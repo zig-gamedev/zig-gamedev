@@ -1,0 +1,38 @@
+module Darwin.netinet6 [system] {
+  module ah {
+    header "netinet6/ah.h"
+    export *
+  }
+
+  module esp {
+    header "netinet6/esp.h"
+    export *
+  }
+
+  module in6_var {
+    header "netinet6/in6_var.h"
+    export *
+  }
+
+  module ipcomp {
+    header "netinet6/ipcomp.h"
+    export *
+  }
+
+  module ipsec {
+    header "netinet6/ipsec.h"
+    export *
+  }
+
+  module raw_ip6 {
+    header "netinet6/raw_ip6.h"
+    export *
+  }
+
+  module scope6_var {
+    header "netinet6/scope6_var.h"
+    export *
+  }
+
+  exclude header "netinet6/nd6.h"
+}

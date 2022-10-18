@@ -1,0 +1,32 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           A88ED990-563F-3230-9C80-703A3134AEE4
+  - target:          x86_64-maccatalyst
+    value:           A88ED990-563F-3230-9C80-703A3134AEE4
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           FA2D8F89-D9C4-316F-9FDC-BFF1A791BD4E
+  - target:          arm64e-maccatalyst
+    value:           FA2D8F89-D9C4-316F-9FDC-BFF1A791BD4E
+install-name:    '/usr/lib/system/libremovefile.dylib'
+current-version: 60
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ ___removefile_init_random, ___removefile_random_char, ___removefile_randomize_buffer, 
+                       ___removefile_rename_unlink, ___removefile_sunlink, ___removefile_tree_walker, 
+                       _removefile, _removefile_cancel, _removefile_state_alloc, 
+                       _removefile_state_free, _removefile_state_get, _removefile_state_set, 
+                       _removefileat ]
+...

@@ -1,0 +1,58 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           3B0BB479-80CD-329A-96EE-20AAB6E8BADB
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           69907794-D8A4-3AEF-89B3-58E1203A8D29
+install-name:    '/usr/lib/libNFC_HAL.dylib'
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, arm64-macos ]
+    symbols:         [ _NFCalibrationGetData, _NFCalibrationGetRFConfigTLVs, _NFHardwareDebug, 
+                       _NFHardwareGPIOClose, _NFHardwareGPIOConfigureHammerfestSPMI, 
+                       _NFHardwareGPIOIsHostWakeCapable, _NFHardwareGPIOOpen, _NFHardwareGPIOSetDeviceWake, 
+                       _NFHardwareGPIOSetDownloadRequest, _NFHardwareGPIOSetIcefallDownloadRequest, 
+                       _NFHardwareGPIOSetPMUStandbyPowerEnabled, _NFHardwareGPIOSetPower, 
+                       _NFHardwareGPIOSetVBAT, _NFHardwareGPIOValidateSPMIConfig, 
+                       _NFHardwareGPIOWasItSPMINack, _NFHardwareGetCalibration, _NFHardwareGetRFConfigTLVs, 
+                       _NFHardwareGetUARTLogEnabled, _NFHardwareInterfaceClose, _NFHardwareInterfaceFlush, 
+                       _NFHardwareInterfaceGetFlowControl, _NFHardwareInterfaceGetType, 
+                       _NFHardwareInterfaceIsHammerfestAlive, _NFHardwareInterfaceIsHostWakeCapable, 
+                       _NFHardwareInterfaceIsSupported, _NFHardwareInterfaceOpen, 
+                       _NFHardwareInterfaceRead, _NFHardwareInterfaceReadAbort, _NFHardwareInterfaceResetSerial, 
+                       _NFHardwareInterfaceSetBaudRate, _NFHardwareInterfaceSetCRCEnabled, 
+                       _NFHardwareInterfaceSetDeviceWake, _NFHardwareInterfaceSetDownloadRequest, 
+                       _NFHardwareInterfaceSetIcefallDownloadRequest, _NFHardwareInterfaceSetLogFunction, 
+                       _NFHardwareInterfaceSetOnDemandClientMode, _NFHardwareInterfaceSetPMUStandbyEnabled, 
+                       _NFHardwareInterfaceSetPMUStandbyPowerEnabled, _NFHardwareInterfaceSetPower, 
+                       _NFHardwareInterfaceSetSPMIConfig, _NFHardwareInterfaceSetVBAT, 
+                       _NFHardwareInterfaceValidateSPMIConfig, _NFHardwareInterfaceWasItNACK, 
+                       _NFHardwareInterfaceWrite, _NFHardwareLoad, _NFHardwareSerialClose, 
+                       _NFHardwareSerialDebugLastMessage, _NFHardwareSerialDump, 
+                       _NFHardwareSerialFlush, _NFHardwareSerialGetCTS, _NFHardwareSerialGetDefaultInterfaceType, 
+                       _NFHardwareSerialHasCTS, _NFHardwareSerialIsHammerfestAlive, 
+                       _NFHardwareSerialIsSupported, _NFHardwareSerialOpen, _NFHardwareSerialPower, 
+                       _NFHardwareSerialRead, _NFHardwareSerialReadAbort, _NFHardwareSerialReset, 
+                       _NFHardwareSerialSetBaudRate, _NFHardwareSerialSetCRCEnabled, 
+                       _NFHardwareSerialSetLogFunction, _NFHardwareSerialSetOnDemandClientMode, 
+                       _NFHardwareSerialWrite, _NFHardwareSetLogFunc, _NFHardwareUnload, 
+                       _phOsalNf_GetTimestamp, _phOsalNfc_CloseLogFile, _phOsalNfc_DeInit, 
+                       _phOsalNfc_Delay, _phOsalNfc_FreeLibrary, _phOsalNfc_FreeMemory, 
+                       _phOsalNfc_GetMemory, _phOsalNfc_Init, _phOsalNfc_LoadLibrary, 
+                       _phOsalNfc_LogBool, _phOsalNfc_LogFunc, _phOsalNfc_LogHexData, 
+                       _phOsalNfc_LogStr, _phOsalNfc_LogU32, _phOsalNfc_LogX32, _phOsalNfc_LogX64, 
+                       _phOsalNfc_MemCompare, _phOsalNfc_MemCopy, _phOsalNfc_OpenLogFile, 
+                       _phOsalNfc_RaiseException, _phOsalNfc_RaiseExceptionWithDescription, 
+                       _phOsalNfc_SetMemory, _phOsalNfc_SignPostLogFunc, _phOsalNfc_SignPostLogHexData, 
+                       _phOsalNfc_SignPostLogStr, _phOsalNfc_SignPostLogTimerEvents, 
+                       _phOsalNfc_SignPostLogX32, _phOsalNfc_Timer_Create, _phOsalNfc_Timer_Deinit, 
+                       _phOsalNfc_Timer_Delete, _phOsalNfc_Timer_Init, _phOsalNfc_Timer_Start, 
+                       _phOsalNfc_Timer_Stop, _phOsalNfc_setHardwareType, _phTmlNfc_ConfigHsuBaudRate, 
+                       _phTmlNfc_ConfigureSpmi, _phTmlNfc_FlushTxRxBuffers, _phTmlNfc_GetHsuMaxBaudRate, 
+                       _phTmlNfc_Init, _phTmlNfc_IoCtl, _phTmlNfc_Read, _phTmlNfc_ReadAbort, 
+                       _phTmlNfc_SetGetSpmiDrvConfigRegs, _phTmlNfc_Shutdown, _phTmlNfc_SpmiDrvErrorStatus, 
+                       _phTmlNfc_Write, _phTmlNfc_WriteAbort ]
+...

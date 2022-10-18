@@ -1,0 +1,28 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           A709C5E1-5F16-3B34-A602-453F0EB7C759
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           3BCF6C2B-FA5C-3D89-8174-41E184DEE01A
+install-name:    '/usr/lib/libScreenReader.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ __SCRMessageProcessCopyInfo, __SCRSignalProcessWithStartUpOptions, 
+                       __SCRSignalProcessWithStopOptions, __ScreenReaderCopyAudioIntroPath, 
+                       __ScreenReaderCopyElement, __ScreenReaderCopyFocusedElement, 
+                       __ScreenReaderCopyInfo, __ScreenReaderCopyKeyboardFocusedElement, 
+                       __ScreenReaderCopyOuterFocusedElement, __ScreenReaderGetEFIAudioFileData, 
+                       __ScreenReaderIsDisabledByManagedPreferences, __ScreenReaderIsRunning, 
+                       __ScreenReaderSendCommand, __ScreenReaderSetEnabledInPreferences, 
+                       __ScreenReaderStart, __ScreenReaderStartWithTarget, __ScreenReaderStop, 
+                       __ScreenReaderSupportsCurrentLocale, __ScreenReaderToggleEnabled, 
+                       __kScreenReaderCopyInfoErrorDomain, __kScreenReaderEFIAudioCharacterTypedKey, 
+                       __kScreenReaderEFIAudioPasswordKey, __kScreenReaderEFIAudioUsernameKey, 
+                       __kScreenReaderEFIAudioUsernameOrPasswordIncorrectKey, __kScreenReaderEFIAudioVoiceOverOffKey, 
+                       __kScreenReaderEFIAudioVoiceOverOnKey, __kUniversalAccessImagePath, 
+                       __kVoiceOverTrainingBundlePath ]
+...

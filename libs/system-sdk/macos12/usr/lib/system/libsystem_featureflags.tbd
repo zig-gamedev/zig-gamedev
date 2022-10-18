@@ -1,0 +1,28 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           C922FEBB-3F3D-3009-885D-386706502278
+  - target:          x86_64-maccatalyst
+    value:           C922FEBB-3F3D-3009-885D-386706502278
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           F0456F65-B4DF-3E14-91DC-C0C2A7954233
+  - target:          arm64e-maccatalyst
+    value:           F0456F65-B4DF-3E14-91DC-C0C2A7954233
+install-name:    '/usr/lib/system/libsystem_featureflags.dylib'
+current-version: 54.30.2
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __os_feature_enabled_impl, __os_feature_enabled_simple_impl ]
+...

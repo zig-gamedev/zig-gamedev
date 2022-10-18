@@ -1,0 +1,8 @@
+// Module map for sys/_pthread/_pthread_types.h.
+//
+// Expected to be included as a submodule of the top-level module for stdint.h.
+
+module Darwin_C_stdint._pthread_types {
+        export *
+        header "sys/_pthread/_pthread_types.h"
+}

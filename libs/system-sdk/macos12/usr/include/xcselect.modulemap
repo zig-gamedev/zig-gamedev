@@ -1,0 +1,5 @@
+module xcselect [system] {
+  header "xcselect.h"
+  export *
+  link "xcselect"
+}

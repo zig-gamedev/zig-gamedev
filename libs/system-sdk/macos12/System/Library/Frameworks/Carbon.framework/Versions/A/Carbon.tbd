@@ -1,0 +1,860 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           4A421290-C065-3A5B-A1B6-CFD3089777A2
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           9D2BB9C5-35D3-359E-AB34-EF8E5165F513
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon'
+current-version: 165
+compatibility-version: 2
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _CarbonVersionNumber, _CarbonVersionString ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           77D1909A-B552-3B89-BAA3-4968DBE58A3E
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           83145A1E-897C-34E0-8378-6F14F11E851E
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/CommonPanels.framework/Versions/A/CommonPanels'
+current-version: 101
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AppKit ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _CCP_FontPanelClose, _CCP_FontPanelGetSelection, _CCP_FontPanelIsVisible, 
+                       _CCP_FontPanelOpen, _CCP_FontPanelSelectFonts, _CCP_NPickColor, 
+                       _CMCalibrateDisplay, _Call_CommonCocoaPanels_NPickColor, _CommonPanelsVersionNumber, 
+                       _CommonPanelsVersionString, _DisposeCalibrateEventUPP, _DisposeCalibrateUPP, 
+                       _DisposeCanCalibrateUPP, _DisposeNColorChangedUPP, _FCAddCollection, 
+                       _FCAddFontDescriptorToCollection, _FCCopyCollectionNames, 
+                       _FCCopyFontDescriptorsInCollection, _FCFontDescriptorCreateWithFontAttributes, 
+                       _FCFontDescriptorCreateWithName, _FCRemoveCollection, _FCRemoveFontDescriptorFromCollection, 
+                       _FPIsFontPanelVisible, _FPShowHideFontPanel, _GetColor, _GetHandleApplicationEventsUPP, 
+                       _GetHandleWinEventsUPP, _InvokeCalibrateEventUPP, _InvokeCalibrateUPP, 
+                       _InvokeCanCalibrateUPP, _InvokeNColorChangedUPP, _LoadNSTypographyBundle, 
+                       _NPickColor, _NewCalibrateEventUPP, _NewCalibrateUPP, _NewCanCalibrateUPP, 
+                       _NewNColorChangedUPP, _SetFontInfoForSelection, _SoftLinkingGetFunctionPointerFromBundleInDirectory, 
+                       _UserWantsColorPanelFromCommonCocoaPanels, __SoftLinkingLoadBundleFromLocation, 
+                       _gApplicationDeactivated, _gApplicationHandler, _gCallingApp, 
+                       _gCallingCCP, _gEventTarget, _gFontPanelInitialized, _gFontPanelRef, 
+                       _gHandler, _gNSTypographyBundle, _gSelFontInfo, _kFCFontCGColorAttribute, 
+                       _kFCFontFaceAttribute, _kFCFontFamilyAttribute, _kFCFontNameAttribute, 
+                       _kFCFontSizeAttribute, _kFCFontVisibleNameAttribute, _kFontPanelATSUFontIDKey, 
+                       _kFontPanelAttributeSizesKey, _kFontPanelAttributeTagsKey, 
+                       _kFontPanelAttributeValuesKey, _kFontPanelAttributesKey, _kFontPanelBackgroundColorAttributeName, 
+                       _kFontPanelDocumentAttributesKey, _kFontPanelFeatureSelectorsKey, 
+                       _kFontPanelFeatureTypesKey, _kFontPanelMouseTrackingState, 
+                       _kFontPanelVariationAxesKey, _kFontPanelVariationValuesKey ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           6320CF1B-CCD8-336D-ADB8-888AC1D8A1AA
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           7E5988A9-A641-398E-A67D-4B3ED39C3B51
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/HIToolbox'
+current-version: 1111.3
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AGL, AppKit, AppleShareClient, Backup, Dock, Finder, FinderKit, 
+                       ImageKit, Printing_UI, QTKit, QTKitServer, RemoteViewServices, 
+                       Shortcut, Suggestions, UIKitMacHelper, ViewBridge, loginwindow ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _AEGetInteractionAllowed, _AEGetTheCurrentEvent, _AEInteractWithUser, 
+                       _AEProcessAppleEvent, _AEProcessEvent, _AEResetTimer, _AEResumeTheCurrentEvent, 
+                       _AESend, _AESetInteractionAllowed, _AESetTheCurrentEvent, 
+                       _AESuspendTheCurrentEvent, _AXNotificationHIObjectNotify, 
+                       _AXNotificationHIObjectNotifyWithUserInfo, _AXUIElementCreateWithHIObjectAndIdentifier, 
+                       _AXUIElementGetHIObject, _AXUIElementGetIdentifier, _AcquireFirstMatchingEventInQueue, 
+                       _AcquireRootMenu, _ActivateControl, _ActivateTSMDocument, 
+                       _ActivateWindow, _ActiveNonFloatingWindow, _AddDataBrowserItems, 
+                       _AddEventTypesToHandler, _AppendDITL, _AppendMenuItemTextWithCFString, 
+                       _BeginAppModalStateForWindow, _BeginWindowProxyDrag, _BlockUntilNextEventMatchingListInMode, 
+                       _BringToFront, _Button, _CalcMenuSize, _CallNextEventHandler, 
+                       _CancelMenuTracking, _ChangeMenuAttributes, _ChangeMenuItemAttributes, 
+                       _ChangeWindowAttributes, _CheckEventQueueForUserCancel, _CheckMenuItem, 
+                       _ClearKeyboardFocus, _ClearMenuBar, _CollapseAllWindows, _CollapseWindow, 
+                       _ConfirmAppShowHideEvent, _ConstrainWindowToScreen, _ConvertEventRefToEventRecord, 
+                       _CopyControlTitleAsCFString, _CopyEvent, _CopyEventAs, _CopyEventCGEvent, 
+                       _CopyMenuItemData, _CopyMenuItemTextAsCFString, _CopyMenuItems, 
+                       _CopyMenuTitleAsCFString, _CopySymbolicHotKeys, _CopyThemeIdentifier, 
+                       _CopyWindowTitleAsCFString, _CountDITL, _CountMenuItems, _CreateCheckBoxControl, 
+                       _CreateEvent, _CreateEventWithCGEvent, _CreateIconControl, 
+                       _CreateLocaleIdentifierForItl0Itl1ResID, _CreateMenuFromNib, 
+                       _CreateNewMenu, _CreateNewWindow, _CreateNibReference, _CreateNibReferenceWithCFBundle, 
+                       _CreatePushButtonControl, _CreateRootControl, _CreateShrinkToFitEditControl, 
+                       _CreateStandardAlert, _CreateStandardSheet, _CreateStandardWindowMenu, 
+                       _CreateStaticTextControl, _CreateTypeStringWithOSType, _CreateWindowFromNib, 
+                       _CreateWindowGroup, _CreateWindowWithCGSWindow, _DeactivateControl, 
+                       _DeactivateTSMDocument, _DebugPrintAllWindowGroups, _DebugPrintControl, 
+                       _DebugPrintControlHierarchy, _DebugPrintDialogInfo, _DebugPrintEvent, 
+                       _DebugPrintEventQueue, _DebugPrintMainEventQueue, _DebugPrintMenu, 
+                       _DebugPrintMenuItem, _DebugPrintMenuList, _DebugPrintTracedEvents, 
+                       _DebugPrintWindow, _DebugPrintWindowGroup, _DebugPrintWindowList, 
+                       _DebugSetEventTraceEnabled, _DebugTraceEvent, _DebugTraceEventByName, 
+                       _DeleteMenu, _DeleteMenuItem, _DeleteMenuItems, _DeleteTSMDocument, 
+                       _DetachSheetWindow, _DialogSelect, _DisableControl, _DisableMenuCommand, 
+                       _DisableMenuItem, _DisableScreenUpdates, _DisableSecureEventInput, 
+                       _DisposeNibReference, _DisposeWindow, _DragWindow, _DrawMenuBar, 
+                       _EnableControl, _EnableMenuItem, _EnableScreenUpdates, _EnableSecureEventInput, 
+                       _EndAppModalStateForWindow, _EndWindowProxyDrag, _EventAvail, 
+                       _FindControlUnderMouse, _FindSpecificEventInQueue, _FindWindow, 
+                       _FixTSMDocument, _FlashMenuBar, _FlushEventQueue, _FlushEvents, 
+                       _FlushEventsMatchingListFromQueue, _FlushSpecificEventsFromQueue, 
+                       _FrontNonFloatingWindow, _FrontWindow, _GetApplicationEventTarget, 
+                       _GetApplicationScript, _GetApplicationTextEncoding, _GetBestControlRect, 
+                       _GetCFRunLoopFromEventLoop, _GetCarbonAccessibilityCallbacks, 
+                       _GetCaretTime, _GetControlBounds, _GetControlByID, _GetControlData, 
+                       _GetControlEventTarget, _GetControlFeatures, _GetControlHilite, 
+                       _GetControlKind, _GetControlOwner, _GetControlProperty, _GetControlValue, 
+                       _GetCurrentButtonState, _GetCurrentEvent, _GetCurrentEventButtonState, 
+                       _GetCurrentEventKeyModifiers, _GetCurrentEventLoop, _GetCurrentEventQueue, 
+                       _GetCurrentEventTime, _GetCurrentKeyModifiers, _GetDataBrowserItemCount, 
+                       _GetDataBrowserItemState, _GetDataBrowserItems, _GetDataBrowserPropertyFlags, 
+                       _GetDataBrowserSelectionAnchor, _GetDataBrowserSelectionFlags, 
+                       _GetDataBrowserTableViewColumnPosition, _GetDataBrowserTableViewColumnWidth, 
+                       _GetDataBrowserTableViewNamedColumnWidth, _GetDataBrowserTableViewRowHeight, 
+                       _GetDblTime, _GetDialogFromWindow, _GetDialogItem, _GetDialogItemAsControl, 
+                       _GetDialogWindow, _GetEventAttributes, _GetEventClass, _GetEventDispatcherTarget, 
+                       _GetEventKind, _GetEventMonitorTarget, _GetEventParameter, 
+                       _GetEventRetainCount, _GetEventTime, _GetFrontWindowOfClass, 
+                       _GetGrayRgn, _GetIndMenuItemWithCommandID, _GetIndexedSubControl, 
+                       _GetItemMark, _GetItlResourceIDsForLocale, _GetKeyboardFocus, 
+                       _GetKeys, _GetMBarHeight, _GetMainEventLoop, _GetMainEventQueue, 
+                       _GetMenuAttributes, _GetMenuDefinition, _GetMenuEventTarget, 
+                       _GetMenuHandle, _GetMenuHeight, _GetMenuID, _GetMenuItemAttributes, 
+                       _GetMenuItemBounds, _GetMenuItemCommandID, _GetMenuItemCommandKey, 
+                       _GetMenuItemHierarchicalMenu, _GetMenuItemModifiers, _GetMenuItemProperty, 
+                       _GetMenuItemRefCon, _GetMenuTitleIcon, _GetMenuTrackingData, 
+                       _GetMenuType, _GetMenuWidth, _GetNativeWindowFromWindowRef, 
+                       _GetNextMenu, _GetNextWindow, _GetNextWindowOfClass, _GetNumEventsInQueue, 
+                       _GetPreviousMenu, _GetPreviousWindow, _GetRootControl, _GetSheetWindowParent, 
+                       _GetStandardAlertDefaultParams, _GetSuperControl, _GetSymbolicHotKeyMode, 
+                       _GetSystemUIMode, _GetThemeBrushAsColor, _GetThemeMenuBarHeight, 
+                       _GetThemeMenuItemExtra, _GetThemeMenuSeparatorHeight, _GetThemeMenuTitleExtra, 
+                       _GetThemeMetric, _GetThemeTextColor, _GetThemeTextShadowOutset, 
+                       _GetUserFocusEventTarget, _GetUserFocusWindow, _GetWRefCon, 
+                       _GetWindowActivationScope, _GetWindowAttributes, _GetWindowBounds, 
+                       _GetWindowCancelButton, _GetWindowClass, _GetWindowDefaultButton, 
+                       _GetWindowEventTarget, _GetWindowFeatures, _GetWindowGroup, 
+                       _GetWindowGroupLevel, _GetWindowGroupOfClass, _GetWindowGroupParent, 
+                       _GetWindowIdealUserState, _GetWindowKind, _GetWindowList, 
+                       _GetWindowModality, _GetWindowPortBounds, _GetWindowProperty, 
+                       _GetWindowRefFromNativeWindow, _GetWindowStandardState, _GetWindowSystemProperty, 
+                       _HICopyAccessibilityActionDescription, _HICopyAccessibilityRoleDescription, 
+                       _HIDictionaryWindowShow, _HIGetMousePosition, _HIGetScaleFactor, 
+                       _HIGrowBoxViewIsTransparent, _HIGrowBoxViewSetTransparent, 
+                       _HIMenuCopyFont, _HIMenuCopyParents, _HIMenuGetContentView, 
+                       _HIMenuItemViewCancelMenuTracking, _HIMenuItemViewGetEnclosingMenuItem, 
+                       _HIMenuSetAttributedItemText, _HIMenuSetFont, _HIMenuSetSelection, 
+                       _HIMouseTrackingGetParameters, _HIObjectAddDelegate, _HIObjectCopyClassID, 
+                       _HIObjectCopyDelegates, _HIObjectCreate, _HIObjectCreateFromBundle, 
+                       _HIObjectDynamicCast, _HIObjectFromEventTarget, _HIObjectGetEventHandlerObject, 
+                       _HIObjectGetEventTarget, _HIObjectIsAccessibilityIgnored, 
+                       _HIObjectIsArchivingIgnored, _HIObjectIsOfClass, _HIObjectOverrideAccessibilityContainment, 
+                       _HIObjectPrintDebugInfo, _HIObjectRegisterSubclass, _HIObjectRemoveDelegate, 
+                       _HIObjectSetAccessibilityIgnored, _HIObjectSetAuxiliaryAccessibilityAttribute, 
+                       _HIObjectUnregisterClass, _HIPointConvert, _HIRectConvert, 
+                       _HIScrollViewCreate, _HIScrollViewGetAllowGrow, _HIScrollViewGetScrollBarAutoHide, 
+                       _HIScrollViewSetAllowGrow, _HIScrollViewSetScrollBarAutoHide, 
+                       _HISearchFieldChangeAttributes, _HISearchFieldCreate, _HISearchFieldGetAttributes, 
+                       _HISearchWindowShow, _HISegmentedViewChangeSegmentAttributes, 
+                       _HISegmentedViewGetSegmentBehavior, _HISegmentedViewGetSegmentCommand, 
+                       _HISegmentedViewGetSegmentCount, _HISegmentedViewIsSegmentEnabled, 
+                       _HISegmentedViewSetSegmentBehavior, _HISegmentedViewSetSegmentCommand, 
+                       _HISegmentedViewSetSegmentContentWidth, _HISegmentedViewSetSegmentCount, 
+                       _HISegmentedViewSetSegmentEnabled, _HISegmentedViewSetSegmentImage, 
+                       _HISizeConvert, _HITextViewCreate, _HITextViewGetTXNObject, 
+                       _HIThemeApplyBackground, _HIThemeBeginFocus, _HIThemeBrushCreateCGColor, 
+                       _HIThemeDrawBackground, _HIThemeDrawButton, _HIThemeDrawChasingArrows, 
+                       _HIThemeDrawFocusRect, _HIThemeDrawFrame, _HIThemeDrawGenericWell, 
+                       _HIThemeDrawGrabber, _HIThemeDrawGroupBox, _HIThemeDrawGrowBox, 
+                       _HIThemeDrawHeader, _HIThemeDrawMenuBackground, _HIThemeDrawMenuBarBackground, 
+                       _HIThemeDrawMenuItem, _HIThemeDrawMenuSeparator, _HIThemeDrawMenuTitle, 
+                       _HIThemeDrawPaneSplitter, _HIThemeDrawPlacard, _HIThemeDrawPopupArrow, 
+                       _HIThemeDrawScrollBarDelimiters, _HIThemeDrawSegment, _HIThemeDrawSeparator, 
+                       _HIThemeDrawTab, _HIThemeDrawTabPane, _HIThemeDrawTextBox, 
+                       _HIThemeDrawTickMark, _HIThemeDrawTitleBarWidget, _HIThemeDrawTrack, 
+                       _HIThemeDrawTrackTickMarks, _HIThemeDrawWindowFrame, _HIThemeEndFocus, 
+                       _HIThemeGetButtonBackgroundBounds, _HIThemeGetButtonContentBounds, 
+                       _HIThemeGetButtonShape, _HIThemeGetGrowBoxBounds, _HIThemeGetMenuBackgroundShape, 
+                       _HIThemeGetScrollBarTrackRect, _HIThemeGetTabDrawShape, _HIThemeGetTabPaneContentShape, 
+                       _HIThemeGetTabPaneDrawShape, _HIThemeGetTabShape, _HIThemeGetTextColorForThemeBrush, 
+                       _HIThemeGetTextDimensions, _HIThemeGetTrackBounds, _HIThemeGetTrackDragRect, 
+                       _HIThemeGetTrackLiveValue, _HIThemeGetTrackPartBounds, _HIThemeGetTrackParts, 
+                       _HIThemeGetTrackThumbPositionFromBounds, _HIThemeGetTrackThumbPositionFromOffset, 
+                       _HIThemeGetTrackThumbShape, _HIThemeGetUIFontType, _HIThemeGetWindowRegionHit, 
+                       _HIThemeGetWindowShape, _HIThemeHitTestScrollBarArrows, _HIThemeHitTestTrack, 
+                       _HIThemeSetFill, _HIThemeSetStroke, _HIThemeSetTextFill, _HIThemeSetTextStroke, 
+                       _HIToolbarAppendItem, _HIToolbarChangeAttributes, _HIToolbarCopyItems, 
+                       _HIToolbarCreate, _HIToolbarCreateItemWithIdentifier, _HIToolbarGetDisplayMode, 
+                       _HIToolbarGetDisplaySize, _HIToolbarItemChangeAttributes, 
+                       _HIToolbarItemChangeAttributesInWindow, _HIToolbarItemCopyIdentifier, 
+                       _HIToolbarItemCreate, _HIToolbarItemGetCommandID, _HIToolbarItemGetToolbar, 
+                       _HIToolbarItemSetCommandID, _HIToolbarItemSetHelpText, _HIToolbarItemSetIconRef, 
+                       _HIToolbarItemSetLabel, _HIToolbarItemSetMenu, _HIToolbarRemoveItemAtIndex, 
+                       _HIToolbarSetDelegate, _HIToolbarSetDisplayMode, _HIToolbarSetDisplaySize, 
+                       _HIViewAddSubview, _HIViewAdvanceFocus, _HIViewApplyLayout, 
+                       _HIViewChangeFeatures, _HIViewConvertPoint, _HIViewConvertRect, 
+                       _HIViewCopyText, _HIViewCountSubviews, _HIViewCreateOffscreenImage, 
+                       _HIViewDisposeTrackingArea, _HIViewDrawCGImage, _HIViewFindByID, 
+                       _HIViewFlashDirtyArea, _HIViewGetBounds, _HIViewGetCommandID, 
+                       _HIViewGetFeatures, _HIViewGetFirstSubview, _HIViewGetFocus, 
+                       _HIViewGetFocusPart, _HIViewGetFrame, _HIViewGetID, _HIViewGetIndexedSubview, 
+                       _HIViewGetKind, _HIViewGetLayoutInfo, _HIViewGetMaximum, _HIViewGetMinimum, 
+                       _HIViewGetNextView, _HIViewGetOptimalBounds, _HIViewGetRoot, 
+                       _HIViewGetSuperview, _HIViewGetThemeTextInfo, _HIViewGetTrackingAreaID, 
+                       _HIViewGetValue, _HIViewGetViewForMouseEvent, _HIViewGetViewSize, 
+                       _HIViewGetWindow, _HIViewIsActive, _HIViewIsCompositingEnabled, 
+                       _HIViewIsDrawingEnabled, _HIViewIsEnabled, _HIViewIsLatentlyVisible, 
+                       _HIViewIsLayoutActive, _HIViewIsLayoutLatentlyActive, _HIViewIsVisible, 
+                       _HIViewMoveBy, _HIViewNewTrackingArea, _HIViewRegionChanged, 
+                       _HIViewRemoveFromSuperview, _HIViewRender, _HIViewResumeLayout, 
+                       _HIViewScrollRect, _HIViewSetActivated, _HIViewSetBoundsOrigin, 
+                       _HIViewSetCommandID, _HIViewSetDrawingEnabled, _HIViewSetEnabled, 
+                       _HIViewSetFocus, _HIViewSetFrame, _HIViewSetHilite, _HIViewSetID, 
+                       _HIViewSetLayoutInfo, _HIViewSetMaximum, _HIViewSetMinimum, 
+                       _HIViewSetNeedsDisplay, _HIViewSetNeedsDisplayInRect, _HIViewSetNeedsDisplayInShape, 
+                       _HIViewSetSubviewsNeedDisplayInShape, _HIViewSetText, _HIViewSetTextFont, 
+                       _HIViewSetTextHorizontalFlush, _HIViewSetTextTruncation, _HIViewSetTextVerticalFlush, 
+                       _HIViewSetValue, _HIViewSetViewSize, _HIViewSetVisible, _HIViewSetZOrder, 
+                       _HIViewSimulateClick, _HIViewSubtreeContainsFocus, _HIViewSuspendLayout, 
+                       _HIWindowChangeAttributes, _HIWindowChangeClass, _HIWindowChangeFeatures, 
+                       _HIWindowCopyAvailablePositioningShape, _HIWindowFindAtLocation, 
+                       _HIWindowFlush, _HIWindowFromCGWindowID, _HIWindowGetAvailablePositioningBounds, 
+                       _HIWindowGetBounds, _HIWindowGetCGWindowID, _HIWindowGetGreatestAreaDisplay, 
+                       _HIWindowGetScaleMode, _HIWindowIsDocumentModalTarget, _HIWindowSetBottomBarHeight, 
+                       _HIWindowTestAttribute, _HMAreHelpTagsDisplayed, _HMGetTagDelay, 
+                       _HMInstallControlContentCallback, _HMSetControlHelpContent, 
+                       _HMSetHelpTagsDisplayed, _HMSetMenuItemHelpContent, _HMSetTagDelay, 
+                       _HandleControlSetCursor, _HideControl, _HideMenuBar, _HideSheetWindow, 
+                       _HideWindow, _HiliteControl, _HiliteMenu, _HiliteWindow, _IMKBaselineKey, 
+                       _IMKChromaticMarkedTextAttributeName, _IMKDictationHilightAttributeName, 
+                       _IMKDictationHilightHypothesisDeltaAttributeName, _IMKDictationInsertionUndoableAttributeName, 
+                       _IMKIronwoodTextAlternativeCorrectedKey, _IMKIronwoodTextAlternativeCorrectionIDKey, 
+                       _IMKIronwoodTextAlternativeOriginalKey, _IMKIronwoodTextAlternativesAttributeName, 
+                       _IMKIronwoodTextAlternativesKey, _IMKLineAscentKey, _IMKLineHeightKey, 
+                       _IMKTextOrientationName, _INIT_ScriptHL, _InitDataBrowserCallbacks, 
+                       _InitDataBrowserCustomCallbacks, _InsertMenu, _InsertMenuItemTextWithCFString, 
+                       _InstallEventHandler, _InstallEventLoopIdleTimer, _InstallEventLoopTimer, 
+                       _InstallEventLoopTimerInMode, _InstallInputSourceMgrHandlers, 
+                       _InstallStandardEventHandler, _IntlCountResources, _IntlGetIndexedResInfo, 
+                       _IntlGetScriptCustomResourceID, _IntlGetValue, _IntlResourceIDToScriptCode, 
+                       _IntlSetValue, _InvalMenuBar, _InvalidateMenuBarFilter, _InvalidateMenuItems, 
+                       _InvalidateMenuSize, _IsAutomaticControlDragTrackingEnabledForWindow, 
+                       _IsCmdChar, _IsControlActive, _IsControlDragTrackingEnabled, 
+                       _IsControlHilited, _IsControlVisible, _IsCurrentTSMDocumentUnicode, 
+                       _IsDataBrowserItemSelected, _IsEventInInstantMouser, _IsEventInQueue, 
+                       _IsMenuBarVisible, _IsMenuItemEnabled, _IsMenuKeyEvent, _IsMenuSizeInvalid, 
+                       _IsMouseCoalescingEnabled, _IsSecureEventInputEnabled, _IsShowContextualMenuEvent, 
+                       _IsUserCancelEventRef, _IsValidControlHandle, _IsValidMenu, 
+                       _IsValidWindowPtr, _IsWindowActive, _IsWindowCollapsed, _IsWindowHilited, 
+                       _IsWindowInStandardState, _IsWindowLatentVisible, _IsWindowPathSelectEvent, 
+                       _IsWindowToolbarVisible, _IsWindowVisible, _KBGetLayoutType, 
+                       _KLCreateKCAPDataForKbdType, _KeyEventMatchesMenuItem, _KeyTranslate, 
+                       _LMGetKbdLast, _LMGetKbdType, _LMGetKeyRepThresh, _LMGetKeyThresh, 
+                       _LMSetKbdLast, _LMSetKbdType, _LMSetKeyRepThresh, _LMSetKeyThresh, 
+                       _LaunchAppleCharacterPalette, _MenuEvent, _MenuSelect, _MoveControl, 
+                       _MoveWindow, _MoveWindowStructure, _NMInstall, _NMRemove, 
+                       _NewTSMDocument, _OpenThemeResFileMapped, _ParamText, _PopSymbolicHotKeyMode, 
+                       _PopUpMenuSelect, _PostEvent, _PostEventToQueue, _PostEventToQueueInternal, 
+                       _PostFakeMenuSelectionEvent, _ProcessHICommand, _ProcessInputSourceSwitchEventCandidate, 
+                       _ProcessInputSourceSwitchKeySequenceCandidate, _PushSymbolicHotKeyMode, 
+                       _QuitAppModalLoopForWindow, _QuitApplicationEventLoop, _QuitEventLoop, 
+                       _ReceiveNextEvent, _RegisterEventHotKey, _RegisterSystemToolboxListenerWithOptions, 
+                       _ReleaseEvent, _RemoveControlProperty, _RemoveDataBrowserItems, 
+                       _RemoveEventFromQueue, _RemoveEventHandler, _RemoveEventLoopTimer, 
+                       _RemoveEventParameter, _RemoveEventTypesFromHandler, _RemoveMenuItemProperty, 
+                       _RemoveWindowProperty, _RemoveWindowProxy, _RepositionWindow, 
+                       _RetainEvent, _RevealDataBrowserItem, _RunAppModalLoopForWindow, 
+                       _RunApplicationEventLoop, _RunCurrentEventLoop, _RunStandardAlert, 
+                       _SelectWindow, _SendBehind, _SendEventToEventTarget, _SendEventToEventTargetWithOptions, 
+                       _SendTextInputEvent, _SendWindowGroupBehind, _SetAnimatedThemeCursor, 
+                       _SetApplicationDockTileMenu, _SetAutomaticControlDragTrackingEnabledForWindow, 
+                       _SetBevelButtonContentInfo, _SetCocoaAccessibilityCallbacks, 
+                       _SetControlAction, _SetControlCommandID, _SetControlData, 
+                       _SetControlDragTrackingEnabled, _SetControlFontStyle, _SetControlID, 
+                       _SetControlProperty, _SetControlTitleWithCFString, _SetControlValue, 
+                       _SetControlVisibility, _SetDataBrowserCallbacks, _SetDataBrowserCustomCallbacks, 
+                       _SetDataBrowserItemDataIcon, _SetDataBrowserItemDataText, 
+                       _SetDataBrowserPropertyFlags, _SetDataBrowserSelectedItems, 
+                       _SetDataBrowserSelectionFlags, _SetDataBrowserSortProperty, 
+                       _SetDataBrowserTableViewColumnPosition, _SetDataBrowserTableViewColumnWidth, 
+                       _SetDataBrowserTableViewGeometry, _SetDataBrowserTableViewNamedColumnWidth, 
+                       _SetDialogItemRectangle, _SetDialogTimeout, _SetEventLoopTimerNextFireTime, 
+                       _SetEventParameter, _SetEventTime, _SetItemMark, _SetItemStyle, 
+                       _SetKeyboardFocus, _SetMenuBarFromNib, _SetMenuDefinition, 
+                       _SetMenuExcludesMarkColumn, _SetMenuItemCommandID, _SetMenuItemCommandKey, 
+                       _SetMenuItemHierarchicalMenu, _SetMenuItemIconHandle, _SetMenuItemIndent, 
+                       _SetMenuItemKeyGlyph, _SetMenuItemModifiers, _SetMenuItemProperty, 
+                       _SetMenuItemRefCon, _SetMenuItemTextWithCFString, _SetMenuTitleIcon, 
+                       _SetMenuTitleWithCFString, _SetModalDialogEventMask, _SetMouseCoalescingEnabled, 
+                       _SetNextMenu, _SetRootMenu, _SetSystemAppMenuSectionAllowed, 
+                       _SetSystemUIMode, _SetThemeCursor, _SetThemeWindowBackground, 
+                       _SetUserFocusWindow, _SetWindowActivationScope, _SetWindowAlternateTitle, 
+                       _SetWindowBounds, _SetWindowCancelButton, _SetWindowDefaultButton, 
+                       _SetWindowGroup, _SetWindowGroupLevel, _SetWindowIdealUserState, 
+                       _SetWindowModality, _SetWindowModified, _SetWindowProperty, 
+                       _SetWindowProxyAlias, _SetWindowProxyIcon, _SetWindowResizeLimits, 
+                       _SetWindowTitleWithCFString, _SetWindowToolbar, _ShowControl, 
+                       _ShowHide, _ShowHideWindowToolbar, _ShowMenuBar, _ShowSheetWindow, 
+                       _ShowWindow, _SizeControl, _SizeWindow, _StdFilterProc, _SyncWindowToCGSWindow, 
+                       _TISCapsLockSwitchShouldKeyboardLayoutUseAlternateForModifiers, 
+                       _TISCopyCurrentASCIICapableKeyboardInputSource, _TISCopyCurrentASCIICapableKeyboardLayoutInputSource, 
+                       _TISCopyCurrentKeyboardInputSource, _TISCopyCurrentKeyboardLayoutInputSource, 
+                       _TISCopyCurrentNonRomanInputSourceForRomanSwitch, _TISCopyInputMethodKeyboardLayoutOverride, 
+                       _TISCopyInputSourceForLanguage, _TISCopyInputSourceRefForInputSourceID, 
+                       _TISCopyInputSourcesForAttachedKeyboardsFilteredByLocale, 
+                       _TISCreateASCIICapableInputSourceList, _TISCreateCompressedInfoStringForInputSource, 
+                       _TISCreateDefaultASCIIInputSourceForLocale, _TISCreateInputSourceList, 
+                       _TISCreatePrunedPreferredInputSourcesWithABC, _TISCreateSecureKeyboardInputSourceList, 
+                       _TISDeselectInputSource, _TISDisableInputSource, _TISEnableInputSource, 
+                       _TISEnableInputSourceWithOptions, _TISGetAppleKeyLayoutCount, 
+                       _TISGetAppleKeyLayoutIndexForKeyLayoutName, _TISGetAppleKeyLayoutIndexForNumericID, 
+                       _TISGetAppleKeyLayoutKLPropertyAtIndex, _TISGetDictationShouldAutoEnable, 
+                       _TISGetFnUsageType, _TISGetGestureHandwritingState, _TISGetInputSourceProperty, 
+                       _TISHardwareSupportsGestureHandwriting, _TISInputMethodDataFileReaderCreateBasicProperties, 
+                       _TISInputMethodDataFileReaderCreatePropertyListAndWordList, 
+                       _TISInputSourceGetTypeID, _TISIsKeyboardLayoutCapsLockSwitchAllowed, 
+                       _TISIsKeyboardLayoutCapsLockSwitched, _TISIsRomanSwitchAllowed, 
+                       _TISIsRomanSwitchEnabled, _TISKeyboardLayoutInputSourceIsQWERTY, 
+                       _TISLaunchCharacterPalette, _TISPerformInputMethodDependentBlockDuringWorkBlock, 
+                       _TISPrefsCopyCurrentKeyboardLayoutID, _TISPrefsUserSnapshotCopyForMachinePrefs, 
+                       _TISRegisterInputSource, _TISSelectInputSource, _TISSetDefaultAsciiCapableKeyboardLayoutInputSource, 
+                       _TISSetDictationShouldAutoEnable, _TISSetExtensionsForIntlFileCacheUpdate, 
+                       _TISSetGestureHandwritingState, _TISSetInputMethodKeyboardLayoutOverride, 
+                       _TISSetRomanSwitchState, _TISUpdateFnUsageType, _TISUpdateIntlFileCache, 
+                       _TISUpdaterEnsureKotoeriHiraganaModeForSUMavericks, _TISUpdaterMigrateDictationAutoEnableFromSpeechRecognition, 
+                       _TISUpdaterMigrateKotoeriToJapaneseIM, _TISUpdaterMigratePrefsFromByHostDomain, 
+                       _TISWriteKeyLayoutCollection, _TSMCanChangeInputSourceEnabledState, 
+                       _TSMCopyTextInputGlobalProperty, _TSMCreateInputSourceForKeyboardLayoutRef, 
+                       _TSMCreateInputSourceRefForIndex, _TSMCurrentKeyboardInputSourceRefCreate, 
+                       _TSMDefaultAsciiCapableKeyboardLayoutCopy, _TSMDeselectInputSource, 
+                       _TSMDisableInputSource, _TSMEnableInputSource, _TSMGetActiveDocument, 
+                       _TSMGetDeadKeyState, _TSMGetDocumentProperty, _TSMGetInputSourceCount, 
+                       _TSMGetInputSourceProperty, _TSMGetIronwoodSessionState, _TSMInvalidateClientGeometry, 
+                       _TSMIsInkWithMouseEnabled, _TSMIsInputSourceAsciiCapable, 
+                       _TSMIsPressAndHoldActive, _TSMKeyTranslateWithInputSource, 
+                       _TSMProcessIronwoodSessionAction, _TSMProcessMouseEvent, _TSMProcessMouseEventWithCompletionHandler, 
+                       _TSMProcessRawKeyCode, _TSMProcessRawKeyEvent, _TSMProcessRawKeyEventWithCompletionHandler, 
+                       _TSMProcessRawKeyEventWithOptionsAndCompletionHandler, _TSMProcessTabletEvent, 
+                       _TSMRecentInputSourcesCreate, _TSMRemoveDocumentProperty, 
+                       _TSMSelectInputSource, _TSMSetCurrentAsciiCapableInputSource, 
+                       _TSMSetDeadKeyState, _TSMSetDocumentProperty, _TSMSetInkWithMouseEnabled, 
+                       _TSMSetInputMethodProperty, _TSMSetTextInputGlobalProperty, 
+                       _TSMShouldTextInputMenuBeDisplayed, _TSMUnrestrictInputSourceAccess, 
+                       _TSMUpgradePrefBundleIDsToLeopard, _TSMUpgradeScriptMgrPrefsToInputSourcePrefs, 
+                       _TXNAdjustCursor, _TXNClear, _TXNCopy, _TXNDataSize, _TXNGetData, 
+                       _TXNGetHIRect, _TXNGetIndexedRunInfoFromRange, _TXNGetSelection, 
+                       _TXNIsScrapPastable, _TXNPaste, _TXNSelectAll, _TXNSetData, 
+                       _TXNSetDataFromCFURLRef, _TXNSetHIRectBounds, _TXNSetSelection, 
+                       _TXNSetTXNObjectControls, _TXNShowSelection, _TestWindowLiveResizePerformance, 
+                       _TrackWindowProxyFromExistingDrag, _TransitionWindow, _TransitionWindowWithOptions, 
+                       _TruncateThemeText, _UnregisterEventHotKey, _UseInputWindow, 
+                       _WaitNextEvent, _WindowPathSelect, __AcquireMatchingCGEvent, 
+                       __AcquireMatchingCGEventInQueue, __AcquireNextEvent, __BeginAppModalState, 
+                       __BeginEventReceiptOnThread, __BlockUntilNextEventMatchingListInModeWithFilter, 
+                       __CancelMenuTracking, __CheckForMenuCancelEvent, __CloseMenu, 
+                       __ContextualMenuInsertItems, __ConvertMatchingCGEvents, __CopyCGEventAssociatedData, 
+                       __CopyMenuItemDataU, __CopyMenuItemTextAsCFStringU, __CountMenuItemsU, 
+                       __CreateFlattenedInputSource, __CreateInputModeArrayForInputMethodInUIOrder, 
+                       __CreateInputModeArrayForInputMethodInUIOrderWithOptions, 
+                       __CreatePrivateDialogRefAndBindToWindowRef, __CreateUnflattenedInputSource, 
+                       __DeclineBackgroundMouseMovedEvents, __EndAppModalState, __EndEventReceiptOnThread, 
+                       __EventQueueSetEventLimit, __FlattenMenuItems2, __GetActiveSystemUIMode, 
+                       __GetActiveSystemUIModeAndOptions, __GetAggregateUIMode, __GetAllEventsOfClass, 
+                       __GetCurrentMenuContext, __GetDefaultMenuFont, __GetMenuItemBoundsU, 
+                       __GetMenuItemHierarchicalMenuU, __GetMenuMinimumWidth, __GetMenuTitleBounds, 
+                       __GetOpenMenuDirection, __GetSymbolicHotKeyValue, __GetSymbolicHotKeyValue2, 
+                       __GetWindowCGContext, __GetWindowCGOrderingEnabled, __GetWindowReshapingEnabled, 
+                       __GetWindowZOrderingEnabled, __HIBevelButtonRegisterClass, 
+                       __HIChasingArrowsRegisterClass, __HICheckBoxRegisterClass, 
+                       __HIDisableSuddenTerminationForSendEvent, __HIDisclosureButtonRegisterClass, 
+                       __HIDisclosureTriangleRegisterClass, __HIEnableAutomaticTerminationIfRequestedByPlist, 
+                       __HIEnableSuddenTerminationForSendEvent, __HIEnableSuddenTerminationIfRequestedByPlist, 
+                       __HIFullScreenAnimationFinished, __HIFullScreenAnimationPrepare, 
+                       __HIIconViewRegisterClass, __HIIsSuddenTerminationDisabledForSendEvent, 
+                       __HIMagnifiedMode, __HIMenuBarGetAppearance, __HIMenuBarGetReveal, 
+                       __HIMenuBarGetTransitionDuration, __HIMenuBarPositionLock, 
+                       __HIMenuBarPositionUnlock, __HIMenuBarRequestVisibility, __HIMenuBarSetAppearanceOverride, 
+                       __HIMenuBarSetAutoHideHeight, __HIMenuBarSetAutoShowDelay, 
+                       __HIMenuBarSetTransitionDuration, __HIMenuBarShowAsPopupFromKeyboard, 
+                       __HIMenuCopyItemViewClass, __HIMenuCreateConfiguredMarkImage, 
+                       __HIMenuDisableAutoDismissal, __HIMenuEnableAutoDismissal, 
+                       __HIMenuGetBackgroundBleed, __HIMenuGetCommandKey, __HIMenuGetContentDirectionality, 
+                       __HIMenuGetContentSize, __HIMenuGetEffectiveDirectionality, 
+                       __HIMenuGetItemView, __HIMenuGetMenuBarHeight, __HIMenuGetMenuBarHeightWithOptions, 
+                       __HIMenuGetNewItemsCount, __HIMenuIsCarbonMenuKeyEvent, __HIMenuIsDark, 
+                       __HIMenuPerformKeyboardNavigation, __HIMenuSendItemSelectedEvent, 
+                       __HIMenuSetCommandKey, __HIMenuSetContentDirectionality, __HIMenuSetContentSize, 
+                       __HIMenuSetEventProc, __HIMenuSetIndentWidth, __HIMenuSetItemIndent, 
+                       __HIMenuSetItemViewClass, __HIMenuSetNSImageInterface, __HIMenuSetNewItemsCount, 
+                       __HIMenuUseBackdrops, __HIMenuViewRegisterClass, __HIPopupButtonRegisterClass, 
+                       __HIPresentationInstanceCreateForFullScreenSpace, __HIPresentationInstanceCreateWithFullScreenMode, 
+                       __HIPresentationInstanceDisplayDidChange, __HIPresentationInstanceRelease, 
+                       __HIPresentationInstanceSetAutoHideHeight, __HIPresentationInstanceSetSpace, 
+                       __HIPresentationInstanceSetUIMode, __HIPresentationInstanceStartMenuBarAnimation, 
+                       __HIProgressBarRegisterClass, __HIPushButtonRegisterClass, 
+                       __HIRadioGroupRegisterClass, __HIRawObjectRegisterClass, __HIRegisterAEWillInteractProc, 
+                       __HIRoundButtonRegisterClass, __HIScrollViewRegisterClass, 
+                       __HISegmentViewRegisterClass, __HISegmentViewSetIsInset, __HIShrinkToFitEditRegisterClass, 
+                       __HISliderRegisterClass, __HIStandardMenuViewRegisterClass, 
+                       __HIStaticTextViewRegisterClass, __HIStdAppHandlerRegisterClass, 
+                       __HIStdEventLoopRegisterClass, __HITextFieldRegisterClass, 
+                       __HITextViewRegisterClass, __HIThemeCreateImage, __HIThemeDrawAppleMenuTitle, 
+                       __HIThemeDrawSegment, __HIThemeDrawSelectionMarquee, __HIThemeDrawWell, 
+                       __HIThemeGetChasingArrowDimensions, __HIThemeGetLegacyModeEnabled, 
+                       __HIThemeGetMenuBarLogoRect, __HIThemeGetMenuCalloutDimensions, 
+                       __HIThemeGetWindowGrowSides, __HIThemeGetWindowTitleBaselineOffset, 
+                       __HIThemeRefreshPreferences, __HIThemeSetColor, __HIThemeSetDrawingCallback, 
+                       __HIThemeSetTextColor, __HIToolbarItemRegisterClass, __HIToolbarViewRegisterClass, 
+                       __HIViewAdvanceFocusFollowingView, __HIViewCopyVisibleShape, 
+                       __HIViewNotifySetFocusPart, __HIViewRegisterClass, __HIViewScrollRectWithOptions, 
+                       __HIWindowFrameViewRegisterClass, __HIWindowSetAutoReleaseFocus, 
+                       __HIWindowSetNeedsQDPrepWhenDrawingViews, __HLTBAddEventSourceToMode, 
+                       __HLTBRemoveEventSourceFromMode, __HandleHelpSymbolicHotKey, 
+                       __HandleMenuSelection, __HandlePopUpMenuSelection7, __HandlePopUpMenuSelectionWithDictionary, 
+                       __HiliteMenuTitle, __InstallEventLoopObserver, __InvalidateAllEnabledInputSourceState, 
+                       __InvalidateAllInputSourceState, __InvalidateAllSelectedInputSourceState, 
+                       __IsFullTabbingEnabled, __IsMenuAlreadyPopulated, __IsMenuItemEnabledU, 
+                       __IsSymbolicHotKeyEvent, __LoadPerformanceMenu, __MenuIterCreate, 
+                       __MenuIterFirst, __MenuIterNext, __MenuIterRelease, __NotifyEventLoopObservers, 
+                       __OpenMenuWithOptions, __OpenSubmenuFromItem, __OpenSubmenuFromItemWithOptions, 
+                       __PostCGEventToQueue, __PushMouseCoalescingState, __QuitAppModalLoop, 
+                       __RegisterSharedDockClientWithRunLoop, __RemoveCGEventFromQueue, 
+                       __RemoveEventLoopObserver, __RemoveMouseCoalescingState, __RequestBackgroundMouseMovedEvents, 
+                       __RunAppModalLoop, __SetAppleMenuEnabled, __SetAppleMenuInstallerMode, 
+                       __SetBaroloFullScreenModeUIMode, __SetCGEventAssociatedData, 
+                       __SetCGEventConversionFilter, __SetDefaultMenuFont, __SetFullTabbingEnabled, 
+                       __SetJavaThreadHook, __SetMenuCallout, __SetMenuItemIconSize, 
+                       __SetMenuMinimumWidth, __SetMenuTrackingShouldReraiseNSExceptions, 
+                       __SetMenuWindowLevel, __SetOpenMenuOrigin, __SetWindowCGOrderingEnabled, 
+                       __SetWindowReshapingEnabled, __SetWindowZOrderingEnabled, 
+                       __SimulateMenuClosed, __SimulateMenuOpening, __SimulateMenuSelection, 
+                       __SimulateMenuSelectionU, __StartSystemUIModeMenuBarAnimation, 
+                       __SyncWindowWithCGAfterMove, __TISCopyParentInputMethodForInputSource, 
+                       __TISCreateEnabledInputSourcePrefs, __TISGetPhysicalKeyboardLanguage, 
+                       __TISRestrictToReadOnlyMachinePrefs, __TISUpdateEnabledInputSourcePrefs, 
+                       __TSMCopySelectableInputSourcesInUIOrder, __TSMInvalidateDocumentClient, 
+                       __TSMIsRemoteViewAccessoryView, __TSMIsRemoteViewKeyEquivalentHandling, 
+                       __TSMParentInputMethodInputSourceForInputModeCreate, __TSMRegisterRemoteViewClient, 
+                       __TSMRemoteViewActivationIsOn, __TSMSetRemoteViewActivation, 
+                       __TSMSetRemoteViewIsAccessoryView, __TSMSetRemoteViewKeyEquivalentHandling, 
+                       __TSMWouldEventBeProcessedByPressAndHold, ___CDCreateScreenFramesDictionaryRepresentation, 
+                       ___CoreDragAnimateOrderOut, ___CoreDragAutoScaleSourceDragComponents, 
+                       ___CoreDragBeginDropAnimationTransaction, ___CoreDragBeginFlockingAnimation, 
+                       ___CoreDragBeginSlideBackAnimation, ___CoreDragBeginUnflockingAnimation, 
+                       ___CoreDragCancelDropAnimationTransaction, ___CoreDragCancelOutstandingFlockingAnimation, 
+                       ___CoreDragClearAllImageOverrides, ___CoreDragCommitDropAnimationTransaction, 
+                       ___CoreDragCreateCFStringFromCGEvent, ___CoreDragCreateDictionaryRepOfLayerTree, 
+                       ___CoreDragCreateImageData, ___CoreDragCreateImageDataFromCFDictionary, 
+                       ___CoreDragCreateImageDataWithComponentsBlock, ___CoreDragCreateImageDataWithImage, 
+                       ___CoreDragGetValueForKey, ___CoreDragHasImageOverrides, ___CoreDragImageDataCreateDictionaryRepresentation, 
+                       ___CoreDragImageDataDeleteSlotForCAContext, ___CoreDragImageDataGetComponentsBlock, 
+                       ___CoreDragImageDataGetItemRef, ___CoreDragImageDataSet, ___CoreDragItemGetImageComponents, 
+                       ___CoreDragItemGetImageData, ___CoreDragItemGetScreenFrame, 
+                       ___CoreDragItemHasAlternate, ___CoreDragItemSetImageComponents, 
+                       ___CoreDragReleaseImageData, ___CoreDragResetAutoScaleSourceDragComponents, 
+                       ___CoreDragSetDestClippingRect, ___CoreDragSetRootCALayer, 
+                       ___CoreDragSetSourceClippingRect, ___CoreDragSetValueForKey, 
+                       ___CoreDragSetupDragImageLayers, ___CoreDragUpdateClippingSuperLayer, 
+                       ___CoreDragUpdateDragLayerContent, ___CoreDragUpdateFlockingFormation, 
+                       ___CoreDragUpdateLayerPositions, ___DisposeLayerBackedSurfaceAndRender, 
+                       ___DragInfoCopyFilterParams, ___DragInfoPtrClearAllImageOverrides, 
+                       ___DragInfoPtrCreateDictionaryRepresentationForImageData, 
+                       ___DragInfoPtrGetCAContext, ___DragInfoPtrGetComponentDataForItem, 
+                       ___DragInfoPtrGetImageDataForItem, ___DragInfoPtrHasImageOverrides, 
+                       ___DragInfoPtrImageDataCount, ___DragInfoPtrMergeRemoteOverrides, 
+                       ___DragInfoPtrMergeSourceImagesForDestinationContext, ___DragInfoPtrSetDestClippingRect, 
+                       ___DragInfoPtrSetValueForKey, ___DragInfoSetAlpha, ___InitLayerBackedDragWindow, 
+                       _kHIDelegateAfterKey, _kHIDelegateBeforeKey, _kHIObjectCustomDataClassIDKey, 
+                       _kHIObjectCustomDataDelegateGroupParametersKey, _kHIObjectCustomDataParameterNamesKey, 
+                       _kHIObjectCustomDataParameterTypesKey, _kHIObjectCustomDataParameterValuesKey, 
+                       _kHIObjectCustomDataSuperClassIDKey, _kHIObjectInitParamDescription, 
+                       _kHIObjectInitParamEventName, _kHIObjectInitParamEventType, 
+                       _kHIObjectInitParamUserName, _kHITextViewClassID, _kHIToolboxVersionNumber, 
+                       _kHIViewMenuContentID, _kHIViewWindowContentID, _kHIViewWindowGrowBoxID, 
+                       _kIMKRequestInputMethodsCheckinEndpoints, _kIMKXPCPrivateRunLoopMode, 
+                       _kTISAppleCharacterPaletteInputSourceID, _kTISAppleChineseHandwritingInputSourceID, 
+                       _kTISAppleEmojiDFRPaletteInputSourceID, _kTISAppleJapaneseKanaPaletteInputSourceID, 
+                       _kTISAppleKeyboardViewerPaletteInputSourceID, _kTISApplePressAndHoldInputSourceID, 
+                       _kTISAppleSyntheticRomanModeInputSourceID, _kTISCategoryInkInputSource, 
+                       _kTISCategoryKeyboardInputSource, _kTISCategoryPaletteInputSource, 
+                       _kTISIterationPropertyPreferredInputSourceLocalePart, _kTISNotifyEnabledKeyboardInputSourcesChanged, 
+                       _kTISNotifyEnabledNonKeyboardInputSourcesChanged, _kTISNotifyHandwritingInputSourceChanged, 
+                       _kTISNotifyInstalledInputSourcesChanged, _kTISNotifyIronwoodAutoEnableChanged, 
+                       _kTISNotifySelectedKeyboardInputSourceChanged, _kTISPlistKeyCapsLockIsSwitch, 
+                       _kTISPlistKeyCapsLockIsSwitchToIMRomanMode, _kTISPlistKeyDoubleSpaceSubstitution, 
+                       _kTISPlistKeyHandwritingLanguages, _kTISPlistKeyIconLabels, 
+                       _kTISPlistKeyIconShouldBeTemplate, _kTISPlistKeyInputSourceID, 
+                       _kTISPlistKeyIntendedLanguage, _kTISPlistKeyParticipatesInTouchBar, 
+                       _kTISPropertyAlternateIconImage, _kTISPropertyBundleID, _kTISPropertyDataFileProperties, 
+                       _kTISPropertyDataFileWordList, _kTISPropertyHandwritingLanguages, 
+                       _kTISPropertyHandwritingLocalizedNames, _kTISPropertyIconFamilyOrURL, 
+                       _kTISPropertyIconImage, _kTISPropertyIconImageURL, _kTISPropertyIconRef, 
+                       _kTISPropertyIconShouldBeTemplate, _kTISPropertyInputModeID, 
+                       _kTISPropertyInputSourceCategory, _kTISPropertyInputSourceDoesCapsLockSwitch, 
+                       _kTISPropertyInputSourceDoesCapsLockSwitchToRomanMode, _kTISPropertyInputSourceDoubleSpaceSubstitution, 
+                       _kTISPropertyInputSourceID, _kTISPropertyInputSourceIconLabels, 
+                       _kTISPropertyInputSourceIsASCIICapable, _kTISPropertyInputSourceIsEnableCapable, 
+                       _kTISPropertyInputSourceIsEnabled, _kTISPropertyInputSourceIsFromSystem, 
+                       _kTISPropertyInputSourceIsInvisible, _kTISPropertyInputSourceIsSelectCapable, 
+                       _kTISPropertyInputSourceIsSelected, _kTISPropertyInputSourceLanguages, 
+                       _kTISPropertyInputSourceLocalePartsForPreferred, _kTISPropertyInputSourceOverrideCapsLockDelay, 
+                       _kTISPropertyInputSourceParticipatesInTouchBar, _kTISPropertyInputSourceType, 
+                       _kTISPropertyIntendedLanguage, _kTISPropertyKeyLayoutName, 
+                       _kTISPropertyKeyLayoutNumber, _kTISPropertyLocale, _kTISPropertyLocalizedName, 
+                       _kTISPropertyRepertoireSetPattern, _kTISPropertyScriptCode, 
+                       _kTISPropertyUSBCountry, _kTISPropertyUnicodeKeyLayoutData, 
+                       _kTISTypeCharacterPalette, _kTISTypeInk, _kTISTypeKeyboardInputMethodModeEnabled, 
+                       _kTISTypeKeyboardInputMethodWithoutModes, _kTISTypeKeyboardInputMode, 
+                       _kTISTypeKeyboardLayout, _kTISTypeKeyboardSyntheticRomanMode, 
+                       _kTISTypeKeyboardViewer ]
+reexports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _ShowHideProcess ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           EE5FA0C7-753F-3232-8D72-F9E834BF16C0
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           3C094BDD-B284-36F4-917D-F3DFB2CD4319
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/Help.framework/Versions/A/Help'
+current-version: 71
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ PrintingUI ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _AHGotoApplicationHelp, _AHGotoMainTOC, _AHGotoPage, _AHLookupAnchor, 
+                       _AHRegisterHelpBook, _AHRegisterHelpBookWithURL, _AHSearch, 
+                       _AppendEncodingHint, _CFStringToCString, _CopyBookDetails, 
+                       _CreateBookDetailsFromAppBundle, _CreateBookDetailsFromAppBundleAtIndex, 
+                       _CreateBookDetailsWithBookNameAndID, _EscapeMacCharacters, 
+                       _MacPathToURLPath, _kANCHOR, _kBOOKID, _kDEFAULT_BUNDLE_ID, 
+                       _kFILE, _kOPENBOOK, _kSEARCH, _kSEARCHALL, _kSTRING ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           4FFADD43-2EC1-3A67-8C43-5E7EB7D73554
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           963345BE-8865-34F5-9500-6752AF50A1B3
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/ImageCapture.framework/Versions/A/ImageCapture'
+current-version: 5
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _ICACloseSession, _ICAConvertJPEGDataToICADataInPlace, _ICAConvertTIFFDataToICADataInPlace, 
+                       _ICACopyMatchingDeviceDictionaries, _ICACopyObjectData, _ICACopyObjectPropertyDictionary, 
+                       _ICACopyObjectThumbnail, _ICACopyParameterBlockPtrForAsyncCall, 
+                       _ICACreateCutsomIconForImageAtPath, _ICACreateJPEGThumbnailDataFromURL, 
+                       _ICADictionaryApplierFunction, _ICADoMacho2CFMConversion, 
+                       _ICADownloadFile, _ICADownloadFileWithOptions, _ICAElapsedTime, 
+                       _ICAGetBehaviorFlags, _ICAGetChildCount, _ICAGetDateFromSeconds, 
+                       _ICAGetDateFromSecondsSince1904, _ICAGetDateFromSecondsSince1970, 
+                       _ICAGetDeviceList, _ICAGetEXIFDateCStringFromSecondsSince1904, 
+                       _ICAGetEXIFDateCStringFromSecondsSince1970, _ICAGetEXIFUTCDateCStringFromSecondsSince1904, 
+                       _ICAGetEXIFUTCDateCStringFromSecondsSince1970, _ICAGetICAObjectForFile, 
+                       _ICAGetICAObjectFromDict, _ICAGetLongValueFromDict, _ICAGetNthChild, 
+                       _ICAGetNthProperty, _ICAGetObjectInfo, _ICAGetObjectRefCon, 
+                       _ICAGetParentOfObject, _ICAGetParentOfProperty, _ICAGetPropertyByType, 
+                       _ICAGetPropertyCount, _ICAGetPropertyData, _ICAGetPropertyInfo, 
+                       _ICAGetPropertyRefCon, _ICAGetRootOfObject, _ICAGetRootOfProperty, 
+                       _ICAGetSInt16ValueFromDict, _ICAGetSInt32ValueFromDict, _ICAGetSInt64ValueFromDict, 
+                       _ICAGetUTCDateFromDateCString, _ICAGetUTCDateFromSeconds, 
+                       _ICAGetUTCDateFromSecondsSince1904, _ICAImportImage, _ICALoadDeviceModule, 
+                       _ICAObjectSendMessage, _ICAOpenSession, _ICARegisterEventNotification, 
+                       _ICARegisterForEventNotification, _ICAScannerCloseSession, 
+                       _ICAScannerGetParameters, _ICAScannerInitialize, _ICAScannerOpenSession, 
+                       _ICAScannerSetParameters, _ICAScannerStart, _ICAScannerStatus, 
+                       _ICASetBehaviorFlags, _ICASetICAObjectInDict, _ICASetLongValueInDict, 
+                       _ICASetObjectRefCon, _ICASetPropertyData, _ICASetPropertyRefCon, 
+                       _ICASetSInt16ValueInDict, _ICASetSInt32ValueInDict, _ICASetSInt64ValueInDict, 
+                       _ICASetUTF8StringInDict, _ICASharedMemoryCreate, _ICASharedMemoryDestroy, 
+                       _ICASharedMemoryMap, _ICASharedMemoryUnmap, _ICAShowDeviceBrowser, 
+                       _ICAUnloadDeviceModule, _ICAUpdateDeviceDictionary, _ICAUploadFile, 
+                       _ICDBulkNewObject, _ICDBulkNewProperty, _ICDDeviceNotification, 
+                       _ICDDeviceRegister, _ICDDeviceUnRegister, _ICDDisposeObject, 
+                       _ICDDisposeProperty, _ICDNewObject, _ICDNewProperty, _kICAAddMetaDataToFinderCommentKey, 
+                       _kICAAdjustCreationDateKey, _kICAAudioCodecsKey, _kICABIPVersionKey, 
+                       _kICABluetoothAddressKey, _kICABluetoothTransportType, _kICABonjourServiceNameKey, 
+                       _kICABonjourServiceTypeKey, _kICABonjourTXTRecordKey, _kICACreateCustomIconKey, 
+                       _kICACreationDateStringKey, _kICADataPropertyKey, _kICADataSizeKey, 
+                       _kICADataTypeKey, _kICADeleteAfterDownloadKey, _kICADeviceBrowserDeviceRefKey, 
+                       _kICADeviceCapabilitiesKey, _kICADeviceDatabaseKey, _kICADeviceIconPathKey, 
+                       _kICADeviceModulePathKey, _kICADeviceNameKey, _kICADevicePropArtist, 
+                       _kICADevicePropBatteryLevel, _kICADevicePropBurstInterval, 
+                       _kICADevicePropBurstNumber, _kICADevicePropCaptureDelay, _kICADevicePropCompressionSetting, 
+                       _kICADevicePropContrast, _kICADevicePropCopyrightInfo, _kICADevicePropDateTime, 
+                       _kICADevicePropDigitalZoom, _kICADevicePropEffectMode, _kICADevicePropExposureBiasCompensation, 
+                       _kICADevicePropExposureIndex, _kICADevicePropExposureMeteringMode, 
+                       _kICADevicePropExposureProgramMode, _kICADevicePropExposureTime, 
+                       _kICADevicePropFNumber, _kICADevicePropFlashMode, _kICADevicePropFocalLength, 
+                       _kICADevicePropFocusDistance, _kICADevicePropFocusMeteringMode, 
+                       _kICADevicePropFocusMode, _kICADevicePropFunctionalMode, _kICADevicePropImageSize, 
+                       _kICADevicePropRGBGain, _kICADevicePropSharpness, _kICADevicePropStillCaptureMode, 
+                       _kICADevicePropTimelapseInterval, _kICADevicePropTimelapseNumber, 
+                       _kICADevicePropUndefined, _kICADevicePropUploadURL, _kICADevicePropWhiteBalance, 
+                       _kICADeviceSharedKey, _kICADeviceTypeCamera, _kICADeviceTypeKey, 
+                       _kICADeviceTypeScanner, _kICADeviceUsedKey, _kICADeviceWebSharedKey, 
+                       _kICADevicesArrayKey, _kICADirPathKey, _kICADisplayNameKey, 
+                       _kICADontEmbedColorSyncProfileKey, _kICAErrorKey, _kICAExecutableArchitectureKey, 
+                       _kICAFileCreatorKey, _kICAFileTypeKey, _kICAFileUTTypeKey, 
+                       _kICAFireWireGUIDKey, _kICAFireWireTransportType, _kICAIOServicePathKey, 
+                       _kICAIPAddressKey, _kICAIPGUIDKey, _kICAIPNameKey, _kICAIPPortKey, 
+                       _kICAIconFilePathKey, _kICAInstancesKey, _kICAKeywordsKey, 
+                       _kICALockStatusKey, _kICAManualConnectDeviceRefKey, _kICAMediaDurationInSecondsKey, 
+                       _kICAMediaFormatsKey, _kICAMediaHeightKey, _kICAMediaMaxDurationKey, 
+                       _kICAMediaSizesKey, _kICAMediaWidthKey, _kICAModelNameKey, 
+                       _kICAModificationDateStringKey, _kICANotificationClassKey, 
+                       _kICANotificationClassPTPStandard, _kICANotificationClassPTPVendor, 
+                       _kICANotificationClassProprietary, _kICANotificationDataCookieKey, 
+                       _kICANotificationDataKey, _kICANotificationDataSizeKey, _kICANotificationDeviceICAObjectKey, 
+                       _kICANotificationDeviceListICAObjectKey, _kICANotificationICAObjectKey, 
+                       _kICANotificationImageBytesPerRowKey, _kICANotificationImageDataKey, 
+                       _kICANotificationImageDataSizeKey, _kICANotificationImageHeightKey, 
+                       _kICANotificationImageKey, _kICANotificationImageNumberOfRowsKey, 
+                       _kICANotificationImageStartRowKey, _kICANotificationImageWidthKey, 
+                       _kICANotificationNumerOfImagesRemainingKey, _kICANotificationPercentDownloadedKey, 
+                       _kICANotificationRawEventKey, _kICANotificationScannerButtonTypeKey, 
+                       _kICANotificationScannerDocumentNameKey, _kICANotificationSubTypeDocumentLoaded, 
+                       _kICANotificationSubTypeDocumentNotLoaded, _kICANotificationSubTypeKey, 
+                       _kICANotificationSubTypePerformOverviewScan, _kICANotificationSubTypeWarmUpDone, 
+                       _kICANotificationSubTypeWarmUpStarted, _kICANotificationTypeCaptureComplete, 
+                       _kICANotificationTypeDeviceAdded, _kICANotificationTypeDeviceConnectionProgress, 
+                       _kICANotificationTypeDeviceInfoChanged, _kICANotificationTypeDevicePropertyChanged, 
+                       _kICANotificationTypeDeviceRemoved, _kICANotificationTypeDeviceStatusError, 
+                       _kICANotificationTypeDeviceStatusInfo, _kICANotificationTypeDeviceWasReset, 
+                       _kICANotificationTypeDownloadProgressStatus, _kICANotificationTypeKey, 
+                       _kICANotificationTypeObjectAdded, _kICANotificationTypeObjectInfoChanged, 
+                       _kICANotificationTypeObjectRemoved, _kICANotificationTypeProprietary, 
+                       _kICANotificationTypeRequestObjectTransfer, _kICANotificationTypeScanProgressStatus, 
+                       _kICANotificationTypeScannerButtonPressed, _kICANotificationTypeScannerOverviewOverlayAvailable, 
+                       _kICANotificationTypeScannerPageDone, _kICANotificationTypeScannerScanDone, 
+                       _kICANotificationTypeScannerSessionClosed, _kICANotificationTypeStoreAdded, 
+                       _kICANotificationTypeStoreFull, _kICANotificationTypeStoreInfoChanged, 
+                       _kICANotificationTypeStoreRemoved, _kICANotificationTypeTransactionCanceled, 
+                       _kICANotificationTypeUnreportedStatus, _kICANotificationVendorErrorCodeKey, 
+                       _kICAOBEXVersionKey, _kICAObjectKey, _kICAObjectNameKey, _kICAOrientationKey, 
+                       _kICAOverwriteKey, _kICAPhysicalTransportsKey, _kICAPictureFolderKey, 
+                       _kICAProtocolKey, _kICARawKey, _kICARefconKey, _kICARemoteDeviceKey, 
+                       _kICASCSITransportType, _kICASaveAsFilenameKey, _kICASavedFilenameKey, 
+                       _kICAScreenHeightKey, _kICAScreenWidthKey, _kICASoundFolderKey, 
+                       _kICAStarRatingKey, _kICASupportedFeaturesKey, _kICASupportingSoftwaresKey, 
+                       _kICATCPIPTransportType, _kICATWAINDSPathKey, _kICATWAINTransportType, 
+                       _kICATelephoneNetworksKey, _kICAThumbnailPropertyKey, _kICAThumbnailSizeKey, 
+                       _kICATransportTypeKey, _kICAUSBLocationIDKey, _kICAUSBProductIDKey, 
+                       _kICAUSBTransportType, _kICAUSBVendorIDKey, _kICAUserAssignedDeviceNameKey, 
+                       _kICAVendorNameKey, _kICAVideoCodecsKey, _kICAVideoFolderKey, 
+                       _kICAWMCVersionKey, _kMetaDataDictionaryKey ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           B93B6A30-0B53-3834-87E8-AB39E50B7FCE
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           4FF5F789-FA55-3B93-816F-2F21BB55AA30
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/Ink.framework/Versions/A/Ink'
+current-version: 227
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _InkAddStrokeToCurrentPhrase, _InkIsPhraseInProgress, _InkSetApplicationRecognitionMode, 
+                       _InkSetApplicationWritingMode, _InkSetDrawingMode, _InkSetPhraseTerminationMode, 
+                       _InkStrokeGetPointCount, _InkStrokeGetPoints, _InkStrokeGetTypeID, 
+                       _InkTerminateCurrentPhrase, _InkTextAlternatesCount, _InkTextBounds, 
+                       _InkTextCopy, _InkTextCreateCFString, _InkTextCreateFromCFData, 
+                       _InkTextDraw, _InkTextFlatten, _InkTextGetStroke, _InkTextGetStrokeCount, 
+                       _InkTextGetTypeID, _InkTextKeyModifiers, _InkUserWritingMode ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           7094B0DD-B83F-325A-A2DA-0788DC2E02CC
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           63B3CFC6-6CE7-37BE-BFA7-D3871AAB1E5C
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/OpenScripting.framework/Versions/A/OpenScripting'
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _ASCopySourceAttributes, _ASGetSourceStyleNames, _ASGetSourceStyles, 
+                       _ASInit, _ASSetSourceAttributes, _ASSetSourceStyles, _OSAAddStorageType, 
+                       _OSAAppletShowStartupScreenKey, _OSAAppletStayOpenKey, _OSAAuthorizeEvent, 
+                       _OSAAvailableDialectCodeList, _OSAAvailableDialects, _OSACoerceFromDesc, 
+                       _OSACoerceToDesc, _OSACompile, _OSACompileExecute, _OSACopyDisplayString, 
+                       _OSACopyID, _OSACopyScript, _OSACopyScriptingDefinition, _OSACopyScriptingDefinitionFromFile, 
+                       _OSACopyScriptingDefinitionFromURL, _OSACopySourceString, 
+                       _OSACopyURLForLibraryInDomainURL, _OSACopyURLForLibraryInFolderURL, 
+                       _OSACopyURLForLibraryInScriptURL, _OSACopyURLForLibraryName, 
+                       _OSACreateFile, _OSADebuggerCreateSession, _OSADebuggerDisposeCallFrame, 
+                       _OSADebuggerDisposeSession, _OSADebuggerGetBreakpoint, _OSADebuggerGetCallFrameState, 
+                       _OSADebuggerGetCurrentCallFrame, _OSADebuggerGetDefaultBreakpoint, 
+                       _OSADebuggerGetPreviousCallFrame, _OSADebuggerGetSessionState, 
+                       _OSADebuggerGetStatementRanges, _OSADebuggerGetVariable, _OSADebuggerSessionStep, 
+                       _OSADebuggerSetBreakpoint, _OSADebuggerSetVariable, _OSADisplay, 
+                       _OSADispose, _OSADoEvent, _OSADoScript, _OSADoScriptFile, 
+                       _OSAExecute, _OSAExecuteEvent, _OSAFindEventHandler, _OSAGenericToRealID, 
+                       _OSAGetActiveProc, _OSAGetCreateProc, _OSAGetCreateProgressProc, 
+                       _OSAGetCurrentDialect, _OSAGetDefaultScriptingComponent, _OSAGetDialectInfo, 
+                       _OSAGetEventHandler, _OSAGetHandler, _OSAGetHandlerNames, 
+                       _OSAGetProperty, _OSAGetPropertyNames, _OSAGetReleaseProgressProc, 
+                       _OSAGetResumeDispatchProc, _OSAGetScriptDataFromURL, _OSAGetScriptInfo, 
+                       _OSAGetScriptingComponent, _OSAGetScriptingComponentFromStored, 
+                       _OSAGetSendProc, _OSAGetSource, _OSAGetStorageType, _OSAGetSysTerminology, 
+                       _OSAInstallEventHandler, _OSAInstallGestaltValues, _OSAInstallScriptingDescCoercions, 
+                       _OSAInstallScriptingEventHandlers, _OSAInstallStdDescCoercions, 
+                       _OSAInstallStdEventHandlers, _OSAInstallStdPtrCoercions, _OSAInstallUnitPtrCoercions, 
+                       _OSAIsEventAuthorizationRequested, _OSAIsEventAuthorized, 
+                       _OSAIsScriptableBundle, _OSAIsScriptableRef, _OSAIsScriptableURL, 
+                       _OSALoad, _OSALoadExecute, _OSALoadExecuteFile, _OSALoadFile, 
+                       _OSALoadScriptData, _OSALoadScriptDataFromFile, _OSAMakeContext, 
+                       _OSARealToGenericID, _OSARecordEvent, _OSARemoveEventHandler, 
+                       _OSARemoveStorageType, _OSARequestEventAuthorization, _OSAScriptError, 
+                       _OSAScriptingComponentName, _OSASetActiveProc, _OSASetCreateProc, 
+                       _OSASetCreateProgressProc, _OSASetCurrentDialect, _OSASetDefaultScriptingComponent, 
+                       _OSASetDefaultTarget, _OSASetHandler, _OSASetProperty, _OSASetReleaseProgressProc, 
+                       _OSASetResumeDispatchProc, _OSASetScriptInfo, _OSASetSendProc, 
+                       _OSAStartRecording, _OSAStopRecording, _OSAStore, _OSAStoreFile, 
+                       _OSAStoreScriptDataToFile, _OSAStoreScriptDataToNewFile, __HandleGDUT, 
+                       __OSACopyDisplayString, __OSACopyScriptingDefinitionFromFile, 
+                       __OSACopySourceString, __OSACreateURL, __OSADoScriptURL, __OSALoadExecuteURL, 
+                       __OSALoadURL, __OSAStoreScriptDataToURL, __OSAStoreURL ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           89117C65-4F2D-35B6-AAAF-72F864A8361A
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           8BBA4D72-F069-306E-90D5-EF6B6BE48F91
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/Print.framework/Versions/A/Print'
+current-version: 272
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           19278940-6BBC-303B-980C-1DB4331DF80F
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           7E410562-7A94-32CF-8FD3-735ABF3BCE07
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SecurityHI.framework/Versions/A/SecurityHI'
+current-version: 55008
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AppleShareClient ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _DisposeURLNotifyUPP, _DisposeURLSystemEventUPP, _InvokeURLNotifyUPP, 
+                       _InvokeURLSystemEventUPP, _KCAddAppleSharePassword, _KCAddGenericPassword, 
+                       _KCAddInternetPassword, _KCAddInternetPasswordWithPath, _KCAddItem, 
+                       _KCChangeSettings, _KCCreateKeychain, _KCUnlock, _NewURLNotifyUPP, 
+                       _NewURLSystemEventUPP, _SecChooseIdentity, _SecChooseIdentityAsSheet, 
+                       _SecDisplayCertificate, _SecDisplayCertificateGroup, _SecEditTrust, 
+                       _SecEditTrustAsSheet, _kcaddapplesharepassword, _kcaddgenericpassword, 
+                       _kcaddinternetpassword, _kcaddinternetpasswordwithpath, _kccreatekeychain, 
+                       _kcunlock ]
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           1D7D200D-3537-3095-8F7F-BE03E40FC12C
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           BE259DCA-1DD4-30C8-BBD8-797D9D86272F
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SpeechRecognition.framework/Versions/A/SpeechRecognition'
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AppKit, LatentSemanticMapping ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _DisposeSRCallBackUPP, _InvokeSRCallBackUPP, _NewSRCallBackUPP, 
+                       _SFSAvatarCaptionVisible, _SFSCopyActiveRecognizer, _SFSCopyCurrentAvatarIdentifier, 
+                       _SFSCopyIndAvatarInfo, _SFSCopyIndRecognizerPluginBundleRef, 
+                       _SFSCopyNamedAvatarInfo, _SFSCopyProperty, _SFSCountAvatars, 
+                       _SFSCountRecognizerPlugins, _SFSCreateSpeechFeedbackService, 
+                       _SFSCreateSpeechFeedbackServiceFromRecognizerIdentifier, _SFSDeminimizeFeedbackWindow, 
+                       _SFSDeminimizeUtilityWindow, _SFSFeedbackWindowVisible, _SFSGetAvatarExpression, 
+                       _SFSGetTargetProcess, _SFSHideAvatarCaption, _SFSHideFeedbackWindow, 
+                       _SFSHideRecognizerArea, _SFSHideTextArea, _SFSHideUtilityWindow, 
+                       _SFSIsRecognizerAreaVisible, _SFSIsTextAreaVisible, _SFSMinimizeFeedbackWindow, 
+                       _SFSMinimizeUtilityWindow, _SFSReleaseSpeechFeedbackService, 
+                       _SFSRequestMicrophone, _SFSReturnMicrophone, _SFSSendMessageToRecognizerArea, 
+                       _SFSSetActiveRecognizer, _SFSSetAvatarCaption, _SFSSetAvatarExpression, 
+                       _SFSSetAvatarSpeakingState, _SFSSetIdentityBadge, _SFSSetMicrophoneMeterStatus, 
+                       _SFSSetProperty, _SFSSetRecognizerStartupAction, _SFSSetSpeakableCommandsData, 
+                       _SFSShowAvatarCaption, _SFSShowFeedbackWindow, _SFSShowRecognizerArea, 
+                       _SFSShowTextArea, _SFSShowUtilityWindow, _SFSSpeakAndDrawString, 
+                       _SFSSpeakAndDrawStringUsingVoice, _SFSSpecifyMicrophoneToMeter, 
+                       _SFSSpeechBusy, _SFSStopSpeech, _SFSSyncFeedbackWindowWithPrefs, 
+                       _SFSUseAvatar, _SFSUseAvatarBundle, _SFSUseRecognizerAreaBundle, 
+                       _SFSUtilityWindowVisible, _SRAddLanguageObject, _SRAddText, 
+                       _SRCancelRecognition, _SRChangeLanguageObject, _SRCloseRecognitionSystem, 
+                       _SRContinueRecognition, _SRCountItems, _SRDrawRecognizedText, 
+                       _SRDrawText, _SREmptyLanguageObject, _SRGetIndexedItem, _SRGetLanguageModel, 
+                       _SRGetProperty, _SRGetReference, _SRIdle, _SRNewLanguageModel, 
+                       _SRNewLanguageObjectFromDataFile, _SRNewLanguageObjectFromHandle, 
+                       _SRNewPath, _SRNewPhrase, _SRNewRecognizer, _SRNewWord, _SROpenRecognitionSystem, 
+                       _SRProcessBegin, _SRProcessEnd, _SRPutLanguageObjectIntoDataFile, 
+                       _SRPutLanguageObjectIntoHandle, _SRReleaseObject, _SRRemoveIndexedItem, 
+                       _SRRemoveLanguageObject, _SRSetIndexedItem, _SRSetLanguageModel, 
+                       _SRSetProperty, _SRSpeakAndDrawText, _SRSpeakText, _SRSpeechBusy, 
+                       _SRStartListening, _SRStopListening, _SRStopSpeech ]
+...

@@ -1,0 +1,25 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           6DCE596C-6E52-3EBA-9862-4E35CC82D052
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           869D7D16-2BA7-38A4-8986-E415FE1973B0
+install-name:    '/usr/lib/libsysmon.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _SYSMON_XPC_KEY_ATTRIBUTES, _SYSMON_XPC_KEY_FLAGS, _SYSMON_XPC_KEY_TYPE, 
+                       _SYSMON_XPC_REPLY_KEY_HEADER, _SYSMON_XPC_REPLY_KEY_TABLE, 
+                       _SYSMON_XPC_REPLY_KEY_TIMESTAMP, _SYSMON_XPC_SERVICE_NAME, 
+                       __sysmon_build_reply_with_diff, _sysmon_release, _sysmon_request_add_attribute, 
+                       _sysmon_request_add_attributes, _sysmon_request_alloc, _sysmon_request_cancel, 
+                       _sysmon_request_create, _sysmon_request_create_with_error, 
+                       _sysmon_request_execute, _sysmon_request_set_flags, _sysmon_request_set_interval, 
+                       _sysmon_retain, _sysmon_row_alloc, _sysmon_row_apply, _sysmon_row_get_value, 
+                       _sysmon_table_alloc, _sysmon_table_apply, _sysmon_table_copy_row, 
+                       _sysmon_table_get_count, _sysmon_table_get_row, _sysmon_table_get_timestamp ]
+    objc-classes:    [ OS_sysmon_object, OS_sysmon_request, OS_sysmon_row, OS_sysmon_table ]
+...

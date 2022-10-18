@@ -1,0 +1,5 @@
+framework module ImageIO [extern_c] [system] {
+  umbrella header "ImageIO.h"
+  export *
+  module * { export * }
+}

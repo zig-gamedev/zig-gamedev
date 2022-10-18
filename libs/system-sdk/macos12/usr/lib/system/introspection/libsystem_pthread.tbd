@@ -1,0 +1,106 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           D75AF394-45A2-387B-B53D-1051D5FF5A57
+  - target:          x86_64-maccatalyst
+    value:           D75AF394-45A2-387B-B53D-1051D5FF5A57
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           AA86A40E-BEDD-3082-8D9A-C583AF6C2334
+  - target:          arm64e-maccatalyst
+    value:           AA86A40E-BEDD-3082-8D9A-C583AF6C2334
+install-name:    '/usr/lib/system/introspection/libsystem_pthread.dylib'
+current-version: 485.30.3
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ ____chkstk_darwin, ___is_threaded, ___pthread_init, ___pthread_late_init, 
+                       ___pthread_workqueue_setkill, ___unix_conforming, __pthread_atfork_child, 
+                       __pthread_atfork_child_handlers, __pthread_atfork_parent, 
+                       __pthread_atfork_parent_handlers, __pthread_atfork_prepare, 
+                       __pthread_atfork_prepare_handlers, __pthread_clear_qos_tsd, 
+                       __pthread_exit_if_canceled, __pthread_fork_child, __pthread_fork_child_postinit, 
+                       __pthread_fork_parent, __pthread_fork_prepare, __pthread_is_threaded, 
+                       __pthread_mutex_enable_legacy_mode, __pthread_override_qos_class_end_direct, 
+                       __pthread_override_qos_class_start_direct, __pthread_qos_class_decode, 
+                       __pthread_qos_class_encode, __pthread_qos_class_encode_workqueue, 
+                       __pthread_qos_override_end_direct, __pthread_qos_override_start_direct, 
+                       __pthread_self, __pthread_set_properties_self, __pthread_set_self, 
+                       __pthread_setspecific_static, __pthread_start, __pthread_workloop_create, 
+                       __pthread_workloop_destroy, __pthread_workqueue_add_cooperativethreads, 
+                       __pthread_workqueue_addthreads, __pthread_workqueue_asynchronous_override_add, 
+                       __pthread_workqueue_asynchronous_override_reset_all_self, 
+                       __pthread_workqueue_asynchronous_override_reset_self, __pthread_workqueue_init, 
+                       __pthread_workqueue_init_with_kevent, __pthread_workqueue_init_with_workloop, 
+                       __pthread_workqueue_override_reset, __pthread_workqueue_override_start_direct, 
+                       __pthread_workqueue_override_start_direct_check_owner, __pthread_workqueue_set_event_manager_priority, 
+                       __pthread_workqueue_should_narrow, __pthread_workqueue_supported, 
+                       __pthread_wqthread, __pthread_yield_to_enqueuer_4dispatch, 
+                       _cthread_yield, _posix_spawnattr_get_qos_class_np, _posix_spawnattr_set_qos_class_np, 
+                       _pthread_atfork, _pthread_attr_destroy, _pthread_attr_get_qos_class_np, 
+                       _pthread_attr_getdetachstate, _pthread_attr_getguardsize, 
+                       _pthread_attr_getinheritsched, _pthread_attr_getschedparam, 
+                       _pthread_attr_getschedpolicy, _pthread_attr_getscope, _pthread_attr_getstack, 
+                       _pthread_attr_getstackaddr, _pthread_attr_getstacksize, _pthread_attr_init, 
+                       _pthread_attr_set_qos_class_np, _pthread_attr_setcpupercent_np, 
+                       _pthread_attr_setdetachstate, _pthread_attr_setguardsize, 
+                       _pthread_attr_setinheritsched, _pthread_attr_setschedparam, 
+                       _pthread_attr_setschedpolicy, _pthread_attr_setscope, _pthread_attr_setstack, 
+                       _pthread_attr_setstackaddr, _pthread_attr_setstacksize, _pthread_cancel, 
+                       _pthread_chdir_np, _pthread_cond_broadcast, _pthread_cond_destroy, 
+                       _pthread_cond_init, _pthread_cond_signal, _pthread_cond_signal_thread_np, 
+                       _pthread_cond_timedwait, '_pthread_cond_timedwait$NOCANCEL', 
+                       _pthread_cond_timedwait_relative_np, _pthread_cond_wait, '_pthread_cond_wait$NOCANCEL', 
+                       _pthread_condattr_destroy, _pthread_condattr_getpshared, _pthread_condattr_init, 
+                       _pthread_condattr_setpshared, _pthread_cpu_number_np, _pthread_create, 
+                       _pthread_create_from_mach_thread, _pthread_create_suspended_np, 
+                       _pthread_create_with_workgroup_np, _pthread_current_stack_contains_np, 
+                       _pthread_dependency_fulfill_np, _pthread_dependency_init_np, 
+                       _pthread_dependency_wait_np, _pthread_detach, _pthread_equal, 
+                       _pthread_exit, _pthread_fchdir_np, _pthread_from_mach_thread_np, 
+                       _pthread_get_qos_class_np, _pthread_get_stackaddr_np, _pthread_get_stacksize_np, 
+                       _pthread_getconcurrency, _pthread_getname_np, _pthread_getschedparam, 
+                       _pthread_getspecific, _pthread_install_workgroup_functions_np, 
+                       _pthread_introspection_getspecific_np, _pthread_introspection_hook_install, 
+                       _pthread_introspection_setspecific_np, _pthread_is_threaded_np, 
+                       _pthread_jit_write_protect_np, _pthread_jit_write_protect_supported_np, 
+                       _pthread_jit_write_with_callback_np, _pthread_join, '_pthread_join$NOCANCEL', 
+                       _pthread_key_create, _pthread_key_delete, _pthread_key_init_np, 
+                       _pthread_kill, _pthread_layout_offsets, _pthread_mach_thread_np, 
+                       _pthread_main_np, _pthread_main_thread_np, _pthread_mutex_destroy, 
+                       _pthread_mutex_getprioceiling, _pthread_mutex_init, _pthread_mutex_lock, 
+                       _pthread_mutex_setprioceiling, _pthread_mutex_trylock, _pthread_mutex_unlock, 
+                       _pthread_mutexattr_destroy, _pthread_mutexattr_getpolicy_np, 
+                       _pthread_mutexattr_getprioceiling, _pthread_mutexattr_getprotocol, 
+                       _pthread_mutexattr_getpshared, _pthread_mutexattr_gettype, 
+                       _pthread_mutexattr_init, _pthread_mutexattr_setpolicy_np, 
+                       _pthread_mutexattr_setprioceiling, _pthread_mutexattr_setprotocol, 
+                       _pthread_mutexattr_setpshared, _pthread_mutexattr_settype, 
+                       _pthread_once, _pthread_override_qos_class_end_np, _pthread_override_qos_class_start_np, 
+                       _pthread_prefer_alternate_amx_self, _pthread_qos_max_parallelism, 
+                       _pthread_rwlock_destroy, _pthread_rwlock_init, _pthread_rwlock_rdlock, 
+                       _pthread_rwlock_tryrdlock, _pthread_rwlock_trywrlock, _pthread_rwlock_unlock, 
+                       _pthread_rwlock_wrlock, _pthread_rwlockattr_destroy, _pthread_rwlockattr_getpshared, 
+                       _pthread_rwlockattr_init, _pthread_rwlockattr_setpshared, 
+                       _pthread_self, _pthread_self_is_exiting_np, _pthread_set_fixedpriority_self, 
+                       _pthread_set_qos_class_np, _pthread_set_qos_class_self_np, 
+                       _pthread_set_timeshare_self, _pthread_setcancelstate, _pthread_setcanceltype, 
+                       _pthread_setconcurrency, _pthread_setname_np, _pthread_setschedparam, 
+                       _pthread_setspecific, _pthread_sigmask, _pthread_stack_frame_decode_np, 
+                       _pthread_testcancel, _pthread_threadid_np, _pthread_time_constraint_max_parallelism, 
+                       _pthread_workqueue_addthreads_np, _pthread_workqueue_setdispatch_np, 
+                       _pthread_workqueue_setdispatchoffset_np, _pthread_workqueue_setup, 
+                       _pthread_yield_np, _qos_class_main, _qos_class_self, _sched_get_priority_max, 
+                       _sched_get_priority_min, _sched_yield, _sigwait, '_sigwait$NOCANCEL', 
+                       _start_wqthread, _thread_chkstk_darwin, _thread_start ]
+...

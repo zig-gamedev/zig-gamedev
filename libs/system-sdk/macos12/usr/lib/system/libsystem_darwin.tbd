@@ -1,0 +1,52 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           735E8A58-EA5A-3989-946E-D19037A7A9AD
+  - target:          x86_64-maccatalyst
+    value:           735E8A58-EA5A-3989-946E-D19037A7A9AD
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           01C0D793-E5FB-3141-95D6-32A973F9FFF8
+  - target:          arm64e-maccatalyst
+    value:           01C0D793-E5FB-3141-95D6-32A973F9FFF8
+install-name:    '/usr/lib/system/libsystem_darwin.dylib'
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ ___libdarwin_init, ___os_temporary_resource_shortage, _claimfd_np, 
+                       _close_drop_np, _close_drop_optional_np, _crfprintf_np, _dirstat_np, 
+                       _dirstatat_np, _dup_np, _err_np, _errc_np, _fcheck_np, _memdup2_np, 
+                       _memdup_np, _os_assert_mach, _os_assert_mach_port_status, 
+                       _os_boot_arg_string_to_int, _os_boot_mode_query, _os_crash_get_reporter_port_array, 
+                       _os_crash_port_array_deallocate, _os_crash_set_reporter_port, 
+                       _os_crash_spawnattr_set_reporter_port, _os_enumerate_boot_args, 
+                       _os_enumerate_boot_args_b, _os_enumerate_boot_args_from_buffer, 
+                       _os_enumerate_boot_args_from_buffer_b, _os_flagset_copy_string, 
+                       _os_localtime_file, _os_mach_msg_copy_description, _os_mach_msg_get_audit_trailer, 
+                       _os_mach_msg_get_context_trailer, _os_mach_msg_get_trailer, 
+                       _os_mach_msg_trailer_copy_description, _os_mach_port_copy_description, 
+                       _os_parse_boot_arg_from_buffer_int, _os_parse_boot_arg_from_buffer_string, 
+                       _os_parse_boot_arg_int, _os_parse_boot_arg_string, _os_simple_hash, 
+                       _os_simple_hash_string, _os_simple_hash_string_with_seed, 
+                       _os_simple_hash_with_seed, _os_subcommand_fprintf, _os_subcommand_main, 
+                       _os_subcommand_vfprintf, _os_variant_allows_internal_security_policies, 
+                       _os_variant_allows_security_research, _os_variant_check, _os_variant_copy_description, 
+                       _os_variant_has_factory_content, _os_variant_has_internal_content, 
+                       _os_variant_has_internal_diagnostics, _os_variant_has_internal_ui, 
+                       _os_variant_init_4launchd, _os_variant_is_basesystem, _os_variant_is_darwinos, 
+                       _os_variant_is_recovery, _os_variant_uses_ephemeral_storage, 
+                       _realpath_np, _strerror_np, _strexit_np, _symerror_np, _symexit_np, 
+                       _sysctl_get_data_np, _sysctlbyname_get_data_np, _sysexit_np, 
+                       _vcrfprintf_np, _verr_np, _verrc_np, _vwarn_np, _vwfprintf_np, 
+                       _warn_np, _wfprintf_np, _xferfd_np, _zsnprintf_np ]
+...

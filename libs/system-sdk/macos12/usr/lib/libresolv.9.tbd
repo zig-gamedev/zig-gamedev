@@ -1,0 +1,63 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           87BB68A3-6953-3C8D-A385-EAF8FDC3507C
+  - target:          x86_64-maccatalyst
+    value:           87BB68A3-6953-3C8D-A385-EAF8FDC3507C
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           AF3DC028-B0A6-36A6-9F9F-26775B5E6E6B
+  - target:          arm64e-maccatalyst
+    value:           AF3DC028-B0A6-36A6-9F9F-26775B5E6E6B
+install-name:    '/usr/lib/libresolv.9.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ ___res_9_p_type_syms, __res_9_h_errno_set, __res_9_ns_flagdata, 
+                       _dns_all_server_addrs, _dns_async_cancel, _dns_async_handle_reply, 
+                       _dns_async_receive, _dns_async_send, _dns_async_start, _dns_class_number, 
+                       _dns_class_string, _dns_free, _dns_free_question, _dns_free_reply, 
+                       _dns_free_resource_record, _dns_get_buffer_size, _dns_lookup, 
+                       _dns_open, _dns_parse_packet, _dns_parse_question, _dns_parse_resource_record, 
+                       _dns_print_handle, _dns_print_question, _dns_print_reply, 
+                       _dns_print_resource_record, _dns_query, _dns_search, _dns_search_list_count, 
+                       _dns_search_list_domain, _dns_server_list_address, _dns_server_list_count, 
+                       _dns_set_buffer_size, _dns_set_debug, _dns_type_number, _dns_type_string, 
+                       _res_9_b64_ntop, _res_9_b64_pton, _res_9_close, _res_9_dn_comp, 
+                       _res_9_dn_count_labels, _res_9_dn_expand, _res_9_dn_skipname, 
+                       _res_9_dnok, _res_9_findzonecut, _res_9_findzonecut2, _res_9_fp_nquery, 
+                       _res_9_fp_query, _res_9_fp_resstat, _res_9_getlong, _res_9_getservers, 
+                       _res_9_getshort, _res_9_hnok, _res_9_hostalias_1, _res_9_hostalias_2, 
+                       _res_9_init, _res_9_isourserver, _res_9_loc_aton, _res_9_loc_ntoa, 
+                       _res_9_mailok, _res_9_mkquery, _res_9_nameinquery, _res_9_nametoclass, 
+                       _res_9_nametotype, _res_9_nclose, _res_9_ndestroy, _res_9_ninit, 
+                       _res_9_nisourserver, _res_9_nmkquery, _res_9_nopt, _res_9_nquery, 
+                       _res_9_nquerydomain, _res_9_ns_datetosecs, _res_9_ns_find_tsig, 
+                       _res_9_ns_format_ttl, _res_9_ns_get16, _res_9_ns_get32, _res_9_ns_initparse, 
+                       _res_9_ns_makecanon, _res_9_ns_msg_getflag, _res_9_ns_name_compress, 
+                       _res_9_ns_name_ntol, _res_9_ns_name_ntop, _res_9_ns_name_pack, 
+                       _res_9_ns_name_pton, _res_9_ns_name_rollback, _res_9_ns_name_skip, 
+                       _res_9_ns_name_uncompress, _res_9_ns_name_unpack, _res_9_ns_parse_ttl, 
+                       _res_9_ns_parserr, _res_9_ns_put16, _res_9_ns_put32, _res_9_ns_samedomain, 
+                       _res_9_ns_samename, _res_9_ns_sign, _res_9_ns_sign2, _res_9_ns_sign_tcp, 
+                       _res_9_ns_sign_tcp2, _res_9_ns_sign_tcp_init, _res_9_ns_skiprr, 
+                       _res_9_ns_sprintrr, _res_9_ns_sprintrrf, _res_9_ns_subdomain, 
+                       _res_9_ns_verify, _res_9_ns_verify_tcp, _res_9_ns_verify_tcp_init, 
+                       _res_9_nsearch, _res_9_nsend, _res_9_nsendsigned, _res_9_ownok, 
+                       _res_9_p_cdname, _res_9_p_cdnname, _res_9_p_class, _res_9_p_fqname, 
+                       _res_9_p_fqnname, _res_9_p_option, _res_9_p_query, _res_9_p_rcode, 
+                       _res_9_p_secstodate, _res_9_p_section, _res_9_p_time, _res_9_p_type, 
+                       _res_9_pquery, _res_9_putlong, _res_9_putshort, _res_9_queriesmatch, 
+                       _res_9_query, _res_9_querydomain, _res_9_randomid, _res_9_search, 
+                       _res_9_send, _res_9_sendsigned, _res_9_setservers, _res_9_sym_ntop, 
+                       _res_9_sym_ntos, _res_9_sym_ston, _res_9_vinit, _res_buildprotolist, 
+                       _res_destroyprotolist, _res_destroyservicelist, _res_get_bitstringsuffix, 
+                       _res_get_nibblesuffix, _res_get_nibblesuffix2, _res_protocolname, 
+                       _res_servicename ]
+...

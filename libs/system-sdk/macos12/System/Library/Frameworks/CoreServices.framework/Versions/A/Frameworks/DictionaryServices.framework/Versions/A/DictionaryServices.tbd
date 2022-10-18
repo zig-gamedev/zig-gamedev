@@ -1,0 +1,84 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           45B3781F-3D4D-3EB1-ABFC-987AE940DABE
+  - target:          x86_64-maccatalyst
+    value:           45B3781F-3D4D-3EB1-ABFC-987AE940DABE
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           23D9E702-80B5-39E1-9B9B-FEA156349D01
+  - target:          arm64e-maccatalyst
+    value:           23D9E702-80B5-39E1-9B9B-FEA156349D01
+install-name:    '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/DictionaryServices.framework/Versions/A/DictionaryServices'
+current-version: 350
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        CoreServices
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _DCSActivateDictionaryPanel, _DCSCopyActiveDictionaries, _DCSCopyAvailableDictionaries, 
+                       _DCSCopyDefinitionMarkup, _DCSCopyDefinitionRecords, _DCSCopyDefinitions, 
+                       _DCSCopyInactiveDictionaries, _DCSCopyLanguagesOfPreparedDefaultDictionaries, 
+                       _DCSCopyRecordForReference, _DCSCopyRecordsForHeadword, _DCSCopyRecordsForSearchString, 
+                       _DCSCopyRecordsWithHeadword, _DCSCopyTextDefinition, _DCSCreateAppleWordEquivalenceList, 
+                       _DCSCreateHeadwordList, _DCSCreateUserDictionariesDirectory, 
+                       _DCSDictionaryAssetAttributesDownloaded, _DCSDictionaryAssetAttributesWillBePurged, 
+                       _DCSDictionaryAssetCopyDiagnosticLog, _DCSDictionaryAssetCopyDownloadedDictionaryIdentifiers, 
+                       _DCSDictionaryAssetCopyRemovedDictionaryIdentifiers, _DCSDictionaryAssetGetAssetType, 
+                       _DCSDictionaryAssetGetCompatibilityVersion, _DCSDictionaryCopyResourceURLsOfType, 
+                       _DCSDictionaryCreate, _DCSDictionaryCreateWithAssetAttributes, 
+                       _DCSDictionaryCreateWithIdentifier, _DCSDictionaryDownloadFinished, 
+                       _DCSDictionaryGetAssetObj, _DCSDictionaryGetBaseURL, _DCSDictionaryGetIdentifier, 
+                       _DCSDictionaryGetLanguages, _DCSDictionaryGetName, _DCSDictionaryGetParentDictionary, 
+                       _DCSDictionaryGetPreference, _DCSDictionaryGetPreferenceHTML, 
+                       _DCSDictionaryGetPrimaryLanguage, _DCSDictionaryGetShortName, 
+                       _DCSDictionaryGetStyleSheetURL, _DCSDictionaryGetSubDictionaries, 
+                       _DCSDictionaryGetTypeID, _DCSDictionaryGetURL, _DCSDictionaryIsLanguageDictionary, 
+                       _DCSDictionaryIsNetworkService, _DCSDictionaryIsSupportedDefinitionStyle, 
+                       _DCSDictionarySetDataHeader, _DCSDictionarySetPreference, 
+                       _DCSGetActiveDictionaries, _DCSGetDefaultDictionary, _DCSGetDefaultThesaurus, 
+                       _DCSGetServicePresentationType, _DCSGetTermRangeInString, 
+                       _DCSGetTermRangeInStringWithOptions, _DCSHasDefinitionForTerm, 
+                       _DCSInvalidateDictionaryCache, _DCSNormalizeSearchString, 
+                       _DCSNormalizeSearchStringWithOptionsAndLocale, _DCSPreferredOrderOfDictionaryAssetAttributesForLanguages, 
+                       _DCSPrepareMobileAssetQuery, _DCSRecordCopyData, _DCSRecordCopyDataURL, 
+                       _DCSRecordCopyDefinition, _DCSRecordCopyTextElements, _DCSRecordGetAnchor, 
+                       _DCSRecordGetAssociatedObj, _DCSRecordGetDictionary, _DCSRecordGetHeadword, 
+                       _DCSRecordGetRawHeadword, _DCSRecordGetString, _DCSRecordGetSubDictionary, 
+                       _DCSRecordGetSupplementalHeadword, _DCSRecordGetTitle, _DCSRecordGetTypeID, 
+                       _DCSRecordSetAssociatedObj, _DCSRecordSetHeadword, _DCSSearchFoundationCopyResults, 
+                       _DCSSearchFoundationCopyResultsWithOptions, _DCSSearchSessionCreate, 
+                       _DCSSearchSessionScheduleWithRunLoop, _DCSSearchSessionUnscheduleFromRunLoop, 
+                       _DCSSetActiveDictionaries, _DCSSetServicePresentationType, 
+                       _DCSSortRecordsWithHeadword, _IDXAddRecord, _IDXBuildIndexWithRecords, 
+                       _IDXContainsMatchData, _IDXCopyIndexNames, _IDXCreateDictionaryPackage, 
+                       _IDXCreateFlattenData, _IDXCreateIndexObject, _IDXDeleteRecord, 
+                       _IDXGetDataByID, _IDXGetDataPtrByID, _IDXGetFieldDataPtrs, 
+                       _IDXGetMatchData, _IDXGetMatchDataPtr, _IDXIndexGetTypeID, 
+                       _IDXPerformSearch, _IDXSetRequestFields, _IDXSetSearchCharacters, 
+                       _IDXSetSearchString, _IDXSupportDataPtr, _kDCSActiveDictionariesChangedNotification, 
+                       _kDCSDictionaryDescriptionLanguage, _kDCSDictionaryIndexLanguage, 
+                       _kDCSFilterOptionAllowNetworkServices, _kDCSFilterOptionDescriptionLanguage, 
+                       _kDCSFilterOptionIndexLanguage, _kDCSResourceTypePrivateFont, 
+                       _kDCSResourceTypeStyleSheet, _kDCSTextElementKeyHeadword, 
+                       _kDCSTextElementKeyPartOfSpeech, _kDCSTextElementKeyPronunciation, 
+                       _kDCSTextElementKeyRecordID, _kDCSTextElementKeySenses, _kDCSTextElementKeySensesWithAttributes, 
+                       _kDCSTextElementKeySyllabifiedHeadword, _kDCSTextElementSenseKeyIsExplicit, 
+                       _kDCSTextElementSenseKeyText, _kIDXPropertyDataFieldName, 
+                       _kIDXPropertyDataFields, _kIDXPropertyDataSize, _kIDXPropertyDataSizeLength, 
+                       _kIDXPropertyExternalFields, _kIDXPropertyFixedFields, _kIDXPropertyIndexAccessMethod, 
+                       _kIDXPropertyIndexBigEndian, _kIDXPropertyIndexDataSizeLength, 
+                       _kIDXPropertyIndexKeyMatchingMethods, _kIDXPropertyIndexList, 
+                       _kIDXPropertyIndexName, _kIDXPropertyIndexPath, _kIDXPropertyIndexSupportDataID, 
+                       _kIDXPropertyIndexWritable, _kIDXPropertyVariableFields, _kIDXPropertyVersion, 
+                       _kIDXSearchAllMatch, _kIDXSearchCommonPrefixMatch, _kIDXSearchExactMatch, 
+                       _kIDXSearchPrefixMatch, _kIDXSearchWildcardMatch ]
+...

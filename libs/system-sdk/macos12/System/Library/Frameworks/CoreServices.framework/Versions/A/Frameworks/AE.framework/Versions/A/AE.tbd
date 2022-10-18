@@ -1,0 +1,101 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           3F027CDA-3649-35AB-A3BF-CE76CDB6192A
+  - target:          x86_64-maccatalyst
+    value:           3F027CDA-3649-35AB-A3BF-CE76CDB6192A
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           EC2CC19C-A2FA-37CD-9664-DF8F9947D367
+  - target:          arm64e-maccatalyst
+    value:           EC2CC19C-A2FA-37CD-9664-DF8F9947D367
+install-name:    '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/AE.framework/Versions/A/AE'
+current-version: 924
+compatibility-version: 0
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        CoreServices
+allowable-clients:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    clients:         [ DesktopServices, Foundation, HIServices, LaunchServices, PrintCore ]
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _AEBuildAppleEvent, _AEBuildDesc, _AEBuildParameters, _AECallObjectAccessor, 
+                       _AECheckIsRecord, _AECoerceDesc, _AECoercePtr, _AECoercionHandlersApplyFunction, 
+                       _AECompareDesc, _AEConvertFromMsg, _AECountItems, _AECreateAppleEvent, 
+                       _AECreateDesc, _AECreateDescFromExternalPtr, _AECreateList, 
+                       _AECreateRemoteProcessResolver, _AEDecodeMessage, _AEDeleteItem, 
+                       _AEDeleteParam, _AEDescribeDesc, _AEDeterminePermissionToAutomateTarget, 
+                       _AEDispatchEvent, _AEDisposeDesc, _AEDisposeRemoteProcessResolver, 
+                       _AEDisposeToken, _AEDuplicateDesc, _AEEventHandlersApplyFunction, 
+                       _AEFlattenDesc, _AEGetArray, _AEGetAttributeDesc, _AEGetAttributePtr, 
+                       _AEGetCoercionHandler, _AEGetDescData, _AEGetDescDataRange, 
+                       _AEGetDescDataSize, _AEGetEventHandler, _AEGetNthDesc, _AEGetNthPtr, 
+                       _AEGetObjectAccessor, _AEGetParamDesc, _AEGetParamPtr, _AEGetRegisteredMachPort, 
+                       _AEGetSpecialHandler, _AEInitializeDesc, _AEInstallCoercionHandler, 
+                       _AEInstallEventHandler, _AEInstallObjectAccessor, _AEInstallSpecialHandler, 
+                       _AEInstallSystemDispatcher, _AEManagerInfo, _AEObjectInit, 
+                       _AEPrintDescToHandle, _AEProcessMessage, _AEPutArray, _AEPutAttributeDesc, 
+                       _AEPutAttributePtr, _AEPutDesc, _AEPutParamDesc, _AEPutParamPtr, 
+                       _AEPutPtr, _AEReceiveFromMach, _AERemoteProcessResolverGetProcesses, 
+                       _AERemoteProcessResolverScheduleWithRunLoop, _AERemoveCoercionHandler, 
+                       _AERemoveEventHandler, _AERemoveObjectAccessor, _AERemoveSpecialHandler, 
+                       _AEReplaceDescData, _AEResolve, _AESendMessage, _AESendWithMach, 
+                       _AESetObjectCallbacks, _AESizeOfAttribute, _AESizeOfFlattenedDesc, 
+                       _AESizeOfNthItem, _AESizeOfParam, _AEStreamClose, _AEStreamCloseDesc, 
+                       _AEStreamCloseList, _AEStreamCloseRecord, _AEStreamCreateEvent, 
+                       _AEStreamOpen, _AEStreamOpenDesc, _AEStreamOpenEvent, _AEStreamOpenKeyDesc, 
+                       _AEStreamOpenList, _AEStreamOpenRecord, _AEStreamOptionalParam, 
+                       _AEStreamSetRecordType, _AEStreamWriteAEDesc, _AEStreamWriteData, 
+                       _AEStreamWriteDesc, _AEStreamWriteKey, _AEStreamWriteKeyDesc, 
+                       _AEUnflattenDesc, _AEUnflattenDescFromBytes, _CreateCompDescriptor, 
+                       _CreateLogicalDescriptor, _CreateObjSpecifier, _CreateOffsetDescriptor, 
+                       _CreateRangeDescriptor, _GDBPrintAECoercionTables, _GDBPrintAEDesc, 
+                       _GDBPrintAEHandlerTables, _GDBPrintHelpDebuggingAppleEvents, 
+                       __AEAddAnnotationsToAppleEvent, __AEAppleEventMergeAnnotations, 
+                       __AECanSandboxedApplicationSendAppleEvent, __AECopyEntitlementForToken, 
+                       __AECopyRegisteredMachPort, __AECreateAEReceiveMachPort, __AECreateAEReceivePortInRunLoopWithSource, 
+                       __AECreateAnnotatedAppleEvent, __AEDescEventGetCounts, __AEDescEventIndexedAttributeItem, 
+                       __AEDescEventIndexedParamItem, __AEDescGetAsString, __AEDescInformation, 
+                       __AEDescListGetCount, __AEDescListIndexedItem, __AEDescRecordGetCount, 
+                       __AEDescRecordIndexedItem, __AEDescToInternalImpl, __AEDoesAppleEventContainAnyTypesWhichRequireAnnotation, 
+                       __AEEventDescGetInformation, __AEEventRequiresSecurityHandlerChecks, 
+                       __AEEventSecurityHandlerDoChecks, __AEGenerateAnnotations, 
+                       __AEInstallAEInteractWithUserCallback, __AEInstallEventHandlerBlock, 
+                       __AEInstallEventSecurityHandler, __AEInstallEventSecurityHandlerBlock, 
+                       __AEIsAppleEventTargetInSandbox, __AERegisterCurrentApplicationInfomationWithAppleEventsD, 
+                       __AERemoveAEReceivePort, __AERemoveEventSecurityHandler, __AEUnflattenDescFromBytes, 
+                       __AppleEventsCheckInApp, __AppleEventsCheckInAppWithBlock, 
+                       __AppleEventsCopyApplicationEntitlements, __AppleEventsCopyApplicationEntitlementsWithBlock, 
+                       __AppleEventsCopyStatusString, __AppleEventsCopyStatusStringWithBlock, 
+                       __AppleEventsForwardEntitlements, __AppleEventsForwardEntitlementsWithBlock, 
+                       __AppleEventsHintApp, __AppleEventsHintAppWithBlock, __AppleEventsListApplications, 
+                       __AppleEventsListApplicationsWithBlock, __AppleEventsLookupApplicationPort, 
+                       __AppleEventsLookupApplicationPortWithBlock, __AppleEventsReleaseProcessAssertion, 
+                       __AppleEventsReleaseProcessAssertionWithBlock, __AppleEventsRequestProcessAssertion, 
+                       __AppleEventsRequestProcessAssertionWithBlock, __AppleEventsSendPortRequiresProcessAssertions, 
+                       __kAppleEventsScriptingEntitlementKey, _aeAddFilter, _aeAppendToImplEnd, 
+                       _aeBindToArbitraryMachPort, _aeCheckMessage, _aeCheckinApp, 
+                       _aeClassicCompatFlattenDesc, _aeClassicCompatSizeOfFlattenedDesc, 
+                       _aeConvertCarbonToClassic, _aeConvertClassicToCarbon, _aeCreateBuffer, 
+                       _aeCreateDefaultReply, _aeDecodeMachMsg, _aeDescToCFStringCopy, 
+                       _aeDescToCFTypeCopy, _aeEventToEppcMsg, _aeGetInteractionAllowed, 
+                       _aeGetTheCurrentEvent, _aeHintApp, _aeInitializeFromHIToolbox, 
+                       _aeInstallBulk, _aeInstallRunLoopDispatcher, _aeInteractWithUser, 
+                       _aeMakeMeta, _aeProcessAppleEvent, _aePushHighLevelEvent, 
+                       _aeReconstructAppleEvent, _aeReconstructReplyAppleEvent, _aeRemoveFromImplEnd, 
+                       _aeResetTimer, _aeResumeTheCurrentEvent, _aeRmvFilter, _aeSend, 
+                       _aeSetInteractionAllowed, _aeSetTheCurrentEvent, _aeSimpleMunger, 
+                       _aeSuspendTheCurrentEvent, _kAERemoteProcessNameKey, _kAERemoteProcessProcessIDKey, 
+                       _kAERemoteProcessURLKey, _kAERemoteProcessUserIDKey, _pushHighLevelEvent, 
+                       _vAEBuildAppleEvent, _vAEBuildDesc, _vAEBuildParameters ]
+...

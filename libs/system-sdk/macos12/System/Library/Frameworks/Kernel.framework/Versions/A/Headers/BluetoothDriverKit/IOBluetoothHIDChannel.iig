@@ -1,0 +1,178 @@
+//
+//  IOBluetoothHIDChannel.iig
+//  BluetoothDriverKit
+//
+//  Created by apple on 12/10/20.
+//
+
+#ifndef IOBluetoothHIDChannel_h
+#define IOBluetoothHIDChannel_h
+
+#include <DriverKit/IOTypes.h>
+#include <DriverKit/IOService.iig>
+#include <DriverKit/IOMemoryDescriptor.iig>
+#include <HIDDriverKit/IOHIDDevice.iig>
+
+/*!
+	@iig implementation
+	#if KERNEL
+	#include <IOKit/bluetooth/IOBluetoothHIDChannel.h>
+	#endif
+	@iig end
+*/
+
+class KERNEL IOBluetoothHIDChannel : public IOService
+{
+public:
+	
+	/*!
+	 * @function	HandleStart
+	 * @abstract	Call IOBluetoothHIDChannel's handleStart() which prepares the hardware and driver to support I/O operations.
+	 * @discussion	IOUserBluetoothHIDDevice's handleStart() should begin its implementation by calling the version in super, and then check the return value.
+	 * 				If the return value is true, then call IOBluetoothHIDChannel's HandleStart()
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HandleStart();
+	
+	/*!
+	 * @function	HandleStop
+	 * @abstract	Call IOBluetoothHIDChannel's handleStop() which quiesces the hardware and stop the driver.
+	 * @discussion	IOHIDDevice will call this method from stop() to signal that the hardware should be quiesced and the driver stopped.
+	 * 				IOUserBluetoothHIDDevice's handleStop() should call IOBluetoothHIDChannel's HandleStop() and then ends its implementation by calling the version in super.
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HandleStop();
+	
+	/*!
+	 * @function	HandleSleep
+	 * @abstract	Call IOBluetoothHIDChannel's handleSleep() which sends HID Suspend
+	 * @discussion	This requires IOUserBluetoothHIDDevice to register for Power Management notification
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HandleSleep();
+	
+	/*!
+	 * @function	HandleWake
+	 * @abstract	Call IOBluetoothHIDChannel's handleWake() which sends Exit HID Suspend
+	 * @discussion	This requires IOUserBluetoothHIDDevice to register for Power Management notification
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HandleWake();
+	
+	/*!
+	 * @function	HandleShutdown
+	 * @abstract	Call IOBluetoothHIDChannel's handleShutdown()
+	 * @discussion	This requires IOUserBluetoothHIDDevice to register for Power Management notification
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HandleShutdown();
+	
+	/*!
+	 * @function	HandleRestart
+	 * @abstract	Call IOBluetoothHIDChannel's handleRestart()
+	 * @discussion	This requires IOUserBluetoothHIDDevice to register for Power Management notification
+	 * @result	kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HandleRestart();
+	
+	/*!
+	 * @function	GetReport
+	 * @abstract	Call IOBluetoothHIDChannel's getReport()
+	 * @discussion	Get a report from the HID device
+	 * @param		report A memory descriptor that describes the memory to store the report read from the HID device.
+	 * @param		reportType The report type.
+	 * @param		options The lower 8 bits will represent the Report ID.  The other 24 bits are options to specify the request.
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t GetReport(IOMemoryDescriptor	*	report,
+									IOHIDReportType			reportType,
+									IOOptionBits			options);
+	
+	/*!
+	 * @function	SetReport
+	 * @abstract	Call IOBluetoothHIDChannel's setReport()
+	 * @discussion	Send a report to the HID device
+	 * @param		report A memory descriptor that describes the report to send to the HID device.
+	 * @param		reportType The report type.
+	 * @param		options The lower 8 bits will represent the Report ID.  The other 24 bits are options to specify the request.
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t SetReport(IOMemoryDescriptor	*	report,
+									IOHIDReportType			reportType,
+									IOOptionBits			options);
+	
+	/*!
+	 * @function	HidControl
+	 * @abstract	Call IOBluetoothHIDChannel's hidControl()
+	 * @discussion	Send a HID control operation byte
+	 * @param		controlOperation HID control operation byte
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t HidControl(uint8_t	controlOperation);
+	
+	/*!
+	 * @function	GetProtocol
+	 * @abstract	Call IOBluetoothHIDChannel's getProtocol()
+	 * @discussion	Get the protocol setting
+	 * @param		protocol Protocol type
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t GetProtocol(uint8_t	*	protocol);
+	
+	/*!
+	 * @function	SetProtocol
+	 * @abstract	Call IOBluetoothHIDChannel's setProtocol()
+	 * @discussion	Set the protocol setting
+	 * @param		protocol Protocol type
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t SetProtocol(uint8_t	protocol);
+	
+	/*!
+	 * @function	GetIdle
+	 * @abstract	Call IOBluetoothHIDChannel's getIdle()
+	 * @discussion	Get the idle rate
+	 * @param		idleRate Idle rate
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t GetIdle(uint8_t	*	idleRate);
+	
+	/*!
+	 * @function	SetIdle
+	 * @abstract	Call IOBluetoothHIDChannel's setIdle()
+	 * @discussion	Set the Idle setting
+	 * @param		idleRate Idle rate
+	 * @result		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+
+	virtual kern_return_t SetIdle(uint8_t	idleRate);
+	
+	/*!
+	 * @function	HandleReport
+	 * @param		action Pointer to the OSAction object for HandleReport
+	 * @return		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+	virtual void HandleReport(IOMemoryDescriptor	*	report) = 0;
+
+	/*!
+	 * @function	SetupHandleReport
+	 * @param		action Pointer to the OSAction object for HandleReport
+	 * @return		kIOReturnSuccess on success, or an error return otherwise.
+	 */
+	virtual kern_return_t SetupHandleReport(OSAction	*	action TYPE(HandleReport));
+};
+
+
+#endif /* IOBluetoothHIDChannel_h */

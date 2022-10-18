@@ -29,7 +29,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
 
     switch (target.os.tag) {
         .windows => {
-            exe.addLibraryPath(thisDir() ++ "/../system-sdk/x86_64-windows-gnu/lib");
+            exe.addLibraryPath(thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu");
             exe.linkSystemLibraryName("gdi32");
             exe.linkSystemLibraryName("user32");
             exe.linkSystemLibraryName("shell32");
@@ -52,11 +52,9 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
             }, &.{"-D_GLFW_WIN32"});
         },
         .macos => {
-            const system_sdk = @import("system_sdk.zig");
-            system_sdk.include(exe.builder, exe, .{});
-            //exe.addFrameworkPath(thisDir() ++ "/../system-sdk/macos.12-none/System/Library/Frameworks");
-            //exe.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos.12-none/usr/include");
-            //exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos.12-none/usr/lib");
+            exe.addFrameworkPath(thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks");
+            exe.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos12/usr/include");
+            exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
             exe.linkSystemLibraryName("objc");
             exe.linkFramework("IOKit");
             exe.linkFramework("CoreFoundation");
@@ -85,12 +83,11 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         },
         else => {
             // We assume Linux (X11)
+            exe.addSystemIncludePath(thisDir() ++ "/../system-sdk/linux/include");
             if (target.cpu.arch.isX86()) {
-                exe.addIncludePath(thisDir() ++ "/../system-sdk/x86_64-linux-gnu/include");
-                exe.addLibraryPath(thisDir() ++ "/../system-sdk/x86_64-linux-gnu/lib");
+                exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu");
             } else {
-                exe.addIncludePath(thisDir() ++ "/../system-sdk/aarch64-linux-gnu/include");
-                exe.addLibraryPath(thisDir() ++ "/../system-sdk/aarch64-linux-gnu/lib");
+                exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu");
             }
             exe.linkSystemLibraryName("X11");
             exe.linkSystemLibraryName("xcb");

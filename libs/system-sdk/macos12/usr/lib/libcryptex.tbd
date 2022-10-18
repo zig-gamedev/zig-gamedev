@@ -1,0 +1,39 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           35FFBC73-71DB-363E-B234-B26636C3B66E
+  - target:          arm64-macos
+    value:           A5C3C5DB-5F42-3EB1-AD9E-B97CBD8FADC2
+  - target:          arm64e-macos
+    value:           F024667A-575E-31D8-A55E-E20F1525A749
+install-name:    '/usr/lib/libcryptex.dylib'
+current-version: 169.30.4
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, arm64-macos ]
+    symbols:         [ __cryptex_copy_list, __cryptex_create, __cryptex_identity_equal, 
+                       __cryptex_install_core, __cryptex_set_actor, __cryptex_signing_service_image_spec_certificate, 
+                       __cryptex_signing_service_image_spec_url, __cryptex_uninstall_by_name, 
+                       __cryptex_version, _cryptex_attr_create, _cryptex_attr_set_authentication, 
+                       _cryptex_attr_set_persistence, _cryptex_attr_set_personalization_flags, 
+                       _cryptex_attr_set_tss_url, _cryptex_bundle_copy_build_manifest, 
+                       _cryptex_bundle_copy_cryptex, _cryptex_bundle_create, _cryptex_bundle_create_with_directory, 
+                       _cryptex_bundle_set_cryptex, _cryptex_bundle_update_build_manifest, 
+                       _cryptex_bundle_write, _cryptex_copy_list_4MSM, _cryptex_get_identity, 
+                       _cryptex_get_variant, _cryptex_identity_set_host_identity, 
+                       _cryptex_install, _cryptex_install_4MSM, _cryptex_lockdown, 
+                       _cryptex_msm_array_destroy, _cryptex_msm_destroy, _cryptex_msm_get_int, 
+                       _cryptex_msm_get_string, _cryptex_personalize, _cryptex_signing_service_create, 
+                       _cryptex_signing_service_set_image, _cryptex_signing_service_set_image_bytes, 
+                       _cryptex_signing_service_set_sso_ticket, _cryptex_signing_service_set_tss_url, 
+                       _cryptex_signing_service_trust, _cryptex_uninstall, _cryptex_uninstall_4MSM, 
+                       _session_activate, _session_add_cryptex, _session_add_job_override, 
+                       _session_add_session_environment, _session_create, _session_create_from_core, 
+                       _session_get_cryptex_array, _session_get_homedir, _session_get_name, 
+                       _session_get_state, _session_get_uuid, _session_has_overrides, 
+                       _session_iter_list, _session_set_event_handler, _session_set_job_environment_override, 
+                       _session_start, _session_stop ]
+    objc-classes:    [ OS_cryptex, OS_cryptex_attr, OS_cryptex_bundle, OS_cryptex_signing_service, 
+                       OS_session ]
+...

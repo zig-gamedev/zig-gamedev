@@ -1,0 +1,64 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           200A3844-81F3-349F-BCFD-6C72F20EE7D4
+  - target:          x86_64-maccatalyst
+    value:           200A3844-81F3-349F-BCFD-6C72F20EE7D4
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           8862E393-0685-36E3-B5BD-979854C68144
+  - target:          arm64e-maccatalyst
+    value:           8862E393-0685-36E3-B5BD-979854C68144
+install-name:    '/usr/lib/libedit.3.dylib'
+current-version: 3
+compatibility-version: 2
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __el_fn_complete, __el_fn_sh_complete, __rl_abort_internal, 
+                       __rl_print_completions_horizontally, __rl_qsort_string_compare, 
+                       _add_history, _clear_history, _completion_matches, _current_history, 
+                       _el_beep, _el_deletestr, _el_end, _el_get, _el_getc, _el_gets, 
+                       _el_init, _el_insertstr, _el_line, _el_parse, _el_push, _el_reset, 
+                       _el_resize, _el_set, _el_source, _el_wget, _el_wgetc, _el_wgets, 
+                       _el_winsertstr, _el_wline, _el_wparse, _el_wpush, _el_wset, 
+                       _emacs_ctlx_keymap, _emacs_meta_keymap, _emacs_standard_keymap, 
+                       _filename_completion_function, _get_history_event, _history, 
+                       _history_arg_extract, _history_base, _history_end, _history_expand, 
+                       _history_get, _history_get_history_state, _history_init, _history_is_stifled, 
+                       _history_length, _history_search, _history_search_pos, _history_search_prefix, 
+                       _history_set_pos, _history_tokenize, _history_total_bytes, 
+                       _history_truncate_file, _history_w, _history_wend, _history_winit, 
+                       _max_input_history, _next_history, _previous_history, _read_history, 
+                       _readline, _readline_echoing_p, _remove_history, _replace_history_entry, 
+                       _rl_add_defun, _rl_already_prompted, _rl_attempted_completion_function, 
+                       _rl_attempted_completion_over, _rl_basic_word_break_characters, 
+                       _rl_bind_key, _rl_bind_key_in_map, _rl_callback_handler_install, 
+                       _rl_callback_handler_remove, _rl_callback_read_char, _rl_cleanup_after_signal, 
+                       _rl_complete, _rl_completer_quote_characters, _rl_completer_word_break_characters, 
+                       _rl_completion_append_character, _rl_completion_display_matches_hook, 
+                       _rl_completion_entry_function, _rl_completion_matches, _rl_completion_query_items, 
+                       _rl_completion_type, _rl_completion_word_break_hook, _rl_deprep_term_function, 
+                       _rl_deprep_terminal, _rl_display_match_list, _rl_end, _rl_filename_completion_desired, 
+                       _rl_filename_completion_function, _rl_forced_update_display, 
+                       _rl_free_line_state, _rl_generic_bind, _rl_get_keymap, _rl_get_previous_history, 
+                       _rl_get_screen_size, _rl_getc_function, _rl_ignore_completion_duplicates, 
+                       _rl_inhibit_completion, _rl_initialize, _rl_insert, _rl_insert_text, 
+                       _rl_instream, _rl_kill_text, _rl_library_version, _rl_line_buffer, 
+                       _rl_make_bare_keymap, _rl_newline, _rl_on_new_line, _rl_outstream, 
+                       _rl_parse_and_bind, _rl_point, _rl_pre_input_hook, _rl_prep_term_function, 
+                       _rl_prep_terminal, _rl_prompt, _rl_read_init_file, _rl_read_key, 
+                       _rl_readline_name, _rl_readline_version, _rl_redisplay, _rl_redisplay_function, 
+                       _rl_reset_terminal, _rl_set_keymap, _rl_set_prompt, _rl_set_screen_size, 
+                       _rl_special_prefixes, _rl_startup_hook, _rl_stuff_char, _rl_terminal_name, 
+                       _rl_variable_bind, _stifle_history, _tilde_expand, _tok_end, 
+                       _tok_init, _tok_line, _tok_reset, _tok_str, _tok_wend, _tok_winit, 
+                       _tok_wline, _tok_wreset, _tok_wstr, _unstifle_history, _username_completion_function, 
+                       _using_history, _where_history, _write_history ]
+...

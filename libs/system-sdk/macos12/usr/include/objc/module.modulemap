@@ -1,0 +1,33 @@
+module ObjectiveC [system] [extern_c] {
+  umbrella "."
+  export *
+  module * { 
+    export *
+  }
+
+  module NSObject {
+    requires objc
+    header "NSObject.h"
+    export *
+  }
+
+  module List {
+    // Uses @defs, which does not work in ObjC++ or non-ARC.
+    requires objc, !objc_arc, !cplusplus
+    header "List.h"
+    export *
+  }
+
+  module Object {
+    requires objc
+    header "Object.h"
+    export *
+  }
+
+  module Protocol {
+    requires objc
+    header "Protocol.h"
+    export *
+  }
+
+}

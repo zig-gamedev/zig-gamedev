@@ -1,0 +1,243 @@
+module libxml2 [system] [extern_c] {
+    link "xml2"
+
+    module HTMLparser {
+        header "HTMLparser.h"
+        header "SAX.h"
+        header "SAX2.h"
+        header "globals.h"
+        header "parser.h"
+        header "threads.h"
+        header "tree.h"
+        header "xlink.h"
+        header "xmlmemory.h"
+        export *
+    }
+
+    module HTMLtree {
+        header "HTMLtree.h"
+        export *
+    }
+
+    module SAX {
+        export HTMLparser
+        export *
+    }
+
+    module SAX2 {
+        export HTMLparser
+        export *
+    }
+
+    module c14n {
+        header "c14n.h"
+        export *
+    }
+
+    module catalog {
+        header "catalog.h"
+        export *
+    }
+
+    module chvalid {
+        header "chvalid.h"
+        export *
+    }
+
+    module debugXML {
+        header "debugXML.h"
+        export *
+    }
+
+    module dict {
+        header "dict.h"
+        export *
+    }
+
+    module encoding {
+        header "encoding.h"
+        export *
+    }
+
+    module entities {
+        header "entities.h"
+        export *
+    }
+
+    module globals {
+        export HTMLparser
+        export *
+    }
+
+    module hash {
+        header "hash.h"
+        export *
+    }
+
+    module list {
+        header "list.h"
+        export *
+    }
+
+    module nanoftp {
+        header "nanoftp.h"
+        export *
+    }
+
+    module nanohttp {
+        header "nanohttp.h"
+        export *
+    }
+
+    module parser {
+        export HTMLparser
+        export *
+    }
+
+    module parserInternals {
+        header "parserInternals.h"
+        export *
+    }
+
+    module pattern {
+        header "pattern.h"
+        export *
+    }
+
+    module relaxng {
+        header "relaxng.h"
+        export *
+    }
+
+    module schemasInternals {
+        header "schemasInternals.h"
+        export *
+    }
+
+    module schematron {
+        header "schematron.h"
+        export *
+    }
+
+    module threads {
+        export HTMLparser
+        export *
+    }
+
+    module tree {
+        export HTMLparser
+        export *
+    }
+
+    module uri {
+        header "uri.h"
+        export *
+    }
+
+    module valid {
+        header "valid.h"
+        export *
+    }
+
+    module xinclude {
+        header "xinclude.h"
+        export *
+    }
+
+    module xlink {
+        export HTMLparser
+        export *
+    }
+
+    module xmlIO {
+        header "xmlIO.h"
+        export *
+    }
+
+    module xmlautomata {
+        header "xmlautomata.h"
+        export *
+    }
+
+    module xmlerror {
+        header "xmlerror.h"
+        export *
+    }
+
+    module xmlexports {
+        header "xmlexports.h"
+        export *
+    }
+
+    module xmlmemory {
+        export HTMLparser
+        export *
+    }
+
+    module xmlmodule {
+        header "xmlmodule.h"
+        export *
+    }
+
+    module xmlreader {
+        header "xmlreader.h"
+        export *
+    }
+
+    module xmlregexp {
+        header "xmlregexp.h"
+        export *
+    }
+
+    module xmlsave {
+        header "xmlsave.h"
+        export *
+    }
+
+    module xmlschemas {
+        header "xmlschemas.h"
+        export *
+    }
+
+    module xmlschemastypes {
+        header "xmlschemastypes.h"
+        export *
+    }
+
+    module xmlstring {
+        header "xmlstring.h"
+        export *
+    }
+
+    module xmlunicode {
+        header "xmlunicode.h"
+        export *
+    }
+
+    module xmlversion {
+        header "xmlversion.h"
+        export *
+    }
+
+    module xmlwriter {
+        header "xmlwriter.h"
+        export *
+    }
+
+    module xpath {
+        header "xpath.h"
+        export *
+    }
+
+    module xpathInternals {
+        header "xpathInternals.h"
+        export *
+    }
+
+    module xpointer {
+        header "xpointer.h"
+        export *
+    }
+
+    exclude header "DOCBparser.h" // Deprecated.
+}

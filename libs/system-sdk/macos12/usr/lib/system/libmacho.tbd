@@ -1,0 +1,60 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           962FA64E-23DE-3C77-AD8B-B302B5E892FF
+  - target:          x86_64-maccatalyst
+    value:           962FA64E-23DE-3C77-AD8B-B302B5E892FF
+  - target:          arm64-macos
+    value:           45FA69BC-984E-3D28-9D18-B3EEBA237CBE
+  - target:          arm64-maccatalyst
+    value:           45FA69BC-984E-3D28-9D18-B3EEBA237CBE
+  - target:          arm64e-macos
+    value:           8D2BECEF-1038-3F2C-B8EF-B02C03092286
+  - target:          arm64e-maccatalyst
+    value:           8D2BECEF-1038-3F2C-B8EF-B02C03092286
+install-name:    '/usr/lib/system/libmacho.dylib'
+current-version: 987
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64e-macos ]
+    umbrella:        System
+exports:
+  - targets:         [ arm64-macos, x86_64-macos, arm64e-macos, x86_64-maccatalyst ]
+    symbols:         [ _NXCombineCpuSubtypes, _NXFindBestFatArch, _NXFindBestFatArch_64, 
+                       _NXFreeArchInfo, _NXGetAllArchInfos, _NXGetArchInfoFromCpuType, 
+                       _NXGetArchInfoFromName, _NXGetLocalArchInfo, _get_edata, _get_end, 
+                       _get_etext, _getsectbyname, _getsectbynamefromheader, _getsectbynamefromheader_64, 
+                       _getsectbynamefromheaderwithswap, _getsectbynamefromheaderwithswap_64, 
+                       _getsectdata, _getsectdatafromFramework, _getsectdatafromheader, 
+                       _getsectdatafromheader_64, _getsectiondata, _getsegbyname, 
+                       _getsegmentdata, _slot_name, _swap_build_tool_version, _swap_build_version_command, 
+                       _swap_dyld_info_command, _swap_dylib_command, _swap_dylib_module, 
+                       _swap_dylib_module_64, _swap_dylib_reference, _swap_dylib_table_of_contents, 
+                       _swap_dylinker_command, _swap_dysymtab_command, _swap_encryption_command, 
+                       _swap_encryption_command_64, _swap_entry_point_command, _swap_fat_arch, 
+                       _swap_fat_arch_64, _swap_fat_header, _swap_fileset_entry_command, 
+                       _swap_fvmfile_command, _swap_fvmlib_command, _swap_hppa_fp_thread_state, 
+                       _swap_hppa_frame_thread_state, _swap_hppa_integer_thread_state, 
+                       _swap_i386_exception_state, _swap_i386_float_state, _swap_i386_thread_state, 
+                       _swap_i860_thread_state_regs, _swap_ident_command, _swap_indirect_symbols, 
+                       _swap_linkedit_data_command, _swap_linker_option_command, 
+                       _swap_load_command, _swap_m68k_thread_state_68882, _swap_m68k_thread_state_regs, 
+                       _swap_m68k_thread_state_user_reg, _swap_m88110_thread_state_impl_t, 
+                       _swap_m88k_thread_state_grf_t, _swap_m88k_thread_state_user_t, 
+                       _swap_m88k_thread_state_xrf_t, _swap_mach_header, _swap_mach_header_64, 
+                       _swap_nlist, _swap_nlist_64, _swap_note_command, _swap_ppc_exception_state_t, 
+                       _swap_ppc_float_state_t, _swap_ppc_thread_state_t, _swap_prebind_cksum_command, 
+                       _swap_prebound_dylib_command, _swap_ranlib, _swap_ranlib_64, 
+                       _swap_relocation_info, _swap_routines_command, _swap_routines_command_64, 
+                       _swap_rpath_command, _swap_section, _swap_section_64, _swap_segment_command, 
+                       _swap_segment_command_64, _swap_source_version_command, _swap_sparc_thread_state_fpu, 
+                       _swap_sparc_thread_state_regs, _swap_sub_client_command, _swap_sub_framework_command, 
+                       _swap_sub_library_command, _swap_sub_umbrella_command, _swap_symseg_command, 
+                       _swap_symtab_command, _swap_thread_command, _swap_twolevel_hint, 
+                       _swap_twolevel_hints_command, _swap_uuid_command, _swap_version_min_command, 
+                       _swap_x86_debug_state, _swap_x86_debug_state32, _swap_x86_debug_state64, 
+                       _swap_x86_exception_state, _swap_x86_exception_state64, _swap_x86_float_state, 
+                       _swap_x86_float_state64, _swap_x86_state_hdr, _swap_x86_thread_state, 
+                       _swap_x86_thread_state64 ]
+...

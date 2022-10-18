@@ -1,0 +1,65 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           60B92551-8821-3350-BA66-053C4FB42642
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           DDDA0AE3-E615-3ED7-BE5B-DBC92A56371B
+install-name:    '/usr/lib/libNFC_Comet.dylib'
+reexported-libraries:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    libraries:       [ '/usr/lib/libNFC_HAL.dylib' ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _aIoctlInputBuff, _aIoctlOutputBuff, _bSetPwdReqd, _gbControllerConfigType, 
+                       _gblinkType, _gphLibNfc_GetFwVersionSequence, _gphLibNfc_GetMemDumpSequence, 
+                       _gphLibNfc_IoctlCtx, _gphLibNfc_IoctlGetIfResVal, _gphLibNfc_IoctlGetRfCalData, 
+                       _gphLibNfc_IoctlGetRfConfig, _gphLibNfc_IoctlGetRfRegVal, 
+                       _gphLibNfc_IoctlGetSpmiGpio, _gphLibNfc_IoctlLoopbackSequence, 
+                       _gphLibNfc_IoctlSetPropConfigSigned, _gphLibNfc_IoctlSetPropRfConfig, 
+                       _gphLibNfc_IoctlSetRfCalData, _gphLibNfc_IoctlSetRfConfig, 
+                       _gphLibNfc_SysConfigSeq, _gwLibNfc_APC_CTRL2, _gwLibNfc_Additional_Phase_Offset, 
+                       _gwLibNfc_Clock_Sel_Cfg, _gwLibNfc_Clock_To_Cfg, _gwLibNfc_Customer_Trimming, 
+                       _gwLibNfc_DIE_ID, _gwLibNfc_DPLL_Settings, _gwLibNfc_DavenPortTxHappenedTO, 
+                       _gwLibNfc_GC_Detected_Flag, _gwLibNfc_GC_READER_RSSI_THRESHOLD, 
+                       _gwLibNfc_GC_READER_SERVICE_CODE, _gwLibNfc_GPIO_Test_Mode, 
+                       _gwLibNfc_GenericAExpTxHappenedTO, _gwLibNfc_HLM_MiniNV, _gwLibNfc_HLM_Test_Mode, 
+                       _gwLibNfc_HlmWaterLevel, _gwLibNfc_IOT_Cfg, _gwLibNfc_ISO15693_Flags, 
+                       _gwLibNfc_ISO15693_GT, _gwLibNfc_LPDET_Trimming, _gwLibNfc_Lpcd, 
+                       _gwLibNfc_NFCLD_Threshold, _gwLibNfc_NFCLD_Trimming, _gwLibNfc_NUMBER_OF_FRAMES_TO_WAIT, 
+                       _gwLibNfc_NoUartMsgRxTimeout, _gwLibNfc_PMU_Cfg, _gwLibNfc_RF_Flags_Cfg, 
+                       _gwLibNfc_RF_OFF, _gwLibNfc_RF_Off_Filtering_Duration, _gwLibNfc_RF_Transition_Cfg, 
+                       _gwLibNfc_RSSI_Trimming, _gwLibNfc_RfOffFiltering, _gwLibNfc_RxBufferUnlockGuardTo_Cfg, 
+                       _gwLibNfc_SuicaExpDynTransHappenedTO, _gwLibNfc_SuicaExpPreTxHappenedTO, 
+                       _gwLibNfc_SuicaExpTxHappenedTO, _gwLibNfc_Suica_Trans_End_Pattern, 
+                       _gwLibNfc_Suica_Trans_End_Pattern_Extd, _gwLibNfc_Sys_CalData_RFSAC, 
+                       _gwLibNfc_Sys_Stats_Marking_Code, _gwLibNfc_TO_DET_15693, 
+                       _gwLibNfc_To_StdBy, _gwLibNfc_Trim_Cust_Ext, _gwLibNfc_Watchdog_Enable_Debug, 
+                       _phLibNfc_CardEmulation_NtfRegister, _phLibNfc_ConvertToReadOnlyNdef, 
+                       _phLibNfc_GetMemoryDump, _phLibNfc_GetMemoryDumpCmd, _phLibNfc_GetMemoryDumpRsp, 
+                       _phLibNfc_GetMemoryDumpSeqComplete, _phLibNfc_GetTagInfo, 
+                       _phLibNfc_Mgt_ConfigRoutingTable, _phLibNfc_Mgt_ConfigureAssertionLogging, 
+                       _phLibNfc_Mgt_ConfigureDiscovery, _phLibNfc_Mgt_ConfigureDriver, 
+                       _phLibNfc_Mgt_ConfigureHsuParams, _phLibNfc_Mgt_ConfigureLogging, 
+                       _phLibNfc_Mgt_ConfigureMwLogging, _phLibNfc_Mgt_ConfigurePowerMode, 
+                       _phLibNfc_Mgt_DeInitialize, _phLibNfc_Mgt_GeneralNtfRegister, 
+                       _phLibNfc_Mgt_GetClrAssertRegs, _phLibNfc_Mgt_GetDebugInfo, 
+                       _phLibNfc_Mgt_GetFwVersion, _phLibNfc_Mgt_GetMwVersionStr, 
+                       _phLibNfc_Mgt_GetNfccParams, _phLibNfc_Mgt_GetstackCapabilities, 
+                       _phLibNfc_Mgt_IceFallPwrCtrl, _phLibNfc_Mgt_Initialize, _phLibNfc_Mgt_IoCtl, 
+                       _phLibNfc_Mgt_SetCE_ConfigParams, _phLibNfc_Mgt_SetNfccParams, 
+                       _phLibNfc_Mgt_SetRfSettings, _phLibNfc_Mgt_TriggerNfccAssertion, 
+                       _phLibNfc_Mgt_UnConfigureDriver, _phLibNfc_Mgt_ValidateEepromSettings, 
+                       _phLibNfc_Mgt_eSeSvddControl, _phLibNfc_Ndef_CheckNdef, _phLibNfc_Ndef_Read, 
+                       _phLibNfc_Ndef_Write, _phLibNfc_RemoteDev_CheckPresence, _phLibNfc_RemoteDev_Connect, 
+                       _phLibNfc_RemoteDev_Disconnect, _phLibNfc_RemoteDev_FormatNdef, 
+                       _phLibNfc_RemoteDev_NtfRegister, _phLibNfc_RemoteDev_NtfUnregister, 
+                       _phLibNfc_RemoteDev_Receive, _phLibNfc_RemoteDev_Send, _phLibNfc_RemoteDev_Transceive, 
+                       _phLibNfc_SE_GetSecureElementList, _phLibNfc_SE_NtfRegister, 
+                       _phLibNfc_SE_NtfUnregister, _phLibNfc_SE_RawTranseive, _phLibNfc_SE_Select, 
+                       _phLibNfc_SE_SetMode, _phLibNfc_TriggerRfFieldOnNtf, _phLibNfc_eSE_GetAtr, 
+                       _phLibNfc_eSE_Transceive, _tDnldSendPayload, _wFwVer, _wMwVer ]
+...

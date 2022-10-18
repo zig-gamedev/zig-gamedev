@@ -1,0 +1,84 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           5EFF7E7B-8B8D-35BA-A53E-F376AED1157B
+  - target:          x86_64-maccatalyst
+    value:           5EFF7E7B-8B8D-35BA-A53E-F376AED1157B
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           19C6D0AB-4DC9-3CAA-B8D6-8A3B29B10B3A
+  - target:          arm64e-maccatalyst
+    value:           19C6D0AB-4DC9-3CAA-B8D6-8A3B29B10B3A
+install-name:    '/usr/lib/libcoretls.dylib'
+current-version: 173
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _CipherSuiteCount, _CurvesCount, _KnownCipherSuites, _KnownCurves, 
+                       _KnownSigAlgs, _SigAlgsCount, _Ssl3Callouts, _Tls12Callouts, 
+                       _Tls1Callouts, _sslCipherSuiteGetKeyExchangeMethod, _sslCipherSuiteGetKeydataSize, 
+                       _sslCipherSuiteGetMacAlgorithm, _sslCipherSuiteGetMacSize, 
+                       _sslCipherSuiteGetMinSupportedTLSVersion, _sslCipherSuiteGetSymmetricCipherAlgorithm, 
+                       _sslCipherSuiteGetSymmetricCipherBlockIvSize, _sslCipherSuiteGetSymmetricCipherKeySize, 
+                       _tls_add_debug_logger, _tls_cache_cleanup, _tls_cache_create, 
+                       _tls_cache_delete_session_data, _tls_cache_destroy, _tls_cache_empty, 
+                       _tls_cache_load_session_data, _tls_cache_save_session_data, 
+                       _tls_cache_set_default_ttls, _tls_handshake_close, _tls_handshake_continue, 
+                       _tls_handshake_create, _tls_handshake_destroy, _tls_handshake_get_acceptable_dn_list, 
+                       _tls_handshake_get_ciphersuites, _tls_handshake_get_client_random, 
+                       _tls_handshake_get_config, _tls_handshake_get_fallback, _tls_handshake_get_false_start, 
+                       _tls_handshake_get_master_secret, _tls_handshake_get_max_protocol_version, 
+                       _tls_handshake_get_min_dh_group_size, _tls_handshake_get_min_protocol_version, 
+                       _tls_handshake_get_negotiated_cipherspec, _tls_handshake_get_negotiated_curve, 
+                       _tls_handshake_get_negotiated_ems, _tls_handshake_get_negotiated_protocol_version, 
+                       _tls_handshake_get_peer_acceptable_client_auth_type, _tls_handshake_get_peer_acceptable_dn_list, 
+                       _tls_handshake_get_peer_alpn_data, _tls_handshake_get_peer_certificates, 
+                       _tls_handshake_get_peer_hostname, _tls_handshake_get_peer_npn_data, 
+                       _tls_handshake_get_peer_ocsp_enabled, _tls_handshake_get_peer_ocsp_request_extensions, 
+                       _tls_handshake_get_peer_ocsp_responder_id_list, _tls_handshake_get_peer_ocsp_response, 
+                       _tls_handshake_get_peer_psk_identity, _tls_handshake_get_peer_psk_identity_hint, 
+                       _tls_handshake_get_peer_requested_ciphersuites, _tls_handshake_get_peer_requested_ecdh_curves, 
+                       _tls_handshake_get_peer_sct_enabled, _tls_handshake_get_peer_sct_list, 
+                       _tls_handshake_get_peer_signature_algorithms, _tls_handshake_get_server_identity_change, 
+                       _tls_handshake_get_server_random, _tls_handshake_get_session_match, 
+                       _tls_handshake_get_session_proposed, _tls_handshake_get_sni_hostname, 
+                       _tls_handshake_internal_client_random, _tls_handshake_internal_master_secret, 
+                       _tls_handshake_internal_prf, _tls_handshake_internal_server_random, 
+                       _tls_handshake_internal_set_master_secret_function, _tls_handshake_internal_set_session_ticket, 
+                       _tls_handshake_negotiate, _tls_handshake_process, _tls_handshake_request_renegotiation, 
+                       _tls_handshake_retransmit_timer_expired, _tls_handshake_send_alert, 
+                       _tls_handshake_set_acceptable_client_auth_type, _tls_handshake_set_acceptable_dn_list, 
+                       _tls_handshake_set_alpn_data, _tls_handshake_set_callbacks, 
+                       _tls_handshake_set_ciphersuites, _tls_handshake_set_client_auth, 
+                       _tls_handshake_set_client_auth_type, _tls_handshake_set_config, 
+                       _tls_handshake_set_curves, _tls_handshake_set_dh_parameters, 
+                       _tls_handshake_set_ems_enable, _tls_handshake_set_encrypt_rsa_public_key, 
+                       _tls_handshake_set_fallback, _tls_handshake_set_false_start, 
+                       _tls_handshake_set_identity, _tls_handshake_set_max_protocol_version, 
+                       _tls_handshake_set_min_dh_group_size, _tls_handshake_set_min_protocol_version, 
+                       _tls_handshake_set_mtu, _tls_handshake_set_npn_data, _tls_handshake_set_npn_enable, 
+                       _tls_handshake_set_ocsp_enable, _tls_handshake_set_ocsp_request_extensions, 
+                       _tls_handshake_set_ocsp_responder_id_list, _tls_handshake_set_ocsp_response, 
+                       _tls_handshake_set_peer_ec_public_key, _tls_handshake_set_peer_hostname, 
+                       _tls_handshake_set_peer_rsa_public_key, _tls_handshake_set_peer_trust, 
+                       _tls_handshake_set_psk_identity, _tls_handshake_set_psk_identity_hint, 
+                       _tls_handshake_set_psk_secret, _tls_handshake_set_renegotiation, 
+                       _tls_handshake_set_resumption, _tls_handshake_set_sct_enable, 
+                       _tls_handshake_set_sct_list, _tls_handshake_set_server_identity_change, 
+                       _tls_handshake_set_session_ticket_enabled, _tls_handshake_set_sigalgs, 
+                       _tls_handshake_set_user_agent, _tls_private_key_create, _tls_private_key_destroy, 
+                       _tls_private_key_ecdsa_create, _tls_private_key_get_context, 
+                       _tls_private_key_rsa_create, _tls_record_advance_read_cipher, 
+                       _tls_record_advance_write_cipher, _tls_record_create, _tls_record_decrypt, 
+                       _tls_record_decrypted_size, _tls_record_destroy, _tls_record_encrypt, 
+                       _tls_record_encrypted_size, _tls_record_get_header_size, _tls_record_init_pending_ciphers, 
+                       _tls_record_parse_header, _tls_record_parse_ssl2_header, _tls_record_rollback_write_cipher, 
+                       _tls_record_set_protocol_version, _tls_record_set_record_splitting, 
+                       _tls_stream_parser_create, _tls_stream_parser_destroy, _tls_stream_parser_parse ]
+...

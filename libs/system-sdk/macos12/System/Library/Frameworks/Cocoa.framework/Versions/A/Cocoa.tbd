@@ -1,0 +1,16 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           DDC94193-6A78-3F24-AE77-1667F2FD66B7
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           A715DD7B-6CD2-34D5-962A-E9EFF7E63840
+install-name:    '/System/Library/Frameworks/Cocoa.framework/Versions/A/Cocoa'
+current-version: 23
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, arm64-macos ]
+    symbols:         [ _CocoaVersionNumber, _CocoaVersionString ]
+...

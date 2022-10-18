@@ -1,0 +1,34 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           6C34EA32-0C1D-35E9-BB3B-32D8185F3C4E
+  - target:          x86_64-maccatalyst
+    value:           6C34EA32-0C1D-35E9-BB3B-32D8185F3C4E
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           3701D756-7023-30C0-9A36-852971092AA9
+  - target:          arm64e-maccatalyst
+    value:           3701D756-7023-30C0-9A36-852971092AA9
+install-name:    '/usr/lib/system/libsystem_notify.dylib'
+current-version: 301
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __notify_fork_child, _notify_cancel, _notify_check, _notify_dump_status, 
+                       _notify_get_event, _notify_get_state, _notify_is_valid_token, 
+                       _notify_monitor_file, _notify_peek, _notify_post, _notify_register_check, 
+                       _notify_register_dispatch, _notify_register_file_descriptor, 
+                       _notify_register_mach_port, _notify_register_plain, _notify_register_signal, 
+                       _notify_resume, _notify_resume_pid, _notify_set_options, _notify_set_state, 
+                       _notify_simple_post, _notify_suspend, _notify_suspend_pid ]
+...

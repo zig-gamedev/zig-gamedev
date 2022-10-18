@@ -1,0 +1,22 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           ADE05D86-8D68-39DA-A91E-4C8048E1B6C5
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           7F215848-BD90-3C4E-B27B-96AAF6C0AA03
+install-name:    '/usr/lib/libpam.1.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _dlfailure, _libopenpam, _misc_conv, _pam_acct_mgmt, _pam_authenticate, 
+                       _pam_chauthtok, _pam_close_session, _pam_end, _pam_get_data, 
+                       _pam_get_item, _pam_get_pass, _pam_get_user, _pam_getenv, 
+                       _pam_getenvlist, _pam_open_session, _pam_prompt, _pam_putenv, 
+                       _pam_set_data, _pam_set_item, _pam_setcred, _pam_start, _pam_strerror, 
+                       _xlate_pam_shim_authenticate_flags, _xlate_pam_shim_chauthtok_flags, 
+                       _xlate_pam_shim_item_type, _xlate_pam_shim_retval, _xlate_pam_shim_session_flags, 
+                       _xlate_pam_shim_setcred_flags ]
+...

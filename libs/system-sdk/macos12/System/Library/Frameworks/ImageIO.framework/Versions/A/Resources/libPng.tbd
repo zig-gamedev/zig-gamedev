@@ -1,0 +1,59 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, x86_64h-macos, x86_64h-maccatalyst, 
+                   arm64-macos, arm64-maccatalyst, arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           7762392E-3A68-3B8C-9D25-1CD908F1C989
+  - target:          x86_64-maccatalyst
+    value:           7762392E-3A68-3B8C-9D25-1CD908F1C989
+  - target:          x86_64h-macos
+    value:           D9D73A38-33A6-3724-BD92-C4ACE4A413DB
+  - target:          x86_64h-maccatalyst
+    value:           D9D73A38-33A6-3724-BD92-C4ACE4A413DB
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           A510EE5E-C6D6-3CCE-AD6E-16784DBADFB3
+  - target:          arm64e-maccatalyst
+    value:           A510EE5E-C6D6-3CCE-AD6E-16784DBADFB3
+install-name:    '/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib'
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, x86_64h-maccatalyst, x86_64h-macos, 
+                       arm64e-maccatalyst, arm64e-macos, arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __cg_png_cleanup_for_write_start_row, __cg_png_create_info_struct, 
+                       __cg_png_create_read_struct, __cg_png_create_write_struct, 
+                       __cg_png_destroy_info_struct, __cg_png_destroy_read_struct, 
+                       __cg_png_destroy_write_struct, __cg_png_error, __cg_png_get_PLTE, 
+                       __cg_png_get_appleflags, __cg_png_get_bit_depth, __cg_png_get_cHRM, 
+                       __cg_png_get_channels, __cg_png_get_color_type, __cg_png_get_do_filter, 
+                       __cg_png_get_eXIf_1, __cg_png_get_first_frame_is_hidden, __cg_png_get_flags, 
+                       __cg_png_get_gAMA, __cg_png_get_height, __cg_png_get_iCCP, 
+                       __cg_png_get_image_height, __cg_png_get_image_width, __cg_png_get_interlace_type, 
+                       __cg_png_get_io_ptr, __cg_png_get_next_frame_fcTL, __cg_png_get_pixel_aspect_ratio, 
+                       __cg_png_get_rowbytes, __cg_png_get_sRGB, __cg_png_get_text, 
+                       __cg_png_get_unknown_chunks, __cg_png_get_user_chunk_ptr, 
+                       __cg_png_get_valid, __cg_png_get_x_pixels_per_meter, __cg_png_get_y_pixels_per_meter, 
+                       __cg_png_get_zstream, __cg_png_insert_iDOTBreak, __cg_png_read_chunk_header, 
+                       __cg_png_read_end, __cg_png_read_frame_head, __cg_png_read_info, 
+                       __cg_png_read_row, __cg_png_read_update_info, __cg_png_reset_write, 
+                       __cg_png_set_IHDR, __cg_png_set_PLTE, __cg_png_set_acTL, __cg_png_set_add_alpha, 
+                       __cg_png_set_appleflags, __cg_png_set_benign_errors, __cg_png_set_bgr, 
+                       __cg_png_set_cHRM, __cg_png_set_compression_level, __cg_png_set_compression_strategy, 
+                       __cg_png_set_crc_action, __cg_png_set_do_filter, __cg_png_set_eXIf_1, 
+                       __cg_png_set_expand, __cg_png_set_expand_gray_1_2_4_to_8, 
+                       __cg_png_set_filler, __cg_png_set_filter, __cg_png_set_flags, 
+                       __cg_png_set_gAMA, __cg_png_set_gamma, __cg_png_set_iCCP, 
+                       __cg_png_set_idat_size, __cg_png_set_interlace_handling, __cg_png_set_keep_unknown_chunks, 
+                       __cg_png_set_option, __cg_png_set_pHYs, __cg_png_set_palette_to_rgb, 
+                       __cg_png_set_read_fn, __cg_png_set_read_user_chunk_fn, __cg_png_set_read_user_transform_fn, 
+                       __cg_png_set_row_number, __cg_png_set_sRGB, __cg_png_set_scale_16, 
+                       __cg_png_set_swap, __cg_png_set_tRNS, __cg_png_set_tRNS_to_alpha, 
+                       __cg_png_set_text, __cg_png_set_write_fn, __cg_png_write_chunk, 
+                       __cg_png_write_chunk_data, __cg_png_write_chunk_end, __cg_png_write_chunk_header, 
+                       __cg_png_write_complete_chunk, __cg_png_write_end, __cg_png_write_flush, 
+                       __cg_png_write_frame_head, __cg_png_write_frame_tail, __cg_png_write_info, 
+                       __cg_png_write_row, __cg_png_write_start_row ]
+...

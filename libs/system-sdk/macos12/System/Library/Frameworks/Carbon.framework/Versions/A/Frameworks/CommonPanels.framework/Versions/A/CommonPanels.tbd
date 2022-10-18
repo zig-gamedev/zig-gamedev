@@ -1,0 +1,45 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           77D1909A-B552-3B89-BAA3-4968DBE58A3E
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           83145A1E-897C-34E0-8378-6F14F11E851E
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/CommonPanels.framework/Versions/A/CommonPanels'
+current-version: 101
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AppKit ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _CCP_FontPanelClose, _CCP_FontPanelGetSelection, _CCP_FontPanelIsVisible, 
+                       _CCP_FontPanelOpen, _CCP_FontPanelSelectFonts, _CCP_NPickColor, 
+                       _CMCalibrateDisplay, _Call_CommonCocoaPanels_NPickColor, _CommonPanelsVersionNumber, 
+                       _CommonPanelsVersionString, _DisposeCalibrateEventUPP, _DisposeCalibrateUPP, 
+                       _DisposeCanCalibrateUPP, _DisposeNColorChangedUPP, _FCAddCollection, 
+                       _FCAddFontDescriptorToCollection, _FCCopyCollectionNames, 
+                       _FCCopyFontDescriptorsInCollection, _FCFontDescriptorCreateWithFontAttributes, 
+                       _FCFontDescriptorCreateWithName, _FCRemoveCollection, _FCRemoveFontDescriptorFromCollection, 
+                       _FPIsFontPanelVisible, _FPShowHideFontPanel, _GetColor, _GetHandleApplicationEventsUPP, 
+                       _GetHandleWinEventsUPP, _InvokeCalibrateEventUPP, _InvokeCalibrateUPP, 
+                       _InvokeCanCalibrateUPP, _InvokeNColorChangedUPP, _LoadNSTypographyBundle, 
+                       _NPickColor, _NewCalibrateEventUPP, _NewCalibrateUPP, _NewCanCalibrateUPP, 
+                       _NewNColorChangedUPP, _SetFontInfoForSelection, _SoftLinkingGetFunctionPointerFromBundleInDirectory, 
+                       _UserWantsColorPanelFromCommonCocoaPanels, __SoftLinkingLoadBundleFromLocation, 
+                       _gApplicationDeactivated, _gApplicationHandler, _gCallingApp, 
+                       _gCallingCCP, _gEventTarget, _gFontPanelInitialized, _gFontPanelRef, 
+                       _gHandler, _gNSTypographyBundle, _gSelFontInfo, _kFCFontCGColorAttribute, 
+                       _kFCFontFaceAttribute, _kFCFontFamilyAttribute, _kFCFontNameAttribute, 
+                       _kFCFontSizeAttribute, _kFCFontVisibleNameAttribute, _kFontPanelATSUFontIDKey, 
+                       _kFontPanelAttributeSizesKey, _kFontPanelAttributeTagsKey, 
+                       _kFontPanelAttributeValuesKey, _kFontPanelAttributesKey, _kFontPanelBackgroundColorAttributeName, 
+                       _kFontPanelDocumentAttributesKey, _kFontPanelFeatureSelectorsKey, 
+                       _kFontPanelFeatureTypesKey, _kFontPanelMouseTrackingState, 
+                       _kFontPanelVariationAxesKey, _kFontPanelVariationValuesKey ]
+...

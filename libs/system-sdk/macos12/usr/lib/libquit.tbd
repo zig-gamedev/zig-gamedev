@@ -1,0 +1,25 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           68DB88D5-1289-3740-A60E-0FABAA8BF809
+  - target:          x86_64-maccatalyst
+    value:           68DB88D5-1289-3740-A60E-0FABAA8BF809
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           ECC8E981-9809-3C3B-8791-57E257B1C473
+  - target:          arm64e-maccatalyst
+    value:           ECC8E981-9809-3C3B-8791-57E257B1C473
+install-name:    '/usr/lib/libquit.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _LQCachePort, _LQForceQuit, _LQReportCpuResource, _LQReportPotentialHang, 
+                       _LQReportPotentialSpin, _LQReportStuckApp, _LQReportUnstuckApp, 
+                       _LQReportWakeupsResource ]
+...

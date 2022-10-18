@@ -1,0 +1,16 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           D113675E-417A-3E76-B9BE-A3CD21D5291D
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           BDC907D6-42A3-3D37-93B5-190B8918B61F
+install-name:    '/usr/lib/libquic.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _quic_enable_nw_verbose_logging, _quic_enable_verbose_logging, 
+                       _quic_fillout_definition_callbacks, _quic_shorthand_describe_entry ]
+...

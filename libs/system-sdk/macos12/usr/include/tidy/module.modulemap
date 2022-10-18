@@ -1,0 +1,23 @@
+module tidy [system] [extern_c] {
+    link "tidy"
+
+    module buffio {
+        header "buffio.h"
+        export *
+    }
+
+    module platform {
+        header "platform.h"
+        export *
+    }
+
+    module tidy {
+        header "tidy.h"
+        export *
+    }
+
+    module tidyenum {
+        header "tidyenum.h"
+        export *
+    }
+}

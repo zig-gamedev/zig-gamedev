@@ -1,0 +1,45 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           CC68680E-753A-30C3-934B-926A7E227595
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           2D078166-C593-3BF1-AB07-A4CEECDC2DC8
+install-name:    '/usr/lib/ACIPCBTLib.dylib'
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, arm64-macos ]
+    symbols:         [ __ZN12ACIPCBTClass10writeAsyncEPKvjPFvPviS2_ES2_, __ZN12ACIPCBTClass12readRegisterEjPvPj, 
+                       __ZN12ACIPCBTClass14clearIteratorsEv, __ZN12ACIPCBTClass14sendImageAsyncEPKvjPFvPviS2_S2_ES2_, 
+                       __ZN12ACIPCBTClass16interfaceMatchedEPvj, __ZN12ACIPCBTClass17abortChannelAsyncE14acipcDirectionPFvPviES1_, 
+                       __ZN12ACIPCBTClass17startChannelAsyncE14acipcDirectionPFvPviES1_, 
+                       __ZN12ACIPCBTClass19setNotificationPortEv, __ZN12ACIPCBTClass20notificationCallbackEPvjjS0_, 
+                       __ZN12ACIPCBTClass21clearNotificationPortEv, __ZN12ACIPCBTClass25setUpNotificationCallbackEj, 
+                       __ZN12ACIPCBTClass27cleanUpNotificationCallbackEv, __ZN12ACIPCBTClass4openEj, 
+                       __ZN12ACIPCBTClass4readEPvPj, __ZN12ACIPCBTClass4stopEP16dispatch_group_s, 
+                       __ZN12ACIPCBTClass5closeEv, __ZN12ACIPCBTClass5startEPKcP11__CFRunLoopU13block_pointerFvjES5_U13block_pointerFv14acipcErrorTypejiE, 
+                       __ZN12ACIPCBTClass5startEPKcP16dispatch_queue_sU13block_pointerFvjES5_U13block_pointerFv14acipcErrorTypejiE, 
+                       __ZN12ACIPCBTClass5writeEPKvj, __ZN12ACIPCBTClass7open_nlEj, 
+                       __ZN12ACIPCBTClass8close_nlEv, __ZN12ACIPCBTClass8start_nlEPKcP11__CFRunLoopP16dispatch_queue_sU13block_pointerFvjES7_U13block_pointerFv14acipcErrorTypejiE, 
+                       __ZN12ACIPCBTClass9readAsyncEPvjPFvS0_iS0_ES0_, __ZN12ACIPCBTClass9sendImageEPKvjPj, 
+                       __ZN12ACIPCBTClassC1Ev, __ZN12ACIPCBTClassC2Ev, __ZN12ACIPCBTClassD1Ev, 
+                       __ZN12ACIPCBTClassD2Ev, __ZN19ACIPCBTControlClass10loggerTuneEjjPvS0_, 
+                       __ZN19ACIPCBTControlClass13readLogsAsyncEPvjbPFvS0_iS0_ES0_, 
+                       __ZN19ACIPCBTControlClass14waitforServiceEv, __ZN19ACIPCBTControlClass19setNotificationPortEv, 
+                       __ZN19ACIPCBTControlClass21clearNotificationPortEv, __ZN19ACIPCBTControlClass21getLastKnownBootStageEPj, 
+                       __ZN19ACIPCBTControlClass23generalInterestCallbackEPvjjS0_, 
+                       __ZN19ACIPCBTControlClass24getLogInternalBufferSizeEPj, __ZN19ACIPCBTControlClass24setEventNotificationPortEv, 
+                       __ZN19ACIPCBTControlClass25registerEventNotificationEP11__CFRunLoopP17ACIPCControlEvent, 
+                       __ZN19ACIPCBTControlClass25registerEventNotificationEP16dispatch_queue_sP17ACIPCControlEvent, 
+                       __ZN19ACIPCBTControlClass26clearEventNotificationPortEv, __ZN19ACIPCBTControlClass27deregisterEventNotificationEP16dispatch_group_s, 
+                       __ZN19ACIPCBTControlClass28registerEventNotification_nlEP11__CFRunLoopP16dispatch_queue_sP17ACIPCControlEvent, 
+                       __ZN19ACIPCBTControlClass30deregisterEventNotification_nlEP16dispatch_group_s, 
+                       __ZN19ACIPCBTControlClass4openEP11__CFRunLoop, __ZN19ACIPCBTControlClass4openEP16dispatch_queue_s, 
+                       __ZN19ACIPCBTControlClass4stopEv, __ZN19ACIPCBTControlClass5closeEv, 
+                       __ZN19ACIPCBTControlClass5startEv, __ZN19ACIPCBTControlClass7open_nlEP11__CFRunLoopP16dispatch_queue_s, 
+                       __ZN19ACIPCBTControlClass8close_nlEv, __ZN19ACIPCBTControlClassC1Ev, 
+                       __ZN19ACIPCBTControlClassC2Ev, __ZN19ACIPCBTControlClassD1Ev, 
+                       __ZN19ACIPCBTControlClassD2Ev ]
+...

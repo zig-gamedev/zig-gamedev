@@ -1,0 +1,55 @@
+framework module Carbon [extern_c] {
+  umbrella header "Carbon.h"
+
+  export *
+  module * { export * }
+
+  framework module CommonPanels {
+    umbrella header "CommonPanels.h"
+    export *
+    module * { export * }
+  }
+
+  framework module Help {
+    umbrella header "Help.h"
+    export *
+    module * { export * }
+  }
+
+  framework module HIToolbox {
+    umbrella header "HIToolbox.h"
+    export *
+    module * { export * }
+  }
+
+  framework module ImageCapture {
+    umbrella header "ImageCapture.h"
+    export *
+    module * { export * }
+  }
+
+  framework module OpenScripting {
+    umbrella header "OpenScripting.h"
+    export *
+    module * { export * }
+  }
+
+  framework module Print {
+    umbrella header "Print.h"
+    export *
+    module * { export * }
+  }
+
+  framework module SecurityHI {
+    umbrella header "SecurityHI.h"
+    export *
+    module * { export * }
+  }
+
+  framework module SpeechRecognition {
+    umbrella header "SpeechRecognition.h"
+    export *
+    module * { export * }
+  }
+
+}

@@ -1,0 +1,189 @@
+// -*- C++ -*-
+//===---------------------------- cstdio ----------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_CSTDIO
+#define _LIBCPP_CSTDIO
+
+/*
+    cstdio synopsis
+
+Macros:
+
+    BUFSIZ
+    EOF
+    FILENAME_MAX
+    FOPEN_MAX
+    L_tmpnam
+    NULL
+    SEEK_CUR
+    SEEK_END
+    SEEK_SET
+    TMP_MAX
+    _IOFBF
+    _IOLBF
+    _IONBF
+    stderr
+    stdin
+    stdout
+
+namespace std
+{
+
+Types:
+
+FILE
+fpos_t
+size_t
+
+int remove(const char* filename);
+int rename(const char* old, const char* new);
+FILE* tmpfile(void);
+char* tmpnam(char* s);
+int fclose(FILE* stream);
+int fflush(FILE* stream);
+FILE* fopen(const char* restrict filename, const char* restrict mode);
+FILE* freopen(const char* restrict filename, const char * restrict mode,
+              FILE * restrict stream);
+void setbuf(FILE* restrict stream, char* restrict buf);
+int setvbuf(FILE* restrict stream, char* restrict buf, int mode, size_t size);
+int fprintf(FILE* restrict stream, const char* restrict format, ...);
+int fscanf(FILE* restrict stream, const char * restrict format, ...);
+int printf(const char* restrict format, ...);
+int scanf(const char* restrict format, ...);
+int snprintf(char* restrict s, size_t n, const char* restrict format, ...);    // C99
+int sprintf(char* restrict s, const char* restrict format, ...);
+int sscanf(const char* restrict s, const char* restrict format, ...);
+int vfprintf(FILE* restrict stream, const char* restrict format, va_list arg);
+int vfscanf(FILE* restrict stream, const char* restrict format, va_list arg);  // C99
+int vprintf(const char* restrict format, va_list arg);
+int vscanf(const char* restrict format, va_list arg);                          // C99
+int vsnprintf(char* restrict s, size_t n, const char* restrict format,         // C99
+              va_list arg);
+int vsprintf(char* restrict s, const char* restrict format, va_list arg);
+int vsscanf(const char* restrict s, const char* restrict format, va_list arg); // C99
+int fgetc(FILE* stream);
+char* fgets(char* restrict s, int n, FILE* restrict stream);
+int fputc(int c, FILE* stream);
+int fputs(const char* restrict s, FILE* restrict stream);
+int getc(FILE* stream);
+int getchar(void);
+char* gets(char* s);  // removed in C++14
+int putc(int c, FILE* stream);
+int putchar(int c);
+int puts(const char* s);
+int ungetc(int c, FILE* stream);
+size_t fread(void* restrict ptr, size_t size, size_t nmemb,
+             FILE* restrict stream);
+size_t fwrite(const void* restrict ptr, size_t size, size_t nmemb,
+              FILE* restrict stream);
+int fgetpos(FILE* restrict stream, fpos_t* restrict pos);
+int fseek(FILE* stream, long offset, int whence);
+int fsetpos(FILE*stream, const fpos_t* pos);
+long ftell(FILE* stream);
+void rewind(FILE* stream);
+void clearerr(FILE* stream);
+int feof(FILE* stream);
+int ferror(FILE* stream);
+void perror(const char* s);
+
+}  // std
+*/
+
+#include <__config>
+#include <stdio.h>
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#pragma GCC system_header
+#endif
+
+_LIBCPP_BEGIN_NAMESPACE_STD
+
+#if !defined(_LIBCPP_DRIVERKIT_LIBC)
+
+_LIBCPP_USING_IF_EXISTS(::FILE);
+_LIBCPP_USING_IF_EXISTS(::fpos_t);
+using ::size_t;
+
+_LIBCPP_USING_IF_EXISTS(::fclose);
+_LIBCPP_USING_IF_EXISTS(::fflush);
+_LIBCPP_USING_IF_EXISTS(::setbuf);
+_LIBCPP_USING_IF_EXISTS(::setvbuf);
+_LIBCPP_USING_IF_EXISTS(::fprintf);
+_LIBCPP_USING_IF_EXISTS(::fscanf);
+_LIBCPP_USING_IF_EXISTS(::snprintf);
+_LIBCPP_USING_IF_EXISTS(::sprintf);
+_LIBCPP_USING_IF_EXISTS(::sscanf);
+_LIBCPP_USING_IF_EXISTS(::vfprintf);
+_LIBCPP_USING_IF_EXISTS(::vfscanf);
+_LIBCPP_USING_IF_EXISTS(::vsscanf);
+_LIBCPP_USING_IF_EXISTS(::vsnprintf);
+_LIBCPP_USING_IF_EXISTS(::vsprintf);
+_LIBCPP_USING_IF_EXISTS(::fgetc);
+_LIBCPP_USING_IF_EXISTS(::fgets);
+_LIBCPP_USING_IF_EXISTS(::fputc);
+_LIBCPP_USING_IF_EXISTS(::fputs);
+_LIBCPP_USING_IF_EXISTS(::getc);
+_LIBCPP_USING_IF_EXISTS(::putc);
+_LIBCPP_USING_IF_EXISTS(::ungetc);
+_LIBCPP_USING_IF_EXISTS(::fread);
+_LIBCPP_USING_IF_EXISTS(::fwrite);
+#ifndef _LIBCPP_HAS_NO_FGETPOS_FSETPOS
+_LIBCPP_USING_IF_EXISTS(::fgetpos);
+#endif
+_LIBCPP_USING_IF_EXISTS(::fseek);
+#ifndef _LIBCPP_HAS_NO_FGETPOS_FSETPOS
+_LIBCPP_USING_IF_EXISTS(::fsetpos);
+#endif
+_LIBCPP_USING_IF_EXISTS(::ftell);
+_LIBCPP_USING_IF_EXISTS(::rewind);
+_LIBCPP_USING_IF_EXISTS(::clearerr);
+_LIBCPP_USING_IF_EXISTS(::feof);
+_LIBCPP_USING_IF_EXISTS(::ferror);
+_LIBCPP_USING_IF_EXISTS(::perror);
+
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
+_LIBCPP_USING_IF_EXISTS(::fopen);
+_LIBCPP_USING_IF_EXISTS(::freopen);
+#if !defined(_LIBCPP_ON_RTKIT)
+using ::remove; // TODO: Regularize this once using_if_exists can handle it
+#endif
+_LIBCPP_USING_IF_EXISTS(::rename);
+_LIBCPP_USING_IF_EXISTS(::tmpfile);
+_LIBCPP_USING_IF_EXISTS(::tmpnam);
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDIN
+_LIBCPP_USING_IF_EXISTS(::getchar);
+#if _LIBCPP_STD_VER <= 11 && !defined(_LIBCPP_C_HAS_NO_GETS)
+_LIBCPP_USING_IF_EXISTS(::gets);
+#endif
+_LIBCPP_USING_IF_EXISTS(::scanf);
+_LIBCPP_USING_IF_EXISTS(::vscanf);
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDOUT
+_LIBCPP_USING_IF_EXISTS(::printf);
+_LIBCPP_USING_IF_EXISTS(::putchar);
+_LIBCPP_USING_IF_EXISTS(::puts);
+_LIBCPP_USING_IF_EXISTS(::vprintf);
+#endif
+
+#else // _LIBCPP_DRIVERKIT_LIBC
+
+using ::size_t;
+_LIBCPP_USING_IF_EXISTS(::snprintf);
+_LIBCPP_USING_IF_EXISTS(::sscanf);
+_LIBCPP_USING_IF_EXISTS(::vsscanf);
+_LIBCPP_USING_IF_EXISTS(::vsnprintf);
+
+#endif // _LIBCPP_DRIVERKIT_LIBC
+
+_LIBCPP_END_NAMESPACE_STD
+
+#endif  // _LIBCPP_CSTDIO

@@ -1,0 +1,38 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           D3126127-3E0F-3306-AAA1-3B1FE96B2C46
+  - target:          x86_64-maccatalyst
+    value:           D3126127-3E0F-3306-AAA1-3B1FE96B2C46
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           6DF564E8-8C06-3984-BCA6-3B79DD4F1162
+  - target:          arm64e-maccatalyst
+    value:           6DF564E8-8C06-3984-BCA6-3B79DD4F1162
+install-name:    '/usr/lib/libpam.2.dylib'
+current-version: 3
+compatibility-version: 3
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __openpam_debug, __openpam_log, __pam_apple_err_name, __pam_control_flag_name, 
+                       __pam_err_name, __pam_facility_name, __pam_func_name, __pam_item_name, 
+                       __pam_sm_func_name, _misc_conv, _openpam_borrow_cred, _openpam_clear_chains, 
+                       _openpam_configure, _openpam_dispatch, _openpam_dynamic, _openpam_findenv, 
+                       _openpam_free_data, _openpam_free_envlist, _openpam_get_option, 
+                       _openpam_load_module, _openpam_nullconv, _openpam_readline, 
+                       _openpam_release_module, _openpam_restore_cred, _openpam_set_option, 
+                       _openpam_ttyconv, _openpam_ttyconv_timeout, _pam_acct_mgmt, 
+                       _pam_authenticate, _pam_chauthtok, _pam_close_session, _pam_end, 
+                       _pam_error, _pam_get_authtok, _pam_get_data, _pam_get_item, 
+                       _pam_get_user, _pam_getenv, _pam_getenvlist, _pam_info, _pam_open_session, 
+                       _pam_prompt, _pam_putenv, _pam_set_data, _pam_set_item, _pam_setcred, 
+                       _pam_setenv, _pam_start, _pam_strerror, _pam_unsetenv, _pam_verror, 
+                       _pam_vinfo, _pam_vprompt ]
+...

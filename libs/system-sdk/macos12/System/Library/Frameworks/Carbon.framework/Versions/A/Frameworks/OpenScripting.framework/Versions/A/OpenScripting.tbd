@@ -1,0 +1,59 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           7094B0DD-B83F-325A-A2DA-0788DC2E02CC
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           63B3CFC6-6CE7-37BE-BFA7-D3871AAB1E5C
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/OpenScripting.framework/Versions/A/OpenScripting'
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _ASCopySourceAttributes, _ASGetSourceStyleNames, _ASGetSourceStyles, 
+                       _ASInit, _ASSetSourceAttributes, _ASSetSourceStyles, _OSAAddStorageType, 
+                       _OSAAppletShowStartupScreenKey, _OSAAppletStayOpenKey, _OSAAuthorizeEvent, 
+                       _OSAAvailableDialectCodeList, _OSAAvailableDialects, _OSACoerceFromDesc, 
+                       _OSACoerceToDesc, _OSACompile, _OSACompileExecute, _OSACopyDisplayString, 
+                       _OSACopyID, _OSACopyScript, _OSACopyScriptingDefinition, _OSACopyScriptingDefinitionFromFile, 
+                       _OSACopyScriptingDefinitionFromURL, _OSACopySourceString, 
+                       _OSACopyURLForLibraryInDomainURL, _OSACopyURLForLibraryInFolderURL, 
+                       _OSACopyURLForLibraryInScriptURL, _OSACopyURLForLibraryName, 
+                       _OSACreateFile, _OSADebuggerCreateSession, _OSADebuggerDisposeCallFrame, 
+                       _OSADebuggerDisposeSession, _OSADebuggerGetBreakpoint, _OSADebuggerGetCallFrameState, 
+                       _OSADebuggerGetCurrentCallFrame, _OSADebuggerGetDefaultBreakpoint, 
+                       _OSADebuggerGetPreviousCallFrame, _OSADebuggerGetSessionState, 
+                       _OSADebuggerGetStatementRanges, _OSADebuggerGetVariable, _OSADebuggerSessionStep, 
+                       _OSADebuggerSetBreakpoint, _OSADebuggerSetVariable, _OSADisplay, 
+                       _OSADispose, _OSADoEvent, _OSADoScript, _OSADoScriptFile, 
+                       _OSAExecute, _OSAExecuteEvent, _OSAFindEventHandler, _OSAGenericToRealID, 
+                       _OSAGetActiveProc, _OSAGetCreateProc, _OSAGetCreateProgressProc, 
+                       _OSAGetCurrentDialect, _OSAGetDefaultScriptingComponent, _OSAGetDialectInfo, 
+                       _OSAGetEventHandler, _OSAGetHandler, _OSAGetHandlerNames, 
+                       _OSAGetProperty, _OSAGetPropertyNames, _OSAGetReleaseProgressProc, 
+                       _OSAGetResumeDispatchProc, _OSAGetScriptDataFromURL, _OSAGetScriptInfo, 
+                       _OSAGetScriptingComponent, _OSAGetScriptingComponentFromStored, 
+                       _OSAGetSendProc, _OSAGetSource, _OSAGetStorageType, _OSAGetSysTerminology, 
+                       _OSAInstallEventHandler, _OSAInstallGestaltValues, _OSAInstallScriptingDescCoercions, 
+                       _OSAInstallScriptingEventHandlers, _OSAInstallStdDescCoercions, 
+                       _OSAInstallStdEventHandlers, _OSAInstallStdPtrCoercions, _OSAInstallUnitPtrCoercions, 
+                       _OSAIsEventAuthorizationRequested, _OSAIsEventAuthorized, 
+                       _OSAIsScriptableBundle, _OSAIsScriptableRef, _OSAIsScriptableURL, 
+                       _OSALoad, _OSALoadExecute, _OSALoadExecuteFile, _OSALoadFile, 
+                       _OSALoadScriptData, _OSALoadScriptDataFromFile, _OSAMakeContext, 
+                       _OSARealToGenericID, _OSARecordEvent, _OSARemoveEventHandler, 
+                       _OSARemoveStorageType, _OSARequestEventAuthorization, _OSAScriptError, 
+                       _OSAScriptingComponentName, _OSASetActiveProc, _OSASetCreateProc, 
+                       _OSASetCreateProgressProc, _OSASetCurrentDialect, _OSASetDefaultScriptingComponent, 
+                       _OSASetDefaultTarget, _OSASetHandler, _OSASetProperty, _OSASetReleaseProgressProc, 
+                       _OSASetResumeDispatchProc, _OSASetScriptInfo, _OSASetSendProc, 
+                       _OSAStartRecording, _OSAStopRecording, _OSAStore, _OSAStoreFile, 
+                       _OSAStoreScriptDataToFile, _OSAStoreScriptDataToNewFile, __HandleGDUT, 
+                       __OSACopyDisplayString, __OSACopyScriptingDefinitionFromFile, 
+                       __OSACopySourceString, __OSACreateURL, __OSADoScriptURL, __OSALoadExecuteURL, 
+                       __OSALoadURL, __OSAStoreScriptDataToURL, __OSAStoreURL ]
+...

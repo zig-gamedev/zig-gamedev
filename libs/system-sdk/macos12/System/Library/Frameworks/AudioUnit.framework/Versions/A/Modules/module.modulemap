@@ -1,0 +1,13 @@
+framework module AudioUnit [extern_c] [system] {
+  umbrella header "AudioUnit.h"
+
+  export *
+  module * { export * }
+  
+  explicit module AudioUnitCarbonView { header "AudioUnitCarbonView.h" export * }
+
+  explicit module AUCocoaUIView {
+    header "AUCocoaUIView.h"
+    export *
+  }
+}

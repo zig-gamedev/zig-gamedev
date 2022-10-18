@@ -1,0 +1,631 @@
+/*
+ * Copyright (c) 2018-2020 Apple Inc. All rights reserved.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_START@
+ *
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. The rights granted to you under the License
+ * may not be used to create, or enable the creation or redistribution of,
+ * unlawful or unlicensed copies of an Apple operating system, or to
+ * circumvent, violate, or enable the circumvention or violation of, any
+ * terms of an Apple operating system software license agreement.
+ *
+ * Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this file.
+ *
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
+ */
+
+#if !__IIG
+#if KERNEL
+#include <IOKit/hidevent/IOHIDEventService.h>
+#endif
+#endif
+
+#ifndef _HIDDRIVERKIT_IOHIDEVENTSERVICE_H
+#define _HIDDRIVERKIT_IOHIDEVENTSERVICE_H
+
+#include <DriverKit/OSAction.iig>
+#include <DriverKit/IOService.iig>
+#include <DriverKit/IOTypes.h>
+
+class IOBufferMemoryDescriptor;
+class IOHIDEvent;
+
+typedef struct IOHIDDigitizerStylusData IOHIDDigitizerStylusData;
+typedef struct IOHIDDigitizerTouchData IOHIDDigitizerTouchData;
+
+
+class KERNEL IOHIDEventService : public IOService
+{
+
+public:
+    /*!
+     * @function init
+     *
+     * @abstract
+     * Initializes IOHIDEventService object.
+     *
+     * @return
+     * true on success.
+     */
+    virtual bool init() override;
+
+    /*!
+     * @function free
+     *
+     * @abstract
+     * frees the object.
+     */
+    virtual void free() override;
+
+    /*!
+     * @function Start
+     *
+     * @abstract
+     * Function called after initialization to start the IOService.
+     *
+     * @discussion
+     * Override this function to perform any needed driver initialization before
+     * main functionality begins. Calling the parent's Start in a child's Start is required.
+     * If the parent's Start returns an error or the child encounters an error in Start after
+     * the parent's Start has been called, Stop must immediately be called.
+     *
+     * @param provider
+     * The IOService that is provider for this object.
+     *
+     * @return
+     * returns kIOReturnSuccess on success.
+     */
+    virtual kern_return_t Start(IOService * provider) override;
+
+    /*!
+     * @function Stop
+     *
+     * @abstract
+     * Function called during termination to stop the IOService.
+     *
+     * @discussion
+     * Override this function to perform any needed driver teardown before
+     * the process exits. Calling the parent's Stop in a child's Stop is required.
+     * Do not call Stop if the parent's Start has not yet been called.
+     * Stop should only be called once.
+     *
+     * @param provider
+     * The IOService that is provider for this object.
+     *
+     * @return
+     * returns kIOReturnSuccess on success.
+     */
+    virtual kern_return_t Stop(IOService * provider) override;
+
+    /*!
+     * @function DispatchKeyboardEvent
+     *
+     * @abstract
+     * Dispatches a keyboard event with the provided usage page, usage, and
+     * value.
+     *
+     * @param timestamp
+     * The timestamp of the event.
+     *
+     * @param usagePage
+     * The usage page. Usage pages are defined in
+     * <IOKit/hid/IOHIDUsageTables.h>.
+     *
+     * @param usage
+     * The usage. Usages are defined in <IOKit/hid/IOHIDUsageTables.h>.
+     *
+     * @param value
+     * The value.
+     *
+     * @param options
+     * Optional option bits. Options are defined in the IOHIDKeyboardEventOptions
+     * enumerator in <IOKit/hid/IOHIDKeys.h>
+     *
+     * @param repeat
+     * Default behavior for keyboard events is to repeat keys if the key has been
+     * held down for a certain amount of time defined in system preferences. Pass
+     * in false to not apply key repeat logic to this event.
+     */
+    virtual kern_return_t dispatchKeyboardEvent(uint64_t timeStamp,
+                                                uint32_t usagePage,
+                                                uint32_t usage,
+                                                uint32_t value,
+                                                IOOptionBits options,
+                                                bool repeat = true) LOCALONLY;
+
+    /*!
+     * @function DispatchRelativePointerEvent
+     *
+     * @abstract
+     * Dispatches a relative pointer event.
+     *
+     * @param timestamp
+     * The timestamp of the event.
+     *
+     * @param dx
+     * The delta X value.
+     *
+     * @param dy
+     * The delta Y value.
+     *
+     * @param buttonState
+     * Current state of the buttons, if any.
+     *
+     * @param options
+     * Optional option bits.
+     *
+     * @param accelerate
+     * Pointer events are subject to an acceleration algorithm. Pass in false
+     * if you do not wish to have acceleration logic applied to the pointer event.
+     */
+    virtual kern_return_t dispatchRelativePointerEvent(uint64_t timeStamp,
+                                                       IOFixed dx,
+                                                       IOFixed dy,
+                                                       uint32_t buttonState,
+                                                       IOOptionBits options,
+                                                       bool accelerate = true) LOCALONLY;
+    
+    /*!
+     * @function DispatchAbsolutePointerEvent
+     *
+     * @abstract
+     * Dispatches an absolute pointer event.
+     *
+     * @param timeStamp
+     * The timestamp of the event.
+     *
+     * @param x
+     * An X value between 0 and 1.
+     *
+     * @param dy
+     * A Y value between 0 and 1.
+     *
+     * @param buttonState
+     * Current state of the buttons, if any.
+     *
+     * @param options
+     * Optional option bits.
+     *
+     * @param accelerate
+     * Pointer events are subject to an acceleration algorithm. Pass in false
+     * if you do not wish to have acceleration logic applied to the pointer event.
+     */
+    virtual kern_return_t dispatchAbsolutePointerEvent(uint64_t timeStamp,
+                                                       IOFixed x,
+                                                       IOFixed y,
+                                                       uint32_t buttonState,
+                                                       IOOptionBits options,
+                                                       bool accelerate = true) LOCALONLY;
+    
+    /*!
+     * @function DispatchRelativeScrollWheelEvent
+     *
+     * @abstract
+     * Dispatches a relative scroll wheel event.
+     *
+     * @param timestamp
+     * The timestamp of the event.
+     *
+     * @param dx
+     * The delta X value.
+     *
+     * @param dy
+     * The delta Y value.
+     *
+     * @param dz
+     * The delta Z value.
+     *
+     * @param options
+     * Optional option bits.
+     *
+     * @param accelerate
+     * Scroll events are subject to an acceleration algorithm. Pass in false
+     * if you do not wish to have acceleration logic applied to the scroll event.
+     */
+    virtual kern_return_t dispatchRelativeScrollWheelEvent(uint64_t timeStamp,
+                                                           IOFixed dx,
+                                                           IOFixed dy,
+                                                           IOFixed dz,
+                                                           IOOptionBits options,
+                                                           bool accelerate = true) LOCALONLY;
+    
+    /*!
+     * @function dispatchDigitizerStylusEvent
+     *
+     * @abstract
+     * Dispatches a digitizer stylus event.
+     *
+     * @param timestamp
+     * The timestamp of the event.
+     *
+     * @param stylusData
+     * A struct containing the stylus data. See IOHIDDigtizerStructs.h for more 
+     * info.
+     */
+    virtual kern_return_t dispatchDigitizerStylusEvent(
+                                        uint64_t timeStamp,
+                                        IOHIDDigitizerStylusData *stylusData) LOCALONLY;
+    
+    /*!
+     * @function dispatchDigitizerTouchEvent
+     *
+     * @abstract
+     * Dispatches a digitizer touch pad event.
+     *
+     * @param timestamp
+     * The timestamp of the event.
+     *
+     * @param touchData
+     * An array of touch data, where each struct represents a surface contact. 
+     * See IOHIDDigtizerStructs.h for more info.
+     *
+     * @param touchDataCount
+     * The touchData array count.
+     */
+    virtual kern_return_t dispatchDigitizerTouchEvent(
+                                            uint64_t timeStamp,
+                                            IOHIDDigitizerTouchData *touchData,
+                                            uint32_t touchDataCount) LOCALONLY;
+
+protected:
+
+    /*!
+     * @function SetLED
+     *
+     * @abstract
+     * DEPRECATED. Prefer SetLEDState instead.
+     * Sets an LED on the service.
+     *
+     * @discussion
+     * By default if no implementation of SetLEDState is provided by
+     * the DriverKit Driver, SetLED will be called instead by a 
+     * default implementation in IOUserHIDEventService. The
+     * IOUserHIDEventService implementation always returns
+     * kIOReturnSuccess if the usagePage for SetLEDState is @{kHIDPage_LEDs}.
+     *
+     * @param usage
+     * The LED usage to set. LED usages can be found in
+     * <IOKit/hid/IOHIDUsageTables.h>.
+     *
+     * @param on
+     * Turn on or off the LED.
+     */
+    virtual void SetLED(uint32_t usage, bool on) LOCAL;
+
+    /*!
+     * @function SetLEDState
+     *
+     * @abstract
+     * Sets an LED on the service.
+     *
+     * @discussion
+     * If there is no matching LED, then kIOReturnUnsupported should be returned, so that the UserClient
+     * can be signaled that the usage requested doesn't exist. If the LED exists it should return
+     * kIOReturnSuccess.
+     *
+     * @param usagePage
+     * The usage page of the LED requested to set.
+     *
+     * @param usage
+     * The LED usage to set. LED usages can be found in
+     * <IOKit/hid/IOHIDUsageTables.h>.
+     *
+     * @param on
+     * Turn on or off the LED.
+     */
+    virtual kern_return_t SetLEDState(uint32_t usagePage, uint32_t usage, bool on) LOCAL;
+    
+    /*!
+     * @function dispatchEvent
+     *
+     * @abstract
+     * Dispatches an event.
+     *
+     * @param event
+     * The IOHIDEvent to dispatch.
+     */
+    virtual void dispatchEvent(IOHIDEvent *event) LOCALONLY;
+
+    /*!
+     * @function handleCopyMatchingEvent
+     *
+     * @abstract
+     * copy event that match parameters
+     *
+     * @param matching
+     * Dictionary with matching key/values. Supported keys (see IOHIDEventServiceKeys_Private.h):
+     *   kIOHIDEventTypeKey
+     *   kIOHIDUsagePageKey
+     *   kIOHIDUsageKey
+     *
+     * @param event
+     * Event copy. Caller must release event.
+     *
+     * @return
+     * Returns kIOReturnSuccess on success.
+     */
+    virtual kern_return_t handleCopyMatchingEvent(OSDictionary * matching, IOHIDEvent **event) LOCAL;
+
+    /*!
+     * @function SetProperties
+     *
+     * @abstract
+     * set properties on the event service
+     *
+     * @discussion
+     * This method should be overridden by the DriverKit class if it needs to respond to setProperties calls.
+     * Calling SetProperties(properties, SUPERDISPATCH) from the DriverKit class will get the properties added to a dictionary in IOReg
+     * that HID Event System Clients will be able to see.
+     *
+     * @param properties
+     * Dictionary with property key/values. Supported keys (see IOHIDEventServiceKeys.h and IOHIDEventServiceKeys_Private.h):
+     *   kIOHIDEventTypeKey
+     *   kIOHIDUsagePageKey
+     *   kIOHIDUsageKey
+     *
+     * @return
+     * Returns kIOReturnSuccess on success.
+     */
+    virtual kern_return_t SetProperties(OSDictionary *properties) override;
+};
+
+class EXTENDS (IOHIDEventService) IOHIDEventServicePrivate
+{
+    virtual kern_return_t _DispatchKeyboardEvent(uint64_t timeStamp,
+                                                 uint32_t usagePage,
+                                                 uint32_t usage,
+                                                 uint32_t value,
+                                                 IOOptionBits options,
+                                                 bool repeat = true);
+    
+    virtual kern_return_t _DispatchRelativePointerEvent(uint64_t timeStamp,
+                                                        IOFixed dx,
+                                                        IOFixed dy,
+                                                        uint32_t buttonState,
+                                                        IOOptionBits options,
+                                                        bool accelerate = true);
+    
+    virtual kern_return_t _DispatchAbsolutePointerEvent(uint64_t timeStamp,
+                                                        IOFixed x,
+                                                        IOFixed y,
+                                                        uint32_t buttonState,
+                                                        IOOptionBits options,
+                                                        bool accelerate = true);
+    
+    virtual kern_return_t _DispatchRelativeScrollWheelEvent(uint64_t timeStamp,
+                                                            IOFixed dx,
+                                                            IOFixed dy,
+                                                            IOFixed dz,
+                                                            IOOptionBits options,
+                                                            bool accelerate = true);
+    
+    virtual kern_return_t SetEventMemory(IOBufferMemoryDescriptor *memory);
+    
+    virtual kern_return_t EventAvailable(uint32_t length);
+
+    /*!
+     * @function _Start
+     *
+     * @abstract
+     * Finalizes initialization of kernel object once user space object
+     * initialization is complete.
+     *
+     * @param provider
+     * The provider of the IOHIDEventService.
+     *
+     * @return
+     * Returns kIOReturnSuccess on success.
+     */
+    virtual kern_return_t _Start(IOService * provider);
+    
+    /*!
+     * @function CopyEvent
+     *
+     * @abstract
+     * Kernel to user-space OSAction callback definition for copying events.
+     *
+     * @param matching
+     * OSDictionary containing the event matching criteria.
+     *
+     * @param context
+     * Kernel context for routing the results to the correct caller. Should be passed to _CompleteCopyEvent.
+     *
+     * @param action
+     * Completion action. Action should be passed to _CompleteCopyEvent.
+     */
+    virtual void CopyEvent(OSDictionary * matching,
+                           uint64_t       context,
+                           OSAction     * action TARGET) LOCAL = 0;
+
+    /*!
+     * @function _CopyEvent
+     *
+     * @abstract
+     * Copy event request called by kernel service. Private function, should not be used directly.
+     *
+     * @param matching
+     * OSDictionary containing the event matching criteria.
+     *
+     * @param context
+     * Kernel context for routing the results to the correct caller. Should be passed to _CompleteCopyEvent.
+     *
+     * @param action
+     * Completion action. Action should be passed to _CompleteCopyEvent.
+     */
+    virtual void _CopyEvent(OSDictionary * matching,
+                            uint64_t       context,
+                            OSAction     * action) LOCAL
+                            TYPE(CopyEvent);
+
+    /*!
+     * @function _CompleteCopyEvent
+     *
+     * @abstract
+     * Complete a _CopyEvent call. Private function, should not be used directly.
+     *
+     * @param action
+     * Action from _CopyEvent.
+     *
+     * @param eventBuffer
+     * Serialized IOHIDEvent to return, if one was matched.
+     *
+     * @param context
+     * Context from _CopyEvent.
+     */
+    virtual void  _CompleteCopyEvent(OSAction                 * action TYPE(CopyEvent),
+                                     IOBufferMemoryDescriptor * eventBuffer,
+                                     uint64_t                   context);
+    
+    /*!
+     * @function SetUserProperties.
+     *
+     * @abstract
+     * Kernel to userspace OSAction callback definition for passing properties.
+     *
+     * @param matching
+     * OSDictionary containing the set properties.
+     *
+     * @param context
+     * Kernel context for routing the results to the correct caller. Should be passed to _CompleteSetProperties.
+     *
+     * @param action
+     * Completion action. Action should be passed to _CompleteSetProperties.
+     */
+    virtual void SetUserProperties(OSDictionary * properties,
+                                   uint64_t       context,
+                                   OSAction     * action TARGET) LOCAL = 0;
+
+    /*!
+     * @function _SetUserProperties
+     *
+     * @abstract
+     * Set properties request called by kernel service. Private function, should not be used directly.
+     *
+     * @param matching
+     * OSDictionary containing the set properties.
+     *
+     * @param context
+     * Kernel context for routing the results to the correct caller. Should be passed to _CompleteSetProperties.
+     *
+     * @param action
+     * Completion action. Action should be passed to _CompleteSetProperties.
+     */
+    virtual void _SetUserProperties(OSDictionary * properties,
+                                    uint64_t       context,
+                                    OSAction     * action) LOCAL
+                                    TYPE(SetUserProperties);
+
+    /*!
+     * @function _CompleteSetProperties
+     *
+     * @abstract
+     * Complete a _SetUserProperties call. Private function, should not be used directly.
+     *
+     * @param action
+     * Action from _SetUserProperties.
+     *
+     * @param result
+     * Result of the set properties call to return to the kernel.
+     *
+     * @param context
+     * Context from _SetUserProperties.
+     */
+    virtual void _CompleteSetProperties(OSAction * action TYPE(SetUserProperties),
+                                        IOReturn   result,
+                                        uint64_t   context);
+
+    /*!
+     * @function _SetLED
+     *
+     * @abstract
+     * Set LED request called by kernel service. Private function, should not be used directly.
+     *
+     * @discussion
+     * _SetLED will call into SetLEDState and return the return value to the kernel.
+     * For backwards compatibility, there is a default implementation of SetLEDState in IOUserHIDEventService.
+     * Which will call SetLED if the UsagePage is kHIDPage_LEDs and return kIOReturnSuccess.
+     * If there is no matching LED, then kIOReturnUnsupported should be returned, so that the UserClient
+     * can be signaled that the usage requested doesn't exist.
+     *
+     * @param usagePage
+     * Usage page of the LED to change.
+     *
+     * @param usage
+     * Usage of the LED to change.
+     *
+     * @param on
+     * Whether the LED should be turned on, or off.
+     *
+     * @param context
+     * Kernel context for routing the results to the correct caller. Should be passed to _CompleteSetLED.
+     *
+     * @param action
+     * Completion action. Action should be passed to _CompleteSetLED.
+     */
+    virtual void _SetLED(uint32_t usagePage,
+                                    uint32_t usage,
+                                    bool on,
+                                    uint64_t       context,
+                                    OSAction     * action) LOCAL
+                                    TYPE(SetLEDAction);
+
+     /*!
+     * @function SetLEDAction
+     *
+     * @abstract
+     * Action definition for SetLEDAction call.
+     *
+     * @param usagePage
+     * Usage page of the LED to change.
+     *
+     * @param usage
+     * Usage of the LED to change.
+     *
+     * @param on
+     * Whether the LED should be turned on, or off.
+     *
+     * @param context
+     * Kernel context for routing the results to the correct caller. Should be passed to _CompleteSetLED.
+     *
+     * @param action
+     * Completion action. Action should be passed to _CompleteSetLED.
+     */
+    virtual void SetLEDAction(uint32_t usagePage,
+                                    uint32_t usage,
+                                    bool on,
+                                    uint64_t       context,
+                                    OSAction     * action TARGET) LOCAL = 0;
+
+    /*!
+     * @function _CompleteSetLED
+     *
+     * @abstract
+     * Complete a _SetLED call. Private function, should not be used directly.
+     *
+     * @param action
+     * Action from _SetLED call.
+     *
+     * @param result
+     * Result of the set LED call to return to the kernel.
+     *
+     * @param context
+     * Context from _SetLED call.
+     */
+     virtual void _CompleteSetLED(OSAction * action TYPE(SetLEDAction),
+                                  IOReturn result,
+                                  uint64_t context);
+};
+
+#endif /* ! _HIDDRIVERKIT_IOHIDEVENTSERVICE_H */

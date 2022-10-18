@@ -1,0 +1,28 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           758A23F5-976F-367C-8356-E261FE4C1EB7
+  - target:          x86_64-maccatalyst
+    value:           758A23F5-976F-367C-8356-E261FE4C1EB7
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           545B03A3-59E0-3667-85F7-4BCA746DB5AB
+  - target:          arm64e-maccatalyst
+    value:           545B03A3-59E0-3667-85F7-4BCA746DB5AB
+install-name:    '/usr/lib/libutil.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _expand_number, _freemntopts, _getmnt_silent, _getmntoptnum, 
+                       _getmntopts, _getmntoptstr, _humanize_number, _pidfile_close, 
+                       _pidfile_open, _pidfile_remove, _pidfile_write, _realhostname, 
+                       _realhostname_sa, _reexec_to_match_kernel, _reexec_to_match_lp64ness, 
+                       _tzlink, _wipefs_alloc, _wipefs_except_blocks, _wipefs_free, 
+                       _wipefs_include_blocks, _wipefs_wipe ]
+...

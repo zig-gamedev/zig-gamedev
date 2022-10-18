@@ -1,0 +1,49 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           EB2458A1-7D04-355E-9F10-CE689D363851
+  - target:          x86_64-maccatalyst
+    value:           EB2458A1-7D04-355E-9F10-CE689D363851
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           E3FC67F9-EFE4-33A7-BA9F-D96D6CBCF79A
+  - target:          arm64e-maccatalyst
+    value:           E3FC67F9-EFE4-33A7-BA9F-D96D6CBCF79A
+install-name:    '/usr/lib/libFosl_dynamic.dylib'
+current-version: 0
+compatibility-version: 0
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _fosl_filter_addChild, _fosl_filter_addLibraryFunction, _fosl_filter_assignRoot, 
+                       _fosl_filter_createConstant, _fosl_filter_createCoordinateTransform, 
+                       _fosl_filter_createGraph, _fosl_filter_createImage, _fosl_filter_createKernel, 
+                       _fosl_filter_createPositionUpdate, _fosl_filter_createSampleTransform, 
+                       _fosl_filter_createSampler, _fosl_filter_createTransformMatrix, 
+                       _fosl_filter_createUniform, _fosl_filter_createUsePosition, 
+                       _fosl_filter_destroyGraph, _fosl_filter_dumpGraph, _fosl_filter_getStringForGraph, 
+                       _fosl_filter_getStringForGraphWithOptions, _fosl_filter_interface_version, 
+                       _fosl_filter_kernelpool_addLibrary, _fosl_filter_kernelpool_addString, 
+                       _fosl_filter_kernelpool_createPool, _fosl_filter_kernelpool_destroyPool, 
+                       _fosl_filter_kernelpool_getAttributeKeyword, _fosl_filter_kernelpool_getAttributeParameters, 
+                       _fosl_filter_kernelpool_getDiagnosticByIdx, _fosl_filter_kernelpool_getKernelByIdx, 
+                       _fosl_filter_kernelpool_getKernelDimensionality, _fosl_filter_kernelpool_getKernelKind, 
+                       _fosl_filter_kernelpool_getKernelName, _fosl_filter_kernelpool_getKernelReturnType, 
+                       _fosl_filter_kernelpool_getNumDiagnostics, _fosl_filter_kernelpool_getNumKernelAttributes, 
+                       _fosl_filter_kernelpool_getNumKernelParameters, _fosl_filter_kernelpool_getNumKernels, 
+                       _fosl_filter_kernelpool_getParamName, _fosl_filter_kernelpool_getParamType, 
+                       _fosl_filter_kernelpool_getPrintedKernel, _fosl_filter_kernelpool_hasAttributeParameters, 
+                       _fosl_filter_kernelpool_hasError, _fosl_filter_kernelpool_isPositionInvariant, 
+                       _fosl_filter_kernelpool_lookupKernel, _fosl_filter_kernelpool_preservesAlpha, 
+                       _fosl_filter_parseNodesInGraph, _fosl_filter_printGraph, _fosl_filter_setMainEntryPointName, 
+                       _fosl_filter_setPositionUpdateContinuation, _fosl_filter_setPositionUpdatePosition, 
+                       _fosl_filter_setSamplerNeedsSRGBToLinear, _fosl_filter_setSamplerSwizzleMacro, 
+                       _fosl_filter_setSamplerSwizzleMask, _fosl_filter_synthesizeMainInGraph, 
+                       _fosl_filter_synthesizeMainInGraphOfType, _fosl_filter_synthesizeMainInGraphOfTypeWithOptions ]
+...

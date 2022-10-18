@@ -1,0 +1,117 @@
+module Darwin.machine [system] {
+  module _limits {
+    header "machine/_limits.h"
+    header "i386/_limits.h"
+    header "arm/_limits.h"
+
+    export *
+  }
+
+  module _mcontext {
+    header "machine/_mcontext.h"
+    header "i386/_mcontext.h"
+    header "arm/_mcontext.h"
+
+    export *
+  }
+
+  module _param {
+    header "machine/_param.h"
+    header "i386/_param.h"
+    header "arm/_param.h"
+
+    export *
+  }
+
+  module _types {
+    header "machine/_types.h"
+    header "i386/_types.h"
+    header "arm/_types.h"
+
+    export *
+  }
+
+  module arch {
+    header "arm/arch.h"
+    export *
+  }
+
+  module byte_order {
+    header "machine/byte_order.h"
+    export *
+  }
+
+  module eflags {
+    header "i386/eflags.h"
+    export *
+  }
+
+  module endian {
+    header "machine/endian.h"
+    header "i386/endian.h"
+    header "arm/endian.h"
+
+    export *
+  }
+
+  module fasttrap_isa {
+    header "machine/fasttrap_isa.h"
+    header "i386/fasttrap_isa.h"
+    header "arm/fasttrap_isa.h"
+
+    export *
+  }
+
+  module limits {
+    header "machine/limits.h"
+    header "i386/limits.h"
+    header "arm/limits.h"
+
+    export *
+  }
+
+  module param {
+    header "machine/param.h"
+    header "i386/param.h"
+    header "arm/param.h"
+
+    export *
+  }
+
+  module profile {
+    header "machine/profile.h"
+    header "i386/profile.h"
+    header "arm/profile.h"
+
+    export *
+  }
+
+  module signal {
+    header "machine/signal.h"
+    header "i386/signal.h"
+    header "arm/signal.h"
+
+    export *
+  }
+
+  module types {
+    header "machine/types.h"
+    header "i386/types.h"
+    header "arm/types.h"
+
+    export *
+  }
+
+  module user_ldt {
+    header "i386/user_ldt.h"
+    export *
+  }
+
+  module vmparam {
+    header "machine/vmparam.h"
+    header "i386/vmparam.h"
+    header "arm/vmparam.h"
+
+    export *
+  }
+}

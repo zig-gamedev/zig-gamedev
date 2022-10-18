@@ -1,0 +1,71 @@
+---
+Name: ApplicationServices
+SwiftVersions:
+- Version: 4
+  Functions:
+  - Name: PMCreateGenericPrinter
+    Parameters:
+    - Position: 0
+      Type: "PMPrinter _Nonnull * _Nonnull"
+  - Name: PMCreatePageFormat
+    Parameters:
+    - Position: 0
+      Type: "PMPageFormat _Nonnull * _Nonnull"
+  - Name: PMCreatePageFormatWithPMPaper
+    Parameters:
+    - Position: 0
+      Type: "PMPageFormat _Nonnull * _Nonnull"
+  - Name: PMCreatePrintSettings
+    Parameters:
+    - Position: 0
+      Type: "PMPrintSettings _Nonnull * _Nonnull"
+  - Name: PMCreateSession
+    Parameters:
+    - Position: 0
+      Type: "PMPrintSession _Nonnull * _Nonnull"
+  - Name: PMGetPageFormatPaper
+    Parameters:
+    - Position: 1
+      Type: "PMPaper _Nonnull * _Nonnull"
+  - Name: PMPageFormatCreateDataRepresentation
+    Parameters:
+    - Position: 1
+      Type: "CFDataRef _Nonnull * _Nonnull"
+  - Name: PMPageFormatCreateWithDataRepresentation
+    Parameters:
+    - Position: 1
+      Type: "PMPageFormat _Nonnull * _Nonnull"
+  - Name: PMPaperGetID
+    Parameters:
+    - Position: 1
+      Type: "CFStringRef _Nonnull * _Nonnull"
+  - Name: PMPresetCreatePrintSettings
+    Parameters:
+    - Position: 2
+      Type: "PMPrintSettings _Nonnull * _Nonnull"
+  - Name: PMPrintSettingsCreateDataRepresentation
+    Parameters:
+    - Position: 1
+      Type: "CFDataRef _Nonnull * _Nonnull"
+  - Name: PMPrintSettingsCreateWithDataRepresentation
+    Parameters:
+    - Position: 1
+      Type: "PMPrintSettings _Nonnull * _Nonnull"
+  - Name: PMPrinterCopyHostName
+    Parameters:
+    - Position: 1
+      Type: "CFStringRef _Nonnull * _Nonnull"
+  - Name: PMPrinterCopyState
+    Parameters:
+    - Position: 1
+      Type: "CFDictionaryRef _Nonnull * _Nonnull"
+  - Name: PMSessionCreatePrinterList
+    Parameters:
+    - Position: 1
+      Type: "CFArrayRef _Nonnull * _Nonnull"
+    - Position: 3
+      Type: "PMPrinter _Nonnull * _Nullable"
+  - Name: PMSessionGetCurrentPrinter
+    Parameters:
+    - Position: 1
+      Type: "PMPrinter _Nonnull * _Nonnull"

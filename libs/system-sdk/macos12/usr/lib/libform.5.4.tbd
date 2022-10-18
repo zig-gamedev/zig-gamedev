@@ -1,0 +1,48 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           611C4590-84F9-3A34-B7B0-1264A682E51B
+  - target:          x86_64-maccatalyst
+    value:           611C4590-84F9-3A34-B7B0-1264A682E51B
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           B3B3642F-C4B0-3474-9EB0-ED4AB8C4D18F
+  - target:          arm64e-maccatalyst
+    value:           B3B3642F-C4B0-3474-9EB0-ED4AB8C4D18F
+install-name:    '/usr/lib/libform.5.4.dylib'
+current-version: 5.4
+compatibility-version: 5.4
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _TYPE_ALNUM, _TYPE_ALPHA, _TYPE_ENUM, _TYPE_INTEGER, _TYPE_IPV4, 
+                       _TYPE_NUMERIC, _TYPE_REGEXP, __nc_Copy_Argument, __nc_Copy_Type, 
+                       __nc_Default_Field, __nc_Default_FieldType, __nc_Default_Form, 
+                       __nc_First_Active_Field, __nc_Free_Argument, __nc_Free_Type, 
+                       __nc_Internal_Validation, __nc_Make_Argument, __nc_Position_Form_Cursor, 
+                       __nc_Refresh_Current_Field, __nc_Set_Current_Field, __nc_Set_Form_Page, 
+                       __nc_Synchronize_Attributes, __nc_Synchronize_Options, __nc_Widen_String, 
+                       _current_field, _data_ahead, _data_behind, _dup_field, _dynamic_field_info, 
+                       _field_arg, _field_back, _field_buffer, _field_count, _field_fore, 
+                       _field_index, _field_info, _field_init, _field_just, _field_opts, 
+                       _field_opts_off, _field_opts_on, _field_pad, _field_status, 
+                       _field_term, _field_type, _field_userptr, _form_driver, _form_fields, 
+                       _form_init, _form_opts, _form_opts_off, _form_opts_on, _form_page, 
+                       _form_request_by_name, _form_request_name, _form_sub, _form_term, 
+                       _form_userptr, _form_win, _free_field, _free_fieldtype, _free_form, 
+                       _link_field, _link_fieldtype, _move_field, _new_field, _new_fieldtype, 
+                       _new_form, _new_page, _pos_form_cursor, _post_form, _scale_form, 
+                       _set_current_field, _set_field_back, _set_field_buffer, _set_field_fore, 
+                       _set_field_init, _set_field_just, _set_field_opts, _set_field_pad, 
+                       _set_field_status, _set_field_term, _set_field_type, _set_field_userptr, 
+                       _set_fieldtype_arg, _set_fieldtype_choice, _set_form_fields, 
+                       _set_form_init, _set_form_opts, _set_form_page, _set_form_sub, 
+                       _set_form_term, _set_form_userptr, _set_form_win, _set_max_field, 
+                       _set_new_page, _unpost_form ]
+...

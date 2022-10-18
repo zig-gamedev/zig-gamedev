@@ -1,0 +1,88 @@
+module Darwin.POSIX.net [system] {
+  module dl {
+    header "net/if_dl.h"
+    export *
+  }
+
+  module if {
+    header "net/if.h"
+    export *
+  }
+
+  module types {
+    header "net/if_types.h"
+    export *
+  }
+}
+
+module Darwin.net [system] {
+  module bpf {
+    header "net/bpf.h"
+    export *
+  }
+
+  module dlil {
+    header "net/dlil.h"
+    export *
+  }
+
+  module ethernet {
+    header "net/ethernet.h"
+    export *
+  }
+
+  module if_arp {
+    header "net/if_arp.h"
+    export *
+  }
+
+  module if_llc {
+    header "net/if_llc.h"
+    export *
+  }
+
+  module if_media {
+    header "net/if_media.h"
+    export *
+  }
+
+  module if_mib {
+    header "net/if_mib.h"
+    export *
+  }
+
+  module if_utun {
+    header "net/if_utun.h"
+    export *
+  }
+
+  module if_var {
+    header "net/if_var.h"
+    export *
+  }
+
+  module kext_net {
+    header "net/kext_net.h"
+    export *
+  }
+
+  module ndrv {
+    header "net/ndrv.h"
+    export *
+  }
+
+  module net_kev {
+    header "net/net_kev.h"
+    export *
+  }
+
+  module pfkeyv2 {
+    header "net/pfkeyv2.h"
+    export *
+  }
+
+  module route {
+    header "net/route.h"
+    export *
+  }
+}

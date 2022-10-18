@@ -1,0 +1,29 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           F2EC0634-0845-34ED-A33F-DDA73554847D
+  - target:          x86_64-maccatalyst
+    value:           F2EC0634-0845-34ED-A33F-DDA73554847D
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           2F747FAC-8610-3EB0-9F1F-6C1CE641D57F
+  - target:          arm64e-maccatalyst
+    value:           2F747FAC-8610-3EB0-9F1F-6C1CE641D57F
+install-name:    '/usr/lib/libDHCPServer.A.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _DHCPSCopyDisabledInterfaces, _DHCPSDHCPLeaseListCreate, _DHCPSDHCPLeaseListNotificationKey, 
+                       _DHCPSDisabledInterfacesNotificationKey, _DHCPSNetBootClientListCreate, 
+                       _kDHCPSPropDHCPHWAddress, _kDHCPSPropDHCPIPAddress, _kDHCPSPropDHCPLease, 
+                       _kDHCPSPropIdentifier, _kDHCPSPropName, _kDHCPSPropNetBootArch, 
+                       _kDHCPSPropNetBootIPAddress, _kDHCPSPropNetBootImageID, _kDHCPSPropNetBootImageIndex, 
+                       _kDHCPSPropNetBootImageIsInstall, _kDHCPSPropNetBootImageKind, 
+                       _kDHCPSPropNetBootLastBootTime, _kDHCPSPropNetBootSysid ]
+...

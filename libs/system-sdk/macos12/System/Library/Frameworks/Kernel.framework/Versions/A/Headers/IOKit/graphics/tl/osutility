@@ -1,0 +1,74 @@
+/* vim: set ft=cpp:
+ *
+ * Copyright (c) 2018- Apple Computer, Inc. All rights reserved.
+ *
+ * @APPLE_LICENSE_HEADER_START@
+ *
+ * The contents of this file constitute Original Code as defined in and
+ * are subject to the Apple Public Source License Version 2.0 (the
+ * "License").  You may not use this file except in compliance with the
+ * License.  Please obtain a copy of the License at
+ * http://www.apple.com/publicsource and read it before using this file.
+ *
+ * This Original Code and all software distributed under the License are
+ * distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT.  Please see the
+ * License for the specific language governing rights and limitations
+ * under the License.
+ *
+ * @APPLE_LICENSE_HEADER_END@
+ */
+// Darwin kernel type_traits and other stuff
+
+#ifndef IOG_TL_OSUTILITY
+#define IOG_TL_OSUTILITY
+
+#include <_config>
+
+
+_IOG_START_NAMESPACE
+
+typedef decltype(nullptr) nullptr_t;
+
+// Reference removal
+template <class _T> struct remove_reference       {typedef _T type;};
+template <class _T> struct remove_reference<_T&>  {typedef _T type;};
+template <class _T> struct remove_reference<_T&&> {typedef _T type;};
+template <class _T>
+using remove_reference_t = typename remove_reference<_T>::type;
+
+// Pointer removal
+template<class _T> struct remove_pointer                     {typedef _T type;};
+template<class _T> struct remove_pointer<_T*>                {typedef _T type;};
+template<class _T> struct remove_pointer<_T* const>          {typedef _T type;};
+template<class _T> struct remove_pointer<_T* volatile>       {typedef _T type;};
+template<class _T> struct remove_pointer<_T* const volatile> {typedef _T type;};
+template<class _T>
+using remove_pointer_t = typename remove_pointer<_T>::type;
+
+// Const/Volatile
+template<typename _T> struct remove_const                 {typedef _T  type;};
+template<typename _T> struct remove_const<const _T>       {typedef _T  type;};
+template<typename _T> struct remove_volatile              {typedef _T  type;};
+template<typename _T> struct remove_volatile<volatile _T> {typedef _T  type;};
+
+// move
+template <class _T>
+inline remove_reference_t<_T>&& move(_T&& _t)
+{
+    return static_cast<remove_reference_t<_T>&&>(_t);
+}
+
+template <typename _T> void swap(_T& lhs, _T& rhs)
+{
+    _T tmp;
+    tmp = _VIOG::move(lhs);
+    lhs = _VIOG::move(rhs);
+    rhs = _VIOG::move(tmp);
+}
+
+_IOG_END_NAMESPACE
+
+#endif /* IOG_TL_OSUTILITY */

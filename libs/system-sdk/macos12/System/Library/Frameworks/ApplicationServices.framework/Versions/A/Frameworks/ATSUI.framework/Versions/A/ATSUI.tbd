@@ -1,0 +1,69 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           F04921AB-73D9-3E0E-973F-83EE84F09C4B
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           7B9808EE-00FD-3F04-8035-E6F784C95611
+install-name:    '/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATSUI.framework/Versions/A/ATSUI'
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        ApplicationServices
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _ATSApplyMorph, _ATSClearGlyphVector, _ATSGrowGlyphVector, 
+                       _ATSInitializeGlyphVector, _ATSUBatchBreakLines, _ATSUBreakLine, 
+                       _ATSUClearAttributes, _ATSUClearFontFeatures, _ATSUClearFontVariations, 
+                       _ATSUClearLayoutCache, _ATSUClearLayoutControls, _ATSUClearLineControls, 
+                       _ATSUClearSoftLineBreaks, _ATSUClearStyle, _ATSUCompareStyles, 
+                       _ATSUConvertCharToGlyphs, _ATSUCopyAttributes, _ATSUCopyLayoutControls, 
+                       _ATSUCopyLineControls, _ATSUCountFontFeatureSelectors, _ATSUCountFontFeatureTypes, 
+                       _ATSUCountFontInstances, _ATSUCountFontNames, _ATSUCountFontVariations, 
+                       _ATSUCreateAndCopyStyle, _ATSUCreateAndCopyTextLayout, _ATSUCreateFontFallbacks, 
+                       _ATSUCreateStyle, _ATSUCreateTextLayout, _ATSUCreateTextLayoutWithTextPtr, 
+                       _ATSUDirectAddStyleSettingRef, _ATSUDirectGetLayoutDataArrayPtrFromLineRef, 
+                       _ATSUDirectGetLayoutDataArrayPtrFromTextLayout, _ATSUDirectReleaseLayoutDataArrayPtr, 
+                       _ATSUDisposeFontFallbacks, _ATSUDisposeStyle, _ATSUDisposeStyleGroup, 
+                       _ATSUDisposeTextLayout, _ATSUDrawText, _ATSUFONDtoFontID, 
+                       _ATSUFindFontFromName, _ATSUFindFontName, _ATSUFlattenStyleRunsToStream, 
+                       _ATSUFontCount, _ATSUFontIDtoFOND, _ATSUGetAllAttributes, 
+                       _ATSUGetAllFontFeatures, _ATSUGetAllFontVariations, _ATSUGetAllLayoutControls, 
+                       _ATSUGetAllLineControls, _ATSUGetAttribute, _ATSUGetContinuousAttributes, 
+                       _ATSUGetFontFeature, _ATSUGetFontFeatureNameCode, _ATSUGetFontFeatureSelectors, 
+                       _ATSUGetFontFeatureTypes, _ATSUGetFontIDs, _ATSUGetFontInstance, 
+                       _ATSUGetFontInstanceNameCode, _ATSUGetFontVariationNameCode, 
+                       _ATSUGetFontVariationValue, _ATSUGetGlyphBounds, _ATSUGetGlyphInfo, 
+                       _ATSUGetIndFontName, _ATSUGetIndFontVariation, _ATSUGetLayoutControl, 
+                       _ATSUGetLineControl, _ATSUGetNativeCurveType, _ATSUGetObjFontFallbacks, 
+                       _ATSUGetRunStyle, _ATSUGetSoftLineBreaks, _ATSUGetStyleGroup, 
+                       _ATSUGetStyleIndex, _ATSUGetStyleRefCon, _ATSUGetTabArray, 
+                       _ATSUGetTextLayoutRefCon, _ATSUGetTextLocation, _ATSUGetTransientFontMatching, 
+                       _ATSUGetUnjustifiedBounds, _ATSUGlyphGetCubicPaths, _ATSUGlyphGetCurvePaths, 
+                       _ATSUGlyphGetIdealMetrics, _ATSUGlyphGetQuadraticPaths, _ATSUGlyphGetScreenMetrics, 
+                       _ATSUHighlightInactiveText, _ATSUHighlightText, _ATSULeftwardCursorPosition, 
+                       _ATSULineBreakEngine, _ATSUMatchFontsToText, _ATSUMeasureTextImage, 
+                       _ATSUNextCursorPosition, _ATSUOffsetToCursorPosition, _ATSUOffsetToPosition, 
+                       _ATSUOverwriteAttributes, _ATSUPositionToCursorOffset, _ATSUPositionToOffset, 
+                       _ATSUPreviousCursorPosition, _ATSURightwardCursorPosition, 
+                       _ATSUSetAttributes, _ATSUSetFontFeatures, _ATSUSetHighlightingMethod, 
+                       _ATSUSetLayoutControls, _ATSUSetLineControls, _ATSUSetObjFontFallbacks, 
+                       _ATSUSetRunStyle, _ATSUSetSoftLineBreak, _ATSUSetStyleRefCon, 
+                       _ATSUSetTabArray, _ATSUSetTextLayoutRefCon, _ATSUSetTextPointerLocation, 
+                       _ATSUSetTransientFontMatching, _ATSUSetVariations, _ATSUStyleIsEmpty, 
+                       _ATSUTextDeleted, _ATSUTextInserted, _ATSUTextMoved, _ATSUUnderwriteAttributes, 
+                       _ATSUUnflattenStyleRunsFromStream, _ATSUUnhighlightText, _DisposeATSCubicClosePathUPP, 
+                       _DisposeATSCubicCurveToUPP, _DisposeATSCubicLineToUPP, _DisposeATSCubicMoveToUPP, 
+                       _DisposeATSQuadraticClosePathUPP, _DisposeATSQuadraticCurveUPP, 
+                       _DisposeATSQuadraticLineUPP, _DisposeATSQuadraticNewPathUPP, 
+                       _DisposeRedrawBackgroundUPP, _InvokeATSCubicClosePathUPP, 
+                       _InvokeATSCubicCurveToUPP, _InvokeATSCubicLineToUPP, _InvokeATSCubicMoveToUPP, 
+                       _InvokeATSQuadraticClosePathUPP, _InvokeATSQuadraticCurveUPP, 
+                       _InvokeATSQuadraticLineUPP, _InvokeATSQuadraticNewPathUPP, 
+                       _InvokeRedrawBackgroundUPP, _NewATSCubicClosePathUPP, _NewATSCubicCurveToUPP, 
+                       _NewATSCubicLineToUPP, _NewATSCubicMoveToUPP, _NewATSQuadraticClosePathUPP, 
+                       _NewATSQuadraticCurveUPP, _NewATSQuadraticLineUPP, _NewATSQuadraticNewPathUPP, 
+                       _NewRedrawBackgroundUPP ]
+...

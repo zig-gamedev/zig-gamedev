@@ -1,0 +1,18 @@
+framework module Foundation [extern_c] [system] {
+    umbrella header "Foundation.h"
+    
+    export *
+    module * {
+        export *
+    }
+    
+    
+    explicit module NSDebug {
+        header "NSDebug.h"
+        export *
+    }
+    
+    // Use NSItemProvider.h
+    exclude header "NSItemProviderReadingWriting.h"
+}
+

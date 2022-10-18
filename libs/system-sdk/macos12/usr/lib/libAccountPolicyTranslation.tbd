@@ -1,0 +1,41 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           F02E957B-CE74-38C0-B7F5-4732CE25E78F
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           0AF322B9-81A5-3E08-88B1-8E10993B5169
+install-name:    '/usr/lib/libAccountPolicyTranslation.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _APCategoryAndIdentifierForLegacyPolicyName, _APLegacyPoliciesWithPolicySet, 
+                       _APPolicySetWithLegacyPolicies, _kAPAttributeConsecutiveCharacters, 
+                       _kAPAttributeCreationTime, _kAPAttributeCurrentDate, _kAPAttributeCurrentDayOfWeek, 
+                       _kAPAttributeCurrentTime, _kAPAttributeCurrentTimeOfDay, _kAPAttributeDaysUntilExpiration, 
+                       _kAPAttributeEnableAtTimeOfDay, _kAPAttributeEnableOnDate, 
+                       _kAPAttributeEnableOnDayOfWeek, _kAPAttributeExpiresAtTimeOfDay, 
+                       _kAPAttributeExpiresEveryNDays, _kAPAttributeExpiresOnDate, 
+                       _kAPAttributeExpiresOnDayOfWeek, _kAPAttributeFailedAuthentications, 
+                       _kAPAttributeGlobalPolicies, _kAPAttributeGlobalPoliciesGUID, 
+                       _kAPAttributeIsAdmin, _kAPAttributeIsAdministrativelyDisabled, 
+                       _kAPAttributeIsMemberOfGroup, _kAPAttributeLastAuthenticationTime, 
+                       _kAPAttributeLastFailedAuthenticationTime, _kAPAttributeLastPasswordChangeTime, 
+                       _kAPAttributeMaximumConsecutiveCharacters, _kAPAttributeMaximumFailedAuthentications, 
+                       _kAPAttributeMaximumSequentialCharacters, _kAPAttributeMinutesUntilFailedAuthenticationReset, 
+                       _kAPAttributeNewPasswordRequiredTime, _kAPAttributePassword, 
+                       _kAPAttributePasswordHashes, _kAPAttributePasswordHistory, 
+                       _kAPAttributePasswordHistoryDepth, _kAPAttributeRecordName, 
+                       _kAPAttributeRecordPolicies, _kAPAttributeRecordPoliciesGUID, 
+                       _kAPAttributeRecordType, _kAPAttributeRecordTypeComputer, 
+                       _kAPAttributeRecordTypeUser, _kAPAttributeSequentialCharacters, 
+                       _kAPExpirationTimeExpired, _kAPExpirationTimeNeverExpires, 
+                       _kAPLegacyPolicyCategory, _kAPLegacyPolicyIdentifier, _kAPPolicyCategoryAuthentication, 
+                       _kAPPolicyCategoryPasswordChange, _kAPPolicyCategoryPasswordContent, 
+                       _kAPPolicyKeyContent, _kAPPolicyKeyContentDescription, _kAPPolicyKeyDefaultContentDescription, 
+                       _kAPPolicyKeyDefaultPasswordContentSummary, _kAPPolicyKeyEvaluationDetails, 
+                       _kAPPolicyKeyIdentifier, _kAPPolicyKeyParameters, _kAPPolicyKeyPasswordContentSummaries, 
+                       _kAPPolicyKeyPolicySatisfied ]
+...

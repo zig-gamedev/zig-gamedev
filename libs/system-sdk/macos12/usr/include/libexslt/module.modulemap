@@ -1,0 +1,18 @@
+module libexslt [system] [extern_c] {
+    link "exslt"
+
+    module exslt {
+        header "exslt.h"
+        export *
+    }
+
+    module exsltconfig {
+        header "exsltconfig.h"
+        export *
+    }
+
+    module exsltexports {
+        header "exsltexports.h"
+        export *
+    }
+}

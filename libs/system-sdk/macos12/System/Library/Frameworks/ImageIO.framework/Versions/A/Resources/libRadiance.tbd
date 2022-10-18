@@ -1,0 +1,28 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, x86_64h-macos, x86_64h-maccatalyst, 
+                   arm64-macos, arm64-maccatalyst, arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           478D4D05-D660-3AF6-A4C8-08BA51D6625E
+  - target:          x86_64-maccatalyst
+    value:           478D4D05-D660-3AF6-A4C8-08BA51D6625E
+  - target:          x86_64h-macos
+    value:           C13174E2-DFB6-3E87-AEAD-47D9F69F3662
+  - target:          x86_64h-maccatalyst
+    value:           C13174E2-DFB6-3E87-AEAD-47D9F69F3662
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           9EEB9BA9-A701-3869-975A-E34C3ED46D61
+  - target:          arm64e-maccatalyst
+    value:           9EEB9BA9-A701-3869-975A-E34C3ED46D61
+install-name:    '/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libRadiance.dylib'
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, x86_64h-maccatalyst, x86_64h-macos, 
+                       arm64e-maccatalyst, arm64e-macos, arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __cg_RadReadRGBSize, __cg_RadReadRGB_float, __cg_RadReadRGB_fp16, 
+                       __cg_RadWriteRGB ]
+...

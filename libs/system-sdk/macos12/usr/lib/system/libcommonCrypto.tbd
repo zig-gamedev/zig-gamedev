@@ -1,0 +1,96 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           2308E152-A258-36BC-A841-D3E8E9F59F43
+  - target:          x86_64-maccatalyst
+    value:           2308E152-A258-36BC-A841-D3E8E9F59F43
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           E6CCD148-5E91-3111-BE37-1C19402F4637
+  - target:          arm64e-maccatalyst
+    value:           E6CCD148-5E91-3111-BE37-1C19402F4637
+install-name:    '/usr/lib/system/libcommonCrypto.dylib'
+current-version: 60190
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _CCAESCmac, _CCAESCmacCreate, _CCAESCmacDestroy, _CCAESCmacFinal, 
+                       _CCAESCmacOutputSizeFromContext, _CCAESCmacUpdate, _CCBigNumAdd, 
+                       _CCBigNumAddI, _CCBigNumBitCount, _CCBigNumByteCount, _CCBigNumClear, 
+                       _CCBigNumCompare, _CCBigNumCompareI, _CCBigNumCopy, _CCBigNumCreateRandom, 
+                       _CCBigNumDiv, _CCBigNumFree, _CCBigNumFromData, _CCBigNumFromDecimalString, 
+                       _CCBigNumFromHexString, _CCBigNumGetI, _CCBigNumIsNegative, 
+                       _CCBigNumIsPrime, _CCBigNumIsZero, _CCBigNumLeftShift, _CCBigNumMod, 
+                       _CCBigNumModExp, _CCBigNumModI, _CCBigNumMul, _CCBigNumMulI, 
+                       _CCBigNumMulMod, _CCBigNumRightShift, _CCBigNumSetI, _CCBigNumSetNegative, 
+                       _CCBigNumSub, _CCBigNumSubI, _CCBigNumToData, _CCBigNumToDecimalString, 
+                       _CCBigNumToHexString, _CCBigNumZeroLSBCount, _CCCKGContributorCommit, 
+                       _CCCKGContributorCreate, _CCCKGContributorDestroy, _CCCKGContributorFinish, 
+                       _CCCKGGetCommitmentSize, _CCCKGGetOpeningSize, _CCCKGGetShareSize, 
+                       _CCCKGOwnerCreate, _CCCKGOwnerDestroy, _CCCKGOwnerFinish, 
+                       _CCCKGOwnerGenerateShare, _CCCalibratePBKDF, _CCCreateBigNum, 
+                       _CCCrypt, _CCCryptorAddParameter, _CCCryptorChaCha20, _CCCryptorChaCha20Poly1305OneshotDecrypt, 
+                       _CCCryptorChaCha20Poly1305OneshotEncrypt, _CCCryptorCreate, 
+                       _CCCryptorCreateFromData, _CCCryptorCreateFromDataWithMode, 
+                       _CCCryptorCreateWithMode, _CCCryptorDecryptDataBlock, _CCCryptorEncryptDataBlock, 
+                       _CCCryptorFinal, _CCCryptorGCM, _CCCryptorGCMAddAAD, _CCCryptorGCMAddADD, 
+                       _CCCryptorGCMAddIV, _CCCryptorGCMDecrypt, _CCCryptorGCMEncrypt, 
+                       _CCCryptorGCMFinal, _CCCryptorGCMFinalize, _CCCryptorGCMOneshotDecrypt, 
+                       _CCCryptorGCMOneshotEncrypt, _CCCryptorGCMReset, _CCCryptorGCMSetIV, 
+                       _CCCryptorGCMaddAAD, _CCCryptorGetIV, _CCCryptorGetOutputLength, 
+                       _CCCryptorGetParameter, _CCCryptorRelease, _CCCryptorReset, 
+                       _CCCryptorReset_binary_compatibility, _CCCryptorUpdate, _CCDHComputeKey, 
+                       _CCDHCreate, _CCDHGenerateKey, _CCDHRelease, _CCDeriveKey, 
+                       _CCDesCBCCksum, _CCDesIsWeakKey, _CCDesSetOddParity, _CCDigest, 
+                       _CCDigestBlockSize, _CCDigestCreate, _CCDigestCreateByOID, 
+                       _CCDigestDestroy, _CCDigestFinal, _CCDigestGetBlockSize, _CCDigestGetBlockSizeFromRef, 
+                       _CCDigestGetOutputSize, _CCDigestGetOutputSizeFromRef, _CCDigestInit, 
+                       _CCDigestOID, _CCDigestOIDLen, _CCDigestOutputSize, _CCDigestReset, 
+                       _CCDigestUpdate, _CCECCryptorBlind, _CCECCryptorBlindingKeysRelease, 
+                       _CCECCryptorComputeSharedSecret, _CCECCryptorCreateFromData, 
+                       _CCECCryptorExportKey, _CCECCryptorExportPublicKey, _CCECCryptorGenerateBlindingKeys, 
+                       _CCECCryptorGeneratePair, _CCECCryptorGetKeyComponents, _CCECCryptorGetPublicKeyFromPrivateKey, 
+                       _CCECCryptorH2C, _CCECCryptorImportKey, _CCECCryptorImportPublicKey, 
+                       _CCECCryptorRelease, _CCECCryptorSignHash, _CCECCryptorTwinDiversifyEntropySize, 
+                       _CCECCryptorTwinDiversifyKey, _CCECCryptorUnblind, _CCECCryptorUnwrapKey, 
+                       _CCECCryptorVerifyHash, _CCECCryptorWrapKey, _CCECGetKeySize, 
+                       _CCECGetKeyType, _CCHKDFExpand, _CCHKDFExtract, _CCHmac, _CCHmacClone, 
+                       _CCHmacCreate, _CCHmacDestroy, _CCHmacFinal, _CCHmacInit, 
+                       _CCHmacOneShot, _CCHmacOutputSize, _CCHmacOutputSizeFromRef, 
+                       _CCHmacUpdate, _CCKDFParametersCreateAnsiX963, _CCKDFParametersCreateCtrHmac, 
+                       _CCKDFParametersCreateCtrHmacFixed, _CCKDFParametersCreateHkdf, 
+                       _CCKDFParametersCreatePbkdf2, _CCKDFParametersDestroy, _CCKeyDerivationHMac, 
+                       _CCKeyDerivationPBKDF, _CCRSACryptorCreateFromData, _CCRSACryptorCreatePublicKeyFromPrivateKey, 
+                       _CCRSACryptorCrypt, _CCRSACryptorDecrypt, _CCRSACryptorEncrypt, 
+                       _CCRSACryptorExport, _CCRSACryptorGeneratePair, _CCRSACryptorGetPublicKeyFromPrivateKey, 
+                       _CCRSACryptorImport, _CCRSACryptorRecoverPrivateKey, _CCRSACryptorRelease, 
+                       _CCRSACryptorSign, _CCRSACryptorVerify, _CCRSAGetCRTComponents, 
+                       _CCRSAGetCRTComponentsSizes, _CCRSAGetKeyComponents, _CCRSAGetKeySize, 
+                       _CCRSAGetKeyType, _CCRandomCopyBytes, _CCRandomGenerateBytes, 
+                       _CCRandomUniform, _CCSymmetricKeyUnwrap, _CCSymmetricKeyWrap, 
+                       _CCSymmetricUnwrappedSize, _CCSymmetricWrappedSize, _CC_MD2, 
+                       _CC_MD2_Final, _CC_MD2_Init, _CC_MD2_Update, _CC_MD4, _CC_MD4_Final, 
+                       _CC_MD4_Init, _CC_MD4_Update, _CC_MD5, _CC_MD5_Final, _CC_MD5_Init, 
+                       _CC_MD5_Update, _CC_SHA1, _CC_SHA1_Final, _CC_SHA1_Init, _CC_SHA1_Update, 
+                       _CC_SHA224, _CC_SHA224_Final, _CC_SHA224_Init, _CC_SHA224_Update, 
+                       _CC_SHA256, _CC_SHA256_Final, _CC_SHA256_Init, _CC_SHA256_Update, 
+                       _CC_SHA384, _CC_SHA384_Final, _CC_SHA384_Init, _CC_SHA384_Update, 
+                       _CC_SHA512, _CC_SHA512_Final, _CC_SHA512_Init, _CC_SHA512_Update, 
+                       _CCrfc3394_iv, _CCrfc3394_ivLen, _CNCRC, _CNCRCDumpTable, 
+                       _CNCRCFinal, _CNCRCInit, _CNCRCRelease, _CNCRCUpdate, _CNCRCWeakTest, 
+                       _CNEncode, _CNEncoderBlocksize, _CNEncoderBlocksizeFromRef, 
+                       _CNEncoderCreate, _CNEncoderCreateCustom, _CNEncoderFinal, 
+                       _CNEncoderGetOutputLength, _CNEncoderGetOutputLengthFromEncoding, 
+                       _CNEncoderRelease, _CNEncoderUpdate, _MD5Final, _ccDRBGGetRngState, 
+                       _ccDevRandomGetRngState, _kCCRandomDefault, _kCCRandomDevRandom ]
+...

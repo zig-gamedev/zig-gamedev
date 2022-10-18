@@ -1,0 +1,41 @@
+framework module QuartzCore {
+  umbrella header "QuartzCore.h"
+
+  export *
+  module * {
+    export *
+  }
+
+  // Import CoreImage directly
+  exclude header "CoreImage.h"
+  exclude header "CIColor.h"
+  exclude header "CIContext.h"
+  exclude header "CIFilter.h"
+  exclude header "CIFilterGenerator.h"
+  exclude header "CIFilterShape.h"
+  exclude header "CIImage.h"
+  exclude header "CIImageAccumulator.h"
+  exclude header "CIImageProvider.h"
+  exclude header "CIKernel.h"
+  exclude header "CIPlugIn.h"
+  exclude header "CIPlugInInterface.h"
+  exclude header "CIRAWFilter.h"
+  exclude header "CISampler.h"
+  exclude header "CIVector.h"
+
+  // Import CoreVideo directly
+  exclude header "CoreVideo.h"
+  exclude header "CVBase.h"
+  exclude header "CVBuffer.h"
+  exclude header "CVDisplayLink.h"
+  exclude header "CVHostTime.h"
+  exclude header "CVImageBuffer.h"
+  exclude header "CVOpenGLBuffer.h"
+  exclude header "CVOpenGLBufferPool.h"
+  exclude header "CVOpenGLTexture.h"
+  exclude header "CVOpenGLTextureCache.h"
+  exclude header "CVPixelBuffer.h"
+  exclude header "CVPixelBufferPool.h"
+  exclude header "CVPixelFormatDescription.h"
+  exclude header "CVReturn.h"
+}

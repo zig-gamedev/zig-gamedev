@@ -1,0 +1,62 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           047F8361-0A74-3753-BA4F-991447B4C7D6
+  - target:          x86_64-maccatalyst
+    value:           047F8361-0A74-3753-BA4F-991447B4C7D6
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           002C7E5D-60B6-30F2-9C7B-54F85CC3C104
+  - target:          arm64e-maccatalyst
+    value:           002C7E5D-60B6-30F2-9C7B-54F85CC3C104
+install-name:    '/System/Library/Frameworks/DiskArbitration.framework/Versions/A/DiskArbitration'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _DAApprovalSessionCreate, _DAApprovalSessionGetTypeID, _DAApprovalSessionScheduleWithRunLoop, 
+                       _DAApprovalSessionUnscheduleFromRunLoop, _DADiskClaim, _DADiskCopyDescription, 
+                       _DADiskCopyIOMedia, _DADiskCopyWholeDisk, _DADiskCreateFromBSDName, 
+                       _DADiskCreateFromIOMedia, _DADiskCreateFromVolumePath, _DADiskEject, 
+                       _DADiskGetBSDName, _DADiskGetOptions, _DADiskGetTypeID, _DADiskIsClaimed, 
+                       _DADiskMount, _DADiskMountWithArguments, _DADiskRename, _DADiskSetOptions, 
+                       _DADiskUnclaim, _DADiskUnmount, _DADissenterCreate, _DADissenterGetProcessID, 
+                       _DADissenterGetStatus, _DADissenterGetStatusString, _DARegisterDiskAppearedCallback, 
+                       _DARegisterDiskDescriptionChangedCallback, _DARegisterDiskDisappearedCallback, 
+                       _DARegisterDiskEjectApprovalCallback, _DARegisterDiskListCompleteCallback, 
+                       _DARegisterDiskMountApprovalCallback, _DARegisterDiskPeekCallback, 
+                       _DARegisterDiskUnmountApprovalCallback, _DARegisterIdleCallback, 
+                       _DASessionCreate, _DASessionGetTypeID, _DASessionScheduleWithRunLoop, 
+                       _DASessionSetDispatchQueue, _DASessionUnscheduleFromRunLoop, 
+                       _DAUnregisterApprovalCallback, _DAUnregisterCallback, __DADiskCreateFromSerialization, 
+                       __DADiskGetSession, __DADiskSetAdoption, __DADiskSetEncoding, 
+                       __DAmkdir, __DArmdir, _kDAApprovalRunLoopMode, _kDADiskDescriptionAppearanceTimeKey, 
+                       _kDADiskDescriptionBusNameKey, _kDADiskDescriptionBusPathKey, 
+                       _kDADiskDescriptionDeviceGUIDKey, _kDADiskDescriptionDeviceInternalKey, 
+                       _kDADiskDescriptionDeviceModelKey, _kDADiskDescriptionDevicePathKey, 
+                       _kDADiskDescriptionDeviceProtocolKey, _kDADiskDescriptionDeviceRevisionKey, 
+                       _kDADiskDescriptionDeviceTDMLockedKey, _kDADiskDescriptionDeviceUnitKey, 
+                       _kDADiskDescriptionDeviceVendorKey, _kDADiskDescriptionMatchMediaUnformatted, 
+                       _kDADiskDescriptionMatchMediaWhole, _kDADiskDescriptionMatchVolumeMountable, 
+                       _kDADiskDescriptionMatchVolumeUnrecognized, _kDADiskDescriptionMediaBSDMajorKey, 
+                       _kDADiskDescriptionMediaBSDMinorKey, _kDADiskDescriptionMediaBSDNameKey, 
+                       _kDADiskDescriptionMediaBSDUnitKey, _kDADiskDescriptionMediaBlockSizeKey, 
+                       _kDADiskDescriptionMediaContentKey, _kDADiskDescriptionMediaEjectableKey, 
+                       _kDADiskDescriptionMediaEncryptedKey, _kDADiskDescriptionMediaEncryptionDetailKey, 
+                       _kDADiskDescriptionMediaIconKey, _kDADiskDescriptionMediaKindKey, 
+                       _kDADiskDescriptionMediaLeafKey, _kDADiskDescriptionMediaMatchKey, 
+                       _kDADiskDescriptionMediaNameKey, _kDADiskDescriptionMediaPathKey, 
+                       _kDADiskDescriptionMediaRemovableKey, _kDADiskDescriptionMediaSizeKey, 
+                       _kDADiskDescriptionMediaTypeKey, _kDADiskDescriptionMediaUUIDKey, 
+                       _kDADiskDescriptionMediaWholeKey, _kDADiskDescriptionMediaWritableKey, 
+                       _kDADiskDescriptionVolumeKindKey, _kDADiskDescriptionVolumeMountableKey, 
+                       _kDADiskDescriptionVolumeNameKey, _kDADiskDescriptionVolumeNetworkKey, 
+                       _kDADiskDescriptionVolumePathKey, _kDADiskDescriptionVolumeTypeKey, 
+                       _kDADiskDescriptionVolumeUUIDKey, _kDADiskDescriptionWatchVolumeName, 
+                       _kDADiskDescriptionWatchVolumePath ]
+...

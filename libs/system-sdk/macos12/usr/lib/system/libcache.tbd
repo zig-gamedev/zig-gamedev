@@ -1,0 +1,38 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           B547F879-03EB-3693-80A2-D588EF6EB815
+  - target:          x86_64-maccatalyst
+    value:           B547F879-03EB-3693-80A2-D588EF6EB815
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           BB47A721-69A7-3EEA-9D9B-82F88FFF2641
+  - target:          arm64e-maccatalyst
+    value:           BB47A721-69A7-3EEA-9D9B-82F88FFF2641
+install-name:    '/usr/lib/system/libcache.dylib'
+current-version: 85
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _cache_create, _cache_destroy, _cache_get, _cache_get_and_retain, 
+                       _cache_get_cost_hint, _cache_get_count_hint, _cache_get_info, 
+                       _cache_get_info_for_key, _cache_get_info_for_keys, _cache_get_minimum_values_hint, 
+                       _cache_get_name, _cache_hash_byte_string, _cache_invoke, _cache_key_hash_cb_cstring, 
+                       _cache_key_hash_cb_integer, _cache_key_is_equal_cb_cstring, 
+                       _cache_key_is_equal_cb_integer, _cache_print, _cache_print_stats, 
+                       _cache_release_cb_free, _cache_release_value, _cache_remove, 
+                       _cache_remove_all, _cache_remove_with_block, _cache_set_and_retain, 
+                       _cache_set_cost_hint, _cache_set_count_hint, _cache_set_minimum_values_hint, 
+                       _cache_set_name, _cache_simulate_memory_warning_event, _cache_value_make_nonpurgeable_cb, 
+                       _cache_value_make_purgeable_cb ]
+...

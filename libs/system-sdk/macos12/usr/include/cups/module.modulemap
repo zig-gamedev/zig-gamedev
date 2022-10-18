@@ -1,0 +1,75 @@
+module CUPS [system] {
+    header "cups.h"
+    link "cups"
+    export *
+
+    module adminutil {
+        header "adminutil.h"
+        export *
+    }
+
+    module array {
+        header "array.h"
+        export *
+    }
+
+    module backend {
+        header "backend.h"
+        export *
+    }
+
+    module dir {
+        header "dir.h"
+        export *
+    }
+
+    module file {
+        header "file.h"
+        export *
+    }
+
+    explicit module http {
+        header "http.h"
+        export *
+    }
+
+    explicit module ipp {
+        header "ipp.h"
+        export *
+    }
+
+    module language {
+        header "language.h"
+        export *
+    }
+
+    explicit module ppd {
+        header "ppd.h"
+        export *
+    }
+
+    explicit module pwg {
+        header "pwg.h"
+        export *
+    }
+
+    module raster {
+        header "raster.h"
+        export *
+    }
+
+    module sidechannel {
+        header "sidechannel.h"
+        export *
+    }
+
+    module transcode {
+        header "transcode.h"
+        export *
+    }
+
+    module versioning {
+        header "versioning.h"
+        export *
+    }
+}

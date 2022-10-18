@@ -1,0 +1,45 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           E9117264-529E-38DA-9A17-1DF853D58A74
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           62131241-605A-3B2B-90D6-98D0F1B25DCF
+install-name:    '/usr/lib/libIASAuthReboot.dylib'
+current-version: 1000
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _IARAuthenticatedRestartSupported, _IARCommitLoginCredentials, 
+                       _IARCommitLoginCredentialsFinalized, _IARIALibRootSideStashLoginCredentialsWithUserData, 
+                       _IARIALibUserSideStashLoginCredentials, _IARIsAutoLoginUser, 
+                       _IARRootSideStashLoginCredentials, _IARRootSideStashLoginCredentialsEnablingFLO, 
+                       _IARRootSideStashLoginCredentialsEnablingFLOForUser, _IARStashAPFSIfApproprate, 
+                       _IARStashLoginCredentials, _IARStashLoginCredentialsEnablingFLO, 
+                       _IARStashLoginCredentialsEnablingFLOForUser, _IARUserSideStashLoginCredentials, 
+                       __IADiskIsAPFS, __IARAssembleKeyCheck, __IARAuthenticatedRestartSupported, 
+                       __IARAutoLoginIsEnabled, __IARCommitLoginCredentials, __IARCommitPrincipalUserCookie, 
+                       __IARCopyRootEncryptionContext, __IARDestroyPrinicipalUserCookie, 
+                       __IARDestroysFVKeyOnStandby, __IARDiskIsEncryptedAPFS, __IARGetModel, 
+                       __IARGetVolumeKEK, __IARIsAPFSSupported, __IARMasterKeyForPassword, 
+                       __IARPreparePrincipalUserCookie, __IARReadRandom, __IARRootDiskIsAPFS, 
+                       __IARRootDiskIsEncryptedAPFS, __IARStagePrincipalUserCookie, 
+                       __IARStashAPFSFDEKeyForPath, __IARStashFDEKey, __IARStashFileVaultKeyBagKek, 
+                       __IARStashLoginCredentialsAKSHijack, __IARStashLoginCredentialsAKSHijackWithMasterKey, 
+                       __IARStashLoginCredentialsOld, __IARStashLoginCredentialsOldWithMasterKey, 
+                       __IARStashMasterKey, __IARUnwrapVolumeKEK, __IARValidateKeyCheck, 
+                       __IARWritePrincipalUserCookie, __IARWriteToSMC, __IAR_APFSVolumeGetVEKState, 
+                       __IAR_APFSVolumeQueryCryptoProgress, __IAR_Cambria_Translated, 
+                       __IAR_IsAppleSilicon, __IAR_MKBFilevaultStashKek, __IAR_MKBKeyBagKeyStashCommitWithOpts, 
+                       __IAR_MKBKeyBagKeyStashCreateWithOpts, __initializeCSSM, _aes_decrypt, 
+                       _aes_decrypt_cbc, _aes_decrypt_key, _aes_decrypt_key128, _aes_decrypt_key192, 
+                       _aes_decrypt_key256, _aes_encrypt, _aes_encrypt_cbc, _aes_encrypt_key, 
+                       _aes_encrypt_key128, _aes_encrypt_key192, _aes_encrypt_key256, 
+                       _gen_tabs, _t_fl, _t_fn, _t_il, _t_im, _t_in, _t_rc, _xts_decrypt, 
+                       _xts_done, _xts_encrypt, _xts_start ]
+    objc-classes:    [ KeychainMasterHandler ]
+    objc-ivars:      [ KeychainMasterHandler._errorStatus, KeychainMasterHandler._errorString, 
+                       KeychainMasterHandler._keychainRef, KeychainMasterHandler._moduleHandle ]
+...

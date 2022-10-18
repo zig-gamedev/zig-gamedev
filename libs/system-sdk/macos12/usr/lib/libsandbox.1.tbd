@@ -1,0 +1,34 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           0122F890-15B9-3BF8-8714-5D41F855760E
+  - target:          x86_64-maccatalyst
+    value:           0122F890-15B9-3BF8-8714-5D41F855760E
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           8E4F4746-C7F2-3DA2-92DA-90096670E887
+  - target:          arm64e-maccatalyst
+    value:           8E4F4746-C7F2-3DA2-92DA-90096670E887
+install-name:    '/usr/lib/libsandbox.1.dylib'
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _SANDBOX_BUILD_ID, ___crashreporter_info__, _sandbox_apply, 
+                       _sandbox_apply_container, _sandbox_compile_entitlements, _sandbox_compile_file, 
+                       _sandbox_compile_named, _sandbox_compile_string, _sandbox_container_paths_iterate_items, 
+                       _sandbox_create_params, _sandbox_exempt_from_network_approval_policy, 
+                       _sandbox_free_params, _sandbox_free_profile, _sandbox_inspect_pid, 
+                       _sandbox_inspect_smemory, _sandbox_prepare_user_home_mount, 
+                       _sandbox_register_network_approval_policy_exemption_for_share, 
+                       _sandbox_register_profile, _sandbox_register_sync_root, _sandbox_set_param, 
+                       _sandbox_set_user_state_item, _sandbox_set_user_state_item_with_persona, 
+                       _sandbox_unregister_all_profiles, _sandbox_unregister_profile, 
+                       _sandbox_user_state_item_buffer_create, _sandbox_user_state_item_buffer_destroy, 
+                       _sandbox_user_state_item_buffer_send, _sandbox_user_state_iterate_items ]
+...

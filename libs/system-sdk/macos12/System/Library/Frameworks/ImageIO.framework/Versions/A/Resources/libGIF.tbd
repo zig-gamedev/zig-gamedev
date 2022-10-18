@@ -1,0 +1,38 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, x86_64h-macos, x86_64h-maccatalyst, 
+                   arm64-macos, arm64-maccatalyst, arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           954BA3AD-2667-3D0E-8735-4BA59E6BA1EE
+  - target:          x86_64-maccatalyst
+    value:           954BA3AD-2667-3D0E-8735-4BA59E6BA1EE
+  - target:          x86_64h-macos
+    value:           781651EE-64C5-3220-A5DA-50AF26BDB8E4
+  - target:          x86_64h-maccatalyst
+    value:           781651EE-64C5-3220-A5DA-50AF26BDB8E4
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           A17F7121-3227-3B35-8512-7B0012E74C6B
+  - target:          arm64e-maccatalyst
+    value:           A17F7121-3227-3B35-8512-7B0012E74C6B
+install-name:    '/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libGIF.dylib'
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, x86_64h-maccatalyst, x86_64h-macos, 
+                       arm64e-maccatalyst, arm64e-macos, arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __cg_DGifCloseFile, __cg_DGifExtensionToGCB, __cg_DGifGetCode, 
+                       __cg_DGifGetCodeNext, __cg_DGifGetExtension, __cg_DGifGetExtensionNext, 
+                       __cg_DGifGetImageDesc, __cg_DGifGetLZCodes, __cg_DGifGetLine, 
+                       __cg_DGifGetPixel, __cg_DGifGetRecordType, __cg_DGifGetScreenDesc, 
+                       __cg_DGifOpen, __cg_DGifOpenFileHandle, __cg_DGifOpenFileName, 
+                       __cg_DGifSlurp, __cg_EGifCloseFile, __cg_EGifOpen, __cg_EGifOpenFileHandle, 
+                       __cg_EGifOpenFileName, __cg_EGifPutCode, __cg_EGifPutCodeNext, 
+                       __cg_EGifPutComment, __cg_EGifPutExtension, __cg_EGifPutExtensionBlock, 
+                       __cg_EGifPutExtensionLeader, __cg_EGifPutExtensionTrailer, 
+                       __cg_EGifPutImageDesc, __cg_EGifPutLine, __cg_EGifPutPixel, 
+                       __cg_EGifPutScreenDesc, __cg_EGifSpew, __cg_GifFreeMapObject, 
+                       __cg_GifLastError, __cg_GifMakeMapObject, __cg_GifQuantizeBuffer ]
+...

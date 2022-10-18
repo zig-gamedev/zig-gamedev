@@ -1,0 +1,190 @@
+/*
+ * Copyright (c) 2018-2019 Apple Inc. All rights reserved.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_START@
+ *
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. The rights granted to you under the License
+ * may not be used to create, or enable the creation or redistribution of,
+ * unlawful or unlicensed copies of an Apple operating system, or to
+ * circumvent, violate, or enable the circumvention or violation of, any
+ * terms of an Apple operating system software license agreement.
+ *
+ * Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this file.
+ *
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
+ */
+
+#if !__IIG
+#if KERNEL
+#include <IOKit/hid/IOHIDDevice.h>
+#endif
+#endif
+
+#ifndef _HIDDRIVERKIT_IOHIDDEVICE_H
+#define _HIDDRIVERKIT_IOHIDDEVICE_H
+
+#include <DriverKit/OSAction.iig>
+#include <DriverKit/IOService.iig>
+#include <HIDDriverKit/IOHIDDeviceTypes.h>
+#include <DriverKit/IOTypes.h>
+
+class IOMemoryDescriptor;
+
+class KERNEL IOHIDDevice : public IOService
+{
+
+public:
+
+    /*!
+     * @function handleReport
+     * @abstract Handle an asynchronous report received from the HID device.
+     * @param report A memory descriptor that describes the report.
+     * @param reportType The type of report.
+     * @param options Options to specify the request. No options are
+     * currently defined, and the default value is 0.
+     * @result kIOReturnSuccess on success, or an error return otherwise.
+     */
+
+    virtual kern_return_t handleReport(uint64_t                  timestamp,
+                                       IOMemoryDescriptor        *report,
+                                       uint32_t                  reportLength,
+                                       IOHIDReportType           reportType = kIOHIDReportTypeInput,
+                                       IOOptionBits              options    = 0) LOCALONLY;
+
+
+    
+    /*!
+     * @function getReport
+     * @abstract Get a report from the HID device.
+     * @param report A memory descriptor that describes the memory to store
+     * the report read from the HID device.
+     * @param reportType The report type.
+     * @param options The lower 8 bits will represent the Report ID.  The
+     * other 24 bits are options to specify the request.
+     * @param completionTimeout Specifies an amount of time (in ms) after which
+     * the command will be aborted if the entire command has not been completed.
+     * @param action OSAction to call CompleteReport when request completes.
+     * @result kIOReturnSuccess on success, or an error return otherwise.
+     */
+    
+    virtual kern_return_t getReport(IOMemoryDescriptor      * report,
+                                    IOHIDReportType         reportType,
+                                    IOOptionBits            options,
+                                    uint32_t                completionTimeout,
+                                    OSAction                * action) LOCALONLY;
+    
+    
+    /*!
+     * @function setReport
+     * @abstract Send a report to the HID device.
+     * @param report A memory descriptor that describes the report to send
+     * to the HID device.
+     * @param reportType The report type.
+     * @param options The lower 8 bits will represent the Report ID.  The
+     * other 24 bits are options to specify the request.
+     * @param completionTimeout Specifies an amount of time (in ms) after which
+     * the command will be aborted if the entire command has not been completed.
+     * @param action OSAction to call CompleteReport when request completes.
+     * @result kIOReturnSuccess on success, or an error return otherwise.
+     */
+    
+    virtual kern_return_t setReport(IOMemoryDescriptor      * report,
+                                    IOHIDReportType         reportType,
+                                    IOOptionBits            options,
+                                    uint32_t                completionTimeout,
+                                    OSAction                * action) LOCALONLY;
+
+    
+protected:
+
+    /*!
+     * @brief       Complete async requests made with GetReport/SetReport
+     * @discussion  method should be called upon completion of GetReport/SetReport.
+     * @param       action   passed to GetReport/SetReport.
+     * @param       status   status of the completion.
+     * @param       actualByteCount   used buffer size of the buffer submitted with SetReport/GetReport.
+     * @return      none
+     */
+
+    virtual void  CompleteReport (OSAction            * action TARGET,
+                                  IOReturn            status,
+                                  uint32_t            actualByteCount) LOCAL = 0;
+
+    
+
+    virtual void setProperty (OSObject * key, OSObject * value) LOCALONLY;
+    
+
+public:
+  
+};
+
+class EXTENDS (IOHIDDevice) IOHIDDevicePrivate
+{
+    
+    virtual void _SetProperty (IOBufferMemoryDescriptor * serialization) LOCAL;
+    
+    virtual kern_return_t _HandleReport(uint64_t                  timestamp,
+                                        IOMemoryDescriptor        *report,
+                                        uint32_t                  reportLength,
+                                        IOHIDReportType           reportType = kIOHIDReportTypeInput,
+                                        IOOptionBits              options    = 0);
+    
+    /*!
+     * @brief       Process GetReport/SetReport requests from  kernel object
+     * @discussion  method called by kernel object to request processing Get/Set report commands.
+     * @param       report      descriptor to store report data.
+     * @param       reportType  report type
+     * @param       options     options[0..7] contain report ID.
+     * @param       completionTimeout    completion timeout
+     * @param       action    asynchronous handle
+     * @return      KERN_SUCCESS is successful see IOReturn.h for error codes.
+     */
+
+    virtual void  _ProcessReport (HIDReportCommandType       command,
+                                 IOMemoryDescriptor         * report,
+                                 IOHIDReportType            reportType,
+                                 IOOptionBits               options,
+                                 uint32_t                   completionTimeout,
+                                 OSAction                   * action TYPE (IOHIDDevice::CompleteReport)) LOCAL;
+    
+ 
+    /*!
+     * @brief       Complete async requests made with GetReport/SetReport
+     * @discussion  Method  represent kernel functionality associated with CompleteReport and should not be used directly
+     * @param       action  passed to GetReport/SetReport.
+     * @param       status  status of the completion.
+     * @param       actualByteCount   used buffer size of the buffer submitted with SetReport/GetReport.
+     * @return      none
+     */
+
+    virtual void _CompleteReport (OSAction             * action,
+                                  IOReturn             status,
+                                  uint32_t             actualByteCount) TYPE (IOHIDDevice::CompleteReport);
+    
+
+    /*!
+     * @brief       Start in kernel object that represent Device
+     * @discussion  Method  used to finalize initialization in kernel object once user space object initialization completed
+     * @param       provider   same object that passed to Start.
+     * @return      KERN_SUCCESS is successful see IOReturn.h for error codes.
+     */
+
+    virtual kern_return_t _Start (IOService * provider);
+
+};
+
+
+#endif /* ! _HIDDRIVERKIT_IOHIDDEVICE_H */

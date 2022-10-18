@@ -1,0 +1,237 @@
+framework module IOKit [extern_c] {
+  header "IOReturn.h"
+  header "IOMapTypes.h"
+  header "IOTypes.h"
+  header "IOKitKeys.h"
+  header "OSMessageNotification.h"
+  header "IOKitLib.h"
+  header "IOBSD.h"
+  header "IODataQueueClient.h"
+  header "IOCFBundle.h"
+  header "IODataQueueShared.h"
+  header "IOSharedLock.h"
+  header "IOCFPlugIn.h"
+  header "IOCFSerialize.h"
+  header "IOCFURLAccess.h"
+  header "IOKitServer.h"
+  header "IOCFUnserialize.h"
+  header "IOMessage.h"
+  header "IORPC.h"
+  header "IOUserServer.h"
+
+  export *
+
+  explicit module audio {
+    header "audio/IOAudioDefines.h"
+    header "audio/IOAudioLib.h"
+    header "audio/IOAudioTypes.h"
+    export *
+  }
+
+  explicit module avc {
+    header "avc/IOFireWireAVCConsts.h"
+    header "avc/IOFireWireAVCLib.h"
+    export *
+  }
+
+  explicit module firewire {
+    header "firewire/IOFireWireLib.h"
+    header "firewire/IOFireWireFamilyCommon.h"
+    header "firewire/IOFireWireLibIsoch.h"
+    export *
+
+    module deprecated {
+      requires unavailable
+      header "firewire/IOFWIsoch.h"
+    }
+  }
+
+  explicit module graphics {
+    header "graphics/IOAccelClientConnect.h"
+    header "graphics/IOGraphicsInterface.h"
+    header "graphics/IOAccelSurfaceConnect.h"
+    header "graphics/IOGraphicsInterfaceTypes.h"
+    header "graphics/IOAccelTypes.h"
+    header "graphics/IOGraphicsLib.h"
+    header "graphics/IOFramebufferShared.h"
+    header "graphics/IOGraphicsTypes.h"
+    header "graphics/IOGraphicsEngine.h"
+    export *
+  }
+
+  explicit module hid {
+    header "hid/IOHIDBase.h"
+    header "hid/IOHIDKeys.h"
+    header "hid/IOHIDQueue.h"
+    header "hid/IOHIDDevice.h"
+    header "hid/IOHIDLib.h"
+    header "hid/IOHIDTransaction.h"
+    header "hid/IOHIDDevicePlugIn.h"
+    header "hid/IOHIDLibObsolete.h"
+    header "hid/IOHIDUsageTables.h"
+    header "hid/IOHIDElement.h"
+    header "hid/IOHIDManager.h"
+    header "hid/IOHIDValue.h"
+    header "hid/IOHIDDeviceKeys.h"
+    header "hid/IOHIDDeviceTypes.h"
+    header "hid/IOHIDEventServiceKeys.h"
+    header "hid/IOHIDEventServiceTypes.h"
+    header "hid/IOHIDProperties.h"
+    export *
+  }
+
+  explicit module hidsystem {
+    header "hidsystem/IOHIDLib.h"
+    header "hidsystem/IOHIDTypes.h"
+    header "hidsystem/event_status_driver.h"
+    header "hidsystem/IOHIDParameter.h"
+    header "hidsystem/IOLLEvent.h"
+    header "hidsystem/IOHIDShared.h"
+    header "hidsystem/ev_keymap.h"
+    header "hidsystem/IOHIDEventSystemClient.h"
+    header "hidsystem/IOHIDServiceClient.h"
+    header "hidsystem/IOHIDUserDevice.h"
+    export *
+  }
+  	
+  explicit module i2c {
+    header "i2c/IOI2CInterface.h"
+    export *
+  }
+
+  explicit module kext {
+    header "kext/KextManager.h"
+    export *
+  }
+
+  /* DPG: this module redefines bits from ApplicationServices.QD, which creates a
+          conflict.
+  explicit module ndrvsupport {
+    header "ndrvsupport/IOMacOSTypes.h"
+    header "ndrvsupport/IOMacOSVideo.h"
+    export *
+  }
+  */
+
+  explicit module network {
+    header "network/IOEthernetController.h"
+    header "network/IONetworkData.h"
+    header "network/IONetworkStack.h"
+    header "network/IOEthernetInterface.h"
+    header "network/IONetworkInterface.h"
+    header "network/IONetworkStats.h"
+    header "network/IOEthernetStats.h"
+    header "network/IONetworkLib.h"
+    header "network/IONetworkUserClient.h"
+    header "network/IONetworkController.h"
+    header "network/IONetworkMedium.h"
+    export *
+  }
+
+  explicit module ps {
+    header "ps/IOPSKeys.h"
+    header "ps/IOPowerSources.h"
+    header "ps/IOUPSPlugIn.h"
+    export *
+  }
+
+  explicit module pwr_mgt {
+    header "pwr_mgt/IOPM.h"
+    header "pwr_mgt/IOPMKeys.h"
+    header "pwr_mgt/IOPMLib.h"
+    header "pwr_mgt/IOPMLibDefs.h"
+    export *
+  }
+
+  explicit module sbp2 {
+    header "sbp2/IOFireWireSBP2Lib.h"
+    export *
+  }
+
+  explicit module scsi {
+    header "scsi/IOSCSIMultimediaCommandsDevice.h"
+    header "scsi/SCSICmds_REQUEST_SENSE_Defs.h"
+    header "scsi/SCSICmds_INQUIRY_Definitions.h"
+    header "scsi/SCSICommandDefinitions.h"
+    header "scsi/SCSICmds_MODE_Definitions.h"
+    header "scsi/SCSICommandOperationCodes.h"
+    header "scsi/SCSICmds_READ_CAPACITY_Definitions.h"
+    header "scsi/SCSITask.h"
+    header "scsi/SCSICmds_REPORT_LUNS_Definitions.h"
+    header "scsi/SCSITaskLib.h"
+    export *
+  }
+
+  explicit module serial {
+    header "serial/IOSerialKeys.h"
+    header "serial/ioss.h"
+    export *
+  }
+
+  explicit module storage {
+    header "storage/IOAppleLabelScheme.h"
+    header "storage/IODVDMediaBSDClient.h"
+    header "storage/IOApplePartitionScheme.h"
+    header "storage/IODVDTypes.h"
+    header "storage/IOBDBlockStorageDevice.h"
+    header "storage/IOFDiskPartitionScheme.h"
+    header "storage/IOBDMedia.h"
+    header "storage/IOFilterScheme.h"
+    header "storage/IOBDMediaBSDClient.h"
+    header "storage/IOFireWireStorageCharacteristics.h"
+    header "storage/IOBDTypes.h"
+    header "storage/IOGUIDPartitionScheme.h"
+    header "storage/IOBlockStorageDevice.h"
+    header "storage/IOMedia.h"
+    header "storage/IOBlockStorageDriver.h"
+    header "storage/IOMediaBSDClient.h"
+    header "storage/IOCDBlockStorageDevice.h"
+    header "storage/IOPartitionScheme.h"
+    header "storage/IOCDMedia.h"
+    header "storage/IOStorage.h"
+    header "storage/IOCDMediaBSDClient.h"
+    header "storage/IOStorageCardCharacteristics.h"
+    header "storage/IOCDPartitionScheme.h"
+    header "storage/IOStorageDeviceCharacteristics.h"
+    header "storage/IOCDTypes.h"
+    header "storage/IOStorageControllerCharacteristics.h"
+    header "storage/IOStorageProtocolCharacteristics.h"
+    header "storage/IODVDBlockStorageDevice.h"
+    header "storage/IODVDMedia.h"
+    export *
+
+    explicit module ata {
+      header "storage/ata/ATASMARTLib.h"
+      header "storage/ata/IOATAStorageDefines.h"
+      export *
+    }
+  }
+
+  explicit module stream {
+    header "stream/IOStreamLib.h"
+    header "stream/IOStreamShared.h"
+    export *
+  }
+
+  explicit module usb {
+    umbrella "Headers/usb"
+    export *
+    module * { export * }
+  }
+
+  explicit module video {
+    // rdar://problem/19486850
+    requires cplusplus, unavailable
+    header "video/IOVideoControlDictionary.h"
+    header "video/IOVideoDeviceUserClient.h"
+    header "video/IOVideoDevice.h"
+    header "video/IOVideoStream.h"
+    header "video/IOVideoDeviceClientInit.h"
+    header "video/IOVideoStreamDictionary.h"
+    header "video/IOVideoDeviceLib.h"
+    header "video/IOVideoStreamFormatDictionary.h"
+    header "video/IOVideoDeviceShared.h"
+    header "video/IOVideoTypes.h"
+    export *
+  }
+}

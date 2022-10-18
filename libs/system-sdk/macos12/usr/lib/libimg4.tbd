@@ -1,0 +1,40 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           588474C2-06E9-3C17-806B-57A66E74D739
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           41052381-D4BA-34D2-927E-307DA172CDE7
+install-name:    '/usr/lib/libimg4.dylib'
+current-version: 157.30.4
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, arm64-macos ]
+    symbols:         [ __img4_chip_ap_category_ff02, __img4_chip_ap_category_ff03, 
+                       __img4_chip_ap_category_ff04_f0, __img4_chip_ap_category_ff04_f1, 
+                       __img4_chip_ap_category_ff04_f2, __img4_chip_ap_category_ff04_f3, 
+                       __img4_chip_ap_hybrid, __img4_chip_ap_hybrid_medium, __img4_chip_ap_hybrid_relaxed, 
+                       __img4_chip_ap_intransigent, __img4_chip_ap_permissive, __img4_chip_ap_reduced, 
+                       __img4_chip_ap_sha1, __img4_chip_ap_sha2_384, __img4_chip_ap_software_ff00, 
+                       __img4_chip_ap_software_ff01, __img4_chip_ap_software_ff06, 
+                       __img4_chip_ap_supplemental, __img4_chip_ap_vma2, __img4_chip_ap_vma2_clone, 
+                       __img4_chip_spec, __img4_chip_x86, __img4_chip_x86_software_8012, 
+                       __img4_firmware_spec, __img4_nonce_domain_cryptex, __img4_nonce_domain_ddi, 
+                       __img4_nonce_domain_ephemeral_cryptex, __img4_nonce_domain_pdi, 
+                       __img4_nonce_domain_test, __img4_nonce_domain_trust_cache, 
+                       __img4_pmap_data_spec, __img4_runtime_default, __img4_runtime_object_spec_supplemental_object, 
+                       __img4_runtime_object_spec_supplemental_root, __img4_runtime_restore, 
+                       _img4_buff_dealloc, _img4_chip_custom, _img4_chip_init_from_buff, 
+                       _img4_chip_instantiate, _img4_chip_select_categorized_ap, 
+                       _img4_chip_select_effective_ap, _img4_chip_select_personalized_ap, 
+                       _img4_chip_shattersphere_reroot, _img4_firmware_attach_manifest, 
+                       _img4_firmware_destroy, _img4_firmware_evaluate, _img4_firmware_execute, 
+                       _img4_firmware_init, _img4_firmware_init_from_buff, _img4_firmware_new, 
+                       _img4_firmware_new_from_fd_4MSM, _img4_firmware_select_chip, 
+                       _img4_image_get_bytes, _img4_image_get_property_bool, _img4_image_get_property_data, 
+                       _img4_image_get_property_uint32, _img4_image_get_property_uint64, 
+                       _img4_nonce_domain_copy_nonce, _img4_nonce_domain_roll_nonce, 
+                       _img4_runtime_copy_object, _img4_runtime_execute_object, _img4_runtime_find_object_spec ]
+...

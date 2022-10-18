@@ -1,0 +1,52 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           1D7D200D-3537-3095-8F7F-BE03E40FC12C
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           BE259DCA-1DD4-30C8-BBD8-797D9D86272F
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SpeechRecognition.framework/Versions/A/SpeechRecognition'
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AppKit, LatentSemanticMapping ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _DisposeSRCallBackUPP, _InvokeSRCallBackUPP, _NewSRCallBackUPP, 
+                       _SFSAvatarCaptionVisible, _SFSCopyActiveRecognizer, _SFSCopyCurrentAvatarIdentifier, 
+                       _SFSCopyIndAvatarInfo, _SFSCopyIndRecognizerPluginBundleRef, 
+                       _SFSCopyNamedAvatarInfo, _SFSCopyProperty, _SFSCountAvatars, 
+                       _SFSCountRecognizerPlugins, _SFSCreateSpeechFeedbackService, 
+                       _SFSCreateSpeechFeedbackServiceFromRecognizerIdentifier, _SFSDeminimizeFeedbackWindow, 
+                       _SFSDeminimizeUtilityWindow, _SFSFeedbackWindowVisible, _SFSGetAvatarExpression, 
+                       _SFSGetTargetProcess, _SFSHideAvatarCaption, _SFSHideFeedbackWindow, 
+                       _SFSHideRecognizerArea, _SFSHideTextArea, _SFSHideUtilityWindow, 
+                       _SFSIsRecognizerAreaVisible, _SFSIsTextAreaVisible, _SFSMinimizeFeedbackWindow, 
+                       _SFSMinimizeUtilityWindow, _SFSReleaseSpeechFeedbackService, 
+                       _SFSRequestMicrophone, _SFSReturnMicrophone, _SFSSendMessageToRecognizerArea, 
+                       _SFSSetActiveRecognizer, _SFSSetAvatarCaption, _SFSSetAvatarExpression, 
+                       _SFSSetAvatarSpeakingState, _SFSSetIdentityBadge, _SFSSetMicrophoneMeterStatus, 
+                       _SFSSetProperty, _SFSSetRecognizerStartupAction, _SFSSetSpeakableCommandsData, 
+                       _SFSShowAvatarCaption, _SFSShowFeedbackWindow, _SFSShowRecognizerArea, 
+                       _SFSShowTextArea, _SFSShowUtilityWindow, _SFSSpeakAndDrawString, 
+                       _SFSSpeakAndDrawStringUsingVoice, _SFSSpecifyMicrophoneToMeter, 
+                       _SFSSpeechBusy, _SFSStopSpeech, _SFSSyncFeedbackWindowWithPrefs, 
+                       _SFSUseAvatar, _SFSUseAvatarBundle, _SFSUseRecognizerAreaBundle, 
+                       _SFSUtilityWindowVisible, _SRAddLanguageObject, _SRAddText, 
+                       _SRCancelRecognition, _SRChangeLanguageObject, _SRCloseRecognitionSystem, 
+                       _SRContinueRecognition, _SRCountItems, _SRDrawRecognizedText, 
+                       _SRDrawText, _SREmptyLanguageObject, _SRGetIndexedItem, _SRGetLanguageModel, 
+                       _SRGetProperty, _SRGetReference, _SRIdle, _SRNewLanguageModel, 
+                       _SRNewLanguageObjectFromDataFile, _SRNewLanguageObjectFromHandle, 
+                       _SRNewPath, _SRNewPhrase, _SRNewRecognizer, _SRNewWord, _SROpenRecognitionSystem, 
+                       _SRProcessBegin, _SRProcessEnd, _SRPutLanguageObjectIntoDataFile, 
+                       _SRPutLanguageObjectIntoHandle, _SRReleaseObject, _SRRemoveIndexedItem, 
+                       _SRRemoveLanguageObject, _SRSetIndexedItem, _SRSetLanguageModel, 
+                       _SRSetProperty, _SRSpeakAndDrawText, _SRSpeakText, _SRSpeechBusy, 
+                       _SRStartListening, _SRStopListening, _SRStopSpeech ]
+...

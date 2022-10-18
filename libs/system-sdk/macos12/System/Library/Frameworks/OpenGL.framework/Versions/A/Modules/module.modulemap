@@ -1,0 +1,71 @@
+framework module OpenGL [extern_c] {
+  umbrella header "OpenGL.h"
+  
+  module CGLRenderers { 
+    header "CGLRenderers.h"
+    export *
+  }
+
+  module CGLDevice {
+    header "CGLDevice.h"
+    export *
+  }
+  
+  export *
+  module * { 
+    export *
+  }
+
+  module GLTypes {
+    header "gltypes.h"
+    export *
+  }
+
+  explicit module GL3 {
+    header "gl3.h"
+    export GLTypes
+    export *    
+
+    explicit module Ext {
+      header "gl3ext.h"
+      export *    
+    }
+  }
+
+  explicit module IOSurface {
+    header "CGLIOSurface.h"
+    export *
+  }
+
+  explicit module GL {
+    header "gl.h"
+
+    export GLTypes
+    export *    
+
+    explicit module Ext {
+      header "glext.h"
+      export *    
+    }
+
+    explicit module GLU {
+      header "glu.h"
+      export *
+
+      explicit module Macro {
+        textual header "gluMacro.h"
+        header "gluContext.h"
+        export *
+      }
+    }
+
+    explicit module Macro {
+      textual header "CGLMacro.h"
+      header "CGLContext.h"
+      header "gliContext.h"
+      header "gliDispatch.h"
+      export *
+    }
+  }
+}
+

@@ -1,0 +1,27 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           E22E5FB8-3F02-3277-856E-25BE886E77AA
+  - target:          x86_64-maccatalyst
+    value:           E22E5FB8-3F02-3277-856E-25BE886E77AA
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           583CD9CC-D290-3A12-AAE5-05DF402A61AD
+  - target:          arm64e-maccatalyst
+    value:           583CD9CC-D290-3A12-AAE5-05DF402A61AD
+install-name:    '/usr/lib/libCTGreenTeaLogger.dylib'
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _ct_green_tea_logger_create, _ct_green_tea_logger_create_static, 
+                       _ct_green_tea_logger_destroy, _ct_green_tea_logging_enabled, 
+                       _getCTGreenTeaOsLogHandle, _kCTGreenTeaMessageDeleteLoggingFormat, 
+                       _kCTGreenTeaMessageReadLoggingFormat, _kCTGreenTeaMessageTransmitLoggingFormat, 
+                       _kCTGreenTeaPhoneNumberTransmitLoggingFormat ]
+...

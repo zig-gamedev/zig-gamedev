@@ -1,0 +1,79 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           EA600CC5-49A1-3D8B-94D5-E70993C50C72
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           67C8BA7F-7D2A-3B59-88C6-ED0B4DC6FD02
+install-name:    '/usr/lib/libSMC.dylib'
+current-version: 21
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _AccumSetupSettingsCPU, _AccumSetupSettingsGPU, _AccumSetupSettingsHP, 
+                       _AccumulatorPlatformStructLookupArray, _SMCAEPopulatePlatform, 
+                       _SMCAccumCheckMinMaxSupport, _SMCAccumGetChannelInfoForKey, 
+                       _SMCAccumIsSupported, _SMCCloseAppleSMC, _SMCCloseConnection, 
+                       _SMCConvertNumericToBytes, _SMCCreateAccumProgrammableChannelsDict1ms, 
+                       _SMCCreateAccumProgrammableChannelsDict1sec, _SMCGetAccumStatus, 
+                       _SMCGetAccumStatusFor, _SMCGetKeyFromIndex, _SMCGetKeyInfo, 
+                       _SMCGetTypeDescriptionForNumericType, _SMCKextCall, _SMCMakeUInt32Key, 
+                       _SMCOSAccumIsSupported, _SMCOSAccumSampleChannel, _SMCOpenAppleSMC, 
+                       _SMCOpenConnection, _SMCOpenConnectionWithDefaultService, 
+                       _SMCParseBytesForNumeric, _SMCProgramAccum, _SMCProgramAccum1Channel, 
+                       _SMCProgramAccumDefaults, _SMCProgramAccumWithoutReset, _SMCReadBigEndianArrayToUIntMax, 
+                       _SMCReadKey, _SMCReadKeyAsNumeric, _SMCReadKeyAsNumericWithKnownKeyInfo, 
+                       _SMCReadKeyWithKnownSize, _SMCReadLittleEndianArrayToUIntMax, 
+                       _SMCRegisterForNotification, _SMCRegisterForSubTypeNotification, 
+                       _SMCRequestMacOSWakeFromAP, _SMCSetAccum1msChannels, _SMCSetAccum1secChannels, 
+                       _SMCSetAccumBitShift, _SMCSetAccumMode, _SMCSignExtendToIntMax, 
+                       _SMCStartAccum, _SMCStopAccum, _SMCUInt32ToString, _SMCUnregisterForNotification, 
+                       _SMCWriteKey, _SMCWriteKeyAsNumeric, _SMCWriteKeyWithKnownSize, 
+                       __smcNotificationCallback, __unregisterForNotification, _atmamDataAccumLookupSt1ms_K17, 
+                       _atmamDataAccumLookupSt1ms_K19, _atmamDataAccumLookupSt1ms_K6, 
+                       _atmamDataAccumLookupSt1ms_K69, _atmamDataAccumLookupSt1ms_K84, 
+                       _atmamDataAccumLookupSt1ms_M96, _atmamDataAccumLookupSt1ms_M97, 
+                       _atmamDataAccumLookupSt1ms_k18, _atmamDataAccumLookupSt1ms_m87, 
+                       _atmamDataAccumLookupSt1ms_m98, _atmasDataAccumLookupSt1ms_D1, 
+                       _atmasDataAccumLookupSt1ms_D2, _atmasDataAccumLookupSt1ms_D7, 
+                       _atmasDataAccumLookupSt1ms_D7I, _atmasDataAccumLookupSt1ms_D8, 
+                       _atmasDataAccumLookupSt1ms_J11, _atmasDataAccumLookupSt1ms_J15, 
+                       _atmasDataAccumLookupSt1ms_J16, _atmasDataAccumLookupSt1ms_J16G, 
+                       _atmasDataAccumLookupSt1ms_J17, _atmasDataAccumLookupSt1ms_J30, 
+                       _atmasDataAccumLookupSt1ms_J31, _atmasDataAccumLookupSt1ms_J40G, 
+                       _atmasDataAccumLookupSt1ms_J40I, _atmasDataAccumLookupSt1ms_J40S, 
+                       _atmasDataAccumLookupSt1ms_J41, _atmasDataAccumLookupSt1ms_J44, 
+                       _atmasDataAccumLookupSt1ms_J45, _atmasDataAccumLookupSt1ms_J45G, 
+                       _atmasDataAccumLookupSt1ms_J50I, _atmasDataAccumLookupSt1ms_J50S, 
+                       _atmasDataAccumLookupSt1ms_J52, _atmasDataAccumLookupSt1ms_J53, 
+                       _atmasDataAccumLookupSt1ms_J64, _atmasDataAccumLookupSt1ms_J70, 
+                       _atmasDataAccumLookupSt1ms_J78, _atmasDataAccumLookupSt1ms_J90, 
+                       _atmasDataAccumLookupSt1ms_J92, _atmasDataAccumLookupSt1ms_K16, 
+                       _atmasDataAccumLookupSt1ms_K21, _atmasDataAccumLookupSt1ms_K90I, 
+                       _atmasDataAccumLookupSt1ms_K91F, _atmasDataAccumLookupSt1ms_K92, 
+                       _atmasDataAccumLookupSt1sec_D1, _atmasDataAccumLookupSt1sec_D2, 
+                       _atmasDataAccumLookupSt1sec_D7, _atmasDataAccumLookupSt1sec_D7I, 
+                       _atmasDataAccumLookupSt1sec_D8, _atmasDataAccumLookupSt1sec_J11, 
+                       _atmasDataAccumLookupSt1sec_J15, _atmasDataAccumLookupSt1sec_J16, 
+                       _atmasDataAccumLookupSt1sec_J16G, _atmasDataAccumLookupSt1sec_J17, 
+                       _atmasDataAccumLookupSt1sec_J30, _atmasDataAccumLookupSt1sec_J31, 
+                       _atmasDataAccumLookupSt1sec_J40G, _atmasDataAccumLookupSt1sec_J40I, 
+                       _atmasDataAccumLookupSt1sec_J40S, _atmasDataAccumLookupSt1sec_J41, 
+                       _atmasDataAccumLookupSt1sec_J44, _atmasDataAccumLookupSt1sec_J45, 
+                       _atmasDataAccumLookupSt1sec_J45G, _atmasDataAccumLookupSt1sec_J50I, 
+                       _atmasDataAccumLookupSt1sec_J50S, _atmasDataAccumLookupSt1sec_J52, 
+                       _atmasDataAccumLookupSt1sec_J53, _atmasDataAccumLookupSt1sec_J64, 
+                       _atmasDataAccumLookupSt1sec_J70, _atmasDataAccumLookupSt1sec_J78, 
+                       _atmasDataAccumLookupSt1sec_J90, _atmasDataAccumLookupSt1sec_J92, 
+                       _atmasDataAccumLookupSt1sec_K16, _atmasDataAccumLookupSt1sec_K17, 
+                       _atmasDataAccumLookupSt1sec_K19, _atmasDataAccumLookupSt1sec_K21, 
+                       _atmasDataAccumLookupSt1sec_K6, _atmasDataAccumLookupSt1sec_K69, 
+                       _atmasDataAccumLookupSt1sec_K84, _atmasDataAccumLookupSt1sec_K90I, 
+                       _atmasDataAccumLookupSt1sec_K91F, _atmasDataAccumLookupSt1sec_K92, 
+                       _atmasDataAccumLookupSt1sec_M96, _atmasDataAccumLookupSt1sec_M97, 
+                       _atmasDataAccumLookupSt1sec_k18, _atmasDataAccumLookupSt1sec_m87, 
+                       _atmasDataAccumLookupSt1sec_m98, _gNotification, _gNotifyPort, 
+                       _gSMCClientList, _getSMCQueue ]
+...

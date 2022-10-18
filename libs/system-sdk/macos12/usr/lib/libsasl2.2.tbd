@@ -1,0 +1,48 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           C28E6B1A-CCFE-32C2-93B8-BDDEDB511B20
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           80DFFBCD-A880-3C19-AD8A-40251F4CCFE5
+install-name:    '/usr/lib/libsasl2.2.dylib'
+current-version: 3.15
+compatibility-version: 3
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ __plug_buf_alloc, __plug_challenge_prompt, __plug_decode, 
+                       __plug_find_prompt, __plug_free_secret, __plug_free_string, 
+                       __plug_get_password, __plug_get_realm, __plug_get_simple, 
+                       __plug_iovec_to_buf, __plug_ipfromstring, __plug_make_prompts, 
+                       __plug_parseuser, __plug_strdup, __sasl_MD5Final, __sasl_MD5Init, 
+                       __sasl_MD5Update, __sasl_add_string, __sasl_alloc_utils, __sasl_auxprop_free, 
+                       __sasl_auxprop_lookup, __sasl_auxprop_verify_apop, __sasl_build_mechlist, 
+                       __sasl_canon_user, __sasl_canonuser_free, __sasl_client_listmech, 
+                       __sasl_client_mechs, __sasl_common_init, __sasl_conn_dispose, 
+                       __sasl_conn_init, __sasl_done_with_plugins, __sasl_find_getpath_callback, 
+                       __sasl_find_verifyfile_callback, __sasl_free_utils, __sasl_get_errorbuf, 
+                       __sasl_get_plugin, __sasl_getcallback, __sasl_hmac_md5, __sasl_hmac_md5_final, 
+                       __sasl_hmac_md5_import, __sasl_hmac_md5_init, __sasl_hmac_md5_precalc, 
+                       __sasl_ipfromstring, __sasl_load_plugins, __sasl_locate_entry, 
+                       __sasl_log, __sasl_server_listmech, __sasl_server_mechs, __sasl_strdup, 
+                       _prop_clear, _prop_dispose, _prop_dup, _prop_erase, _prop_format, 
+                       _prop_get, _prop_getnames, _prop_new, _prop_request, _prop_set, 
+                       _prop_setvals, _sasl_auxprop_add_plugin, _sasl_auxprop_getctx, 
+                       _sasl_auxprop_request, _sasl_auxprop_store, _sasl_canonuser_add_plugin, 
+                       _sasl_checkapop, _sasl_checkpass, _sasl_churn, _sasl_client_add_plugin, 
+                       _sasl_client_done, _sasl_client_init, _sasl_client_new, _sasl_client_plugin_info, 
+                       _sasl_client_start, _sasl_client_step, _sasl_config_done, 
+                       _sasl_config_getstring, _sasl_config_init, _sasl_decode, _sasl_decode64, 
+                       _sasl_dispose, _sasl_done, _sasl_encode, _sasl_encode64, _sasl_encodev, 
+                       _sasl_erasebuffer, _sasl_errdetail, _sasl_errstring, _sasl_getprop, 
+                       _sasl_global_listmech, _sasl_idle, _sasl_listmech, _sasl_mkchal, 
+                       _sasl_rand, _sasl_randcreate, _sasl_randfree, _sasl_randseed, 
+                       _sasl_server_add_plugin, _sasl_server_done, _sasl_server_init, 
+                       _sasl_server_init_alt, _sasl_server_new, _sasl_server_plugin_info, 
+                       _sasl_server_start, _sasl_server_step, _sasl_set_alloc, _sasl_set_mutex, 
+                       _sasl_set_path, _sasl_seterror, _sasl_setpass, _sasl_setprop, 
+                       _sasl_user_exists, _sasl_utf8verify, _sasl_version, _sasl_version_info ]
+...

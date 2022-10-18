@@ -1,0 +1,5 @@
+framework module CFNetwork [extern_c] [system] {
+	umbrella header "CFNetwork.h"
+	export *
+	module * {export *}
+}

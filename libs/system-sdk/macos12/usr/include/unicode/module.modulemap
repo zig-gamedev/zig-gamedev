@@ -1,0 +1,28 @@
+module ICU [extern_c] [system] {
+    header "uconfig.h"
+    header "uvernum.h"
+    header "platform.h"
+    header "ptypes.h"
+    header "urename.h"
+    header "umachine.h"
+    header "uversion.h"
+    header "utf.h"
+    header "utf8.h"
+    header "utf16.h"
+    header "utf_old.h"
+    header "utypes.h"
+    header "localpointer.h"
+    header "parseerr.h"
+    header "putil.h"
+    header "stringoptions.h"
+    header "ucpmap.h"
+    header "uchar.h"
+    header "uiter.h"
+    header "utext.h"
+    header "uregex.h"
+    header "ustring.h"
+    
+    link "icucore"
+    
+    export *
+}

@@ -1,0 +1,77 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           19A279BD-191D-3114-808B-09A74E978A6B
+  - target:          x86_64-maccatalyst
+    value:           19A279BD-191D-3114-808B-09A74E978A6B
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           362E885B-20EA-395B-BB01-6E46B864294D
+  - target:          arm64e-maccatalyst
+    value:           362E885B-20EA-395B-BB01-6E46B864294D
+install-name:    '/usr/lib/system/libsystem_trace.dylib'
+current-version: 1372.30.3
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __libtrace_fork_child, __libtrace_init, __os_activity_create, 
+                       __os_activity_current, __os_activity_initiate, __os_activity_initiate_f, 
+                       __os_activity_label_useraction, __os_activity_none, __os_activity_set_breadcrumb, 
+                       __os_activity_start, __os_activity_stream_entry_encode, __os_log_create, 
+                       __os_log_debug, __os_log_debug_impl, __os_log_default, __os_log_disabled, 
+                       __os_log_error, __os_log_error_impl, __os_log_fault, __os_log_fault_impl, 
+                       __os_log_impl, __os_log_internal, __os_log_pack_fill, __os_log_pack_size, 
+                       __os_log_preferences_compute, __os_log_preferences_copy_cache, 
+                       __os_log_preferences_load, __os_log_preferences_load_sysprefs, 
+                       __os_log_release, __os_log_set_nscf_formatter, __os_signpost_emit_impl, 
+                       __os_signpost_emit_unreliably_with_name_impl, __os_signpost_emit_with_name_impl, 
+                       __os_signpost_pack_fill, __os_signpost_pack_send, __os_state_request_for_pidlist, 
+                       __os_trace_atm_diagnostic_config, __os_trace_basesystem_storage_available, 
+                       __os_trace_calloc, __os_trace_commpage_compute, __os_trace_fdscandir_b, 
+                       __os_trace_get_boot_uuid, __os_trace_get_image_info, __os_trace_get_mode_for_pid, 
+                       __os_trace_get_times_now, __os_trace_getxattr_at, __os_trace_intprefsdir_path, 
+                       __os_trace_is_development_build, __os_trace_lazy_init_completed_4libxpc, 
+                       __os_trace_log_simple, __os_trace_macho_for_each_slice, __os_trace_malloc, 
+                       __os_trace_memdup, __os_trace_mmap, __os_trace_mmap_at, __os_trace_mmap_offset, 
+                       __os_trace_mode_match_4tests, __os_trace_prefs_latest_version_4tests, 
+                       __os_trace_prefsdir_path, __os_trace_read_file_at, __os_trace_read_plist_at, 
+                       __os_trace_realloc, __os_trace_scandir_free_namelist, __os_trace_sect_names, 
+                       __os_trace_set_diagnostic_flags, __os_trace_set_mode_for_pid, 
+                       __os_trace_strdup, __os_trace_sysprefsdir_path, __os_trace_update_with_datavolume_4launchd, 
+                       __os_trace_with_buffer, __os_trace_write, __os_trace_writev, 
+                       __os_trace_zalloc, _os_activity_apply, _os_activity_apply_f, 
+                       _os_activity_diagnostic_for_pid, _os_activity_end, _os_activity_for_task_thread, 
+                       _os_activity_for_thread, _os_activity_get_active, _os_activity_get_identifier, 
+                       _os_activity_iterate_activities, _os_activity_iterate_breadcrumbs, 
+                       _os_activity_iterate_messages, _os_activity_iterate_processes, 
+                       _os_activity_messages_for_thread, _os_activity_scope_enter, 
+                       _os_activity_scope_leave, _os_log_backtrace_copy_description, 
+                       _os_log_backtrace_copy_serialized_buffer, _os_log_backtrace_create_from_buffer, 
+                       _os_log_backtrace_create_from_current, _os_log_backtrace_create_from_pcs, 
+                       _os_log_backtrace_create_from_return_address, _os_log_backtrace_destroy, 
+                       _os_log_backtrace_get_frames, _os_log_backtrace_get_length, 
+                       _os_log_backtrace_print_to_blob, _os_log_backtrace_serialize_to_blob, 
+                       _os_log_create, _os_log_errors_count, _os_log_fault_default_callback, 
+                       _os_log_faults_count, _os_log_fmt_compose, _os_log_fmt_convert_trace, 
+                       _os_log_fmt_extract_pubdata, _os_log_fmt_get_plugin, _os_log_get_type, 
+                       _os_log_is_debug_enabled, _os_log_is_enabled, _os_log_pack_compose, 
+                       _os_log_pack_send, _os_log_pack_send_and_compose, _os_log_set_client_type, 
+                       _os_log_set_enabled, _os_log_set_fault_callback, _os_log_shim_enabled, 
+                       _os_log_shim_legacy_logging_enabled, _os_log_shim_with_CFString, 
+                       _os_log_type_enabled, _os_log_with_args, _os_signpost_enabled, 
+                       _os_signpost_id_generate, _os_signpost_id_make_with_pointer, 
+                       _os_signpost_set_introspection_hook_4Perf, _os_state_add_handler, 
+                       _os_state_remove_handler, _os_trace_debug_enabled, _os_trace_get_mode, 
+                       _os_trace_get_type, _os_trace_info_enabled, _os_trace_set_mode ]
+    objc-classes:    [ OS_os_log ]
+...

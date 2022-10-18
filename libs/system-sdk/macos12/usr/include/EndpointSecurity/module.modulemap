@@ -1,0 +1,4 @@
+module EndpointSecurity [system] [extern_c] {
+	umbrella header "EndpointSecurity.h"
+	export *
+}

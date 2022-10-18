@@ -1,0 +1,91 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           EBCDED71-A48E-3FC6-A05D-81EA84A901AD
+  - target:          x86_64-maccatalyst
+    value:           EBCDED71-A48E-3FC6-A05D-81EA84A901AD
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           30C492F6-C9E6-3C1D-BE52-CA4F4FC824D6
+  - target:          arm64e-maccatalyst
+    value:           30C492F6-C9E6-3C1D-BE52-CA4F4FC824D6
+install-name:    '/usr/lib/system/libsystem_containermanager.dylib'
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _CONTAINER_CURRENT_MOBILE_UID, _CONTAINER_INSTALLATION_UID, 
+                       _CONTAINER_LINK_ARRAY_NONE, _CONTAINER_NOTIFY_CLEANUP_COMPLETE, 
+                       _CONTAINER_NOTIFY_REBOOT_CLEANUP_COMPLETE, _CONTAINER_NOTIFY_USER_INVALIDATED, 
+                       _CONTAINER_PERSONA_CURRENT, _CONTAINER_PERSONA_PRIMARY, _CONTAINER_SYSTEM_UID, 
+                       __container_init, _container_acquire_sandbox_extension, _container_bundle_copy_data_container, 
+                       _container_bundle_copy_data_container_path, _container_client_create_from_audit_token, 
+                       _container_copy_client, _container_copy_code_signing_info_for_identifier, 
+                       _container_copy_from_path, _container_copy_info, _container_copy_info_value_for_key, 
+                       _container_copy_links_array, _container_copy_object, _container_copy_path, 
+                       _container_copy_persona_unique_strings, _container_copy_unlocalized_description, 
+                       _container_create_or_lookup, _container_create_or_lookup_app_group_path_by_app_group_identifier, 
+                       _container_create_or_lookup_app_group_paths, _container_create_or_lookup_app_group_paths_for_current_user, 
+                       _container_create_or_lookup_app_group_paths_for_platform, 
+                       _container_create_or_lookup_app_group_paths_from_entitlements, 
+                       _container_create_or_lookup_for_current_user, _container_create_or_lookup_for_platform, 
+                       _container_create_or_lookup_group_container_paths_for_current_user, 
+                       _container_create_or_lookup_path, _container_create_or_lookup_path_for_current_user, 
+                       _container_create_or_lookup_path_for_platform, _container_create_or_lookup_system_group_paths, 
+                       _container_create_or_lookup_user_managed_assets_path, _container_create_or_lookup_user_managed_assets_relative_path, 
+                       _container_delete, _container_delete_all_container_content, 
+                       _container_delete_all_data_container_content, _container_delete_all_data_container_content_for_current_user, 
+                       _container_delete_array_of_containers, _container_delete_user_managed_assets, 
+                       _container_delete_with_class_and_identifier_for_current_user, 
+                       _container_delete_with_uid_class_and_identifier, _container_disk_usage, 
+                       _container_error_copy, _container_error_copy_unlocalized_description, 
+                       _container_error_free, _container_error_get_category, _container_error_get_path, 
+                       _container_error_get_posix_errno, _container_error_get_type, 
+                       _container_error_is_fatal, _container_flush_container_cache, 
+                       _container_flush_persona_cache, _container_free_array_of_containers, 
+                       _container_free_client, _container_free_object, _container_get_all_with_class, 
+                       _container_get_all_with_class_for_current_user, _container_get_class, 
+                       _container_get_error_description, _container_get_identifier, 
+                       _container_get_persona_unique_string, _container_get_uid, 
+                       _container_get_unique_path_component, _container_group_container_identifiers_for_current_user, 
+                       _container_invalidate_code_signing_cache, _container_is_equal, 
+                       _container_is_new, _container_is_transient, _container_link_apply, 
+                       _container_link_copy, _container_link_copy_container_a, _container_link_copy_container_b, 
+                       _container_link_copy_unlocalized_description, _container_link_create, 
+                       _container_link_exists, _container_link_free, _container_link_free_array, 
+                       _container_link_get_attributes, _container_link_is_implicit, 
+                       _container_link_remove, _container_log_client_fault_logging_is_enabled, 
+                       _container_log_set_client_fault_logging, _container_operation_delete, 
+                       _container_operation_delete_array, _container_operation_delete_reclaim_disk_space, 
+                       _container_paths_context_create, _container_paths_context_free, 
+                       _container_paths_context_set_class, _container_paths_context_set_flags, 
+                       _container_paths_context_set_persona_unique_string, _container_paths_context_set_transient, 
+                       _container_paths_context_set_uid, _container_paths_copy_container_at, 
+                       _container_paths_copy_container_from_path, _container_paths_copy_container_root_path_for_context, 
+                       _container_paths_enumerate_containers_at, _container_perform_data_migration, 
+                       _container_perform_data_migration_for_current_user, _container_perform_with_client_context, 
+                       _container_process_restored_container, _container_query_copy, 
+                       _container_query_create, _container_query_free, _container_query_get_last_error, 
+                       _container_query_get_single_result, _container_query_iterate_results_sync, 
+                       _container_query_operation_set_client, _container_query_operation_set_flags, 
+                       _container_query_operation_set_platform, _container_query_set_class, 
+                       _container_query_set_group_identifiers, _container_query_set_identifiers, 
+                       _container_query_set_include_other_owners, _container_query_set_links, 
+                       _container_query_set_persona_unique_string, _container_query_set_transient, 
+                       _container_query_set_uid, _container_recreate_structure, _container_regenerate_uuid, 
+                       _container_repair_user_data, _container_replace, _container_set_code_signing_info_for_identifier, 
+                       _container_set_data_protection_for_current_user, _container_set_info_value, 
+                       _container_stage_shared_system_content, _container_subdirectories_for_class, 
+                       _container_system_group_path_for_identifier, _container_system_path_for_identifier, 
+                       _container_user_managed_assets_path, _container_user_managed_assets_relative_path, 
+                       _container_xpc_connection_is_shared, _container_xpc_set_use_shared_connection ]
+...

@@ -1,0 +1,25 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           0CF06721-A9F3-3758-801B-B97AE4CC9ECF
+  - target:          x86_64-maccatalyst
+    value:           0CF06721-A9F3-3758-801B-B97AE4CC9ECF
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           E2992999-DB2E-39E6-8586-5474E93B7E7A
+  - target:          arm64e-maccatalyst
+    value:           E2992999-DB2E-39E6-8586-5474E93B7E7A
+install-name:    '/usr/lib/libAXSafeCategoryBundle.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _AXSetUIAXReportSenderErrorLoggerFunction, _AXSetValidationErrorLoggingFunction, 
+                       _UIAccessibilityInstallSafeCategories, _UIAccessibilityInstallSafeCategory ]
+    objc-classes:    [ UIAccessibilitySafeCategory ]
+...

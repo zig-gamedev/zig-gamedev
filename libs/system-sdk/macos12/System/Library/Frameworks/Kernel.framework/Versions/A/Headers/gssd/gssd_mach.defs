@@ -1,0 +1,188 @@
+/*
+ * Copyright (c) 2006 Apple Computer, Inc. All rights reserved.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_START@
+ * 
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. The rights granted to you under the License
+ * may not be used to create, or enable the creation or redistribution of,
+ * unlawful or unlicensed copies of an Apple operating system, or to
+ * circumvent, violate, or enable the circumvention or violation of, any
+ * terms of an Apple operating system software license agreement.
+ * 
+ * Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this file.
+ * 
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ * 
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
+ */
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+import <gssd/gssd_mach_types.h>;
+
+type gssd_mechtype = int32_t;
+type gssd_nametype = int32_t;
+type gssd_string = c_string[*:1024]; /* MAX_PRINC_STR must be < 1024 */
+type gssd_dstring = c_string[*:128]; /* MAX_DISPLAY_STR must be < 128 */
+type gssd_byte_buffer = array [] of uint8_t;
+type gssd_verifier =  uint64_t;
+type gssd_gid_list = array [*:16] of uint32_t;
+type gssd_ctx = uint64_t;
+type gssd_cred = uint64_t;
+type gssd_etype_list = array [*:64] of int32_t;
+
+subsystem
+#if KERNEL_USER
+KernelUser
+#endif
+gssd_mach  999;
+
+serverprefix svc_;
+
+Routine mach_gss_init_sec_context(
+	server			: mach_port_t;
+	in  mech		: gssd_mechtype;
+	in  intoken		: gssd_byte_buffer;
+	in  uid			: uint32_t;
+	in  princ_namestr	: gssd_string;
+	in  svc_namestr		: gssd_string;
+	in  flags		: uint32_t;
+	in  gssd_flags		: uint32_t;
+	inout context		: gssd_ctx;
+	inout cred_handle	: gssd_cred;
+	ServerAuditToken atoken	: audit_token_t;
+	out  ret_flags		: uint32_t;
+	out  key		: gssd_byte_buffer, dealloc;
+	out outtoken		: gssd_byte_buffer, dealloc;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+routine mach_gss_accept_sec_context(
+	server			: mach_port_t;
+	in  intoken		: gssd_byte_buffer;
+	in  svc_namestr		: gssd_string;
+	in  gssd_flags		: uint32_t;
+	inout context		: gssd_ctx;
+	inout cred_handle	: gssd_cred;
+	ServerAuditToken atoken	: audit_token_t;
+	out flags		: uint32_t;
+	out uid			: uint32_t;
+	out gids		: gssd_gid_list;
+	out key			: gssd_byte_buffer, dealloc;
+	out outtoken		: gssd_byte_buffer, dealloc;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+simpleroutine mach_gss_log_error(
+	server			: mach_port_t;
+	in  mnt			: gssd_string;
+	in  uid			: uint32_t;
+	in  source		: gssd_string;
+	in  major_stat		: uint32_t;
+	in  minor_stat		: uint32_t;
+	ServerAuditToken atoken	: audit_token_t
+);
+
+routine mach_gss_init_sec_context_v2(
+	server			: mach_port_t;
+	in  mech		: gssd_mechtype;
+	in  intoken		: gssd_byte_buffer;
+	in  uid			: uint32_t;
+	in  clnt_nt		: gssd_nametype;
+	in  clnt_princ		: gssd_byte_buffer;
+	in  svc_nt		: gssd_nametype;
+	in  svc_princ		: gssd_byte_buffer;
+	in  flags		: uint32_t;
+	inout gssd_flags	: uint32_t;
+	inout context		: gssd_ctx;
+	inout cred_handle	: gssd_cred;
+	ServerAuditToken atoken	: audit_token_t;
+	out  ret_flags		: uint32_t;
+	out  key		: gssd_byte_buffer, dealloc;
+	out outtoken		: gssd_byte_buffer, dealloc;
+	out displayname		: gssd_dstring;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+routine mach_gss_accept_sec_context_v2(
+	server			: mach_port_t;
+	in  intoken		: gssd_byte_buffer;
+	in  svc_nt		: gssd_nametype;
+	in  svc_princ		: gssd_byte_buffer;
+	inout gssd_flags	: uint32_t;
+	inout context		: gssd_ctx;
+	inout cred_handle	: gssd_cred;
+	ServerAuditToken atoken	: audit_token_t;
+	out flags		: uint32_t;
+	out uid			: uint32_t;
+	out gids		: gssd_gid_list;
+	out key			: gssd_byte_buffer, dealloc;
+	out outtoken		: gssd_byte_buffer, dealloc;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+routine mach_gss_init_sec_context_v3(
+	server			: mach_port_t;
+	in  mech		: gssd_mechtype;
+	in  intoken		: gssd_byte_buffer;
+	in  uid			: uint32_t;
+	in  clnt_nt		: gssd_nametype;
+	in  clnt_princ		: gssd_byte_buffer;
+	in  svc_nt		: gssd_nametype;
+	in  svc_princ		: gssd_byte_buffer;
+	in  flags		: uint32_t;
+	in  etypes		: gssd_etype_list;
+	inout gssd_flags	: uint32_t;
+	inout context		: gssd_ctx;
+	inout cred_handle	: gssd_cred;
+	ServerAuditToken atoken	: audit_token_t;
+	out  ret_flags		: uint32_t;
+	out key			: gssd_byte_buffer, dealloc;
+	out outtoken		: gssd_byte_buffer, dealloc;
+	out displayname		: gssd_dstring;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+routine mach_gss_hold_cred(
+	server			: mach_port_t;
+	in  mech		: gssd_mechtype;
+	in  nt			: gssd_nametype;
+	in  princ		: gssd_byte_buffer;
+	ServerAuditToken atoken	: audit_token_t;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+routine mach_gss_unhold_cred(
+	server			: mach_port_t;
+	in  mech		: gssd_mechtype;
+	in  nt			: gssd_nametype;
+	in  princ		: gssd_byte_buffer;
+	ServerAuditToken atoken	: audit_token_t;
+	out major_stat		: uint32_t;
+	out minor_stat		: uint32_t
+);
+
+routine mach_gss_lookup(
+	server			: mach_port_t;
+	in  uid			: uint32_t;
+	in  asid		: int32_t;
+	ServerAuditToken atoken	: audit_token_t;
+	out gssd_session_port	: mach_port_t
+);

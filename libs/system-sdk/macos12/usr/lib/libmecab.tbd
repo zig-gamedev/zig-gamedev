@@ -1,0 +1,33 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           9F25445F-99C3-3314-A69C-DEB55FE839E1
+  - target:          x86_64-maccatalyst
+    value:           9F25445F-99C3-3314-A69C-DEB55FE839E1
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           0C69CF6E-A43D-3638-844C-C9AD40F72AD3
+  - target:          arm64e-maccatalyst
+    value:           0C69CF6E-A43D-3638-844C-C9AD40F72AD3
+install-name:    '/usr/lib/libmecab.dylib'
+current-version: 972
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _mecab_cost_train, _mecab_destroy, _mecab_dict_gen, _mecab_dict_index, 
+                       _mecab_dictionary_info, _mecab_do, _mecab_format_node, _mecab_get_feature, 
+                       _mecab_get_input_code, _mecab_get_lastname_length, _mecab_get_lattice_level, 
+                       _mecab_get_maximal_input_code_length, _mecab_nbest_init, _mecab_nbest_init2, 
+                       _mecab_nbest_next_tonode, _mecab_nbest_next_tostr, _mecab_nbest_next_tostr2, 
+                       _mecab_nbest_sparse_tostr, _mecab_nbest_sparse_tostr2, _mecab_nbest_sparse_tostr3, 
+                       _mecab_new, _mecab_new2, _mecab_set_lattice_level, _mecab_sparse_tonode, 
+                       _mecab_sparse_tonode2, _mecab_sparse_tostr, _mecab_sparse_tostr2, 
+                       _mecab_sparse_tostr3, _mecab_strerror, _mecab_system_eval, 
+                       _mecab_test_gen, _mecab_version ]
+...

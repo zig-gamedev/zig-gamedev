@@ -1,0 +1,28 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           7FCC76BD-D64E-3D18-ACBD-4FB6D285B751
+  - target:          x86_64-maccatalyst
+    value:           7FCC76BD-D64E-3D18-ACBD-4FB6D285B751
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           0D4E668C-9447-3E46-BD98-24704196732F
+  - target:          arm64e-maccatalyst
+    value:           0D4E668C-9447-3E46-BD98-24704196732F
+install-name:    '/usr/lib/libauditd.0.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _audit_quick_start, _audit_quick_start_internal, _audit_quick_stop, 
+                       _auditd_close_dirs, _auditd_expire_trails, _auditd_gen_record, 
+                       _auditd_new_curlink, _auditd_prevent_audit, _auditd_read_dirs, 
+                       _auditd_set_evcmap, _auditd_set_fsize, _auditd_set_host, _auditd_set_minfree, 
+                       _auditd_set_namask, _auditd_set_policy, _auditd_set_sflags_masks, 
+                       _auditd_strerror, _auditd_swap_trail ]
+...

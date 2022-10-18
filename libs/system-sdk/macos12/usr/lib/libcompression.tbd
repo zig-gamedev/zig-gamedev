@@ -1,0 +1,38 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, x86_64h-macos, x86_64h-maccatalyst, 
+                   arm64-macos, arm64-maccatalyst, arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           7E29A057-3CBC-3F25-B30D-369DAF2C4933
+  - target:          x86_64-maccatalyst
+    value:           7E29A057-3CBC-3F25-B30D-369DAF2C4933
+  - target:          x86_64h-macos
+    value:           79B74BCC-7309-36DB-8E28-DDB5DF2CA302
+  - target:          x86_64h-maccatalyst
+    value:           79B74BCC-7309-36DB-8E28-DDB5DF2CA302
+  - target:          arm64-macos
+    value:           9EA2FF8A-33DA-39EF-BE1A-CF7A8AFBD70A
+  - target:          arm64-maccatalyst
+    value:           9EA2FF8A-33DA-39EF-BE1A-CF7A8AFBD70A
+  - target:          arm64e-macos
+    value:           957D242D-EFBF-3E4D-9FC6-3E800ACCFEC4
+  - target:          arm64e-maccatalyst
+    value:           957D242D-EFBF-3E4D-9FC6-3E800ACCFEC4
+install-name:    '/usr/lib/libcompression.dylib'
+exports:
+  - targets:         [ arm64-macos, x86_64-macos, arm64e-macos, x86_64h-macos, x86_64-maccatalyst, 
+                       x86_64h-maccatalyst, arm64-maccatalyst, arm64e-maccatalyst ]
+    symbols:         [ _compression_decode_buffer, _compression_decode_scratch_buffer_size, 
+                       _compression_encode_buffer, _compression_encode_scratch_buffer_size, 
+                       _compression_stream_destroy, _compression_stream_get_decode_state_size, 
+                       _compression_stream_get_encode_state_size, _compression_stream_get_state_size, 
+                       _compression_stream_identify_algorithm, _compression_stream_init, 
+                       _compression_stream_init_with_state_buffer, _compression_stream_is_state_valid, 
+                       _compression_stream_process, _compression_stream_reinit, _yzip_codec_create, 
+                       _yzip_codec_destroy, _yzip_image_create, _yzip_image_create_with_payload, 
+                       _yzip_image_decode, _yzip_image_destroy, _yzip_image_encode, 
+                       _yzip_image_get_descriptor, _yzip_image_get_max_payload_size, 
+                       _yzip_image_get_plane_descriptor, _yzip_image_set_data, _yzip_image_set_identifier, 
+                       _yzip_image_set_plane_data ]
+...

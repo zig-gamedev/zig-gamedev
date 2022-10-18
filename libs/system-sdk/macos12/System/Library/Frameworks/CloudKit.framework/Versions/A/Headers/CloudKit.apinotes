@@ -1,0 +1,658 @@
+---
+Name: CloudKit
+Classes:
+- Name: CKContainer
+  Methods:
+  - Selector: "fetchAllLongLivedOperationIDsWithCompletionHandler:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "fetchLongLivedOperationWithID:completionHandler:"
+    MethodKind: Instance
+    SwiftPrivate: true
+    
+- Name: CKDatabase
+  Methods:
+  # Records
+  - Selector: 'fetchRecordWithID:completionHandler:'
+    MethodKind: Instance
+    SwiftName: 'fetch(withRecordID:completionHandler:)'
+  - Selector: 'deleteRecordWithID:completionHandler:'
+    MethodKind: Instance
+    SwiftName: 'delete(withRecordID:completionHandler:)'
+  # Record Zones
+  - Selector: 'fetchRecordZoneWithID:completionHandler:'
+    MethodKind: Instance
+    SwiftName: 'fetch(withRecordZoneID:completionHandler:)'
+  - Selector: 'deleteRecordZoneWithID:completionHandler:'
+    MethodKind: Instance
+    SwiftName: 'delete(withRecordZoneID:completionHandler:)'
+  # Subscriptions
+  - Selector: 'fetchSubscriptionWithID:completionHandler:'
+    MethodKind: Instance
+    SwiftPrivate: true
+    SwiftName: '__fetch(withSubscriptionID:completionHandler:)'
+  - Selector: 'deleteSubscriptionWithID:completionHandler:'
+    MethodKind: Instance
+    SwiftPrivate: true
+    SwiftName: '__delete(withSubscriptionID:completionHandler:)'
+
+- Name: CKDatabaseSubscription
+  Methods:
+  - Selector: "initWithSubscriptionID:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  Properties:
+  - Name: recordType
+    SwiftPrivate: true
+
+- Name: CKFetchRecordsOperation
+  Methods:
+  - Selector: 'fetchCurrentUserRecordOperation'
+    MethodKind: Class
+    SwiftName: 'fetchCurrentUserRecordOperation()'
+  Properties:
+  - Name: desiredKeys
+    SwiftPrivate: true
+    
+- Name: CKFetchRecordZoneChangesConfiguration
+  SwiftName: CKFetchRecordZoneChangesOperation.ZoneConfiguration
+  Properties:
+  - Name: desiredKeys
+    SwiftPrivate: true
+
+- Name: CKFetchRecordZoneChangesOperation
+  Methods:
+  - Selector: "initWithRecordZoneIDs:configurationsByRecordZoneID:"
+    MethodKind: Instance
+    Availability: nonswift
+  Properties:
+  - Name: recordWithIDWasDeletedBlock
+    SwiftPrivate: true
+    
+- Name: CKFetchRecordZoneChangesOptions
+  SwiftName: CKFetchRecordZoneChangesOperation.ZoneOptions
+    
+- Name: CKFetchRecordZonesOperation
+  Methods:
+  - Selector: 'fetchAllRecordZonesOperation'
+    MethodKind: Class
+    SwiftName: 'fetchAllRecordZonesOperation()'
+
+- Name: CKFetchShareMetadataOperation
+  Methods:
+  - Selector: "initWithShareURLs:"
+    MethodKind: Instance
+    SwiftName: 'init(shareURLs:)'
+  Properties:
+  - Name: rootRecordDesiredKeys
+    SwiftPrivate: true
+    
+- Name: CKFetchSubscriptionsOperation
+  Methods:
+  - Selector: 'fetchAllSubscriptionsOperation'
+    MethodKind: Class
+    SwiftName: 'fetchAllSubscriptionsOperation()'
+  - Selector: 'initWithSubscriptionIDs:'
+    MethodKind: Instance
+    SwiftPrivate: true
+  Properties:
+  - Name: subscriptionIDs
+    SwiftPrivate: true
+  - Name: fetchSubscriptionCompletionBlock
+    SwiftPrivate: true
+    
+- Name: CKModifyRecordsOperation
+  Methods:
+  - Selector: "initWithRecordsToSave:recordIDsToDelete:"
+    MethodKind: Instance
+    Availability: nonswift
+    
+- Name: CKModifyRecordZonesOperation
+  Methods:
+  - Selector: "initWithRecordZonesToSave:recordZoneIDsToDelete:"
+    MethodKind: Instance
+    Availability: nonswift
+    
+- Name: CKModifySubscriptionsOperation
+  Methods:
+  - Selector: "initWithSubscriptionsToSave:subscriptionIDsToDelete:"
+    MethodKind: Instance
+    Availability: nonswift
+  Properties:
+  - Name: subscriptionIDsToDelete
+    SwiftPrivate: true
+  - Name: modifySubscriptionsCompletionBlock
+    SwiftPrivate: true
+
+- Name: CKNotification
+  Properties:
+  - Name: subscriptionID
+    SwiftPrivate: true
+    
+- Name: CKNotificationID
+  SwiftName: CKNotification.ID
+    
+- Name: CKNotificationInfo
+  SwiftName: CKSubscription.NotificationInfo
+  Properties:
+  - Name: alertLocalizationArgs
+    SwiftPrivate: true
+  - Name: titleLocalizationArgs
+    SwiftPrivate: true
+  - Name: subtitleLocalizationArgs
+    SwiftPrivate: true
+  - Name: desiredKeys
+    SwiftPrivate: true
+
+- Name: CKOperation
+  Properties:
+  - Name: operationID
+    SwiftPrivate: true
+
+- Name: CKOperationConfiguration
+  SwiftName: CKOperation.Configuration
+
+- Name: CKQuery
+  Methods:
+  - Selector: "initWithRecordType:predicate:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  Properties:
+  - Name: recordType
+    SwiftPrivate: true
+  
+- Name: CKQueryCursor
+  SwiftName: CKQueryOperation.Cursor
+    
+- Name: CKQueryOperation
+  Properties:
+  - Name: desiredKeys
+    SwiftPrivate: true
+
+- Name: CKQuerySubscription
+  Methods:
+  - Selector: "initWithRecordType:predicate:subscriptionID:options:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "initWithRecordType:predicate:options:"
+    MethodKind: Instance
+    Availability: nonswift
+  Properties:
+  - Name: recordType
+    SwiftPrivate: true
+    
+- Name: CKRecord
+  Methods:
+  # Init
+  - Selector: "initWithRecordType:"
+    MethodKind: Instance
+    Availability: nonswift
+  - Selector: "initWithRecordType:recordID:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "initWithRecordType:zoneID:"
+    MethodKind: Instance
+    Availability: nonswift
+  # Parent Reference
+  - Selector: 'setParentReferenceFromRecord:'
+    MethodKind: Instance
+    SwiftName: 'setParent(_:)'
+  - Selector: 'setParentReferenceFromRecordID:'
+    MethodKind: Instance
+    SwiftName: 'setParent(_:)'
+  # Fields
+  - Selector: "allKeys"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "changedKeys"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "objectForKey:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "setObject:forKey:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  - Selector: "objectForKeyedSubscript:"
+    MethodKind: Instance
+    Availability: nonswift
+  - Selector: "setObject:forKeyedSubscript:"
+    MethodKind: Instance
+    Availability: nonswift
+  Properties:
+  - Name: recordType
+    SwiftPrivate: true
+    
+- Name: CKRecordID
+  SwiftName: CKRecord.ID
+  Methods:
+  - Selector: 'initWithRecordName:zoneID:'
+    MethodKind: Instance
+    SwiftPrivate: true
+    
+- Name: CKRecordZoneID
+  SwiftName: CKRecordZone.ID
+  Methods:
+  - Selector: 'initWithZoneName:ownerName:'
+    MethodKind: Instance
+    SwiftPrivate: true
+
+- Name: CKRecordZoneSubscription
+  Methods:
+  - Selector: "initWithZoneID:subscriptionID:"
+    MethodKind: Instance
+    SwiftPrivate: true
+  Properties:
+  - Name: recordType
+    SwiftPrivate: true
+
+- Name: CKReference
+  SwiftName: CKRecord.Reference
+  Properties:
+  - Name: referenceAction
+    PropertyKind: Instance
+    SwiftName: action
+
+- Name: CKShare
+  Methods:
+  - Selector: 'initWithRootRecord:shareID:'
+    MethodKind: Instance
+    SwiftName: 'init(rootRecord:shareID:)'
+
+- Name: CKShareMetadata
+  SwiftName: CKShare.Metadata
+    
+- Name: CKShareParticipant
+  SwiftName: CKShare.Participant
+
+- Name: CKSubscription
+  Properties:
+  - Name: recordType
+    SwiftPrivate: true
+  - Name: subscriptionID
+    SwiftPrivate: true
+  
+- Name: CKUserIdentityLookupInfo
+  SwiftName: CKUserIdentity.LookupInfo
+
+
+Globals:
+- Name: CKQueryOperationMaximumResults
+  SwiftName: CKQueryOperation.maximumResults
+- Name: CKRecordParentKey
+  SwiftPrivate: true
+- Name: CKRecordShareKey
+  SwiftPrivate: true
+- Name: CKRecordTypeShare
+  SwiftPrivate: true
+- Name: CKRecordTypeUserRecord
+  SwiftPrivate: true
+- Name: CKRecordZoneDefaultName
+  SwiftPrivate: true
+- Name: CKShareThumbnailImageDataKey
+  SwiftPrivate: true
+- Name: CKShareTitleKey
+  SwiftPrivate: true
+- Name: CKShareTypeKey
+  SwiftPrivate: true
+
+
+Protocols:
+- Name: CKRecordValue
+  SwiftName: __CKRecordObjCValue
+
+
+Tags:
+- Name: CKApplicationPermissions
+  SwiftName: CKContainer.ApplicationPermissions
+- Name: CKApplicationPermissionStatus
+  SwiftName: CKContainer.ApplicationPermissionStatus
+- Name: CKDatabaseScope
+  SwiftName: CKDatabase.Scope
+- Name: CKErrorCode
+  NSErrorDomain: CKErrorDomain
+- Name: CKNotificationType
+  SwiftName: CKNotification.NotificationType
+- Name: CKOperationGroupTransferSize
+  SwiftName: CKOperationGroup.TransferSize
+- Name: CKQueryNotificationReason
+  SwiftName: CKQueryNotification.Reason
+- Name: CKQuerySubscriptionOptions
+  SwiftName: CKQuerySubscription.Options
+- Name: CKRecordSavePolicy
+  SwiftName: CKModifyRecordsOperation.RecordSavePolicy
+- Name: CKRecordZoneCapabilities
+  SwiftName: CKRecordZone.Capabilities
+- Name: CKReferenceAction
+  SwiftName: CKRecord.ReferenceAction
+- Name: CKShareParticipantAcceptanceStatus
+  SwiftName: CKShare.ParticipantAcceptanceStatus
+- Name: CKShareParticipantPermission
+  SwiftName: CKShare.ParticipantPermission
+- Name: CKShareParticipantRole
+  SwiftName: CKShare.ParticipantRole
+- Name: CKShareParticipantType
+  SwiftName: CKShare.ParticipantType
+- Name: CKSubscriptionType
+  SwiftName: CKSubscription.SubscriptionType
+
+
+Typedefs:
+- Name: CKApplicationPermissionBlock
+  SwiftName: CKContainer.ApplicationPermissionBlock
+- Name: CKOperationID
+  Availability: nonswift
+- Name: CKRecordFieldKey
+  Availability: nonswift
+- Name: CKRecordType
+  Availability: nonswift
+- Name: CKSubscriptionID
+  Availability: nonswift
+
+
+SwiftVersions:
+- Version: 4.2
+  Classes:
+  - Name: CKAsset
+    Properties:
+    - Name: fileURL
+      Nullability: N
+  - Name: CKNotification
+    Methods:
+    - Selector: "notificationFromRemoteNotificationDictionary:"
+      MethodKind: Class
+      ResultType: "CKNotification * _Nonnull"
+
+
+- Version: 4
+  Classes:
+  - Name: CKContainer
+    Methods:
+    - Selector: "fetchAllLongLivedOperationIDsWithCompletionHandler:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "fetchLongLivedOperationWithID:completionHandler:"
+      MethodKind: Instance
+      SwiftPrivate: false
+
+  - Name: CKDatabase
+    Methods:
+    - Selector: 'fetchSubscriptionWithID:completionHandler:'
+      MethodKind: Instance
+      SwiftPrivate: false
+      SwiftName: 'fetch(withSubscriptionID:completionHandler:)'
+    - Selector: 'deleteSubscriptionWithID:completionHandler:'
+      MethodKind: Instance
+      SwiftPrivate: false
+      SwiftName: 'delete(withSubscriptionID:completionHandler:)'
+
+  - Name: CKDatabaseSubscription
+    Methods:
+    - Selector: "initWithSubscriptionID:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    Properties:
+    - Name: recordType
+      SwiftPrivate: false
+      
+  - Name: CKFetchRecordsOperation
+    Properties:
+    - Name: desiredKeys
+      SwiftPrivate: false
+
+  - Name: CKFetchRecordZoneChangesConfiguration
+    SwiftName: CKFetchRecordZoneChangesConfiguration
+    Properties:
+    - Name: desiredKeys
+      SwiftPrivate: false
+
+  - Name: CKFetchRecordZoneChangesOperation
+    Methods:
+    - Selector: "initWithRecordZoneIDs:configurationsByRecordZoneID:"
+      MethodKind: Instance
+      Availability: available
+    Properties:
+    - Name: recordWithIDWasDeletedBlock
+      SwiftPrivate: false
+
+  - Name: CKFetchRecordZoneChangesOptions
+    SwiftName: CKFetchRecordZoneChangesOptions
+
+  - Name: CKFetchShareMetadataOperation
+    Properties:
+    - Name: rootRecordDesiredKeys
+      SwiftPrivate: false
+      
+  - Name: CKFetchSubscriptionsOperation
+    Methods:
+    - Selector: 'initWithSubscriptionIDs:'
+      MethodKind: Instance
+      SwiftPrivate: false
+    Properties:
+    - Name: subscriptionIDs
+      SwiftPrivate: false
+    - Name: fetchSubscriptionCompletionBlock
+      SwiftPrivate: false
+      
+  - Name: CKModifyRecordsOperation
+    Methods:
+    - Selector: "initWithRecordsToSave:recordIDsToDelete:"
+      MethodKind: Instance
+      Availability: available
+      
+  - Name: CKModifyRecordZonesOperation
+    Methods:
+    - Selector: "initWithRecordZonesToSave:recordZoneIDsToDelete:"
+      MethodKind: Instance
+      Availability: available
+
+  - Name: CKModifySubscriptionsOperation
+    Methods:
+    - Selector: "initWithSubscriptionsToSave:subscriptionIDsToDelete:"
+      MethodKind: Instance
+      Availability: available
+    Properties:
+    - Name: subscriptionIDsToDelete
+      SwiftPrivate: false
+    - Name: modifySubscriptionsCompletionBlock
+      SwiftPrivate: false
+
+  - Name: CKNotification
+    Properties:
+    - Name: subscriptionID
+      SwiftPrivate: false
+
+  - Name: CKNotificationID
+    SwiftName: CKNotificationID
+    
+  - Name: CKNotificationInfo
+    SwiftName: CKNotificationInfo
+    Properties:
+    - Name: alertLocalizationArgs
+      SwiftPrivate: false
+    - Name: titleLocalizationArgs
+      SwiftPrivate: false
+    - Name: subtitleLocalizationArgs
+      SwiftPrivate: false
+    - Name: desiredKeys
+      SwiftPrivate: false
+
+  - Name: CKOperation
+    Properties:
+    - Name: operationID
+      SwiftPrivate: false
+
+  - Name: CKOperationConfiguration
+    SwiftName: CKOperationConfiguration
+
+  - Name: CKQuery
+    Methods:
+    - Selector: "initWithRecordType:predicate:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    Properties:
+    - Name: recordType
+      SwiftPrivate: false
+
+  - Name: CKQueryCursor
+    SwiftName: CKQueryCursor
+          
+  - Name: CKQueryOperation
+    Properties:
+    - Name: desiredKeys
+      SwiftPrivate: false
+
+  - Name: CKQuerySubscription
+    Methods:
+    - Selector: "initWithRecordType:predicate:subscriptionID:options:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "initWithRecordType:predicate:options:"
+      MethodKind: Instance
+      Availability: available
+    Properties:
+    - Name: recordType
+      SwiftPrivate: false
+
+  - Name: CKRecord
+    Methods:
+    # Init
+    - Selector: "initWithRecordType:"
+      MethodKind: Instance
+      Availability: available
+    - Selector: "initWithRecordType:recordID:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "initWithRecordType:zoneID:"
+      MethodKind: Instance
+      Availability: available
+    # Fields
+    - Selector: "allKeys"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "changedKeys"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "objectForKey:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "setObject:forKey:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    - Selector: "objectForKeyedSubscript:"
+      MethodKind: Instance
+      Availability: available
+    - Selector: "setObject:forKeyedSubscript:"
+      MethodKind: Instance
+      Availability: available
+    Properties:
+    - Name: recordType
+      SwiftPrivate: false
+
+  - Name: CKRecordID
+    SwiftName: CKRecordID
+    Methods:
+    - Selector: 'initWithRecordName:zoneID:'
+      MethodKind: Instance
+      SwiftPrivate: false
+
+  - Name: CKRecordZoneID
+    SwiftName: CKRecordZoneID
+    Methods:
+    - Selector: 'initWithZoneName:ownerName:'
+      MethodKind: Instance
+      SwiftPrivate: false
+
+  - Name: CKRecordZoneSubscription
+    Methods:
+    - Selector: "initWithZoneID:subscriptionID:"
+      MethodKind: Instance
+      SwiftPrivate: false
+    Properties:
+    - Name: recordType
+      SwiftPrivate: false
+
+  - Name: CKReference
+    SwiftName: CKReference
+    Properties:
+    - Name: referenceAction
+      PropertyKind: Instance
+      SwiftName: referenceAction
+
+  - Name: CKShareMetadata
+    SwiftName: CKShareMetadata
+
+  - Name: CKShareParticipant
+    SwiftName: CKShareParticipant
+
+  - Name: CKSubscription
+    Properties:
+    - Name: recordType
+      SwiftPrivate: false
+    - Name: subscriptionID
+      SwiftPrivate: false
+
+  - Name: CKUserIdentityLookupInfo
+    SwiftName: CKUserIdentityLookupInfo
+
+
+  Globals:
+  - Name: CKQueryOperationMaximumResults
+    SwiftName: CKQueryOperationMaximumResults
+
+
+  Protocols:
+  - Name: CKRecordValue
+    SwiftName: CKRecordValue
+
+
+  Tags:
+  - Name: CKReferenceAction
+    SwiftName: CKReferenceAction
+  - Name: CKShareParticipantAcceptanceStatus
+    SwiftName: CKShareParticipantAcceptanceStatus
+  - Name: CKShareParticipantPermission
+    SwiftName: CKShareParticipantPermission
+  - Name: CKShareParticipantRole
+    SwiftName: CKShareParticipantRole
+  - Name: CKShareParticipantType
+    SwiftName: CKShareParticipantType
+  - Name: CKDatabaseScope
+    SwiftName: CKDatabaseScope
+  - Name: CKApplicationPermissions
+    SwiftName: CKApplicationPermissions
+  - Name: CKApplicationPermissionStatus
+    SwiftName: CKApplicationPermissionStatus
+  - Name: CKRecordSavePolicy
+    SwiftName: CKRecordSavePolicy
+  - Name: CKNotificationType
+    SwiftName: CKNotificationType
+  - Name: CKQueryNotificationReason
+    SwiftName: CKQueryNotificationReason
+  - Name: CKOperationGroupTransferSize
+    SwiftName: CKOperationGroupTransferSize
+  - Name: CKRecordZoneCapabilities
+    SwiftName: CKRecordZoneCapabilities
+  - Name: CKSubscriptionType
+    SwiftName: CKSubscriptionType
+  - Name: CKQuerySubscriptionOptions
+    SwiftName: CKQuerySubscriptionOptions
+
+  Typedefs:
+  - Name: CKApplicationPermissionBlock
+    SwiftName: CKApplicationPermissionBlock
+
+
+- Version: 3
+  Classes:
+  - Name: CKFetchShareMetadataOperation
+    Methods:
+    - Selector: "initWithShareURLs:"
+      MethodKind: Instance
+      SwiftName: 'init(share:)'
+      
+  - Name: CKShare
+    Methods:
+    - Selector: 'initWithRootRecord:shareID:'
+      MethodKind: Instance
+      SwiftName: 'init(rootRecord:share:)'

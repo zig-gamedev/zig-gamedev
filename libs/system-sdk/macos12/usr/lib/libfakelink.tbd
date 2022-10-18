@@ -1,0 +1,19 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           0901F82D-C6CF-3806-BD28-A4233F86D8CF
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           9FC9E2F8-506E-3235-96DD-A85DE7CFC10B
+install-name:    '/usr/lib/libfakelink.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ __fakelink_destination_void, _fakelink_get_property, _fakelink_group_add, 
+                       _fakelink_group_free, _fakelink_group_iterate_mappings, _fakelink_group_iterate_mappings_with_filter, 
+                       _fakelink_group_new, _fakelink_group_resolve, _fakelink_group_set_manifest_path, 
+                       _fakelink_group_set_synthetic_conf_path, _fakelink_group_unresolve, 
+                       _fakelink_volume_free, _fakelink_volume_new ]
+...

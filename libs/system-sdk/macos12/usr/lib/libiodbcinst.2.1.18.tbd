@@ -1,0 +1,52 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           FF6A4CFE-3E43-3D8B-A6E3-AEF8EC6F94EC
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           9D5F8FF9-82D8-3BB2-A045-19DCA760FDAA
+install-name:    '/usr/lib/libiodbcinst.2.dylib'
+current-version: 4.18
+compatibility-version: 4
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _CreateDataSource, _GetAvailableDrivers, _GetPrivateProfileString, 
+                       _GetTranslator, _InstallDriverPath, _InstallDriverPathLength, 
+                       _InstallODBC, _ManageDataSources, _RemoveDSNFromIni, _RemoveDefaultDataSource, 
+                       _SQLConfigDataSource, _SQLConfigDataSourceW, _SQLConfigDataSource_Internal, 
+                       _SQLConfigDriver, _SQLConfigDriverW, _SQLConfigDriver_Internal, 
+                       _SQLCreateDataSource, _SQLCreateDataSourceW, _SQLCreateDataSource_Internal, 
+                       _SQLGetAvailableDrivers, _SQLGetAvailableDriversW, _SQLGetConfigMode, 
+                       _SQLGetInstalledDrivers, _SQLGetInstalledDriversW, _SQLGetInstalledDrivers_Internal, 
+                       _SQLGetKeywordValue, _SQLGetKeywordValueW, _SQLGetPrivateProfileString, 
+                       _SQLGetPrivateProfileStringW, _SQLGetTranslator, _SQLGetTranslatorW, 
+                       _SQLInstallDriver, _SQLInstallDriverEx, _SQLInstallDriverExW, 
+                       _SQLInstallDriverManager, _SQLInstallDriverManagerW, _SQLInstallDriverW, 
+                       _SQLInstallODBC, _SQLInstallODBCW, _SQLInstallTranslator, 
+                       _SQLInstallTranslatorEx, _SQLInstallTranslatorExW, _SQLInstallTranslatorW, 
+                       _SQLInstallerError, _SQLInstallerErrorW, _SQLManageDataSources, 
+                       _SQLPostInstallerError, _SQLPostInstallerErrorW, _SQLReadFileDSN, 
+                       _SQLReadFileDSNW, _SQLRemoveDSNFromIni, _SQLRemoveDSNFromIniW, 
+                       _SQLRemoveDefaultDataSource, _SQLRemoveDriver, _SQLRemoveDriverManager, 
+                       _SQLRemoveDriverW, _SQLRemoveTranslator, _SQLRemoveTranslatorW, 
+                       _SQLSetConfigMode, _SQLSetKeywordValue, _SQLSetKeywordValueW, 
+                       _SQLValidDSN, _SQLValidDSNW, _SQLWriteDSNToIni, _SQLWriteDSNToIniW, 
+                       _SQLWriteDSNToIni_Internal, _SQLWriteFileDSN, _SQLWriteFileDSNW, 
+                       _SQLWritePrivateProfileString, _SQLWritePrivateProfileStringW, 
+                       _ValidDSN, _ValidDSNW, _WriteDSNToIni, _WritePrivateProfileString, 
+                       __iodbcadm_getinifile, __iodbcdm_cfg_commit, __iodbcdm_cfg_done, 
+                       __iodbcdm_cfg_find, __iodbcdm_cfg_freeimage, __iodbcdm_cfg_init, 
+                       __iodbcdm_cfg_next_section, __iodbcdm_cfg_nextentry, __iodbcdm_cfg_refresh, 
+                       __iodbcdm_cfg_rewind, __iodbcdm_cfg_search_init, __iodbcdm_cfg_storeentry, 
+                       __iodbcdm_cfg_write, __iodbcdm_check_for_string, __iodbcdm_getdsnfile, 
+                       __iodbcdm_list_entries, __iodbcdm_list_sections, __iodbcdm_remove_quotes, 
+                       __iodbcdm_strlcat, __iodbcdm_strlcpy, _configMode, _dm_SQL_A2W, 
+                       _dm_SQL_U8toW, _dm_SQL_W2A, _dm_SQL_WtoU8, _dm_StrCopyOut2_A2W, 
+                       _dm_StrCopyOut2_U8toW, _dm_StrCopyOut2_W2A, _dm_strcpy_A2W, 
+                       _dm_strcpy_W2A, _do_create_dsns, _errormsg, _errortable, _ierror, 
+                       _install_from_ini, _install_from_string, _iodbcinst_version, 
+                       _numerrors, _wSystemDSN ]
+...

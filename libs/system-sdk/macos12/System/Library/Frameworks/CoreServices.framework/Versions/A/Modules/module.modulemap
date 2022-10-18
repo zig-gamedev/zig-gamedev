@@ -1,0 +1,83 @@
+framework module CoreServices [extern_c] {
+  umbrella header "CoreServices.h"
+
+  exclude header "Components.k.h"
+
+  export *
+  module * { 
+    export *
+  }
+
+  framework module AE {
+    umbrella header "AE.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module CarbonCore {
+    umbrella header "CarbonCore.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module DictionaryServices {
+    umbrella header "DictionaryServices.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module FSEvents {
+    umbrella header "FSEvents.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module LaunchServices {
+    umbrella header "LaunchServices.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module Metadata {
+    umbrella header "Metadata.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module OSServices {
+    umbrella header "OSServices.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module SearchKit {
+    umbrella header "SearchKit.h"
+    export *
+    module * {
+      export *
+    }
+  }
+
+  framework module SharedFileList {
+    umbrella header "SharedFileList.h"
+    export *
+    module * {
+      export *
+    }
+  }
+}
+

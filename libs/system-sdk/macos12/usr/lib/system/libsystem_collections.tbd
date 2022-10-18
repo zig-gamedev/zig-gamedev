@@ -1,0 +1,44 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           238A47F2-BED4-36B9-8080-E88095B11F5A
+  - target:          x86_64-maccatalyst
+    value:           238A47F2-BED4-36B9-8080-E88095B11F5A
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           1F580793-A1C3-30C6-A9BC-7789C14677AE
+  - target:          arm64e-maccatalyst
+    value:           1F580793-A1C3-30C6-A9BC-7789C14677AE
+install-name:    '/usr/lib/system/libsystem_collections.dylib'
+current-version: 1506.30.3
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _os_map_128_clear, _os_map_128_count, _os_map_128_delete, 
+                       _os_map_128_destroy, _os_map_128_find, _os_map_128_foreach, 
+                       _os_map_128_init, _os_map_128_insert, _os_map_32_clear, _os_map_32_count, 
+                       _os_map_32_delete, _os_map_32_destroy, _os_map_32_find, _os_map_32_foreach, 
+                       _os_map_32_init, _os_map_32_insert, _os_map_64_clear, _os_map_64_count, 
+                       _os_map_64_delete, _os_map_64_destroy, _os_map_64_find, _os_map_64_foreach, 
+                       _os_map_64_init, _os_map_64_insert, _os_map_str_clear, _os_map_str_count, 
+                       _os_map_str_delete, _os_map_str_destroy, _os_map_str_entry, 
+                       _os_map_str_find, _os_map_str_foreach, _os_map_str_init, _os_map_str_insert, 
+                       _os_set_32_ptr_clear, _os_set_32_ptr_count, _os_set_32_ptr_delete, 
+                       _os_set_32_ptr_destroy, _os_set_32_ptr_find, _os_set_32_ptr_foreach, 
+                       _os_set_32_ptr_init, _os_set_32_ptr_insert, _os_set_64_ptr_clear, 
+                       _os_set_64_ptr_count, _os_set_64_ptr_delete, _os_set_64_ptr_destroy, 
+                       _os_set_64_ptr_find, _os_set_64_ptr_foreach, _os_set_64_ptr_init, 
+                       _os_set_64_ptr_insert, _os_set_str_ptr_clear, _os_set_str_ptr_count, 
+                       _os_set_str_ptr_delete, _os_set_str_ptr_destroy, _os_set_str_ptr_find, 
+                       _os_set_str_ptr_foreach, _os_set_str_ptr_init, _os_set_str_ptr_insert ]
+...

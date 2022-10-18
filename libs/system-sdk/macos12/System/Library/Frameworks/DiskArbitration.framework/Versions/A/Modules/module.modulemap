@@ -1,0 +1,9 @@
+framework module DiskArbitration [extern_c] [system]
+{
+    umbrella header "DiskArbitration.h"
+    export *
+    module *
+    {
+        export *
+    }
+}

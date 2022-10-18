@@ -1,0 +1,42 @@
+Name: CoreAudioTypes
+Tags:
+- Name: AVAudioSessionErrorCode
+  SwiftName: AVAudioSession.ErrorCode
+
+SwiftVersions:
+- Version: 4
+  Enumerators:
+  # AVAudioSession Error Codes
+  - Name: AVAudioSessionErrorCodeNone
+    SwiftName: codeNone
+  - Name: AVAudioSessionErrorCodeMediaServicesFailed
+    SwiftName: codeMediaServicesFailed
+  - Name: AVAudioSessionErrorCodeIsBusy
+    SwiftName: codeIsBusy
+  - Name: AVAudioSessionErrorCodeIncompatibleCategory
+    SwiftName: codeIncompatibleCategory
+  - Name: AVAudioSessionErrorCodeCannotInterruptOthers
+    SwiftName: codeCannotInterruptOthers
+  - Name: AVAudioSessionErrorCodeMissingEntitlement
+    SwiftName: codeMissingEntitlement
+  - Name: AVAudioSessionErrorCodeSiriIsRecording
+    SwiftName: codeSiriIsRecording
+  - Name: AVAudioSessionErrorCodeCannotStartPlaying
+    SwiftName: codeCannotStartPlaying
+  - Name: AVAudioSessionErrorCodeCannotStartRecording
+    SwiftName: codeCannotStartRecording
+  - Name: AVAudioSessionErrorCodeBadParam
+    SwiftName: codeBadParam
+  - Name: AVAudioSessionErrorCodeInsufficientPriority
+    SwiftName: insufficientPriority
+  - Name: AVAudioSessionErrorCodeResourceNotAvailable
+    SwiftName: codeResourceNotAvailable
+  - Name: AVAudioSessionErrorCodeUnspecified
+    SwiftName: codeUnspecified
+  - Name: AVAudioSessionErrorCodeExpiredSession
+    SwiftName: codeExpiredSession
+  - Name: AVAudioSessionErrorCodeSessionNotActive
+    SwiftName: codeSessionNotActive
+  Tags:
+  - Name: AVAudioSessionErrorCode
+    SwiftName: AVAudioSessionErrorCode

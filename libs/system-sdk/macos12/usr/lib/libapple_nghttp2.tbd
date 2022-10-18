@@ -1,0 +1,96 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           DAA78C43-8E75-34FA-9DA6-7755C25B82D2
+  - target:          x86_64-maccatalyst
+    value:           DAA78C43-8E75-34FA-9DA6-7755C25B82D2
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           A51DF613-DD32-3DDB-8953-A90ED0D18959
+  - target:          arm64e-maccatalyst
+    value:           A51DF613-DD32-3DDB-8953-A90ED0D18959
+install-name:    '/usr/lib/libapple_nghttp2.dylib'
+current-version: 1.42
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _nghttp2_check_authority, _nghttp2_check_header_name, _nghttp2_check_header_value, 
+                       _nghttp2_hd_deflate_bound, _nghttp2_hd_deflate_change_table_size, 
+                       _nghttp2_hd_deflate_del, _nghttp2_hd_deflate_get_dynamic_table_size, 
+                       _nghttp2_hd_deflate_get_max_dynamic_table_size, _nghttp2_hd_deflate_get_num_table_entries, 
+                       _nghttp2_hd_deflate_get_table_entry, _nghttp2_hd_deflate_hd, 
+                       _nghttp2_hd_deflate_hd_vec, _nghttp2_hd_deflate_new, _nghttp2_hd_deflate_new2, 
+                       _nghttp2_hd_inflate_change_table_size, _nghttp2_hd_inflate_del, 
+                       _nghttp2_hd_inflate_end_headers, _nghttp2_hd_inflate_get_dynamic_table_size, 
+                       _nghttp2_hd_inflate_get_max_dynamic_table_size, _nghttp2_hd_inflate_get_num_table_entries, 
+                       _nghttp2_hd_inflate_get_table_entry, _nghttp2_hd_inflate_hd, 
+                       _nghttp2_hd_inflate_hd2, _nghttp2_hd_inflate_new, _nghttp2_hd_inflate_new2, 
+                       _nghttp2_http2_strerror, _nghttp2_is_fatal, _nghttp2_nv_compare_name, 
+                       _nghttp2_option_del, _nghttp2_option_new, _nghttp2_option_set_builtin_recv_extension_type, 
+                       _nghttp2_option_set_max_deflate_dynamic_table_size, _nghttp2_option_set_max_outbound_ack, 
+                       _nghttp2_option_set_max_reserved_remote_streams, _nghttp2_option_set_max_send_header_block_length, 
+                       _nghttp2_option_set_max_settings, _nghttp2_option_set_no_auto_ping_ack, 
+                       _nghttp2_option_set_no_auto_window_update, _nghttp2_option_set_no_closed_streams, 
+                       _nghttp2_option_set_no_http_messaging, _nghttp2_option_set_no_http_semantics, 
+                       _nghttp2_option_set_no_recv_client_magic, _nghttp2_option_set_peer_max_concurrent_streams, 
+                       _nghttp2_option_set_user_recv_extension_type, _nghttp2_pack_settings_payload, 
+                       _nghttp2_priority_spec_check_default, _nghttp2_priority_spec_default_init, 
+                       _nghttp2_priority_spec_init, _nghttp2_rcbuf_decref, _nghttp2_rcbuf_get_buf, 
+                       _nghttp2_rcbuf_incref, _nghttp2_rcbuf_is_static, _nghttp2_select_next_protocol, 
+                       _nghttp2_session_callbacks_del, _nghttp2_session_callbacks_new, 
+                       _nghttp2_session_callbacks_set_before_frame_send_callback, 
+                       _nghttp2_session_callbacks_set_data_source_read_length_callback, 
+                       _nghttp2_session_callbacks_set_error_callback, _nghttp2_session_callbacks_set_error_callback2, 
+                       _nghttp2_session_callbacks_set_on_begin_frame_callback, _nghttp2_session_callbacks_set_on_begin_headers_callback, 
+                       _nghttp2_session_callbacks_set_on_data_chunk_recv_callback, 
+                       _nghttp2_session_callbacks_set_on_extension_chunk_recv_callback, 
+                       _nghttp2_session_callbacks_set_on_frame_not_send_callback, 
+                       _nghttp2_session_callbacks_set_on_frame_recv_callback, _nghttp2_session_callbacks_set_on_frame_send_callback, 
+                       _nghttp2_session_callbacks_set_on_header_callback, _nghttp2_session_callbacks_set_on_header_callback2, 
+                       _nghttp2_session_callbacks_set_on_invalid_frame_recv_callback, 
+                       _nghttp2_session_callbacks_set_on_invalid_header_callback, 
+                       _nghttp2_session_callbacks_set_on_invalid_header_callback2, 
+                       _nghttp2_session_callbacks_set_on_stream_close_callback, _nghttp2_session_callbacks_set_pack_extension_callback, 
+                       _nghttp2_session_callbacks_set_recv_callback, _nghttp2_session_callbacks_set_select_padding_callback, 
+                       _nghttp2_session_callbacks_set_send_callback, _nghttp2_session_callbacks_set_send_data_callback, 
+                       _nghttp2_session_callbacks_set_unpack_extension_callback, 
+                       _nghttp2_session_change_stream_priority, _nghttp2_session_check_request_allowed, 
+                       _nghttp2_session_check_server_session, _nghttp2_session_client_new, 
+                       _nghttp2_session_client_new2, _nghttp2_session_client_new3, 
+                       _nghttp2_session_consume, _nghttp2_session_consume_connection, 
+                       _nghttp2_session_consume_stream, _nghttp2_session_create_idle_stream, 
+                       _nghttp2_session_del, _nghttp2_session_find_stream, _nghttp2_session_get_effective_local_window_size, 
+                       _nghttp2_session_get_effective_recv_data_length, _nghttp2_session_get_hd_deflate_dynamic_table_size, 
+                       _nghttp2_session_get_hd_inflate_dynamic_table_size, _nghttp2_session_get_last_proc_stream_id, 
+                       _nghttp2_session_get_local_settings, _nghttp2_session_get_local_window_size, 
+                       _nghttp2_session_get_next_stream_id, _nghttp2_session_get_outbound_queue_size, 
+                       _nghttp2_session_get_remote_settings, _nghttp2_session_get_remote_window_size, 
+                       _nghttp2_session_get_root_stream, _nghttp2_session_get_stream_effective_local_window_size, 
+                       _nghttp2_session_get_stream_effective_recv_data_length, _nghttp2_session_get_stream_local_close, 
+                       _nghttp2_session_get_stream_local_window_size, _nghttp2_session_get_stream_remote_close, 
+                       _nghttp2_session_get_stream_remote_window_size, _nghttp2_session_get_stream_user_data, 
+                       _nghttp2_session_mem_recv, _nghttp2_session_mem_send, _nghttp2_session_recv, 
+                       _nghttp2_session_resume_data, _nghttp2_session_send, _nghttp2_session_server_new, 
+                       _nghttp2_session_server_new2, _nghttp2_session_server_new3, 
+                       _nghttp2_session_set_local_window_size, _nghttp2_session_set_next_stream_id, 
+                       _nghttp2_session_set_stream_user_data, _nghttp2_session_set_user_data, 
+                       _nghttp2_session_terminate_session, _nghttp2_session_terminate_session2, 
+                       _nghttp2_session_upgrade, _nghttp2_session_upgrade2, _nghttp2_session_want_read, 
+                       _nghttp2_session_want_write, _nghttp2_set_debug_vprintf_callback, 
+                       _nghttp2_stream_get_first_child, _nghttp2_stream_get_next_sibling, 
+                       _nghttp2_stream_get_parent, _nghttp2_stream_get_previous_sibling, 
+                       _nghttp2_stream_get_state, _nghttp2_stream_get_stream_id, 
+                       _nghttp2_stream_get_sum_dependency_weight, _nghttp2_stream_get_weight, 
+                       _nghttp2_strerror, _nghttp2_submit_altsvc, _nghttp2_submit_data, 
+                       _nghttp2_submit_extension, _nghttp2_submit_goaway, _nghttp2_submit_headers, 
+                       _nghttp2_submit_origin, _nghttp2_submit_ping, _nghttp2_submit_priority, 
+                       _nghttp2_submit_push_promise, _nghttp2_submit_request, _nghttp2_submit_response, 
+                       _nghttp2_submit_rst_stream, _nghttp2_submit_settings, _nghttp2_submit_shutdown_notice, 
+                       _nghttp2_submit_trailer, _nghttp2_submit_window_update, _nghttp2_version ]
+...

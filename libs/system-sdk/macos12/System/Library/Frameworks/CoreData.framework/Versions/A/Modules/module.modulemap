@@ -1,0 +1,8 @@
+framework module CoreData [extern_c] [system] {
+    umbrella header "CoreData.h"
+    exclude header "CoreData_CloudKit.h"
+    exclude header "NSPersistentCloudKitContainer_Sharing.h"
+    module * {
+        export *
+    }
+}

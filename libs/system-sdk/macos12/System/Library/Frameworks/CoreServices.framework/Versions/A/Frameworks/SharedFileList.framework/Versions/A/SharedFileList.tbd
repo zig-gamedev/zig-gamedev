@@ -1,0 +1,109 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           CDE97B98-5C70-3120-BA12-1A0408C41F09
+  - target:          x86_64-maccatalyst
+    value:           CDE97B98-5C70-3120-BA12-1A0408C41F09
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           A30F9F46-7FF0-3404-9585-F54117864BAB
+  - target:          arm64e-maccatalyst
+    value:           A30F9F46-7FF0-3404-9585-F54117864BAB
+install-name:    '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SharedFileList.framework/Versions/A/SharedFileList'
+current-version: 155
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        CoreServices
+allowable-clients:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    clients:         [ Foundation ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _SFLListChangeNotification, _SFLListLaunchNotification, _SFLServiceName, 
+                       _kSFLDefaultsDomain ]
+    objc-classes:    [ SFLBookmark, SFLDefaults, SFLItem, SFLManager, SFLResolveResult, 
+                       _SFLItem, _SFLList ]
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _LSSharedFileListAddObserver, _LSSharedFileListAddObserverOnQueue, 
+                       _LSSharedFileListCopyProperty, _LSSharedFileListCopySnapshot, 
+                       _LSSharedFileListCreate, _LSSharedFileListGetSeedValue, _LSSharedFileListGetTypeID, 
+                       _LSSharedFileListInsertItemAlias, _LSSharedFileListInsertItemBookmark, 
+                       _LSSharedFileListInsertItemFSRef, _LSSharedFileListInsertItemURL, 
+                       _LSSharedFileListItemCopyAliasData, _LSSharedFileListItemCopyBookmarkData, 
+                       _LSSharedFileListItemCopyDisplayName, _LSSharedFileListItemCopyIconRef, 
+                       _LSSharedFileListItemCopyProperty, _LSSharedFileListItemCopyResolvedURL, 
+                       _LSSharedFileListItemGetID, _LSSharedFileListItemGetTypeID, 
+                       _LSSharedFileListItemMove, _LSSharedFileListItemRemove, _LSSharedFileListItemResolve, 
+                       _LSSharedFileListItemSetProperty, _LSSharedFileListItemUpdate, 
+                       _LSSharedFileListRemoveAllItems, _LSSharedFileListRemoveObserver, 
+                       _LSSharedFileListRemoveObserverOnQueue, _LSSharedFileListSetAuthorization, 
+                       _LSSharedFileListSetProperty, __LSSharedFileListCopyListType, 
+                       __LSSharedFileListIsURLSharePoint, __LSSharedFileListItemCopyBinding, 
+                       __LSSharedFileListItemCopyURL, __LSSharedFileListItemOpen, 
+                       __LSSharedFileListItemSetBookmarkData, __LSSharedFileListItemSetURL, 
+                       __LSSharedFileListUpgrade, __LSSharedFileListVolumeIsVisibleInSidebar, 
+                       __SFLCreateSnapshot, __SFLGetRestrictedCustomFileList, __SFLIsFolderShareable, 
+                       __SFLRelease, __SFLReleaseSnapshot, __kLSSharedFileListFavoriteItems, 
+                       __kLSSharedFileListFavoriteVolumes, __kLSSharedFileListGlobalLoginItems, 
+                       __kLSSharedFileListItemBeforeFirst, __kLSSharedFileListItemHidden, 
+                       __kLSSharedFileListItemLast, __kLSSharedFileListLoginItemHidden, 
+                       __kLSSharedFileListRecentApplicationItems, __kLSSharedFileListRecentDocumentItems, 
+                       __kLSSharedFileListRecentItemsMaxAmount, __kLSSharedFileListRecentServerItems, 
+                       __kLSSharedFileListSessionLoginItems, __kLSSharedFileListSharePoints, 
+                       __kLSSharedFileListVolumesComputerVisible, __kLSSharedFileListVolumesICloudDriveVisible, 
+                       __kLSSharedFileListVolumesIDiskVisible, __kLSSharedFileListVolumesNetworkVisible, 
+                       __kLSSharedFileListiCloudItems, _kLSSharedFileListAFPCancelShutdown, 
+                       _kLSSharedFileListAFPConnectionUserName, _kLSSharedFileListAFPConnections, 
+                       _kLSSharedFileListAFPSecondsToShutdown, _kLSSharedFileListAFPServerActivity, 
+                       _kLSSharedFileListAFPServerName, _kLSSharedFileListAFPServerState, 
+                       _kLSSharedFileListAFPServerStateGoingToShutDown, _kLSSharedFileListAFPServerStateNotRunning, 
+                       _kLSSharedFileListAFPServerStateRefusingConnections, _kLSSharedFileListAFPServerStateServerIsEnabled, 
+                       _kLSSharedFileListAFPServerStateShuttingDown, _kLSSharedFileListAFPServerStateStartingUp, 
+                       _kLSSharedFileListAFPServerStateUnknown, _kLSSharedFileListAFPServerTimedShutdownMessage, 
+                       _kLSSharedFileListAFPServerTimedShutdownTime, _kLSSharedFileListAFPServerVersion, 
+                       _kLSSharedFileListAFPSharingEnabled, _kLSSharedFileListAFPStatus, 
+                       _kLSSharedFileListAFPTimedShutdown, _kLSSharedFileListApplicationRecentDocuments, 
+                       _kLSSharedFileListAutomountedServers, _kLSSharedFileListCancelShutdown, 
+                       _kLSSharedFileListDockApplications, _kLSSharedFileListFTPSharingEnabled, 
+                       _kLSSharedFileListFavoriteItems, _kLSSharedFileListFavoriteServers, 
+                       _kLSSharedFileListFavoriteVolumes, _kLSSharedFileListFinderProjectsItems, 
+                       _kLSSharedFileListGlobalLoginItems, _kLSSharedFileListGuestAccessEnabled, 
+                       _kLSSharedFileListItemBeforeFirst, _kLSSharedFileListItemBinding, 
+                       _kLSSharedFileListItemHidden, _kLSSharedFileListItemIsComputer, 
+                       _kLSSharedFileListItemIsEjectableVolume, _kLSSharedFileListItemIsICloudDrive, 
+                       _kLSSharedFileListItemIsIDisk, _kLSSharedFileListItemIsMeetingRoom, 
+                       _kLSSharedFileListItemIsMobileTimeMachine, _kLSSharedFileListItemIsNetwork, 
+                       _kLSSharedFileListItemIsRemoteDisc, _kLSSharedFileListItemIsShared, 
+                       _kLSSharedFileListItemIsVideoDisc, _kLSSharedFileListItemLast, 
+                       _kLSSharedFileListItemLocked, _kLSSharedFileListItemManaged, 
+                       _kLSSharedFileListItemPersistent, _kLSSharedFileListItemRepairedVolume, 
+                       _kLSSharedFileListItemShareName, _kLSSharedFileListItemSharePointNotAvailable, 
+                       _kLSSharedFileListItemSharingUUID, _kLSSharedFileListItemTargetIsDirectory, 
+                       _kLSSharedFileListItemTargetIsVolume, _kLSSharedFileListItemTargetName, 
+                       _kLSSharedFileListItemVolumeRefNum, _kLSSharedFileListLoginItemHidden, 
+                       _kLSSharedFileListManagedSessionLoginItems, _kLSSharedFileListManagedSharedItems, 
+                       _kLSSharedFileListNMBSharingEnabled, _kLSSharedFileListNetworkBrowser, 
+                       _kLSSharedFileListRecentApplicationItems, _kLSSharedFileListRecentDocumentItems, 
+                       _kLSSharedFileListRecentHostItems, _kLSSharedFileListRecentItemsMaxAmount, 
+                       _kLSSharedFileListRecentServerItems, _kLSSharedFileListRestrictedItemFSProperties, 
+                       _kLSSharedFileListRestrictedItemFileSecurity, _kLSSharedFileListRestrictedItemOnVolumeSupportingPerms, 
+                       _kLSSharedFileListRestrictedItemOnWritableVolume, _kLSSharedFileListRestrictedItemOwner, 
+                       _kLSSharedFileListSMBPrintingEnabled, _kLSSharedFileListSMBSharingEnabled, 
+                       _kLSSharedFileListSavedSearchesItems, _kLSSharedFileListSessionLoginItems, 
+                       _kLSSharedFileListSharePoints, _kLSSharedFileListSharingEnabled, 
+                       _kLSSharedFileListSpecialItemIdentifier, _kLSSharedFileListTimedShutdown, 
+                       _kLSSharedFileListVolumesComputerVisible, _kLSSharedFileListVolumesIDiskVisible, 
+                       _kLSSharedFileListVolumesNetworkVisible, _kLSSharedFileListVolumesShowEjectableVolumes, 
+                       _kLSSharedFileListVolumesShowEjectableVolumesExceptions, _kLSSharedFileListVolumesShowHardDrives, 
+                       _kLSSharedFileListVolumesShowHardDrivesExceptions, _kLSSharedFileListVolumesShowRemovableVolumes, 
+                       _kLSSharedFileListVolumesShowRemovableVolumesExceptions, _kLSSharedFileListVolumesShowRepairing ]
+...

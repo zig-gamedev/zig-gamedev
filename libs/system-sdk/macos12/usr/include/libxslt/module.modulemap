@@ -1,0 +1,108 @@
+module libxslt [system] [extern_c] {
+    link "xslt"
+
+    module attributes {
+        header "attributes.h"
+        export *
+    }
+
+    module documents {
+        header "documents.h"
+        export *
+    }
+
+    module extensions {
+        header "extensions.h"
+        export *
+    }
+
+    module extra {
+        header "extra.h"
+        export *
+    }
+
+    module functions {
+        header "functions.h"
+        export *
+    }
+
+    module imports {
+        header "imports.h"
+        export *
+    }
+
+    module keys {
+        header "keys.h"
+        export *
+    }
+
+    module namespaces {
+        header "namespaces.h"
+        export *
+    }
+
+    module numbersInternals {
+        header "numbersInternals.h"
+        export *
+    }
+
+    module pattern {
+        header "pattern.h"
+        export *
+    }
+
+    module preproc {
+        header "preproc.h"
+        export *
+    }
+
+    module security {
+        header "security.h"
+        export *
+    }
+
+    module templates {
+        header "templates.h"
+        export *
+    }
+
+    module transform {
+        header "transform.h"
+        export *
+    }
+
+    module variables {
+        header "variables.h"
+        export *
+    }
+
+    module xslt {
+        header "xslt.h"
+        export *
+    }
+
+    module xsltInternals {
+        header "xsltInternals.h"
+        export *
+    }
+
+    module xsltconfig {
+        header "xsltconfig.h"
+        export *
+    }
+
+    module xsltexports {
+        header "xsltexports.h"
+        export *
+    }
+
+    module xsltlocale {
+        header "xsltlocale.h"
+        export *
+    }
+
+    module xsltutils {
+        header "xsltutils.h"
+        export *
+    }
+}

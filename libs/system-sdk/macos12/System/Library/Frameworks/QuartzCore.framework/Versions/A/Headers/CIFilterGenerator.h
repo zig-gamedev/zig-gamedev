@@ -1,0 +1,1 @@
+#include <CoreImage/CIFilterGenerator.h>

@@ -12,8 +12,9 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
     if (target.os.tag == .macos) {
-        const system_sdk = @import("system_sdk.zig");
-        system_sdk.include(exe.builder, exe, .{});
+        exe.addFrameworkPath(thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks");
+        exe.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos12/usr/include");
+        exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
         exe.linkFramework("CoreAudio");
         exe.linkFramework("CoreFoundation");
         exe.linkFramework("AudioUnit");

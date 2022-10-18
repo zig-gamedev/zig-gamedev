@@ -1,0 +1,82 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           F3B7A997-F966-36D2-93EE-7DA212212E09
+  - target:          x86_64-maccatalyst
+    value:           F3B7A997-F966-36D2-93EE-7DA212212E09
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           C777F08F-B75C-3AD7-9B62-A5CA138F80DC
+  - target:          arm64e-maccatalyst
+    value:           C777F08F-B75C-3AD7-9B62-A5CA138F80DC
+install-name:    '/usr/lib/libxar.1.dylib'
+current-version: 1.3
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __xar_signature_read_from_heap, __xar_signature_remove_cert, 
+                       _digestRef_from_name, _xar_1VersionNumber, _xar_1VersionString, 
+                       _xar_add, _xar_add_folder, _xar_add_from_archive, _xar_add_frombuffer, 
+                       _xar_add_frompath, _xar_arcmod_archive, _xar_arcmod_extract, 
+                       _xar_arcmod_verify, _xar_arcmods, _xar_attr_first, _xar_attr_free, 
+                       _xar_attr_get, _xar_attr_new, _xar_attr_next, _xar_attr_pget, 
+                       _xar_attr_pset, _xar_attr_set, _xar_attrcopy_from_heap, _xar_attrcopy_from_heap_to_heap, 
+                       _xar_attrcopy_from_heap_to_stream, _xar_attrcopy_from_heap_to_stream_end, 
+                       _xar_attrcopy_from_heap_to_stream_init, _xar_attrcopy_to_heap, 
+                       _xar_bzip_fromheap_done, _xar_bzip_fromheap_in, _xar_bzip_toheap_done, 
+                       _xar_bzip_toheap_in, _xar_check_prop, _xar_close, _xar_darwinattr_archive, 
+                       _xar_darwinattr_extract, _xar_data_archive, _xar_data_extract, 
+                       _xar_data_read, _xar_data_verify, _xar_data_write, _xar_datamods, 
+                       _xar_devmake, _xar_ea_find, _xar_ea_new, _xar_ea_pget, _xar_ea_pset, 
+                       _xar_ea_root, _xar_err_callback, _xar_err_get_archive, _xar_err_get_errno, 
+                       _xar_err_get_file, _xar_err_get_string, _xar_err_new, _xar_err_set_errno, 
+                       _xar_err_set_file, _xar_err_set_formatted_string, _xar_err_set_string, 
+                       _xar_ext2attr_archive, _xar_ext2attr_extract, _xar_extract, 
+                       _xar_extract_tobuffer, _xar_extract_tobuffersz, _xar_extract_tofile, 
+                       _xar_extract_tostream, _xar_extract_tostream_end, _xar_extract_tostream_init, 
+                       _xar_fbsdattr_archive, _xar_fbsdattr_extract, _xar_file_find, 
+                       _xar_file_first, _xar_file_free, _xar_file_new, _xar_file_next, 
+                       _xar_file_replicate, _xar_file_serialize, _xar_file_unserialize, 
+                       _xar_flags_extract, _xar_from_base64, _xar_get_group, _xar_get_heap_offset, 
+                       _xar_get_mode, _xar_get_mtime, _xar_get_owner, _xar_get_path, 
+                       _xar_get_safe_path, _xar_get_size, _xar_get_toc_checksum, 
+                       _xar_get_toc_checksum_type, _xar_get_type, _xar_gzip_fromheap_done, 
+                       _xar_gzip_fromheap_in, _xar_gzip_toheap_done, _xar_gzip_toheap_in, 
+                       _xar_hash_finish, _xar_hash_fromheap_done, _xar_hash_fromheap_in, 
+                       _xar_hash_fromheap_out, _xar_hash_get_context, _xar_hash_get_digest_name, 
+                       _xar_hash_new, _xar_hash_toheap_done, _xar_hash_toheap_in, 
+                       _xar_hash_toheap_out, _xar_hash_update, _xar_header_get, _xar_heap_to_archive, 
+                       _xar_io_get_file_offset, _xar_io_get_heap_base_offset, _xar_io_get_length, 
+                       _xar_io_get_rsize, _xar_io_get_toc_checksum_length, _xar_io_get_toc_checksum_length_for_type, 
+                       _xar_is_safe_filename, _xar_iter_free, _xar_iter_new, _xar_linuxattr_archive, 
+                       _xar_linuxattr_extract, _xar_lzma_fromheap_done, _xar_lzma_fromheap_in, 
+                       _xar_lzma_toheap_done, _xar_lzma_toheap_in, _xar_makedev, 
+                       _xar_ntoh64, _xar_open, _xar_open_digest_verify, _xar_opt_get, 
+                       _xar_opt_set, _xar_opt_unset, _xar_optimal_io_size_at_path, 
+                       _xar_path_issane, _xar_path_nextcomponent, _xar_pread_fd, 
+                       _xar_prop_create, _xar_prop_find, _xar_prop_first, _xar_prop_free, 
+                       _xar_prop_get, _xar_prop_getkey, _xar_prop_getvalue, _xar_prop_new, 
+                       _xar_prop_next, _xar_prop_pfirst, _xar_prop_pget, _xar_prop_pnext, 
+                       _xar_prop_pset, _xar_prop_punset, _xar_prop_replicate_r, _xar_prop_serializable, 
+                       _xar_prop_serialize, _xar_prop_set, _xar_prop_setkey, _xar_prop_setvalue, 
+                       _xar_prop_unserialize, _xar_prop_unset, _xar_pwrite_fd, _xar_read_fd, 
+                       _xar_register_errhandler, _xar_safe_dirname, _xar_script_done, 
+                       _xar_script_in, _xar_serialize, _xar_set_perm, _xar_signature_add_x509certificate, 
+                       _xar_signature_copy_signed_data, _xar_signature_first, _xar_signature_get_x509certificate_count, 
+                       _xar_signature_get_x509certificate_data, _xar_signature_new, 
+                       _xar_signature_new_extended, _xar_signature_new_internal, 
+                       _xar_signature_next, _xar_signature_remove, _xar_signature_serialize, 
+                       _xar_signature_type, _xar_signature_unserialize, _xar_stat_archive, 
+                       _xar_stat_extract, _xar_subdoc_attr_get, _xar_subdoc_attr_set, 
+                       _xar_subdoc_copyin, _xar_subdoc_copyout, _xar_subdoc_find, 
+                       _xar_subdoc_first, _xar_subdoc_name, _xar_subdoc_new, _xar_subdoc_next, 
+                       _xar_subdoc_prop_get, _xar_subdoc_prop_set, _xar_subdoc_remove, 
+                       _xar_subdoc_serialize, _xar_subdoc_unserialize, _xar_swap32, 
+                       _xar_underbar_check, _xar_verify, _xar_verify_progress, _xar_write_fd ]
+...

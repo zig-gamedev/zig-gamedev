@@ -1,0 +1,20 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           39C99D94-1D40-376C-8EF3-E166DBFF4008
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           8BFD4509-ED09-31EB-836E-D3A1BAD145C9
+install-name:    '/usr/lib/log/liblog_coreacc.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _NSObjectIfNotNull, _OSLogCopyFormattedString, _base64DecodeArray, 
+                       _base64EncodeArray, _classImplementsMethodsInProtocol, _convertNSDataToNSString, 
+                       _convertNSStringToNSData, _isNSObjectEqual, _isNSObjectNull, 
+                       _kACCConnection_Type_Strings, _kACCEndpoint_Protocol_Strings, 
+                       _kACCEndpoint_TransportType_Strings, _readJSONFile, _removeBidirectionalUnicodeCharacters, 
+                       _trimBidirectionalUnicodeCharacters, _writeJSONFile ]
+...

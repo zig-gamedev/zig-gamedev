@@ -1,0 +1,15 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           30AAA6F8-4242-348A-9637-004386B1525F
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           A4E1051B-84B8-3C0F-9FB8-9D73AEACC777
+install-name:    '/usr/lib/log/liblog_odtypes.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _OSLogCopyFormattedString ]
+...

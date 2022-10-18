@@ -1,0 +1,41 @@
+framework module ApplicationServices [extern_c] {
+    umbrella header "ApplicationServices.h"
+    export *
+    module * { export * }
+
+    framework module ATS [extern_c] {
+        umbrella header "ATS.h"
+        export *
+        module * { export * }
+    }
+
+    framework module ATSUI [extern_c] {
+        umbrella header "ATSUnicode.h"
+        export *
+        module * { export * }
+    }
+
+    framework module HIServices [extern_c] {
+        umbrella header "HIServices.h"
+        export *
+        module * { export * }
+    }
+
+    framework module PrintCore [extern_c] {
+        umbrella header "PrintCore.h"
+        export *
+        module * { export * }
+    }
+
+    framework module QD [extern_c] {
+        umbrella header "QD.h"
+        export *
+        module * { export * }
+    }
+
+    framework module SpeechSynthesis [extern_c] {
+        umbrella header "SpeechSynthesis.h"
+        export *
+        module * { export * }
+    }
+}

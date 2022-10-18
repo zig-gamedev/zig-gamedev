@@ -1,0 +1,16 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           E98B56F2-AAE0-3055-B790-FA8C4815128C
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           59C6704B-A4F0-3E7C-9E41-D956B6413CDE
+install-name:    '/usr/lib/libxpc_datastores.dylib'
+exports:
+  - targets:         [ arm64e-macos, x86_64-macos, arm64-macos ]
+    symbols:         [ _xpc_datastore_copy_state, _xpc_datastore_publisher_create, 
+                       _xpc_datastore_publisher_invalidate_state, _xpc_datastore_subscriber_create ]
+...

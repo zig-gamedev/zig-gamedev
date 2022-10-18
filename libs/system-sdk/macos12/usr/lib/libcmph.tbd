@@ -1,0 +1,34 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           75CC90E5-80E8-3790-A202-95E109D49F46
+  - target:          x86_64-maccatalyst
+    value:           75CC90E5-80E8-3790-A202-95E109D49F46
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           805DAFA7-5878-38D3-9B77-F4BC05873CA4
+  - target:          arm64e-maccatalyst
+    value:           805DAFA7-5878-38D3-9B77-F4BC05873CA4
+install-name:    '/usr/lib/libcmph.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _cmph_config_destroy, _cmph_config_new, _cmph_config_set_algo, 
+                       _cmph_config_set_b, _cmph_config_set_graphsize, _cmph_config_set_hashfuncs, 
+                       _cmph_config_set_keys_per_bin, _cmph_config_set_memory_availability, 
+                       _cmph_config_set_mphf_fd, _cmph_config_set_tmp_dir, _cmph_config_set_verbosity, 
+                       _cmph_destroy, _cmph_dump, _cmph_hash_names, _cmph_io_byte_vector_adapter, 
+                       _cmph_io_byte_vector_adapter_destroy, _cmph_io_nlfile_adapter, 
+                       _cmph_io_nlfile_adapter_destroy, _cmph_io_nlnkfile_adapter, 
+                       _cmph_io_nlnkfile_adapter_destroy, _cmph_io_struct_vector_adapter, 
+                       _cmph_io_struct_vector_adapter_destroy, _cmph_io_vector_adapter, 
+                       _cmph_io_vector_adapter_destroy, _cmph_load, _cmph_names, 
+                       _cmph_new, _cmph_pack, _cmph_packed_size, _cmph_search, _cmph_search_packed, 
+                       _cmph_size ]
+...

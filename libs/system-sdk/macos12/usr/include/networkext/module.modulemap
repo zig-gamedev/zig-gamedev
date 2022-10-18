@@ -1,0 +1,6 @@
+module networkext [system] {
+  umbrella "."
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,92 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           ACE11FA2-1955-3276-9343-D49A2B2059C5
+  - target:          x86_64-maccatalyst
+    value:           ACE11FA2-1955-3276-9343-D49A2B2059C5
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           2F331637-80F6-3208-816F-618DA9081899
+  - target:          arm64e-maccatalyst
+    value:           2F331637-80F6-3208-816F-618DA9081899
+install-name:    '/usr/lib/system/libsystem_networkextension.dylib'
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _NEHelperCacheAddRedirectedAddress, _NEHelperCacheClearRedirectedAddresses, 
+                       _NEHelperCacheClearUUIDs, _NEHelperCacheCopyAppUUIDMapping, 
+                       _NEHelperCacheCopyAppUUIDMappingExtended, _NEHelperCacheCopyAppUUIDMappingForUIDExtended, 
+                       _NEHelperCacheCopySigningIdentifierMapping, _NEHelperCacheSetDomainDictionaries, 
+                       _NEHelperCacheSetRoutes, _NEHelperCopyAggregatePathRules, 
+                       _NEHelperCopyAppInfo, _NEHelperCopyCurrentNetworkAsync, _NEHelperCopyCurrentNetworkInfo, 
+                       _NEHelperCopyPerAppDomains, _NEHelperCopyPreferredBundleID, 
+                       _NEHelperCopyResponse, _NEHelperGetIKESocket, _NEHelperGetIKESocketWithResult, 
+                       _NEHelperGetKernelControlSocket, _NEHelperGetKernelControlSocketExtended, 
+                       _NEHelperGetNECPSessionFD, _NEHelperGetPFKeySocket, _NEHelperHandleConfigurationsChangedBySC, 
+                       _NEHelperInit, _NEHelperInterfaceRemoveAddress, _NEHelperInterfaceSetAddress, 
+                       _NEHelperInterfaceSetMTU, _NEHelperInterfaceSetOption, _NEHelperSendRequest, 
+                       _NEHelperSettingsSetArray, _NEHelperSettingsSetBool, _NEHelperSettingsSetNumber, 
+                       _NEHelperVPNConfigurationExists, _NEHelperVPNSetEnabled, _g_ne_read_uuid_cache, 
+                       _g_ne_uuid_cache_hit, _ne_copy_cached_bundle_identifier_for_uuid, 
+                       _ne_copy_cached_preferred_bundle_for_bundle_identifier, _ne_copy_cached_uuids_for_bundle_identifier, 
+                       _ne_copy_signature_info_for_pid, _ne_copy_signing_identifier_for_pid, 
+                       _ne_copy_uuid_cache, _ne_force_reset_uuid_cache, _ne_get_configuration_generation, 
+                       _ne_is_sockaddr_valid, _ne_log_large_obj, _ne_log_obj, _ne_print_backtrace, 
+                       _ne_privacy_dns_netagent_id, _ne_privacy_proxy_netagent_id, 
+                       _ne_session_add_necp_drop_dest_from_dest_list, _ne_session_add_necp_drop_dest_from_path, 
+                       _ne_session_address_matches_subnets, _ne_session_agent_get_advisory, 
+                       _ne_session_agent_get_advisory_interface_index, _ne_session_always_on_vpn_configs_present, 
+                       _ne_session_always_on_vpn_configs_present_at_boot, _ne_session_app_vpn_configs_present, 
+                       _ne_session_cancel, _ne_session_clear_caches, _ne_session_content_filter_configs_present, 
+                       _ne_session_copy_app_data_from_flow_divert_socket, _ne_session_copy_app_data_from_flow_divert_token, 
+                       _ne_session_copy_os_version_string, _ne_session_copy_policy_match, 
+                       _ne_session_copy_security_session_info, _ne_session_copy_socket_attributes, 
+                       _ne_session_copy_socket_domain_attributes, _ne_session_create, 
+                       _ne_session_disable_restrictions, _ne_session_dns_proxy_configs_present, 
+                       _ne_session_dns_settings_configs_present, _ne_session_establish_ipc, 
+                       _ne_session_fallback_advisory, _ne_session_fallback_default, 
+                       _ne_session_get_config_id_from_network_agent, _ne_session_get_configuration_id, 
+                       _ne_session_get_info, _ne_session_get_info2, _ne_session_get_status, 
+                       _ne_session_info_type_to_string, _ne_session_initialize_necp_drop_all, 
+                       _ne_session_is_always_on_vpn_enabled, _ne_session_is_safeboot, 
+                       _ne_session_local_communication_configs_present, _ne_session_local_communication_send_info, 
+                       _ne_session_manager_get_pid, _ne_session_manager_has_active_sessions, 
+                       _ne_session_manager_is_running, _ne_session_on_demand_configs_present, 
+                       _ne_session_path_controller_configs_present, _ne_session_policy_copy_flow_divert_token, 
+                       _ne_session_policy_copy_flow_divert_token_with_key, _ne_session_policy_match_get_filter_unit, 
+                       _ne_session_policy_match_get_flow_divert_unit, _ne_session_policy_match_get_scoped_interface_index, 
+                       _ne_session_policy_match_get_service, _ne_session_policy_match_get_service_action, 
+                       _ne_session_policy_match_get_service_type, _ne_session_policy_match_is_drop, 
+                       _ne_session_policy_match_is_flow_divert, _ne_session_policy_match_service_is_registered, 
+                       _ne_session_release, _ne_session_retain, _ne_session_send_barrier, 
+                       _ne_session_service_get_dns_service_id, _ne_session_service_get_dns_service_id_for_interface, 
+                       _ne_session_service_matches_address, _ne_session_service_matches_address_for_interface, 
+                       _ne_session_set_event_handler, _ne_session_set_socket_attributes, 
+                       _ne_session_set_socket_context_attribute, _ne_session_set_socket_tracker_attributes, 
+                       _ne_session_should_disable_nexus, _ne_session_start, _ne_session_start_on_behalf_of, 
+                       _ne_session_start_with_options, _ne_session_status_to_string, 
+                       _ne_session_stop, _ne_session_stop_all_with_plugin_type, _ne_session_stop_reason_to_string, 
+                       _ne_session_type_to_string, _ne_session_use_as_system_vpn, 
+                       _ne_session_vpn_include_all_networks_configs_present, _ne_socket_set_attribution, 
+                       _ne_socket_set_domains, _ne_socket_set_is_app_initiated, _ne_socket_set_website_attribution, 
+                       _ne_tracker_build_cache, _ne_tracker_build_trie, _ne_tracker_check_info_changed, 
+                       _ne_tracker_clear_cache, _ne_tracker_context_get_domain, _ne_tracker_context_get_domain_owner, 
+                       _ne_tracker_context_is_from_app_list, _ne_tracker_context_is_from_web_list, 
+                       _ne_tracker_get_ddg_dictionary, _ne_tracker_lookup_app_domains, 
+                       _ne_tracker_set_test_domains, _ne_tracker_validate_domain, 
+                       _ne_trie_free, _ne_trie_has_high_ascii, _ne_trie_init, _ne_trie_init_from_file, 
+                       _ne_trie_insert, _ne_trie_save_to_file, _ne_trie_search, _necp_drop_dest_copy_dest_entry_list, 
+                       _nehelper_copy_connection_for_delegate_class, _nehelper_queue, 
+                       _nelog_is_debug_logging_enabled, _nelog_is_extra_vpn_logging_enabled, 
+                       _nelog_is_info_logging_enabled ]
+...

@@ -1,0 +1,91 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           D2F8B1F4-12FF-3226-9FCB-75193C2EDE2E
+  - target:          x86_64-maccatalyst
+    value:           D2F8B1F4-12FF-3226-9FCB-75193C2EDE2E
+  - target:          arm64-macos
+    value:           7F570139-CD4C-32F5-B68D-AFB040F45EC4
+  - target:          arm64-maccatalyst
+    value:           7F570139-CD4C-32F5-B68D-AFB040F45EC4
+  - target:          arm64e-macos
+    value:           96ECED73-F10C-3941-91A7-00254B907499
+  - target:          arm64e-maccatalyst
+    value:           96ECED73-F10C-3941-91A7-00254B907499
+install-name:    '/usr/lib/system/libdyld.dylib'
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ arm64-macos, x86_64-macos, arm64e-macos ]
+    symbols:         [ _dyld_shared_cache_for_each_subcache4Rosetta, _dyld_shared_subcache_get_info4Rosetta ]
+  - targets:         [ arm64-macos, x86_64-macos, arm64e-macos, x86_64-maccatalyst, 
+                       arm64-maccatalyst, arm64e-maccatalyst ]
+    symbols:         [ _NSAddImage, _NSAddLibrary, _NSAddLibraryWithSearching, _NSAddressOfSymbol, 
+                       _NSCreateObjectFileImageFromFile, _NSCreateObjectFileImageFromMemory, 
+                       _NSDestroyObjectFileImage, _NSGetSectionDataInObjectFileImage, 
+                       _NSInstallLinkEditErrorHandlers, _NSIsSymbolDefinedInObjectFileImage, 
+                       _NSIsSymbolNameDefined, _NSIsSymbolNameDefinedInImage, _NSIsSymbolNameDefinedWithHint, 
+                       _NSLibraryNameForModule, _NSLinkEditError, _NSLinkModule, 
+                       _NSLookupAndBindSymbol, _NSLookupAndBindSymbolWithHint, _NSLookupSymbolInImage, 
+                       _NSLookupSymbolInModule, _NSModuleForSymbol, _NSNameOfModule, 
+                       _NSNameOfSymbol, _NSSymbolDefinitionCountInObjectFileImage, 
+                       _NSSymbolDefinitionNameInObjectFileImage, _NSSymbolReferenceCountInObjectFileImage, 
+                       _NSSymbolReferenceNameInObjectFileImage, _NSUnLinkModule, 
+                       _NSVersionOfLinkTimeLibrary, _NSVersionOfRunTimeLibrary, _NXArgc, 
+                       _NXArgv, __NSGetExecutablePath, ___progname, __dyld_all_twolevel_modules_prebound, 
+                       __dyld_atfork_parent, __dyld_atfork_prepare, __dyld_bind_fully_image_containing_address, 
+                       __dyld_find_foreign_type_protocol_conformance, __dyld_find_protocol_conformance, 
+                       __dyld_find_unwind_sections, __dyld_for_each_objc_class, __dyld_for_each_objc_protocol, 
+                       __dyld_fork_child, __dyld_get_image_header, __dyld_get_image_header_containing_address, 
+                       __dyld_get_image_name, __dyld_get_image_slide, __dyld_get_image_uuid, 
+                       __dyld_get_image_vmaddr_slide, __dyld_get_objc_selector, __dyld_get_prog_image_header, 
+                       __dyld_get_shared_cache_range, __dyld_get_shared_cache_uuid, 
+                       __dyld_has_fix_for_radar, __dyld_image_containing_address, 
+                       __dyld_image_count, __dyld_images_for_addresses, __dyld_initializer, 
+                       __dyld_is_memory_immutable, __dyld_is_objc_constant, __dyld_launch_mode, 
+                       __dyld_launched_prebound, __dyld_lookup_and_bind, __dyld_lookup_and_bind_fully, 
+                       __dyld_lookup_and_bind_with_hint, __dyld_missing_symbol_abort, 
+                       __dyld_objc_class_count, __dyld_objc_notify_register, __dyld_objc_uses_large_shared_cache, 
+                       __dyld_present, __dyld_process_info_create, __dyld_process_info_for_each_aot_image, 
+                       __dyld_process_info_for_each_image, __dyld_process_info_for_each_segment, 
+                       __dyld_process_info_get_aot_cache, __dyld_process_info_get_cache, 
+                       __dyld_process_info_get_platform, __dyld_process_info_get_state, 
+                       __dyld_process_info_notify, __dyld_process_info_notify_main, 
+                       __dyld_process_info_notify_release, __dyld_process_info_notify_retain, 
+                       __dyld_process_info_release, __dyld_process_info_retain, __dyld_register_driverkit_main, 
+                       __dyld_register_for_bulk_image_loads, __dyld_register_for_image_loads, 
+                       __dyld_register_func_for_add_image, __dyld_register_func_for_remove_image, 
+                       __dyld_shared_cache_contains_path, __dyld_shared_cache_is_locally_built, 
+                       __dyld_shared_cache_optimized, __dyld_shared_cache_real_path, 
+                       __dyld_swift_optimizations_version, __dyld_visit_objc_classes, 
+                       __tlv_atexit, __tlv_bootstrap, __tlv_exit, _dladdr, _dlclose, 
+                       _dlerror, _dlopen, _dlopen_audited, _dlopen_from, _dlopen_preflight, 
+                       _dlsym, _dyldVersionNumber, _dyldVersionString, _dyld_dynamic_interpose, 
+                       _dyld_for_each_installed_shared_cache, _dyld_for_each_installed_shared_cache_with_system_path, 
+                       _dyld_get_active_platform, _dyld_get_base_platform, _dyld_get_image_versions, 
+                       _dyld_get_min_os_version, _dyld_get_program_min_os_version, 
+                       _dyld_get_program_sdk_version, _dyld_get_sdk_version, _dyld_has_inserted_or_interposing_libraries, 
+                       _dyld_image_content_for_section, _dyld_image_content_for_segment, 
+                       _dyld_image_copy_uuid, _dyld_image_for_each_section_info, 
+                       _dyld_image_for_each_segment_info, _dyld_image_get_installname, 
+                       _dyld_image_header_containing_address, _dyld_image_local_nlist_content_4Symbolication, 
+                       _dyld_image_path_containing_address, _dyld_is_simulator_platform, 
+                       _dyld_minos_at_least, _dyld_need_closure, _dyld_process_create_for_current_task, 
+                       _dyld_process_create_for_task, _dyld_process_dispose, _dyld_process_is_restricted, 
+                       _dyld_process_register_for_event_notification, _dyld_process_snapshot_create_for_process, 
+                       _dyld_process_snapshot_dispose, _dyld_process_snapshot_get_shared_cache, 
+                       _dyld_process_unregister_for_notification, _dyld_program_minos_at_least, 
+                       _dyld_program_sdk_at_least, _dyld_sdk_at_least, _dyld_shared_cache_copy_uuid, 
+                       _dyld_shared_cache_create, _dyld_shared_cache_dispose, _dyld_shared_cache_file_path, 
+                       _dyld_shared_cache_find_iterate_text, _dyld_shared_cache_for_each_file, 
+                       _dyld_shared_cache_for_each_image, _dyld_shared_cache_for_file, 
+                       _dyld_shared_cache_get_base_address, _dyld_shared_cache_get_mapped_size, 
+                       _dyld_shared_cache_is_mapped_private, _dyld_shared_cache_iterate_text, 
+                       _dyld_shared_cache_pin_mapping, _dyld_shared_cache_some_image_overridden, 
+                       _dyld_shared_cache_unpin_mapping, _environ, dyld_stub_binder ]
+...

@@ -1,0 +1,115 @@
+module Darwin.POSIX.netinet [system] {
+  module in {
+    header "netinet/in.h"
+    export *
+
+    exclude header "netinet6/in6.h"
+  }
+
+  module tcp {
+    header "netinet/tcp.h"
+    export *
+  }
+}
+
+module Darwin.netinet [system] {
+  module bootp {
+    header "netinet/bootp.h"
+    export *
+  }
+
+  module icmp6 {
+    header "netinet/icmp6.h"
+    export *
+  }
+
+  module icmp_var {
+    header "netinet/icmp_var.h"
+    export *
+  }
+
+  module if_ether {
+    header "netinet/if_ether.h"
+    export *
+  }
+
+  module igmp {
+    header "netinet/igmp.h"
+    export *
+  }
+
+  module igmp_var {
+    header "netinet/igmp_var.h"
+    export *
+  }
+
+  module in_pcb {
+    header "netinet/in_pcb.h"
+    export *
+  }
+
+  module in_systm {
+    header "netinet/in_systm.h"
+    export *
+  }
+
+  module in_var {
+    header "netinet/in_var.h"
+    export *
+  }
+
+  module ip {
+    header "netinet/ip.h"
+    export *
+  }
+
+  module ip6 {
+    header "netinet/ip6.h"
+    export *
+  }
+
+  module ip_icmp {
+    header "netinet/ip_icmp.h"
+    export *
+  }
+
+  module ip_var {
+    header "netinet/ip_var.h"
+    export *
+  }
+
+  module tcp_fsm {
+    header "netinet/tcp_fsm.h"
+    export *
+  }
+
+  module tcp_seq {
+    header "netinet/tcp_seq.h"
+    export *
+  }
+
+  module tcp_timer {
+    header "netinet/tcp_timer.h"
+    export *
+  }
+
+  module tcp_var {
+    header "netinet/tcp_var.h"
+    export *
+  }
+
+  module tcpip {
+    header "netinet/tcpip.h"
+    export *
+  }
+
+  module udp {
+    header "netinet/udp.h"
+    export *
+  }
+
+  module udp_var {
+    header "netinet/udp_var.h"
+    export *
+  }
+}

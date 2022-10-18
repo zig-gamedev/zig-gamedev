@@ -1,0 +1,1 @@
+#include <CoreImage/CIImageProvider.h>

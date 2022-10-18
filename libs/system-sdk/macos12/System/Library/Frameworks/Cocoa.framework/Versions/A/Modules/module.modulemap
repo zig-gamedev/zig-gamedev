@@ -1,0 +1,5 @@
+framework module Cocoa [extern_c] {
+    umbrella header "Cocoa.h"
+    export *
+    module * { export * }
+}

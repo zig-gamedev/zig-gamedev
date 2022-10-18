@@ -1,0 +1,15 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           696019D6-B9BF-31AA-892C-AB228B43D716
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           6CE549AA-419B-31FA-BAC9-44453C0E0419
+install-name:    '/usr/lib/libpcreposix.0.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _regcomp, _regerror, _regexec, _regfree ]
+...

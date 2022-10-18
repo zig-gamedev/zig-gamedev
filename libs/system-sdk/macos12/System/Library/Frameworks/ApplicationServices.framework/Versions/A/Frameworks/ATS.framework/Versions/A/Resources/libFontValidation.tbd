@@ -1,0 +1,50 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           E0D5835F-B317-31DA-8B61-AD072B0E3800
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           44FA281B-85E5-345D-8A85-D6B4C5B48207
+install-name:    '/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Resources/libFontValidation.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _ATSFontTestCopyAvailableTests, _ATSFontTestCreateReport, 
+                       _kATSFontTestArrayKey, _kATSFontTestConsistencyTest, _kATSFontTestCoreTest, 
+                       _kATSFontTestCreateReportTypeKey, _kATSFontTestDescriptionKey, 
+                       _kATSFontTestFONDResource, _kATSFontTestFontIdentifierKey, 
+                       _kATSFontTestFontNameKey, _kATSFontTestFontPostScriptNameKey, 
+                       _kATSFontTestFontTypeKey, _kATSFontTestFontsTestedKey, _kATSFontTestForceTestExecutionKey, 
+                       _kATSFontTestGeneralFontData, _kATSFontTestIdentifierKey, 
+                       _kATSFontTestMessageTextKey, _kATSFontTestMessagesKey, _kATSFontTestNFNTResource, 
+                       _kATSFontTestNameKey, _kATSFontTestPostScriptFontData, _kATSFontTestReportTypeFull, 
+                       _kATSFontTestReportTypeResultsOnly, _kATSFontTestReportTypeSummary, 
+                       _kATSFontTestResultKey, _kATSFontTestSeverityFatalError, _kATSFontTestSeverityInformation, 
+                       _kATSFontTestSeverityKey, _kATSFontTestSeverityMajorError, 
+                       _kATSFontTestSeverityMinorError, _kATSFontTestSeverityNonFontError, 
+                       _kATSFontTestSeverityTechnicalError, _kATSFontTestSpecificationTest, 
+                       _kATSFontTestSplicedFontData, _kATSFontTestStructureTest, 
+                       _kATSFontTestTargetKey, _kATSFontTestTimeStampKey, _kATSFontTestTrueTypeFontData, 
+                       _kATSFontTestTypeKey, _kATSFontTestUnexpectedValueTest, _kATSFontTestUsabilityTest, 
+                       _kATSFontTestUseSandboxOptionKey, _kATSFontTestVersionKey, 
+                       _kATSFontTest_BASETable, _kATSFontTest_CFF_Table, _kATSFontTest_DSIGTable, 
+                       _kATSFontTest_EBDTTable, _kATSFontTest_EBLCTable, _kATSFontTest_EBSCTable, 
+                       _kATSFontTest_GDEFTable, _kATSFontTest_GPOSTable, _kATSFontTest_GSUBTable, 
+                       _kATSFontTest_JSTFTable, _kATSFontTest_LTSHTable, _kATSFontTest_OS_2Table, 
+                       _kATSFontTest_PCLTTable, _kATSFontTest_VDMXTable, _kATSFontTest_VORGTable, 
+                       _kATSFontTest_ZapfTable, _kATSFontTest_acntTable, _kATSFontTest_avarTable, 
+                       _kATSFontTest_bdatTable, _kATSFontTest_bhedTable, _kATSFontTest_blocTable, 
+                       _kATSFontTest_bslnTable, _kATSFontTest_cmapTable, _kATSFontTest_cvarTable, 
+                       _kATSFontTest_cvt_Table, _kATSFontTest_fdscTable, _kATSFontTest_featTable, 
+                       _kATSFontTest_fmtxTable, _kATSFontTest_fpgmTable, _kATSFontTest_fvarTable, 
+                       _kATSFontTest_gaspTable, _kATSFontTest_glyfTable, _kATSFontTest_hdmxTable, 
+                       _kATSFontTest_headTable, _kATSFontTest_hheaTable, _kATSFontTest_hmtxTable, 
+                       _kATSFontTest_hstyTable, _kATSFontTest_justTable, _kATSFontTest_kernTable, 
+                       _kATSFontTest_lcarTable, _kATSFontTest_locaTable, _kATSFontTest_maxpTable, 
+                       _kATSFontTest_mortTable, _kATSFontTest_morxTable, _kATSFontTest_nameTable, 
+                       _kATSFontTest_opbdTable, _kATSFontTest_postTable, _kATSFontTest_prepTable, 
+                       _kATSFontTest_propTable, _kATSFontTest_trakTable, _kATSFontTest_vheaTable, 
+                       _kATSFontTest_vmtxTable ]
+...

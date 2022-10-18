@@ -1,0 +1,39 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           527C0692-CB5F-3966-BDDF-DAEE87D414A3
+  - target:          x86_64-maccatalyst
+    value:           527C0692-CB5F-3966-BDDF-DAEE87D414A3
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           372D7FDC-DFC6-3781-88AB-33E10A638A41
+  - target:          arm64e-maccatalyst
+    value:           372D7FDC-DFC6-3781-88AB-33E10A638A41
+install-name:    '/System/Volumes/Data/SWE/macOS/BuildRoots/6b362bc7f6/Library/Caches/com.apple.xbs/Binaries/CVMS/install/Symbols/Release/libCoreVMClient.mono600.dylib'
+current-version: 0
+compatibility-version: 0
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ __cvmsIsAssert, __cvmsIsMonolithic, _cvms_connection_control, 
+                       _cvms_connection_create, _cvms_connection_has_service, _cvms_connection_release, 
+                       _cvms_connection_retain, _cvms_content_get_function_pointer, 
+                       _cvms_content_get_segment_count, _cvms_content_get_segments, 
+                       _cvms_element_build_and_get, _cvms_element_build_from_source, 
+                       _cvms_element_create_with_content, _cvms_element_find_with_key, 
+                       _cvms_element_get_content, _cvms_element_get_key, _cvms_element_release, 
+                       _cvms_element_release_async, _cvms_element_release_dylib, 
+                       _cvms_element_remove_from_cache, _cvms_element_retain, _cvms_element_write_content_to_file, 
+                       _cvms_error_string, _cvms_queue_element_build, _cvms_queue_element_compile, 
+                       _cvms_queue_element_create_empty, _cvms_queue_element_release, 
+                       _cvms_queue_element_retain, _cvms_queue_element_set_status, 
+                       _cvms_queue_service_control, _cvms_queue_service_create, _cvms_queue_service_release, 
+                       _cvms_queue_service_retain, _cvms_queue_service_sync, _cvms_service_attach, 
+                       _cvms_service_control, _cvms_service_detach ]
+...

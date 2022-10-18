@@ -1,0 +1,23 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           6FFF6BFD-B070-3B4E-9048-34A4430387F7
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           8613E583-F709-3065-A236-F2D60595F8F0
+install-name:    '/usr/lib/libMemoryResourceException.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _MREBundleStringForUnbundledProcess, _MREErrorDomain, _MREExceptionTypeToString, 
+                       _RMECheckEntitlement, _ReportMemoryExceptionFromTask, _kMREOutputFormatterCategoryTotalKey, 
+                       _kMREOutputFormatterCleanKey, _kMREOutputFormatterDirtyKey, 
+                       _kMREOutputFormatterPageSizeKey, _kMREOutputFormatterReclaimableKey, 
+                       _kMREOutputFormatterRegionsKey, _kMREOutputFormatterSummaryKey, 
+                       _kMREOutputFormatterSwappedKey, _kMREOutputFormatterTotalFootprintKey, 
+                       _kMREOutputFormatterWiredKey ]
+    objc-classes:    [ FPFootprint, FPMemoryCategory, FPProcess, MemoryResourceException, 
+                       RMECacheEnumerator ]
+...

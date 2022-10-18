@@ -1,0 +1,77 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           AA221842-A109-3A1A-8538-74A669107CD5
+  - target:          x86_64-maccatalyst
+    value:           AA221842-A109-3A1A-8538-74A669107CD5
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           574458EF-C54B-35B8-88A9-9584A6BA7CB8
+  - target:          arm64e-maccatalyst
+    value:           574458EF-C54B-35B8-88A9-9584A6BA7CB8
+install-name:    '/usr/lib/libCRFSuite.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _crf_content_copy, _crf_content_init, _crf_content_set, _crf_create_instance, 
+                       _crf_data_append, _crf_data_finish, _crf_data_init, _crf_data_maxlength, 
+                       _crf_data_totalitems, _crf_evaluation_init, _crf_item_append_content, 
+                       _crf_item_copy, _crf_item_finish, _crf_item_init, _crf_output_finish, 
+                       _crf_output_init, _crf_output_init_n, _crf_paragraph_finish, 
+                       _crf_paragraph_get_id, _crf_paragraph_get_item_count, _crf_paragraph_get_item_count_for_sentence, 
+                       _crf_paragraph_init_with_attrs, _crf_paragraph_set_id, _crf_sequence_append, 
+                       _crf_sequence_copy, _crf_sequence_finish, _crf_sequence_init, 
+                       _crfsuite_attribute_copy, _crfsuite_attribute_init, _crfsuite_attribute_set, 
+                       _crfsuite_attribute_swap, _crfsuite_create_instance, _crfsuite_create_instance_from_file, 
+                       _crfsuite_create_tokenizer_from_feature_file, _crfsuite_data_append, 
+                       _crfsuite_data_copy, _crfsuite_data_finish, _crfsuite_data_init, 
+                       _crfsuite_data_init_n, _crfsuite_data_maxlength, _crfsuite_data_swap, 
+                       _crfsuite_data_totalitems, _crfsuite_delete_feature_tokenizer, 
+                       _crfsuite_dictioanry_addref, _crfsuite_dictionary_create, 
+                       _crfsuite_dictionary_get_count, _crfsuite_dictionary_get_id_for_string, 
+                       _crfsuite_dictionary_get_string_for_id, _crfsuite_dictionary_release, 
+                       _crfsuite_evaluation_accmulate, _crfsuite_evaluation_clear, 
+                       _crfsuite_evaluation_finalize, _crfsuite_evaluation_finish, 
+                       _crfsuite_evaluation_init, _crfsuite_evaluation_output, _crfsuite_feature_token_get_attribute, 
+                       _crfsuite_feature_token_get_type, _crfsuite_feature_token_get_value, 
+                       _crfsuite_feature_tokenizer_get_next_token, _crfsuite_get_id_from_dictionary, 
+                       _crfsuite_instance_append, _crfsuite_instance_copy, _crfsuite_instance_empty, 
+                       _crfsuite_instance_finish, _crfsuite_instance_init, _crfsuite_instance_init_n, 
+                       _crfsuite_instance_swap, _crfsuite_interlocked_decrement, 
+                       _crfsuite_interlocked_increment, _crfsuite_item_append_attribute, 
+                       _crfsuite_item_copy, _crfsuite_item_empty, _crfsuite_item_finish, 
+                       _crfsuite_item_init, _crfsuite_item_init_n, _crfsuite_item_init_with_capacity, 
+                       _crfsuite_item_swap, _crfsuite_model_addref, _crfsuite_model_create_from_buffer, 
+                       _crfsuite_model_create_from_file, _crfsuite_model_dump, _crfsuite_model_get_attrs, 
+                       _crfsuite_model_get_labels, _crfsuite_model_get_number_of_attributes, 
+                       _crfsuite_model_get_number_of_labels, _crfsuite_model_get_tagger, 
+                       _crfsuite_model_release, _crfsuite_tagger_addref, _crfsuite_tagger_instance_length, 
+                       _crfsuite_tagger_lognorm, _crfsuite_tagger_marginal_path, 
+                       _crfsuite_tagger_marginal_point, _crfsuite_tagger_release, 
+                       _crfsuite_tagger_score, _crfsuite_tagger_set_instance, _crfsuite_tagger_tag_paragraph, 
+                       _crfsuite_tagger_viterbi, _crfsuite_trainer_addref, _crfsuite_trainer_create, 
+                       _crfsuite_trainer_get_params, _crfsuite_trainer_release, _crfsuite_trainer_set_message_callback, 
+                       _crfsuite_trainer_train, _crfsuite_trainer_train_model_to_file_pointer, 
+                       _libsvm_version, _maxent_add_training_sample, _maxent_classify, 
+                       _maxent_copy_loaded_model_data, _maxent_copy_trained_model_data, 
+                       _maxent_get_class_id, _maxent_get_class_label, _maxent_load_from_file, 
+                       _maxent_load_with_bytes, _maxent_model_create, _maxent_model_release, 
+                       _maxent_model_retain, _maxent_mutable_model_release, _maxent_num_classes, 
+                       _maxent_sample_add_feature, _maxent_sample_add_feature_with_value, 
+                       _maxent_sample_clear, _maxent_sample_create, _maxent_sample_description, 
+                       _maxent_sample_get_label, _maxent_sample_release, _maxent_sample_set_label, 
+                       _maxent_save_to_file, _maxent_save_to_file_with_threshold, 
+                       _maxent_set_heldout, _maxent_train, _maxent_use_SGD, _maxent_use_default_SGD, 
+                       _maxent_use_l1_regularizer, _maxent_use_l2_regularizer, _my_crf_create_instance_from_file, 
+                       _svm_check_parameter, _svm_check_probability_model, _svm_cross_validation, 
+                       _svm_destroy_param, _svm_free_and_destroy_model, _svm_free_model_content, 
+                       _svm_get_labels, _svm_get_nr_class, _svm_get_svm_type, _svm_get_svr_probability, 
+                       _svm_load_model, _svm_predict, _svm_predict_probability, _svm_predict_values, 
+                       _svm_save_model, _svm_set_print_string_function, _svm_train ]
+...

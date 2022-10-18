@@ -1,0 +1,30 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           19278940-6BBC-303B-980C-1DB4331DF80F
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           7E410562-7A94-32CF-8FD3-735ABF3BCE07
+install-name:    '/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SecurityHI.framework/Versions/A/SecurityHI'
+current-version: 55008
+parent-umbrella:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    umbrella:        Carbon
+allowable-clients:
+  - targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+    clients:         [ AppleShareClient ]
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _DisposeURLNotifyUPP, _DisposeURLSystemEventUPP, _InvokeURLNotifyUPP, 
+                       _InvokeURLSystemEventUPP, _KCAddAppleSharePassword, _KCAddGenericPassword, 
+                       _KCAddInternetPassword, _KCAddInternetPasswordWithPath, _KCAddItem, 
+                       _KCChangeSettings, _KCCreateKeychain, _KCUnlock, _NewURLNotifyUPP, 
+                       _NewURLSystemEventUPP, _SecChooseIdentity, _SecChooseIdentityAsSheet, 
+                       _SecDisplayCertificate, _SecDisplayCertificateGroup, _SecEditTrust, 
+                       _SecEditTrustAsSheet, _kcaddapplesharepassword, _kcaddgenericpassword, 
+                       _kcaddinternetpassword, _kcaddinternetpasswordwithpath, _kccreatekeychain, 
+                       _kcunlock ]
+...

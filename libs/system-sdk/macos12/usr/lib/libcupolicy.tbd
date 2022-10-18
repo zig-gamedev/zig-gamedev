@@ -1,0 +1,28 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           175D67E0-33BE-322A-9D66-FE4FFC524C5F
+  - target:          x86_64-maccatalyst
+    value:           175D67E0-33BE-322A-9D66-FE4FFC524C5F
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           485BA4C3-AF36-3389-BE96-6A781B8DE059
+  - target:          arm64e-maccatalyst
+    value:           485BA4C3-AF36-3389-BE96-6A781B8DE059
+install-name:    '/usr/lib/libcupolicy.dylib'
+exports:
+  - targets:         [ x86_64-maccatalyst, x86_64-macos, arm64e-maccatalyst, arm64e-macos, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ _network_usage_policy_create_client, _network_usage_policy_destroy_client, 
+                       _network_usage_policy_get_WiFi_data_allowed_from_policy, _network_usage_policy_get_bundle_from_policy, 
+                       _network_usage_policy_get_cell_data_allowed_from_policy, _network_usage_policy_get_datausage_policies, 
+                       _network_usage_policy_get_first_use_flow_performed_from_policy, 
+                       _network_usage_policy_get_for_bundle, _network_usage_policy_set_changed_handler, 
+                       _perform_first_network_use_flow ]
+...

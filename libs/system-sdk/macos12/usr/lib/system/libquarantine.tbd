@@ -1,0 +1,55 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                   arm64e-macos, arm64e-maccatalyst ]
+uuids:
+  - target:          x86_64-macos
+    value:           C6D1E49B-561D-3F84-8548-18FE40AB02DA
+  - target:          x86_64-maccatalyst
+    value:           C6D1E49B-561D-3F84-8548-18FE40AB02DA
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64-maccatalyst
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           3D861651-91A7-3D78-B43B-ECAA41D63D9E
+  - target:          arm64e-maccatalyst
+    value:           3D861651-91A7-3D78-B43B-ECAA41D63D9E
+install-name:    '/usr/lib/system/libquarantine.dylib'
+current-version: 129.30.3
+parent-umbrella:
+  - targets:         [ x86_64-macos, x86_64-maccatalyst, arm64-macos, arm64-maccatalyst, 
+                       arm64e-macos, arm64e-maccatalyst ]
+    umbrella:        System
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, x86_64-maccatalyst, arm64e-maccatalyst, 
+                       arm64-macos, arm64-maccatalyst ]
+    symbols:         [ ___esp_check, ___esp_check_ns, ___esp_enabled, ___esp_notify, 
+                       ___esp_notify_ns, __qtn_error, __qtn_file_alloc, __qtn_file_apply_to_fd, 
+                       __qtn_file_apply_to_mount_point, __qtn_file_apply_to_path, 
+                       __qtn_file_clone, __qtn_file_free, __qtn_file_get_flags, __qtn_file_get_identifier, 
+                       __qtn_file_get_metadata, __qtn_file_get_metadata_size, __qtn_file_get_timestamp, 
+                       __qtn_file_init, __qtn_file_init_with_data, __qtn_file_init_with_fd, 
+                       __qtn_file_init_with_mount_point, __qtn_file_init_with_path, 
+                       __qtn_file_set_flags, __qtn_file_set_identifier, __qtn_file_set_metadata, 
+                       __qtn_file_set_timestamp, __qtn_file_to_data, __qtn_label_name, 
+                       __qtn_proc_alloc, __qtn_proc_apply_to_self, __qtn_proc_clone, 
+                       __qtn_proc_free, __qtn_proc_get_flags, __qtn_proc_get_identifier, 
+                       __qtn_proc_get_metadata, __qtn_proc_get_metadata_size, __qtn_proc_get_path_exclusion_pattern, 
+                       __qtn_proc_init, __qtn_proc_init_with_data, __qtn_proc_init_with_self, 
+                       __qtn_proc_set_flags, __qtn_proc_set_identifier, __qtn_proc_set_metadata, 
+                       __qtn_proc_set_path_exclusion_pattern, __qtn_proc_to_data, 
+                       __qtn_xattr_name, _qtn_proc_init_with_pid, _responsibility_get_attribution_for_audittoken, 
+                       _responsibility_get_pid_responsible_for_pid, _responsibility_get_responsible_audit_token_for_audit_token, 
+                       _responsibility_get_responsible_for_pid, _responsibility_get_uniqueid_responsible_for_pid, 
+                       _responsibility_identity_get_binary_entitlement_data, _responsibility_identity_get_binary_is_platform, 
+                       _responsibility_identity_get_binary_offset, _responsibility_identity_get_binary_path, 
+                       _responsibility_identity_get_binary_signing_id, _responsibility_identity_get_binary_team_id, 
+                       _responsibility_identity_get_csflags, _responsibility_identity_get_hosted_path, 
+                       _responsibility_identity_get_persistent_identifier, _responsibility_identity_get_platform, 
+                       _responsibility_identity_get_sdk, _responsibility_identity_get_user_uuid, 
+                       _responsibility_identity_release, _responsibility_init, _responsibility_set_audittoken_responsible_for_caller, 
+                       _responsibility_set_audittoken_responsible_for_self, _responsibility_set_caller_responsible_for_self, 
+                       _responsibility_set_hosted_path, _responsibility_set_pid_responsible_for_pid, 
+                       _responsibility_spawnattrs_getdisclaim, _responsibility_spawnattrs_setdisclaim ]
+...

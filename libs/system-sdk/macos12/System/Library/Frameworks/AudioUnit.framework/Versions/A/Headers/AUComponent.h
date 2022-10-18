@@ -1,0 +1,1 @@
+#include <AudioToolbox/AUComponent.h>

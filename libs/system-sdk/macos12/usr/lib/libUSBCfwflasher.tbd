@@ -1,0 +1,25 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ arm64-macos, arm64e-macos ]
+uuids:
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           4DB05EE9-C627-36C7-B684-1E1036116BB6
+install-name:    '/usr/lib/libUSBCfwflasher.dylib'
+exports:
+  - targets:         [ arm64e-macos, arm64-macos ]
+    symbols:         [ _USBCFlasherCreate, _USBCFlasherExecCmd, _USBCFlasherIsDone, 
+                       _USBCFlasherSupported ]
+    objc-classes:    [ IECSInterface, IOKitUtilities, flashUpdater, iecsUpdater, 
+                       swdUpdater ]
+    objc-ivars:      [ IECSInterface._cfPlugInInterface, IECSInterface._deviceInterface, 
+                       IECSInterface._userClientActive, flashUpdater.currentDevice, 
+                       flashUpdater.fConnection, flashUpdater.fGAIDEnabled, flashUpdater.fRetriesEnabled, 
+                       flashUpdater.fUpcomingFirmwareVersionStash, flashUpdater.locatedDeviceEnumerator, 
+                       flashUpdater.locatedDevices, iecsUpdater.device_id, iecsUpdater.fInterface, 
+                       iecsUpdater.gaidEnabled, iecsUpdater.retriesEnabled, iecsUpdater.upcomingFirmwareVersionStash, 
+                       iecsUpdater.updated, iecsUpdater.uuid, iecsUpdater.verbose, 
+                       swdUpdater.device, swdUpdater.entryID, swdUpdater.name, swdUpdater.retriesEnabled, 
+                       swdUpdater.updated, swdUpdater.verbose ]
+...

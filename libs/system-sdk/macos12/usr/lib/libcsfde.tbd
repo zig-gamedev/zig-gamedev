@@ -1,0 +1,45 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           3E550028-D8C2-30FE-9853-CE87CDFE943B
+  - target:          arm64-macos
+    value:           00000000-0000-0000-0000-000000000000
+  - target:          arm64e-macos
+    value:           AA0BB980-8F7B-3527-9BA7-0F8C4B9756E1
+install-name:    '/usr/lib/libcsfde.dylib'
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos, arm64-macos ]
+    symbols:         [ _CSFDEActivateRecoveryAgentAsNeeded, _CSFDEAddExternalKeyUserEntry, 
+                       _CSFDEAddOSUserEntry, _CSFDEAddPassphraseOnlyUserEntry, _CSFDEAddVolumeEncryption, 
+                       _CSFDEChangeUserPassphrase, _CSFDECookRecipeIntoContext, _CSFDECopyBankersQuestions, 
+                       _CSFDECopyReserveKEK, _CSFDECopyServerURL, _CSFDECopyUserEntriesForKEK, 
+                       _CSFDECopyUserEntriesOfType, _CSFDECopyUserEntryUUIDsForType, 
+                       _CSFDECopyUserRequestsOfType, _CSFDECopyWVEKEntriesMatchingKEK, 
+                       _CSFDECreateContextFromRecipe, _CSFDECreateDefaultContext, 
+                       _CSFDECreateKey, _CSFDECreateNewRecipe, _CSFDEEncryptData, 
+                       _CSFDEFilterSupportedHardware, _CSFDEFilterSupportedLocale, 
+                       _CSFDEGetConversionState, _CSFDEGetPBKDF, _CSFDEGetPassphrase, 
+                       _CSFDEGetRecoveryDataFromApple, _CSFDEGetTargetContextIndex, 
+                       _CSFDEGetUserEntryForUUID, _CSFDEGetWVEKEntryWithIndex, _CSFDEInitPropertyCache, 
+                       _CSFDEMergeRecoveryDataFromRecipe, _CSFDEOptInToNonAppleRecoveryService, 
+                       _CSFDEOptInToRecoveryService, _CSFDEPostRecoveryData, _CSFDEPrepareRevertWithKEK, 
+                       _CSFDEProvideRecoveryHints, _CSFDEQueryContext, _CSFDERecoveryCopyRedirectionInfo, 
+                       _CSFDERemoveKey, _CSFDERemovePassphrase, _CSFDERemoveRecipeSecrets, 
+                       _CSFDERemoveUserEntry, _CSFDERemoveWVEKEntriesWithIndex, _CSFDERequestExternalKeyUserEntry, 
+                       _CSFDERequestInstitutionalRecoveryUserEntry, _CSFDERequestOSUserEntry, 
+                       _CSFDERequestPassphraseOnlyUserEntry, _CSFDERequestPersonalRecoveryUserEntry, 
+                       _CSFDERequestRecoveryUser, _CSFDERequestUserRemovalByType, 
+                       _CSFDERequestiCloudRecoveryUserEntry, _CSFDERequestiCloudRecoveryUserEntryWithIdentity, 
+                       _CSFDERequestiCloudRecoveryUserEntryWithIdentitySet, _CSFDEResetUserPassphrase, 
+                       _CSFDEResetUserPassphraseWithKEK, _CSFDESetConversionState, 
+                       _CSFDESetTargetContextIndex, _CSFDEStoreKey, _CSFDEStorePBKDF, 
+                       _CSFDEStorePassphrase, _CSFDEStorePassphraseWithBytes, _CSFDEUnlockAnyUserEntryWithPassphrase, 
+                       _CSFDEUnlockAnyUserEntryWithPassphraseForSMC, _CSFDEUnlockUserEntryWithKey, 
+                       _CSFDEUnlockUserEntryWithPassphrase, _CSFDEUnlockWithPrivateRecoveryKey, 
+                       _CSFDEUnwrapWithiCloudRecoveryKeyWithIdentity, _CSFDEUnwrapWithiCloudRecoveryKeyWithIdentitySet, 
+                       _CSFDEUpdateTimeStamp, _CSFDEWritePropertyCacheToFD, _CSFDEdecodeRecoveryPassword, 
+                       _CSFDEpackRecoveryRecord, _CSFDEunpackRecoveryRecord, _kCSFDERecoveryRedirectionPayloadEncryptCert, 
+                       _kCSFDERecoveryRedirectionURL ]
+...
