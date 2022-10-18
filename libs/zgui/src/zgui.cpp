@@ -1280,6 +1280,14 @@ ZGUI_API void zguiEndMenu(void) {
 ZGUI_API bool zguiMenuItem(const char* label, const char* shortcut, bool selected, bool enabled) {
     return ImGui::MenuItem(label, shortcut, selected, enabled);
 }
+
+ZGUI_API void zguiBeginTooltip(void) {
+    ImGui::BeginTooltip();
+}
+
+ZGUI_API void zguiEndTooltip(void) {
+    ImGui::EndTooltip();
+}
 //--------------------------------------------------------------------------------------------------
 //
 // DrawList
