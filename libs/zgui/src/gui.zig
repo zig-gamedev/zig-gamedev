@@ -2290,7 +2290,7 @@ pub fn collapsingHeaderStatePtr(label: [:0]const u8, args: CollapsingHeaderState
     return zguiCollapsingHeaderStatePtr(label, args.pvisible, args.flags);
 }
 extern fn zguiCollapsingHeader(label: [*:0]const u8, flags: TreeNodeFlags) bool;
-extern fn zguiCollapsingHeaderStatePtr(label: [*:0]const u8, pvisible: bool, flags: TreeNodeFlags) bool;
+extern fn zguiCollapsingHeaderStatePtr(label: [*:0]const u8, pvisible: *bool, flags: TreeNodeFlags) bool;
 //--------------------------------------------------------------------------------------------------
 const SetNextItemOpen = struct {
     is_open: bool,
