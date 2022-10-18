@@ -1,5 +1,4 @@
 const std = @import("std");
-const system_sdk = @import("system_sdk.zig");
 
 pub fn build(_: *std.build.Builder) void {}
 
@@ -23,7 +22,6 @@ pub const pkg = std.build.Pkg{
 pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludePath(thisDir() ++ "/libs/glfw/include");
     exe.linkSystemLibraryName("c");
-    system_sdk.include(exe.builder, exe, .{});
 
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
@@ -31,6 +29,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
 
     switch (target.os.tag) {
         .windows => {
+            exe.addLibraryPath(thisDir() ++ "/../system-sdk/x86_64-windows-gnu/lib");
             exe.linkSystemLibraryName("gdi32");
             exe.linkSystemLibraryName("user32");
             exe.linkSystemLibraryName("shell32");
@@ -53,6 +52,12 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
             }, &.{"-D_GLFW_WIN32"});
         },
         .macos => {
+            const system_sdk = @import("system_sdk.zig");
+            system_sdk.include(exe.builder, exe, .{});
+            //exe.addFrameworkPath(thisDir() ++ "/../system-sdk/macos.12-none/System/Library/Frameworks");
+            //exe.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos.12-none/usr/include");
+            //exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos.12-none/usr/lib");
+            exe.linkSystemLibraryName("objc");
             exe.linkFramework("IOKit");
             exe.linkFramework("CoreFoundation");
             exe.linkFramework("Metal");
@@ -60,7 +65,6 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
             exe.linkFramework("CoreServices");
             exe.linkFramework("CoreGraphics");
             exe.linkFramework("Foundation");
-            exe.linkSystemLibraryName("objc");
             exe.addCSourceFiles(&.{
                 src_dir ++ "monitor.c",
                 src_dir ++ "init.c",
@@ -81,6 +85,13 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         },
         else => {
             // We assume Linux (X11)
+            if (target.cpu.arch.isX86()) {
+                exe.addIncludePath(thisDir() ++ "/../system-sdk/x86_64-linux-gnu/include");
+                exe.addLibraryPath(thisDir() ++ "/../system-sdk/x86_64-linux-gnu/lib");
+            } else {
+                exe.addIncludePath(thisDir() ++ "/../system-sdk/aarch64-linux-gnu/include");
+                exe.addLibraryPath(thisDir() ++ "/../system-sdk/aarch64-linux-gnu/lib");
+            }
             exe.linkSystemLibraryName("X11");
             exe.linkSystemLibraryName("xcb");
             exe.linkSystemLibraryName("Xau");
