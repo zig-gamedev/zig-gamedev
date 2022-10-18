@@ -137,10 +137,6 @@ typedef void (*JPH_AlignedFreeFunction)(void *in_block);
 // Geometry Types
 //
 //--------------------------------------------------------------------------------------------------
-typedef struct JPH_AABox  JPH_AABox;
-typedef struct JPH_Plane  JPH_Plane;
-typedef struct JPH_Sphere JPH_Sphere;
-
 typedef struct JPH_ShapeSettings               JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings         JPH_ConvexShapeSettings;
 typedef struct JPH_BoxShapeSettings            JPH_BoxShapeSettings;
@@ -196,26 +192,6 @@ typedef struct JPH_TransformedShape  JPH_TransformedShape;
 // Structures
 //
 //--------------------------------------------------------------------------------------------------
-// NOTE: Needs to be kept in sync with JPH::AABox
-struct JPH_AABox
-{
-    alignas(16) float min[4];
-    alignas(16) float max[4];
-};
-
-// NOTE: Needs to be kept in sync with JPH::Plane
-struct JPH_Plane
-{
-    alignas(16) float normal_and_constant[4];
-};
-
-// NOTE: Needs to be kept in sync with JPH::Sphere
-struct JPH_Sphere
-{
-    float center[3];
-    float radius;
-};
-
 // NOTE: Needs to be kept in sync with JPH::MassProperties
 struct JPH_MassProperties
 {
@@ -245,8 +221,7 @@ struct JPH_MotionProperties
     JPH_MotionQuality motion_quality;
     bool              allow_sleeping;
 
-    JPH_Sphere        sleep_test_spheres[3];
-    float             sleep_test_timer;
+    float             reserved[13];
 
 #ifdef JPH_ENABLE_ASSERTS
     JPH_MotionType    cached_motion_type;
@@ -1008,7 +983,7 @@ JPH_Body_MoveKinematic(JPH_Body *in_body,
                        float in_delta_time);
 JPH_CAPI void
 JPH_Body_ApplyBuoyancyImpulse(JPH_Body *in_body,
-                              const JPH_Plane *in_plane,
+                              const float in_plane[4],
                               float in_buoyancy,
                               float in_linear_drag,
                               float in_angular_drag,
@@ -1039,8 +1014,8 @@ JPH_Body_GetCenterOfMassPosition(const JPH_Body *in_body, float out_position_com
 JPH_CAPI void
 JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_transform[16]);
 
-JPH_CAPI const JPH_AABox *
-JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body);
+JPH_CAPI void
+JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body, float out_min[3], float out_max[3]);
 
 JPH_CAPI JPH_MotionProperties *
 JPH_Body_GetMotionProperties(JPH_Body *in_body);

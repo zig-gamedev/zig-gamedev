@@ -33,10 +33,6 @@ static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult)
 static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer));
 static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer));
 
-static_assert(sizeof(JPH::AABox)  == sizeof(JPH_AABox));
-static_assert(sizeof(JPH::Plane)  == sizeof(JPH_Plane));
-static_assert(sizeof(JPH::Sphere) == sizeof(JPH_Sphere));
-
 static_assert(sizeof(JPH::MassProperties)       == sizeof(JPH_MassProperties));
 static_assert(sizeof(JPH::MotionProperties)     == sizeof(JPH_MotionProperties));
 static_assert(sizeof(JPH::CollisionGroup)       == sizeof(JPH_CollisionGroup));
@@ -47,10 +43,6 @@ static_assert(sizeof(JPH::SubShapeIDPair)       == sizeof(JPH_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)   == sizeof(JPH_CollideShapeResult));
 static_assert(sizeof(JPH::TransformedShape)     == sizeof(JPH_TransformedShape));
 //--------------------------------------------------------------------------------------------------
-static_assert(alignof(JPH::AABox)  == alignof(JPH_AABox));
-static_assert(alignof(JPH::Plane)  == alignof(JPH_Plane));
-static_assert(alignof(JPH::Sphere) == alignof(JPH_Sphere));
-
 static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties));
 static_assert(alignof(JPH::MotionProperties)     == alignof(JPH_MotionProperties));
 static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup));
@@ -158,9 +150,6 @@ static_assert(
 static_assert(
     offsetof(JPH::MotionProperties, mMotionQuality) ==
     offsetof(JPH_MotionProperties, motion_quality));
-static_assert(
-    offsetof(JPH::MotionProperties, mSleepTestTimer) ==
-    offsetof(JPH_MotionProperties, sleep_test_timer));
 
 static_assert(
     offsetof(JPH::MassProperties, mInertia) ==
@@ -190,12 +179,4 @@ static_assert(
 static_assert(
     offsetof(JPH::CollisionGroup, mGroupID) ==
     offsetof(JPH_CollisionGroup, group_id));
-
-static_assert(
-    offsetof(JPH::Sphere, mRadius) ==
-    offsetof(JPH_Sphere, radius));
-
-static_assert(
-    offsetof(JPH::AABox, mMax) ==
-    offsetof(JPH_AABox, max));
 //--------------------------------------------------------------------------------------------------

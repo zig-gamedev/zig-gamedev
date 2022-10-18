@@ -1187,7 +1187,7 @@ JPH_Body_MoveKinematic(JPH_Body *in_body,
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_Body_ApplyBuoyancyImpulse(JPH_Body *in_body,
-                              const JPH_Plane *in_plane,
+                              const float in_plane[4],
                               float in_buoyancy,
                               float in_linear_drag,
                               float in_angular_drag,
@@ -1270,12 +1270,13 @@ JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_tran
     m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
 }
 //--------------------------------------------------------------------------------------------------
-JPH_CAPI const JPH_AABox *
-JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body)
+JPH_CAPI void
+JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body, float out_min[3], float out_max[3])
 {
     assert(in_body != nullptr);
-    return reinterpret_cast<const JPH_AABox *>(
-        &reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceBounds());
+    const JPH::AABox& aabb = reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceBounds();
+    aabb.mMin.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_min));
+    aabb.mMax.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_max));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_MotionProperties *
