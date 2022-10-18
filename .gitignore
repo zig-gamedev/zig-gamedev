@@ -34,6 +34,7 @@
 !.vimrc
 !.gitkeep
 
+!/libs/system-sdk/**
 !/libs/zgpu/libs/**
 !/libs/zwin32/bin/x64/*
 
