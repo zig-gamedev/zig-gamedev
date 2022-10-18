@@ -2483,6 +2483,18 @@ extern fn zguiEndMainMenuBar() void;
 extern fn zguiBeginMenu(label: [*:0]const u8, enabled: bool) bool;
 extern fn zguiEndMenu() void;
 extern fn zguiMenuItem(label: [*:0]const u8, shortcut: ?[*:0]const u8, selected: bool, enabled: bool) bool;
+
+//--------------------------------------------------------------------------------------------------
+//
+// Popups
+//
+//--------------------------------------------------------------------------------------------------
+/// 'pub fn beginTooltip() bool'
+pub const beginTooltip = zguiBeginTooltip;
+/// 'pub fn endTooltip() void'
+pub const endTooltip = zguiEndTooltip;
+extern fn zguiBeginTooltip() void;
+extern fn zguiEndTooltip() void;
 //--------------------------------------------------------------------------------------------------
 //
 // Tabs
