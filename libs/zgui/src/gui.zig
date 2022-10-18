@@ -2473,7 +2473,9 @@ const MenuItem = struct {
 };
 
 pub fn menuItem(label: [:0]const u8, args: MenuItem) bool {
-    return zguiMenuItem(label, args.shortcut, args.selected, args.enabled);
+    if (args.shortcut) |shortcut| {
+        return zguiMenuItem(label, shortcut.ptr, args.selected, args.enabled);
+    } else return zguiMenuItem(label, null, args.selected, args.enabled);
 }
 
 extern fn zguiBeginMenuBar() bool;
