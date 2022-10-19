@@ -90,9 +90,6 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
                 exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu");
             }
             exe.linkSystemLibraryName("X11");
-            exe.linkSystemLibraryName("xcb");
-            exe.linkSystemLibraryName("Xau");
-            exe.linkSystemLibraryName("Xdmcp");
             exe.addCSourceFiles(&.{
                 src_dir ++ "monitor.c",
                 src_dir ++ "init.c",
