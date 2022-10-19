@@ -810,7 +810,7 @@ test "zmath.maxFast" {
 
 pub inline fn min(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     // This will handle inf & nan
-    return @minimum(v0, v1); // minps, cmpunordps, andps, andnps, orps
+    return @min(v0, v1); // minps, cmpunordps, andps, andnps, orps
 }
 test "zmath.min" {
     {
@@ -851,7 +851,7 @@ test "zmath.min" {
 
 pub inline fn max(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     // This will handle inf & nan
-    return @maximum(v0, v1); // maxps, cmpunordps, andps, andnps, orps
+    return @max(v0, v1); // maxps, cmpunordps, andps, andnps, orps
 }
 test "zmath.max" {
     {
