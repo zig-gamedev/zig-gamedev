@@ -1,1 +1,0 @@
-../../System/Library/Frameworks/Tk.framework/Versions/8.5/Headers/tkPlatDecls.h

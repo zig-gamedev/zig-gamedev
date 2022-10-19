@@ -1,4 +1,0 @@
-module MachO.dyld [system] [extern_c] {
-  header "dyld.h"
-  export *
-}

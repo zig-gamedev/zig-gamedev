@@ -1,6 +1,0 @@
-module Darwin.bank [system] {
-  module bank_types {
-    header "bank/bank_types.h"
-    export *
-  }
-}

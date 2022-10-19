@@ -1,6 +1,0 @@
-module Darwin.Mach.debug [system] {
-  umbrella "mach_debug"
-
-  export *
-  module * { export * }
-}

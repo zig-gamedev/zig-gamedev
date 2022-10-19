@@ -1,4 +1,0 @@
-module kcdata [system] {
-  header "kern/kcdata.h"
-  export *
-}
