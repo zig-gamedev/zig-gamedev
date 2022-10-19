@@ -3,6 +3,9 @@ const math = std.math;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
+const zgui = @import("zgui");
+
+const content_dir = @import("build_options").content_dir;
 
 const Dimension = struct {
     width: f32,
@@ -47,6 +50,17 @@ pub const State = struct {
     pub fn init(allocator: std.mem.Allocator, window: zglfw.Window) !State {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
+        zgui.init(allocator);
+        const scale_factor = scale_factor: {
+            const scale = window.getContentScale();
+            break :scale_factor math.max(scale[0], scale[1]);
+        };
+        const font_size = 16.0 * scale_factor;
+        _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
+
+        // This needs to be called *after* adding your custom fonts.
+        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+
         // Create a color/depth texture and its 'view'.
         const color = createColorTexture(gctx);
         const depth = createDepthTexture(gctx);
@@ -67,6 +81,8 @@ pub const State = struct {
     }
 
     pub fn deinit(self: *State, allocator: std.mem.Allocator) void {
+        zgui.backend.deinit();
+        zgui.deinit();
         const gctx = self.gctx;
         self.layers.deinit();
         gctx.destroy(allocator);
@@ -165,6 +181,18 @@ pub const State = struct {
     pub fn draw(self: *State) void {
         const gctx = self.gctx;
 
+        zgui.backend.newFrame(
+            gctx.swapchain_descriptor.width,
+            gctx.swapchain_descriptor.height,
+        );
+        const draw_list = zgui.getBackgroundDrawList();
+        draw_list.addText(
+            .{ 10, 10 },
+            0xff_ff_ff_ff,
+            "{d:.3} ms/frame ({d:.1} fps)",
+            .{ gctx.stats.average_cpu_time, gctx.stats.fps },
+        );
+
         const back_buffer_view = gctx.swapchain.getCurrentTextureView();
         defer back_buffer_view.release();
 
@@ -199,6 +227,24 @@ pub const State = struct {
                 }
             }
             self.drawLayers(back_buffer_view, color_view, depth_view, encoder);
+
+            {
+                const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
+                    .view = back_buffer_view,
+                    .load_op = .load,
+                    .store_op = .store,
+                }};
+                const render_pass_info = wgpu.RenderPassDescriptor{
+                    .color_attachment_count = color_attachments.len,
+                    .color_attachments = &color_attachments,
+                };
+                const pass = encoder.beginRenderPass(render_pass_info);
+                defer {
+                    pass.end();
+                    pass.release();
+                }
+                zgui.backend.draw(pass);
+            }
 
             break :commands encoder.finish(null);
         };
