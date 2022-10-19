@@ -23,7 +23,7 @@ const DemoState = struct {
         return .{
             .graphics = graphics,
             .hexagons = try pill.init(graphics.gctx, allocator, 3),
-            .pills = try pill.init(graphics.gctx, allocator, 10),
+            .pills = try pill.init(graphics.gctx, allocator, 12),
         };
     }
 
@@ -37,7 +37,7 @@ const DemoState = struct {
         {
             demo.hexagons.instances.clearRetainingCapacity();
             try demo.hexagons.instances.append(.{
-                .width = 0.4,
+                .width = 0.9,
                 .length = 0.0,
                 .angle = 0.0,
                 .position = .{ 0.0, 0.0 },
@@ -56,8 +56,8 @@ const DemoState = struct {
         {
             demo.pills.instances.clearRetainingCapacity();
             try demo.pills.instances.append(.{
-                .width = 0.05,
-                .length = 0.8,
+                .width = 0.1,
+                .length = 1.8,
                 .angle = -math.pi / 3.0,
                 .position = .{ 0.0, 0.0 },
                 .depth = 0.0,
@@ -65,13 +65,13 @@ const DemoState = struct {
                 .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
             });
             try demo.pills.instances.append(.{
-                .width = 0.05,
-                .length = 0.8,
+                .width = 0.1,
+                .length = 1.8,
                 .angle = math.pi / 3.0,
                 .position = .{ 0.0, 0.0 },
                 .depth = 0.2,
-                .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
-                .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
+                .start_color = .{ 1.0, 0.0, 1.0, 1.0 },
+                .end_color = .{ 1.0, 0.0, 1.0, 1.0 },
             });
             demo.pills.recreateInstanceBuffer();
 
@@ -105,7 +105,7 @@ pub fn main() !void {
     zglfw.defaultWindowHints();
     zglfw.windowHint(.cocoa_retina_framebuffer, 1);
     zglfw.windowHint(.client_api, 0);
-    const window = zglfw.createWindow(1600, 1000, window_title, null, null) catch {
+    const window = zglfw.createWindow(800, 800, window_title, null, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };

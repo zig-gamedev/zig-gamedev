@@ -185,6 +185,9 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
                     .target_count = color_targets.len,
                     .targets = &color_targets,
                 },
+                .multisample = .{
+                    .count = 4,
+                },
             };
             return gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
         }
