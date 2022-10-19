@@ -29,7 +29,6 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
 
     switch (target.os.tag) {
         .windows => {
-            exe.addLibraryPath(thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu");
             exe.linkSystemLibraryName("gdi32");
             exe.linkSystemLibraryName("user32");
             exe.linkSystemLibraryName("shell32");

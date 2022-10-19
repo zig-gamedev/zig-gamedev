@@ -75,6 +75,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
 
     switch (target.os.tag) {
         .windows => {
+            exe.addLibraryPath(thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu");
             exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-windows-gnu");
 
             exe.linkSystemLibraryName("ole32");
