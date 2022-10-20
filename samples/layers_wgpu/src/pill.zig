@@ -4,6 +4,7 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
 
+const vertex_generator = @import("vertex_generator.zig");
 const Layer = @import("layer.zig").Layer;
 
 // zig fmt: off
@@ -136,7 +137,7 @@ pub const Instance = struct {
 
 pub const Pills = Layer(Vertex, Instance);
 
-pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) Pills {
+pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator, segments: u16) !Pills {
     const bind_groups = [_]zgpu.BindGroupLayoutHandle{
         gctx.createBindGroupLayout(&.{
             zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
@@ -149,7 +150,7 @@ pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) Pills {
         .offset = 0,
         .size = @sizeOf(zm.Mat),
     }};
-    return Pills.init(
+    var self = Pills.init(
         gctx,
         allocator,
 
@@ -166,27 +167,12 @@ pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) Pills {
         null,
         fragment_shader,
     );
-}
 
-pub fn addInstanceByEndpoints(
-    self: *Pills,
-    width: f32,
-    start_color: [4]f32,
-    end_color: [4]f32,
-    v0: zm.F32x4,
-    v1: zm.F32x4,
-) !void {
-    const dx = v1[0] - v0[0];
-    const dy = v1[1] - v0[1];
-    const length = @sqrt(dx * dx + dy * dy);
-    const angle = math.atan2(f32, dy, dx);
-    const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
-    try self.element.instances.append(.{
-        .width = width,
-        .length = length,
-        .angle = angle,
-        .position = position,
-        .start_color = start_color,
-        .end_color = end_color,
-    });
+    try vertex_generator.generateVertices(segments, &self.vertices);
+    self.recreateVertexBuffer();
+
+    try vertex_generator.generateIndices(segments, &self.indices);
+    self.recreateIndexBuffer();
+
+    return self;
 }

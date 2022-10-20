@@ -3,6 +3,9 @@ const math = std.math;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
+const zgui = @import("zgui");
+
+const content_dir = @import("build_options").content_dir;
 
 const Dimension = struct {
     width: f32,
@@ -38,13 +41,28 @@ pub const State = struct {
     dimension: Dimension,
     layers: std.ArrayList(Layer),
 
+    color_texture: zgpu.TextureHandle,
+    color_texture_view: zgpu.TextureViewHandle,
+
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
 
     pub fn init(allocator: std.mem.Allocator, window: zglfw.Window) !State {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
-        // Create a depth texture and its 'view'.
+        zgui.init(allocator);
+        const scale_factor = scale_factor: {
+            const scale = window.getContentScale();
+            break :scale_factor math.max(scale[0], scale[1]);
+        };
+        const font_size = 16.0 * scale_factor;
+        _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
+
+        // This needs to be called *after* adding your custom fonts.
+        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+
+        // Create a color/depth texture and its 'view'.
+        const color = createColorTexture(gctx);
         const depth = createDepthTexture(gctx);
 
         return .{
@@ -54,12 +72,17 @@ pub const State = struct {
             .dimension = calculateDimensions(gctx),
             .layers = std.ArrayList(Layer).init(allocator),
 
+            .color_texture = color.texture,
+            .color_texture_view = color.view,
+
             .depth_texture = depth.texture,
             .depth_texture_view = depth.view,
         };
     }
 
     pub fn deinit(self: *State, allocator: std.mem.Allocator) void {
+        zgui.backend.deinit();
+        zgui.deinit();
         const gctx = self.gctx;
         self.layers.deinit();
         gctx.destroy(allocator);
@@ -93,11 +116,18 @@ pub const State = struct {
         });
     }
 
-    fn drawLayers(self: *State, back_buffer_view: wgpu.TextureView, depth_view: wgpu.TextureView, encoder: wgpu.CommandEncoder) void {
+    fn drawLayers(
+        self: *State,
+        back_buffer_view: wgpu.TextureView,
+        color_view: wgpu.TextureView,
+        depth_view: wgpu.TextureView,
+        encoder: wgpu.CommandEncoder,
+    ) void {
         const gctx = self.gctx;
 
         const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
-            .view = back_buffer_view,
+            .view = color_view,
+            .resolve_target = back_buffer_view,
             .load_op = .load,
             .store_op = .store,
         }};
@@ -151,16 +181,30 @@ pub const State = struct {
     pub fn draw(self: *State) void {
         const gctx = self.gctx;
 
+        zgui.backend.newFrame(
+            gctx.swapchain_descriptor.width,
+            gctx.swapchain_descriptor.height,
+        );
+        const draw_list = zgui.getBackgroundDrawList();
+        draw_list.addText(
+            .{ 10, 10 },
+            0xff_ff_ff_ff,
+            "{d:.3} ms/frame ({d:.1} fps)",
+            .{ gctx.stats.average_cpu_time, gctx.stats.fps },
+        );
+
         const back_buffer_view = gctx.swapchain.getCurrentTextureView();
         defer back_buffer_view.release();
 
+        const color_view = gctx.lookupResource(self.color_texture_view) orelse return;
         const depth_view = gctx.lookupResource(self.depth_texture_view) orelse return;
         const commands = commands: {
             const encoder = gctx.device.createCommandEncoder(null);
             defer encoder.release();
             {
                 const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
-                    .view = back_buffer_view,
+                    .view = color_view,
+                    .resolve_target = back_buffer_view,
                     .load_op = .clear,
                     .store_op = .store,
                     .clear_value = self.background_color,
@@ -182,7 +226,25 @@ pub const State = struct {
                     pass.release();
                 }
             }
-            self.drawLayers(back_buffer_view, depth_view, encoder);
+            self.drawLayers(back_buffer_view, color_view, depth_view, encoder);
+
+            {
+                const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
+                    .view = back_buffer_view,
+                    .load_op = .load,
+                    .store_op = .store,
+                }};
+                const render_pass_info = wgpu.RenderPassDescriptor{
+                    .color_attachment_count = color_attachments.len,
+                    .color_attachments = &color_attachments,
+                };
+                const pass = encoder.beginRenderPass(render_pass_info);
+                defer {
+                    pass.end();
+                    pass.release();
+                }
+                zgui.backend.draw(pass);
+            }
 
             break :commands encoder.finish(null);
         };
@@ -192,11 +254,16 @@ pub const State = struct {
         if (gctx.present() == .swap_chain_resized) {
             self.dimension = calculateDimensions(gctx);
 
-            // Release old depth texture.
+            // Release old color/depth texture.
+            gctx.releaseResource(self.color_texture_view);
+            gctx.destroyResource(self.color_texture);
             gctx.releaseResource(self.depth_texture_view);
             gctx.destroyResource(self.depth_texture);
 
-            // Create a new depth texture to match the new window size.
+            // Create a new color/depth texture to match the new window size.
+            const color = createColorTexture(gctx);
+            self.color_texture = color.texture;
+            self.color_texture_view = color.view;
             const depth = createDepthTexture(gctx);
             self.depth_texture = depth.texture;
             self.depth_texture_view = depth.view;
@@ -218,6 +285,24 @@ fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
     };
 }
 
+fn createColorTexture(gctx: *zgpu.GraphicsContext) struct {
+    texture: zgpu.TextureHandle,
+    view: zgpu.TextureViewHandle,
+} {
+    const texture = gctx.createTexture(.{
+        .usage = .{ .render_attachment = true },
+        .dimension = .tdim_2d,
+        .size = .{
+            .width = gctx.swapchain_descriptor.width,
+            .height = gctx.swapchain_descriptor.height,
+        },
+        .format = gctx.swapchain_descriptor.format,
+        .sample_count = 4,
+    });
+    const view = gctx.createTextureView(texture, .{});
+    return .{ .texture = texture, .view = view };
+}
+
 fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     texture: zgpu.TextureHandle,
     view: zgpu.TextureViewHandle,
@@ -231,8 +316,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
             .depth_or_array_layers = 1,
         },
         .format = .depth16_unorm,
-        .mip_level_count = 1,
-        .sample_count = 1,
+        .sample_count = 4,
     });
     const view = gctx.createTextureView(texture, .{});
     return .{ .texture = texture, .view = view };
