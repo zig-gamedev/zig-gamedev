@@ -250,3 +250,8 @@ extern fn stbi_is_16_bit(filename: [*:0]const u8) c_int;
 extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
 
 extern fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: c_int) void;
+
+test "zstbi.basic" {
+    init(std.testing.allocator);
+    defer deinit();
+}
