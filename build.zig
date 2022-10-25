@@ -40,6 +40,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     installDemo(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
     installDemo(b, layers_wgpu.build(b, options), "layers_wgpu");
+    installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
 
     //
     // Tests
@@ -107,6 +108,7 @@ const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig
 const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
 const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
 const layers_wgpu = @import("samples/layers_wgpu/build.zig");
+const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
