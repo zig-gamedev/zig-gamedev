@@ -372,17 +372,17 @@ test "zmath.load" {
     var ptr = &a;
     var i: u32 = 0;
     const v0 = load(a[i..], F32x4, 2);
-    try expect(approxEqAbs(v0, f32x4(1.0, 2.0, 0.0, 0.0), 0.0));
+    try expect(approxEqAbs(v0, F32x4{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
     i += 2;
     const v1 = load(a[i .. i + 2], F32x4, 2);
-    try expect(approxEqAbs(v1, f32x4(3.0, 4.0, 0.0, 0.0), 0.0));
+    try expect(approxEqAbs(v1, F32x4{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
     const v2 = load(a[5..7], F32x4, 2);
-    try expect(approxEqAbs(v2, f32x4(6.0, 7.0, 0.0, 0.0), 0.0));
+    try expect(approxEqAbs(v2, F32x4{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
     const v3 = load(ptr[1..], F32x4, 2);
-    try expect(approxEqAbs(v3, f32x4(2.0, 3.0, 0.0, 0.0), 0.0));
+    try expect(approxEqAbs(v3, F32x4{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
     i += 1;
     const v4 = load(ptr[i .. i + 2], F32x4, 2);
-    try expect(approxEqAbs(v4, f32x4(4.0, 5.0, 0.0, 0.0), 0.0));
+    try expect(approxEqAbs(v4, F32x4{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
 }
 
 pub fn store(mem: []f32, v: anytype, comptime len: u32) void {
@@ -505,16 +505,16 @@ pub fn all(vb: anytype, comptime len: u32) bool {
     return result;
 }
 test "zmath.all" {
-    try expect(all(boolx8(true, true, true, true, true, false, true, false), 5) == true);
-    try expect(all(boolx8(true, true, true, true, true, false, true, false), 6) == false);
-    try expect(all(boolx8(true, true, true, true, false, false, false, false), 4) == true);
-    try expect(all(boolx4(true, true, true, false), 3) == true);
-    try expect(all(boolx4(true, true, true, false), 1) == true);
-    try expect(all(boolx4(true, false, false, false), 1) == true);
-    try expect(all(boolx4(false, true, false, false), 1) == false);
-    try expect(all(boolx8(true, true, true, true, true, false, true, false), 0) == false);
-    try expect(all(boolx4(false, true, false, false), 0) == false);
-    try expect(all(boolx4(true, true, true, true), 0) == true);
+    try expect(all(Boolx8{ true, true, true, true, true, false, true, false }, 5) == true);
+    try expect(all(Boolx8{ true, true, true, true, true, false, true, false }, 6) == false);
+    try expect(all(Boolx8{ true, true, true, true, false, false, false, false }, 4) == true);
+    try expect(all(Boolx4{ true, true, true, false }, 3) == true);
+    try expect(all(Boolx4{ true, true, true, false }, 1) == true);
+    try expect(all(Boolx4{ true, false, false, false }, 1) == true);
+    try expect(all(Boolx4{ false, true, false, false }, 1) == false);
+    try expect(all(Boolx8{ true, true, true, true, true, false, true, false }, 0) == false);
+    try expect(all(Boolx4{ false, true, false, false }, 0) == false);
+    try expect(all(Boolx4{ true, true, true, true }, 0) == true);
 }
 
 pub fn any(vb: anytype, comptime len: u32) bool {
@@ -532,9 +532,9 @@ pub fn any(vb: anytype, comptime len: u32) bool {
     return result;
 }
 test "zmath.any" {
-    try expect(any(boolx8(true, true, true, true, true, false, true, false), 0) == true);
-    try expect(any(boolx8(false, false, false, true, true, false, true, false), 3) == false);
-    try expect(any(boolx8(false, false, false, false, false, true, false, false), 4) == false);
+    try expect(any(Boolx8{ true, true, true, true, true, false, true, false }, 0) == true);
+    try expect(any(Boolx8{ false, false, false, true, true, false, true, false }, 3) == false);
+    try expect(any(Boolx8{ false, false, false, false, false, true, false, false }, 4) == false);
 }
 
 pub inline fn isNearEqual(
@@ -553,13 +553,13 @@ test "zmath.isNearEqual" {
         const v0 = f32x4(1.0, 2.0, -3.0, 4.001);
         const v1 = f32x4(1.0, 2.1, 3.0, 4.0);
         const b = isNearEqual(v0, v1, splat(F32x4, 0.01));
-        try expect(@reduce(.And, b == boolx4(true, false, false, true)));
+        try expect(@reduce(.And, b == Boolx4{ true, false, false, true }));
     }
     {
         const v0 = f32x8(1.0, 2.0, -3.0, 4.001, 1.001, 2.3, -0.0, 0.0);
         const v1 = f32x8(1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0);
         const b = isNearEqual(v0, v1, splat(F32x8, 0.01));
-        try expect(@reduce(.And, b == boolx8(true, false, false, true, false, false, true, true)));
+        try expect(@reduce(.And, b == Boolx8{ true, false, false, true, false, false, true, true }));
     }
     try expect(all(isNearEqual(
         splat(F32x4, math.inf_f32),
@@ -592,12 +592,12 @@ test "zmath.isNan" {
     {
         const v0 = f32x4(math.inf_f32, math.nan_f32, math.nan_f32, 7.0);
         const b = isNan(v0);
-        try expect(@reduce(.And, b == boolx4(false, true, true, false)));
+        try expect(@reduce(.And, b == Boolx4{ false, true, true, false }));
     }
     {
         const v0 = f32x8(0, math.nan_f32, 0, 0, math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
         const b = isNan(v0);
-        try expect(@reduce(.And, b == boolx8(false, true, false, false, false, true, true, false)));
+        try expect(@reduce(.And, b == Boolx8{ false, true, false, false, false, true, true, false }));
     }
 }
 
@@ -611,12 +611,12 @@ test "zmath.isInf" {
     {
         const v0 = f32x4(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
         const b = isInf(v0);
-        try expect(@reduce(.And, b == boolx4(true, false, false, false)));
+        try expect(@reduce(.And, b == Boolx4{ true, false, false, false }));
     }
     {
         const v0 = f32x8(0, math.inf_f32, 0, 0, math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
         const b = isInf(v0);
-        try expect(@reduce(.And, b == boolx8(false, true, false, false, true, false, false, false)));
+        try expect(@reduce(.And, b == Boolx8{ false, true, false, false, true, false, false, false }));
     }
 }
 
@@ -642,14 +642,14 @@ test "zmath.isInBounds" {
         const bounds = f32x4(1.0, 2.0, 1.0, 2.0);
         const b0 = isInBounds(v0, bounds);
         const b1 = isInBounds(v1, bounds);
-        try expect(@reduce(.And, b0 == boolx4(true, true, true, true)));
-        try expect(@reduce(.And, b1 == boolx4(false, false, true, true)));
+        try expect(@reduce(.And, b0 == Boolx4{ true, true, true, true }));
+        try expect(@reduce(.And, b1 == Boolx4{ false, false, true, true }));
     }
     {
         const v0 = f32x8(2.0, 1.0, 2.0, 1.0, 0.5, -2.0, -1.0, 1.9);
         const bounds = f32x8(1.0, 1.0, 1.0, math.inf_f32, 1.0, math.nan_f32, 1.0, 2.0);
         const b0 = isInBounds(v0, bounds);
-        try expect(@reduce(.And, b0 == boolx8(false, true, false, true, true, false, true, true)));
+        try expect(@reduce(.And, b0 == Boolx8{ false, true, false, true, true, false, true, true }));
     }
 }
 
@@ -3001,10 +3001,10 @@ pub fn rgbToHsl(rgb: F32x4) F32x4 {
 
     const l = (minv + maxv) * f32x4s(0.5);
     const d = maxv - minv;
-    const la = select(boolx4(true, true, true, false), l, rgb);
+    const la = select(Boolx4{ true, true, true, false }, l, rgb);
 
     if (all(d < f32x4s(math.f32_epsilon), 3)) {
-        return select(boolx4(true, true, false, false), f32x4s(0.0), la);
+        return select(Boolx4{ true, true, false, false }, f32x4s(0.0), la);
     } else {
         var s: F32x4 = undefined;
         var h: F32x4 = undefined;
@@ -3031,8 +3031,8 @@ pub fn rgbToHsl(rgb: F32x4) F32x4 {
             h += f32x4s(1.0);
         }
 
-        const lha = select(boolx4(true, true, false, false), h, la);
-        return select(boolx4(true, false, true, true), lha, s);
+        const lha = select(Boolx4{ true, true, false, false }, h, la);
+        return select(Boolx4{ true, false, true, true }, lha, s);
     }
 }
 test "zmath.color.rgbToHsl" {
@@ -3070,7 +3070,7 @@ pub fn hslToRgb(hsl: F32x4) F32x4 {
     const l = swizzle(hsl, .z, .z, .z, .z);
 
     if (all(isNearEqual(s, f32x4s(0.0), f32x4s(math.f32_epsilon)), 3)) {
-        return select(boolx4(true, true, true, false), l, hsl);
+        return select(Boolx4{ true, true, true, false }, l, hsl);
     } else {
         const h = swizzle(hsl, .x, .x, .x, .x);
         var q: F32x4 = undefined;
@@ -3086,9 +3086,9 @@ pub fn hslToRgb(hsl: F32x4) F32x4 {
         const g = hueToClr(p, q, h);
         const b = hueToClr(p, q, h - f32x4s(1.0 / 3.0));
 
-        const rg = select(boolx4(true, false, false, false), r, g);
-        const ba = select(boolx4(true, true, true, false), b, hsl);
-        return select(boolx4(true, true, false, false), rg, ba);
+        const rg = select(Boolx4{ true, false, false, false }, r, g);
+        const ba = select(Boolx4{ true, true, true, false }, b, hsl);
+        return select(Boolx4{ true, true, false, false }, rg, ba);
     }
 }
 test "zmath.color.hslToRgb" {
@@ -3132,9 +3132,9 @@ pub fn rgbToHsv(rgb: F32x4) F32x4 {
     const s = if (all(isNearEqual(v, f32x4s(0.0), f32x4s(math.f32_epsilon)), 3)) f32x4s(0.0) else d / v;
 
     if (all(d < f32x4s(math.f32_epsilon), 3)) {
-        const hv = select(boolx4(true, false, false, false), f32x4s(0.0), v);
-        const hva = select(boolx4(true, true, true, false), hv, rgb);
-        return select(boolx4(true, false, true, true), hva, s);
+        const hv = select(Boolx4{ true, false, false, false }, f32x4s(0.0), v);
+        const hva = select(Boolx4{ true, true, true, false }, hv, rgb);
+        return select(Boolx4{ true, false, true, true }, hva, s);
     } else {
         var h: F32x4 = undefined;
         if (all(r == v, 3)) {
@@ -3148,9 +3148,9 @@ pub fn rgbToHsv(rgb: F32x4) F32x4 {
         }
 
         h /= f32x4s(6.0);
-        const hv = select(boolx4(true, false, false, false), h, v);
-        const hva = select(boolx4(true, true, true, false), hv, rgb);
-        return select(boolx4(true, false, true, true), hva, s);
+        const hv = select(Boolx4{ true, false, false, false }, h, v);
+        const hva = select(Boolx4{ true, true, true, false }, hv, rgb);
+        return select(Boolx4{ true, false, true, true }, hva, s);
     }
 }
 test "zmath.color.rgbToHsv" {
@@ -3180,32 +3180,32 @@ pub fn hsvToRgb(hsv: F32x4) F32x4 {
     const ii = @floatToInt(i32, mod(i, f32x4s(6.0))[0]);
     const rgb = switch (ii) {
         0 => blk: {
-            const vt = select(boolx4(true, false, false, false), v, t);
-            break :blk select(boolx4(true, true, false, false), vt, p);
+            const vt = select(Boolx4{ true, false, false, false }, v, t);
+            break :blk select(Boolx4{ true, true, false, false }, vt, p);
         },
         1 => blk: {
-            const qv = select(boolx4(true, false, false, false), q, v);
-            break :blk select(boolx4(true, true, false, false), qv, p);
+            const qv = select(Boolx4{ true, false, false, false }, q, v);
+            break :blk select(Boolx4{ true, true, false, false }, qv, p);
         },
         2 => blk: {
-            const pv = select(boolx4(true, false, false, false), p, v);
-            break :blk select(boolx4(true, true, false, false), pv, t);
+            const pv = select(Boolx4{ true, false, false, false }, p, v);
+            break :blk select(Boolx4{ true, true, false, false }, pv, t);
         },
         3 => blk: {
-            const pq = select(boolx4(true, false, false, false), p, q);
-            break :blk select(boolx4(true, true, false, false), pq, v);
+            const pq = select(Boolx4{ true, false, false, false }, p, q);
+            break :blk select(Boolx4{ true, true, false, false }, pq, v);
         },
         4 => blk: {
-            const tp = select(boolx4(true, false, false, false), t, p);
-            break :blk select(boolx4(true, true, false, false), tp, v);
+            const tp = select(Boolx4{ true, false, false, false }, t, p);
+            break :blk select(Boolx4{ true, true, false, false }, tp, v);
         },
         5 => blk: {
-            const vp = select(boolx4(true, false, false, false), v, p);
-            break :blk select(boolx4(true, true, false, false), vp, q);
+            const vp = select(Boolx4{ true, false, false, false }, v, p);
+            break :blk select(Boolx4{ true, true, false, false }, vp, q);
         },
         else => unreachable,
     };
-    return select(boolx4(true, true, true, false), rgb, hsv);
+    return select(Boolx4{ true, true, true, false }, rgb, hsv);
 }
 test "zmath.color.hsvToRgb" {
     const epsilon = 0.0005;
@@ -3256,7 +3256,7 @@ pub fn rgbToSrgb(rgb: F32x4) F32x4 {
         v[3],
     ) - static.bias;
     v = select(v < static.cutoff, v0, v1);
-    return select(boolx4(true, true, true, false), v, rgb);
+    return select(Boolx4{ true, true, true, false }, v, rgb);
 }
 test "zmath.color.rgbToSrgb" {
     const epsilon = 0.001;
@@ -3281,7 +3281,7 @@ pub fn srgbToRgb(srgb: F32x4) F32x4 {
         v1[3],
     );
     v = select(v > static.cutoff, v1, v0);
-    return select(boolx4(true, true, true, false), v, srgb);
+    return select(Boolx4{ true, true, true, false }, v, srgb);
 }
 test "zmath.color.srgbToRgb" {
     const epsilon = 0.0007;
