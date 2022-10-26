@@ -119,6 +119,47 @@ pub const Image = struct {
         };
     }
 
+    pub fn initFromData(data: []const u8, forced_num_channels: u32) !Image {
+        var width: u32 = 0;
+        var height: u32 = 0;
+        var num_components: u32 = 0;
+        var bytes_per_component: u32 = 0;
+        var bytes_per_row: u32 = 0;
+
+        const image_data = data: {
+            var x: c_int = undefined;
+            var y: c_int = undefined;
+            var ch: c_int = undefined;
+            const ptr = stbi_load_from_memory(
+                buffer.ptr,
+                @intCast(c_int, buffer.len),
+                &x,
+                &y,
+                &ch,
+                @intCast(c_int, forced_num_channels),
+            );
+            if (ptr == null) return error.ImageInitFailed;
+
+            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            width = @intCast(u32, x);
+            height = @intCast(u32, y);
+            bytes_per_component = 1;
+            bytes_per_row = width * num_components * bytes_per_component;
+
+            break :data @ptrCast([*]u8, ptr)[0 .. height * bytes_per_row];
+        };
+
+        return Image{
+            .data = image_data,
+            .width = width,
+            .height = height,
+            .num_components = num_components,
+            .bytes_per_component = bytes_per_component,
+            .bytes_per_row = bytes_per_row,
+            .is_hdr = false,
+        };
+    }
+
     pub fn deinit(image: *Image) void {
         stbi_image_free(image.data.ptr);
         image.* = undefined;
@@ -238,6 +279,15 @@ extern fn stbi_loadf(
     channels_in_file: *c_int,
     desired_channels: c_int,
 ) ?[*]f32;
+
+pub extern fn stbi_load_from_memory(
+    buffer: [*]const u8,
+    len: c_int,
+    x: *c_int,
+    y: *c_int,
+    channels_in_file: *c_int,
+    desired_channels: c_int,
+) ?[*]u8;
 
 extern fn stbi_image_free(image_data: ?[*]u8) void;
 
