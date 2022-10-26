@@ -119,7 +119,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn initFromData(buffer: [*]u8, len: usize, forced_num_channels: u32) !Image {
+    pub fn initFromData(buffer: []const u8, forced_num_channels: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -131,8 +131,8 @@ pub const Image = struct {
             var y: c_int = undefined;
             var ch: c_int = undefined;
             const ptr = stbi_load_from_memory(
-                buffer,
-                @intCast(c_int, len),
+                buffer.ptr,
+                @intCast(c_int, buffer.len),
                 &x,
                 &y,
                 &ch,
@@ -281,7 +281,7 @@ extern fn stbi_loadf(
 ) ?[*]f32;
 
 pub extern fn stbi_load_from_memory(
-    buffer: [*]u8,
+    buffer: [*]const u8,
     len: c_int,
     x: *c_int,
     y: *c_int,
