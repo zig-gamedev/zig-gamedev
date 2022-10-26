@@ -131,8 +131,8 @@ pub const Image = struct {
             var y: c_int = undefined;
             var ch: c_int = undefined;
             const ptr = stbi_load_from_memory(
-                buffer.ptr,
-                @intCast(c_int, buffer.len),
+                data.ptr,
+                @intCast(c_int, data.len),
                 &x,
                 &y,
                 &ch,
