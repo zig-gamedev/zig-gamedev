@@ -119,14 +119,14 @@ pub const Image = struct {
         };
     }
 
-    pub fn initFromData(buffer: []const u8, forced_num_channels: u32) !Image {
+    pub fn initFromData(data: []const u8, forced_num_channels: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
         var bytes_per_component: u32 = 0;
         var bytes_per_row: u32 = 0;
 
-        const data = data: {
+        const image_data = data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
@@ -150,7 +150,7 @@ pub const Image = struct {
         };
 
         return Image{
-            .data = data,
+            .data = image_data,
             .width = width,
             .height = height,
             .num_components = num_components,
