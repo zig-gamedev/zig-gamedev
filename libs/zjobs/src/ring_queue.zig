@@ -100,7 +100,8 @@ test "RingQueue basics" {
     try expectEqual(@as(u8, 'b'), q.dequeueIfNotEmpty().?);
     try expectEqual(@as(u8, 'c'), q.dequeueIfNotEmpty().?);
     try expectEqual(@as(u8, 'd'), q.dequeueIfNotEmpty().?);
-    try expectEqual(null, q.dequeueIfNotEmpty());
+    try std.testing.expect(q.dequeueIfNotEmpty() == null);
+    try std.testing.expect(q.dequeueIfNotEmpty() == null);
 
     try expectEqual(@as(usize, 0), q.len());
     try expectEqual(true, q.isEmpty());
