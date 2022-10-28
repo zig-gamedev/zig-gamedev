@@ -1679,12 +1679,11 @@ const EngineImpl = opaque {
 
     pub fn createSoundCopy(
         engine: Engine,
-        allocator: std.mem.Allocator,
         existing_sound: Sound,
         flags: SoundFlags,
         sgroup: ?SoundGroup,
     ) Error!Sound {
-        return SoundImpl.createCopy(allocator, engine, existing_sound, flags, sgroup);
+        return SoundImpl.createCopy(engine, existing_sound, flags, sgroup);
     }
 
     pub fn createSoundGroup(engine: Engine, flags: SoundFlags, parent: ?SoundGroup) Error!SoundGroup {
@@ -2653,6 +2652,9 @@ test "zaudio.sound.basic" {
     _ = sound.getOutputChannels(0);
     _ = sound.getInputBusCount();
     _ = sound.getOutputBusCount();
+
+    // Cloning only works for data buffers (not streams) that are loaded from the resource manager.
+    _ = engine.createSoundCopy(sound, .{}, null) catch |err| try expect(err == Error.InvalidOperation);
 
     sound.setVolume(0.25);
     try expect(sound.getVolume() == 0.25);
