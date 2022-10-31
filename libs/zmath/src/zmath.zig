@@ -1,6 +1,6 @@
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 1 };
 // ==============================================================================
 //
-// zmath v0.9.1
 // SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/tree/main/libs/zmath
 //
