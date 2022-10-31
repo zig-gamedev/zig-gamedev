@@ -37,7 +37,12 @@ extern ImGuiID ImHashData(const void* data_p, size_t data_size, ImU32 seed = 0);
 // mziulek: We removed header file and declare all our external functions here.
 extern "C" {
 
-bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format);
+struct Config
+{
+    unsigned int pipeline_multisample_count;
+    unsigned int texture_filter_mode;
+};
+bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format, const Config* config);
 void ImGui_ImplWGPU_Shutdown(void);
 void ImGui_ImplWGPU_NewFrame(void);
 void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder pass_encoder);
@@ -84,6 +89,9 @@ struct Uniforms
 {
     float MVP[4][4];
 };
+
+
+static Config g_config;
 
 //-----------------------------------------------------------------------------
 // SHADERS
@@ -530,10 +538,11 @@ static void ImGui_ImplWGPU_CreateFontsTexture()
     // Create the associated sampler
     // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
     {
+        const WGPUFilterMode filter_mode = g_config.texture_filter_mode == 1 ? WGPUFilterMode_Linear : WGPUFilterMode_Nearest;
         WGPUSamplerDescriptor sampler_desc = {};
-        sampler_desc.minFilter = WGPUFilterMode_Linear;
-        sampler_desc.magFilter = WGPUFilterMode_Linear;
-        sampler_desc.mipmapFilter = WGPUFilterMode_Linear;
+        sampler_desc.minFilter = filter_mode;
+        sampler_desc.magFilter = filter_mode;
+        sampler_desc.mipmapFilter = filter_mode;
         sampler_desc.addressModeU = WGPUAddressMode_Repeat;
         sampler_desc.addressModeV = WGPUAddressMode_Repeat;
         sampler_desc.addressModeW = WGPUAddressMode_Repeat;
@@ -572,7 +581,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects(void)
     graphics_pipeline_desc.primitive.stripIndexFormat = WGPUIndexFormat_Undefined;
     graphics_pipeline_desc.primitive.frontFace = WGPUFrontFace_CW;
     graphics_pipeline_desc.primitive.cullMode = WGPUCullMode_None;
-    graphics_pipeline_desc.multisample.count = 1;
+    graphics_pipeline_desc.multisample.count = g_config.pipeline_multisample_count;
     graphics_pipeline_desc.multisample.mask = UINT_MAX;
     graphics_pipeline_desc.multisample.alphaToCoverageEnabled = false;
     graphics_pipeline_desc.layout = nullptr; // Use automatic layout generation
@@ -682,8 +691,10 @@ void ImGui_ImplWGPU_InvalidateDeviceObjects(void)
         SafeRelease(g_pFrameResources[i]);
 }
 
-bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format)
+bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format, const Config* config)
 {
+    g_config = *config;
+
     // Setup backend capabilities flags
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_webgpu";
