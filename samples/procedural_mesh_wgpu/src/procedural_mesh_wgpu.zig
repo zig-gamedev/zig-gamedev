@@ -7,6 +7,7 @@ const zgui = @import("zgui");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const znoise = @import("znoise");
+const ztracy = @import("ztracy");
 const wgsl = @import("procedural_mesh_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
@@ -95,6 +96,9 @@ fn initScene(
     meshes_positions: *std.ArrayList([3]f32),
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
+    const tracy_zone = ztracy.ZoneNC(@src(), "initScene", 0x00_ff_00_00);
+    defer tracy_zone.End();
+
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
     const arena = arena_state.allocator();
@@ -626,6 +630,7 @@ fn draw(demo: *DemoState) void {
         demo.depth_texture = depth.texture;
         demo.depth_texture_view = depth.view;
     }
+    ztracy.FrameMark();
 }
 
 fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {

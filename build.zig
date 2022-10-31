@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 10, .patch = 0, .pre = "dev.4460" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 10, .patch = 0, .pre = "dev.4720" };
 
 pub fn build(b: *std.build.Builder) void {
     const options = Options{
