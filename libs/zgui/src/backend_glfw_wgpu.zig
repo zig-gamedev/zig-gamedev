@@ -10,17 +10,13 @@ pub const Config = extern struct {
     texture_filter_mode: TextureFilterMode = .linear,
 };
 
-/// This call will install GLFW callbacks to handle GUI interactions.
-/// Those callbacks will chain-call user's previously installed callbacks, if any.
-/// This means that custom user's callbacks need to be installed *before* calling zgpu.gui.init().
-pub fn init(window: *const anyopaque, wgpu_device: *const anyopaque, wgpu_swap_chain_format: u32) void {
-    initWithConfig(window, wgpu_device, wgpu_swap_chain_format, .{});
-}
-
+// This call will install GLFW callbacks to handle GUI interactions.
+// Those callbacks will chain-call user's previously installed callbacks, if any.
+// This means that custom user's callbacks need to be installed *before* calling zgpu.gui.init().
 pub fn initWithConfig(
-    window: *const anyopaque,
-    wgpu_device: *const anyopaque,
-    wgpu_swap_chain_format: u32,
+    window: *const anyopaque, // zglfw.Window
+    wgpu_device: *const anyopaque, // wgpu.Device
+    wgpu_swap_chain_format: u32, // wgpu.TextureFormat
     config: Config,
 ) void {
     if (!ImGui_ImplGlfw_InitForOther(window, true)) {
@@ -30,6 +26,10 @@ pub fn initWithConfig(
     if (!ImGui_ImplWGPU_Init(wgpu_device, 1, wgpu_swap_chain_format, &config)) {
         unreachable;
     }
+}
+
+pub fn init(window: *const anyopaque, wgpu_device: *const anyopaque, wgpu_swap_chain_format: u32) void {
+    initWithConfig(window, wgpu_device, wgpu_swap_chain_format, .{});
 }
 
 pub fn deinit() void {
@@ -57,7 +57,12 @@ pub fn draw(wgpu_render_pass: *const anyopaque) void {
 extern fn ImGui_ImplGlfw_InitForOther(window: *const anyopaque, install_callbacks: bool) bool;
 extern fn ImGui_ImplGlfw_NewFrame() void;
 extern fn ImGui_ImplGlfw_Shutdown() void;
-extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: u32, rt_format: u32, config: *const Config) bool;
+extern fn ImGui_ImplWGPU_Init(
+    device: *const anyopaque,
+    num_frames_in_flight: u32,
+    rt_format: u32,
+    config: *const Config,
+) bool;
 extern fn ImGui_ImplWGPU_NewFrame() void;
 extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *const anyopaque, pass_encoder: *const anyopaque) void;
 extern fn ImGui_ImplWGPU_Shutdown() void;
