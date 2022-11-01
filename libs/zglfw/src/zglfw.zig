@@ -274,7 +274,7 @@ pub const ButtonAction = enum(u8) {
 };
 
 pub fn joystickPresent(jid: Joystick) bool {
-    return glfwJoystickPresent(@enumToInt(jid)) == 1;
+    return glfwJoystickPresent(@enumToInt(jid)) == @boolToInt(true);
 }
 extern fn glfwJoystickPresent(jid: i32) i32;
 
@@ -351,12 +351,12 @@ pub const GamepadState = extern struct {
 };
 
 pub fn updateGamepadMappings(mappings: [*:0]const u8) bool {
-    return glfwUpdateGamepadMappings(mappings) == 1;
+    return glfwUpdateGamepadMappings(mappings) == @boolToInt(true);
 }
 extern fn glfwUpdateGamepadMappings(mappings: [*:0]const u8) i32;
 
 pub fn joystickIsGamepad(jid: Joystick) bool {
-    return glfwJoystickIsGamepad(@enumToInt(jid)) == 1;
+    return glfwJoystickIsGamepad(@enumToInt(jid)) == @boolToInt(true);
 }
 extern fn glfwJoystickIsGamepad(jid: i32) i32;
 

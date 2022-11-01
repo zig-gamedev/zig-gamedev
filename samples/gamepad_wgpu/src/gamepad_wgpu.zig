@@ -62,9 +62,41 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     allocator.destroy(demo);
 }
 
-const action_labels = [_][:0]const u8{ "release", "press" };
-const axis_labels = [_][:0]const u8{ "left x", "left y", "right x", "right y", "left trigger", "right trigger" };
-const button_labels = [_][:0]const u8{ "a", "b", "x", "y", "left bumper", "right bumper", "back", "start", "guide", "left thumb", "right thumb", "dpad up", "dpad right", "dpad down", "dpad left" };
+const action_labels = action_labels: {
+    var labels = std.enums.EnumArray(zglfw.ButtonAction, [:0]const u8).initUndefined();
+    labels.set(.release, "release");
+    labels.set(.press, "press");
+    break :action_labels labels;
+};
+const axis_labels = axis_labels: {
+    var labels = std.enums.EnumArray(zglfw.GamepadAxis, [:0]const u8).initUndefined();
+    labels.set(.left_x, "left x");
+    labels.set(.left_y, "left y");
+    labels.set(.right_x, "right x");
+    labels.set(.right_y, "right y");
+    labels.set(.left_trigger, "left trigger");
+    labels.set(.right_trigger, "right trigger");
+    break :axis_labels labels;
+};
+const button_labels = button_labels: {
+    var labels = std.enums.EnumArray(zglfw.GamepadButton, [:0]const u8).initUndefined();
+    labels.set(.a, "a");
+    labels.set(.b, "b");
+    labels.set(.x, "x");
+    labels.set(.y, "y");
+    labels.set(.left_bumper, "left bumper");
+    labels.set(.right_bumper, "right bumper");
+    labels.set(.back, "back");
+    labels.set(.start, "start");
+    labels.set(.guide, "guide");
+    labels.set(.left_thumb, "left thumb");
+    labels.set(.right_thumb, "right thumb");
+    labels.set(.dpad_up, "dpad up");
+    labels.set(.dpad_right, "dpad right");
+    labels.set(.dpad_down, "dpad down");
+    labels.set(.dpad_left, "dpad left");
+    break :button_labels labels;
+};
 
 fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
@@ -115,7 +147,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                             .fraction = if (button == .press) 1.0 else 0.0,
                             .w = 400.0,
                             .h = 50.0,
-                            .overlay = action_labels[@intCast(usize, @enumToInt(button))],
+                            .overlay = action_labels.get(button),
                         });
                         zgui.sameLine(.{});
                         zgui.text("Button {}", .{i});
@@ -141,22 +173,22 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                                 .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{value}),
                             });
                             zgui.sameLine(.{});
-                            zgui.text("{s}", .{axis_labels[axis]});
+                            zgui.text("{s}", .{axis_labels.get(@intToEnum(zglfw.GamepadAxis, axis))});
                         }
                         zgui.endGroup();
                         zgui.sameLine(.{});
                         zgui.beginGroup();
                         inline for (@typeInfo(zglfw.GamepadButton).Enum.fields) |button_enum_field| {
                             const button = @intCast(usize, button_enum_field.value);
-                            const value = gamepad_state.buttons[button];
+                            const action = gamepad_state.buttons[button];
                             zgui.progressBar(.{
-                                .fraction = if (value == .press) 1.0 else 0.0,
+                                .fraction = if (action == .press) 1.0 else 0.0,
                                 .w = 400.0,
                                 .h = 50.0,
-                                .overlay = action_labels[@intCast(usize, @enumToInt(value))],
+                                .overlay = action_labels.get(action),
                             });
                             zgui.sameLine(.{});
-                            zgui.text("{s}", .{button_labels[button]});
+                            zgui.text("{s}", .{button_labels.get(@intToEnum(zglfw.GamepadButton, button))});
                         }
                         zgui.endGroup();
                     }
