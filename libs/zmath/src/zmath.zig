@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 3 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 4 };
 // ==============================================================================
 //
 // SIMD math library for game developers
@@ -209,6 +209,7 @@ pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .pat
 // ------------------------------------------------------------------------------
 //
 // qmul(q0: Quat, q1: Quat) Quat
+// qidentity() Quat
 // conjugate(quat: Quat) Quat
 // inverse(q: Quat) Quat
 // slerp(q0: Quat, q1: Quat, t: f32) Quat
@@ -2848,6 +2849,10 @@ test "zmath.quaternion.quatFromNormAxisAngle" {
     }
 }
 
+pub inline fn qidentity() Quat {
+    return f32x4(@as(f32, 0.0), @as(f32, 0.0), @as(f32, 0.0), @as(f32, 1.0));
+}
+
 pub inline fn conjugate(quat: Quat) Quat {
     return quat * f32x4(-1.0, -1.0, -1.0, 1.0);
 }
@@ -2863,6 +2868,7 @@ test "zmath.quaternion.inverseQuat" {
         f32x4(-1.0 / 15.0, -1.0 / 10.0, -2.0 / 15.0, 1.0 / 30.0),
         0.0001,
     ));
+    try expect(approxEqAbs(inverse(qidentity()), qidentity(), 0.0001));
 }
 
 pub fn slerp(q0: Quat, q1: Quat, t: f32) Quat {
