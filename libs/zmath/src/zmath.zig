@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 1 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 2 };
 // ==============================================================================
 //
 // SIMD math library for game developers
@@ -60,11 +60,6 @@ pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .pat
 // f32x8s(e0: f32) F32x8
 // f32x16s(e0: f32) F32x16
 //
-// u32x4(e0: u32, e1: u32, e2: u32, e3: u32) U32x4
-// u32x8(e0: u32, e1: u32, e2: u32, e3: u32, e4: u32, e5: u32, e6: u32, e7: u32) U32x8
-// u32x16(e0: u32, e1: u32, e2: u32, e3: u32, e4: u32, e5: u32, e6: u32, e7: u32,
-//        e8: u32, e9: u32, ea: u32, eb: u32, ec: u32, ed: u32, ee: u32, ef: u32) U32x16
-//
 // boolx4(e0: bool, e1: bool, e2: bool, e3: bool) Boolx4
 // boolx8(e0: bool, e1: bool, e2: bool, e3: bool, e4: bool, e5: bool, e6: bool, e7: bool) Boolx8
 // boolx16(e0: bool, e1: bool, e2: bool, e3: bool, e4: bool, e5: bool, e6: bool, e7: bool,
@@ -88,7 +83,6 @@ pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .pat
 //
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
-// usplat(comptime T: type, value: u32) T
 //
 // ------------------------------------------------------------------------------
 // 2. Functions that work on all vector components (F32xN = F32x4 or F32x8 or F32x16)
@@ -270,11 +264,6 @@ pub const Vec = F32x4;
 pub const Mat = [4]F32x4;
 pub const Quat = F32x4;
 
-// Helper types
-pub const U32x4 = @Vector(4, u32);
-pub const U32x8 = @Vector(8, u32);
-pub const U32x16 = @Vector(16, u32);
-
 const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
@@ -314,20 +303,6 @@ pub inline fn f32x16s(e0: f32) F32x16 {
     return splat(F32x16, e0);
 }
 
-pub inline fn u32x4(e0: u32, e1: u32, e2: u32, e3: u32) U32x4 {
-    return .{ e0, e1, e2, e3 };
-}
-pub inline fn u32x8(e0: u32, e1: u32, e2: u32, e3: u32, e4: u32, e5: u32, e6: u32, e7: u32) U32x8 {
-    return .{ e0, e1, e2, e3, e4, e5, e6, e7 };
-}
-// zig fmt: off
-pub inline fn u32x16(
-    e0: u32, e1: u32, e2: u32, e3: u32, e4: u32, e5: u32, e6: u32, e7: u32,
-    e8: u32, e9: u32, ea: u32, eb: u32, ec: u32, ed: u32, ee: u32, ef: u32) U32x16 {
-    return .{ e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, ea, eb, ec, ed, ee, ef };
-}
-// zig fmt: on
-
 pub inline fn boolx4(e0: bool, e1: bool, e2: bool, e3: bool) Boolx4 {
     return .{ e0, e1, e2, e3 };
 }
@@ -351,9 +326,6 @@ pub inline fn splat(comptime T: type, value: f32) T {
 }
 pub inline fn splatInt(comptime T: type, value: u32) T {
     return @splat(veclen(T), @bitCast(f32, value));
-}
-pub inline fn usplat(comptime T: type, value: u32) T {
-    return @splat(veclen(T), value);
 }
 
 pub fn load(mem: []const f32, comptime T: type, comptime len: u32) T {
