@@ -8,6 +8,9 @@ pub const pkg = std.build.Pkg{
 pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludePath(thisDir() ++ "/libs");
 
+    exe.linkSystemLibraryName("c");
+    exe.linkSystemLibraryName("c++");
+
     const flags = &.{"-fno-sanitize=undefined"};
 
     exe.addCSourceFile(thisDir() ++ "/src/zgui.cpp", flags);
