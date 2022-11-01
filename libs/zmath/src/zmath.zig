@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 2 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 3 };
 // ==============================================================================
 //
 // SIMD math library for game developers
@@ -317,7 +317,7 @@ pub inline fn boolx16(
 }
 // zig fmt: on
 
-pub fn veclen(comptime T: type) comptime_int {
+pub inline fn veclen(comptime T: type) comptime_int {
     return @typeInfo(T).Vector.len;
 }
 
@@ -2848,7 +2848,7 @@ test "zmath.quaternion.quatFromNormAxisAngle" {
     }
 }
 
-pub fn conjugate(quat: Quat) Quat {
+pub inline fn conjugate(quat: Quat) Quat {
     return quat * f32x4(-1.0, -1.0, -1.0, 1.0);
 }
 
@@ -3256,7 +3256,7 @@ test "zmath.color.srgbToRgb" {
 // X. Misc functions
 //
 // ------------------------------------------------------------------------------
-pub inline fn linePointDistance(linept0: Vec, linept1: Vec, pt: Vec) F32x4 {
+pub fn linePointDistance(linept0: Vec, linept1: Vec, pt: Vec) F32x4 {
     const ptvec = pt - linept0;
     const linevec = linept1 - linept0;
     const scale = dot3(ptvec, linevec) / lengthSq3(linevec);
