@@ -1,5 +1,5 @@
 ## gamepad (wgpu)
 
-Demo of gamepad bindings for zglfw.
+Demo of gamepad support in zglfw.
 
 ![image](screenshot.png)

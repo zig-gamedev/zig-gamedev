@@ -756,10 +756,10 @@ extern fn zguiIndent(indent_w: f32) void;
 extern fn zguiUnindent(indent_w: f32) void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn beginGroup() void`
-const beginGroup = zguiBeginGroup;
+pub const beginGroup = zguiBeginGroup;
 extern fn zguiBeginGroup() void;
 /// `pub fn endGroup() void`
-const endGroup = zguiEndGroup;
+pub const endGroup = zguiEndGroup;
 extern fn zguiEndGroup() void;
 //--------------------------------------------------------------------------------------------------
 pub fn getCursorPos() [2]f32 {

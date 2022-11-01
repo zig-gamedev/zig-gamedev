@@ -16,12 +16,17 @@ const DemoState = struct {
 fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
+    const success = zglfw.updateGamepadMappings(@embedFile("gamecontrollerdb.txt"));
+    if (!success) {
+        @panic("failed to update gamepad mappings");
+    }
+
     zgui.init(allocator);
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
         break :scale_factor math.max(scale[0], scale[1]);
     };
-    const font_size = 24.0 * scale_factor;
+    const font_size = 20.0 * scale_factor;
     _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
 
     // This needs to be called *after* adding your custom fonts.
@@ -33,7 +38,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     const style = zgui.getStyle();
 
     style.window_min_size = .{ 320.0, 240.0 };
-    style.window_border_size = 8.0;
+    style.window_border_size = 0.0;
     style.scrollbar_size = 6.0;
     {
         var color = style.getColor(.scrollbar_grab);
@@ -57,15 +62,112 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     allocator.destroy(demo);
 }
 
-fn update(demo: *DemoState) !void {
+const action_labels = [_][:0]const u8{ "release", "press" };
+const axis_labels = [_][:0]const u8{ "left x", "left y", "right x", "right y", "left trigger", "right trigger" };
+const button_labels = [_][:0]const u8{ "a", "b", "x", "y", "left bumper", "right bumper", "back", "start", "guide", "left thumb", "right thumb", "dpad up", "dpad right", "dpad down", "dpad left" };
+
+fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
     zgui.backend.newFrame(
         demo.gctx.swapchain_descriptor.width,
         demo.gctx.swapchain_descriptor.height,
     );
 
-    const draw_list = zgui.getBackgroundDrawList();
+    if (zgui.begin("Gamepad", .{
+        .flags = .{
+            .no_title_bar = true,
+            .no_move = true,
+            .no_collapse = true,
+            .always_auto_resize = true,
+        },
+    })) {
+        _ = zgui.beginTabBar("Joystick picker", .{});
+        defer zgui.endTabBar();
 
-    draw_list.addText(.{ 0, 0 }, 0xff_ff_ff_ff, "Hello", .{});
+        inline for (@typeInfo(zglfw.Joystick).Enum.fields) |joystick_enum_field| {
+            const jid = @intToEnum(zglfw.Joystick, joystick_enum_field.value);
+            if (zgui.beginTabItem(try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{joystick_enum_field.value + 1}), .{})) {
+                const present = zglfw.joystickPresent(jid);
+                zgui.text("Present: {s}", .{if (present) "yes" else "no"});
+                zgui.newLine();
+                if (present) {
+                    zgui.beginGroup();
+                    zgui.text("Raw joystick: {s}", .{zglfw.getJoystickGUID(jid)});
+                    zgui.indent(.{ .indent_w = 50.0 });
+                    zgui.beginGroup();
+                    for (zglfw.getJoystickAxes(jid)) |axis, i| {
+                        zgui.progressBar(.{
+                            .fraction = (axis + 1.0) / 2.0,
+                            .w = 400.0,
+                            .h = 50.0,
+                            .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{axis}),
+                        });
+                        zgui.sameLine(.{});
+                        zgui.text("Axis {}", .{i});
+                    }
+                    zgui.endGroup();
+                    zgui.sameLine(.{});
+                    zgui.beginGroup();
+                    for (zglfw.getJoystickButtons(jid)) |button, i| {
+                        zgui.progressBar(.{
+                            .fraction = if (button == .press) 1.0 else 0.0,
+                            .w = 400.0,
+                            .h = 50.0,
+                            .overlay = action_labels[@intCast(usize, @enumToInt(button))],
+                        });
+                        zgui.sameLine(.{});
+                        zgui.text("Button {}", .{i});
+                    }
+                    zgui.endGroup();
+                    zgui.unindent(.{ .indent_w = 50.0 });
+                    zgui.endGroup();
+                    zgui.sameLine(.{});
+                    zgui.beginGroup();
+                    const mapped = zglfw.joystickIsGamepad(jid);
+                    zgui.text("Mapped gamepad: {s}", .{if (mapped) zglfw.getGamepadName(jid) else "Missing mapping. Is GUID found in gamecontrollerdb.txt?"});
+                    zgui.indent(.{ .indent_w = 50.0 });
+                    if (mapped) {
+                        zgui.beginGroup();
+                        const gamepad_state = zglfw.getGamepadState(jid);
+                        inline for (@typeInfo(zglfw.GamepadAxis).Enum.fields) |axis_enum_field| {
+                            const axis = @intCast(usize, axis_enum_field.value);
+                            const value = gamepad_state.axes[axis];
+                            zgui.progressBar(.{
+                                .fraction = (value + 1.0) / 2.0,
+                                .w = 400.0,
+                                .h = 50.0,
+                                .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{value}),
+                            });
+                            zgui.sameLine(.{});
+                            zgui.text("{s}", .{axis_labels[axis]});
+                        }
+                        zgui.endGroup();
+                        zgui.sameLine(.{});
+                        zgui.beginGroup();
+                        inline for (@typeInfo(zglfw.GamepadButton).Enum.fields) |button_enum_field| {
+                            const button = @intCast(usize, button_enum_field.value);
+                            const value = gamepad_state.buttons[button];
+                            zgui.progressBar(.{
+                                .fraction = if (value == .press) 1.0 else 0.0,
+                                .w = 400.0,
+                                .h = 50.0,
+                                .overlay = action_labels[@intCast(usize, @enumToInt(value))],
+                            });
+                            zgui.sameLine(.{});
+                            zgui.text("{s}", .{button_labels[button]});
+                        }
+                        zgui.endGroup();
+                    }
+                    zgui.unindent(.{ .indent_w = 50.0 });
+                    zgui.endGroup();
+                }
+                zgui.endTabItem();
+            }
+        }
+    }
+    zgui.end();
 }
 
 fn draw(demo: *DemoState) void {
@@ -110,7 +212,7 @@ pub fn main() !void {
     zglfw.defaultWindowHints();
     zglfw.windowHint(.cocoa_retina_framebuffer, 1);
     zglfw.windowHint(.client_api, 0);
-    const window = zglfw.createWindow(1600, 1000, window_title, null, null) catch {
+    const window = zglfw.createWindow(1600, 775, window_title, null, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };
@@ -130,7 +232,7 @@ pub fn main() !void {
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
-        try update(demo);
+        try update(allocator, demo);
         draw(demo);
     }
 }
