@@ -63,13 +63,13 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 const action_labels = action_labels: {
-    var labels = std.enums.EnumArray(zglfw.ButtonAction, [:0]const u8).initUndefined();
+    var labels = std.enums.EnumArray(zglfw.Joystick.ButtonAction, [:0]const u8).initUndefined();
     labels.set(.release, "release");
     labels.set(.press, "press");
     break :action_labels labels;
 };
 const axis_labels = axis_labels: {
-    var labels = std.enums.EnumArray(zglfw.GamepadAxis, [:0]const u8).initUndefined();
+    var labels = std.enums.EnumArray(zglfw.Gamepad.Axis, [:0]const u8).initUndefined();
     labels.set(.left_x, "left x");
     labels.set(.left_y, "left y");
     labels.set(.right_x, "right x");
@@ -79,7 +79,7 @@ const axis_labels = axis_labels: {
     break :axis_labels labels;
 };
 const button_labels = button_labels: {
-    var labels = std.enums.EnumArray(zglfw.GamepadButton, [:0]const u8).initUndefined();
+    var labels = std.enums.EnumArray(zglfw.Gamepad.Button, [:0]const u8).initUndefined();
     labels.set(.a, "a");
     labels.set(.b, "b");
     labels.set(.x, "x");
@@ -118,18 +118,17 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
         _ = zgui.beginTabBar("Joystick picker", .{});
         defer zgui.endTabBar();
 
-        inline for (@typeInfo(zglfw.Joystick).Enum.fields) |joystick_enum_field| {
-            const jid = @intToEnum(zglfw.Joystick, joystick_enum_field.value);
-            if (zgui.beginTabItem(try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{joystick_enum_field.value + 1}), .{})) {
-                const present = zglfw.joystickPresent(jid);
-                zgui.text("Present: {s}", .{if (present) "yes" else "no"});
-                zgui.newLine();
-                if (present) {
+        var jid: u8 = 0;
+        while (jid < zglfw.Joystick.maximum_supported) : (jid += 1) {
+            if (zgui.beginTabItem(try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1}), .{})) {
+                if (zglfw.Joystick.init(@intCast(u4, jid))) |joystick| {
+                    zgui.text("Present: yes", .{});
+                    zgui.newLine();
                     zgui.beginGroup();
-                    zgui.text("Raw joystick: {s}", .{zglfw.getJoystickGUID(jid)});
+                    zgui.text("Raw joystick: {s}", .{joystick.getGUID()});
                     zgui.indent(.{ .indent_w = 50.0 });
                     zgui.beginGroup();
-                    for (zglfw.getJoystickAxes(jid)) |axis, i| {
+                    for (joystick.getAxes()) |axis, i| {
                         zgui.progressBar(.{
                             .fraction = (axis + 1.0) / 2.0,
                             .w = 400.0,
@@ -142,12 +141,12 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                     zgui.endGroup();
                     zgui.sameLine(.{});
                     zgui.beginGroup();
-                    for (zglfw.getJoystickButtons(jid)) |button, i| {
+                    for (joystick.getButtons()) |action, i| {
                         zgui.progressBar(.{
-                            .fraction = if (button == .press) 1.0 else 0.0,
+                            .fraction = if (action == .press) 1.0 else 0.0,
                             .w = 400.0,
                             .h = 50.0,
-                            .overlay = action_labels.get(button),
+                            .overlay = action_labels.get(action),
                         });
                         zgui.sameLine(.{});
                         zgui.text("Button {}", .{i});
@@ -157,13 +156,12 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                     zgui.endGroup();
                     zgui.sameLine(.{});
                     zgui.beginGroup();
-                    const mapped = zglfw.joystickIsGamepad(jid);
-                    zgui.text("Mapped gamepad: {s}", .{if (mapped) zglfw.getGamepadName(jid) else "Missing mapping. Is GUID found in gamecontrollerdb.txt?"});
-                    zgui.indent(.{ .indent_w = 50.0 });
-                    if (mapped) {
+                    if (joystick.gamepad()) |gamepad| {
+                        zgui.text("Mapped gamepad: {s}", .{gamepad.getName()});
+                        zgui.indent(.{ .indent_w = 50.0 });
                         zgui.beginGroup();
-                        const gamepad_state = zglfw.getGamepadState(jid);
-                        inline for (@typeInfo(zglfw.GamepadAxis).Enum.fields) |axis_enum_field| {
+                        const gamepad_state = gamepad.getState();
+                        inline for (@typeInfo(zglfw.Gamepad.Axis).Enum.fields) |axis_enum_field| {
                             const axis = @intCast(usize, axis_enum_field.value);
                             const value = gamepad_state.axes[axis];
                             zgui.progressBar(.{
@@ -173,12 +171,12 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                                 .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{value}),
                             });
                             zgui.sameLine(.{});
-                            zgui.text("{s}", .{axis_labels.get(@intToEnum(zglfw.GamepadAxis, axis))});
+                            zgui.text("{s}", .{axis_labels.get(@intToEnum(zglfw.Gamepad.Axis, axis))});
                         }
                         zgui.endGroup();
                         zgui.sameLine(.{});
                         zgui.beginGroup();
-                        inline for (@typeInfo(zglfw.GamepadButton).Enum.fields) |button_enum_field| {
+                        inline for (@typeInfo(zglfw.Gamepad.Button).Enum.fields) |button_enum_field| {
                             const button = @intCast(usize, button_enum_field.value);
                             const action = gamepad_state.buttons[button];
                             zgui.progressBar(.{
@@ -188,12 +186,16 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                                 .overlay = action_labels.get(action),
                             });
                             zgui.sameLine(.{});
-                            zgui.text("{s}", .{button_labels.get(@intToEnum(zglfw.GamepadButton, button))});
+                            zgui.text("{s}", .{button_labels.get(@intToEnum(zglfw.Gamepad.Button, button))});
                         }
                         zgui.endGroup();
+                        zgui.unindent(.{ .indent_w = 50.0 });
+                    } else {
+                        zgui.text("Mapped gamepad: Missing mapping. Is GUID found in gamecontrollerdb.txt?", .{});
                     }
-                    zgui.unindent(.{ .indent_w = 50.0 });
                     zgui.endGroup();
+                } else {
+                    zgui.text("Present: no", .{});
                 }
                 zgui.endTabItem();
             }
