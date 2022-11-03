@@ -121,11 +121,11 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
         var jid: u8 = 0;
         while (jid < zglfw.Joystick.maximum_supported) : (jid += 1) {
             if (zgui.beginTabItem(try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1}), .{})) {
-                if (zglfw.Joystick.init(@intCast(u4, jid))) |joystick| {
+                if (zglfw.getJoystick(@intCast(u4, jid))) |joystick| {
                     zgui.text("Present: yes", .{});
                     zgui.newLine();
                     zgui.beginGroup();
-                    zgui.text("Raw joystick: {s}", .{joystick.getGUID()});
+                    zgui.text("Raw joystick: {s}", .{joystick.getGuid()});
                     zgui.indent(.{ .indent_w = 50.0 });
                     zgui.beginGroup();
                     for (joystick.getAxes()) |axis, i| {
@@ -156,7 +156,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                     zgui.endGroup();
                     zgui.sameLine(.{});
                     zgui.beginGroup();
-                    if (joystick.gamepad()) |gamepad| {
+                    if (joystick.asGamepad()) |gamepad| {
                         zgui.text("Mapped gamepad: {s}", .{gamepad.getName()});
                         zgui.indent(.{ .indent_w = 50.0 });
                         zgui.beginGroup();
