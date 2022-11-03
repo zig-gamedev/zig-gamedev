@@ -15,7 +15,6 @@ TRACY_API void ___tracy_set_thread_name( const char* name );
 
 #define TracyCSetThreadName( name ) ___tracy_set_thread_name( name );
 
-
 #ifndef TRACY_ENABLE
 
 typedef const void* TracyCZoneCtx;
