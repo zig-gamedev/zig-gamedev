@@ -59,7 +59,7 @@ pub const GraphicsContext = struct {
 
                 // On Linux we require Vulkan support.
                 if (@import("builtin").target.os.tag == .linux) {
-                    if (!zglfw.vulkanSupported()) {
+                    if (!zglfw.isVulkanSupported()) {
                         return error.VulkanNotSupported;
                     }
                     _ = zglfw.getRequiredInstanceExtensions() catch return error.VulkanNotSupported;

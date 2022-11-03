@@ -25,7 +25,7 @@ extern fn glfwTerminate() void;
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
 
-pub fn vulkanSupported() bool {
+pub fn isVulkanSupported() bool {
     return if (glfwVulkanSupported() == 0) false else true;
 }
 extern fn glfwVulkanSupported() i32;
@@ -577,8 +577,8 @@ extern fn glfwDefaultWindowHints() void;
 // Native
 //
 //--------------------------------------------------------------------------------------------------
-pub fn getWin32Adapter(monitor: Monitor) Error![*:0]const u8 {
-    if (glfwGetWin32Adapter(monitor)) |adapter| return adapter;
+pub fn getWin32Adapter(monitor: Monitor) Error![:0]const u8 {
+    if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
     try maybeError();
     unreachable;
 }
@@ -658,7 +658,7 @@ test "zglfw.basic" {
     try init();
     defer terminate();
 
-    if (vulkanSupported()) {
+    if (isVulkanSupported()) {
         _ = try getRequiredInstanceExtensions();
     }
 
