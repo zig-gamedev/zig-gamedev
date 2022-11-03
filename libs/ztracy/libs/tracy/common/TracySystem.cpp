@@ -78,6 +78,9 @@ TRACY_API uint32_t GetThreadHandleImpl()
     return lwp_gettid();
 #elif defined __OpenBSD__
     return getthrid();
+#elif defined __EMSCRIPTEN__
+    // Not supported, but let it compile.
+    return 0;
 #else
     // To add support for a platform, retrieve and return the kernel thread identifier here.
     //
@@ -111,7 +114,7 @@ struct THREADNAME_INFO
     DWORD dwThreadID;
     DWORD dwFlags;
 };
-#  pragma pack(pop)
+#  pragma pack( pop )
 
 void ThreadNameMsvcMagic( const THREADNAME_INFO& info )
 {

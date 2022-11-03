@@ -255,7 +255,10 @@ const tracy_full = struct {
         pub inline fn Text(self: ZoneCtx, text: []const u8) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected Value() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected Value() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
             }
             c.___tracy_emit_zone_text(self._zone, text.ptr, text.len);
@@ -263,7 +266,10 @@ const tracy_full = struct {
         pub inline fn Name(self: ZoneCtx, name: []const u8) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected Value() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected Value() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
             }
             c.___tracy_emit_zone_name(self._zone, name.ptr, name.len);
@@ -271,7 +277,10 @@ const tracy_full = struct {
         pub inline fn Value(self: ZoneCtx, val: u64) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected Value() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected Value() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
             }
             c.___tracy_emit_zone_value(self._zone, val);
@@ -279,7 +288,10 @@ const tracy_full = struct {
         pub inline fn End(self: ZoneCtx) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected End() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected End() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
                 stack_depth -= 1;
             }
