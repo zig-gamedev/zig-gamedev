@@ -5,7 +5,7 @@ pub const pkg = std.build.Pkg{
     .source = .{ .path = thisDir() ++ "/src/main.zig" },
 };
 
-pub fn link(exe: *std.build.LibExeObjStep) void {
+pub fn link(exe: *std.build.LibExeObjStep, use_wgpu_backend: bool) void {
     exe.addIncludePath(thisDir() ++ "/libs");
 
     exe.linkSystemLibraryName("c");
@@ -25,10 +25,12 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", flags);
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", flags);
 
-    // This is needed for 'glfw/wgpu' rendering backend.
-    // You may need to remove/change this if you use different backend.
-    exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", flags);
-    exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", flags);
+    if (use_wgpu_backend) {
+        // This is needed for 'glfw/wgpu' rendering backend.
+        // You may need to remove/change this if you use different backend.
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", flags);
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", flags);
+    }
 }
 
 inline fn thisDir() []const u8 {
