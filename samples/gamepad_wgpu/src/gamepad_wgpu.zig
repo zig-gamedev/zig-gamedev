@@ -161,9 +161,8 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                         zgui.indent(.{ .indent_w = 50.0 });
                         zgui.beginGroup();
                         const gamepad_state = gamepad.getState();
-                        inline for (@typeInfo(zglfw.Gamepad.Axis).Enum.fields) |axis_enum_field| {
-                            const axis = @intCast(usize, axis_enum_field.value);
-                            const value = gamepad_state.axes[axis];
+                        for (std.enums.values(zglfw.Gamepad.Axis)) |axis| {
+                            const value = gamepad_state.axes[@enumToInt(axis)];
                             zgui.progressBar(.{
                                 .fraction = (value + 1.0) / 2.0,
                                 .w = 400.0,
@@ -171,14 +170,13 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                                 .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{value}),
                             });
                             zgui.sameLine(.{});
-                            zgui.text("{s}", .{axis_labels.get(@intToEnum(zglfw.Gamepad.Axis, axis))});
+                            zgui.text("{s}", .{axis_labels.get(axis)});
                         }
                         zgui.endGroup();
                         zgui.sameLine(.{});
                         zgui.beginGroup();
-                        inline for (@typeInfo(zglfw.Gamepad.Button).Enum.fields) |button_enum_field| {
-                            const button = @intCast(usize, button_enum_field.value);
-                            const action = gamepad_state.buttons[button];
+                        for (std.enums.values(zglfw.Gamepad.Button)) |button| {
+                            const action = gamepad_state.buttons[@enumToInt(button)];
                             zgui.progressBar(.{
                                 .fraction = if (action == .press) 1.0 else 0.0,
                                 .w = 400.0,
@@ -186,7 +184,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                                 .overlay = action_labels.get(action),
                             });
                             zgui.sameLine(.{});
-                            zgui.text("{s}", .{button_labels.get(@intToEnum(zglfw.Gamepad.Button, button))});
+                            zgui.text("{s}", .{button_labels.get(button)});
                         }
                         zgui.endGroup();
                         zgui.unindent(.{ .indent_w = 50.0 });
