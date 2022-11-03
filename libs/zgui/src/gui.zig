@@ -2572,6 +2572,22 @@ pub const getMainViewport = zguiGetMainViewport;
 extern fn zguiGetMainViewport() Viewport;
 //--------------------------------------------------------------------------------------------------
 //
+// Mouse Input
+//
+//--------------------------------------------------------------------------------------------------
+pub const MouseDragDelta = struct {
+    lock_threshold: f32 = -1.0,
+};
+pub fn getMouseDragDelta(drag_button: MouseButton, args: MouseDragDelta) [2]f32 {
+    var delta: [2]f32 = undefined;
+    zguiGetMouseDragDelta(drag_button, args.lock_threshold, &delta);
+    return delta;
+}
+pub const resetMouseDragDelta = zguiResetMouseDragDelta;
+extern fn zguiGetMouseDragDelta(button: MouseButton, lock_threshold: f32, delta: *[2]f32) void;
+extern fn zguiResetMouseDragDelta(button: MouseButton) void;
+//--------------------------------------------------------------------------------------------------
+//
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------

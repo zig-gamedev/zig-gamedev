@@ -140,6 +140,16 @@ ZGUI_API float zguiGetWindowHeight(void) {
     return ImGui::GetWindowHeight();
 }
 
+ZGUI_API void zguiGetMouseDragDelta(ImGuiMouseButton button, float lock_threshold, float delta[2]) {
+    const ImVec2 d = ImGui::GetMouseDragDelta(button, lock_threshold);
+    delta[0] = d.x;
+    delta[1] = d.y;
+}
+
+ZGUI_API void zguiResetMouseDragDelta(ImGuiMouseButton button) {
+    ImGui::ResetMouseDragDelta(button);
+}
+
 ZGUI_API void zguiSpacing(void) {
     ImGui::Spacing();
 }
