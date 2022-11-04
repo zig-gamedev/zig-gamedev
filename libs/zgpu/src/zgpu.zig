@@ -130,6 +130,7 @@ pub const GraphicsContext = struct {
         errdefer adapter.release();
 
         var properties: wgpu.AdapterProperties = undefined;
+        properties.next_in_chain = null;
         adapter.getProperties(&properties);
         std.log.info("[zgpu] High-performance device has been selected:", .{});
         std.log.info("[zgpu]   Name: {s}", .{properties.name});
