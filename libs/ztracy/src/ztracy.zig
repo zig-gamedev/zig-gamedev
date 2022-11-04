@@ -239,12 +239,13 @@ const tracy_stub = struct {
 
 const tracy_full = struct {
     const c = @cImport({
+        //@cDefine("TRACY_CALLSTACK", "8"); Uncomment to enable callstacks. "8" is max depth (can be changed).
         @cDefine("TRACY_ENABLE", "");
         @cInclude("TracyC.h");
     });
 
     const has_callstack_support = @hasDecl(c, "TRACY_HAS_CALLSTACK") and @hasDecl(c, "TRACY_CALLSTACK");
-    const callstack_enabled: c_int = if (has_callstack_support) c.TRACY_CALLSTACK else 0;
+    const callstack_depth: c_int = if (has_callstack_support) c.TRACY_CALLSTACK else 0;
 
     threadlocal var stack_depth: if (debug_verify_stack_order) usize else u0 = 0;
 
@@ -255,7 +256,10 @@ const tracy_full = struct {
         pub inline fn Text(self: ZoneCtx, text: []const u8) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected Value() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected Value() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
             }
             c.___tracy_emit_zone_text(self._zone, text.ptr, text.len);
@@ -263,7 +267,10 @@ const tracy_full = struct {
         pub inline fn Name(self: ZoneCtx, name: []const u8) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected Value() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected Value() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
             }
             c.___tracy_emit_zone_name(self._zone, name.ptr, name.len);
@@ -271,7 +278,10 @@ const tracy_full = struct {
         pub inline fn Value(self: ZoneCtx, val: u64) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected Value() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected Value() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
             }
             c.___tracy_emit_zone_value(self._zone, val);
@@ -279,7 +289,10 @@ const tracy_full = struct {
         pub inline fn End(self: ZoneCtx) void {
             if (debug_verify_stack_order) {
                 if (stack_depth != self._token) {
-                    std.debug.panic("Error: expected End() at stack depth {} but was {}\n", .{ self._token, stack_depth });
+                    std.debug.panic(
+                        "Error: expected End() at stack depth {} but was {}\n",
+                        .{ self._token, stack_depth },
+                    );
                 }
                 stack_depth -= 1;
             }
@@ -321,16 +334,16 @@ const tracy_full = struct {
     }
 
     pub inline fn Zone(comptime src: Src) ZoneCtx {
-        return initZone(src, null, 0, callstack_enabled);
+        return initZone(src, null, 0, callstack_depth);
     }
     pub inline fn ZoneN(comptime src: Src, name: [*:0]const u8) ZoneCtx {
-        return initZone(src, name, 0, callstack_enabled);
+        return initZone(src, name, 0, callstack_depth);
     }
     pub inline fn ZoneC(comptime src: Src, color: u32) ZoneCtx {
-        return initZone(src, null, color, callstack_enabled);
+        return initZone(src, null, color, callstack_depth);
     }
     pub inline fn ZoneNC(comptime src: Src, name: [*:0]const u8, color: u32) ZoneCtx {
-        return initZone(src, name, color, callstack_enabled);
+        return initZone(src, name, color, callstack_depth);
     }
     pub inline fn ZoneS(comptime src: Src, depth: i32) ZoneCtx {
         return initZone(src, null, 0, depth);
@@ -347,28 +360,28 @@ const tracy_full = struct {
 
     pub inline fn Alloc(ptr: ?*const anyopaque, size: usize) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_alloc_callstack(ptr, size, callstack_enabled, 0);
+            c.___tracy_emit_memory_alloc_callstack(ptr, size, callstack_depth, 0);
         } else {
             c.___tracy_emit_memory_alloc(ptr, size, 0);
         }
     }
     pub inline fn Free(ptr: ?*const anyopaque) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_free_callstack(ptr, callstack_enabled, 0);
+            c.___tracy_emit_memory_free_callstack(ptr, callstack_depth, 0);
         } else {
             c.___tracy_emit_memory_free(ptr, 0);
         }
     }
     pub inline fn SecureAlloc(ptr: ?*const anyopaque, size: usize) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_alloc_callstack(ptr, size, callstack_enabled, 1);
+            c.___tracy_emit_memory_alloc_callstack(ptr, size, callstack_depth, 1);
         } else {
             c.___tracy_emit_memory_alloc(ptr, size, 1);
         }
     }
     pub inline fn SecureFree(ptr: ?*const anyopaque) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_free_callstack(ptr, callstack_enabled, 1);
+            c.___tracy_emit_memory_free_callstack(ptr, callstack_depth, 1);
         } else {
             c.___tracy_emit_memory_free(ptr, 1);
         }
@@ -404,28 +417,28 @@ const tracy_full = struct {
 
     pub inline fn AllocN(ptr: ?*const anyopaque, size: usize, name: [*:0]const u8) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_alloc_callstack_named(ptr, size, callstack_enabled, 0, name);
+            c.___tracy_emit_memory_alloc_callstack_named(ptr, size, callstack_depth, 0, name);
         } else {
             c.___tracy_emit_memory_alloc_named(ptr, size, 0, name);
         }
     }
     pub inline fn FreeN(ptr: ?*const anyopaque, name: [*:0]const u8) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_free_callstack_named(ptr, callstack_enabled, 0, name);
+            c.___tracy_emit_memory_free_callstack_named(ptr, callstack_depth, 0, name);
         } else {
             c.___tracy_emit_memory_free_named(ptr, 0, name);
         }
     }
     pub inline fn SecureAllocN(ptr: ?*const anyopaque, size: usize, name: [*:0]const u8) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_alloc_callstack_named(ptr, size, callstack_enabled, 1, name);
+            c.___tracy_emit_memory_alloc_callstack_named(ptr, size, callstack_depth, 1, name);
         } else {
             c.___tracy_emit_memory_alloc_named(ptr, size, 1, name);
         }
     }
     pub inline fn SecureFreeN(ptr: ?*const anyopaque, name: [*:0]const u8) void {
         if (has_callstack_support) {
-            c.___tracy_emit_memory_free_callstack_named(ptr, callstack_enabled, 1, name);
+            c.___tracy_emit_memory_free_callstack_named(ptr, callstack_depth, 1, name);
         } else {
             c.___tracy_emit_memory_free_named(ptr, 1, name);
         }
@@ -460,16 +473,16 @@ const tracy_full = struct {
     }
 
     pub inline fn Message(text: []const u8) void {
-        c.___tracy_emit_message(text.ptr, text.len, callstack_enabled);
+        c.___tracy_emit_message(text.ptr, text.len, callstack_depth);
     }
     pub inline fn MessageL(text: [*:0]const u8, color: u32) void {
-        c.___tracy_emit_messageL(text, color, callstack_enabled);
+        c.___tracy_emit_messageL(text, color, callstack_depth);
     }
     pub inline fn MessageC(text: []const u8, color: u32) void {
-        c.___tracy_emit_messageC(text.ptr, text.len, color, callstack_enabled);
+        c.___tracy_emit_messageC(text.ptr, text.len, color, callstack_depth);
     }
     pub inline fn MessageLC(text: [*:0]const u8, color: u32) void {
-        c.___tracy_emit_messageLC(text, color, callstack_enabled);
+        c.___tracy_emit_messageLC(text, color, callstack_depth);
     }
     pub inline fn MessageS(text: []const u8, depth: c_int) void {
         const inner_depth: c_int = if (has_callstack_support) depth else 0;

@@ -793,10 +793,10 @@ extern fn zguiIndent(indent_w: f32) void;
 extern fn zguiUnindent(indent_w: f32) void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn beginGroup() void`
-const beginGroup = zguiBeginGroup;
+pub const beginGroup = zguiBeginGroup;
 extern fn zguiBeginGroup() void;
 /// `pub fn endGroup() void`
-const endGroup = zguiEndGroup;
+pub const endGroup = zguiEndGroup;
 extern fn zguiEndGroup() void;
 //--------------------------------------------------------------------------------------------------
 pub fn getCursorPos() [2]f32 {
@@ -2607,6 +2607,22 @@ pub const Viewport = *opaque {
 };
 pub const getMainViewport = zguiGetMainViewport;
 extern fn zguiGetMainViewport() Viewport;
+//--------------------------------------------------------------------------------------------------
+//
+// Mouse Input
+//
+//--------------------------------------------------------------------------------------------------
+pub const MouseDragDelta = struct {
+    lock_threshold: f32 = -1.0,
+};
+pub fn getMouseDragDelta(drag_button: MouseButton, args: MouseDragDelta) [2]f32 {
+    var delta: [2]f32 = undefined;
+    zguiGetMouseDragDelta(drag_button, args.lock_threshold, &delta);
+    return delta;
+}
+pub const resetMouseDragDelta = zguiResetMouseDragDelta;
+extern fn zguiGetMouseDragDelta(button: MouseButton, lock_threshold: f32, delta: *[2]f32) void;
+extern fn zguiResetMouseDragDelta(button: MouseButton) void;
 //--------------------------------------------------------------------------------------------------
 //
 // DrawFlags
