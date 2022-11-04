@@ -1157,7 +1157,7 @@ ZGUI_API void zguiIoSetDefaultFont(ImFont* font) {
     ImGui::GetIO().FontDefault = font;
 }
 
-ZGUI_API unsigned char *zguiIoGetFontsTexDataAsRGB32(int *width, int *height) {
+ZGUI_API unsigned char *zguiIoGetFontsTexDataAsRgba32(int *width, int *height) {
     unsigned char *font_pixels;
     int font_width, font_height;
     ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
@@ -1166,11 +1166,11 @@ ZGUI_API unsigned char *zguiIoGetFontsTexDataAsRGB32(int *width, int *height) {
     return font_pixels;
 }
 
-ZGUI_API void zguiIoSetFontsTexID(ImTextureID id) {
+ZGUI_API void zguiIoSetFontsTexId(ImTextureID id) {
     ImGui::GetIO().Fonts->TexID = id;
 }
 
-ZGUI_API ImTextureID zguiIoGetFontsTexID() {
+ZGUI_API ImTextureID zguiIoGetFontsTexId() {
     return ImGui::GetIO().Fonts->TexID;
 }
 

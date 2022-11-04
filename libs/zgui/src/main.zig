@@ -8,4 +8,4 @@ pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .pat
 
 pub usingnamespace @import("gui.zig");
 pub const plot = @import("plot.zig");
-pub const wgpu_backend = @import("backend_glfw_wgpu.zig");
+pub const backend = @import("backend_glfw_wgpu.zig");

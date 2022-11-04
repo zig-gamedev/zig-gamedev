@@ -13,7 +13,7 @@ pub const ImDrawIdx = u16;
 pub const ImDrawVert = struct {
     pos: ImVec2,
     uv: ImVec2,
-    colour: u32,
+    color: u32,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -154,16 +154,16 @@ pub const io = struct {
     pub const setDefaultFont = zguiIoSetDefaultFont;
     extern fn zguiIoSetDefaultFont(font: Font) void;
 
-    /// `pub fn getFontsTextDataAsRGBA32() return fonts pixel data and size
-    pub const getFontsTextDataAsRGBA32 = zguiIoGetFontsTexDataAsRGB32;
-    extern fn zguiIoGetFontsTexDataAsRGB32(width: *i32, height: *i32) [*c]const u32;
+    /// `pub fn getFontsTextDataAsRgba32() return fonts pixel data and size
+    pub const getFontsTextDataAsRgba32 = zguiIoGetFontsTexDataAsRgba32;
+    extern fn zguiIoGetFontsTexDataAsRgba32(width: *i32, height: *i32) [*c]const u32;
 
-    /// `pub fn setFontsTexID(id:TextureIdent) set the backend Id for the fonts atlas
-    pub const setFontsTexID = zguiIoSetFontsTexID;
-    extern fn zguiIoSetFontsTexID(id: TextureIdent) void;
+    /// `pub fn setFontsTexId(id:TextureIdent) set the backend Id for the fonts atlas
+    pub const setFontsTexId = zguiIoSetFontsTexId;
+    extern fn zguiIoSetFontsTexId(id: TextureIdent) void;
 
-    pub const getFontsTexID = zguiIoGetFontsTexID;
-    extern fn zguiIoGetFontsTexID() TextureIdent;
+    pub const getFontsTexId = zguiIoGetFontsTexId;
+    extern fn zguiIoGetFontsTexId() TextureIdent;
 
     /// `pub fn zguiIoGetWantCaptureMouse() bool`
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
@@ -199,13 +199,13 @@ pub const io = struct {
 const Context = *opaque {};
 pub const DrawData = *extern struct {
     valid: bool,
-    cmdListsCount: c_int,
-    totalIdxCount: c_int,
-    totalVtxCount: c_int,
-    cmdLists: [*]DrawList,
-    displayPos: @Vector(2, f32),
-    displaySize: @Vector(2, f32),
-    framebufferScale: @Vector(2, f32),
+    cmd_lists_count: c_int,
+    total_idx_count: c_int,
+    total_vtx_count: c_int,
+    cmd_lists: [*]DrawList,
+    display_pos: @Vector(2, f32),
+    display_size: @Vector(2, f32),
+    framebuffer_scale: @Vector(2, f32),
 };
 pub const Font = *opaque {};
 pub const Ident = u32;
@@ -2684,7 +2684,7 @@ extern fn zguiGetWindowDrawList() DrawList;
 extern fn zguiGetBackgroundDrawList() DrawList;
 extern fn zguiGetForegroundDrawList() DrawList;
 
-pub const DrawList = *extern struct {
+pub const DrawList = *opaque {
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) c_int;
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
@@ -2701,10 +2701,10 @@ pub const DrawList = *extern struct {
     extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]const ImDrawCmd;
 
     pub const DrawListFlags = packed struct(u32) {
-        antiAliasedLines: bool = false,
-        antiAliasedLinesUseTex: bool = false,
-        antiAliasedFill: bool = false,
-        allowVtxOffset: bool = false,
+        anti_aliased_lines: bool = false,
+        anti_aliased_lines_use_tex: bool = false,
+        anti_aliased_fill: bool = false,
+        allow_vtx_offset: bool = false,
 
         _padding: u28,
     };
