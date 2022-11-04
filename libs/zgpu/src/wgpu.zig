@@ -122,32 +122,37 @@ pub const DeviceLostReason = enum(u32) {
 pub const ErrorFilter = enum(u32) {
     validation = 0x00000000,
     out_of_memory = 0x00000001,
+    internal = 0x00000002,
 };
 
 pub const ErrorType = enum(u32) {
     no_error = 0x00000000,
     validation = 0x00000001,
     out_of_memory = 0x00000002,
-    unknown = 0x00000003,
-    device_lost = 0x00000004,
+    internal = 0x00000003,
+    unknown = 0x00000004,
+    device_lost = 0x00000005,
 };
 
 pub const FeatureName = enum(u32) {
     undef = 0x00000000,
-    depth24_unorm_stencil8 = 0x00000002,
-    depth32_float_stencil8 = 0x00000003,
-    timestamp_query = 0x00000004,
-    pipeline_statistics_query = 0x00000005,
-    texture_compression_bc = 0x00000006,
-    texture_compression_etc2 = 0x00000007,
-    texture_compression_astc = 0x00000008,
-    indirect_first_instance = 0x00000009,
+    depth_clip_control = 0x00000001,
+    depth32_float_stencil8 = 0x00000002,
+    timestamp_query = 0x00000003,
+    pipeline_statistics_query = 0x00000004,
+    texture_compression_bc = 0x00000005,
+    texture_compression_etc2 = 0x00000006,
+    texture_compression_astc = 0x00000007,
+    indirect_first_instance = 0x00000008,
+    shader_f16 = 0x00000009,
+    rg11_b10_ufloat_renderable = 0x0000000A,
     depth_clamping = 0x000003E8,
     dawn_shader_float16 = 0x000003E9,
     dawn_internal_usages = 0x000003EA,
     dawn_multi_planar_formats = 0x000003EB,
     dawn_native = 0x000003EC,
     chromium_experimental_dp4a = 0x000003ED,
+    timestamp_query_inside_passes = 0x000003EE,
 };
 
 pub const FilterMode = enum(u32) {
@@ -290,6 +295,7 @@ pub const StructType = enum(u32) {
     dawn_encoder_internal_usage_descriptor = 0x000003EB,
     dawn_instance_descriptor = 0x000003EC,
     dawn_cache_device_descriptor = 0x000003ED,
+    dawn_adapter_properties_power_preference = 0x000003EE,
 };
 
 pub const SamplerBindingType = enum(u32) {
@@ -668,7 +674,9 @@ pub const ExternalTextureDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
     plane0: TextureView,
-    plane1: TextureView,
+    plane1: ?TextureView = null,
+    visible_origin: Origin2D,
+    visible_size: Extent2D,
     do_yuv_to_rgb_conversion_only: bool,
     yuv_to_rgb_conversion_matrix: ?[*]const f32,
     src_transfer_function_parameters: [*]const f32,
@@ -837,6 +845,11 @@ pub const SwapChainDescriptor = extern struct {
     implementation: u64,
 };
 
+pub const Extent2D = extern struct {
+    width: u32,
+    height: u32 = 1,
+};
+
 pub const Extent3D = extern struct {
     width: u32,
     height: u32 = 1,
@@ -862,6 +875,7 @@ pub const Limits = extern struct {
     max_texture_dimension_3d: u32,
     max_texture_array_layers: u32,
     max_bind_groups: u32,
+    max_bindings_per_bind_group: u32,
     max_dynamic_uniform_buffers_per_pipeline_layout: u32,
     max_dynamic_storage_buffers_per_pipeline_layout: u32,
     max_sampled_textures_per_shader_stage: u32,
@@ -874,6 +888,7 @@ pub const Limits = extern struct {
     min_uniform_buffer_offset_alignment: u32,
     min_storage_buffer_offset_alignment: u32,
     max_vertex_buffers: u32,
+    max_buffer_size: u64,
     max_vertex_attributes: u32,
     max_vertex_buffer_array_stride: u32,
     max_inter_stage_shader_components: u32,
@@ -906,6 +921,11 @@ pub const DawnTogglesDeviceDescriptor = extern struct {
     force_enabled_toggles: ?[*]const [*:0]const u8 = null,
     force_disabled_toggles_count: u32 = 0,
     force_disabled_toggles: ?[*]const [*:0]const u8 = null,
+};
+
+pub const DawnAdapterPropertiesPowerPreference = extern struct {
+    chain: ChainedStructOut,
+    power_preference: PowerPreference,
 };
 
 pub const DeviceDescriptor = extern struct {
@@ -1001,6 +1021,11 @@ pub const TextureDataLayout = extern struct {
     rows_per_image: u32,
 };
 
+pub const Origin2D = extern struct {
+    x: u32 = 0,
+    y: u32 = 0,
+};
+
 pub const Origin3D = extern struct {
     x: u32 = 0,
     y: u32 = 0,
@@ -1019,6 +1044,12 @@ pub const ImageCopyTexture = extern struct {
     mip_level: u32 = 0,
     origin: Origin3D = .{},
     aspect: TextureAspect = .all,
+};
+
+pub const ImageCopyExternalTexture = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    external_texture: ExternalTexture,
+    origin: Origin3D,
 };
 
 pub const CommandBufferDescriptor = extern struct {
@@ -1774,12 +1805,12 @@ pub const Device = *opaque {
     }
     extern fn wgpuDeviceCreateShaderModule(device: Device, descriptor: *const ShaderModuleDescriptor) ShaderModule;
 
-    pub inline fn createSwapChain(device: Device, surface: Surface, descriptor: SwapChainDescriptor) SwapChain {
+    pub inline fn createSwapChain(device: Device, surface: ?Surface, descriptor: SwapChainDescriptor) SwapChain {
         return wgpuDeviceCreateSwapChain(device, surface, &descriptor);
     }
     extern fn wgpuDeviceCreateSwapChain(
         device: Device,
-        surface: Surface,
+        surface: ?Surface,
         descriptor: *const SwapChainDescriptor,
     ) SwapChain;
 
@@ -1818,10 +1849,15 @@ pub const Device = *opaque {
     }
     extern fn wgpuDeviceInjectError(device: Device, err_type: ErrorType, message: ?[*:0]const u8) void;
 
-    pub inline fn loseForTesting(device: Device) void {
-        wgpuDeviceLoseForTesting(device);
+    pub inline fn forceLoss(device: Device, reason: DeviceLostReason, message: ?[*:0]const u8) void {
+        wgpuDeviceForceLoss(device, reason, message);
     }
-    extern fn wgpuDeviceLoseForTesting(device: Device) void;
+    extern fn wgpuDeviceForceLoss(device: Device, reason: DeviceLostReason, message: ?[*:0]const u8) void;
+
+    pub inline fn getAdapter(device: Device) Adapter {
+        return wgpuDeviceGetAdapter(device);
+    }
+    extern fn wgpuDeviceGetAdapter(device: Device) Adapter;
 
     pub inline fn popErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool {
         return wgpuDevicePopErrorScope(device, callback, userdata);
@@ -1975,6 +2011,23 @@ pub const QuerySet = *opaque {
 };
 
 pub const Queue = *opaque {
+    pub inline fn copyExternalTextureForBrowser(
+        queue: Queue,
+        source: ImageCopyExternalTexture,
+        destination: ImageCopyTexture,
+        copy_size: Extent3D,
+        options: CopyTextureForBrowserOptions,
+    ) void {
+        wgpuQueueCopyExternalTextureForBrowser(queue, &source, &destination, &copy_size, &options);
+    }
+    extern fn wgpuQueueCopyExternalTextureForBrowser(
+        queue: Queue,
+        source: *const ImageCopyExternalTexture,
+        destination: *const ImageCopyTexture,
+        copy_size: *const Extent3D,
+        options: *const CopyTextureForBrowserOptions,
+    ) void;
+
     pub inline fn copyTextureForBrowser(
         queue: Queue,
         source: ImageCopyTexture,
@@ -2373,14 +2426,14 @@ pub const RenderPassEncoder = *opaque {
 
     pub inline fn executeBundles(
         render_pass_encoder: RenderPassEncoder,
-        bundles_count: u32,
+        bundle_count: u32,
         bundles: [*]const RenderBundle,
     ) void {
-        wgpuRenderPassEncoderExecuteBundles(render_pass_encoder, bundles_count, bundles);
+        wgpuRenderPassEncoderExecuteBundles(render_pass_encoder, bundle_count, bundles);
     }
     extern fn wgpuRenderPassEncoderExecuteBundles(
         render_pass_encoder: RenderPassEncoder,
-        bundles_count: u32,
+        bundle_count: u32,
         bundles: [*]const RenderBundle,
     ) void;
 

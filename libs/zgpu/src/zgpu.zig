@@ -1655,6 +1655,7 @@ fn logUnhandledError(
         .validation => std.log.err("[zgpu] Validation: {?s}", .{message}),
         .out_of_memory => std.log.err("[zgpu] Out of memory: {?s}", .{message}),
         .device_lost => std.log.err("[zgpu] Device lost: {?s}", .{message}),
+        .internal => std.log.err("[zgpu] Internal error: {?s}", .{message}),
         .unknown => std.log.err("[zgpu] Unknown error: {?s}", .{message}),
     }
 
