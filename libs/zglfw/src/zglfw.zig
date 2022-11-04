@@ -1,6 +1,17 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
+pub const InitHint = enum(i32) {
+    joystick_hat_buttons = 0x00050001,
+    cocoa_chdir_resources = 0x00051001,
+    cocoa_menubar = 0x00051002,
+};
+
+pub fn initHint(hint: InitHint, value: bool) void {
+    glfwInitHint(@enumToInt(hint), @boolToInt(value));
+}
+extern fn glfwInitHint(hint: i32, value: i32) void;
+
 pub fn init() Error!void {
     if (glfwInit() != 0) return;
     try maybeError();
@@ -14,7 +25,7 @@ extern fn glfwTerminate() void;
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
 
-pub fn vulkanSupported() bool {
+pub fn isVulkanSupported() bool {
     return if (glfwVulkanSupported() == 0) false else true;
 }
 extern fn glfwVulkanSupported() i32;
@@ -233,6 +244,135 @@ pub const CursorMode = enum(i32) {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Joystick
+//
+//--------------------------------------------------------------------------------------------------
+pub fn isJoystickPresent(jid: u4) bool {
+    return glfwJoystickPresent(@intCast(i32, jid)) == @boolToInt(true);
+}
+extern fn glfwJoystickPresent(jid: i32) i32;
+
+pub fn getJoystick(jid: u4) ?Joystick {
+    if (!isJoystickPresent(jid)) {
+        return null;
+    }
+    return .{ .jid = jid };
+}
+
+pub const Joystick = struct {
+    pub const ButtonAction = enum(u8) {
+        release = 0,
+        press = 1,
+    };
+
+    jid: u4,
+
+    pub const maximum_supported = 16;
+
+    pub fn getGuid(self: Joystick) [:0]const u8 {
+        return std.mem.span(glfwGetJoystickGUID(@intCast(i32, self.jid)));
+    }
+    extern fn glfwGetJoystickGUID(jid: i32) [*:0]const u8;
+
+    pub fn getAxes(self: Joystick) []const f32 {
+        var count: i32 = undefined;
+        const state = glfwGetJoystickAxes(@intCast(i32, self.jid), &count);
+        if (count == 0) {
+            return @as([*]const ButtonAction, undefined)[0..0];
+        }
+        return state[0..@intCast(usize, count)];
+    }
+    extern fn glfwGetJoystickAxes(jid: i32, count: *i32) [*]const f32;
+
+    pub fn getButtons(self: Joystick) []const ButtonAction {
+        var count: i32 = undefined;
+        const state = glfwGetJoystickButtons(@intCast(i32, self.jid), &count);
+        if (count == 0) {
+            return @as([*]const f32, undefined)[0..0];
+        }
+        return @ptrCast([]const ButtonAction, state[0..@intCast(usize, count)]);
+    }
+    extern fn glfwGetJoystickButtons(jid: i32, count: *i32) [*]const u8;
+
+    fn isGamepad(self: Joystick) bool {
+        return glfwJoystickIsGamepad(@intCast(i32, self.jid)) == @boolToInt(true);
+    }
+    extern fn glfwJoystickIsGamepad(jid: i32) i32;
+
+    pub fn asGamepad(self: Joystick) ?Gamepad {
+        return if (self.isGamepad()) .{ .jid = self.jid } else null;
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Gamepad
+//
+//--------------------------------------------------------------------------------------------------
+pub const Gamepad = struct {
+    pub const Axis = enum(u3) {
+        left_x = 0,
+        left_y = 1,
+        right_x = 2,
+        right_y = 3,
+        left_trigger = 4,
+        right_trigger = 5,
+
+        const last = Axis.right_trigger;
+    };
+
+    pub const Button = enum(u4) {
+        a = 0,
+        b = 1,
+        x = 2,
+        y = 3,
+        left_bumper = 4,
+        right_bumper = 5,
+        back = 6,
+        start = 7,
+        guide = 8,
+        left_thumb = 9,
+        right_thumb = 10,
+        dpad_up = 11,
+        dpad_right = 12,
+        dpad_down = 13,
+        dpad_left = 14,
+
+        const last = Button.dpad_left;
+
+        const cross = Button.a;
+        const circle = Button.b;
+        const square = Button.x;
+        const triangle = Button.y;
+    };
+
+    pub const State = extern struct {
+        buttons: [15]Joystick.ButtonAction,
+        axes: [6]f32,
+    };
+
+    jid: u4,
+
+    pub fn getName(self: Gamepad) [:0]u8 {
+        return std.mem.span(glfwGetGamepadName(@intCast(i32, self.jid)));
+    }
+    extern fn glfwGetGamepadName(jid: i32) [*:0]u8;
+
+    pub fn getState(self: Gamepad) State {
+        var state: State = undefined;
+        _ = glfwGetGamepadState(@intCast(i32, self.jid), &state);
+        // return value of glfwGetGamepadState is ignored as
+        // it is expected this is guarded by glfwJoystickIsGamepad
+        return state;
+    }
+    extern fn glfwGetGamepadState(jid: i32, state: *Gamepad.State) i32;
+};
+
+pub fn updateGamepadMappings(mappings: [:0]const u8) bool {
+    return glfwUpdateGamepadMappings(mappings) == @boolToInt(true);
+}
+extern fn glfwUpdateGamepadMappings(mappings: [*:0]const u8) i32;
+//--------------------------------------------------------------------------------------------------
+//
 // Error
 //
 //--------------------------------------------------------------------------------------------------
@@ -437,8 +577,8 @@ extern fn glfwDefaultWindowHints() void;
 // Native
 //
 //--------------------------------------------------------------------------------------------------
-pub fn getWin32Adapter(monitor: Monitor) Error![*:0]const u8 {
-    if (glfwGetWin32Adapter(monitor)) |adapter| return adapter;
+pub fn getWin32Adapter(monitor: Monitor) Error![:0]const u8 {
+    if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
     try maybeError();
     unreachable;
 }
@@ -518,7 +658,7 @@ test "zglfw.basic" {
     try init();
     defer terminate();
 
-    if (vulkanSupported()) {
+    if (isVulkanSupported()) {
         _ = try getRequiredInstanceExtensions();
     }
 

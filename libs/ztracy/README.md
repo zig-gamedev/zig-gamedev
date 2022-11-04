@@ -1,4 +1,4 @@
-# ztracy v0.9 - performance markers for Tracy 0.8.2
+# ztracy v0.9 - performance markers for Tracy 0.9
 
 Zig bindings taken from: https://github.com/SpexGuy/Zig-Tracy
 
@@ -44,7 +44,7 @@ pub fn main() !void {
 
 ## Async "Fibers" support
 
-Tracy v0.8.0 added support for marking fibers (also called green threads,
+Tracy has support for marking fibers (also called green threads,
 coroutines, and other forms of cooperative multitasking). This support requires
 an additional option passed through when compiling the Tracy library, so change
 the `link()` call in your `build.zig` to:
