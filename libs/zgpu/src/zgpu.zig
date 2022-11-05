@@ -1756,6 +1756,7 @@ test "zgpu.wgpu.init" {
         _ = num_adapter_features;
 
         var properties: wgpu.AdapterProperties = undefined;
+        properties.next_in_chain = null;
         adapter.getProperties(&properties);
 
         break :adapter adapter;
