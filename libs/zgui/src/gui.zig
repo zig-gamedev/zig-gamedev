@@ -5,14 +5,10 @@ const assert = std.debug.assert;
 pub const f32_min: f32 = 1.17549435082228750796873653722225e-38;
 pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 
-pub const ImVec2 = [2]f32;
-pub const ImVec3 = [3]f32;
-pub const ImVec4 = [4]f32;
-
-pub const ImDrawIdx = u16;
-pub const ImDrawVert = struct {
-    pos: ImVec2,
-    uv: ImVec2,
+pub const DrawIdx = u16;
+pub const DrawVert = struct {
+    pos: [2]f32,
+    uv: [2]f32,
     color: u32,
 };
 
@@ -203,9 +199,9 @@ pub const DrawData = *extern struct {
     total_idx_count: c_int,
     total_vtx_count: c_int,
     cmd_lists: [*]DrawList,
-    display_pos: @Vector(2, f32),
-    display_size: @Vector(2, f32),
-    framebuffer_scale: @Vector(2, f32),
+    display_pos: [2]f32,
+    display_size: [2]f32,
+    framebuffer_scale: [2]f32,
 };
 pub const Font = *opaque {};
 pub const Ident = u32;
@@ -2666,8 +2662,8 @@ pub const DrawFlags = packed struct(u32) {
     };
 };
 
-pub const ImDrawCmd = extern struct {
-    clip_rect: ImVec4,
+pub const DrawCmd = extern struct {
+    clip_rect: [4]f32,
     texture_id: TextureIdent,
     vtx_offset: c_uint,
     idx_offset: c_uint,
@@ -2688,17 +2684,17 @@ pub const DrawList = *opaque {
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) c_int;
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
-    extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]const ImDrawVert;
+    extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]const DrawVert;
 
     pub const getIndexBufferLength = zguiDrawList_GetIndexBufferLength;
     extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) c_int;
     pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
-    extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]const ImDrawIdx;
+    extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]const DrawIdx;
 
     pub const getCmdBufferLength = zguiDrawList_GetCmdBufferLength;
     extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) c_int;
     pub const getCmdBufferData = zguiDrawList_GetCmdBufferData;
-    extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]const ImDrawCmd;
+    extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]const DrawCmd;
 
     pub const DrawListFlags = packed struct(u32) {
         anti_aliased_lines: bool = false,
