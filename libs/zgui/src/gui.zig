@@ -4,6 +4,14 @@ const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
 pub const f32_min: f32 = 1.17549435082228750796873653722225e-38;
 pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
+
+pub const DrawIdx = u16;
+pub const DrawVert = struct {
+    pos: [2]f32,
+    uv: [2]f32,
+    color: u32,
+};
+
 //--------------------------------------------------------------------------------------------------
 pub fn init(allocator: std.mem.Allocator) void {
     if (zguiGetCurrentContext() == null) {
@@ -142,6 +150,17 @@ pub const io = struct {
     pub const setDefaultFont = zguiIoSetDefaultFont;
     extern fn zguiIoSetDefaultFont(font: Font) void;
 
+    /// `pub fn getFontsTextDataAsRgba32() return fonts pixel data and size
+    pub const getFontsTextDataAsRgba32 = zguiIoGetFontsTexDataAsRgba32;
+    extern fn zguiIoGetFontsTexDataAsRgba32(width: *i32, height: *i32) [*c]const u32;
+
+    /// `pub fn setFontsTexId(id:TextureIdent) set the backend Id for the fonts atlas
+    pub const setFontsTexId = zguiIoSetFontsTexId;
+    extern fn zguiIoSetFontsTexId(id: TextureIdent) void;
+
+    pub const getFontsTexId = zguiIoGetFontsTexId;
+    extern fn zguiIoGetFontsTexId() TextureIdent;
+
     /// `pub fn zguiIoGetWantCaptureMouse() bool`
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
     extern fn zguiIoGetWantCaptureMouse() bool;
@@ -166,10 +185,24 @@ pub const io = struct {
     /// `pub fn setConfigFlags(flags: ConfigFlags) void`
     pub const setConfigFlags = zguiIoSetConfigFlags;
     extern fn zguiIoSetConfigFlags(flags: ConfigFlags) void;
+
+    /// set the frame for this frame
+    /// `pub fnsetDeltaTime(delta_time: f32) void`
+    pub const setDeltaTime = zguiIoSetDeltaTime;
+    extern fn zguiIoSetDeltaTime(delta_time: f32) void;
 };
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};
-pub const DrawData = *opaque {};
+pub const DrawData = *extern struct {
+    valid: bool,
+    cmd_lists_count: c_int,
+    total_idx_count: c_int,
+    total_vtx_count: c_int,
+    cmd_lists: [*]DrawList,
+    display_pos: [2]f32,
+    display_size: [2]f32,
+    framebuffer_scale: [2]f32,
+};
 pub const Font = *opaque {};
 pub const Ident = u32;
 pub const TextureIdent = *anyopaque;
@@ -2588,7 +2621,7 @@ extern fn zguiGetMouseDragDelta(button: MouseButton, lock_threshold: f32, delta:
 extern fn zguiResetMouseDragDelta(button: MouseButton) void;
 //--------------------------------------------------------------------------------------------------
 //
-// DrawList
+// DrawFlags
 //
 //--------------------------------------------------------------------------------------------------
 pub const DrawFlags = packed struct(u32) {
@@ -2629,6 +2662,16 @@ pub const DrawFlags = packed struct(u32) {
     };
 };
 
+pub const DrawCmd = extern struct {
+    clip_rect: [4]f32,
+    texture_id: TextureIdent,
+    vtx_offset: c_uint,
+    idx_offset: c_uint,
+    elem_count: c_uint,
+    user_callback: ?*anyopaque,
+    user_callback_data: *anyopaque,
+};
+
 pub const getWindowDrawList = zguiGetWindowDrawList;
 pub const getBackgroundDrawList = zguiGetBackgroundDrawList;
 pub const getForegroundDrawList = zguiGetForegroundDrawList;
@@ -2638,6 +2681,33 @@ extern fn zguiGetBackgroundDrawList() DrawList;
 extern fn zguiGetForegroundDrawList() DrawList;
 
 pub const DrawList = *opaque {
+    pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
+    extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) c_int;
+    pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
+    extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]const DrawVert;
+
+    pub const getIndexBufferLength = zguiDrawList_GetIndexBufferLength;
+    extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) c_int;
+    pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
+    extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]const DrawIdx;
+
+    pub const getCmdBufferLength = zguiDrawList_GetCmdBufferLength;
+    extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) c_int;
+    pub const getCmdBufferData = zguiDrawList_GetCmdBufferData;
+    extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]const DrawCmd;
+
+    pub const DrawListFlags = packed struct(u32) {
+        anti_aliased_lines: bool = false,
+        anti_aliased_lines_use_tex: bool = false,
+        anti_aliased_fill: bool = false,
+        allow_vtx_offset: bool = false,
+
+        _padding: u28,
+    };
+
+    pub const getDrawListFlags = zguiDrawList_GetFlags;
+    extern fn zguiDrawList_GetFlags(draw_list: DrawList) DrawListFlags;
+
     //----------------------------------------------------------------------------------------------
     const ClipRect = struct {
         pmin: [2]f32,
