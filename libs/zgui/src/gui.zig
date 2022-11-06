@@ -190,6 +190,27 @@ pub const io = struct {
     /// `pub fnsetDeltaTime(delta_time: f32) void`
     pub const setDeltaTime = zguiIoSetDeltaTime;
     extern fn zguiIoSetDeltaTime(delta_time: f32) void;
+
+    pub const addFocusEvent = zguiIoAddFocusEvent;
+    extern fn zguiIoAddFocusEvent(focused: bool) void;
+
+    pub const addMousePositionEvent = zguiIoAddMousePositionEvent;
+    extern fn zguiIoAddMousePositionEvent(x: f32, y: f32) void;
+
+    pub const addMouseButtonEvent = zguiIoAddMouseButtonEvent;
+    extern fn zguiIoAddMouseButtonEvent(button: MouseButton, down: bool) void;
+
+    pub const addMouseWheelEvent = zguiIoAddMouseWheelEvent;
+    extern fn zguiIoAddMouseWheelEvent(x: f32, y: f32) void;
+
+    pub const addKeyEvent = zguiIoAddKeyEvent;
+    extern fn zguiIoAddKeyEvent(key: Key, down: bool) void;
+
+    pub const setKeyEventNativeData = zguiIoSetKeyEventNativeData;
+    extern fn zguiIoSetKeyEventNativeData(key: Key, keycode: i32, scancode: i32) void;
+
+    pub const addCharacterEvent = zguiIoAddCharacterEvent;
+    extern fn zguiIoAddCharacterEvent(char: i32) void;
 };
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};
@@ -207,7 +228,185 @@ pub const Font = *opaque {};
 pub const Ident = u32;
 pub const TextureIdent = *anyopaque;
 pub const Wchar = u16;
-pub const Key = i32;
+pub const Key = enum(u32) {
+    // keyboard
+    none = 0,
+    tab = 512, // == imguikey_namedkey_begin
+    left_arrow,
+    right_arrow,
+    up_arrow,
+    down_arrow,
+    page_up,
+    page_down,
+    home,
+    end,
+    insert,
+    delete,
+    back_space,
+    space,
+    enter,
+    escape,
+    left_ctrl,
+    left_shift,
+    left_alt,
+    left_super,
+    right_ctrl,
+    right_shift,
+    right_alt,
+    right_super,
+    menu,
+    _0,
+    _1,
+    _2,
+    _3,
+    _4,
+    _5,
+    _6,
+    _7,
+    _8,
+    _9,
+    a,
+    b,
+    c,
+    d,
+    e,
+    f,
+    g,
+    h,
+    i,
+    j,
+    k,
+    l,
+    m,
+    n,
+    o,
+    p,
+    q,
+    r,
+    s,
+    t,
+    u,
+    v,
+    w,
+    x,
+    y,
+    z,
+    f1,
+    f2,
+    f3,
+    f4,
+    f5,
+    f6,
+    f7,
+    f8,
+    f9,
+    f10,
+    f11,
+    f12,
+    apostrophe,
+    comma,
+    minus,
+    period,
+    slash,
+    semicolon,
+    equal,
+    left_bracket,
+    back_slash,
+    right_bracket,
+    grave_accent,
+    caps_lock,
+    scroll_lock,
+    num_lock,
+    print_screen,
+    pause,
+    keypad_0,
+    keypad_1,
+    keypad_2,
+    keypad_3,
+    keypad_4,
+    keypad_5,
+    keypad_6,
+    keypad_7,
+    keypad_8,
+    keypad_9,
+    keypad_decimal,
+    keypad_divide,
+    keypad_multiply,
+    keypad_subtract,
+    keypad_add,
+    keypad_enter,
+    keypad_equal,
+
+    gamepad_start,
+    gamepad_back,
+    gamepad_faceup,
+    gamepad_facedown,
+    gamepad_faceleft,
+    gamepad_faceright,
+    gamepad_dpadup,
+    gamepad_dpaddown,
+    gamepad_dpadleft,
+    gamepad_dpadright,
+    gamepad_l1,
+    gamepad_r1,
+    gamepad_l2,
+    gamepad_r2,
+    gamepad_l3,
+    gamepad_r3,
+    gamepad_lstickup,
+    gamepad_lstickdown,
+    gamepad_lstickleft,
+    gamepad_lstickright,
+    gamepad_rstickup,
+    gamepad_rstickdown,
+    gamepad_rstickleft,
+    gamepad_rstickright,
+
+    mod_ctrl,
+    mod_shift,
+    mod_alt,
+    mod_super,
+
+    _,
+
+    pub const named_key_begin = 512;
+    pub const named_key_end = std.enums.directEnumArrayLen(@This(), named_key_begin);
+    pub const named_key_count = named_key_end - named_key_begin;
+    pub const keys_data_size = named_key_count;
+    pub const keys_data_offset = named_key_begin;
+};
+
+const KeyModifiers = packed struct {
+    ctrl: bool = false,
+    shift: bool = false,
+    alt: bool = false,
+    super: bool = false,
+};
+
+const NavInput = enum {
+    activate,
+    cancel,
+    input,
+    menu,
+    dpad_left,
+    dpad_right,
+    dpad_up,
+    dpad_down,
+    lstick_left,
+    lstick_right,
+    lsick_up,
+    lstick_down,
+    focus_prev,
+    focus_next,
+    tweak_slow,
+    tweak_fast,
+
+    key_left,
+    key_right,
+    key_up,
+    key_down,
+};
+
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct(u32) {
     no_title_bar: bool = false,
