@@ -1202,6 +1202,34 @@ ZGUI_API void zguiIoSetDeltaTime(float delta_time) {
     ImGui::GetIO().DeltaTime = delta_time;
 }
 
+ZGUI_API void zguiIoAddFocusEvent(bool focused) {
+    ImGui::GetIO().AddFocusEvent(focused);
+}
+
+ZGUI_API void zguiIoAddMousePositionEvent(float x, float y) {
+    ImGui::GetIO().AddMousePosEvent(x, y);
+}
+
+ZGUI_API void zguiIoAddMouseButtonEvent(ImGuiMouseButton button, bool down) {
+    ImGui::GetIO().AddMouseButtonEvent(button, down);
+}
+
+ZGUI_API void zguiIoAddMouseWheelEvent(float x, float y) {
+    ImGui::GetIO().AddMouseWheelEvent(x, y);
+}
+
+ZGUI_API void zguiIoAddKeyEvent(ImGuiKey key, bool down) {
+    ImGui::GetIO().AddKeyEvent(key, down);
+}
+
+ZGUI_API void zguiIoSetKeyEventNativeData(ImGuiKey key, int keycode, int scancode) {
+    ImGui::GetIO().SetKeyEventNativeData(key, keycode, scancode);
+}
+
+ZGUI_API void zguiIoAddCharacterEvent(int c) {
+    ImGui::GetIO().AddInputCharacter(c);
+}
+
 
 ZGUI_API bool zguiIsItemHovered(ImGuiHoveredFlags flags) {
     return ImGui::IsItemHovered(flags);
