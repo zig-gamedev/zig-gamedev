@@ -714,6 +714,10 @@ JPH_CAPI void
 JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings,
                                           float in_convex_radius);
 //--------------------------------------------------------------------------------------------------
+//
+// JPH_CapsuleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_CapsuleShapeSettings *
 JPH_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radius);
 
