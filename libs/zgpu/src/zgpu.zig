@@ -433,21 +433,23 @@ pub const GraphicsContext = struct {
     } {
         gctx.swapchain.present();
 
-        const fb_size = gctx.window.getFramebufferSize();
+        var fb_size = gctx.window.getFramebufferSize();
         if (gctx.swapchain_descriptor.width != fb_size[0] or
             gctx.swapchain_descriptor.height != fb_size[1])
         {
-            gctx.swapchain_descriptor.width = @intCast(u32, fb_size[0]);
-            gctx.swapchain_descriptor.height = @intCast(u32, fb_size[1]);
-            gctx.swapchain.release();
+            if (fb_size[0] != 0 and fb_size[1] != 0) {
+                gctx.swapchain_descriptor.width = @intCast(u32, fb_size[0]);
+                gctx.swapchain_descriptor.height = @intCast(u32, fb_size[1]);
+                gctx.swapchain.release();
 
-            gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
+                gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
 
-            std.log.info(
-                "[zgpu] Window has been resized to: {d}x{d}.",
-                .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
-            );
-            return .swap_chain_resized;
+                std.log.info(
+                    "[zgpu] Window has been resized to: {d}x{d}.",
+                    .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
+                );
+                return .swap_chain_resized;
+            }
         }
 
         return .normal_execution;
