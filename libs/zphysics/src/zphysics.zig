@@ -10,7 +10,71 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
     GetNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
-    GetBroadPhaseLayer: *const fn (self: *const anyopaque, ObjectLayer) callconv(.C) BroadPhaseLayer,
+    GetBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
+};
+
+pub const MassProperties = extern struct {
+    mass: f32,
+    inertia: [16]f32 align(16),
+};
+
+pub const Shape = *opaque {};
+
+pub const GroupFilter = *opaque {};
+pub const CollisionGroupId = u32;
+pub const CollisionSubGroupId = u32;
+
+pub const CollisionGroup = extern struct {
+    filter: ?*const GroupFilter = null,
+    group_id: CollisionGroupId = invalid_group,
+    sub_group_id: CollisionSubGroupId = invalid_sub_group,
+
+    const invalid_group = ~@as(CollisionGroupId, 0);
+    const invalid_sub_group = ~@as(CollisionSubGroupId, 0);
+};
+
+pub const MotionType = enum(u8) {
+    static,
+    kinematic,
+    dynamic,
+};
+
+pub const MotionQuality = enum(u8) {
+    discrete,
+    linear_cast,
+};
+
+pub const OverrideMassProperties = enum(u8) {
+    calc_mass_inertia,
+    calc_inertia,
+    mass_inertia_provided,
+};
+
+pub const BodyCreationSettings = extern struct {
+    position: [4]f32 align(16),
+    rotation: [4]f32 align(16),
+    linear_velocity: [4]f32 align(16),
+    angular_velocity: [4]f32 align(16),
+    user_data: u64,
+    object_layer: ObjectLayer,
+    collision_group: CollisionGroup,
+    motion_type: MotionType,
+    allow_dynamic_or_kinematic: bool,
+    is_sensor: bool,
+    motion_quality: MotionQuality,
+    allow_sleeping: bool,
+    friction: f32,
+    restitution: f32,
+    linear_damping: f32,
+    angular_damping: f32,
+    max_linear_velocity: f32,
+    max_angular_velocity: f32,
+    gravity_factor: f32,
+    override_mass_properties: OverrideMassProperties,
+    inertia_multiplier: f32,
+    mass_properties_override: MassProperties,
+    reserved: ?*const anyopaque,
+    shape: Shape,
 };
 
 pub fn init(allocator: std.mem.Allocator) !void {

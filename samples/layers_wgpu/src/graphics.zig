@@ -55,8 +55,7 @@ pub const State = struct {
             const scale = window.getContentScale();
             break :scale_factor math.max(scale[0], scale[1]);
         };
-        const font_size = 16.0 * scale_factor;
-        _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
+        _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
 
         // This needs to be called *after* adding your custom fonts.
         zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));

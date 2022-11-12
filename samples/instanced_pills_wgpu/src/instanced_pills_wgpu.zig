@@ -131,8 +131,10 @@ const DemoState = struct {
             const scale = window.getContentScale();
             break :scale_factor math.max(scale[0], scale[1]);
         };
-        const font_size = 20.0 * scale_factor;
-        const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
+        const font_normal = zgui.io.addFontFromFile(
+            content_dir ++ "Roboto-Medium.ttf",
+            math.floor(20.0 * scale_factor),
+        );
         assert(zgui.io.getFont(0) == font_normal);
 
         // This needs to be called *after* adding your custom fonts.

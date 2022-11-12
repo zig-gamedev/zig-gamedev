@@ -1364,7 +1364,7 @@ pub fn main() !void {
     zgui.init(allocator);
     defer zgui.deinit();
 
-    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0 * scale_factor);
+    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
 
     zgui.backend.init(
         window,

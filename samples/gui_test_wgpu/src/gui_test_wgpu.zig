@@ -65,8 +65,8 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         break :scale_factor math.max(scale[0], scale[1]);
     };
     const font_size = 16.0 * scale_factor;
-    const font_large = zgui.io.addFontFromFile(content_dir ++ "FiraCode-Medium.ttf", font_size * 1.1);
-    const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
+    const font_large = zgui.io.addFontFromFile(content_dir ++ "FiraCode-Medium.ttf", math.floor(font_size * 1.1));
+    const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(font_size));
     assert(zgui.io.getFont(0) == font_large);
     assert(zgui.io.getFont(1) == font_normal);
 
