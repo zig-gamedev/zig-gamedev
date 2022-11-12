@@ -1,24 +1,34 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const c = @cImport(@cInclude("JoltC.h"));
 
-pub const BroadPhaseLayer = c.JPH_BroadPhaseLayer;
-pub const ObjectLayer = c.JPH_ObjectLayer;
-pub const ObjectVsBroadPhaseLayerFilter = std.meta.Child(c.JPH_ObjectVsBroadPhaseLayerFilter);
-pub const ObjectLayerPairFilter = std.meta.Child(c.JPH_ObjectLayerPairFilter);
+pub const BroadPhaseLayer = u16;
+pub const ObjectLayer = u8;
+pub const ObjectVsBroadPhaseLayerFilter = *const fn (ObjectLayer, BroadPhaseLayer) callconv(.C) bool;
+pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(.C) bool;
+
+pub const BroadPhaseLayerInterfaceVTable = extern struct {
+    reserved0: ?*const anyopaque = null,
+    reserved1: ?*const anyopaque = null,
+    GetNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
+    GetBroadPhaseLayer: *const fn (self: *const anyopaque, ObjectLayer) callconv(.C) BroadPhaseLayer,
+};
 
 pub fn init(allocator: std.mem.Allocator) !void {
     // TODO: Add support for Zig allocator (JPH_RegisterCustomAllocator).
     _ = allocator;
-    c.JPH_RegisterDefaultAllocator();
+    JPH_RegisterDefaultAllocator();
 
-    c.JPH_CreateFactory();
-    c.JPH_RegisterTypes();
+    JPH_CreateFactory();
+    JPH_RegisterTypes();
 }
+extern fn JPH_RegisterDefaultAllocator() void;
+extern fn JPH_CreateFactory() void;
+extern fn JPH_RegisterTypes() void;
 
 pub fn deinit() void {
-    c.JPH_DestroyFactory();
+    JPH_DestroyFactory();
 }
+extern fn JPH_DestroyFactory() void;
 
 pub fn createPhysicsSystem(
     max_bodies: u32,
@@ -29,8 +39,8 @@ pub fn createPhysicsSystem(
     object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
     object_layer_pair_filter: ObjectLayerPairFilter,
 ) PhysicsSystem {
-    const physics_system = c.JPH_PhysicsSystem_Create();
-    c.JPH_PhysicsSystem_Init(
+    const physics_system = JPH_PhysicsSystem_Create();
+    JPH_PhysicsSystem_Init(
         physics_system,
         max_bodies,
         num_body_mutexes,
@@ -40,13 +50,25 @@ pub fn createPhysicsSystem(
         object_vs_broad_phase_layer_filter,
         object_layer_pair_filter,
     );
-    return @ptrCast(PhysicsSystem, physics_system);
+    return physics_system;
 }
+extern fn JPH_PhysicsSystem_Create() PhysicsSystem;
+extern fn JPH_PhysicsSystem_Init(
+    physics_system: PhysicsSystem,
+    max_bodies: u32,
+    num_body_mutexes: u32,
+    max_body_pairs: u32,
+    max_contact_constraints: u32,
+    broad_phase_layer_interface: *const anyopaque,
+    object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
+    object_layer_pair_filter: ObjectLayerPairFilter,
+) void;
 
 pub const PhysicsSystem = *opaque {
     pub fn destroy(physics_system: PhysicsSystem) void {
-        c.JPH_PhysicsSystem_Destroy(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        JPH_PhysicsSystem_Destroy(physics_system);
     }
+    extern fn JPH_PhysicsSystem_Destroy(physics_system: PhysicsSystem) void;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -75,24 +97,22 @@ test "jolt_c.helloworld" {
 
 const test_cb1 = struct {
     const layers = struct {
-        const non_moving: c.JPH_ObjectLayer = 0;
-        const moving: c.JPH_ObjectLayer = 1;
+        const non_moving: ObjectLayer = 0;
+        const moving: ObjectLayer = 1;
         const len: u32 = 2;
     };
 
     const broad_phase_layers = struct {
-        const non_moving: c.JPH_BroadPhaseLayer = 0;
-        const moving: c.JPH_BroadPhaseLayer = 1;
+        const non_moving: BroadPhaseLayer = 0;
+        const moving: BroadPhaseLayer = 1;
         const len: u32 = 2;
     };
 
     const BPLayerInterfaceImpl = extern struct {
-        vtable_ptr: *const c.JPH_BroadPhaseLayerInterfaceVTable = &vtable,
-        object_to_broad_phase: [layers.len]c.JPH_BroadPhaseLayer = undefined,
+        vtable_ptr: *const BroadPhaseLayerInterfaceVTable = &vtable,
+        object_to_broad_phase: [layers.len]BroadPhaseLayer = undefined,
 
-        const vtable = c.JPH_BroadPhaseLayerInterfaceVTable{
-            .reserved0 = null,
-            .reserved1 = null,
+        const vtable = BroadPhaseLayerInterfaceVTable{
             .GetNumBroadPhaseLayers = getNumBroadPhaseLayers,
             .GetBroadPhaseLayer = getBroadPhaseLayer,
         };
@@ -104,32 +124,28 @@ const test_cb1 = struct {
             return layer_interface;
         }
 
-        fn getNumBroadPhaseLayers(self: ?*const anyopaque) callconv(.C) u32 {
+        fn getNumBroadPhaseLayers(self: *const anyopaque) callconv(.C) u32 {
             const layer_interface = @ptrCast(*const BPLayerInterfaceImpl, @alignCast(@sizeOf(usize), self));
             return @intCast(u32, layer_interface.object_to_broad_phase.len);
         }
 
-        fn getBroadPhaseLayer(
-            self: ?*const anyopaque,
-            layer: c.JPH_ObjectLayer,
-        ) callconv(.C) c.JPH_BroadPhaseLayer {
+        fn getBroadPhaseLayer(self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer {
             const layer_interface = @ptrCast(*const BPLayerInterfaceImpl, @alignCast(@sizeOf(usize), self));
-            assert(layer < layers.len);
             return layer_interface.object_to_broad_phase[@intCast(usize, layer)];
         }
     };
 
-    fn myBroadPhaseCanCollide(inLayer1: c.JPH_ObjectLayer, inLayer2: c.JPH_BroadPhaseLayer) callconv(.C) bool {
-        return switch (inLayer1) {
-            layers.non_moving => inLayer2 == broad_phase_layers.moving,
+    fn myBroadPhaseCanCollide(layer1: ObjectLayer, layer2: BroadPhaseLayer) callconv(.C) bool {
+        return switch (layer1) {
+            layers.non_moving => layer2 == broad_phase_layers.moving,
             layers.moving => true,
             else => unreachable,
         };
     }
 
-    fn myObjectCanCollide(inObject1: c.JPH_ObjectLayer, inObject2: c.JPH_ObjectLayer) callconv(.C) bool {
-        return switch (inObject1) {
-            layers.non_moving => inObject2 == layers.moving,
+    fn myObjectCanCollide(object1: ObjectLayer, object2: ObjectLayer) callconv(.C) bool {
+        return switch (object1) {
+            layers.non_moving => object2 == layers.moving,
             layers.moving => true,
             else => unreachable,
         };
@@ -157,34 +173,4 @@ test "zphysics.basic" {
         test_cb1.myObjectCanCollide,
     );
     defer physics_system.destroy();
-}
-
-test "zphysics.c.basic" {
-    c.JPH_RegisterDefaultAllocator();
-    c.JPH_CreateFactory();
-    defer c.JPH_DestroyFactory();
-    c.JPH_RegisterTypes();
-    const physics_system = c.JPH_PhysicsSystem_Create();
-    defer c.JPH_PhysicsSystem_Destroy(physics_system);
-
-    const max_bodies: u32 = 1024;
-    const num_body_mutexes: u32 = 0;
-    const max_body_pairs: u32 = 1024;
-    const max_contact_constraints: u32 = 1024;
-
-    const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
-
-    c.JPH_PhysicsSystem_Init(
-        physics_system,
-        max_bodies,
-        num_body_mutexes,
-        max_body_pairs,
-        max_contact_constraints,
-        &broad_phase_layer_interface,
-        test_cb1.myBroadPhaseCanCollide,
-        test_cb1.myObjectCanCollide,
-    );
-
-    try expect(c.JPH_PhysicsSystem_GetNumBodies(physics_system) == 0);
-    try expect(c.JPH_PhysicsSystem_GetNumActiveBodies(physics_system) == 0);
 }
