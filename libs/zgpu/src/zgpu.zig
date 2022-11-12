@@ -433,7 +433,7 @@ pub const GraphicsContext = struct {
     } {
         gctx.swapchain.present();
 
-        var fb_size = gctx.window.getFramebufferSize();
+        const fb_size = gctx.window.getFramebufferSize();
         if (gctx.swapchain_descriptor.width != fb_size[0] or
             gctx.swapchain_descriptor.height != fb_size[1])
         {

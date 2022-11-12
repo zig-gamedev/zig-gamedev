@@ -4,8 +4,8 @@ const c = @cImport(@cInclude("JoltC.h"));
 
 pub const BroadPhaseLayer = c.JPH_BroadPhaseLayer;
 pub const ObjectLayer = c.JPH_ObjectLayer;
-pub const ObjectVsBroadPhaseLayerFilter = c.JPH_ObjectVsBroadPhaseLayerFilter;
-pub const ObjectLayerPairFilter = c.JPH_ObjectLayerPairFilter;
+pub const ObjectVsBroadPhaseLayerFilter = std.meta.Child(c.JPH_ObjectVsBroadPhaseLayerFilter);
+pub const ObjectLayerPairFilter = std.meta.Child(c.JPH_ObjectLayerPairFilter);
 
 pub fn init(allocator: std.mem.Allocator) !void {
     // TODO: Add support for Zig allocator (JPH_RegisterCustomAllocator).
@@ -87,8 +87,6 @@ const test_cb1 = struct {
     };
 
     const BPLayerInterfaceImpl = extern struct {
-        const Self = @This();
-
         vtable_ptr: *const c.JPH_BroadPhaseLayerInterfaceVTable = &vtable,
         object_to_broad_phase: [layers.len]c.JPH_BroadPhaseLayer = undefined,
 
@@ -99,15 +97,15 @@ const test_cb1 = struct {
             .GetBroadPhaseLayer = getBroadPhaseLayer,
         };
 
-        fn init() Self {
-            var layer_interface: Self = .{};
+        fn init() BPLayerInterfaceImpl {
+            var layer_interface: BPLayerInterfaceImpl = .{};
             layer_interface.object_to_broad_phase[layers.non_moving] = broad_phase_layers.non_moving;
             layer_interface.object_to_broad_phase[layers.moving] = broad_phase_layers.moving;
             return layer_interface;
         }
 
         fn getNumBroadPhaseLayers(self: ?*const anyopaque) callconv(.C) u32 {
-            const layer_interface = @ptrCast(*const Self, @alignCast(@sizeOf(usize), self));
+            const layer_interface = @ptrCast(*const BPLayerInterfaceImpl, @alignCast(@sizeOf(usize), self));
             return @intCast(u32, layer_interface.object_to_broad_phase.len);
         }
 
@@ -115,31 +113,27 @@ const test_cb1 = struct {
             self: ?*const anyopaque,
             layer: c.JPH_ObjectLayer,
         ) callconv(.C) c.JPH_BroadPhaseLayer {
-            const layer_interface = @ptrCast(*const Self, @alignCast(@sizeOf(usize), self));
+            const layer_interface = @ptrCast(*const BPLayerInterfaceImpl, @alignCast(@sizeOf(usize), self));
             assert(layer < layers.len);
             return layer_interface.object_to_broad_phase[@intCast(usize, layer)];
         }
     };
 
-    const myBroadPhaseCanCollide = (struct {
-        fn impl(inLayer1: c.JPH_ObjectLayer, inLayer2: c.JPH_BroadPhaseLayer) callconv(.C) bool {
-            return switch (inLayer1) {
-                layers.non_moving => inLayer2 == broad_phase_layers.moving,
-                layers.moving => true,
-                else => unreachable,
-            };
-        }
-    }).impl;
+    fn myBroadPhaseCanCollide(inLayer1: c.JPH_ObjectLayer, inLayer2: c.JPH_BroadPhaseLayer) callconv(.C) bool {
+        return switch (inLayer1) {
+            layers.non_moving => inLayer2 == broad_phase_layers.moving,
+            layers.moving => true,
+            else => unreachable,
+        };
+    }
 
-    const myObjectCanCollide = (struct {
-        fn impl(inObject1: c.JPH_ObjectLayer, inObject2: c.JPH_ObjectLayer) callconv(.C) bool {
-            return switch (inObject1) {
-                layers.non_moving => inObject2 == layers.moving,
-                layers.moving => true,
-                else => unreachable,
-            };
-        }
-    }).impl;
+    fn myObjectCanCollide(inObject1: c.JPH_ObjectLayer, inObject2: c.JPH_ObjectLayer) callconv(.C) bool {
+        return switch (inObject1) {
+            layers.non_moving => inObject2 == layers.moving,
+            layers.moving => true,
+            else => unreachable,
+        };
+    }
 };
 
 test "zphysics.basic" {

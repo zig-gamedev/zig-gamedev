@@ -200,6 +200,7 @@ struct JPH_MassProperties
 };
 
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
+// TODO: We can probably remove this struct and make it fully opaque.
 struct JPH_MotionProperties
 {
     alignas(16) float linear_velocity[4];
