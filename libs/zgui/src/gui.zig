@@ -488,6 +488,10 @@ pub const Condition = enum(u32) {
 pub const newFrame = zguiNewFrame;
 extern fn zguiNewFrame() void;
 //--------------------------------------------------------------------------------------------------
+/// `pub fn endFrame() void`
+pub const endFrame = zguiEndFrame;
+extern fn zguiEndFrame() void;
+//--------------------------------------------------------------------------------------------------
 /// `pub fn render() void`
 pub const render = zguiRender;
 extern fn zguiRender() void;
@@ -2597,6 +2601,8 @@ extern fn zguiEndListBox() void;
 // Item/Widgets Utilities and Query Functions
 //
 //--------------------------------------------------------------------------------------------------
+/// `pub fn setKeyboardFocusHere() void`
+pub const setKeyboardFocusHere = zguiSetKeyboardFocusHere;
 pub fn isItemHovered(flags: HoveredFlags) bool {
     return zguiIsItemHovered(flags);
 }
@@ -2629,6 +2635,7 @@ pub const isAnyItemHovered = zguiIsAnyItemHovered;
 pub const isAnyItemActive = zguiIsAnyItemActive;
 /// `pub fn isAnyItemFocused() bool`
 pub const isAnyItemFocused = zguiIsAnyItemFocused;
+extern fn zguiSetKeyboardFocusHere(offset: i32) void;
 extern fn zguiIsItemHovered(flags: HoveredFlags) bool;
 extern fn zguiIsItemActive() bool;
 extern fn zguiIsItemFocused() bool;

@@ -956,6 +956,10 @@ ZGUI_API void zguiNewFrame(void) {
     ImGui::NewFrame();
 }
 
+ZGUI_API void zguiEndFrame(void) {
+    ImGui::EndFrame();
+}
+
 ZGUI_API void zguiRender(void) {
     ImGui::Render();
 }
@@ -1231,6 +1235,10 @@ ZGUI_API void zguiIoAddCharacterEvent(int c) {
 }
 
 
+ZGUI_API void zguiSetKeyboardFocusHere(int offset) {
+    return ImGui::SetKeyboardFocusHere(offset);
+}
+
 ZGUI_API bool zguiIsItemHovered(ImGuiHoveredFlags flags) {
     return ImGui::IsItemHovered(flags);
 }
@@ -1335,7 +1343,7 @@ ZGUI_API bool zguiBeginMenu(const char* label, bool enabled) {
 
 ZGUI_API void zguiEndMenu(void) {
     ImGui::EndMenu();
-} 
+}
 
 ZGUI_API bool zguiMenuItem(const char* label, const char* shortcut, bool selected, bool enabled) {
     return ImGui::MenuItem(label, shortcut, selected, enabled);
