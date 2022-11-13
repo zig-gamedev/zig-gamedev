@@ -102,9 +102,13 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     max_barriers: u32 = max_physics_barriers,
     num_threads: i32 = -1,
 }) !void {
-    // TODO: Add support for Zig allocator (JPH_RegisterCustomAllocator).
-    _ = allocator;
-    JPH_RegisterDefaultAllocator();
+    std.debug.assert(mem_allocator == null and mem_allocations == null);
+
+    mem_allocator = allocator;
+    mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
+    mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
+
+    JPH_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
 
     JPH_CreateFactory();
     JPH_RegisterTypes();
@@ -113,7 +117,12 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     temp_allocator = JPH_TempAllocator_Create(args.temp_allocator_size);
     job_system = JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads);
 }
-extern fn JPH_RegisterDefaultAllocator() void;
+extern fn JPH_RegisterCustomAllocator(
+    alloc: *const fn (size: usize) callconv(.C) ?*anyopaque,
+    free: *const fn (ptr: ?*anyopaque) callconv(.C) void,
+    aligned_alloc: *const fn (size: usize, alignment: usize) callconv(.C) ?*anyopaque,
+    free: *const fn (ptr: ?*anyopaque) callconv(.C) void,
+) void;
 extern fn JPH_CreateFactory() void;
 extern fn JPH_RegisterTypes() void;
 extern fn JPH_TempAllocator_Create(size: u32) TempAllocator;
@@ -125,10 +134,67 @@ pub fn deinit() void {
     JPH_TempAllocator_Destroy(temp_allocator.?);
     temp_allocator = null;
     JPH_DestroyFactory();
+
+    mem_allocations.?.deinit();
+    mem_allocations = null;
+    mem_allocator = null;
 }
 extern fn JPH_DestroyFactory() void;
 extern fn JPH_TempAllocator_Destroy(temp_allocator: TempAllocator) void;
 extern fn JPH_JobSystem_Destroy(job_system: JobSystem) void;
+
+var mem_allocator: ?std.mem.Allocator = null;
+var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
+var mem_mutex: std.Thread.Mutex = .{};
+const mem_alignment = 16;
+
+pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
+    mem_mutex.lock();
+    defer mem_mutex.unlock();
+
+    const mem = mem_allocator.?.allocBytes(
+        mem_alignment,
+        size,
+        0,
+        @returnAddress(),
+    ) catch @panic("zphysics: out of memory");
+
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zphysics: out of memory");
+
+    return mem.ptr;
+}
+
+pub export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
+    mem_mutex.lock();
+    defer mem_mutex.unlock();
+
+    const mem = mem_allocator.?.allocBytes(
+        @intCast(u29, alignment),
+        size,
+        0,
+        @returnAddress(),
+    ) catch @panic("zphysics: out of memory");
+
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zphysics: out of memory");
+
+    return mem.ptr;
+}
+
+export fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
+    if (maybe_ptr) |ptr| {
+        mem_mutex.lock();
+        defer mem_mutex.unlock();
+
+        if (mem_allocations != null) {
+            const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+            const mem = @ptrCast(
+                [*]align(mem_alignment) u8,
+                @alignCast(mem_alignment, ptr),
+            )[0..size];
+            mem_allocator.?.free(mem);
+        }
+    }
+}
 
 pub fn createPhysicsSystem(
     broad_phase_layer_interface: *const anyopaque,

@@ -226,7 +226,6 @@ JoltCTest_Basic1(void)
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
     JPH_RegisterTypes();
-    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
 
     const uint32_t max_bodies = 1024;
     const uint32_t num_body_mutexes = 0;
@@ -235,6 +234,7 @@ JoltCTest_Basic1(void)
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
 
+    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
     JPH_PhysicsSystem_Init(
         physics_system,
         max_bodies,
