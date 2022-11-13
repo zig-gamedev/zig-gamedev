@@ -42,8 +42,8 @@ const wgsl_vs =
 \\          vec2<f32>(1.0, 0.0),
 \\      );
 \\      var fragment: Fragment;
-\\      let world = vec4<f32>(position[vertex.index], 0.0, 1.0);
-\\      fragment.position = world * object_to_clip;
+\\      let object = vec4<f32>(position[vertex.index], 0.0, 1.0);
+\\      fragment.position = object * object_to_clip;
 \\      fragment.uv = uv[vertex.index];
 \\      return fragment;
 \\  }
@@ -84,7 +84,7 @@ const DemoState = struct {
     render_scale: f32 = 1,
     msaa: bool = false,
     offset: [2]f32 = .{ 0, 0 },
-    scale: [2]f32 = .{ 1, 1 },
+    scale: f32 = 1,
     angle: f32 = 0,
 
     pipeline: zgpu.RenderPipelineHandle = .{},
@@ -95,30 +95,21 @@ const DemoState = struct {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
         zgui.init(allocator);
-        const scale_factor = scale_factor: {
-            const scale = window.getContentScale();
-            break :scale_factor math.max(scale[0], scale[1]);
-        };
-        _ = zgui.io.addFontFromFile(
-            content_dir ++ "Roboto-Medium.ttf",
-            math.floor(20.0 * scale_factor),
-        );
         {
-            var config = zgui.FontConfig.init();
-            config.merge_mode = true;
-            const ranges: []const u16 = &.{ 0x02DA, 0x02DB, 0 };
-            _ = zgui.io.addFontFromFileWithConfig(
+            const scale_factor = scale_factor: {
+                const scale = window.getContentScale();
+                break :scale_factor math.max(scale[0], scale[1]);
+            };
+            _ = zgui.io.addFontFromFile(
                 content_dir ++ "Roboto-Medium.ttf",
                 math.floor(20.0 * scale_factor),
-                config,
-                ranges.ptr,
             );
         }
 
         // This needs to be called *after* adding your custom fonts.
         zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
 
-        const sampler = gctx.createSampler(.{});
+        const sampler = gctx.createSampler(.{ .min_filter = .linear });
 
         var demo = DemoState{
             .gctx = gctx,
@@ -224,21 +215,20 @@ const DemoState = struct {
         _ = zgui.checkbox("4x multisample anti-aliasing", .{ .v = &demo.msaa });
         _ = zgui.sliderFloat2("Translate", .{
             .v = &demo.offset,
-            .min = -1000,
-            .max = 1000,
+            .min = -500,
+            .max = 500,
             .cfmt = "%.0f",
         });
-        _ = zgui.sliderFloat2("Scale", .{
+        _ = zgui.sliderFloat("Scale", .{
             .v = &demo.scale,
-            .min = -2,
-            .max = 2,
+            .min = 0.01,
+            .max = 20,
             .cfmt = "%.2f x",
         });
-        _ = zgui.sliderFloat("Rotate", .{
-            .v = &demo.angle,
-            .min = 0,
-            .max = 360,
-            .cfmt = "%.0f˚",
+        _ = zgui.sliderAngle("Rotate", .{
+            .vrad = &demo.angle,
+            .deg_min = -180,
+            .deg_max = 180,
         });
     }
 
@@ -275,14 +265,38 @@ const DemoState = struct {
                     const screen_aspect_ratio = @intToFloat(f32, gctx.swapchain_descriptor.width) / @intToFloat(f32, gctx.swapchain_descriptor.height);
                     const texture_aspect_ratio = @intToFloat(f32, text_texture_info.size.width) / @intToFloat(f32, text_texture_info.size.height);
                     const object_to_clip = zm.mul(
-                        zm.scaling(
-                            texture_aspect_ratio / screen_aspect_ratio,
-                            1.0,
-                            1.0,
+                        zm.mul(
+                            zm.scaling(
+                                texture_aspect_ratio,
+                                1.0,
+                                1.0,
+                            ),
+                            zm.mul(
+                                zm.scaling(
+                                    @intToFloat(f32, text_texture_info.size.height) / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                                    @intToFloat(f32, text_texture_info.size.height) / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                                    1.0,
+                                ),
+                                zm.mul(
+                                    zm.rotationZ(demo.angle),
+                                    zm.mul(
+                                        zm.scaling(
+                                            demo.scale,
+                                            demo.scale,
+                                            1.0,
+                                        ),
+                                        zm.translation(
+                                            2 * demo.offset[0] / @intToFloat(f32, gctx.swapchain_descriptor.width),
+                                            2 * demo.offset[1] / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                                            0.0,
+                                        ),
+                                    ),
+                                ),
+                            ),
                         ),
                         zm.scaling(
-                            @intToFloat(f32, text_texture_info.size.height) / @intToFloat(f32, gctx.swapchain_descriptor.height),
-                            @intToFloat(f32, text_texture_info.size.height) / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                            1.0 / screen_aspect_ratio,
+                            1.0,
                             1.0,
                         ),
                     );
