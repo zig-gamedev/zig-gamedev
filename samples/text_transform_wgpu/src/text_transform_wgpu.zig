@@ -12,10 +12,7 @@ const window_title = "zig-gamedev: text transform(wgpu)";
 
 // zig fmt: off
 const wgsl_vs =
-\\  struct Uniforms {
-\\      aspect_ratio: f32,
-\\  }
-\\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+\\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
 \\
 \\  struct Vertex {
 \\      @builtin(vertex_index) index : u32,
@@ -29,12 +26,12 @@ const wgsl_vs =
 \\  @vertex
 \\  fn main(vertex: Vertex) -> Fragment {
 \\      var position = array<vec2<f32>, 6>(
-\\          vec2<f32>(-0.25,  0.25),
-\\          vec2<f32>(-0.25, -0.25),
-\\          vec2<f32>( 0.25, -0.25),
-\\          vec2<f32>(-0.25,  0.25),
-\\          vec2<f32>( 0.25, -0.25),
-\\          vec2<f32>( 0.25,  0.25),
+\\          vec2<f32>(-1.0,  1.0),
+\\          vec2<f32>(-1.0, -1.0),
+\\          vec2<f32>( 1.0, -1.0),
+\\          vec2<f32>(-1.0,  1.0),
+\\          vec2<f32>( 1.0, -1.0),
+\\          vec2<f32>( 1.0,  1.0),
 \\      );
 \\      var uv = array<vec2<f32>, 6>(
 \\          vec2<f32>(0.0, 0.0),
@@ -45,7 +42,8 @@ const wgsl_vs =
 \\          vec2<f32>(1.0, 0.0),
 \\      );
 \\      var fragment: Fragment;
-\\      fragment.position = vec4<f32>(position[vertex.index].x / uniforms.aspect_ratio, position[vertex.index].y, 0.0, 1.0);
+\\      let world = vec4<f32>(position[vertex.index], 0.0, 1.0);
+\\      fragment.position = world * object_to_clip;
 \\      fragment.uv = uv[vertex.index];
 \\      return fragment;
 \\  }
@@ -127,7 +125,7 @@ const DemoState = struct {
             .sampler = sampler,
         };
 
-        const default_text = "Greetings!";
+        const default_text = "Sample";
         std.mem.copy(u8, &demo.sample_text, default_text);
 
         return demo;
@@ -216,7 +214,7 @@ const DemoState = struct {
         if (!zgui.isAnyItemActive()) {
             zgui.setKeyboardFocusHere(0);
         }
-        _ = zgui.inputText("Sample text", .{ .buf = demo.sample_text[0..] });
+        _ = zgui.inputText("Text", .{ .buf = demo.sample_text[0..] });
         _ = zgui.sliderFloat("Render scale", .{
             .v = &demo.render_scale,
             .min = 0.01,
@@ -273,14 +271,28 @@ const DemoState = struct {
                     pass.release();
                 }
                 pass.setPipeline(pipeline);
-                const screen_aspect_ratio = @intToFloat(f32, gctx.swapchain_descriptor.width) / @intToFloat(f32, gctx.swapchain_descriptor.height);
-                const texture_aspect_ratio = @intToFloat(f32, text_texture_info.size.width) / @intToFloat(f32, text_texture_info.size.height);
-                const mem = gctx.uniformsAllocate(Uniforms, 1);
-                mem.slice[0] = .{
-                    .aspect_ratio = screen_aspect_ratio / texture_aspect_ratio,
-                };
-                pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.draw(6, 1, 0, 0);
+                {
+                    const screen_aspect_ratio = @intToFloat(f32, gctx.swapchain_descriptor.width) / @intToFloat(f32, gctx.swapchain_descriptor.height);
+                    const texture_aspect_ratio = @intToFloat(f32, text_texture_info.size.width) / @intToFloat(f32, text_texture_info.size.height);
+                    const object_to_clip = zm.mul(
+                        zm.scaling(
+                            texture_aspect_ratio / screen_aspect_ratio,
+                            1.0,
+                            1.0,
+                        ),
+                        zm.scaling(
+                            @intToFloat(f32, text_texture_info.size.height) / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                            @intToFloat(f32, text_texture_info.size.height) / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                            1.0,
+                        ),
+                    );
+
+                    const mem = gctx.uniformsAllocate(zm.Mat, 1);
+                    mem.slice[0] = zm.transpose(object_to_clip);
+
+                    pass.setBindGroup(0, bind_group, &.{mem.offset});
+                    pass.draw(6, 1, 0, 0);
+                }
             }
 
             {
