@@ -14,6 +14,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     // You may need to remove/change this if you use different backend.
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", cflags);
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", cflags);
+    exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_offscreen_wgpu.cpp", cflags);
 }
 
 pub fn linkNoBackend(exe: *std.build.LibExeObjStep) void {

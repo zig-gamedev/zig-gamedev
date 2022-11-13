@@ -13,6 +13,10 @@ pub const DrawVert = struct {
 };
 
 //--------------------------------------------------------------------------------------------------
+const Contexts = struct {
+    var glfw: Context = undefined;
+    var offscreen: ?Context = null;
+};
 pub fn init(allocator: std.mem.Allocator) void {
     if (zguiGetCurrentContext() == null) {
         mem_allocator = allocator;
@@ -20,7 +24,7 @@ pub fn init(allocator: std.mem.Allocator) void {
         mem_allocations.?.ensureTotalCapacity(32) catch @panic("zgui: out of memory");
         zguiSetAllocatorFunctions(zguiMemAlloc, zguiMemFree);
 
-        _ = zguiCreateContext(null);
+        Contexts.glfw = zguiCreateContext(null);
 
         temp_buffer = std.ArrayList(u8).init(allocator);
         temp_buffer.?.resize(3 * 1024 + 1) catch unreachable;
@@ -29,7 +33,7 @@ pub fn init(allocator: std.mem.Allocator) void {
 pub fn deinit() void {
     if (zguiGetCurrentContext() != null) {
         temp_buffer.?.deinit();
-        zguiDestroyContext(null);
+        zguiDestroyContext(Contexts.glfw);
         zguiSetAllocatorFunctions(null, null);
 
         assert(mem_allocations.?.count() == 0);
@@ -38,9 +42,26 @@ pub fn deinit() void {
         mem_allocator = null;
     }
 }
+pub fn useGlfw() void {
+    zguiSetCurrentContext(Contexts.glfw);
+}
+
+pub fn initOffscreen() void {
+    if (Contexts.offscreen == null) {
+        Contexts.offscreen = zguiCreateContext(null);
+    }
+}
+pub fn deinitOffscreen() void {
+    zguiDestroyContext(Contexts.offscreen);
+}
+pub fn useOffscreen() void {
+    zguiSetCurrentContext(Contexts.offscreen);
+}
+
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 extern fn zguiDestroyContext(ctx: ?Context) void;
 extern fn zguiGetCurrentContext() ?Context;
+extern fn zguiSetCurrentContext(ctx: ?Context) void;
 //--------------------------------------------------------------------------------------------------
 var mem_allocator: ?std.mem.Allocator = null;
 var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
