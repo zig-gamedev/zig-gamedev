@@ -19,18 +19,23 @@ pub const MassProperties = extern struct {
 };
 
 pub const Shape = *opaque {};
-
 pub const GroupFilter = *opaque {};
-pub const CollisionGroupId = u32;
-pub const CollisionSubGroupId = u32;
 
 pub const CollisionGroup = extern struct {
-    filter: ?*const GroupFilter = null,
-    group_id: CollisionGroupId = invalid_group,
-    sub_group_id: CollisionSubGroupId = invalid_sub_group,
+    filter: ?*const GroupFilter,
+    group_id: GroupId,
+    sub_group_id: SubGroupId,
 
-    const invalid_group = ~@as(CollisionGroupId, 0);
-    const invalid_sub_group = ~@as(CollisionSubGroupId, 0);
+    pub const GroupId = u32;
+    pub const SubGroupId = u32;
+
+    const invalid_group = ~@as(GroupId, 0);
+    const invalid_sub_group = ~@as(SubGroupId, 0);
+
+    pub fn init() CollisionGroup {
+        return JPH_CollisionGroup_InitDefault();
+    }
+    extern fn JPH_CollisionGroup_InitDefault() CollisionGroup;
 };
 
 pub const MotionType = enum(u8) {
@@ -74,42 +79,75 @@ pub const BodyCreationSettings = extern struct {
     inertia_multiplier: f32,
     mass_properties_override: MassProperties,
     reserved: ?*const anyopaque,
-    shape: Shape,
+    shape: ?Shape,
+
+    pub fn init() BodyCreationSettings {
+        return JPH_BodyCreationSettings_InitDefault();
+    }
+    extern fn JPH_BodyCreationSettings_InitDefault() BodyCreationSettings;
 };
 
-pub fn init(allocator: std.mem.Allocator) !void {
+pub const max_physics_jobs: u32 = 2048;
+pub const max_physics_barriers: u32 = 8;
+
+const TempAllocator = *opaque {};
+const JobSystem = *opaque {};
+
+var temp_allocator: ?TempAllocator = null;
+var job_system: ?JobSystem = null;
+
+pub fn init(allocator: std.mem.Allocator, args: struct {
+    temp_allocator_size: u32 = 16 * 1024 * 1024,
+    max_jobs: u32 = max_physics_jobs,
+    max_barriers: u32 = max_physics_barriers,
+    num_threads: i32 = -1,
+}) !void {
     // TODO: Add support for Zig allocator (JPH_RegisterCustomAllocator).
     _ = allocator;
     JPH_RegisterDefaultAllocator();
 
     JPH_CreateFactory();
     JPH_RegisterTypes();
+
+    assert(temp_allocator == null and job_system == null);
+    temp_allocator = JPH_TempAllocator_Create(args.temp_allocator_size);
+    job_system = JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads);
 }
 extern fn JPH_RegisterDefaultAllocator() void;
 extern fn JPH_CreateFactory() void;
 extern fn JPH_RegisterTypes() void;
+extern fn JPH_TempAllocator_Create(size: u32) TempAllocator;
+extern fn JPH_JobSystem_Create(max_jobs: u32, max_barriers: u32, num_threads: i32) JobSystem;
 
 pub fn deinit() void {
+    JPH_JobSystem_Destroy(job_system.?);
+    job_system = null;
+    JPH_TempAllocator_Destroy(temp_allocator.?);
+    temp_allocator = null;
     JPH_DestroyFactory();
 }
 extern fn JPH_DestroyFactory() void;
+extern fn JPH_TempAllocator_Destroy(temp_allocator: TempAllocator) void;
+extern fn JPH_JobSystem_Destroy(job_system: JobSystem) void;
 
 pub fn createPhysicsSystem(
-    max_bodies: u32,
-    num_body_mutexes: u32,
-    max_body_pairs: u32,
-    max_contact_constraints: u32,
     broad_phase_layer_interface: *const anyopaque,
     object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
     object_layer_pair_filter: ObjectLayerPairFilter,
-) PhysicsSystem {
+    args: struct {
+        max_bodies: u32 = 1024,
+        num_body_mutexes: u32 = 0,
+        max_body_pairs: u32 = 1024,
+        max_contact_constraints: u32 = 1024,
+    },
+) !PhysicsSystem {
     const physics_system = JPH_PhysicsSystem_Create();
     JPH_PhysicsSystem_Init(
         physics_system,
-        max_bodies,
-        num_body_mutexes,
-        max_body_pairs,
-        max_contact_constraints,
+        args.max_bodies,
+        args.num_body_mutexes,
+        args.max_body_pairs,
+        args.max_contact_constraints,
         broad_phase_layer_interface,
         object_vs_broad_phase_layer_filter,
         object_layer_pair_filter,
@@ -217,24 +255,21 @@ const test_cb1 = struct {
 };
 
 test "zphysics.basic" {
-    try init(std.testing.allocator);
+    try init(std.testing.allocator, .{});
     defer deinit();
-
-    const max_bodies: u32 = 1024;
-    const num_body_mutexes: u32 = 0;
-    const max_body_pairs: u32 = 1024;
-    const max_contact_constraints: u32 = 1024;
 
     const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
 
-    const physics_system = createPhysicsSystem(
-        max_bodies,
-        num_body_mutexes,
-        max_body_pairs,
-        max_contact_constraints,
+    const physics_system = try createPhysicsSystem(
         &broad_phase_layer_interface,
         test_cb1.myBroadPhaseCanCollide,
         test_cb1.myObjectCanCollide,
+        .{
+            .max_bodies = 1024,
+            .num_body_mutexes = 0,
+            .max_body_pairs = 1024,
+            .max_contact_constraints = 1024,
+        },
     );
     defer physics_system.destroy();
 }

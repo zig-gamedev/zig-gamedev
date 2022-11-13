@@ -293,7 +293,6 @@ JoltCTest_Basic2(void)
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
     JPH_RegisterTypes();
-    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
 
     JPH_TempAllocator *temp_allocator = JPH_TempAllocator_Create(10 * 1024 * 1024);
     JPH_JobSystem *job_system = JPH_JobSystem_Create(JPH_MAX_PHYSICS_JOBS, JPH_MAX_PHYSICS_BARRIERS, -1);
@@ -305,6 +304,7 @@ JoltCTest_Basic2(void)
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
 
+    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
     JPH_PhysicsSystem_Init(
         physics_system,
         max_bodies,
@@ -395,7 +395,6 @@ JoltCTest_HelloWorld(void)
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
     JPH_RegisterTypes();
-    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
 
     JPH_TempAllocator *temp_allocator = JPH_TempAllocator_Create(10 * 1024 * 1024);
     JPH_JobSystem *job_system = JPH_JobSystem_Create(JPH_MAX_PHYSICS_JOBS, JPH_MAX_PHYSICS_BARRIERS, -1);
@@ -407,6 +406,7 @@ JoltCTest_HelloWorld(void)
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
 
+    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
     JPH_PhysicsSystem_Init(
         physics_system,
         max_bodies,
