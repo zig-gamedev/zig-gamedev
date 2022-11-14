@@ -1,16 +1,62 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
+pub const Shape = *opaque {};
+pub const Body = *opaque {};
+pub const GroupFilter = *opaque {};
 pub const BroadPhaseLayer = u16;
 pub const ObjectLayer = u8;
+pub const BodyId = u32;
+pub const SubShapeId = u32;
+
 pub const ObjectVsBroadPhaseLayerFilter = *const fn (ObjectLayer, BroadPhaseLayer) callconv(.C) bool;
 pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(.C) bool;
 
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
-    GetNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
-    GetBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
+    getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
+    getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
+    // TODO: GetBroadPhaseLayerName() if JPH_EXTERNAL_PROFILE or JPH_PROFILE_ENABLED
+};
+
+pub const BodyActivationListenerVTable = extern struct {
+    reserved0: ?*const anyopaque = null,
+    reserved1: ?*const anyopaque = null,
+    onBodyActivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
+    onBodyDeactivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
+};
+
+pub const ContactListenerVTable = extern struct {
+    reserved0: ?*const anyopaque = null,
+    reserved1: ?*const anyopaque = null,
+    onContactValidate: *const fn (
+        self: *anyopaque,
+        body1: *const Body,
+        body2: *const Body,
+        collision_result: *const CollideShapeResult,
+    ) callconv(.C) ValidateResult,
+    onContactAdded: *const fn (
+        self: *anyopaque,
+        body1: *const Body,
+        body2: *const Body,
+        manifold: *const ContactManifold,
+        settings: *ContactSettings,
+    ) callconv(.C) void,
+    onContactPersisted: *const fn (
+        self: *anyopaque,
+        body1: *const Body,
+        body2: *const Body,
+        manifold: *const ContactManifold,
+        settings: *ContactSettings,
+    ) callconv(.C) void,
+    onContactRemoved: *const fn (self: *anyopaque, sub_shape_pair: *const SubShapeIdPair) callconv(.C) void,
+};
+
+pub const ContactSettings = extern struct {
+    combined_friction: f32,
+    combined_restitution: f32,
+    is_sensor: bool,
 };
 
 pub const MassProperties = extern struct {
@@ -18,8 +64,37 @@ pub const MassProperties = extern struct {
     inertia: [16]f32 align(16),
 };
 
-pub const Shape = *opaque {};
-pub const GroupFilter = *opaque {};
+pub const SubShapeIdPair = extern struct {
+    body1_id: BodyId,
+    sub_shape1_id: SubShapeId,
+    body2_id: BodyId,
+    sub_shape2_id: SubShapeId,
+};
+
+pub const CollideShapeResult = extern struct {
+    contact_point1: [4]f32 align(16),
+    contact_point2: [4]f32 align(16),
+    penetration_axis: [4]f32 align(16),
+    penetration_depth: f32,
+    sub_shape1_id: SubShapeId,
+    sub_shape2_id: SubShapeId,
+    body2_id: BodyId,
+    num_face_points1: u32 align(16),
+    shape1_face: [32][4]f32 align(16),
+    num_face_points2: u32 align(16),
+    shape2_face: [32][4]f32 align(16),
+};
+
+pub const ContactManifold = extern struct {
+    world_space_normal: [4]f32 align(16),
+    penetration_depth: f32 align(16),
+    sub_shape1_id: SubShapeId,
+    sub_shape2_id: SubShapeId,
+    num_points1: u32 align(16),
+    world_space_contact_points1: [64][4]f32 align(16),
+    num_points2: u32 align(16),
+    world_space_contact_points2: [64][4]f32 align(16),
+};
 
 pub const CollisionGroup = extern struct {
     filter: ?*const GroupFilter,
@@ -35,6 +110,13 @@ pub const CollisionGroup = extern struct {
     pub fn init() CollisionGroup {
         return JPH_CollisionGroup_InitDefault();
     }
+};
+
+pub const ValidateResult = enum(u32) {
+    accept_all_contacts,
+    accept_contact,
+    reject_contact,
+    reject_all_contacts,
 };
 
 pub const MotionType = enum(u8) {
@@ -85,8 +167,8 @@ pub const BodyCreationSettings = extern struct {
     }
 };
 
-pub const max_physics_jobs: u32 = 2048;
-pub const max_physics_barriers: u32 = 8;
+pub const max_physics_jobs: u32 = c.JPH_MAX_PHYSICS_JOBS;
+pub const max_physics_barriers: u32 = c.JPH_MAX_PHYSICS_BARRIERS;
 
 const TempAllocator = *opaque {};
 const JobSystem = *opaque {};
@@ -133,6 +215,50 @@ pub fn deinit() void {
     mem_allocator = null;
 }
 
+pub fn createPhysicsSystem(
+    broad_phase_layer_interface: *const anyopaque,
+    object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
+    object_layer_pair_filter: ObjectLayerPairFilter,
+    args: struct {
+        max_bodies: u32 = 1024,
+        num_body_mutexes: u32 = 0,
+        max_body_pairs: u32 = 1024,
+        max_contact_constraints: u32 = 1024,
+    },
+) !PhysicsSystem {
+    const physics_system = JPH_PhysicsSystem_Create();
+    JPH_PhysicsSystem_Init(
+        physics_system,
+        args.max_bodies,
+        args.num_body_mutexes,
+        args.max_body_pairs,
+        args.max_contact_constraints,
+        broad_phase_layer_interface,
+        object_vs_broad_phase_layer_filter,
+        object_layer_pair_filter,
+    );
+    return physics_system;
+}
+
+pub const PhysicsSystem = *opaque {
+    pub fn destroy(physics_system: PhysicsSystem) void {
+        c.JPH_PhysicsSystem_Destroy(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+    }
+
+    pub fn getNumBodies(physics_system: PhysicsSystem) u32 {
+        return c.JPH_PhysicsSystem_GetNumBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+    }
+
+    /// `pub fn getNumActiveBodies(physics_system: PhysicsSystem) u32`
+    pub const getNumActiveBodies = JPH_PhysicsSystem_GetNumActiveBodies;
+
+    /// `pub fn getMaxBodies(physics_system: PhysicsSystem) u32`
+    pub const getMaxBodies = JPH_PhysicsSystem_GetMaxBodies;
+
+    /// `setBodyActivationListener(physics_system: PhysicsSystem, listener: ?*anyopaque) void`
+    pub const setBodyActivationListener = JPH_PhysicsSystem_SetBodyActivationListener;
+};
+
 pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
@@ -170,53 +296,42 @@ export fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        if (mem_allocations != null) {
-            const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-            const mem = @ptrCast(
-                [*]align(mem_alignment) u8,
-                @alignCast(mem_alignment, ptr),
-            )[0..size];
-            mem_allocator.?.free(mem);
-        }
+        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const mem = @ptrCast(
+            [*]align(mem_alignment) u8,
+            @alignCast(mem_alignment, ptr),
+        )[0..size];
+        mem_allocator.?.free(mem);
     }
 }
-
-pub fn createPhysicsSystem(
-    broad_phase_layer_interface: *const anyopaque,
-    object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
-    object_layer_pair_filter: ObjectLayerPairFilter,
-    args: struct {
-        max_bodies: u32 = 1024,
-        num_body_mutexes: u32 = 0,
-        max_body_pairs: u32 = 1024,
-        max_contact_constraints: u32 = 1024,
-    },
-) !PhysicsSystem {
-    const physics_system = JPH_PhysicsSystem_Create();
-    JPH_PhysicsSystem_Init(
-        physics_system,
-        args.max_bodies,
-        args.num_body_mutexes,
-        args.max_body_pairs,
-        args.max_contact_constraints,
-        broad_phase_layer_interface,
-        object_vs_broad_phase_layer_filter,
-        object_layer_pair_filter,
-    );
-    return physics_system;
-}
-
-pub const PhysicsSystem = *opaque {
-    pub fn destroy(physics_system: PhysicsSystem) void {
-        JPH_PhysicsSystem_Destroy(physics_system);
-    }
-};
 //--------------------------------------------------------------------------------------------------
 //
 // Tests
 //
 //--------------------------------------------------------------------------------------------------
 const expect = std.testing.expect;
+
+test "zphysics.basic" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
+
+    const physics_system = try createPhysicsSystem(
+        &broad_phase_layer_interface,
+        test_cb1.myBroadPhaseCanCollide,
+        test_cb1.myObjectCanCollide,
+        .{
+            .max_bodies = 1024,
+            .num_body_mutexes = 0,
+            .max_body_pairs = 1024,
+            .max_contact_constraints = 1024,
+        },
+    );
+    defer physics_system.destroy();
+
+    try expect(physics_system.getNumBodies() == 0);
+}
 
 extern fn JoltCTest_Basic1() u32;
 test "jolt_c.basic1" {
@@ -254,8 +369,8 @@ const test_cb1 = struct {
         object_to_broad_phase: [layers.len]BroadPhaseLayer = undefined,
 
         const vtable = BroadPhaseLayerInterfaceVTable{
-            .GetNumBroadPhaseLayers = getNumBroadPhaseLayers,
-            .GetBroadPhaseLayer = getBroadPhaseLayer,
+            .getNumBroadPhaseLayers = getNumBroadPhaseLayers,
+            .getBroadPhaseLayer = getBroadPhaseLayer,
         };
 
         fn init() BPLayerInterfaceImpl {
@@ -292,31 +407,13 @@ const test_cb1 = struct {
         };
     }
 };
-
-test "zphysics.basic" {
-    try init(std.testing.allocator, .{});
-    defer deinit();
-
-    const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
-
-    const physics_system = try createPhysicsSystem(
-        &broad_phase_layer_interface,
-        test_cb1.myBroadPhaseCanCollide,
-        test_cb1.myObjectCanCollide,
-        .{
-            .max_bodies = 1024,
-            .num_body_mutexes = 0,
-            .max_body_pairs = 1024,
-            .max_contact_constraints = 1024,
-        },
-    );
-    defer physics_system.destroy();
-}
 //--------------------------------------------------------------------------------------------------
 //
 // C API
 //
 //--------------------------------------------------------------------------------------------------
+const c = @cImport(@cInclude("JoltC.h"));
+
 extern fn JPH_BodyCreationSettings_InitDefault() BodyCreationSettings;
 extern fn JPH_RegisterCustomAllocator(
     alloc: *const fn (size: usize) callconv(.C) ?*anyopaque,
@@ -344,3 +441,11 @@ extern fn JPH_PhysicsSystem_Init(
 ) void;
 extern fn JPH_PhysicsSystem_Destroy(physics_system: PhysicsSystem) void;
 extern fn JPH_CollisionGroup_InitDefault() CollisionGroup;
+extern fn JPH_PhysicsSystem_GetNumBodies(physics_system: PhysicsSystem) u32;
+extern fn JPH_PhysicsSystem_GetNumActiveBodies(physics_system: PhysicsSystem) u32;
+extern fn JPH_PhysicsSystem_GetMaxBodies(physics_system: PhysicsSystem) u32;
+extern fn JPH_PhysicsSystem_SetBodyActivationListener(physics_system: PhysicsSystem, listener: ?*anyopaque) void;
+extern fn JPH_PhysicsSystem_GetBodyActivationListener(physics_system: PhysicsSystem) ?*anyopaque;
+extern fn JPH_PhysicsSystem_SetContactListener(physics_system: PhysicsSystem, listener: ?*anyopaque) void;
+extern fn JPH_PhysicsSystem_GetContactListener(physics_system: PhysicsSystem) ?*anyopaque;
+//--------------------------------------------------------------------------------------------------

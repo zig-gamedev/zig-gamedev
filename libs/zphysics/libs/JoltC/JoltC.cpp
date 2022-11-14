@@ -20,6 +20,7 @@
 #include <Jolt/Physics/Collision/Shape/TaperedCapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
+#include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
@@ -72,6 +73,7 @@ JPH_CAPI void
 JPH_DestroyFactory(void)
 {
     assert(JPH::Factory::sInstance != nullptr);
+    JPH::PhysicsMaterial::sDefault = nullptr;
     delete JPH::Factory::sInstance;
     JPH::Factory::sInstance = nullptr;
 }
