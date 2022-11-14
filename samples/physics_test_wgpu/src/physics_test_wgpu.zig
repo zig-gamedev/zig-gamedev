@@ -69,9 +69,8 @@ const BroadPhaseLayerInterface = extern struct {
         return layer_interface;
     }
 
-    fn getNumBroadPhaseLayers(raw_self: *const anyopaque) callconv(.C) u32 {
-        const self = @ptrCast(*const BroadPhaseLayerInterface, @alignCast(@sizeOf(usize), raw_self));
-        return @intCast(u32, self.object_to_broad_phase.len);
+    fn getNumBroadPhaseLayers(_: *const anyopaque) callconv(.C) u32 {
+        return broad_phase_layers.len;
     }
 
     fn getBroadPhaseLayer(
@@ -79,7 +78,7 @@ const BroadPhaseLayerInterface = extern struct {
         layer: zphy.ObjectLayer,
     ) callconv(.C) zphy.BroadPhaseLayer {
         const self = @ptrCast(*const BroadPhaseLayerInterface, @alignCast(@sizeOf(usize), raw_self));
-        return self.object_to_broad_phase[@intCast(usize, layer)];
+        return self.object_to_broad_phase[layer];
     }
 };
 
@@ -99,6 +98,22 @@ fn objectCanCollide(object1: zphy.ObjectLayer, object2: zphy.ObjectLayer) callco
     };
 }
 
+const ContactListener = extern struct {
+    vtable_ptr: *const zphy.ContactListenerVTable = &vtable,
+
+    const vtable = zphy.ContactListenerVTable{ .onContactValidate = onContactValidate };
+
+    fn onContactValidate(
+        self: *anyopaque,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
+        collision_result: *const zphy.CollideShapeResult,
+    ) callconv(.C) zphy.ValidateResult {
+        // Let's just call a default implementation as a test.
+        return zphy.ContactListenerVTable.onContactValidate(self, body1, body2, collision_result);
+    }
+};
+
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
@@ -112,6 +127,7 @@ const DemoState = struct {
     depth_texture_view: zgpu.TextureViewHandle,
 
     broad_phase_layer_interface: *BroadPhaseLayerInterface,
+    contact_listener: *ContactListener,
     physics_system: zphy.PhysicsSystem,
 };
 
@@ -207,6 +223,9 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     const broad_phase_layer_interface = try allocator.create(BroadPhaseLayerInterface);
     broad_phase_layer_interface.* = BroadPhaseLayerInterface.init();
 
+    const contact_listener = try allocator.create(ContactListener);
+    contact_listener.* = .{};
+
     const physics_system = try zphy.createPhysicsSystem(
         broad_phase_layer_interface,
         broadPhaseCanCollide,
@@ -228,12 +247,14 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
         .broad_phase_layer_interface = broad_phase_layer_interface,
+        .contact_listener = contact_listener,
         .physics_system = physics_system,
     };
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.physics_system.destroy();
+    allocator.destroy(demo.contact_listener);
     allocator.destroy(demo.broad_phase_layer_interface);
     zphy.deinit();
     demo.gctx.destroy(allocator);

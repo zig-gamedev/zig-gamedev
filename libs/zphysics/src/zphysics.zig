@@ -15,42 +15,87 @@ pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
+
     getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
+
     getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
+
     // TODO: GetBroadPhaseLayerName() if JPH_EXTERNAL_PROFILE or JPH_PROFILE_ENABLED
 };
 
 pub const BodyActivationListenerVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
+
     onBodyActivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
+
     onBodyDeactivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
 };
 
 pub const ContactListenerVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
+
     onContactValidate: *const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         collision_result: *const CollideShapeResult,
-    ) callconv(.C) ValidateResult,
+    ) callconv(.C) ValidateResult = onContactValidate,
+
     onContactAdded: *const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
-    ) callconv(.C) void,
+    ) callconv(.C) void = (struct {
+        fn defaultImpl(
+            _: *anyopaque,
+            _: *const Body,
+            _: *const Body,
+            _: *const ContactManifold,
+            _: *ContactSettings,
+        ) callconv(.C) void {
+            // Do nothing
+        }
+    }).defaultImpl,
+
     onContactPersisted: *const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
-    ) callconv(.C) void,
-    onContactRemoved: *const fn (self: *anyopaque, sub_shape_pair: *const SubShapeIdPair) callconv(.C) void,
+    ) callconv(.C) void = (struct {
+        fn defaultImpl(
+            _: *anyopaque,
+            _: *const Body,
+            _: *const Body,
+            _: *const ContactManifold,
+            _: *ContactSettings,
+        ) callconv(.C) void {
+            // Do nothing
+        }
+    }).defaultImpl,
+
+    onContactRemoved: *const fn (
+        self: *anyopaque,
+        sub_shape_pair: *const SubShapeIdPair,
+    ) callconv(.C) void = (struct {
+        fn defaultImpl(_: *anyopaque, _: *const SubShapeIdPair) callconv(.C) void {
+            // Do nothing
+        }
+    }).defaultImpl,
+
+    pub fn onContactValidate(
+        _: *anyopaque,
+        _: *const Body,
+        _: *const Body,
+        _: *const CollideShapeResult,
+    ) callconv(.C) ValidateResult {
+        return .accept_all_contacts;
+    }
 };
 
 pub const ContactSettings = extern struct {
