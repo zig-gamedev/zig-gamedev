@@ -35,7 +35,6 @@ pub const CollisionGroup = extern struct {
     pub fn init() CollisionGroup {
         return JPH_CollisionGroup_InitDefault();
     }
-    extern fn JPH_CollisionGroup_InitDefault() CollisionGroup;
 };
 
 pub const MotionType = enum(u8) {
@@ -84,7 +83,6 @@ pub const BodyCreationSettings = extern struct {
     pub fn init() BodyCreationSettings {
         return JPH_BodyCreationSettings_InitDefault();
     }
-    extern fn JPH_BodyCreationSettings_InitDefault() BodyCreationSettings;
 };
 
 pub const max_physics_jobs: u32 = 2048;
@@ -92,6 +90,11 @@ pub const max_physics_barriers: u32 = 8;
 
 const TempAllocator = *opaque {};
 const JobSystem = *opaque {};
+
+var mem_allocator: ?std.mem.Allocator = null;
+var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
+var mem_mutex: std.Thread.Mutex = .{};
+const mem_alignment = 16;
 
 var temp_allocator: ?TempAllocator = null;
 var job_system: ?JobSystem = null;
@@ -117,16 +120,6 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     temp_allocator = JPH_TempAllocator_Create(args.temp_allocator_size);
     job_system = JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads);
 }
-extern fn JPH_RegisterCustomAllocator(
-    alloc: *const fn (size: usize) callconv(.C) ?*anyopaque,
-    free: *const fn (ptr: ?*anyopaque) callconv(.C) void,
-    aligned_alloc: *const fn (size: usize, alignment: usize) callconv(.C) ?*anyopaque,
-    free: *const fn (ptr: ?*anyopaque) callconv(.C) void,
-) void;
-extern fn JPH_CreateFactory() void;
-extern fn JPH_RegisterTypes() void;
-extern fn JPH_TempAllocator_Create(size: u32) TempAllocator;
-extern fn JPH_JobSystem_Create(max_jobs: u32, max_barriers: u32, num_threads: i32) JobSystem;
 
 pub fn deinit() void {
     JPH_JobSystem_Destroy(job_system.?);
@@ -139,14 +132,6 @@ pub fn deinit() void {
     mem_allocations = null;
     mem_allocator = null;
 }
-extern fn JPH_DestroyFactory() void;
-extern fn JPH_TempAllocator_Destroy(temp_allocator: TempAllocator) void;
-extern fn JPH_JobSystem_Destroy(job_system: JobSystem) void;
-
-var mem_allocator: ?std.mem.Allocator = null;
-var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
-var mem_mutex: std.Thread.Mutex = .{};
-const mem_alignment = 16;
 
 pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
@@ -220,23 +205,11 @@ pub fn createPhysicsSystem(
     );
     return physics_system;
 }
-extern fn JPH_PhysicsSystem_Create() PhysicsSystem;
-extern fn JPH_PhysicsSystem_Init(
-    physics_system: PhysicsSystem,
-    max_bodies: u32,
-    num_body_mutexes: u32,
-    max_body_pairs: u32,
-    max_contact_constraints: u32,
-    broad_phase_layer_interface: *const anyopaque,
-    object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
-    object_layer_pair_filter: ObjectLayerPairFilter,
-) void;
 
 pub const PhysicsSystem = *opaque {
     pub fn destroy(physics_system: PhysicsSystem) void {
         JPH_PhysicsSystem_Destroy(physics_system);
     }
-    extern fn JPH_PhysicsSystem_Destroy(physics_system: PhysicsSystem) void;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -339,3 +312,35 @@ test "zphysics.basic" {
     );
     defer physics_system.destroy();
 }
+//--------------------------------------------------------------------------------------------------
+//
+// C API
+//
+//--------------------------------------------------------------------------------------------------
+extern fn JPH_BodyCreationSettings_InitDefault() BodyCreationSettings;
+extern fn JPH_RegisterCustomAllocator(
+    alloc: *const fn (size: usize) callconv(.C) ?*anyopaque,
+    free: *const fn (ptr: ?*anyopaque) callconv(.C) void,
+    aligned_alloc: *const fn (size: usize, alignment: usize) callconv(.C) ?*anyopaque,
+    free: *const fn (ptr: ?*anyopaque) callconv(.C) void,
+) void;
+extern fn JPH_CreateFactory() void;
+extern fn JPH_RegisterTypes() void;
+extern fn JPH_TempAllocator_Create(size: u32) TempAllocator;
+extern fn JPH_JobSystem_Create(max_jobs: u32, max_barriers: u32, num_threads: i32) JobSystem;
+extern fn JPH_DestroyFactory() void;
+extern fn JPH_TempAllocator_Destroy(temp_allocator: TempAllocator) void;
+extern fn JPH_JobSystem_Destroy(job_system: JobSystem) void;
+extern fn JPH_PhysicsSystem_Create() PhysicsSystem;
+extern fn JPH_PhysicsSystem_Init(
+    physics_system: PhysicsSystem,
+    max_bodies: u32,
+    num_body_mutexes: u32,
+    max_body_pairs: u32,
+    max_contact_constraints: u32,
+    broad_phase_layer_interface: *const anyopaque,
+    object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
+    object_layer_pair_filter: ObjectLayerPairFilter,
+) void;
+extern fn JPH_PhysicsSystem_Destroy(physics_system: PhysicsSystem) void;
+extern fn JPH_CollisionGroup_InitDefault() CollisionGroup;
