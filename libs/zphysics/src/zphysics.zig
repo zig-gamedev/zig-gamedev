@@ -13,6 +13,12 @@ pub const SubShapeId = c.JPH_SubShapeID;
 pub const ObjectVsBroadPhaseLayerFilter = *const fn (ObjectLayer, BroadPhaseLayer) callconv(.C) bool;
 pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(.C) bool;
 
+pub const max_physics_jobs: u32 = c.JPH_MAX_PHYSICS_JOBS;
+pub const max_physics_barriers: u32 = c.JPH_MAX_PHYSICS_BARRIERS;
+
+const TempAllocator = *opaque {};
+const JobSystem = *opaque {};
+
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
@@ -256,13 +262,11 @@ pub const BodyCreationSettings = extern struct {
         assert(@sizeOf(BodyCreationSettings) == @sizeOf(c.JPH_BodyCreationSettings));
     }
 };
-
-pub const max_physics_jobs: u32 = c.JPH_MAX_PHYSICS_JOBS;
-pub const max_physics_barriers: u32 = c.JPH_MAX_PHYSICS_BARRIERS;
-
-const TempAllocator = *opaque {};
-const JobSystem = *opaque {};
-
+//--------------------------------------------------------------------------------------------------
+//
+// Init/deinit and global state
+//
+//--------------------------------------------------------------------------------------------------
 var mem_allocator: ?std.mem.Allocator = null;
 var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
@@ -304,7 +308,11 @@ pub fn deinit() void {
     mem_allocations = null;
     mem_allocator = null;
 }
-
+//--------------------------------------------------------------------------------------------------
+//
+// PhysicsSystem
+//
+//--------------------------------------------------------------------------------------------------
 pub fn createPhysicsSystem(
     broad_phase_layer_interface: *const anyopaque,
     object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
@@ -345,6 +353,13 @@ pub const PhysicsSystem = *opaque {
         return c.JPH_PhysicsSystem_GetMaxBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
 
+    pub fn getBodyInterface(physics_system: PhysicsSystem) BodyInterface {
+        return @ptrCast(
+            BodyInterface,
+            c.JPH_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPH_PhysicsSystem, physics_system)).?,
+        );
+    }
+
     pub fn setBodyActivationListener(physics_system: PhysicsSystem, listener: ?*anyopaque) void {
         c.JPH_PhysicsSystem_SetBodyActivationListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system), listener);
     }
@@ -366,20 +381,39 @@ pub const PhysicsSystem = *opaque {
     pub fn update(
         physics_system: PhysicsSystem,
         delta_time: f32,
-        collision_steps: i32,
-        integration_sub_steps: i32,
+        args: struct {
+            collision_steps: i32 = 1,
+            integration_sub_steps: i32 = 1,
+        },
     ) void {
         c.JPH_PhysicsSystem_Update(
             @ptrCast(*c.JPH_PhysicsSystem, physics_system),
             delta_time,
-            collision_steps,
-            integration_sub_steps,
+            args.collision_steps,
+            args.integration_sub_steps,
             @ptrCast(*c.JPH_TempAllocator, temp_allocator.?),
             @ptrCast(*c.JPH_JobSystem, job_system.?),
         );
     }
 };
-
+//--------------------------------------------------------------------------------------------------
+//
+// BodyInterface
+//
+//--------------------------------------------------------------------------------------------------
+pub const BodyInterface = *opaque {
+    pub fn createBody(body_iface: BodyInterface, settings: BodyCreationSettings) ?Body {
+        return @ptrCast(?Body, c.JPH_BodyInterface_CreateBody(
+            @ptrCast(*c.JPH_BodyInterface, body_iface),
+            @ptrCast(*const c.JPH_BodyCreationSettings, &settings),
+        ));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Memory allocation
+//
+//--------------------------------------------------------------------------------------------------
 pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
@@ -463,8 +497,11 @@ test "zphysics.basic" {
     physics_system.setContactListener(null);
     try expect(physics_system.getContactListener() == null);
 
+    _ = physics_system.getBodyInterface();
+
     physics_system.optimizeBroadPhase();
-    physics_system.update(1.0 / 60.0, 1, 1);
+    physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
+    physics_system.update(1.0 / 60.0, .{});
 
     _ = CollisionGroup.init();
     _ = BodyCreationSettings.init();
