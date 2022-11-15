@@ -358,6 +358,26 @@ pub const PhysicsSystem = *opaque {
     pub fn getContactListener(physics_system: PhysicsSystem) ?*anyopaque {
         return c.JPH_PhysicsSystem_GetContactListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
+
+    pub fn optimizeBroadPhase(physics_system: PhysicsSystem) void {
+        c.JPH_PhysicsSystem_OptimizeBroadPhase(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+    }
+
+    pub fn update(
+        physics_system: PhysicsSystem,
+        delta_time: f32,
+        collision_steps: i32,
+        integration_sub_steps: i32,
+    ) void {
+        c.JPH_PhysicsSystem_Update(
+            @ptrCast(*c.JPH_PhysicsSystem, physics_system),
+            delta_time,
+            collision_steps,
+            integration_sub_steps,
+            @ptrCast(*c.JPH_TempAllocator, temp_allocator.?),
+            @ptrCast(*c.JPH_JobSystem, job_system.?),
+        );
+    }
 };
 
 pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
@@ -442,6 +462,9 @@ test "zphysics.basic" {
     try expect(physics_system.getContactListener() == null);
     physics_system.setContactListener(null);
     try expect(physics_system.getContactListener() == null);
+
+    physics_system.optimizeBroadPhase();
+    physics_system.update(1.0 / 60.0, 1, 1);
 
     _ = CollisionGroup.init();
     _ = BodyCreationSettings.init();
