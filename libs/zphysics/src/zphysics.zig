@@ -414,7 +414,7 @@ pub const BodyInterface = *opaque {
 // Memory allocation
 //
 //--------------------------------------------------------------------------------------------------
-pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
+export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -430,7 +430,7 @@ pub export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
-pub export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
+export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
