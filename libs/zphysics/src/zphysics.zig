@@ -498,6 +498,21 @@ pub const ConvexShapeSettingsImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// BoxShapeSettings
+//
+//--------------------------------------------------------------------------------------------------
+pub fn createBoxShapeSettings(half_extent: [3]f32) !BoxShapeSettings {
+    const box_shape_settings = c.JPH_BoxShapeSettings_Create(&half_extent);
+    if (box_shape_settings == null)
+        return error.FailedToCreateBoxShapeSettings;
+    return @ptrCast(BoxShapeSettings, box_shape_settings.?);
+}
+
+pub const BoxShapeSettings = *opaque {
+    usingnamespace ConvexShapeSettingsImpl.Methods(BoxShapeSettings);
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Memory allocation
 //
 //--------------------------------------------------------------------------------------------------
@@ -593,7 +608,11 @@ test "zphysics.basic" {
     _ = CollisionGroup.init();
     _ = BodyCreationSettings.init();
 
-    //_ = ShapeSettingsImpl.Methods;
+    const box_shape_settings = try createBoxShapeSettings(.{ 1.0, 2.0, 3.0 });
+    defer box_shape_settings.release();
+
+    //const box_shape = try box_shape_settings.createShape();
+    //defer box_shape.release();
 
     //const convex_shape_settings: ConvexShapeSettings = undefined;
     //_ = convex_shape_settings.getDensity();
