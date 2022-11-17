@@ -512,6 +512,15 @@ pub fn createBoxShapeSettings(half_extent: [3]f32) !BoxShapeSettings {
 
 pub const BoxShapeSettingsImpl = opaque {
     usingnamespace ConvexShapeSettingsImpl.Methods(BoxShapeSettings);
+
+    pub fn getHalfExtent(box_shape_settings: BoxShapeSettings) [3]f32 {
+        var half_extent: [3]f32 = undefined;
+        c.JPH_BoxShapeSettings_GetHalfExtent(
+            @ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings),
+            &half_extent,
+        );
+        return half_extent;
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -621,6 +630,11 @@ test "zphysics.basic" {
     try expect(box_shape_settings.getRefCount() == 2);
     box_shape_settings.release();
     try expect(box_shape_settings.getRefCount() == 1);
+
+    {
+        const he = box_shape_settings.getHalfExtent();
+        try expect(he[0] == 1.0 and he[1] == 2.0 and he[2] == 3.0);
+    }
 
     try expect(box_shape_settings.asConvexShapeSettings().getDensity() == 2.0);
     try expect(box_shape_settings.asShapeSettings().getRefCount() == 1);
