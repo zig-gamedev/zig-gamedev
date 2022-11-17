@@ -515,11 +515,11 @@ pub const BoxShapeSettingsImpl = opaque {
 
     pub fn getHalfExtent(box_shape_settings: BoxShapeSettings) [3]f32 {
         var half_extent: [3]f32 = undefined;
-        c.JPH_BoxShapeSettings_GetHalfExtent(
-            @ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings),
-            &half_extent,
-        );
+        c.JPH_BoxShapeSettings_GetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
         return half_extent;
+    }
+    pub fn setHalfExtent(box_shape_settings: BoxShapeSettings, half_extent: [3]f32) void {
+        c.JPH_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -632,8 +632,11 @@ test "zphysics.basic" {
     try expect(box_shape_settings.getRefCount() == 1);
 
     {
-        const he = box_shape_settings.getHalfExtent();
+        var he = box_shape_settings.getHalfExtent();
         try expect(he[0] == 1.0 and he[1] == 2.0 and he[2] == 3.0);
+        box_shape_settings.setHalfExtent(.{ 4.0, 5.0, 6.0 });
+        he = box_shape_settings.getHalfExtent();
+        try expect(he[0] == 4.0 and he[1] == 5.0 and he[2] == 6.0);
     }
 
     try expect(box_shape_settings.asConvexShapeSettings().getDensity() == 2.0);
