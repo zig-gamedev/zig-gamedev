@@ -521,6 +521,16 @@ pub const BoxShapeSettingsImpl = opaque {
     pub fn setHalfExtent(box_shape_settings: BoxShapeSettings, half_extent: [3]f32) void {
         c.JPH_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
     }
+
+    pub fn getConvexRadius(box_shape_settings: BoxShapeSettings) f32 {
+        return c.JPH_BoxShapeSettings_GetConvexRadius(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings));
+    }
+    pub fn setConvexRadius(box_shape_settings: BoxShapeSettings, convex_radius: f32) void {
+        c.JPH_BoxShapeSettings_SetConvexRadius(
+            @ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings),
+            convex_radius,
+        );
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -624,6 +634,9 @@ test "zphysics.basic" {
 
     box_shape_settings.setDensity(2.0);
     try expect(box_shape_settings.getDensity() == 2.0);
+
+    box_shape_settings.setConvexRadius(0.5);
+    try expect(box_shape_settings.getConvexRadius() == 0.5);
 
     try expect(box_shape_settings.getRefCount() == 1);
     box_shape_settings.addRef();
