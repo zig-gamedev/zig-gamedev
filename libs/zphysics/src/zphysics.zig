@@ -501,14 +501,16 @@ pub const ConvexShapeSettingsImpl = opaque {
 // BoxShapeSettings
 //
 //--------------------------------------------------------------------------------------------------
+pub const BoxShapeSettings = *align(@sizeOf(usize)) BoxShapeSettingsImpl;
+
 pub fn createBoxShapeSettings(half_extent: [3]f32) !BoxShapeSettings {
     const box_shape_settings = c.JPH_BoxShapeSettings_Create(&half_extent);
     if (box_shape_settings == null)
         return error.FailedToCreateBoxShapeSettings;
-    return @ptrCast(BoxShapeSettings, box_shape_settings.?);
+    return @ptrCast(BoxShapeSettings, @alignCast(@sizeOf(usize), box_shape_settings.?));
 }
 
-pub const BoxShapeSettings = *opaque {
+pub const BoxShapeSettingsImpl = opaque {
     usingnamespace ConvexShapeSettingsImpl.Methods(BoxShapeSettings);
 };
 //--------------------------------------------------------------------------------------------------
@@ -610,6 +612,18 @@ test "zphysics.basic" {
 
     const box_shape_settings = try createBoxShapeSettings(.{ 1.0, 2.0, 3.0 });
     defer box_shape_settings.release();
+
+    box_shape_settings.setDensity(2.0);
+    try expect(box_shape_settings.getDensity() == 2.0);
+
+    try expect(box_shape_settings.getRefCount() == 1);
+    box_shape_settings.addRef();
+    try expect(box_shape_settings.getRefCount() == 2);
+    box_shape_settings.release();
+    try expect(box_shape_settings.getRefCount() == 1);
+
+    try expect(box_shape_settings.asConvexShapeSettings().getDensity() == 2.0);
+    try expect(box_shape_settings.asShapeSettings().getRefCount() == 1);
 
     //const box_shape = try box_shape_settings.createShape();
     //defer box_shape.release();
