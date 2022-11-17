@@ -454,7 +454,7 @@ pub const ShapeSettingsImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// JPH_ConvexShapeSettings (-> JPH_ShapeSettings)
+// ConvexShapeSettings (-> ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 pub const ConvexShapeSettings = *align(@sizeOf(usize)) ConvexShapeSettingsImpl;
@@ -464,7 +464,7 @@ pub const ConvexShapeSettingsImpl = opaque {
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub usingnamespace ShapeSettingsImpl.Methods(ConvexShapeSettings);
+            pub usingnamespace ShapeSettingsImpl.Methods(T);
 
             pub fn asConvexShapeSettings(convex_shape_settings: T) ConvexShapeSettings {
                 return @ptrCast(ConvexShapeSettings, convex_shape_settings);
