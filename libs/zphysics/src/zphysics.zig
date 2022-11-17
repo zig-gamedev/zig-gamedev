@@ -4,6 +4,7 @@ const c = @cImport(@cInclude("JoltC.h"));
 
 pub const Shape = *opaque {};
 pub const Body = *opaque {};
+pub const Material = *opaque {};
 pub const GroupFilter = *opaque {};
 pub const BroadPhaseLayer = c.JPH_BroadPhaseLayer;
 pub const ObjectLayer = c.JPH_ObjectLayer;
@@ -411,6 +412,92 @@ pub const BodyInterface = *opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// ShapeSettings
+//
+//--------------------------------------------------------------------------------------------------
+pub const ShapeSettings = *align(@sizeOf(usize)) ShapeSettingsImpl;
+
+pub const ShapeSettingsImpl = opaque {
+    pub usingnamespace Methods(ShapeSettings);
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asShapeSettings(shape_settings: T) ShapeSettings {
+                return @ptrCast(ShapeSettings, shape_settings);
+            }
+
+            pub fn addRef(shape_settings: T) void {
+                c.JPH_ShapeSettings_AddRef(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+            }
+            pub fn release(shape_settings: T) void {
+                c.JPH_ShapeSettings_Release(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+            }
+            pub fn getRefCount(shape_settings: T) u32 {
+                return c.JPH_ShapeSettings_GetRefCount(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+            }
+
+            pub fn createShape(shape_settings: T) !Shape {
+                const shape = c.JPH_ShapeSettings_CreateShape(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+                if (shape == null)
+                    return error.FailedToCreateShape;
+                return @ptrCast(Shape, shape.?);
+            }
+
+            pub fn getUserData(shape_settings: T) u64 {
+                return c.JPH_ShapeSettings_GetUserData(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+            }
+            pub fn setUserData(shape_settings: T, user_data: u64) void {
+                return c.JPH_ShapeSettings_SetUserData(@ptrCast(*c.JPH_ShapeSettings, shape_settings), user_data);
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_ConvexShapeSettings (-> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const ConvexShapeSettings = *align(@sizeOf(usize)) ConvexShapeSettingsImpl;
+
+pub const ConvexShapeSettingsImpl = opaque {
+    pub usingnamespace Methods(ConvexShapeSettings);
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub usingnamespace ShapeSettingsImpl.Methods(ConvexShapeSettings);
+
+            pub fn asConvexShapeSettings(convex_shape_settings: T) ConvexShapeSettings {
+                return @ptrCast(ConvexShapeSettings, convex_shape_settings);
+            }
+
+            pub fn getMaterial(convex_shape_settings: T) ?Material {
+                return @ptrCast(?Material, c.JPH_ConvexShapeSettings_GetMaterial(
+                    @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
+                ));
+            }
+            pub fn setMaterial(convex_shape_settings: T, material: ?Material) void {
+                c.JPH_ConvexShapeSettings_SetMaterial(
+                    @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
+                    @ptrCast(?*c.JPH_PhysicsMaterial, material),
+                );
+            }
+
+            pub fn getDensity(convex_shape_settings: T) f32 {
+                return c.JPH_ConvexShapeSettings_GetDensity(
+                    @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
+                );
+            }
+            pub fn setDensity(shape_settings: T, density: f32) void {
+                c.JPH_ConvexShapeSettings_SetDensity(
+                    @ptrCast(*c.JPH_ConvexShapeSettings, shape_settings),
+                    density,
+                );
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Memory allocation
 //
 //--------------------------------------------------------------------------------------------------
@@ -505,6 +592,11 @@ test "zphysics.basic" {
 
     _ = CollisionGroup.init();
     _ = BodyCreationSettings.init();
+
+    //_ = ShapeSettingsImpl.Methods;
+
+    //const convex_shape_settings: ConvexShapeSettings = undefined;
+    //_ = convex_shape_settings.getDensity();
 }
 
 extern fn JoltCTest_Basic1() u32;
