@@ -548,6 +548,31 @@ pub const ShapeType = enum(c.JPH_ShapeType) {
     user4 = c.JPH_SHAPE_TYPE_USER4,
 };
 
+pub const ShapeSubType = enum(c.JPH_ShapeSubType) {
+    sphere = c.JPH_SHAPE_SUB_TYPE_SPHERE,
+    box = c.JPH_SHAPE_SUB_TYPE_BOX,
+    triangle = c.JPH_SHAPE_SUB_TYPE_TRIANGLE,
+    capsule = c.JPH_SHAPE_SUB_TYPE_CAPSULE,
+    tapered_capsule = c.JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE,
+    cylinder = c.JPH_SHAPE_SUB_TYPE_CYLINDER,
+    convex_hull = c.JPH_SHAPE_SUB_TYPE_CONVEX_HULL,
+    static_compound = c.JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND,
+    mutable_compound = c.JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND,
+    rotated_translated = c.JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED,
+    scaled = c.JPH_SHAPE_SUB_TYPE_SCALED,
+    offset_center_of_mass = c.JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS,
+    mesh = c.JPH_SHAPE_SUB_TYPE_MESH,
+    height_field = c.JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD,
+    user1 = c.JPH_SHAPE_SUB_TYPE_USER1,
+    user2 = c.JPH_SHAPE_SUB_TYPE_USER2,
+    user3 = c.JPH_SHAPE_SUB_TYPE_USER3,
+    user4 = c.JPH_SHAPE_SUB_TYPE_USER4,
+    user5 = c.JPH_SHAPE_SUB_TYPE_USER5,
+    user6 = c.JPH_SHAPE_SUB_TYPE_USER6,
+    user7 = c.JPH_SHAPE_SUB_TYPE_USER7,
+    user8 = c.JPH_SHAPE_SUB_TYPE_USER8,
+};
+
 pub const Shape = *align(@sizeOf(usize)) ShapeImpl;
 
 pub const ShapeImpl = opaque {
