@@ -2,7 +2,6 @@ const std = @import("std");
 const assert = std.debug.assert;
 const c = @cImport(@cInclude("JoltC.h"));
 
-pub const Shape = *opaque {};
 pub const Body = *opaque {};
 pub const Material = *opaque {};
 pub const GroupFilter = *opaque {};
@@ -440,7 +439,7 @@ pub const ShapeSettingsImpl = opaque {
                 const shape = c.JPH_ShapeSettings_CreateShape(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
                 if (shape == null)
                     return error.FailedToCreateShape;
-                return @ptrCast(Shape, shape.?);
+                return @ptrCast(Shape, @alignCast(@sizeOf(usize), shape.?));
             }
 
             pub fn getUserData(shape_settings: T) u64 {
@@ -530,6 +529,46 @@ pub const BoxShapeSettingsImpl = opaque {
             @ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings),
             convex_radius,
         );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Shape
+//
+//--------------------------------------------------------------------------------------------------
+pub const ShapeType = enum(c.JPH_ShapeType) {
+    convex = c.JPH_SHAPE_TYPE_CONVEX,
+    compound = c.JPH_SHAPE_TYPE_COMPOUND,
+    decorated = c.JPH_SHAPE_TYPE_DECORATED,
+    mesh = c.JPH_SHAPE_TYPE_MESH,
+    height_field = c.JPH_SHAPE_TYPE_HEIGHT_FIELD,
+    user1 = c.JPH_SHAPE_TYPE_USER1,
+    user2 = c.JPH_SHAPE_TYPE_USER2,
+    user3 = c.JPH_SHAPE_TYPE_USER3,
+    user4 = c.JPH_SHAPE_TYPE_USER4,
+};
+
+pub const Shape = *align(@sizeOf(usize)) ShapeImpl;
+
+pub const ShapeImpl = opaque {
+    pub usingnamespace Methods(Shape);
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asShape(shape: T) Shape {
+                return @ptrCast(Shape, shape);
+            }
+
+            pub fn addRef(shape: T) void {
+                c.JPH_Shape_AddRef(@ptrCast(*c.JPH_Shape, shape));
+            }
+            pub fn release(shape: T) void {
+                c.JPH_Shape_Release(@ptrCast(*c.JPH_Shape, shape));
+            }
+            pub fn getRefCount(shape: T) u32 {
+                return c.JPH_Shape_GetRefCount(@ptrCast(*c.JPH_Shape, shape));
+            }
+        };
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -655,11 +694,10 @@ test "zphysics.basic" {
     try expect(box_shape_settings.asConvexShapeSettings().getDensity() == 2.0);
     try expect(box_shape_settings.asShapeSettings().getRefCount() == 1);
 
-    //const box_shape = try box_shape_settings.createShape();
-    //defer box_shape.release();
-
-    //const convex_shape_settings: ConvexShapeSettings = undefined;
-    //_ = convex_shape_settings.getDensity();
+    const box_shape = try box_shape_settings.createShape();
+    defer box_shape.release();
+    try expect(box_shape.getRefCount() == 2);
+    try expect(box_shape_settings.getRefCount() == 1);
 }
 
 extern fn JoltCTest_Basic1() u32;
