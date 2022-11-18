@@ -818,11 +818,15 @@ test "zphysics.body.basic" {
     floor_settings.object_layer = test_cb1.layers.non_moving;
     const body = try body_interface.createBody(floor_settings);
     defer body_interface.destroyBody(body.getId());
+    try expect(physics_system.getNumBodies() == 1);
 
     {
         const body1 = try body_interface.createBody(floor_settings);
         defer body_interface.destroyBody(body1.getId());
+        try expect(physics_system.getNumBodies() == 2);
     }
+
+    try expect(physics_system.getNumBodies() == 1);
 }
 
 extern fn JoltCTest_Basic1() u32;
