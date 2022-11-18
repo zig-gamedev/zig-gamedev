@@ -292,14 +292,14 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     c.JPH_RegisterTypes();
 
     assert(temp_allocator == null and job_system == null);
-    temp_allocator = @ptrCast(*TempAllocator, c.JPH_TempAllocator_Create(args.temp_allocator_size).?);
-    job_system = @ptrCast(*JobSystem, c.JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads).?);
+    temp_allocator = @ptrCast(*TempAllocator, c.JPH_TempAllocator_Create(args.temp_allocator_size));
+    job_system = @ptrCast(*JobSystem, c.JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads));
 }
 
 pub fn deinit() void {
-    c.JPH_JobSystem_Destroy(@ptrCast(*c.JPH_JobSystem, job_system.?));
+    c.JPH_JobSystem_Destroy(@ptrCast(*c.JPH_JobSystem, job_system));
     job_system = null;
-    c.JPH_TempAllocator_Destroy(@ptrCast(*c.JPH_TempAllocator, temp_allocator.?));
+    c.JPH_TempAllocator_Destroy(@ptrCast(*c.JPH_TempAllocator, temp_allocator));
     temp_allocator = null;
     c.JPH_DestroyFactory();
 
@@ -355,7 +355,7 @@ pub const PhysicsSystem = opaque {
     pub fn getBodyInterface(physics_system: *PhysicsSystem) *BodyInterface {
         return @ptrCast(
             *BodyInterface,
-            c.JPH_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPH_PhysicsSystem, physics_system)).?,
+            c.JPH_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPH_PhysicsSystem, physics_system)),
         );
     }
 
@@ -390,8 +390,8 @@ pub const PhysicsSystem = opaque {
             delta_time,
             args.collision_steps,
             args.integration_sub_steps,
-            @ptrCast(*c.JPH_TempAllocator, temp_allocator.?),
-            @ptrCast(*c.JPH_JobSystem, job_system.?),
+            @ptrCast(*c.JPH_TempAllocator, temp_allocator),
+            @ptrCast(*c.JPH_JobSystem, job_system),
         );
     }
 };
@@ -408,7 +408,7 @@ pub const BodyInterface = opaque {
         );
         if (body == null)
             return error.FailedToCreateBody;
-        return @ptrCast(*Body, body.?);
+        return @ptrCast(*Body, body);
     }
 
     pub fn destroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
@@ -453,7 +453,7 @@ pub const ShapeSettings = opaque {
                 const shape = c.JPH_ShapeSettings_CreateShape(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
                 if (shape == null)
                     return error.FailedToCreateShape;
-                return @ptrCast(*Shape, shape.?);
+                return @ptrCast(*Shape, shape);
             }
 
             pub fn getUserData(shape_settings: *T) u64 {
@@ -509,7 +509,7 @@ pub const ConvexShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// BoxShapeSettings
+// BoxShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 pub const BoxShapeSettings = opaque {
@@ -519,7 +519,7 @@ pub const BoxShapeSettings = opaque {
         const box_shape_settings = c.JPH_BoxShapeSettings_Create(&half_extent);
         if (box_shape_settings == null)
             return error.FailedToCreateBoxShapeSettings;
-        return @ptrCast(*BoxShapeSettings, box_shape_settings.?);
+        return @ptrCast(*BoxShapeSettings, box_shape_settings);
     }
 
     pub fn getHalfExtent(box_shape_settings: *BoxShapeSettings) [3]f32 {
