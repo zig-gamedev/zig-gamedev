@@ -2,8 +2,8 @@ const std = @import("std");
 const assert = std.debug.assert;
 const c = @cImport(@cInclude("JoltC.h"));
 
-pub const Material = *opaque {};
-pub const GroupFilter = *opaque {};
+pub const Material = opaque {};
+pub const GroupFilter = opaque {};
 pub const BroadPhaseLayer = c.JPH_BroadPhaseLayer;
 pub const ObjectLayer = c.JPH_ObjectLayer;
 pub const BodyId = c.JPH_BodyID;
@@ -15,8 +15,8 @@ pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(
 pub const max_physics_jobs: u32 = c.JPH_MAX_PHYSICS_JOBS;
 pub const max_physics_barriers: u32 = c.JPH_MAX_PHYSICS_BARRIERS;
 
-const TempAllocator = *opaque {};
-const JobSystem = *opaque {};
+const TempAllocator = opaque {};
+const JobSystem = opaque {};
 
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
     reserved0: ?*const anyopaque = null,
@@ -184,7 +184,7 @@ pub const ContactManifold = extern struct {
 };
 
 pub const CollisionGroup = extern struct {
-    filter: ?GroupFilter,
+    filter: ?*GroupFilter,
     group_id: GroupId,
     sub_group_id: SubGroupId,
 
@@ -271,8 +271,8 @@ var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
-var temp_allocator: ?TempAllocator = null;
-var job_system: ?JobSystem = null;
+var temp_allocator: ?*TempAllocator = null;
+var job_system: ?*JobSystem = null;
 
 pub fn init(allocator: std.mem.Allocator, args: struct {
     temp_allocator_size: u32 = 16 * 1024 * 1024,
@@ -292,8 +292,8 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     c.JPH_RegisterTypes();
 
     assert(temp_allocator == null and job_system == null);
-    temp_allocator = @ptrCast(TempAllocator, c.JPH_TempAllocator_Create(args.temp_allocator_size).?);
-    job_system = @ptrCast(JobSystem, c.JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads).?);
+    temp_allocator = @ptrCast(*TempAllocator, c.JPH_TempAllocator_Create(args.temp_allocator_size).?);
+    job_system = @ptrCast(*JobSystem, c.JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads).?);
 }
 
 pub fn deinit() void {
@@ -481,12 +481,12 @@ pub const ConvexShapeSettings = opaque {
                 return @ptrCast(*ConvexShapeSettings, convex_shape_settings);
             }
 
-            pub fn getMaterial(convex_shape_settings: *T) ?Material {
-                return @ptrCast(?Material, c.JPH_ConvexShapeSettings_GetMaterial(
+            pub fn getMaterial(convex_shape_settings: *T) ?*Material {
+                return @ptrCast(?*Material, c.JPH_ConvexShapeSettings_GetMaterial(
                     @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
                 ));
             }
-            pub fn setMaterial(convex_shape_settings: *T, material: ?Material) void {
+            pub fn setMaterial(convex_shape_settings: *T, material: ?*Material) void {
                 c.JPH_ConvexShapeSettings_SetMaterial(
                     @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
                     @ptrCast(?*c.JPH_PhysicsMaterial, material),
