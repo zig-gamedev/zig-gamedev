@@ -105,8 +105,8 @@ const ContactListener = extern struct {
 
     fn onContactValidate(
         self: *anyopaque,
-        body1: zphy.Body,
-        body2: zphy.Body,
+        body1: *zphy.Body,
+        body2: *zphy.Body,
         collision_result: *const zphy.CollideShapeResult,
     ) callconv(.C) zphy.ValidateResult {
         // Let's just call a default implementation as a test.
@@ -128,7 +128,7 @@ const DemoState = struct {
 
     broad_phase_layer_interface: *BroadPhaseLayerInterface,
     contact_listener: *ContactListener,
-    physics_system: zphy.PhysicsSystem,
+    physics_system: *zphy.PhysicsSystem,
 };
 
 fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
@@ -226,7 +226,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     const contact_listener = try allocator.create(ContactListener);
     contact_listener.* = .{};
 
-    const physics_system = try zphy.createPhysicsSystem(
+    const physics_system = try zphy.PhysicsSystem.create(
         broad_phase_layer_interface,
         broadPhaseCanCollide,
         objectCanCollide,

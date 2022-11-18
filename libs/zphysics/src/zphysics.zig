@@ -56,22 +56,22 @@ pub const ContactListenerVTable = extern struct {
 
     onContactValidate: *const fn (
         self: *anyopaque,
-        body1: Body,
-        body2: Body,
+        body1: *Body,
+        body2: *Body,
         collision_result: *const CollideShapeResult,
     ) callconv(.C) ValidateResult = onContactValidate,
 
     onContactAdded: *const fn (
         self: *anyopaque,
-        body1: Body,
-        body2: Body,
+        body1: *Body,
+        body2: *Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
     ) callconv(.C) void = (struct {
         fn defaultImpl(
             _: *anyopaque,
-            _: Body,
-            _: Body,
+            _: *Body,
+            _: *Body,
             _: *const ContactManifold,
             _: *ContactSettings,
         ) callconv(.C) void {
@@ -81,15 +81,15 @@ pub const ContactListenerVTable = extern struct {
 
     onContactPersisted: *const fn (
         self: *anyopaque,
-        body1: Body,
-        body2: Body,
+        body1: *Body,
+        body2: *Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
     ) callconv(.C) void = (struct {
         fn defaultImpl(
             _: *anyopaque,
-            _: Body,
-            _: Body,
+            _: *Body,
+            _: *Body,
             _: *const ContactManifold,
             _: *ContactSettings,
         ) callconv(.C) void {
@@ -108,8 +108,8 @@ pub const ContactListenerVTable = extern struct {
 
     pub fn onContactValidate(
         _: *anyopaque,
-        _: Body,
-        _: Body,
+        _: *Body,
+        _: *Body,
         _: *const CollideShapeResult,
     ) callconv(.C) ValidateResult {
         return .accept_all_contacts;
