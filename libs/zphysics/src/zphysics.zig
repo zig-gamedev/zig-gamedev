@@ -713,40 +713,50 @@ test "zphysics.basic" {
     _ = CollisionGroup.init();
     _ = BodyCreationSettings.init();
 
-    const box_shape_settings = try createBoxShapeSettings(.{ 1.0, 2.0, 3.0 });
-    errdefer box_shape_settings.release();
+    var box_shape_settings: ?BoxShapeSettings = null;
+    box_shape_settings = try createBoxShapeSettings(.{ 1.0, 2.0, 3.0 });
+    defer {
+        if (box_shape_settings) |bss| bss.release();
+    }
 
-    box_shape_settings.setDensity(2.0);
-    try expect(box_shape_settings.getDensity() == 2.0);
+    box_shape_settings.?.setDensity(2.0);
+    try expect(box_shape_settings.?.getDensity() == 2.0);
 
-    box_shape_settings.setUserData(123);
-    try expect(box_shape_settings.getUserData() == 123);
+    box_shape_settings.?.setUserData(123);
+    try expect(box_shape_settings.?.getUserData() == 123);
 
-    box_shape_settings.setConvexRadius(0.5);
-    try expect(box_shape_settings.getConvexRadius() == 0.5);
+    box_shape_settings.?.setConvexRadius(0.5);
+    try expect(box_shape_settings.?.getConvexRadius() == 0.5);
 
-    try expect(box_shape_settings.getRefCount() == 1);
-    box_shape_settings.addRef();
-    try expect(box_shape_settings.getRefCount() == 2);
-    box_shape_settings.release();
-    try expect(box_shape_settings.getRefCount() == 1);
+    try expect(box_shape_settings.?.getRefCount() == 1);
+    box_shape_settings.?.addRef();
+    try expect(box_shape_settings.?.getRefCount() == 2);
+    box_shape_settings.?.release();
+    try expect(box_shape_settings.?.getRefCount() == 1);
 
     {
-        var he = box_shape_settings.getHalfExtent();
+        var he = box_shape_settings.?.getHalfExtent();
         try expect(he[0] == 1.0 and he[1] == 2.0 and he[2] == 3.0);
-        box_shape_settings.setHalfExtent(.{ 4.0, 5.0, 6.0 });
-        he = box_shape_settings.getHalfExtent();
+        box_shape_settings.?.setHalfExtent(.{ 4.0, 5.0, 6.0 });
+        he = box_shape_settings.?.getHalfExtent();
         try expect(he[0] == 4.0 and he[1] == 5.0 and he[2] == 6.0);
     }
 
-    try expect(box_shape_settings.asConvexShapeSettings().getDensity() == 2.0);
-    try expect(box_shape_settings.asShapeSettings().getRefCount() == 1);
+    try expect(box_shape_settings.?.asConvexShapeSettings().getDensity() == 2.0);
+    try expect(box_shape_settings.?.asShapeSettings().getRefCount() == 1);
 
-    const box_shape = try box_shape_settings.createShape();
+    const box_shape = try box_shape_settings.?.createShape();
     defer box_shape.release();
 
+    {
+        const bs = try box_shape_settings.?.createShape();
+        defer bs.release();
+        try expect(bs == box_shape);
+    }
+
     try expect(box_shape.getRefCount() == 2);
-    box_shape_settings.release();
+    box_shape_settings.?.release();
+    box_shape_settings = null;
     try expect(box_shape.getRefCount() == 1);
 
     try expect(box_shape.getType() == .convex);
