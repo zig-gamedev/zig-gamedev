@@ -593,6 +593,26 @@ pub const ShapeImpl = opaque {
             pub fn getRefCount(shape: T) u32 {
                 return c.JPH_Shape_GetRefCount(@ptrCast(*c.JPH_Shape, shape));
             }
+
+            pub fn getType(shape: T) ShapeType {
+                return @intToEnum(
+                    ShapeType,
+                    c.JPH_Shape_GetType(@ptrCast(*c.JPH_Shape, shape)),
+                );
+            }
+            pub fn getSubType(shape: T) ShapeSubType {
+                return @intToEnum(
+                    ShapeSubType,
+                    c.JPH_Shape_GetSubType(@ptrCast(*c.JPH_Shape, shape)),
+                );
+            }
+
+            pub fn getUserData(shape: T) u64 {
+                return c.JPH_Shape_GetUserData(@ptrCast(*c.JPH_Shape, shape));
+            }
+            pub fn setUserData(shape: T, user_data: u64) void {
+                return c.JPH_Shape_SetUserData(@ptrCast(*c.JPH_Shape, shape), user_data);
+            }
         };
     }
 };
@@ -699,6 +719,9 @@ test "zphysics.basic" {
     box_shape_settings.setDensity(2.0);
     try expect(box_shape_settings.getDensity() == 2.0);
 
+    box_shape_settings.setUserData(123);
+    try expect(box_shape_settings.getUserData() == 123);
+
     box_shape_settings.setConvexRadius(0.5);
     try expect(box_shape_settings.getConvexRadius() == 0.5);
 
@@ -723,6 +746,12 @@ test "zphysics.basic" {
     defer box_shape.release();
     try expect(box_shape.getRefCount() == 2);
     try expect(box_shape_settings.getRefCount() == 1);
+
+    try expect(box_shape.getType() == .convex);
+    try expect(box_shape.getSubType() == .box);
+
+    box_shape.setUserData(456);
+    try expect(box_shape.getUserData() == 456);
 }
 
 extern fn JoltCTest_Basic1() u32;
