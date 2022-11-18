@@ -714,7 +714,7 @@ test "zphysics.basic" {
     _ = BodyCreationSettings.init();
 
     const box_shape_settings = try createBoxShapeSettings(.{ 1.0, 2.0, 3.0 });
-    defer box_shape_settings.release();
+    errdefer box_shape_settings.release();
 
     box_shape_settings.setDensity(2.0);
     try expect(box_shape_settings.getDensity() == 2.0);
@@ -744,8 +744,10 @@ test "zphysics.basic" {
 
     const box_shape = try box_shape_settings.createShape();
     defer box_shape.release();
+
     try expect(box_shape.getRefCount() == 2);
-    try expect(box_shape_settings.getRefCount() == 1);
+    box_shape_settings.release();
+    try expect(box_shape.getRefCount() == 1);
 
     try expect(box_shape.getType() == .convex);
     try expect(box_shape.getSubType() == .box);
