@@ -2,7 +2,6 @@ const std = @import("std");
 const assert = std.debug.assert;
 const c = @cImport(@cInclude("JoltC.h"));
 
-pub const Body = *opaque {};
 pub const Material = *opaque {};
 pub const GroupFilter = *opaque {};
 pub const BroadPhaseLayer = c.JPH_BroadPhaseLayer;
@@ -402,11 +401,28 @@ pub const PhysicsSystem = *opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const BodyInterface = *opaque {
-    pub fn createBody(body_iface: BodyInterface, settings: BodyCreationSettings) ?Body {
-        return @ptrCast(?Body, c.JPH_BodyInterface_CreateBody(
+    pub fn createBody(body_iface: BodyInterface, settings: BodyCreationSettings) !Body {
+        const body = c.JPH_BodyInterface_CreateBody(
             @ptrCast(*c.JPH_BodyInterface, body_iface),
             @ptrCast(*const c.JPH_BodyCreationSettings, &settings),
-        ));
+        );
+        if (body == null)
+            return error.FailedToCreateBody;
+        return @ptrCast(Body, body.?);
+    }
+
+    pub fn destroyBody(body_iface: BodyInterface, body_id: BodyId) void {
+        c.JPH_BodyInterface_DestroyBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Body
+//
+//--------------------------------------------------------------------------------------------------
+pub const Body = *opaque {
+    pub fn getId(body: Body) BodyId {
+        return c.JPH_Body_GetID(@ptrCast(*c.JPH_Body, body));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -765,6 +781,48 @@ test "zphysics.basic" {
 
     box_shape.setUserData(456);
     try expect(box_shape.getUserData() == 456);
+}
+
+test "zphysics.body.basic" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
+
+    const physics_system = try createPhysicsSystem(
+        &broad_phase_layer_interface,
+        test_cb1.myBroadPhaseCanCollide,
+        test_cb1.myObjectCanCollide,
+        .{
+            .max_bodies = 1024,
+            .num_body_mutexes = 0,
+            .max_body_pairs = 1024,
+            .max_contact_constraints = 1024,
+        },
+    );
+    defer physics_system.destroy();
+
+    const body_interface = physics_system.getBodyInterface();
+
+    const floor_shape_settings = try createBoxShapeSettings(.{ 100.0, 1.0, 100.0 });
+    defer floor_shape_settings.release();
+
+    const floor_shape = try floor_shape_settings.createShape();
+    defer floor_shape.release();
+
+    var floor_settings = BodyCreationSettings.init();
+    floor_settings.position = .{ 0.0, -1.0, 0.0, 1.0 };
+    floor_settings.rotation = .{ 0.0, 0.0, 0.0, 1.0 };
+    floor_settings.shape = floor_shape;
+    floor_settings.motion_type = .static;
+    floor_settings.object_layer = test_cb1.layers.non_moving;
+    const body = try body_interface.createBody(floor_settings);
+    defer body_interface.destroyBody(body.getId());
+
+    {
+        const body1 = try body_interface.createBody(floor_settings);
+        defer body_interface.destroyBody(body1.getId());
+    }
 }
 
 extern fn JoltCTest_Basic1() u32;
