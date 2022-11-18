@@ -752,6 +752,7 @@ test "zphysics.basic" {
         const bs = try box_shape_settings.?.createShape();
         defer bs.release();
         try expect(bs == box_shape);
+        try expect(bs.getRefCount() == 3);
     }
 
     try expect(box_shape.getRefCount() == 2);
