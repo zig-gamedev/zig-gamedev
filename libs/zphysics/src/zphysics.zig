@@ -251,7 +251,7 @@ pub const BodyCreationSettings = extern struct {
     inertia_multiplier: f32,
     mass_properties_override: MassProperties,
     reserved: ?*const anyopaque,
-    shape: ?Shape,
+    shape: ?*Shape,
 
     pub fn init() BodyCreationSettings {
         return @ptrCast(*const BodyCreationSettings, &c.JPH_BodyCreationSettings_InitDefault()).*;
@@ -312,73 +312,73 @@ pub fn deinit() void {
 // PhysicsSystem
 //
 //--------------------------------------------------------------------------------------------------
-pub fn createPhysicsSystem(
-    broad_phase_layer_interface: *const anyopaque,
-    object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
-    object_layer_pair_filter: ObjectLayerPairFilter,
-    args: struct {
-        max_bodies: u32 = 1024,
-        num_body_mutexes: u32 = 0,
-        max_body_pairs: u32 = 1024,
-        max_contact_constraints: u32 = 1024,
-    },
-) !PhysicsSystem {
-    const physics_system = c.JPH_PhysicsSystem_Create();
-    c.JPH_PhysicsSystem_Init(
-        physics_system,
-        args.max_bodies,
-        args.num_body_mutexes,
-        args.max_body_pairs,
-        args.max_contact_constraints,
-        broad_phase_layer_interface,
-        object_vs_broad_phase_layer_filter,
-        object_layer_pair_filter,
-    );
-    return @ptrCast(PhysicsSystem, physics_system);
-}
+pub const PhysicsSystem = opaque {
+    pub fn create(
+        broad_phase_layer_interface: *const anyopaque,
+        object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
+        object_layer_pair_filter: ObjectLayerPairFilter,
+        args: struct {
+            max_bodies: u32 = 1024,
+            num_body_mutexes: u32 = 0,
+            max_body_pairs: u32 = 1024,
+            max_contact_constraints: u32 = 1024,
+        },
+    ) !*PhysicsSystem {
+        const physics_system = c.JPH_PhysicsSystem_Create();
+        c.JPH_PhysicsSystem_Init(
+            physics_system,
+            args.max_bodies,
+            args.num_body_mutexes,
+            args.max_body_pairs,
+            args.max_contact_constraints,
+            broad_phase_layer_interface,
+            object_vs_broad_phase_layer_filter,
+            object_layer_pair_filter,
+        );
+        return @ptrCast(*PhysicsSystem, physics_system);
+    }
 
-pub const PhysicsSystem = *opaque {
-    pub fn destroy(physics_system: PhysicsSystem) void {
+    pub fn destroy(physics_system: *PhysicsSystem) void {
         c.JPH_PhysicsSystem_Destroy(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
 
-    pub fn getNumBodies(physics_system: PhysicsSystem) u32 {
+    pub fn getNumBodies(physics_system: *PhysicsSystem) u32 {
         return c.JPH_PhysicsSystem_GetNumBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
-    pub fn getNumActiveBodies(physics_system: PhysicsSystem) u32 {
+    pub fn getNumActiveBodies(physics_system: *PhysicsSystem) u32 {
         return c.JPH_PhysicsSystem_GetNumActiveBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
-    pub fn getMaxBodies(physics_system: PhysicsSystem) u32 {
+    pub fn getMaxBodies(physics_system: *PhysicsSystem) u32 {
         return c.JPH_PhysicsSystem_GetMaxBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
 
-    pub fn getBodyInterface(physics_system: PhysicsSystem) BodyInterface {
+    pub fn getBodyInterface(physics_system: *PhysicsSystem) *BodyInterface {
         return @ptrCast(
-            BodyInterface,
+            *BodyInterface,
             c.JPH_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPH_PhysicsSystem, physics_system)).?,
         );
     }
 
-    pub fn setBodyActivationListener(physics_system: PhysicsSystem, listener: ?*anyopaque) void {
+    pub fn setBodyActivationListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
         c.JPH_PhysicsSystem_SetBodyActivationListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system), listener);
     }
-    pub fn getBodyActivationListener(physics_system: PhysicsSystem) ?*anyopaque {
+    pub fn getBodyActivationListener(physics_system: *PhysicsSystem) ?*anyopaque {
         return c.JPH_PhysicsSystem_GetBodyActivationListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
 
-    pub fn setContactListener(physics_system: PhysicsSystem, listener: ?*anyopaque) void {
+    pub fn setContactListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
         c.JPH_PhysicsSystem_SetContactListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system), listener);
     }
-    pub fn getContactListener(physics_system: PhysicsSystem) ?*anyopaque {
+    pub fn getContactListener(physics_system: *PhysicsSystem) ?*anyopaque {
         return c.JPH_PhysicsSystem_GetContactListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
 
-    pub fn optimizeBroadPhase(physics_system: PhysicsSystem) void {
+    pub fn optimizeBroadPhase(physics_system: *PhysicsSystem) void {
         c.JPH_PhysicsSystem_OptimizeBroadPhase(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
     }
 
     pub fn update(
-        physics_system: PhysicsSystem,
+        physics_system: *PhysicsSystem,
         delta_time: f32,
         args: struct {
             collision_steps: i32 = 1,
@@ -400,18 +400,18 @@ pub const PhysicsSystem = *opaque {
 // BodyInterface
 //
 //--------------------------------------------------------------------------------------------------
-pub const BodyInterface = *opaque {
-    pub fn createBody(body_iface: BodyInterface, settings: BodyCreationSettings) !Body {
+pub const BodyInterface = opaque {
+    pub fn createBody(body_iface: *BodyInterface, settings: BodyCreationSettings) !*Body {
         const body = c.JPH_BodyInterface_CreateBody(
             @ptrCast(*c.JPH_BodyInterface, body_iface),
             @ptrCast(*const c.JPH_BodyCreationSettings, &settings),
         );
         if (body == null)
             return error.FailedToCreateBody;
-        return @ptrCast(Body, body.?);
+        return @ptrCast(*Body, body.?);
     }
 
-    pub fn destroyBody(body_iface: BodyInterface, body_id: BodyId) void {
+    pub fn destroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
         c.JPH_BodyInterface_DestroyBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
     }
 };
@@ -420,8 +420,8 @@ pub const BodyInterface = *opaque {
 // Body
 //
 //--------------------------------------------------------------------------------------------------
-pub const Body = *opaque {
-    pub fn getId(body: Body) BodyId {
+pub const Body = opaque {
+    pub fn getId(body: *Body) BodyId {
         return c.JPH_Body_GetID(@ptrCast(*c.JPH_Body, body));
     }
 };
@@ -430,38 +430,36 @@ pub const Body = *opaque {
 // ShapeSettings
 //
 //--------------------------------------------------------------------------------------------------
-pub const ShapeSettings = *align(@sizeOf(usize)) ShapeSettingsImpl;
-
-pub const ShapeSettingsImpl = opaque {
-    pub usingnamespace Methods(ShapeSettings);
+pub const ShapeSettings = opaque {
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asShapeSettings(shape_settings: T) ShapeSettings {
-                return @ptrCast(ShapeSettings, shape_settings);
+            pub fn asShapeSettings(shape_settings: *T) *ShapeSettings {
+                return @ptrCast(*ShapeSettings, shape_settings);
             }
 
-            pub fn addRef(shape_settings: T) void {
+            pub fn addRef(shape_settings: *T) void {
                 c.JPH_ShapeSettings_AddRef(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
             }
-            pub fn release(shape_settings: T) void {
+            pub fn release(shape_settings: *T) void {
                 c.JPH_ShapeSettings_Release(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
             }
-            pub fn getRefCount(shape_settings: T) u32 {
+            pub fn getRefCount(shape_settings: *T) u32 {
                 return c.JPH_ShapeSettings_GetRefCount(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
             }
 
-            pub fn createShape(shape_settings: T) !Shape {
+            pub fn createShape(shape_settings: *T) !*Shape {
                 const shape = c.JPH_ShapeSettings_CreateShape(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
                 if (shape == null)
                     return error.FailedToCreateShape;
-                return @ptrCast(Shape, @alignCast(@sizeOf(usize), shape.?));
+                return @ptrCast(*Shape, shape.?);
             }
 
-            pub fn getUserData(shape_settings: T) u64 {
+            pub fn getUserData(shape_settings: *T) u64 {
                 return c.JPH_ShapeSettings_GetUserData(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
             }
-            pub fn setUserData(shape_settings: T, user_data: u64) void {
+            pub fn setUserData(shape_settings: *T, user_data: u64) void {
                 return c.JPH_ShapeSettings_SetUserData(@ptrCast(*c.JPH_ShapeSettings, shape_settings), user_data);
             }
         };
@@ -472,37 +470,35 @@ pub const ShapeSettingsImpl = opaque {
 // ConvexShapeSettings (-> ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
-pub const ConvexShapeSettings = *align(@sizeOf(usize)) ConvexShapeSettingsImpl;
-
-pub const ConvexShapeSettingsImpl = opaque {
-    pub usingnamespace Methods(ConvexShapeSettings);
+pub const ConvexShapeSettings = opaque {
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub usingnamespace ShapeSettingsImpl.Methods(T);
+            pub usingnamespace ShapeSettings.Methods(T);
 
-            pub fn asConvexShapeSettings(convex_shape_settings: T) ConvexShapeSettings {
-                return @ptrCast(ConvexShapeSettings, convex_shape_settings);
+            pub fn asConvexShapeSettings(convex_shape_settings: *T) *ConvexShapeSettings {
+                return @ptrCast(*ConvexShapeSettings, convex_shape_settings);
             }
 
-            pub fn getMaterial(convex_shape_settings: T) ?Material {
+            pub fn getMaterial(convex_shape_settings: *T) ?Material {
                 return @ptrCast(?Material, c.JPH_ConvexShapeSettings_GetMaterial(
                     @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
                 ));
             }
-            pub fn setMaterial(convex_shape_settings: T, material: ?Material) void {
+            pub fn setMaterial(convex_shape_settings: *T, material: ?Material) void {
                 c.JPH_ConvexShapeSettings_SetMaterial(
                     @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
                     @ptrCast(?*c.JPH_PhysicsMaterial, material),
                 );
             }
 
-            pub fn getDensity(convex_shape_settings: T) f32 {
+            pub fn getDensity(convex_shape_settings: *T) f32 {
                 return c.JPH_ConvexShapeSettings_GetDensity(
                     @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
                 );
             }
-            pub fn setDensity(shape_settings: T, density: f32) void {
+            pub fn setDensity(shape_settings: *T, density: f32) void {
                 c.JPH_ConvexShapeSettings_SetDensity(
                     @ptrCast(*c.JPH_ConvexShapeSettings, shape_settings),
                     density,
@@ -516,31 +512,29 @@ pub const ConvexShapeSettingsImpl = opaque {
 // BoxShapeSettings
 //
 //--------------------------------------------------------------------------------------------------
-pub const BoxShapeSettings = *align(@sizeOf(usize)) BoxShapeSettingsImpl;
+pub const BoxShapeSettings = opaque {
+    usingnamespace ConvexShapeSettings.Methods(@This());
 
-pub fn createBoxShapeSettings(half_extent: [3]f32) !BoxShapeSettings {
-    const box_shape_settings = c.JPH_BoxShapeSettings_Create(&half_extent);
-    if (box_shape_settings == null)
-        return error.FailedToCreateBoxShapeSettings;
-    return @ptrCast(BoxShapeSettings, @alignCast(@sizeOf(usize), box_shape_settings.?));
-}
+    pub fn create(half_extent: [3]f32) !*BoxShapeSettings {
+        const box_shape_settings = c.JPH_BoxShapeSettings_Create(&half_extent);
+        if (box_shape_settings == null)
+            return error.FailedToCreateBoxShapeSettings;
+        return @ptrCast(*BoxShapeSettings, box_shape_settings.?);
+    }
 
-pub const BoxShapeSettingsImpl = opaque {
-    usingnamespace ConvexShapeSettingsImpl.Methods(BoxShapeSettings);
-
-    pub fn getHalfExtent(box_shape_settings: BoxShapeSettings) [3]f32 {
+    pub fn getHalfExtent(box_shape_settings: *BoxShapeSettings) [3]f32 {
         var half_extent: [3]f32 = undefined;
         c.JPH_BoxShapeSettings_GetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
         return half_extent;
     }
-    pub fn setHalfExtent(box_shape_settings: BoxShapeSettings, half_extent: [3]f32) void {
+    pub fn setHalfExtent(box_shape_settings: *BoxShapeSettings, half_extent: [3]f32) void {
         c.JPH_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
     }
 
-    pub fn getConvexRadius(box_shape_settings: BoxShapeSettings) f32 {
+    pub fn getConvexRadius(box_shape_settings: *BoxShapeSettings) f32 {
         return c.JPH_BoxShapeSettings_GetConvexRadius(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings));
     }
-    pub fn setConvexRadius(box_shape_settings: BoxShapeSettings, convex_radius: f32) void {
+    pub fn setConvexRadius(box_shape_settings: *BoxShapeSettings, convex_radius: f32) void {
         c.JPH_BoxShapeSettings_SetConvexRadius(
             @ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings),
             convex_radius,
@@ -589,44 +583,42 @@ pub const ShapeSubType = enum(c.JPH_ShapeSubType) {
     user8 = c.JPH_SHAPE_SUB_TYPE_USER8,
 };
 
-pub const Shape = *align(@sizeOf(usize)) ShapeImpl;
-
-pub const ShapeImpl = opaque {
-    pub usingnamespace Methods(Shape);
+pub const Shape = opaque {
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asShape(shape: T) Shape {
-                return @ptrCast(Shape, shape);
+            pub fn asShape(shape: *T) *Shape {
+                return @ptrCast(*Shape, shape);
             }
 
-            pub fn addRef(shape: T) void {
+            pub fn addRef(shape: *T) void {
                 c.JPH_Shape_AddRef(@ptrCast(*c.JPH_Shape, shape));
             }
-            pub fn release(shape: T) void {
+            pub fn release(shape: *T) void {
                 c.JPH_Shape_Release(@ptrCast(*c.JPH_Shape, shape));
             }
-            pub fn getRefCount(shape: T) u32 {
+            pub fn getRefCount(shape: *T) u32 {
                 return c.JPH_Shape_GetRefCount(@ptrCast(*c.JPH_Shape, shape));
             }
 
-            pub fn getType(shape: T) ShapeType {
+            pub fn getType(shape: *T) ShapeType {
                 return @intToEnum(
                     ShapeType,
                     c.JPH_Shape_GetType(@ptrCast(*c.JPH_Shape, shape)),
                 );
             }
-            pub fn getSubType(shape: T) ShapeSubType {
+            pub fn getSubType(shape: *T) ShapeSubType {
                 return @intToEnum(
                     ShapeSubType,
                     c.JPH_Shape_GetSubType(@ptrCast(*c.JPH_Shape, shape)),
                 );
             }
 
-            pub fn getUserData(shape: T) u64 {
+            pub fn getUserData(shape: *T) u64 {
                 return c.JPH_Shape_GetUserData(@ptrCast(*c.JPH_Shape, shape));
             }
-            pub fn setUserData(shape: T, user_data: u64) void {
+            pub fn setUserData(shape: *T, user_data: u64) void {
                 return c.JPH_Shape_SetUserData(@ptrCast(*c.JPH_Shape, shape), user_data);
             }
         };
@@ -695,7 +687,7 @@ test "zphysics.basic" {
 
     const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
 
-    const physics_system = try createPhysicsSystem(
+    const physics_system = try PhysicsSystem.create(
         &broad_phase_layer_interface,
         test_cb1.myBroadPhaseCanCollide,
         test_cb1.myObjectCanCollide,
@@ -729,8 +721,8 @@ test "zphysics.basic" {
     _ = CollisionGroup.init();
     _ = BodyCreationSettings.init();
 
-    var box_shape_settings: ?BoxShapeSettings = null;
-    box_shape_settings = try createBoxShapeSettings(.{ 1.0, 2.0, 3.0 });
+    var box_shape_settings: ?*BoxShapeSettings = null;
+    box_shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
     defer {
         if (box_shape_settings) |bss| bss.release();
     }
@@ -789,7 +781,7 @@ test "zphysics.body.basic" {
 
     const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
 
-    const physics_system = try createPhysicsSystem(
+    const physics_system = try PhysicsSystem.create(
         &broad_phase_layer_interface,
         test_cb1.myBroadPhaseCanCollide,
         test_cb1.myObjectCanCollide,
@@ -804,7 +796,7 @@ test "zphysics.body.basic" {
 
     const body_interface = physics_system.getBodyInterface();
 
-    const floor_shape_settings = try createBoxShapeSettings(.{ 100.0, 1.0, 100.0 });
+    const floor_shape_settings = try BoxShapeSettings.create(.{ 100.0, 1.0, 100.0 });
     defer floor_shape_settings.release();
 
     const floor_shape = try floor_shape_settings.createShape();
