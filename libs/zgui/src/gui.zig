@@ -222,9 +222,9 @@ pub const io = struct {
 const Context = *opaque {};
 pub const DrawData = *extern struct {
     valid: bool,
-    cmd_lists_count: c_int,
-    total_idx_count: c_int,
-    total_vtx_count: c_int,
+    cmd_lists_count: i32,
+    total_idx_count: i32,
+    total_vtx_count: i32,
     cmd_lists: [*]DrawList,
     display_pos: [2]f32,
     display_size: [2]f32,
@@ -2888,11 +2888,11 @@ pub const DrawFlags = packed struct(u32) {
 pub const DrawCmd = extern struct {
     clip_rect: [4]f32,
     texture_id: TextureIdent,
-    vtx_offset: c_uint,
-    idx_offset: c_uint,
-    elem_count: c_uint,
+    vtx_offset: u32,
+    idx_offset: u32,
+    elem_count: u32,
     user_callback: ?*anyopaque,
-    user_callback_data: *anyopaque,
+    user_callback_data: ?*anyopaque,
 };
 
 pub const getWindowDrawList = zguiGetWindowDrawList;
@@ -2905,17 +2905,17 @@ extern fn zguiGetForegroundDrawList() DrawList;
 
 pub const DrawList = *opaque {
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
-    extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) c_int;
+    extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
     extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]const DrawVert;
 
     pub const getIndexBufferLength = zguiDrawList_GetIndexBufferLength;
-    extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) c_int;
+    extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) i32;
     pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
     extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]const DrawIdx;
 
     pub const getCmdBufferLength = zguiDrawList_GetCmdBufferLength;
-    extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) c_int;
+    extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) i32;
     pub const getCmdBufferData = zguiDrawList_GetCmdBufferData;
     extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]const DrawCmd;
 
