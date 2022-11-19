@@ -178,6 +178,13 @@ pub const io = struct {
     pub const setDisplaySize = zguiIoSetDisplaySize;
     extern fn zguiIoSetDisplaySize(width: f32, height: f32) void;
 
+    pub fn getDisplaySize() [2]f32 {
+        var size: [2]f32 = undefined;
+        zguiIoGetDisplaySize(&size);
+        return size;
+    }
+    extern fn zguiIoGetDisplaySize(size: *[2]f32) void;
+
     /// `pub fn setDisplayFramebufferScale(sx: f32, sy: f32) void`
     pub const setDisplayFramebufferScale = zguiIoSetDisplayFramebufferScale;
     extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;
@@ -694,6 +701,24 @@ pub fn getContentRegionAvail() [2]f32 {
     return size;
 }
 
+pub fn getContentRegionMax() [2]f32 {
+    var size: [2]f32 = undefined;
+    zguiGetContentRegionMax(&size);
+    return size;
+}
+
+pub fn getWindowContentRegionMin() [2]f32 {
+    var size: [2]f32 = undefined;
+    zguiGetWindowContentRegionMin(&size);
+    return size;
+}
+
+pub fn getWindowContentRegionMax() [2]f32 {
+    var size: [2]f32 = undefined;
+    zguiGetWindowContentRegionMax(&size);
+    return size;
+}
+
 /// `pub fn getWindowWidth() f32`
 pub const getWindowWidth = zguiGetWindowWidth;
 /// `pub fn getWindowHeight() f32`
@@ -703,6 +728,9 @@ extern fn zguiGetWindowSize(size: *[2]f32) void;
 extern fn zguiGetWindowWidth() f32;
 extern fn zguiGetWindowHeight() f32;
 extern fn zguiGetContentRegionAvail(size: *[2]f32) void;
+extern fn zguiGetContentRegionMax(size: *[2]f32) void;
+extern fn zguiGetWindowContentRegionMin(size: *[2]f32) void;
+extern fn zguiGetWindowContentRegionMax(size: *[2]f32) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Style
