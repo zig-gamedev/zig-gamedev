@@ -4,14 +4,13 @@ const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
 pub const f32_min: f32 = 1.17549435082228750796873653722225e-38;
 pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
-
+//--------------------------------------------------------------------------------------------------
 pub const DrawIdx = u16;
-pub const DrawVert = struct {
+pub const DrawVert = extern struct {
     pos: [2]f32,
     uv: [2]f32,
     color: u32,
 };
-
 //--------------------------------------------------------------------------------------------------
 pub fn init(allocator: std.mem.Allocator) void {
     if (zguiGetCurrentContext() == null) {
@@ -411,7 +410,6 @@ const NavInput = enum {
     key_up,
     key_down,
 };
-
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct(u32) {
     no_title_bar: bool = false,
