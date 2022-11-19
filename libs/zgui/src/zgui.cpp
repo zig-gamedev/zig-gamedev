@@ -1194,6 +1194,12 @@ ZGUI_API void zguiIoSetDisplaySize(float width, float height) {
     ImGui::GetIO().DisplaySize = { width, height };
 }
 
+ZGUI_API void zguiIoGetDisplaySize(float size[2]) {
+    const ImVec2 ds = ImGui::GetIO().DisplaySize;
+    size[0] = ds[0];
+    size[1] = ds[1];
+}
+
 ZGUI_API void zguiIoSetDisplayFramebufferScale(float sx, float sy) {
     ImGui::GetIO().DisplayFramebufferScale = { sx, sy };
 }
@@ -1261,6 +1267,24 @@ ZGUI_API void zguiGetContentRegionAvail(float pos[2]) {
     pos[1] = p.y;
 }
 
+ZGUI_API void zguiGetContentRegionMax(float pos[2]) {
+    const ImVec2 p = ImGui::GetContentRegionMax();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiGetWindowContentRegionMin(float pos[2]) {
+    const ImVec2 p = ImGui::GetWindowContentRegionMin();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiGetWindowContentRegionMax(float pos[2]) {
+    const ImVec2 p = ImGui::GetWindowContentRegionMax();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
 ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
     ImGui::PushTextWrapPos(wrap_pos_x);
 }
@@ -1307,7 +1331,7 @@ ZGUI_API bool zguiBeginMenu(const char* label, bool enabled) {
 
 ZGUI_API void zguiEndMenu(void) {
     ImGui::EndMenu();
-} 
+}
 
 ZGUI_API bool zguiMenuItem(const char* label, const char* shortcut, bool selected, bool enabled) {
     return ImGui::MenuItem(label, shortcut, selected, enabled);
