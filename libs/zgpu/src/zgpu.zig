@@ -18,7 +18,7 @@ pub const wgpu = @import("wgpu.zig");
 pub const GraphicsContext = struct {
     pub const swapchain_format = wgpu.TextureFormat.bgra8_unorm;
 
-    window: zglfw.Window,
+    window: *zglfw.Window,
     stats: FrameStats = .{},
 
     native_instance: DawnNativeInstance,
@@ -52,7 +52,7 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    pub fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*GraphicsContext {
+    pub fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*GraphicsContext {
         const checkGraphicsApiSupport = (struct {
             fn impl() error{VulkanNotSupported}!void {
                 // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
@@ -1528,23 +1528,23 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
     },
 };
 
-fn createSurfaceForWindow(instance: wgpu.Instance, window: zglfw.Window) wgpu.Surface {
+fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.Surface {
     const os_tag = @import("builtin").target.os.tag;
 
     const descriptor = if (os_tag == .windows) SurfaceDescriptor{
         .windows_hwnd = .{
             .label = "basic surface",
             .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
-            .hwnd = zglfw.getWin32Window(window) catch unreachable,
+            .hwnd = zglfw.native.getWin32Window(window) catch unreachable,
         },
     } else if (os_tag == .linux) SurfaceDescriptor{
         .xlib = .{
             .label = "basic surface",
-            .display = zglfw.getX11Display() catch unreachable,
-            .window = zglfw.getX11Window(window) catch unreachable,
+            .display = zglfw.native.getX11Display() catch unreachable,
+            .window = zglfw.native.getX11Window(window) catch unreachable,
         },
     } else if (os_tag == .macos) blk: {
-        const ns_window = zglfw.getCocoaWindow(window) catch unreachable;
+        const ns_window = zglfw.native.getCocoaWindow(window) catch unreachable;
         const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
 
         // Create a CAMetalLayer that covers the whole window that will be passed to CreateSurface.

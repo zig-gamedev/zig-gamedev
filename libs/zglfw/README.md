@@ -1,4 +1,4 @@
-# zglfw v0.1 - GLFW bindings
+# zglfw v0.5 - GLFW bindings
 
 ## Getting started
 

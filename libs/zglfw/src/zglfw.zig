@@ -1,16 +1,20 @@
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 5, .patch = 0 };
 const std = @import("std");
-const builtin = @import("builtin");
-
-pub const InitHint = enum(i32) {
+//--------------------------------------------------------------------------------------------------
+//
+// Misc
+//
+//--------------------------------------------------------------------------------------------------
+pub const Hint = enum(i32) {
     joystick_hat_buttons = 0x00050001,
     cocoa_chdir_resources = 0x00051001,
     cocoa_menubar = 0x00051002,
-};
 
-pub fn initHint(hint: InitHint, value: bool) void {
-    glfwInitHint(@enumToInt(hint), @boolToInt(value));
-}
-extern fn glfwInitHint(hint: i32, value: i32) void;
+    pub fn set(hint: Hint, value: bool) void {
+        glfwInitHint(@enumToInt(hint), @boolToInt(value));
+    }
+    extern fn glfwInitHint(hint: i32, value: i32) void;
+};
 
 pub fn init() Error!void {
     if (glfwInit() != 0) return;
@@ -19,9 +23,11 @@ pub fn init() Error!void {
 }
 extern fn glfwInit() i32;
 
+/// `pub fn terminate() void`
 pub const terminate = glfwTerminate;
 extern fn glfwTerminate() void;
 
+/// `pub fn pollEvents() void`
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
 
@@ -40,8 +46,41 @@ pub fn getRequiredInstanceExtensions() Error![][*:0]const u8 {
 }
 extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?*?[*:0]const u8;
 
+/// `pub fn getTime() f64`
 pub const getTime = glfwGetTime;
 extern fn glfwGetTime() f64;
+
+pub const Error = error{
+    NotInitialized,
+    NoCurrentContext,
+    InvalidEnum,
+    InvalidValue,
+    OutOfMemory,
+    APIUnavailable,
+    VersionUnavailable,
+    PlatformError,
+    FormatUnavailable,
+    NoWindowContext,
+    Unknown,
+};
+
+pub fn maybeError() Error!void {
+    return switch (glfwGetError(null)) {
+        0 => {},
+        0x00010001 => Error.NotInitialized,
+        0x00010002 => Error.NoCurrentContext,
+        0x00010003 => Error.InvalidEnum,
+        0x00010004 => Error.InvalidValue,
+        0x00010005 => Error.OutOfMemory,
+        0x00010006 => Error.APIUnavailable,
+        0x00010007 => Error.VersionUnavailable,
+        0x00010008 => Error.PlatformError,
+        0x00010009 => Error.FormatUnavailable,
+        0x0001000A => Error.NoWindowContext,
+        else => Error.Unknown,
+    };
+}
+extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
 //--------------------------------------------------------------------------------------------------
 //
 // Keyboard/Mouse
@@ -204,26 +243,27 @@ pub const Mods = packed struct(i32) {
 // Cursor
 //
 //--------------------------------------------------------------------------------------------------
-pub const CursorShape = enum(i32) {
-    arrow = 0x00036001,
-    ibeam = 0x00036002,
-    crosshair = 0x00036003,
-    hand = 0x00036004,
-    hresize = 0x00036005,
-    vresize = 0x00036006,
-};
+pub const Cursor = opaque {
+    pub const Shape = enum(i32) {
+        arrow = 0x00036001,
+        ibeam = 0x00036002,
+        crosshair = 0x00036003,
+        hand = 0x00036004,
+        hresize = 0x00036005,
+        vresize = 0x00036006,
+    };
 
-pub const Cursor = *opaque {
+    /// `pub fn destroy(cursor: *Cursor) void`
     pub const destroy = glfwDestroyCursor;
-    extern fn glfwDestroyCursor(cursor: Cursor) void;
-};
+    extern fn glfwDestroyCursor(cursor: *Cursor) void;
 
-pub fn createStandardCursor(shape: CursorShape) Error!Cursor {
-    if (glfwCreateStandardCursor(shape)) |ptr| return ptr;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwCreateStandardCursor(shape: CursorShape) ?Cursor;
+    pub fn createStandard(shape: Shape) Error!*Cursor {
+        if (glfwCreateStandardCursor(shape)) |ptr| return ptr;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwCreateStandardCursor(shape: Shape) ?*Cursor;
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Input mode
@@ -247,27 +287,17 @@ pub const CursorMode = enum(i32) {
 // Joystick
 //
 //--------------------------------------------------------------------------------------------------
-pub fn isJoystickPresent(jid: u4) bool {
-    return glfwJoystickPresent(@intCast(i32, jid)) == @boolToInt(true);
-}
-extern fn glfwJoystickPresent(jid: i32) i32;
-
-pub fn getJoystick(jid: u4) ?Joystick {
-    if (!isJoystickPresent(jid)) {
-        return null;
-    }
-    return .{ .jid = jid };
-}
-
 pub const Joystick = struct {
+    jid: Id,
+
+    pub const Id = u4;
+
+    pub const maximum_supported = std.math.maxInt(Id) + 1;
+
     pub const ButtonAction = enum(u8) {
         release = 0,
         press = 1,
     };
-
-    jid: u4,
-
-    pub const maximum_supported = 16;
 
     pub fn getGuid(self: Joystick) [:0]const u8 {
         return std.mem.span(glfwGetJoystickGUID(@intCast(i32, self.jid)));
@@ -297,10 +327,22 @@ pub const Joystick = struct {
     fn isGamepad(self: Joystick) bool {
         return glfwJoystickIsGamepad(@intCast(i32, self.jid)) == @boolToInt(true);
     }
-    extern fn glfwJoystickIsGamepad(jid: i32) i32;
 
     pub fn asGamepad(self: Joystick) ?Gamepad {
         return if (self.isGamepad()) .{ .jid = self.jid } else null;
+    }
+    extern fn glfwJoystickIsGamepad(jid: i32) i32;
+
+    pub fn isPresent(jid: Id) bool {
+        return glfwJoystickPresent(@intCast(i32, jid)) == @boolToInt(true);
+    }
+    extern fn glfwJoystickPresent(jid: i32) i32;
+
+    pub fn get(jid: Id) ?Joystick {
+        if (!isPresent(jid)) {
+            return null;
+        }
+        return .{ .jid = jid };
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -309,7 +351,9 @@ pub const Joystick = struct {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Gamepad = struct {
-    pub const Axis = enum(u3) {
+    jid: Joystick.Id,
+
+    pub const Axis = enum(u8) {
         left_x = 0,
         left_y = 1,
         right_x = 2,
@@ -320,7 +364,7 @@ pub const Gamepad = struct {
         const last = Axis.right_trigger;
     };
 
-    pub const Button = enum(u4) {
+    pub const Button = enum(u8) {
         a = 0,
         b = 1,
         x = 2,
@@ -350,12 +394,10 @@ pub const Gamepad = struct {
         axes: [6]f32,
     };
 
-    jid: u4,
-
-    pub fn getName(self: Gamepad) [:0]u8 {
+    pub fn getName(self: Gamepad) [:0]const u8 {
         return std.mem.span(glfwGetGamepadName(@intCast(i32, self.jid)));
     }
-    extern fn glfwGetGamepadName(jid: i32) [*:0]u8;
+    extern fn glfwGetGamepadName(jid: i32) [*:0]const u8;
 
     pub fn getState(self: Gamepad) State {
         var state: State = undefined;
@@ -365,145 +407,114 @@ pub const Gamepad = struct {
         return state;
     }
     extern fn glfwGetGamepadState(jid: i32, state: *Gamepad.State) i32;
-};
 
-pub fn updateGamepadMappings(mappings: [:0]const u8) bool {
-    return glfwUpdateGamepadMappings(mappings) == @boolToInt(true);
-}
-extern fn glfwUpdateGamepadMappings(mappings: [*:0]const u8) i32;
-//--------------------------------------------------------------------------------------------------
-//
-// Error
-//
-//--------------------------------------------------------------------------------------------------
-pub const Error = error{
-    NotInitialized,
-    NoCurrentContext,
-    InvalidEnum,
-    InvalidValue,
-    OutOfMemory,
-    APIUnavailable,
-    VersionUnavailable,
-    PlatformError,
-    FormatUnavailable,
-    NoWindowContext,
-    Unknown,
+    pub fn updateMappings(mappings: [:0]const u8) bool {
+        return glfwUpdateGamepadMappings(mappings) == @boolToInt(true);
+    }
+    extern fn glfwUpdateGamepadMappings(mappings: [*:0]const u8) i32;
 };
-
-pub fn maybeError() Error!void {
-    return switch (glfwGetError(null)) {
-        0 => {},
-        0x00010001 => Error.NotInitialized,
-        0x00010002 => Error.NoCurrentContext,
-        0x00010003 => Error.InvalidEnum,
-        0x00010004 => Error.InvalidValue,
-        0x00010005 => Error.OutOfMemory,
-        0x00010006 => Error.APIUnavailable,
-        0x00010007 => Error.VersionUnavailable,
-        0x00010008 => Error.PlatformError,
-        0x00010009 => Error.FormatUnavailable,
-        0x0001000A => Error.NoWindowContext,
-        else => Error.Unknown,
-    };
-}
-extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
 //--------------------------------------------------------------------------------------------------
 //
 // Monitor
 //
 //--------------------------------------------------------------------------------------------------
-pub const Monitor = *opaque {
-    pub fn getPos(monitor: Monitor) [2]i32 {
+pub const Monitor = opaque {
+    pub fn getPos(monitor: *Monitor) [2]i32 {
         var xpos: i32 = 0;
         var ypos: i32 = 0;
         glfwGetMonitorPos(monitor, &xpos, &ypos);
         return .{ xpos, ypos };
     }
-    extern fn glfwGetMonitorPos(monitor: Monitor, xpos: *i32, ypos: *i32) void;
-};
+    extern fn glfwGetMonitorPos(monitor: *Monitor, xpos: *i32, ypos: *i32) void;
 
-pub const getPrimaryMonitor = glfwGetPrimaryMonitor;
-extern fn glfwGetPrimaryMonitor() ?Monitor;
+    /// `pub fn getPrimary() ?*Monitor`
+    pub const getPrimary = glfwGetPrimaryMonitor;
+    extern fn glfwGetPrimaryMonitor() ?*Monitor;
 
-pub fn getMonitors() ?[]Monitor {
-    var count: i32 = 0;
-    if (glfwGetMonitors(&count)) |monitors| {
-        return monitors[0..@intCast(usize, count)];
+    pub fn getAll() ?[]*Monitor {
+        var count: i32 = 0;
+        if (glfwGetMonitors(&count)) |monitors| {
+            return monitors[0..@intCast(usize, count)];
+        }
+        return null;
     }
-    return null;
-}
-extern fn glfwGetMonitors(count: *i32) ?[*]Monitor;
+    extern fn glfwGetMonitors(count: *i32) ?[*]*Monitor;
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Window
 //
 //--------------------------------------------------------------------------------------------------
-pub const WindowHint = enum(i32) {
-    client_api = 0x00022001,
-    cocoa_retina_framebuffer = 0x00023001,
-};
+pub const Window = opaque {
+    pub const Hint = enum(i32) {
+        client_api = 0x00022001,
+        cocoa_retina_framebuffer = 0x00023001,
 
-pub const Window = *opaque {
-    pub fn shouldClose(window: Window) bool {
+        pub const set = glfwWindowHint;
+        extern fn glfwWindowHint(hint: Window.Hint, value: i32) void;
+
+        pub const reset = glfwDefaultWindowHints;
+        extern fn glfwDefaultWindowHints() void;
+    };
+
+    pub fn shouldClose(window: *Window) bool {
         return if (glfwWindowShouldClose(window) == 0) false else true;
     }
-    extern fn glfwWindowShouldClose(window: Window) i32;
+    extern fn glfwWindowShouldClose(window: *Window) i32;
 
+    /// `pub fn destroy(window: *Window) void`
     pub const destroy = glfwDestroyWindow;
-    extern fn glfwDestroyWindow(window: Window) void;
+    extern fn glfwDestroyWindow(window: *Window) void;
 
+    /// `pub fn setSizeLimits(window: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void`
     pub const setSizeLimits = glfwSetWindowSizeLimits;
-    extern fn glfwSetWindowSizeLimits(
-        window: Window,
-        minwidth: i32,
-        minheight: i32,
-        maxwidth: i32,
-        maxheight: i32,
-    ) void;
+    extern fn glfwSetWindowSizeLimits(window: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void;
 
-    pub fn getContentScale(window: Window) [2]f32 {
+    pub fn getContentScale(window: *Window) [2]f32 {
         var xscale: f32 = 0.0;
         var yscale: f32 = 0.0;
         glfwGetWindowContentScale(window, &xscale, &yscale);
         return .{ xscale, yscale };
     }
-    extern fn glfwGetWindowContentScale(window: Window, xscale: *f32, yscale: *f32) void;
+    extern fn glfwGetWindowContentScale(window: *Window, xscale: *f32, yscale: *f32) void;
 
+    /// `pub getKey(window: *Window, key: Key) Action`
     pub const getKey = glfwGetKey;
-    extern fn glfwGetKey(window: Window, key: Key) Action;
+    extern fn glfwGetKey(window: *Window, key: Key) Action;
 
+    /// `pub fn getMouseButton(window: *Window, button: MouseButton) Action`
     pub const getMouseButton = glfwGetMouseButton;
-    extern fn glfwGetMouseButton(window: Window, button: MouseButton) Action;
+    extern fn glfwGetMouseButton(window: *Window, button: MouseButton) Action;
 
-    pub fn getCursorPos(window: Window) [2]f64 {
+    pub fn getCursorPos(window: *Window) [2]f64 {
         var xpos: f64 = 0.0;
         var ypos: f64 = 0.0;
         glfwGetCursorPos(window, &xpos, &ypos);
         return .{ xpos, ypos };
     }
-    extern fn glfwGetCursorPos(window: Window, xpos: *f64, ypos: *f64) void;
+    extern fn glfwGetCursorPos(window: *Window, xpos: *f64, ypos: *f64) void;
 
-    pub fn getFramebufferSize(window: Window) [2]i32 {
+    pub fn getFramebufferSize(window: *Window) [2]i32 {
         var width: i32 = 0.0;
         var height: i32 = 0.0;
         glfwGetFramebufferSize(window, &width, &height);
         return .{ width, height };
     }
-    extern fn glfwGetFramebufferSize(window: Window, width: *i32, height: *i32) void;
+    extern fn glfwGetFramebufferSize(window: *Window, width: *i32, height: *i32) void;
 
-    pub fn getSize(window: Window) [2]i32 {
+    pub fn getSize(window: *Window) [2]i32 {
         var width: i32 = 0.0;
         var height: i32 = 0.0;
         glfwGetWindowSize(window, &width, &height);
         return .{ width, height };
     }
-    extern fn glfwGetWindowSize(window: Window, width: *i32, height: *i32) void;
+    extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
 
     pub const setKeyCallback = glfwSetKeyCallback;
     extern fn glfwSetKeyCallback(
-        window: Window,
+        window: *Window,
         callback: ?*const fn (
-            window: Window,
+            window: *Window,
             key: Key,
             scancode: i32,
             action: Action,
@@ -513,30 +524,36 @@ pub const Window = *opaque {
 
     pub const setMouseButtonCallback = glfwSetMouseButtonCallback;
     extern fn glfwSetMouseButtonCallback(
-        window: Window,
-        callback: ?*const fn (window: Window, button: MouseButton, action: Action, mods: Mods) callconv(.C) void,
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            button: MouseButton,
+            action: Action,
+            mods: Mods,
+        ) callconv(.C) void,
     ) void;
 
     pub const setCursorPosCallback = glfwSetCursorPosCallback;
     extern fn glfwSetCursorPosCallback(
-        window: Window,
-        callback: ?*const fn (Window, xpos: f64, ypos: f64) callconv(.C) void,
+        window: *Window,
+        callback: ?*const fn (window: *Window, xpos: f64, ypos: f64) callconv(.C) void,
     ) void;
 
     pub const setScrollCallback = glfwSetScrollCallback;
     extern fn glfwSetScrollCallback(
-        window: Window,
+        window: *Window,
         callback: ?*const fn (
-            window: Window,
+            window: *Window,
             xoffset: f64,
             yoffset: f64,
         ) callconv(.C) void,
     ) void;
 
+    /// `pub fn setCursor(window: *Window, cursor: ?*Cursor) void`
     pub const setCursor = glfwSetCursor;
-    extern fn glfwSetCursor(window: Window, cursor: ?Cursor) void;
+    extern fn glfwSetCursor(window: *Window, cursor: ?*Cursor) void;
 
-    pub fn setInputMode(window: Window, mode: InputMode, value: anytype) void {
+    pub fn setInputMode(window: *Window, mode: InputMode, value: anytype) void {
         const T = @TypeOf(value);
         const i32_value = switch (@typeInfo(T)) {
             .Enum, .EnumLiteral => @enumToInt(@as(CursorMode, value)),
@@ -545,81 +562,77 @@ pub const Window = *opaque {
         };
         glfwSetInputMode(window, mode, i32_value);
     }
-    extern fn glfwSetInputMode(window: Window, mode: InputMode, value: i32) void;
+    extern fn glfwSetInputMode(window: *Window, mode: InputMode, value: i32) void;
+
+    pub fn create(
+        width: i32,
+        height: i32,
+        title: [:0]const u8,
+        monitor: ?*Monitor,
+        share: ?*Window,
+    ) Error!*Window {
+        if (glfwCreateWindow(width, height, title, monitor, share)) |window| return window;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwCreateWindow(
+        width: i32,
+        height: i32,
+        title: [*:0]const u8,
+        monitor: ?*Monitor,
+        share: ?*Window,
+    ) ?*Window;
 };
-
-pub fn createWindow(
-    width: i32,
-    height: i32,
-    title: [:0]const u8,
-    monitor: ?Monitor,
-    share: ?Window,
-) Error!Window {
-    if (glfwCreateWindow(width, height, title, monitor, share)) |window| return window;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwCreateWindow(
-    width: i32,
-    height: i32,
-    title: [*:0]const u8,
-    monitor: ?Monitor,
-    share: ?Window,
-) ?Window;
-
-pub const windowHint = glfwWindowHint;
-extern fn glfwWindowHint(hint: WindowHint, value: i32) void;
-
-pub const defaultWindowHints = glfwDefaultWindowHints;
-extern fn glfwDefaultWindowHints() void;
 //--------------------------------------------------------------------------------------------------
 //
 // Native
 //
 //--------------------------------------------------------------------------------------------------
-pub fn getWin32Adapter(monitor: Monitor) Error![:0]const u8 {
-    if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
-    try maybeError();
-    unreachable;
-}
-extern fn glfwGetWin32Adapter(monitor: Monitor) ?[*:0]const u8;
+pub const native = struct {
+    pub fn getWin32Adapter(monitor: *Monitor) Error![:0]const u8 {
+        if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetWin32Adapter(monitor: *Monitor) ?[*:0]const u8;
 
-pub fn getWin32Window(window: Window) Error!std.os.windows.HWND {
-    if (glfwGetWin32Window(window)) |hwnd| return hwnd;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwGetWin32Window(window: Window) ?std.os.windows.HWND;
+    pub fn getWin32Window(window: *Window) Error!std.os.windows.HWND {
+        if (glfwGetWin32Window(window)) |hwnd| return hwnd;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetWin32Window(window: *Window) ?std.os.windows.HWND;
 
-pub fn getX11Adapter(monitor: Monitor) Error!u32 {
-    const adapter = glfwGetX11Adapter(monitor);
-    if (adapter != 0) return adapter;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwGetX11Adapter(monitor: Monitor) u32;
+    pub fn getX11Adapter(monitor: *Monitor) Error!u32 {
+        const adapter = glfwGetX11Adapter(monitor);
+        if (adapter != 0) return adapter;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetX11Adapter(monitor: *Monitor) u32;
 
-pub fn getX11Display() Error!*anyopaque {
-    if (glfwGetX11Display()) |display| return display;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwGetX11Display() ?*anyopaque;
+    pub fn getX11Display() Error!*anyopaque {
+        if (glfwGetX11Display()) |display| return display;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetX11Display() ?*anyopaque;
 
-pub fn getX11Window(window: Window) Error!u32 {
-    const window_native = glfwGetX11Window(window);
-    if (window_native != 0) return window_native;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwGetX11Window(window: Window) u32;
+    pub fn getX11Window(window: *Window) Error!u32 {
+        const window_native = glfwGetX11Window(window);
+        if (window_native != 0) return window_native;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetX11Window(window: *Window) u32;
 
-pub fn getCocoaWindow(window: Window) Error!*anyopaque {
-    if (glfwGetCocoaWindow(window)) |window_native| return window_native;
-    try maybeError();
-    unreachable;
-}
-extern fn glfwGetCocoaWindow(window: Window) ?*anyopaque;
+    pub fn getCocoaWindow(window: *Window) Error!*anyopaque {
+        if (glfwGetCocoaWindow(window)) |window_native| return window_native;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Test
@@ -627,26 +640,26 @@ extern fn glfwGetCocoaWindow(window: Window) ?*anyopaque;
 //--------------------------------------------------------------------------------------------------
 const expect = std.testing.expect;
 
-fn cursorPosCallback(window: Window, xpos: f64, ypos: f64) callconv(.C) void {
+fn cursorPosCallback(window: *Window, xpos: f64, ypos: f64) callconv(.C) void {
     _ = window;
     _ = xpos;
     _ = ypos;
 }
 
-fn mouseButtonCallback(window: Window, button: MouseButton, action: Action, mods: Mods) callconv(.C) void {
+fn mouseButtonCallback(window: *Window, button: MouseButton, action: Action, mods: Mods) callconv(.C) void {
     _ = window;
     _ = button;
     _ = action;
     _ = mods;
 }
 
-fn scrollCallback(window: Window, xoffset: f64, yoffset: f64) callconv(.C) void {
+fn scrollCallback(window: *Window, xoffset: f64, yoffset: f64) callconv(.C) void {
     _ = window;
     _ = xoffset;
     _ = yoffset;
 }
 
-fn keyCallback(window: Window, key: Key, scancode: i32, action: Action, mods: Mods) callconv(.C) void {
+fn keyCallback(window: *Window, key: Key, scancode: i32, action: Action, mods: Mods) callconv(.C) void {
     _ = window;
     _ = key;
     _ = scancode;
@@ -664,26 +677,26 @@ test "zglfw.basic" {
 
     _ = getTime();
 
-    const primary_monitor = getPrimaryMonitor();
+    const primary_monitor = Monitor.getPrimary();
     if (primary_monitor) |monitor| {
-        const monitors = getMonitors().?;
+        const monitors = Monitor.getAll().?;
         try expect(monitor == monitors[0]);
         const pos = monitor.getPos();
         _ = pos[0];
         _ = pos[1];
 
         const adapter = switch (@import("builtin").target.os.tag) {
-            .windows => try getWin32Adapter(monitor),
-            .linux => try getX11Adapter(monitor),
+            .windows => try native.getWin32Adapter(monitor),
+            .linux => try native.getX11Adapter(monitor),
             else => {},
         };
         _ = adapter;
     }
 
-    defaultWindowHints();
-    windowHint(.cocoa_retina_framebuffer, 1);
-    windowHint(.client_api, 0);
-    const window = try createWindow(200, 200, "test", null, null);
+    Window.Hint.reset();
+    Window.Hint.set(.cocoa_retina_framebuffer, 1);
+    Window.Hint.set(.client_api, 0);
+    const window = try Window.create(200, 200, "test", null, null);
     defer window.destroy();
 
     window.setCursorPosCallback(cursorPosCallback);
@@ -692,7 +705,7 @@ test "zglfw.basic" {
     window.setScrollCallback(scrollCallback);
     window.setKeyCallback(null);
 
-    const cursor = try createStandardCursor(.hand);
+    const cursor = try Cursor.createStandard(.hand);
     defer cursor.destroy();
     window.setCursor(cursor);
     window.setCursor(null);
@@ -704,9 +717,9 @@ test "zglfw.basic" {
     _ = cursor_pos[1];
 
     const window_native = try switch (@import("builtin").target.os.tag) {
-        .windows => getWin32Window(window),
-        .linux => getX11Window(window),
-        .macos => getCocoaWindow(window),
+        .windows => native.getWin32Window(window),
+        .linux => native.getX11Window(window),
+        .macos => native.getCocoaWindow(window),
         else => unreachable,
     };
     _ = window_native;

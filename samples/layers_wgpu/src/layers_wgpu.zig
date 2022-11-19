@@ -16,7 +16,7 @@ const DemoState = struct {
     hexagons: pill.Pills,
     pills: pill.Pills,
 
-    fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
+    fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         var graphics = try Graphics.init(allocator, window);
         graphics.background_color = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 };
 
@@ -102,10 +102,10 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    zglfw.defaultWindowHints();
-    zglfw.windowHint(.cocoa_retina_framebuffer, 1);
-    zglfw.windowHint(.client_api, 0);
-    const window = zglfw.createWindow(800, 800, window_title, null, null) catch {
+    zglfw.Window.Hint.reset();
+    zglfw.Window.Hint.set(.cocoa_retina_framebuffer, 1);
+    zglfw.Window.Hint.set(.client_api, 0);
+    const window = zglfw.Window.create(800, 800, window_title, null, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };

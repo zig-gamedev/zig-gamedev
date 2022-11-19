@@ -13,10 +13,10 @@ const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 };
 
-fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
+fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
-    const success = zglfw.updateGamepadMappings(@embedFile("gamecontrollerdb.txt"));
+    const success = zglfw.Gamepad.updateMappings(@embedFile("gamecontrollerdb.txt"));
     if (!success) {
         @panic("failed to update gamepad mappings");
     }
@@ -117,10 +117,13 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
         _ = zgui.beginTabBar("Joystick picker", .{});
         defer zgui.endTabBar();
 
-        var jid: u8 = 0;
+        var jid: u32 = 0;
         while (jid < zglfw.Joystick.maximum_supported) : (jid += 1) {
-            if (zgui.beginTabItem(try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1}), .{})) {
-                if (zglfw.getJoystick(@intCast(u4, jid))) |joystick| {
+            if (zgui.beginTabItem(
+                try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1}),
+                .{},
+            )) {
+                if (zglfw.Joystick.get(@intCast(zglfw.Joystick.Id, jid))) |joystick| {
                     zgui.text("Present: yes", .{});
                     zgui.newLine();
                     zgui.beginGroup();
@@ -240,10 +243,10 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    zglfw.defaultWindowHints();
-    zglfw.windowHint(.cocoa_retina_framebuffer, 1);
-    zglfw.windowHint(.client_api, 0);
-    const window = zglfw.createWindow(1600, 775, window_title, null, null) catch {
+    zglfw.Window.Hint.reset();
+    zglfw.Window.Hint.set(.cocoa_retina_framebuffer, 1);
+    zglfw.Window.Hint.set(.client_api, 0);
+    const window = zglfw.Window.create(1600, 775, window_title, null, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };

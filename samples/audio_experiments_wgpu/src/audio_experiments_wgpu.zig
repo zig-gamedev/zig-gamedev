@@ -222,7 +222,7 @@ const DemoState = struct {
     } = .{},
 };
 
-fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
+fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
@@ -968,10 +968,10 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    zglfw.defaultWindowHints();
-    zglfw.windowHint(.cocoa_retina_framebuffer, 1);
-    zglfw.windowHint(.client_api, 0);
-    const window = zglfw.createWindow(1600, 1000, window_title, null, null) catch {
+    zglfw.Window.Hint.reset();
+    zglfw.Window.Hint.set(.cocoa_retina_framebuffer, 1);
+    zglfw.Window.Hint.set(.client_api, 0);
+    const window = zglfw.Window.create(1600, 1000, window_title, null, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };

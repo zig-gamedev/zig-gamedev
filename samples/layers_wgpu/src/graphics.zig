@@ -47,7 +47,7 @@ pub const State = struct {
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
 
-    pub fn init(allocator: std.mem.Allocator, window: zglfw.Window) !State {
+    pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !State {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
         zgui.init(allocator);
