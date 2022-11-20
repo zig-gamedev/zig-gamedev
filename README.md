@@ -18,18 +18,18 @@ zig build physically_based_rendering_wgpu-run
 ## Libraries
 Library | Latest version | Description
 ------- | --------- | ---------------
-**[zgpu](libs/zgpu)** | 0.9 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
-**[zgui](libs/zgui)** | 0.9 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
-**[zaudio](libs/zaudio)** | 0.9 | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
-**[zmath](libs/zmath)** | 0.9 | SIMD math library for game developers
-**[zstbi](libs/zstbi)** | 0.9 | Image loading with [stbi](https://github.com/nothings/stb)
-**[zmesh](libs/zmesh)** | 0.9 | Loading, generating, processing and optimizing triangle meshes
-**[ztracy](libs/ztracy)** | 0.9 | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
-**[zpool](libs/zpool)** | 0.9 | Generic pool & handle implementation
-**[zglfw](libs/zglfw)** | 0.5 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
-**[znoise](libs/znoise)** | 0.1 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
-**[zjobs](libs/zjobs)** | 0.1 | Generic job queue implementation
-**[zbullet](libs/zbullet)** | 0.2 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
+**[zgpu](libs/zgpu)** | 0.9.0 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
+**[zgui](libs/zgui)** | 0.9.3 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
+**[zaudio](libs/zaudio)** | 0.9.1 | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
+**[zmath](libs/zmath)** | 0.9.4 | SIMD math library for game developers
+**[zstbi](libs/zstbi)** | 0.9.1 | Image loading with [stbi](https://github.com/nothings/stb)
+**[zmesh](libs/zmesh)** | 0.9.0 | Loading, generating, processing and optimizing triangle meshes
+**[ztracy](libs/ztracy)** | 0.9.0 | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
+**[zpool](libs/zpool)** | 0.9.0 | Generic pool & handle implementation
+**[zglfw](libs/zglfw)** | 0.5.0 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
+**[znoise](libs/znoise)** | 0.1.0 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
+**[zjobs](libs/zjobs)** | 0.1.0 | Generic job queue implementation
+**[zbullet](libs/zbullet)** | 0.2.0 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs

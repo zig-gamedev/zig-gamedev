@@ -59,30 +59,30 @@ const AudioFilter = struct {
 
     lpf: struct {
         config: zaudio.LpfConfig,
-        node: zaudio.LpfNode,
+        node: *zaudio.LpfNode,
     },
     hpf: struct {
         config: zaudio.HpfConfig,
-        node: zaudio.HpfNode,
+        node: *zaudio.HpfNode,
     },
     notch: struct {
         config: zaudio.NotchConfig,
-        node: zaudio.NotchNode,
+        node: *zaudio.NotchNode,
     },
     peak: struct {
         config: zaudio.PeakConfig,
-        node: zaudio.PeakNode,
+        node: *zaudio.PeakNode,
     },
     loshelf: struct {
         config: zaudio.LoshelfConfig,
-        node: zaudio.LoshelfNode,
+        node: *zaudio.LoshelfNode,
     },
     hishelf: struct {
         config: zaudio.HishelfConfig,
-        node: zaudio.HishelfNode,
+        node: *zaudio.HishelfNode,
     },
 
-    fn getCurrentNode(filter: AudioFilter) zaudio.Node {
+    fn getCurrentNode(filter: AudioFilter) *zaudio.Node {
         return switch (filter.current_type) {
             .lpf => filter.lpf.node.asNode(),
             .hpf => filter.hpf.node.asNode(),
@@ -108,14 +108,14 @@ const AudioState = struct {
     const samples_per_set = 512;
     const usable_samples_per_set = 480;
 
-    device: zaudio.Device,
-    engine: zaudio.Engine,
+    device: *zaudio.Device,
+    engine: *zaudio.Engine,
     mutex: Mutex = .{},
     current_set: u32 = num_sets - 1,
     samples: std.ArrayList(f32),
 
     fn audioCallback(
-        device: zaudio.Device,
+        device: *zaudio.Device,
         output: ?*anyopaque,
         _: ?*const anyopaque,
         num_frames: u32,
@@ -153,7 +153,7 @@ const AudioState = struct {
         const audio = try allocator.create(AudioState);
 
         const device = device: {
-            var config = zaudio.DeviceConfig.init(.playback);
+            var config = zaudio.Device.Config.init(.playback);
             config.data_callback = audioCallback;
             config.user_data = audio;
             config.sample_rate = 48_000;
@@ -161,14 +161,14 @@ const AudioState = struct {
             config.period_size_in_milliseconds = 10;
             config.playback.format = .float32;
             config.playback.channels = 2;
-            break :device try zaudio.createDevice(null, config);
+            break :device try zaudio.Device.create(null, config);
         };
 
         const engine = engine: {
-            var config = zaudio.EngineConfig.init();
+            var config = zaudio.Engine.Config.init();
             config.device = device;
-            config.no_auto_start = 1;
-            break :engine try zaudio.createEngine(config);
+            config.no_auto_start = .true32;
+            break :engine try zaudio.Engine.create(config);
         };
 
         audio.* = .{
@@ -199,17 +199,17 @@ const DemoState = struct {
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
-    music: zaudio.Sound,
-    sounds: std.ArrayList(zaudio.Sound),
+    music: *zaudio.Sound,
+    sounds: std.ArrayList(*zaudio.Sound),
     audio_filter: AudioFilter,
 
-    waveform_config: zaudio.WaveformConfig,
-    waveform_data_source: zaudio.WaveformDataSource,
-    waveform_node: zaudio.DataSourceNode,
+    waveform_config: zaudio.Waveform.Config,
+    waveform_data_source: *zaudio.Waveform,
+    waveform_node: *zaudio.DataSourceNode,
 
-    noise_config: zaudio.NoiseConfig,
-    noise_data_source: zaudio.NoiseDataSource,
-    noise_node: zaudio.DataSourceNode,
+    noise_config: zaudio.Noise.Config,
+    noise_data_source: *zaudio.Noise,
+    noise_node: *zaudio.DataSourceNode,
 
     camera: struct {
         position: [3]f32 = .{ -10.0, 15.0, -10.0 },
@@ -249,7 +249,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     try audio.engine.start();
 
     const sounds = sounds: {
-        var sounds = std.ArrayList(zaudio.Sound).init(allocator);
+        var sounds = std.ArrayList(*zaudio.Sound).init(allocator);
         try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "drum_bass_hard.flac", .{}));
         try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "tabla_tas1.flac", .{}));
         try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "loop_mika.flac", .{}));
@@ -264,39 +264,39 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     try music.start();
 
     const audio_filter = audio_filter: {
-        const lpf_config = zaudio.LpfNodeConfig.init(
+        const lpf_config = zaudio.LpfNode.Config.init(
             audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_fequency,
             filter_order,
         );
-        const hpf_config = zaudio.HpfNodeConfig.init(
+        const hpf_config = zaudio.HpfNode.Config.init(
             audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_fequency,
             filter_order,
         );
-        const notch_config = zaudio.NotchNodeConfig.init(
+        const notch_config = zaudio.NotchNode.Config.init(
             audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_q,
             min_filter_fequency,
         );
-        const peak_config = zaudio.PeakNodeConfig.init(
+        const peak_config = zaudio.PeakNode.Config.init(
             audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
             min_filter_fequency,
         );
-        const loshelf_config = zaudio.LoshelfNodeConfig.init(
+        const loshelf_config = zaudio.LoshelfNode.Config.init(
             audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
             min_filter_fequency,
         );
-        const hishelf_config = zaudio.HishelfNodeConfig.init(
+        const hishelf_config = zaudio.HishelfNode.Config.init(
             audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
@@ -342,7 +342,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     };
 
     // Waveform generator
-    const waveform_config = zaudio.WaveformConfig.init(
+    const waveform_config = zaudio.Waveform.Config.init(
         .float32,
         audio.engine.getChannels(),
         audio.engine.getSampleRate(),
@@ -350,23 +350,23 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         0.5,
         440.0,
     );
-    const waveform_data_source = try zaudio.createWaveformDataSource(waveform_config);
+    const waveform_data_source = try zaudio.Waveform.create(waveform_config);
     const waveform_node = try audio.engine.createDataSourceNode(
-        zaudio.DataSourceNodeConfig.init(waveform_data_source.asDataSource()),
+        zaudio.DataSourceNode.Config.init(waveform_data_source.asDataSource()),
     );
     try waveform_node.setState(.stopped);
 
     // Noise generator
-    const noise_config = zaudio.NoiseConfig.init(
+    const noise_config = zaudio.Noise.Config.init(
         .float32,
         audio.engine.getChannels(),
         .pink,
         123,
         0.25,
     );
-    const noise_data_source = try zaudio.createNoiseDataSource(noise_config);
+    const noise_data_source = try zaudio.Noise.create(noise_config);
     const noise_node = try audio.engine.createDataSourceNode(
-        zaudio.DataSourceNodeConfig.init(noise_data_source.asDataSource()),
+        zaudio.DataSourceNode.Config.init(noise_data_source.asDataSource()),
     );
     try noise_node.setState(.stopped);
 
@@ -546,7 +546,7 @@ fn update(demo: *DemoState) !void {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.waveform_config.waveform_type = @intToEnum(zaudio.WaveformType, index);
+                        demo.waveform_config.waveform_type = @intToEnum(zaudio.Waveform.Type, index);
                         try demo.waveform_data_source.setType(demo.waveform_config.waveform_type);
                     }
                 }
@@ -595,7 +595,7 @@ fn update(demo: *DemoState) !void {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.noise_config.noise_type = @intToEnum(zaudio.NoiseType, index);
+                        demo.noise_config.noise_type = @intToEnum(zaudio.Noise.Type, index);
                         try demo.noise_data_source.setType(demo.noise_config.noise_type);
                     }
                 }

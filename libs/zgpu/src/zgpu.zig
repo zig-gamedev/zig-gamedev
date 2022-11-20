@@ -1,6 +1,5 @@
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 0 };
 //--------------------------------------------------------------------------------------------------
-// zgpu v0.9
-//
 // zgpu is a small helper library built on top of native wgpu implementation (Dawn).
 //
 // It supports Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan).

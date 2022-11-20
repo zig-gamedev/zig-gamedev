@@ -450,9 +450,11 @@ pub const Window = opaque {
         client_api = 0x00022001,
         cocoa_retina_framebuffer = 0x00023001,
 
+        /// `pub fn set(hint: Window.Hint, value: i32) void`
         pub const set = glfwWindowHint;
         extern fn glfwWindowHint(hint: Window.Hint, value: i32) void;
 
+        /// `pub fn reset() void`
         pub const reset = glfwDefaultWindowHints;
         extern fn glfwDefaultWindowHints() void;
     };

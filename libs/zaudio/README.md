@@ -1,4 +1,4 @@
-# zaudio v0.9 - Cross-platform audio
+# zaudio v0.9.1 - Cross-platform audio
 
 Zig bindings for [miniaudio](https://github.com/mackron/miniaudio) library. Tested on Windows, Linux and macOS but should also work on mobile/web platforms.
 
@@ -62,7 +62,7 @@ pub fn main() !void {
     zaudio.init(allocator);
     defer zaudio.deinit();
 
-    const engine = try zaudio.createEngine(null);
+    const engine = try zaudio.Engine.create(null);
 
     const music = try engine.createSoundFromFile(
         content_dir ++ "Broke For Free - Night Owl.mp3",

@@ -1,4 +1,4 @@
-# zmath v0.9 - SIMD math library for game developers
+# zmath v0.9.4 - SIMD math library for game developers
 
 Tested on x86_64 and AArch64.
 
