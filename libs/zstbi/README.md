@@ -1,4 +1,4 @@
-# zstbi v0.9 - stb_image bindings
+# zstbi v0.9.1 - stb_image bindings
 
 ## Features
 

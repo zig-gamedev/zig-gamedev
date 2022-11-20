@@ -1,4 +1,4 @@
-# znoise v0.1 - Zig bindings for FastNoiseLite
+# znoise v0.1.0 - Zig bindings for FastNoiseLite
 
 ## Getting started
 

@@ -1,4 +1,4 @@
-# zjobs v0.1 - Generic job queue implementation
+# zjobs v0.1.0 - Generic job queue implementation
 
 In order to take full advantage of modern multicore CPUs, it is necessary to
 run much of your application logic on separate threads.  This `JobQueue`

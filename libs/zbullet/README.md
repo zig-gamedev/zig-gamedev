@@ -1,4 +1,4 @@
-# zbullet v0.2 - Zig bindings for Bullet Physics SDK
+# zbullet v0.2.0 - Zig bindings for Bullet Physics SDK
 
 ## Overview
 

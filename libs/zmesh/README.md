@@ -1,6 +1,6 @@
 ![image](logo.jpg)
 
-# zmesh v0.9 - loading, generating, processing and optimizing triangle meshes
+# zmesh v0.9.0 - loading, generating, processing and optimizing triangle meshes
 
 As an example program please see [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu).
 
