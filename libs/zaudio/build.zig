@@ -31,6 +31,8 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         "-DMA_NO_ENCODING",
         "-DMA_NO_NULL",
         "-DMA_NO_JACK",
+        "-DMA_NO_DSOUND",
+        "-DMA_NO_WINMM",
         "-std=c99",
         "-fno-sanitize=undefined",
         if (target.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",

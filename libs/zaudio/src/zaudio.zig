@@ -296,6 +296,12 @@ pub const ShareMode = enum(u32) {
     exclusive,
 };
 
+pub const WasapiUsage = enum(u32) {
+    default,
+    games,
+    pro_audio,
+};
+
 pub const OpenslStreamType = enum(u32) {
     default,
     voice,
@@ -317,39 +323,39 @@ pub const OpenslRecordingPreset = enum(u32) {
 
 pub const AaudioUsage = enum(u32) {
     default,
-    announcement,
-    emergency,
-    safety,
-    vehicle_status,
+    media,
+    voice_communication,
+    voice_communication_signalling,
     alarm,
+    notification,
+    notification_ringtone,
+    notification_event,
     assistance_accessibility,
     assistance_navigation_guidance,
     assistance_sonification,
-    assitant,
     game,
-    media,
-    notification,
-    notification_event,
-    notification_ringtone,
-    voice_communication,
-    voice_communication_signalling,
+    assitant,
+    emergency,
+    safety,
+    vehicle_status,
+    announcement,
 };
 
 pub const AaudioContentType = enum(u32) {
     default,
-    movie,
-    music,
-    sonification,
     speech,
+    music,
+    movie,
+    sonification,
 };
 
 pub const AaudioInputPreset = enum(u32) {
     default,
     generic,
     camcorder,
-    unprocessed,
     voice_recognition,
     voice_communication,
+    unprocessed,
     voice_performance,
 };
 
@@ -817,9 +823,10 @@ pub const SplitterNode = opaque {
     pub const destroy = zaudioSplitterNodeDestroy;
     extern fn zaudioSplitterNodeDestroy(handle: *SplitterNode) void;
 
-    pub const Config = struct {
+    pub const Config = extern struct {
         node_config: Node.Config,
         channels: u32,
+        output_bus_count: u32,
 
         pub fn init(channels: u32) Config {
             var config: Config = undefined;
@@ -1491,6 +1498,7 @@ pub const Device = opaque {
             channels: u32,
             channel_map: [*]Channel,
             channel_mix_mode: ChannelMixMode,
+            calculate_lfe_from_spatial_channels: Bool32,
             share_mode: ShareMode,
         },
         capture: extern struct {
@@ -1502,10 +1510,13 @@ pub const Device = opaque {
             share_mode: ShareMode,
         },
         wasapi: extern struct {
+            usage: WasapiUsage,
             no_auto_convert_src: bool,
             no_default_quality_src: bool,
             no_auto_stream_routing: bool,
             no_hardware_offloading: bool,
+            loopback_process_id: u32,
+            loopback_process_exclude: bool,
         },
         alsa: extern struct {
             no_mmap: Bool32,
@@ -1587,6 +1598,7 @@ pub const Engine = opaque {
         context: ?*Context,
         device: ?*Device,
         playback_device_id: ?*Device.Id,
+        notification_callback: ?Device.NotificationProc,
         log: ?*Log,
         listener_count: u32,
         channels: u32,
@@ -2161,6 +2173,7 @@ pub const Sound = opaque {
         initial_attachment_input_bus_index: u32,
         channels_in: u32,
         channels_out: u32,
+        mono_expansion_mode: MonoExpansionMode,
         flags: Flags,
         initial_seek_point_in_pcm_frames: u64,
         range_beg_in_pcm_frames: u64,
