@@ -370,15 +370,15 @@ pub const MonoExpansionMode = enum(u32) {
 pub const AllocationCallbacks = extern struct {
     user_data: ?*anyopaque,
 
-    on_malloc: ?*const fn (len: usize, user_data: ?*anyopaque) callconv(.C) ?*anyopaque,
+    onMalloc: ?*const fn (len: usize, user_data: ?*anyopaque) callconv(.C) ?*anyopaque,
 
-    on_realloc: ?*const fn (
+    onRealloc: ?*const fn (
         ptr: ?*anyopaque,
         len: usize,
         user_data: ?*anyopaque,
     ) callconv(.C) ?*anyopaque,
 
-    on_free: ?*const fn (ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.C) void,
+    onFree: ?*const fn (ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.C) void,
 };
 
 pub const Bool32 = enum(u32) {
@@ -781,7 +781,7 @@ pub const Node = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Data Source Node
+// DataSourceNode (-> Node)
 //
 //--------------------------------------------------------------------------------------------------
 pub const DataSourceNode = opaque {
@@ -814,7 +814,7 @@ pub const DataSourceNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Splitter Node
+// SplitterNode (-> Node)
 //
 //--------------------------------------------------------------------------------------------------
 pub const SplitterNode = opaque {
@@ -838,7 +838,7 @@ pub const SplitterNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Biquad Filter Node
+// BiquadNode (-> Node) - Biquad Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const BiquadConfig = extern struct {
@@ -886,7 +886,7 @@ pub const BiquadNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Low-Pass Filter Node
+// LpfNode (-> Node) - Low-Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const LpfConfig = extern struct {
@@ -928,7 +928,7 @@ pub const LpfNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// High-Pass Filter Node
+// HpfNode (-> Node) - High-Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const HpfConfig = extern struct {
@@ -970,7 +970,7 @@ pub const HpfNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Notch Filter Node
+// NotchNode (-> Node) - Notch Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const NotchConfig = extern struct {
@@ -1012,7 +1012,7 @@ pub const NotchNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Peak Filter Node
+// PeakNode (-> Node) - Peak Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const PeakConfig = extern struct {
@@ -1056,7 +1056,7 @@ pub const PeakNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Low Shelf Filter Node
+// LoshelfNode (-> Node) - Low Shelf Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const LoshelfConfig = extern struct {
@@ -1106,7 +1106,7 @@ pub const LoshelfNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// High Shelf Filter Node
+// HishelfNode (-> Node) - High Shelf Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const HishelfConfig = extern struct {
@@ -1156,7 +1156,7 @@ pub const HishelfNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// DelayFilterNode
+// DelayFilterNode (-> Node)
 //
 //--------------------------------------------------------------------------------------------------
 pub const DelayConfig = extern struct {
@@ -1213,7 +1213,7 @@ pub const DelayNode = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// NodeGraph
+// NodeGraph (-> Node)
 //
 //--------------------------------------------------------------------------------------------------
 pub const NodeGraph = opaque {
@@ -2198,6 +2198,8 @@ pub const Sound = opaque {
 //--------------------------------------------------------------------------------------------------
 pub const SoundGroup = opaque {
     pub usingnamespace Node.Methods(@This());
+
+    pub const Config = Sound.Config;
 
     fn create(engine: *Engine, flags: Sound.Flags, parent: ?*SoundGroup) Error!*SoundGroup {
         var handle: ?*SoundGroup = null;
