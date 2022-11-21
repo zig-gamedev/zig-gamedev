@@ -18,8 +18,8 @@ Provided structs:
 - [ ] `ResourceManager` (missing methods)
 - [ ] `Log` (missing methods)
 - [x] `DataSource` (missing methods)
-  - [x] `WaveformDataSource`
-  - [x] `NoiseDataSource`
+  - [x] `Waveform`
+  - [x] `Noise`
   - [x] custom data sources
 - [x] `Node`
   - [x] `DataSourceNode`
