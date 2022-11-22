@@ -192,7 +192,7 @@ pub const GraphicsContext = struct {
         const framebuffer_size = window.getFramebufferSize();
 
         const swapchain_descriptor = wgpu.SwapChainDescriptor{
-            .label = "main window swap chain",
+            .label = "zig-gamedev-gctx-swapchain",
             .usage = .{ .render_attachment = true },
             .format = swapchain_format,
             .width = @intCast(u32, framebuffer_size[0]),

@@ -5,6 +5,8 @@ pub const pkg = std.build.Pkg{
     .source = .{ .path = thisDir() ++ "/src/zaudio.zig" },
 };
 
+pub fn build(_: *std.build.Builder) void {}
+
 pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludePath(thisDir() ++ "/libs/miniaudio");
     exe.linkSystemLibraryName("c");
