@@ -1507,6 +1507,7 @@ pub const Device = opaque {
             channels: u32,
             channel_map: [*]Channel,
             channel_mix_mode: ChannelMixMode,
+            calculate_lfe_from_spatial_channels: Bool32,
             share_mode: ShareMode,
         },
         wasapi: extern struct {
