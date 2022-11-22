@@ -203,6 +203,11 @@ pub const CollisionGroup = extern struct {
     }
 };
 
+pub const Activation = enum(c.JPH_Activation) {
+    activate = c.JPH_ACTIVATION_ACTIVATE,
+    dont_activate = c.JPH_ACTIVATION_DONT_ACTIVATE,
+};
+
 pub const ValidateResult = enum(c.JPH_ValidateResult) {
     accept_all_contacts = c.JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS,
     accept_contact = c.JPH_VALIDATE_RESULT_ACCEPT_CONTACT,
@@ -413,6 +418,33 @@ pub const BodyInterface = opaque {
 
     pub fn destroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
         c.JPH_BodyInterface_DestroyBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+    }
+
+    pub fn addBody(body_iface: *BodyInterface, body_id: BodyId, mode: Activation) void {
+        c.JPH_BodyInterface_AddBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id, @enumToInt(mode));
+    }
+
+    pub fn removeBody(body_iface: *BodyInterface, body_id: BodyId) void {
+        c.JPH_BodyInterface_RemoveBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+    }
+
+    pub fn createAndAddBody(body_iface: *BodyInterface, settings: BodyCreationSettings, mode: Activation) !BodyId {
+        const body_id = c.JPH_BodyInterface_CreateAndAddBody(
+            @ptrCast(*c.JPH_BodyInterface, body_iface),
+            @ptrCast(*const c.JPH_BodyCreationSettings, &settings),
+            @enumToInt(mode),
+        );
+        if (body_id == 0)
+            return error.FailedToCreateBody;
+        return body_id;
+    }
+
+    pub fn isAdded(body_iface: *BodyInterface, body_id: BodyId) bool {
+        return c.JPH_BodyInterface_IsAdded(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+    }
+
+    pub fn isActive(body_iface: *BodyInterface, body_id: BodyId) bool {
+        return c.JPH_BodyInterface_IsActive(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -808,14 +840,27 @@ test "zphysics.body.basic" {
     floor_settings.shape = floor_shape;
     floor_settings.motion_type = .static;
     floor_settings.object_layer = test_cb1.layers.non_moving;
-    const body = try body_interface.createBody(floor_settings);
-    defer body_interface.destroyBody(body.getId());
+    const body_id = try body_interface.createAndAddBody(floor_settings, .dont_activate);
+    defer {
+        body_interface.removeBody(body_id);
+        body_interface.destroyBody(body_id);
+    }
+
     try expect(physics_system.getNumBodies() == 1);
     try expect(physics_system.getNumActiveBodies() == 0);
 
     {
         const body1 = try body_interface.createBody(floor_settings);
         defer body_interface.destroyBody(body1.getId());
+        try expect(body_interface.isAdded(body1.getId()) == false);
+
+        body_interface.addBody(body1.getId(), .activate);
+        try expect(body_interface.isAdded(body1.getId()) == true);
+        try expect(body_interface.isActive(body1.getId()) == false);
+
+        body_interface.removeBody(body1.getId());
+        try expect(body_interface.isAdded(body1.getId()) == false);
+
         try expect(physics_system.getNumBodies() == 2);
         try expect(physics_system.getNumActiveBodies() == 0);
     }
