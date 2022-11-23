@@ -11,9 +11,9 @@ pub const Hint = enum(i32) {
     cocoa_menubar = 0x00051002,
 
     pub fn set(hint: Hint, value: bool) void {
-        glfwInitHint(@enumToInt(hint), @boolToInt(value));
+        glfwInitHint(hint, @boolToInt(value));
     }
-    extern fn glfwInitHint(hint: i32, value: i32) void;
+    extern fn glfwInitHint(hint: Hint, value: i32) void;
 };
 
 pub fn init() Error!void {
@@ -81,6 +81,14 @@ pub fn maybeError() Error!void {
     };
 }
 extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
+
+pub const InputMode = enum(i32) {
+    cursor = 0x00033001,
+    sticky_keys = 0x00033002,
+    sticky_mouse_buttons = 0x00033003,
+    lock_key_mods = 0x00033004,
+    raw_mouse_motion = 0x00033005,
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Keyboard/Mouse
@@ -253,6 +261,12 @@ pub const Cursor = opaque {
         vresize = 0x00036006,
     };
 
+    pub const Mode = enum(i32) {
+        normal = 0x00034001,
+        hidden = 0x00034002,
+        disabled = 0x00034003,
+    };
+
     /// `pub fn destroy(cursor: *Cursor) void`
     pub const destroy = glfwDestroyCursor;
     extern fn glfwDestroyCursor(cursor: *Cursor) void;
@@ -263,24 +277,6 @@ pub const Cursor = opaque {
         unreachable;
     }
     extern fn glfwCreateStandardCursor(shape: Shape) ?*Cursor;
-};
-//--------------------------------------------------------------------------------------------------
-//
-// Input mode
-//
-//--------------------------------------------------------------------------------------------------
-pub const InputMode = enum(i32) {
-    cursor = 0x00033001,
-    sticky_keys = 0x00033002,
-    sticky_mouse_buttons = 0x00033003,
-    lock_key_mods = 0x00033004,
-    raw_mouse_motion = 0x00033005,
-};
-
-pub const CursorMode = enum(i32) {
-    normal = 0x00034001,
-    hidden = 0x00034002,
-    disabled = 0x00034003,
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -512,6 +508,7 @@ pub const Window = opaque {
     }
     extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
 
+    /// `pub fn setKeyCallback(window: *Window, callback) void`
     pub const setKeyCallback = glfwSetKeyCallback;
     extern fn glfwSetKeyCallback(
         window: *Window,
@@ -524,6 +521,7 @@ pub const Window = opaque {
         ) callconv(.C) void,
     ) void;
 
+    /// `pub fn setMouseButtonCallback(window: *Window, callback) void`
     pub const setMouseButtonCallback = glfwSetMouseButtonCallback;
     extern fn glfwSetMouseButtonCallback(
         window: *Window,
@@ -535,12 +533,14 @@ pub const Window = opaque {
         ) callconv(.C) void,
     ) void;
 
+    /// `pub fn setCursorPosCallback(window: *Window, callback) void`
     pub const setCursorPosCallback = glfwSetCursorPosCallback;
     extern fn glfwSetCursorPosCallback(
         window: *Window,
         callback: ?*const fn (window: *Window, xpos: f64, ypos: f64) callconv(.C) void,
     ) void;
 
+    /// `pub fn setScrollCallback(window: *Window, callback) void`
     pub const setScrollCallback = glfwSetScrollCallback;
     extern fn glfwSetScrollCallback(
         window: *Window,
@@ -558,7 +558,7 @@ pub const Window = opaque {
     pub fn setInputMode(window: *Window, mode: InputMode, value: anytype) void {
         const T = @TypeOf(value);
         const i32_value = switch (@typeInfo(T)) {
-            .Enum, .EnumLiteral => @enumToInt(@as(CursorMode, value)),
+            .Enum, .EnumLiteral => @enumToInt(@as(Cursor.Mode, value)),
             .Bool => @boolToInt(value),
             else => unreachable,
         };
