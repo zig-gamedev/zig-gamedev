@@ -114,6 +114,7 @@ typedef enum JPH_ValidateResult
 //--------------------------------------------------------------------------------------------------
 typedef uint16_t JPH_ObjectLayer;
 typedef uint8_t  JPH_BroadPhaseLayer;
+typedef uint64_t JPH_MutexMask;
 
 // TODO: Consider using structures for IDs
 typedef uint32_t JPH_BodyID;
@@ -121,10 +122,11 @@ typedef uint32_t JPH_SubShapeID;
 typedef uint32_t JPH_CollisionGroupID;
 typedef uint32_t JPH_CollisionSubGroupID;
 
-typedef struct JPH_TempAllocator JPH_TempAllocator;
-typedef struct JPH_JobSystem     JPH_JobSystem;
-typedef struct JPH_Body          JPH_Body;
-typedef struct JPH_BodyInterface JPH_BodyInterface;
+typedef struct JPH_TempAllocator     JPH_TempAllocator;
+typedef struct JPH_JobSystem         JPH_JobSystem;
+typedef struct JPH_Body              JPH_Body;
+typedef struct JPH_BodyInterface     JPH_BodyInterface;
+typedef struct JPH_BodyLockInterface JPH_BodyLockInterface;
 
 // Must be 16 byte aligned
 typedef void *(*JPH_AllocateFunction)(size_t in_size);
@@ -158,50 +160,35 @@ typedef bool
 //
 //--------------------------------------------------------------------------------------------------
 typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
-typedef struct JPH_StateRecorder JPH_StateRecorder;
+typedef struct JPH_SharedMutex   JPH_SharedMutex;
 //--------------------------------------------------------------------------------------------------
 //
 // Physics/Body Types
 //
 //--------------------------------------------------------------------------------------------------
-typedef struct JPH_MassProperties   JPH_MassProperties;
-typedef struct JPH_MotionProperties JPH_MotionProperties;
-
-typedef struct JPH_BodyCreationSettings JPH_BodyCreationSettings;
-typedef struct JPH_ContactManifold      JPH_ContactManifold;
-typedef struct JPH_ContactSettings      JPH_ContactSettings;
-typedef struct JPH_CollideShapeResult   JPH_CollideShapeResult;
-
-typedef struct JPH_BroadPhaseLayerInterfaceVTable JPH_BroadPhaseLayerInterfaceVTable;
-typedef struct JPH_BodyActivationListenerVTable   JPH_BodyActivationListenerVTable;
-typedef struct JPH_ContactListenerVTable          JPH_ContactListenerVTable;
 //--------------------------------------------------------------------------------------------------
 //
 // Physics/Collision Types
 //
 //--------------------------------------------------------------------------------------------------
 typedef struct JPH_Shape             JPH_Shape;
-typedef struct JPH_SubShapeIDCreator JPH_SubShapeIDCreator;
-typedef struct JPH_SubShapeIDPair    JPH_SubShapeIDPair;
 typedef struct JPH_PhysicsMaterial   JPH_PhysicsMaterial;
 typedef struct JPH_GroupFilter       JPH_GroupFilter;
-typedef struct JPH_CollisionGroup    JPH_CollisionGroup;
-typedef struct JPH_TransformedShape  JPH_TransformedShape;
 //--------------------------------------------------------------------------------------------------
 //
 // Structures
 //
 //--------------------------------------------------------------------------------------------------
 // NOTE: Needs to be kept in sync with JPH::MassProperties
-struct JPH_MassProperties
+typedef struct JPH_MassProperties
 {
     float             mass;
     alignas(16) float inertia[16];
-};
+} JPH_MassProperties;
 
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
 // TODO: We can probably remove this struct and make it fully opaque.
-struct JPH_MotionProperties
+typedef struct JPH_MotionProperties
 {
     alignas(16) float linear_velocity[4];
     alignas(16) float angular_velocity[4];
@@ -227,18 +214,18 @@ struct JPH_MotionProperties
 #ifdef JPH_ENABLE_ASSERTS
     JPH_MotionType    cached_motion_type;
 #endif
-};
+} JPH_MotionProperties;
 
 // NOTE: Needs to be kept in sync with JPH::CollisionGroup
-struct JPH_CollisionGroup
+typedef struct JPH_CollisionGroup
 {
     const JPH_GroupFilter *  filter;
     JPH_CollisionGroupID     group_id;
     JPH_CollisionSubGroupID  sub_group_id;
-};
+} JPH_CollisionGroup;
 
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
-struct JPH_BodyCreationSettings
+typedef struct JPH_BodyCreationSettings
 {
     alignas(16) float          position[4];
     alignas(16) float          rotation[4];
@@ -264,26 +251,26 @@ struct JPH_BodyCreationSettings
     JPH_MassProperties         mass_properties_override;
     const void *               reserved;
     const JPH_Shape *          shape;
-};
+} JPH_BodyCreationSettings;
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
-struct JPH_SubShapeIDCreator
+typedef struct JPH_SubShapeIDCreator
 {
     JPH_SubShapeID id;
     uint32_t       current_bit;
-};
+} JPH_SubShapeIDCreator;
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDPair
-struct JPH_SubShapeIDPair
+typedef struct JPH_SubShapeIDPair
 {
     JPH_BodyID     body1_id;
     JPH_SubShapeID sub_shape1_id;
     JPH_BodyID     body2_id;
     JPH_SubShapeID sub_shape2_id;
-};
+} JPH_SubShapeIDPair;
 
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
-struct JPH_ContactManifold
+typedef struct JPH_ContactManifold
 {
     alignas(16) float    world_space_normal[4];
     alignas(16) float    penetration_depth;
@@ -293,18 +280,18 @@ struct JPH_ContactManifold
     alignas(16) float    world_space_contact_points1[64][4];
     alignas(16) uint32_t num_points2;
     alignas(16) float    world_space_contact_points2[64][4];
-};
+} JPH_ContactManifold;
 
 // NOTE: Needs to be kept in sync with JPH::ContactSettings
-struct JPH_ContactSettings
+typedef struct JPH_ContactSettings
 {
     float combined_friction;
     float combined_restitution;
     bool  is_sensor;
-};
+} JPH_ContactSettings;
 
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
-struct JPH_CollideShapeResult
+typedef struct JPH_CollideShapeResult
 {
     alignas(16) float    contact_point1[4];
     alignas(16) float    contact_point2[4];
@@ -317,10 +304,10 @@ struct JPH_CollideShapeResult
     alignas(16) float    shape1_face[32][4];
     alignas(16) uint32_t num_face_points2;
     alignas(16) float    shape2_face[32][4];
-};
+} JPH_CollideShapeResult;
 
 // NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
-struct JPH_BroadPhaseLayerInterfaceVTable
+typedef struct JPH_BroadPhaseLayerInterfaceVTable
 {
     const void *reserved0;
     const void *reserved1;
@@ -335,10 +322,10 @@ struct JPH_BroadPhaseLayerInterfaceVTable
     const char *
     (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
 #endif
-};
+} JPH_BroadPhaseLayerInterfaceVTable;
 
 // NOTE: Needs to be kept in sync with JPH::BodyActivationListener
-struct JPH_BodyActivationListenerVTable
+typedef struct JPH_BodyActivationListenerVTable
 {
     const void *reserved0;
     const void *reserved1;
@@ -348,10 +335,10 @@ struct JPH_BodyActivationListenerVTable
 
     void
     (*OnBodyDeactivated)(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data);
-};
+} JPH_BodyActivationListenerVTable;
 
 // NOTE: Needs to be kept in sync with JPH::ContactListener
-struct JPH_ContactListenerVTable
+typedef struct JPH_ContactListenerVTable
 {
     const void *reserved0;
     const void *reserved1;
@@ -375,10 +362,10 @@ struct JPH_ContactListenerVTable
                           JPH_ContactSettings *io_settings);
     void
     (*OnContactRemoved)(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair);
-};
+} JPH_ContactListenerVTable;
 
 // NOTE: Needs to be kept in sync with JPH::TransformedShape
-struct JPH_TransformedShape
+typedef struct JPH_TransformedShape
 {
     alignas(16) float     shape_position_com[4];
     alignas(16) float     shape_rotation[4];
@@ -386,7 +373,47 @@ struct JPH_TransformedShape
     float                 shape_scale[3];
     JPH_BodyID            body_id;
     JPH_SubShapeIDCreator sub_shape_id_creator;
-};
+} JPH_TransformedShape;
+
+// NOTE: Needs to be kept in sync with JPH::BodyLockRead
+typedef struct JPH_BodyLockRead
+{
+    const JPH_BodyLockInterface *body_lock_interface;
+    JPH_SharedMutex *            body_lock_mutex;
+    const JPH_Body *             body;
+} JPH_BodyLockRead;
+
+void JPH_CAPI
+JPH_BodyLockRead_Lock(JPH_BodyLockRead *out_lock, const JPH_BodyLockInterface *in_lock_interface, JPH_BodyID in_body_id);
+
+void JPH_CAPI
+JPH_BodyLockRead_Unlock(JPH_BodyLockRead *io_lock);
+
+// NOTE: Needs to be kept in sync with JPH::BodyLockWrite
+typedef struct JPH_BodyLockWrite
+{
+    const JPH_BodyLockInterface *body_lock_interface;
+    JPH_SharedMutex *            body_lock_mutex;
+    JPH_Body *                   body;
+} JPH_BodyLockWrite;
+
+// NOTE: Needs to be kept in sync with JPH::BodyLockMultiRead
+typedef struct JPH_BodyLockMultiRead
+{
+    const JPH_BodyLockInterface *body_lock_interface;
+    JPH_MutexMask                mutex_mask;
+    const JPH_BodyID *           body_ids;
+    int                          num_body_ids;
+} JPH_BodyLockMultiRead;
+
+// NOTE: Needs to be kept in sync with JPH::BodyLockMultiWrite
+typedef struct JPH_BodyLockMultiWrite
+{
+    const JPH_BodyLockInterface *body_lock_interface;
+    JPH_MutexMask                mutex_mask;
+    const JPH_BodyID *           body_ids;
+    int                          num_body_ids;
+} JPH_BodyLockMultiWrite;
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions

@@ -23,6 +23,8 @@
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Body/BodyLockMulti.h>
 
 JPH_SUPPRESS_WARNINGS
 
@@ -136,6 +138,20 @@ JPH_TempAllocator_Destroy(JPH_TempAllocator *in_allocator)
 {
     assert(in_allocator != nullptr);
     delete reinterpret_cast<JPH::TempAllocator *>(in_allocator);
+}
+
+void JPH_CAPI
+JPH_BodyLockRead_Lock(JPH_BodyLockRead *out_lock, const JPH_BodyLockInterface *in_lock_interface, JPH_BodyID in_body_id)
+{
+    new (out_lock) JPH::BodyLockRead(
+        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface),
+        JPH::BodyID(in_body_id));
+}
+
+void JPH_CAPI
+JPH_BodyLockRead_Unlock(JPH_BodyLockRead *io_lock)
+{
+    reinterpret_cast<JPH::BodyLockRead *>(io_lock)->~BodyLockRead();
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1226,6 +1242,7 @@ JPH_CAPI const JPH_Shape *
 JPH_Body_GetShape(const JPH_Body *in_body)
 {
     assert(in_body != nullptr);
+    // TODO: We should probably call shape->addRef() here
     return reinterpret_cast<const JPH_Shape *>(
         reinterpret_cast<const JPH::Body *>(in_body)->GetShape()
     );
