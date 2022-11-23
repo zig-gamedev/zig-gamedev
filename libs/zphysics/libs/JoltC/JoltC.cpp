@@ -132,26 +132,12 @@ JPH_TempAllocator_Create(uint32_t in_size)
     auto impl = new JPH::TempAllocatorImpl(in_size);
     return reinterpret_cast<JPH_TempAllocator *>(impl);
 }
-//--------------------------------------------------------------------------------------------------
+
 JPH_CAPI void
 JPH_TempAllocator_Destroy(JPH_TempAllocator *in_allocator)
 {
     assert(in_allocator != nullptr);
     delete reinterpret_cast<JPH::TempAllocator *>(in_allocator);
-}
-
-void JPH_CAPI
-JPH_BodyLockRead_Lock(JPH_BodyLockRead *out_lock, const JPH_BodyLockInterface *in_lock_interface, JPH_BodyID in_body_id)
-{
-    new (out_lock) JPH::BodyLockRead(
-        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface),
-        JPH::BodyID(in_body_id));
-}
-
-void JPH_CAPI
-JPH_BodyLockRead_Unlock(JPH_BodyLockRead *io_lock)
-{
-    reinterpret_cast<JPH::BodyLockRead *>(io_lock)->~BodyLockRead();
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -298,6 +284,44 @@ JPH_PhysicsSystem_Update(JPH_PhysicsSystem *in_physics_system,
         in_integration_sub_steps,
         reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator),
         reinterpret_cast<JPH::JobSystem *>(in_job_system));
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_BodyLock
+//
+//--------------------------------------------------------------------------------------------------
+void JPH_CAPI
+JPH_BodyLockRead_Lock(JPH_BodyLockRead *out_lock,
+                      const JPH_BodyLockInterface *in_lock_interface,
+                      JPH_BodyID in_body_id)
+{
+    assert(out_lock != nullptr && in_lock_interface != nullptr);
+    new (out_lock) JPH::BodyLockRead(
+        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface), JPH::BodyID(in_body_id));
+}
+//--------------------------------------------------------------------------------------------------
+void JPH_CAPI
+JPH_BodyLockRead_Unlock(JPH_BodyLockRead *io_lock)
+{
+    assert(io_lock != nullptr);
+    reinterpret_cast<JPH::BodyLockRead *>(io_lock)->~BodyLockRead();
+}
+//--------------------------------------------------------------------------------------------------
+void JPH_CAPI
+JPH_BodyLockWrite_Lock(JPH_BodyLockWrite *out_lock,
+                       const JPH_BodyLockInterface *in_lock_interface,
+                       JPH_BodyID in_body_id)
+{
+    assert(out_lock != nullptr && in_lock_interface != nullptr);
+    new (out_lock) JPH::BodyLockWrite(
+        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface), JPH::BodyID(in_body_id));
+}
+//--------------------------------------------------------------------------------------------------
+void JPH_CAPI
+JPH_BodyLockWrite_Unlock(JPH_BodyLockWrite *io_lock)
+{
+    assert(io_lock != nullptr);
+    reinterpret_cast<JPH::BodyLockWrite *>(io_lock)->~BodyLockWrite();
 }
 //--------------------------------------------------------------------------------------------------
 //

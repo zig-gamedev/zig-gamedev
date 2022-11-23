@@ -122,23 +122,32 @@ typedef uint32_t JPH_SubShapeID;
 typedef uint32_t JPH_CollisionGroupID;
 typedef uint32_t JPH_CollisionSubGroupID;
 
-typedef struct JPH_TempAllocator     JPH_TempAllocator;
-typedef struct JPH_JobSystem         JPH_JobSystem;
-typedef struct JPH_Body              JPH_Body;
-typedef struct JPH_BodyInterface     JPH_BodyInterface;
-typedef struct JPH_BodyLockInterface JPH_BodyLockInterface;
-
 // Must be 16 byte aligned
 typedef void *(*JPH_AllocateFunction)(size_t in_size);
 typedef void (*JPH_FreeFunction)(void *in_block);
 
 typedef void *(*JPH_AlignedAllocateFunction)(size_t in_size, size_t in_alignment);
 typedef void (*JPH_AlignedFreeFunction)(void *in_block);
+
+typedef bool
+(*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
+
+typedef bool
+(*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
 //--------------------------------------------------------------------------------------------------
 //
-// Geometry Types
+// Opaque Types
 //
 //--------------------------------------------------------------------------------------------------
+typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
+typedef struct JPH_SharedMutex   JPH_SharedMutex;
+
+typedef struct JPH_TempAllocator     JPH_TempAllocator;
+typedef struct JPH_JobSystem         JPH_JobSystem;
+typedef struct JPH_Body              JPH_Body;
+typedef struct JPH_BodyInterface     JPH_BodyInterface;
+typedef struct JPH_BodyLockInterface JPH_BodyLockInterface;
+
 typedef struct JPH_ShapeSettings               JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings         JPH_ConvexShapeSettings;
 typedef struct JPH_BoxShapeSettings            JPH_BoxShapeSettings;
@@ -149,28 +158,6 @@ typedef struct JPH_TaperedCapsuleShapeSettings JPH_TaperedCapsuleShapeSettings;
 typedef struct JPH_CylinderShapeSettings       JPH_CylinderShapeSettings;
 typedef struct JPH_ConvexHullShapeSettings     JPH_ConvexHullShapeSettings;
 
-typedef bool
-(*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
-
-typedef bool
-(*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
-//--------------------------------------------------------------------------------------------------
-//
-// Physics Types
-//
-//--------------------------------------------------------------------------------------------------
-typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
-typedef struct JPH_SharedMutex   JPH_SharedMutex;
-//--------------------------------------------------------------------------------------------------
-//
-// Physics/Body Types
-//
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-//
-// Physics/Collision Types
-//
-//--------------------------------------------------------------------------------------------------
 typedef struct JPH_Shape             JPH_Shape;
 typedef struct JPH_PhysicsMaterial   JPH_PhysicsMaterial;
 typedef struct JPH_GroupFilter       JPH_GroupFilter;
@@ -382,12 +369,6 @@ typedef struct JPH_BodyLockRead
     JPH_SharedMutex *            body_lock_mutex;
     const JPH_Body *             body;
 } JPH_BodyLockRead;
-
-void JPH_CAPI
-JPH_BodyLockRead_Lock(JPH_BodyLockRead *out_lock, const JPH_BodyLockInterface *in_lock_interface, JPH_BodyID in_body_id);
-
-void JPH_CAPI
-JPH_BodyLockRead_Unlock(JPH_BodyLockRead *io_lock);
 
 // NOTE: Needs to be kept in sync with JPH::BodyLockWrite
 typedef struct JPH_BodyLockWrite
@@ -646,6 +627,24 @@ JPH_PhysicsSystem_Update(JPH_PhysicsSystem *in_physics_system,
                          int in_integration_sub_steps,
                          JPH_TempAllocator *in_temp_allocator,
                          JPH_JobSystem *in_job_system);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_BodyLock
+//
+//--------------------------------------------------------------------------------------------------
+void JPH_CAPI
+JPH_BodyLockRead_Lock(JPH_BodyLockRead *out_lock,
+                      const JPH_BodyLockInterface *in_lock_interface,
+                      JPH_BodyID in_body_id);
+void JPH_CAPI
+JPH_BodyLockRead_Unlock(JPH_BodyLockRead *io_lock);
+
+void JPH_CAPI
+JPH_BodyLockWrite_Lock(JPH_BodyLockWrite *out_lock,
+                       const JPH_BodyLockInterface *in_lock_interface,
+                       JPH_BodyID in_body_id);
+void JPH_CAPI
+JPH_BodyLockWrite_Unlock(JPH_BodyLockWrite *io_lock);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ShapeSettings
