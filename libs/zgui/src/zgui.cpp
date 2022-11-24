@@ -1815,6 +1815,18 @@ ZGUI_API ImGuiViewport* zguiGetMainViewport(void) {
     return ImGui::GetMainViewport();
 }
 
+ZGUI_API void zguiViewport_GetPos(ImGuiViewport* viewport, float p[2]) {
+    const ImVec2 pos = viewport->Pos;
+    p[0] = pos.x;
+    p[1] = pos.y;
+}
+
+ZGUI_API void zguiViewport_GetSize(ImGuiViewport* viewport, float p[2]) {
+    const ImVec2 sz = viewport->Size;
+    p[0] = sz.x;
+    p[1] = sz.y;
+}
+
 ZGUI_API void zguiViewport_GetWorkPos(ImGuiViewport* viewport, float p[2]) {
     const ImVec2 pos = viewport->WorkPos;
     p[0] = pos.x;
