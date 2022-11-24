@@ -2748,6 +2748,34 @@ pub const beginTooltip = zguiBeginTooltip;
 pub const endTooltip = zguiEndTooltip;
 extern fn zguiBeginTooltip() void;
 extern fn zguiEndTooltip() void;
+
+pub const PopupFlags = packed struct(u32) {
+    mouse_button_left: bool = false,
+    mouse_button_right: bool = false,
+    mouse_button_middle: bool = false,
+    mouse_button_mask_: bool = false,
+    mouse_button_default_: bool = false,
+    no_open_over_existing_popup: bool = false,
+    no_open_over_items: bool = false,
+    any_popup_id: bool = false,
+    any_popup_level: bool = false,
+    any_popup: bool = false,
+    _padding: u22 = 0,
+};
+pub fn beginPopupModal(name: [:0]const u8, args: Begin) bool {
+    return zguiBeginPopupModal(name, args.popen, args.flags);
+}
+pub fn openPopup(str_id: [:0]const u8, flags: PopupFlags) void {
+    zguiOpenPopup(str_id, flags);
+}
+/// `pub fn endPopup() void`
+pub const endPopup = zguiEndPopup;
+/// `pub fn closeCurrentPopup() void`
+pub const closeCurrentPopup = zguiCloseCurrentPopup;
+extern fn zguiBeginPopupModal(name: [*:0]const u8, popen: ?*bool, flags: WindowFlags) bool;
+extern fn zguiEndPopup() void;
+extern fn zguiOpenPopup(str_id: [*:0]const u8, flags: PopupFlags) void;
+extern fn zguiCloseCurrentPopup() void;
 //--------------------------------------------------------------------------------------------------
 //
 // Tabs

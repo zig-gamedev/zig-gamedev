@@ -1372,6 +1372,22 @@ ZGUI_API void zguiBeginTooltip(void) {
 ZGUI_API void zguiEndTooltip(void) {
     ImGui::EndTooltip();
 }
+
+ZGUI_API bool zguiBeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags flags) {
+    return ImGui::BeginPopupModal(name, p_open, flags);
+}
+
+ZGUI_API void zguiEndPopup(void) {
+    ImGui::EndPopup();
+}
+
+ZGUI_API void zguiOpenPopup(const char* str_id, ImGuiPopupFlags popup_flags) {
+    ImGui::OpenPopup(str_id, popup_flags);
+}
+
+ZGUI_API void zguiCloseCurrentPopup(void) {
+    ImGui::CloseCurrentPopup();
+}
 //--------------------------------------------------------------------------------------------------
 //
 // DrawList
