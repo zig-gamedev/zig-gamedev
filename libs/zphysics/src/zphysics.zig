@@ -358,7 +358,13 @@ pub const PhysicsSystem = opaque {
         return c.JPC_PhysicsSystem_GetMaxBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
 
-    pub fn getBodyInterface(physics_system: *PhysicsSystem) *BodyInterface {
+    pub fn getBodyInterface(physics_system: *const PhysicsSystem) *const BodyInterface {
+        return @ptrCast(
+            *const BodyInterface,
+            c.JPC_PhysicsSystem_GetBodyInterface(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
+        );
+    }
+    pub fn getBodyInterfaceMut(physics_system: *PhysicsSystem) *BodyInterface {
         return @ptrCast(
             *BodyInterface,
             c.JPC_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
@@ -973,6 +979,7 @@ test "zphysics.body.basic" {
     );
     defer physics_system.destroy();
 
+    const body_interface_mut = physics_system.getBodyInterfaceMut();
     const body_interface = physics_system.getBodyInterface();
 
     const floor_shape_settings = try BoxShapeSettings.create(.{ 100.0, 1.0, 100.0 });
@@ -988,10 +995,10 @@ test "zphysics.body.basic" {
         .motion_type = .static,
         .object_layer = test_cb1.layers.non_moving,
     };
-    const body_id = try body_interface.createAndAddBody(floor_settings, .dont_activate);
+    const body_id = try body_interface_mut.createAndAddBody(floor_settings, .dont_activate);
     defer {
-        body_interface.removeBody(body_id);
-        body_interface.destroyBody(body_id);
+        body_interface_mut.removeBody(body_id);
+        body_interface_mut.destroyBody(body_id);
     }
 
     {
@@ -1006,15 +1013,15 @@ test "zphysics.body.basic" {
     try expect(physics_system.getNumActiveBodies() == 0);
 
     {
-        const body1 = try body_interface.createBody(floor_settings);
-        defer body_interface.destroyBody(body1.id);
+        const body1 = try body_interface_mut.createBody(floor_settings);
+        defer body_interface_mut.destroyBody(body1.id);
         try expect(body_interface.isAdded(body1.getId()) == false);
 
-        body_interface.addBody(body1.getId(), .activate);
-        try expect(body_interface.isAdded(body1.getId()) == true);
+        body_interface_mut.addBody(body1.getId(), .activate);
+        try expect(body_interface_mut.isAdded(body1.getId()) == true);
         try expect(body_interface.isActive(body1.id) == false);
 
-        body_interface.removeBody(body1.getId());
+        body_interface_mut.removeBody(body1.getId());
         try expect(body_interface.isAdded(body1.id) == false);
 
         try expect(physics_system.getNumBodies() == 2);
