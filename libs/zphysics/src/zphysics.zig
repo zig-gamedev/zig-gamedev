@@ -269,7 +269,7 @@ pub const BodyCreationSettings = extern struct {
 pub const BodyLockRead = extern struct {
     lock_interface: *const BodyLockInterface,
     mutex: ?*SharedMutex,
-    body: ?*Body,
+    body: ?*const Body,
 
     pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockRead {
         var lock: c.JPC_BodyLockRead = undefined;
@@ -284,6 +284,10 @@ pub const BodyLockRead = extern struct {
     pub fn deinit(lock: *BodyLockRead) void {
         c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, lock));
         lock.* = undefined;
+    }
+
+    comptime {
+        assert(@sizeOf(BodyLockRead) == @sizeOf(c.JPC_BodyLockRead));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -480,8 +484,8 @@ pub const BodyInterface = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Body = opaque {
-    pub fn getId(body: *Body) BodyId {
-        return c.JPC_Body_GetID(@ptrCast(*c.JPC_Body, body));
+    pub fn getId(body: *const Body) BodyId {
+        return c.JPC_Body_GetID(@ptrCast(*const c.JPC_Body, body));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -778,7 +782,12 @@ test "zphysics.BodyCreationSettings" {
     try expect(approxEql(f32, bcs0.gravity_factor, bcs1.gravity_factor, 0.0001));
     try expect(bcs0.override_mass_properties == bcs1.override_mass_properties);
     try expect(approxEql(f32, bcs0.inertia_multiplier, bcs1.inertia_multiplier, 0.0001));
-    try expect(eql(u8, asBytes(&bcs0.mass_properties_override), asBytes(&bcs1.mass_properties_override)));
+    try expect(approxEql(f32, bcs0.mass_properties_override.mass, bcs1.mass_properties_override.mass, 0.0001));
+    try expect(eql(
+        u8,
+        asBytes(&bcs0.mass_properties_override.inertia),
+        asBytes(&bcs1.mass_properties_override.inertia),
+    ));
     try expect(bcs0.reserved == bcs1.reserved);
     try expect(bcs0.shape == bcs1.shape);
 }
