@@ -18,6 +18,8 @@
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Body/BodyLockMulti.h>
 JPH_SUPPRESS_WARNINGS
 //--------------------------------------------------------------------------------------------------
 static_assert(sizeof(JPH::BodyID)                  == sizeof(JPC_BodyID));
@@ -42,6 +44,11 @@ static_assert(sizeof(JPH::ContactSettings)      == sizeof(JPC_ContactSettings));
 static_assert(sizeof(JPH::SubShapeIDPair)       == sizeof(JPC_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)   == sizeof(JPC_CollideShapeResult));
 static_assert(sizeof(JPH::TransformedShape)     == sizeof(JPC_TransformedShape));
+
+static_assert(sizeof(JPH::BodyLockRead)       == sizeof(JPC_BodyLockRead));
+static_assert(sizeof(JPH::BodyLockWrite)      == sizeof(JPC_BodyLockWrite));
+static_assert(sizeof(JPH::BodyLockMultiRead)  == sizeof(JPC_BodyLockMultiRead));
+static_assert(sizeof(JPH::BodyLockMultiWrite) == sizeof(JPC_BodyLockMultiWrite));
 //--------------------------------------------------------------------------------------------------
 static_assert(alignof(JPH::MassProperties)       == alignof(JPC_MassProperties));
 static_assert(alignof(JPH::MotionProperties)     == alignof(JPC_MotionProperties));
@@ -52,6 +59,11 @@ static_assert(alignof(JPH::ContactSettings)      == alignof(JPC_ContactSettings)
 static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPC_SubShapeIDPair));
 static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPC_CollideShapeResult));
 static_assert(alignof(JPH::TransformedShape)     == alignof(JPC_TransformedShape));
+
+static_assert(alignof(JPH::BodyLockRead)       == alignof(JPC_BodyLockRead));
+static_assert(alignof(JPH::BodyLockWrite)      == alignof(JPC_BodyLockWrite));
+static_assert(alignof(JPH::BodyLockMultiRead)  == alignof(JPC_BodyLockMultiRead));
+static_assert(alignof(JPH::BodyLockMultiWrite) == alignof(JPC_BodyLockMultiWrite));
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 

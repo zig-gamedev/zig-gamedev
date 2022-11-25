@@ -184,7 +184,6 @@ typedef struct JPC_MassProperties
 } JPC_MassProperties;
 
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
-// TODO: We can probably remove this struct and make it fully opaque.
 typedef struct JPC_MotionProperties
 {
     alignas(16) float linear_velocity[4];
@@ -375,25 +374,23 @@ typedef struct JPC_TransformedShape
 // NOTE: Needs to be kept in sync with JPH::BodyLockRead
 typedef struct JPC_BodyLockRead
 {
-    const JPC_BodyLockInterface *body_lock_interface;
-    JPC_SharedMutex *            body_lock_mutex;
+    const JPC_BodyLockInterface *lock_interface;
+    JPC_SharedMutex *            mutex;
     const JPC_Body *             body;
 } JPC_BodyLockRead;
 
 // NOTE: Needs to be kept in sync with JPH::BodyLockWrite
 typedef struct JPC_BodyLockWrite
 {
-    const JPC_BodyLockInterface *body_lock_interface;
-    JPC_SharedMutex *            body_lock_mutex;
+    const JPC_BodyLockInterface *lock_interface;
+    JPC_SharedMutex *            mutex;
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
 
-// TODO:
-#if 0
 // NOTE: Needs to be kept in sync with JPH::BodyLockMultiRead
 typedef struct JPC_BodyLockMultiRead
 {
-    const JPC_BodyLockInterface *body_lock_interface;
+    const JPC_BodyLockInterface *lock_interface;
     JPC_MutexMask                mutex_mask;
     const JPC_BodyID *           body_ids;
     int                          num_body_ids;
@@ -402,12 +399,11 @@ typedef struct JPC_BodyLockMultiRead
 // NOTE: Needs to be kept in sync with JPH::BodyLockMultiWrite
 typedef struct JPC_BodyLockMultiWrite
 {
-    const JPC_BodyLockInterface *body_lock_interface;
+    const JPC_BodyLockInterface *lock_interface;
     JPC_MutexMask                mutex_mask;
     const JPC_BodyID *           body_ids;
     int                          num_body_ids;
 } JPC_BodyLockMultiWrite;
-#endif
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions

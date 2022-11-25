@@ -265,8 +265,8 @@ JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system)
 {
     assert(in_physics_system != nullptr);
-    auto physics_system = (JPH::PhysicsSystem *)in_physics_system;
-    return (JPC_BodyInterface *)&physics_system->GetBodyInterface();
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterface());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -297,8 +297,8 @@ JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_system)
 {
     assert(in_physics_system != nullptr);
-    auto physics_system = (JPH::PhysicsSystem *)in_physics_system;
-    return (const JPC_BodyLockInterface *)&physics_system->GetBodyLockInterface();
+    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
+    return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterface());
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -312,14 +312,14 @@ JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
 {
     assert(out_lock != nullptr && in_lock_interface != nullptr);
     new (out_lock) JPH::BodyLockRead(
-        *(const JPH::BodyLockInterface *)in_lock_interface, JPH::BodyID(in_body_id));
+        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface), JPH::BodyID(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
 JPC_BodyLockRead_Unlock(JPC_BodyLockRead *io_lock)
 {
     assert(io_lock != nullptr);
-    ((JPH::BodyLockRead *)io_lock)->~BodyLockRead();
+    reinterpret_cast<JPH::BodyLockRead *>(io_lock)->~BodyLockRead();
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
@@ -329,14 +329,14 @@ JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
 {
     assert(out_lock != nullptr && in_lock_interface != nullptr);
     new (out_lock) JPH::BodyLockWrite(
-        *(const JPH::BodyLockInterface *)in_lock_interface, JPH::BodyID(in_body_id));
+        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface), JPH::BodyID(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
 JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock)
 {
     assert(io_lock != nullptr);
-    ((JPH::BodyLockWrite *)io_lock)->~BodyLockWrite();
+    reinterpret_cast<JPH::BodyLockWrite *>(io_lock)->~BodyLockWrite();
 }
 //--------------------------------------------------------------------------------------------------
 //
