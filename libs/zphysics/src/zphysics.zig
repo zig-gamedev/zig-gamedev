@@ -259,7 +259,7 @@ pub const BodyCreationSettings = extern struct {
     inertia_multiplier: f32 = 1.0,
     mass_properties_override: MassProperties = .{},
     reserved: ?*const anyopaque = null,
-    shape: ?*Shape = null,
+    shape: ?*const Shape = null,
 
     comptime {
         assert(@sizeOf(BodyCreationSettings) == @sizeOf(c.JPC_BodyCreationSettings));
