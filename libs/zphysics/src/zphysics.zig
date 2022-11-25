@@ -63,22 +63,22 @@ pub const ContactListenerVTable = extern struct {
 
     onContactValidate: *const fn (
         self: *anyopaque,
-        body1: *Body,
-        body2: *Body,
+        body1: *const Body,
+        body2: *const Body,
         collision_result: *const CollideShapeResult,
     ) callconv(.C) ValidateResult = onContactValidate,
 
     onContactAdded: *const fn (
         self: *anyopaque,
-        body1: *Body,
-        body2: *Body,
+        body1: *const Body,
+        body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
     ) callconv(.C) void = (struct {
         fn defaultImpl(
             _: *anyopaque,
-            _: *Body,
-            _: *Body,
+            _: *const Body,
+            _: *const Body,
             _: *const ContactManifold,
             _: *ContactSettings,
         ) callconv(.C) void {
@@ -88,15 +88,15 @@ pub const ContactListenerVTable = extern struct {
 
     onContactPersisted: *const fn (
         self: *anyopaque,
-        body1: *Body,
-        body2: *Body,
+        body1: *const Body,
+        body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
     ) callconv(.C) void = (struct {
         fn defaultImpl(
             _: *anyopaque,
-            _: *Body,
-            _: *Body,
+            _: *const Body,
+            _: *const Body,
             _: *const ContactManifold,
             _: *ContactSettings,
         ) callconv(.C) void {
@@ -115,8 +115,8 @@ pub const ContactListenerVTable = extern struct {
 
     pub fn onContactValidate(
         _: *anyopaque,
-        _: *Body,
-        _: *Body,
+        _: *const Body,
+        _: *const Body,
         _: *const CollideShapeResult,
     ) callconv(.C) ValidateResult {
         return .accept_all_contacts;
@@ -265,31 +265,6 @@ pub const BodyCreationSettings = extern struct {
         assert(@sizeOf(BodyCreationSettings) == @sizeOf(c.JPC_BodyCreationSettings));
     }
 };
-
-pub const BodyLockRead = extern struct {
-    lock_interface: *const BodyLockInterface,
-    mutex: ?*SharedMutex,
-    body: ?*const Body,
-
-    pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockRead {
-        var lock: c.JPC_BodyLockRead = undefined;
-        c.JPC_BodyLockRead_Lock(
-            &lock,
-            @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
-            body_id,
-        );
-        return @ptrCast(*const BodyLockRead, &lock).*;
-    }
-
-    pub fn deinit(lock: *BodyLockRead) void {
-        c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, lock));
-        lock.* = undefined;
-    }
-
-    comptime {
-        assert(@sizeOf(BodyLockRead) == @sizeOf(c.JPC_BodyLockRead));
-    }
-};
 //--------------------------------------------------------------------------------------------------
 //
 // Init/deinit and global state
@@ -374,11 +349,11 @@ pub const PhysicsSystem = opaque {
     pub fn getNumBodies(physics_system: *const PhysicsSystem) u32 {
         return c.JPC_PhysicsSystem_GetNumBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
-    pub fn getNumActiveBodies(physics_system: *PhysicsSystem) u32 {
-        return c.JPC_PhysicsSystem_GetNumActiveBodies(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+    pub fn getNumActiveBodies(physics_system: *const PhysicsSystem) u32 {
+        return c.JPC_PhysicsSystem_GetNumActiveBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
-    pub fn getMaxBodies(physics_system: *PhysicsSystem) u32 {
-        return c.JPC_PhysicsSystem_GetMaxBodies(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+    pub fn getMaxBodies(physics_system: *const PhysicsSystem) u32 {
+        return c.JPC_PhysicsSystem_GetMaxBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn getBodyInterface(physics_system: *PhysicsSystem) *BodyInterface {
@@ -398,15 +373,15 @@ pub const PhysicsSystem = opaque {
     pub fn setBodyActivationListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
         c.JPC_PhysicsSystem_SetBodyActivationListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system), listener);
     }
-    pub fn getBodyActivationListener(physics_system: *PhysicsSystem) ?*anyopaque {
-        return c.JPC_PhysicsSystem_GetBodyActivationListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+    pub fn getBodyActivationListener(physics_system: *const PhysicsSystem) ?*anyopaque {
+        return c.JPC_PhysicsSystem_GetBodyActivationListener(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn setContactListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
         c.JPC_PhysicsSystem_SetContactListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system), listener);
     }
-    pub fn getContactListener(physics_system: *PhysicsSystem) ?*anyopaque {
-        return c.JPC_PhysicsSystem_GetContactListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+    pub fn getContactListener(physics_system: *const PhysicsSystem) ?*anyopaque {
+        return c.JPC_PhysicsSystem_GetContactListener(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn optimizeBroadPhase(physics_system: *PhysicsSystem) void {
@@ -429,6 +404,35 @@ pub const PhysicsSystem = opaque {
             @ptrCast(*c.JPC_TempAllocator, temp_allocator),
             @ptrCast(*c.JPC_JobSystem, job_system),
         );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// BodyLock*
+//
+//--------------------------------------------------------------------------------------------------
+pub const BodyLockRead = extern struct {
+    lock_interface: *const BodyLockInterface,
+    mutex: ?*SharedMutex,
+    body: ?*const Body,
+
+    pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockRead {
+        var lock: c.JPC_BodyLockRead = undefined;
+        c.JPC_BodyLockRead_Lock(
+            &lock,
+            @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
+            body_id,
+        );
+        return @ptrCast(*const BodyLockRead, &lock).*;
+    }
+
+    pub fn deinit(lock: *BodyLockRead) void {
+        c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, lock));
+        lock.* = undefined;
+    }
+
+    comptime {
+        assert(@sizeOf(BodyLockRead) == @sizeOf(c.JPC_BodyLockRead));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -470,12 +474,12 @@ pub const BodyInterface = opaque {
         return body_id;
     }
 
-    pub fn isAdded(body_iface: *BodyInterface, body_id: BodyId) bool {
-        return c.JPC_BodyInterface_IsAdded(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+    pub fn isAdded(body_iface: *const BodyInterface, body_id: BodyId) bool {
+        return c.JPC_BodyInterface_IsAdded(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
 
-    pub fn isActive(body_iface: *BodyInterface, body_id: BodyId) bool {
-        return c.JPC_BodyInterface_IsActive(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+    pub fn isActive(body_iface: *const BodyInterface, body_id: BodyId) bool {
+        return c.JPC_BodyInterface_IsActive(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -508,19 +512,19 @@ pub const ShapeSettings = opaque {
             pub fn release(shape_settings: *T) void {
                 c.JPC_ShapeSettings_Release(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
             }
-            pub fn getRefCount(shape_settings: *T) u32 {
-                return c.JPC_ShapeSettings_GetRefCount(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
+            pub fn getRefCount(shape_settings: *const T) u32 {
+                return c.JPC_ShapeSettings_GetRefCount(@ptrCast(*const c.JPC_ShapeSettings, shape_settings));
             }
 
-            pub fn createShape(shape_settings: *T) !*Shape {
-                const shape = c.JPC_ShapeSettings_CreateShape(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
+            pub fn createShape(shape_settings: *const T) !*Shape {
+                const shape = c.JPC_ShapeSettings_CreateShape(@ptrCast(*const c.JPC_ShapeSettings, shape_settings));
                 if (shape == null)
                     return error.FailedToCreateShape;
                 return @ptrCast(*Shape, shape);
             }
 
-            pub fn getUserData(shape_settings: *T) u64 {
-                return c.JPC_ShapeSettings_GetUserData(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
+            pub fn getUserData(shape_settings: *const T) u64 {
+                return c.JPC_ShapeSettings_GetUserData(@ptrCast(*const c.JPC_ShapeSettings, shape_settings));
             }
             pub fn setUserData(shape_settings: *T, user_data: u64) void {
                 return c.JPC_ShapeSettings_SetUserData(@ptrCast(*c.JPC_ShapeSettings, shape_settings), user_data);
@@ -544,9 +548,9 @@ pub const ConvexShapeSettings = opaque {
                 return @ptrCast(*ConvexShapeSettings, convex_shape_settings);
             }
 
-            pub fn getMaterial(convex_shape_settings: *T) ?*Material {
-                return @ptrCast(?*Material, c.JPC_ConvexShapeSettings_GetMaterial(
-                    @ptrCast(*c.JPC_ConvexShapeSettings, convex_shape_settings),
+            pub fn getMaterial(convex_shape_settings: *const T) ?*const Material {
+                return @ptrCast(?*const Material, c.JPC_ConvexShapeSettings_GetMaterial(
+                    @ptrCast(*const c.JPC_ConvexShapeSettings, convex_shape_settings),
                 ));
             }
             pub fn setMaterial(convex_shape_settings: *T, material: ?*Material) void {
@@ -556,9 +560,9 @@ pub const ConvexShapeSettings = opaque {
                 );
             }
 
-            pub fn getDensity(convex_shape_settings: *T) f32 {
+            pub fn getDensity(convex_shape_settings: *const T) f32 {
                 return c.JPC_ConvexShapeSettings_GetDensity(
-                    @ptrCast(*c.JPC_ConvexShapeSettings, convex_shape_settings),
+                    @ptrCast(*const c.JPC_ConvexShapeSettings, convex_shape_settings),
                 );
             }
             pub fn setDensity(shape_settings: *T, density: f32) void {
@@ -585,17 +589,20 @@ pub const BoxShapeSettings = opaque {
         return @ptrCast(*BoxShapeSettings, box_shape_settings);
     }
 
-    pub fn getHalfExtent(box_shape_settings: *BoxShapeSettings) [3]f32 {
+    pub fn getHalfExtent(box_shape_settings: *const BoxShapeSettings) [3]f32 {
         var half_extent: [3]f32 = undefined;
-        c.JPC_BoxShapeSettings_GetHalfExtent(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings), &half_extent);
+        c.JPC_BoxShapeSettings_GetHalfExtent(
+            @ptrCast(*const c.JPC_BoxShapeSettings, box_shape_settings),
+            &half_extent,
+        );
         return half_extent;
     }
     pub fn setHalfExtent(box_shape_settings: *BoxShapeSettings, half_extent: [3]f32) void {
         c.JPC_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings), &half_extent);
     }
 
-    pub fn getConvexRadius(box_shape_settings: *BoxShapeSettings) f32 {
-        return c.JPC_BoxShapeSettings_GetConvexRadius(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings));
+    pub fn getConvexRadius(box_shape_settings: *const BoxShapeSettings) f32 {
+        return c.JPC_BoxShapeSettings_GetConvexRadius(@ptrCast(*const c.JPC_BoxShapeSettings, box_shape_settings));
     }
     pub fn setConvexRadius(box_shape_settings: *BoxShapeSettings, convex_radius: f32) void {
         c.JPC_BoxShapeSettings_SetConvexRadius(
@@ -661,25 +668,25 @@ pub const Shape = opaque {
             pub fn release(shape: *T) void {
                 c.JPC_Shape_Release(@ptrCast(*c.JPC_Shape, shape));
             }
-            pub fn getRefCount(shape: *T) u32 {
-                return c.JPC_Shape_GetRefCount(@ptrCast(*c.JPC_Shape, shape));
+            pub fn getRefCount(shape: *const T) u32 {
+                return c.JPC_Shape_GetRefCount(@ptrCast(*const c.JPC_Shape, shape));
             }
 
-            pub fn getType(shape: *T) Type {
+            pub fn getType(shape: *const T) Type {
                 return @intToEnum(
                     Type,
-                    c.JPC_Shape_GetType(@ptrCast(*c.JPC_Shape, shape)),
+                    c.JPC_Shape_GetType(@ptrCast(*const c.JPC_Shape, shape)),
                 );
             }
-            pub fn getSubType(shape: *T) SubType {
+            pub fn getSubType(shape: *const T) SubType {
                 return @intToEnum(
                     SubType,
-                    c.JPC_Shape_GetSubType(@ptrCast(*c.JPC_Shape, shape)),
+                    c.JPC_Shape_GetSubType(@ptrCast(*const c.JPC_Shape, shape)),
                 );
             }
 
-            pub fn getUserData(shape: *T) u64 {
-                return c.JPC_Shape_GetUserData(@ptrCast(*c.JPC_Shape, shape));
+            pub fn getUserData(shape: *const T) u64 {
+                return c.JPC_Shape_GetUserData(@ptrCast(*const c.JPC_Shape, shape));
             }
             pub fn setUserData(shape: *T, user_data: u64) void {
                 return c.JPC_Shape_SetUserData(@ptrCast(*c.JPC_Shape, shape), user_data);

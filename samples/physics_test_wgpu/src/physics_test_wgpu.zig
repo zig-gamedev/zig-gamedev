@@ -105,8 +105,8 @@ const ContactListener = extern struct {
 
     fn onContactValidate(
         self: *anyopaque,
-        body1: *zphy.Body,
-        body2: *zphy.Body,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
         collision_result: *const zphy.CollideShapeResult,
     ) callconv(.C) zphy.ValidateResult {
         // Let's just call a default implementation as a test.
