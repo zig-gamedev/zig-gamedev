@@ -136,44 +136,39 @@ static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
     offsetof(JPC_BodyCreationSettings, inertia_multiplier));
 static_assert(
-    offsetof(JPH::BodyCreationSettings, mIsSensor) ==
-    offsetof(JPC_BodyCreationSettings, is_sensor));
+    offsetof(JPH::BodyCreationSettings, mIsSensor) == offsetof(JPC_BodyCreationSettings, is_sensor));
 static_assert(
-    offsetof(JPH::BodyCreationSettings, mAngularDamping) ==
-    offsetof(JPC_BodyCreationSettings, angular_damping));
+    offsetof(JPH::BodyCreationSettings, mAngularDamping) == offsetof(JPC_BodyCreationSettings, angular_damping));
 
 static_assert(
-    offsetof(JPH::ContactManifold, mPenetrationDepth) ==
-    offsetof(JPC_ContactManifold, penetration_depth));
+    offsetof(JPH::ContactManifold, mPenetrationDepth) == offsetof(JPC_ContactManifold, penetration_depth));
 static_assert(
-    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) ==
-    offsetof(JPC_ContactManifold, num_points1));
+    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) == offsetof(JPC_ContactManifold, num_points1));
 
 static_assert(
-    offsetof(JPH::CollideShapeResult, mPenetrationDepth) ==
-    offsetof(JPC_CollideShapeResult, penetration_depth));
+    offsetof(JPH::CollideShapeResult, mPenetrationDepth) == offsetof(JPC_CollideShapeResult, penetration_depth));
 static_assert(
-    offsetof(JPH::CollideShapeResult, mShape1Face) ==
-    offsetof(JPC_CollideShapeResult, num_face_points1));
+    offsetof(JPH::CollideShapeResult, mShape1Face) == offsetof(JPC_CollideShapeResult, num_face_points1));
 
 static_assert(offsetof(JPH::MotionProperties, mForce) == offsetof(JPC_MotionProperties, force));
 static_assert(offsetof(JPH::MotionProperties, mTorque) == offsetof(JPC_MotionProperties, torque));
 static_assert(offsetof(JPH::MotionProperties, mMotionQuality) == offsetof(JPC_MotionProperties, motion_quality));
+static_assert(offsetof(JPH::MotionProperties, mGravityFactor) == offsetof(JPC_MotionProperties, gravity_factor));
+#ifdef JPH_ENABLE_ASSERTS
+static_assert(
+    offsetof(JPH::MotionProperties, mCachedMotionType) == offsetof(JPC_MotionProperties, cached_motion_type));
+#endif
 
 static_assert(offsetof(JPH::MassProperties, mInertia) == offsetof(JPC_MassProperties, inertia));
 
 static_assert(
-    offsetof(JPH::CollideShapeResult, mPenetrationDepth) ==
-    offsetof(JPC_CollideShapeResult, penetration_depth));
+    offsetof(JPH::CollideShapeResult, mPenetrationDepth) == offsetof(JPC_CollideShapeResult, penetration_depth));
 static_assert(
-    offsetof(JPH::CollideShapeResult, mBodyID2) ==
-    offsetof(JPC_CollideShapeResult, body2_id));
+    offsetof(JPH::CollideShapeResult, mBodyID2) == offsetof(JPC_CollideShapeResult, body2_id));
 static_assert(
-    offsetof(JPH::CollideShapeResult, mShape1Face) ==
-    offsetof(JPC_CollideShapeResult, num_face_points1));
+    offsetof(JPH::CollideShapeResult, mShape1Face) == offsetof(JPC_CollideShapeResult, num_face_points1));
 static_assert(
-    offsetof(JPH::CollideShapeResult, mShape2Face) ==
-    offsetof(JPC_CollideShapeResult, num_face_points2));
+    offsetof(JPH::CollideShapeResult, mShape2Face) == offsetof(JPC_CollideShapeResult, num_face_points2));
 
 static_assert(offsetof(JPH::SubShapeIDPair, mBody2ID) == offsetof(JPC_SubShapeIDPair, body2_id));
 

@@ -6,7 +6,6 @@ pub const Material = opaque {};
 pub const GroupFilter = opaque {};
 pub const BodyLockInterface = opaque {};
 pub const SharedMutex = opaque {};
-pub const MotionProperties = opaque {};
 pub const BroadPhaseLayer = c.JPC_BroadPhaseLayer;
 pub const ObjectLayer = c.JPC_ObjectLayer;
 pub const BodyId = c.JPC_BodyID;
@@ -36,7 +35,9 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
     // Pure virtual
     getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
 
-    // TODO: GetBroadPhaseLayerName() if JPC_EXTERNAL_PROFILE or JPC_PROFILE_ENABLED
+    // TODO:
+    // GetBroadPhaseLayerName(): *const fn (self: *const anyopaque) [*:0]const u8,
+    // if JPC_EXTERNAL_PROFILE or JPC_PROFILE_ENABLED
 
     comptime {
         assert(@sizeOf(BroadPhaseLayerInterfaceVTable) == @sizeOf(c.JPC_BroadPhaseLayerInterfaceVTable));
@@ -519,6 +520,44 @@ pub const Body = extern struct {
         assert(@offsetOf(Body, "motion_properties") == @offsetOf(c.JPC_Body, "motion_properties"));
         assert(@offsetOf(Body, "object_layer") == @offsetOf(c.JPC_Body, "object_layer"));
         assert(@offsetOf(Body, "rotation") == @offsetOf(c.JPC_Body, "rotation"));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// MotionProperties
+//
+//--------------------------------------------------------------------------------------------------
+pub const MotionProperties = extern struct {
+    linear_velocity: [4]f32 align(16),
+    angular_velocity: [4]f32 align(16),
+    inv_inertia_diagnonal: [4]f32 align(16),
+    inertia_rotation: [4]f32 align(16),
+
+    force: [3]f32,
+    torque: [3]f32,
+    inv_mass: f32,
+    linear_damping: f32,
+    angular_damping: f32,
+    max_linear_velocity: f32,
+    max_angular_velocity: f32,
+    gravity_factor: f32,
+    index_in_active_bodies: u32,
+    island_index: u32,
+
+    motion_quality: MotionQuality,
+    allow_sleeping: bool,
+
+    reserved: [if (c.JPC_ENABLE_ASSERTS == 1) 55 else 52]u8,
+
+    comptime {
+        assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));
+        assert(@offsetOf(MotionProperties, "force") == @offsetOf(c.JPC_MotionProperties, "force"));
+        assert(
+            @offsetOf(MotionProperties, "motion_quality") == @offsetOf(c.JPC_MotionProperties, "motion_quality"),
+        );
+        assert(
+            @offsetOf(MotionProperties, "gravity_factor") == @offsetOf(c.JPC_MotionProperties, "gravity_factor"),
+        );
     }
 };
 //--------------------------------------------------------------------------------------------------

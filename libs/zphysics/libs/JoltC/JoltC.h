@@ -8,13 +8,13 @@
 // Const
 //
 //--------------------------------------------------------------------------------------------------
-// TODO: Define this
-#define JPC_API
+#define JPC_API // TODO: Define this properly
 
-// Copied from IssueReporting.h
 // Always turn on asserts in Debug mode
 #if defined(_DEBUG) && !defined(JPH_ENABLE_ASSERTS)
-    #define JPH_ENABLE_ASSERTS
+    #define JPC_ENABLE_ASSERTS 1
+#else
+    #define JPC_ENABLE_ASSERTS 0
 #endif
 
 #define JPC_PI 3.14159265358979323846f
@@ -206,7 +206,7 @@ typedef struct JPC_MotionProperties
 
     float             reserved[13];
 
-#ifdef JPH_ENABLE_ASSERTS
+#if JPC_ENABLE_ASSERTS == 1
     JPC_MotionType    cached_motion_type;
 #endif
 } JPC_MotionProperties;
