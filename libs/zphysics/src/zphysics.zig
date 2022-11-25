@@ -749,13 +749,8 @@ test "zphysics.BodyCreationSettings" {
     const asBytes = std.mem.asBytes;
     const approxEql = std.math.approxEqAbs;
 
-    var bcs0: BodyCreationSettings = undefined;
-    var bcs1: BodyCreationSettings = undefined;
-    std.mem.set(u8, asBytes(&bcs0), 0);
-    std.mem.set(u8, asBytes(&bcs1), 0);
-
-    bcs0 = BodyCreationSettings{};
-    bcs1 = blk: {
+    const bcs0 = BodyCreationSettings{};
+    const bcs1 = blk: {
         var settings: c.JPC_BodyCreationSettings = undefined;
         c.JPC_BodyCreationSettings_Init(&settings);
         break :blk @ptrCast(*const BodyCreationSettings, &settings).*;
