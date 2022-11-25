@@ -4,16 +4,23 @@ const c = @cImport(@cInclude("JoltC.h"));
 
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};
-pub const BroadPhaseLayer = c.JPH_BroadPhaseLayer;
-pub const ObjectLayer = c.JPH_ObjectLayer;
-pub const BodyId = c.JPH_BodyID;
-pub const SubShapeId = c.JPH_SubShapeID;
+pub const BodyLockInterface = opaque {};
+pub const SharedMutex = opaque {};
+pub const BroadPhaseLayer = c.JPC_BroadPhaseLayer;
+pub const ObjectLayer = c.JPC_ObjectLayer;
+pub const BodyId = c.JPC_BodyID;
+pub const SubShapeId = c.JPC_SubShapeID;
 
 pub const ObjectVsBroadPhaseLayerFilter = *const fn (ObjectLayer, BroadPhaseLayer) callconv(.C) bool;
 pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(.C) bool;
 
-pub const max_physics_jobs: u32 = c.JPH_MAX_PHYSICS_JOBS;
-pub const max_physics_barriers: u32 = c.JPH_MAX_PHYSICS_BARRIERS;
+pub const max_physics_jobs: u32 = c.JPC_MAX_PHYSICS_JOBS;
+pub const max_physics_barriers: u32 = c.JPC_MAX_PHYSICS_BARRIERS;
+
+pub const body_id_invalid: BodyId = c.JPC_BODY_ID_INVALID;
+pub const body_id_index_bits: BodyId = c.JPC_BODY_ID_INDEX_BITS;
+pub const body_id_sequence_bits: BodyId = c.JPC_BODY_ID_SEQUENCE_BITS;
+pub const body_id_sequence_shift: BodyId = c.JPC_BODY_ID_SEQUENCE_SHIFT;
 
 const TempAllocator = opaque {};
 const JobSystem = opaque {};
@@ -28,10 +35,10 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
     // Pure virtual
     getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
 
-    // TODO: GetBroadPhaseLayerName() if JPH_EXTERNAL_PROFILE or JPH_PROFILE_ENABLED
+    // TODO: GetBroadPhaseLayerName() if JPC_EXTERNAL_PROFILE or JPC_PROFILE_ENABLED
 
     comptime {
-        assert(@sizeOf(BroadPhaseLayerInterfaceVTable) == @sizeOf(c.JPH_BroadPhaseLayerInterfaceVTable));
+        assert(@sizeOf(BroadPhaseLayerInterfaceVTable) == @sizeOf(c.JPC_BroadPhaseLayerInterfaceVTable));
     }
 };
 
@@ -46,7 +53,7 @@ pub const BodyActivationListenerVTable = extern struct {
     onBodyDeactivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
 
     comptime {
-        assert(@sizeOf(BodyActivationListenerVTable) == @sizeOf(c.JPH_BodyActivationListenerVTable));
+        assert(@sizeOf(BodyActivationListenerVTable) == @sizeOf(c.JPC_BodyActivationListenerVTable));
     }
 };
 
@@ -116,7 +123,7 @@ pub const ContactListenerVTable = extern struct {
     }
 
     comptime {
-        assert(@sizeOf(ContactListenerVTable) == @sizeOf(c.JPH_ContactListenerVTable));
+        assert(@sizeOf(ContactListenerVTable) == @sizeOf(c.JPC_ContactListenerVTable));
     }
 };
 
@@ -126,16 +133,16 @@ pub const ContactSettings = extern struct {
     is_sensor: bool,
 
     comptime {
-        assert(@sizeOf(ContactSettings) == @sizeOf(c.JPH_ContactSettings));
+        assert(@sizeOf(ContactSettings) == @sizeOf(c.JPC_ContactSettings));
     }
 };
 
 pub const MassProperties = extern struct {
-    mass: f32,
-    inertia: [16]f32 align(16),
+    mass: f32 = 0.0,
+    inertia: [16]f32 align(16) = [_]f32{0} ** 16,
 
     comptime {
-        assert(@sizeOf(MassProperties) == @sizeOf(c.JPH_MassProperties));
+        assert(@sizeOf(MassProperties) == @sizeOf(c.JPC_MassProperties));
     }
 };
 
@@ -146,7 +153,7 @@ pub const SubShapeIdPair = extern struct {
     sub_shape2_id: SubShapeId,
 
     comptime {
-        assert(@sizeOf(SubShapeIdPair) == @sizeOf(c.JPH_SubShapeIDPair));
+        assert(@sizeOf(SubShapeIdPair) == @sizeOf(c.JPC_SubShapeIDPair));
     }
 };
 
@@ -164,7 +171,7 @@ pub const CollideShapeResult = extern struct {
     shape2_face: [32][4]f32 align(16),
 
     comptime {
-        assert(@sizeOf(CollideShapeResult) == @sizeOf(c.JPH_CollideShapeResult));
+        assert(@sizeOf(CollideShapeResult) == @sizeOf(c.JPC_CollideShapeResult));
     }
 };
 
@@ -179,91 +186,104 @@ pub const ContactManifold = extern struct {
     world_space_contact_points2: [64][4]f32 align(16),
 
     comptime {
-        assert(@sizeOf(ContactManifold) == @sizeOf(c.JPH_ContactManifold));
+        assert(@sizeOf(ContactManifold) == @sizeOf(c.JPC_ContactManifold));
     }
 };
 
 pub const CollisionGroup = extern struct {
-    filter: ?*GroupFilter,
-    group_id: GroupId,
-    sub_group_id: SubGroupId,
+    filter: ?*GroupFilter = null,
+    group_id: GroupId = invalid_group,
+    sub_group_id: SubGroupId = invalid_sub_group,
 
-    pub const GroupId = c.JPH_CollisionGroupID;
-    pub const SubGroupId = c.JPH_CollisionSubGroupID;
+    pub const GroupId = c.JPC_CollisionGroupID;
+    pub const SubGroupId = c.JPC_CollisionSubGroupID;
 
-    const invalid_group = ~@as(GroupId, 0);
-    const invalid_sub_group = ~@as(SubGroupId, 0);
-
-    pub fn init() CollisionGroup {
-        return @ptrCast(*const CollisionGroup, &c.JPH_CollisionGroup_InitDefault()).*;
-    }
+    const invalid_group = @as(GroupId, c.JPC_COLLISION_GROUP_INVALID_GROUP);
+    const invalid_sub_group = @as(SubGroupId, c.JPC_COLLISION_GROUP_INVALID_SUB_GROUP);
 
     comptime {
-        assert(@sizeOf(CollisionGroup) == @sizeOf(c.JPH_CollisionGroup));
+        assert(@sizeOf(CollisionGroup) == @sizeOf(c.JPC_CollisionGroup));
     }
 };
 
-pub const Activation = enum(c.JPH_Activation) {
-    activate = c.JPH_ACTIVATION_ACTIVATE,
-    dont_activate = c.JPH_ACTIVATION_DONT_ACTIVATE,
+pub const Activation = enum(c.JPC_Activation) {
+    activate = c.JPC_ACTIVATION_ACTIVATE,
+    dont_activate = c.JPC_ACTIVATION_DONT_ACTIVATE,
 };
 
-pub const ValidateResult = enum(c.JPH_ValidateResult) {
-    accept_all_contacts = c.JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS,
-    accept_contact = c.JPH_VALIDATE_RESULT_ACCEPT_CONTACT,
-    reject_contact = c.JPH_VALIDATE_RESULT_REJECT_CONTACT,
-    reject_all_contacts = c.JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS,
+pub const ValidateResult = enum(c.JPC_ValidateResult) {
+    accept_all_contacts = c.JPC_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS,
+    accept_contact = c.JPC_VALIDATE_RESULT_ACCEPT_CONTACT,
+    reject_contact = c.JPC_VALIDATE_RESULT_REJECT_CONTACT,
+    reject_all_contacts = c.JPC_VALIDATE_RESULT_REJECT_ALL_CONTACTS,
 };
 
-pub const MotionType = enum(c.JPH_MotionType) {
-    static = c.JPH_MOTION_TYPE_STATIC,
-    kinematic = c.JPH_MOTION_TYPE_KINEMATIC,
-    dynamic = c.JPH_MOTION_TYPE_DYNAMIC,
+pub const MotionType = enum(c.JPC_MotionType) {
+    static = c.JPC_MOTION_TYPE_STATIC,
+    kinematic = c.JPC_MOTION_TYPE_KINEMATIC,
+    dynamic = c.JPC_MOTION_TYPE_DYNAMIC,
 };
 
-pub const MotionQuality = enum(c.JPH_MotionQuality) {
-    discrete = c.JPH_MOTION_QUALITY_DISCRETE,
-    linear_cast = c.JPH_MOTION_QUALITY_LINEAR_CAST,
+pub const MotionQuality = enum(c.JPC_MotionQuality) {
+    discrete = c.JPC_MOTION_QUALITY_DISCRETE,
+    linear_cast = c.JPC_MOTION_QUALITY_LINEAR_CAST,
 };
 
-pub const OverrideMassProperties = enum(c.JPH_OverrideMassProperties) {
-    calc_mass_inertia = c.JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
-    calc_inertia = c.JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA,
-    mass_inertia_provided = c.JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED,
+pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
+    calc_mass_inertia = c.JPC_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
+    calc_inertia = c.JPC_OVERRIDE_MASS_PROPS_CALC_INERTIA,
+    mass_inertia_provided = c.JPC_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED,
 };
 
 pub const BodyCreationSettings = extern struct {
-    position: [4]f32 align(16),
-    rotation: [4]f32 align(16),
-    linear_velocity: [4]f32 align(16),
-    angular_velocity: [4]f32 align(16),
-    user_data: u64,
-    object_layer: ObjectLayer,
-    collision_group: CollisionGroup,
-    motion_type: MotionType,
-    allow_dynamic_or_kinematic: bool,
-    is_sensor: bool,
-    motion_quality: MotionQuality,
-    allow_sleeping: bool,
-    friction: f32,
-    restitution: f32,
-    linear_damping: f32,
-    angular_damping: f32,
-    max_linear_velocity: f32,
-    max_angular_velocity: f32,
-    gravity_factor: f32,
-    override_mass_properties: OverrideMassProperties,
-    inertia_multiplier: f32,
-    mass_properties_override: MassProperties,
-    reserved: ?*const anyopaque,
-    shape: ?*Shape,
-
-    pub fn init() BodyCreationSettings {
-        return @ptrCast(*const BodyCreationSettings, &c.JPH_BodyCreationSettings_InitDefault()).*;
-    }
+    position: [4]f32 align(16) = .{ 0, 0, 0, 0 },
+    rotation: [4]f32 align(16) = .{ 0, 0, 0, 1 },
+    linear_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 },
+    angular_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 },
+    user_data: u64 = 0,
+    object_layer: ObjectLayer = 0,
+    collision_group: CollisionGroup = .{},
+    motion_type: MotionType = .dynamic,
+    allow_dynamic_or_kinematic: bool = false,
+    is_sensor: bool = false,
+    motion_quality: MotionQuality = .discrete,
+    allow_sleeping: bool = true,
+    friction: f32 = 0.2,
+    restitution: f32 = 0.0,
+    linear_damping: f32 = 0.05,
+    angular_damping: f32 = 0.05,
+    max_linear_velocity: f32 = 500.0,
+    max_angular_velocity: f32 = 0.25 * c.JPC_PI * 60.0,
+    gravity_factor: f32 = 1.0,
+    override_mass_properties: OverrideMassProperties = .calc_mass_inertia,
+    inertia_multiplier: f32 = 1.0,
+    mass_properties_override: MassProperties = .{},
+    reserved: ?*const anyopaque = null,
+    shape: ?*Shape = null,
 
     comptime {
-        assert(@sizeOf(BodyCreationSettings) == @sizeOf(c.JPH_BodyCreationSettings));
+        assert(@sizeOf(BodyCreationSettings) == @sizeOf(c.JPC_BodyCreationSettings));
+    }
+};
+
+pub const BodyLockRead = extern struct {
+    lock_interface: *const BodyLockInterface,
+    mutex: ?*SharedMutex,
+    body: ?*Body,
+
+    pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockRead {
+        var lock: c.JPC_BodyLockRead = undefined;
+        c.JPC_BodyLockRead_Lock(
+            &lock,
+            @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
+            body_id,
+        );
+        return @ptrCast(*const BodyLockRead, &lock).*;
+    }
+
+    pub fn deinit(lock: *BodyLockRead) void {
+        c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, lock));
+        lock.* = undefined;
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -291,22 +311,22 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
     mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
 
-    c.JPH_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
+    c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
 
-    c.JPH_CreateFactory();
-    c.JPH_RegisterTypes();
+    c.JPC_CreateFactory();
+    c.JPC_RegisterTypes();
 
     assert(temp_allocator == null and job_system == null);
-    temp_allocator = @ptrCast(*TempAllocator, c.JPH_TempAllocator_Create(args.temp_allocator_size));
-    job_system = @ptrCast(*JobSystem, c.JPH_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads));
+    temp_allocator = @ptrCast(*TempAllocator, c.JPC_TempAllocator_Create(args.temp_allocator_size));
+    job_system = @ptrCast(*JobSystem, c.JPC_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads));
 }
 
 pub fn deinit() void {
-    c.JPH_JobSystem_Destroy(@ptrCast(*c.JPH_JobSystem, job_system));
+    c.JPC_JobSystem_Destroy(@ptrCast(*c.JPC_JobSystem, job_system));
     job_system = null;
-    c.JPH_TempAllocator_Destroy(@ptrCast(*c.JPH_TempAllocator, temp_allocator));
+    c.JPC_TempAllocator_Destroy(@ptrCast(*c.JPC_TempAllocator, temp_allocator));
     temp_allocator = null;
-    c.JPH_DestroyFactory();
+    c.JPC_DestroyFactory();
 
     mem_allocations.?.deinit();
     mem_allocations = null;
@@ -329,8 +349,8 @@ pub const PhysicsSystem = opaque {
             max_contact_constraints: u32 = 1024,
         },
     ) !*PhysicsSystem {
-        const physics_system = c.JPH_PhysicsSystem_Create();
-        c.JPH_PhysicsSystem_Init(
+        const physics_system = c.JPC_PhysicsSystem_Create();
+        c.JPC_PhysicsSystem_Init(
             physics_system,
             args.max_bodies,
             args.num_body_mutexes,
@@ -344,42 +364,49 @@ pub const PhysicsSystem = opaque {
     }
 
     pub fn destroy(physics_system: *PhysicsSystem) void {
-        c.JPH_PhysicsSystem_Destroy(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        c.JPC_PhysicsSystem_Destroy(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
     }
 
-    pub fn getNumBodies(physics_system: *PhysicsSystem) u32 {
-        return c.JPH_PhysicsSystem_GetNumBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+    pub fn getNumBodies(physics_system: *const PhysicsSystem) u32 {
+        return c.JPC_PhysicsSystem_GetNumBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
     pub fn getNumActiveBodies(physics_system: *PhysicsSystem) u32 {
-        return c.JPH_PhysicsSystem_GetNumActiveBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetNumActiveBodies(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
     }
     pub fn getMaxBodies(physics_system: *PhysicsSystem) u32 {
-        return c.JPH_PhysicsSystem_GetMaxBodies(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetMaxBodies(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn getBodyInterface(physics_system: *PhysicsSystem) *BodyInterface {
         return @ptrCast(
             *BodyInterface,
-            c.JPH_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPH_PhysicsSystem, physics_system)),
+            c.JPC_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
+        );
+    }
+
+    pub fn getBodyLockInterface(physics_system: *const PhysicsSystem) *const BodyLockInterface {
+        return @ptrCast(
+            *const BodyLockInterface,
+            c.JPC_PhysicsSystem_GetBodyLockInterface(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
         );
     }
 
     pub fn setBodyActivationListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
-        c.JPH_PhysicsSystem_SetBodyActivationListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system), listener);
+        c.JPC_PhysicsSystem_SetBodyActivationListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system), listener);
     }
     pub fn getBodyActivationListener(physics_system: *PhysicsSystem) ?*anyopaque {
-        return c.JPH_PhysicsSystem_GetBodyActivationListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetBodyActivationListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn setContactListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
-        c.JPH_PhysicsSystem_SetContactListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system), listener);
+        c.JPC_PhysicsSystem_SetContactListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system), listener);
     }
     pub fn getContactListener(physics_system: *PhysicsSystem) ?*anyopaque {
-        return c.JPH_PhysicsSystem_GetContactListener(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetContactListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn optimizeBroadPhase(physics_system: *PhysicsSystem) void {
-        c.JPH_PhysicsSystem_OptimizeBroadPhase(@ptrCast(*c.JPH_PhysicsSystem, physics_system));
+        c.JPC_PhysicsSystem_OptimizeBroadPhase(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
     }
 
     pub fn update(
@@ -390,13 +417,13 @@ pub const PhysicsSystem = opaque {
             integration_sub_steps: i32 = 1,
         },
     ) void {
-        c.JPH_PhysicsSystem_Update(
-            @ptrCast(*c.JPH_PhysicsSystem, physics_system),
+        c.JPC_PhysicsSystem_Update(
+            @ptrCast(*c.JPC_PhysicsSystem, physics_system),
             delta_time,
             args.collision_steps,
             args.integration_sub_steps,
-            @ptrCast(*c.JPH_TempAllocator, temp_allocator),
-            @ptrCast(*c.JPH_JobSystem, job_system),
+            @ptrCast(*c.JPC_TempAllocator, temp_allocator),
+            @ptrCast(*c.JPC_JobSystem, job_system),
         );
     }
 };
@@ -407,9 +434,9 @@ pub const PhysicsSystem = opaque {
 //--------------------------------------------------------------------------------------------------
 pub const BodyInterface = opaque {
     pub fn createBody(body_iface: *BodyInterface, settings: BodyCreationSettings) !*Body {
-        const body = c.JPH_BodyInterface_CreateBody(
-            @ptrCast(*c.JPH_BodyInterface, body_iface),
-            @ptrCast(*const c.JPH_BodyCreationSettings, &settings),
+        const body = c.JPC_BodyInterface_CreateBody(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @ptrCast(*const c.JPC_BodyCreationSettings, &settings),
         );
         if (body == null)
             return error.FailedToCreateBody;
@@ -417,34 +444,34 @@ pub const BodyInterface = opaque {
     }
 
     pub fn destroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
-        c.JPH_BodyInterface_DestroyBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+        c.JPC_BodyInterface_DestroyBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
     }
 
     pub fn addBody(body_iface: *BodyInterface, body_id: BodyId, mode: Activation) void {
-        c.JPH_BodyInterface_AddBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id, @enumToInt(mode));
+        c.JPC_BodyInterface_AddBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id, @enumToInt(mode));
     }
 
     pub fn removeBody(body_iface: *BodyInterface, body_id: BodyId) void {
-        c.JPH_BodyInterface_RemoveBody(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+        c.JPC_BodyInterface_RemoveBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
     }
 
     pub fn createAndAddBody(body_iface: *BodyInterface, settings: BodyCreationSettings, mode: Activation) !BodyId {
-        const body_id = c.JPH_BodyInterface_CreateAndAddBody(
-            @ptrCast(*c.JPH_BodyInterface, body_iface),
-            @ptrCast(*const c.JPH_BodyCreationSettings, &settings),
+        const body_id = c.JPC_BodyInterface_CreateAndAddBody(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @ptrCast(*const c.JPC_BodyCreationSettings, &settings),
             @enumToInt(mode),
         );
-        if (body_id == 0)
+        if (body_id == body_id_invalid)
             return error.FailedToCreateBody;
         return body_id;
     }
 
     pub fn isAdded(body_iface: *BodyInterface, body_id: BodyId) bool {
-        return c.JPH_BodyInterface_IsAdded(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+        return c.JPC_BodyInterface_IsAdded(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
     }
 
     pub fn isActive(body_iface: *BodyInterface, body_id: BodyId) bool {
-        return c.JPH_BodyInterface_IsActive(@ptrCast(*c.JPH_BodyInterface, body_iface), body_id);
+        return c.JPC_BodyInterface_IsActive(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -454,7 +481,7 @@ pub const BodyInterface = opaque {
 //--------------------------------------------------------------------------------------------------
 pub const Body = opaque {
     pub fn getId(body: *Body) BodyId {
-        return c.JPH_Body_GetID(@ptrCast(*c.JPH_Body, body));
+        return c.JPC_Body_GetID(@ptrCast(*c.JPC_Body, body));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -472,27 +499,27 @@ pub const ShapeSettings = opaque {
             }
 
             pub fn addRef(shape_settings: *T) void {
-                c.JPH_ShapeSettings_AddRef(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+                c.JPC_ShapeSettings_AddRef(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
             }
             pub fn release(shape_settings: *T) void {
-                c.JPH_ShapeSettings_Release(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+                c.JPC_ShapeSettings_Release(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
             }
             pub fn getRefCount(shape_settings: *T) u32 {
-                return c.JPH_ShapeSettings_GetRefCount(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+                return c.JPC_ShapeSettings_GetRefCount(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
             }
 
             pub fn createShape(shape_settings: *T) !*Shape {
-                const shape = c.JPH_ShapeSettings_CreateShape(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+                const shape = c.JPC_ShapeSettings_CreateShape(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
                 if (shape == null)
                     return error.FailedToCreateShape;
                 return @ptrCast(*Shape, shape);
             }
 
             pub fn getUserData(shape_settings: *T) u64 {
-                return c.JPH_ShapeSettings_GetUserData(@ptrCast(*c.JPH_ShapeSettings, shape_settings));
+                return c.JPC_ShapeSettings_GetUserData(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
             }
             pub fn setUserData(shape_settings: *T, user_data: u64) void {
-                return c.JPH_ShapeSettings_SetUserData(@ptrCast(*c.JPH_ShapeSettings, shape_settings), user_data);
+                return c.JPC_ShapeSettings_SetUserData(@ptrCast(*c.JPC_ShapeSettings, shape_settings), user_data);
             }
         };
     }
@@ -514,25 +541,25 @@ pub const ConvexShapeSettings = opaque {
             }
 
             pub fn getMaterial(convex_shape_settings: *T) ?*Material {
-                return @ptrCast(?*Material, c.JPH_ConvexShapeSettings_GetMaterial(
-                    @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
+                return @ptrCast(?*Material, c.JPC_ConvexShapeSettings_GetMaterial(
+                    @ptrCast(*c.JPC_ConvexShapeSettings, convex_shape_settings),
                 ));
             }
             pub fn setMaterial(convex_shape_settings: *T, material: ?*Material) void {
-                c.JPH_ConvexShapeSettings_SetMaterial(
-                    @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
-                    @ptrCast(?*c.JPH_PhysicsMaterial, material),
+                c.JPC_ConvexShapeSettings_SetMaterial(
+                    @ptrCast(*c.JPC_ConvexShapeSettings, convex_shape_settings),
+                    @ptrCast(?*c.JPC_PhysicsMaterial, material),
                 );
             }
 
             pub fn getDensity(convex_shape_settings: *T) f32 {
-                return c.JPH_ConvexShapeSettings_GetDensity(
-                    @ptrCast(*c.JPH_ConvexShapeSettings, convex_shape_settings),
+                return c.JPC_ConvexShapeSettings_GetDensity(
+                    @ptrCast(*c.JPC_ConvexShapeSettings, convex_shape_settings),
                 );
             }
             pub fn setDensity(shape_settings: *T, density: f32) void {
-                c.JPH_ConvexShapeSettings_SetDensity(
-                    @ptrCast(*c.JPH_ConvexShapeSettings, shape_settings),
+                c.JPC_ConvexShapeSettings_SetDensity(
+                    @ptrCast(*c.JPC_ConvexShapeSettings, shape_settings),
                     density,
                 );
             }
@@ -548,7 +575,7 @@ pub const BoxShapeSettings = opaque {
     usingnamespace ConvexShapeSettings.Methods(@This());
 
     pub fn create(half_extent: [3]f32) !*BoxShapeSettings {
-        const box_shape_settings = c.JPH_BoxShapeSettings_Create(&half_extent);
+        const box_shape_settings = c.JPC_BoxShapeSettings_Create(&half_extent);
         if (box_shape_settings == null)
             return error.FailedToCreateBoxShapeSettings;
         return @ptrCast(*BoxShapeSettings, box_shape_settings);
@@ -556,19 +583,19 @@ pub const BoxShapeSettings = opaque {
 
     pub fn getHalfExtent(box_shape_settings: *BoxShapeSettings) [3]f32 {
         var half_extent: [3]f32 = undefined;
-        c.JPH_BoxShapeSettings_GetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
+        c.JPC_BoxShapeSettings_GetHalfExtent(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings), &half_extent);
         return half_extent;
     }
     pub fn setHalfExtent(box_shape_settings: *BoxShapeSettings, half_extent: [3]f32) void {
-        c.JPH_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings), &half_extent);
+        c.JPC_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings), &half_extent);
     }
 
     pub fn getConvexRadius(box_shape_settings: *BoxShapeSettings) f32 {
-        return c.JPH_BoxShapeSettings_GetConvexRadius(@ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings));
+        return c.JPC_BoxShapeSettings_GetConvexRadius(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings));
     }
     pub fn setConvexRadius(box_shape_settings: *BoxShapeSettings, convex_radius: f32) void {
-        c.JPH_BoxShapeSettings_SetConvexRadius(
-            @ptrCast(*c.JPH_BoxShapeSettings, box_shape_settings),
+        c.JPC_BoxShapeSettings_SetConvexRadius(
+            @ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings),
             convex_radius,
         );
     }
@@ -581,41 +608,41 @@ pub const BoxShapeSettings = opaque {
 pub const Shape = opaque {
     pub usingnamespace Methods(@This());
 
-    pub const Type = enum(c.JPH_ShapeType) {
-        convex = c.JPH_SHAPE_TYPE_CONVEX,
-        compound = c.JPH_SHAPE_TYPE_COMPOUND,
-        decorated = c.JPH_SHAPE_TYPE_DECORATED,
-        mesh = c.JPH_SHAPE_TYPE_MESH,
-        height_field = c.JPH_SHAPE_TYPE_HEIGHT_FIELD,
-        user1 = c.JPH_SHAPE_TYPE_USER1,
-        user2 = c.JPH_SHAPE_TYPE_USER2,
-        user3 = c.JPH_SHAPE_TYPE_USER3,
-        user4 = c.JPH_SHAPE_TYPE_USER4,
+    pub const Type = enum(c.JPC_ShapeType) {
+        convex = c.JPC_SHAPE_TYPE_CONVEX,
+        compound = c.JPC_SHAPE_TYPE_COMPOUND,
+        decorated = c.JPC_SHAPE_TYPE_DECORATED,
+        mesh = c.JPC_SHAPE_TYPE_MESH,
+        height_field = c.JPC_SHAPE_TYPE_HEIGHT_FIELD,
+        user1 = c.JPC_SHAPE_TYPE_USER1,
+        user2 = c.JPC_SHAPE_TYPE_USER2,
+        user3 = c.JPC_SHAPE_TYPE_USER3,
+        user4 = c.JPC_SHAPE_TYPE_USER4,
     };
 
-    pub const SubType = enum(c.JPH_ShapeSubType) {
-        sphere = c.JPH_SHAPE_SUB_TYPE_SPHERE,
-        box = c.JPH_SHAPE_SUB_TYPE_BOX,
-        triangle = c.JPH_SHAPE_SUB_TYPE_TRIANGLE,
-        capsule = c.JPH_SHAPE_SUB_TYPE_CAPSULE,
-        tapered_capsule = c.JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE,
-        cylinder = c.JPH_SHAPE_SUB_TYPE_CYLINDER,
-        convex_hull = c.JPH_SHAPE_SUB_TYPE_CONVEX_HULL,
-        static_compound = c.JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND,
-        mutable_compound = c.JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND,
-        rotated_translated = c.JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED,
-        scaled = c.JPH_SHAPE_SUB_TYPE_SCALED,
-        offset_center_of_mass = c.JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS,
-        mesh = c.JPH_SHAPE_SUB_TYPE_MESH,
-        height_field = c.JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD,
-        user1 = c.JPH_SHAPE_SUB_TYPE_USER1,
-        user2 = c.JPH_SHAPE_SUB_TYPE_USER2,
-        user3 = c.JPH_SHAPE_SUB_TYPE_USER3,
-        user4 = c.JPH_SHAPE_SUB_TYPE_USER4,
-        user5 = c.JPH_SHAPE_SUB_TYPE_USER5,
-        user6 = c.JPH_SHAPE_SUB_TYPE_USER6,
-        user7 = c.JPH_SHAPE_SUB_TYPE_USER7,
-        user8 = c.JPH_SHAPE_SUB_TYPE_USER8,
+    pub const SubType = enum(c.JPC_ShapeSubType) {
+        sphere = c.JPC_SHAPE_SUB_TYPE_SPHERE,
+        box = c.JPC_SHAPE_SUB_TYPE_BOX,
+        triangle = c.JPC_SHAPE_SUB_TYPE_TRIANGLE,
+        capsule = c.JPC_SHAPE_SUB_TYPE_CAPSULE,
+        tapered_capsule = c.JPC_SHAPE_SUB_TYPE_TAPERED_CAPSULE,
+        cylinder = c.JPC_SHAPE_SUB_TYPE_CYLINDER,
+        convex_hull = c.JPC_SHAPE_SUB_TYPE_CONVEX_HULL,
+        static_compound = c.JPC_SHAPE_SUB_TYPE_STATIC_COMPOUND,
+        mutable_compound = c.JPC_SHAPE_SUB_TYPE_MUTABLE_COMPOUND,
+        rotated_translated = c.JPC_SHAPE_SUB_TYPE_ROTATED_TRANSLATED,
+        scaled = c.JPC_SHAPE_SUB_TYPE_SCALED,
+        offset_center_of_mass = c.JPC_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS,
+        mesh = c.JPC_SHAPE_SUB_TYPE_MESH,
+        height_field = c.JPC_SHAPE_SUB_TYPE_HEIGHT_FIELD,
+        user1 = c.JPC_SHAPE_SUB_TYPE_USER1,
+        user2 = c.JPC_SHAPE_SUB_TYPE_USER2,
+        user3 = c.JPC_SHAPE_SUB_TYPE_USER3,
+        user4 = c.JPC_SHAPE_SUB_TYPE_USER4,
+        user5 = c.JPC_SHAPE_SUB_TYPE_USER5,
+        user6 = c.JPC_SHAPE_SUB_TYPE_USER6,
+        user7 = c.JPC_SHAPE_SUB_TYPE_USER7,
+        user8 = c.JPC_SHAPE_SUB_TYPE_USER8,
     };
 
     fn Methods(comptime T: type) type {
@@ -625,33 +652,33 @@ pub const Shape = opaque {
             }
 
             pub fn addRef(shape: *T) void {
-                c.JPH_Shape_AddRef(@ptrCast(*c.JPH_Shape, shape));
+                c.JPC_Shape_AddRef(@ptrCast(*c.JPC_Shape, shape));
             }
             pub fn release(shape: *T) void {
-                c.JPH_Shape_Release(@ptrCast(*c.JPH_Shape, shape));
+                c.JPC_Shape_Release(@ptrCast(*c.JPC_Shape, shape));
             }
             pub fn getRefCount(shape: *T) u32 {
-                return c.JPH_Shape_GetRefCount(@ptrCast(*c.JPH_Shape, shape));
+                return c.JPC_Shape_GetRefCount(@ptrCast(*c.JPC_Shape, shape));
             }
 
             pub fn getType(shape: *T) Type {
                 return @intToEnum(
                     Type,
-                    c.JPH_Shape_GetType(@ptrCast(*c.JPH_Shape, shape)),
+                    c.JPC_Shape_GetType(@ptrCast(*c.JPC_Shape, shape)),
                 );
             }
             pub fn getSubType(shape: *T) SubType {
                 return @intToEnum(
                     SubType,
-                    c.JPH_Shape_GetSubType(@ptrCast(*c.JPH_Shape, shape)),
+                    c.JPC_Shape_GetSubType(@ptrCast(*c.JPC_Shape, shape)),
                 );
             }
 
             pub fn getUserData(shape: *T) u64 {
-                return c.JPH_Shape_GetUserData(@ptrCast(*c.JPH_Shape, shape));
+                return c.JPC_Shape_GetUserData(@ptrCast(*c.JPC_Shape, shape));
             }
             pub fn setUserData(shape: *T, user_data: u64) void {
-                return c.JPH_Shape_SetUserData(@ptrCast(*c.JPH_Shape, shape), user_data);
+                return c.JPC_Shape_SetUserData(@ptrCast(*c.JPC_Shape, shape), user_data);
             }
         };
     }
@@ -713,6 +740,49 @@ export fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
 //--------------------------------------------------------------------------------------------------
 const expect = std.testing.expect;
 
+test "zphysics.BodyCreationSettings" {
+    const eql = std.mem.eql;
+    const asBytes = std.mem.asBytes;
+    const approxEql = std.math.approxEqAbs;
+
+    var bcs0: BodyCreationSettings = undefined;
+    var bcs1: BodyCreationSettings = undefined;
+    std.mem.set(u8, asBytes(&bcs0), 0);
+    std.mem.set(u8, asBytes(&bcs1), 0);
+
+    bcs0 = BodyCreationSettings{};
+    bcs1 = blk: {
+        var settings: c.JPC_BodyCreationSettings = undefined;
+        c.JPC_BodyCreationSettings_Init(&settings);
+        break :blk @ptrCast(*const BodyCreationSettings, &settings).*;
+    };
+
+    try expect(eql(u8, asBytes(&bcs0.position), asBytes(&bcs1.position)));
+    try expect(eql(u8, asBytes(&bcs0.rotation), asBytes(&bcs1.rotation)));
+    try expect(eql(u8, asBytes(&bcs0.linear_velocity), asBytes(&bcs1.linear_velocity)));
+    try expect(eql(u8, asBytes(&bcs0.angular_velocity), asBytes(&bcs1.angular_velocity)));
+    try expect(bcs0.user_data == bcs1.user_data);
+    try expect(bcs0.object_layer == bcs1.object_layer);
+    try expect(eql(u8, asBytes(&bcs0.collision_group), asBytes(&bcs1.collision_group)));
+    try expect(bcs0.motion_type == bcs1.motion_type);
+    try expect(bcs0.allow_dynamic_or_kinematic == bcs1.allow_dynamic_or_kinematic);
+    try expect(bcs0.is_sensor == bcs1.is_sensor);
+    try expect(bcs0.motion_quality == bcs1.motion_quality);
+    try expect(bcs0.allow_sleeping == bcs1.allow_sleeping);
+    try expect(approxEql(f32, bcs0.friction, bcs1.friction, 0.0001));
+    try expect(approxEql(f32, bcs0.restitution, bcs1.restitution, 0.0001));
+    try expect(approxEql(f32, bcs0.linear_damping, bcs1.linear_damping, 0.0001));
+    try expect(approxEql(f32, bcs0.angular_damping, bcs1.angular_damping, 0.0001));
+    try expect(approxEql(f32, bcs0.max_linear_velocity, bcs1.max_linear_velocity, 0.0001));
+    try expect(approxEql(f32, bcs0.max_angular_velocity, bcs1.max_angular_velocity, 0.0001));
+    try expect(approxEql(f32, bcs0.gravity_factor, bcs1.gravity_factor, 0.0001));
+    try expect(bcs0.override_mass_properties == bcs1.override_mass_properties);
+    try expect(approxEql(f32, bcs0.inertia_multiplier, bcs1.inertia_multiplier, 0.0001));
+    try expect(eql(u8, asBytes(&bcs0.mass_properties_override), asBytes(&bcs1.mass_properties_override)));
+    try expect(bcs0.reserved == bcs1.reserved);
+    try expect(bcs0.shape == bcs1.shape);
+}
+
 test "zphysics.basic" {
     try init(std.testing.allocator, .{});
     defer deinit();
@@ -745,13 +815,11 @@ test "zphysics.basic" {
     try expect(physics_system.getContactListener() == null);
 
     _ = physics_system.getBodyInterface();
+    _ = physics_system.getBodyLockInterface();
 
     physics_system.optimizeBroadPhase();
     physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
     physics_system.update(1.0 / 60.0, .{});
-
-    _ = CollisionGroup.init();
-    _ = BodyCreationSettings.init();
 
     var box_shape_settings: ?*BoxShapeSettings = null;
     box_shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
@@ -834,16 +902,25 @@ test "zphysics.body.basic" {
     const floor_shape = try floor_shape_settings.createShape();
     defer floor_shape.release();
 
-    var floor_settings = BodyCreationSettings.init();
-    floor_settings.position = .{ 0.0, -1.0, 0.0, 1.0 };
-    floor_settings.rotation = .{ 0.0, 0.0, 0.0, 1.0 };
-    floor_settings.shape = floor_shape;
-    floor_settings.motion_type = .static;
-    floor_settings.object_layer = test_cb1.layers.non_moving;
+    const floor_settings = BodyCreationSettings{
+        .position = .{ 0.0, -1.0, 0.0, 1.0 },
+        .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+        .shape = floor_shape,
+        .motion_type = .static,
+        .object_layer = test_cb1.layers.non_moving,
+    };
     const body_id = try body_interface.createAndAddBody(floor_settings, .dont_activate);
     defer {
         body_interface.removeBody(body_id);
         body_interface.destroyBody(body_id);
+    }
+
+    {
+        const lock_interface = physics_system.getBodyLockInterface();
+        var lock = BodyLockRead.init(lock_interface, body_id);
+        defer lock.deinit();
+        try expect(lock.body != null);
+        try expect(lock.body.?.getId() == body_id);
     }
 
     try expect(physics_system.getNumBodies() == 1);

@@ -135,6 +135,10 @@
 
 // Disable common warnings triggered by Jolt when compiling with -Wall
 #define JPH_SUPPRESS_WARNINGS																	\
+	JPH_CLANG_SUPPRESS_WARNING("-Wunknown-warning-option")									    \
+	JPH_MINGW_SUPPRESS_WARNING("-Wunknown-warning-option")									    \
+	JPH_GCC_SUPPRESS_WARNING("-Wunknown-warning-option")									    \
+                                                                                                \
 	JPH_CLANG_SUPPRESS_WARNING("-Wc++98-compat")												\
 	JPH_CLANG_SUPPRESS_WARNING("-Wc++98-compat-pedantic")										\
 	JPH_CLANG_SUPPRESS_WARNING("-Wfloat-equal")													\
