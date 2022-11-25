@@ -6,6 +6,7 @@ pub const Material = opaque {};
 pub const GroupFilter = opaque {};
 pub const BodyLockInterface = opaque {};
 pub const SharedMutex = opaque {};
+pub const MotionProperties = opaque {};
 pub const BroadPhaseLayer = c.JPC_BroadPhaseLayer;
 pub const ObjectLayer = c.JPC_ObjectLayer;
 pub const BodyId = c.JPC_BodyID;
@@ -487,9 +488,37 @@ pub const BodyInterface = opaque {
 // Body
 //
 //--------------------------------------------------------------------------------------------------
-pub const Body = opaque {
+pub const Body = extern struct {
+    position: [4]f32 align(16),
+    rotation: [4]f32 align(16),
+    bounds_min: [4]f32 align(16),
+    bounds_max: [4]f32 align(16),
+
+    shape: *Shape,
+    motion_properties: ?*MotionProperties,
+    user_data: u64,
+    collision_group: CollisionGroup,
+
+    friction: f32,
+    restitution: f32,
+    id: BodyId,
+
+    object_layer: ObjectLayer,
+
+    broad_phase_layer: BroadPhaseLayer,
+    motion_type: MotionType,
+    flags: u8,
+
     pub fn getId(body: *const Body) BodyId {
         return c.JPC_Body_GetID(@ptrCast(*const c.JPC_Body, body));
+    }
+
+    comptime {
+        assert(@sizeOf(Body) == @sizeOf(c.JPC_Body));
+        assert(@offsetOf(Body, "flags") == @offsetOf(c.JPC_Body, "flags"));
+        assert(@offsetOf(Body, "motion_properties") == @offsetOf(c.JPC_Body, "motion_properties"));
+        assert(@offsetOf(Body, "object_layer") == @offsetOf(c.JPC_Body, "object_layer"));
+        assert(@offsetOf(Body, "rotation") == @offsetOf(c.JPC_Body, "rotation"));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -931,7 +960,7 @@ test "zphysics.body.basic" {
         var lock = BodyLockRead.init(lock_interface, body_id);
         defer lock.deinit();
         try expect(lock.body != null);
-        try expect(lock.body.?.getId() == body_id);
+        try expect(lock.body.?.id == body_id);
     }
 
     try expect(physics_system.getNumBodies() == 1);
@@ -939,15 +968,15 @@ test "zphysics.body.basic" {
 
     {
         const body1 = try body_interface.createBody(floor_settings);
-        defer body_interface.destroyBody(body1.getId());
+        defer body_interface.destroyBody(body1.id);
         try expect(body_interface.isAdded(body1.getId()) == false);
 
         body_interface.addBody(body1.getId(), .activate);
         try expect(body_interface.isAdded(body1.getId()) == true);
-        try expect(body_interface.isActive(body1.getId()) == false);
+        try expect(body_interface.isActive(body1.id) == false);
 
         body_interface.removeBody(body1.getId());
-        try expect(body_interface.isAdded(body1.getId()) == false);
+        try expect(body_interface.isAdded(body1.id) == false);
 
         try expect(physics_system.getNumBodies() == 2);
         try expect(physics_system.getNumActiveBodies() == 0);

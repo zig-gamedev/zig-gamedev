@@ -44,6 +44,7 @@ static_assert(sizeof(JPH::ContactSettings)      == sizeof(JPC_ContactSettings));
 static_assert(sizeof(JPH::SubShapeIDPair)       == sizeof(JPC_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)   == sizeof(JPC_CollideShapeResult));
 static_assert(sizeof(JPH::TransformedShape)     == sizeof(JPC_TransformedShape));
+static_assert(sizeof(JPH::Body)                 == sizeof(JPC_Body));
 
 static_assert(sizeof(JPH::BodyLockRead)       == sizeof(JPC_BodyLockRead));
 static_assert(sizeof(JPH::BodyLockWrite)      == sizeof(JPC_BodyLockWrite));
@@ -59,11 +60,13 @@ static_assert(alignof(JPH::ContactSettings)      == alignof(JPC_ContactSettings)
 static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPC_SubShapeIDPair));
 static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPC_CollideShapeResult));
 static_assert(alignof(JPH::TransformedShape)     == alignof(JPC_TransformedShape));
+static_assert(alignof(JPH::Body)                 == alignof(JPC_Body));
 
 static_assert(alignof(JPH::BodyLockRead)       == alignof(JPC_BodyLockRead));
 static_assert(alignof(JPH::BodyLockWrite)      == alignof(JPC_BodyLockWrite));
 static_assert(alignof(JPH::BodyLockMultiRead)  == alignof(JPC_BodyLockMultiRead));
 static_assert(alignof(JPH::BodyLockMultiWrite) == alignof(JPC_BodyLockMultiWrite));
+
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -153,19 +156,11 @@ static_assert(
     offsetof(JPH::CollideShapeResult, mShape1Face) ==
     offsetof(JPC_CollideShapeResult, num_face_points1));
 
-static_assert(
-    offsetof(JPH::MotionProperties, mForce) ==
-    offsetof(JPC_MotionProperties, force));
-static_assert(
-    offsetof(JPH::MotionProperties, mTorque) ==
-    offsetof(JPC_MotionProperties, torque));
-static_assert(
-    offsetof(JPH::MotionProperties, mMotionQuality) ==
-    offsetof(JPC_MotionProperties, motion_quality));
+static_assert(offsetof(JPH::MotionProperties, mForce) == offsetof(JPC_MotionProperties, force));
+static_assert(offsetof(JPH::MotionProperties, mTorque) == offsetof(JPC_MotionProperties, torque));
+static_assert(offsetof(JPH::MotionProperties, mMotionQuality) == offsetof(JPC_MotionProperties, motion_quality));
 
-static_assert(
-    offsetof(JPH::MassProperties, mInertia) ==
-    offsetof(JPC_MassProperties, inertia));
+static_assert(offsetof(JPH::MassProperties, mInertia) == offsetof(JPC_MassProperties, inertia));
 
 static_assert(
     offsetof(JPH::CollideShapeResult, mPenetrationDepth) ==
@@ -180,15 +175,14 @@ static_assert(
     offsetof(JPH::CollideShapeResult, mShape2Face) ==
     offsetof(JPC_CollideShapeResult, num_face_points2));
 
-static_assert(
-    offsetof(JPH::SubShapeIDPair, mBody2ID) ==
-    offsetof(JPC_SubShapeIDPair, body2_id));
+static_assert(offsetof(JPH::SubShapeIDPair, mBody2ID) == offsetof(JPC_SubShapeIDPair, body2_id));
 
-static_assert(
-    offsetof(JPH::SubShapeIDCreator, mCurrentBit) ==
-    offsetof(JPC_SubShapeIDCreator, current_bit));
+static_assert(offsetof(JPH::SubShapeIDCreator, mCurrentBit) == offsetof(JPC_SubShapeIDCreator, current_bit));
 
-static_assert(
-    offsetof(JPH::CollisionGroup, mGroupID) ==
-    offsetof(JPC_CollisionGroup, group_id));
+static_assert(offsetof(JPH::CollisionGroup, mGroupID) == offsetof(JPC_CollisionGroup, group_id));
+
+static_assert(offsetof(JPH::Body, mFlags) == offsetof(JPC_Body, flags));
+static_assert(offsetof(JPH::Body, mMotionProperties) == offsetof(JPC_Body, motion_properties));
+static_assert(offsetof(JPH::Body, mObjectLayer) == offsetof(JPC_Body, object_layer));
+static_assert(offsetof(JPH::Body, mRotation) == offsetof(JPC_Body, rotation));
 //--------------------------------------------------------------------------------------------------

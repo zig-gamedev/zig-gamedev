@@ -151,7 +151,6 @@ typedef bool
 //--------------------------------------------------------------------------------------------------
 typedef struct JPC_TempAllocator     JPC_TempAllocator;
 typedef struct JPC_JobSystem         JPC_JobSystem;
-typedef struct JPC_Body              JPC_Body;
 typedef struct JPC_BodyInterface     JPC_BodyInterface;
 typedef struct JPC_BodyLockInterface JPC_BodyLockInterface;
 
@@ -248,6 +247,30 @@ typedef struct JPC_BodyCreationSettings
     const void *               reserved;
     const JPC_Shape *          shape;
 } JPC_BodyCreationSettings;
+
+// NOTE: Needs to be kept in sync with JPH::Body
+typedef struct JPC_Body
+{
+    alignas(16) float     position[4];
+    alignas(16) float     rotation[4];
+    alignas(16) float     bounds_min[4];
+    alignas(16) float     bounds_max[4];
+
+    JPC_Shape *           shape;
+    JPC_MotionProperties *motion_properties;
+    uint64_t              user_data;
+    JPC_CollisionGroup    collision_group;
+
+    float                 friction;
+    float                 restitution;
+    JPC_BodyID            id;
+
+    JPC_ObjectLayer       object_layer;
+
+    JPC_BroadPhaseLayer   broad_phase_layer;
+    JPC_MotionType        motion_type;
+    uint8_t               flags;
+} JPC_Body;
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
 typedef struct JPC_SubShapeIDCreator
