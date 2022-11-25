@@ -1372,6 +1372,22 @@ ZGUI_API void zguiBeginTooltip(void) {
 ZGUI_API void zguiEndTooltip(void) {
     ImGui::EndTooltip();
 }
+
+ZGUI_API bool zguiBeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags flags) {
+    return ImGui::BeginPopupModal(name, p_open, flags);
+}
+
+ZGUI_API void zguiEndPopup(void) {
+    ImGui::EndPopup();
+}
+
+ZGUI_API void zguiOpenPopup(const char* str_id, ImGuiPopupFlags popup_flags) {
+    ImGui::OpenPopup(str_id, popup_flags);
+}
+
+ZGUI_API void zguiCloseCurrentPopup(void) {
+    ImGui::CloseCurrentPopup();
+}
 //--------------------------------------------------------------------------------------------------
 //
 // DrawList
@@ -1797,6 +1813,18 @@ ZGUI_API void zguiDrawList_PathRect(
 //--------------------------------------------------------------------------------------------------
 ZGUI_API ImGuiViewport* zguiGetMainViewport(void) {
     return ImGui::GetMainViewport();
+}
+
+ZGUI_API void zguiViewport_GetPos(ImGuiViewport* viewport, float p[2]) {
+    const ImVec2 pos = viewport->Pos;
+    p[0] = pos.x;
+    p[1] = pos.y;
+}
+
+ZGUI_API void zguiViewport_GetSize(ImGuiViewport* viewport, float p[2]) {
+    const ImVec2 sz = viewport->Size;
+    p[0] = sz.x;
+    p[1] = sz.y;
 }
 
 ZGUI_API void zguiViewport_GetWorkPos(ImGuiViewport* viewport, float p[2]) {
