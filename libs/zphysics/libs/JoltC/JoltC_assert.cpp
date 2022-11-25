@@ -50,6 +50,11 @@ static_assert(sizeof(JPH::BodyLockRead)       == sizeof(JPC_BodyLockRead));
 static_assert(sizeof(JPH::BodyLockWrite)      == sizeof(JPC_BodyLockWrite));
 static_assert(sizeof(JPH::BodyLockMultiRead)  == sizeof(JPC_BodyLockMultiRead));
 static_assert(sizeof(JPH::BodyLockMultiWrite) == sizeof(JPC_BodyLockMultiWrite));
+
+static_assert(JPC_COLLISION_GROUP_INVALID_GROUP     == JPH::CollisionGroup::cInvalidGroup);
+static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInvalidSubGroup);
+static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
+static_assert((JPC_BODY_ID_SEQUENCE_BITS >> JPC_BODY_ID_SEQUENCE_SHIFT) == JPH::BodyID::cMaxSequenceNumber);
 //--------------------------------------------------------------------------------------------------
 static_assert(alignof(JPH::MassProperties)       == alignof(JPC_MassProperties));
 static_assert(alignof(JPH::MotionProperties)     == alignof(JPC_MotionProperties));
@@ -66,7 +71,6 @@ static_assert(alignof(JPH::BodyLockRead)       == alignof(JPC_BodyLockRead));
 static_assert(alignof(JPH::BodyLockWrite)      == alignof(JPC_BodyLockWrite));
 static_assert(alignof(JPH::BodyLockMultiRead)  == alignof(JPC_BodyLockMultiRead));
 static_assert(alignof(JPH::BodyLockMultiWrite) == alignof(JPC_BodyLockMultiWrite));
-
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 

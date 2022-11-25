@@ -11,7 +11,7 @@
 #define JPC_API // TODO: Define this properly
 
 // Always turn on asserts in Debug mode
-#if defined(_DEBUG) && !defined(JPH_ENABLE_ASSERTS)
+#if defined(_DEBUG)
     #define JPC_ENABLE_ASSERTS 1
 #else
     #define JPC_ENABLE_ASSERTS 0
@@ -336,11 +336,6 @@ typedef struct JPC_BroadPhaseLayerInterfaceVTable
 
     JPC_BroadPhaseLayer
     (*GetBroadPhaseLayer)(const void *in_self, JPC_ObjectLayer in_layer);
-
-#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *
-    (*GetBroadPhaseLayerName)(const void *in_self, JPC_BroadPhaseLayer in_layer);
-#endif
 } JPC_BroadPhaseLayerInterfaceVTable;
 
 // NOTE: Needs to be kept in sync with JPH::BodyActivationListener
