@@ -23,7 +23,7 @@
 #define JPC_COLLISION_GROUP_INVALID_SUB_GROUP 0xffffffff
 
 #define JPC_BODY_ID_INVALID 0xffffffff
-#define JPC_BODY_ID_INDEX_BITS 0x00ffffff
+#define JPC_BODY_ID_INDEX_BITS 0x007fffff
 #define JPC_BODY_ID_SEQUENCE_BITS 0xff000000
 #define JPC_BODY_ID_SEQUENCE_SHIFT 24
 
@@ -658,6 +658,9 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
 
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_system);
+
+JPC_API JPC_Body **
+JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BodyLock*

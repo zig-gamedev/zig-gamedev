@@ -35,10 +35,6 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
     // Pure virtual
     getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
 
-    // TODO:
-    // GetBroadPhaseLayerName(): *const fn (self: *const anyopaque) [*:0]const u8,
-    // if JPC_EXTERNAL_PROFILE or JPC_PROFILE_ENABLED
-
     comptime {
         assert(@sizeOf(BroadPhaseLayerInterfaceVTable) == @sizeOf(c.JPC_BroadPhaseLayerInterfaceVTable));
     }
@@ -265,6 +261,9 @@ pub const BodyCreationSettings = extern struct {
 
     comptime {
         assert(@sizeOf(BodyCreationSettings) == @sizeOf(c.JPC_BodyCreationSettings));
+        assert(@offsetOf(BodyCreationSettings, "is_sensor") == @offsetOf(c.JPC_BodyCreationSettings, "is_sensor"));
+        assert(@offsetOf(BodyCreationSettings, "shape") == @offsetOf(c.JPC_BodyCreationSettings, "shape"));
+        assert(@offsetOf(BodyCreationSettings, "user_data") == @offsetOf(c.JPC_BodyCreationSettings, "user_data"));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -558,12 +557,8 @@ pub const MotionProperties = extern struct {
     comptime {
         assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));
         assert(@offsetOf(MotionProperties, "force") == @offsetOf(c.JPC_MotionProperties, "force"));
-        assert(
-            @offsetOf(MotionProperties, "motion_quality") == @offsetOf(c.JPC_MotionProperties, "motion_quality"),
-        );
-        assert(
-            @offsetOf(MotionProperties, "gravity_factor") == @offsetOf(c.JPC_MotionProperties, "gravity_factor"),
-        );
+        assert(@offsetOf(MotionProperties, "motion_quality") == @offsetOf(c.JPC_MotionProperties, "motion_quality"));
+        assert(@offsetOf(MotionProperties, "gravity_factor") == @offsetOf(c.JPC_MotionProperties, "gravity_factor"));
     }
 };
 //--------------------------------------------------------------------------------------------------

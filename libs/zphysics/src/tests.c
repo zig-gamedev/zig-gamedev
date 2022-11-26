@@ -365,6 +365,9 @@ JoltCTest_Basic2(void)
     JPC_BodyInterface_AddBody(body_interface, floor_id, JPC_ACTIVATION_ACTIVATE);
     if (JPC_BodyInterface_IsAdded(body_interface, floor_id) != true) return 0;
 
+    JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
+    JPC_PhysicsSystem_Update(physics_system, 1.0f / 60.0f, 1, 1, temp_allocator, job_system);
+
     JPC_BodyInterface_RemoveBody(body_interface, floor_id);
     if (JPC_BodyInterface_IsAdded(body_interface, floor_id) != false) return 0;
 
@@ -497,6 +500,20 @@ JoltCTest_HelloWorld(void)
                 position[0], position[1], position[2],
                 velocity[0], velocity[1], velocity[2]);
 #endif
+
+        {
+            JPC_BodyLockRead lock;
+            JPC_BodyLockRead_Lock(&lock, JPC_PhysicsSystem_GetBodyLockInterface(physics_system), sphere_id);
+            if (lock.body)
+            {
+                JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
+                JPC_Body *body = bodies[sphere_id & JPC_BODY_ID_INDEX_BITS];
+
+                if (body != lock.body) return 0;
+                if (body->id != sphere_id) return 0;
+            }
+            JPC_BodyLockRead_Unlock(&lock);
+        }
 
         const float delta_time = 1.0f / 60.0f;
         const int collision_steps = 1;

@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 #include "JoltC.h"
+#include <assert.h>
 #define private public
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -21,6 +22,14 @@
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 JPH_SUPPRESS_WARNINGS
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_Body **
+JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    return reinterpret_cast<JPC_Body **>(physics_system->mBodyManager.mBodies.data());
+}
 //--------------------------------------------------------------------------------------------------
 static_assert(sizeof(JPH::BodyID)                  == sizeof(JPC_BodyID));
 static_assert(sizeof(JPH::SubShapeID)              == sizeof(JPC_SubShapeID));
@@ -184,4 +193,9 @@ static_assert(offsetof(JPH::Body, mFlags) == offsetof(JPC_Body, flags));
 static_assert(offsetof(JPH::Body, mMotionProperties) == offsetof(JPC_Body, motion_properties));
 static_assert(offsetof(JPH::Body, mObjectLayer) == offsetof(JPC_Body, object_layer));
 static_assert(offsetof(JPH::Body, mRotation) == offsetof(JPC_Body, rotation));
+static_assert(offsetof(JPH::Body, mID) == offsetof(JPC_Body, id));
+
+static_assert(offsetof(JPH::BodyLockRead, mBodyLockInterface) == offsetof(JPC_BodyLockRead, lock_interface));
+static_assert(offsetof(JPH::BodyLockRead, mBodyLockMutex) == offsetof(JPC_BodyLockRead, mutex));
+static_assert(offsetof(JPH::BodyLockRead, mBody) == offsetof(JPC_BodyLockRead, body));
 //--------------------------------------------------------------------------------------------------
