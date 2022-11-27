@@ -6,6 +6,7 @@ pub const Material = opaque {};
 pub const GroupFilter = opaque {};
 pub const BodyLockInterface = opaque {};
 pub const SharedMutex = opaque {};
+
 pub const BroadPhaseLayer = c.JPC_BroadPhaseLayer;
 pub const ObjectLayer = c.JPC_ObjectLayer;
 pub const BodyId = c.JPC_BodyID;
@@ -428,23 +429,25 @@ pub const PhysicsSystem = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const BodyLockRead = extern struct {
-    lock_interface: *const BodyLockInterface,
-    mutex: ?*SharedMutex,
-    body: ?*const Body,
+    lock_interface: *const BodyLockInterface = undefined,
+    mutex: ?*SharedMutex = null,
+    body: ?*const Body = null,
 
-    pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockRead {
-        var lock: c.JPC_BodyLockRead = undefined;
+    pub fn tryLock(
+        read_lock: *BodyLockRead,
+        lock_interface: *const BodyLockInterface,
+        body_id: BodyId,
+    ) ?*const Body {
         c.JPC_BodyLockRead_Lock(
-            &lock,
+            @ptrCast(*c.JPC_BodyLockRead, read_lock),
             @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
             body_id,
         );
-        return @ptrCast(*const BodyLockRead, &lock).*;
+        return read_lock.body;
     }
 
-    pub fn deinit(lock: *BodyLockRead) void {
-        c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, lock));
-        lock.* = undefined;
+    pub fn unlock(read_lock: *BodyLockRead) void {
+        c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, read_lock));
     }
 
     comptime {
@@ -453,23 +456,25 @@ pub const BodyLockRead = extern struct {
 };
 
 pub const BodyLockWrite = extern struct {
-    lock_interface: *const BodyLockInterface,
-    mutex: ?*SharedMutex,
-    body: ?*Body,
+    lock_interface: *const BodyLockInterface = undefined,
+    mutex: ?*SharedMutex = null,
+    body: ?*Body = null,
 
-    pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockWrite {
-        var lock: c.JPC_BodyLockWrite = undefined;
+    pub fn tryLock(
+        write_lock: *BodyLockWrite,
+        lock_interface: *const BodyLockInterface,
+        body_id: BodyId,
+    ) ?*Body {
         c.JPC_BodyLockWrite_Lock(
-            &lock,
+            @ptrCast(*c.JPC_BodyLockWrite, write_lock),
             @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
             body_id,
         );
-        return @ptrCast(*const BodyLockWrite, &lock).*;
+        return write_lock.body;
     }
 
-    pub fn deinit(lock: *BodyLockWrite) void {
-        c.JPC_BodyLockWrite_Unlock(@ptrCast(*c.JPC_BodyLockWrite, lock));
-        lock.* = undefined;
+    pub fn unlock(write_lock: *BodyLockWrite) void {
+        c.JPC_BodyLockWrite_Unlock(@ptrCast(*c.JPC_BodyLockWrite, write_lock));
     }
 
     comptime {
@@ -1032,25 +1037,31 @@ test "zphysics.body.basic" {
 
     const lock_interface = physics_system.getBodyLockInterface();
     {
-        var read_lock = BodyLockRead.init(lock_interface, body_id);
-        defer read_lock.deinit();
-        const bodies: []const *const Body = physics_system.getBodiesUnsafe();
-        try expect(read_lock.body != null);
-        try expect(read_lock.body.? == bodies[body_id & body_id_index_bits]);
-        try expect(read_lock.body.?.id == body_id);
-        try expect(read_lock.body.?.id == bodies[body_id & body_id_index_bits].id);
+        var read_lock: BodyLockRead = .{};
+        if (read_lock.tryLock(lock_interface, body_id)) |locked_body| {
+            defer read_lock.unlock();
+
+            const all_bodies: []const *const Body = physics_system.getBodiesUnsafe();
+
+            try expect(locked_body == all_bodies[body_id & body_id_index_bits]);
+            try expect(locked_body.id == body_id);
+            try expect(locked_body.id == all_bodies[body_id & body_id_index_bits].id);
+        }
     }
     {
-        var write_lock = BodyLockWrite.init(lock_interface, body_id);
-        defer write_lock.deinit();
-        const bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
-        try expect(write_lock.body != null);
-        try expect(write_lock.body.? == bodies_mut[body_id & body_id_index_bits]);
-        try expect(write_lock.body.?.id == body_id);
-        try expect(write_lock.body.?.id == bodies_mut[body_id & body_id_index_bits].id);
+        var write_lock: BodyLockWrite = .{};
+        if (write_lock.tryLock(lock_interface, body_id)) |locked_body| {
+            defer write_lock.unlock();
 
-        bodies_mut[body_id & body_id_index_bits].user_data = 12345;
-        try expect(bodies_mut[body_id & body_id_index_bits].user_data == 12345);
+            const all_bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
+
+            try expect(locked_body == all_bodies_mut[body_id & body_id_index_bits]);
+            try expect(locked_body.id == body_id);
+            try expect(locked_body.id == all_bodies_mut[body_id & body_id_index_bits].id);
+
+            all_bodies_mut[body_id & body_id_index_bits].user_data = 12345;
+            try expect(all_bodies_mut[body_id & body_id_index_bits].user_data == 12345);
+        }
     }
 
     try expect(physics_system.getNumBodies() == 1);
