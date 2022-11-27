@@ -63,6 +63,8 @@ static_assert(sizeof(JPH::BodyLockMultiWrite) == sizeof(JPC_BodyLockMultiWrite))
 static_assert(JPC_COLLISION_GROUP_INVALID_GROUP     == JPH::CollisionGroup::cInvalidGroup);
 static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInvalidSubGroup);
 static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
+static_assert(JPC_BODY_ID_INDEX_BITS                == JPH::BodyID::cMaxBodyIndex);
+static_assert(JPC_BODY_ID_BROAD_PHASE_BIT           == JPH::BodyID::cBroadPhaseBit);
 static_assert((JPC_BODY_ID_SEQUENCE_BITS >> JPC_BODY_ID_SEQUENCE_SHIFT) == JPH::BodyID::cMaxSequenceNumber);
 //--------------------------------------------------------------------------------------------------
 static_assert(alignof(JPH::MassProperties)       == alignof(JPC_MassProperties));
