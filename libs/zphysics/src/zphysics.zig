@@ -412,6 +412,15 @@ pub const PhysicsSystem = opaque {
             @ptrCast(*c.JPC_JobSystem, job_system),
         );
     }
+
+    pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
+        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)));
+        return @ptrCast([*]const *const Body, ptr)[0..physics_system.getMaxBodies()];
+    }
+    pub fn getBodiesMutUnsafe(physics_system: *PhysicsSystem) []const *Body {
+        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+        return @ptrCast([*]const *Body, ptr)[0..physics_system.getMaxBodies()];
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -440,6 +449,31 @@ pub const BodyLockRead = extern struct {
 
     comptime {
         assert(@sizeOf(BodyLockRead) == @sizeOf(c.JPC_BodyLockRead));
+    }
+};
+
+pub const BodyLockWrite = extern struct {
+    lock_interface: *const BodyLockInterface,
+    mutex: ?*SharedMutex,
+    body: ?*Body,
+
+    pub fn init(lock_interface: *const BodyLockInterface, body_id: BodyId) BodyLockWrite {
+        var lock: c.JPC_BodyLockWrite = undefined;
+        c.JPC_BodyLockWrite_Lock(
+            &lock,
+            @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
+            body_id,
+        );
+        return @ptrCast(*const BodyLockWrite, &lock).*;
+    }
+
+    pub fn deinit(lock: *BodyLockWrite) void {
+        c.JPC_BodyLockWrite_Unlock(@ptrCast(*c.JPC_BodyLockWrite, lock));
+        lock.* = undefined;
+    }
+
+    comptime {
+        assert(@sizeOf(BodyLockWrite) == @sizeOf(c.JPC_BodyLockWrite));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -996,12 +1030,27 @@ test "zphysics.body.basic" {
         body_interface_mut.destroyBody(body_id);
     }
 
+    const lock_interface = physics_system.getBodyLockInterface();
     {
-        const lock_interface = physics_system.getBodyLockInterface();
-        var lock = BodyLockRead.init(lock_interface, body_id);
-        defer lock.deinit();
-        try expect(lock.body != null);
-        try expect(lock.body.?.id == body_id);
+        var read_lock = BodyLockRead.init(lock_interface, body_id);
+        defer read_lock.deinit();
+        const bodies: []const *const Body = physics_system.getBodiesUnsafe();
+        try expect(read_lock.body != null);
+        try expect(read_lock.body.? == bodies[body_id & body_id_index_bits]);
+        try expect(read_lock.body.?.id == body_id);
+        try expect(read_lock.body.?.id == bodies[body_id & body_id_index_bits].id);
+    }
+    {
+        var write_lock = BodyLockWrite.init(lock_interface, body_id);
+        defer write_lock.deinit();
+        const bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
+        try expect(write_lock.body != null);
+        try expect(write_lock.body.? == bodies_mut[body_id & body_id_index_bits]);
+        try expect(write_lock.body.?.id == body_id);
+        try expect(write_lock.body.?.id == bodies_mut[body_id & body_id_index_bits].id);
+
+        bodies_mut[body_id & body_id_index_bits].user_data = 12345;
+        try expect(bodies_mut[body_id & body_id_index_bits].user_data == 12345);
     }
 
     try expect(physics_system.getNumBodies() == 1);
