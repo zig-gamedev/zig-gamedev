@@ -23,7 +23,7 @@
 JPH_SUPPRESS_WARNINGS
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Body **
-JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system)
+JPC_PhysicsSystem_GetBodies(JPC_PhysicsSystem *in_physics_system)
 {
     assert(in_physics_system != nullptr);
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
@@ -34,7 +34,6 @@ static_assert(JPC_COLLISION_GROUP_INVALID_GROUP     == JPH::CollisionGroup::cInv
 static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInvalidSubGroup);
 static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
 static_assert(JPC_BODY_ID_INDEX_BITS                == JPH::BodyID::cMaxBodyIndex);
-static_assert(JPC_BODY_ID_BROAD_PHASE_BIT           == JPH::BodyID::cBroadPhaseBit);
 static_assert(_JPC_IS_FREED_BODY_BIT                == JPH::BodyManager::cIsFreedBody);
 
 static_assert((JPC_BODY_ID_SEQUENCE_BITS >> JPC_BODY_ID_SEQUENCE_SHIFT) == JPH::BodyID::cMaxSequenceNumber);

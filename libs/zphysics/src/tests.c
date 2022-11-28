@@ -484,7 +484,7 @@ JoltCTest_HelloWorld(void)
 
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
 
-    JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
+    JPC_Body **bodies = JPC_PhysicsSystem_GetBodies(physics_system);
 
     uint32_t step = 0;
     while (JPC_BodyInterface_IsActive(body_interface, sphere_id))

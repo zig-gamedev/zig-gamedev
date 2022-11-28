@@ -26,6 +26,28 @@ pub const body_id_sequence_shift: BodyId = c.JPC_BODY_ID_SEQUENCE_SHIFT;
 const TempAllocator = opaque {};
 const JobSystem = opaque {};
 
+/// Check if this is a valid body pointer.
+/// When a body is freed the memory that the pointer occupies is reused to store a freelist.
+/// NOTE: This function is *not* protected by a lock, use with care!
+pub inline fn isValidBodyPointer(body: *const Body) bool {
+    return (@ptrToInt(body) & c._JPC_IS_FREED_BODY_BIT) == 0;
+}
+
+/// Access a body, will return a `null` if the `body_id` is no longer valid.
+/// Use `PhysicsSystem.getBodies()` to get all the bodies.
+/// NOTE: This function is *not* protected by a lock, use with care!
+pub inline fn tryGetBody(all_bodies: []const *const Body, body_id: BodyId) ?*const Body {
+    const body = all_bodies[body_id & body_id_index_bits];
+    return if (isValidBodyPointer(body) and body.id == body_id) body else null;
+}
+/// Access a body, will return a `null` if the `body_id` is no longer valid.
+/// Use `PhysicsSystem.getBodiesMut()` to get all the bodies.
+/// NOTE: This function is *not* protected by a lock, use with care!
+pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
+    const body = all_bodies[body_id & body_id_index_bits];
+    return if (isValidBodyPointer(body) and body.id == body_id) body else null;
+}
+
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
     reserved0: ?*const anyopaque = null,
     reserved1: ?*const anyopaque = null,
@@ -364,10 +386,22 @@ pub const PhysicsSystem = opaque {
             c.JPC_PhysicsSystem_GetBodyInterface(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
         );
     }
+    pub fn getBodyInterfaceNoLock(physics_system: *const PhysicsSystem) *const BodyInterface {
+        return @ptrCast(
+            *const BodyInterface,
+            c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
+        );
+    }
     pub fn getBodyInterfaceMut(physics_system: *PhysicsSystem) *BodyInterface {
         return @ptrCast(
             *BodyInterface,
             c.JPC_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
+        );
+    }
+    pub fn getBodyInterfaceMutNoLock(physics_system: *PhysicsSystem) *BodyInterface {
+        return @ptrCast(
+            *BodyInterface,
+            c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
         );
     }
 
@@ -375,6 +409,12 @@ pub const PhysicsSystem = opaque {
         return @ptrCast(
             *const BodyLockInterface,
             c.JPC_PhysicsSystem_GetBodyLockInterface(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
+        );
+    }
+    pub fn getBodyLockInterfaceNoLock(physics_system: *const PhysicsSystem) *const BodyLockInterface {
+        return @ptrCast(
+            *const BodyLockInterface,
+            c.JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
         );
     }
 
@@ -414,12 +454,14 @@ pub const PhysicsSystem = opaque {
         );
     }
 
-    pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
-        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)));
+    /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
+    pub fn getBodies(physics_system: *const PhysicsSystem) []const *const Body {
+        const ptr = c.JPC_PhysicsSystem_GetBodies(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)));
         return @ptrCast([*]const *const Body, ptr)[0..physics_system.getNumBodies()];
     }
-    pub fn getBodiesMutUnsafe(physics_system: *PhysicsSystem) []const *Body {
-        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+    /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
+    pub fn getBodiesMut(physics_system: *PhysicsSystem) []const *Body {
+        const ptr = c.JPC_PhysicsSystem_GetBodies(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
         return @ptrCast([*]const *Body, ptr)[0..physics_system.getNumBodies()];
     }
 };
@@ -934,7 +976,11 @@ test "zphysics.basic" {
     try expect(physics_system.getContactListener() == null);
 
     _ = physics_system.getBodyInterface();
+    _ = physics_system.getBodyInterfaceNoLock();
+    _ = physics_system.getBodyInterfaceMut();
+    _ = physics_system.getBodyInterfaceMutNoLock();
     _ = physics_system.getBodyLockInterface();
+    _ = physics_system.getBodyLockInterfaceNoLock();
 
     physics_system.optimizeBroadPhase();
     physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
@@ -1035,26 +1081,29 @@ test "zphysics.body.basic" {
         body_interface_mut.destroyBody(body_id);
     }
 
-    const lock_interface = physics_system.getBodyLockInterface();
     {
+        const lock_interface = physics_system.getBodyLockInterfaceNoLock();
         var read_lock: BodyLockRead = .{};
         if (read_lock.tryLock(lock_interface, body_id)) |locked_body| {
             defer read_lock.unlock();
 
-            const all_bodies: []const *const Body = physics_system.getBodiesUnsafe();
+            const all_bodies: []const *const Body = physics_system.getBodies();
 
+            try expect(isValidBodyPointer(all_bodies[body_id & body_id_index_bits]));
             try expect(locked_body == all_bodies[body_id & body_id_index_bits]);
             try expect(locked_body.id == body_id);
             try expect(locked_body.id == all_bodies[body_id & body_id_index_bits].id);
         }
     }
     {
+        const lock_interface = physics_system.getBodyLockInterface();
         var write_lock: BodyLockWrite = .{};
         if (write_lock.tryLock(lock_interface, body_id)) |locked_body| {
             defer write_lock.unlock();
 
-            const all_bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
+            const all_bodies_mut: []const *Body = physics_system.getBodiesMut();
 
+            try expect(isValidBodyPointer(all_bodies_mut[body_id & body_id_index_bits]));
             try expect(locked_body == all_bodies_mut[body_id & body_id_index_bits]);
             try expect(locked_body.id == body_id);
             try expect(locked_body.id == all_bodies_mut[body_id & body_id_index_bits].id);

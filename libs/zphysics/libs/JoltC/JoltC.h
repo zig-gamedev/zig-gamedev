@@ -24,7 +24,6 @@
 
 #define JPC_BODY_ID_INVALID 0xffffffff
 #define JPC_BODY_ID_INDEX_BITS 0x007fffff
-#define JPC_BODY_ID_BROAD_PHASE_BIT 0x00800000
 #define JPC_BODY_ID_SEQUENCE_BITS 0xff000000
 #define JPC_BODY_ID_SEQUENCE_SHIFT 24
 
@@ -35,7 +34,7 @@
 #define JPC_IS_VALID_BODY_POINTER(body_ptr) (((uintptr_t)(body_ptr) & _JPC_IS_FREED_BODY_BIT) == 0)
 
 /// Access a body, will return a NULL if the body ID is no longer valid (not protected by a lock).
-/// Use `JPC_PhysicsSystem_GetBodiesUnsafe()` to get an array of all body pointers.
+/// Use `JPC_PhysicsSystem_GetBodies()` to get an array of all body pointers.
 #define JPC_TRY_GET_BODY(all_body_ptrs, body_id) \
     JPC_IS_VALID_BODY_POINTER(all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]) && \
     all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]->id == body_id ? \
@@ -661,7 +660,7 @@ JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system);
 
 JPC_API JPC_Body **
-JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system);
+JPC_PhysicsSystem_GetBodies(JPC_PhysicsSystem *in_physics_system);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BodyLock*
