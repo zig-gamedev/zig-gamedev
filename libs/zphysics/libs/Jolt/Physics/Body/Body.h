@@ -127,6 +127,12 @@ public:
 	/// Add torque (unit: N m) for the next time step, will be reset after the next call to PhysicsSimulation::Update
 	inline void				AddTorque(Vec3Arg inTorque)										{ JPH_ASSERT(IsDynamic()); (Vec3::sLoadFloat3Unsafe(mMotionProperties->mTorque) + inTorque).StoreFloat3(&mMotionProperties->mTorque); }
 
+	// Get the total amount of force applied to the center of mass this time step (through AddForce calls). Note that it will reset to zero after PhysicsSimulation::Update.
+	inline Vec3				GetAccumulatedForce() const										{ JPH_ASSERT(IsDynamic()); return mMotionProperties->GetAccumulatedForce(); }
+
+	// Get the total amount of torque applied to the center of mass this time step (through AddForce/AddTorque calls). Note that it will reset to zero after PhysicsSimulation::Update.
+	inline Vec3				GetAccumulatedTorque() const									{ JPH_ASSERT(IsDynamic()); return mMotionProperties->GetAccumulatedTorque(); }
+
 	/// Get inverse inertia tensor in world space
 	inline Mat44			GetInverseInertia() const;
 
@@ -317,7 +323,7 @@ private:
 };
 
 static_assert(sizeof(Body) == 128, "Body should be 128 bytes");
-static_assert(alignof(Body) == 16, "Body should align to 16 bytes");
+static_assert(alignof(Body) == JPH_VECTOR_ALIGNMENT, "Body should properly align");
 
 JPH_NAMESPACE_END
 

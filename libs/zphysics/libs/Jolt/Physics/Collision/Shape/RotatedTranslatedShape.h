@@ -42,6 +42,7 @@ public:
 	/// Constructor
 									RotatedTranslatedShape() : DecoratedShape(EShapeSubType::RotatedTranslated) { }
 									RotatedTranslatedShape(const RotatedTranslatedShapeSettings &inSettings, ShapeResult &outResult);
+									RotatedTranslatedShape(Vec3Arg inPosition, QuatArg inRotation, const Shape *inShape);
 
 	/// Access the rotation that is applied to the inner shape
 	Quat							GetRotation() const										{ return mRotation; }
@@ -69,6 +70,9 @@ public:
 
 	// See Shape::GetSurfaceNormal
 	virtual Vec3					GetSurfaceNormal(const SubShapeID &inSubShapeID, Vec3Arg inLocalSurfacePosition) const override;
+
+	// See Shape::GetSupportingFace
+	virtual void					GetSupportingFace(const SubShapeID &inSubShapeID, Vec3Arg inDirection, Vec3Arg inScale, Mat44Arg inCenterOfMassTransform, SupportingFace &outVertices) const override;
 
 	// See Shape::GetSubmergedVolume
 	virtual void					GetSubmergedVolume(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, const Plane &inSurface, float &outTotalVolume, float &outSubmergedVolume, Vec3 &outCenterOfBuoyancy) const override;

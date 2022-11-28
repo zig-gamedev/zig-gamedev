@@ -143,9 +143,9 @@ MeshShape::MeshShape(const MeshShapeSettings &inSettings, ShapeResult &outResult
 	if (!mMaterials.empty())
 	{
 		// Validate materials
-		if (mMaterials.size() > FLAGS_MATERIAL_MASK)
+		if (mMaterials.size() > (1 << FLAGS_MATERIAL_BITS))
 		{
-			outResult.SetError(StringFormat("Supporting max %d materials per mesh", FLAGS_ACTIVE_EDGE_MASK + 1));
+			outResult.SetError(StringFormat("Supporting max %d materials per mesh", 1 << FLAGS_MATERIAL_BITS));
 			return;
 		}
 		for (const IndexedTriangle &t : inSettings.mIndexedTriangles)
@@ -383,6 +383,30 @@ Vec3 MeshShape::GetSurfaceNormal(const SubShapeID &inSubShapeID, Vec3Arg inLocal
 
 	//  Calculate normal
 	return (v3 - v2).Cross(v1 - v2).Normalized();
+}
+
+void MeshShape::GetSupportingFace(const SubShapeID &inSubShapeID, Vec3Arg inDirection, Vec3Arg inScale, Mat44Arg inCenterOfMassTransform, SupportingFace &outVertices) const
+{
+	// Decode ID
+	const void *block_start;
+	uint32 triangle_idx;
+	DecodeSubShapeID(inSubShapeID, block_start, triangle_idx);
+
+	// Decode triangle	
+	const TriangleCodec::DecodingContext triangle_ctx(sGetTriangleHeader(mTree));
+	outVertices.resize(3);
+	triangle_ctx.GetTriangle(block_start, triangle_idx, outVertices[0], outVertices[1], outVertices[2]);
+
+	// Flip triangle if scaled inside out
+	if (ScaleHelpers::IsInsideOut(inScale))
+		swap(outVertices[1], outVertices[2]);
+
+	// Calculate transform with scale
+	Mat44 transform = inCenterOfMassTransform.PreScaled(inScale);
+
+	// Transform to world space
+	for (Vec3 &v : outVertices)
+		v = transform * v;
 }
 
 AABox MeshShape::GetLocalBounds() const

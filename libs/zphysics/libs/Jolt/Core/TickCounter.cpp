@@ -24,7 +24,7 @@
 
 JPH_NAMESPACE_BEGIN
 
-#ifdef JPH_PLATFORM_WINDOWS_UWP
+#if defined(JPH_PLATFORM_WINDOWS_UWP) || (defined(JPH_PLATFORM_WINDOWS) && defined(JPH_CPU_ARM))
 
 uint64 GetProcessorTickCount()
 {
@@ -33,10 +33,10 @@ uint64 GetProcessorTickCount()
 	return uint64(count.QuadPart);
 }
 
-#endif // JPH_PLATFORM_WINDOWS_UWP
+#endif // JPH_PLATFORM_WINDOWS_UWP || (JPH_PLATFORM_WINDOWS && JPH_CPU_ARM)
 
 static const uint64 sProcessorTicksPerSecond = []() {
-#if defined(JPH_PLATFORM_WINDOWS_UWP)
+#if defined(JPH_PLATFORM_WINDOWS_UWP) || (defined(JPH_PLATFORM_WINDOWS) && defined(JPH_CPU_ARM))
 	LARGE_INTEGER frequency { };
 	QueryPerformanceFrequency(&frequency);
 	return uint64(frequency.QuadPart);
@@ -59,7 +59,7 @@ static const uint64 sProcessorTicksPerSecond = []() {
 	return JPH_PLATFORM_BLUE_GET_TICK_FREQUENCY();
 #elif defined(JPH_PLATFORM_LINUX) || defined(JPH_PLATFORM_ANDROID) 
 	// Open /proc/cpuinfo
-    ifstream ifs("/proc/cpuinfo");
+    std::ifstream ifs("/proc/cpuinfo");
     if (ifs.is_open())
 	{
 		// Read all lines
@@ -71,7 +71,7 @@ static const uint64 sProcessorTicksPerSecond = []() {
 		
 		#if defined(JPH_CPU_X86)
 			const char *cpu_str = "cpu MHz";
-		#elif defined(JPH_CPU_ARM64)
+		#elif defined(JPH_CPU_ARM)
 			const char *cpu_str = "BogoMIPS";
 		#else
 			#error Unsupported CPU architecture
@@ -104,6 +104,8 @@ static const uint64 sProcessorTicksPerSecond = []() {
     size_t len = sizeof(freq);
     sysctl(mib, 2, &freq, &len, nullptr, 0);
 	return freq;
+#elif defined(JPH_PLATFORM_WASM)
+	return 1; // Not supported
 #else
 	#error Undefined
 #endif

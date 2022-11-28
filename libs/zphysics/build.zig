@@ -132,6 +132,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(src_dir ++ "/Physics/Constraints/SliderConstraint.cpp", flags);
     exe.addCSourceFile(src_dir ++ "/Physics/Constraints/SwingTwistConstraint.cpp", flags);
     exe.addCSourceFile(src_dir ++ "/Physics/Constraints/TwoBodyConstraint.cpp", flags);
+    exe.addCSourceFile(src_dir ++ "/Physics/Constraints/PulleyConstraint.cpp", flags);
     exe.addCSourceFile(src_dir ++ "/Physics/DeterminismLog.cpp", flags);
     exe.addCSourceFile(src_dir ++ "/Physics/IslandBuilder.cpp", flags);
     exe.addCSourceFile(src_dir ++ "/Physics/PhysicsLock.cpp", flags);

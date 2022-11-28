@@ -120,43 +120,8 @@ BodyManager::BodyStats BodyManager::GetBodyStats() const
 	return stats;
 }
 
-Body *BodyManager::CreateBody(const BodyCreationSettings &inBodyCreationSettings)
+Body *BodyManager::AllocateBody(const BodyCreationSettings &inBodyCreationSettings) const
 {
-	// Determine next free index
-	uint32 idx;
-	{
-		UniqueLock lock(mBodiesMutex, EPhysicsLockTypes::BodiesList);
-
-		if (mBodyIDFreeListStart != cBodyIDFreeListEnd)
-		{
-			// Pop an item from the freelist
-			JPH_ASSERT(mBodyIDFreeListStart & cIsFreedBody);
-			idx = uint32(mBodyIDFreeListStart >> cFreedBodyIndexShift);
-			JPH_ASSERT(!sIsValidBodyPointer(mBodies[idx]));
-			mBodyIDFreeListStart = uintptr_t(mBodies[idx]);
-		}
-		else
-		{
-			if (mBodies.size() < mBodies.capacity())
-			{
-				// Allocate a new entry, note that the array should not actually resize since we've reserved it at init time
-				idx = uint32(mBodies.size());
-				mBodies.push_back((Body *)cBodyIDFreeListEnd);
-			}
-			else
-			{
-				// Out of bodies
-				return nullptr;
-			}
-		}
-
-		// Update cached number of bodies
-		mNumBodies++;
-	}
-
-	// Get next sequence number
-	uint8 seq_no = GetNextSequenceNumber(idx);
-
 	// Fill in basic properties
 	Body *body;
 	if (inBodyCreationSettings.HasMassProperties())
@@ -169,7 +134,6 @@ Body *BodyManager::CreateBody(const BodyCreationSettings &inBodyCreationSettings
 	{
 	 	body = new Body;
 	}
-	body->mID = BodyID(idx, seq_no);
 	body->mShape = inBodyCreationSettings.GetShape();
 	body->mUserData = inBodyCreationSettings.mUserData;
 	body->SetFriction(inBodyCreationSettings.mFriction);
@@ -202,9 +166,196 @@ Body *BodyManager::CreateBody(const BodyCreationSettings &inBodyCreationSettings
 	// Position body
 	body->SetPositionAndRotationInternal(inBodyCreationSettings.mPosition, inBodyCreationSettings.mRotation);
 
-	// Add body
-	mBodies[idx] = body;
 	return body;
+}
+
+void BodyManager::FreeBody(Body *inBody) const
+{
+	JPH_ASSERT(inBody->GetID().IsInvalid(), "This function should only be called on a body that doesn't have an ID yet, use DestroyBody otherwise");
+
+	sDeleteBody(inBody);
+}
+
+bool BodyManager::AddBody(Body *ioBody)
+{
+	// Return error when body was already added
+	if (!ioBody->GetID().IsInvalid())
+		return false;
+
+	// Determine next free index
+	uint32 idx;
+	{
+		UniqueLock lock(mBodiesMutex, EPhysicsLockTypes::BodiesList);
+
+		if (mBodyIDFreeListStart != cBodyIDFreeListEnd)
+		{
+			// Pop an item from the freelist
+			JPH_ASSERT(mBodyIDFreeListStart & cIsFreedBody);
+			idx = uint32(mBodyIDFreeListStart >> cFreedBodyIndexShift);
+			JPH_ASSERT(!sIsValidBodyPointer(mBodies[idx]));
+			mBodyIDFreeListStart = uintptr_t(mBodies[idx]);
+			mBodies[idx] = ioBody;
+		}
+		else
+		{
+			if (mBodies.size() < mBodies.capacity())
+			{
+				// Allocate a new entry, note that the array should not actually resize since we've reserved it at init time
+				idx = uint32(mBodies.size());
+				mBodies.push_back(ioBody);
+			}
+			else
+			{
+				// Out of bodies
+				return false;
+			}
+		}
+
+		// Update cached number of bodies
+		mNumBodies++;
+	}
+
+	// Get next sequence number and assign the ID
+	uint8 seq_no = GetNextSequenceNumber(idx);
+	ioBody->mID = BodyID(idx, seq_no);
+	return true;
+}
+
+bool BodyManager::AddBodyWithCustomID(Body *ioBody, const BodyID &inBodyID)
+{
+	// Return error when body was already added
+	if (!ioBody->GetID().IsInvalid())
+		return false;
+
+	{
+		UniqueLock lock(mBodiesMutex, EPhysicsLockTypes::BodiesList);
+
+		// Check if index is beyond the max body ID
+		uint32 idx = inBodyID.GetIndex();
+		if (idx >= mBodies.capacity())
+			return false; // Return error
+
+		if (idx < mBodies.size())
+		{
+			// Body array entry has already been allocated, check if there's a free body here
+			if (sIsValidBodyPointer(mBodies[idx]))
+				return false; // Return error
+
+			// Remove the entry from the freelist
+			uintptr_t idx_start = mBodyIDFreeListStart >> cFreedBodyIndexShift;
+			if (idx == idx_start)
+			{
+				// First entry, easy to remove, the start of the list is our next
+				mBodyIDFreeListStart = uintptr_t(mBodies[idx]);
+			}
+			else
+			{
+				// Loop over the freelist and find the entry in the freelist pointing to our index
+				// TODO: This is O(N), see if this becomes a performance problem (don't want to put the freed bodies in a double linked list)
+				uintptr_t cur, next;
+				for (cur = idx_start; cur != cBodyIDFreeListEnd >> cFreedBodyIndexShift; cur = next)
+				{
+					next = uintptr_t(mBodies[cur]) >> cFreedBodyIndexShift;
+					if (next == idx)
+					{
+						mBodies[cur] = mBodies[idx];
+						break;
+					}
+				}
+				JPH_ASSERT(cur != cBodyIDFreeListEnd >> cFreedBodyIndexShift);
+			}
+
+			// Put the body in the slot
+			mBodies[idx] = ioBody;
+		}
+		else
+		{
+			// Ensure that all body IDs up to this body ID have been allocated and added to the free list
+			while (idx > mBodies.size())
+			{
+				// Push the id onto the freelist
+				mBodies.push_back((Body *)mBodyIDFreeListStart);
+				mBodyIDFreeListStart = (uintptr_t(mBodies.size() - 1) << cFreedBodyIndexShift) | cIsFreedBody;
+			}
+
+			// Add the element to the list
+			mBodies.push_back(ioBody);
+		}
+
+		// Update cached number of bodies
+		mNumBodies++;
+	}
+
+	// Assign the ID
+	ioBody->mID = inBodyID;
+	return true;
+}
+
+Body *BodyManager::RemoveBodyInternal(const BodyID &inBodyID)
+{
+	// Get body
+	uint32 idx = inBodyID.GetIndex();
+	Body *body = mBodies[idx];
+
+	// Validate that it can be removed
+	JPH_ASSERT(body->GetID() == inBodyID);
+	JPH_ASSERT(!body->IsActive());
+	JPH_ASSERT(!body->IsInBroadPhase());
+	
+	// Push the id onto the freelist
+	mBodies[idx] = (Body *)mBodyIDFreeListStart;
+	mBodyIDFreeListStart = (uintptr_t(idx) << cFreedBodyIndexShift) | cIsFreedBody;
+
+	return body;
+}
+
+#if defined(_DEBUG) && defined(JPH_ENABLE_ASSERTS)
+
+void BodyManager::ValidateFreeList() const
+{
+	// Check that the freelist is correct
+	size_t num_freed = 0;
+	for (uintptr_t start = mBodyIDFreeListStart; start != cBodyIDFreeListEnd; start = uintptr_t(mBodies[start >> cFreedBodyIndexShift]))
+	{
+		JPH_ASSERT(start & cIsFreedBody);
+		num_freed++;
+	}
+	JPH_ASSERT(mNumBodies == mBodies.size() - num_freed);
+}
+
+#endif // defined(_DEBUG) && _defined(JPH_ENABLE_ASSERTS)
+
+void BodyManager::RemoveBodies(const BodyID *inBodyIDs, int inNumber, Body **outBodies)
+{
+	// Don't take lock if no bodies are to be destroyed
+	if (inNumber <= 0)
+		return;
+
+	UniqueLock lock(mBodiesMutex, EPhysicsLockTypes::BodiesList);
+
+	// Update cached number of bodies
+	JPH_ASSERT(mNumBodies >= (uint)inNumber);
+	mNumBodies -= inNumber;
+
+	for (const BodyID *b = inBodyIDs, *b_end = inBodyIDs + inNumber; b < b_end; b++)
+	{
+		// Remove body
+		Body *body = RemoveBodyInternal(*b);
+
+		// Clear the ID
+		body->mID = BodyID();
+
+		// Return the body to the caller
+		if (outBodies != nullptr)
+		{
+			*outBodies = body;
+			++outBodies;
+		}
+	}
+
+#if defined(_DEBUG) && defined(JPH_ENABLE_ASSERTS)
+	ValidateFreeList();
+#endif // defined(_DEBUG) && _defined(JPH_ENABLE_ASSERTS)
 }
 
 void BodyManager::DestroyBodies(const BodyID *inBodyIDs, int inNumber)
@@ -221,33 +372,15 @@ void BodyManager::DestroyBodies(const BodyID *inBodyIDs, int inNumber)
 
 	for (const BodyID *b = inBodyIDs, *b_end = inBodyIDs + inNumber; b < b_end; b++)
 	{
-		// Get body
-		BodyID body_id = *b;
-		uint32 idx = body_id.GetIndex();
-		Body *body = mBodies[idx];
-
-		// Validate that it can be removed
-		JPH_ASSERT(body->GetID() == body_id);
-		JPH_ASSERT(!body->IsActive());
-		JPH_ASSERT(!body->IsInBroadPhase());
-	
-		// Push the id onto the freelist
-		mBodies[idx] = (Body *)mBodyIDFreeListStart;
-		mBodyIDFreeListStart = (uintptr_t(idx) << cFreedBodyIndexShift) | cIsFreedBody;
+		// Remove body
+		Body *body = RemoveBodyInternal(*b);
 
 		// Free the body
 		sDeleteBody(body);
 	}
 
 #if defined(_DEBUG) && defined(JPH_ENABLE_ASSERTS)
-	// Check that the freelist is correct
-	size_t num_freed = 0;
-	for (uintptr_t start = mBodyIDFreeListStart; start != cBodyIDFreeListEnd; start = uintptr_t(mBodies[start >> cFreedBodyIndexShift]))
-	{
-		JPH_ASSERT(start & cIsFreedBody);
-		num_freed++;
-	}
-	JPH_ASSERT(mNumBodies == mBodies.size() - num_freed);
+	ValidateFreeList();
 #endif // defined(_DEBUG) && _defined(JPH_ENABLE_ASSERTS)
 }
 

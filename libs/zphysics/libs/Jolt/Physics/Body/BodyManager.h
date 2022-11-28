@@ -60,12 +60,22 @@ public:
 	/// Get stats about the bodies in the body manager (slow, iterates through all bodies)
 	BodyStats						GetBodyStats() const;
 
-	/// Create a body.
-	/// This is a thread safe function. Can return null if there are no more bodies available.
-	Body *							CreateBody(const BodyCreationSettings &inBodyCreationSettings);
+	/// Create a body using creation settings. The returned body will not be part of the body manager yet.
+	Body *							AllocateBody(const BodyCreationSettings &inBodyCreationSettings) const;
 
-	/// Mark a list of bodies for destruction and remove it from this manager.
-	/// This is a thread safe function since the body is not deleted until the next PhysicsSystem::Update() (which will take all locks)
+	/// Free a body that has not been added to the body manager yet (if it has, use DestroyBodies).
+	void							FreeBody(Body *inBody) const;
+
+	/// Add a body to the body manager, assigning it the next available ID. Returns false if no more IDs are available.
+	bool							AddBody(Body *ioBody);
+
+	/// Add a body to the body manager, assigning it a custom ID. Returns false if the ID is not valid.
+	bool							AddBodyWithCustomID(Body *ioBody, const BodyID &inBodyID);
+
+	/// Remove a list of bodies from the body manager
+	void							RemoveBodies(const BodyID *inBodyIDs, int inNumber, Body **outBodies);
+
+	/// Remove a set of bodies from the body manager and frees them.
 	void							DestroyBodies(const BodyID *inBodyIDs, int inNumber);
 
 	/// Activate a list of bodies.
@@ -222,8 +232,16 @@ private:
 #endif
 	inline uint8					GetNextSequenceNumber(int inBodyIndex)		{ return ++mBodySequenceNumbers[inBodyIndex]; }
 
+	/// Helper function to remove a body from the manager
+	JPH_INLINE Body *				RemoveBodyInternal(const BodyID &inBodyID);
+
 	/// Helper function to delete a body (which could actually be a BodyWithMotionProperties)
 	inline static void				sDeleteBody(Body *inBody);
+
+#if defined(_DEBUG) && defined(JPH_ENABLE_ASSERTS)
+	/// Function to check that the free list is not corrupted
+	void							ValidateFreeList() const;
+#endif // defined(_DEBUG) && _defined(JPH_ENABLE_ASSERTS)
 
 	/// List of pointers to all bodies. Contains invalid pointers for deleted bodies, check with sIsValidBodyPointer. Note that this array is reserved to the max bodies that is passed in the Init function so that adding bodies will not reallocate the array.
 	BodyVector						mBodies;

@@ -99,13 +99,6 @@ public:
 	/// inScale scales this shape in local space.
 	virtual const Support *			GetSupportFunction(ESupportMode inMode, SupportBuffer &inBuffer, Vec3Arg inScale) const = 0;
 
-	/// Type definition for a supporting face
-	using SupportingFace = StaticArray<Vec3, 32>;
-
-	/// Get the vertices of the face that faces inDirection the most (includes convex radius).
-	/// Face is relative to the center of mass of the shape.
-	virtual void					GetSupportingFace(Vec3Arg inDirection, Vec3Arg inScale, SupportingFace &outVertices) const = 0;
-
 	/// Material of the shape
 	void							SetMaterial(const PhysicsMaterial *inMaterial)				{ mMaterial = inMaterial; }
 	const PhysicsMaterial *			GetMaterial() const											{ return mMaterial != nullptr? mMaterial : PhysicsMaterial::sDefault; }
@@ -137,7 +130,7 @@ protected:
 	virtual void					RestoreBinaryState(StreamIn &inStream) override;
 
 	/// Vertex list that forms a unit sphere
-	static const vector<Vec3>		sUnitSphereTriangles;
+	static const std::vector<Vec3>	sUnitSphereTriangles;
 
 private:
 	// Class for GetTrianglesStart/Next

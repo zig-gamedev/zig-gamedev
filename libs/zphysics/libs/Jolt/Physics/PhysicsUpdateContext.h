@@ -39,6 +39,7 @@ public:
 
 		bool				mIsFirst;												///< If this is the first substep in the step
 		bool				mIsLast;												///< If this is the last substep in the step
+		bool				mIsFirstOfAll;											///< If this is the first substep of the first step
 		bool				mIsLastOfAll;											///< If this is the last substep in the last step
 
 		atomic<uint32>		mSolveVelocityConstraintsNextIsland { 0 };				///< Next island that needs to be processed for the solve velocity constraints step (doesn't need own cache line since position jobs don't run at same time)
@@ -145,7 +146,7 @@ public:
 		JobHandle			mStartNextStep;											///< Job that kicks the next step (empty for the last step)
 	};
 
-	using Steps = vector<Step, STLTempAllocator<Step>>;
+	using Steps = std::vector<Step, STLTempAllocator<Step>>;
 
 	/// Maximum amount of concurrent jobs on this machine
 	int						GetMaxConcurrency() const								{ const int max_concurrency = PhysicsUpdateContext::cMaxConcurrency; return min(max_concurrency, mJobSystem->GetMaxConcurrency()); } ///< Need to put max concurrency in temp var as min requires a reference

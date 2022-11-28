@@ -13,6 +13,12 @@
 #include <Jolt/Geometry/RayAABox.h>
 #include <Jolt/Geometry/OrientedBox.h>
 
+#ifdef JPH_DUMP_BROADPHASE_TREE
+JPH_SUPPRESS_WARNINGS_STD_BEGIN
+#include <fstream>
+JPH_SUPPRESS_WARNINGS_STD_END
+#endif // JPH_DUMP_BROADPHASE_TREE
+
 JPH_NAMESPACE_BEGIN
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -497,7 +503,7 @@ QuadTree::NodeID QuadTree::BuildTree(const BodyVector &inBodies, TrackingVector 
 
 	// Calculate centers of all bodies that are to be inserted
 	Vec3 *centers = new Vec3 [inNumber];
-	JPH_ASSERT(IsAligned(centers, 16));
+	JPH_ASSERT(IsAligned(centers, JPH_VECTOR_ALIGNMENT));
 	Vec3 *c = centers;
 	for (const NodeID *n = ioNodeIDs, *n_end = ioNodeIDs + inNumber; n < n_end; ++n, ++c)
 		*c = GetNodeOrBodyBounds(inBodies, *n).GetCenter();
@@ -1529,8 +1535,8 @@ void QuadTree::ValidateTree(const BodyVector &inBodies, const TrackingVector &in
 void QuadTree::DumpTree(const NodeID &inRoot, const char *inFileNamePrefix) const
 {
 	// Open DOT file
-	ofstream f;
-	f.open(StringFormat("%s.dot", inFileNamePrefix), ofstream::out | ofstream::trunc);
+	std::ofstream f;
+	f.open(StringFormat("%s.dot", inFileNamePrefix).c_str(), std::ofstream::out | std::ofstream::trunc);
 	if (!f.is_open())
 		return;
 

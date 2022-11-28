@@ -45,6 +45,17 @@ RotatedTranslatedShape::RotatedTranslatedShape(const RotatedTranslatedShapeSetti
 	outResult.Set(this);
 }
 
+RotatedTranslatedShape::RotatedTranslatedShape(Vec3Arg inPosition, QuatArg inRotation, const Shape *inShape) :
+	DecoratedShape(EShapeSubType::RotatedTranslated, inShape)
+{
+	// Calculate center of mass position
+	mCenterOfMass = inPosition + inRotation * mInnerShape->GetCenterOfMass(); 
+
+	// Store rotation (position is always zero because we center around the center of mass)
+	mRotation = inRotation;
+	mIsRotationIdentity = mRotation.IsClose(Quat::sIdentity());
+}
+
 MassProperties RotatedTranslatedShape::GetMassProperties() const
 {
 	// Rotate inertia of child into place
@@ -82,6 +93,12 @@ Vec3 RotatedTranslatedShape::GetSurfaceNormal(const SubShapeID &inSubShapeID, Ve
 
 	// Transform normal to this shape's space
 	return transform.Multiply3x3Transposed(normal);
+}
+
+void RotatedTranslatedShape::GetSupportingFace(const SubShapeID &inSubShapeID, Vec3Arg inDirection, Vec3Arg inScale, Mat44Arg inCenterOfMassTransform, SupportingFace &outVertices) const
+{
+	Mat44 transform = Mat44::sRotation(mRotation);
+	mInnerShape->GetSupportingFace(inSubShapeID, transform.Multiply3x3Transposed(inDirection), TransformScale(inScale), inCenterOfMassTransform * transform, outVertices);
 }
 
 void RotatedTranslatedShape::GetSubmergedVolume(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, const Plane &inSurface, float &outTotalVolume, float &outSubmergedVolume, Vec3 &outCenterOfBuoyancy) const
