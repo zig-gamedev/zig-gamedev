@@ -35,7 +35,7 @@
 #define JPC_IS_VALID_BODY_POINTER(body_ptr) (((uintptr_t)(body_ptr) & _JPC_IS_FREED_BODY_BIT) == 0)
 
 /// Access a body, will return a NULL if the body ID is no longer valid (not protected by a lock).
-/// Use `JPC_PhysicsSystem_GetBodiesUnsafe()` to get a list of all body pointers.
+/// Use `JPC_PhysicsSystem_GetBodiesUnsafe()` to get an array of all body pointers.
 #define JPC_TRY_GET_BODY(all_body_ptrs, body_id) \
     JPC_IS_VALID_BODY_POINTER(all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]) && \
     all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]->id == body_id ? \
@@ -640,6 +640,9 @@ JPC_PhysicsSystem_GetMaxBodies(const JPC_PhysicsSystem *in_physics_system);
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system);
 
+JPC_API JPC_BodyInterface *
+JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system);
+
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system);
 
@@ -653,6 +656,9 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
 
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_system);
+
+JPC_API const JPC_BodyLockInterface *
+JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system);
 
 JPC_API JPC_Body **
 JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system);

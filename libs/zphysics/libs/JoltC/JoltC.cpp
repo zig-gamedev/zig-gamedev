@@ -272,6 +272,13 @@ JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system)
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
     return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterface());
 }
+JPC_API JPC_BodyInterface *
+JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterfaceNoLock());
+}
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system)
@@ -303,6 +310,13 @@ JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_syste
     assert(in_physics_system != nullptr);
     auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
     return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterface());
+}
+JPC_API const JPC_BodyLockInterface *
+JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
+    return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterfaceNoLock());
 }
 //--------------------------------------------------------------------------------------------------
 //
