@@ -28,6 +28,19 @@
 #define JPC_BODY_ID_SEQUENCE_BITS 0xff000000
 #define JPC_BODY_ID_SEQUENCE_SHIFT 24
 
+#define _JPC_IS_FREED_BODY_BIT 0x1
+
+/// Check if this is a valid body pointer.
+/// When a body is freed the memory that the pointer occupies is reused to store a freelist.
+#define JPC_IS_VALID_BODY_POINTER(body_ptr) (((uintptr_t)(body_ptr) & _JPC_IS_FREED_BODY_BIT) == 0)
+
+/// Access a body, will return a NULL if the body ID is no longer valid (not protected by a lock).
+/// Use `JPC_PhysicsSystem_GetBodiesUnsafe()` to get a list of all body pointers.
+#define JPC_TRY_GET_BODY(all_body_ptrs, body_id) \
+    JPC_IS_VALID_BODY_POINTER(all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]) && \
+    all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]->id == body_id ? \
+    all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS] : NULL
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -125,7 +138,6 @@ typedef enum JPC_ValidateResult
 //--------------------------------------------------------------------------------------------------
 typedef uint16_t JPC_ObjectLayer;
 typedef uint8_t  JPC_BroadPhaseLayer;
-typedef uint64_t JPC_MutexMask;
 
 // TODO: Consider using structures for IDs
 typedef uint32_t JPC_BodyID;
@@ -405,24 +417,6 @@ typedef struct JPC_BodyLockWrite
     JPC_SharedMutex *            mutex;
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
-
-// NOTE: Needs to be kept in sync with JPH::BodyLockMultiRead
-typedef struct JPC_BodyLockMultiRead
-{
-    const JPC_BodyLockInterface *lock_interface;
-    JPC_MutexMask                mutex_mask;
-    const JPC_BodyID *           body_ids;
-    int                          num_body_ids;
-} JPC_BodyLockMultiRead;
-
-// NOTE: Needs to be kept in sync with JPH::BodyLockMultiWrite
-typedef struct JPC_BodyLockMultiWrite
-{
-    const JPC_BodyLockInterface *lock_interface;
-    JPC_MutexMask                mutex_mask;
-    const JPC_BodyID *           body_ids;
-    int                          num_body_ids;
-} JPC_BodyLockMultiWrite;
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions

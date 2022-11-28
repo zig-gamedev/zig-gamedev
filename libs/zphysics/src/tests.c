@@ -422,6 +422,8 @@ JoltCTest_HelloWorld(void)
         MyBroadPhaseCanCollide,
         MyObjectCanCollide);
 
+
+
     MyActivationListener body_activation_listener = MyActivationListener_Init();
     JPC_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);
 
@@ -480,8 +482,9 @@ JoltCTest_HelloWorld(void)
     const float sphere_velocity[3] = { 0.0f, -5.0f, 0.0f };
     JPC_BodyInterface_SetLinearVelocity(body_interface, sphere_id, sphere_velocity);
 
-
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
+
+    JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
 
     uint32_t step = 0;
     while (JPC_BodyInterface_IsActive(body_interface, sphere_id))
@@ -506,8 +509,14 @@ JoltCTest_HelloWorld(void)
             JPC_BodyLockRead_Lock(&lock, JPC_PhysicsSystem_GetBodyLockInterface(physics_system), sphere_id);
             if (lock.body)
             {
-                JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
                 JPC_Body *body = bodies[sphere_id & JPC_BODY_ID_INDEX_BITS];
+                if (!JPC_IS_VALID_BODY_POINTER(body)) return 0;
+
+                JPC_Body *body_checked = JPC_TRY_GET_BODY(bodies, sphere_id);
+                if (body_checked == NULL) return 0;
+
+                if (body_checked != body) return 0;
+                if (body_checked->id != body->id) return 0;
 
                 if (body != lock.body) return 0;
                 if (body->id != sphere_id) return 0;

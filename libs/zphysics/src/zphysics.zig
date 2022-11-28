@@ -416,11 +416,11 @@ pub const PhysicsSystem = opaque {
 
     pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
         const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)));
-        return @ptrCast([*]const *const Body, ptr)[0..physics_system.getMaxBodies()];
+        return @ptrCast([*]const *const Body, ptr)[0..physics_system.getNumBodies()];
     }
     pub fn getBodiesMutUnsafe(physics_system: *PhysicsSystem) []const *Body {
         const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
-        return @ptrCast([*]const *Body, ptr)[0..physics_system.getMaxBodies()];
+        return @ptrCast([*]const *Body, ptr)[0..physics_system.getNumBodies()];
     }
 };
 //--------------------------------------------------------------------------------------------------

@@ -20,7 +20,6 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
-#include <Jolt/Physics/Body/BodyLockMulti.h>
 JPH_SUPPRESS_WARNINGS
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Body **
@@ -31,57 +30,48 @@ JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system)
     return reinterpret_cast<JPC_Body **>(physics_system->mBodyManager.mBodies.data());
 }
 //--------------------------------------------------------------------------------------------------
-static_assert(sizeof(JPH::BodyID)                  == sizeof(JPC_BodyID));
-static_assert(sizeof(JPH::SubShapeID)              == sizeof(JPC_SubShapeID));
-static_assert(sizeof(JPH::SubShapeIDCreator)       == sizeof(JPC_SubShapeIDCreator));
-static_assert(sizeof(JPH::EShapeType)              == sizeof(JPC_ShapeType));
-static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPC_ShapeSubType));
-static_assert(sizeof(JPH::EMotionType)             == sizeof(JPC_MotionType));
-static_assert(sizeof(JPH::EMotionQuality)          == sizeof(JPC_MotionQuality));
-static_assert(sizeof(JPH::EOverrideMassProperties) == sizeof(JPC_OverrideMassProperties));
-static_assert(sizeof(JPH::EActivation)             == sizeof(JPC_Activation));
-static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPC_ValidateResult));
-static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPC_BroadPhaseLayer));
-static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPC_ObjectLayer));
-
-static_assert(sizeof(JPH::MassProperties)       == sizeof(JPC_MassProperties));
-static_assert(sizeof(JPH::MotionProperties)     == sizeof(JPC_MotionProperties));
-static_assert(sizeof(JPH::CollisionGroup)       == sizeof(JPC_CollisionGroup));
-static_assert(sizeof(JPH::BodyCreationSettings) == sizeof(JPC_BodyCreationSettings));
-static_assert(sizeof(JPH::ContactManifold)      == sizeof(JPC_ContactManifold));
-static_assert(sizeof(JPH::ContactSettings)      == sizeof(JPC_ContactSettings));
-static_assert(sizeof(JPH::SubShapeIDPair)       == sizeof(JPC_SubShapeIDPair));
-static_assert(sizeof(JPH::CollideShapeResult)   == sizeof(JPC_CollideShapeResult));
-static_assert(sizeof(JPH::TransformedShape)     == sizeof(JPC_TransformedShape));
-static_assert(sizeof(JPH::Body)                 == sizeof(JPC_Body));
-
-static_assert(sizeof(JPH::BodyLockRead)       == sizeof(JPC_BodyLockRead));
-static_assert(sizeof(JPH::BodyLockWrite)      == sizeof(JPC_BodyLockWrite));
-static_assert(sizeof(JPH::BodyLockMultiRead)  == sizeof(JPC_BodyLockMultiRead));
-static_assert(sizeof(JPH::BodyLockMultiWrite) == sizeof(JPC_BodyLockMultiWrite));
-
 static_assert(JPC_COLLISION_GROUP_INVALID_GROUP     == JPH::CollisionGroup::cInvalidGroup);
 static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInvalidSubGroup);
 static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
 static_assert(JPC_BODY_ID_INDEX_BITS                == JPH::BodyID::cMaxBodyIndex);
 static_assert(JPC_BODY_ID_BROAD_PHASE_BIT           == JPH::BodyID::cBroadPhaseBit);
+static_assert(_JPC_IS_FREED_BODY_BIT                == JPH::BodyManager::cIsFreedBody);
+
 static_assert((JPC_BODY_ID_SEQUENCE_BITS >> JPC_BODY_ID_SEQUENCE_SHIFT) == JPH::BodyID::cMaxSequenceNumber);
 //--------------------------------------------------------------------------------------------------
-static_assert(alignof(JPH::MassProperties)       == alignof(JPC_MassProperties));
-static_assert(alignof(JPH::MotionProperties)     == alignof(JPC_MotionProperties));
-static_assert(alignof(JPH::CollisionGroup)       == alignof(JPC_CollisionGroup));
-static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPC_BodyCreationSettings));
-static_assert(alignof(JPH::ContactManifold)      == alignof(JPC_ContactManifold));
-static_assert(alignof(JPH::ContactSettings)      == alignof(JPC_ContactSettings));
-static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPC_SubShapeIDPair));
-static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPC_CollideShapeResult));
-static_assert(alignof(JPH::TransformedShape)     == alignof(JPC_TransformedShape));
-static_assert(alignof(JPH::Body)                 == alignof(JPC_Body));
+#define ENSURE_SIZE_ALIGN(type0, type1) \
+    static_assert(sizeof(type0) == sizeof(type1)); \
+    static_assert(alignof(type0) == alignof(type1));
 
-static_assert(alignof(JPH::BodyLockRead)       == alignof(JPC_BodyLockRead));
-static_assert(alignof(JPH::BodyLockWrite)      == alignof(JPC_BodyLockWrite));
-static_assert(alignof(JPH::BodyLockMultiRead)  == alignof(JPC_BodyLockMultiRead));
-static_assert(alignof(JPH::BodyLockMultiWrite) == alignof(JPC_BodyLockMultiWrite));
+ENSURE_SIZE_ALIGN(JPH::BodyID,                  JPC_BodyID)
+ENSURE_SIZE_ALIGN(JPH::SubShapeID,              JPC_SubShapeID)
+ENSURE_SIZE_ALIGN(JPH::SubShapeIDCreator,       JPC_SubShapeIDCreator)
+ENSURE_SIZE_ALIGN(JPH::EShapeType,              JPC_ShapeType)
+ENSURE_SIZE_ALIGN(JPH::EShapeSubType,           JPC_ShapeSubType)
+ENSURE_SIZE_ALIGN(JPH::EMotionType,             JPC_MotionType)
+ENSURE_SIZE_ALIGN(JPH::EMotionQuality,          JPC_MotionQuality)
+ENSURE_SIZE_ALIGN(JPH::EOverrideMassProperties, JPC_OverrideMassProperties)
+ENSURE_SIZE_ALIGN(JPH::EActivation,             JPC_Activation)
+ENSURE_SIZE_ALIGN(JPH::ValidateResult,          JPC_ValidateResult)
+ENSURE_SIZE_ALIGN(JPH::BroadPhaseLayer,         JPC_BroadPhaseLayer)
+ENSURE_SIZE_ALIGN(JPH::ObjectLayer,             JPC_ObjectLayer)
+
+ENSURE_SIZE_ALIGN(JPH::CollisionGroup::GroupID,    JPC_CollisionGroupID)
+ENSURE_SIZE_ALIGN(JPH::CollisionGroup::SubGroupID, JPC_CollisionSubGroupID)
+
+ENSURE_SIZE_ALIGN(JPH::MassProperties,       JPC_MassProperties)
+ENSURE_SIZE_ALIGN(JPH::MotionProperties,     JPC_MotionProperties)
+ENSURE_SIZE_ALIGN(JPH::CollisionGroup,       JPC_CollisionGroup)
+ENSURE_SIZE_ALIGN(JPH::BodyCreationSettings, JPC_BodyCreationSettings)
+ENSURE_SIZE_ALIGN(JPH::ContactManifold,      JPC_ContactManifold)
+ENSURE_SIZE_ALIGN(JPH::ContactSettings,      JPC_ContactSettings)
+ENSURE_SIZE_ALIGN(JPH::SubShapeIDPair,       JPC_SubShapeIDPair)
+ENSURE_SIZE_ALIGN(JPH::CollideShapeResult,   JPC_CollideShapeResult)
+ENSURE_SIZE_ALIGN(JPH::TransformedShape,     JPC_TransformedShape)
+ENSURE_SIZE_ALIGN(JPH::Body,                 JPC_Body)
+
+ENSURE_SIZE_ALIGN(JPH::BodyLockRead,  JPC_BodyLockRead)
+ENSURE_SIZE_ALIGN(JPH::BodyLockWrite, JPC_BodyLockWrite)
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
