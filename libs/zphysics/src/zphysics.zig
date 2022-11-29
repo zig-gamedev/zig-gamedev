@@ -730,7 +730,7 @@ pub const ConvexShapeSettings = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const BoxShapeSettings = opaque {
-    usingnamespace ConvexShapeSettings.Methods(@This());
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
 
     pub fn create(half_extent: [3]f32) !*BoxShapeSettings {
         const box_shape_settings = c.JPC_BoxShapeSettings_Create(&half_extent);

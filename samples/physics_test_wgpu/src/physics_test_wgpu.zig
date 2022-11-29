@@ -128,9 +128,9 @@ const DemoState = struct {
     physics_system: *zphy.PhysicsSystem,
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 8.0, -4.0 },
+        position: [3]f32 = .{ 0.0, 8.0, -8.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.15 * math.pi,
+        pitch: f32 = 0.125 * math.pi,
         yaw: f32 = 0.0,
     } = .{},
     mouse: struct {
@@ -157,6 +157,9 @@ fn appendMesh(
     meshes_normals.appendSlice(mesh.normals.?) catch unreachable;
 }
 
+const mesh_floor = 0;
+const mesh_cube = 1;
+
 fn generateMeshes(
     allocator: std.mem.Allocator,
     meshes: *std.ArrayList(Mesh),
@@ -180,14 +183,25 @@ fn generateMeshes(
                 position[2] = uv[1];
             }
         }).impl;
-        var ground = zmesh.Shape.initParametric(terrain, 100, 100, null);
+        var ground = zmesh.Shape.initParametric(terrain, 32, 32, null);
         defer ground.deinit();
         ground.translate(-0.5, 0.0, -0.5);
         ground.invert(0, 0);
-        ground.scale(100, 1, 100);
+        ground.scale(128.0, 1.0, 128.0);
+        ground.unweld();
         ground.computeNormals();
 
         appendMesh(ground, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+
+    {
+        var cube = zmesh.Shape.initCube();
+        defer cube.deinit();
+        cube.translate(-0.5, -0.5, -0.5);
+        cube.unweld();
+        cube.computeNormals();
+
+        appendMesh(cube, meshes, meshes_indices, meshes_positions, meshes_normals);
     }
 }
 
@@ -278,6 +292,46 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         },
     );
 
+    {
+        const body_interface = physics_system.getBodyInterfaceMut();
+
+        const floor_shape_settings = try zphy.BoxShapeSettings.create(.{ 100.0, 1.0, 100.0 });
+        defer floor_shape_settings.release();
+
+        const floor_shape = try floor_shape_settings.createShape();
+        defer floor_shape.release();
+
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ 0.0, -1.0, 0.0, 1.0 },
+            .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+            .shape = floor_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.non_moving,
+        }, .activate);
+
+        const box_shape_settings = try zphy.BoxShapeSettings.create(.{ 0.5, 0.5, 0.5 });
+        defer box_shape_settings.release();
+
+        const box_shape = try box_shape_settings.createShape();
+        defer box_shape.release();
+
+        var i: u32 = 0;
+        while (i < 16) : (i += 1) {
+            const fi = @intToFloat(f32, i);
+            _ = try body_interface.createAndAddBody(.{
+                .position = .{ 0.0, 8.0 + fi * 1.2, 8.0, 1.0 },
+                .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+                .shape = box_shape,
+                .motion_type = .dynamic,
+                .object_layer = object_layers.moving,
+                .angular_velocity = .{ 0.0, 0.0, 0.0, 0 },
+                //.allow_sleeping = false,
+            }, .activate);
+        }
+
+        physics_system.optimizeBroadPhase();
+    }
+
     //
     // Demo
     //
@@ -333,10 +387,8 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgui.backend.newFrame(
-        demo.gctx.swapchain_descriptor.width,
-        demo.gctx.swapchain_descriptor.height,
-    );
+    zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+    demo.physics_system.update(1.0 / 60.0, .{});
 
     const window = demo.gctx.window;
 
@@ -420,7 +472,14 @@ fn draw(demo: *DemoState) void {
         pass: {
             const render_pipe = gctx.lookupResource(demo.render_pipe) orelse break :pass;
 
-            const pass = zgpu.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
+            const pass = zgpu.beginRenderPassSimple(
+                encoder,
+                .clear,
+                swapchain_texv,
+                .{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 },
+                depth_texv,
+                1.0,
+            );
             defer zgpu.endReleasePass(pass);
 
             pass.setVertexBuffer(0, vertex_buf_info.gpuobj.?, 0, vertex_buf_info.size);
@@ -441,7 +500,8 @@ fn draw(demo: *DemoState) void {
                 };
                 pass.setBindGroup(0, uniform_bg, &.{mem.offset});
             }
-            // Update "object to world" xform.
+
+            // Draw "floor".
             {
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
@@ -449,14 +509,43 @@ fn draw(demo: *DemoState) void {
                     .basecolor_roughness = .{ 0.2, 0.2, 0.2, 1.0 },
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
+                pass.drawIndexed(
+                    demo.meshes.items[mesh_floor].num_indices,
+                    1,
+                    demo.meshes.items[mesh_floor].index_offset,
+                    demo.meshes.items[mesh_floor].vertex_offset,
+                    0,
+                );
             }
-            pass.drawIndexed(
-                demo.meshes.items[0].num_indices,
-                1,
-                demo.meshes.items[0].index_offset,
-                demo.meshes.items[0].vertex_offset,
-                0,
-            );
+
+            // Draw all dynamic bodies.
+            const bodies = demo.physics_system.getBodies();
+            for (bodies) |body| {
+                if (!zphy.isValidBodyPointer(body) or body.motion_properties == null) continue;
+
+                const object_to_world = object_to_world: {
+                    const position = zm.loadArr4(body.position);
+                    const rotation = zm.loadArr4(body.rotation);
+                    var xform = zm.matFromQuat(rotation);
+                    xform[3] = position;
+                    xform[3][3] = 1.0;
+                    break :object_to_world xform;
+                };
+
+                const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+                mem.slice[0] = .{
+                    .object_to_world = zm.transpose(object_to_world),
+                    .basecolor_roughness = .{ 0.1, 0.5, 0.05, 0.5 },
+                };
+                pass.setBindGroup(1, uniform_bg, &.{mem.offset});
+                pass.drawIndexed(
+                    demo.meshes.items[mesh_cube].num_indices,
+                    1,
+                    demo.meshes.items[mesh_cube].index_offset,
+                    demo.meshes.items[mesh_cube].vertex_offset,
+                    0,
+                );
+            }
         }
         {
             const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
