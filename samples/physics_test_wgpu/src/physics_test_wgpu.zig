@@ -6,39 +6,34 @@ const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 const zm = @import("zmath");
 const zphy = @import("zphysics");
+const zmesh = @import("zmesh");
+const wgsl = @import("physics_test_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: physics test (wgpu)";
 
-// zig fmt: off
-const wgsl_vs =
-\\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
-\\  struct VertexOut {
-\\      @builtin(position) position_clip: vec4<f32>,
-\\      @location(0) color: vec3<f32>,
-\\  }
-\\  @stage(vertex) fn main(
-\\      @location(0) position: vec3<f32>,
-\\      @location(1) color: vec3<f32>,
-\\  ) -> VertexOut {
-\\      var output: VertexOut;
-\\      output.position_clip = vec4(position, 1.0) * object_to_clip;
-\\      output.color = color;
-\\      return output;
-\\  }
-;
-const wgsl_fs =
-\\  @stage(fragment) fn main(
-\\      @location(0) color: vec3<f32>,
-\\  ) -> @location(0) vec4<f32> {
-\\      return vec4(color, 1.0);
-\\  }
-// zig fmt: on
-;
+const FrameUniforms = struct {
+    world_to_clip: zm.Mat,
+    camera_position: [3]f32,
+};
+
+const DrawUniforms = struct {
+    object_to_world: zm.Mat,
+    basecolor_roughness: [4]f32,
+};
 
 const Vertex = struct {
     position: [3]f32,
-    color: [3]f32,
+    normal: [3]f32,
+};
+
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: i32,
+    num_indices: u32,
+    num_vertices: u32,
+
+    const IndexType = zmesh.Shape.IndexType;
 };
 
 const object_layers = struct {
@@ -117,107 +112,152 @@ const ContactListener = extern struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
-    pipeline: zgpu.RenderPipelineHandle,
-    bind_group: zgpu.BindGroupHandle,
+    render_pipe: zgpu.RenderPipelineHandle = .{},
+    uniform_bg: zgpu.BindGroupHandle,
 
-    vertex_buffer: zgpu.BufferHandle,
-    index_buffer: zgpu.BufferHandle,
+    vertex_buf: zgpu.BufferHandle,
+    index_buf: zgpu.BufferHandle,
 
-    depth_texture: zgpu.TextureHandle,
-    depth_texture_view: zgpu.TextureViewHandle,
+    depth_tex: zgpu.TextureHandle,
+    depth_texv: zgpu.TextureViewHandle,
+
+    meshes: std.ArrayList(Mesh),
 
     broad_phase_layer_interface: *BroadPhaseLayerInterface,
     contact_listener: *ContactListener,
     physics_system: *zphy.PhysicsSystem,
+
+    camera: struct {
+        position: [3]f32 = .{ 0.0, 8.0, -4.0 },
+        forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
+        pitch: f32 = 0.15 * math.pi,
+        yaw: f32 = 0.0,
+    } = .{},
+    mouse: struct {
+        cursor_pos: [2]f64 = .{ 0, 0 },
+    } = .{},
 };
 
-fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
+fn appendMesh(
+    mesh: zmesh.Shape,
+    meshes: *std.ArrayList(Mesh),
+    meshes_indices: *std.ArrayList(Mesh.IndexType),
+    meshes_positions: *std.ArrayList([3]f32),
+    meshes_normals: *std.ArrayList([3]f32),
+) void {
+    meshes.append(.{
+        .index_offset = @intCast(u32, meshes_indices.items.len),
+        .vertex_offset = @intCast(i32, meshes_positions.items.len),
+        .num_indices = @intCast(u32, mesh.indices.len),
+        .num_vertices = @intCast(u32, mesh.positions.len),
+    }) catch unreachable;
+
+    meshes_indices.appendSlice(mesh.indices) catch unreachable;
+    meshes_positions.appendSlice(mesh.positions) catch unreachable;
+    meshes_normals.appendSlice(mesh.normals.?) catch unreachable;
+}
+
+fn generateMeshes(
+    allocator: std.mem.Allocator,
+    meshes: *std.ArrayList(Mesh),
+    meshes_indices: *std.ArrayList(Mesh.IndexType),
+    meshes_positions: *std.ArrayList([3]f32),
+    meshes_normals: *std.ArrayList([3]f32),
+) void {
+    var arena_state = std.heap.ArenaAllocator.init(allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    zmesh.init(arena);
+    defer zmesh.deinit();
+
+    {
+        const terrain = (struct {
+            fn impl(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.C) void {
+                _ = userdata;
+                position[0] = uv[0];
+                position[1] = 0.0;
+                position[2] = uv[1];
+            }
+        }).impl;
+        var ground = zmesh.Shape.initParametric(terrain, 100, 100, null);
+        defer ground.deinit();
+        ground.translate(-0.5, 0.0, -0.5);
+        ground.invert(0, 0);
+        ground.scale(100, 1, 100);
+        ground.computeNormals();
+
+        appendMesh(ground, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+}
+
+fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
+    var arena_state = std.heap.ArenaAllocator.init(allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    //
+    // Procedural meshes
+    //
+    var meshes = std.ArrayList(Mesh).init(allocator);
+    var meshes_indices = std.ArrayList(Mesh.IndexType).init(arena);
+    var meshes_positions = std.ArrayList([3]f32).init(arena);
+    var meshes_normals = std.ArrayList([3]f32).init(arena);
+    generateMeshes(allocator, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
+
+    const total_num_vertices = @intCast(u32, meshes_positions.items.len);
+    const total_num_indices = @intCast(u32, meshes_indices.items.len);
+
+    //
+    // Graphics
+    //
     const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
-    // Create a bind group layout needed for our render pipeline.
-    const bind_group_layout = gctx.createBindGroupLayout(&.{
-        zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
+    // Uniform buffer and layout
+    const uniform_bgl = gctx.createBindGroupLayout(&.{
+        zgpu.bufferEntry(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
     });
-    defer gctx.releaseResource(bind_group_layout);
+    defer gctx.releaseResource(uniform_bgl);
 
-    const pipeline_layout = gctx.createPipelineLayout(&.{bind_group_layout});
-    defer gctx.releaseResource(pipeline_layout);
-
-    const pipeline = pipline: {
-        const vs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
-        defer vs_module.release();
-
-        const fs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
-        defer fs_module.release();
-
-        const color_targets = [_]wgpu.ColorTargetState{.{
-            .format = zgpu.GraphicsContext.swapchain_format,
-        }};
-
-        const vertex_attributes = [_]wgpu.VertexAttribute{
-            .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-            .{ .format = .float32x3, .offset = @offsetOf(Vertex, "color"), .shader_location = 1 },
-        };
-        const vertex_buffers = [_]wgpu.VertexBufferLayout{.{
-            .array_stride = @sizeOf(Vertex),
-            .attribute_count = vertex_attributes.len,
-            .attributes = &vertex_attributes,
-        }};
-
-        const pipeline_descriptor = wgpu.RenderPipelineDescriptor{
-            .vertex = wgpu.VertexState{
-                .module = vs_module,
-                .entry_point = "main",
-                .buffer_count = vertex_buffers.len,
-                .buffers = &vertex_buffers,
-            },
-            .primitive = wgpu.PrimitiveState{
-                .front_face = .ccw,
-                .cull_mode = .none,
-                .topology = .triangle_list,
-            },
-            .depth_stencil = &wgpu.DepthStencilState{
-                .format = .depth32_float,
-                .depth_write_enabled = true,
-                .depth_compare = .less,
-            },
-            .fragment = &wgpu.FragmentState{
-                .module = fs_module,
-                .entry_point = "main",
-                .target_count = color_targets.len,
-                .targets = &color_targets,
-            },
-        };
-        break :pipline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
-    };
-
-    const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
+    const uniform_bg = gctx.createBindGroup(uniform_bgl, &.{
+        .{
+            .binding = 0,
+            .buffer_handle = gctx.uniforms.buffer,
+            .offset = 0,
+            .size = math.max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
+        },
     });
 
-    // Create a vertex buffer.
-    const vertex_buffer = gctx.createBuffer(.{
+    // Vertex buffer
+    const vertex_buf = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
-        .size = 3 * @sizeOf(Vertex),
+        .size = total_num_vertices * @sizeOf(Vertex),
     });
-    const vertex_data = [_]Vertex{
-        .{ .position = [3]f32{ 0.0, 0.5, 0.0 }, .color = [3]f32{ 1.0, 0.0, 0.0 } },
-        .{ .position = [3]f32{ -0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 1.0, 0.0 } },
-        .{ .position = [3]f32{ 0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 0.0, 1.0 } },
-    };
-    gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
+    {
+        var vertex_data = std.ArrayList(Vertex).init(arena);
+        defer vertex_data.deinit();
+        vertex_data.resize(total_num_vertices) catch unreachable;
 
-    // Create an index buffer.
-    const index_buffer = gctx.createBuffer(.{
+        for (meshes_positions.items) |_, i| {
+            vertex_data.items[i].position = meshes_positions.items[i];
+            vertex_data.items[i].normal = meshes_normals.items[i];
+        }
+        gctx.queue.writeBuffer(gctx.lookupResource(vertex_buf).?, 0, Vertex, vertex_data.items);
+    }
+
+    // Index buffer
+    const index_buf = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
-        .size = 3 * @sizeOf(u32),
+        .size = total_num_indices * @sizeOf(Mesh.IndexType),
     });
-    const index_data = [_]u32{ 0, 1, 2 };
-    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
+    gctx.queue.writeBuffer(gctx.lookupResource(index_buf).?, 0, Mesh.IndexType, meshes_indices.items);
 
-    // Create a depth texture and its 'view'.
+    // Depth texture
     const depth = createDepthTexture(gctx);
 
+    //
+    // Physics
+    //
     try zphy.init(allocator, .{});
 
     const broad_phase_layer_interface = try allocator.create(BroadPhaseLayerInterface);
@@ -238,27 +278,58 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         },
     );
 
-    return DemoState{
+    //
+    // Demo
+    //
+    const demo = try allocator.create(DemoState);
+    demo.* = .{
         .gctx = gctx,
-        .pipeline = pipeline,
-        .bind_group = bind_group,
-        .vertex_buffer = vertex_buffer,
-        .index_buffer = index_buffer,
-        .depth_texture = depth.texture,
-        .depth_texture_view = depth.view,
+        .uniform_bg = uniform_bg,
+        .vertex_buf = vertex_buf,
+        .index_buf = index_buf,
+        .depth_tex = depth.tex,
+        .depth_texv = depth.texv,
+        .meshes = meshes,
         .broad_phase_layer_interface = broad_phase_layer_interface,
         .contact_listener = contact_listener,
         .physics_system = physics_system,
     };
+
+    //
+    // GPU pipelines (async compiled; need to be created *after* the `demo` instance is constructed)
+    //
+    zgpu.createRenderPipelineSimple(
+        allocator,
+        gctx,
+        &.{ uniform_bgl, uniform_bgl },
+        wgsl.vs,
+        wgsl.fs,
+        @sizeOf(Vertex),
+        &.{
+            .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+            .{ .format = .float32x3, .offset = @offsetOf(Vertex, "normal"), .shader_location = 1 },
+        },
+        .{ .topology = .triangle_list },
+        zgpu.GraphicsContext.swapchain_format,
+        .{
+            .format = .depth32_float,
+            .depth_write_enabled = true,
+            .depth_compare = .less,
+        },
+        &demo.render_pipe,
+    );
+
+    return demo;
 }
 
-fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
+    demo.meshes.deinit();
     demo.physics_system.destroy();
     allocator.destroy(demo.contact_listener);
     allocator.destroy(demo.broad_phase_layer_interface);
     zphy.deinit();
     demo.gctx.destroy(allocator);
-    demo.* = undefined;
+    allocator.destroy(demo);
 }
 
 fn update(demo: *DemoState) void {
@@ -266,18 +337,63 @@ fn update(demo: *DemoState) void {
         demo.gctx.swapchain_descriptor.width,
         demo.gctx.swapchain_descriptor.height,
     );
-    zgui.showDemoWindow(null);
+
+    const window = demo.gctx.window;
+
+    // Handle camera rotation with mouse.
+    {
+        const cursor_pos = window.getCursorPos();
+        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
+        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        demo.mouse.cursor_pos = cursor_pos;
+
+        if (window.getMouseButton(.right) == .press) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = zm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed = zm.f32x4s(2.0);
+        const delta_time = zm.f32x4s(demo.gctx.stats.delta_time);
+        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+        var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
+
+        zm.storeArr3(&demo.camera.forward, forward);
+
+        const right = speed * delta_time *
+            zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        forward = speed * delta_time * forward;
+
+        var cam_pos = zm.loadArr3(demo.camera.position);
+
+        if (window.getKey(.w) == .press) {
+            cam_pos += forward;
+        } else if (window.getKey(.s) == .press) {
+            cam_pos -= forward;
+        }
+        if (window.getKey(.d) == .press) {
+            cam_pos += right;
+        } else if (window.getKey(.a) == .press) {
+            cam_pos -= right;
+        }
+
+        zm.storeArr3(&demo.camera.position, cam_pos);
+    }
 }
 
 fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, gctx.stats.time);
 
-    const cam_world_to_view = zm.lookAtLh(
-        zm.f32x4(3.0, 3.0, -3.0, 1.0),
-        zm.f32x4(0.0, 0.0, 0.0, 1.0),
+    const cam_world_to_view = zm.lookToLh(
+        zm.loadArr3(demo.camera.position),
+        zm.loadArr3(demo.camera.forward),
         zm.f32x4(0.0, 1.0, 0.0, 0.0),
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
@@ -288,87 +404,63 @@ fn draw(demo: *DemoState) void {
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
 
-    const back_buffer_view = gctx.swapchain.getCurrentTextureView();
-    defer back_buffer_view.release();
+    // Lookup common resources which may be needed for all the passes.
+    const depth_texv = gctx.lookupResource(demo.depth_texv) orelse return;
+    const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse return;
+    const vertex_buf_info = gctx.lookupResourceInfo(demo.vertex_buf) orelse return;
+    const index_buf_info = gctx.lookupResourceInfo(demo.index_buf) orelse return;
+
+    const swapchain_texv = gctx.swapchain.getCurrentTextureView();
+    defer swapchain_texv.release();
 
     const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
         pass: {
-            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
-            const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
-            const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
-            const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
-            const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
+            const render_pipe = gctx.lookupResource(demo.render_pipe) orelse break :pass;
 
-            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
-                .view = back_buffer_view,
-                .load_op = .clear,
-                .store_op = .store,
-            }};
-            const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
-                .view = depth_view,
-                .depth_load_op = .clear,
-                .depth_store_op = .store,
-                .depth_clear_value = 1.0,
-            };
-            const render_pass_info = wgpu.RenderPassDescriptor{
-                .color_attachment_count = color_attachments.len,
-                .color_attachments = &color_attachments,
-                .depth_stencil_attachment = &depth_attachment,
-            };
-            const pass = encoder.beginRenderPass(render_pass_info);
-            defer {
-                pass.end();
-                pass.release();
-            }
+            const pass = zgpu.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
+            defer zgpu.endReleasePass(pass);
 
-            pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
-            pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
+            pass.setVertexBuffer(0, vertex_buf_info.gpuobj.?, 0, vertex_buf_info.size);
+            pass.setIndexBuffer(
+                index_buf_info.gpuobj.?,
+                if (Mesh.IndexType == u16) .uint16 else .uint32,
+                0,
+                index_buf_info.size,
+            );
+            pass.setPipeline(render_pipe);
 
-            pass.setPipeline(pipeline);
-
-            // Draw triangle 1.
+            // Update "world to clip" (camera) xform.
             {
-                const object_to_world = zm.mul(zm.rotationY(t), zm.translation(-1.0, 0.0, 0.0));
-                const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
-
-                const mem = gctx.uniformsAllocate(zm.Mat, 1);
-                mem.slice[0] = zm.transpose(object_to_clip);
-
-                pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.drawIndexed(3, 1, 0, 0, 0);
+                const mem = gctx.uniformsAllocate(FrameUniforms, 1);
+                mem.slice[0] = .{
+                    .world_to_clip = zm.transpose(cam_world_to_clip),
+                    .camera_position = demo.camera.position,
+                };
+                pass.setBindGroup(0, uniform_bg, &.{mem.offset});
             }
-
-            // Draw triangle 2.
+            // Update "object to world" xform.
             {
-                const object_to_world = zm.mul(zm.rotationY(0.75 * t), zm.translation(1.0, 0.0, 0.0));
-                const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
-
-                const mem = gctx.uniformsAllocate(zm.Mat, 1);
-                mem.slice[0] = zm.transpose(object_to_clip);
-
-                pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.drawIndexed(3, 1, 0, 0, 0);
+                const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+                mem.slice[0] = .{
+                    .object_to_world = zm.identity(),
+                    .basecolor_roughness = .{ 0.2, 0.2, 0.2, 1.0 },
+                };
+                pass.setBindGroup(1, uniform_bg, &.{mem.offset});
             }
+            pass.drawIndexed(
+                demo.meshes.items[0].num_indices,
+                1,
+                demo.meshes.items[0].index_offset,
+                demo.meshes.items[0].vertex_offset,
+                0,
+            );
         }
         {
-            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
-                .view = back_buffer_view,
-                .load_op = .load,
-                .store_op = .store,
-            }};
-            const render_pass_info = wgpu.RenderPassDescriptor{
-                .color_attachment_count = color_attachments.len,
-                .color_attachments = &color_attachments,
-            };
-            const pass = encoder.beginRenderPass(render_pass_info);
-            defer {
-                pass.end();
-                pass.release();
-            }
-
+            const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+            defer zgpu.endReleasePass(pass);
             zgui.backend.draw(pass);
         }
 
@@ -377,24 +469,13 @@ fn draw(demo: *DemoState) void {
     defer commands.release();
 
     gctx.submit(&.{commands});
-
-    if (gctx.present() == .swap_chain_resized) {
-        // Release old depth texture.
-        gctx.releaseResource(demo.depth_texture_view);
-        gctx.destroyResource(demo.depth_texture);
-
-        // Create a new depth texture to match the new window size.
-        const depth = createDepthTexture(gctx);
-        demo.depth_texture = depth.texture;
-        demo.depth_texture_view = depth.view;
-    }
 }
 
 fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
-    texture: zgpu.TextureHandle,
-    view: zgpu.TextureViewHandle,
+    tex: zgpu.TextureHandle,
+    texv: zgpu.TextureViewHandle,
 } {
-    const texture = gctx.createTexture(.{
+    const tex = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
         .dimension = .tdim_2d,
         .size = .{
@@ -406,8 +487,8 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
         .mip_level_count = 1,
         .sample_count = 1,
     });
-    const view = gctx.createTextureView(texture, .{});
-    return .{ .texture = texture, .view = view };
+    const texv = gctx.createTextureView(tex, .{});
+    return .{ .tex = tex, .texv = texv };
 }
 
 pub fn main() !void {
@@ -439,11 +520,11 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var demo = init(allocator, window) catch {
+    var demo = create(allocator, window) catch {
         std.log.err("Failed to initialize the demo.", .{});
         return;
     };
-    defer deinit(allocator, &demo);
+    defer destroy(allocator, demo);
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
@@ -466,7 +547,19 @@ pub fn main() !void {
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
-        update(&demo);
-        draw(&demo);
+
+        update(demo);
+        draw(demo);
+
+        if (demo.gctx.present() == .swap_chain_resized) {
+            // Release old depth texture.
+            demo.gctx.releaseResource(demo.depth_texv);
+            demo.gctx.destroyResource(demo.depth_tex);
+
+            // Create a new depth texture to match the new window size.
+            const depth = createDepthTexture(demo.gctx);
+            demo.depth_tex = depth.tex;
+            demo.depth_texv = depth.texv;
+        }
     }
 }
