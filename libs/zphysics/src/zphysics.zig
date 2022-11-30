@@ -870,15 +870,19 @@ export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*any
 
     const zig_ver = @import("builtin").zig_version;
 
-    const mem = mem_allocator.?.rawAlloc(
-        size,
-        if (zig_ver.order(.{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.368" }) == .gt)
-            std.math.log2_int(u29, @intCast(u29, alignment))
-        else
+    const mem = if (comptime zig_ver.order(.{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.368" }) == .gt)
+        mem_allocator.?.rawAlloc(
+            size,
+            std.math.log2_int(u29, @intCast(u29, alignment)),
+            @returnAddress(),
+        ) catch @panic("zphysics: out of memory")
+    else
+        mem_allocator.?.rawAlloc(
+            size,
             @intCast(u29, alignment),
-        0,
-        @returnAddress(),
-    ) catch @panic("zphysics: out of memory");
+            0,
+            @returnAddress(),
+        ) catch @panic("zphysics: out of memory");
 
     mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zphysics: out of memory");
 
