@@ -34,9 +34,14 @@ export fn zbulletAlloc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
+    const zig_ver = @import("builtin").zig_version;
+
     var slice = allocator.?.rawAlloc(
         size,
-        @intCast(u29, alignment), // TODO: log2
+        if (zig_ver.order(.{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.368" }) == .gt)
+            std.math.log2_int(u29, @intCast(u29, alignment))
+        else
+            @intCast(u29, alignment),
         0,
         @returnAddress(),
     ) catch @panic("zbullet: out of memory");
