@@ -295,22 +295,26 @@ typedef struct JPC_SubShapeIDCreator
 typedef struct JPC_SubShapeIDPair
 {
     JPC_BodyID     body1_id;
-    JPC_SubShapeID sub_shape1_id;
+    JPC_SubShapeID shape1_sub_shape_id;
     JPC_BodyID     body2_id;
-    JPC_SubShapeID sub_shape2_id;
+    JPC_SubShapeID shape2_sub_shape_id;
 } JPC_SubShapeIDPair;
 
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 typedef struct JPC_ContactManifold
 {
-    alignas(16) float    world_space_normal[4];
-    alignas(16) float    penetration_depth;
-    JPC_SubShapeID       sub_shape1_id;
-    JPC_SubShapeID       sub_shape2_id;
-    alignas(16) uint32_t num_points1;
-    alignas(16) float    world_space_contact_points1[64][4];
-    alignas(16) uint32_t num_points2;
-    alignas(16) float    world_space_contact_points2[64][4];
+    alignas(16) float normal[4]; // 4th element is ignored; world space
+    alignas(16) float penetration_depth;
+    JPC_SubShapeID    shape1_sub_shape_id;
+    JPC_SubShapeID    shape2_sub_shape_id;
+    struct {
+        alignas(16) uint32_t num_points;
+        alignas(16) float    points[64][4]; // 4th element is ignored; world space
+    } shape1_contact;
+    struct {
+        alignas(16) uint32_t num_points;
+        alignas(16) float    points[64][4]; // 4th element is ignored; world space
+    } shape2_contact;
 } JPC_ContactManifold;
 
 // NOTE: Needs to be kept in sync with JPH::ContactSettings
@@ -324,17 +328,21 @@ typedef struct JPC_ContactSettings
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
 typedef struct JPC_CollideShapeResult
 {
-    alignas(16) float    contact_point1[4]; // 4th element is ignored
-    alignas(16) float    contact_point2[4]; // 4th element is ignored
-    alignas(16) float    penetration_axis[4]; // 4th element is ignored
+    alignas(16) float    shape1_contact_point[4]; // 4th element is ignored; world space
+    alignas(16) float    shape2_contact_point[4]; // 4th element is ignored; world space
+    alignas(16) float    penetration_axis[4]; // 4th element is ignored; world space
     float                penetration_depth;
-    JPC_SubShapeID       sub_shape1_id;
-    JPC_SubShapeID       sub_shape2_id;
+    JPC_SubShapeID       shape1_sub_shape_id;
+    JPC_SubShapeID       shape2_sub_shape_id;
     JPC_BodyID           body2_id;
-    alignas(16) uint32_t num_face_points1;
-    alignas(16) float    shape1_face[32][4]; // 4th element is ignored
-    alignas(16) uint32_t num_face_points2;
-    alignas(16) float    shape2_face[32][4]; // 4th element is ignored
+    struct {
+        alignas(16) uint32_t num_points;
+        alignas(16) float    points[32][4]; // 4th element is ignored; world space
+    } shape1_face;
+    struct {
+        alignas(16) uint32_t num_points;
+        alignas(16) float    points[32][4]; // 4th element is ignored; world space
+    } shape2_face;
 } JPC_CollideShapeResult;
 
 // NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface

@@ -147,12 +147,20 @@ static_assert(
 static_assert(
     offsetof(JPH::ContactManifold, mPenetrationDepth) == offsetof(JPC_ContactManifold, penetration_depth));
 static_assert(
-    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) == offsetof(JPC_ContactManifold, num_points1));
+    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) == offsetof(JPC_ContactManifold, shape1_contact));
+static_assert(
+    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn2) == offsetof(JPC_ContactManifold, shape2_contact));
 
 static_assert(
     offsetof(JPH::CollideShapeResult, mPenetrationDepth) == offsetof(JPC_CollideShapeResult, penetration_depth));
 static_assert(
-    offsetof(JPH::CollideShapeResult, mShape1Face) == offsetof(JPC_CollideShapeResult, num_face_points1));
+    offsetof(JPH::CollideShapeResult, mShape1Face) == offsetof(JPC_CollideShapeResult, shape1_face));
+static_assert(
+    offsetof(JPH::CollideShapeResult, mShape2Face) == offsetof(JPC_CollideShapeResult, shape2_face));
+static_assert(
+    offsetof(JPH::CollideShapeResult, mPenetrationDepth) == offsetof(JPC_CollideShapeResult, penetration_depth));
+static_assert(
+    offsetof(JPH::CollideShapeResult, mBodyID2) == offsetof(JPC_CollideShapeResult, body2_id));
 
 static_assert(offsetof(JPH::MotionProperties, mForce) == offsetof(JPC_MotionProperties, force));
 static_assert(offsetof(JPH::MotionProperties, mTorque) == offsetof(JPC_MotionProperties, torque));
@@ -164,15 +172,6 @@ static_assert(
 #endif
 
 static_assert(offsetof(JPH::MassProperties, mInertia) == offsetof(JPC_MassProperties, inertia));
-
-static_assert(
-    offsetof(JPH::CollideShapeResult, mPenetrationDepth) == offsetof(JPC_CollideShapeResult, penetration_depth));
-static_assert(
-    offsetof(JPH::CollideShapeResult, mBodyID2) == offsetof(JPC_CollideShapeResult, body2_id));
-static_assert(
-    offsetof(JPH::CollideShapeResult, mShape1Face) == offsetof(JPC_CollideShapeResult, num_face_points1));
-static_assert(
-    offsetof(JPH::CollideShapeResult, mShape2Face) == offsetof(JPC_CollideShapeResult, num_face_points2));
 
 static_assert(offsetof(JPH::SubShapeIDPair, mBody2ID) == offsetof(JPC_SubShapeIDPair, body2_id));
 

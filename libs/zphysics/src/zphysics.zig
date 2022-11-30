@@ -868,25 +868,16 @@ export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*any
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const zig_ver = @import("builtin").zig_version;
+    const ptr = mem_allocator.?.rawAlloc(
+        size,
+        std.math.log2_int(u29, @intCast(u29, alignment)),
+        @returnAddress(),
+    );
+    if (ptr == null) @panic("zphysics: out of memory");
 
-    const mem = if (comptime zig_ver.order(.{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.368" }) == .gt)
-        mem_allocator.?.rawAlloc(
-            size,
-            std.math.log2_int(u29, @intCast(u29, alignment)),
-            @returnAddress(),
-        ) catch @panic("zphysics: out of memory")
-    else
-        mem_allocator.?.rawAlloc(
-            size,
-            @intCast(u29, alignment),
-            0,
-            @returnAddress(),
-        ) catch @panic("zphysics: out of memory");
+    mem_allocations.?.put(@ptrToInt(ptr.?), size) catch @panic("zphysics: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zphysics: out of memory");
-
-    return mem.ptr;
+    return ptr;
 }
 
 export fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
