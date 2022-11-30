@@ -11,7 +11,7 @@
 #define JPC_API // TODO: Define this properly
 
 // Always turn on asserts in Debug mode
-#if defined(_DEBUG)
+#if defined(_DEBUG) || defined(JPH_ENABLE_ASSERTS)
     #define JPC_ENABLE_ASSERTS 1
 #else
     #define JPC_ENABLE_ASSERTS 0
@@ -197,9 +197,9 @@ typedef struct JPC_MassProperties
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
 typedef struct JPC_MotionProperties
 {
-    alignas(16) float linear_velocity[4];
-    alignas(16) float angular_velocity[4];
-    alignas(16) float inv_inertia_diagnonal[4];
+    alignas(16) float linear_velocity[4]; // 4th element is ignored
+    alignas(16) float angular_velocity[4]; // 4th element is ignored
+    alignas(16) float inv_inertia_diagnonal[4]; // 4th element is ignored
     alignas(16) float inertia_rotation[4];
 
     float             force[3];
@@ -234,10 +234,10 @@ typedef struct JPC_CollisionGroup
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 typedef struct JPC_BodyCreationSettings
 {
-    alignas(16) float          position[4];
+    alignas(16) float          position[4]; // 4th element is ignored
     alignas(16) float          rotation[4];
-    alignas(16) float          linear_velocity[4];
-    alignas(16) float          angular_velocity[4];
+    alignas(16) float          linear_velocity[4]; // 4th element is ignored
+    alignas(16) float          angular_velocity[4]; // 4th element is ignored
     uint64_t                   user_data;
     JPC_ObjectLayer            object_layer;
     JPC_CollisionGroup         collision_group;
@@ -263,10 +263,10 @@ typedef struct JPC_BodyCreationSettings
 // NOTE: Needs to be kept in sync with JPH::Body
 typedef struct JPC_Body
 {
-    alignas(16) float     position[4];
+    alignas(16) float     position[4]; // 4th element is ignored
     alignas(16) float     rotation[4];
-    alignas(16) float     bounds_min[4];
-    alignas(16) float     bounds_max[4];
+    alignas(16) float     bounds_min[4]; // 4th element is ignored
+    alignas(16) float     bounds_max[4]; // 4th element is ignored
 
     JPC_Shape *           shape;
     JPC_MotionProperties *motion_properties;
@@ -324,17 +324,17 @@ typedef struct JPC_ContactSettings
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
 typedef struct JPC_CollideShapeResult
 {
-    alignas(16) float    contact_point1[4];
-    alignas(16) float    contact_point2[4];
-    alignas(16) float    penetration_axis[4];
+    alignas(16) float    contact_point1[4]; // 4th element is ignored
+    alignas(16) float    contact_point2[4]; // 4th element is ignored
+    alignas(16) float    penetration_axis[4]; // 4th element is ignored
     float                penetration_depth;
     JPC_SubShapeID       sub_shape1_id;
     JPC_SubShapeID       sub_shape2_id;
     JPC_BodyID           body2_id;
     alignas(16) uint32_t num_face_points1;
-    alignas(16) float    shape1_face[32][4];
+    alignas(16) float    shape1_face[32][4]; // 4th element is ignored
     alignas(16) uint32_t num_face_points2;
-    alignas(16) float    shape2_face[32][4];
+    alignas(16) float    shape2_face[32][4]; // 4th element is ignored
 } JPC_CollideShapeResult;
 
 // NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
@@ -393,7 +393,7 @@ typedef struct JPC_ContactListenerVTable
 // NOTE: Needs to be kept in sync with JPH::TransformedShape
 typedef struct JPC_TransformedShape
 {
-    alignas(16) float     shape_position_com[4];
+    alignas(16) float     shape_position_com[4]; // 4th element is ignored
     alignas(16) float     shape_rotation[4];
     const JPC_Shape *     shape;
     float                 shape_scale[3];

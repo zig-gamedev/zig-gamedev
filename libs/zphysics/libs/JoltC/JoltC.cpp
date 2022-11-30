@@ -771,7 +771,7 @@ JPC_API JPC_ConvexHullShapeSettings *
 JPC_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points)
 {
     assert(in_points != nullptr && in_num_points > 0);
-    assert((reinterpret_cast<intptr_t>(&in_points[0][0]) & 0xf) == 0);
+    assert((reinterpret_cast<uintptr_t>(&in_points[0][0]) & 0xf) == 0);
     auto settings = new JPH::ConvexHullShapeSettings(
         reinterpret_cast<const JPH::Vec3 *>(&in_points[0][0]), in_num_points);
     settings->AddRef();
@@ -792,8 +792,7 @@ JPC_ConvexHullShapeSettings_SetMaxConvexRadius(JPC_ConvexHullShapeSettings *in_s
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius =
-        in_max_convex_radius;
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius = in_max_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
