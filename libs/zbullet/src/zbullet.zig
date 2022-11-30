@@ -34,15 +34,14 @@ export fn zbulletAlloc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
-    var slice = allocator.?.allocBytes(
-        @intCast(u29, alignment),
+    var slice = allocator.?.rawAlloc(
         size,
+        @intCast(u29, alignment), // TODO: log2
         0,
         @returnAddress(),
     ) catch @panic("zbullet: out of memory");
 
-    allocations.?.put(@ptrToInt(slice.ptr), size) catch
-        @panic("zbullet: out of memory");
+    allocations.?.put(@ptrToInt(slice.ptr), size) catch @panic("zbullet: out of memory");
 
     return slice.ptr;
 }

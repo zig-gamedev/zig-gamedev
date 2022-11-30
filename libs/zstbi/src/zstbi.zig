@@ -201,11 +201,10 @@ export fn zstbiMalloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const mem = mem_allocator.?.allocBytes(
+    const mem = mem_allocator.?.alignedAlloc(
+        u8,
         mem_alignment,
         size,
-        0,
-        @returnAddress(),
     ) catch @panic("zstbi: out of memory");
 
     mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zstbi: out of memory");
@@ -219,18 +218,11 @@ export fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
 
     const old_size = if (ptr != null) mem_allocations.?.get(@ptrToInt(ptr.?)).? else 0;
     const old_mem = if (old_size > 0)
-        @ptrCast([*]u8, ptr)[0..old_size]
+        @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..old_size]
     else
-        @as([*]u8, undefined)[0..0];
+        @as([*]align(mem_alignment) u8, undefined)[0..0];
 
-    const new_mem = mem_allocator.?.reallocBytes(
-        old_mem,
-        mem_alignment,
-        size,
-        mem_alignment,
-        0,
-        @returnAddress(),
-    ) catch @panic("zstbi: out of memory");
+    const new_mem = mem_allocator.?.realloc(old_mem, size) catch @panic("zstbi: out of memory");
 
     if (ptr != null) {
         const removed = mem_allocations.?.remove(@ptrToInt(ptr.?));
@@ -248,10 +240,7 @@ export fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         defer mem_mutex.unlock();
 
         const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast(
-            [*]align(mem_alignment) u8,
-            @alignCast(mem_alignment, ptr),
-        )[0..size];
+        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
         mem_allocator.?.free(mem);
     }
 }

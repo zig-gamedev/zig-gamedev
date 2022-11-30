@@ -853,11 +853,10 @@ export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const mem = mem_allocator.?.allocBytes(
+    const mem = mem_allocator.?.alignedAlloc(
+        u8,
         mem_alignment,
         size,
-        0,
-        @returnAddress(),
     ) catch @panic("zphysics: out of memory");
 
     mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zphysics: out of memory");
@@ -869,9 +868,9 @@ export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*any
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const mem = mem_allocator.?.allocBytes(
-        @intCast(u29, alignment),
+    const mem = mem_allocator.?.rawAlloc(
         size,
+        @intCast(u29, alignment), // TODO: log2
         0,
         @returnAddress(),
     ) catch @panic("zphysics: out of memory");
@@ -887,10 +886,7 @@ export fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         defer mem_mutex.unlock();
 
         const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast(
-            [*]align(mem_alignment) u8,
-            @alignCast(mem_alignment, ptr),
-        )[0..size];
+        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
         mem_allocator.?.free(mem);
     }
 }

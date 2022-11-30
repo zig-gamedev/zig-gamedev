@@ -50,11 +50,10 @@ export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const mem = mem_allocator.?.allocBytes(
+    const mem = mem_allocator.?.alignedAlloc(
+        u8,
         mem_alignment,
         size,
-        0,
-        @returnAddress(),
     ) catch @panic("zgui: out of memory");
 
     mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zgui: out of memory");
@@ -68,10 +67,7 @@ export fn zguiMemFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void 
         defer mem_mutex.unlock();
 
         const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast(
-            [*]align(mem_alignment) u8,
-            @alignCast(mem_alignment, ptr),
-        )[0..size];
+        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
         mem_allocator.?.free(mem);
     }
 }
