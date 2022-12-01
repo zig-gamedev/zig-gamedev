@@ -294,17 +294,21 @@ typedef struct JPC_SubShapeIDCreator
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDPair
 typedef struct JPC_SubShapeIDPair
 {
-    JPC_BodyID     body1_id;
-    JPC_SubShapeID shape1_sub_shape_id;
-    JPC_BodyID     body2_id;
-    JPC_SubShapeID shape2_sub_shape_id;
+    struct {
+        JPC_BodyID     body_id;
+        JPC_SubShapeID sub_shape_id;
+    } first;
+    struct {
+        JPC_BodyID     body_id;
+        JPC_SubShapeID sub_shape_id;
+    } second;
 } JPC_SubShapeIDPair;
 
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 typedef struct JPC_ContactManifold
 {
     alignas(16) float normal[4]; // 4th element is ignored; world space
-    alignas(16) float penetration_depth;
+    float             penetration_depth;
     JPC_SubShapeID    shape1_sub_shape_id;
     JPC_SubShapeID    shape2_sub_shape_id;
     struct {

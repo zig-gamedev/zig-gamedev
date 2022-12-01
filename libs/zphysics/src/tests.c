@@ -120,8 +120,8 @@ MyContactListener_OnContactPersisted(void *in_self,
 static void
 MyContactListener_OnContactRemoved(void *in_self, const JPC_SubShapeIDPair *in_sub_shape_pair)
 {
-    const JPC_BodyID body1_id = in_sub_shape_pair->body1_id;
-    const JPC_BodyID body2_id = in_sub_shape_pair->body2_id;
+    const JPC_BodyID body1_id = in_sub_shape_pair->first.body_id;
+    const JPC_BodyID body2_id = in_sub_shape_pair->second.body_id;
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnContactRemoved(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
             JPC_BodyID_GetSequenceNumber(body1_id), JPC_BodyID_GetIndex(body1_id),

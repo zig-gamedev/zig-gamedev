@@ -60,6 +60,10 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
 
     comptime {
         assert(@sizeOf(BroadPhaseLayerInterfaceVTable) == @sizeOf(c.JPC_BroadPhaseLayerInterfaceVTable));
+        assert(@offsetOf(BroadPhaseLayerInterfaceVTable, "getBroadPhaseLayer") == @offsetOf(
+            c.JPC_BroadPhaseLayerInterfaceVTable,
+            "GetBroadPhaseLayer",
+        ));
     }
 };
 
@@ -75,6 +79,10 @@ pub const BodyActivationListenerVTable = extern struct {
 
     comptime {
         assert(@sizeOf(BodyActivationListenerVTable) == @sizeOf(c.JPC_BodyActivationListenerVTable));
+        assert(@offsetOf(BodyActivationListenerVTable, "onBodyDeactivated") == @offsetOf(
+            c.JPC_BodyActivationListenerVTable,
+            "OnBodyDeactivated",
+        ));
     }
 };
 
@@ -145,6 +153,10 @@ pub const ContactListenerVTable = extern struct {
 
     comptime {
         assert(@sizeOf(ContactListenerVTable) == @sizeOf(c.JPC_ContactListenerVTable));
+        assert(@offsetOf(ContactListenerVTable, "onContactValidate") == @offsetOf(
+            c.JPC_ContactListenerVTable,
+            "OnContactValidate",
+        ));
     }
 };
 
@@ -155,6 +167,10 @@ pub const ContactSettings = extern struct {
 
     comptime {
         assert(@sizeOf(ContactSettings) == @sizeOf(c.JPC_ContactSettings));
+        assert(@offsetOf(ContactSettings, "combined_restitution") == @offsetOf(
+            c.JPC_ContactSettings,
+            "combined_restitution",
+        ));
     }
 };
 
@@ -164,50 +180,66 @@ pub const MassProperties = extern struct {
 
     comptime {
         assert(@sizeOf(MassProperties) == @sizeOf(c.JPC_MassProperties));
+        assert(@offsetOf(MassProperties, "inertia") == @offsetOf(c.JPC_MassProperties, "inertia"));
     }
 };
 
 pub const SubShapeIdPair = extern struct {
-    body1_id: BodyId,
-    sub_shape1_id: SubShapeId,
-    body2_id: BodyId,
-    sub_shape2_id: SubShapeId,
+    first: extern struct {
+        body_id: BodyId,
+        sub_shape_id: SubShapeId,
+    },
+    second: extern struct {
+        body_id: BodyId,
+        sub_shape_id: SubShapeId,
+    },
 
     comptime {
         assert(@sizeOf(SubShapeIdPair) == @sizeOf(c.JPC_SubShapeIDPair));
+        assert(@offsetOf(SubShapeIdPair, "second") == @offsetOf(c.JPC_SubShapeIDPair, "second"));
     }
 };
 
 pub const CollideShapeResult = extern struct {
-    contact_point1: [4]f32 align(16),
-    contact_point2: [4]f32 align(16),
-    penetration_axis: [4]f32 align(16),
+    shape1_contact_point: [4]f32 align(16), // 4th element is ignored; world space
+    shape2_contact_point: [4]f32 align(16), // 4th element is ignored; world space
+    penetration_axis: [4]f32 align(16), // 4th element is ignored; world space
     penetration_depth: f32,
-    sub_shape1_id: SubShapeId,
-    sub_shape2_id: SubShapeId,
+    shape1_sub_shape_id: SubShapeId,
+    shape2_sub_shape_id: SubShapeId,
     body2_id: BodyId,
-    num_face_points1: u32 align(16),
-    shape1_face: [32][4]f32 align(16),
-    num_face_points2: u32 align(16),
-    shape2_face: [32][4]f32 align(16),
+    shape1_face: extern struct {
+        num_points: u32 align(16),
+        points: [32][4]f32 align(16), // 4th element is ignored; world space
+    },
+    shape2_face: extern struct {
+        num_points: u32 align(16),
+        points: [32][4]f32 align(16), // 4th element is ignored; world space
+    },
 
     comptime {
         assert(@sizeOf(CollideShapeResult) == @sizeOf(c.JPC_CollideShapeResult));
+        assert(@offsetOf(CollideShapeResult, "shape2_face") == @offsetOf(c.JPC_CollideShapeResult, "shape2_face"));
     }
 };
 
 pub const ContactManifold = extern struct {
-    world_space_normal: [4]f32 align(16),
-    penetration_depth: f32 align(16),
-    sub_shape1_id: SubShapeId,
-    sub_shape2_id: SubShapeId,
-    num_points1: u32 align(16),
-    world_space_contact_points1: [64][4]f32 align(16),
-    num_points2: u32 align(16),
-    world_space_contact_points2: [64][4]f32 align(16),
+    normal: [4]f32 align(16), // 4th element is ignored; world space
+    penetration_depth: f32,
+    shape1_sub_shape_id: SubShapeId,
+    shape2_sub_shape_id: SubShapeId,
+    shape1_contact: extern struct {
+        num_points: u32 align(16),
+        points: [64][4]f32 align(16), // 4th element is ignored; world space
+    },
+    shape2_contact: extern struct {
+        num_points: u32 align(16),
+        points: [64][4]f32 align(16), // 4th element is ignored; world space
+    },
 
     comptime {
         assert(@sizeOf(ContactManifold) == @sizeOf(c.JPC_ContactManifold));
+        assert(@offsetOf(ContactManifold, "shape2_contact") == @offsetOf(c.JPC_ContactManifold, "shape2_contact"));
     }
 };
 

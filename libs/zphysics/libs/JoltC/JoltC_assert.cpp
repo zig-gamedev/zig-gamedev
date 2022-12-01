@@ -173,7 +173,7 @@ static_assert(
 
 static_assert(offsetof(JPH::MassProperties, mInertia) == offsetof(JPC_MassProperties, inertia));
 
-static_assert(offsetof(JPH::SubShapeIDPair, mBody2ID) == offsetof(JPC_SubShapeIDPair, body2_id));
+static_assert(offsetof(JPH::SubShapeIDPair, mBody2ID) == offsetof(JPC_SubShapeIDPair, second));
 
 static_assert(offsetof(JPH::SubShapeIDCreator, mCurrentBit) == offsetof(JPC_SubShapeIDCreator, current_bit));
 
