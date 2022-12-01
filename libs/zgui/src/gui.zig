@@ -1261,29 +1261,28 @@ const ImageButton = struct {
     h: f32,
     uv0: [2]f32 = .{ 0.0, 0.0 },
     uv1: [2]f32 = .{ 1.0, 1.0 },
-    frame_padding: i32 = -1,
     bg_col: [4]f32 = .{ 0.0, 0.0, 0.0, 0.0 },
     tint_col: [4]f32 = .{ 1.0, 1.0, 1.0, 1.0 },
 };
-pub fn imageButton(user_texture_id: TextureIdent, args: ImageButton) bool {
+pub fn imageButton(str_id: [:0]const u8, user_texture_id: TextureIdent, args: ImageButton) bool {
     return zguiImageButton(
+        str_id,
         user_texture_id,
         args.w,
         args.h,
         &args.uv0,
         &args.uv1,
-        args.frame_padding,
         &args.bg_col,
         &args.tint_col,
     );
 }
 extern fn zguiImageButton(
+    str_id: [*:0]const u8,
     user_texture_id: TextureIdent,
     w: f32,
     h: f32,
     uv0: *const [2]f32,
     uv1: *const [2]f32,
-    frame_padding: i32,
     bg_col: *const [4]f32,
     tint_col: *const [4]f32,
 ) bool;

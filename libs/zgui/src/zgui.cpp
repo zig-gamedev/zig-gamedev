@@ -892,21 +892,21 @@ ZGUI_API void zguiImage(
 }
 
 ZGUI_API bool zguiImageButton(
+    const char* str_id,
     ImTextureID user_texture_id,
     float w,
     float h,
     const float uv0[2],
     const float uv1[2],
-    int frame_padding,
     const float bg_col[4],
     const float tint_col[4]
 ) {
     return ImGui::ImageButton(
+        str_id,
         user_texture_id,
         { w, h },
         { uv0[0], uv0[1] },
         { uv1[0], uv1[1] },
-        frame_padding,
         { bg_col[0], bg_col[1], bg_col[2], bg_col[3] },
         { tint_col[0], tint_col[1], tint_col[2], tint_col[3] }
     );

@@ -435,7 +435,7 @@ fn update(demo: *DemoState) !void {
         if (zgui.collapsingHeader("Widgets: Image", .{})) {
             const tex_id = demo.gctx.lookupResource(demo.texture_view).?;
             zgui.image(tex_id, .{ .w = 512.0, .h = 512.0 });
-            _ = zgui.imageButton(tex_id, .{ .w = 512.0, .h = 512.0, .frame_padding = 10 });
+            _ = zgui.imageButton("image_button_id", tex_id, .{ .w = 512.0, .h = 512.0 });
         }
 
         const draw_list = zgui.getBackgroundDrawList();
