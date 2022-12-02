@@ -164,10 +164,10 @@ pub const io = struct {
     pub const getWantCaptureKeyboard = zguiIoGetWantCaptureKeyboard;
     extern fn zguiIoGetWantCaptureKeyboard() bool;
 
-    pub fn setIniFilename(filename: [:0]const u8) void {
+    pub fn setIniFilename(filename: ?[*:0]const u8) void {
         zguiIoSetIniFilename(filename);
     }
-    extern fn zguiIoSetIniFilename(filename: [*:0]const u8) void;
+    extern fn zguiIoSetIniFilename(filename: ?[*:0]const u8) void;
 
     /// `pub fn setDisplaySize(width: f32, height: f32) void`
     pub const setDisplaySize = zguiIoSetDisplaySize;
