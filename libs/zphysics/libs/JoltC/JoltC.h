@@ -660,6 +660,11 @@ JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_syste
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system);
 
+JPC_API void
+JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
+                             uint32_t in_max_body_ids,
+                             uint32_t *out_num_body_ids,
+                             JPC_BodyID *out_body_ids);
 ///
 /// Low-level access for advanced usage and zero CPU overhead
 ///
@@ -667,7 +672,7 @@ JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics
 /// When a body is freed the memory that the pointer occupies is reused to store a freelist.
 #define JPC_IS_VALID_BODY_POINTER(body_ptr) (((uintptr_t)(body_ptr) & _JPC_IS_FREED_BODY_BIT) == 0)
 
-/// Access a body, will return a NULL if the body ID is no longer valid (not protected by a lock).
+/// Access a body, will return NULL if the body ID is no longer valid.
 /// Use `JPC_PhysicsSystem_GetBodiesUnsafe()` to get an array of all body pointers.
 #define JPC_TRY_GET_BODY(all_body_ptrs, body_id) \
     JPC_IS_VALID_BODY_POINTER(all_body_ptrs[body_id & JPC_BODY_ID_INDEX_BITS]) && \

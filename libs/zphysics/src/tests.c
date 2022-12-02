@@ -475,9 +475,8 @@ JoltCTest_HelloWorld(void)
         &sphere_settings,
         JPC_ACTIVATION_ACTIVATE);
 
-
-    //if (JPC_Body_IsStatic(floor) == false) return 0;
-    //if (JPC_Body_IsDynamic(floor) == true) return 0;
+    if (JPC_Body_IsStatic(floor) == false) return 0;
+    if (JPC_Body_IsDynamic(floor) == true) return 0;
 
     const float sphere_velocity[3] = { 0.0f, -5.0f, 0.0f };
     JPC_BodyInterface_SetLinearVelocity(body_interface, sphere_id, sphere_velocity);
@@ -485,6 +484,15 @@ JoltCTest_HelloWorld(void)
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
 
     JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
+
+    {
+        JPC_BodyID body_ids[2];
+        uint32_t num_body_ids = 0;
+        JPC_PhysicsSystem_GetBodyIDs(physics_system, 2, &num_body_ids, &body_ids[0]);
+        if (num_body_ids != 2) return 0;
+        if (body_ids[0] != floor_id) return 0;
+        if (body_ids[1] != sphere_id) return 0;
+    }
 
     uint32_t step = 0;
     while (JPC_BodyInterface_IsActive(body_interface, sphere_id))

@@ -5,6 +5,7 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
+#include <Jolt/Core/Memory.h>
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
@@ -28,6 +29,33 @@ JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system)
     assert(in_physics_system != nullptr);
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
     return reinterpret_cast<JPC_Body **>(physics_system->mBodyManager.mBodies.data());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
+                             uint32_t in_max_body_ids,
+                             uint32_t *out_num_body_ids,
+                             JPC_BodyID *out_body_ids)
+{
+    assert(in_physics_system != nullptr && out_body_ids != nullptr);
+    assert(in_max_body_ids > 0);
+
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+
+    JPH::UniqueLock lock(physics_system->mBodyManager.mBodiesMutex, JPH::EPhysicsLockTypes::BodiesList);
+
+    if (out_num_body_ids) *out_num_body_ids = 0;
+
+    for (const JPH::Body *b : physics_system->mBodyManager.mBodies)
+        if (JPH::BodyManager::sIsValidBodyPointer(b))
+        {
+            *out_body_ids = b->GetID().GetIndexAndSequenceNumber();
+            out_body_ids += 1;
+            if (out_num_body_ids) *out_num_body_ids += 1;
+            in_max_body_ids -= 1;
+            if (in_max_body_ids == 0)
+                break;
+        }
 }
 //--------------------------------------------------------------------------------------------------
 static_assert(JPC_COLLISION_GROUP_INVALID_GROUP     == JPH::CollisionGroup::cInvalidGroup);
