@@ -684,7 +684,10 @@ pub const ShapeSettings = opaque {
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asShapeSettings(shape_settings: *T) *ShapeSettings {
+            pub fn asShapeSettings(shape_settings: *const T) *const ShapeSettings {
+                return @ptrCast(*const ShapeSettings, shape_settings);
+            }
+            pub fn asShapeSettingsMut(shape_settings: *T) *ShapeSettings {
                 return @ptrCast(*ShapeSettings, shape_settings);
             }
 
@@ -840,7 +843,10 @@ pub const Shape = opaque {
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asShape(shape: *T) *Shape {
+            pub fn asShape(shape: *const T) *const Shape {
+                return @ptrCast(*const Shape, shape);
+            }
+            pub fn asShapeMut(shape: *T) *Shape {
                 return @ptrCast(*Shape, shape);
             }
 
@@ -1162,6 +1168,10 @@ test "zphysics.body.basic" {
 
     try expect(physics_system.getNumBodies() == 1);
     try expect(physics_system.getNumActiveBodies() == 0);
+}
+
+test {
+    std.testing.refAllDecls(@This());
 }
 
 extern fn JoltCTest_Basic1() u32;
