@@ -84,12 +84,12 @@ const AudioFilter = struct {
 
     fn getCurrentNode(filter: AudioFilter) *zaudio.Node {
         return switch (filter.current_type) {
-            .lpf => filter.lpf.node.asNode(),
-            .hpf => filter.hpf.node.asNode(),
-            .notch => filter.notch.node.asNode(),
-            .peak => filter.peak.node.asNode(),
-            .loshelf => filter.loshelf.node.asNode(),
-            .hishelf => filter.hishelf.node.asNode(),
+            .lpf => filter.lpf.node.asNodeMut(),
+            .hpf => filter.hpf.node.asNodeMut(),
+            .notch => filter.notch.node.asNodeMut(),
+            .peak => filter.peak.node.asNodeMut(),
+            .loshelf => filter.loshelf.node.asNodeMut(),
+            .hishelf => filter.hishelf.node.asNodeMut(),
         };
     }
 
@@ -331,12 +331,12 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             },
         };
 
-        try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
-        try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
-        try audio_filter.notch.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
-        try audio_filter.peak.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
-        try audio_filter.loshelf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
-        try audio_filter.hishelf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+        try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
+        try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
+        try audio_filter.notch.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
+        try audio_filter.peak.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
+        try audio_filter.loshelf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
+        try audio_filter.hishelf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
 
         break :audio_filter audio_filter;
     };
@@ -352,7 +352,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     );
     const waveform_data_source = try zaudio.Waveform.create(waveform_config);
     const waveform_node = try audio.engine.createDataSourceNode(
-        zaudio.DataSourceNode.Config.init(waveform_data_source.asDataSource()),
+        zaudio.DataSourceNode.Config.init(waveform_data_source.asDataSourceMut()),
     );
     try waveform_node.setState(.stopped);
 
@@ -366,7 +366,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     );
     const noise_data_source = try zaudio.Noise.create(noise_config);
     const noise_node = try audio.engine.createDataSourceNode(
-        zaudio.DataSourceNode.Config.init(noise_data_source.asDataSource()),
+        zaudio.DataSourceNode.Config.init(noise_data_source.asDataSourceMut()),
     );
     try noise_node.setState(.stopped);
 
@@ -438,7 +438,7 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn updateAudioGraph(demo: DemoState) !void {
     const node = node: {
         if (demo.audio_filter.is_enabled == false)
-            break :node demo.audio.engine.getEndpoint();
+            break :node demo.audio.engine.getEndpointMut();
         break :node demo.audio_filter.getCurrentNode();
     };
 

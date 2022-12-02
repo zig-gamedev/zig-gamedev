@@ -20,7 +20,7 @@ Library | Latest version | Description
 ------- | --------- | ---------------
 **[zgpu](libs/zgpu)** | 0.9.0 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
 **[zgui](libs/zgui)** | 0.9.3 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
-**[zaudio](libs/zaudio)** | 0.9.1 | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
+**[zaudio](libs/zaudio)** | 0.9.2 | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
 **[zmath](libs/zmath)** | 0.9.4 | SIMD math library for game developers
 **[zstbi](libs/zstbi)** | 0.9.1 | Image loading with [stbi](https://github.com/nothings/stb)
 **[zmesh](libs/zmesh)** | 0.9.0 | Loading, generating, processing and optimizing triangle meshes
