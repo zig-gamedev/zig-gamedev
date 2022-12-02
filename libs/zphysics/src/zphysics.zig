@@ -487,13 +487,15 @@ pub const PhysicsSystem = opaque {
     }
 
     /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
-    pub fn getBodies(physics_system: *const PhysicsSystem) []const *const Body {
-        const ptr = c.JPC_PhysicsSystem_GetBodies(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)));
+    pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
+        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(
+            @intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)),
+        );
         return @ptrCast([*]const *const Body, ptr)[0..physics_system.getNumBodies()];
     }
     /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
-    pub fn getBodiesMut(physics_system: *PhysicsSystem) []const *Body {
-        const ptr = c.JPC_PhysicsSystem_GetBodies(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+    pub fn getBodiesMutUnsafe(physics_system: *PhysicsSystem) []const *Body {
+        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
         return @ptrCast([*]const *Body, ptr)[0..physics_system.getNumBodies()];
     }
 };
@@ -1121,7 +1123,7 @@ test "zphysics.body.basic" {
         if (read_lock.tryLock(lock_interface, body_id)) |locked_body| {
             defer read_lock.unlock();
 
-            const all_bodies: []const *const Body = physics_system.getBodies();
+            const all_bodies: []const *const Body = physics_system.getBodiesUnsafe();
 
             try expect(isValidBodyPointer(all_bodies[body_id & body_id_index_bits]));
             try expect(locked_body == all_bodies[body_id & body_id_index_bits]);
@@ -1135,7 +1137,7 @@ test "zphysics.body.basic" {
         if (write_lock.tryLock(lock_interface, body_id)) |locked_body| {
             defer write_lock.unlock();
 
-            const all_bodies_mut: []const *Body = physics_system.getBodiesMut();
+            const all_bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
 
             try expect(isValidBodyPointer(all_bodies_mut[body_id & body_id_index_bits]));
             try expect(locked_body == all_bodies_mut[body_id & body_id_index_bits]);

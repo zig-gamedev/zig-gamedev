@@ -519,7 +519,7 @@ fn draw(demo: *DemoState) void {
             }
 
             // Draw all dynamic bodies.
-            const bodies = demo.physics_system.getBodies();
+            const bodies = demo.physics_system.getBodiesUnsafe();
             for (bodies) |body| {
                 if (!zphy.isValidBodyPointer(body) or body.motion_properties == null) continue;
 

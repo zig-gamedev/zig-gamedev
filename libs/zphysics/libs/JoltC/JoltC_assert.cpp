@@ -23,7 +23,7 @@
 JPH_SUPPRESS_WARNINGS
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Body **
-JPC_PhysicsSystem_GetBodies(JPC_PhysicsSystem *in_physics_system)
+JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system)
 {
     assert(in_physics_system != nullptr);
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
