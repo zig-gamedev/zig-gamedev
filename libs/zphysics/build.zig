@@ -38,8 +38,8 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         "-DJPH_COMPILER_MINGW",
         "-fno-sanitize=undefined",
     };
-    exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltC.cpp", flags);
-    exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltC_extension.cpp", flags);
+    exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp", flags);
+    exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC_Extensions.cpp", flags);
 
     const src_dir = thisDir() ++ "/libs/Jolt";
     exe.addCSourceFile(src_dir ++ "/AABBTree/AABBTreeBuilder.cpp", flags);

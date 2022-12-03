@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-#include "JoltC.h"
+#include "JoltPhysicsC.h"
 #include <assert.h>
 #define private public
 #include <Jolt/Jolt.h>

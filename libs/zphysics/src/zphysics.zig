@@ -1,6 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const c = @cImport(@cInclude("JoltC.h"));
+const c = @cImport(@cInclude("JoltPhysicsC.h"));
 
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};

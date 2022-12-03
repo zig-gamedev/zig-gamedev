@@ -1,3 +1,5 @@
+// JoltPhysicsC v0.0.1 - C API for Jolt Physics C++ library
+
 #pragma once
 #include <stdlib.h>
 #include <stdbool.h>

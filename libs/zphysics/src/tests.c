@@ -1,4 +1,4 @@
-#include <JoltC.h>
+#include "JoltPhysicsC.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
