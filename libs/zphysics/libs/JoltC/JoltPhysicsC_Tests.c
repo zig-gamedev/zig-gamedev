@@ -516,12 +516,25 @@ JoltCTest_HelloWorld(void)
         float velocity[3];
         JPC_BodyInterface_GetLinearVelocity(body_interface, sphere_id, &velocity[0]);
 
+        const float delta_time = 1.0f / 60.0f;
+        const int collision_steps = 1;
+        const int integration_sub_steps = 1;
+
+        JPC_PhysicsSystem_Update(
+            physics_system,
+            delta_time,
+            collision_steps,
+            integration_sub_steps,
+            temp_allocator,
+            job_system);
+
 #ifdef PRINT_OUTPUT
         fprintf(stderr, "Step %d\n\tPosition = (%f, %f, %f), Velocity(%f, %f, %f)\n",
                 step,
                 position[0], position[1], position[2],
                 velocity[0], velocity[1], velocity[2]);
 #endif
+
         // Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads)
         {
             JPC_BodyID body_ids[16]; // You can use `JPC_PhysicsSystem_GetMaxBodies()` to pre-allocate storage
@@ -588,18 +601,6 @@ JoltCTest_HelloWorld(void)
             }
             JPC_BodyLockRead_Unlock(&lock);
         }
-
-        const float delta_time = 1.0f / 60.0f;
-        const int collision_steps = 1;
-        const int integration_sub_steps = 1;
-
-        JPC_PhysicsSystem_Update(
-            physics_system,
-            delta_time,
-            collision_steps,
-            integration_sub_steps,
-            temp_allocator,
-            job_system);
     }
 
     JPC_BodyInterface_RemoveBody(body_interface, sphere_id);
