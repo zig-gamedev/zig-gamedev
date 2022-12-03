@@ -258,7 +258,7 @@ typedef struct JPC_Body
     alignas(16) float     bounds_max[4]; // 4th element is ignored
 
     JPC_Shape *           shape;
-    JPC_MotionProperties *motion_properties;
+    JPC_MotionProperties *motion_properties; // `NULL` for static bodies
     uint64_t              user_data;
     JPC_CollisionGroup    collision_group;
 
@@ -722,6 +722,7 @@ JPC_ShapeSettings_Release(JPC_ShapeSettings *in_settings);
 JPC_API uint32_t
 JPC_ShapeSettings_GetRefCount(const JPC_ShapeSettings *in_settings);
 
+/// First call creates the shape, subsequent calls return the same pointer and increments reference count. Call `JPC_Shape_Release()` when you don't need returned pointer anymore.
 JPC_API JPC_Shape *
 JPC_ShapeSettings_CreateShape(const JPC_ShapeSettings *in_settings);
 
@@ -1090,6 +1091,7 @@ JPC_Body_IsInBroadPhase(const JPC_Body *in_body);
 JPC_API bool
 JPC_Body_IsCollisionCacheInvalid(const JPC_Body *in_body);
 
+/// Increments reference count. Call JPC_Shape_Release() when you don't need returned pointer anymore.
 JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body);
 

@@ -1298,10 +1298,12 @@ JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body)
 {
     assert(in_body != nullptr);
-    // TODO: We should probably call shape->addRef() here
-    return reinterpret_cast<const JPC_Shape *>(
+    const JPC_Shape* shape = reinterpret_cast<const JPC_Shape *>(
         reinterpret_cast<const JPH::Body *>(in_body)->GetShape()
     );
+    assert(shape != nullptr);
+    JPC_Shape_AddRef(const_cast<JPC_Shape *>(shape));
+    return shape;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
