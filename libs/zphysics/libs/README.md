@@ -16,7 +16,7 @@ Folder structure:
     * `JoltPhysicsC_Tests.c` - tests and sample code for our C API
 
 ```c
-// Basic initialization code
+// Basic initialization C code.
 
 JPC_RegisterDefaultAllocator();
 JPC_CreateFactory();
@@ -27,19 +27,20 @@ const uint32_t num_body_mutexes = 0;
 const uint32_t max_body_pairs = 1024;
 const uint32_t max_contact_constraints = 1024;
 
-BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+BPLayerInterfaceImpl* broad_phase_layer_interface = (BPLayerInterfaceImpl *)malloc(sizeof(BPLayerInterfaceImpl));
+*broad_phase_layer_interface = BPLayerInterface_Init();
 
 JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
     max_bodies,
     num_body_mutexes,
     max_body_pairs,
     max_contact_constraints,
-    &broad_phase_layer_interface,
+    broad_phase_layer_interface,
     MyBroadPhaseCanCollide,
     MyObjectCanCollide);
 ```
 ```c
-// Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads)
+// Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads).
 
 JPC_BodyID body_ids[16]; // You can use JPC_PhysicsSystem_GetMaxBodies() to pre-allocate storage
 uint32_t num_body_ids = 0;
