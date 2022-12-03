@@ -537,19 +537,25 @@ JoltCTest_HelloWorld(void)
 
         // Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads).
         {
-            JPC_BodyID body_ids[16]; // You can use `JPC_PhysicsSystem_GetMaxBodies()` to pre-allocate storage
+            JPC_BodyID body_ids[16]; // You can use JPC_PhysicsSystem_GetMaxBodies() to pre-allocate storage
             uint32_t num_body_ids = 0;
             JPC_PhysicsSystem_GetBodyIDs(physics_system, 16, &num_body_ids, &body_ids[0]);
+
+            const JPC_BodyLockInterface *lock_iface = JPC_PhysicsSystem_GetBodyLockInterface(physics_system);
+            //const JPC_BodyLockInterface *lock_iface = JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(physics_system);
 
             for (uint32_t i = 0; i < num_body_ids; ++i)
             {
                 JPC_BodyLockRead lock;
-                JPC_BodyLockRead_Lock(&lock, JPC_PhysicsSystem_GetBodyLockInterface(physics_system), body_ids[i]);
+                JPC_BodyLockRead_Lock(&lock, lock_iface, body_ids[i]);
+                //JPC_BodyLockWrite lock;
+                //JPC_BodyLockWrite_Lock(&lock, lock_iface, body_ids[i]);
                 if (lock.body)
                 {
                     // Body has been locked, you can safely use `JPC_Body_*()` functions.
                 }
                 JPC_BodyLockRead_Unlock(&lock);
+                //JPC_BodyLockWrite_Unlock(&lock);
             }
         }
 
