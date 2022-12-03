@@ -6,9 +6,9 @@ This project aims to create high-performance, consistent and roboust C API for J
 
 Folder structure:
 
-`Jolt/` - contains complete, up-to date source code of Jolt Physics
-`JoltC/`
-    `JoltPhysicsC.h/` - C API header file
-    `JoltPhysicsC.cpp/` - C API implementation
-    `JoltPhysicsC_Extensions.cpp/` - Some additional, low-level functions implemented for performance reasons
-    'JoltPhysicsC_Tests.c` - tests and sample code for our C API
+* `Jolt/` - contains complete, up-to date source code of Jolt Physics
+* `JoltC/`
+    * `JoltPhysicsC.h/` - C API header file
+    * `JoltPhysicsC.cpp/` - C API implementation
+    * `JoltPhysicsC_Extensions.cpp/` - Some additional, low-level functions implemented for performance reasons
+    * `JoltPhysicsC_Tests.c` - tests and sample code for our C API
