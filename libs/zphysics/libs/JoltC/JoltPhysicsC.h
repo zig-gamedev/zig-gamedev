@@ -724,7 +724,8 @@ JPC_ShapeSettings_Release(JPC_ShapeSettings *in_settings);
 JPC_API uint32_t
 JPC_ShapeSettings_GetRefCount(const JPC_ShapeSettings *in_settings);
 
-/// First call creates the shape, subsequent calls return the same pointer and increments reference count. Call `JPC_Shape_Release()` when you don't need returned pointer anymore.
+/// First call creates the shape, subsequent calls return the same pointer and increments reference count.
+/// Call `JPC_Shape_Release()` when you don't need returned pointer anymore.
 JPC_API JPC_Shape *
 JPC_ShapeSettings_CreateShape(const JPC_ShapeSettings *in_settings);
 

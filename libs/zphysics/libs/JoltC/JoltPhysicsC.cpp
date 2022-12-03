@@ -28,7 +28,7 @@
 JPH_SUPPRESS_WARNINGS
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-#error Currently JoltC does not support profiling. Please undef JPH_EXTERNAL_PROFILE and JPH_PROFILE_ENABLED.
+#error Currently JoltPhysicsC does not support profiling. Please undef JPH_EXTERNAL_PROFILE and JPH_PROFILE_ENABLED.
 #endif
 
 #define ENSURE_TYPE(o, t) \

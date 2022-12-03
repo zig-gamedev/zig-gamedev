@@ -422,8 +422,6 @@ JoltCTest_HelloWorld(void)
         MyBroadPhaseCanCollide,
         MyObjectCanCollide);
 
-
-
     MyActivationListener body_activation_listener = MyActivationListener_Init();
     JPC_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);
 
@@ -478,14 +476,12 @@ JoltCTest_HelloWorld(void)
     if (JPC_Body_IsStatic(floor) == false) return 0;
     if (JPC_Body_IsDynamic(floor) == true) return 0;
 
-
     const float sphere_velocity[3] = { 0.0f, -5.0f, 0.0f };
     JPC_BodyInterface_SetLinearVelocity(body_interface, sphere_id, sphere_velocity);
 
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
 
-    JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
-
+    // Test JPC_PhysicsSystem_GetBodyIDs()
     {
         JPC_BodyID body_ids[2];
         uint32_t num_body_ids = 0;
@@ -495,6 +491,7 @@ JoltCTest_HelloWorld(void)
         if (body_ids[1] != sphere_id) return 0;
     }
 
+    // Test JPC_PhysicsSystem_GetActiveBodyIDs()
     {
         JPC_BodyID body_ids[2];
         uint32_t num_body_ids = 0;
@@ -520,8 +517,9 @@ JoltCTest_HelloWorld(void)
                 position[0], position[1], position[2],
                 velocity[0], velocity[1], velocity[2]);
 #endif
-
         {
+            JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
+
             JPC_BodyLockRead lock;
             JPC_BodyLockRead_Lock(&lock, JPC_PhysicsSystem_GetBodyLockInterface(physics_system), sphere_id);
             if (lock.body)
