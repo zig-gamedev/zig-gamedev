@@ -535,7 +535,7 @@ JoltCTest_HelloWorld(void)
                 velocity[0], velocity[1], velocity[2]);
 #endif
 
-        // Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads)
+        // Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads).
         {
             JPC_BodyID body_ids[16]; // You can use `JPC_PhysicsSystem_GetMaxBodies()` to pre-allocate storage
             uint32_t num_body_ids = 0;
@@ -553,7 +553,9 @@ JoltCTest_HelloWorld(void)
             }
         }
 
-        // Low-level, advanced acces to body data. Not protected by a lock, no function calls overhead.
+        // Low-level, advanced way of accessing body data. Not protected by a lock, no function calls overhead.
+        // Use when you interact with Jolt only from one thread or when you are sure that JPC_PhysicsSystem_Update()
+        // has already completed in a given frame.
         {
             JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
 

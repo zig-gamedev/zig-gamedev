@@ -4,7 +4,7 @@ Jolt Physics is a fast and modern physics library written in C++: https://github
 
 This project aims to create high-performance, consistent and roboust C API for Jolt.
 
-JoltPhysicsC is not yet complete but already usable, to get started please take a look on [tests](https://github.com/michal-z/zig-gamedev/blob/main/libs/zphysics/libs/JoltC/JoltPhysicsC_Tests.c).
+JoltPhysicsC is not yet complete but already usable, to get started please take a look at our [tests](https://github.com/michal-z/zig-gamedev/blob/main/libs/zphysics/libs/JoltC/JoltPhysicsC_Tests.c).
 
 Folder structure:
 
@@ -27,7 +27,7 @@ const uint32_t num_body_mutexes = 0;
 const uint32_t max_body_pairs = 1024;
 const uint32_t max_contact_constraints = 1024;
 
-BPLayerInterfaceImpl* broad_phase_layer_interface = (BPLayerInterfaceImpl *)malloc(sizeof(BPLayerInterfaceImpl));
+BPLayerInterfaceImpl *broad_phase_layer_interface = (BPLayerInterfaceImpl *)malloc(sizeof(BPLayerInterfaceImpl));
 *broad_phase_layer_interface = BPLayerInterface_Init();
 
 JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
