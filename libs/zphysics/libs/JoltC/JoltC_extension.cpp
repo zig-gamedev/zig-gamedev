@@ -58,6 +58,33 @@ JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
         }
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_GetActiveBodyIDs(JPC_PhysicsSystem *in_physics_system,
+                                   uint32_t in_max_body_ids,
+                                   uint32_t *out_num_body_ids,
+                                   JPC_BodyID *out_body_ids)
+{
+    assert(in_physics_system != nullptr && out_body_ids != nullptr);
+    assert(in_max_body_ids > 0);
+
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+
+    JPH::UniqueLock lock(physics_system->mBodyManager.mActiveBodiesMutex, JPH::EPhysicsLockTypes::BodiesList);
+
+    if (out_num_body_ids) *out_num_body_ids = 0;
+
+    for (uint32_t i = 0; i < physics_system->mBodyManager.mNumActiveBodies; ++i)
+    {
+        const JPH::BodyID body_id = physics_system->mBodyManager.mActiveBodies[i];
+        *out_body_ids = body_id.GetIndexAndSequenceNumber();
+        out_body_ids += 1;
+        if (out_num_body_ids) *out_num_body_ids += 1;
+        in_max_body_ids -= 1;
+        if (in_max_body_ids == 0)
+            break;
+    }
+}
+//--------------------------------------------------------------------------------------------------
 static_assert(JPC_COLLISION_GROUP_INVALID_GROUP     == JPH::CollisionGroup::cInvalidGroup);
 static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInvalidSubGroup);
 static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
