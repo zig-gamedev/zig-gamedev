@@ -1,6 +1,6 @@
 # JoltPhysicsC v0.0.1 - C API for Jolt Physics C++ library
 
-Jolt Physics is a fast and modern physics library written in C++: https://github.com/jrouwe/JoltPhysics
+[Jolt Physics](https://github.com/jrouwe/JoltPhysics) is a fast and modern physics library written in C++.
 
 This project aims to create high-performance, consistent and roboust C API for Jolt.
 
