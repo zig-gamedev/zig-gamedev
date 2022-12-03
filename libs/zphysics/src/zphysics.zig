@@ -384,9 +384,7 @@ pub const PhysicsSystem = opaque {
             max_contact_constraints: u32 = 1024,
         },
     ) !*PhysicsSystem {
-        const physics_system = c.JPC_PhysicsSystem_Create();
-        c.JPC_PhysicsSystem_Init(
-            physics_system,
+        return @ptrCast(*PhysicsSystem, c.JPC_PhysicsSystem_Create(
             args.max_bodies,
             args.num_body_mutexes,
             args.max_body_pairs,
@@ -394,8 +392,7 @@ pub const PhysicsSystem = opaque {
             broad_phase_layer_interface,
             object_vs_broad_phase_layer_filter,
             object_layer_pair_filter,
-        );
-        return @ptrCast(*PhysicsSystem, physics_system);
+        ));
     }
 
     pub fn destroy(physics_system: *PhysicsSystem) void {

@@ -1,4 +1,5 @@
 #include "JoltPhysicsC.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -237,9 +238,7 @@ JoltCTest_Basic1(void)
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
 
-    JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create();
-    JPC_PhysicsSystem_Init(
-        physics_system,
+    JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
         max_bodies,
         num_body_mutexes,
         max_body_pairs,
@@ -309,9 +308,7 @@ JoltCTest_Basic2(void)
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
 
-    JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create();
-    JPC_PhysicsSystem_Init(
-        physics_system,
+    JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
         max_bodies,
         num_body_mutexes,
         max_body_pairs,
@@ -418,9 +415,7 @@ JoltCTest_HelloWorld(void)
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
 
-    JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create();
-    JPC_PhysicsSystem_Init(
-        physics_system,
+    JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
         max_bodies,
         num_body_mutexes,
         max_body_pairs,

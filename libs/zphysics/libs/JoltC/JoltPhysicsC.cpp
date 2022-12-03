@@ -173,33 +173,20 @@ JPC_JobSystem_Destroy(JPC_JobSystem *in_job_system)
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_PhysicsSystem *
-JPC_PhysicsSystem_Create(void)
+JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
+                         uint32_t in_num_body_mutexes,
+                         uint32_t in_max_body_pairs,
+                         uint32_t in_max_contact_constraints,
+                         const void *in_broad_phase_layer_interface,
+                         JPC_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
+                         JPC_ObjectLayerPairFilter in_object_layer_pair_filter)
 {
-    return reinterpret_cast<JPC_PhysicsSystem *>(new JPH::PhysicsSystem());
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
-{
-    assert(in_physics_system != nullptr);
-    delete reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_PhysicsSystem_Init(JPC_PhysicsSystem *in_physics_system,
-                       uint32_t in_max_bodies,
-                       uint32_t in_num_body_mutexes,
-                       uint32_t in_max_body_pairs,
-                       uint32_t in_max_contact_constraints,
-                       const void *in_broad_phase_layer_interface,
-                       JPC_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
-                       JPC_ObjectLayerPairFilter in_object_layer_pair_filter)
-{
-    assert(in_physics_system != nullptr);
     assert(in_broad_phase_layer_interface != nullptr);
     assert(in_object_vs_broad_phase_layer_filter != nullptr);
     assert(in_object_layer_pair_filter != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+
+    auto physics_system = new JPH::PhysicsSystem();
+
     physics_system->Init(
         in_max_bodies,
         in_num_body_mutexes,
@@ -208,6 +195,15 @@ JPC_PhysicsSystem_Init(JPC_PhysicsSystem *in_physics_system,
         *static_cast<const JPH::BroadPhaseLayerInterface *>(in_broad_phase_layer_interface),
         reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
         reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
+
+    return reinterpret_cast<JPC_PhysicsSystem *>(physics_system);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    delete reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void

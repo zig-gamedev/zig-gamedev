@@ -604,20 +604,16 @@ JPC_JobSystem_Destroy(JPC_JobSystem *in_job_system);
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_PhysicsSystem *
-JPC_PhysicsSystem_Create(void);
-
+JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
+                         uint32_t in_num_body_mutexes,
+                         uint32_t in_max_body_pairs,
+                         uint32_t in_max_contact_constraints,
+                         const void *in_broad_phase_layer_interface,
+                         JPC_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
+                         JPC_ObjectLayerPairFilter in_object_layer_pair_filter);
 JPC_API void
 JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system);
 
-JPC_API void
-JPC_PhysicsSystem_Init(JPC_PhysicsSystem *in_physics_system,
-                       uint32_t in_max_bodies,
-                       uint32_t in_num_body_mutexes,
-                       uint32_t in_max_body_pairs,
-                       uint32_t in_max_contact_constraints,
-                       const void *in_broad_phase_layer_interface,
-                       JPC_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
-                       JPC_ObjectLayerPairFilter in_object_layer_pair_filter);
 JPC_API void
 JPC_PhysicsSystem_SetBodyActivationListener(JPC_PhysicsSystem *in_physics_system, void *in_listener);
 
