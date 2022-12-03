@@ -44,7 +44,8 @@ BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPC_ObjectLayer in_laye
     return self->object_to_broad_phase[in_layer];
 }
 
-static const JPC_BroadPhaseLayerInterfaceVTable g_bp_layer_interface_vtable =
+static const JPC_BroadPhaseLayerInterfaceVTable
+g_bp_layer_interface_vtable =
 {
     .GetNumBroadPhaseLayers = BPLayerInterface_GetNumBroadPhaseLayers,
     .GetBroadPhaseLayer     = BPLayerInterface_GetBroadPhaseLayer,
@@ -131,7 +132,8 @@ MyContactListener_OnContactRemoved(void *in_self, const JPC_SubShapeIDPair *in_s
 #endif
 }
 
-static const JPC_ContactListenerVTable g_contact_listener_vtable =
+static const JPC_ContactListenerVTable
+g_contact_listener_vtable =
 {
     .OnContactValidate  = MyContactListener_OnContactValidate,
     .OnContactAdded     = MyContactListener_OnContactAdded,
@@ -176,7 +178,8 @@ MyActivationListener_OnBodyDeactivated(void *in_self, const JPC_BodyID *in_body_
 #endif
 }
 
-static const JPC_BodyActivationListenerVTable g_activation_listener_vtable =
+static const JPC_BodyActivationListenerVTable
+g_activation_listener_vtable =
 {
     .OnBodyActivated   = MyActivationListener_OnBodyActivated,
     .OnBodyDeactivated = MyActivationListener_OnBodyDeactivated,
@@ -519,6 +522,49 @@ JoltCTest_HelloWorld(void)
                 position[0], position[1], position[2],
                 velocity[0], velocity[1], velocity[2]);
 #endif
+        // Safe, lock protected way of accessing all bodies (use when you interact with Jolt from multiple threads)
+        {
+            JPC_BodyID body_ids[16]; // You can use `JPC_PhysicsSystem_GetMaxBodies()` to pre-allocate storage
+            uint32_t num_body_ids = 0;
+            JPC_PhysicsSystem_GetBodyIDs(physics_system, 16, &num_body_ids, &body_ids[0]);
+
+            for (uint32_t i = 0; i < num_body_ids; ++i)
+            {
+                JPC_BodyLockRead lock;
+                JPC_BodyLockRead_Lock(&lock, JPC_PhysicsSystem_GetBodyLockInterface(physics_system), body_ids[i]);
+                if (lock.body)
+                {
+                    // Body has been locked, you can safely use `JPC_Body_*()` functions.
+                }
+                JPC_BodyLockRead_Unlock(&lock);
+            }
+        }
+
+        // Low-level, advanced acces to body data. Not protected by a lock, no function calls overhead.
+        {
+            JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
+
+            // Access a single body (get the body pointer from a body id).
+            {
+                JPC_Body *sphere = JPC_TRY_GET_BODY(bodies, sphere_id);
+                if (sphere)
+                {
+                    sphere->friction = 0.2f;
+                }
+            }
+
+            // Access all body pointers.
+            for (uint32_t i = 0; i < JPC_PhysicsSystem_GetNumBodies(physics_system); ++i)
+            {
+                JPC_Body *body = bodies[i];
+                if (JPC_IS_VALID_BODY_POINTER(body))
+                {
+                    // Body pointer is valid (not freed) you can access the data.
+                }
+            }
+        }
+
+        // Test body access.
         {
             JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
 
