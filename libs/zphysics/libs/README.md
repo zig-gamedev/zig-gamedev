@@ -10,7 +10,7 @@ Folder structure:
 
 * `Jolt/` - contains complete, up-to date source code of Jolt Physics
 * `JoltC/`
-    * `JoltPhysicsC.h/` - C API header file
-    * `JoltPhysicsC.cpp/` - C API implementation
-    * `JoltPhysicsC_Extensions.cpp/` - some additional, low-level functions implemented for performance reasons
+    * `JoltPhysicsC.h` - C API header file
+    * `JoltPhysicsC.cpp` - C API implementation
+    * `JoltPhysicsC_Extensions.cpp` - some additional, low-level functions implemented for performance reasons
     * `JoltPhysicsC_Tests.c` - tests for our C API
