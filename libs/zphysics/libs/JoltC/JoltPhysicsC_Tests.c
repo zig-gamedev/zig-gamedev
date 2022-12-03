@@ -4,23 +4,24 @@
 #include <stdio.h>
 
 //#define PRINT_OUTPUT
-#define NUM_LAYERS 2
-#define LAYER_NON_MOVING 0
-#define LAYER_MOVING 1
+
+// Object layers
+#define NUM_OBJ_LAYERS 2
+#define OBJ_LAYER_NON_MOVING 0
+#define OBJ_LAYER_MOVING 1
+
+// Braod phase layers
+#define NUM_BP_LAYERS 2
 #define BP_LAYER_NON_MOVING 0
 #define BP_LAYER_MOVING 1
-
-typedef struct BPLayerInterfaceImpl BPLayerInterfaceImpl;
-typedef struct MyContactListener MyContactListener;
-typedef struct MyActivationListener MyActivationListener;
 //--------------------------------------------------------------------------------------------------
 // BPLayerInterface
 //--------------------------------------------------------------------------------------------------
-struct BPLayerInterfaceImpl
+typedef struct BPLayerInterfaceImpl
 {
-    const JPC_BroadPhaseLayerInterfaceVTable *vtable;
-    JPC_BroadPhaseLayer                       object_to_broad_phase[NUM_LAYERS];
-};
+    const JPC_BroadPhaseLayerInterfaceVTable *vtable; // VTable has to be the first filed in the struct.
+    JPC_BroadPhaseLayer                       object_to_broad_phase[NUM_OBJ_LAYERS];
+} BPLayerInterfaceImpl;
 
 static uint32_t
 BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
@@ -28,7 +29,7 @@ BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "BPLayerInterface_GetNumBroadPhaseLayers()\n");
 #endif
-    return NUM_LAYERS;
+    return NUM_BP_LAYERS;
 }
 
 static JPC_BroadPhaseLayer
@@ -37,7 +38,7 @@ BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPC_ObjectLayer in_laye
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "BPLayerInterface_GetBroadPhaseLayer()\n");
 #endif
-    assert(in_layer < NUM_LAYERS);
+    assert(in_layer < NUM_BP_LAYERS);
     const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
     return self->object_to_broad_phase[in_layer];
 }
@@ -55,18 +56,18 @@ BPLayerInterface_Init(void)
     {
         .vtable = &g_bp_layer_interface_vtable,
     };
-    impl.object_to_broad_phase[LAYER_NON_MOVING] = BP_LAYER_NON_MOVING;
-    impl.object_to_broad_phase[LAYER_MOVING]     = BP_LAYER_MOVING;
+    impl.object_to_broad_phase[OBJ_LAYER_NON_MOVING] = BP_LAYER_NON_MOVING;
+    impl.object_to_broad_phase[OBJ_LAYER_MOVING]     = BP_LAYER_MOVING;
 
     return impl;
 }
 //--------------------------------------------------------------------------------------------------
 // MyContactListener
 //--------------------------------------------------------------------------------------------------
-struct MyContactListener
+typedef struct MyContactListener
 {
-    const JPC_ContactListenerVTable *vtable;
-};
+    const JPC_ContactListenerVTable *vtable; // VTable has to be the first filed in the struct.
+} MyContactListener;
 
 static JPC_ValidateResult
 MyContactListener_OnContactValidate(void *in_self,
@@ -149,10 +150,10 @@ MyContactListener_Init(void)
 //--------------------------------------------------------------------------------------------------
 // MyActivationListener
 //--------------------------------------------------------------------------------------------------
-struct MyActivationListener
+typedef struct MyActivationListener
 {
-    const JPC_BodyActivationListenerVTable *vtable;
-};
+    const JPC_BodyActivationListenerVTable *vtable; // VTable has to be the first filed in the struct.
+} MyActivationListener;
 
 static void
 MyActivationListener_OnBodyActivated(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data)
@@ -195,9 +196,9 @@ MyObjectCanCollide(JPC_ObjectLayer in_object1, JPC_ObjectLayer in_object2)
 {
     switch (in_object1)
     {
-        case LAYER_NON_MOVING:
-            return in_object2 == LAYER_MOVING;
-        case LAYER_MOVING:
+        case OBJ_LAYER_NON_MOVING:
+            return in_object2 == OBJ_LAYER_MOVING;
+        case OBJ_LAYER_MOVING:
             return true;
         default:
             assert(false);
@@ -210,15 +211,17 @@ MyBroadPhaseCanCollide(JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2)
 {
     switch (in_layer1)
     {
-        case LAYER_NON_MOVING:
+        case OBJ_LAYER_NON_MOVING:
             return in_layer2 == BP_LAYER_MOVING;
-        case LAYER_MOVING:
+        case OBJ_LAYER_MOVING:
             return true;
         default:
             assert(false);
             return false;
     }
 }
+//--------------------------------------------------------------------------------------------------
+// Basic1
 //--------------------------------------------------------------------------------------------------
 uint32_t
 JoltCTest_Basic1(void)
@@ -287,6 +290,8 @@ JoltCTest_Basic1(void)
     return 1;
 }
 //--------------------------------------------------------------------------------------------------
+// Basic2
+//--------------------------------------------------------------------------------------------------
 uint32_t
 JoltCTest_Basic2(void)
 {
@@ -339,7 +344,7 @@ JoltCTest_Basic2(void)
         floor_position,
         floor_rotation,
         JPC_MOTION_TYPE_STATIC,
-        LAYER_NON_MOVING);
+        OBJ_LAYER_NON_MOVING);
 
     JPC_BodyInterface *body_interface = JPC_PhysicsSystem_GetBodyInterface(physics_system);
 
@@ -394,6 +399,8 @@ JoltCTest_Basic2(void)
     return 1;
 }
 //--------------------------------------------------------------------------------------------------
+// HelloWorld
+//--------------------------------------------------------------------------------------------------
 uint32_t
 JoltCTest_HelloWorld(void)
 {
@@ -446,7 +453,7 @@ JoltCTest_HelloWorld(void)
         floor_position,
         identity_rotation,
         JPC_MOTION_TYPE_STATIC,
-        LAYER_NON_MOVING);
+        OBJ_LAYER_NON_MOVING);
 
     JPC_Body *floor = JPC_BodyInterface_CreateBody(body_interface, &floor_settings);
     const JPC_BodyID floor_id = JPC_Body_GetID(floor);
@@ -466,7 +473,7 @@ JoltCTest_HelloWorld(void)
         sphere_position,
         identity_rotation,
         JPC_MOTION_TYPE_DYNAMIC,
-        LAYER_MOVING);
+        OBJ_LAYER_MOVING);
 
     const JPC_BodyID sphere_id = JPC_BodyInterface_CreateAndAddBody(
         body_interface,

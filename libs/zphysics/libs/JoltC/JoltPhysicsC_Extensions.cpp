@@ -1,7 +1,11 @@
 //--------------------------------------------------------------------------------------------------
 #include "JoltPhysicsC.h"
 #include <assert.h>
+
+// We do this because we add some low-level functions which need access to private fields.
+// Also, we static assert offsets of some private fields (see bottom of this file).
 #define private public
+
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
@@ -21,6 +25,7 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
+
 JPH_SUPPRESS_WARNINGS
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Body **
