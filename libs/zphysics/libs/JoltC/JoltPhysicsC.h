@@ -259,7 +259,7 @@ typedef struct JPC_Body
     alignas(16) float     bounds_min[4]; // 4th element is ignored
     alignas(16) float     bounds_max[4]; // 4th element is ignored
 
-    JPC_Shape *           shape;
+    const JPC_Shape *     shape;
     JPC_MotionProperties *motion_properties; // will be NULL for static bodies
     uint64_t              user_data;
     JPC_CollisionGroup    collision_group;

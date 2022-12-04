@@ -614,7 +614,7 @@ pub const Body = extern struct {
     bounds_min: [4]f32 align(16),
     bounds_max: [4]f32 align(16),
 
-    shape: *Shape,
+    shape: *const Shape,
     motion_properties: ?*MotionProperties,
     user_data: u64,
     collision_group: CollisionGroup,
