@@ -11,7 +11,7 @@
 #define OBJ_LAYER_NON_MOVING 0
 #define OBJ_LAYER_MOVING 1
 
-// Braod phase layers
+// Broad phase layers
 #define NUM_BP_LAYERS 2
 #define BP_LAYER_NON_MOVING 0
 #define BP_LAYER_MOVING 1
@@ -338,7 +338,7 @@ JoltCTest_Basic2(void)
     const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
     const float floor_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     JPC_BodyCreationSettings floor_settings;
-    JPC_BodyCreationSettings_InitSimple(
+    JPC_BodyCreationSettings_Set(
         &floor_settings,
         floor_shape,
         floor_position,
@@ -445,7 +445,7 @@ JoltCTest_HelloWorld(void)
     const float identity_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
     JPC_BodyCreationSettings floor_settings;
-    JPC_BodyCreationSettings_InitSimple(
+    JPC_BodyCreationSettings_Set(
         &floor_settings,
         floor_shape,
         floor_position,
@@ -465,7 +465,7 @@ JoltCTest_HelloWorld(void)
 
     const float sphere_position[3] = { 0.0f, 2.0f, 0.0f };
     JPC_BodyCreationSettings sphere_settings;
-    JPC_BodyCreationSettings_InitSimple(
+    JPC_BodyCreationSettings_Set(
         &sphere_settings,
         sphere_shape,
         sphere_position,

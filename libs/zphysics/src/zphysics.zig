@@ -942,7 +942,7 @@ test "zphysics.BodyCreationSettings" {
     const bcs0 = BodyCreationSettings{};
     const bcs1 = blk: {
         var settings: c.JPC_BodyCreationSettings = undefined;
-        c.JPC_BodyCreationSettings_Init(&settings);
+        c.JPC_BodyCreationSettings_SetDefault(&settings);
         break :blk @ptrCast(*const BodyCreationSettings, &settings).*;
     };
 

@@ -260,7 +260,7 @@ typedef struct JPC_Body
     alignas(16) float     bounds_max[4]; // 4th element is ignored
 
     JPC_Shape *           shape;
-    JPC_MotionProperties *motion_properties; // `NULL` for static bodies
+    JPC_MotionProperties *motion_properties; // will be NULL for static bodies
     uint64_t              user_data;
     JPC_CollisionGroup    collision_group;
 
@@ -288,28 +288,28 @@ typedef struct JPC_SubShapeIDPair
     struct {
         JPC_BodyID     body_id;
         JPC_SubShapeID sub_shape_id;
-    } first;
+    }                  first;
     struct {
         JPC_BodyID     body_id;
         JPC_SubShapeID sub_shape_id;
-    } second;
+    }                  second;
 } JPC_SubShapeIDPair;
 
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 typedef struct JPC_ContactManifold
 {
-    alignas(16) float normal[4]; // 4th element is ignored; world space
-    float             penetration_depth;
-    JPC_SubShapeID    shape1_sub_shape_id;
-    JPC_SubShapeID    shape2_sub_shape_id;
+    alignas(16) float        normal[4]; // 4th element is ignored; world space
+    float                    penetration_depth;
+    JPC_SubShapeID           shape1_sub_shape_id;
+    JPC_SubShapeID           shape2_sub_shape_id;
     struct {
         alignas(16) uint32_t num_points;
         alignas(16) float    points[64][4]; // 4th element is ignored; world space
-    } shape1_contact;
+    }                        shape1_contact;
     struct {
         alignas(16) uint32_t num_points;
         alignas(16) float    points[64][4]; // 4th element is ignored; world space
-    } shape2_contact;
+    }                        shape2_contact;
 } JPC_ContactManifold;
 
 // NOTE: Needs to be kept in sync with JPH::ContactSettings
@@ -323,21 +323,21 @@ typedef struct JPC_ContactSettings
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
 typedef struct JPC_CollideShapeResult
 {
-    alignas(16) float    shape1_contact_point[4]; // 4th element is ignored; world space
-    alignas(16) float    shape2_contact_point[4]; // 4th element is ignored; world space
-    alignas(16) float    penetration_axis[4]; // 4th element is ignored; world space
-    float                penetration_depth;
-    JPC_SubShapeID       shape1_sub_shape_id;
-    JPC_SubShapeID       shape2_sub_shape_id;
-    JPC_BodyID           body2_id;
+    alignas(16) float        shape1_contact_point[4]; // 4th element is ignored; world space
+    alignas(16) float        shape2_contact_point[4]; // 4th element is ignored; world space
+    alignas(16) float        penetration_axis[4]; // 4th element is ignored; world space
+    float                    penetration_depth;
+    JPC_SubShapeID           shape1_sub_shape_id;
+    JPC_SubShapeID           shape2_sub_shape_id;
+    JPC_BodyID               body2_id;
     struct {
         alignas(16) uint32_t num_points;
         alignas(16) float    points[32][4]; // 4th element is ignored; world space
-    } shape1_face;
+    }                        shape1_face;
     struct {
         alignas(16) uint32_t num_points;
         alignas(16) float    points[32][4]; // 4th element is ignored; world space
-    } shape2_face;
+    }                        shape2_face;
 } JPC_CollideShapeResult;
 
 // NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
@@ -442,15 +442,15 @@ JPC_API void
 JPC_RegisterTypes(void);
 
 JPC_API void
-JPC_BodyCreationSettings_Init(JPC_BodyCreationSettings *out_settings);
+JPC_BodyCreationSettings_SetDefault(JPC_BodyCreationSettings *out_settings);
 
 JPC_API void
-JPC_BodyCreationSettings_InitSimple(JPC_BodyCreationSettings *out_settings,
-                                    const JPC_Shape *in_shape,
-                                    const float in_position[3],
-                                    const float in_rotation[4],
-                                    JPC_MotionType in_motion_type,
-                                    JPC_ObjectLayer in_layer);
+JPC_BodyCreationSettings_Set(JPC_BodyCreationSettings *out_settings,
+                             const JPC_Shape *in_shape,
+                             const float in_position[3],
+                             const float in_rotation[4],
+                             JPC_MotionType in_motion_type,
+                             JPC_ObjectLayer in_layer);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_MotionProperties
@@ -577,7 +577,7 @@ JPC_MotionProperties_SubAngularVelocityStep(JPC_MotionProperties *in_properties,
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_CollisionGroup_Init(JPC_CollisionGroup *out_group);
+JPC_CollisionGroup_SetDefault(JPC_CollisionGroup *out_group);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_TempAllocator

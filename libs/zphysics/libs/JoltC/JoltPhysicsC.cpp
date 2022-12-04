@@ -90,7 +90,7 @@ JPC_RegisterTypes(void)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_CollisionGroup_Init(JPC_CollisionGroup *out_group)
+JPC_CollisionGroup_SetDefault(JPC_CollisionGroup *out_group)
 {
     assert(out_group != nullptr);
     const JPH::CollisionGroup group;
@@ -98,7 +98,7 @@ JPC_CollisionGroup_Init(JPC_CollisionGroup *out_group)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_BodyCreationSettings_Init(JPC_BodyCreationSettings *out_settings)
+JPC_BodyCreationSettings_SetDefault(JPC_BodyCreationSettings *out_settings)
 {
     assert(out_settings != nullptr);
     const JPH::BodyCreationSettings settings;
@@ -106,17 +106,17 @@ JPC_BodyCreationSettings_Init(JPC_BodyCreationSettings *out_settings)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_BodyCreationSettings_InitSimple(JPC_BodyCreationSettings *out_settings,
-                                    const JPC_Shape *in_shape,
-                                    const float in_position[3],
-                                    const float in_rotation[4],
-                                    JPC_MotionType in_motion_type,
-                                    JPC_ObjectLayer in_layer)
+JPC_BodyCreationSettings_Set(JPC_BodyCreationSettings *out_settings,
+                             const JPC_Shape *in_shape,
+                             const float in_position[3],
+                             const float in_rotation[4],
+                             JPC_MotionType in_motion_type,
+                             JPC_ObjectLayer in_layer)
 {
     assert(out_settings != nullptr && in_shape != nullptr && in_position != nullptr && in_rotation != nullptr);
 
     JPC_BodyCreationSettings settings;
-    JPC_BodyCreationSettings_Init(&settings);
+    JPC_BodyCreationSettings_SetDefault(&settings);
 
     settings.position[0] = in_position[0];
     settings.position[1] = in_position[1];
