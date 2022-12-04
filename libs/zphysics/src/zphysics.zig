@@ -506,17 +506,16 @@ pub const BodyLockRead = extern struct {
     mutex: ?*SharedMutex = null,
     body: ?*const Body = null,
 
-    pub fn tryLock(
+    pub fn lock(
         read_lock: *BodyLockRead,
         lock_interface: *const BodyLockInterface,
         body_id: BodyId,
-    ) ?*const Body {
+    ) void {
         c.JPC_BodyLockRead_Lock(
             @ptrCast(*c.JPC_BodyLockRead, read_lock),
             @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
             body_id,
         );
-        return read_lock.body;
     }
 
     pub fn unlock(read_lock: *BodyLockRead) void {
@@ -525,6 +524,8 @@ pub const BodyLockRead = extern struct {
 
     comptime {
         assert(@sizeOf(BodyLockRead) == @sizeOf(c.JPC_BodyLockRead));
+        assert(@offsetOf(BodyLockRead, "mutex") == @offsetOf(c.JPC_BodyLockRead, "mutex"));
+        assert(@offsetOf(BodyLockRead, "body") == @offsetOf(c.JPC_BodyLockRead, "body"));
     }
 };
 
@@ -533,17 +534,16 @@ pub const BodyLockWrite = extern struct {
     mutex: ?*SharedMutex = null,
     body: ?*Body = null,
 
-    pub fn tryLock(
+    pub fn lock(
         write_lock: *BodyLockWrite,
         lock_interface: *const BodyLockInterface,
         body_id: BodyId,
-    ) ?*Body {
+    ) void {
         c.JPC_BodyLockWrite_Lock(
             @ptrCast(*c.JPC_BodyLockWrite, write_lock),
             @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
             body_id,
         );
-        return write_lock.body;
     }
 
     pub fn unlock(write_lock: *BodyLockWrite) void {
@@ -552,6 +552,8 @@ pub const BodyLockWrite = extern struct {
 
     comptime {
         assert(@sizeOf(BodyLockWrite) == @sizeOf(c.JPC_BodyLockWrite));
+        assert(@offsetOf(BodyLockWrite, "mutex") == @offsetOf(c.JPC_BodyLockWrite, "mutex"));
+        assert(@offsetOf(BodyLockWrite, "body") == @offsetOf(c.JPC_BodyLockWrite, "body"));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -1116,10 +1118,12 @@ test "zphysics.body.basic" {
 
     {
         const lock_interface = physics_system.getBodyLockInterfaceNoLock();
-        var read_lock: BodyLockRead = .{};
-        if (read_lock.tryLock(lock_interface, body_id)) |locked_body| {
-            defer read_lock.unlock();
 
+        var read_lock: BodyLockRead = .{};
+        read_lock.lock(lock_interface, body_id);
+        defer read_lock.unlock();
+
+        if (read_lock.body) |locked_body| {
             const all_bodies: []const *const Body = physics_system.getBodiesUnsafe();
 
             try expect(isValidBodyPointer(all_bodies[body_id & body_id_index_bits]));
@@ -1131,7 +1135,9 @@ test "zphysics.body.basic" {
     {
         const lock_interface = physics_system.getBodyLockInterface();
         var write_lock: BodyLockWrite = .{};
-        if (write_lock.tryLock(lock_interface, body_id)) |locked_body| {
+        write_lock.lock(lock_interface, body_id);
+
+        if (write_lock.body) |locked_body| {
             defer write_lock.unlock();
 
             const all_bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
