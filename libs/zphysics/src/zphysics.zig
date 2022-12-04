@@ -483,6 +483,30 @@ pub const PhysicsSystem = opaque {
         );
     }
 
+    pub fn getBodyIds(physics_system: *const PhysicsSystem, body_ids: *std.ArrayList(BodyId)) !void {
+        try body_ids.ensureTotalCapacityPrecise(physics_system.getMaxBodies());
+        var num_body_ids: u32 = 0;
+        c.JPC_PhysicsSystem_GetBodyIDs(
+            @ptrCast(*const c.JPC_PhysicsSystem, physics_system),
+            @intCast(u32, body_ids.capacity),
+            &num_body_ids,
+            body_ids.items.ptr,
+        );
+        body_ids.items.len = num_body_ids;
+    }
+
+    pub fn getActiveBodyIds(physics_system: *const PhysicsSystem, body_ids: *std.ArrayList(BodyId)) !void {
+        try body_ids.ensureTotalCapacityPrecise(physics_system.getMaxBodies());
+        var num_body_ids: u32 = 0;
+        c.JPC_PhysicsSystem_GetActiveBodyIDs(
+            @ptrCast(*const c.JPC_PhysicsSystem, physics_system),
+            @intCast(u32, body_ids.capacity),
+            &num_body_ids,
+            body_ids.items.ptr,
+        );
+        body_ids.items.len = num_body_ids;
+    }
+
     /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
     pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
         const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(
@@ -1114,6 +1138,23 @@ test "zphysics.body.basic" {
     defer {
         body_interface_mut.removeBody(body_id);
         body_interface_mut.destroyBody(body_id);
+    }
+
+    {
+        var body_ids = std.ArrayList(BodyId).init(std.testing.allocator);
+        defer body_ids.deinit();
+        try physics_system.getBodyIds(&body_ids);
+        try expect(body_ids.items.len == 1);
+        try expect(body_ids.capacity >= physics_system.getMaxBodies());
+        try expect(body_ids.items[0] == body_id);
+    }
+
+    {
+        var body_ids = std.ArrayList(BodyId).init(std.testing.allocator);
+        defer body_ids.deinit();
+        try physics_system.getActiveBodyIds(&body_ids);
+        try expect(body_ids.items.len == 0);
+        try expect(body_ids.capacity >= physics_system.getMaxBodies());
     }
 
     {

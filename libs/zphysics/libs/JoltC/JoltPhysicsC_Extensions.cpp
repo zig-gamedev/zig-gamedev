@@ -37,7 +37,7 @@ JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
+JPC_PhysicsSystem_GetBodyIDs(const JPC_PhysicsSystem *in_physics_system,
                              uint32_t in_max_body_ids,
                              uint32_t *out_num_body_ids,
                              JPC_BodyID *out_body_ids)
@@ -45,7 +45,7 @@ JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
     assert(in_physics_system != nullptr && out_body_ids != nullptr);
     assert(in_max_body_ids > 0);
 
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
 
     JPH::UniqueLock lock(physics_system->mBodyManager.mBodiesMutex, JPH::EPhysicsLockTypes::BodiesList);
 
@@ -64,7 +64,7 @@ JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_PhysicsSystem_GetActiveBodyIDs(JPC_PhysicsSystem *in_physics_system,
+JPC_PhysicsSystem_GetActiveBodyIDs(const JPC_PhysicsSystem *in_physics_system,
                                    uint32_t in_max_body_ids,
                                    uint32_t *out_num_body_ids,
                                    JPC_BodyID *out_body_ids)
@@ -72,7 +72,7 @@ JPC_PhysicsSystem_GetActiveBodyIDs(JPC_PhysicsSystem *in_physics_system,
     assert(in_physics_system != nullptr && out_body_ids != nullptr);
     assert(in_max_body_ids > 0);
 
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
 
     JPH::UniqueLock lock(physics_system->mBodyManager.mActiveBodiesMutex, JPH::EPhysicsLockTypes::BodiesList);
 

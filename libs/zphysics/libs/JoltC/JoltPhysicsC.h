@@ -660,14 +660,14 @@ JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics
 
 /// Get copy of the list of all bodies under protection of a lock.
 JPC_API void
-JPC_PhysicsSystem_GetBodyIDs(JPC_PhysicsSystem *in_physics_system,
+JPC_PhysicsSystem_GetBodyIDs(const JPC_PhysicsSystem *in_physics_system,
                              uint32_t in_max_body_ids,
                              uint32_t *out_num_body_ids,
                              JPC_BodyID *out_body_ids);
 
 /// Get copy of the list of active bodies under protection of a lock.
 JPC_API void
-JPC_PhysicsSystem_GetActiveBodyIDs(JPC_PhysicsSystem *in_physics_system,
+JPC_PhysicsSystem_GetActiveBodyIDs(const JPC_PhysicsSystem *in_physics_system,
                                    uint32_t in_max_body_ids,
                                    uint32_t *out_num_body_ids,
                                    JPC_BodyID *out_body_ids);
