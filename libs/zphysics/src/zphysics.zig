@@ -667,7 +667,7 @@ pub const Body = extern struct {
     bounds_max: [4]f32 align(16), // 4th element is ignored
 
     shape: *const Shape,
-    motion_properties: ?*MotionProperties,
+    motion_properties: ?*MotionProperties, // Will be null for static objects
     user_data: u64,
     collision_group: CollisionGroup,
 
@@ -683,6 +683,29 @@ pub const Body = extern struct {
 
     pub fn getId(body: *const Body) BodyId {
         return c.JPC_Body_GetID(@ptrCast(*const c.JPC_Body, body));
+    }
+
+    pub fn isActive(body: *const Body) bool {
+        return c.JPC_Body_IsActive(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn isStatic(body: *const Body) bool {
+        return c.JPC_Body_IsStatic(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn isKinematic(body: *const Body) bool {
+        return c.JPC_Body_IsKinematic(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn isDynamic(body: *const Body) bool {
+        return c.JPC_Body_IsDynamic(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn canBeKinematicOrDynamic(body: *const Body) bool {
+        return c.JPC_Body_CanBeKinematicOrDynamic(@ptrCast(*const c.JPC_Body, body));
+    }
+
+    pub fn isSensor(body: *const Body) bool {
+        return c.JPC_Body_IsSensor(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn setIsSensor(body: *Body, is_sensor: bool) void {
+        c.JPC_Body_SetIsSensor(@ptrCast(*c.JPC_Body, body), is_sensor);
     }
 
     comptime {
