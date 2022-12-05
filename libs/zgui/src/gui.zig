@@ -29,7 +29,20 @@ pub fn deinit() void {
     if (zguiGetCurrentContext() != null) {
         temp_buffer.?.deinit();
         zguiDestroyContext(null);
-        zguiSetAllocatorFunctions(null, null);
+
+        if (mem_allocations.?.count() > 0) {
+            var it = mem_allocations.?.iterator();
+            while (it.next()) |kv| {
+                const address = kv.key_ptr.*;
+                const size = kv.value_ptr.*;
+                mem_allocator.?.free(@intToPtr([*]align(mem_alignment) u8, address)[0..size]);
+                std.log.info(
+                    "[zgui] Possible memory leak or static memory usage detected: (address: 0x{x}, size: {d})",
+                    .{ address, size },
+                );
+            }
+            mem_allocations.?.clearAndFree();
+        }
 
         assert(mem_allocations.?.count() == 0);
         mem_allocations.?.deinit();
@@ -66,9 +79,11 @@ export fn zguiMemFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void 
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
-        mem_allocator.?.free(mem);
+        if (mem_allocations != null) {
+            const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+            const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
+            mem_allocator.?.free(mem);
+        }
     }
 }
 

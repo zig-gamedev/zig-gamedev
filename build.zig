@@ -3,13 +3,13 @@ const std = @import("std");
 const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.398" };
 
 pub fn build(b: *std.build.Builder) void {
+    ensureZigVersion() catch return;
     const options = Options{
         .build_mode = b.standardReleaseOptions(),
         .target = b.standardTargetOptions(.{}),
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
     };
     ensureTarget(options.target) catch return;
-    ensureZigVersion() catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
