@@ -289,10 +289,10 @@ pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
 };
 
 pub const BodyCreationSettings = extern struct {
-    position: [4]f32 align(16) = .{ 0, 0, 0, 0 },
+    position: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     rotation: [4]f32 align(16) = .{ 0, 0, 0, 1 },
-    linear_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 },
-    angular_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 },
+    linear_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
+    angular_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     user_data: u64 = 0,
     object_layer: ObjectLayer = 0,
     collision_group: CollisionGroup = .{},
@@ -626,6 +626,34 @@ pub const BodyInterface = opaque {
     pub fn isActive(body_iface: *const BodyInterface, body_id: BodyId) bool {
         return c.JPC_BodyInterface_IsActive(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
+
+    pub fn setLinearVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
+        return c.JPC_BodyInterface_SetLinearVelocity(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &velocity,
+        );
+    }
+
+    pub fn getLinearVelocity(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_BodyInterface_GetLinearVelocity(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &velocity,
+        );
+        return velocity;
+    }
+
+    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
+        var position: [3]f32 = undefined;
+        c.JPC_BodyInterface_GetCenterOfMassPosition(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &position,
+        );
+        return position;
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -633,10 +661,10 @@ pub const BodyInterface = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Body = extern struct {
-    position: [4]f32 align(16),
+    position: [4]f32 align(16), // 4th element is ignored
     rotation: [4]f32 align(16),
-    bounds_min: [4]f32 align(16),
-    bounds_max: [4]f32 align(16),
+    bounds_min: [4]f32 align(16), // 4th element is ignored
+    bounds_max: [4]f32 align(16), // 4th element is ignored
 
     shape: *const Shape,
     motion_properties: ?*MotionProperties,
@@ -671,8 +699,8 @@ pub const Body = extern struct {
 //
 //--------------------------------------------------------------------------------------------------
 pub const MotionProperties = extern struct {
-    linear_velocity: [4]f32 align(16),
-    angular_velocity: [4]f32 align(16),
+    linear_velocity: [4]f32 align(16), // 4th element is ignored
+    angular_velocity: [4]f32 align(16), // 4th element is ignored
     inv_inertia_diagnonal: [4]f32 align(16),
     inertia_rotation: [4]f32 align(16),
 

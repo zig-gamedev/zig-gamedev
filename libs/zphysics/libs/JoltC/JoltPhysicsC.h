@@ -29,8 +29,6 @@
 #define JPC_BODY_ID_SEQUENCE_BITS 0xff000000
 #define JPC_BODY_ID_SEQUENCE_SHIFT 24
 
-#define _JPC_IS_FREED_BODY_BIT 0x1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -676,6 +674,8 @@ JPC_PhysicsSystem_GetActiveBodyIDs(const JPC_PhysicsSystem *in_physics_system,
 ///
 /// Check if this is a valid body pointer.
 /// When a body is freed the memory that the pointer occupies is reused to store a freelist.
+#define _JPC_IS_FREED_BODY_BIT 0x1
+
 #define JPC_IS_VALID_BODY_POINTER(body_ptr) (((uintptr_t)(body_ptr) & _JPC_IS_FREED_BODY_BIT) == 0)
 
 /// Access a body, will return NULL if the body ID is no longer valid.
