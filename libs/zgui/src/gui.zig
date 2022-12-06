@@ -2914,6 +2914,236 @@ extern fn zguiGetMouseDragDelta(button: MouseButton, lock_threshold: f32, delta:
 extern fn zguiResetMouseDragDelta(button: MouseButton) void;
 //--------------------------------------------------------------------------------------------------
 //
+// Tables
+//
+//--------------------------------------------------------------------------------------------------
+pub const TableFlags = packed struct(u32) {
+    resizable: bool = false,
+    reorderable: bool = false,
+    hideable: bool = false,
+    sortable: bool = false,
+    no_saved_settings: bool = false,
+    context_menu_in_body: bool = false,
+    row_bg: bool = false,
+    borders_inner_h: bool = false,
+    borders_outer_h: bool = false,
+    borders_inner_v: bool = false,
+    borders_outer_v: bool = false,
+    no_borders_in_body: bool = false,
+    no_borders_in_body_until_resize: bool = false,
+
+    // Sizing Policy
+    sizing: enum(u3) {
+        none = 0,
+        fixed_fit = 1,
+        fixed_same = 2,
+        stretch_prop = 3,
+        stretch_same = 4,
+    } = .none,
+
+    // Sizing Extra Options
+    no_host_extend_x: bool = false,
+    no_host_extend_y: bool = false,
+    no_keep_columns_visible: bool = false,
+    precise_widths: bool = false,
+
+    // Clipping
+    no_clip: bool = false,
+
+    // Padding
+    pad_outer_x: bool = false,
+    no_pad_outer_x: bool = false,
+    no_pad_inner_x: bool = false,
+
+    // Scrolling
+    scroll_x: bool = false,
+    scroll_y: bool = false,
+
+    // Sorting
+    sort_multi: bool = false,
+    sort_tristate: bool = false,
+
+    _padding: u4 = 0,
+
+    pub const borders_h = TabBarFlags{
+        .borders_inner_h = true,
+        .borders_outer_h = true,
+    }; // Draw horizontal borders.
+    pub const borders_v = TabBarFlags{
+        .borders_inner_v = true,
+        .borders_outer_v = true,
+    }; // Draw vertical borders.
+    pub const borders_inner = TableFlags{
+        .borders_inner_v = true,
+        .borders_inner_h = true,
+    }; // Draw inner borders.
+    pub const borders_outer = TableFlags{
+        .borders_outer_v = true,
+        .borders_outer_h = true,
+    }; // Draw outer borders.
+    pub const borders = TableFlags{
+        .borders_inner_v = true,
+        .borders_inner_h = true,
+        .borders_outer_v = true,
+        .borders_outer_h = true,
+    }; // Draw all borders.
+};
+
+pub const TableRowFlags = packed struct(u32) {
+    headers: bool = false,
+
+    _padding: u31 = 0,
+};
+
+pub const TableColumnFlags = packed struct(u32) {
+    // Input configuration flags
+    disabled: bool = false,
+    default_hide: bool = false,
+    default_sort: bool = false,
+    width_stretch: bool = false,
+    width_fixed: bool = false,
+    no_resize: bool = false,
+    no_reorder: bool = false,
+    no_hide: bool = false,
+    no_clip: bool = false,
+    no_sort: bool = false,
+    no_sort_ascending: bool = false,
+    no_sort_descending: bool = false,
+    no_header_label: bool = false,
+    no_header_width: bool = false,
+    prefer_sort_ascending: bool = false,
+    prefer_sort_descending: bool = false,
+    indent_enable: bool = false,
+    indent_disable: bool = false,
+
+    _padding0: u6 = 0,
+
+    // Output status flags, read-only via TableGetColumnFlags()
+    is_enabled: bool = false,
+    is_visible: bool = false,
+    is_sorted: bool = false,
+    is_hovered: bool = false,
+
+    _padding1: u4 = 0,
+};
+
+pub const TableColumnSortSpecs = extern struct {
+    user_id: Ident,
+    index: i16,
+    sort_order: i16,
+    sort_direction: enum(u8) {
+        none = 0,
+        ascending = 1, // Ascending = 0->9, A->Z etc.
+        descending = 2, // Descending = 9->0, Z->A etc.
+    },
+};
+
+pub const TableSortSpecs = *extern struct {
+    specs: [*]TableColumnSortSpecs,
+    count: i32,
+    dirty: bool,
+};
+
+pub const TableBgTarget = enum(u32) {
+    none = 0,
+    row_bg0 = 1,
+    row_bg1 = 2,
+    cell_bg = 3,
+};
+
+pub const BeginTable = struct {
+    flags: TableFlags = .{},
+    outer_size: [2]f32 = .{ 0, 0 },
+    inner_width: f32 = 0,
+};
+pub fn beginTable(name: [:0]const u8, args: BeginTable) void {
+    zguiBeginTable(name, args.flags, args.outer_size, args.inner_width);
+}
+extern fn zguiBeginTable(str_id: [*:0]const u8, column: i32, flags: TableFlags, outer_size: [2]f32, inner_width: f32) void;
+
+pub fn endTable() void {
+    zguiEndTable();
+}
+extern fn zguiEndTable() void;
+
+pub const TableNextRow = struct {
+    row_flags: TableRowFlags = .{},
+    min_row_height: f32 = 0,
+};
+pub fn tableNextRow(args: TableNextRow) void {
+    zguiTableNextRow(args.row_flags, args.min_row_height);
+}
+extern fn zguiTableNextRow(row_flags: TableRowFlags, min_row_height: f32) void;
+
+pub const tableNextColumn = zguiTableNextColumn;
+extern fn zguiTableNextColumn() bool;
+
+pub const tableSetColumnIndex = zguiTableSetColumnIndex;
+extern fn zguiTableSetColumnIndex(column_n: i32) bool;
+
+pub const TableSetupColumn = struct {
+    flags: TableColumnFlags = .{},
+    init_width_or_height: f32 = 0,
+    user_id: Ident = 0,
+};
+pub fn tableSetupColumn(label: [:0]const u8, args: TableSetupColumn) void {
+    zguiTableSetupColumn(label, args.flags, args.init_width_or_height, args.user_id);
+}
+extern fn zguiTableSetupColumn(label: [*:0]const u8, flags: TableColumnFlags, init_width_or_height: f32, user_id: Ident) void;
+
+pub const tableSetupScrollFreeze = zguiTableSetupScrollFreeze;
+extern fn zguiTableSetupScrollFreeze(cols: i32, rows: i32) void;
+
+pub const tableHeadersRow = zguiTableHeadersRow;
+extern fn zguiTableHeadersRow() void;
+
+pub fn tableHeader(label: [:0]const u8) void {
+    zguiTableHeader(label);
+}
+extern fn zguiTableHeader(label: [*:0]const u8) void;
+
+pub const tableGetSortSpecs = zguiTableGetSortSpecs;
+extern fn zguiTableGetSortSpecs() ?TableSortSpecs;
+
+pub const tableGetColumnCount = zguiTableGetColumnCount;
+extern fn zguiTableGetColumnCount() i32;
+
+pub const tableGetColumnIndex = zguiTableGetColumnIndex;
+extern fn zguiTableGetColumnIndex() i32;
+
+pub const tableGetRowIndex = zguiTableGetRowIndex;
+extern fn zguiTableGetRowIndex() i32;
+
+pub const TableGetColumnName = struct {
+    column_n: i32 = -1,
+};
+pub fn tableGetColumnName(args: TableGetColumnName) [*:0]const u8 {
+    return zguiTableGetColumnName(args.column_n);
+}
+extern fn zguiTableGetColumnName(column_n: i32) [*:0]const u8;
+
+pub const TableGetColumnFlags = struct {
+    column_n: i32 = -1,
+};
+pub fn tableGetColumnFlags(args: TableGetColumnFlags) TableColumnFlags {
+    return zguiTableGetColumnFlags(args.column_n);
+}
+extern fn zguiTableGetColumnFlags(column_n: i32) TableColumnFlags;
+
+pub const tableSetColumnEnabled = zguiTableSetColumnEnabled;
+extern fn zguiTableSetColumnEnabled(column_n: i32, v: bool) void;
+
+pub const TableSetBgColor = struct {
+    target: TableBgTarget,
+    color: u32,
+    column_n: i32 = -1,
+};
+pub fn tableSetBgColor(args: TableSetBgColor) void {
+    zguiTableSetBgColor(args.target, args.color, args.column_n);
+}
+extern fn zguiTableSetBgColor(target: TableBgTarget, color: u32, column_n: i32) void;
+//--------------------------------------------------------------------------------------------------
+//
 // DrawFlags
 //
 //--------------------------------------------------------------------------------------------------
