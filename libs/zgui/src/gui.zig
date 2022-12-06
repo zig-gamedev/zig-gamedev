@@ -2950,27 +2950,27 @@ pub const TableFlags = packed struct(u32) {
 
     _padding: u4 = 0,
 
-    pub const bordersH = TabBarFlags{
-        .bordersInnerH = true,
-        .bordersOuterH = true,
+    pub const borders_h = TabBarFlags{
+        .borders_inner_h = true,
+        .borders_outer_h = true,
     }; // Draw horizontal borders.
-    pub const bordersV = TabBarFlags{
-        .bordersInnerV = true,
-        .bordersOuterV = true,
+    pub const borders_v = TabBarFlags{
+        .borders_inner_v = true,
+        .borders_outer_v = true,
     }; // Draw vertical borders.
-    pub const bordersInner = TableFlags{
-        .bordersInnerV = true,
-        .bordersInnerH = true,
+    pub const borders_inner = TableFlags{
+        .borders_inner_v = true,
+        .borders_inner_h = true,
     }; // Draw inner borders.
-    pub const bordersOuter = TableFlags{
-        .bordersOuterV = true,
-        .bordersOuterH = true,
+    pub const borders_outer = TableFlags{
+        .borders_outer_v = true,
+        .borders_outer_h = true,
     }; // Draw outer borders.
     pub const borders = TableFlags{
-        .bordersInnerV = true,
-        .bordersInnerH = true,
-        .bordersOuterV = true,
-        .bordersOuterH = true,
+        .borders_inner_v = true,
+        .borders_inner_h = true,
+        .borders_outer_v = true,
+        .borders_outer_h = true,
     }; // Draw all borders.
 };
 
