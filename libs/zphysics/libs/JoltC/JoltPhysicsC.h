@@ -26,10 +26,10 @@
 #endif
 
 #if JPC_DOUBLE_PRECISION == 1
-typedef double Real;
+typedef double JPC_Real;
 #define JPC_RVEC_ALIGN alignas(32)
 #else
-typedef float Real;
+typedef float JPC_Real;
 #define JPC_RVEC_ALIGN alignas(16)
 #endif
 
@@ -310,7 +310,7 @@ typedef struct JPC_SubShapeIDPair
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 typedef struct JPC_ContactManifold
 {
-    JPC_RVEC_ALIGN Real      base_offset[4]; // 4th element is ignored
+    JPC_RVEC_ALIGN JPC_Real  base_offset[4]; // 4th element is ignored
     alignas(16) float        normal[4]; // 4th element is ignored; world space
     float                    penetration_depth;
     JPC_SubShapeID           shape1_sub_shape_id;
@@ -1081,15 +1081,18 @@ JPC_API void
 JPC_Body_AddImpulse(JPC_Body *in_body, const float in_impulse[3]);
 
 JPC_API void
+JPC_Body_AddImpulseAtPosition(JPC_Body *in_body, const float in_impulse[3], const JPC_Real in_position[3]);
+
+JPC_API void
 JPC_Body_AddAngularImpulse(JPC_Body *in_body, const float in_angular_impulse[3]);
 
 JPC_API void
 JPC_Body_MoveKinematic(JPC_Body *in_body,
-                       const float in_target_rotation[4],
+                       const JPC_Real in_target_rotation[4],
                        float in_delta_time);
 JPC_API void
 JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
-                              const Real in_surface_position[3],
+                              const JPC_Real in_surface_position[3],
                               const float in_surface_normal[3],
                               float in_buoyancy,
                               float in_linear_drag,
@@ -1140,7 +1143,7 @@ JPC_Body_SetUserData(JPC_Body *in_body, uint64_t in_user_data);
 JPC_API void
 JPC_Body_GetWorldSpaceSurfaceNormal(const JPC_Body *in_body,
                                     const JPC_SubShapeID *in_sub_shape_id,
-                                    const float in_position[3],
+                                    const JPC_Real in_position[3],
                                     float out_normal_vector[3]);
 JPC_API void
 JPC_Body_GetTransformedShape(const JPC_Body *in_body, JPC_TransformedShape *out_shape);

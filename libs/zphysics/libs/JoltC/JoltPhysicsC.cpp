@@ -31,41 +31,62 @@ JPH_SUPPRESS_WARNINGS
 #error Currently JoltPhysicsC does not support profiling. Please undef JPH_EXTERNAL_PROFILE and JPH_PROFILE_ENABLED.
 #endif
 
-auto toJph(const JPC_Body *in) { assert(in); return reinterpret_cast<const JPH::Body *>(in); }
-auto toJph(JPC_Body *in) { assert(in); return reinterpret_cast<JPH::Body *>(in); }
+#define FN(name) static auto name
 
-auto toJpc(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_CollisionGroup *>(in); }
-auto toJph(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
+FN(toJph)(const JPC_Body *in) { assert(in); return reinterpret_cast<const JPH::Body *>(in); }
+FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
+FN(toJph)(const JPC_SubShapeID *in) { assert(in); return reinterpret_cast<const JPH::SubShapeID *>(in); }
+FN(toJph)(JPC_Body *in) { assert(in); return reinterpret_cast<JPH::Body *>(in); }
+FN(toJph)(JPC_MotionType in) { return static_cast<JPH::EMotionType>(in); }
 
-auto toJpc(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
-auto toJph(JPC_MotionType in) { return static_cast<JPH::EMotionType>(in); }
+FN(toJpc)(const JPH::Shape *in) { assert(in); return reinterpret_cast<const JPC_Shape *>(in); }
+FN(toJpc)(const JPH::TransformedShape *in) { assert(in); return reinterpret_cast<const JPC_TransformedShape *>(in); }
+FN(toJpc)(const JPH::BodyCreationSettings *in) {
+    assert(in); return reinterpret_cast<const JPC_BodyCreationSettings *>(in);
+}
+FN(toJpc)(JPH::MotionProperties *in) { assert(in); return reinterpret_cast<JPC_MotionProperties *>(in); }
+FN(toJpc)(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_CollisionGroup *>(in); }
+FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
+FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
+FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
 
-auto toJpc(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
-auto toJpc(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
+#undef FN
 
 #define ENSURE_TYPE(o, t) \
     assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
 
-static inline JPH::Vec3
-loadVec3(const float in_xyz[3])
+static inline JPH::Vec3 loadVec3(const float in[3])
 {
-    return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_xyz));
+    return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 }
 
-static inline JPH::RVec3
-loadRVec3(const Real in_xyz[3])
+static inline JPH::Vec4 loadVec4(const float in[4])
+{
+    return JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in));
+}
+
+static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
 {
 #if JPC_DOUBLE_PRECISION == 0
-    return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_xyz));
+    return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 #else
-    return JPH::DVec3(in_xyz[0], in_xyz[1], in_xyz[2]);
+    return JPH::DVec3(in[0], in[1], in[2]);
 #endif
 }
 
-static inline void
-storeVec3(float out_xyz[3], JPH::Vec3Arg in_vec3)
+static inline void storeVec3(float out[3], JPH::Vec3Arg in)
 {
-    in_vec3.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_xyz));
+    in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
+}
+
+static inline void storeVec4(float out[4], JPH::Vec4Arg in)
+{
+    in.StoreFloat4(reinterpret_cast<JPH::Float4 *>(out));
+}
+
+static inline void storeMat44(float out[16], JPH::Mat44Arg in)
+{
+    in.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
 #ifdef JPH_ENABLE_ASSERTS
@@ -1166,99 +1187,78 @@ JPC_Body_SetAnglularVelocity(JPC_Body *in_body, const float in_angular_velocity[
 JPC_API void
 JPC_Body_SetAnglularVelocityClamped(JPC_Body *in_body, const float in_angular_velocity[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->SetAngularVelocityClamped(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity)));
+    toJph(in_body)->SetAngularVelocityClamped(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetPointVelocityCOM(
-    JPC_Body *in_body,
-    const float in_point_relative_to_com[3],
-    float out_velocity[3]
-)
+JPC_Body_GetPointVelocityCOM(JPC_Body *in_body,
+                             const float in_point_relative_to_com[3],
+                             float out_velocity[3])
 {
-    assert(in_body != nullptr);
-    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetPointVelocityCOM(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point_relative_to_com)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+    storeVec3(out_velocity, toJph(in_body)->GetPointVelocityCOM(loadVec3(in_point_relative_to_com)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetPointVelocity(JPC_Body *in_body, const float in_point[3], float out_velocity[3])
+JPC_Body_GetPointVelocity(JPC_Body *in_body, const JPC_Real in_point[3], float out_velocity[3])
 {
-    assert(in_body != nullptr);
-    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetPointVelocity(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+    storeVec3(out_velocity, toJph(in_body)->GetPointVelocity(loadRVec3(in_point)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_AddForce(JPC_Body *in_body, const float in_force[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->AddForce(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_force)));
+    toJph(in_body)->AddForce(loadVec3(in_force));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_AddForceAtPosition(JPC_Body *in_body, const float in_force[3], const float in_position[3])
+JPC_Body_AddForceAtPosition(JPC_Body *in_body, const float in_force[3], const JPC_Real in_position[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->AddForce(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_force)),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_position))
-    );
+    toJph(in_body)->AddForce(loadVec3(in_force), loadRVec3(in_position));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_AddTorque(JPC_Body *in_body, const float in_torque[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->AddTorque(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_torque)));
+    toJph(in_body)->AddTorque(loadVec3(in_torque));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetInverseInertia(const JPC_Body *in_body, float out_inverse_inertia[16])
 {
-    assert(in_body != nullptr);
-    const JPH::Mat44 m = reinterpret_cast<const JPH::Body *>(in_body)->GetInverseInertia();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_inverse_inertia));
+    storeMat44(out_inverse_inertia, toJph(in_body)->GetInverseInertia());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_AddImpulse(JPC_Body *in_body, const float in_impulse[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->AddImpulse(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_impulse)));
+    toJph(in_body)->AddImpulse(loadVec3(in_impulse));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Body_AddImpulseAtPosition(JPC_Body *in_body, const float in_impulse[3], const JPC_Real in_position[3])
+{
+    toJph(in_body)->AddImpulse(loadVec3(in_impulse), loadRVec3(in_position));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_AddAngularImpulse(JPC_Body *in_body, const float in_angular_impulse[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->AddAngularImpulse(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_impulse)));
+    toJph(in_body)->AddAngularImpulse(loadVec3(in_angular_impulse));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_MoveKinematic(JPC_Body *in_body,
-                       const float in_target_position[3],
+                       const JPC_Real in_target_position[3],
                        const float in_target_rotation[4],
                        float in_delta_time)
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->MoveKinematic(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_target_position)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_target_rotation))),
-        in_delta_time);
+    toJph(in_body)->MoveKinematic(
+        loadRVec3(in_target_position), JPH::Quat(loadVec4(in_target_rotation)), in_delta_time);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
-                              const Real in_surface_position[3],
+                              const JPC_Real in_surface_position[3],
                               const float in_surface_normal[3],
                               float in_buoyancy,
                               float in_linear_drag,
@@ -1267,8 +1267,7 @@ JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
                               const float in_gravity[3],
                               float in_delta_time)
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->ApplyBuoyancyImpulse(
+    toJph(in_body)->ApplyBuoyancyImpulse(
         loadRVec3(in_surface_position),
         loadVec3(in_surface_normal),
         in_buoyancy,
@@ -1282,25 +1281,19 @@ JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
 JPC_API bool
 JPC_Body_IsInBroadPhase(const JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    return reinterpret_cast<const JPH::Body *>(in_body)->IsInBroadPhase();
+    return toJph(in_body)->IsInBroadPhase();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_Body_IsCollisionCacheInvalid(const JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    return reinterpret_cast<const JPH::Body *>(in_body)->IsCollisionCacheInvalid();
+    return toJph(in_body)->IsCollisionCacheInvalid();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    const JPC_Shape* shape = reinterpret_cast<const JPC_Shape *>(
-        reinterpret_cast<const JPH::Body *>(in_body)->GetShape()
-    );
-    assert(shape != nullptr);
+    const JPC_Shape* shape = toJpc(toJph(in_body)->GetShape());
     JPC_Shape_AddRef(const_cast<JPC_Shape *>(shape));
     return shape;
 }
@@ -1308,112 +1301,88 @@ JPC_Body_GetShape(const JPC_Body *in_body)
 JPC_API void
 JPC_Body_GetPosition(const JPC_Body *in_body, float out_position[3])
 {
-    assert(in_body != nullptr);
-    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetPosition();
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+    storeVec3(out_position, toJph(in_body)->GetPosition());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetRotation(const JPC_Body *in_body, float out_rotation[4])
 {
-    assert(in_body != nullptr);
-    const JPH::Quat q = reinterpret_cast<const JPH::Body *>(in_body)->GetRotation();
-    q.GetXYZW().StoreFloat4(reinterpret_cast<JPH::Float4 *>(out_rotation));
+    storeVec4(out_rotation, toJph(in_body)->GetRotation().GetXYZW());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_transform[16])
 {
-    assert(in_body != nullptr);
-    const JPH::Mat44 m = reinterpret_cast<const JPH::Body *>(in_body)->GetWorldTransform();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
+    storeMat44(out_transform, toJph(in_body)->GetWorldTransform());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, float out_position[3])
 {
-    assert(in_body != nullptr);
-    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetCenterOfMassPosition();
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+    storeVec3(out_position, toJph(in_body)->GetCenterOfMassPosition());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body, float out_transform[16])
 {
-    assert(in_body != nullptr);
-    const JPH::Body *body = body;
-    const JPH::Mat44 m = body->GetInverseCenterOfMassTransform();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
+    storeMat44(out_transform, toJph(in_body)->GetInverseCenterOfMassTransform());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetWorldSpaceBounds(const JPC_Body *in_body, float out_min[3], float out_max[3])
 {
-    assert(in_body != nullptr);
-    const JPH::AABox& aabb = reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceBounds();
-    aabb.mMin.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_min));
-    aabb.mMax.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_max));
+    const JPH::AABox& aabb = toJph(in_body)->GetWorldSpaceBounds();
+    storeVec3(out_min, aabb.mMin);
+    storeVec3(out_min, aabb.mMax);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_MotionProperties *
 JPC_Body_GetMotionProperties(JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    const auto body = reinterpret_cast<JPH::Body *>(in_body);
-    return reinterpret_cast<JPC_MotionProperties *>(body->GetMotionProperties());
+    return toJpc(toJph(in_body)->GetMotionProperties());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_MotionProperties *
 JPC_Body_GetMotionPropertiesUnchecked(JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    const auto body = reinterpret_cast<JPH::Body *>(in_body);
-    return reinterpret_cast<JPC_MotionProperties *>(body->GetMotionPropertiesUnchecked());
+    return toJpc(toJph(in_body)->GetMotionPropertiesUnchecked());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint64_t
 JPC_Body_GetUserData(const JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    return reinterpret_cast<const JPH::Body *>(in_body)->GetUserData();
+    return toJph(in_body)->GetUserData();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_SetUserData(JPC_Body *in_body, uint64_t in_user_data)
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->SetUserData(in_user_data);
+    toJph(in_body)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetWorldSpaceSurfaceNormal(const JPC_Body *in_body,
                                     const JPC_SubShapeID *in_sub_shape_id,
-                                    const float in_position[3],
+                                    const JPC_Real in_position[3],
                                     float out_normal_vector[3])
 {
-    assert(in_body != nullptr);
-    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceSurfaceNormal(
-        *reinterpret_cast<const JPH::SubShapeID *>(in_sub_shape_id),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_position)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_normal_vector));
+    const JPH::Vec3 v = toJph(in_body)->GetWorldSpaceSurfaceNormal(
+        *toJph(in_sub_shape_id), loadRVec3(in_position));
+    storeVec3(out_normal_vector, v);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetTransformedShape(const JPC_Body *in_body, JPC_TransformedShape *out_shape)
 {
-    assert(in_body != nullptr && out_shape != nullptr);
-    const auto body = reinterpret_cast<const JPH::Body *>(in_body);
-    const JPH::TransformedShape transformed_shape = body->GetTransformedShape();
-    *out_shape = *reinterpret_cast<const JPC_TransformedShape *>(&transformed_shape);
+    const JPH::TransformedShape transformed_shape = toJph(in_body)->GetTransformedShape();
+    *out_shape = *toJpc(&transformed_shape);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetBodyCreationSettings(const JPC_Body *in_body, JPC_BodyCreationSettings *out_settings)
 {
-    assert(in_body != nullptr && out_settings != nullptr);
-    const auto body = reinterpret_cast<const JPH::Body *>(in_body);
-    const JPH::BodyCreationSettings settings = body->GetBodyCreationSettings();
-    *out_settings = *reinterpret_cast<const JPC_BodyCreationSettings *>(&settings);
+    const JPH::BodyCreationSettings settings = toJph(in_body)->GetBodyCreationSettings();
+    *out_settings = *toJpc(&settings);
 }
 //--------------------------------------------------------------------------------------------------
 //
