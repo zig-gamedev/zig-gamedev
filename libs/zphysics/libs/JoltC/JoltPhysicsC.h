@@ -19,6 +19,20 @@
     #define JPC_ENABLE_ASSERTS 0
 #endif
 
+#if defined(JPH_DOUBLE_PRECISION)
+    #define JPC_DOUBLE_PRECISION 1
+#else
+    #define JPC_DOUBLE_PRECISION 0
+#endif
+
+#if JPC_DOUBLE_PRECISION == 1
+typedef double Real;
+#define JPC_RVEC_ALIGN alignas(32)
+#else
+typedef float Real;
+#define JPC_RVEC_ALIGN alignas(16)
+#endif
+
 #define JPC_PI 3.14159265358979323846f
 
 #define JPC_COLLISION_GROUP_INVALID_GROUP 0xffffffff
@@ -296,6 +310,7 @@ typedef struct JPC_SubShapeIDPair
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 typedef struct JPC_ContactManifold
 {
+    JPC_RVEC_ALIGN Real      base_offset[4]; // 4th element is ignored
     alignas(16) float        normal[4]; // 4th element is ignored; world space
     float                    penetration_depth;
     JPC_SubShapeID           shape1_sub_shape_id;
@@ -303,11 +318,11 @@ typedef struct JPC_ContactManifold
     struct {
         alignas(16) uint32_t num_points;
         alignas(16) float    points[64][4]; // 4th element is ignored; world space
-    }                        shape1_contact;
+    }                        shape1_relative_contact;
     struct {
         alignas(16) uint32_t num_points;
         alignas(16) float    points[64][4]; // 4th element is ignored; world space
-    }                        shape2_contact;
+    }                        shape2_relative_contact;
 } JPC_ContactManifold;
 
 // NOTE: Needs to be kept in sync with JPH::ContactSettings
@@ -457,9 +472,6 @@ JPC_BodyCreationSettings_Set(JPC_BodyCreationSettings *out_settings,
 JPC_API JPC_MotionQuality
 JPC_MotionProperties_GetMotionQuality(const JPC_MotionProperties *in_properties);
 
-JPC_API void
-JPC_MotionProperties_SetMotionQuality(JPC_MotionProperties *in_properties,
-                                      JPC_MotionQuality in_motion_quality);
 JPC_API void
 JPC_MotionProperties_GetLinearVelocity(const JPC_MotionProperties *in_properties,
                                        float out_linear_velocity[3]);
@@ -1077,7 +1089,8 @@ JPC_Body_MoveKinematic(JPC_Body *in_body,
                        float in_delta_time);
 JPC_API void
 JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
-                              const float in_plane[4],
+                              const Real in_surface_position[3],
+                              const float in_surface_normal[3],
                               float in_buoyancy,
                               float in_linear_drag,
                               float in_angular_drag,

@@ -34,6 +34,20 @@ JPH_SUPPRESS_WARNINGS
 #define ENSURE_TYPE(o, t) \
     assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
 
+static inline JPH::Vec3 loadVec3(const float in_xyz[3])
+{
+    return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(&in_xyz[0]));
+}
+
+static inline JPH::RVec3 loadRVec3(const Real in_xyz[3])
+{
+#if JPC_DOUBLE_PRECISION == 0
+    return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(&in_xyz[0]));
+#else
+    return JPH::DVec3(in_xyz[0], in_xyz[1], in_xyz[2]);
+#endif
+}
+
 #ifdef JPH_ENABLE_ASSERTS
 
 static bool
@@ -1256,7 +1270,8 @@ JPC_Body_MoveKinematic(JPC_Body *in_body,
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
-                              const float in_plane[4],
+                              const Real in_surface_position[3],
+                              const float in_surface_normal[3],
                               float in_buoyancy,
                               float in_linear_drag,
                               float in_angular_drag,
@@ -1266,12 +1281,13 @@ JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
 {
     assert(in_body != nullptr);
     reinterpret_cast<JPH::Body *>(in_body)->ApplyBuoyancyImpulse(
-        JPH::Plane(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_plane))),
+        loadRVec3(in_surface_position),
+        loadVec3(in_surface_normal),
         in_buoyancy,
         in_linear_drag,
         in_angular_drag,
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_fluid_velocity)),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_gravity)),
+        loadVec3(in_fluid_velocity),
+        loadVec3(in_gravity),
         in_delta_time);
 }
 //--------------------------------------------------------------------------------------------------
@@ -1423,15 +1439,6 @@ JPC_MotionProperties_GetMotionQuality(const JPC_MotionProperties *in_properties)
     return static_cast<JPC_MotionQuality>(
         reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMotionQuality()
     );
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_MotionProperties_SetMotionQuality(JPC_MotionProperties *in_properties,
-                                      JPC_MotionQuality in_motion_quality)
-{
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetMotionQuality(
-        static_cast<JPH::EMotionQuality>(in_motion_quality));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void

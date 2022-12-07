@@ -205,11 +205,15 @@ static_assert(
     offsetof(JPH::BodyCreationSettings, mAngularDamping) == offsetof(JPC_BodyCreationSettings, angular_damping));
 
 static_assert(
+    offsetof(JPH::ContactManifold, mWorldSpaceNormal) == offsetof(JPC_ContactManifold, normal));
+static_assert(
     offsetof(JPH::ContactManifold, mPenetrationDepth) == offsetof(JPC_ContactManifold, penetration_depth));
 static_assert(
-    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) == offsetof(JPC_ContactManifold, shape1_contact));
+        offsetof(JPH::ContactManifold, mRelativeContactPointsOn1) ==
+        offsetof(JPC_ContactManifold, shape1_relative_contact));
 static_assert(
-    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn2) == offsetof(JPC_ContactManifold, shape2_contact));
+    offsetof(JPH::ContactManifold, mRelativeContactPointsOn2) ==
+    offsetof(JPC_ContactManifold, shape2_relative_contact));
 
 static_assert(
     offsetof(JPH::CollideShapeResult, mPenetrationDepth) == offsetof(JPC_CollideShapeResult, penetration_depth));

@@ -224,22 +224,24 @@ pub const CollideShapeResult = extern struct {
 };
 
 pub const ContactManifold = extern struct {
+    base_offset: [4]f32 align(16), // 4th element is ignored; world space
     normal: [4]f32 align(16), // 4th element is ignored; world space
     penetration_depth: f32,
     shape1_sub_shape_id: SubShapeId,
     shape2_sub_shape_id: SubShapeId,
-    shape1_contact: extern struct {
+    shape1_relative_contact: extern struct {
         num_points: u32 align(16),
         points: [64][4]f32 align(16), // 4th element is ignored; world space
     },
-    shape2_contact: extern struct {
+    shape2_relative_contact: extern struct {
         num_points: u32 align(16),
         points: [64][4]f32 align(16), // 4th element is ignored; world space
     },
 
     comptime {
         assert(@sizeOf(ContactManifold) == @sizeOf(c.JPC_ContactManifold));
-        assert(@offsetOf(ContactManifold, "shape2_contact") == @offsetOf(c.JPC_ContactManifold, "shape2_contact"));
+        assert(@offsetOf(ContactManifold, "shape2_relative_contact") ==
+            @offsetOf(c.JPC_ContactManifold, "shape2_relative_contact"));
     }
 };
 
