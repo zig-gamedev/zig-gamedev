@@ -1170,7 +1170,7 @@ ZGUI_API void zguiIoSetFontsTexId(ImTextureID id) {
     ImGui::GetIO().Fonts->TexID = id;
 }
 
-ZGUI_API ImTextureID zguiIoGetFontsTexId() {
+ZGUI_API ImTextureID zguiIoGetFontsTexId(void) {
     return ImGui::GetIO().Fonts->TexID;
 }
 
@@ -1388,15 +1388,19 @@ ZGUI_API void zguiOpenPopup(const char* str_id, ImGuiPopupFlags popup_flags) {
 ZGUI_API void zguiCloseCurrentPopup(void) {
     ImGui::CloseCurrentPopup();
 }
-
 //--------------------------------------------------------------------------------------------------
 //
 // Tables
 //
 //--------------------------------------------------------------------------------------------------
-
-ZGUI_API void zguiBeginTable(const char* str_id, int column, ImGuiTableFlags flags, float outer_size[2], float inner_width) {
-    ImGui::BeginTable(str_id, column, flags, {outer_size[0], outer_size[1]}, inner_width);
+ZGUI_API void zguiBeginTable(
+    const char* str_id,
+    int column,
+    ImGuiTableFlags flags,
+    float outer_size[2],
+    float inner_width
+) {
+    ImGui::BeginTable(str_id, column, flags, { outer_size[0], outer_size[1] }, inner_width);
 }
 
 ZGUI_API void zguiEndTable(void) {
@@ -1415,7 +1419,12 @@ ZGUI_API bool zguiTableSetColumnIndex(int column_n) {
     return ImGui::TableSetColumnIndex(column_n);
 }
 
-ZGUI_API void zguiTableSetupColumn(const char* label, ImGuiTableColumnFlags flags, float init_width_or_height, ImGuiID user_id) {
+ZGUI_API void zguiTableSetupColumn(
+    const char* label,
+    ImGuiTableColumnFlags flags,
+    float init_width_or_height,
+    ImGuiID user_id
+) {
     ImGui::TableSetupColumn(label, flags, init_width_or_height, user_id);
 }
 
@@ -1423,7 +1432,7 @@ ZGUI_API void zguiTableSetupScrollFreeze(int cols, int rows) {
     ImGui::TableSetupScrollFreeze(cols, rows);
 }
 
-ZGUI_API void zguiTableHeadersRow() {
+ZGUI_API void zguiTableHeadersRow(void) {
     ImGui::TableHeadersRow();
 }
 
@@ -1431,19 +1440,19 @@ ZGUI_API void zguiTableHeader(const char* label) {
     ImGui::TableHeader(label);
 }
 
-ZGUI_API ImGuiTableSortSpecs* zguiTableGetSortSpecs() {
+ZGUI_API ImGuiTableSortSpecs* zguiTableGetSortSpecs(void) {
     return ImGui::TableGetSortSpecs();
 }
 
-ZGUI_API int zguiTableGetColumnCount() {
+ZGUI_API int zguiTableGetColumnCount(void) {
     return ImGui::TableGetColumnCount();
 }
 
-ZGUI_API int zguiTableGetColumnIndex() {
+ZGUI_API int zguiTableGetColumnIndex(void) {
     return ImGui::TableGetColumnIndex();
 }
 
-ZGUI_API int zguiTableGetRowIndex() {
+ZGUI_API int zguiTableGetRowIndex(void) {
     return ImGui::TableGetRowIndex();
 }
 
@@ -1462,18 +1471,21 @@ ZGUI_API void zguiTableSetColumnEnabled(int column_n, bool v) {
 ZGUI_API void zguiTableSetBgColor(ImGuiTableBgTarget target, unsigned int color, int column_n) {
     ImGui::TableSetBgColor(target, color, column_n);
 }
-
 //--------------------------------------------------------------------------------------------------
 //
 // Color Utilities
 //
 //--------------------------------------------------------------------------------------------------
-ZGUI_API ImVec4 zguiColorConvertU32ToFloat4(ImU32 in) {
-    return ImGui::ColorConvertU32ToFloat4(in);
+ZGUI_API void zguiColorConvertU32ToFloat4(ImU32 in, float rgba[4]) {
+    const ImVec4 c = ImGui::ColorConvertU32ToFloat4(in);
+    rgba[0] = c.x;
+    rgba[1] = c.y;
+    rgba[2] = c.z;
+    rgba[3] = c.w;
 }
 
 ZGUI_API ImU32 zguiColorConvertFloat4ToU32(const float in[4]) {
-    return ImGui::ColorConvertFloat4ToU32(ImVec4(in[0], in[1], in[2], in[3]));
+    return ImGui::ColorConvertFloat4ToU32({ in[0], in[1], in[2], in[3] });
 }
 
 ZGUI_API void zguiColorConvertRGBtoHSV(float r, float g, float b, float* out_h, float* out_s, float* out_v) {
@@ -1483,13 +1495,11 @@ ZGUI_API void zguiColorConvertRGBtoHSV(float r, float g, float b, float* out_h, 
 ZGUI_API void zguiColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b) {
     return ImGui::ColorConvertHSVtoRGB(h, s, v, *out_r, *out_g, *out_b);
 }
-
 //--------------------------------------------------------------------------------------------------
 //
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------
-
 ZGUI_API ImDrawList *zguiGetWindowDrawList(void) {
     return ImGui::GetWindowDrawList();
 }

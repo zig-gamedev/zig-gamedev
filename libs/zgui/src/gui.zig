@@ -203,8 +203,7 @@ pub const io = struct {
     pub const setConfigFlags = zguiIoSetConfigFlags;
     extern fn zguiIoSetConfigFlags(flags: ConfigFlags) void;
 
-    /// set the frame for this frame
-    /// `pub fnsetDeltaTime(delta_time: f32) void`
+    /// `pub fn setDeltaTime(delta_time: f32) void`
     pub const setDeltaTime = zguiIoSetDeltaTime;
     extern fn zguiIoSetDeltaTime(delta_time: f32) void;
 
@@ -246,9 +245,8 @@ pub const Ident = u32;
 pub const TextureIdent = *anyopaque;
 pub const Wchar = u16;
 pub const Key = enum(u32) {
-    // keyboard
     none = 0,
-    tab = 512, // == imguikey_namedkey_begin
+    tab = 512,
     left_arrow,
     right_arrow,
     up_arrow,
@@ -391,14 +389,14 @@ pub const Key = enum(u32) {
     pub const keys_data_offset = named_key_begin;
 };
 
-const KeyModifiers = packed struct {
+pub const KeyModifiers = packed struct {
     ctrl: bool = false,
     shift: bool = false,
     alt: bool = false,
     super: bool = false,
 };
 
-const NavInput = enum {
+pub const NavInput = enum {
     activate,
     cancel,
     input,
@@ -2917,11 +2915,14 @@ extern fn zguiIsAnyItemFocused() bool;
 //
 //--------------------------------------------------------------------------------------------------
 pub fn colorConvertU32ToFloat4(in: u32) [4]f32 {
-    return zguiColorConvertU32ToFloat4(in);
+    var rgba: [4]f32 = undefined;
+    zguiColorConvertU32ToFloat4(in, &rgba);
+    return rgba;
 }
 
 pub fn colorConvertU32ToFloat3(in: u32) [3]f32 {
-    const rgba = zguiColorConvertU32ToFloat4(in);
+    var rgba: [4]f32 = undefined;
+    zguiColorConvertU32ToFloat4(in, &rgba);
     return .{ rgba[0], rgba[1], rgba[2] };
 }
 
@@ -2943,7 +2944,7 @@ pub fn colorConvertHsvToRgb(h: f32, s: f32, v: f32) [3]f32 {
     return zguiColorConvertHSVtoRGB(h, s, v, &rgb[0], &rgb[1], &rgb[2]);
 }
 
-extern fn zguiColorConvertU32ToFloat4(in: u32) [4]f32;
+extern fn zguiColorConvertU32ToFloat4(in: u32, rgba: *[4]f32) void;
 extern fn zguiColorConvertFloat4ToU32(in: *const [4]f32) u32;
 extern fn zguiColorConvertRGBtoHSV(r: f32, g: f32, b: f32, out_h: *f32, out_s: *f32, out_v: *f32) void;
 extern fn zguiColorConvertHSVtoRGB(h: f32, s: f32, v: f32, out_r: *f32, out_g: *f32, out_b: *f32) void;
