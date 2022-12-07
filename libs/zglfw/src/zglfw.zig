@@ -42,7 +42,7 @@ pub fn getRequiredInstanceExtensions() Error![][*:0]const u8 {
         return @ptrCast([*][*:0]const u8, extensions)[0..count];
     }
     try maybeError();
-    unreachable;
+    return error.APIUnavailable;
 }
 extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?*?[*:0]const u8;
 
