@@ -440,23 +440,28 @@ fn update(demo: *DemoState) !void {
 
         const draw_list = zgui.getBackgroundDrawList();
         draw_list.pushClipRect(.{ .pmin = .{ 0, 0 }, .pmax = .{ 400, 400 } });
-        draw_list.addLine(.{ .p1 = .{ 0, 0 }, .p2 = .{ 400, 400 }, .col = 0xff_ff_00_ff, .thickness = 5.0 });
+        draw_list.addLine(.{
+            .p1 = .{ 0, 0 },
+            .p2 = .{ 400, 400 },
+            .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 0, 1 }),
+            .thickness = 5.0,
+        });
         draw_list.popClipRect();
 
         draw_list.pushClipRectFullScreen();
         draw_list.addRectFilled(.{
             .pmin = .{ 100, 100 },
             .pmax = .{ 300, 200 },
-            .col = 0xff_ff_ff_ff,
+            .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 1 }),
             .rounding = 25.0,
         });
         draw_list.addRectFilledMultiColor(.{
             .pmin = .{ 100, 300 },
             .pmax = .{ 200, 400 },
-            .col_upr_left = 0xff_00_00_ff,
-            .col_upr_right = 0xff_00_ff_00,
-            .col_bot_right = 0xff_ff_00_00,
-            .col_bot_left = 0xff_00_ff_ff,
+            .col_upr_left = zgui.colorConvertFloat3ToU32([_]f32{ 1, 0, 0 }),
+            .col_upr_right = zgui.colorConvertFloat3ToU32([_]f32{ 0, 1, 0 }),
+            .col_bot_right = zgui.colorConvertFloat3ToU32([_]f32{ 0, 0, 1 }),
+            .col_bot_left = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 0 }),
         });
         draw_list.addQuadFilled(.{
             .p1 = .{ 150, 400 },
@@ -470,15 +475,24 @@ fn update(demo: *DemoState) !void {
             .p2 = .{ 270, 420 },
             .p3 = .{ 220, 520 },
             .p4 = .{ 120, 520 },
-            .col = 0xff_00_00_ff,
+            .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 0, 0 }),
             .thickness = 3.0,
         });
         draw_list.addText(.{ 130, 130 }, 0xff_00_00_ff, "The number is: {}", .{7});
-        draw_list.addCircleFilled(.{ .p = .{ 200, 600 }, .r = 50, .col = 0xff_ff_ff_ff });
-        draw_list.addCircle(.{ .p = .{ 200, 600 }, .r = 30, .col = 0xff_00_00_ff, .thickness = 11 });
+        draw_list.addCircleFilled(.{
+            .p = .{ 200, 600 },
+            .r = 50,
+            .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 1 }),
+        });
+        draw_list.addCircle(.{
+            .p = .{ 200, 600 },
+            .r = 30,
+            .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 0, 0 }),
+            .thickness = 11,
+        });
         draw_list.addPolyline(
             &.{ .{ 100, 700 }, .{ 200, 600 }, .{ 300, 700 }, .{ 400, 600 } },
-            .{ .col = 0xff_00_aa_11, .thickness = 7 },
+            .{ .col = zgui.colorConvertFloat3ToU32([_]f32{ 0x11.0 / 0xff.0, 0xaa.0 / 0xff.0, 0 }), .thickness = 7 },
         );
         _ = draw_list.getClipRectMin();
         _ = draw_list.getClipRectMax();
