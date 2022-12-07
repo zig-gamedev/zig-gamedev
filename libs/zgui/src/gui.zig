@@ -354,70 +354,48 @@ pub const Key = enum(u32) {
 
     gamepad_start,
     gamepad_back,
-    gamepad_faceup,
-    gamepad_facedown,
     gamepad_faceleft,
     gamepad_faceright,
-    gamepad_dpadup,
-    gamepad_dpaddown,
+    gamepad_faceup,
+    gamepad_facedown,
     gamepad_dpadleft,
     gamepad_dpadright,
+    gamepad_dpadup,
+    gamepad_dpaddown,
     gamepad_l1,
     gamepad_r1,
     gamepad_l2,
     gamepad_r2,
     gamepad_l3,
     gamepad_r3,
-    gamepad_lstickup,
-    gamepad_lstickdown,
     gamepad_lstickleft,
     gamepad_lstickright,
-    gamepad_rstickup,
-    gamepad_rstickdown,
+    gamepad_lstickup,
+    gamepad_lstickdown,
     gamepad_rstickleft,
     gamepad_rstickright,
+    gamepad_rstickup,
+    gamepad_rstickdown,
 
-    mod_ctrl,
-    mod_shift,
-    mod_alt,
-    mod_super,
+    mouse_left,
+    mouse_right,
+    mouse_middle,
+    mouse_x1,
+    mouse_x2,
 
-    pub const named_key_begin = 512;
-    pub const named_key_end = std.enums.directEnumArrayLen(@This(), named_key_begin);
-    pub const named_key_count = named_key_end - named_key_begin;
-    pub const keys_data_size = named_key_count;
-    pub const keys_data_offset = named_key_begin;
-};
+    mouse_wheel_x,
+    mouse_wheel_y,
 
-pub const KeyModifiers = packed struct {
-    ctrl: bool = false,
-    shift: bool = false,
-    alt: bool = false,
-    super: bool = false,
-};
+    reserved_for_mod_ctrl,
+    reserved_for_mod_shift,
+    reserved_for_mod_alt,
+    reserved_for_mod_super,
 
-pub const NavInput = enum {
-    activate,
-    cancel,
-    input,
-    menu,
-    dpad_left,
-    dpad_right,
-    dpad_up,
-    dpad_down,
-    lstick_left,
-    lstick_right,
-    lsick_up,
-    lstick_down,
-    focus_prev,
-    focus_next,
-    tweak_slow,
-    tweak_fast,
-
-    key_left,
-    key_right,
-    key_up,
-    key_down,
+    mod_ctrl = 1 << 12,
+    mod_shift = 1 << 13,
+    mod_alt = 1 << 14,
+    mod_super = 1 << 15,
+    mod_mask_ = 0xf000,
 };
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct(u32) {
