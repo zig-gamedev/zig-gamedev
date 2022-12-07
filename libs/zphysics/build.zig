@@ -36,6 +36,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     const flags = &.{
         "-std=c++17",
         "-DJPH_COMPILER_MINGW",
+        //"-DJPH_DOUBLE_PRECISION",
         "-fno-sanitize=undefined",
     };
     exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp", flags);
