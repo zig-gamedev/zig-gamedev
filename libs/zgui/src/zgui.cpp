@@ -1465,6 +1465,27 @@ ZGUI_API void zguiTableSetBgColor(ImGuiTableBgTarget target, unsigned int color,
 
 //--------------------------------------------------------------------------------------------------
 //
+// Color Utilities
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API ImVec4 zguiColorConvertU32ToFloat4(ImU32 in) {
+    return ImGui::ColorConvertU32ToFloat4(in);
+}
+
+ZGUI_API ImU32 zguiColorConvertFloat4ToU32(const float in[4]) {
+    return ImGui::ColorConvertFloat4ToU32(ImVec4(in[0], in[1], in[2], in[3]));
+}
+
+ZGUI_API void zguiColorConvertRGBtoHSV(float r, float g, float b, float* out_h, float* out_s, float* out_v) {
+    return ImGui::ColorConvertRGBtoHSV(r, g, b, *out_h, *out_s, *out_v);
+}
+
+ZGUI_API void zguiColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b) {
+    return ImGui::ColorConvertHSVtoRGB(h, s, v, *out_r, *out_g, *out_b);
+}
+
+//--------------------------------------------------------------------------------------------------
+//
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------
