@@ -40,6 +40,9 @@ auto toJph(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<c
 auto toJpc(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 auto toJph(JPC_MotionType in) { return static_cast<JPH::EMotionType>(in); }
 
+auto toJpc(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
+auto toJpc(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
+
 #define ENSURE_TYPE(o, t) \
     assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
 
@@ -1013,8 +1016,7 @@ JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body
 JPC_API JPC_BodyID
 JPC_Body_GetID(const JPC_Body *in_body)
 {
-    const JPH::BodyID body_id = toJph(in_body)->GetID();
-    return body_id.GetIndexAndSequenceNumber();
+    return toJph(in_body)->GetID().GetIndexAndSequenceNumber();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
@@ -1074,15 +1076,13 @@ JPC_Body_SetMotionType(JPC_Body *in_body, JPC_MotionType in_motion_type)
 JPC_API JPC_BroadPhaseLayer
 JPC_Body_GetBroadPhaseLayer(const JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    return static_cast<JPC_BroadPhaseLayer>(toJph(in_body)->GetBroadPhaseLayer());
+    return toJpc(toJph(in_body)->GetBroadPhaseLayer());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ObjectLayer
 JPC_Body_GetObjectLayer(const JPC_Body *in_body)
 {
-    assert(in_body != nullptr);
-    return static_cast<JPC_ObjectLayer>(toJph(in_body)->GetObjectLayer());
+    return toJpc(toJph(in_body)->GetObjectLayer());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_CollisionGroup *
@@ -1148,26 +1148,19 @@ JPC_Body_SetLinearVelocity(JPC_Body *in_body, const float in_linear_velocity[3])
 JPC_API void
 JPC_Body_SetLinearVelocityClamped(JPC_Body *in_body, const float in_linear_velocity[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->SetLinearVelocityClamped(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity)));
+    toJph(in_body)->SetLinearVelocityClamped(loadVec3(in_linear_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetAngularVelocity(JPC_Body *in_body, float out_angular_velocity[3])
 {
-    assert(in_body != nullptr);
-    const JPH::Vec3 v = static_cast<JPH::Vec3>(
-        reinterpret_cast<const JPH::Body *>(in_body)->GetAngularVelocity());
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_angular_velocity));
+    storeVec3(out_angular_velocity, toJph(in_body)->GetAngularVelocity());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_SetAnglularVelocity(JPC_Body *in_body, const float in_angular_velocity[3])
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->SetAngularVelocity(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity)));
+    toJph(in_body)->SetAngularVelocity(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
