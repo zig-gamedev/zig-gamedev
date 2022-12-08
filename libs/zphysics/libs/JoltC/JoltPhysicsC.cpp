@@ -155,7 +155,6 @@ FN(toJpc)(const JPH::BodyLockInterface *in) {
     assert(in); return reinterpret_cast<const JPC_BodyLockInterface *>(in);
 }
 
-
 FN(toJph)(const JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<const JPH::PhysicsSystem *>(in); }
 FN(toJph)(JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<JPH::PhysicsSystem *>(in); }
 FN(toJpc)(JPH::PhysicsSystem *in) { assert(in); return reinterpret_cast<JPC_PhysicsSystem *>(in); }
@@ -172,6 +171,11 @@ FN(toJph)(JPC_BodyInterface *in) { assert(in); return reinterpret_cast<JPH::Body
 
 FN(toJpc)(const JPH::TransformedShape *in) { assert(in); return reinterpret_cast<const JPC_TransformedShape *>(in); }
 
+FN(toJph)(const JPC_MassProperties *in) { assert(in); return reinterpret_cast<const JPH::MassProperties *>(in); }
+
+FN(toJph)(JPC_BodyLockRead *in) { assert(in); return reinterpret_cast<const JPH::BodyLockRead *>(in); }
+FN(toJph)(JPC_BodyLockWrite *in) { assert(in); return reinterpret_cast<const JPH::BodyLockWrite *>(in); }
+
 FN(toJpc)(const JPH::BodyCreationSettings *in) {
     assert(in); return reinterpret_cast<const JPC_BodyCreationSettings *>(in);
 }
@@ -179,7 +183,10 @@ FN(toJph)(const JPC_BodyCreationSettings *in) {
     assert(in); return reinterpret_cast<const JPH::BodyCreationSettings *>(in);
 }
 
+FN(toJpc)(const JPH::MotionProperties *in) { assert(in); return reinterpret_cast<const JPC_MotionProperties *>(in); }
+FN(toJph)(const JPC_MotionProperties *in) { assert(in); return reinterpret_cast<const JPH::MotionProperties *>(in); }
 FN(toJpc)(JPH::MotionProperties *in) { assert(in); return reinterpret_cast<JPC_MotionProperties *>(in); }
+FN(toJph)(JPC_MotionProperties *in) { assert(in); return reinterpret_cast<JPH::MotionProperties *>(in); }
 
 FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
@@ -187,6 +194,7 @@ FN(toJpc)(JPH::EShapeType in) { return static_cast<JPC_ShapeType>(in); }
 FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
 FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
+FN(toJpc)(JPH::EMotionQuality in) { return static_cast<JPC_MotionQuality>(in); }
 
 #undef FN
 
@@ -198,6 +206,11 @@ static inline JPH::Vec3 loadVec3(const float in[3]) {
 static inline JPH::Vec4 loadVec4(const float in[4]) {
     assert(in != nullptr);
     return JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in));
+}
+
+static inline JPH::Mat44 loadMat44(const float in[16]) {
+    assert(in != nullptr);
+    return JPH::Mat44::sLoadFloat4x4(reinterpret_cast<const JPH::Float4 *>(in));
 }
 
 static inline JPH::RVec3 loadRVec3(const JPC_Real in[3]) {
@@ -499,8 +512,7 @@ JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
 void JPC_API
 JPC_BodyLockRead_Unlock(JPC_BodyLockRead *io_lock)
 {
-    assert(io_lock != nullptr);
-    reinterpret_cast<JPH::BodyLockRead *>(io_lock)->~BodyLockRead();
+    toJph(io_lock)->~BodyLockRead();
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
@@ -515,8 +527,7 @@ JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
 void JPC_API
 JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock)
 {
-    assert(io_lock != nullptr);
-    reinterpret_cast<JPH::BodyLockWrite *>(io_lock)->~BodyLockWrite();
+    toJph(io_lock)->~BodyLockWrite();
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1369,55 +1380,42 @@ JPC_Body_GetBodyCreationSettings(const JPC_Body *in_body, JPC_BodyCreationSettin
 JPC_API JPC_MotionQuality
 JPC_MotionProperties_GetMotionQuality(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return static_cast<JPC_MotionQuality>(
-        reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMotionQuality());
+    return toJpc(toJph(in_properties)->GetMotionQuality());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetLinearVelocity(const JPC_MotionProperties *in_properties,
                                        float out_linear_velocity[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->GetLinearVelocity();
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_linear_velocity));
+    storeVec3(out_linear_velocity, toJph(in_properties)->GetLinearVelocity());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetLinearVelocity(JPC_MotionProperties *in_properties,
                                        const float in_linear_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearVelocity(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity)));
+    toJph(in_properties)->SetLinearVelocity(loadVec3(in_linear_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetLinearVelocityClamped(JPC_MotionProperties *in_properties,
                                               const float in_linear_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearVelocityClamped(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity)));
+    toJph(in_properties)->SetLinearVelocityClamped(loadVec3(in_linear_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetAngularVelocity(JPC_MotionProperties *in_properties,
                                         const float in_angular_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularVelocity(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity)));
+    toJph(in_properties)->SetAngularVelocity(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetAngularVelocityClamped(JPC_MotionProperties *in_properties,
                                                const float in_angular_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularVelocityClamped(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity)));
+    toJph(in_properties)->SetAngularVelocityClamped(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1426,120 +1424,98 @@ JPC_MotionProperties_MoveKinematic(JPC_MotionProperties *in_properties,
                                    const float in_delta_rotation[4],
                                    float in_delta_time)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->MoveKinematic(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_delta_position)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_delta_rotation))),
-        in_delta_time);
+    toJph(in_properties)->MoveKinematic(
+        loadVec3(in_delta_position), JPH::Quat(loadVec4(in_delta_rotation)), in_delta_time);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_ClampLinearVelocity(JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ClampLinearVelocity();
+    toJph(in_properties)->ClampLinearVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_ClampAngularVelocity(JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ClampAngularVelocity();
+    toJph(in_properties)->ClampAngularVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetLinearDamping(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetLinearDamping();
+    return toJph(in_properties)->GetLinearDamping();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetLinearDamping(JPC_MotionProperties *in_properties,
                                       float in_linear_damping)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearDamping(in_linear_damping);
+    toJph(in_properties)->SetLinearDamping(in_linear_damping);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetAngularDamping(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetAngularDamping();
+    return toJph(in_properties)->GetAngularDamping();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetAngularDamping(JPC_MotionProperties *in_properties,
                                        float in_angular_damping)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularDamping(in_angular_damping);
+    toJph(in_properties)->SetAngularDamping(in_angular_damping);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetGravityFactor(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetGravityFactor();
+    return toJph(in_properties)->GetGravityFactor();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetGravityFactor(JPC_MotionProperties *in_properties,
                                       float in_gravity_factor)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetGravityFactor(in_gravity_factor);
+    toJph(in_properties)->SetGravityFactor(in_gravity_factor);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMassProperties(JPC_MotionProperties *in_properties,
                                        const JPC_MassProperties *in_mass_properties)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetMassProperties(
-        *reinterpret_cast<const JPH::MassProperties *>(in_mass_properties));
+    toJph(in_properties)->SetMassProperties(*toJph(in_mass_properties));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetInverseMass(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetInverseMass();
+    return toJph(in_properties)->GetInverseMass();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetInverseMassUnchecked(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetInverseMassUnchecked();
+    return toJph(in_properties)->GetInverseMassUnchecked();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetInverseMass(JPC_MotionProperties *in_properties, float in_inv_mass)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseMass(in_inv_mass);
+    toJph(in_properties)->SetInverseMass(in_inv_mass);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetInverseInertiaDiagonal(const JPC_MotionProperties *in_properties,
                                                float out_inverse_inertia_diagonal[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->GetInverseInertiaDiagonal();
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_inverse_inertia_diagonal));
+    storeVec3(out_inverse_inertia_diagonal, toJph(in_properties)->GetInverseInertiaDiagonal());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetInertiaRotation(const JPC_MotionProperties *in_properties,
                                         float out_inertia_rotation[4])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Quat v = properties->GetInertiaRotation();
-    v.GetXYZW().StoreFloat4(reinterpret_cast<JPH::Float4 *>(out_inertia_rotation));
+    storeVec4(out_inertia_rotation, toJph(in_properties)->GetInertiaRotation().GetXYZW());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1547,30 +1523,23 @@ JPC_MotionProperties_SetInverseInertia(JPC_MotionProperties *in_properties,
                                        const float in_diagonal[3],
                                        const float in_rotation[4])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseInertia(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_diagonal)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_rotation))));
+    toJph(in_properties)->SetInverseInertia(
+        loadVec3(in_diagonal),
+        JPH::Quat(loadVec4(in_rotation)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetLocalSpaceInverseInertia(const JPC_MotionProperties *in_properties,
                                                  float out_matrix[16])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Mat44 m = properties->GetLocalSpaceInverseInertia();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+    storeMat44(out_matrix, toJph(in_properties)->GetLocalSpaceInverseInertia());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(const JPC_MotionProperties *in_properties,
                                                           float out_matrix[16])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Mat44 m = properties->GetLocalSpaceInverseInertiaUnchecked();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+    storeMat44(out_matrix, toJph(in_properties)->GetLocalSpaceInverseInertiaUnchecked());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1578,11 +1547,7 @@ JPC_MotionProperties_GetInverseInertiaForRotation(const JPC_MotionProperties *in
                                                   const float in_rotation_matrix[16],
                                                   float out_matrix[16])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Mat44 m = properties->GetInverseInertiaForRotation(
-        *reinterpret_cast<const JPH::Mat44 *>(in_rotation_matrix));
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+    storeMat44(out_matrix, toJph(in_properties)->GetInverseInertiaForRotation(loadMat44(in_rotation_matrix)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1591,12 +1556,9 @@ JPC_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(const JPC_MotionPr
                                                               const float in_vector[3],
                                                               float out_vector[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->MultiplyWorldSpaceInverseInertiaByVector(
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_body_rotation))),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_vector)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_vector));
+    const JPH::Vec3 v = toJph(in_properties)->MultiplyWorldSpaceInverseInertiaByVector(
+        JPH::Quat(loadVec4(in_body_rotation)), loadVec3(in_vector));
+    storeVec3(out_vector, v);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1604,83 +1566,61 @@ JPC_MotionProperties_GetPointVelocityCOM(const JPC_MotionProperties *in_properti
                                          const float in_point_relative_to_com[3],
                                          float out_point[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->GetPointVelocityCOM(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point_relative_to_com)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_point));
+    storeVec3(out_point, toJph(in_properties)->GetPointVelocityCOM(loadVec3(in_point_relative_to_com)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetMaxLinearVelocity(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMaxLinearVelocity();
+    return toJph(in_properties)->GetMaxLinearVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMaxLinearVelocity(JPC_MotionProperties *in_properties,
                                           float in_max_linear_velocity)
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SetMaxLinearVelocity(in_max_linear_velocity);
+    toJph(in_properties)->SetMaxLinearVelocity(in_max_linear_velocity);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetMaxAngularVelocity(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMaxAngularVelocity();
+    return toJph(in_properties)->GetMaxAngularVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMaxAngularVelocity(JPC_MotionProperties *in_properties,
                                            float in_max_angular_velocity)
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SetMaxAngularVelocity(in_max_angular_velocity);
+    toJph(in_properties)->SetMaxAngularVelocity(in_max_angular_velocity);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_AddLinearVelocityStep(JPC_MotionProperties *in_properties,
                                            const float in_linear_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->AddLinearVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity_change)));
+    toJph(in_properties)->AddLinearVelocityStep(loadVec3(in_linear_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SubLinearVelocityStep(JPC_MotionProperties *in_properties,
                                            const float in_linear_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SubLinearVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity_change)));
+    toJph(in_properties)->SubLinearVelocityStep(loadVec3(in_linear_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_AddAngularVelocityStep(JPC_MotionProperties *in_properties,
                                             const float in_angular_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->AddAngularVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change)));
+    toJph(in_properties)->AddAngularVelocityStep(loadVec3(in_angular_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SubAngularVelocityStep(JPC_MotionProperties *in_properties,
                                             const float in_angular_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SubAngularVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change)));
+    toJph(in_properties)->SubAngularVelocityStep(loadVec3(in_angular_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 //
