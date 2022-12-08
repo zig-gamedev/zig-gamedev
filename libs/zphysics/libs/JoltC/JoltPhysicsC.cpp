@@ -87,6 +87,51 @@ FN(toJph)(JPC_TriangleShapeSettings *in) {
 }
 FN(toJpc)(JPH::TriangleShapeSettings *in) { assert(in); return reinterpret_cast<JPC_TriangleShapeSettings *>(in); }
 
+FN(toJph)(const JPC_CapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CapsuleShapeSettings);
+    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in);
+}
+FN(toJph)(JPC_CapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CapsuleShapeSettings);
+    return reinterpret_cast<JPH::CapsuleShapeSettings *>(in);
+}
+FN(toJpc)(JPH::CapsuleShapeSettings *in) { assert(in); return reinterpret_cast<JPC_CapsuleShapeSettings *>(in); }
+
+FN(toJph)(const JPC_TaperedCapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::TaperedCapsuleShapeSettings);
+    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in);
+}
+FN(toJph)(JPC_TaperedCapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::TaperedCapsuleShapeSettings);
+    return reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in);
+}
+FN(toJpc)(JPH::TaperedCapsuleShapeSettings *in) {
+    assert(in); return reinterpret_cast<JPC_TaperedCapsuleShapeSettings *>(in);
+}
+
+FN(toJph)(const JPC_CylinderShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CylinderShapeSettings);
+    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in);
+}
+FN(toJph)(JPC_CylinderShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CylinderShapeSettings);
+    return reinterpret_cast<JPH::CylinderShapeSettings *>(in);
+}
+FN(toJpc)(JPH::CylinderShapeSettings *in) { assert(in); return reinterpret_cast<JPC_CylinderShapeSettings *>(in); }
+
+FN(toJph)(const JPC_ConvexHullShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in);
+}
+FN(toJph)(JPC_ConvexHullShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<JPH::ConvexHullShapeSettings *>(in);
+}
+FN(toJpc)(JPH::ConvexHullShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_ConvexHullShapeSettings *>(in);
+}
+
 FN(toJph)(const JPC_ConvexShapeSettings *in) {
     ENSURE_TYPE(in, JPH::ConvexShapeSettings);
     return reinterpret_cast<const JPH::ConvexShapeSettings *>(in);
@@ -116,7 +161,9 @@ FN(toJph)(JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<JPH::Phys
 FN(toJpc)(JPH::PhysicsSystem *in) { assert(in); return reinterpret_cast<JPC_PhysicsSystem *>(in); }
 
 FN(toJpc)(const JPH::Shape *in) { assert(in); return reinterpret_cast<const JPC_Shape *>(in); }
+FN(toJph)(const JPC_Shape *in) { assert(in); return reinterpret_cast<const JPH::Shape *>(in); }
 FN(toJpc)(JPH::Shape *in) { assert(in); return reinterpret_cast<JPC_Shape *>(in); }
+FN(toJph)(JPC_Shape *in) { assert(in); return reinterpret_cast<JPH::Shape *>(in); }
 
 FN(toJpc)(const JPH::BodyInterface *in) { assert(in); return reinterpret_cast<const JPC_BodyInterface *>(in); }
 FN(toJpc)(JPH::BodyInterface *in) { assert(in); return reinterpret_cast<JPC_BodyInterface *>(in); }
@@ -134,6 +181,10 @@ FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
 
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
+
+FN(toJpc)(JPH::EShapeType in) { return static_cast<JPC_ShapeType>(in); }
+
+FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
 
 #undef FN
 
@@ -492,8 +543,7 @@ JPC_API JPC_Shape *
 JPC_ShapeSettings_CreateShape(const JPC_ShapeSettings *in_settings)
 {
     const JPH::Result result = toJph(in_settings)->Create();
-    if (result.HasError())
-        return nullptr;
+    if (result.HasError()) return nullptr;
     JPH::Shape *shape = const_cast<JPH::Shape *>(result.Get().GetPtr());
     shape->AddRef();
     return toJpc(shape);
@@ -664,41 +714,32 @@ JPC_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radiu
 {
     auto settings = new JPH::CapsuleShapeSettings(in_half_height_of_cylinder, in_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_CapsuleShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPC_CapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder;
+    return toJph(in_settings)->mHalfHeightOfCylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPC_CapsuleShapeSettings *in_settings,
                                                  float in_half_height_of_cylinder)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder =
-        in_half_height_of_cylinder;
+    toJph(in_settings)->mHalfHeightOfCylinder = in_half_height_of_cylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CapsuleShapeSettings_GetRadius(const JPC_CapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mRadius;
+    return toJph(in_settings)->mRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CapsuleShapeSettings_SetRadius(JPC_CapsuleShapeSettings *in_settings, float in_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mRadius = in_radius;
+    toJph(in_settings)->mRadius = in_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -710,59 +751,45 @@ JPC_TaperedCapsuleShapeSettings_Create(float in_half_height, float in_top_radius
 {
     auto settings = new JPH::TaperedCapsuleShapeSettings(in_half_height, in_top_radius, in_bottom_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_TaperedCapsuleShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mHalfHeightOfTaperedCylinder;
+    return toJph(in_settings)->mHalfHeightOfTaperedCylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder(JPC_TaperedCapsuleShapeSettings *in_settings,
                                                                float in_half_height)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mHalfHeightOfTaperedCylinder = 
-        in_half_height;
+    toJph(in_settings)->mHalfHeightOfTaperedCylinder = in_half_height;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetTopRadius(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mTopRadius;
+    return toJph(in_settings)->mTopRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_TaperedCapsuleShapeSettings_SetTopRadius(JPC_TaperedCapsuleShapeSettings *in_settings, float in_top_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mTopRadius = in_top_radius;
+    toJph(in_settings)->mTopRadius = in_top_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetBottomRadius(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mBottomRadius;
+    return toJph(in_settings)->mBottomRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_TaperedCapsuleShapeSettings_SetBottomRadius(JPC_TaperedCapsuleShapeSettings *in_settings,
                                                 float in_bottom_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mBottomRadius =
-        in_bottom_radius;
+    toJph(in_settings)->mBottomRadius = in_bottom_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -774,55 +801,43 @@ JPC_CylinderShapeSettings_Create(float in_half_height, float in_radius)
 {
     auto settings = new JPH::CylinderShapeSettings(in_half_height, in_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_CylinderShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CylinderShapeSettings_GetConvexRadius(const JPC_CylinderShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mConvexRadius;
+    return toJph(in_settings)->mConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CylinderShapeSettings_SetConvexRadius(JPC_CylinderShapeSettings *in_settings, float in_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
+    toJph(in_settings)->mConvexRadius = in_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CylinderShapeSettings_GetHalfHeight(const JPC_CylinderShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mHalfHeight;
+    return toJph(in_settings)->mHalfHeight;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CylinderShapeSettings_SetHalfHeight(JPC_CylinderShapeSettings *in_settings, float in_half_height)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mHalfHeight = in_half_height;
+    toJph(in_settings)->mHalfHeight = in_half_height;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CylinderShapeSettings_GetRadius(const JPC_CylinderShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mRadius;
+    return toJph(in_settings)->mRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CylinderShapeSettings_SetRadius(JPC_CylinderShapeSettings *in_settings, float in_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mRadius = in_radius;
+    toJph(in_settings)->mRadius = in_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -837,59 +852,46 @@ JPC_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points
     auto settings = new JPH::ConvexHullShapeSettings(
         reinterpret_cast<const JPH::Vec3 *>(&in_points[0][0]), in_num_points);
     settings->AddRef();
-    return reinterpret_cast<JPC_ConvexHullShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexHullShapeSettings_GetMaxConvexRadius(const JPC_ConvexHullShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius;
+    return toJph(in_settings)->mMaxConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexHullShapeSettings_SetMaxConvexRadius(JPC_ConvexHullShapeSettings *in_settings,
                                                float in_max_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius = in_max_convex_radius;
+    toJph(in_settings)->mMaxConvexRadius = in_max_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexHullShapeSettings_GetMaxErrorConvexRadius(const JPC_ConvexHullShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius;
+    return toJph(in_settings)->mMaxErrorConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexHullShapeSettings_SetMaxErrorConvexRadius(JPC_ConvexHullShapeSettings *in_settings,
                                                     float in_max_err_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius =
-        in_max_err_convex_radius;
+    toJph(in_settings)->mMaxErrorConvexRadius = in_max_err_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexHullShapeSettings_GetHullTolerance(const JPC_ConvexHullShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance;
+    return toJph(in_settings)->mHullTolerance;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_settings,
                                              float in_hull_tolerance)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance = in_hull_tolerance;
+    toJph(in_settings)->mHullTolerance = in_hull_tolerance;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -899,50 +901,43 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
 JPC_API void
 JPC_Shape_AddRef(JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    reinterpret_cast<JPH::Shape *>(in_shape)->AddRef();
+    toJph(in_shape)->AddRef();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Shape_Release(JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    reinterpret_cast<JPH::Shape *>(in_shape)->Release();
+    toJph(in_shape)->Release();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_Shape_GetRefCount(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetRefCount();
+    return toJph(in_shape)->GetRefCount();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ShapeType
 JPC_Shape_GetType(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return static_cast<JPC_ShapeType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetType());
+    return toJpc(toJph(in_shape)->GetType());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ShapeSubType
 JPC_Shape_GetSubType(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return static_cast<JPC_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetSubType());
+    return toJpc(toJph(in_shape)->GetSubType());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint64_t
 JPC_Shape_GetUserData(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetUserData();
+    return toJph(in_shape)->GetUserData();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<JPH::Shape *>(in_shape)->SetUserData(in_user_data);
+    return toJph(in_shape)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1305,9 +1300,7 @@ JPC_Body_IsCollisionCacheInvalid(const JPC_Body *in_body)
 JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body)
 {
-    const JPC_Shape* shape = toJpc(toJph(in_body)->GetShape());
-    JPC_Shape_AddRef(const_cast<JPC_Shape *>(shape));
-    return shape;
+    return toJpc(toJph(in_body)->GetShape());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void

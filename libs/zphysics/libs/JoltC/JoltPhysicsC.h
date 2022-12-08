@@ -1106,7 +1106,6 @@ JPC_Body_IsInBroadPhase(const JPC_Body *in_body);
 JPC_API bool
 JPC_Body_IsCollisionCacheInvalid(const JPC_Body *in_body);
 
-/// Increments reference count. Call JPC_Shape_Release() when you don't need returned pointer anymore.
 JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body);
 
