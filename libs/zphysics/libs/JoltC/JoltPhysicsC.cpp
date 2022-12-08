@@ -36,16 +36,25 @@ JPH_SUPPRESS_WARNINGS
 FN(toJph)(const JPC_Body *in) { assert(in); return reinterpret_cast<const JPH::Body *>(in); }
 FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
 FN(toJph)(const JPC_SubShapeID *in) { assert(in); return reinterpret_cast<const JPH::SubShapeID *>(in); }
+FN(toJph)(const JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<const JPH::PhysicsSystem *>(in); }
 FN(toJph)(JPC_Body *in) { assert(in); return reinterpret_cast<JPH::Body *>(in); }
 FN(toJph)(JPC_MotionType in) { return static_cast<JPH::EMotionType>(in); }
+FN(toJph)(JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<JPH::PhysicsSystem *>(in); }
 
 FN(toJpc)(const JPH::Shape *in) { assert(in); return reinterpret_cast<const JPC_Shape *>(in); }
+FN(toJpc)(const JPH::BodyInterface *in) { assert(in); return reinterpret_cast<const JPC_BodyInterface *>(in); }
+FN(toJpc)(const JPH::BodyLockInterface *in) {
+    assert(in); return reinterpret_cast<const JPC_BodyLockInterface *>(in);
+}
 FN(toJpc)(const JPH::TransformedShape *in) { assert(in); return reinterpret_cast<const JPC_TransformedShape *>(in); }
+FN(toJpc)(const JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<const JPC_CollisionGroup *>(in); }
 FN(toJpc)(const JPH::BodyCreationSettings *in) {
     assert(in); return reinterpret_cast<const JPC_BodyCreationSettings *>(in);
 }
 FN(toJpc)(JPH::MotionProperties *in) { assert(in); return reinterpret_cast<JPC_MotionProperties *>(in); }
+FN(toJpc)(JPH::BodyInterface *in) { assert(in); return reinterpret_cast<JPC_BodyInterface *>(in); }
 FN(toJpc)(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_CollisionGroup *>(in); }
+FN(toJpc)(JPH::PhysicsSystem *in) { assert(in); return reinterpret_cast<JPC_PhysicsSystem *>(in); }
 FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
@@ -149,7 +158,7 @@ JPC_CollisionGroup_SetDefault(JPC_CollisionGroup *out_group)
 {
     assert(out_group != nullptr);
     const JPH::CollisionGroup group;
-    *out_group = *reinterpret_cast<const JPC_CollisionGroup *>(&group);
+    *out_group = *toJpc(&group);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -157,7 +166,7 @@ JPC_BodyCreationSettings_SetDefault(JPC_BodyCreationSettings *out_settings)
 {
     assert(out_settings != nullptr);
     const JPH::BodyCreationSettings settings;
-    *out_settings = *reinterpret_cast<const JPC_BodyCreationSettings *>(&settings);
+    *out_settings = *toJpc(&settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -251,90 +260,73 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
         reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
         reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
 
-    return reinterpret_cast<JPC_PhysicsSystem *>(physics_system);
+    return toJpc(physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    delete reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    delete toJph(in_physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_SetBodyActivationListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    physics_system->SetBodyActivationListener(
+    toJph(in_physics_system)->SetBodyActivationListener(
         reinterpret_cast<JPH::BodyActivationListener *>(in_listener));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void *
 JPC_PhysicsSystem_GetBodyActivationListener(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return physics_system->GetBodyActivationListener();
+    return toJph(in_physics_system)->GetBodyActivationListener();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_SetContactListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    physics_system->SetContactListener(reinterpret_cast<JPH::ContactListener *>(in_listener));
+    toJph(in_physics_system)->SetContactListener(reinterpret_cast<JPH::ContactListener *>(in_listener));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void *
 JPC_PhysicsSystem_GetContactListener(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return physics_system->GetContactListener();
+    return toJph(in_physics_system)->GetContactListener();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_PhysicsSystem_GetNumBodies(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetNumBodies();
+    return toJph(in_physics_system)->GetNumBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_PhysicsSystem_GetNumActiveBodies(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetNumActiveBodies();
+    return toJph(in_physics_system)->GetNumActiveBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_PhysicsSystem_GetMaxBodies(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetMaxBodies();
+    return toJph(in_physics_system)->GetMaxBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterface());
+    return toJpc(&toJph(in_physics_system)->GetBodyInterface());
 }
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterfaceNoLock());
+    return toJpc(&toJph(in_physics_system)->GetBodyInterfaceNoLock());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system)->OptimizeBroadPhase();
+    toJph(in_physics_system)->OptimizeBroadPhase();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -345,8 +337,8 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          JPC_TempAllocator *in_temp_allocator,
                          JPC_JobSystem *in_job_system)
 {
-    assert(in_physics_system != nullptr && in_temp_allocator != nullptr && in_job_system != nullptr);
-    reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system)->Update(
+    assert(in_temp_allocator != nullptr && in_job_system != nullptr);
+    toJph(in_physics_system)->Update(
         in_delta_time,
         in_collision_steps,
         in_integration_sub_steps,
@@ -357,16 +349,12 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterface());
+    return toJpc(&toJph(in_physics_system)->GetBodyLockInterface());
 }
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterfaceNoLock());
+    return toJpc(&toJph(in_physics_system)->GetBodyLockInterfaceNoLock());
 }
 //--------------------------------------------------------------------------------------------------
 //
