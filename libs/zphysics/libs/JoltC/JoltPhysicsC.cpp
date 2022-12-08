@@ -23,7 +23,6 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
-#include <Jolt/Physics/Body/BodyLockMulti.h>
 
 JPH_SUPPRESS_WARNINGS
 
@@ -191,20 +190,17 @@ FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
 
 #undef FN
 
-static inline JPH::Vec3 loadVec3(const float in[3])
-{
+static inline JPH::Vec3 loadVec3(const float in[3]) {
     assert(in != nullptr);
     return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 }
 
-static inline JPH::Vec4 loadVec4(const float in[4])
-{
+static inline JPH::Vec4 loadVec4(const float in[4]) {
     assert(in != nullptr);
     return JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in));
 }
 
-static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
-{
+static inline JPH::RVec3 loadRVec3(const JPC_Real in[3]) {
     assert(in != nullptr);
 #if JPC_DOUBLE_PRECISION == 0
     return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
@@ -213,20 +209,17 @@ static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
 #endif
 }
 
-static inline void storeVec3(float out[3], JPH::Vec3Arg in)
-{
+static inline void storeVec3(float out[3], JPH::Vec3Arg in) {
     assert(out != nullptr);
     in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
 }
 
-static inline void storeVec4(float out[4], JPH::Vec4Arg in)
-{
+static inline void storeVec4(float out[4], JPH::Vec4Arg in) {
     assert(out != nullptr);
     in.StoreFloat4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
-static inline void storeMat44(float out[16], JPH::Mat44Arg in)
-{
+static inline void storeMat44(float out[16], JPH::Mat44Arg in) {
     assert(out != nullptr);
     in.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out));
 }
@@ -607,7 +600,6 @@ JPC_ConvexShapeSettings_SetDensity(JPC_ConvexShapeSettings *in_settings, float i
 JPC_API JPC_BoxShapeSettings *
 JPC_BoxShapeSettings_Create(const float in_half_extent[3])
 {
-    assert(in_half_extent != nullptr);
     auto settings = new JPH::BoxShapeSettings(loadVec3(in_half_extent));
     settings->AddRef();
     return toJpc(settings);
@@ -616,14 +608,12 @@ JPC_BoxShapeSettings_Create(const float in_half_extent[3])
 JPC_API void
 JPC_BoxShapeSettings_GetHalfExtent(const JPC_BoxShapeSettings *in_settings, float out_half_extent[3])
 {
-    assert(out_half_extent != nullptr);
     storeVec3(out_half_extent, toJph(in_settings)->mHalfExtent);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BoxShapeSettings_SetHalfExtent(JPC_BoxShapeSettings *in_settings, const float in_half_extent[3])
 {
-    assert(in_half_extent != nullptr);
     toJph(in_settings)->mHalfExtent = loadVec3(in_half_extent);
 }
 //--------------------------------------------------------------------------------------------------
@@ -670,7 +660,6 @@ JPC_SphereShapeSettings_SetRadius(JPC_SphereShapeSettings *in_settings, float in
 JPC_API JPC_TriangleShapeSettings *
 JPC_TriangleShapeSettings_Create(const float in_v1[3], const float in_v2[3], const float in_v3[3])
 {
-    assert(in_v1 != nullptr && in_v2 != nullptr && in_v3 != nullptr);
     auto settings = new JPH::TriangleShapeSettings(loadVec3(in_v1), loadVec3(in_v2), loadVec3(in_v3));
     settings->AddRef();
     return toJpc(settings);
@@ -682,7 +671,6 @@ JPC_TriangleShapeSettings_SetVertices(JPC_TriangleShapeSettings *in_settings,
                                       const float in_v2[3],
                                       const float in_v3[3])
 {
-    assert(in_v1 != nullptr && in_v2 != nullptr && in_v3 != nullptr);
     JPH::TriangleShapeSettings *settings = toJph(in_settings);
     settings->mV1 = loadVec3(in_v1);
     settings->mV2 = loadVec3(in_v2);
@@ -695,7 +683,6 @@ JPC_TriangleShapeSettings_GetVertices(const JPC_TriangleShapeSettings *in_settin
                                       float out_v2[3],
                                       float out_v3[3])
 {
-    assert(out_v1 != nullptr && out_v2 != nullptr && out_v3 != nullptr);
     const JPH::TriangleShapeSettings *settings = toJph(in_settings);
     storeVec3(out_v1, settings->mV1);
     storeVec3(out_v2, settings->mV2);
@@ -997,7 +984,6 @@ JPC_BodyInterface_SetLinearVelocity(JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     const float in_velocity[3])
 {
-    assert(in_velocity != nullptr);
     toJph(in_iface)->SetLinearVelocity(toJph(in_body_id), loadVec3(in_velocity));
 }
 //--------------------------------------------------------------------------------------------------
@@ -1385,8 +1371,7 @@ JPC_MotionProperties_GetMotionQuality(const JPC_MotionProperties *in_properties)
 {
     assert(in_properties != nullptr);
     return static_cast<JPC_MotionQuality>(
-        reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMotionQuality()
-    );
+        reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMotionQuality());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
