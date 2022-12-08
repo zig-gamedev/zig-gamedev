@@ -40,7 +40,9 @@ JPH_SUPPRESS_WARNINGS
 FN(toJph)(JPC_BodyID in) { return JPH::BodyID(in); }
 FN(toJpc)(JPH::BodyID in) { return in.GetIndexAndSequenceNumber(); }
 
+FN(toJpc)(const JPH::Body *in) { assert(in); return reinterpret_cast<const JPC_Body *>(in); }
 FN(toJph)(const JPC_Body *in) { assert(in); return reinterpret_cast<const JPH::Body *>(in); }
+FN(toJpc)(JPH::Body *in) { assert(in); return reinterpret_cast<JPC_Body *>(in); }
 FN(toJph)(JPC_Body *in) { assert(in); return reinterpret_cast<JPH::Body *>(in); }
 
 FN(toJph)(const JPC_PhysicsMaterial *in) { assert(in); return reinterpret_cast<const JPH::PhysicsMaterial *>(in); }
@@ -154,7 +156,6 @@ FN(toJpc)(const JPH::BodyLockInterface *in) {
     assert(in); return reinterpret_cast<const JPC_BodyLockInterface *>(in);
 }
 
-FN(toJph)(JPC_MotionType in) { return static_cast<JPH::EMotionType>(in); }
 
 FN(toJph)(const JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<const JPH::PhysicsSystem *>(in); }
 FN(toJph)(JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<JPH::PhysicsSystem *>(in); }
@@ -166,40 +167,45 @@ FN(toJpc)(JPH::Shape *in) { assert(in); return reinterpret_cast<JPC_Shape *>(in)
 FN(toJph)(JPC_Shape *in) { assert(in); return reinterpret_cast<JPH::Shape *>(in); }
 
 FN(toJpc)(const JPH::BodyInterface *in) { assert(in); return reinterpret_cast<const JPC_BodyInterface *>(in); }
+FN(toJph)(const JPC_BodyInterface *in) { assert(in); return reinterpret_cast<const JPH::BodyInterface *>(in); }
 FN(toJpc)(JPH::BodyInterface *in) { assert(in); return reinterpret_cast<JPC_BodyInterface *>(in); }
+FN(toJph)(JPC_BodyInterface *in) { assert(in); return reinterpret_cast<JPH::BodyInterface *>(in); }
 
 FN(toJpc)(const JPH::TransformedShape *in) { assert(in); return reinterpret_cast<const JPC_TransformedShape *>(in); }
 
 FN(toJpc)(const JPH::BodyCreationSettings *in) {
     assert(in); return reinterpret_cast<const JPC_BodyCreationSettings *>(in);
 }
+FN(toJph)(const JPC_BodyCreationSettings *in) {
+    assert(in); return reinterpret_cast<const JPH::BodyCreationSettings *>(in);
+}
 
 FN(toJpc)(JPH::MotionProperties *in) { assert(in); return reinterpret_cast<JPC_MotionProperties *>(in); }
 
-FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
-
 FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
-
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
-
 FN(toJpc)(JPH::EShapeType in) { return static_cast<JPC_ShapeType>(in); }
-
 FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
+FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
+FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
 
 #undef FN
 
 static inline JPH::Vec3 loadVec3(const float in[3])
 {
+    assert(in != nullptr);
     return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 }
 
 static inline JPH::Vec4 loadVec4(const float in[4])
 {
+    assert(in != nullptr);
     return JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in));
 }
 
 static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
 {
+    assert(in != nullptr);
 #if JPC_DOUBLE_PRECISION == 0
     return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 #else
@@ -209,16 +215,19 @@ static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
 
 static inline void storeVec3(float out[3], JPH::Vec3Arg in)
 {
+    assert(out != nullptr);
     in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
 }
 
 static inline void storeVec4(float out[4], JPH::Vec4Arg in)
 {
+    assert(out != nullptr);
     in.StoreFloat4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
 static inline void storeMat44(float out[16], JPH::Mat44Arg in)
 {
+    assert(out != nullptr);
     in.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
@@ -945,35 +954,27 @@ JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data)
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Body *
-JPC_BodyInterface_CreateBody(JPC_BodyInterface *in_iface, const JPC_BodyCreationSettings *in_setting)
+JPC_BodyInterface_CreateBody(JPC_BodyInterface *in_iface, const JPC_BodyCreationSettings *in_settings)
 {
-    assert(in_iface != nullptr && in_setting != nullptr);
-    auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
-    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
-    return reinterpret_cast<JPC_Body *>(iface->CreateBody(*settings));
+    return toJpc(toJph(in_iface)->CreateBody(*toJph(in_settings)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_DestroyBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->DestroyBody(JPH::BodyID(in_body_id));
+    toJph(in_iface)->DestroyBody(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_AddBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_Activation in_mode)
 {
-    assert(in_iface != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->AddBody(
-        JPH::BodyID(in_body_id),
-        static_cast<JPH::EActivation>(in_mode));
+    toJph(in_iface)->AddBody(toJph(in_body_id), static_cast<JPH::EActivation>(in_mode));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_RemoveBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->RemoveBody(JPH::BodyID(in_body_id));
+    toJph(in_iface)->RemoveBody(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_BodyID
@@ -981,20 +982,14 @@ JPC_BodyInterface_CreateAndAddBody(JPC_BodyInterface *in_iface,
                                    const JPC_BodyCreationSettings *in_settings,
                                    JPC_Activation in_mode)
 {
-    assert(in_iface != nullptr && in_settings != nullptr);
-    auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
-    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_settings);
-    const JPH::BodyID body_id = iface->CreateAndAddBody(
-        *settings,
-        static_cast<JPH::EActivation>(in_mode));
-    return body_id.GetIndexAndSequenceNumber();
+    return toJpc(toJph(in_iface)->CreateAndAddBody(*toJph(in_settings),
+        static_cast<JPH::EActivation>(in_mode)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_BodyInterface_IsAdded(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsAdded(JPH::BodyID(in_body_id));
+    return toJph(in_iface)->IsAdded(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1002,10 +997,8 @@ JPC_BodyInterface_SetLinearVelocity(JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     const float in_velocity[3])
 {
-    assert(in_iface != nullptr && in_velocity != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->SetLinearVelocity(
-        JPH::BodyID(in_body_id),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_velocity)));
+    assert(in_velocity != nullptr);
+    toJph(in_iface)->SetLinearVelocity(toJph(in_body_id), loadVec3(in_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1013,10 +1006,7 @@ JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     float out_velocity[3])
 {
-    assert(in_iface != nullptr && out_velocity != nullptr);
-    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetLinearVelocity(
-        JPH::BodyID(in_body_id));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+    storeVec3(out_velocity, toJph(in_iface)->GetLinearVelocity(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1024,17 +1014,13 @@ JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
                                           float out_position[3])
 {
-    assert(in_iface != nullptr && out_position != nullptr);
-    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetCenterOfMassPosition(
-        JPH::BodyID(in_body_id));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+    storeVec3(out_position, toJph(in_iface)->GetCenterOfMassPosition(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsActive(JPH::BodyID(in_body_id));
+    return toJph(in_iface)->IsActive(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1098,7 +1084,7 @@ JPC_Body_GetMotionType(const JPC_Body *in_body)
 JPC_API void
 JPC_Body_SetMotionType(JPC_Body *in_body, JPC_MotionType in_motion_type)
 {
-    toJph(in_body)->SetMotionType(toJph(in_motion_type));
+    toJph(in_body)->SetMotionType(static_cast<JPH::EMotionType>(in_motion_type));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_BroadPhaseLayer
