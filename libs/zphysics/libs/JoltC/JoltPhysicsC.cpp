@@ -222,6 +222,15 @@ static inline JPH::RVec3 loadRVec3(const JPC_Real in[3]) {
 #endif
 }
 
+static inline void storeRVec3(JPC_Real out[3], JPH::RVec3Arg in) {
+    assert(out != nullptr);
+#if JPC_DOUBLE_PRECISION == 0
+    in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
+#else
+    in.StoreDouble3(reinterpret_cast<JPH::Double3 *>(out));
+#endif
+}
+
 static inline void storeVec3(float out[3], JPH::Vec3Arg in) {
     assert(out != nullptr);
     in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
@@ -1009,9 +1018,9 @@ JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
 JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
-                                          float out_position[3])
+                                          JPC_Real out_position[3])
 {
-    storeVec3(out_position, toJph(in_iface)->GetCenterOfMassPosition(toJph(in_body_id)));
+    storeRVec3(out_position, toJph(in_iface)->GetCenterOfMassPosition(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
@@ -1287,9 +1296,9 @@ JPC_Body_GetShape(const JPC_Body *in_body)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetPosition(const JPC_Body *in_body, float out_position[3])
+JPC_Body_GetPosition(const JPC_Body *in_body, JPC_Real out_position[3])
 {
-    storeVec3(out_position, toJph(in_body)->GetPosition());
+    storeRVec3(out_position, toJph(in_body)->GetPosition());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1299,21 +1308,43 @@ JPC_Body_GetRotation(const JPC_Body *in_body, float out_rotation[4])
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_transform[16])
+JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_rotation[9], JPC_Real out_translation[3])
 {
-    storeMat44(out_transform, toJph(in_body)->GetWorldTransform());
+    const JPH::RMat44 m = toJph(in_body)->GetWorldTransform();
+    storeVec3(&out_rotation[0], m.GetColumn3(0));
+    storeVec3(&out_rotation[3], m.GetColumn3(1));
+    storeVec3(&out_rotation[6], m.GetColumn3(2));
+    storeRVec3(&out_translation[0], m.GetTranslation());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, float out_position[3])
+JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, JPC_Real out_position[3])
 {
-    storeVec3(out_position, toJph(in_body)->GetCenterOfMassPosition());
+    storeRVec3(out_position, toJph(in_body)->GetCenterOfMassPosition());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body, float out_transform[16])
+JPC_Body_GetCenterOfMassTransform(const JPC_Body *in_body,
+                                  float out_rotation[9],
+                                  JPC_Real out_translation[3])
 {
-    storeMat44(out_transform, toJph(in_body)->GetInverseCenterOfMassTransform());
+    const JPH::RMat44 m = toJph(in_body)->GetCenterOfMassTransform();
+    storeVec3(&out_rotation[0], m.GetColumn3(0));
+    storeVec3(&out_rotation[3], m.GetColumn3(1));
+    storeVec3(&out_rotation[6], m.GetColumn3(2));
+    storeRVec3(&out_translation[0], m.GetTranslation());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body,
+                                         float out_rotation[9],
+                                         JPC_Real out_translation[3])
+{
+    const JPH::RMat44 m = toJph(in_body)->GetInverseCenterOfMassTransform();
+    storeVec3(&out_rotation[0], m.GetColumn3(0));
+    storeVec3(&out_rotation[3], m.GetColumn3(1));
+    storeVec3(&out_rotation[6], m.GetColumn3(2));
+    storeRVec3(&out_translation[0], m.GetTranslation());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void

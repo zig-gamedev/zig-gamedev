@@ -200,26 +200,30 @@ typedef struct JPC_MassProperties
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
 typedef struct JPC_MotionProperties
 {
-    alignas(16) float linear_velocity[4]; // 4th element is ignored
-    alignas(16) float angular_velocity[4]; // 4th element is ignored
-    alignas(16) float inv_inertia_diagnonal[4]; // 4th element is ignored
-    alignas(16) float inertia_rotation[4];
+    alignas(16) float  linear_velocity[4]; // 4th element is ignored
+    alignas(16) float  angular_velocity[4]; // 4th element is ignored
+    alignas(16) float  inv_inertia_diagnonal[4]; // 4th element is ignored
+    alignas(16) float  inertia_rotation[4];
 
-    float             force[3];
-    float             torque[3];
-    float             inv_mass;
-    float             linear_damping;
-    float             angular_daming;
-    float             max_linear_velocity;
-    float             max_angular_velocity;
-    float             gravity_factor;
-    uint32_t          index_in_active_bodies;
-    uint32_t          island_index;
+    float              force[3];
+    float              torque[3];
+    float              inv_mass;
+    float              linear_damping;
+    float              angular_daming;
+    float              max_linear_velocity;
+    float              max_angular_velocity;
+    float              gravity_factor;
+    uint32_t           index_in_active_bodies;
+    uint32_t           island_index;
 
-    JPC_MotionQuality motion_quality;
-    bool              allow_sleeping;
+    JPC_MotionQuality  motion_quality;
+    bool               allow_sleeping;
 
-    float             reserved[13];
+#if JPC_DOUBLE_PRECISION == 1
+    alignas(8) uint8_t reserved[76];
+#else
+    alignas(4) uint8_t reserved[52];
+#endif
 
 #if JPC_ENABLE_ASSERTS == 1
     JPC_MotionType    cached_motion_type;
@@ -972,7 +976,7 @@ JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
 JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
-                                          float out_position[3]);
+                                          JPC_Real out_position[3]);
 JPC_API bool
 JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 //--------------------------------------------------------------------------------------------------
@@ -1110,20 +1114,25 @@ JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body);
 
 JPC_API void
-JPC_Body_GetPosition(const JPC_Body *in_body, float out_position[3]);
+JPC_Body_GetPosition(const JPC_Body *in_body, JPC_Real out_position[3]);
 
 JPC_API void
 JPC_Body_GetRotation(const JPC_Body *in_body, float out_rotation[4]);
 
 JPC_API void
-JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_transform[16]);
+JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_rotation[9], JPC_Real out_translation[3]);
 
 JPC_API void
-JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, float out_position_com[3]);
+JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, JPC_Real out_position[3]);
 
 JPC_API void
-JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body, float out_transform[16]);
-
+JPC_Body_GetCenterOfMassTransform(const JPC_Body *in_body,
+                                  float out_rotation[9],
+                                  JPC_Real out_translation[3]);
+JPC_API void
+JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body,
+                                         float out_rotation[9],
+                                         JPC_Real out_translation[3]);
 JPC_API void
 JPC_Body_GetWorldSpaceBounds(const JPC_Body *in_body, float out_min[3], float out_max[3]);
 
