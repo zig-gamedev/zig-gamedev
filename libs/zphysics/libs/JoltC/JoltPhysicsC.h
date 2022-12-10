@@ -241,7 +241,7 @@ typedef struct JPC_CollisionGroup
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 typedef struct JPC_BodyCreationSettings
 {
-    alignas(16) float          position[4]; // 4th element is ignored
+    JPC_RVEC_ALIGN JPC_Real    position[4]; // 4th element is ignored
     alignas(16) float          rotation[4];
     alignas(16) float          linear_velocity[4]; // 4th element is ignored
     alignas(16) float          angular_velocity[4]; // 4th element is ignored
@@ -270,25 +270,25 @@ typedef struct JPC_BodyCreationSettings
 // NOTE: Needs to be kept in sync with JPH::Body
 typedef struct JPC_Body
 {
-    alignas(16) float     position[4]; // 4th element is ignored
-    alignas(16) float     rotation[4];
-    alignas(16) float     bounds_min[4]; // 4th element is ignored
-    alignas(16) float     bounds_max[4]; // 4th element is ignored
+    JPC_RVEC_ALIGN JPC_Real position[4]; // 4th element is ignored
+    alignas(16) float       rotation[4];
+    alignas(16) float       bounds_min[4]; // 4th element is ignored
+    alignas(16) float       bounds_max[4]; // 4th element is ignored
 
-    const JPC_Shape *     shape;
-    JPC_MotionProperties *motion_properties; // will be NULL for static bodies
-    uint64_t              user_data;
-    JPC_CollisionGroup    collision_group;
+    const JPC_Shape *       shape;
+    JPC_MotionProperties *  motion_properties; // will be NULL for static bodies
+    uint64_t                user_data;
+    JPC_CollisionGroup      collision_group;
 
-    float                 friction;
-    float                 restitution;
-    JPC_BodyID            id;
+    float                   friction;
+    float                   restitution;
+    JPC_BodyID              id;
 
-    JPC_ObjectLayer       object_layer;
+    JPC_ObjectLayer         object_layer;
 
-    JPC_BroadPhaseLayer   broad_phase_layer;
-    JPC_MotionType        motion_type;
-    uint8_t               flags;
+    JPC_BroadPhaseLayer     broad_phase_layer;
+    JPC_MotionType          motion_type;
+    uint8_t                 flags;
 } JPC_Body;
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
@@ -413,12 +413,12 @@ typedef struct JPC_ContactListenerVTable
 // NOTE: Needs to be kept in sync with JPH::TransformedShape
 typedef struct JPC_TransformedShape
 {
-    alignas(16) float     shape_position_com[4]; // 4th element is ignored
-    alignas(16) float     shape_rotation[4];
-    const JPC_Shape *     shape;
-    float                 shape_scale[3];
-    JPC_BodyID            body_id;
-    JPC_SubShapeIDCreator sub_shape_id_creator;
+    JPC_RVEC_ALIGN JPC_Real shape_position_com[4]; // 4th element is ignored
+    alignas(16) float       shape_rotation[4];
+    const JPC_Shape *       shape;
+    float                   shape_scale[3];
+    JPC_BodyID              body_id;
+    JPC_SubShapeIDCreator   sub_shape_id_creator;
 } JPC_TransformedShape;
 
 // NOTE: Needs to be kept in sync with JPH::BodyLockRead
