@@ -39,7 +39,7 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
 pub fn build(b: *std.build.Builder) void {
     const build_mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, build_mode, target);
+    const tests = buildTests(b, build_mode, target, .{});
 
     const test_step = b.step("test", "Run zphysics tests");
     test_step.dependOn(&tests.step);
