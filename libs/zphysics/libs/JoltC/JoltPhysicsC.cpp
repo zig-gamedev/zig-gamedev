@@ -188,6 +188,22 @@ FN(toJph)(const JPC_MotionProperties *in) { assert(in); return reinterpret_cast<
 FN(toJpc)(JPH::MotionProperties *in) { assert(in); return reinterpret_cast<JPC_MotionProperties *>(in); }
 FN(toJph)(JPC_MotionProperties *in) { assert(in); return reinterpret_cast<JPH::MotionProperties *>(in); }
 
+FN(toJpc)(const JPH::SubShapeIDPair *in) {
+    assert(in); return reinterpret_cast<const JPC_SubShapeIDPair *>(in);
+}
+
+FN(toJpc)(const JPH::ContactManifold *in) {
+    assert(in); return reinterpret_cast<const JPC_ContactManifold *>(in);
+}
+
+FN(toJpc)(const JPH::CollideShapeResult *in) {
+    assert(in); return reinterpret_cast<const JPC_CollideShapeResult *>(in);
+}
+
+FN(toJpc)(JPH::ContactSettings *in) {
+    assert(in); return reinterpret_cast<JPC_ContactSettings *>(in);
+}
+
 FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
 FN(toJpc)(JPH::EShapeType in) { return static_cast<JPC_ShapeType>(in); }
@@ -384,6 +400,62 @@ JPC_JobSystem_Destroy(JPC_JobSystem *in_job_system)
 // JPC_PhysicsSystem
 //
 //--------------------------------------------------------------------------------------------------
+class ContactListener : public JPH::ContactListener
+{
+public:
+    JPH::ValidateResult OnContactValidate(
+        const JPH::Body &inBody1,
+        const JPH::Body &inBody2,
+        JPH::RVec3Arg inBaseOffset,
+        const JPH::CollideShapeResult &inCollisionResult) override
+    {
+        JPC_Real base_offset[3];
+        storeRVec3(base_offset, inBaseOffset);
+
+        const JPC_ValidateResult res = c_listener->vtbl->OnContactValidate(
+            c_listener, toJpc(&inBody1), toJpc(&inBody2), base_offset, toJpc(&inCollisionResult));
+
+        return static_cast<JPH::ValidateResult>(res);
+    }
+
+    void OnContactAdded(
+        const JPH::Body &inBody1,
+        const JPH::Body &inBody2,
+        const JPH::ContactManifold &inManifold,
+        JPH::ContactSettings &ioSettings) override
+    {
+        c_listener->vtbl->OnContactAdded(
+            c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+    }
+
+    void OnContactPersisted(
+        const JPH::Body &inBody1,
+        const JPH::Body &inBody2,
+        const JPH::ContactManifold &inManifold,
+        JPH::ContactSettings &ioSettings) override
+    {
+        c_listener->vtbl->OnContactPersisted(
+            c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+    }
+
+    void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
+    {
+        c_listener->vtbl->OnContactRemoved(c_listener, toJpc(&inSubShapePair));
+    }
+
+    struct CListener
+    {
+        JPC_ContactListenerVTable *vtbl;
+    };
+    CListener *c_listener;
+};
+
+struct PhysicsSystemData
+{
+    uint64_t safety_token = 0xC0DEC0DEC0DEC0DE;
+    ContactListener *contact_listener = nullptr;
+};
+
 JPC_API JPC_PhysicsSystem *
 JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
                          uint32_t in_num_body_mutexes,
@@ -397,7 +469,11 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
     assert(in_object_vs_broad_phase_layer_filter != nullptr);
     assert(in_object_layer_pair_filter != nullptr);
 
-    auto physics_system = new JPH::PhysicsSystem();
+    void *mem = JPH::Allocate(sizeof(JPH::PhysicsSystem) + sizeof(PhysicsSystemData));
+    auto physics_system = ::new (mem) JPH::PhysicsSystem();
+
+    PhysicsSystemData* data = new (static_cast<uint8_t *>(mem) + sizeof(JPH::PhysicsSystem)) PhysicsSystemData();
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
 
     physics_system->Init(
         in_max_bodies,
@@ -414,7 +490,13 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
 JPC_API void
 JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
 {
-    delete toJph(in_physics_system);
+    auto data = reinterpret_cast<PhysicsSystemData *>(
+        reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+
+    delete data->contact_listener;
+
+    toJph(in_physics_system)->~PhysicsSystem();
+    JPH::Free(in_physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -433,13 +515,30 @@ JPC_PhysicsSystem_GetBodyActivationListener(const JPC_PhysicsSystem *in_physics_
 JPC_API void
 JPC_PhysicsSystem_SetContactListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
 {
-    toJph(in_physics_system)->SetContactListener(reinterpret_cast<JPH::ContactListener *>(in_listener));
+    if (in_listener == nullptr)
+    {
+        toJph(in_physics_system)->SetContactListener(nullptr);
+        return;
+    }
+
+    auto data = reinterpret_cast<PhysicsSystemData *>(
+        reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+
+    if (data->contact_listener == nullptr)
+        data->contact_listener = new ContactListener();
+
+    toJph(in_physics_system)->SetContactListener(data->contact_listener);
+
+    data->contact_listener->c_listener = static_cast<ContactListener::CListener *>(in_listener);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void *
 JPC_PhysicsSystem_GetContactListener(const JPC_PhysicsSystem *in_physics_system)
 {
-    return toJph(in_physics_system)->GetContactListener();
+    auto listener = static_cast<ContactListener *>(toJph(in_physics_system)->GetContactListener());
+    if (listener == nullptr)
+        return nullptr;
+    return listener->c_listener;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t

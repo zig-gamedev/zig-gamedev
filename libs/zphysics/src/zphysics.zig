@@ -99,8 +99,8 @@ pub const BodyActivationListenerVTable = extern struct {
 };
 
 pub const ContactListenerVTable = extern struct {
-    reserved0: ?*const anyopaque = null,
-    reserved1: ?*const anyopaque = null,
+    //reserved0: ?*const anyopaque = null,
+    //reserved1: ?*const anyopaque = null,
 
     onContactValidate: *const fn (
         self: *anyopaque,

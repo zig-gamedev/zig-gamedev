@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------------------------------
 typedef struct BPLayerInterfaceImpl
 {
-    const JPC_BroadPhaseLayerInterfaceVTable *vtable; // VTable has to be the first filed in the struct.
+    const JPC_BroadPhaseLayerInterfaceVTable *vtable; // VTable has to be the first field in the struct.
     JPC_BroadPhaseLayer                       object_to_broad_phase[NUM_OBJ_LAYERS];
 } BPLayerInterfaceImpl;
 
@@ -68,13 +68,14 @@ BPLayerInterface_Init(void)
 //--------------------------------------------------------------------------------------------------
 typedef struct MyContactListener
 {
-    const JPC_ContactListenerVTable *vtable; // VTable has to be the first filed in the struct.
+    const JPC_ContactListenerVTable *vtable; // VTable has to be the first field in the struct.
 } MyContactListener;
 
 static JPC_ValidateResult
 MyContactListener_OnContactValidate(void *in_self,
                                     const JPC_Body *in_body1,
                                     const JPC_Body *in_body2,
+                                    const JPC_Real in_base_offset[3],
                                     const JPC_CollideShapeResult *in_collision_result)
 {
     const JPC_BodyID body1_id = JPC_Body_GetID(in_body1);
@@ -83,8 +84,14 @@ MyContactListener_OnContactValidate(void *in_self,
     fprintf(stderr, "\tOnContactValidate(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
             JPC_BodyID_GetSequenceNumber(body1_id), JPC_BodyID_GetIndex(body1_id),
             JPC_BodyID_GetSequenceNumber(body2_id), JPC_BodyID_GetIndex(body2_id));
+    fprintf(stderr,
+            "\tOnContactValidate(): in_base_offset (%f, %f, %f)\n",
+            in_base_offset[0], in_base_offset[1], in_base_offset[2]);
+    fprintf(stderr, "\tOnContactValidate(): penetration_depth (%f)\n", in_collision_result->penetration_depth);
+    fprintf(stderr, "\tOnContactValidate(): shape1_sub_shape_id (%d)\n", in_collision_result->shape1_sub_shape_id);
+    fprintf(stderr, "\tOnContactValidate(): shape2_sub_shape_id (%d)\n", in_collision_result->shape2_sub_shape_id);
+    fprintf(stderr, "\tOnContactValidate(): body2_id (%d)\n", in_collision_result->body2_id);
 #endif
-
     return JPC_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS;
 }
 
@@ -155,7 +162,7 @@ MyContactListener_Init(void)
 //--------------------------------------------------------------------------------------------------
 typedef struct MyActivationListener
 {
-    const JPC_BodyActivationListenerVTable *vtable; // VTable has to be the first filed in the struct.
+    const JPC_BodyActivationListenerVTable *vtable; // VTable has to be the first field in the struct.
 } MyActivationListener;
 
 static void
@@ -324,6 +331,8 @@ JoltCTest_Basic2(void)
     JPC_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);
 
     MyContactListener contact_listener = MyContactListener_Init();
+    JPC_PhysicsSystem_SetContactListener(physics_system, &contact_listener);
+    JPC_PhysicsSystem_SetContactListener(physics_system, NULL);
     JPC_PhysicsSystem_SetContactListener(physics_system, &contact_listener);
 
     const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
@@ -504,6 +513,11 @@ JoltCTest_HelloWorld(void)
         if (num_body_ids != 1) return 0;
         if (body_ids[0] != sphere_id) return 0;
     }
+
+#ifdef PRINT_OUTPUT
+    if (sizeof(JPC_Real) == 8)
+        fprintf(stderr, "Using double precision computation...\n");
+#endif
 
     uint32_t step = 0;
     while (JPC_BodyInterface_IsActive(body_interface, sphere_id))

@@ -386,13 +386,11 @@ typedef struct JPC_BodyActivationListenerVTable
 // NOTE: Needs to be kept in sync with JPH::ContactListener
 typedef struct JPC_ContactListenerVTable
 {
-    const void *reserved0;
-    const void *reserved1;
-
     JPC_ValidateResult
     (*OnContactValidate)(void *in_self,
                          const JPC_Body *in_body1,
                          const JPC_Body *in_body2,
+                         const JPC_Real in_base_offset[3],
                          const JPC_CollideShapeResult *in_collision_result);
     void
     (*OnContactAdded)(void *in_self,
