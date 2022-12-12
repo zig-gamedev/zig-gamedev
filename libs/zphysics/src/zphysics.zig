@@ -1,6 +1,18 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const c = @cImport(@cInclude("JoltPhysicsC.h"));
+const options = @import("zphysics_options");
+const c = @cImport({
+    if (options.use_double_precision) @cDefine("JPH_DOUBLE_PRECISION", "");
+    if (options.enable_asserts) @cDefine("JPH_ENABLE_ASSERTS", "");
+    @cInclude("JoltPhysicsC.h");
+});
+
+pub const Real = c.JPC_Real;
+comptime {
+    assert(if (options.use_double_precision) Real == f64 else Real == f32);
+}
+
+pub const rvec_align = if (Real == f64) 32 else 16;
 
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};
@@ -224,7 +236,7 @@ pub const CollideShapeResult = extern struct {
 };
 
 pub const ContactManifold = extern struct {
-    base_offset: [4]f32 align(16), // 4th element is ignored; world space
+    base_offset: [4]Real align(rvec_align), // 4th element is ignored; world space
     normal: [4]f32 align(16), // 4th element is ignored; world space
     penetration_depth: f32,
     shape1_sub_shape_id: SubShapeId,
@@ -291,7 +303,7 @@ pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
 };
 
 pub const BodyCreationSettings = extern struct {
-    position: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
+    position: [4]Real align(rvec_align) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     rotation: [4]f32 align(16) = .{ 0, 0, 0, 1 },
     linear_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     angular_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
@@ -663,7 +675,7 @@ pub const BodyInterface = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Body = extern struct {
-    position: [4]f32 align(16), // 4th element is ignored
+    position: [4]Real align(rvec_align), // 4th element is ignored
     rotation: [4]f32 align(16),
     bounds_min: [4]f32 align(16), // 4th element is ignored
     bounds_max: [4]f32 align(16), // 4th element is ignored
@@ -743,7 +755,7 @@ pub const MotionProperties = extern struct {
     motion_quality: MotionQuality,
     allow_sleeping: bool,
 
-    reserved: [if (c.JPC_ENABLE_ASSERTS == 1) 55 else 52]u8,
+    reserved: [52 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
 
     comptime {
         assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));

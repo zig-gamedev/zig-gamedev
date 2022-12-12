@@ -510,7 +510,7 @@ JoltCTest_HelloWorld(void)
     {
         step += 1;
 
-        float position[3];
+        JPC_Real position[3];
         JPC_BodyInterface_GetCenterOfMassPosition(body_interface, sphere_id, &position[0]);
 
         float velocity[3];
