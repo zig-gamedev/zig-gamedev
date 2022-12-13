@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const pkg = std.build.Pkg{
     .name = "zmath",
-    .source = .{ .path = thisDir() ++ "/src/zmath.zig" },
+    .source = .{ .path = thisDir() ++ "/src/main.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -19,7 +19,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(thisDir() ++ "/src/zmath.zig");
+    const tests = b.addTest(thisDir() ++ "/src/main.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     return tests;
