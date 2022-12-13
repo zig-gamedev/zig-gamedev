@@ -61,9 +61,6 @@ pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
 }
 
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
-    reserved0: ?*const anyopaque = null,
-    reserved1: ?*const anyopaque = null,
-
     // Pure virtual
     getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
 
@@ -80,14 +77,11 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
 };
 
 pub const BodyActivationListenerVTable = extern struct {
-    reserved0: ?*const anyopaque = null,
-    reserved1: ?*const anyopaque = null,
+    // Pure virtual
+    onBodyActivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
 
     // Pure virtual
-    onBodyActivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
-
-    // Pure virtual
-    onBodyDeactivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
+    onBodyDeactivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
 
     comptime {
         assert(@sizeOf(BodyActivationListenerVTable) == @sizeOf(c.JPC_BodyActivationListenerVTable));
@@ -99,72 +93,43 @@ pub const BodyActivationListenerVTable = extern struct {
 };
 
 pub const ContactListenerVTable = extern struct {
-    onContactValidate: *const fn (
+    onContactValidate: ?*const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         collision_result: *const CollideShapeResult,
-    ) callconv(.C) ValidateResult = onContactValidate,
+    ) callconv(.C) ValidateResult = null,
 
-    onContactAdded: *const fn (
+    onContactAdded: ?*const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
-    ) callconv(.C) void = (struct {
-        fn defaultImpl(
-            _: *anyopaque,
-            _: *const Body,
-            _: *const Body,
-            _: *const ContactManifold,
-            _: *ContactSettings,
-        ) callconv(.C) void {
-            // Do nothing
-        }
-    }).defaultImpl,
+    ) callconv(.C) void = null,
 
-    onContactPersisted: *const fn (
+    onContactPersisted: ?*const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
-    ) callconv(.C) void = (struct {
-        fn defaultImpl(
-            _: *anyopaque,
-            _: *const Body,
-            _: *const Body,
-            _: *const ContactManifold,
-            _: *ContactSettings,
-        ) callconv(.C) void {
-            // Do nothing
-        }
-    }).defaultImpl,
+    ) callconv(.C) void = null,
 
-    onContactRemoved: *const fn (
+    onContactRemoved: ?*const fn (
         self: *anyopaque,
         sub_shape_pair: *const SubShapeIdPair,
-    ) callconv(.C) void = (struct {
-        fn defaultImpl(_: *anyopaque, _: *const SubShapeIdPair) callconv(.C) void {
-            // Do nothing
-        }
-    }).defaultImpl,
-
-    pub fn onContactValidate(
-        _: *anyopaque,
-        _: *const Body,
-        _: *const Body,
-        _: *const CollideShapeResult,
-    ) callconv(.C) ValidateResult {
-        return .accept_all_contacts;
-    }
+    ) callconv(.C) void = null,
 
     comptime {
         assert(@sizeOf(ContactListenerVTable) == @sizeOf(c.JPC_ContactListenerVTable));
-        assert(@offsetOf(ContactListenerVTable, "onContactValidate") == @offsetOf(
+        assert(@offsetOf(ContactListenerVTable, "onContactAdded") == @offsetOf(
             c.JPC_ContactListenerVTable,
-            "OnContactValidate",
+            "OnContactAdded",
+        ));
+        assert(@offsetOf(ContactListenerVTable, "onContactRemoved") == @offsetOf(
+            c.JPC_ContactListenerVTable,
+            "OnContactRemoved",
         ));
     }
 };

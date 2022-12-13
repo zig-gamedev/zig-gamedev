@@ -400,6 +400,51 @@ JPC_JobSystem_Destroy(JPC_JobSystem *in_job_system)
 // JPC_PhysicsSystem
 //
 //--------------------------------------------------------------------------------------------------
+class BroadPhaseLayerInterface : public JPH::BroadPhaseLayerInterface
+{
+public:
+	uint32_t GetNumBroadPhaseLayers() const override
+    {
+        assert(c_listener->vtbl->GetNumBroadPhaseLayers);
+        return c_listener->vtbl->GetNumBroadPhaseLayers(c_listener);
+    }
+
+    JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
+    {
+        assert(c_listener->vtbl->GetBroadPhaseLayer);
+        return static_cast<JPH::BroadPhaseLayer>(
+            c_listener->vtbl->GetBroadPhaseLayer(c_listener, toJpc(inLayer)));
+    }
+
+    struct CListener
+    {
+        JPC_BroadPhaseLayerInterfaceVTable *vtbl;
+    };
+    const CListener *c_listener;
+};
+
+class BodyActivationListener : public JPH::BodyActivationListener
+{
+public:
+    void OnBodyActivated(const JPH::BodyID &inBodyID, uint64_t inBodyUserData) override
+    {
+        assert(c_listener->vtbl->OnBodyActivated);
+        c_listener->vtbl->OnBodyActivated(c_listener, inBodyID.GetIndexAndSequenceNumber(), inBodyUserData);
+    }
+
+    void OnBodyDeactivated(const JPH::BodyID &inBodyID, uint64_t inBodyUserData) override
+    {
+        assert(c_listener->vtbl->OnBodyDeactivated);
+        c_listener->vtbl->OnBodyDeactivated(c_listener, inBodyID.GetIndexAndSequenceNumber(), inBodyUserData);
+    }
+
+    struct CListener
+    {
+        JPC_BodyActivationListenerVTable *vtbl;
+    };
+    CListener *c_listener;
+};
+
 class ContactListener : public JPH::ContactListener
 {
 public:
@@ -409,13 +454,17 @@ public:
         JPH::RVec3Arg inBaseOffset,
         const JPH::CollideShapeResult &inCollisionResult) override
     {
-        JPC_Real base_offset[3];
-        storeRVec3(base_offset, inBaseOffset);
+        if (c_listener->vtbl->OnContactValidate)
+        {
+            JPC_Real base_offset[3];
+            storeRVec3(base_offset, inBaseOffset);
 
-        const JPC_ValidateResult res = c_listener->vtbl->OnContactValidate(
-            c_listener, toJpc(&inBody1), toJpc(&inBody2), base_offset, toJpc(&inCollisionResult));
+            const JPC_ValidateResult res = c_listener->vtbl->OnContactValidate(
+                    c_listener, toJpc(&inBody1), toJpc(&inBody2), base_offset, toJpc(&inCollisionResult));
 
-        return static_cast<JPH::ValidateResult>(res);
+            return static_cast<JPH::ValidateResult>(res);
+        }
+        return JPH::ContactListener::OnContactValidate(inBody1, inBody2, inBaseOffset, inCollisionResult);
     }
 
     void OnContactAdded(
@@ -424,8 +473,11 @@ public:
         const JPH::ContactManifold &inManifold,
         JPH::ContactSettings &ioSettings) override
     {
-        c_listener->vtbl->OnContactAdded(
-            c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+        if (c_listener->vtbl->OnContactAdded)
+        {
+            c_listener->vtbl->OnContactAdded(
+                c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+        }
     }
 
     void OnContactPersisted(
@@ -434,13 +486,17 @@ public:
         const JPH::ContactManifold &inManifold,
         JPH::ContactSettings &ioSettings) override
     {
-        c_listener->vtbl->OnContactPersisted(
-            c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+        if (c_listener->vtbl->OnContactPersisted)
+        {
+            c_listener->vtbl->OnContactPersisted(
+                c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+        }
     }
 
     void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
     {
-        c_listener->vtbl->OnContactRemoved(c_listener, toJpc(&inSubShapePair));
+        if (c_listener->vtbl->OnContactRemoved)
+            c_listener->vtbl->OnContactRemoved(c_listener, toJpc(&inSubShapePair));
     }
 
     struct CListener
@@ -454,6 +510,8 @@ struct PhysicsSystemData
 {
     uint64_t safety_token = 0xC0DEC0DEC0DEC0DE;
     ContactListener *contact_listener = nullptr;
+    BroadPhaseLayerInterface *broad_phase_layer_interface = nullptr;
+    BodyActivationListener *body_activation_listener = nullptr;
 };
 
 JPC_API JPC_PhysicsSystem *
@@ -469,18 +527,28 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
     assert(in_object_vs_broad_phase_layer_filter != nullptr);
     assert(in_object_layer_pair_filter != nullptr);
 
-    void *mem = JPH::Allocate(sizeof(JPH::PhysicsSystem) + sizeof(PhysicsSystemData));
-    auto physics_system = ::new (mem) JPH::PhysicsSystem();
+    auto physics_system =
+        static_cast<JPH::PhysicsSystem *>(
+            JPH::Allocate(sizeof(JPH::PhysicsSystem) + sizeof(PhysicsSystemData)));
+    ::new (physics_system) JPH::PhysicsSystem();
 
-    PhysicsSystemData* data = new (static_cast<uint8_t *>(mem) + sizeof(JPH::PhysicsSystem)) PhysicsSystemData();
+    PhysicsSystemData* data =
+        ::new (reinterpret_cast<uint8_t *>(physics_system) + sizeof(JPH::PhysicsSystem)) PhysicsSystemData();
     assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
+
+    data->broad_phase_layer_interface =
+        static_cast<BroadPhaseLayerInterface *>(JPH::Allocate(sizeof(BroadPhaseLayerInterface)));
+    ::new (data->broad_phase_layer_interface) BroadPhaseLayerInterface();
+
+    data->broad_phase_layer_interface->c_listener =
+        static_cast<const BroadPhaseLayerInterface::CListener *>(in_broad_phase_layer_interface);
 
     physics_system->Init(
         in_max_bodies,
         in_num_body_mutexes,
         in_max_body_pairs,
         in_max_contact_constraints,
-        *static_cast<const JPH::BroadPhaseLayerInterface *>(in_broad_phase_layer_interface),
+        *data->broad_phase_layer_interface,
         reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
         reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
 
@@ -492,8 +560,23 @@ JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
 {
     auto data = reinterpret_cast<PhysicsSystemData *>(
         reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
 
-    delete data->contact_listener;
+    if (data->broad_phase_layer_interface)
+    {
+        data->broad_phase_layer_interface->~BroadPhaseLayerInterface();
+        JPH::Free(data->broad_phase_layer_interface);
+    }
+    if (data->contact_listener)
+    {
+        data->contact_listener->~ContactListener();
+        JPH::Free(data->contact_listener);
+    }
+    if (data->body_activation_listener)
+    {
+        data->body_activation_listener->~BodyActivationListener();
+        JPH::Free(data->body_activation_listener);
+    }
 
     toJph(in_physics_system)->~PhysicsSystem();
     JPH::Free(in_physics_system);
@@ -502,14 +585,35 @@ JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
 JPC_API void
 JPC_PhysicsSystem_SetBodyActivationListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
 {
-    toJph(in_physics_system)->SetBodyActivationListener(
-        reinterpret_cast<JPH::BodyActivationListener *>(in_listener));
+    if (in_listener == nullptr)
+    {
+        toJph(in_physics_system)->SetBodyActivationListener(nullptr);
+        return;
+    }
+
+    auto data = reinterpret_cast<PhysicsSystemData *>(
+        reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
+
+    if (data->body_activation_listener == nullptr)
+    {
+        data->body_activation_listener = static_cast<BodyActivationListener *>(
+            JPH::Allocate(sizeof(BodyActivationListener)));
+        ::new (data->body_activation_listener) BodyActivationListener();
+    }
+
+    toJph(in_physics_system)->SetBodyActivationListener(data->body_activation_listener);
+
+    data->body_activation_listener->c_listener = static_cast<BodyActivationListener::CListener *>(in_listener);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void *
 JPC_PhysicsSystem_GetBodyActivationListener(const JPC_PhysicsSystem *in_physics_system)
 {
-    return toJph(in_physics_system)->GetBodyActivationListener();
+    auto listener = static_cast<BodyActivationListener *>(toJph(in_physics_system)->GetBodyActivationListener());
+    if (listener == nullptr)
+        return nullptr;
+    return listener->c_listener;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -523,9 +627,13 @@ JPC_PhysicsSystem_SetContactListener(JPC_PhysicsSystem *in_physics_system, void 
 
     auto data = reinterpret_cast<PhysicsSystemData *>(
         reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
 
     if (data->contact_listener == nullptr)
-        data->contact_listener = new ContactListener();
+    {
+        data->contact_listener = static_cast<ContactListener *>(JPH::Allocate(sizeof(ContactListener)));
+        ::new (data->contact_listener) ContactListener();
+    }
 
     toJph(in_physics_system)->SetContactListener(data->contact_listener);
 
@@ -614,7 +722,7 @@ JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
                       JPC_BodyID in_body_id)
 {
     assert(out_lock != nullptr);
-    new (out_lock) JPH::BodyLockRead(*toJph(in_lock_interface), toJph(in_body_id));
+    ::new (out_lock) JPH::BodyLockRead(*toJph(in_lock_interface), toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
@@ -629,7 +737,7 @@ JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
                        JPC_BodyID in_body_id)
 {
     assert(out_lock != nullptr);
-    new (out_lock) JPH::BodyLockWrite(*toJph(in_lock_interface), toJph(in_body_id));
+    ::new (out_lock) JPH::BodyLockWrite(*toJph(in_lock_interface), toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API

@@ -104,8 +104,11 @@ const ContactListener = extern struct {
         body2: *const zphy.Body,
         collision_result: *const zphy.CollideShapeResult,
     ) callconv(.C) zphy.ValidateResult {
-        // Let's just call a default implementation as a test.
-        return zphy.ContactListenerVTable.onContactValidate(self, body1, body2, collision_result);
+        _ = self;
+        _ = body1;
+        _ = body2;
+        _ = collision_result;
+        return .accept_all_contacts;
     }
 };
 
