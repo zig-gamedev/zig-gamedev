@@ -97,6 +97,7 @@ pub const ContactListenerVTable = extern struct {
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
+        in_base_offset: *const [3]Real,
         collision_result: *const CollideShapeResult,
     ) callconv(.C) ValidateResult = null,
 
@@ -621,8 +622,8 @@ pub const BodyInterface = opaque {
         return velocity;
     }
 
-    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
-        var position: [3]f32 = undefined;
+    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
+        var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
             @ptrCast(*const c.JPC_BodyInterface, body_iface),
             body_id,

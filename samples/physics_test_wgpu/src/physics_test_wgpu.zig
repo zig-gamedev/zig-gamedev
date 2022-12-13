@@ -102,11 +102,13 @@ const ContactListener = extern struct {
         self: *anyopaque,
         body1: *const zphy.Body,
         body2: *const zphy.Body,
+        in_base_offset: *const [3]zphy.Real,
         collision_result: *const zphy.CollideShapeResult,
     ) callconv(.C) zphy.ValidateResult {
         _ = self;
         _ = body1;
         _ = body2;
+        _ = in_base_offset;
         _ = collision_result;
         return .accept_all_contacts;
     }
