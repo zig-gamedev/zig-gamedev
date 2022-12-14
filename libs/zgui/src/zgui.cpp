@@ -1132,10 +1132,6 @@ ZGUI_API ImGuiID zguiGetPtrId(const void* ptr_id) {
     return ImGui::GetID(ptr_id);
 }
 
-ZGUI_API ImFont* zguiIoAddFontFromFile(const char* filename, float size_pixels) {
-    return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, nullptr, nullptr);
-}
-
 ZGUI_API ImFont* zguiIoAddFontFromFileWithConfig(
     const char* filename,
     float size_pixels,
@@ -1143,6 +1139,26 @@ ZGUI_API ImFont* zguiIoAddFontFromFileWithConfig(
     const ImWchar* ranges
 ) {
     return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, config, ranges);
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromFile(const char* filename, float size_pixels) {
+    return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, nullptr, nullptr);
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromMemoryWithConfig(
+    void* font_data,
+    int font_size,
+    float size_pixels,
+    const ImFontConfig* config,
+    const ImWchar* ranges
+) {
+    return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(font_data, font_size, size_pixels, config, ranges);
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromMemory(void* font_data, int font_size, float size_pixels) {
+    ImFontConfig config = ImFontConfig();
+    config.FontDataOwnedByAtlas = false;
+    return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(font_data, font_size, size_pixels, &config, nullptr);
 }
 
 ZGUI_API ImFontConfig zguiFontConfig_Init(void) {
