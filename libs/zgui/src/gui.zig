@@ -152,6 +152,27 @@ pub const io = struct {
         ranges: ?[*]const Wchar,
     ) Font;
 
+    pub fn addFontFromMemory(fontdata: []const u8, size_pixels: f32) Font {
+        return zguiIoAddFontFromMemory(fontdata.ptr, @intCast(i32, fontdata.len), size_pixels);
+    }
+    extern fn zguiIoAddFontFromMemory(font_data: *const anyopaque, font_size: i32, size_pixels: f32) Font;
+
+    pub fn addFontFromMemoryWithConfig(
+        fontdata: []const u8,
+        size_pixels: f32,
+        config: ?FontConfig,
+        ranges: ?[*]const Wchar,
+    ) Font {
+        return zguiIoAddFontFromMemoryWithConfig(fontdata.ptr, @intCast(i32, fontdata.len), size_pixels, if (config) |c| &c else null, ranges);
+    }
+    extern fn zguiIoAddFontFromMemoryWithConfig(
+        font_data: *const anyopaque,
+        font_size: i32,
+        size_pixels: f32,
+        config: ?*const FontConfig,
+        ranges: ?[*]const Wchar,
+    ) Font;
+
     /// `pub fn getFont(index: u32) Font`
     pub const getFont = zguiIoGetFont;
     extern fn zguiIoGetFont(index: u32) Font;
