@@ -2213,8 +2213,8 @@ pub const Sound = opaque {
     };
 
     pub const Config = extern struct {
-        file_path: [*:0]const u8,
-        file_path_w: [*:0]const i32,
+        file_path: ?[*:0]const u8,
+        file_path_w: ?[*:0]const i32,
         data_source: ?*DataSource,
         initial_attachment: ?*Node,
         initial_attachment_input_bus_index: u32,
