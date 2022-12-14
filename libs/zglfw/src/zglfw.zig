@@ -456,6 +456,14 @@ pub const Window = opaque {
         hovered = 0x0002000B,
         focus_on_show = 0x0002000C,
     };
+    pub fn getAttribute(window: *Window, attrib: Attribute) bool {
+        if (glfwGetWindowAttrib(window, @enumToInt(attrib)) == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    extern fn glfwGetWindowAttrib(window: *Window, attrib: i32) u32;
 
     pub const Hint = enum(i32) {
         client_api = 0x00022001,
@@ -522,15 +530,6 @@ pub const Window = opaque {
         return .{ width, height };
     }
     extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
-
-    pub fn getAttribute(window: *Window, attrib: Attribute) bool {
-        if (glfwGetWindowAttrib(window, @enumToInt(attrib)) == 0) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-    extern fn glfwGetWindowAttrib(window: *Window, attrib: i32) u32;
 
     /// `pub fn setKeyCallback(window: *Window, callback) void`
     pub const setKeyCallback = glfwSetKeyCallback;
