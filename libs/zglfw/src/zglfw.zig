@@ -442,6 +442,29 @@ pub const Monitor = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Window = opaque {
+    pub const Attribute = enum(i32) {
+        focused = 0x00020001,
+        iconified = 0x00020002,
+        resizable = 0x00020003,
+        visible = 0x00020004,
+        decorated = 0x00020005,
+        auto_iconify = 0x00020006,
+        floating = 0x00020007,
+        maximized = 0x00020008,
+        center_cursor = 0x00020009,
+        transparent_framebuffer = 0x0002000A,
+        hovered = 0x0002000B,
+        focus_on_show = 0x0002000C,
+    };
+    pub fn getAttribute(window: *Window, attrib: Attribute) bool {
+        if (glfwGetWindowAttrib(window, @enumToInt(attrib)) == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    extern fn glfwGetWindowAttrib(window: *Window, attrib: i32) u32;
+
     pub const Hint = enum(i32) {
         client_api = 0x00022001,
         cocoa_retina_framebuffer = 0x00023001,
