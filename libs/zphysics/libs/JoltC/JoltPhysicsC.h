@@ -1,4 +1,4 @@
-// JoltPhysicsC v0.0.1 - C API for Jolt Physics C++ library
+// JoltPhysicsC v0.0.2 - C API for Jolt Physics C++ library
 
 #pragma once
 #include <stdlib.h>
@@ -357,59 +357,6 @@ typedef struct JPC_CollideShapeResult
     }                        shape2_face;
 } JPC_CollideShapeResult;
 
-// NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
-typedef struct JPC_BroadPhaseLayerInterfaceVTable
-{
-    const void *reserved0;
-    const void *reserved1;
-
-    uint32_t
-    (*GetNumBroadPhaseLayers)(const void *in_self);
-
-    JPC_BroadPhaseLayer
-    (*GetBroadPhaseLayer)(const void *in_self, JPC_ObjectLayer in_layer);
-} JPC_BroadPhaseLayerInterfaceVTable;
-
-// NOTE: Needs to be kept in sync with JPH::BodyActivationListener
-typedef struct JPC_BodyActivationListenerVTable
-{
-    const void *reserved0;
-    const void *reserved1;
-
-    void
-    (*OnBodyActivated)(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data);
-
-    void
-    (*OnBodyDeactivated)(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data);
-} JPC_BodyActivationListenerVTable;
-
-// NOTE: Needs to be kept in sync with JPH::ContactListener
-typedef struct JPC_ContactListenerVTable
-{
-    const void *reserved0;
-    const void *reserved1;
-
-    JPC_ValidateResult
-    (*OnContactValidate)(void *in_self,
-                         const JPC_Body *in_body1,
-                         const JPC_Body *in_body2,
-                         const JPC_CollideShapeResult *in_collision_result);
-    void
-    (*OnContactAdded)(void *in_self,
-                      const JPC_Body *in_body1,
-                      const JPC_Body *in_body2,
-                      const JPC_ContactManifold *in_manifold,
-                      JPC_ContactSettings *io_settings);
-    void
-    (*OnContactPersisted)(void *in_self,
-                          const JPC_Body *in_body1,
-                          const JPC_Body *in_body2,
-                          const JPC_ContactManifold *in_manifold,
-                          JPC_ContactSettings *io_settings);
-    void
-    (*OnContactRemoved)(void *in_self, const JPC_SubShapeIDPair *in_sub_shape_pair);
-} JPC_ContactListenerVTable;
-
 // NOTE: Needs to be kept in sync with JPH::TransformedShape
 typedef struct JPC_TransformedShape
 {
@@ -436,6 +383,63 @@ typedef struct JPC_BodyLockWrite
     JPC_SharedMutex *            mutex;
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
+//--------------------------------------------------------------------------------------------------
+//
+// Interfaces (virtual tables)
+//
+//--------------------------------------------------------------------------------------------------
+typedef struct JPC_BroadPhaseLayerInterfaceVTable
+{
+    // Required, *cannot* be NULL.
+    uint32_t
+    (*GetNumBroadPhaseLayers)(const void *in_self);
+
+    // Required, *cannot* be NULL.
+    JPC_BroadPhaseLayer
+    (*GetBroadPhaseLayer)(const void *in_self, JPC_ObjectLayer in_layer);
+} JPC_BroadPhaseLayerInterfaceVTable;
+
+typedef struct JPC_BodyActivationListenerVTable
+{
+    // Required, *cannot* be NULL.
+    void
+    (*OnBodyActivated)(void *in_self, JPC_BodyID in_body_id, uint64_t in_user_data);
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnBodyDeactivated)(void *in_self, JPC_BodyID in_body_id, uint64_t in_user_data);
+} JPC_BodyActivationListenerVTable;
+
+typedef struct JPC_ContactListenerVTable
+{
+    // Optional, can be NULL.
+    JPC_ValidateResult
+    (*OnContactValidate)(void *in_self,
+                         const JPC_Body *in_body1,
+                         const JPC_Body *in_body2,
+                         const JPC_Real in_base_offset[3],
+                         const JPC_CollideShapeResult *in_collision_result);
+
+    // Optional, can be NULL.
+    void
+    (*OnContactAdded)(void *in_self,
+                      const JPC_Body *in_body1,
+                      const JPC_Body *in_body2,
+                      const JPC_ContactManifold *in_manifold,
+                      JPC_ContactSettings *io_settings);
+
+    // Optional, can be NULL.
+    void
+    (*OnContactPersisted)(void *in_self,
+                          const JPC_Body *in_body1,
+                          const JPC_Body *in_body2,
+                          const JPC_ContactManifold *in_manifold,
+                          JPC_ContactSettings *io_settings);
+
+    // Optional, can be NULL.
+    void
+    (*OnContactRemoved)(void *in_self, const JPC_SubShapeIDPair *in_sub_shape_pair);
+} JPC_ContactListenerVTable;
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions

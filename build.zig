@@ -76,8 +76,16 @@ pub fn build(b: *std.build.Builder) void {
     const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zaudio_tests.step);
 
-    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(b, options.build_mode, options.target);
+    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(b, options.build_mode, options.target, .{});
     test_step.dependOn(&zphysics_tests.step);
+
+    const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+        .{ .use_double_precision = true },
+    );
+    test_step.dependOn(&zphysics_f64_tests.step);
 
     const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zglfw_tests.step);

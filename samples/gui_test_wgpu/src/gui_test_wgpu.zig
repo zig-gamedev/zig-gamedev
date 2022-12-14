@@ -10,6 +10,8 @@ const zstbi = @import("zstbi");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: gui test (wgpu)";
 
+const embedded_font_data = @embedFile("./FiraCode-Medium.ttf");
+
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
     texture_view: zgpu.TextureViewHandle,
@@ -65,7 +67,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         break :scale_factor math.max(scale[0], scale[1]);
     };
     const font_size = 16.0 * scale_factor;
-    const font_large = zgui.io.addFontFromFile(content_dir ++ "FiraCode-Medium.ttf", math.floor(font_size * 1.1));
+    const font_large = zgui.io.addFontFromMemory(embedded_font_data, math.floor(font_size * 1.1));
     const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(font_size));
     assert(zgui.io.getFont(0) == font_large);
     assert(zgui.io.getFont(1) == font_normal);

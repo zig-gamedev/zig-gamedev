@@ -102,10 +102,15 @@ const ContactListener = extern struct {
         self: *anyopaque,
         body1: *const zphy.Body,
         body2: *const zphy.Body,
+        in_base_offset: *const [3]zphy.Real,
         collision_result: *const zphy.CollideShapeResult,
     ) callconv(.C) zphy.ValidateResult {
-        // Let's just call a default implementation as a test.
-        return zphy.ContactListenerVTable.onContactValidate(self, body1, body2, collision_result);
+        _ = self;
+        _ = body1;
+        _ = body2;
+        _ = in_base_offset;
+        _ = collision_result;
+        return .accept_all_contacts;
     }
 };
 
@@ -524,7 +529,15 @@ fn draw(demo: *DemoState) void {
                 if (!zphy.isValidBodyPointer(body) or body.motion_properties == null) continue;
 
                 const object_to_world = object_to_world: {
-                    const position = zm.loadArr4(body.position);
+                    const position = if (zphy.Real == f32)
+                        zm.loadArr4(body.position)
+                    else
+                        zm.loadArr4(.{
+                            @floatCast(f32, body.position[0]),
+                            @floatCast(f32, body.position[1]),
+                            @floatCast(f32, body.position[2]),
+                            @floatCast(f32, body.position[3]),
+                        });
                     const rotation = zm.loadArr4(body.rotation);
                     var xform = zm.matFromQuat(rotation);
                     xform[3] = position;

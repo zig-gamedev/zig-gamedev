@@ -1,6 +1,18 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const c = @cImport(@cInclude("JoltPhysicsC.h"));
+const options = @import("zphysics_options");
+const c = @cImport({
+    if (options.use_double_precision) @cDefine("JPH_DOUBLE_PRECISION", "");
+    if (options.enable_asserts) @cDefine("JPH_ENABLE_ASSERTS", "");
+    @cInclude("JoltPhysicsC.h");
+});
+
+pub const Real = c.JPC_Real;
+comptime {
+    assert(if (options.use_double_precision) Real == f64 else Real == f32);
+}
+
+pub const rvec_align = if (Real == f64) 32 else 16;
 
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};
@@ -49,9 +61,6 @@ pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
 }
 
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
-    reserved0: ?*const anyopaque = null,
-    reserved1: ?*const anyopaque = null,
-
     // Pure virtual
     getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
 
@@ -68,14 +77,11 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
 };
 
 pub const BodyActivationListenerVTable = extern struct {
-    reserved0: ?*const anyopaque = null,
-    reserved1: ?*const anyopaque = null,
+    // Pure virtual
+    onBodyActivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
 
     // Pure virtual
-    onBodyActivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
-
-    // Pure virtual
-    onBodyDeactivated: *const fn (self: *anyopaque, body_id: *const BodyId, user_data: u64) callconv(.C) void,
+    onBodyDeactivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
 
     comptime {
         assert(@sizeOf(BodyActivationListenerVTable) == @sizeOf(c.JPC_BodyActivationListenerVTable));
@@ -87,75 +93,44 @@ pub const BodyActivationListenerVTable = extern struct {
 };
 
 pub const ContactListenerVTable = extern struct {
-    reserved0: ?*const anyopaque = null,
-    reserved1: ?*const anyopaque = null,
-
-    onContactValidate: *const fn (
+    onContactValidate: ?*const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
+        in_base_offset: *const [3]Real,
         collision_result: *const CollideShapeResult,
-    ) callconv(.C) ValidateResult = onContactValidate,
+    ) callconv(.C) ValidateResult = null,
 
-    onContactAdded: *const fn (
+    onContactAdded: ?*const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
-    ) callconv(.C) void = (struct {
-        fn defaultImpl(
-            _: *anyopaque,
-            _: *const Body,
-            _: *const Body,
-            _: *const ContactManifold,
-            _: *ContactSettings,
-        ) callconv(.C) void {
-            // Do nothing
-        }
-    }).defaultImpl,
+    ) callconv(.C) void = null,
 
-    onContactPersisted: *const fn (
+    onContactPersisted: ?*const fn (
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
         manifold: *const ContactManifold,
         settings: *ContactSettings,
-    ) callconv(.C) void = (struct {
-        fn defaultImpl(
-            _: *anyopaque,
-            _: *const Body,
-            _: *const Body,
-            _: *const ContactManifold,
-            _: *ContactSettings,
-        ) callconv(.C) void {
-            // Do nothing
-        }
-    }).defaultImpl,
+    ) callconv(.C) void = null,
 
-    onContactRemoved: *const fn (
+    onContactRemoved: ?*const fn (
         self: *anyopaque,
         sub_shape_pair: *const SubShapeIdPair,
-    ) callconv(.C) void = (struct {
-        fn defaultImpl(_: *anyopaque, _: *const SubShapeIdPair) callconv(.C) void {
-            // Do nothing
-        }
-    }).defaultImpl,
-
-    pub fn onContactValidate(
-        _: *anyopaque,
-        _: *const Body,
-        _: *const Body,
-        _: *const CollideShapeResult,
-    ) callconv(.C) ValidateResult {
-        return .accept_all_contacts;
-    }
+    ) callconv(.C) void = null,
 
     comptime {
         assert(@sizeOf(ContactListenerVTable) == @sizeOf(c.JPC_ContactListenerVTable));
-        assert(@offsetOf(ContactListenerVTable, "onContactValidate") == @offsetOf(
+        assert(@offsetOf(ContactListenerVTable, "onContactAdded") == @offsetOf(
             c.JPC_ContactListenerVTable,
-            "OnContactValidate",
+            "OnContactAdded",
+        ));
+        assert(@offsetOf(ContactListenerVTable, "onContactRemoved") == @offsetOf(
+            c.JPC_ContactListenerVTable,
+            "OnContactRemoved",
         ));
     }
 };
@@ -224,7 +199,7 @@ pub const CollideShapeResult = extern struct {
 };
 
 pub const ContactManifold = extern struct {
-    base_offset: [4]f32 align(16), // 4th element is ignored; world space
+    base_offset: [4]Real align(rvec_align), // 4th element is ignored; world space
     normal: [4]f32 align(16), // 4th element is ignored; world space
     penetration_depth: f32,
     shape1_sub_shape_id: SubShapeId,
@@ -291,7 +266,7 @@ pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
 };
 
 pub const BodyCreationSettings = extern struct {
-    position: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
+    position: [4]Real align(rvec_align) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     rotation: [4]f32 align(16) = .{ 0, 0, 0, 1 },
     linear_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     angular_velocity: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
@@ -647,8 +622,8 @@ pub const BodyInterface = opaque {
         return velocity;
     }
 
-    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
-        var position: [3]f32 = undefined;
+    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
+        var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
             @ptrCast(*const c.JPC_BodyInterface, body_iface),
             body_id,
@@ -663,7 +638,7 @@ pub const BodyInterface = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Body = extern struct {
-    position: [4]f32 align(16), // 4th element is ignored
+    position: [4]Real align(rvec_align), // 4th element is ignored
     rotation: [4]f32 align(16),
     bounds_min: [4]f32 align(16), // 4th element is ignored
     bounds_max: [4]f32 align(16), // 4th element is ignored
@@ -743,7 +718,7 @@ pub const MotionProperties = extern struct {
     motion_quality: MotionQuality,
     allow_sleeping: bool,
 
-    reserved: [if (c.JPC_ENABLE_ASSERTS == 1) 55 else 52]u8,
+    reserved: [52 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
 
     comptime {
         assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));
@@ -1025,10 +1000,20 @@ test "zphysics.BodyCreationSettings" {
         break :blk @ptrCast(*const BodyCreationSettings, &settings).*;
     };
 
-    try expect(eql(u8, asBytes(&bcs0.position), asBytes(&bcs1.position)));
+    try expect(approxEql(Real, bcs0.position[0], bcs1.position[0], 0.0001));
+    try expect(approxEql(Real, bcs0.position[1], bcs1.position[1], 0.0001));
+    try expect(approxEql(Real, bcs0.position[2], bcs1.position[2], 0.0001));
+
     try expect(eql(u8, asBytes(&bcs0.rotation), asBytes(&bcs1.rotation)));
-    try expect(eql(u8, asBytes(&bcs0.linear_velocity), asBytes(&bcs1.linear_velocity)));
-    try expect(eql(u8, asBytes(&bcs0.angular_velocity), asBytes(&bcs1.angular_velocity)));
+
+    try expect(approxEql(Real, bcs0.linear_velocity[0], bcs1.linear_velocity[0], 0.0001));
+    try expect(approxEql(Real, bcs0.linear_velocity[1], bcs1.linear_velocity[1], 0.0001));
+    try expect(approxEql(Real, bcs0.linear_velocity[2], bcs1.linear_velocity[2], 0.0001));
+
+    try expect(approxEql(Real, bcs0.angular_velocity[0], bcs1.angular_velocity[0], 0.0001));
+    try expect(approxEql(Real, bcs0.angular_velocity[1], bcs1.angular_velocity[1], 0.0001));
+    try expect(approxEql(Real, bcs0.angular_velocity[2], bcs1.angular_velocity[2], 0.0001));
+
     try expect(bcs0.user_data == bcs1.user_data);
     try expect(bcs0.object_layer == bcs1.object_layer);
     try expect(eql(u8, asBytes(&bcs0.collision_group), asBytes(&bcs1.collision_group)));
