@@ -23,7 +23,6 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
-#include <Jolt/Physics/Body/BodyLockMulti.h>
 
 JPH_SUPPRESS_WARNINGS
 
@@ -31,42 +30,207 @@ JPH_SUPPRESS_WARNINGS
 #error Currently JoltPhysicsC does not support profiling. Please undef JPH_EXTERNAL_PROFILE and JPH_PROFILE_ENABLED.
 #endif
 
+#define ENSURE_TYPE(o, t) \
+    assert(o != nullptr); \
+    assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
+
 #define FN(name) static auto name
 
+FN(toJph)(JPC_BodyID in) { return JPH::BodyID(in); }
+FN(toJpc)(JPH::BodyID in) { return in.GetIndexAndSequenceNumber(); }
+
+FN(toJpc)(const JPH::Body *in) { assert(in); return reinterpret_cast<const JPC_Body *>(in); }
 FN(toJph)(const JPC_Body *in) { assert(in); return reinterpret_cast<const JPH::Body *>(in); }
-FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
-FN(toJph)(const JPC_SubShapeID *in) { assert(in); return reinterpret_cast<const JPH::SubShapeID *>(in); }
+FN(toJpc)(JPH::Body *in) { assert(in); return reinterpret_cast<JPC_Body *>(in); }
 FN(toJph)(JPC_Body *in) { assert(in); return reinterpret_cast<JPH::Body *>(in); }
-FN(toJph)(JPC_MotionType in) { return static_cast<JPH::EMotionType>(in); }
+
+FN(toJph)(const JPC_PhysicsMaterial *in) { assert(in); return reinterpret_cast<const JPH::PhysicsMaterial *>(in); }
+FN(toJpc)(const JPH::PhysicsMaterial *in) { assert(in); return reinterpret_cast<const JPC_PhysicsMaterial *>(in); }
+
+FN(toJph)(const JPC_ShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ShapeSettings);
+    return reinterpret_cast<const JPH::ShapeSettings *>(in);
+}
+FN(toJph)(JPC_ShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ShapeSettings);
+    return reinterpret_cast<JPH::ShapeSettings *>(in);
+}
+FN(toJpc)(const JPH::ShapeSettings *in) { assert(in); return reinterpret_cast<const JPC_ShapeSettings *>(in); }
+FN(toJpc)(JPH::ShapeSettings *in) { assert(in); return reinterpret_cast<JPC_ShapeSettings *>(in); }
+
+FN(toJph)(const JPC_BoxShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::BoxShapeSettings);
+    return reinterpret_cast<const JPH::BoxShapeSettings *>(in);
+}
+FN(toJph)(JPC_BoxShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::BoxShapeSettings);
+    return reinterpret_cast<JPH::BoxShapeSettings *>(in);
+}
+FN(toJpc)(JPH::BoxShapeSettings *in) { assert(in); return reinterpret_cast<JPC_BoxShapeSettings *>(in); }
+
+FN(toJph)(const JPC_SphereShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::SphereShapeSettings);
+    return reinterpret_cast<const JPH::SphereShapeSettings *>(in);
+}
+FN(toJph)(JPC_SphereShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::SphereShapeSettings);
+    return reinterpret_cast<JPH::SphereShapeSettings *>(in);
+}
+FN(toJpc)(JPH::SphereShapeSettings *in) { assert(in); return reinterpret_cast<JPC_SphereShapeSettings *>(in); }
+
+FN(toJph)(const JPC_TriangleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::TriangleShapeSettings);
+    return reinterpret_cast<const JPH::TriangleShapeSettings *>(in);
+}
+FN(toJph)(JPC_TriangleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::TriangleShapeSettings);
+    return reinterpret_cast<JPH::TriangleShapeSettings *>(in);
+}
+FN(toJpc)(JPH::TriangleShapeSettings *in) { assert(in); return reinterpret_cast<JPC_TriangleShapeSettings *>(in); }
+
+FN(toJph)(const JPC_CapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CapsuleShapeSettings);
+    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in);
+}
+FN(toJph)(JPC_CapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CapsuleShapeSettings);
+    return reinterpret_cast<JPH::CapsuleShapeSettings *>(in);
+}
+FN(toJpc)(JPH::CapsuleShapeSettings *in) { assert(in); return reinterpret_cast<JPC_CapsuleShapeSettings *>(in); }
+
+FN(toJph)(const JPC_TaperedCapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::TaperedCapsuleShapeSettings);
+    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in);
+}
+FN(toJph)(JPC_TaperedCapsuleShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::TaperedCapsuleShapeSettings);
+    return reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in);
+}
+FN(toJpc)(JPH::TaperedCapsuleShapeSettings *in) {
+    assert(in); return reinterpret_cast<JPC_TaperedCapsuleShapeSettings *>(in);
+}
+
+FN(toJph)(const JPC_CylinderShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CylinderShapeSettings);
+    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in);
+}
+FN(toJph)(JPC_CylinderShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CylinderShapeSettings);
+    return reinterpret_cast<JPH::CylinderShapeSettings *>(in);
+}
+FN(toJpc)(JPH::CylinderShapeSettings *in) { assert(in); return reinterpret_cast<JPC_CylinderShapeSettings *>(in); }
+
+FN(toJph)(const JPC_ConvexHullShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in);
+}
+FN(toJph)(JPC_ConvexHullShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<JPH::ConvexHullShapeSettings *>(in);
+}
+FN(toJpc)(JPH::ConvexHullShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_ConvexHullShapeSettings *>(in);
+}
+
+FN(toJph)(const JPC_ConvexShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ConvexShapeSettings);
+    return reinterpret_cast<const JPH::ConvexShapeSettings *>(in);
+}
+FN(toJph)(JPC_ConvexShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::ConvexShapeSettings);
+    return reinterpret_cast<JPH::ConvexShapeSettings *>(in);
+}
+
+FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
+FN(toJpc)(const JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<const JPC_CollisionGroup *>(in); }
+FN(toJpc)(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_CollisionGroup *>(in); }
+
+FN(toJph)(const JPC_SubShapeID *in) { assert(in); return reinterpret_cast<const JPH::SubShapeID *>(in); }
+
+FN(toJph)(const JPC_BodyLockInterface *in) {
+    assert(in); return reinterpret_cast<const JPH::BodyLockInterface *>(in);
+}
+FN(toJpc)(const JPH::BodyLockInterface *in) {
+    assert(in); return reinterpret_cast<const JPC_BodyLockInterface *>(in);
+}
+
+FN(toJph)(const JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<const JPH::PhysicsSystem *>(in); }
+FN(toJph)(JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<JPH::PhysicsSystem *>(in); }
+FN(toJpc)(JPH::PhysicsSystem *in) { assert(in); return reinterpret_cast<JPC_PhysicsSystem *>(in); }
 
 FN(toJpc)(const JPH::Shape *in) { assert(in); return reinterpret_cast<const JPC_Shape *>(in); }
+FN(toJph)(const JPC_Shape *in) { assert(in); return reinterpret_cast<const JPH::Shape *>(in); }
+FN(toJpc)(JPH::Shape *in) { assert(in); return reinterpret_cast<JPC_Shape *>(in); }
+FN(toJph)(JPC_Shape *in) { assert(in); return reinterpret_cast<JPH::Shape *>(in); }
+
+FN(toJpc)(const JPH::BodyInterface *in) { assert(in); return reinterpret_cast<const JPC_BodyInterface *>(in); }
+FN(toJph)(const JPC_BodyInterface *in) { assert(in); return reinterpret_cast<const JPH::BodyInterface *>(in); }
+FN(toJpc)(JPH::BodyInterface *in) { assert(in); return reinterpret_cast<JPC_BodyInterface *>(in); }
+FN(toJph)(JPC_BodyInterface *in) { assert(in); return reinterpret_cast<JPH::BodyInterface *>(in); }
+
 FN(toJpc)(const JPH::TransformedShape *in) { assert(in); return reinterpret_cast<const JPC_TransformedShape *>(in); }
+
+FN(toJph)(const JPC_MassProperties *in) { assert(in); return reinterpret_cast<const JPH::MassProperties *>(in); }
+
+FN(toJph)(JPC_BodyLockRead *in) { assert(in); return reinterpret_cast<const JPH::BodyLockRead *>(in); }
+FN(toJph)(JPC_BodyLockWrite *in) { assert(in); return reinterpret_cast<const JPH::BodyLockWrite *>(in); }
+
 FN(toJpc)(const JPH::BodyCreationSettings *in) {
     assert(in); return reinterpret_cast<const JPC_BodyCreationSettings *>(in);
 }
+FN(toJph)(const JPC_BodyCreationSettings *in) {
+    assert(in); return reinterpret_cast<const JPH::BodyCreationSettings *>(in);
+}
+
+FN(toJpc)(const JPH::MotionProperties *in) { assert(in); return reinterpret_cast<const JPC_MotionProperties *>(in); }
+FN(toJph)(const JPC_MotionProperties *in) { assert(in); return reinterpret_cast<const JPH::MotionProperties *>(in); }
 FN(toJpc)(JPH::MotionProperties *in) { assert(in); return reinterpret_cast<JPC_MotionProperties *>(in); }
-FN(toJpc)(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_CollisionGroup *>(in); }
-FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
+FN(toJph)(JPC_MotionProperties *in) { assert(in); return reinterpret_cast<JPH::MotionProperties *>(in); }
+
+FN(toJpc)(const JPH::SubShapeIDPair *in) {
+    assert(in); return reinterpret_cast<const JPC_SubShapeIDPair *>(in);
+}
+
+FN(toJpc)(const JPH::ContactManifold *in) {
+    assert(in); return reinterpret_cast<const JPC_ContactManifold *>(in);
+}
+
+FN(toJpc)(const JPH::CollideShapeResult *in) {
+    assert(in); return reinterpret_cast<const JPC_CollideShapeResult *>(in);
+}
+
+FN(toJpc)(JPH::ContactSettings *in) {
+    assert(in); return reinterpret_cast<JPC_ContactSettings *>(in);
+}
+
 FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in); }
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
+FN(toJpc)(JPH::EShapeType in) { return static_cast<JPC_ShapeType>(in); }
+FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
+FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
+FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
+FN(toJpc)(JPH::EMotionQuality in) { return static_cast<JPC_MotionQuality>(in); }
 
 #undef FN
 
-#define ENSURE_TYPE(o, t) \
-    assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
-
-static inline JPH::Vec3 loadVec3(const float in[3])
-{
+static inline JPH::Vec3 loadVec3(const float in[3]) {
+    assert(in != nullptr);
     return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 }
 
-static inline JPH::Vec4 loadVec4(const float in[4])
-{
+static inline JPH::Vec4 loadVec4(const float in[4]) {
+    assert(in != nullptr);
     return JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in));
 }
 
-static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
-{
+static inline JPH::Mat44 loadMat44(const float in[16]) {
+    assert(in != nullptr);
+    return JPH::Mat44::sLoadFloat4x4(reinterpret_cast<const JPH::Float4 *>(in));
+}
+
+static inline JPH::RVec3 loadRVec3(const JPC_Real in[3]) {
+    assert(in != nullptr);
 #if JPC_DOUBLE_PRECISION == 0
     return JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in));
 #else
@@ -74,18 +238,27 @@ static inline JPH::RVec3 loadRVec3(const JPC_Real in[3])
 #endif
 }
 
-static inline void storeVec3(float out[3], JPH::Vec3Arg in)
-{
+static inline void storeRVec3(JPC_Real out[3], JPH::RVec3Arg in) {
+    assert(out != nullptr);
+#if JPC_DOUBLE_PRECISION == 0
+    in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
+#else
+    in.StoreDouble3(reinterpret_cast<JPH::Double3 *>(out));
+#endif
+}
+
+static inline void storeVec3(float out[3], JPH::Vec3Arg in) {
+    assert(out != nullptr);
     in.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out));
 }
 
-static inline void storeVec4(float out[4], JPH::Vec4Arg in)
-{
+static inline void storeVec4(float out[4], JPH::Vec4Arg in) {
+    assert(out != nullptr);
     in.StoreFloat4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
-static inline void storeMat44(float out[16], JPH::Mat44Arg in)
-{
+static inline void storeMat44(float out[16], JPH::Mat44Arg in) {
+    assert(out != nullptr);
     in.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
@@ -149,7 +322,7 @@ JPC_CollisionGroup_SetDefault(JPC_CollisionGroup *out_group)
 {
     assert(out_group != nullptr);
     const JPH::CollisionGroup group;
-    *out_group = *reinterpret_cast<const JPC_CollisionGroup *>(&group);
+    *out_group = *toJpc(&group);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -157,7 +330,7 @@ JPC_BodyCreationSettings_SetDefault(JPC_BodyCreationSettings *out_settings)
 {
     assert(out_settings != nullptr);
     const JPH::BodyCreationSettings settings;
-    *out_settings = *reinterpret_cast<const JPC_BodyCreationSettings *>(&settings);
+    *out_settings = *toJpc(&settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -227,6 +400,120 @@ JPC_JobSystem_Destroy(JPC_JobSystem *in_job_system)
 // JPC_PhysicsSystem
 //
 //--------------------------------------------------------------------------------------------------
+class BroadPhaseLayerInterface : public JPH::BroadPhaseLayerInterface
+{
+public:
+	uint32_t GetNumBroadPhaseLayers() const override
+    {
+        assert(c_listener->vtbl->GetNumBroadPhaseLayers);
+        return c_listener->vtbl->GetNumBroadPhaseLayers(c_listener);
+    }
+
+    JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
+    {
+        assert(c_listener->vtbl->GetBroadPhaseLayer);
+        return static_cast<JPH::BroadPhaseLayer>(
+            c_listener->vtbl->GetBroadPhaseLayer(c_listener, toJpc(inLayer)));
+    }
+
+    struct CListener
+    {
+        JPC_BroadPhaseLayerInterfaceVTable *vtbl;
+    };
+    const CListener *c_listener;
+};
+
+class BodyActivationListener : public JPH::BodyActivationListener
+{
+public:
+    void OnBodyActivated(const JPH::BodyID &inBodyID, uint64_t inBodyUserData) override
+    {
+        assert(c_listener->vtbl->OnBodyActivated);
+        c_listener->vtbl->OnBodyActivated(c_listener, inBodyID.GetIndexAndSequenceNumber(), inBodyUserData);
+    }
+
+    void OnBodyDeactivated(const JPH::BodyID &inBodyID, uint64_t inBodyUserData) override
+    {
+        assert(c_listener->vtbl->OnBodyDeactivated);
+        c_listener->vtbl->OnBodyDeactivated(c_listener, inBodyID.GetIndexAndSequenceNumber(), inBodyUserData);
+    }
+
+    struct CListener
+    {
+        JPC_BodyActivationListenerVTable *vtbl;
+    };
+    CListener *c_listener;
+};
+
+class ContactListener : public JPH::ContactListener
+{
+public:
+    JPH::ValidateResult OnContactValidate(
+        const JPH::Body &inBody1,
+        const JPH::Body &inBody2,
+        JPH::RVec3Arg inBaseOffset,
+        const JPH::CollideShapeResult &inCollisionResult) override
+    {
+        if (c_listener->vtbl->OnContactValidate)
+        {
+            JPC_Real base_offset[3];
+            storeRVec3(base_offset, inBaseOffset);
+
+            const JPC_ValidateResult res = c_listener->vtbl->OnContactValidate(
+                    c_listener, toJpc(&inBody1), toJpc(&inBody2), base_offset, toJpc(&inCollisionResult));
+
+            return static_cast<JPH::ValidateResult>(res);
+        }
+        return JPH::ContactListener::OnContactValidate(inBody1, inBody2, inBaseOffset, inCollisionResult);
+    }
+
+    void OnContactAdded(
+        const JPH::Body &inBody1,
+        const JPH::Body &inBody2,
+        const JPH::ContactManifold &inManifold,
+        JPH::ContactSettings &ioSettings) override
+    {
+        if (c_listener->vtbl->OnContactAdded)
+        {
+            c_listener->vtbl->OnContactAdded(
+                c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+        }
+    }
+
+    void OnContactPersisted(
+        const JPH::Body &inBody1,
+        const JPH::Body &inBody2,
+        const JPH::ContactManifold &inManifold,
+        JPH::ContactSettings &ioSettings) override
+    {
+        if (c_listener->vtbl->OnContactPersisted)
+        {
+            c_listener->vtbl->OnContactPersisted(
+                c_listener, toJpc(&inBody1), toJpc(&inBody2), toJpc(&inManifold), toJpc(&ioSettings));
+        }
+    }
+
+    void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
+    {
+        if (c_listener->vtbl->OnContactRemoved)
+            c_listener->vtbl->OnContactRemoved(c_listener, toJpc(&inSubShapePair));
+    }
+
+    struct CListener
+    {
+        JPC_ContactListenerVTable *vtbl;
+    };
+    CListener *c_listener;
+};
+
+struct PhysicsSystemData
+{
+    uint64_t safety_token = 0xC0DEC0DEC0DEC0DE;
+    ContactListener *contact_listener = nullptr;
+    BroadPhaseLayerInterface *broad_phase_layer_interface = nullptr;
+    BodyActivationListener *body_activation_listener = nullptr;
+};
+
 JPC_API JPC_PhysicsSystem *
 JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
                          uint32_t in_num_body_mutexes,
@@ -240,101 +527,161 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
     assert(in_object_vs_broad_phase_layer_filter != nullptr);
     assert(in_object_layer_pair_filter != nullptr);
 
-    auto physics_system = new JPH::PhysicsSystem();
+    auto physics_system =
+        static_cast<JPH::PhysicsSystem *>(
+            JPH::Allocate(sizeof(JPH::PhysicsSystem) + sizeof(PhysicsSystemData)));
+    ::new (physics_system) JPH::PhysicsSystem();
+
+    PhysicsSystemData* data =
+        ::new (reinterpret_cast<uint8_t *>(physics_system) + sizeof(JPH::PhysicsSystem)) PhysicsSystemData();
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
+
+    data->broad_phase_layer_interface =
+        static_cast<BroadPhaseLayerInterface *>(JPH::Allocate(sizeof(BroadPhaseLayerInterface)));
+    ::new (data->broad_phase_layer_interface) BroadPhaseLayerInterface();
+
+    data->broad_phase_layer_interface->c_listener =
+        static_cast<const BroadPhaseLayerInterface::CListener *>(in_broad_phase_layer_interface);
 
     physics_system->Init(
         in_max_bodies,
         in_num_body_mutexes,
         in_max_body_pairs,
         in_max_contact_constraints,
-        *static_cast<const JPH::BroadPhaseLayerInterface *>(in_broad_phase_layer_interface),
+        *data->broad_phase_layer_interface,
         reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
         reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
 
-    return reinterpret_cast<JPC_PhysicsSystem *>(physics_system);
+    return toJpc(physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    delete reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    auto data = reinterpret_cast<PhysicsSystemData *>(
+        reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
+
+    if (data->broad_phase_layer_interface)
+    {
+        data->broad_phase_layer_interface->~BroadPhaseLayerInterface();
+        JPH::Free(data->broad_phase_layer_interface);
+    }
+    if (data->contact_listener)
+    {
+        data->contact_listener->~ContactListener();
+        JPH::Free(data->contact_listener);
+    }
+    if (data->body_activation_listener)
+    {
+        data->body_activation_listener->~BodyActivationListener();
+        JPH::Free(data->body_activation_listener);
+    }
+
+    toJph(in_physics_system)->~PhysicsSystem();
+    JPH::Free(in_physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_SetBodyActivationListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    physics_system->SetBodyActivationListener(
-        reinterpret_cast<JPH::BodyActivationListener *>(in_listener));
+    if (in_listener == nullptr)
+    {
+        toJph(in_physics_system)->SetBodyActivationListener(nullptr);
+        return;
+    }
+
+    auto data = reinterpret_cast<PhysicsSystemData *>(
+        reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
+
+    if (data->body_activation_listener == nullptr)
+    {
+        data->body_activation_listener = static_cast<BodyActivationListener *>(
+            JPH::Allocate(sizeof(BodyActivationListener)));
+        ::new (data->body_activation_listener) BodyActivationListener();
+    }
+
+    toJph(in_physics_system)->SetBodyActivationListener(data->body_activation_listener);
+
+    data->body_activation_listener->c_listener = static_cast<BodyActivationListener::CListener *>(in_listener);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void *
 JPC_PhysicsSystem_GetBodyActivationListener(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return physics_system->GetBodyActivationListener();
+    auto listener = static_cast<BodyActivationListener *>(toJph(in_physics_system)->GetBodyActivationListener());
+    if (listener == nullptr)
+        return nullptr;
+    return listener->c_listener;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_SetContactListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    physics_system->SetContactListener(reinterpret_cast<JPH::ContactListener *>(in_listener));
+    if (in_listener == nullptr)
+    {
+        toJph(in_physics_system)->SetContactListener(nullptr);
+        return;
+    }
+
+    auto data = reinterpret_cast<PhysicsSystemData *>(
+        reinterpret_cast<uint8_t *>(in_physics_system) + sizeof(JPH::PhysicsSystem));
+    assert(data->safety_token == 0xC0DEC0DEC0DEC0DE);
+
+    if (data->contact_listener == nullptr)
+    {
+        data->contact_listener = static_cast<ContactListener *>(JPH::Allocate(sizeof(ContactListener)));
+        ::new (data->contact_listener) ContactListener();
+    }
+
+    toJph(in_physics_system)->SetContactListener(data->contact_listener);
+
+    data->contact_listener->c_listener = static_cast<ContactListener::CListener *>(in_listener);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void *
 JPC_PhysicsSystem_GetContactListener(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return physics_system->GetContactListener();
+    auto listener = static_cast<ContactListener *>(toJph(in_physics_system)->GetContactListener());
+    if (listener == nullptr)
+        return nullptr;
+    return listener->c_listener;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_PhysicsSystem_GetNumBodies(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetNumBodies();
+    return toJph(in_physics_system)->GetNumBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_PhysicsSystem_GetNumActiveBodies(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetNumActiveBodies();
+    return toJph(in_physics_system)->GetNumActiveBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_PhysicsSystem_GetMaxBodies(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetMaxBodies();
+    return toJph(in_physics_system)->GetMaxBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterface());
+    return toJpc(&toJph(in_physics_system)->GetBodyInterface());
 }
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<JPC_BodyInterface *>(&physics_system->GetBodyInterfaceNoLock());
+    return toJpc(&toJph(in_physics_system)->GetBodyInterfaceNoLock());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system)->OptimizeBroadPhase();
+    toJph(in_physics_system)->OptimizeBroadPhase();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -345,8 +692,8 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          JPC_TempAllocator *in_temp_allocator,
                          JPC_JobSystem *in_job_system)
 {
-    assert(in_physics_system != nullptr && in_temp_allocator != nullptr && in_job_system != nullptr);
-    reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system)->Update(
+    assert(in_temp_allocator != nullptr && in_job_system != nullptr);
+    toJph(in_physics_system)->Update(
         in_delta_time,
         in_collision_steps,
         in_integration_sub_steps,
@@ -357,16 +704,12 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterface());
+    return toJpc(&toJph(in_physics_system)->GetBodyLockInterface());
 }
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system)
 {
-    assert(in_physics_system != nullptr);
-    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
-    return reinterpret_cast<const JPC_BodyLockInterface *>(&physics_system->GetBodyLockInterfaceNoLock());
+    return toJpc(&toJph(in_physics_system)->GetBodyLockInterfaceNoLock());
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -378,16 +721,14 @@ JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
                       const JPC_BodyLockInterface *in_lock_interface,
                       JPC_BodyID in_body_id)
 {
-    assert(out_lock != nullptr && in_lock_interface != nullptr);
-    new (out_lock) JPH::BodyLockRead(
-        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface), JPH::BodyID(in_body_id));
+    assert(out_lock != nullptr);
+    ::new (out_lock) JPH::BodyLockRead(*toJph(in_lock_interface), toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
 JPC_BodyLockRead_Unlock(JPC_BodyLockRead *io_lock)
 {
-    assert(io_lock != nullptr);
-    reinterpret_cast<JPH::BodyLockRead *>(io_lock)->~BodyLockRead();
+    toJph(io_lock)->~BodyLockRead();
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
@@ -395,16 +736,14 @@ JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
                        const JPC_BodyLockInterface *in_lock_interface,
                        JPC_BodyID in_body_id)
 {
-    assert(out_lock != nullptr && in_lock_interface != nullptr);
-    new (out_lock) JPH::BodyLockWrite(
-        *reinterpret_cast<const JPH::BodyLockInterface *>(in_lock_interface), JPH::BodyID(in_body_id));
+    assert(out_lock != nullptr);
+    ::new (out_lock) JPH::BodyLockWrite(*toJph(in_lock_interface), toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 void JPC_API
 JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock)
 {
-    assert(io_lock != nullptr);
-    reinterpret_cast<JPH::BodyLockWrite *>(io_lock)->~BodyLockWrite();
+    toJph(io_lock)->~BodyLockWrite();
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -414,55 +753,41 @@ JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock)
 JPC_API void
 JPC_ShapeSettings_AddRef(JPC_ShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    reinterpret_cast<JPH::ShapeSettings *>(in_settings)->AddRef();
+    toJph(in_settings)->AddRef();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ShapeSettings_Release(JPC_ShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    reinterpret_cast<JPH::ShapeSettings *>(in_settings)->Release();
+    toJph(in_settings)->Release();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_ShapeSettings_GetRefCount(const JPC_ShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    return reinterpret_cast<const JPH::ShapeSettings *>(in_settings)->GetRefCount();
+    return toJph(in_settings)->GetRefCount();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Shape *
 JPC_ShapeSettings_CreateShape(const JPC_ShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    auto settings = reinterpret_cast<const JPH::ShapeSettings *>(in_settings);
-    const JPH::Result result = settings->Create();
-    if (result.HasError())
-        return nullptr;
+    const JPH::Result result = toJph(in_settings)->Create();
+    if (result.HasError()) return nullptr;
     JPH::Shape *shape = const_cast<JPH::Shape *>(result.Get().GetPtr());
     shape->AddRef();
-    return reinterpret_cast<JPC_Shape *>(shape);
+    return toJpc(shape);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint64_t
 JPC_ShapeSettings_GetUserData(const JPC_ShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    return reinterpret_cast<const JPH::ShapeSettings *>(in_settings)->mUserData;
+    return toJph(in_settings)->mUserData;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ShapeSettings_SetUserData(JPC_ShapeSettings *in_settings, uint64_t in_user_data)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    reinterpret_cast<JPH::ShapeSettings *>(in_settings)->mUserData = in_user_data;
+    toJph(in_settings)->mUserData = in_user_data;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -472,36 +797,27 @@ JPC_ShapeSettings_SetUserData(JPC_ShapeSettings *in_settings, uint64_t in_user_d
 JPC_API const JPC_PhysicsMaterial *
 JPC_ConvexShapeSettings_GetMaterial(const JPC_ConvexShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
-    auto settings = reinterpret_cast<const JPH::ConvexShapeSettings *>(in_settings);
-    return reinterpret_cast<const JPC_PhysicsMaterial *>(settings->mMaterial.GetPtr());
+    // TODO: Increment ref count
+    return toJpc(toJph(in_settings)->mMaterial.GetPtr());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexShapeSettings_SetMaterial(JPC_ConvexShapeSettings *in_settings,
                                     const JPC_PhysicsMaterial *in_material)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
-    auto settings = reinterpret_cast<JPH::ConvexShapeSettings *>(in_settings);
-    settings->mMaterial = reinterpret_cast<const JPH::PhysicsMaterial *>(in_material);
+    toJph(in_settings)->mMaterial = toJph(in_material);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexShapeSettings_GetDensity(const JPC_ConvexShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
-    return reinterpret_cast<const JPH::ConvexShapeSettings *>(in_settings)->mDensity;
+    return toJph(in_settings)->mDensity;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexShapeSettings_SetDensity(JPC_ConvexShapeSettings *in_settings, float in_density)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
-    reinterpret_cast<JPH::ConvexShapeSettings *>(in_settings)->SetDensity(in_density);
+    toJph(in_settings)->SetDensity(in_density);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -511,45 +827,33 @@ JPC_ConvexShapeSettings_SetDensity(JPC_ConvexShapeSettings *in_settings, float i
 JPC_API JPC_BoxShapeSettings *
 JPC_BoxShapeSettings_Create(const float in_half_extent[3])
 {
-    assert(in_half_extent != nullptr);
-    auto settings = new JPH::BoxShapeSettings(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_half_extent)));
+    auto settings = new JPH::BoxShapeSettings(loadVec3(in_half_extent));
     settings->AddRef();
-    return reinterpret_cast<JPC_BoxShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BoxShapeSettings_GetHalfExtent(const JPC_BoxShapeSettings *in_settings, float out_half_extent[3])
 {
-    assert(in_settings != nullptr && out_half_extent != nullptr);
-    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
-    auto settings = reinterpret_cast<const JPH::BoxShapeSettings *>(in_settings);
-    settings->mHalfExtent.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_half_extent));
+    storeVec3(out_half_extent, toJph(in_settings)->mHalfExtent);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BoxShapeSettings_SetHalfExtent(JPC_BoxShapeSettings *in_settings, const float in_half_extent[3])
 {
-    assert(in_settings != nullptr && in_half_extent != nullptr);
-    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
-    auto settings = reinterpret_cast<JPH::BoxShapeSettings *>(in_settings);
-    settings->mHalfExtent = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_half_extent));
+    toJph(in_settings)->mHalfExtent = loadVec3(in_half_extent);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_BoxShapeSettings_GetConvexRadius(const JPC_BoxShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
-    return reinterpret_cast<const JPH::BoxShapeSettings *>(in_settings)->mConvexRadius;
+    return toJph(in_settings)->mConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BoxShapeSettings_SetConvexRadius(JPC_BoxShapeSettings *in_settings, float in_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
-    reinterpret_cast<JPH::BoxShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
+    toJph(in_settings)->mConvexRadius = in_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -561,23 +865,19 @@ JPC_SphereShapeSettings_Create(float in_radius)
 {
     auto settings = new JPH::SphereShapeSettings(in_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_SphereShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_SphereShapeSettings_GetRadius(const JPC_SphereShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::SphereShapeSettings);
-    return reinterpret_cast<const JPH::SphereShapeSettings *>(in_settings)->mRadius;
+    return toJph(in_settings)->mRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_SphereShapeSettings_SetRadius(JPC_SphereShapeSettings *in_settings, float in_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::SphereShapeSettings);
-    reinterpret_cast<JPH::SphereShapeSettings *>(in_settings)->mRadius = in_radius;
+    toJph(in_settings)->mRadius = in_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -587,13 +887,9 @@ JPC_SphereShapeSettings_SetRadius(JPC_SphereShapeSettings *in_settings, float in
 JPC_API JPC_TriangleShapeSettings *
 JPC_TriangleShapeSettings_Create(const float in_v1[3], const float in_v2[3], const float in_v3[3])
 {
-    assert(in_v1 != nullptr && in_v2 != nullptr && in_v3 != nullptr);
-    auto settings = new JPH::TriangleShapeSettings(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v1)),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v2)),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v3)));
+    auto settings = new JPH::TriangleShapeSettings(loadVec3(in_v1), loadVec3(in_v2), loadVec3(in_v3));
     settings->AddRef();
-    return reinterpret_cast<JPC_TriangleShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -602,10 +898,7 @@ JPC_TriangleShapeSettings_SetVertices(JPC_TriangleShapeSettings *in_settings,
                                       const float in_v2[3],
                                       const float in_v3[3])
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
-    assert(in_v1 != nullptr && in_v2 != nullptr && in_v3 != nullptr);
-    auto settings = reinterpret_cast<JPH::TriangleShapeSettings *>(in_settings);
+    JPH::TriangleShapeSettings *settings = toJph(in_settings);
     settings->mV1 = loadVec3(in_v1);
     settings->mV2 = loadVec3(in_v2);
     settings->mV3 = loadVec3(in_v3);
@@ -617,10 +910,7 @@ JPC_TriangleShapeSettings_GetVertices(const JPC_TriangleShapeSettings *in_settin
                                       float out_v2[3],
                                       float out_v3[3])
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
-    assert(out_v1 != nullptr && out_v2 != nullptr && out_v3 != nullptr);
-    auto settings = reinterpret_cast<const JPH::TriangleShapeSettings *>(in_settings);
+    const JPH::TriangleShapeSettings *settings = toJph(in_settings);
     storeVec3(out_v1, settings->mV1);
     storeVec3(out_v2, settings->mV2);
     storeVec3(out_v3, settings->mV3);
@@ -629,18 +919,13 @@ JPC_TriangleShapeSettings_GetVertices(const JPC_TriangleShapeSettings *in_settin
 JPC_API float
 JPC_TriangleShapeSettings_GetConvexRadius(const JPC_TriangleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
-    return reinterpret_cast<const JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius;
+    return toJph(in_settings)->mConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_TriangleShapeSettings_SetConvexRadius(JPC_TriangleShapeSettings *in_settings,
-                                          float in_convex_radius)
+JPC_TriangleShapeSettings_SetConvexRadius(JPC_TriangleShapeSettings *in_settings, float in_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
-    reinterpret_cast<JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
+    toJph(in_settings)->mConvexRadius = in_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -652,41 +937,32 @@ JPC_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radiu
 {
     auto settings = new JPH::CapsuleShapeSettings(in_half_height_of_cylinder, in_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_CapsuleShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPC_CapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder;
+    return toJph(in_settings)->mHalfHeightOfCylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPC_CapsuleShapeSettings *in_settings,
                                                  float in_half_height_of_cylinder)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder =
-        in_half_height_of_cylinder;
+    toJph(in_settings)->mHalfHeightOfCylinder = in_half_height_of_cylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CapsuleShapeSettings_GetRadius(const JPC_CapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mRadius;
+    return toJph(in_settings)->mRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CapsuleShapeSettings_SetRadius(JPC_CapsuleShapeSettings *in_settings, float in_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
-    reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mRadius = in_radius;
+    toJph(in_settings)->mRadius = in_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -698,59 +974,45 @@ JPC_TaperedCapsuleShapeSettings_Create(float in_half_height, float in_top_radius
 {
     auto settings = new JPH::TaperedCapsuleShapeSettings(in_half_height, in_top_radius, in_bottom_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_TaperedCapsuleShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mHalfHeightOfTaperedCylinder;
+    return toJph(in_settings)->mHalfHeightOfTaperedCylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder(JPC_TaperedCapsuleShapeSettings *in_settings,
                                                                float in_half_height)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mHalfHeightOfTaperedCylinder = 
-        in_half_height;
+    toJph(in_settings)->mHalfHeightOfTaperedCylinder = in_half_height;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetTopRadius(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mTopRadius;
+    return toJph(in_settings)->mTopRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_TaperedCapsuleShapeSettings_SetTopRadius(JPC_TaperedCapsuleShapeSettings *in_settings, float in_top_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mTopRadius = in_top_radius;
+    toJph(in_settings)->mTopRadius = in_top_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetBottomRadius(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mBottomRadius;
+    return toJph(in_settings)->mBottomRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_TaperedCapsuleShapeSettings_SetBottomRadius(JPC_TaperedCapsuleShapeSettings *in_settings,
                                                 float in_bottom_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
-    reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mBottomRadius =
-        in_bottom_radius;
+    toJph(in_settings)->mBottomRadius = in_bottom_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -762,55 +1024,43 @@ JPC_CylinderShapeSettings_Create(float in_half_height, float in_radius)
 {
     auto settings = new JPH::CylinderShapeSettings(in_half_height, in_radius);
     settings->AddRef();
-    return reinterpret_cast<JPC_CylinderShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CylinderShapeSettings_GetConvexRadius(const JPC_CylinderShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mConvexRadius;
+    return toJph(in_settings)->mConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CylinderShapeSettings_SetConvexRadius(JPC_CylinderShapeSettings *in_settings, float in_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
+    toJph(in_settings)->mConvexRadius = in_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CylinderShapeSettings_GetHalfHeight(const JPC_CylinderShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mHalfHeight;
+    return toJph(in_settings)->mHalfHeight;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CylinderShapeSettings_SetHalfHeight(JPC_CylinderShapeSettings *in_settings, float in_half_height)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mHalfHeight = in_half_height;
+    toJph(in_settings)->mHalfHeight = in_half_height;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_CylinderShapeSettings_GetRadius(const JPC_CylinderShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mRadius;
+    return toJph(in_settings)->mRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_CylinderShapeSettings_SetRadius(JPC_CylinderShapeSettings *in_settings, float in_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
-    reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mRadius = in_radius;
+    toJph(in_settings)->mRadius = in_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -825,59 +1075,46 @@ JPC_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points
     auto settings = new JPH::ConvexHullShapeSettings(
         reinterpret_cast<const JPH::Vec3 *>(&in_points[0][0]), in_num_points);
     settings->AddRef();
-    return reinterpret_cast<JPC_ConvexHullShapeSettings *>(settings);
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexHullShapeSettings_GetMaxConvexRadius(const JPC_ConvexHullShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius;
+    return toJph(in_settings)->mMaxConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexHullShapeSettings_SetMaxConvexRadius(JPC_ConvexHullShapeSettings *in_settings,
                                                float in_max_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius = in_max_convex_radius;
+    toJph(in_settings)->mMaxConvexRadius = in_max_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexHullShapeSettings_GetMaxErrorConvexRadius(const JPC_ConvexHullShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius;
+    return toJph(in_settings)->mMaxErrorConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexHullShapeSettings_SetMaxErrorConvexRadius(JPC_ConvexHullShapeSettings *in_settings,
                                                     float in_max_err_convex_radius)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius =
-        in_max_err_convex_radius;
+    toJph(in_settings)->mMaxErrorConvexRadius = in_max_err_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_ConvexHullShapeSettings_GetHullTolerance(const JPC_ConvexHullShapeSettings *in_settings)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance;
+    return toJph(in_settings)->mHullTolerance;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_settings,
                                              float in_hull_tolerance)
 {
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
-    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance = in_hull_tolerance;
+    toJph(in_settings)->mHullTolerance = in_hull_tolerance;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -887,50 +1124,43 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
 JPC_API void
 JPC_Shape_AddRef(JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    reinterpret_cast<JPH::Shape *>(in_shape)->AddRef();
+    toJph(in_shape)->AddRef();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Shape_Release(JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    reinterpret_cast<JPH::Shape *>(in_shape)->Release();
+    toJph(in_shape)->Release();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
 JPC_Shape_GetRefCount(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetRefCount();
+    return toJph(in_shape)->GetRefCount();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ShapeType
 JPC_Shape_GetType(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return static_cast<JPC_ShapeType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetType());
+    return toJpc(toJph(in_shape)->GetType());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ShapeSubType
 JPC_Shape_GetSubType(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return static_cast<JPC_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetSubType());
+    return toJpc(toJph(in_shape)->GetSubType());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint64_t
 JPC_Shape_GetUserData(const JPC_Shape *in_shape)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetUserData();
+    return toJph(in_shape)->GetUserData();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<JPH::Shape *>(in_shape)->SetUserData(in_user_data);
+    return toJph(in_shape)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -938,35 +1168,27 @@ JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data)
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Body *
-JPC_BodyInterface_CreateBody(JPC_BodyInterface *in_iface, const JPC_BodyCreationSettings *in_setting)
+JPC_BodyInterface_CreateBody(JPC_BodyInterface *in_iface, const JPC_BodyCreationSettings *in_settings)
 {
-    assert(in_iface != nullptr && in_setting != nullptr);
-    auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
-    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
-    return reinterpret_cast<JPC_Body *>(iface->CreateBody(*settings));
+    return toJpc(toJph(in_iface)->CreateBody(*toJph(in_settings)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_DestroyBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->DestroyBody(JPH::BodyID(in_body_id));
+    toJph(in_iface)->DestroyBody(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_AddBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_Activation in_mode)
 {
-    assert(in_iface != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->AddBody(
-        JPH::BodyID(in_body_id),
-        static_cast<JPH::EActivation>(in_mode));
+    toJph(in_iface)->AddBody(toJph(in_body_id), static_cast<JPH::EActivation>(in_mode));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_RemoveBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->RemoveBody(JPH::BodyID(in_body_id));
+    toJph(in_iface)->RemoveBody(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_BodyID
@@ -974,20 +1196,14 @@ JPC_BodyInterface_CreateAndAddBody(JPC_BodyInterface *in_iface,
                                    const JPC_BodyCreationSettings *in_settings,
                                    JPC_Activation in_mode)
 {
-    assert(in_iface != nullptr && in_settings != nullptr);
-    auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
-    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_settings);
-    const JPH::BodyID body_id = iface->CreateAndAddBody(
-        *settings,
-        static_cast<JPH::EActivation>(in_mode));
-    return body_id.GetIndexAndSequenceNumber();
+    return toJpc(toJph(in_iface)->CreateAndAddBody(*toJph(in_settings),
+        static_cast<JPH::EActivation>(in_mode)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_BodyInterface_IsAdded(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsAdded(JPH::BodyID(in_body_id));
+    return toJph(in_iface)->IsAdded(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -995,10 +1211,7 @@ JPC_BodyInterface_SetLinearVelocity(JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     const float in_velocity[3])
 {
-    assert(in_iface != nullptr && in_velocity != nullptr);
-    reinterpret_cast<JPH::BodyInterface *>(in_iface)->SetLinearVelocity(
-        JPH::BodyID(in_body_id),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_velocity)));
+    toJph(in_iface)->SetLinearVelocity(toJph(in_body_id), loadVec3(in_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1006,28 +1219,21 @@ JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     float out_velocity[3])
 {
-    assert(in_iface != nullptr && out_velocity != nullptr);
-    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetLinearVelocity(
-        JPH::BodyID(in_body_id));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+    storeVec3(out_velocity, toJph(in_iface)->GetLinearVelocity(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
-                                          float out_position[3])
+                                          JPC_Real out_position[3])
 {
-    assert(in_iface != nullptr && out_position != nullptr);
-    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetCenterOfMassPosition(
-        JPH::BodyID(in_body_id));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+    storeRVec3(out_position, toJph(in_iface)->GetCenterOfMassPosition(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
-    assert(in_iface != nullptr);
-    return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsActive(JPH::BodyID(in_body_id));
+    return toJph(in_iface)->IsActive(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1091,7 +1297,7 @@ JPC_Body_GetMotionType(const JPC_Body *in_body)
 JPC_API void
 JPC_Body_SetMotionType(JPC_Body *in_body, JPC_MotionType in_motion_type)
 {
-    toJph(in_body)->SetMotionType(toJph(in_motion_type));
+    toJph(in_body)->SetMotionType(static_cast<JPH::EMotionType>(in_motion_type));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_BroadPhaseLayer
@@ -1293,15 +1499,13 @@ JPC_Body_IsCollisionCacheInvalid(const JPC_Body *in_body)
 JPC_API const JPC_Shape *
 JPC_Body_GetShape(const JPC_Body *in_body)
 {
-    const JPC_Shape* shape = toJpc(toJph(in_body)->GetShape());
-    JPC_Shape_AddRef(const_cast<JPC_Shape *>(shape));
-    return shape;
+    return toJpc(toJph(in_body)->GetShape());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetPosition(const JPC_Body *in_body, float out_position[3])
+JPC_Body_GetPosition(const JPC_Body *in_body, JPC_Real out_position[3])
 {
-    storeVec3(out_position, toJph(in_body)->GetPosition());
+    storeRVec3(out_position, toJph(in_body)->GetPosition());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1311,21 +1515,43 @@ JPC_Body_GetRotation(const JPC_Body *in_body, float out_rotation[4])
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_transform[16])
+JPC_Body_GetWorldTransform(const JPC_Body *in_body, float out_rotation[9], JPC_Real out_translation[3])
 {
-    storeMat44(out_transform, toJph(in_body)->GetWorldTransform());
+    const JPH::RMat44 m = toJph(in_body)->GetWorldTransform();
+    storeVec3(&out_rotation[0], m.GetColumn3(0));
+    storeVec3(&out_rotation[3], m.GetColumn3(1));
+    storeVec3(&out_rotation[6], m.GetColumn3(2));
+    storeRVec3(&out_translation[0], m.GetTranslation());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, float out_position[3])
+JPC_Body_GetCenterOfMassPosition(const JPC_Body *in_body, JPC_Real out_position[3])
 {
-    storeVec3(out_position, toJph(in_body)->GetCenterOfMassPosition());
+    storeRVec3(out_position, toJph(in_body)->GetCenterOfMassPosition());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body, float out_transform[16])
+JPC_Body_GetCenterOfMassTransform(const JPC_Body *in_body,
+                                  float out_rotation[9],
+                                  JPC_Real out_translation[3])
 {
-    storeMat44(out_transform, toJph(in_body)->GetInverseCenterOfMassTransform());
+    const JPH::RMat44 m = toJph(in_body)->GetCenterOfMassTransform();
+    storeVec3(&out_rotation[0], m.GetColumn3(0));
+    storeVec3(&out_rotation[3], m.GetColumn3(1));
+    storeVec3(&out_rotation[6], m.GetColumn3(2));
+    storeRVec3(&out_translation[0], m.GetTranslation());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Body_GetInverseCenterOfMassTransform(const JPC_Body *in_body,
+                                         float out_rotation[9],
+                                         JPC_Real out_translation[3])
+{
+    const JPH::RMat44 m = toJph(in_body)->GetInverseCenterOfMassTransform();
+    storeVec3(&out_rotation[0], m.GetColumn3(0));
+    storeVec3(&out_rotation[3], m.GetColumn3(1));
+    storeVec3(&out_rotation[6], m.GetColumn3(2));
+    storeRVec3(&out_translation[0], m.GetTranslation());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1392,56 +1618,42 @@ JPC_Body_GetBodyCreationSettings(const JPC_Body *in_body, JPC_BodyCreationSettin
 JPC_API JPC_MotionQuality
 JPC_MotionProperties_GetMotionQuality(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return static_cast<JPC_MotionQuality>(
-        reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMotionQuality()
-    );
+    return toJpc(toJph(in_properties)->GetMotionQuality());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetLinearVelocity(const JPC_MotionProperties *in_properties,
                                        float out_linear_velocity[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->GetLinearVelocity();
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_linear_velocity));
+    storeVec3(out_linear_velocity, toJph(in_properties)->GetLinearVelocity());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetLinearVelocity(JPC_MotionProperties *in_properties,
                                        const float in_linear_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearVelocity(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity)));
+    toJph(in_properties)->SetLinearVelocity(loadVec3(in_linear_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetLinearVelocityClamped(JPC_MotionProperties *in_properties,
                                               const float in_linear_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearVelocityClamped(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity)));
+    toJph(in_properties)->SetLinearVelocityClamped(loadVec3(in_linear_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetAngularVelocity(JPC_MotionProperties *in_properties,
                                         const float in_angular_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularVelocity(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity)));
+    toJph(in_properties)->SetAngularVelocity(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetAngularVelocityClamped(JPC_MotionProperties *in_properties,
                                                const float in_angular_velocity[3])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularVelocityClamped(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity)));
+    toJph(in_properties)->SetAngularVelocityClamped(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1450,120 +1662,98 @@ JPC_MotionProperties_MoveKinematic(JPC_MotionProperties *in_properties,
                                    const float in_delta_rotation[4],
                                    float in_delta_time)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->MoveKinematic(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_delta_position)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_delta_rotation))),
-        in_delta_time);
+    toJph(in_properties)->MoveKinematic(
+        loadVec3(in_delta_position), JPH::Quat(loadVec4(in_delta_rotation)), in_delta_time);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_ClampLinearVelocity(JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ClampLinearVelocity();
+    toJph(in_properties)->ClampLinearVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_ClampAngularVelocity(JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ClampAngularVelocity();
+    toJph(in_properties)->ClampAngularVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetLinearDamping(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetLinearDamping();
+    return toJph(in_properties)->GetLinearDamping();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetLinearDamping(JPC_MotionProperties *in_properties,
                                       float in_linear_damping)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearDamping(in_linear_damping);
+    toJph(in_properties)->SetLinearDamping(in_linear_damping);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetAngularDamping(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetAngularDamping();
+    return toJph(in_properties)->GetAngularDamping();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetAngularDamping(JPC_MotionProperties *in_properties,
                                        float in_angular_damping)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularDamping(in_angular_damping);
+    toJph(in_properties)->SetAngularDamping(in_angular_damping);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetGravityFactor(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetGravityFactor();
+    return toJph(in_properties)->GetGravityFactor();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetGravityFactor(JPC_MotionProperties *in_properties,
                                       float in_gravity_factor)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetGravityFactor(in_gravity_factor);
+    toJph(in_properties)->SetGravityFactor(in_gravity_factor);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMassProperties(JPC_MotionProperties *in_properties,
                                        const JPC_MassProperties *in_mass_properties)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetMassProperties(
-        *reinterpret_cast<const JPH::MassProperties *>(in_mass_properties));
+    toJph(in_properties)->SetMassProperties(*toJph(in_mass_properties));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetInverseMass(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetInverseMass();
+    return toJph(in_properties)->GetInverseMass();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetInverseMassUnchecked(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetInverseMassUnchecked();
+    return toJph(in_properties)->GetInverseMassUnchecked();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetInverseMass(JPC_MotionProperties *in_properties, float in_inv_mass)
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseMass(in_inv_mass);
+    toJph(in_properties)->SetInverseMass(in_inv_mass);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetInverseInertiaDiagonal(const JPC_MotionProperties *in_properties,
                                                float out_inverse_inertia_diagonal[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->GetInverseInertiaDiagonal();
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_inverse_inertia_diagonal));
+    storeVec3(out_inverse_inertia_diagonal, toJph(in_properties)->GetInverseInertiaDiagonal());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetInertiaRotation(const JPC_MotionProperties *in_properties,
                                         float out_inertia_rotation[4])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Quat v = properties->GetInertiaRotation();
-    v.GetXYZW().StoreFloat4(reinterpret_cast<JPH::Float4 *>(out_inertia_rotation));
+    storeVec4(out_inertia_rotation, toJph(in_properties)->GetInertiaRotation().GetXYZW());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1571,30 +1761,23 @@ JPC_MotionProperties_SetInverseInertia(JPC_MotionProperties *in_properties,
                                        const float in_diagonal[3],
                                        const float in_rotation[4])
 {
-    assert(in_properties != nullptr);
-    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseInertia(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_diagonal)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_rotation))));
+    toJph(in_properties)->SetInverseInertia(
+        loadVec3(in_diagonal),
+        JPH::Quat(loadVec4(in_rotation)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetLocalSpaceInverseInertia(const JPC_MotionProperties *in_properties,
                                                  float out_matrix[16])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Mat44 m = properties->GetLocalSpaceInverseInertia();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+    storeMat44(out_matrix, toJph(in_properties)->GetLocalSpaceInverseInertia());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(const JPC_MotionProperties *in_properties,
                                                           float out_matrix[16])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Mat44 m = properties->GetLocalSpaceInverseInertiaUnchecked();
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+    storeMat44(out_matrix, toJph(in_properties)->GetLocalSpaceInverseInertiaUnchecked());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1602,11 +1785,7 @@ JPC_MotionProperties_GetInverseInertiaForRotation(const JPC_MotionProperties *in
                                                   const float in_rotation_matrix[16],
                                                   float out_matrix[16])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Mat44 m = properties->GetInverseInertiaForRotation(
-        *reinterpret_cast<const JPH::Mat44 *>(in_rotation_matrix));
-    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+    storeMat44(out_matrix, toJph(in_properties)->GetInverseInertiaForRotation(loadMat44(in_rotation_matrix)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1615,12 +1794,9 @@ JPC_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(const JPC_MotionPr
                                                               const float in_vector[3],
                                                               float out_vector[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->MultiplyWorldSpaceInverseInertiaByVector(
-        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_body_rotation))),
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_vector)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_vector));
+    const JPH::Vec3 v = toJph(in_properties)->MultiplyWorldSpaceInverseInertiaByVector(
+        JPH::Quat(loadVec4(in_body_rotation)), loadVec3(in_vector));
+    storeVec3(out_vector, v);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1628,83 +1804,61 @@ JPC_MotionProperties_GetPointVelocityCOM(const JPC_MotionProperties *in_properti
                                          const float in_point_relative_to_com[3],
                                          float out_point[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
-    const JPH::Vec3 v = properties->GetPointVelocityCOM(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point_relative_to_com)));
-    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_point));
+    storeVec3(out_point, toJph(in_properties)->GetPointVelocityCOM(loadVec3(in_point_relative_to_com)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetMaxLinearVelocity(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMaxLinearVelocity();
+    return toJph(in_properties)->GetMaxLinearVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMaxLinearVelocity(JPC_MotionProperties *in_properties,
                                           float in_max_linear_velocity)
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SetMaxLinearVelocity(in_max_linear_velocity);
+    toJph(in_properties)->SetMaxLinearVelocity(in_max_linear_velocity);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
 JPC_MotionProperties_GetMaxAngularVelocity(const JPC_MotionProperties *in_properties)
 {
-    assert(in_properties != nullptr);
-    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMaxAngularVelocity();
+    return toJph(in_properties)->GetMaxAngularVelocity();
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMaxAngularVelocity(JPC_MotionProperties *in_properties,
                                            float in_max_angular_velocity)
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SetMaxAngularVelocity(in_max_angular_velocity);
+    toJph(in_properties)->SetMaxAngularVelocity(in_max_angular_velocity);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_AddLinearVelocityStep(JPC_MotionProperties *in_properties,
                                            const float in_linear_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->AddLinearVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity_change)));
+    toJph(in_properties)->AddLinearVelocityStep(loadVec3(in_linear_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SubLinearVelocityStep(JPC_MotionProperties *in_properties,
                                            const float in_linear_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SubLinearVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity_change)));
+    toJph(in_properties)->SubLinearVelocityStep(loadVec3(in_linear_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_AddAngularVelocityStep(JPC_MotionProperties *in_properties,
                                             const float in_angular_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->AddAngularVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change)));
+    toJph(in_properties)->AddAngularVelocityStep(loadVec3(in_angular_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SubAngularVelocityStep(JPC_MotionProperties *in_properties,
                                             const float in_angular_velocity_change[3])
 {
-    assert(in_properties != nullptr);
-    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
-    properties->SubAngularVelocityStep(
-        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change)));
+    toJph(in_properties)->SubAngularVelocityStep(loadVec3(in_angular_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 //

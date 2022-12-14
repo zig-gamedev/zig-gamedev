@@ -1,14 +1,45 @@
 const std = @import("std");
 
-pub const pkg = std.build.Pkg{
-    .name = "zphysics",
-    .source = .{ .path = thisDir() ++ "/src/zphysics.zig" },
+pub const BuildOptions = struct {
+    use_double_precision: bool = false,
+    enable_asserts: bool = false,
 };
+
+pub const BuildOptionsStep = struct {
+    options: BuildOptions,
+    step: *std.build.OptionsStep,
+
+    pub fn init(b: *std.build.Builder, options: BuildOptions) BuildOptionsStep {
+        const bos = .{
+            .options = options,
+            .step = b.addOptions(),
+        };
+        bos.step.addOption(bool, "use_double_precision", bos.options.use_double_precision);
+        bos.step.addOption(bool, "enable_asserts", bos.options.enable_asserts);
+        return bos;
+    }
+
+    pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
+        return bos.step.getPackage("zphysics_options");
+    }
+
+    fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
+        target_step.addOptions("zphysics_options", bos.step);
+    }
+};
+
+pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+    return .{
+        .name = "zphysics",
+        .source = .{ .path = thisDir() ++ "/src/zphysics.zig" },
+        .dependencies = dependencies,
+    };
+}
 
 pub fn build(b: *std.build.Builder) void {
     const build_mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, build_mode, target);
+    const tests = buildTests(b, build_mode, target, .{});
 
     const test_step = b.step("test", "Run zphysics tests");
     test_step.dependOn(&tests.step);
@@ -18,16 +49,26 @@ pub fn buildTests(
     b: *std.build.Builder,
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
+    options: BuildOptions,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(pkg.source.path);
-    tests.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c", &.{"-std=c11"});
+    const tests = b.addTest(thisDir() ++ "/src/zphysics.zig");
+    tests.addCSourceFile(
+        thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c",
+        &.{
+            "-std=c11",
+            if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
+            if (options.enable_asserts or tests.build_mode == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+        },
+    );
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
-    link(tests);
+    link(tests, BuildOptionsStep.init(b, options));
     return tests;
 }
 
-pub fn link(exe: *std.build.LibExeObjStep) void {
+pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
+    bos.addTo(exe);
+
     exe.addIncludePath(thisDir() ++ "/libs");
     exe.addIncludePath(thisDir() ++ "/libs/JoltC");
     exe.linkSystemLibraryName("c");
@@ -36,7 +77,8 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     const flags = &.{
         "-std=c++17",
         "-DJPH_COMPILER_MINGW",
-        //"-DJPH_DOUBLE_PRECISION",
+        if (bos.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
+        if (bos.options.enable_asserts or exe.build_mode == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         "-fno-sanitize=undefined",
     };
     exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp", flags);
