@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 5, .patch = 1 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 5, .patch = 2 };
 const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 //
@@ -582,9 +582,8 @@ pub const Window = opaque {
         height: i32,
         title: [:0]const u8,
         monitor: ?*Monitor,
-        share: ?*Window,
     ) Error!*Window {
-        if (glfwCreateWindow(width, height, title, monitor, share)) |window| return window;
+        if (glfwCreateWindow(width, height, title, monitor, null)) |window| return window;
         try maybeError();
         unreachable;
     }
@@ -706,7 +705,7 @@ test "zglfw.basic" {
         _ = adapter;
     }
 
-    const window = try Window.create(200, 200, "test", null, null);
+    const window = try Window.create(200, 200, "test", null);
     defer window.destroy();
 
     window.setAttribute(.resizable, true);

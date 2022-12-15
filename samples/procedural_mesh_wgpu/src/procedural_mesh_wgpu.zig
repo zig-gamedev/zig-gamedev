@@ -667,7 +667,7 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    const window = zglfw.Window.create(1600, 1000, window_title, null, null) catch {
+    const window = zglfw.Window.create(1600, 1000, window_title, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };
