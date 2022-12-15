@@ -61,10 +61,7 @@ pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
 }
 
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
-    // Pure virtual
     getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
-
-    // Pure virtual
     getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
 
     comptime {
@@ -77,10 +74,7 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
 };
 
 pub const BodyActivationListenerVTable = extern struct {
-    // Pure virtual
     onBodyActivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
-
-    // Pure virtual
     onBodyDeactivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
 
     comptime {

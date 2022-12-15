@@ -457,26 +457,14 @@ pub const Window = opaque {
         focus_on_show = 0x0002000C,
     };
     pub fn getAttribute(window: *Window, attrib: Attribute) bool {
-        if (glfwGetWindowAttrib(window, @enumToInt(attrib)) == 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return glfwGetWindowAttrib(window, attrib) != 0;
     }
-    extern fn glfwGetWindowAttrib(window: *Window, attrib: i32) u32;
+    extern fn glfwGetWindowAttrib(window: *Window, attrib: Attribute) i32;
 
-    pub const Hint = enum(i32) {
-        client_api = 0x00022001,
-        cocoa_retina_framebuffer = 0x00023001,
-
-        /// `pub fn set(hint: Window.Hint, value: i32) void`
-        pub const set = glfwWindowHint;
-        extern fn glfwWindowHint(hint: Window.Hint, value: i32) void;
-
-        /// `pub fn reset() void`
-        pub const reset = glfwDefaultWindowHints;
-        extern fn glfwDefaultWindowHints() void;
-    };
+    pub fn setAttribute(window: *Window, attrib: Attribute, value: bool) void {
+        glfwSetWindowAttrib(window, attrib, @boolToInt(value));
+    }
+    extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
 
     pub fn shouldClose(window: *Window) bool {
         return if (glfwWindowShouldClose(window) == 0) false else true;
@@ -718,11 +706,14 @@ test "zglfw.basic" {
         _ = adapter;
     }
 
-    Window.Hint.reset();
-    Window.Hint.set(.cocoa_retina_framebuffer, 1);
-    Window.Hint.set(.client_api, 0);
     const window = try Window.create(200, 200, "test", null, null);
     defer window.destroy();
+
+    window.setAttribute(.resizable, true);
+    try expect(window.getAttribute(.resizable) == true);
+
+    window.setAttribute(.resizable, false);
+    try expect(window.getAttribute(.resizable) == false);
 
     window.setCursorPosCallback(cursorPosCallback);
     window.setMouseButtonCallback(mouseButtonCallback);
