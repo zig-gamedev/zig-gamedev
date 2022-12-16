@@ -2201,30 +2201,23 @@ pub const ICommandList = extern struct {
 };
 
 pub const IGraphicsCommandList = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace ICommandList.Methods(T);
+
             pub inline fn Close(self: *T) HRESULT {
-                return self.v.grcmdlist.Close(self);
+                return @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .Close(@ptrCast(*IGraphicsCommandList, self));
             }
             pub inline fn Reset(self: *T, alloc: *ICommandAllocator, initial_state: ?*IPipelineState) HRESULT {
-                return self.v.grcmdlist.Reset(self, alloc, initial_state);
+                return .Reset(@ptrCast(*IGraphicsCommandList, self), alloc, initial_state);
             }
             pub inline fn ClearState(self: *T, pso: ?*IPipelineState) void {
-                self.v.grcmdlist.ClearState(self, pso);
+                .ClearState(@ptrCast(*IGraphicsCommandList, self), pso);
             }
             pub inline fn DrawInstanced(
                 self: *T,
@@ -2233,8 +2226,8 @@ pub const IGraphicsCommandList = extern struct {
                 start_vertex_location: UINT,
                 start_instance_location: UINT,
             ) void {
-                self.v.grcmdlist.DrawInstanced(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).DrawInstanced(
+                    @ptrCast(*IGraphicsCommandList, self),
                     vertex_count_per_instance,
                     instance_count,
                     start_vertex_location,
@@ -2249,8 +2242,8 @@ pub const IGraphicsCommandList = extern struct {
                 base_vertex_location: INT,
                 start_instance_location: UINT,
             ) void {
-                self.v.grcmdlist.DrawIndexedInstanced(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).DrawIndexedInstanced(
+                    @ptrCast(*IGraphicsCommandList, self),
                     index_count_per_instance,
                     instance_count,
                     start_index_location,
@@ -2259,7 +2252,8 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn Dispatch(self: *T, count_x: UINT, count_y: UINT, count_z: UINT) void {
-                self.v.grcmdlist.Dispatch(self, count_x, count_y, count_z);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .Dispatch(@ptrCast(*IGraphicsCommandList, self), count_x, count_y, count_z);
             }
             pub inline fn CopyBufferRegion(
                 self: *T,
@@ -2269,8 +2263,8 @@ pub const IGraphicsCommandList = extern struct {
                 src_offset: UINT64,
                 num_bytes: UINT64,
             ) void {
-                self.v.grcmdlist.CopyBufferRegion(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).CopyBufferRegion(
+                    @ptrCast(*IGraphicsCommandList, self),
                     dst_buffer,
                     dst_offset,
                     src_buffer,
@@ -2287,10 +2281,19 @@ pub const IGraphicsCommandList = extern struct {
                 src: *const TEXTURE_COPY_LOCATION,
                 src_box: ?*const BOX,
             ) void {
-                self.v.grcmdlist.CopyTextureRegion(self, dst, dst_x, dst_y, dst_z, src, src_box);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).CopyTextureRegion(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    dst,
+                    dst_x,
+                    dst_y,
+                    dst_z,
+                    src,
+                    src_box,
+                );
             }
             pub inline fn CopyResource(self: *T, dst: *IResource, src: *IResource) void {
-                self.v.grcmdlist.CopyResource(self, dst, src);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .CopyResource(@ptrCast(*IGraphicsCommandList, self), dst, src);
             }
             pub inline fn CopyTiles(
                 self: *T,
@@ -2301,8 +2304,8 @@ pub const IGraphicsCommandList = extern struct {
                 buffer_start_offset_in_bytes: UINT64,
                 flags: TILE_COPY_FLAGS,
             ) void {
-                self.v.grcmdlist.CopyTiles(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).CopyTiles(
+                    @ptrCast(*IGraphicsCommandList, self),
                     tiled_resource,
                     tile_region_start_coordinate,
                     tile_region_size,
@@ -2319,8 +2322,8 @@ pub const IGraphicsCommandList = extern struct {
                 src_subresource: UINT,
                 format: dxgi.FORMAT,
             ) void {
-                self.v.grcmdlist.ResolveSubresource(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ResolveSubresource(
+                    @ptrCast(*IGraphicsCommandList, self),
                     dst_resource,
                     dst_subresource,
                     src_resource,
@@ -2329,57 +2332,86 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn IASetPrimitiveTopology(self: *T, topology: PRIMITIVE_TOPOLOGY) void {
-                self.v.grcmdlist.IASetPrimitiveTopology(self, topology);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .IASetPrimitiveTopology(@ptrCast(*IGraphicsCommandList, self), topology);
             }
             pub inline fn RSSetViewports(self: *T, num: UINT, viewports: [*]const VIEWPORT) void {
-                self.v.grcmdlist.RSSetViewports(self, num, viewports);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .RSSetViewports(@ptrCast(*IGraphicsCommandList, self), num, viewports);
             }
             pub inline fn RSSetScissorRects(self: *T, num: UINT, rects: [*]const RECT) void {
-                self.v.grcmdlist.RSSetScissorRects(self, num, rects);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .RSSetScissorRects(@ptrCast(*IGraphicsCommandList, self), num, rects);
             }
             pub inline fn OMSetBlendFactor(self: *T, blend_factor: *const [4]FLOAT) void {
-                self.v.grcmdlist.OMSetBlendFactor(self, blend_factor);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .OMSetBlendFactor(@ptrCast(*IGraphicsCommandList, self), blend_factor);
             }
             pub inline fn OMSetStencilRef(self: *T, stencil_ref: UINT) void {
-                self.v.grcmdlist.OMSetStencilRef(self, stencil_ref);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .OMSetStencilRef(@ptrCast(*IGraphicsCommandList, self), stencil_ref);
             }
             pub inline fn SetPipelineState(self: *T, pso: *IPipelineState) void {
-                self.v.grcmdlist.SetPipelineState(self, pso);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .SetPipelineState(@ptrCast(*IGraphicsCommandList, self), pso);
             }
             pub inline fn ResourceBarrier(self: *T, num: UINT, barriers: [*]const RESOURCE_BARRIER) void {
-                self.v.grcmdlist.ResourceBarrier(self, num, barriers);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .ResourceBarrier(@ptrCast(*IGraphicsCommandList, self), num, barriers);
             }
             pub inline fn ExecuteBundle(self: *T, cmdlist: *IGraphicsCommandList) void {
-                self.v.grcmdlist.ExecuteBundle(self, cmdlist);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .ExecuteBundle(@ptrCast(*IGraphicsCommandList, self), cmdlist);
             }
             pub inline fn SetDescriptorHeaps(self: *T, num: UINT, heaps: [*]const *IDescriptorHeap) void {
-                self.v.grcmdlist.SetDescriptorHeaps(self, num, heaps);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .SetDescriptorHeaps(@ptrCast(*IGraphicsCommandList, self), num, heaps);
             }
             pub inline fn SetComputeRootSignature(self: *T, root_signature: ?*IRootSignature) void {
-                self.v.grcmdlist.SetComputeRootSignature(self, root_signature);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .SetComputeRootSignature(@ptrCast(*IGraphicsCommandList, self), root_signature);
             }
             pub inline fn SetGraphicsRootSignature(self: *T, root_signature: ?*IRootSignature) void {
-                self.v.grcmdlist.SetGraphicsRootSignature(self, root_signature);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .SetGraphicsRootSignature(@ptrCast(*IGraphicsCommandList, self), root_signature);
             }
             pub inline fn SetComputeRootDescriptorTable(
                 self: *T,
                 root_index: UINT,
                 base_descriptor: GPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.grcmdlist.SetComputeRootDescriptorTable(self, root_index, base_descriptor);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootDescriptorTable(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    root_index,
+                    base_descriptor,
+                );
             }
             pub inline fn SetGraphicsRootDescriptorTable(
                 self: *T,
                 root_index: UINT,
                 base_descriptor: GPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.grcmdlist.SetGraphicsRootDescriptorTable(self, root_index, base_descriptor);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootDescriptorTable(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    root_index,
+                    base_descriptor,
+                );
             }
             pub inline fn SetComputeRoot32BitConstant(self: *T, index: UINT, data: UINT, off: UINT) void {
-                self.v.grcmdlist.SetComputeRoot32BitConstant(self, index, data, off);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRoot32BitConstant(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    data,
+                    off,
+                );
             }
             pub inline fn SetGraphicsRoot32BitConstant(self: *T, index: UINT, data: UINT, off: UINT) void {
-                self.v.grcmdlist.SetGraphicsRoot32BitConstant(self, index, data, off);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRoot32BitConstant(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    data,
+                    off,
+                );
             }
             pub inline fn SetComputeRoot32BitConstants(
                 self: *T,
@@ -2388,7 +2420,13 @@ pub const IGraphicsCommandList = extern struct {
                 data: *const anyopaque,
                 offset: UINT,
             ) void {
-                self.v.grcmdlist.SetComputeRoot32BitConstants(self, root_index, num, data, offset);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRoot32BitConstants(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    root_index,
+                    num,
+                    data,
+                    offset,
+                );
             }
             pub inline fn SetGraphicsRoot32BitConstants(
                 self: *T,
@@ -2397,52 +2435,83 @@ pub const IGraphicsCommandList = extern struct {
                 data: *const anyopaque,
                 offset: UINT,
             ) void {
-                self.v.grcmdlist.SetGraphicsRoot32BitConstants(self, root_index, num, data, offset);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRoot32BitConstants(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    root_index,
+                    num,
+                    data,
+                    offset,
+                );
             }
             pub inline fn SetComputeRootConstantBufferView(
                 self: *T,
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist.SetComputeRootConstantBufferView(self, index, buffer_location);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootConstantBufferView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    buffer_location,
+                );
             }
             pub inline fn SetGraphicsRootConstantBufferView(
                 self: *T,
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist.SetGraphicsRootConstantBufferView(self, index, buffer_location);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootConstantBufferView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    buffer_location,
+                );
             }
             pub inline fn SetComputeRootShaderResourceView(
                 self: *T,
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist.SetComputeRootShaderResourceView(self, index, buffer_location);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootShaderResourceView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    buffer_location,
+                );
             }
             pub inline fn SetGraphicsRootShaderResourceView(
                 self: *T,
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist.SetGraphicsRootShaderResourceView(self, index, buffer_location);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootShaderResourceView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    buffer_location,
+                );
             }
             pub inline fn SetComputeRootUnorderedAccessView(
                 self: *T,
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist.SetComputeRootUnorderedAccessView(self, index, buffer_location);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootUnorderedAccessView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    buffer_location,
+                );
             }
             pub inline fn SetGraphicsRootUnorderedAccessView(
                 self: *T,
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist.SetGraphicsRootUnorderedAccessView(self, index, buffer_location);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootUnorderedAccessView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    index,
+                    buffer_location,
+                );
             }
             pub inline fn IASetIndexBuffer(self: *T, view: ?*const INDEX_BUFFER_VIEW) void {
-                self.v.grcmdlist.IASetIndexBuffer(self, view);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .IASetIndexBuffer(@ptrCast(*IGraphicsCommandList, self), view);
             }
             pub inline fn IASetVertexBuffers(
                 self: *T,
@@ -2450,7 +2519,12 @@ pub const IGraphicsCommandList = extern struct {
                 num_views: UINT,
                 views: ?[*]const VERTEX_BUFFER_VIEW,
             ) void {
-                self.v.grcmdlist.IASetVertexBuffers(self, start_slot, num_views, views);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).IASetVertexBuffers(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    start_slot,
+                    num_views,
+                    views,
+                );
             }
             pub inline fn SOSetTargets(
                 self: *T,
@@ -2458,7 +2532,8 @@ pub const IGraphicsCommandList = extern struct {
                 num_views: UINT,
                 views: ?[*]const STREAM_OUTPUT_BUFFER_VIEW,
             ) void {
-                self.v.grcmdlist.SOSetTargets(self, start_slot, num_views, views);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .SOSetTargets(@ptrCast(*IGraphicsCommandList, self), start_slot, num_views, views);
             }
             pub inline fn OMSetRenderTargets(
                 self: *T,
@@ -2467,8 +2542,8 @@ pub const IGraphicsCommandList = extern struct {
                 single_handle: BOOL,
                 ds_descriptors: ?*const CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.grcmdlist.OMSetRenderTargets(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).OMSetRenderTargets(
+                    @ptrCast(*IGraphicsCommandList, self),
                     num_rt_descriptors,
                     rt_descriptors,
                     single_handle,
@@ -2484,8 +2559,8 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                self.v.grcmdlist.ClearDepthStencilView(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearDepthStencilView(
+                    @ptrCast(*IGraphicsCommandList, self),
                     ds_view,
                     clear_flags,
                     depth,
@@ -2501,7 +2576,13 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                self.v.grcmdlist.ClearRenderTargetView(self, rt_view, rgba, num_rects, rects);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearRenderTargetView(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    rt_view,
+                    rgba,
+                    num_rects,
+                    rects,
+                );
             }
             pub inline fn ClearUnorderedAccessViewUint(
                 self: *T,
@@ -2512,8 +2593,8 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                self.v.grcmdlist.ClearUnorderedAccessViewUint(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearUnorderedAccessViewUint(
+                    @ptrCast(*IGraphicsCommandList, self),
                     gpu_view,
                     cpu_view,
                     resource,
@@ -2531,8 +2612,8 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                self.v.grcmdlist.ClearUnorderedAccessViewFloat(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearUnorderedAccessViewFloat(
+                    @ptrCast(*IGraphicsCommandList, self),
                     gpu_view,
                     cpu_view,
                     resource,
@@ -2542,13 +2623,16 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn DiscardResource(self: *T, resource: *IResource, region: ?*const DISCARD_REGION) void {
-                self.v.grcmdlist.DiscardResource(self, resource, region);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .DiscardResource(@ptrCast(*IGraphicsCommandList, self), resource, region);
             }
             pub inline fn BeginQuery(self: *T, query: *IQueryHeap, query_type: QUERY_TYPE, index: UINT) void {
-                self.v.grcmdlist.BeginQuery(self, query, query_type, index);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .BeginQuery(@ptrCast(*IGraphicsCommandList, self), query, query_type, index);
             }
             pub inline fn EndQuery(self: *T, query: *IQueryHeap, query_type: QUERY_TYPE, index: UINT) void {
-                self.v.grcmdlist.EndQuery(self, query, query_type, index);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .EndQuery(@ptrCast(*IGraphicsCommandList, self), query, query_type, index);
             }
             pub inline fn ResolveQueryData(
                 self: *T,
@@ -2559,8 +2643,8 @@ pub const IGraphicsCommandList = extern struct {
                 dst_resource: *IResource,
                 buffer_offset: UINT64,
             ) void {
-                self.v.grcmdlist.ResolveQueryData(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ResolveQueryData(
+                    @ptrCast(*IGraphicsCommandList, self),
                     query,
                     query_type,
                     start_index,
@@ -2575,16 +2659,24 @@ pub const IGraphicsCommandList = extern struct {
                 buffer_offset: UINT64,
                 operation: PREDICATION_OP,
             ) void {
-                self.v.grcmdlist.SetPredication(self, buffer, buffer_offset, operation);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetPredication(
+                    @ptrCast(*IGraphicsCommandList, self),
+                    buffer,
+                    buffer_offset,
+                    operation,
+                );
             }
             pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                self.v.grcmdlist.SetMarker(self, metadata, data, size);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .SetMarker(@ptrCast(*IGraphicsCommandList, self), metadata, data, size);
             }
             pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                self.v.grcmdlist.BeginEvent(self, metadata, data, size);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .BeginEvent(@ptrCast(*IGraphicsCommandList, self), metadata, data, size);
             }
             pub inline fn EndEvent(self: *T) void {
-                self.v.grcmdlist.EndEvent(self);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .EndEvent(@ptrCast(*IGraphicsCommandList, self));
             }
             pub inline fn ExecuteIndirect(
                 self: *T,
@@ -2595,8 +2687,8 @@ pub const IGraphicsCommandList = extern struct {
                 count_buffer: ?*IResource,
                 count_buffer_offset: UINT64,
             ) void {
-                self.v.grcmdlist.ExecuteIndirect(
-                    self,
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ExecuteIndirect(
+                    @ptrCast(*IGraphicsCommandList, self),
                     command_signature,
                     max_command_count,
                     arg_buffer,
@@ -2608,129 +2700,130 @@ pub const IGraphicsCommandList = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            Close: *const fn (*T) callconv(.C) HRESULT,
-            Reset: *const fn (*T, *ICommandAllocator, ?*IPipelineState) callconv(WINAPI) HRESULT,
-            ClearState: *const fn (*T, ?*IPipelineState) callconv(WINAPI) void,
-            DrawInstanced: *const fn (*T, UINT, UINT, UINT, UINT) callconv(WINAPI) void,
-            DrawIndexedInstanced: *const fn (*T, UINT, UINT, UINT, INT, UINT) callconv(WINAPI) void,
-            Dispatch: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            CopyBufferRegion: *const fn (*T, *IResource, UINT64, *IResource, UINT64, UINT64) callconv(WINAPI) void,
-            CopyTextureRegion: *const fn (
-                *T,
-                *const TEXTURE_COPY_LOCATION,
-                UINT,
-                UINT,
-                UINT,
-                *const TEXTURE_COPY_LOCATION,
-                ?*const BOX,
-            ) callconv(WINAPI) void,
-            CopyResource: *const fn (*T, *IResource, *IResource) callconv(WINAPI) void,
-            CopyTiles: *const fn (
-                *T,
-                *IResource,
-                *const TILED_RESOURCE_COORDINATE,
-                *const TILE_REGION_SIZE,
-                *IResource,
-                buffer_start_offset_in_bytes: UINT64,
-                TILE_COPY_FLAGS,
-            ) callconv(WINAPI) void,
-            ResolveSubresource: *const fn (*T, *IResource, UINT, *IResource, UINT, dxgi.FORMAT) callconv(WINAPI) void,
-            IASetPrimitiveTopology: *const fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
-            RSSetViewports: *const fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
-            RSSetScissorRects: *const fn (*T, UINT, [*]const RECT) callconv(WINAPI) void,
-            OMSetBlendFactor: *const fn (*T, *const [4]FLOAT) callconv(WINAPI) void,
-            OMSetStencilRef: *const fn (*T, UINT) callconv(WINAPI) void,
-            SetPipelineState: *const fn (*T, *IPipelineState) callconv(WINAPI) void,
-            ResourceBarrier: *const fn (*T, UINT, [*]const RESOURCE_BARRIER) callconv(WINAPI) void,
-            ExecuteBundle: *const fn (*T, *IGraphicsCommandList) callconv(WINAPI) void,
-            SetDescriptorHeaps: *const fn (*T, UINT, [*]const *IDescriptorHeap) callconv(WINAPI) void,
-            SetComputeRootSignature: *const fn (*T, ?*IRootSignature) callconv(WINAPI) void,
-            SetGraphicsRootSignature: *const fn (*T, ?*IRootSignature) callconv(WINAPI) void,
-            SetComputeRootDescriptorTable: *const fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            SetGraphicsRootDescriptorTable: *const fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            SetComputeRoot32BitConstant: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            SetGraphicsRoot32BitConstant: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            SetComputeRoot32BitConstants: *const fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
-            SetGraphicsRoot32BitConstants: *const fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
-            SetComputeRootConstantBufferView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootConstantBufferView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetComputeRootShaderResourceView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootShaderResourceView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetComputeRootUnorderedAccessView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootUnorderedAccessView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            IASetIndexBuffer: *const fn (*T, ?*const INDEX_BUFFER_VIEW) callconv(WINAPI) void,
-            IASetVertexBuffers: *const fn (*T, UINT, UINT, ?[*]const VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
-            SOSetTargets: *const fn (*T, UINT, UINT, ?[*]const STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
-            OMSetRenderTargets: *const fn (
-                *T,
-                UINT,
-                ?[*]const CPU_DESCRIPTOR_HANDLE,
-                BOOL,
-                ?*const CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            ClearDepthStencilView: *const fn (
-                *T,
-                CPU_DESCRIPTOR_HANDLE,
-                CLEAR_FLAGS,
-                FLOAT,
-                UINT8,
-                UINT,
-                ?[*]const RECT,
-            ) callconv(WINAPI) void,
-            ClearRenderTargetView: *const fn (
-                *T,
-                CPU_DESCRIPTOR_HANDLE,
-                *const [4]FLOAT,
-                UINT,
-                ?[*]const RECT,
-            ) callconv(WINAPI) void,
-            ClearUnorderedAccessViewUint: *const fn (
-                *T,
-                GPU_DESCRIPTOR_HANDLE,
-                CPU_DESCRIPTOR_HANDLE,
-                *IResource,
-                *const [4]UINT,
-                UINT,
-                ?[*]const RECT,
-            ) callconv(WINAPI) void,
-            ClearUnorderedAccessViewFloat: *const fn (
-                *T,
-                GPU_DESCRIPTOR_HANDLE,
-                CPU_DESCRIPTOR_HANDLE,
-                *IResource,
-                *const [4]FLOAT,
-                UINT,
-                ?[*]const RECT,
-            ) callconv(WINAPI) void,
-            DiscardResource: *const fn (*T, *IResource, ?*const DISCARD_REGION) callconv(WINAPI) void,
-            BeginQuery: *const fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
-            EndQuery: *const fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
-            ResolveQueryData: *const fn (
-                *T,
-                *IQueryHeap,
-                QUERY_TYPE,
-                UINT,
-                UINT,
-                *IResource,
-                UINT64,
-            ) callconv(WINAPI) void,
-            SetPredication: *const fn (*T, ?*IResource, UINT64, PREDICATION_OP) callconv(WINAPI) void,
-            SetMarker: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            BeginEvent: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            EndEvent: *const fn (*T) callconv(WINAPI) void,
-            ExecuteIndirect: *const fn (
-                *T,
-                *ICommandSignature,
-                UINT,
-                *IResource,
-                UINT64,
-                ?*IResource,
-                UINT64,
-            ) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IGraphicsCommandList;
+
+        base: ICommandList.VTable,
+        Close: *const fn (*T) callconv(.C) HRESULT,
+        Reset: *const fn (*T, *ICommandAllocator, ?*IPipelineState) callconv(WINAPI) HRESULT,
+        ClearState: *const fn (*T, ?*IPipelineState) callconv(WINAPI) void,
+        DrawInstanced: *const fn (*T, UINT, UINT, UINT, UINT) callconv(WINAPI) void,
+        DrawIndexedInstanced: *const fn (*T, UINT, UINT, UINT, INT, UINT) callconv(WINAPI) void,
+        Dispatch: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+        CopyBufferRegion: *const fn (*T, *IResource, UINT64, *IResource, UINT64, UINT64) callconv(WINAPI) void,
+        CopyTextureRegion: *const fn (
+            *T,
+            *const TEXTURE_COPY_LOCATION,
+            UINT,
+            UINT,
+            UINT,
+            *const TEXTURE_COPY_LOCATION,
+            ?*const BOX,
+        ) callconv(WINAPI) void,
+        CopyResource: *const fn (*T, *IResource, *IResource) callconv(WINAPI) void,
+        CopyTiles: *const fn (
+            *T,
+            *IResource,
+            *const TILED_RESOURCE_COORDINATE,
+            *const TILE_REGION_SIZE,
+            *IResource,
+            buffer_start_offset_in_bytes: UINT64,
+            TILE_COPY_FLAGS,
+        ) callconv(WINAPI) void,
+        ResolveSubresource: *const fn (*T, *IResource, UINT, *IResource, UINT, dxgi.FORMAT) callconv(WINAPI) void,
+        IASetPrimitiveTopology: *const fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
+        RSSetViewports: *const fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
+        RSSetScissorRects: *const fn (*T, UINT, [*]const RECT) callconv(WINAPI) void,
+        OMSetBlendFactor: *const fn (*T, *const [4]FLOAT) callconv(WINAPI) void,
+        OMSetStencilRef: *const fn (*T, UINT) callconv(WINAPI) void,
+        SetPipelineState: *const fn (*T, *IPipelineState) callconv(WINAPI) void,
+        ResourceBarrier: *const fn (*T, UINT, [*]const RESOURCE_BARRIER) callconv(WINAPI) void,
+        ExecuteBundle: *const fn (*T, *IGraphicsCommandList) callconv(WINAPI) void,
+        SetDescriptorHeaps: *const fn (*T, UINT, [*]const *IDescriptorHeap) callconv(WINAPI) void,
+        SetComputeRootSignature: *const fn (*T, ?*IRootSignature) callconv(WINAPI) void,
+        SetGraphicsRootSignature: *const fn (*T, ?*IRootSignature) callconv(WINAPI) void,
+        SetComputeRootDescriptorTable: *const fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+        SetGraphicsRootDescriptorTable: *const fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+        SetComputeRoot32BitConstant: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+        SetGraphicsRoot32BitConstant: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+        SetComputeRoot32BitConstants: *const fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
+        SetGraphicsRoot32BitConstants: *const fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
+        SetComputeRootConstantBufferView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+        SetGraphicsRootConstantBufferView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+        SetComputeRootShaderResourceView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+        SetGraphicsRootShaderResourceView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+        SetComputeRootUnorderedAccessView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+        SetGraphicsRootUnorderedAccessView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+        IASetIndexBuffer: *const fn (*T, ?*const INDEX_BUFFER_VIEW) callconv(WINAPI) void,
+        IASetVertexBuffers: *const fn (*T, UINT, UINT, ?[*]const VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
+        SOSetTargets: *const fn (*T, UINT, UINT, ?[*]const STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
+        OMSetRenderTargets: *const fn (
+            *T,
+            UINT,
+            ?[*]const CPU_DESCRIPTOR_HANDLE,
+            BOOL,
+            ?*const CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        ClearDepthStencilView: *const fn (
+            *T,
+            CPU_DESCRIPTOR_HANDLE,
+            CLEAR_FLAGS,
+            FLOAT,
+            UINT8,
+            UINT,
+            ?[*]const RECT,
+        ) callconv(WINAPI) void,
+        ClearRenderTargetView: *const fn (
+            *T,
+            CPU_DESCRIPTOR_HANDLE,
+            *const [4]FLOAT,
+            UINT,
+            ?[*]const RECT,
+        ) callconv(WINAPI) void,
+        ClearUnorderedAccessViewUint: *const fn (
+            *T,
+            GPU_DESCRIPTOR_HANDLE,
+            CPU_DESCRIPTOR_HANDLE,
+            *IResource,
+            *const [4]UINT,
+            UINT,
+            ?[*]const RECT,
+        ) callconv(WINAPI) void,
+        ClearUnorderedAccessViewFloat: *const fn (
+            *T,
+            GPU_DESCRIPTOR_HANDLE,
+            CPU_DESCRIPTOR_HANDLE,
+            *IResource,
+            *const [4]FLOAT,
+            UINT,
+            ?[*]const RECT,
+        ) callconv(WINAPI) void,
+        DiscardResource: *const fn (*T, *IResource, ?*const DISCARD_REGION) callconv(WINAPI) void,
+        BeginQuery: *const fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
+        EndQuery: *const fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
+        ResolveQueryData: *const fn (
+            *T,
+            *IQueryHeap,
+            QUERY_TYPE,
+            UINT,
+            UINT,
+            *IResource,
+            UINT64,
+        ) callconv(WINAPI) void,
+        SetPredication: *const fn (*T, ?*IResource, UINT64, PREDICATION_OP) callconv(WINAPI) void,
+        SetMarker: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+        BeginEvent: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+        EndEvent: *const fn (*T) callconv(WINAPI) void,
+        ExecuteIndirect: *const fn (
+            *T,
+            *ICommandSignature,
+            UINT,
+            *IResource,
+            UINT64,
+            ?*IResource,
+            UINT64,
+        ) callconv(WINAPI) void,
+    };
 };
 
 pub const RANGE_UINT64 = extern struct {
