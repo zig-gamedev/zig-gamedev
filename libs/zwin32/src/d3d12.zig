@@ -2851,24 +2851,14 @@ pub const RESOLVE_MODE = enum(UINT) {
 };
 
 pub const IGraphicsCommandList1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: IGraphicsCommandList.VTable(Self),
-        grcmdlist1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IGraphicsCommandList.Methods(T);
+
             pub inline fn AtomicCopyBufferUINT(
                 self: *T,
                 dst_buffer: *IResource,
@@ -2879,8 +2869,8 @@ pub const IGraphicsCommandList1 = extern struct {
                 dependent_resources: [*]const *IResource,
                 dependent_subresource_ranges: [*]const SUBRESOURCE_RANGE_UINT64,
             ) void {
-                self.v.grcmdlist1.AtomicCopyBufferUINT(
-                    self,
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).AtomicCopyBufferUINT(
+                    @ptrCast(*IGraphicsCommandList1, self),
                     dst_buffer,
                     dst_offset,
                     src_buffer,
@@ -2900,8 +2890,8 @@ pub const IGraphicsCommandList1 = extern struct {
                 dependent_resources: [*]const *IResource,
                 dependent_subresource_ranges: [*]const SUBRESOURCE_RANGE_UINT64,
             ) void {
-                self.v.grcmdlist1.AtomicCopyBufferUINT64(
-                    self,
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).AtomicCopyBufferUINT64(
+                    @ptrCast(*IGraphicsCommandList1, self),
                     dst_buffer,
                     dst_offset,
                     src_buffer,
@@ -2912,7 +2902,8 @@ pub const IGraphicsCommandList1 = extern struct {
                 );
             }
             pub inline fn OMSetDepthBounds(self: *T, min: FLOAT, max: FLOAT) void {
-                self.v.grcmdlist1.OMSetDepthBounds(self, min, max);
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.v)
+                    .OMSetDepthBounds(@ptrCast(*IGraphicsCommandList1, self), min, max);
             }
             pub inline fn SetSamplePositions(
                 self: *T,
@@ -2920,7 +2911,12 @@ pub const IGraphicsCommandList1 = extern struct {
                 num_pixels: UINT,
                 sample_positions: *SAMPLE_POSITION,
             ) void {
-                self.v.grcmdlist1.SetSamplePositions(self, num_samples, num_pixels, sample_positions);
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).SetSamplePositions(
+                    @ptrCast(*IGraphicsCommandList1, self),
+                    num_samples,
+                    num_pixels,
+                    sample_positions,
+                );
             }
             pub inline fn ResolveSubresourceRegion(
                 self: *T,
@@ -2934,8 +2930,8 @@ pub const IGraphicsCommandList1 = extern struct {
                 format: dxgi.FORMAT,
                 resolve_mode: RESOLVE_MODE,
             ) void {
-                self.v.grcmdlist1.ResolveSubresourceRegion(
-                    self,
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).ResolveSubresourceRegion(
+                    @ptrCast(*IGraphicsCommandList1, self),
                     dst_resource,
                     dst_subresource,
                     dst_x,
@@ -2948,50 +2944,52 @@ pub const IGraphicsCommandList1 = extern struct {
                 );
             }
             pub inline fn SetViewInstanceMask(self: *T, mask: UINT) void {
-                self.v.grcmdlist1.SetViewInstanceMask(self, mask);
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.v)
+                    .SetViewInstanceMask(@ptrCast(*IGraphicsCommandList1, self), mask);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            AtomicCopyBufferUINT: *const fn (
-                *T,
-                *IResource,
-                UINT64,
-                *IResource,
-                UINT64,
-                UINT,
-                [*]const *IResource,
-                [*]const SUBRESOURCE_RANGE_UINT64,
-            ) callconv(WINAPI) void,
-            AtomicCopyBufferUINT64: *const fn (
-                *T,
-                *IResource,
-                UINT64,
-                *IResource,
-                UINT64,
-                UINT,
-                [*]const *IResource,
-                [*]const SUBRESOURCE_RANGE_UINT64,
-            ) callconv(WINAPI) void,
-            OMSetDepthBounds: *const fn (*T, FLOAT, FLOAT) callconv(WINAPI) void,
-            SetSamplePositions: *const fn (*T, UINT, UINT, *SAMPLE_POSITION) callconv(WINAPI) void,
-            ResolveSubresourceRegion: *const fn (
-                *T,
-                *IResource,
-                UINT,
-                UINT,
-                UINT,
-                *IResource,
-                UINT,
-                *RECT,
-                dxgi.FORMAT,
-                RESOLVE_MODE,
-            ) callconv(WINAPI) void,
-            SetViewInstanceMask: *const fn (*T, UINT) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IGraphicsCommandList1;
+
+        base: IGraphicsCommandList.VTable,
+        AtomicCopyBufferUINT: *const fn (
+            *T,
+            *IResource,
+            UINT64,
+            *IResource,
+            UINT64,
+            UINT,
+            [*]const *IResource,
+            [*]const SUBRESOURCE_RANGE_UINT64,
+        ) callconv(WINAPI) void,
+        AtomicCopyBufferUINT64: *const fn (
+            *T,
+            *IResource,
+            UINT64,
+            *IResource,
+            UINT64,
+            UINT,
+            [*]const *IResource,
+            [*]const SUBRESOURCE_RANGE_UINT64,
+        ) callconv(WINAPI) void,
+        OMSetDepthBounds: *const fn (*T, FLOAT, FLOAT) callconv(WINAPI) void,
+        SetSamplePositions: *const fn (*T, UINT, UINT, *SAMPLE_POSITION) callconv(WINAPI) void,
+        ResolveSubresourceRegion: *const fn (
+            *T,
+            *IResource,
+            UINT,
+            UINT,
+            UINT,
+            *IResource,
+            UINT,
+            *RECT,
+            dxgi.FORMAT,
+            RESOLVE_MODE,
+        ) callconv(WINAPI) void,
+        SetViewInstanceMask: *const fn (*T, UINT) callconv(WINAPI) void,
+    };
 };
 
 pub const WRITEBUFFERIMMEDIATE_PARAMETER = extern struct {
