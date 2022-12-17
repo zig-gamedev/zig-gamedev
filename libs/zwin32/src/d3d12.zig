@@ -3004,83 +3004,60 @@ pub const WRITEBUFFERIMMEDIATE_MODE = enum(UINT) {
 };
 
 pub const IGraphicsCommandList2 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: IGraphicsCommandList.VTable(Self),
-        grcmdlist1: IGraphicsCommandList1.VTable(Self),
-        grcmdlist2: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList1.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IGraphicsCommandList1.Methods(T);
+
             pub inline fn WriteBufferImmediate(
                 self: *T,
                 count: UINT,
                 params: [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
                 modes: ?[*]const WRITEBUFFERIMMEDIATE_MODE,
             ) void {
-                self.v.grcmdlist2.WriteBufferImmediate(self, count, params, modes);
+                @ptrCast(*const IGraphicsCommandList2.VTable, self.v)
+                    .WriteBufferImmediate(@ptrCast(*IGraphicsCommandList2, self), count, params, modes);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            WriteBufferImmediate: *const fn (
-                *T,
-                UINT,
-                [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
-                ?[*]const WRITEBUFFERIMMEDIATE_MODE,
-            ) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList1.VTable,
+        WriteBufferImmediate: *const fn (
+            *IGraphicsCommandList2,
+            UINT,
+            [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
+            ?[*]const WRITEBUFFERIMMEDIATE_MODE,
+        ) callconv(WINAPI) void,
+    };
 };
 
 pub const IGraphicsCommandList3 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: IGraphicsCommandList.VTable(Self),
-        grcmdlist1: IGraphicsCommandList1.VTable(Self),
-        grcmdlist2: IGraphicsCommandList2.VTable(Self),
-        grcmdlist3: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList1.Methods(Self);
-    usingnamespace IGraphicsCommandList2.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IGraphicsCommandList2.Methods(T);
+
             pub inline fn SetProtectedResourceSession(self: *T, prsession: ?*IProtectedResourceSession) void {
-                self.v.grcmdlist3.SetProtectedResourceSession(self, prsession);
+                @ptrCast(*const IGraphicsCommandList3.VTable, self.v)
+                    .SetProtectedResourceSession(@ptrCast(*IGraphicsCommandList3, self), prsession);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            SetProtectedResourceSession: *const fn (*T, ?*IProtectedResourceSession) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList2.VTable,
+        SetProtectedResourceSession: *const fn (
+            *IGraphicsCommandList3,
+            ?*IProtectedResourceSession,
+        ) callconv(WINAPI) void,
+    };
 };
 
 pub const RENDER_PASS_BEGINNING_ACCESS_TYPE = enum(UINT) {
@@ -3553,27 +3530,19 @@ pub const RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = extern struct {
 
 pub const IID_IStateObject = GUID.parse("{47016943-fca8-4594-93ea-af258b55346d}");
 pub const IStateObject = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        stateobj: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IDeviceChild.Methods(T);
+        };
     }
 
-    fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
+    pub const VTable = extern struct {
+        base: IDeviceChild.VTable,
+    };
 };
 
 pub const IID_IStateObjectProperties = GUID.parse("{de5fa827-9bf9-4f26-89ff-d7f56fde3860}");
@@ -3624,30 +3593,14 @@ pub const DISPATCH_RAYS_DESC = extern struct {
 };
 
 pub const IGraphicsCommandList4 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: IGraphicsCommandList.VTable(Self),
-        grcmdlist1: IGraphicsCommandList1.VTable(Self),
-        grcmdlist2: IGraphicsCommandList2.VTable(Self),
-        grcmdlist3: IGraphicsCommandList3.VTable(Self),
-        grcmdlist4: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList1.Methods(Self);
-    usingnamespace IGraphicsCommandList2.Methods(Self);
-    usingnamespace IGraphicsCommandList3.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IGraphicsCommandList3.Methods(T);
+
             pub inline fn BeginRenderPass(
                 self: *T,
                 num_render_targets: UINT,
@@ -3655,10 +3608,17 @@ pub const IGraphicsCommandList4 = extern struct {
                 depth_stencil: ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
                 flags: RENDER_PASS_FLAGS,
             ) void {
-                self.v.grcmdlist4.BeginRenderPass(self, num_render_targets, render_targets, depth_stencil, flags);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).BeginRenderPass(
+                    @ptrCast(*IGraphicsCommandList4, self),
+                    num_render_targets,
+                    render_targets,
+                    depth_stencil,
+                    flags,
+                );
             }
             pub inline fn EndRenderPass(self: *T) void {
-                self.v.grcmdlist4.EndRenderPass(self);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                    .EndRenderPass(@ptrCast(*IGraphicsCommandList4, self));
             }
             pub inline fn InitializeMetaCommand(
                 self: *T,
@@ -3666,7 +3626,12 @@ pub const IGraphicsCommandList4 = extern struct {
                 init_param_data: ?*const anyopaque,
                 data_size: SIZE_T,
             ) void {
-                self.v.grcmdlist4.InitializeMetaCommand(self, meta_cmd, init_param_data, data_size);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).InitializeMetaCommand(
+                    @ptrCast(*IGraphicsCommandList4, self),
+                    meta_cmd,
+                    init_param_data,
+                    data_size,
+                );
             }
             pub inline fn ExecuteMetaCommand(
                 self: *T,
@@ -3674,7 +3639,12 @@ pub const IGraphicsCommandList4 = extern struct {
                 exe_param_data: ?*const anyopaque,
                 data_size: SIZE_T,
             ) void {
-                self.v.grcmdlist4.InitializeMetaCommand(self, meta_cmd, exe_param_data, data_size);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).InitializeMetaCommand(
+                    @ptrCast(*IGraphicsCommandList4, self),
+                    meta_cmd,
+                    exe_param_data,
+                    data_size,
+                );
             }
             pub inline fn BuildRaytracingAccelerationStructure(
                 self: *T,
@@ -3682,7 +3652,12 @@ pub const IGraphicsCommandList4 = extern struct {
                 num_post_build_descs: UINT,
                 post_build_descs: ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
             ) void {
-                self.v.grcmdlist4.BuildRaytracingAccelerationStructure(self, desc, num_post_build_descs, post_build_descs);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).BuildRaytracingAccelerationStructure(
+                    @ptrCast(*IGraphicsCommandList4, self),
+                    desc,
+                    num_post_build_descs,
+                    post_build_descs,
+                );
             }
             pub inline fn EmitRaytracingAccelerationStructurePostbuildInfo(
                 self: *T,
@@ -3690,8 +3665,9 @@ pub const IGraphicsCommandList4 = extern struct {
                 num_src_accel_structs: UINT,
                 src_accel_struct_data: [*]const GPU_VIRTUAL_ADDRESS,
             ) void {
-                self.v.grcmdlist4.EmitRaytracingAccelerationStructurePostbuildInfo(
-                    self,
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                    .EmitRaytracingAccelerationStructurePostbuildInfo(
+                    @ptrCast(*IGraphicsCommandList4, self),
                     desc,
                     num_src_accel_structs,
                     src_accel_struct_data,
@@ -3703,51 +3679,59 @@ pub const IGraphicsCommandList4 = extern struct {
                 src_data: GPU_VIRTUAL_ADDRESS,
                 mode: RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
             ) void {
-                self.v.grcmdlist4.CopyRaytracingAccelerationStructure(self, dst_data, src_data, mode);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).CopyRaytracingAccelerationStructure(
+                    @ptrCast(*IGraphicsCommandList4, self),
+                    dst_data,
+                    src_data,
+                    mode,
+                );
             }
             pub inline fn SetPipelineState1(self: *T, state_obj: *IStateObject) void {
-                self.v.grcmdlist4.SetPipelineState1(self, state_obj);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                    .SetPipelineState1(@ptrCast(*IGraphicsCommandList4, self), state_obj);
             }
             pub inline fn DispatchRays(self: *T, desc: *const DISPATCH_RAYS_DESC) void {
-                self.v.grcmdlist4.DispatchRays(self, desc);
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                    .DispatchRays(@ptrCast(*IGraphicsCommandList4, self), desc);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            BeginRenderPass: *const fn (
-                *T,
-                UINT,
-                ?[*]const RENDER_PASS_RENDER_TARGET_DESC,
-                ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
-                RENDER_PASS_FLAGS,
-            ) callconv(WINAPI) void,
-            EndRenderPass: *const fn (*T) callconv(WINAPI) void,
-            InitializeMetaCommand: *const fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
-            ExecuteMetaCommand: *const fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
-            BuildRaytracingAccelerationStructure: *const fn (
-                *T,
-                *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
-                UINT,
-                ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
-            ) callconv(WINAPI) void,
-            EmitRaytracingAccelerationStructurePostbuildInfo: *const fn (
-                *T,
-                *const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
-                UINT,
-                [*]const GPU_VIRTUAL_ADDRESS,
-            ) callconv(WINAPI) void,
-            CopyRaytracingAccelerationStructure: *const fn (
-                *T,
-                GPU_VIRTUAL_ADDRESS,
-                GPU_VIRTUAL_ADDRESS,
-                RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
-            ) callconv(WINAPI) void,
-            SetPipelineState1: *const fn (*T, *IStateObject) callconv(WINAPI) void,
-            DispatchRays: *const fn (*T, *const DISPATCH_RAYS_DESC) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IGraphicsCommandList4;
+
+        base: IGraphicsCommandList3.VTable,
+        BeginRenderPass: *const fn (
+            *T,
+            UINT,
+            ?[*]const RENDER_PASS_RENDER_TARGET_DESC,
+            ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
+            RENDER_PASS_FLAGS,
+        ) callconv(WINAPI) void,
+        EndRenderPass: *const fn (*T) callconv(WINAPI) void,
+        InitializeMetaCommand: *const fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
+        ExecuteMetaCommand: *const fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
+        BuildRaytracingAccelerationStructure: *const fn (
+            *T,
+            *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
+            UINT,
+            ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+        ) callconv(WINAPI) void,
+        EmitRaytracingAccelerationStructurePostbuildInfo: *const fn (
+            *T,
+            *const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+            UINT,
+            [*]const GPU_VIRTUAL_ADDRESS,
+        ) callconv(WINAPI) void,
+        CopyRaytracingAccelerationStructure: *const fn (
+            *T,
+            GPU_VIRTUAL_ADDRESS,
+            GPU_VIRTUAL_ADDRESS,
+            RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
+        ) callconv(WINAPI) void,
+        SetPipelineState1: *const fn (*T, *IStateObject) callconv(WINAPI) void,
+        DispatchRays: *const fn (*T, *const DISPATCH_RAYS_DESC) callconv(WINAPI) void,
+    };
 };
 
 pub const RS_SET_SHADING_RATE_COMBINER_COUNT = 2;
@@ -3771,121 +3755,80 @@ pub const SHADING_RATE_COMBINER = enum(UINT) {
 };
 
 pub const IGraphicsCommandList5 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: IGraphicsCommandList.VTable(Self),
-        grcmdlist1: IGraphicsCommandList1.VTable(Self),
-        grcmdlist2: IGraphicsCommandList2.VTable(Self),
-        grcmdlist3: IGraphicsCommandList3.VTable(Self),
-        grcmdlist4: IGraphicsCommandList4.VTable(Self),
-        grcmdlist5: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList1.Methods(Self);
-    usingnamespace IGraphicsCommandList2.Methods(Self);
-    usingnamespace IGraphicsCommandList3.Methods(Self);
-    usingnamespace IGraphicsCommandList4.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IGraphicsCommandList4.Methods(T);
+
             pub inline fn RSSetShadingRate(
                 self: *T,
                 base_shading_rate: SHADING_RATE,
                 combiners: ?*const [RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
             ) void {
-                self.v.grcmdlist5.RSSetShadingRate(self, base_shading_rate, combiners);
+                @ptrCast(*const IGraphicsCommandList5.VTable, self.v)
+                    .RSSetShadingRate(@ptrCast(*IGraphicsCommandList5, self), base_shading_rate, combiners);
             }
             pub inline fn RSSetShadingRateImage(self: *T, shading_rate_img: ?*IResource) void {
-                self.v.grcmdlist5.RSSetShadingRateImage(self, shading_rate_img);
+                @ptrCast(*const IGraphicsCommandList5.VTable, self.v)
+                    .RSSetShadingRateImage(@ptrCast(*IGraphicsCommandList5, self), shading_rate_img);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            RSSetShadingRate: *const fn (
-                *T,
-                SHADING_RATE,
-                ?*const [RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
-            ) callconv(WINAPI) void,
-            RSSetShadingRateImage: *const fn (*T, ?*IResource) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList4.VTable,
+        RSSetShadingRate: *const fn (
+            *IGraphicsCommandList5,
+            SHADING_RATE,
+            ?*const [RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
+        ) callconv(WINAPI) void,
+        RSSetShadingRateImage: *const fn (*IGraphicsCommandList5, ?*IResource) callconv(WINAPI) void,
+    };
 };
 
 pub const IGraphicsCommandList6 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        cmdlist: ICommandList.VTable(Self),
-        grcmdlist: IGraphicsCommandList.VTable(Self),
-        grcmdlist1: IGraphicsCommandList1.VTable(Self),
-        grcmdlist2: IGraphicsCommandList2.VTable(Self),
-        grcmdlist3: IGraphicsCommandList3.VTable(Self),
-        grcmdlist4: IGraphicsCommandList4.VTable(Self),
-        grcmdlist5: IGraphicsCommandList5.VTable(Self),
-        grcmdlist6: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace ICommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList.Methods(Self);
-    usingnamespace IGraphicsCommandList1.Methods(Self);
-    usingnamespace IGraphicsCommandList2.Methods(Self);
-    usingnamespace IGraphicsCommandList3.Methods(Self);
-    usingnamespace IGraphicsCommandList4.Methods(Self);
-    usingnamespace IGraphicsCommandList5.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IGraphicsCommandList5.Methods(T);
+
             pub inline fn DispatchMesh(
                 self: *T,
                 thread_group_count_x: UINT,
                 thread_group_count_y: UINT,
                 thread_group_count_z: UINT,
             ) void {
-                self.v.grcmdlist6.DispatchMesh(self, thread_group_count_x, thread_group_count_y, thread_group_count_z);
+                @ptrCast(*const IGraphicsCommandList6.VTable, self.v).DispatchMesh(
+                    @ptrCast(*IGraphicsCommandList6, self),
+                    thread_group_count_x,
+                    thread_group_count_y,
+                    thread_group_count_z,
+                );
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            DispatchMesh: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList5.VTable,
+        DispatchMesh: *const fn (*IGraphicsCommandList6, UINT, UINT, UINT) callconv(WINAPI) void,
+    };
 };
 
 pub const ICommandQueue = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        pageable: IPageable.VTable(Self),
-        cmdqueue: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace IPageable.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IPageable.Methods(T);
+
             pub inline fn UpdateTileMappings(
                 self: *T,
                 resource: *IResource,
@@ -3899,8 +3842,8 @@ pub const ICommandQueue = extern struct {
                 range_tile_counts: ?[*]const UINT,
                 flags: TILE_MAPPING_FLAGS,
             ) void {
-                self.v.cmdqueue.UpdateTileMappings(
-                    self,
+                @ptrCast(*const ICommandQueue.VTable, self.v).UpdateTileMappings(
+                    @ptrCast(*ICommandQueue, self),
                     resource,
                     num_resource_regions,
                     resource_region_start_coordinates,
@@ -3922,8 +3865,8 @@ pub const ICommandQueue = extern struct {
                 region_size: *const TILE_REGION_SIZE,
                 flags: TILE_MAPPING_FLAGS,
             ) void {
-                self.v.cmdqueue.CopyTileMappings(
-                    self,
+                @ptrCast(*const ICommandQueue.VTable, self.v).CopyTileMappings(
+                    @ptrCast(*ICommandQueue, self),
                     dst_resource,
                     dst_region_start_coordinate,
                     src_resource,
@@ -3933,72 +3876,80 @@ pub const ICommandQueue = extern struct {
                 );
             }
             pub inline fn ExecuteCommandLists(self: *T, num: UINT, cmdlists: [*]const *ICommandList) void {
-                self.v.cmdqueue.ExecuteCommandLists(self, num, cmdlists);
+                @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .ExecuteCommandLists(@ptrCast(*ICommandQueue, self), num, cmdlists);
             }
             pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                self.v.cmdqueue.SetMarker(self, metadata, data, size);
+                @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .SetMarker(@ptrCast(*ICommandQueue, self), metadata, data, size);
             }
             pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                self.v.cmdqueue.BeginEvent(self, metadata, data, size);
+                @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .BeginEvent(@ptrCast(*ICommandQueue, self), metadata, data, size);
             }
             pub inline fn EndEvent(self: *T) void {
-                self.v.cmdqueue.EndEvent(self);
+                @ptrCast(*const ICommandQueue.VTable, self.v).EndEvent(@ptrCast(*ICommandQueue, self));
             }
             pub inline fn Signal(self: *T, fence: *IFence, value: UINT64) HRESULT {
-                return self.v.cmdqueue.Signal(self, fence, value);
+                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .Signal(@ptrCast(*ICommandQueue, self), fence, value);
             }
             pub inline fn Wait(self: *T, fence: *IFence, value: UINT64) HRESULT {
-                return self.v.cmdqueue.Wait(self, fence, value);
+                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .Wait(@ptrCast(*ICommandQueue, self), fence, value);
             }
             pub inline fn GetTimestampFrequency(self: *T, frequency: *UINT64) HRESULT {
-                return self.v.cmdqueue.GetTimestampFrequency(self, frequency);
+                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .GetTimestampFrequency(@ptrCast(*ICommandQueue, self), frequency);
             }
             pub inline fn GetClockCalibration(self: *T, gpu_timestamp: *UINT64, cpu_timestamp: *UINT64) HRESULT {
-                return self.v.cmdqueue.GetClockCalibration(self, gpu_timestamp, cpu_timestamp);
+                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                    .GetClockCalibration(@ptrCast(*ICommandQueue, self), gpu_timestamp, cpu_timestamp);
             }
             pub inline fn GetDesc(self: *T) COMMAND_QUEUE_DESC {
                 var desc: COMMAND_QUEUE_DESC = undefined;
-                _ = self.v.cmdqueue.GetDesc(self, &desc);
+                _ = @ptrCast(*const ICommandQueue.VTable, self.v).GetDesc(@ptrCast(*ICommandQueue, self), &desc);
                 return desc;
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            UpdateTileMappings: *const fn (
-                *T,
-                *IResource,
-                UINT,
-                ?[*]const TILED_RESOURCE_COORDINATE,
-                ?[*]const TILE_REGION_SIZE,
-                *IHeap,
-                UINT,
-                ?[*]const TILE_RANGE_FLAGS,
-                ?[*]const UINT,
-                ?[*]const UINT,
-                TILE_MAPPING_FLAGS,
-            ) callconv(WINAPI) void,
-            CopyTileMappings: *const fn (
-                *T,
-                *IResource,
-                *const TILED_RESOURCE_COORDINATE,
-                *IResource,
-                *const TILED_RESOURCE_COORDINATE,
-                *const TILE_REGION_SIZE,
-                TILE_MAPPING_FLAGS,
-            ) callconv(WINAPI) void,
-            ExecuteCommandLists: *const fn (*T, UINT, [*]const *ICommandList) callconv(WINAPI) void,
-            SetMarker: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            BeginEvent: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            EndEvent: *const fn (*T) callconv(WINAPI) void,
-            Signal: *const fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
-            Wait: *const fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
-            GetTimestampFrequency: *const fn (*T, *UINT64) callconv(WINAPI) HRESULT,
-            GetClockCalibration: *const fn (*T, *UINT64, *UINT64) callconv(WINAPI) HRESULT,
-            GetDesc: *const fn (*T, *COMMAND_QUEUE_DESC) callconv(WINAPI) *COMMAND_QUEUE_DESC,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = ICommandQueue;
+
+        base: IPageable.VTable,
+        UpdateTileMappings: *const fn (
+            *T,
+            *IResource,
+            UINT,
+            ?[*]const TILED_RESOURCE_COORDINATE,
+            ?[*]const TILE_REGION_SIZE,
+            *IHeap,
+            UINT,
+            ?[*]const TILE_RANGE_FLAGS,
+            ?[*]const UINT,
+            ?[*]const UINT,
+            TILE_MAPPING_FLAGS,
+        ) callconv(WINAPI) void,
+        CopyTileMappings: *const fn (
+            *T,
+            *IResource,
+            *const TILED_RESOURCE_COORDINATE,
+            *IResource,
+            *const TILED_RESOURCE_COORDINATE,
+            *const TILE_REGION_SIZE,
+            TILE_MAPPING_FLAGS,
+        ) callconv(WINAPI) void,
+        ExecuteCommandLists: *const fn (*T, UINT, [*]const *ICommandList) callconv(WINAPI) void,
+        SetMarker: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+        BeginEvent: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+        EndEvent: *const fn (*T) callconv(WINAPI) void,
+        Signal: *const fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
+        Wait: *const fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
+        GetTimestampFrequency: *const fn (*T, *UINT64) callconv(WINAPI) HRESULT,
+        GetClockCalibration: *const fn (*T, *UINT64, *UINT64) callconv(WINAPI) HRESULT,
+        GetDesc: *const fn (*T, *COMMAND_QUEUE_DESC) callconv(WINAPI) *COMMAND_QUEUE_DESC,
+    };
 };
 
 pub const IDevice = extern struct {
@@ -4864,26 +4815,14 @@ pub const RESOURCE_ALLOCATION_INFO1 = extern struct {
 };
 
 pub const IDevice4 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice3.Methods(T);
+
             pub inline fn CreateCommandList1(
                 self: *T,
                 node_mask: UINT,
@@ -4892,7 +4831,8 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 cmdlist: *?*anyopaque,
             ) HRESULT {
-                return self.v.device4.CreateCommandList1(self, node_mask, cmdlist_type, flags, guid, cmdlist);
+                return @ptrCast(*const IDevice4.VTable, self.v)
+                    .CreateCommandList1(@ptrCast(*IDevice4, self), node_mask, cmdlist_type, flags, guid, cmdlist);
             }
             pub inline fn CreateProtectedResourceSession(
                 self: *T,
@@ -4900,7 +4840,8 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 session: *?*anyopaque,
             ) HRESULT {
-                return self.v.device4.CreateProtectedResourceSession(self, desc, guid, session);
+                return @ptrCast(*const IDevice4.VTable, self.v)
+                    .CreateProtectedResourceSession(@ptrCast(*IDevice4, self), desc, guid, session);
             }
             pub inline fn CreateCommittedResource1(
                 self: *T,
@@ -4913,8 +4854,8 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device4.CreateCommittedResource1(
-                    self,
+                return @ptrCast(*const IDevice4.VTable, self.v).CreateCommittedResource1(
+                    @ptrCast(*IDevice4, self),
                     heap_properties,
                     heap_flags,
                     desc,
@@ -4932,7 +4873,8 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 heap: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device4.CreateHeap1(self, desc, psession, guid, heap);
+                return @ptrCast(*const IDevice4.VTable, self.v)
+                    .CreateHeap1(@ptrCast(*IDevice4, self), desc, psession, guid, heap);
             }
             pub inline fn CreateReservedResource1(
                 self: *T,
@@ -4943,8 +4885,8 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device4.CreateReservedResource1(
-                    self,
+                return @ptrCast(*const IDevice4.VTable, self.v).CreateReservedResource1(
+                    @ptrCast(*IDevice4, self),
                     desc,
                     initial_state,
                     clear_value,
@@ -4961,8 +4903,8 @@ pub const IDevice4 = extern struct {
                 alloc_info: ?[*]RESOURCE_ALLOCATION_INFO1,
             ) RESOURCE_ALLOCATION_INFO {
                 var desc: RESOURCE_ALLOCATION_INFO = undefined;
-                self.v.device4.GetResourceAllocationInfo1(
-                    self,
+                @ptrCast(*const IDevice4.VTable, self.v).GetResourceAllocationInfo1(
+                    @ptrCast(*IDevice4, self),
                     &desc,
                     visible_mask,
                     num_resource_descs,
@@ -4974,59 +4916,60 @@ pub const IDevice4 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateCommandList1: *const fn (
-                *T,
-                UINT,
-                COMMAND_LIST_TYPE,
-                COMMAND_LIST_FLAGS,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateProtectedResourceSession: *const fn (
-                *T,
-                *const PROTECTED_RESOURCE_SESSION_DESC,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateCommittedResource1: *const fn (
-                *T,
-                *const HEAP_PROPERTIES,
-                HEAP_FLAGS,
-                *const RESOURCE_DESC,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                ?*IProtectedResourceSession,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateHeap1: *const fn (
-                *T,
-                *const HEAP_DESC,
-                ?*IProtectedResourceSession,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateReservedResource1: *const fn (
-                *T,
-                *const RESOURCE_DESC,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                ?*IProtectedResourceSession,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            GetResourceAllocationInfo1: *const fn (
-                *T,
-                *RESOURCE_ALLOCATION_INFO,
-                UINT,
-                UINT,
-                [*]const RESOURCE_DESC,
-                ?[*]RESOURCE_ALLOCATION_INFO1,
-            ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice4;
+
+        base: IGraphicsCommandList.VTable,
+        CreateCommandList1: *const fn (
+            *T,
+            UINT,
+            COMMAND_LIST_TYPE,
+            COMMAND_LIST_FLAGS,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateProtectedResourceSession: *const fn (
+            *T,
+            *const PROTECTED_RESOURCE_SESSION_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateCommittedResource1: *const fn (
+            *T,
+            *const HEAP_PROPERTIES,
+            HEAP_FLAGS,
+            *const RESOURCE_DESC,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            ?*IProtectedResourceSession,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateHeap1: *const fn (
+            *T,
+            *const HEAP_DESC,
+            ?*IProtectedResourceSession,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateReservedResource1: *const fn (
+            *T,
+            *const RESOURCE_DESC,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            ?*IProtectedResourceSession,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        GetResourceAllocationInfo1: *const fn (
+            *T,
+            *RESOURCE_ALLOCATION_INFO,
+            UINT,
+            UINT,
+            [*]const RESOURCE_DESC,
+            ?[*]RESOURCE_ALLOCATION_INFO1,
+        ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
+    };
 };
 
 pub const LIFETIME_STATE = enum(UINT) {
@@ -5035,27 +4978,25 @@ pub const LIFETIME_STATE = enum(UINT) {
 };
 
 pub const ILifetimeOwner = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        ltowner: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn LifetimeStateUpdated(self: *T, new_state: LIFETIME_STATE) void {
-                self.v.ltowner.LifetimeStateUpdated(self, new_state);
+                @ptrCast(*const ILifetimeOwner.VTable, self.v)
+                    .LifetimeStateUpdated(@ptrCast(*ILifetimeOwner, self), new_state);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            LifetimeStateUpdated: *const fn (*T, LIFETIME_STATE) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        LifetimeStateUpdated: *const fn (*ILifetimeOwner, LIFETIME_STATE) callconv(WINAPI) void,
+    };
 };
 
 pub const IDevice5 = extern struct {
@@ -5587,35 +5528,30 @@ pub const PROTECTED_SESSION_STATUS = enum(UINT) {
 };
 
 pub const IProtectedSession = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        psession: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDeviceChild.Methods(T);
+
             pub inline fn GetStatusFence(self: *T, guid: *const GUID, fence: ?*?*anyopaque) HRESULT {
-                return self.v.psession.GetStatusFence(self, guid, fence);
+                return @ptrCast(*const IProtectedSession.VTable, self.v)
+                    .GetStatusFence(@ptrCast(*IProtectedSession, self), guid, fence);
             }
             pub inline fn GetSessionStatus(self: *T) PROTECTED_SESSION_STATUS {
-                return self.v.psession.GetSessionStatus(self);
+                return @ptrCast(*const IProtectedSession.VTable, self.v)
+                    .GetSessionStatus(@ptrCast(*IProtectedSession, self));
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetStatusFence: *const fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            GetSessionStatus: *const fn (*T) callconv(WINAPI) PROTECTED_SESSION_STATUS,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDeviceChild.VTable,
+        GetStatusFence: *const fn (*IProtectedSession, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+        GetSessionStatus: *const fn (*IProtectedSession) callconv(WINAPI) PROTECTED_SESSION_STATUS,
+    };
 };
 
 pub const PROTECTED_RESOURCE_SESSION_FLAGS = UINT;
@@ -5626,38 +5562,30 @@ pub const PROTECTED_RESOURCE_SESSION_DESC = extern struct {
 };
 
 pub const IProtectedResourceSession = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        psession: IProtectedSession.VTable(Self),
-        prsession: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace IProtectedSession.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IProtectedSession.Methods(T);
+
             pub inline fn GetDesc(self: *T) PROTECTED_RESOURCE_SESSION_DESC {
                 var desc: PROTECTED_RESOURCE_SESSION_DESC = undefined;
-                _ = self.v.prsession.GetDesc(self, &desc);
+                _ = @ptrCast(*const IProtectedResourceSession.VTable, self.v)
+                    .GetDesc(@ptrCast(*IProtectedResourceSession, self), &desc);
                 return desc;
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetDesc: *const fn (
-                *T,
-                *PROTECTED_RESOURCE_SESSION_DESC,
-            ) callconv(WINAPI) *PROTECTED_RESOURCE_SESSION_DESC,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IProtectedSession.VTable,
+        GetDesc: *const fn (
+            *IProtectedResourceSession,
+            *PROTECTED_RESOURCE_SESSION_DESC,
+        ) callconv(WINAPI) *PROTECTED_RESOURCE_SESSION_DESC,
+    };
 };
 
 pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT;
