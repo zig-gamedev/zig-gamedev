@@ -44,9 +44,9 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
     installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
 
-    //var aaa: *zwin32.d3d12.IDeviceChild = undefined;
-    //_ = aaa.Release();
-    //installDemo(b, minimal.build(b, options), "minimal");
+    if (@import("builtin").target.os.tag == .windows) {
+        //installDemo(b, minimal.build(b, options), "minimal");
+    }
 
     //
     // Tests

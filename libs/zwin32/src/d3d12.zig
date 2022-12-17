@@ -2855,7 +2855,7 @@ pub const IGraphicsCommandList1 = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IGraphicsCommandList.Methods(T);
 
@@ -5059,45 +5059,33 @@ pub const ILifetimeOwner = extern struct {
 };
 
 pub const IDevice5 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice4.Methods(T);
+
             pub inline fn CreateLifetimeTracker(
                 self: *T,
                 owner: *ILifetimeOwner,
                 guid: *const GUID,
                 tracker: *?*anyopaque,
             ) HRESULT {
-                return self.v.device5.CreateLifetimeTracker(self, owner, guid, tracker);
+                return @ptrCast(*const IDevice5.VTable, self.v)
+                    .CreateLifetimeTracker(@ptrCast(*IDevice5, self), owner, guid, tracker);
             }
             pub inline fn RemoveDevice(self: *T) void {
-                self.v.device5.RemoveDevice(self);
+                @ptrCast(*const IDevice5.VTable, self.v).RemoveDevice();
             }
             pub inline fn EnumerateMetaCommands(
                 self: *T,
                 num_meta_cmds: *UINT,
                 descs: ?[*]META_COMMAND_DESC,
             ) HRESULT {
-                return self.v.device5.EnumerateMetaCommands(self, num_meta_cmds, descs);
+                return @ptrCast(*const IDevice5.VTable, self.v)
+                    .EnumerateMetaCommands(@ptrCast(*IDevice5, self), num_meta_cmds, descs);
             }
             pub inline fn EnumerateMetaCommandParameters(
                 self: *T,
@@ -5107,8 +5095,8 @@ pub const IDevice5 = extern struct {
                 param_count: *UINT,
                 param_descs: ?[*]META_COMMAND_PARAMETER_DESC,
             ) HRESULT {
-                return self.v.device5.EnumerateMetaCommandParameters(
-                    self,
+                return @ptrCast(*const IDevice5.VTable, self.v).EnumerateMetaCommandParameters(
+                    @ptrCast(*IDevice5, self),
                     cmd_id,
                     stage,
                     total_size,
@@ -5125,8 +5113,8 @@ pub const IDevice5 = extern struct {
                 guid: *const GUID,
                 meta_cmd: *?*anyopaque,
             ) HRESULT {
-                return self.v.device5.CreateMetaCommand(
-                    self,
+                return @ptrCast(*const IDevice5.VTable, self.v).CreateMetaCommand(
+                    @ptrCast(*IDevice5, self),
                     cmd_id,
                     node_mask,
                     creation_param_data,
@@ -5141,65 +5129,72 @@ pub const IDevice5 = extern struct {
                 guid: *const GUID,
                 state_object: *?*anyopaque,
             ) HRESULT {
-                return self.v.device5.CreateStateObject(self, desc, guid, state_object);
+                return @ptrCast(*const IDevice5.VTable, self.v)
+                    .CreateStateObject(@ptrCast(*IDevice5, self), desc, guid, state_object);
             }
             pub inline fn GetRaytracingAccelerationStructurePrebuildInfo(
                 self: *T,
                 desc: *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
                 info: *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
             ) void {
-                self.v.device5.GetRaytracingAccelerationStructurePrebuildInfo(self, desc, info);
+                @ptrCast(*const IDevice5.VTable, self.v)
+                    .GetRaytracingAccelerationStructurePrebuildInfo(@ptrCast(*IDevice5, self), desc, info);
             }
             pub inline fn CheckDriverMatchingIdentifier(
                 self: *T,
                 serialized_data_type: SERIALIZED_DATA_TYPE,
                 identifier_to_check: *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
             ) DRIVER_MATCHING_IDENTIFIER_STATUS {
-                return self.v.device5.CheckDriverMatchingIdentifier(self, serialized_data_type, identifier_to_check);
+                return @ptrCast(*const IDevice5.VTable, self.v).CheckDriverMatchingIdentifier(
+                    @ptrCast(*IDevice5, self),
+                    serialized_data_type,
+                    identifier_to_check,
+                );
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateLifetimeTracker: *const fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            RemoveDevice: *const fn (self: *T) callconv(WINAPI) void,
-            EnumerateMetaCommands: *const fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
-            EnumerateMetaCommandParameters: *const fn (
-                *T,
-                *const GUID,
-                META_COMMAND_PARAMETER_STAGE,
-                ?*UINT,
-                *UINT,
-                ?[*]META_COMMAND_PARAMETER_DESC,
-            ) callconv(WINAPI) HRESULT,
-            CreateMetaCommand: *const fn (
-                *T,
-                *const GUID,
-                UINT,
-                ?*const anyopaque,
-                SIZE_T,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateStateObject: *const fn (
-                *T,
-                *const STATE_OBJECT_DESC,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            GetRaytracingAccelerationStructurePrebuildInfo: *const fn (
-                *T,
-                *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
-                *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
-            ) callconv(WINAPI) void,
-            CheckDriverMatchingIdentifier: *const fn (
-                *T,
-                SERIALIZED_DATA_TYPE,
-                *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
-            ) callconv(WINAPI) DRIVER_MATCHING_IDENTIFIER_STATUS,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice5;
+
+        base: IDevice4.VTable,
+        CreateLifetimeTracker: *const fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+        RemoveDevice: *const fn (self: *T) callconv(WINAPI) void,
+        EnumerateMetaCommands: *const fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
+        EnumerateMetaCommandParameters: *const fn (
+            *T,
+            *const GUID,
+            META_COMMAND_PARAMETER_STAGE,
+            ?*UINT,
+            *UINT,
+            ?[*]META_COMMAND_PARAMETER_DESC,
+        ) callconv(WINAPI) HRESULT,
+        CreateMetaCommand: *const fn (
+            *T,
+            *const GUID,
+            UINT,
+            ?*const anyopaque,
+            SIZE_T,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateStateObject: *const fn (
+            *T,
+            *const STATE_OBJECT_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        GetRaytracingAccelerationStructurePrebuildInfo: *const fn (
+            *T,
+            *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+            *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
+        ) callconv(WINAPI) void,
+        CheckDriverMatchingIdentifier: *const fn (
+            *T,
+            SERIALIZED_DATA_TYPE,
+            *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+        ) callconv(WINAPI) DRIVER_MATCHING_IDENTIFIER_STATUS,
+    };
 };
 
 pub const BACKGROUND_PROCESSING_MODE = enum(UINT) {
@@ -5217,30 +5212,13 @@ pub const MEASUREMENTS_ACTION = enum(UINT) {
 };
 
 pub const IDevice6 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: IDevice5.VTable(Self),
-        device6: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace IDevice5.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice5.Methods(T);
             pub inline fn SetBackgroundProcessingMode(
                 self: *T,
                 mode: BACKGROUND_PROCESSING_MODE,
@@ -5248,8 +5226,8 @@ pub const IDevice6 = extern struct {
                 event_to_signal_upon_completion: ?HANDLE,
                 further_measurements_desired: ?*BOOL,
             ) HRESULT {
-                return self.v.device6.SetBackgroundProcessingMode(
-                    self,
+                return @ptrCast(*const IDevice6.VTable, self.v).SetBackgroundProcessingMode(
+                    @ptrCast(*IDevice6, self),
                     mode,
                     measurements_action,
                     event_to_signal_upon_completion,
@@ -5259,17 +5237,16 @@ pub const IDevice6 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            SetBackgroundProcessingMode: *const fn (
-                *T,
-                BACKGROUND_PROCESSING_MODE,
-                MEASUREMENTS_ACTION,
-                ?HANDLE,
-                ?*BOOL,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDevice5.VTable,
+        SetBackgroundProcessingMode: *const fn (
+            *IDevice6,
+            BACKGROUND_PROCESSING_MODE,
+            MEASUREMENTS_ACTION,
+            ?HANDLE,
+            ?*BOOL,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
@@ -5279,32 +5256,14 @@ pub const PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
 };
 
 pub const IDevice7 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: IDevice5.VTable(Self),
-        device6: IDevice6.VTable(Self),
-        device7: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace IDevice5.Methods(Self);
-    usingnamespace IDevice6.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice6.Methods(T);
+
             pub inline fn AddToStateObject(
                 self: *T,
                 addition: *const STATE_OBJECT_DESC,
@@ -5312,7 +5271,8 @@ pub const IDevice7 = extern struct {
                 guid: *const GUID,
                 new_state_object: *?*anyopaque,
             ) HRESULT {
-                return self.v.device7.AddToStateObject(self, addition, state_object, guid, new_state_object);
+                return @ptrCast(*const IDevice7.VTable, self.v)
+                    .AddToStateObject(@ptrCast(*IDevice7, self), addition, state_object, guid, new_state_object);
             }
             pub inline fn CreateProtectedResourceSession1(
                 self: *T,
@@ -5320,28 +5280,28 @@ pub const IDevice7 = extern struct {
                 guid: *const GUID,
                 session: *?*anyopaque,
             ) HRESULT {
-                return self.v.device7.CreateProtectedResourceSession1(self, desc, guid, session);
+                return @ptrCast(*const IDevice7.VTable, self.v)
+                    .CreateProtectedResourceSession1(@ptrCast(*IDevice7, self), desc, guid, session);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            AddToStateObject: *const fn (
-                *T,
-                *const STATE_OBJECT_DESC,
-                *IStateObject,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateProtectedResourceSession1: *const fn (
-                *T,
-                *const PROTECTED_RESOURCE_SESSION_DESC1,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDevice6.VTable,
+        AddToStateObject: *const fn (
+            *IDevice7,
+            *const STATE_OBJECT_DESC,
+            *IStateObject,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateProtectedResourceSession1: *const fn (
+            *IDevice7,
+            *const PROTECTED_RESOURCE_SESSION_DESC1,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const MIP_REGION = extern struct {
@@ -5365,34 +5325,14 @@ pub const RESOURCE_DESC1 = extern struct {
 };
 
 pub const IDevice8 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: IDevice5.VTable(Self),
-        device6: IDevice6.VTable(Self),
-        device7: IDevice7.VTable(Self),
-        device8: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace IDevice5.Methods(Self);
-    usingnamespace IDevice6.Methods(Self);
-    usingnamespace IDevice7.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice7.Methods(T);
+
             pub inline fn GetResourceAllocationInfo2(
                 self: *T,
                 visible_mask: UINT,
@@ -5401,8 +5341,8 @@ pub const IDevice8 = extern struct {
                 alloc_info: ?[*]RESOURCE_ALLOCATION_INFO1,
             ) RESOURCE_ALLOCATION_INFO {
                 var desc: RESOURCE_ALLOCATION_INFO = undefined;
-                self.v.device8.GetResourceAllocationInfo2(
-                    self,
+                @ptrCast(*const IDevice8.VTable, self.v).GetResourceAllocationInfo2(
+                    @ptrCast(*IDevice8, self),
                     &desc,
                     visible_mask,
                     num_resource_descs,
@@ -5422,8 +5362,8 @@ pub const IDevice8 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device8.CreateCommittedResource2(
-                    self,
+                return @ptrCast(*const IDevice8.VTable, self.v).CreateCommittedResource2(
+                    @ptrCast(*IDevice8, self),
                     heap_properties,
                     heap_flags,
                     desc,
@@ -5444,8 +5384,8 @@ pub const IDevice8 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device8.CreatePlacedResource1(
-                    self,
+                return @ptrCast(*const IDevice8.VTable, self.v).CreatePlacedResource1(
+                    @ptrCast(*IDevice8, self),
                     heap,
                     heap_offset,
                     desc,
@@ -5461,8 +5401,8 @@ pub const IDevice8 = extern struct {
                 feedback_resource: ?*IResource,
                 dest_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device8.CreateSamplerFeedbackUnorderedAccessView(
-                    self,
+                @ptrCast(*const IDevice8.VTable, self.v).CreateSamplerFeedbackUnorderedAccessView(
+                    @ptrCast(*IDevice8, self),
                     targeted_resource,
                     feedback_resource,
                     dest_descriptor,
@@ -5479,8 +5419,8 @@ pub const IDevice8 = extern struct {
                 row_size_in_bytes: ?[*]UINT64,
                 total_bytes: ?*UINT64,
             ) void {
-                self.v.device8.GetCopyableFootprints1(
-                    self,
+                @ptrCast(*const IDevice8.VTable, self.v).GetCopyableFootprints1(
+                    @ptrCast(*IDevice8, self),
                     desc,
                     first_subresource,
                     num_subresources,
@@ -5494,55 +5434,56 @@ pub const IDevice8 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetResourceAllocationInfo2: *const fn (
-                *T,
-                UINT,
-                UINT,
-                *const RESOURCE_DESC1,
-                ?[*]RESOURCE_ALLOCATION_INFO1,
-            ) callconv(WINAPI) RESOURCE_ALLOCATION_INFO,
-            CreateCommittedResource2: *const fn (
-                *T,
-                *const HEAP_PROPERTIES,
-                HEAP_FLAGS,
-                *const RESOURCE_DESC1,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                ?*IProtectedResourceSession,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreatePlacedResource1: *const fn (
-                *T,
-                *IHeap,
-                UINT64,
-                *const RESOURCE_DESC1,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateSamplerFeedbackUnorderedAccessView: *const fn (
-                *T,
-                ?*IResource,
-                ?*IResource,
-                CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            GetCopyableFootprints1: *const fn (
-                *T,
-                *const RESOURCE_DESC1,
-                UINT,
-                UINT,
-                UINT64,
-                ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
-                ?[*]UINT,
-                ?[*]UINT64,
-                ?*UINT64,
-            ) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice8;
+
+        base: IDevice7.VTable,
+        GetResourceAllocationInfo2: *const fn (
+            *T,
+            UINT,
+            UINT,
+            *const RESOURCE_DESC1,
+            ?[*]RESOURCE_ALLOCATION_INFO1,
+        ) callconv(WINAPI) RESOURCE_ALLOCATION_INFO,
+        CreateCommittedResource2: *const fn (
+            *T,
+            *const HEAP_PROPERTIES,
+            HEAP_FLAGS,
+            *const RESOURCE_DESC1,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            ?*IProtectedResourceSession,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreatePlacedResource1: *const fn (
+            *T,
+            *IHeap,
+            UINT64,
+            *const RESOURCE_DESC1,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateSamplerFeedbackUnorderedAccessView: *const fn (
+            *T,
+            ?*IResource,
+            ?*IResource,
+            CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        GetCopyableFootprints1: *const fn (
+            *T,
+            *const RESOURCE_DESC1,
+            UINT,
+            UINT,
+            UINT64,
+            ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
+            ?[*]UINT,
+            ?[*]UINT64,
+            ?*UINT64,
+        ) callconv(WINAPI) void,
+    };
 };
 
 pub const SHADER_CACHE_KIND_FLAGS = UINT;
@@ -5576,56 +5517,31 @@ pub const SHADER_CACHE_SESSION_DESC = extern struct {
     Version: UINT64,
 };
 
-fn IDevice9VTable(comptime Self: type) type {
-    return extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: IDevice5.VTable(Self),
-        device6: IDevice6.VTable(Self),
-        device7: IDevice7.VTable(Self),
-        device8: IDevice8.VTable(Self),
-        device9: IDevice9.VTable(Self),
-    };
-}
-
 pub const IDevice9 = extern struct {
-    const Self = @This();
-    v: *const IDevice9VTable(@This()),
+    v: *const VTable,
 
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace IDevice5.Methods(Self);
-    usingnamespace IDevice6.Methods(Self);
-    usingnamespace IDevice7.Methods(Self);
-    usingnamespace IDevice8.Methods(Self);
-    usingnamespace IDevice9.Methods(Self);
+    pub usingnamespace IDevice9.Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice8.Methods(T);
+
             pub inline fn CreateShaderCacheSession(
                 self: *T,
                 desc: *const SHADER_CACHE_SESSION_DESC,
                 guid: *const GUID,
                 session: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device9.CreateShaderCacheSession(self, desc, guid, session);
+                return @ptrCast(*const IDevice9.VTable, self.v)
+                    .CreateShaderCacheSession(@ptrCast(*IDevice9, self), desc, guid, session);
             }
             pub inline fn ShaderCacheControl(
                 self: *T,
                 kinds: SHADER_CACHE_KIND_FLAGS,
                 control: SHADER_CACHE_CONTROL_FLAGS,
             ) HRESULT {
-                return self.v.device9.ShaderCacheControl(self, kinds, control);
+                return @ptrCast(*const IDevice9.VTable, self.v)
+                    .ShaderCacheControl(@ptrCast(*IDevice9, self), kinds, control);
             }
             pub inline fn CreateCommandQueue1(
                 self: *T,
@@ -5634,33 +5550,35 @@ pub const IDevice9 = extern struct {
                 guid: *const GUID,
                 cmdqueue: *?*anyopaque,
             ) HRESULT {
-                return self.v.device9.CreateCommandQueue1(self, desc, creator_id, guid, cmdqueue);
+                return @ptrCast(*const IDevice9.VTable, self.v)
+                    .CreateCommandQueue1(@ptrCast(*IDevice9, self), desc, creator_id, guid, cmdqueue);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateShaderCacheSession: *const fn (
-                *T,
-                *const SHADER_CACHE_SESSION_DESC,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            ShaderCacheControl: *const fn (
-                *T,
-                SHADER_CACHE_KIND_FLAGS,
-                SHADER_CACHE_CONTROL_FLAGS,
-            ) callconv(WINAPI) HRESULT,
-            CreateCommandQueue1: *const fn (
-                *T,
-                *const COMMAND_QUEUE_DESC,
-                *const GUID,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice9;
+
+        base: IDevice8.VTable,
+        CreateShaderCacheSession: *const fn (
+            *T,
+            *const SHADER_CACHE_SESSION_DESC,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        ShaderCacheControl: *const fn (
+            *T,
+            SHADER_CACHE_KIND_FLAGS,
+            SHADER_CACHE_CONTROL_FLAGS,
+        ) callconv(WINAPI) HRESULT,
+        CreateCommandQueue1: *const fn (
+            *T,
+            *const COMMAND_QUEUE_DESC,
+            *const GUID,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const PROTECTED_SESSION_STATUS = enum(UINT) {
