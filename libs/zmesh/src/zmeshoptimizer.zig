@@ -26,7 +26,6 @@ pub inline fn remapVertexBuffer(
     vertices: []const T,
     remap: []const u32,
 ) void {
-    assert(destination.len >= vertices.len);
     meshopt_remapVertexBuffer(
         destination.ptr,
         vertices.ptr,
