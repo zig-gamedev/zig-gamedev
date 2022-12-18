@@ -1968,339 +1968,195 @@ pub const IDeviceContext6 = extern struct {
 };
 
 pub const IFactory3 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDevice2: *anyopaque,
+            pub usingnamespace IFactory2.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory2.VTable,
+        CreateDevice2: *anyopaque,
+    };
 };
 
 pub const IFactory4 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDevice3: *anyopaque,
+            pub usingnamespace IFactory3.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory3.VTable,
+        CreateDevice3: *anyopaque,
+    };
 };
 
 pub const IFactory5 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: IFactory4.VTable(Self),
-        factory5: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace IFactory4.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDevice4: *anyopaque,
+            pub usingnamespace IFactory4.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory4.VTable,
+        CreateDevice4: *anyopaque,
+    };
 };
 
 pub const IFactory6 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: IFactory4.VTable(Self),
-        factory5: IFactory5.VTable(Self),
-        factory6: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace IFactory4.Methods(Self);
-    usingnamespace IFactory5.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDevice5: *anyopaque,
+            pub usingnamespace IFactory5.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory5.VTable,
+        CreateDevice5: *anyopaque,
+    };
 };
 
 pub const IFactory7 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: IFactory4.VTable(Self),
-        factory5: IFactory5.VTable(Self),
-        factory6: IFactory6.VTable(Self),
-        factory7: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace IFactory4.Methods(Self);
-    usingnamespace IFactory5.Methods(Self);
-    usingnamespace IFactory6.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IFactory6.Methods(T);
+
             pub inline fn CreateDevice6(self: *T, dxgi_device: *dxgi.IDevice, d2d_device6: *?*IDevice6) HRESULT {
-                return self.v.factory7.CreateDevice6(self, dxgi_device, d2d_device6);
+                return @ptrCast(*const IFactory7.VTable, self.v)
+                    .CreateDevice6(@ptrCast(*IFactory7, self), dxgi_device, d2d_device6);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateDevice6: *const fn (*T, *dxgi.IDevice, *?*IDevice6) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IFactory6.VTable,
+        CreateDevice6: *const fn (*IFactory7, *dxgi.IDevice, *?*IDevice6) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IDevice2 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDeviceContext2: *anyopaque,
-            FlushDeviceContexts: *anyopaque,
-            GetDxgiDevice: *anyopaque,
+            pub usingnamespace IDevice1.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IDevice1.VTable,
+        CreateDeviceContext2: *anyopaque,
+        FlushDeviceContexts: *anyopaque,
+        GetDxgiDevice: *anyopaque,
+    };
 };
 
 pub const IDevice3 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDeviceContext3: *anyopaque,
+            pub usingnamespace IDevice2.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IDevice2.VTable,
+        CreateDeviceContext3: *anyopaque,
+    };
 };
 
 pub const IDevice4 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDeviceContext4: *anyopaque,
-            SetMaximumColorGlyphCacheMemory: *anyopaque,
-            GetMaximumColorGlyphCacheMemory: *anyopaque,
+            pub usingnamespace IDevice3.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IDevice3.VTable,
+        CreateDeviceContext4: *anyopaque,
+        SetMaximumColorGlyphCacheMemory: *anyopaque,
+        GetMaximumColorGlyphCacheMemory: *anyopaque,
+    };
 };
 
 pub const IDevice5 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDeviceContext5: *anyopaque,
+            pub usingnamespace IDevice4.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IDevice4.VTable,
+        CreateDeviceContext5: *anyopaque,
+    };
 };
 
 pub const IDevice6 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: IDevice3.VTable(Self),
-        device4: IDevice4.VTable(Self),
-        device5: IDevice5.VTable(Self),
-        device6: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace IDevice3.Methods(Self);
-    usingnamespace IDevice4.Methods(Self);
-    usingnamespace IDevice5.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice5.Methods(T);
+
             pub inline fn CreateDeviceContext6(
                 self: *T,
                 options: DEVICE_CONTEXT_OPTIONS,
                 devctx: *?*IDeviceContext6,
             ) HRESULT {
-                return self.v.device6.CreateDeviceContext6(self, options, devctx);
+                return @ptrCast(*const IDevice6.VTable, self.v)
+                    .CreateDeviceContext6(@ptrCast(*IDevice6, self), options, devctx);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateDeviceContext6: *const fn (
-                *T,
-                DEVICE_CONTEXT_OPTIONS,
-                *?*IDeviceContext6,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDevice5.VTable,
+        CreateDeviceContext6: *const fn (
+            *IDevice6,
+            DEVICE_CONTEXT_OPTIONS,
+            *?*IDeviceContext6,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IID_IFactory7 = GUID{
