@@ -19,7 +19,7 @@ pub fn build(b: *std.build.Builder) void {
     const skip_dawn_update = b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
     if (!skip_dawn_update) {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
-        child.cwd = thisDir();
+        child.cwd = "."; // TODO: thisDir();
         child.stderr = std.io.getStdErr();
         child.stdout = std.io.getStdOut();
         _ = child.spawnAndWait() catch {

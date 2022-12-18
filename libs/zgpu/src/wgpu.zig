@@ -981,10 +981,10 @@ pub const RenderPassColorAttachment = extern struct {
     load_op: LoadOp,
     store_op: StoreOp,
     clear_color: Color = .{
-        .r = std.math.nan(f32),
-        .g = std.math.nan(f32),
-        .b = std.math.nan(f32),
-        .a = std.math.nan(f32),
+        .r = std.math.nan_f64,
+        .g = std.math.nan_f64,
+        .b = std.math.nan_f64,
+        .a = std.math.nan_f64,
     },
     clear_value: Color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 0.0 },
 };
@@ -993,7 +993,7 @@ pub const RenderPassDepthStencilAttachment = extern struct {
     view: TextureView,
     depth_load_op: LoadOp = .undef,
     depth_store_op: StoreOp = .undef,
-    clear_depth: f32 = std.math.nan(f32),
+    clear_depth: f32 = std.math.nan_f32,
     depth_clear_value: f32 = 0.0,
     depth_read_only: bool = false,
     stencil_load_op: LoadOp = .undef,
