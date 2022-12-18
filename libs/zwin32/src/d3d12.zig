@@ -3184,39 +3184,33 @@ pub const META_COMMAND_DESC = extern struct {
 };
 
 pub const IMetaCommand = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devchild: IDeviceChild.VTable(Self),
-        metacmd: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceChild.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDeviceChild.Methods(T);
+
             pub inline fn GetRequiredParameterResourceSize(
                 self: *T,
                 stage: META_COMMAND_PARAMETER_STAGE,
                 param_index: UINT,
             ) UINT64 {
-                return self.v.metacmd.GetRequiredParameterResourceSize(self, stage, param_index);
+                return @ptrCast(*const IMetaCommand.VTable, self.v)
+                    .GetRequiredParameterResourceSize(@ptrCast(*IMetaCommand, self), stage, param_index);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetRequiredParameterResourceSize: *const fn (
-                *T,
-                META_COMMAND_PARAMETER_STAGE,
-                UINT,
-            ) callconv(WINAPI) UINT64,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDeviceChild.VTable,
+        GetRequiredParameterResourceSize: *const fn (
+            *IMetaCommand,
+            META_COMMAND_PARAMETER_STAGE,
+            UINT,
+        ) callconv(WINAPI) UINT64,
+    };
 };
 
 pub const STATE_SUBOBJECT_TYPE = enum(UINT) {
@@ -3547,39 +3541,42 @@ pub const IStateObject = extern struct {
 
 pub const IID_IStateObjectProperties = GUID.parse("{de5fa827-9bf9-4f26-89ff-d7f56fde3860}");
 pub const IStateObjectProperties = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        properties: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetShaderIdentifier(self: *T, export_name: LPCWSTR) *anyopaque {
-                return self.v.properties.GetShaderIdentifier(self, export_name);
+                return @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                    .GetShaderIdentifier(@ptrCast(*IStateObjectProperties, self), export_name);
             }
             pub inline fn GetShaderStackSize(self: *T, export_name: LPCWSTR) UINT64 {
-                return self.v.properties.GetShaderStackSize(self, export_name);
+                return @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                    .GetShaderStackSize(@ptrCast(*IStateObjectProperties, self), export_name);
             }
             pub inline fn GetPipelineStackSize(self: *T) UINT64 {
-                return self.v.properties.GetPipelineStackSize(self);
+                return @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                    .GetPipelineStackSize(@ptrCast(*IStateObjectProperties, self));
             }
             pub inline fn SetPipelineStackSize(self: *T, stack_size: UINT64) void {
-                self.v.properties.SetPipelineStackSize(self, stack_size);
+                @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                    .SetPipelineStackSize(@ptrCast(*IStateObjectProperties, self), stack_size);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetShaderIdentifier: *const fn (*T, LPCWSTR) callconv(WINAPI) *anyopaque,
-            GetShaderStackSize: *const fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
-            GetPipelineStackSize: *const fn (*T) callconv(WINAPI) UINT64,
-            SetPipelineStackSize: *const fn (*T, UINT64) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IStateObjectProperties;
+
+        base: IUnknown.VTable,
+        GetShaderIdentifier: *const fn (*T, LPCWSTR) callconv(WINAPI) *anyopaque,
+        GetShaderStackSize: *const fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
+        GetPipelineStackSize: *const fn (*T) callconv(WINAPI) UINT64,
+        SetPipelineStackSize: *const fn (*T, UINT64) callconv(WINAPI) void,
+    };
 };
 
 pub const DISPATCH_RAYS_DESC = extern struct {
@@ -3953,20 +3950,16 @@ pub const ICommandQueue = extern struct {
 };
 
 pub const IDevice = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IObject.Methods(T);
+
             pub inline fn GetNodeCount(self: *T) UINT {
-                return self.v.device.GetNodeCount(self);
+                return @ptrCast(*const IDevice.VTable, self.v).GetNodeCount(@ptrCast(*IDevice, self));
             }
             pub inline fn CreateCommandQueue(
                 self: *T,
@@ -3974,7 +3967,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 obj: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateCommandQueue(self, desc, guid, obj);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateCommandQueue(@ptrCast(*IDevice, self), desc, guid, obj);
             }
             pub inline fn CreateCommandAllocator(
                 self: *T,
@@ -3982,7 +3976,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 obj: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateCommandAllocator(self, cmdlist_type, guid, obj);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateCommandAllocator(@ptrCast(*IDevice, self), cmdlist_type, guid, obj);
             }
             pub inline fn CreateGraphicsPipelineState(
                 self: *T,
@@ -3990,7 +3985,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 pso: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateGraphicsPipelineState(self, desc, guid, pso);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateGraphicsPipelineState(@ptrCast(*IDevice, self), desc, guid, pso);
             }
             pub inline fn CreateComputePipelineState(
                 self: *T,
@@ -3998,7 +3994,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 pso: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateComputePipelineState(self, desc, guid, pso);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateComputePipelineState(@ptrCast(*IDevice, self), desc, guid, pso);
             }
             pub inline fn CreateCommandList(
                 self: *T,
@@ -4009,10 +4006,19 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 cmdlist: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateCommandList(self, node_mask, cmdlist_type, cmdalloc, initial_state, guid, cmdlist);
+                return @ptrCast(*const IDevice.VTable, self.v).CreateCommandList(
+                    @ptrCast(*IDevice, self),
+                    node_mask,
+                    cmdlist_type,
+                    cmdalloc,
+                    initial_state,
+                    guid,
+                    cmdlist,
+                );
             }
             pub inline fn CheckFeatureSupport(self: *T, feature: FEATURE, data: *anyopaque, data_size: UINT) HRESULT {
-                return self.v.device.CheckFeatureSupport(self, feature, data, data_size);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CheckFeatureSupport(@ptrCast(*IDevice, self), feature, data, data_size);
             }
             pub inline fn CreateDescriptorHeap(
                 self: *T,
@@ -4020,10 +4026,12 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 heap: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateDescriptorHeap(self, desc, guid, heap);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateDescriptorHeap(@ptrCast(*IDevice, self), desc, guid, heap);
             }
             pub inline fn GetDescriptorHandleIncrementSize(self: *T, heap_type: DESCRIPTOR_HEAP_TYPE) UINT {
-                return self.v.device.GetDescriptorHandleIncrementSize(self, heap_type);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .GetDescriptorHandleIncrementSize(@ptrCast(*IDevice, self), heap_type);
             }
             pub inline fn CreateRootSignature(
                 self: *T,
@@ -4033,14 +4041,16 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 signature: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateRootSignature(self, node_mask, blob, blob_size, guid, signature);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateRootSignature(@ptrCast(*IDevice, self), node_mask, blob, blob_size, guid, signature);
             }
             pub inline fn CreateConstantBufferView(
                 self: *T,
                 desc: ?*const CONSTANT_BUFFER_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device.CreateConstantBufferView(self, desc, dst_descriptor);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateConstantBufferView(@ptrCast(*IDevice, self), desc, dst_descriptor);
             }
             pub inline fn CreateShaderResourceView(
                 self: *T,
@@ -4048,7 +4058,8 @@ pub const IDevice = extern struct {
                 desc: ?*const SHADER_RESOURCE_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device.CreateShaderResourceView(self, resource, desc, dst_descriptor);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateShaderResourceView(@ptrCast(*IDevice, self), resource, desc, dst_descriptor);
             }
             pub inline fn CreateUnorderedAccessView(
                 self: *T,
@@ -4057,8 +4068,8 @@ pub const IDevice = extern struct {
                 desc: ?*const UNORDERED_ACCESS_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device.CreateUnorderedAccessView(
-                    self,
+                @ptrCast(*const IDevice.VTable, self.v).CreateUnorderedAccessView(
+                    @ptrCast(*IDevice, self),
                     resource,
                     counter_resource,
                     desc,
@@ -4071,7 +4082,8 @@ pub const IDevice = extern struct {
                 desc: ?*const RENDER_TARGET_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device.CreateRenderTargetView(self, resource, desc, dst_descriptor);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateRenderTargetView(@ptrCast(*IDevice, self), resource, desc, dst_descriptor);
             }
             pub inline fn CreateDepthStencilView(
                 self: *T,
@@ -4079,14 +4091,16 @@ pub const IDevice = extern struct {
                 desc: ?*const DEPTH_STENCIL_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device.CreateDepthStencilView(self, resource, desc, dst_descriptor);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateDepthStencilView(@ptrCast(*IDevice, self), resource, desc, dst_descriptor);
             }
             pub inline fn CreateSampler(
                 self: *T,
                 desc: *const SAMPLER_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                self.v.device.CreateSampler(self, desc, dst_descriptor);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateSampler(@ptrCast(*IDevice, self), desc, dst_descriptor);
             }
             pub inline fn CopyDescriptors(
                 self: *T,
@@ -4098,8 +4112,8 @@ pub const IDevice = extern struct {
                 src_range_sizes: ?[*]const UINT,
                 heap_type: DESCRIPTOR_HEAP_TYPE,
             ) void {
-                self.v.device.CopyDescriptors(
-                    self,
+                @ptrCast(*const IDevice.VTable, self.v).CopyDescriptors(
+                    @ptrCast(*IDevice, self),
                     num_dst_ranges,
                     dst_range_starts,
                     dst_range_sizes,
@@ -4116,7 +4130,13 @@ pub const IDevice = extern struct {
                 src_range_start: CPU_DESCRIPTOR_HANDLE,
                 heap_type: DESCRIPTOR_HEAP_TYPE,
             ) void {
-                self.v.device.CopyDescriptorsSimple(self, num, dst_range_start, src_range_start, heap_type);
+                @ptrCast(*const IDevice.VTable, self.v).CopyDescriptorsSimple(
+                    @ptrCast(*IDevice, self),
+                    num,
+                    dst_range_start,
+                    src_range_start,
+                    heap_type,
+                );
             }
             pub inline fn GetResourceAllocationInfo(
                 self: *T,
@@ -4125,7 +4145,13 @@ pub const IDevice = extern struct {
                 descs: [*]const RESOURCE_DESC,
             ) RESOURCE_ALLOCATION_INFO {
                 var info: RESOURCE_ALLOCATION_INFO = undefined;
-                self.v.device.GetResourceAllocationInfo(self, &info, visible_mask, num_descs, descs);
+                @ptrCast(*const IDevice.VTable, self.v).GetResourceAllocationInfo(
+                    @ptrCast(*IDevice, self),
+                    &info,
+                    visible_mask,
+                    num_descs,
+                    descs,
+                );
                 return info;
             }
             pub inline fn GetCustomHeapProperties(
@@ -4134,7 +4160,8 @@ pub const IDevice = extern struct {
                 heap_type: HEAP_TYPE,
             ) HEAP_PROPERTIES {
                 var props: HEAP_PROPERTIES = undefined;
-                self.v.device.GetCustomHeapProperties(self, &props, node_mask, heap_type);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .GetCustomHeapProperties(@ptrCast(*IDevice, self), &props, node_mask, heap_type);
                 return props;
             }
             pub inline fn CreateCommittedResource(
@@ -4147,8 +4174,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateCommittedResource(
-                    self,
+                return @ptrCast(*const IDevice.VTable, self.v).CreateCommittedResource(
+                    @ptrCast(*IDevice, self),
                     heap_props,
                     heap_flags,
                     desc,
@@ -4158,8 +4185,14 @@ pub const IDevice = extern struct {
                     resource,
                 );
             }
-            pub inline fn CreateHeap(self: *T, desc: *const HEAP_DESC, guid: *const GUID, heap: ?*?*anyopaque) HRESULT {
-                return self.v.device.CreateHeap(self, desc, guid, heap);
+            pub inline fn CreateHeap(
+                self: *T,
+                desc: *const HEAP_DESC,
+                guid: *const GUID,
+                heap: ?*?*anyopaque,
+            ) HRESULT {
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateHeap(@ptrCast(*IDevice, self), desc, guid, heap);
             }
             pub inline fn CreatePlacedResource(
                 self: *T,
@@ -4171,8 +4204,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreatePlacedResource(
-                    self,
+                return @ptrCast(*const IDevice.VTable, self.v).CreatePlacedResource(
+                    @ptrCast(*IDevice, self),
                     heap,
                     heap_offset,
                     desc,
@@ -4190,7 +4223,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateReservedResource(self, desc, state, clear_value, guid, resource);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateReservedResource(@ptrCast(*IDevice, self), desc, state, clear_value, guid, resource);
             }
             pub inline fn CreateSharedHandle(
                 self: *T,
@@ -4200,19 +4234,27 @@ pub const IDevice = extern struct {
                 name: ?LPCWSTR,
                 handle: ?*HANDLE,
             ) HRESULT {
-                return self.v.device.CreateSharedHandle(self, object, attributes, access, name, handle);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateSharedHandle(@ptrCast(*IDevice, self), object, attributes, access, name, handle);
             }
-            pub inline fn OpenSharedHandle(self: *T, handle: HANDLE, guid: *const GUID, object: ?*?*anyopaque) HRESULT {
-                return self.v.device.OpenSharedHandle(self, handle, guid, object);
+            pub inline fn OpenSharedHandle(
+                self: *T,
+                handle: HANDLE,
+                guid: *const GUID,
+                object: ?*?*anyopaque,
+            ) HRESULT {
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .OpenSharedHandle(@ptrCast(*IDevice, self), handle, guid, object);
             }
             pub inline fn OpenSharedHandleByName(self: *T, name: LPCWSTR, access: DWORD, handle: ?*HANDLE) HRESULT {
-                return self.v.device.OpenSharedHandleByName(self, name, access, handle);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .OpenSharedHandleByName(@ptrCast(*IDevice, self), name, access, handle);
             }
             pub inline fn MakeResident(self: *T, num: UINT, objects: [*]const *IPageable) HRESULT {
-                return self.v.device.MakeResident(self, num, objects);
+                return @ptrCast(*const IDevice.VTable, self.v).MakeResident(@ptrCast(*IDevice, self), num, objects);
             }
             pub inline fn Evict(self: *T, num: UINT, objects: [*]const *IPageable) HRESULT {
-                return self.v.device.Evict(self, num, objects);
+                return @ptrCast(*const IDevice.VTable, self.v).Evict(@ptrCast(*IDevice, self), num, objects);
             }
             pub inline fn CreateFence(
                 self: *T,
@@ -4221,10 +4263,11 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 fence: *?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateFence(self, initial_value, flags, guid, fence);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateFence(@ptrCast(*IDevice, self), initial_value, flags, guid, fence);
             }
             pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
-                return self.v.device.GetDeviceRemovedReason(self);
+                return @ptrCast(*const IDevice.VTable, self.v).GetDeviceRemovedReason(@ptrCast(*IDevice, self));
             }
             pub inline fn GetCopyableFootprints(
                 self: *T,
@@ -4237,8 +4280,8 @@ pub const IDevice = extern struct {
                 row_size: ?[*]UINT64,
                 total_sizie: ?*UINT64,
             ) void {
-                self.v.device.GetCopyableFootprints(
-                    self,
+                @ptrCast(*const IDevice.VTable, self.v).GetCopyableFootprints(
+                    @ptrCast(*IDevice, self),
                     desc,
                     first_subresource,
                     num_subresources,
@@ -4255,10 +4298,12 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 query_heap: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateQueryHeap(self, desc, guid, query_heap);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateQueryHeap(@ptrCast(*IDevice, self), desc, guid, query_heap);
             }
             pub inline fn SetStablePowerState(self: *T, enable: BOOL) HRESULT {
-                return self.v.device.SetStablePowerState(self, enable);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .SetStablePowerState(@ptrCast(*IDevice, self), enable);
             }
             pub inline fn CreateCommandSignature(
                 self: *T,
@@ -4267,7 +4312,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 cmd_signature: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.device.CreateCommandSignature(self, desc, root_signature, guid, cmd_signature);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .CreateCommandSignature(@ptrCast(*IDevice, self), desc, root_signature, guid, cmd_signature);
             }
             pub inline fn GetResourceTiling(
                 self: *T,
@@ -4279,8 +4325,8 @@ pub const IDevice = extern struct {
                 first_subresource: UINT,
                 subresource_tiling_for_non_packed_mips: [*]SUBRESOURCE_TILING,
             ) void {
-                self.v.device.GetResourceTiling(
-                    self,
+                @ptrCast(*const IDevice.VTable, self.v).GetResourceTiling(
+                    @ptrCast(*IDevice, self),
                     resource,
                     num_resource_tiles,
                     packed_mip_desc,
@@ -4292,184 +4338,202 @@ pub const IDevice = extern struct {
             }
             pub inline fn GetAdapterLuid(self: *T) LUID {
                 var luid: LUID = undefined;
-                self.v.device.GetAdapterLuid(self, &luid);
+                @ptrCast(*const IDevice.VTable, self.v).GetAdapterLuid(@ptrCast(*IDevice, self), &luid);
                 return luid;
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetNodeCount: *const fn (*T) callconv(WINAPI) UINT,
-            CreateCommandQueue: *const fn (*T, *const COMMAND_QUEUE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateCommandAllocator: *const fn (*T, COMMAND_LIST_TYPE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateGraphicsPipelineState: *const fn (
-                *T,
-                *const GRAPHICS_PIPELINE_STATE_DESC,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateComputePipelineState: *const fn (
-                *T,
-                *const COMPUTE_PIPELINE_STATE_DESC,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateCommandList: *const fn (
-                *T,
-                UINT,
-                COMMAND_LIST_TYPE,
-                *ICommandAllocator,
-                ?*IPipelineState,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CheckFeatureSupport: *const fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
-            CreateDescriptorHeap: *const fn (
-                *T,
-                *const DESCRIPTOR_HEAP_DESC,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            GetDescriptorHandleIncrementSize: *const fn (*T, DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
-            CreateRootSignature: *const fn (*T, UINT, *const anyopaque, UINT64, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateConstantBufferView: *const fn (
-                *T,
-                ?*const CONSTANT_BUFFER_VIEW_DESC,
-                CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            CreateShaderResourceView: *const fn (
-                *T,
-                ?*IResource,
-                ?*const SHADER_RESOURCE_VIEW_DESC,
-                CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            CreateUnorderedAccessView: *const fn (
-                *T,
-                ?*IResource,
-                ?*IResource,
-                ?*const UNORDERED_ACCESS_VIEW_DESC,
-                CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            CreateRenderTargetView: *const fn (
-                *T,
-                ?*IResource,
-                ?*const RENDER_TARGET_VIEW_DESC,
-                CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            CreateDepthStencilView: *const fn (
-                *T,
-                ?*IResource,
-                ?*const DEPTH_STENCIL_VIEW_DESC,
-                CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) void,
-            CreateSampler: *const fn (*T, *const SAMPLER_DESC, CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            CopyDescriptors: *const fn (
-                *T,
-                UINT,
-                [*]const CPU_DESCRIPTOR_HANDLE,
-                ?[*]const UINT,
-                UINT,
-                [*]const CPU_DESCRIPTOR_HANDLE,
-                ?[*]const UINT,
-                DESCRIPTOR_HEAP_TYPE,
-            ) callconv(WINAPI) void,
-            CopyDescriptorsSimple: *const fn (
-                *T,
-                UINT,
-                CPU_DESCRIPTOR_HANDLE,
-                CPU_DESCRIPTOR_HANDLE,
-                DESCRIPTOR_HEAP_TYPE,
-            ) callconv(WINAPI) void,
-            GetResourceAllocationInfo: *const fn (
-                *T,
-                *RESOURCE_ALLOCATION_INFO,
-                UINT,
-                UINT,
-                [*]const RESOURCE_DESC,
-            ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
-            GetCustomHeapProperties: *const fn (
-                *T,
-                *HEAP_PROPERTIES,
-                UINT,
-                HEAP_TYPE,
-            ) callconv(WINAPI) *HEAP_PROPERTIES,
-            CreateCommittedResource: *const fn (
-                *T,
-                *const HEAP_PROPERTIES,
-                HEAP_FLAGS,
-                *const RESOURCE_DESC,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateHeap: *const fn (*T, *const HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            CreatePlacedResource: *const fn (
-                *T,
-                *IHeap,
-                UINT64,
-                *const RESOURCE_DESC,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateReservedResource: *const fn (
-                *T,
-                *const RESOURCE_DESC,
-                RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            CreateSharedHandle: *const fn (
-                *T,
-                *IDeviceChild,
-                ?*const SECURITY_ATTRIBUTES,
-                DWORD,
-                ?LPCWSTR,
-                ?*HANDLE,
-            ) callconv(WINAPI) HRESULT,
-            OpenSharedHandle: *const fn (*T, HANDLE, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            OpenSharedHandleByName: *const fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
-            MakeResident: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            Evict: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            CreateFence: *const fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            GetDeviceRemovedReason: *const fn (*T) callconv(WINAPI) HRESULT,
-            GetCopyableFootprints: *const fn (
-                *T,
-                *const RESOURCE_DESC,
-                UINT,
-                UINT,
-                UINT64,
-                ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
-                ?[*]UINT,
-                ?[*]UINT64,
-                ?*UINT64,
-            ) callconv(WINAPI) void,
-            CreateQueryHeap: *const fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            SetStablePowerState: *const fn (*T, BOOL) callconv(WINAPI) HRESULT,
-            CreateCommandSignature: *const fn (
-                *T,
-                *const COMMAND_SIGNATURE_DESC,
-                ?*IRootSignature,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            GetResourceTiling: *const fn (
-                *T,
-                *IResource,
-                ?*UINT,
-                ?*PACKED_MIP_INFO,
-                ?*TILE_SHAPE,
-                ?*UINT,
-                UINT,
-                [*]SUBRESOURCE_TILING,
-            ) callconv(WINAPI) void,
-            GetAdapterLuid: *const fn (*T, *LUID) callconv(WINAPI) *LUID,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice;
+
+        base: IObject.VTable,
+        GetNodeCount: *const fn (*T) callconv(WINAPI) UINT,
+        CreateCommandQueue: *const fn (
+            *T,
+            *const COMMAND_QUEUE_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateCommandAllocator: *const fn (
+            *T,
+            COMMAND_LIST_TYPE,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateGraphicsPipelineState: *const fn (
+            *T,
+            *const GRAPHICS_PIPELINE_STATE_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateComputePipelineState: *const fn (
+            *T,
+            *const COMPUTE_PIPELINE_STATE_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateCommandList: *const fn (
+            *T,
+            UINT,
+            COMMAND_LIST_TYPE,
+            *ICommandAllocator,
+            ?*IPipelineState,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CheckFeatureSupport: *const fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
+        CreateDescriptorHeap: *const fn (
+            *T,
+            *const DESCRIPTOR_HEAP_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        GetDescriptorHandleIncrementSize: *const fn (*T, DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
+        CreateRootSignature: *const fn (
+            *T,
+            UINT,
+            *const anyopaque,
+            UINT64,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateConstantBufferView: *const fn (
+            *T,
+            ?*const CONSTANT_BUFFER_VIEW_DESC,
+            CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        CreateShaderResourceView: *const fn (
+            *T,
+            ?*IResource,
+            ?*const SHADER_RESOURCE_VIEW_DESC,
+            CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        CreateUnorderedAccessView: *const fn (
+            *T,
+            ?*IResource,
+            ?*IResource,
+            ?*const UNORDERED_ACCESS_VIEW_DESC,
+            CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        CreateRenderTargetView: *const fn (
+            *T,
+            ?*IResource,
+            ?*const RENDER_TARGET_VIEW_DESC,
+            CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        CreateDepthStencilView: *const fn (
+            *T,
+            ?*IResource,
+            ?*const DEPTH_STENCIL_VIEW_DESC,
+            CPU_DESCRIPTOR_HANDLE,
+        ) callconv(WINAPI) void,
+        CreateSampler: *const fn (*T, *const SAMPLER_DESC, CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+        CopyDescriptors: *const fn (
+            *T,
+            UINT,
+            [*]const CPU_DESCRIPTOR_HANDLE,
+            ?[*]const UINT,
+            UINT,
+            [*]const CPU_DESCRIPTOR_HANDLE,
+            ?[*]const UINT,
+            DESCRIPTOR_HEAP_TYPE,
+        ) callconv(WINAPI) void,
+        CopyDescriptorsSimple: *const fn (
+            *T,
+            UINT,
+            CPU_DESCRIPTOR_HANDLE,
+            CPU_DESCRIPTOR_HANDLE,
+            DESCRIPTOR_HEAP_TYPE,
+        ) callconv(WINAPI) void,
+        GetResourceAllocationInfo: *const fn (
+            *T,
+            *RESOURCE_ALLOCATION_INFO,
+            UINT,
+            UINT,
+            [*]const RESOURCE_DESC,
+        ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
+        GetCustomHeapProperties: *const fn (
+            *T,
+            *HEAP_PROPERTIES,
+            UINT,
+            HEAP_TYPE,
+        ) callconv(WINAPI) *HEAP_PROPERTIES,
+        CreateCommittedResource: *const fn (
+            *T,
+            *const HEAP_PROPERTIES,
+            HEAP_FLAGS,
+            *const RESOURCE_DESC,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateHeap: *const fn (*T, *const HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+        CreatePlacedResource: *const fn (
+            *T,
+            *IHeap,
+            UINT64,
+            *const RESOURCE_DESC,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateReservedResource: *const fn (
+            *T,
+            *const RESOURCE_DESC,
+            RESOURCE_STATES,
+            ?*const CLEAR_VALUE,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateSharedHandle: *const fn (
+            *T,
+            *IDeviceChild,
+            ?*const SECURITY_ATTRIBUTES,
+            DWORD,
+            ?LPCWSTR,
+            ?*HANDLE,
+        ) callconv(WINAPI) HRESULT,
+        OpenSharedHandle: *const fn (*T, HANDLE, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+        OpenSharedHandleByName: *const fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
+        MakeResident: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+        Evict: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+        CreateFence: *const fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+        GetDeviceRemovedReason: *const fn (*T) callconv(WINAPI) HRESULT,
+        GetCopyableFootprints: *const fn (
+            *T,
+            *const RESOURCE_DESC,
+            UINT,
+            UINT,
+            UINT64,
+            ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
+            ?[*]UINT,
+            ?[*]UINT64,
+            ?*UINT64,
+        ) callconv(WINAPI) void,
+        CreateQueryHeap: *const fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+        SetStablePowerState: *const fn (*T, BOOL) callconv(WINAPI) HRESULT,
+        CreateCommandSignature: *const fn (
+            *T,
+            *const COMMAND_SIGNATURE_DESC,
+            ?*IRootSignature,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        GetResourceTiling: *const fn (
+            *T,
+            *IResource,
+            ?*UINT,
+            ?*PACKED_MIP_INFO,
+            ?*TILE_SHAPE,
+            ?*UINT,
+            UINT,
+            [*]SUBRESOURCE_TILING,
+        ) callconv(WINAPI) void,
+        GetAdapterLuid: *const fn (*T, *LUID) callconv(WINAPI) *LUID,
+    };
 };
 
 pub const MULTIPLE_FENCE_WAIT_FLAGS = enum(UINT) {
@@ -4486,20 +4550,14 @@ pub const RESIDENCY_PRIORITY = enum(UINT) {
 };
 
 pub const IDevice1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice.Methods(T);
+
             pub inline fn CreatePipelineLibrary(
                 self: *T,
                 blob: *const anyopaque,
@@ -4507,7 +4565,8 @@ pub const IDevice1 = extern struct {
                 guid: *const GUID,
                 library: *?*anyopaque,
             ) HRESULT {
-                return self.v.device1.CreatePipelineLibrary(self, blob, blob_length, guid, library);
+                return @ptrCast(*const IDevice1.VTable, self.v)
+                    .CreatePipelineLibrary(@ptrCast(*IDevice1, self), blob, blob_length, guid, library);
             }
             pub inline fn SetEventOnMultipleFenceCompletion(
                 self: *T,
@@ -4517,8 +4576,8 @@ pub const IDevice1 = extern struct {
                 flags: MULTIPLE_FENCE_WAIT_FLAGS,
                 event: HANDLE,
             ) HRESULT {
-                return self.v.device1.SetEventOnMultipleFenceCompletion(
-                    self,
+                return @ptrCast(*const IDevice1.VTable, self.v).SetEventOnMultipleFenceCompletion(
+                    @ptrCast(*IDevice1, self),
                     fences,
                     fence_values,
                     num_fences,
@@ -4532,30 +4591,38 @@ pub const IDevice1 = extern struct {
                 objects: [*]const *IPageable,
                 priorities: [*]const RESIDENCY_PRIORITY,
             ) HRESULT {
-                return self.v.device1.SetResidencyPriority(self, num_objects, objects, priorities);
+                return @ptrCast(*const IDevice1.VTable, self.v)
+                    .SetResidencyPriority(@ptrCast(*IDevice1, self), num_objects, objects, priorities);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            CreatePipelineLibrary: *const fn (*T, *const anyopaque, SIZE_T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            SetEventOnMultipleFenceCompletion: *const fn (
-                *T,
-                [*]const *IFence,
-                [*]const UINT64,
-                UINT,
-                MULTIPLE_FENCE_WAIT_FLAGS,
-                HANDLE,
-            ) callconv(WINAPI) HRESULT,
-            SetResidencyPriority: *const fn (
-                *T,
-                UINT,
-                [*]const *IPageable,
-                [*]const RESIDENCY_PRIORITY,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice1;
+
+        base: IDevice.VTable,
+        CreatePipelineLibrary: *const fn (
+            *T,
+            *const anyopaque,
+            SIZE_T,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        SetEventOnMultipleFenceCompletion: *const fn (
+            *T,
+            [*]const *IFence,
+            [*]const UINT64,
+            UINT,
+            MULTIPLE_FENCE_WAIT_FLAGS,
+            HANDLE,
+        ) callconv(WINAPI) HRESULT,
+        SetResidencyPriority: *const fn (
+            *T,
+            UINT,
+            [*]const *IPageable,
+            [*]const RESIDENCY_PRIORITY,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
@@ -4692,43 +4759,35 @@ pub const PIPELINE_MESH_STATE_STREAM = extern struct {
 };
 
 pub const IDevice2 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice1.Methods(T);
+
             pub inline fn CreatePipelineState(
                 self: *T,
                 desc: *const PIPELINE_STATE_STREAM_DESC,
                 guid: *const GUID,
                 pso: *?*anyopaque,
             ) HRESULT {
-                return self.v.device2.CreatePipelineState(self, desc, guid, pso);
+                return @ptrCast(*const IDevice2.VTable, self.v)
+                    .CreatePipelineState(@ptrCast(*IDevice2, self), desc, guid, pso);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            CreatePipelineState: *const fn (
-                *T,
-                *const PIPELINE_STATE_STREAM_DESC,
-                *const GUID,
-                *?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDevice1.VTable,
+        CreatePipelineState: *const fn (
+            *IDevice2,
+            *const PIPELINE_STATE_STREAM_DESC,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const RESIDENCY_FLAGS = UINT;
@@ -4736,31 +4795,22 @@ pub const RESIDENCY_FLAG_NONE = 0;
 pub const RESIDENCY_FLAG_DENY_OVERBUDGET = 0x1;
 
 pub const IDevice3 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: IDevice1.VTable(Self),
-        device2: IDevice2.VTable(Self),
-        device3: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace IDevice2.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice2.Methods(T);
+
             pub inline fn OpenExistingHeapFromAddress(
                 self: *T,
                 address: *const anyopaque,
                 guid: *const GUID,
                 heap: *?*anyopaque,
             ) HRESULT {
-                return self.v.device3.OpenExistingHeapFromAddress(self, address, guid, heap);
+                return @ptrCast(*const IDevice3.VTable, self.v)
+                    .OpenExistingHeapFromAddress(@ptrCast(*IDevice3, self), address, guid, heap);
             }
             pub inline fn OpenExistingHeapFromFileMapping(
                 self: *T,
@@ -4768,7 +4818,8 @@ pub const IDevice3 = extern struct {
                 guid: *const GUID,
                 heap: *?*anyopaque,
             ) HRESULT {
-                return self.v.device3.OpenExistingHeapFromFileMapping(self, file_mapping, guid, heap);
+                return @ptrCast(*const IDevice3.VTable, self.v)
+                    .OpenExistingHeapFromFileMapping(@ptrCast(*IDevice3, self), file_mapping, guid, heap);
             }
             pub inline fn EnqueueMakeResident(
                 self: *T,
@@ -4778,8 +4829,8 @@ pub const IDevice3 = extern struct {
                 fence_to_signal: *IFence,
                 fence_value_to_signal: UINT64,
             ) HRESULT {
-                return self.v.device3.EnqueueMakeResident(
-                    self,
+                return @ptrCast(*const IDevice3.VTable, self.v).EnqueueMakeResident(
+                    @ptrCast(*IDevice3, self),
                     flags,
                     num_objects,
                     objects,
@@ -4790,20 +4841,26 @@ pub const IDevice3 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            OpenExistingHeapFromAddress: *const fn (*T, *const anyopaque, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            OpenExistingHeapFromFileMapping: *const fn (*T, HANDLE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            EnqueueMakeResident: *const fn (
-                *T,
-                RESIDENCY_FLAGS,
-                UINT,
-                [*]const *IPageable,
-                *IFence,
-                UINT64,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice3;
+
+        base: IDevice2.VTable,
+        OpenExistingHeapFromAddress: *const fn (
+            *T,
+            *const anyopaque,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        OpenExistingHeapFromFileMapping: *const fn (*T, HANDLE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+        EnqueueMakeResident: *const fn (
+            *T,
+            RESIDENCY_FLAGS,
+            UINT,
+            [*]const *IPageable,
+            *IFence,
+            UINT64,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const COMMAND_LIST_FLAGS = UINT;
@@ -4819,7 +4876,7 @@ pub const IDevice4 = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IDevice3.Methods(T);
 
