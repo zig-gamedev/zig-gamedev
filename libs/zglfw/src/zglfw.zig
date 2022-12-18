@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 5, .patch = 0 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 5, .patch = 2 };
 const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 //
@@ -442,18 +442,29 @@ pub const Monitor = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Window = opaque {
-    pub const Hint = enum(i32) {
-        client_api = 0x00022001,
-        cocoa_retina_framebuffer = 0x00023001,
-
-        /// `pub fn set(hint: Window.Hint, value: i32) void`
-        pub const set = glfwWindowHint;
-        extern fn glfwWindowHint(hint: Window.Hint, value: i32) void;
-
-        /// `pub fn reset() void`
-        pub const reset = glfwDefaultWindowHints;
-        extern fn glfwDefaultWindowHints() void;
+    pub const Attribute = enum(i32) {
+        focused = 0x00020001,
+        iconified = 0x00020002,
+        resizable = 0x00020003,
+        visible = 0x00020004,
+        decorated = 0x00020005,
+        auto_iconify = 0x00020006,
+        floating = 0x00020007,
+        maximized = 0x00020008,
+        center_cursor = 0x00020009,
+        transparent_framebuffer = 0x0002000A,
+        hovered = 0x0002000B,
+        focus_on_show = 0x0002000C,
     };
+    pub fn getAttribute(window: *Window, attrib: Attribute) bool {
+        return glfwGetWindowAttrib(window, attrib) != 0;
+    }
+    extern fn glfwGetWindowAttrib(window: *Window, attrib: Attribute) i32;
+
+    pub fn setAttribute(window: *Window, attrib: Attribute, value: bool) void {
+        glfwSetWindowAttrib(window, attrib, @boolToInt(value));
+    }
+    extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
 
     pub fn shouldClose(window: *Window) bool {
         return if (glfwWindowShouldClose(window) == 0) false else true;
@@ -571,9 +582,8 @@ pub const Window = opaque {
         height: i32,
         title: [:0]const u8,
         monitor: ?*Monitor,
-        share: ?*Window,
     ) Error!*Window {
-        if (glfwCreateWindow(width, height, title, monitor, share)) |window| return window;
+        if (glfwCreateWindow(width, height, title, monitor, null)) |window| return window;
         try maybeError();
         unreachable;
     }
@@ -695,11 +705,14 @@ test "zglfw.basic" {
         _ = adapter;
     }
 
-    Window.Hint.reset();
-    Window.Hint.set(.cocoa_retina_framebuffer, 1);
-    Window.Hint.set(.client_api, 0);
-    const window = try Window.create(200, 200, "test", null, null);
+    const window = try Window.create(200, 200, "test", null);
     defer window.destroy();
+
+    window.setAttribute(.resizable, true);
+    try expect(window.getAttribute(.resizable) == true);
+
+    window.setAttribute(.resizable, false);
+    try expect(window.getAttribute(.resizable) == false);
 
     window.setCursorPosCallback(cursorPosCallback);
     window.setMouseButtonCallback(mouseButtonCallback);

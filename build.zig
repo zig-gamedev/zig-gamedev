@@ -44,6 +44,10 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
     installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
 
+    if (@import("builtin").target.os.tag == .windows) {
+        //installDemo(b, minimal.build(b, options), "minimal");
+    }
+
     //
     // Tests
     //
@@ -109,6 +113,8 @@ pub fn build(b: *std.build.Builder) void {
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
+const zwin32 = @import("libs/zwin32/src/zwin32.zig");
+
 const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
@@ -120,6 +126,7 @@ const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
 const layers_wgpu = @import("samples/layers_wgpu/build.zig");
 const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
 const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+const minimal = @import("samples/minimal/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,

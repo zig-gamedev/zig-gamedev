@@ -344,10 +344,7 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    zglfw.Window.Hint.reset();
-    zglfw.Window.Hint.set(.cocoa_retina_framebuffer, 1);
-    zglfw.Window.Hint.set(.client_api, 0);
-    const window = zglfw.Window.create(1600, 1000, window_title, null, null) catch {
+    const window = zglfw.Window.create(1600, 1000, window_title, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
     };

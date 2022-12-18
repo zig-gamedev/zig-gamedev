@@ -61,10 +61,7 @@ pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
 }
 
 pub const BroadPhaseLayerInterfaceVTable = extern struct {
-    // Pure virtual
     getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
-
-    // Pure virtual
     getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
 
     comptime {
@@ -77,10 +74,7 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
 };
 
 pub const BodyActivationListenerVTable = extern struct {
-    // Pure virtual
     onBodyActivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
-
-    // Pure virtual
     onBodyDeactivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
 
     comptime {
@@ -97,6 +91,7 @@ pub const ContactListenerVTable = extern struct {
         self: *anyopaque,
         body1: *const Body,
         body2: *const Body,
+        in_base_offset: *const [3]Real,
         collision_result: *const CollideShapeResult,
     ) callconv(.C) ValidateResult = null,
 
@@ -621,8 +616,8 @@ pub const BodyInterface = opaque {
         return velocity;
     }
 
-    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
-        var position: [3]f32 = undefined;
+    pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
+        var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
             @ptrCast(*const c.JPC_BodyInterface, body_iface),
             body_id,
