@@ -508,7 +508,12 @@ pub const IObject = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: *const anyopaque) HRESULT {
+            pub inline fn SetPrivateData(
+                self: *T,
+                guid: *const GUID,
+                data_size: UINT,
+                data: *const anyopaque,
+            ) HRESULT {
                 return self.v.object.SetPrivateData(self, guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
@@ -777,7 +782,12 @@ pub const IOutput = extern struct {
         return extern struct {
             GetDesc: *const fn (self: *T, desc: *OUTPUT_DESC) callconv(WINAPI) HRESULT,
             GetDisplayModeList: *const fn (*T, FORMAT, UINT, *UINT, ?*MODE_DESC) callconv(WINAPI) HRESULT,
-            FindClosestMatchingMode: *const fn (*T, *const MODE_DESC, *MODE_DESC, ?*IUnknown) callconv(WINAPI) HRESULT,
+            FindClosestMatchingMode: *const fn (
+                *T,
+                *const MODE_DESC,
+                *MODE_DESC,
+                ?*IUnknown,
+            ) callconv(WINAPI) HRESULT,
             WaitForVBlank: *const fn (*T) callconv(WINAPI) HRESULT,
             TakeOwnership: *const fn (*T, *IUnknown, BOOL) callconv(WINAPI) HRESULT,
             ReleaseOwnership: *const fn (*T) callconv(WINAPI) void,
@@ -1229,7 +1239,13 @@ pub const IFactory6 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapterByGpuPreference: *const fn (*T, UINT, GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
+            EnumAdapterByGpuPreference: *const fn (
+                *T,
+                UINT,
+                GPU_PREFERENCE,
+                *const GUID,
+                *?*IAdapter1,
+            ) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1361,33 +1377,27 @@ pub const PRESENT_PARAMETERS = extern struct {
 };
 
 pub const ISwapChain1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devsubobj: IDeviceSubObject.VTable(Self),
-        swapchain: ISwapChain.VTable(Self),
-        swapchain1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceSubObject.Methods(Self);
-    usingnamespace ISwapChain.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace ISwapChain.Methods(T);
+
             pub inline fn GetDesc1(self: *T, desc: *SWAP_CHAIN_DESC1) HRESULT {
-                return self.v.swapchain1.GetDesc1(self, desc);
+                return @ptrCast(*const ISwapChain1.VTable, self.v).GetDesc1(@ptrCast(*ISwapChain1, self), desc);
             }
             pub inline fn GetFullscreenDesc(self: *T, desc: *SWAP_CHAIN_FULLSCREEN_DESC) HRESULT {
-                return self.v.swapchain1.GetFullscreenDesc(self, desc);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .GetFullscreenDesc(@ptrCast(*ISwapChain1, self), desc);
             }
             pub inline fn GetHwnd(self: *T, hwnd: *HWND) HRESULT {
-                return self.v.swapchain1.GetHwnd(self, hwnd);
+                return @ptrCast(*const ISwapChain1.VTable, self.v).GetHwnd(@ptrCast(*ISwapChain1, self), hwnd);
             }
             pub inline fn GetCoreWindow(self: *T, guid: *const GUID, unknown: *?*anyopaque) HRESULT {
-                return self.v.swapchain1.GetCoreWindow(self, guid, unknown);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .GetCoreWindow(@ptrCast(*ISwapChain1, self), guid, unknown);
             }
             pub inline fn Present1(
                 self: *T,
@@ -1395,44 +1405,50 @@ pub const ISwapChain1 = extern struct {
                 flags: UINT,
                 params: *const PRESENT_PARAMETERS,
             ) HRESULT {
-                return self.v.swapchain1.Present1(self, sync_interval, flags, params);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .Present1(@ptrCast(*ISwapChain1, self), sync_interval, flags, params);
             }
             pub inline fn IsTemporaryMonoSupported(self: *T) BOOL {
-                return self.v.swapchain1.IsTemporaryMonoSupported(self);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .IsTemporaryMonoSupported(@ptrCast(*ISwapChain1, self));
             }
             pub inline fn GetRestrictToOutput(self: *T, output: *?*IOutput) HRESULT {
-                return self.v.swapchain1.GetRestrictToOutput(self, output);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .GetRestrictToOutput(@ptrCast(*ISwapChain1, self), output);
             }
             pub inline fn SetBackgroundColor(self: *T, color: *const RGBA) HRESULT {
-                return self.v.swapchain1.SetBackgroundColor(self, color);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .SetBackgroundColor(@ptrCast(*ISwapChain1, self), color);
             }
             pub inline fn GetBackgroundColor(self: *T, color: *RGBA) HRESULT {
-                return self.v.swapchain1.GetBackgroundColor(self, color);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .GetBackgroundColor(@ptrCast(*ISwapChain1, self), color);
             }
             pub inline fn SetRotation(self: *T, rotation: MODE_ROTATION) HRESULT {
-                return self.v.swapchain1.SetRotation(self, rotation);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .SetRotation(@ptrCast(*ISwapChain1, self), rotation);
             }
             pub inline fn GetRotation(self: *T, rotation: *MODE_ROTATION) HRESULT {
-                return self.v.swapchain1.GetRotation(self, rotation);
+                return @ptrCast(*const ISwapChain1.VTable, self.v)
+                    .GetRotation(@ptrCast(*ISwapChain1, self), rotation);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            GetDesc1: *const fn (*T, *SWAP_CHAIN_DESC1) callconv(WINAPI) HRESULT,
-            GetFullscreenDesc: *const fn (*T, *SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
-            GetHwnd: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
-            GetCoreWindow: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            Present1: *const fn (*T, UINT, UINT, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
-            IsTemporaryMonoSupported: *const fn (*T) callconv(WINAPI) BOOL,
-            GetRestrictToOutput: *const fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
-            SetBackgroundColor: *const fn (*T, *const RGBA) callconv(WINAPI) HRESULT,
-            GetBackgroundColor: *const fn (*T, *RGBA) callconv(WINAPI) HRESULT,
-            SetRotation: *const fn (*T, MODE_ROTATION) callconv(WINAPI) HRESULT,
-            GetRotation: *const fn (*T, *MODE_ROTATION) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = ISwapChain1;
+        GetDesc1: *const fn (*T, *SWAP_CHAIN_DESC1) callconv(WINAPI) HRESULT,
+        GetFullscreenDesc: *const fn (*T, *SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
+        GetHwnd: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
+        GetCoreWindow: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+        Present1: *const fn (*T, UINT, UINT, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
+        IsTemporaryMonoSupported: *const fn (*T) callconv(WINAPI) BOOL,
+        GetRestrictToOutput: *const fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
+        SetBackgroundColor: *const fn (*T, *const RGBA) callconv(WINAPI) HRESULT,
+        GetBackgroundColor: *const fn (*T, *RGBA) callconv(WINAPI) HRESULT,
+        SetRotation: *const fn (*T, MODE_ROTATION) callconv(WINAPI) HRESULT,
+        GetRotation: *const fn (*T, *MODE_ROTATION) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IID_ISwapChain1 = GUID{
@@ -1452,59 +1468,56 @@ pub const MATRIX_3X2_F = extern struct {
 };
 
 pub const ISwapChain2 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devsubobj: IDeviceSubObject.VTable(Self),
-        swapchain: ISwapChain.VTable(Self),
-        swapchain1: ISwapChain1.VTable(Self),
-        swapchain2: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceSubObject.Methods(Self);
-    usingnamespace ISwapChain.Methods(Self);
-    usingnamespace ISwapChain1.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace ISwapChain1.Methods(T);
+
             pub inline fn SetSourceSize(self: *T, width: UINT, height: UINT) HRESULT {
-                return self.v.swapchain2.SetSourceSize(self, width, height);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .SetSourceSize(@ptrCast(*ISwapChain2, self), width, height);
             }
             pub inline fn GetSourceSize(self: *T, width: *UINT, height: *UINT) HRESULT {
-                return self.v.swapchain2.GetSourceSize(self, width, height);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .GetSourceSize(@ptrCast(*ISwapChain2, self), width, height);
             }
             pub inline fn SetMaximumFrameLatency(self: *T, max_latency: UINT) HRESULT {
-                return self.v.swapchain2.SetMaximumFrameLatency(self, max_latency);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .SetMaximumFrameLatency(@ptrCast(*ISwapChain2, self), max_latency);
             }
             pub inline fn GetMaximumFrameLatency(self: *T, max_latency: *UINT) HRESULT {
-                return self.v.swapchain2.GetMaximumFrameLatency(self, max_latency);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .GetMaximumFrameLatency(@ptrCast(*ISwapChain2, self), max_latency);
             }
             pub inline fn GetFrameLatencyWaitableObject(self: *T) HANDLE {
-                return self.v.swapchain2.GetFrameLatencyWaitableObject(self);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .GetFrameLatencyWaitableObject(@ptrCast(*ISwapChain2, self));
             }
             pub inline fn SetMatrixTransform(self: *T, matrix: *const MATRIX_3X2_F) HRESULT {
-                return self.v.swapchain2.SetMatrixTransform(self, matrix);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .SetMatrixTransform(@ptrCast(*ISwapChain2, self), matrix);
             }
             pub inline fn GetMatrixTransform(self: *T, matrix: *MATRIX_3X2_F) HRESULT {
-                return self.v.swapchain2.GetMatrixTransform(self, matrix);
+                return @ptrCast(*const ISwapChain2.VTable, self.v)
+                    .GetMatrixTransform(@ptrCast(*ISwapChain2, self), matrix);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            SetSourceSize: *const fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
-            GetSourceSize: *const fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
-            SetMaximumFrameLatency: *const fn (*T, UINT) callconv(WINAPI) HRESULT,
-            GetMaximumFrameLatency: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
-            GetFrameLatencyWaitableObject: *const fn (*T) callconv(WINAPI) HANDLE,
-            SetMatrixTransform: *const fn (*T, *const MATRIX_3X2_F) callconv(WINAPI) HRESULT,
-            GetMatrixTransform: *const fn (*T, *MATRIX_3X2_F) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = ISwapChain2;
+        base: ISwapChain1.VTable,
+        SetSourceSize: *const fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
+        GetSourceSize: *const fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
+        SetMaximumFrameLatency: *const fn (*T, UINT) callconv(WINAPI) HRESULT,
+        GetMaximumFrameLatency: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
+        GetFrameLatencyWaitableObject: *const fn (*T) callconv(WINAPI) HANDLE,
+        SetMatrixTransform: *const fn (*T, *const MATRIX_3X2_F) callconv(WINAPI) HRESULT,
+        GetMatrixTransform: *const fn (*T, *MATRIX_3X2_F) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IID_ISwapChain2 = GUID{
@@ -1515,34 +1528,25 @@ pub const IID_ISwapChain2 = GUID{
 };
 
 pub const ISwapChain3 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devsubobj: IDeviceSubObject.VTable(Self),
-        swapchain: ISwapChain.VTable(Self),
-        swapchain1: ISwapChain1.VTable(Self),
-        swapchain2: ISwapChain2.VTable(Self),
-        swapchain3: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceSubObject.Methods(Self);
-    usingnamespace ISwapChain.Methods(Self);
-    usingnamespace ISwapChain1.Methods(Self);
-    usingnamespace ISwapChain2.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace ISwapChain2.Methods(T);
+
             pub inline fn GetCurrentBackBufferIndex(self: *T) UINT {
-                return self.v.swapchain3.GetCurrentBackBufferIndex(self);
+                return @ptrCast(*const ISwapChain3.VTable, self.v)
+                    .GetCurrentBackBufferIndex(@ptrCast(*ISwapChain3, self));
             }
             pub inline fn CheckColorSpaceSupport(self: *T, space: COLOR_SPACE_TYPE, support: *UINT) HRESULT {
-                return self.v.swapchain3.CheckColorSpaceSupport(self, space, support);
+                return @ptrCast(*const ISwapChain3.VTable, self.v)
+                    .CheckColorSpaceSupport(@ptrCast(*const ISwapChain3.VTable, self.v), space, support);
             }
             pub inline fn SetColorSpace1(self: *T, space: COLOR_SPACE_TYPE) HRESULT {
-                return self.v.swapchain3.SetColorSpace1(self, space);
+                return @ptrCast(*const ISwapChain3.VTable, self.v)
+                    .SetColorSpace1(@ptrCast(*const ISwapChain3.VTable, self.v), space);
             }
             pub inline fn ResizeBuffers1(
                 self: *T,
@@ -1554,8 +1558,8 @@ pub const ISwapChain3 = extern struct {
                 creation_node_mask: [*]const UINT,
                 present_queue: [*]const *IUnknown,
             ) HRESULT {
-                return self.v.swapchain3.ResizeBuffers1(
-                    self,
+                return @ptrCast(*const ISwapChain3.VTable, self.v).ResizeBuffers1(
+                    @ptrCast(*const ISwapChain3.VTable, self.v),
                     buffer_count,
                     width,
                     height,
@@ -1568,23 +1572,23 @@ pub const ISwapChain3 = extern struct {
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            GetCurrentBackBufferIndex: *const fn (*T) callconv(WINAPI) UINT,
-            CheckColorSpaceSupport: *const fn (*T, COLOR_SPACE_TYPE, *UINT) callconv(WINAPI) HRESULT,
-            SetColorSpace1: *const fn (*T, COLOR_SPACE_TYPE) callconv(WINAPI) HRESULT,
-            ResizeBuffers1: *const fn (
-                *T,
-                UINT,
-                UINT,
-                UINT,
-                FORMAT,
-                UINT,
-                [*]const UINT,
-                [*]const *IUnknown,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = ISwapChain3;
+        base: ISwapChain2.VTable,
+        GetCurrentBackBufferIndex: *const fn (*T) callconv(WINAPI) UINT,
+        CheckColorSpaceSupport: *const fn (*T, COLOR_SPACE_TYPE, *UINT) callconv(WINAPI) HRESULT,
+        SetColorSpace1: *const fn (*T, COLOR_SPACE_TYPE) callconv(WINAPI) HRESULT,
+        ResizeBuffers1: *const fn (
+            *T,
+            UINT,
+            UINT,
+            UINT,
+            FORMAT,
+            UINT,
+            [*]const UINT,
+            [*]const *IUnknown,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IID_ISwapChain3 = GUID{
