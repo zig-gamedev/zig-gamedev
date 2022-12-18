@@ -667,37 +667,34 @@ pub const ISurface = extern struct {
 };
 
 pub const IAdapter = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        adapter: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IObject.Methods(T);
+
             pub inline fn EnumOutputs(self: *T, index: UINT, output: *?*IOutput) HRESULT {
-                return self.v.adapter.EnumOutputs(self, index, output);
+                return @ptrCast(*const IAdapter.VTable, self.v)
+                    .EnumOutputs(@ptrCast(*IAdapter, self), index, output);
             }
             pub inline fn GetDesc(self: *T, desc: *ADAPTER_DESC) HRESULT {
-                return self.v.adapter.GetDesc(self, desc);
+                return @ptrCast(*const IAdapter.VTable, self.v).GetDesc(@ptrCast(*IAdapter, self), desc);
             }
             pub inline fn CheckInterfaceSupport(self: *T, guid: *const GUID, umd_ver: *LARGE_INTEGER) HRESULT {
-                return self.v.adapter.CheckInterfaceSupport(self, guid, umd_ver);
+                return @ptrCast(*const IAdapter.VTable, self.v)
+                    .CheckInterfaceSupport(@ptrCast(*IAdapter, self), guid, umd_ver);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            EnumOutputs: *const fn (*T, UINT, *?*IOutput) callconv(WINAPI) HRESULT,
-            GetDesc: *const fn (*T, *ADAPTER_DESC) callconv(WINAPI) HRESULT,
-            CheckInterfaceSupport: *const fn (*T, *const GUID, *LARGE_INTEGER) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IObject.VTable,
+        EnumOutputs: *const fn (*IAdapter, UINT, *?*IOutput) callconv(WINAPI) HRESULT,
+        GetDesc: *const fn (*IAdapter, *ADAPTER_DESC) callconv(WINAPI) HRESULT,
+        CheckInterfaceSupport: *const fn (*IAdapter, *const GUID, *LARGE_INTEGER) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const ENUM_MODES_INTERLACED: UINT = 0x1;
@@ -930,20 +927,16 @@ pub const IFactory = extern struct {
 };
 
 pub const IDevice = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IObject.Methods(T);
+
             pub inline fn GetAdapter(self: *T, adapter: *?*IAdapter) HRESULT {
-                return self.v.device.GetAdapter(self, adapter);
+                return @ptrCast(*const IDevice.VTable, self.v).GetAdapter(@ptrCast(*IDevice, self), adapter);
             }
             pub inline fn CreateSurface(
                 self: *T,
@@ -953,7 +946,14 @@ pub const IDevice = extern struct {
                 shared_resource: ?*const SHARED_RESOURCE,
                 surface: *?*ISurface,
             ) HRESULT {
-                return self.v.device.CreateSurface(self, desc, num_surfaces, usage, shared_resource, surface);
+                return @ptrCast(*const IDevice.VTable, self.v).CreateSurface(
+                    @ptrCast(*IDevice, self),
+                    desc,
+                    num_surfaces,
+                    usage,
+                    shared_resource,
+                    surface,
+                );
             }
             pub inline fn QueryResourceResidency(
                 self: *T,
@@ -961,38 +961,41 @@ pub const IDevice = extern struct {
                 status: [*]RESIDENCY,
                 num_resources: UINT,
             ) HRESULT {
-                return self.v.device.QueryResourceResidency(self, resources, status, num_resources);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .QueryResourceResidency(@ptrCast(*IDevice, self), resources, status, num_resources);
             }
             pub inline fn SetGPUThreadPriority(self: *T, priority: INT) HRESULT {
-                return self.v.device.SetGPUThreadPriority(self, priority);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .SetGPUThreadPriority(@ptrCast(*IDevice, self), priority);
             }
             pub inline fn GetGPUThreadPriority(self: *T, priority: *INT) HRESULT {
-                return self.v.device.GetGPUThreadPriority(self, priority);
+                return @ptrCast(*const IDevice.VTable, self.v)
+                    .GetGPUThreadPriority(@ptrCast(*IDevice, self), priority);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            GetAdapter: *const fn (self: *T, adapter: *?*IAdapter) callconv(WINAPI) HRESULT,
-            CreateSurface: *const fn (
-                *T,
-                *const SURFACE_DESC,
-                UINT,
-                USAGE,
-                ?*const SHARED_RESOURCE,
-                *?*ISurface,
-            ) callconv(WINAPI) HRESULT,
-            QueryResourceResidency: *const fn (
-                *T,
-                *const *IUnknown,
-                [*]RESIDENCY,
-                UINT,
-            ) callconv(WINAPI) HRESULT,
-            SetGPUThreadPriority: *const fn (self: *T, priority: INT) callconv(WINAPI) HRESULT,
-            GetGPUThreadPriority: *const fn (self: *T, priority: *INT) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IDevice;
+        base: IObject.VTable,
+        GetAdapter: *const fn (self: *T, adapter: *?*IAdapter) callconv(WINAPI) HRESULT,
+        CreateSurface: *const fn (
+            *T,
+            *const SURFACE_DESC,
+            UINT,
+            USAGE,
+            ?*const SHARED_RESOURCE,
+            *?*ISurface,
+        ) callconv(WINAPI) HRESULT,
+        QueryResourceResidency: *const fn (
+            *T,
+            *const *IUnknown,
+            [*]RESIDENCY,
+            UINT,
+        ) callconv(WINAPI) HRESULT,
+        SetGPUThreadPriority: *const fn (self: *T, priority: INT) callconv(WINAPI) HRESULT,
+        GetGPUThreadPriority: *const fn (self: *T, priority: *INT) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const ADAPTER_FLAGS = UINT;
