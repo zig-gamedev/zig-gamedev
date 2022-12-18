@@ -2702,7 +2702,6 @@ pub const IGraphicsCommandList = extern struct {
 
     pub const VTable = extern struct {
         const T = IGraphicsCommandList;
-
         base: ICommandList.VTable,
         Close: *const fn (*T) callconv(.C) HRESULT,
         Reset: *const fn (*T, *ICommandAllocator, ?*IPipelineState) callconv(WINAPI) HRESULT,
@@ -2952,7 +2951,6 @@ pub const IGraphicsCommandList1 = extern struct {
 
     pub const VTable = extern struct {
         const T = IGraphicsCommandList1;
-
         base: IGraphicsCommandList.VTable,
         AtomicCopyBufferUINT: *const fn (
             *T,
@@ -3570,7 +3568,6 @@ pub const IStateObjectProperties = extern struct {
 
     pub const VTable = extern struct {
         const T = IStateObjectProperties;
-
         base: IUnknown.VTable,
         GetShaderIdentifier: *const fn (*T, LPCWSTR) callconv(WINAPI) *anyopaque,
         GetShaderStackSize: *const fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
@@ -3696,7 +3693,6 @@ pub const IGraphicsCommandList4 = extern struct {
 
     pub const VTable = extern struct {
         const T = IGraphicsCommandList4;
-
         base: IGraphicsCommandList3.VTable,
         BeginRenderPass: *const fn (
             *T,
@@ -3913,7 +3909,6 @@ pub const ICommandQueue = extern struct {
 
     pub const VTable = extern struct {
         const T = ICommandQueue;
-
         base: IPageable.VTable,
         UpdateTileMappings: *const fn (
             *T,
@@ -4346,7 +4341,6 @@ pub const IDevice = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice;
-
         base: IObject.VTable,
         GetNodeCount: *const fn (*T) callconv(WINAPI) UINT,
         CreateCommandQueue: *const fn (
@@ -4599,7 +4593,6 @@ pub const IDevice1 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice1;
-
         base: IDevice.VTable,
         CreatePipelineLibrary: *const fn (
             *T,
@@ -4843,7 +4836,6 @@ pub const IDevice3 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice3;
-
         base: IDevice2.VTable,
         OpenExistingHeapFromAddress: *const fn (
             *T,
@@ -4975,7 +4967,6 @@ pub const IDevice4 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice4;
-
         base: IGraphicsCommandList.VTable,
         CreateCommandList1: *const fn (
             *T,
@@ -5154,7 +5145,6 @@ pub const IDevice5 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice5;
-
         base: IDevice4.VTable,
         CreateLifetimeTracker: *const fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         RemoveDevice: *const fn (self: *T) callconv(WINAPI) void,
@@ -5434,7 +5424,6 @@ pub const IDevice8 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice8;
-
         base: IDevice7.VTable,
         GetResourceAllocationInfo2: *const fn (
             *T,
@@ -5556,7 +5545,6 @@ pub const IDevice9 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice9;
-
         base: IDevice8.VTable,
         CreateShaderCacheSession: *const fn (
             *T,
