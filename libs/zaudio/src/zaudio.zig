@@ -95,7 +95,7 @@ pub const Error = error{
     FailedToStopBackendDevice,
 };
 
-const Result = enum(i32) {
+pub const Result = enum(i32) {
     success = 0,
     generic_error = -1,
     invalid_args = -2,
@@ -1672,12 +1672,11 @@ pub const Engine = opaque {
 
     pub fn createSoundFromDataSource(
         engine: *Engine,
-        allocator: std.mem.Allocator,
         data_source: *DataSource,
         flags: Sound.Flags,
         sgroup: ?*SoundGroup,
     ) Error!*Sound {
-        return Sound.createFromDataSource(allocator, engine, data_source, flags, sgroup);
+        return Sound.createFromDataSource(engine, data_source, flags, sgroup);
     }
 
     pub fn createSound(engine: *Engine, config: Sound.Config) Error!*Sound {
@@ -1886,7 +1885,7 @@ pub const Sound = opaque {
         data_source: *DataSource,
         flags: Flags,
         sgroup: ?*SoundGroup,
-    ) Error!Sound {
+    ) Error!*Sound {
         var handle: ?*Sound = null;
         try maybeError(zaudioSoundCreateFromDataSource(engine, data_source, flags, sgroup, &handle));
         return handle.?;
