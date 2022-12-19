@@ -47,16 +47,17 @@ pub const IDebug1 = extern struct {
                 @ptrCast(*const IDebug1.VTable, self.v).SetEnableGPUBasedValidation(@ptrCast(*IDebug1, self), enable);
             }
             pub inline fn SetEnableSynchronizedCommandQueueValidation(self: *T, enable: BOOL) void {
-                @ptrCast(*const IDebug1.VTable, self.v).SetEnableSynchronizedCommandQueueValidation(@ptrCast(*IDebug1, self), enable);
+                @ptrCast(*const IDebug1.VTable, self.v)
+                    .SetEnableSynchronizedCommandQueueValidation(@ptrCast(*IDebug1, self), enable);
             }
         };
     }
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
-        EnableDebugLayer: fn (*IDebug1) callconv(WINAPI) void,
-        SetEnableGPUBasedValidation: fn (*IDebug1, BOOL) callconv(WINAPI) void,
-        SetEnableSynchronizedCommandQueueValidation: fn (*IDebug1, BOOL) callconv(WINAPI) void,
+        EnableDebugLayer: *const fn (*IDebug1) callconv(WINAPI) void,
+        SetEnableGPUBasedValidation: *const fn (*IDebug1, BOOL) callconv(WINAPI) void,
+        SetEnableSynchronizedCommandQueueValidation: *const fn (*IDebug1, BOOL) callconv(WINAPI) void,
     };
 };
 
@@ -70,14 +71,15 @@ pub const IDebug2 = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn SetGPUBasedValidationFlags(self: *T, flags: GPU_BASED_VALIDATION_FLAGS) void {
-                self.v.debug2.SetGPUBasedValidationFlags(self, flags);
+                @ptrCast(*const IDebug2.VTable, self.v)
+                    .SetGPUBasedValidationFlags(@ptrCast(*IDebug2, self), flags);
             }
         };
     }
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
-        SetGPUBasedValidationFlags: fn (*IDebug2, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
+        SetGPUBasedValidationFlags: *const fn (*IDebug2, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
     };
 };
 
@@ -91,22 +93,25 @@ pub const IDebug3 = extern struct {
             pub usingnamespace IDebug.Methods(T);
 
             pub inline fn SetEnableGPUBasedValidation(self: *T, enable: BOOL) void {
-                @ptrCast(*const IDebug3.VTable, self.v).SetEnableGPUBasedValidation(@ptrCast(*IDebug3, self), enable);
+                @ptrCast(*const IDebug3.VTable, self.v)
+                    .SetEnableGPUBasedValidation(@ptrCast(*IDebug3, self), enable);
             }
             pub inline fn SetEnableSynchronizedCommandQueueValidation(self: *T, enable: BOOL) void {
-                @ptrCast(*const IDebug3.VTable, self.v).SetEnableSynchronizedCommandQueueValidation(@ptrCast(*IDebug3, self), enable);
+                @ptrCast(*const IDebug3.VTable, self.v)
+                    .SetEnableSynchronizedCommandQueueValidation(@ptrCast(*IDebug3, self), enable);
             }
             pub inline fn SetGPUBasedValidationFlags(self: *T, flags: GPU_BASED_VALIDATION_FLAGS) void {
-                @ptrCast(*const IDebug3.VTable, self.v).SetGPUBasedValidationFlags(@ptrCast(*IDebug3, self), flags);
+                @ptrCast(*const IDebug3.VTable, self.v)
+                    .SetGPUBasedValidationFlags(@ptrCast(*IDebug3, self), flags);
             }
         };
     }
 
     pub const VTable = extern struct {
         base: IDebug.VTable,
-        SetEnableGPUBasedValidation: fn (*IDebug3, BOOL) callconv(WINAPI) void,
-        SetEnableSynchronizedCommandQueueValidation: fn (*IDebug3, BOOL) callconv(WINAPI) void,
-        SetGPUBasedValidationFlags: fn (*IDebug3, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
+        SetEnableGPUBasedValidation: *const fn (*IDebug3, BOOL) callconv(WINAPI) void,
+        SetEnableSynchronizedCommandQueueValidation: *const fn (*IDebug3, BOOL) callconv(WINAPI) void,
+        SetGPUBasedValidationFlags: *const fn (*IDebug3, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
     };
 };
 
@@ -127,7 +132,7 @@ pub const IDebug4 = extern struct {
 
     pub const VTable = extern struct {
         base: IDebug3.VTable,
-        DisableDebugLayer: fn (*IDebug4) callconv(WINAPI) void,
+        DisableDebugLayer: *const fn (*IDebug4) callconv(WINAPI) void,
     };
 };
 
@@ -148,7 +153,7 @@ pub const IDebug5 = extern struct {
 
     pub const VTable = extern struct {
         base: IDebug4.VTable,
-        SetEnableAutoName: fn (*IDebug5, BOOL) callconv(WINAPI) void,
+        SetEnableAutoName: *const fn (*IDebug5, BOOL) callconv(WINAPI) void,
     };
 };
 
