@@ -95,7 +95,7 @@ pub const Error = error{
     FailedToStopBackendDevice,
 };
 
-const Result = enum(i32) {
+pub const Result = enum(i32) {
     success = 0,
     generic_error = -1,
     invalid_args = -2,
