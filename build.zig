@@ -10,12 +10,12 @@ pub fn build(b: *std.build.Builder) void {
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
         .zd3d12_enable_debug_layer = b.option(
             bool,
-            "d3d12-enable-debug-layer",
+            "zd3d12-enable-debug-layer",
             "Enable DirectX 12 debug layer",
         ) orelse false,
         .zd3d12_enable_gbv = b.option(
             bool,
-            "d3d12-enable-gpu-debug-layer",
+            "zd3d12-enable-gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
     };
