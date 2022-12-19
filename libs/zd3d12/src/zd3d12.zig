@@ -14,11 +14,10 @@ const HResultError = zwin32.HResultError;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const hrErrorOnFail = zwin32.hrErrorOnFail;
-//const ztracy = @import("ztracy");
 
-const enable_dx_debug = @import("build_options").enable_dx_debug;
-const enable_dx_gpu_debug = @import("build_options").enable_dx_gpu_debug;
-const enable_d2d = @import("build_options").enable_d2d;
+const enable_debug_layer = @import("zd3d12_options").enable_debug_layer;
+const enable_gbv = @import("zd3d12_options").enable_gbv;
+const enable_d2d = @import("zd3d12_options").enable_d2d;
 
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
@@ -95,7 +94,7 @@ pub const GraphicsContext = struct {
         const factory = blk: {
             var factory: *dxgi.IFactory6 = undefined;
             hrPanicOnFail(dxgi.CreateDXGIFactory2(
-                if (enable_dx_debug) dxgi.CREATE_FACTORY_DEBUG else 0,
+                if (enable_debug_layer) dxgi.CREATE_FACTORY_DEBUG else 0,
                 &dxgi.IID_IFactory6,
                 @ptrCast(*?*anyopaque, &factory),
             ));
@@ -118,12 +117,12 @@ pub const GraphicsContext = struct {
             }
         }
 
-        if (enable_dx_debug) {
+        if (enable_debug_layer) {
             var maybe_debug: ?*d3d12d.IDebug1 = null;
             _ = d3d12.D3D12GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*anyopaque, &maybe_debug));
             if (maybe_debug) |debug| {
                 debug.EnableDebugLayer();
-                if (enable_dx_gpu_debug) {
+                if (enable_gbv) {
                     debug.SetEnableGPUBasedValidation(w32.TRUE);
                 }
                 _ = debug.Release();
@@ -362,7 +361,7 @@ pub const GraphicsContext = struct {
                 var device_context11: *d3d11.IDeviceContext = undefined;
                 hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
                     @ptrCast(*w32.IUnknown, device),
-                    if (enable_dx_debug)
+                    if (enable_debug_layer)
                         d3d11.CREATE_DEVICE_DEBUG | d3d11.CREATE_DEVICE_BGRA_SUPPORT
                     else
                         d3d11.CREATE_DEVICE_BGRA_SUPPORT,
@@ -392,7 +391,7 @@ pub const GraphicsContext = struct {
                 hrPanicOnFail(d2d1.D2D1CreateFactory(
                     .SINGLE_THREADED,
                     &d2d1.IID_IFactory7,
-                    if (enable_dx_debug)
+                    if (enable_debug_layer)
                         &d2d1.FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
                     else
                         &d2d1.FACTORY_OPTIONS{ .debugLevel = .NONE },
@@ -657,7 +656,6 @@ pub const GraphicsContext = struct {
         // Take a look at:
         // https://github.com/microsoft/DirectML/blob/master/Samples/DirectMLSuperResolution/DeviceResources.cpp
 
-        //ztracy.FrameMark();
         hrPanicOnFail(gctx.cmdqueue.Signal(gctx.frame_fence, gctx.frame_fence_counter));
 
         const gpu_frame_counter = gctx.frame_fence.GetCompletedValue();
@@ -688,7 +686,7 @@ pub const GraphicsContext = struct {
     pub fn endDraw2d(gctx: *GraphicsContext) void {
         var info_queue: *d3d12d.IInfoQueue = undefined;
         const mute_d2d_completely = true;
-        if (enable_dx_debug) {
+        if (enable_debug_layer) {
             // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame. To see create/destroy
             // messages in debug output set 'mute_d2d_completely' to 'false'.
             hrPanicOnFail(gctx.device.QueryInterface(
@@ -735,7 +733,7 @@ pub const GraphicsContext = struct {
         );
         gctx.d2d.?.context11.Flush();
 
-        if (enable_dx_debug) {
+        if (enable_debug_layer) {
             if (mute_d2d_completely) {
                 info_queue.SetMuteDebugOutput(w32.FALSE);
             } else {
@@ -939,9 +937,6 @@ pub const GraphicsContext = struct {
         gs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        //const tracy_zone = ztracy.Zone(@src());
-        //defer tracy_zone.End();
-
         if (vs_cso_path) |path| {
             const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
             defer vs_file.close();
@@ -1053,9 +1048,6 @@ pub const GraphicsContext = struct {
         ms_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        //const tracy_zone = ztracy.Zone(@src());
-        //defer tracy_zone.End();
-
         if (as_cso_path) |path| {
             const as_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
             defer as_file.close();
@@ -1150,9 +1142,6 @@ pub const GraphicsContext = struct {
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
-        //const tracy_zone = ztracy.ZoneNC(@src(), "createComputeShaderPipeline", 0x00_ff_00_00);
-        //defer tracy_zone.End();
-
         if (cs_cso_path) |path| {
             const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
             defer cs_file.close();

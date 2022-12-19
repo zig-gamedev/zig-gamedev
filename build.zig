@@ -8,12 +8,12 @@ pub fn build(b: *std.build.Builder) void {
         .build_mode = b.standardReleaseOptions(),
         .target = b.standardTargetOptions(.{}),
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
-        .d3d12_enable_debug_layer = b.option(
+        .zd3d12_enable_debug_layer = b.option(
             bool,
             "d3d12-enable-debug-layer",
             "Enable DirectX 12 debug layer",
         ) orelse false,
-        .d3d12_enable_gpu_debug_layer = b.option(
+        .zd3d12_enable_gbv = b.option(
             bool,
             "d3d12-enable-gpu-debug-layer",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
@@ -144,8 +144,8 @@ pub const Options = struct {
 
     ztracy_enable: bool,
 
-    d3d12_enable_debug_layer: bool,
-    d3d12_enable_gpu_debug_layer: bool,
+    zd3d12_enable_debug_layer: bool,
+    zd3d12_enable_gbv: bool,
 };
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
