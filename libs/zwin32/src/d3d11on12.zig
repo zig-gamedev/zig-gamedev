@@ -16,16 +16,14 @@ pub const RESOURCE_FLAGS = extern struct {
 };
 
 pub const IDevice = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        on12dev: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn CreateWrappedResource(
                 self: *T,
                 resource12: *IUnknown,
@@ -35,8 +33,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource11: ?*?*anyopaque,
             ) HRESULT {
-                return self.v.on12dev.CreateWrappedResource(
-                    self,
+                return @ptrCast(*const IDevice.VTable, self.v).CreateWrappedResource(
+                    @ptrCast(*IDevice, self),
                     resource12,
                     flags11,
                     in_state,
@@ -50,84 +48,69 @@ pub const IDevice = extern struct {
                 resources: [*]const *d3d11.IResource,
                 num_resources: UINT,
             ) void {
-                self.v.on12dev.ReleaseWrappedResources(self, resources, num_resources);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .ReleaseWrappedResources(@ptrCast(*IDevice, self), resources, num_resources);
             }
             pub inline fn AcquireWrappedResources(
                 self: *T,
                 resources: [*]const *d3d11.IResource,
                 num_resources: UINT,
             ) void {
-                self.v.on12dev.AcquireWrappedResources(self, resources, num_resources);
+                @ptrCast(*const IDevice.VTable, self.v)
+                    .AcquireWrappedResources(@ptrCast(*IDevice, self), resources, num_resources);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateWrappedResource: *const fn (
-                *T,
-                *IUnknown,
-                *const RESOURCE_FLAGS,
-                RESOURCE_STATES,
-                RESOURCE_STATES,
-                *const GUID,
-                ?*?*anyopaque,
-            ) callconv(WINAPI) HRESULT,
-            ReleaseWrappedResources: *const fn (*T, [*]const *d3d11.IResource, UINT) callconv(WINAPI) void,
-            AcquireWrappedResources: *const fn (*T, [*]const *d3d11.IResource, UINT) callconv(WINAPI) void,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        CreateWrappedResource: *const fn (
+            *IDevice,
+            *IUnknown,
+            *const RESOURCE_FLAGS,
+            RESOURCE_STATES,
+            RESOURCE_STATES,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        ReleaseWrappedResources: *const fn (*IDevice, [*]const *d3d11.IResource, UINT) callconv(WINAPI) void,
+        AcquireWrappedResources: *const fn (*IDevice, [*]const *d3d11.IResource, UINT) callconv(WINAPI) void,
+    };
 };
 
 pub const IDevice1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        on12dev: IDevice.VTable(Self),
-        on12dev1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            GetD3D12Device: *anyopaque,
+            pub usingnamespace IDevice.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IDevice.VTable,
+        GetD3D12Device: *anyopaque,
+    };
 };
 
 pub const IDevice2 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        on12dev: IDevice.VTable(Self),
-        on12dev1: IDevice1.VTable(Self),
-        on12dev2: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace IDevice1.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            UnwrapUnderlyingResource: *anyopaque,
-            ReturnUnderlyingResource: *anyopaque,
+            pub usingnamespace IDevice1.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IDevice1.VTable,
+        UnwrapUnderlyingResource: *anyopaque,
+        ReturnUnderlyingResource: *anyopaque,
+    };
 };
 
 pub const IID_IDevice2 = GUID{
