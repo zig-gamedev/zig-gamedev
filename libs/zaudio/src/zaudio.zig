@@ -428,7 +428,7 @@ pub const DataSource = opaque {
     }
 
     pub const Config = extern struct {
-        vtable: *const VTable,
+        vtable: *VTable,
 
         pub fn init() Config {
             var config: Config = undefined;
@@ -675,7 +675,7 @@ pub const Node = opaque {
     };
 
     pub const Config = extern struct {
-        vtable: *const VTable,
+        vtable: *VTable,
         initial_state: State,
         input_bus_count: u32,
         output_bus_count: u32,
