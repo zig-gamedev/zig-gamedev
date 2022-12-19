@@ -2214,10 +2214,12 @@ pub const IGraphicsCommandList = extern struct {
                     .Close(@ptrCast(*IGraphicsCommandList, self));
             }
             pub inline fn Reset(self: *T, alloc: *ICommandAllocator, initial_state: ?*IPipelineState) HRESULT {
-                return .Reset(@ptrCast(*IGraphicsCommandList, self), alloc, initial_state);
+                return @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .Reset(@ptrCast(*IGraphicsCommandList, self), alloc, initial_state);
             }
             pub inline fn ClearState(self: *T, pso: ?*IPipelineState) void {
-                .ClearState(@ptrCast(*IGraphicsCommandList, self), pso);
+                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                    .ClearState(@ptrCast(*IGraphicsCommandList, self), pso);
             }
             pub inline fn DrawInstanced(
                 self: *T,

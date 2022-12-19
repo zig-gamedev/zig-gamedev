@@ -45,7 +45,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
 
     if (@import("builtin").target.os.tag == .windows) {
-        //installDemo(b, minimal.build(b, options), "minimal");
+        installDemo(b, minimal.build(b, options), "minimal");
     }
 
     //

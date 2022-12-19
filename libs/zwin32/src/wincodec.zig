@@ -40,128 +40,114 @@ pub const BitmapPaletteType = enum(UINT) {
 };
 
 pub const IPalette = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        palette: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
+    pub usingnamespace Methods(@This());
 
-    fn VTable(comptime T: type) type {
-        _ = T;
+    pub fn Methods(comptime T: type) type {
         return extern struct {
-            InitializePredefined: *anyopaque,
-            InitializeCustom: *anyopaque,
-            InitializeFromBitmap: *anyopaque,
-            InitializeFromPalette: *anyopaque,
-            GetType: *anyopaque,
-            GetColorCount: *anyopaque,
-            GetColors: *anyopaque,
-            IsBlackWhite: *anyopaque,
-            IsGrayscale: *anyopaque,
-            HasAlpha: *anyopaque,
+            pub usingnamespace IUnknown.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        InitializePredefined: *anyopaque,
+        InitializeCustom: *anyopaque,
+        InitializeFromBitmap: *anyopaque,
+        InitializeFromPalette: *anyopaque,
+        GetType: *anyopaque,
+        GetColorCount: *anyopaque,
+        GetColors: *anyopaque,
+        IsBlackWhite: *anyopaque,
+        IsGrayscale: *anyopaque,
+        HasAlpha: *anyopaque,
+    };
 };
 
 pub const IBitmapDecoder = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        bmpdecoder: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetFrame(self: *T, index: UINT, frame: ?*?*IBitmapFrameDecode) HRESULT {
-                return self.v.bmpdecoder.GetFrame(self, index, frame);
+                return @ptrCast(*const IBitmapDecoder.VTable, self.v)
+                    .GetFrame(@ptrCast(*IBitmapDecoder, self), index, frame);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            QueryCapability: *anyopaque,
-            Initialize: *anyopaque,
-            GetContainerFormat: *anyopaque,
-            GetDecoderInfo: *anyopaque,
-            CopyPalette: *anyopaque,
-            GetMetadataQueryReader: *anyopaque,
-            GetPreview: *anyopaque,
-            GetColorContexts: *anyopaque,
-            GetThumbnail: *anyopaque,
-            GetFrameCount: *anyopaque,
-            GetFrame: *const fn (*T, UINT, ?*?*IBitmapFrameDecode) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        QueryCapability: *anyopaque,
+        Initialize: *anyopaque,
+        GetContainerFormat: *anyopaque,
+        GetDecoderInfo: *anyopaque,
+        CopyPalette: *anyopaque,
+        GetMetadataQueryReader: *anyopaque,
+        GetPreview: *anyopaque,
+        GetColorContexts: *anyopaque,
+        GetThumbnail: *anyopaque,
+        GetFrameCount: *anyopaque,
+        GetFrame: *const fn (*IBitmapDecoder, UINT, ?*?*IBitmapFrameDecode) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IBitmapSource = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        bmpsource: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetSize(self: *T, width: *UINT, height: *UINT) HRESULT {
-                return self.v.bmpsource.GetSize(self, width, height);
+                return @ptrCast(*const IBitmapSource.VTable, self.v)
+                    .GetSize(@ptrCast(*IBitmapSource, self), width, height);
             }
             pub inline fn GetPixelFormat(self: *T, guid: *PixelFormatGUID) HRESULT {
-                return self.v.bmpsource.GetPixelFormat(self, guid);
+                return @ptrCast(*const IBitmapSource.VTable, self.v)
+                    .GetPixelFormat(@ptrCast(*IBitmapSource, self), guid);
             }
             pub inline fn CopyPixels(self: *T, rect: ?*const Rect, stride: UINT, size: UINT, buffer: [*]BYTE) HRESULT {
-                return self.v.bmpsource.CopyPixels(self, rect, stride, size, buffer);
+                return @ptrCast(*const IBitmapSource.VTable, self.v)
+                    .CopyPixels(@ptrCast(*IBitmapSource, self), rect, stride, size, buffer);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetSize: *const fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
-            GetPixelFormat: *const fn (*T, *GUID) callconv(WINAPI) HRESULT,
-            GetResolution: *anyopaque,
-            CopyPalette: *anyopaque,
-            CopyPixels: *const fn (*T, ?*const Rect, UINT, UINT, [*]BYTE) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        GetSize: *const fn (*IBitmapSource, *UINT, *UINT) callconv(WINAPI) HRESULT,
+        GetPixelFormat: *const fn (*IBitmapSource, *GUID) callconv(WINAPI) HRESULT,
+        GetResolution: *anyopaque,
+        CopyPalette: *anyopaque,
+        CopyPixels: *const fn (*IBitmapSource, ?*const Rect, UINT, UINT, [*]BYTE) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IBitmapFrameDecode = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        bmpsource: IBitmapSource.VTable(Self),
-        bmpframedecode: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IBitmapSource.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            GetMetadataQueryReader: *anyopaque,
-            GetColorContexts: *anyopaque,
-            GetThumbnail: *anyopaque,
+            pub usingnamespace IBitmapSource.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IBitmapSource.VTable,
+        GetMetadataQueryReader: *anyopaque,
+        GetColorContexts: *anyopaque,
+        GetThumbnail: *anyopaque,
+    };
 };
 
 pub const IBitmap = extern struct {
@@ -203,18 +189,14 @@ pub const BitmapDitherType = enum(UINT) {
 };
 
 pub const IFormatConverter = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        bmpsource: IBitmapSource.VTable(Self),
-        fmtconv: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IBitmapSource.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IBitmapSource.Methods(T);
+
             pub inline fn Initialize(
                 self: *T,
                 source: ?*IBitmapSource,
@@ -224,8 +206,8 @@ pub const IFormatConverter = extern struct {
                 alpha_threshold_percent: f64,
                 palette_translate: BitmapPaletteType,
             ) HRESULT {
-                return self.v.fmtconv.Initialize(
-                    self,
+                return @ptrCast(*const IFormatConverter.VTable, self.v).Initialize(
+                    @ptrCast(*IFormatConverter, self),
                     source,
                     dest_format,
                     dither,
@@ -237,33 +219,30 @@ pub const IFormatConverter = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            Initialize: *const fn (
-                *T,
-                ?*IBitmapSource,
-                *const PixelFormatGUID,
-                BitmapDitherType,
-                ?*IPalette,
-                f64,
-                BitmapPaletteType,
-            ) callconv(WINAPI) HRESULT,
-            CanConvert: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IBitmapSource.VTable,
+        Initialize: *const fn (
+            *IFormatConverter,
+            ?*IBitmapSource,
+            *const PixelFormatGUID,
+            BitmapDitherType,
+            ?*IPalette,
+            f64,
+            BitmapPaletteType,
+        ) callconv(WINAPI) HRESULT,
+        CanConvert: *anyopaque,
+    };
 };
 
 pub const IImagingFactory = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        imgfactory: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn CreateDecoderFromFilename(
                 self: *T,
                 filename: LPCWSTR,
@@ -272,50 +251,57 @@ pub const IImagingFactory = extern struct {
                 metadata: DecodeOptions,
                 decoder: ?*?*IBitmapDecoder,
             ) HRESULT {
-                return self.v.imgfactory.CreateDecoderFromFilename(self, filename, vendor, access, metadata, decoder);
+                return @ptrCast(*const IImagingFactory.VTable, self.v).CreateDecoderFromFilename(
+                    @ptrCast(*IImagingFactory, self),
+                    filename,
+                    vendor,
+                    access,
+                    metadata,
+                    decoder,
+                );
             }
             pub inline fn CreateFormatConverter(self: *T, converter: ?*?*IFormatConverter) HRESULT {
-                return self.v.imgfactory.CreateFormatConverter(self, converter);
+                return @ptrCast(*const IImagingFactory.VTable, self.v)
+                    .CreateFormatConverter(@ptrCast(*IImagingFactory, self), converter);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            CreateDecoderFromFilename: *const fn (
-                *T,
-                LPCWSTR,
-                ?*const GUID,
-                DWORD,
-                DecodeOptions,
-                ?*?*IBitmapDecoder,
-            ) callconv(WINAPI) HRESULT,
-            CreateDecoderFromStream: *anyopaque,
-            CreateDecoderFromFileHandle: *anyopaque,
-            CreateComponentInfo: *anyopaque,
-            CreateDecoder: *anyopaque,
-            CreateEncoder: *anyopaque,
-            CreatePalette: *anyopaque,
-            CreateFormatConverter: *const fn (*T, ?*?*IFormatConverter) callconv(WINAPI) HRESULT,
-            CreateBitmapScaler: *anyopaque,
-            CreateBitmapClipper: *anyopaque,
-            CreateBitmapFlipRotator: *anyopaque,
-            CreateStream: *anyopaque,
-            CreateColorContext: *anyopaque,
-            CreateColorTransformer: *anyopaque,
-            CreateBitmap: *anyopaque,
-            CreateBitmapFromSource: *anyopaque,
-            CreateBitmapFromSourceRect: *anyopaque,
-            CreateBitmapFromMemory: *anyopaque,
-            CreateBitmapFromHBITMAP: *anyopaque,
-            CreateBitmapFromHICON: *anyopaque,
-            CreateComponentEnumerator: *anyopaque,
-            CreateFastMetadataEncoderFromDecoder: *anyopaque,
-            CreateFastMetadataEncoderFromFrameDecode: *anyopaque,
-            CreateQueryWriter: *anyopaque,
-            CreateQueryWriterFromReader: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        CreateDecoderFromFilename: *const fn (
+            *IImagingFactory,
+            LPCWSTR,
+            ?*const GUID,
+            DWORD,
+            DecodeOptions,
+            ?*?*IBitmapDecoder,
+        ) callconv(WINAPI) HRESULT,
+        CreateDecoderFromStream: *anyopaque,
+        CreateDecoderFromFileHandle: *anyopaque,
+        CreateComponentInfo: *anyopaque,
+        CreateDecoder: *anyopaque,
+        CreateEncoder: *anyopaque,
+        CreatePalette: *anyopaque,
+        CreateFormatConverter: *const fn (*IImagingFactory, ?*?*IFormatConverter) callconv(WINAPI) HRESULT,
+        CreateBitmapScaler: *anyopaque,
+        CreateBitmapClipper: *anyopaque,
+        CreateBitmapFlipRotator: *anyopaque,
+        CreateStream: *anyopaque,
+        CreateColorContext: *anyopaque,
+        CreateColorTransformer: *anyopaque,
+        CreateBitmap: *anyopaque,
+        CreateBitmapFromSource: *anyopaque,
+        CreateBitmapFromSourceRect: *anyopaque,
+        CreateBitmapFromMemory: *anyopaque,
+        CreateBitmapFromHBITMAP: *anyopaque,
+        CreateBitmapFromHICON: *anyopaque,
+        CreateComponentEnumerator: *anyopaque,
+        CreateFastMetadataEncoderFromDecoder: *anyopaque,
+        CreateFastMetadataEncoderFromFrameDecode: *anyopaque,
+        CreateQueryWriter: *anyopaque,
+        CreateQueryWriterFromReader: *anyopaque,
+    };
 };
 
 pub const CLSID_ImagingFactory = GUID{

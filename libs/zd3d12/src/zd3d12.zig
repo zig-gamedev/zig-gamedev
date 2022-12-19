@@ -14,7 +14,7 @@ const HResultError = zwin32.HResultError;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const hrErrorOnFail = zwin32.hrErrorOnFail;
-const ztracy = @import("ztracy");
+//const ztracy = @import("ztracy");
 
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 const enable_dx_gpu_debug = @import("build_options").enable_dx_gpu_debug;
@@ -657,7 +657,7 @@ pub const GraphicsContext = struct {
         // Take a look at:
         // https://github.com/microsoft/DirectML/blob/master/Samples/DirectMLSuperResolution/DeviceResources.cpp
 
-        ztracy.FrameMark();
+        //ztracy.FrameMark();
         hrPanicOnFail(gctx.cmdqueue.Signal(gctx.frame_fence, gctx.frame_fence_counter));
 
         const gpu_frame_counter = gctx.frame_fence.GetCompletedValue();
@@ -939,8 +939,8 @@ pub const GraphicsContext = struct {
         gs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        const tracy_zone = ztracy.Zone(@src());
-        defer tracy_zone.End();
+        //const tracy_zone = ztracy.Zone(@src());
+        //defer tracy_zone.End();
 
         if (vs_cso_path) |path| {
             const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
@@ -1053,8 +1053,8 @@ pub const GraphicsContext = struct {
         ms_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        const tracy_zone = ztracy.Zone(@src());
-        defer tracy_zone.End();
+        //const tracy_zone = ztracy.Zone(@src());
+        //defer tracy_zone.End();
 
         if (as_cso_path) |path| {
             const as_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
@@ -1150,8 +1150,8 @@ pub const GraphicsContext = struct {
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
-        const tracy_zone = ztracy.ZoneNC(@src(), "createComputeShaderPipeline", 0x00_ff_00_00);
-        defer tracy_zone.End();
+        //const tracy_zone = ztracy.ZoneNC(@src(), "createComputeShaderPipeline", 0x00_ff_00_00);
+        //defer tracy_zone.End();
 
         if (cs_cso_path) |path| {
             const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;

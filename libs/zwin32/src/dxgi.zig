@@ -880,26 +880,25 @@ pub const ISwapChain = extern struct {
 };
 
 pub const IFactory = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IObject.Methods(T);
+
             pub inline fn EnumAdapters(self: *T, index: UINT, adapter: *?*IAdapter) HRESULT {
-                return self.v.factory.EnumAdapters(self, index, adapter);
+                return @ptrCast(*const IFactory.VTable, self.v)
+                    .EnumAdapters(@ptrCast(*IFactory, self), index, adapter);
             }
             pub inline fn MakeWindowAssociation(self: *T, window: HWND, flags: UINT) HRESULT {
-                return self.v.factory.MakeWindowAssociation(self, window, flags);
+                return @ptrCast(*const IFactory.VTable, self.v)
+                    .MakeWindowAssociation(@ptrCast(*IFactory, self), window, flags);
             }
             pub inline fn GetWindowAssociation(self: *T, window: *HWND) HRESULT {
-                return self.v.factory.GetWindowAssociation(self, window);
+                return @ptrCast(*const IFactory.VTable, self.v)
+                    .GetWindowAssociation(@ptrCast(*IFactory, self), window);
             }
             pub inline fn CreateSwapChain(
                 self: *T,
@@ -907,23 +906,25 @@ pub const IFactory = extern struct {
                 desc: *SWAP_CHAIN_DESC,
                 swapchain: *?*ISwapChain,
             ) HRESULT {
-                return self.v.factory.CreateSwapChain(self, device, desc, swapchain);
+                return @ptrCast(*const IFactory.VTable, self.v)
+                    .CreateSwapChain(@ptrCast(*IFactory, self), device, desc, swapchain);
             }
             pub inline fn CreateSoftwareAdapter(self: *T, adapter: *?*IAdapter) HRESULT {
-                return self.v.factory.CreateSoftwareAdapter(self, adapter);
+                return @ptrCast(*const IFactory.VTable, self.v)
+                    .CreateSoftwareAdapter(@ptrCast(*IFactory, self), adapter);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            EnumAdapters: *const fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
-            MakeWindowAssociation: *const fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
-            GetWindowAssociation: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
-            CreateSwapChain: *const fn (*T, *IUnknown, *SWAP_CHAIN_DESC, *?*ISwapChain) callconv(WINAPI) HRESULT,
-            CreateSoftwareAdapter: *const fn (*T, *?*IAdapter) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IFactory;
+        base: IObject.VTable,
+        EnumAdapters: *const fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
+        MakeWindowAssociation: *const fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
+        GetWindowAssociation: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
+        CreateSwapChain: *const fn (*T, *IUnknown, *SWAP_CHAIN_DESC, *?*ISwapChain) callconv(WINAPI) HRESULT,
+        CreateSoftwareAdapter: *const fn (*T, *?*IAdapter) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IDevice = extern struct {
@@ -1017,136 +1018,92 @@ pub const ADAPTER_DESC1 = extern struct {
 };
 
 pub const IFactory1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IFactory.Methods(T);
+
             pub inline fn EnumAdapters1(self: *T, index: UINT, adapter: *?*IAdapter1) HRESULT {
-                return self.v.factory1.EnumAdapters1(self, index, adapter);
+                return @ptrCast(*const IFactory1.VTable, self.v)
+                    .EnumAdapters1(@ptrCast(*IFactory1, self), index, adapter);
             }
             pub inline fn IsCurrent(self: *T) BOOL {
-                return self.v.factory1.IsCurrent(self);
+                return @ptrCast(*const IFactory1.VTable, self.v)
+                    .IsCurrent(@ptrCast(*IFactory1, self));
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            EnumAdapters1: *const fn (*T, UINT, *?*IAdapter1) callconv(WINAPI) HRESULT,
-            IsCurrent: *const fn (*T) callconv(WINAPI) BOOL,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IFactory.VTable,
+        EnumAdapters1: *const fn (*IFactory1, UINT, *?*IAdapter1) callconv(WINAPI) HRESULT,
+        IsCurrent: *const fn (*IFactory1) callconv(WINAPI) BOOL,
+    };
 };
 
 pub const IFactory2 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            IsWindowedStereoEnabled: *anyopaque,
-            CreateSwapChainForHwnd: *anyopaque,
-            CreateSwapChainForCoreWindow: *anyopaque,
-            GetSharedResourceAdapterLuid: *anyopaque,
-            RegisterStereoStatusWindow: *anyopaque,
-            RegisterStereoStatusEvent: *anyopaque,
-            UnregisterStereoStatus: *anyopaque,
-            RegisterOcclusionStatusWindow: *anyopaque,
-            RegisterOcclusionStatusEvent: *anyopaque,
-            UnregisterOcclusionStatus: *anyopaque,
-            CreateSwapChainForComposition: *anyopaque,
+            pub usingnamespace IFactory1.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory1.VTable,
+        IsWindowedStereoEnabled: *anyopaque,
+        CreateSwapChainForHwnd: *anyopaque,
+        CreateSwapChainForCoreWindow: *anyopaque,
+        GetSharedResourceAdapterLuid: *anyopaque,
+        RegisterStereoStatusWindow: *anyopaque,
+        RegisterStereoStatusEvent: *anyopaque,
+        UnregisterStereoStatus: *anyopaque,
+        RegisterOcclusionStatusWindow: *anyopaque,
+        RegisterOcclusionStatusEvent: *anyopaque,
+        UnregisterOcclusionStatus: *anyopaque,
+        CreateSwapChainForComposition: *anyopaque,
+    };
 };
 
 pub const IFactory3 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            GetCreationFlags: *anyopaque,
+            pub usingnamespace IFactory2.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory2.VTable,
+        GetCreationFlags: *anyopaque,
+    };
 };
 
 pub const IFactory4 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            EnumAdapterByLuid: *anyopaque,
-            EnumWarpAdapter: *anyopaque,
+            pub usingnamespace IFactory3.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IFactory3.VTable,
+        EnumAdapterByLuid: *anyopaque,
+        EnumWarpAdapter: *anyopaque,
+    };
 };
 
 pub const FEATURE = enum(UINT) {
@@ -1155,44 +1112,34 @@ pub const FEATURE = enum(UINT) {
 
 pub const IID_IFactory5 = GUID.parse("{7632e1f5-ee65-4dca-87fd-84cd75f8838d}");
 pub const IFactory5 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: IFactory4.VTable(Self),
-        factory5: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace IFactory4.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IFactory4.Methods(T);
+
             pub inline fn CheckFeatureSupport(
                 self: *T,
                 feature: FEATURE,
                 support_data: *anyopaque,
                 support_data_size: UINT,
             ) HRESULT {
-                return self.v.factory5.CheckFeatureSupport(self, feature, support_data, support_data_size);
+                return @ptrCast(*const IFactory5.VTable, self.v).CheckFeatureSupport(
+                    @ptrCast(*IFactory5, self),
+                    feature,
+                    support_data,
+                    support_data_size,
+                );
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            CheckFeatureSupport: *const fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IFactory4.VTable,
+        CheckFeatureSupport: *const fn (*IFactory5, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const GPU_PREFERENCE = UINT;
@@ -1202,30 +1149,14 @@ pub const GPU_PREFERENCE_HIGH_PERFORMANCE: GPU_PREFERENCE = 2;
 
 pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
 pub const IFactory6 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        factory: IFactory.VTable(Self),
-        factory1: IFactory1.VTable(Self),
-        factory2: IFactory2.VTable(Self),
-        factory3: IFactory3.VTable(Self),
-        factory4: IFactory4.VTable(Self),
-        factory5: IFactory5.VTable(Self),
-        factory6: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IFactory.Methods(Self);
-    usingnamespace IFactory1.Methods(Self);
-    usingnamespace IFactory2.Methods(Self);
-    usingnamespace IFactory3.Methods(Self);
-    usingnamespace IFactory4.Methods(Self);
-    usingnamespace IFactory5.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IFactory5.Methods(T);
+
             pub inline fn EnumAdapterByGpuPreference(
                 self: *T,
                 adapter_index: UINT,
@@ -1233,51 +1164,50 @@ pub const IFactory6 = extern struct {
                 riid: *const GUID,
                 adapter: *?*IAdapter1,
             ) HRESULT {
-                return self.v.factory6.EnumAdapterByGpuPreference(self, adapter_index, gpu_preference, riid, adapter);
+                return @ptrCast(*const IFactory6.VTable, self.v).EnumAdapterByGpuPreference(
+                    @ptrCast(*IFactory6, self),
+                    adapter_index,
+                    gpu_preference,
+                    riid,
+                    adapter,
+                );
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            EnumAdapterByGpuPreference: *const fn (
-                *T,
-                UINT,
-                GPU_PREFERENCE,
-                *const GUID,
-                *?*IAdapter1,
-            ) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IFactory5.VTable,
+        EnumAdapterByGpuPreference: *const fn (
+            *IFactory6,
+            UINT,
+            GPU_PREFERENCE,
+            *const GUID,
+            *?*IAdapter1,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IID_IAdapter1 = GUID.parse("{29038f61-3839-4626-91fd-086879011a05}");
 pub const IAdapter1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        adapter: IAdapter.VTable(Self),
-        adapter1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IAdapter.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IAdapter.Methods(T);
+
             pub inline fn GetDesc1(self: *T, desc: *ADAPTER_DESC1) HRESULT {
-                return self.v.adapter1.GetDesc1(self, desc);
+                return @ptrCast(*const IAdapter1.VTable, self.v)
+                    .GetDesc1(@ptrCast(*IAdapter1, self), desc);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            GetDesc1: *const fn (*T, *ADAPTER_DESC1) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IAdapter.VTable,
+        GetDesc1: *const fn (*IAdapter1, *ADAPTER_DESC1) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IDevice1 = extern struct {
