@@ -11,8 +11,8 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
-    exe_options.addOption(bool, "enable_dx_debug", false);
-    exe_options.addOption(bool, "enable_dx_gpu_debug", false);
+    exe_options.addOption(bool, "enable_dx_debug", options.d3d12_enable_debug_layer);
+    exe_options.addOption(bool, "enable_dx_gpu_debug", options.d3d12_enable_gpu_debug_layer);
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
