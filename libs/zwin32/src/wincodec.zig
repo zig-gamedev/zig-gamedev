@@ -136,7 +136,7 @@ pub const IBitmapFrameDecode = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IBitmapSource.Methods(T);
         };
@@ -151,29 +151,21 @@ pub const IBitmapFrameDecode = extern struct {
 };
 
 pub const IBitmap = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        bmpsource: IBitmapSource.VTable(Self),
-        bmp: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IBitmapSource.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
+    pub usingnamespace Methods(@This());
 
-    fn VTable(comptime T: type) type {
-        _ = T;
+    pub fn Methods(comptime T: type) type {
         return extern struct {
-            Lock: *anyopaque,
-            SetPalette: *anyopaque,
-            SetResolution: *anyopaque,
+            pub usingnamespace IBitmapSource.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        Lock: *anyopaque,
+        SetPalette: *anyopaque,
+        SetResolution: *anyopaque,
+    };
 };
 
 pub const BitmapDitherType = enum(UINT) {
