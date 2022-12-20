@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.398" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.900" };
 
 pub fn build(b: *std.build.Builder) void {
     ensureZigVersion() catch return;
@@ -29,7 +29,7 @@ pub fn build(b: *std.build.Builder) void {
     const skip_dawn_update = b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
     if (!skip_dawn_update) {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
-        child.cwd = "."; // TODO: thisDir();
+        child.cwd = thisDir();
         child.stderr = std.io.getStdErr();
         child.stdout = std.io.getStdOut();
         _ = child.spawnAndWait() catch {
