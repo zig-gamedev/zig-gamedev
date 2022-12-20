@@ -1386,18 +1386,14 @@ pub const GraphicsContext = struct {
         gctx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_COPY_DEST);
         gctx.flushResourceBarriers();
 
-        gctx.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
+        gctx.cmdlist.CopyTextureRegion(&.{
             .pResource = gctx.lookupResource(texture).?,
             .Type = .SUBRESOURCE_INDEX,
-            .u = .{
-                .SubresourceIndex = subresource,
-            },
-        }, 0, 0, 0, &d3d12.TEXTURE_COPY_LOCATION{
+            .u = .{ .SubresourceIndex = subresource },
+        }, 0, 0, 0, &.{
             .pResource = upload.buffer,
             .Type = .PLACED_FOOTPRINT,
-            .u = .{
-                .PlacedFootprint = layout[0],
-            },
+            .u = .{ .PlacedFootprint = layout[0] },
         }, null);
     }
 
