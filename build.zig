@@ -59,6 +59,7 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, triangle.build(b, options), "triangle");
         installDemo(b, textured_quad.build(b, options), "textured_quad");
         installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
+        installDemo(b, rasterization.build(b, options), "rasterization");
     }
 
     //
@@ -142,6 +143,7 @@ const minimal = @import("samples/minimal/build.zig");
 const triangle = @import("samples/triangle/build.zig");
 const textured_quad = @import("samples/textured_quad/build.zig");
 const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
+const rasterization = @import("samples/rasterization/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
