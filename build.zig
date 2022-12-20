@@ -57,6 +57,7 @@ pub fn build(b: *std.build.Builder) void {
     if (@import("builtin").target.os.tag == .windows) {
         installDemo(b, minimal.build(b, options), "minimal");
         installDemo(b, triangle.build(b, options), "triangle");
+        installDemo(b, textured_quad.build(b, options), "textured_quad");
     }
 
     //
@@ -124,8 +125,6 @@ pub fn build(b: *std.build.Builder) void {
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
-const zwin32 = @import("libs/zwin32/src/zwin32.zig");
-
 const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
@@ -140,6 +139,7 @@ const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
 
 const minimal = @import("samples/minimal/build.zig");
 const triangle = @import("samples/triangle/build.zig");
+const textured_quad = @import("samples/textured_quad/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
