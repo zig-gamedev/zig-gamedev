@@ -1397,7 +1397,7 @@ pub const IInfoQueue = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
@@ -1407,8 +1407,8 @@ pub const IInfoQueue = extern struct {
                 pMessage: ?*MESSAGE,
                 pMessageByteLength: *SIZE_T,
             ) HRESULT {
-                return .GetMessage(
-                    self,
+                return @ptrCast(*const IInfoQueue.VTable, self.v).GetMessage(
+                    @ptrCast(*IInfoQueue, self),
                     MessageIndex,
                     pMessage,
                     pMessageByteLength,

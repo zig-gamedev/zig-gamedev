@@ -15,7 +15,7 @@ pub const IDebug = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
@@ -204,7 +204,7 @@ pub const IInfoQueue = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
