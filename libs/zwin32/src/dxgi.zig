@@ -562,75 +562,66 @@ pub const IDeviceSubObject = extern struct {
 };
 
 pub const IResource = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devsubobj: IDeviceSubObject.VTable(Self),
-        resource: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceSubObject.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDeviceSubObject.Methods(T);
+
             pub inline fn GetSharedHandle(self: *T, handle: *HANDLE) HRESULT {
-                return self.v.resource.GetSharedHandle(self, handle);
+                return @ptrCast(*const IResource.VTable, self.v)
+                    .GetSharedHandle(@ptrCast(*IResource, self), handle);
             }
             pub inline fn GetUsage(self: *T, usage: *USAGE) HRESULT {
-                return self.v.resource.GetUsage(self, usage);
+                return @ptrCast(*const IResource.VTable, self.v).GetUsage(@ptrCast(*IResource, self), usage);
             }
             pub inline fn SetEvictionPriority(self: *T, priority: UINT) HRESULT {
-                return self.v.resource.SetEvictionPriority(self, priority);
+                return @ptrCast(*const IResource.VTable, self.v)
+                    .SetEvictionPriority(@ptrCast(*IResource, self), priority);
             }
             pub inline fn GetEvictionPriority(self: *T, priority: *UINT) HRESULT {
-                return self.v.resource.GetEvictionPriority(self, priority);
+                return @ptrCast(*const IResource.VTable, self.v)
+                    .GetEvictionPriority(@ptrCast(*IResource, self), priority);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            GetSharedHandle: *const fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
-            GetUsage: *const fn (*T, *USAGE) callconv(WINAPI) HRESULT,
-            SetEvictionPriority: *const fn (*T, UINT) callconv(WINAPI) HRESULT,
-            GetEvictionPriority: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IResource;
+        base: IDeviceSubObject.VTable,
+        GetSharedHandle: *const fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
+        GetUsage: *const fn (*T, *USAGE) callconv(WINAPI) HRESULT,
+        SetEvictionPriority: *const fn (*T, UINT) callconv(WINAPI) HRESULT,
+        GetEvictionPriority: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IKeyedMutex = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        devsubobj: IDeviceSubObject.VTable(Self),
-        mutex: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDeviceSubObject.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDeviceSubObject.Methods(T);
+
             pub inline fn AcquireSync(self: *T, key: UINT64, milliseconds: DWORD) HRESULT {
-                return self.v.mutex.AcquireSync(self, key, milliseconds);
+                return @ptrCast(*const IKeyedMutex.VTable, self.v)
+                    .AcquireSync(@ptrCast(*IKeyedMutex, self), key, milliseconds);
             }
             pub inline fn ReleaseSync(self: *T, key: UINT64) HRESULT {
-                return self.v.mutex.ReleaseSync(self, key);
+                return @ptrCast(*const IKeyedMutex.VTable, self.v).ReleaseSync(@ptrCast(*IKeyedMutex, self), key);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            AcquireSync: *const fn (*T, UINT64, DWORD) callconv(WINAPI) HRESULT,
-            ReleaseSync: *const fn (*T, UINT64) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDeviceSubObject.VTable,
+        AcquireSync: *const fn (*IKeyedMutex, UINT64, DWORD) callconv(WINAPI) HRESULT,
+        ReleaseSync: *const fn (*IKeyedMutex, UINT64) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const MAP_READ: UINT = 0x1;
@@ -1211,35 +1202,30 @@ pub const IAdapter1 = extern struct {
 };
 
 pub const IDevice1 = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        object: IObject.VTable(Self),
-        device: IDevice.VTable(Self),
-        device1: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IObject.Methods(Self);
-    usingnamespace IDevice.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IDevice.Methods(T);
+
             pub inline fn SetMaximumFrameLatency(self: *T, max_latency: UINT) HRESULT {
-                return self.v.device1.SetMaximumFrameLatency(self, max_latency);
+                return @ptrCast(*const IDevice1.VTable, self.v)
+                    .SetMaximumFrameLatency(@ptrCast(*IDevice1, self), max_latency);
             }
             pub inline fn GetMaximumFrameLatency(self: *T, max_latency: *UINT) HRESULT {
-                return self.v.device1.GetMaximumFrameLatency(self, max_latency);
+                return @ptrCast(*const IDevice1.VTable, self.v)
+                    .GetMaximumFrameLatency(@ptrCast(*IDevice1, self), max_latency);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            SetMaximumFrameLatency: *const fn (self: *T, max_latency: UINT) callconv(WINAPI) HRESULT,
-            GetMaximumFrameLatency: *const fn (self: *T, max_latency: *UINT) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IDevice.VTable,
+        SetMaximumFrameLatency: *const fn (self: *IDevice1, max_latency: UINT) callconv(WINAPI) HRESULT,
+        GetMaximumFrameLatency: *const fn (self: *IDevice1, max_latency: *UINT) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const IID_IFactory1 = GUID{

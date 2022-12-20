@@ -114,7 +114,13 @@ pub const IBitmapSource = extern struct {
                 return @ptrCast(*const IBitmapSource.VTable, self.v)
                     .GetPixelFormat(@ptrCast(*IBitmapSource, self), guid);
             }
-            pub inline fn CopyPixels(self: *T, rect: ?*const Rect, stride: UINT, size: UINT, buffer: [*]BYTE) HRESULT {
+            pub inline fn CopyPixels(
+                self: *T,
+                rect: ?*const Rect,
+                stride: UINT,
+                size: UINT,
+                buffer: [*]BYTE,
+            ) HRESULT {
                 return @ptrCast(*const IBitmapSource.VTable, self.v)
                     .CopyPixels(@ptrCast(*IBitmapSource, self), rect, stride, size, buffer);
             }
