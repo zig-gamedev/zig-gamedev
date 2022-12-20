@@ -319,39 +319,6 @@ pub const IBrush = extern struct {
     };
 };
 
-pub const IBitmapBrush = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        brush: IBrush.VTable(Self),
-        bmpbrush: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IBrush.Methods(Self);
-    usingnamespace Methods(Self);
-
-    pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {
-            SetExtendModeX: *anyopaque,
-            SetExtendModeY: *anyopaque,
-            SetInterpolationMode: *anyopaque,
-            SetBitmap: *anyopaque,
-            GetExtendModeX: *anyopaque,
-            GetExtendModeY: *anyopaque,
-            GetInterpolationMode: *anyopaque,
-            GetBitmap: *anyopaque,
-        };
-    }
-};
-
 pub const ISolidColorBrush = extern struct {
     v: *const VTable,
 
@@ -379,36 +346,6 @@ pub const ISolidColorBrush = extern struct {
         SetColor: *const fn (*ISolidColorBrush, *const COLOR_F) callconv(WINAPI) void,
         GetColor: *const fn (*ISolidColorBrush, *COLOR_F) callconv(WINAPI) *COLOR_F,
     };
-};
-
-pub const ILinearGradientBrush = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        brush: IBrush.VTable(Self),
-        lgbrush: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace IBrush.Methods(Self);
-    usingnamespace Methods(Self);
-
-    pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {
-            SetStartPoint: *anyopaque,
-            SetEndPoint: *anyopaque,
-            GetStartPoint: *anyopaque,
-            GetEndPoint: *anyopaque,
-            GetGradientStopCollection: *anyopaque,
-        };
-    }
 };
 
 pub const IRadialGradientBrush = extern struct {
@@ -730,29 +667,6 @@ pub const IGeometrySink = extern struct {
     };
 };
 
-pub const ITessellationSink = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        tesssink: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
-
-    pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {
-            AddTriangles: *anyopaque,
-            Close: *anyopaque,
-        };
-    }
-};
-
 pub const IPathGeometry = extern struct {
     v: *const VTable,
 
@@ -784,81 +698,6 @@ pub const IPathGeometry = extern struct {
         GetSegmentCount: *const fn (*T, *UINT32) callconv(WINAPI) HRESULT,
         GetFigureCount: *const fn (*T, *UINT32) callconv(WINAPI) HRESULT,
     };
-};
-
-pub const IMesh = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        mesh: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace Methods(Self);
-
-    pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {
-            Open: *anyopaque,
-        };
-    }
-};
-
-pub const ILayer = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        layer: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace Methods(Self);
-
-    pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {
-            GetSize: *anyopaque,
-        };
-    }
-};
-
-pub const IDrawingStateBlock = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        resource: IResource.VTable(Self),
-        stateblock: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IResource.Methods(Self);
-    usingnamespace Methods(Self);
-
-    pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {
-            GetDescription: *anyopaque,
-            SetDescription: *anyopaque,
-            SetTextRenderingParams: *anyopaque,
-            GetTextRenderingParams: *anyopaque,
-        };
-    }
 };
 
 pub const BRUSH_PROPERTIES = extern struct {
@@ -1065,6 +904,7 @@ pub const IRenderTarget = extern struct {
 
     pub const VTable = extern struct {
         const T = IRenderTarget;
+        base: IResource.VTable,
         CreateBitmap: *anyopaque,
         CreateBitmapFromWicBitmap: *anyopaque,
         CreateSharedBitmap: *anyopaque,
@@ -1177,7 +1017,11 @@ pub const IFactory = extern struct {
         return extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
-            pub inline fn CreateRectangleGeometry(self: *T, rect: *const RECT_F, geo: *?*IRectangleGeometry) HRESULT {
+            pub inline fn CreateRectangleGeometry(
+                self: *T,
+                rect: *const RECT_F,
+                geo: *?*IRectangleGeometry,
+            ) HRESULT {
                 return @ptrCast(*const IFactory.VTable, self.v)
                     .CreateRectangleGeometry(@ptrCast(*IFactory, self), rect, geo);
             }
@@ -1189,7 +1033,11 @@ pub const IFactory = extern struct {
                 return @ptrCast(*const IFactory.VTable, self.v)
                     .CreateRoundedRectangleGeometry(@ptrCast(*IFactory, self), rect, geo);
             }
-            pub inline fn CreateEllipseGeometry(self: *T, ellipse: *const ELLIPSE, geo: *?*IEllipseGeometry) HRESULT {
+            pub inline fn CreateEllipseGeometry(
+                self: *T,
+                ellipse: *const ELLIPSE,
+                geo: *?*IEllipseGeometry,
+            ) HRESULT {
                 return @ptrCast(*const IFactory.VTable, self.v)
                     .CreateEllipseGeometry(@ptrCast(*IFactory, self), ellipse, geo);
             }
@@ -1336,11 +1184,11 @@ pub const IDeviceContext = extern struct {
                 properties: ?*const BITMAP_PROPERTIES1,
                 bitmap: *?*IBitmap1,
             ) HRESULT {
-                return @ptrCast(*const IDeviceContext, self.v)
+                return @ptrCast(*const IDeviceContext.VTable, self.v)
                     .CreateBitmapFromDxgiSurface(@ptrCast(*IDeviceContext, self), surface, properties, bitmap);
             }
             pub inline fn SetTarget(self: *T, image: ?*IImage) void {
-                @ptrCast(*const IDeviceContext, self.v).SetTarget(@ptrCast(*IDeviceContext, self), image);
+                @ptrCast(*const IDeviceContext.VTable, self.v).SetTarget(@ptrCast(*IDeviceContext, self), image);
             }
         };
     }
@@ -1481,7 +1329,7 @@ pub const IDevice1 = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            usingnamespace IDevice.Methods(T);
+            pub usingnamespace IDevice.Methods(T);
         };
     }
 
@@ -1608,7 +1456,7 @@ pub const IDeviceContext2 = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            usingnamespace IDeviceContext1.Methods(T);
+            pub usingnamespace IDeviceContext1.Methods(T);
 
             pub inline fn CreateInk(self: *T, start_point: *const INK_POINT, ink: *?*IInk) HRESULT {
                 return @ptrCast(*const IDeviceContext2.VTable, self.v)
