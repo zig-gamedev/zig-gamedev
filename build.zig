@@ -62,6 +62,7 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, rasterization.build(b, options), "rasterization");
         installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
         installDemo(b, bindless.build(b, options), "bindless");
+        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
     }
 
     //
@@ -148,6 +149,7 @@ const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
 const rasterization = @import("samples/rasterization/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const bindless = @import("samples/bindless/build.zig");
+const simple_raytracer = @import("samples/simple_raytracer/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,

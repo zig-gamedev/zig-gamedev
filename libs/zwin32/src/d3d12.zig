@@ -4013,7 +4013,12 @@ pub const IDevice = extern struct {
                     cmdlist,
                 );
             }
-            pub inline fn CheckFeatureSupport(self: *T, feature: FEATURE, data: *anyopaque, data_size: UINT) HRESULT {
+            pub inline fn CheckFeatureSupport(
+                self: *T,
+                feature: FEATURE,
+                data: *anyopaque,
+                data_size: UINT,
+            ) HRESULT {
                 return @ptrCast(*const IDevice.VTable, self.v)
                     .CheckFeatureSupport(@ptrCast(*IDevice, self), feature, data, data_size);
             }
@@ -4969,7 +4974,7 @@ pub const IDevice4 = extern struct {
 
     pub const VTable = extern struct {
         const T = IDevice4;
-        base: IGraphicsCommandList.VTable,
+        base: IDevice3.VTable,
         CreateCommandList1: *const fn (
             *T,
             UINT,
@@ -5805,15 +5810,4 @@ pub const Error = error{
 
 test {
     std.testing.refAllDecls(@This());
-}
-
-test {
-    if (false) {
-        //var pp: ?*anyopaque = undefined;
-        var aaa: *IObject = undefined;
-        _ = aaa.Release();
-        var bbb: *IPipelineState = undefined;
-        _ = bbb.Release();
-        //_ = aaa.GetDevice(&IID_IGraphicsCommandList6, &pp);
-    }
 }

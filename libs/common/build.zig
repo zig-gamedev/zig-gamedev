@@ -17,7 +17,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.linkLibrary(lib);
     //exe.addIncludePath(thisDir() ++ "/src/c");
     exe.addIncludePath(thisDir() ++ "/libs/imgui");
-    //exe.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");
+    exe.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");
     //exe.addIncludePath(thisDir() ++ "/../zstbi/libs/stbi");
 }
 
@@ -40,8 +40,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
     lib.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
 
-    //lib.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");
-    //lib.addCSourceFile(thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c", &.{"-std=c99"});
+    lib.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");
+    lib.addCSourceFile(thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c", &.{"-std=c99"});
 
     //lib.addIncludePath(thisDir() ++ "/../zstbi/libs/stbi");
     //lib.addCSourceFile(thisDir() ++ "/../zstbi/libs/stbi/stb_image.c", &.{"-std=c99"});
