@@ -2,7 +2,7 @@
 
 # zig-gamedev project
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. Please consider [helping to sustain](https://github.com/sponsors/michal-z) the project. We create:
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. We create:
 
 * Sample [applications](#sample-applications)
 * Cross-platform and composable [libraries](#libraries)
@@ -30,6 +30,8 @@ Library | Latest version | Description
 **[znoise](libs/znoise)** | 0.1.0 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
 **[zjobs](libs/zjobs)** | 0.1.0 | Generic job queue implementation
 **[zbullet](libs/zbullet)** | 0.2.0 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
+**[zwin32](libs/zwin32)** | 0.1.0 | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi)
+**[zd3d12](libs/zd3d12)** | 0.1.0 | Helper library for working with DirectX 12
 
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs
@@ -37,7 +39,7 @@ Library | Latest version | Description
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings for carefully selected C/C++ libraries
-* Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows ([windows branch](https://github.com/michal-z/zig-gamedev/tree/windows))
+* Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 
 ## Sample applications (native wgpu)
 
@@ -108,6 +110,10 @@ All sample applications support the following build options:
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
 * `-Dztracy-enable=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
+
+Addidtional options for Windows applications:
+* `-Dzd3d12-enable-debug-layer=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
+* `-Dzd3d12-enable-gbv=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Dzd3d12-enable-debug-layer=true)
 
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
