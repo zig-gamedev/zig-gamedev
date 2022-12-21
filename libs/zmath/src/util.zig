@@ -7,10 +7,10 @@
 // 1. Matrix functions
 // ------------------------------------------------------------------------------
 //
-// matTranslation(m: Mat) Vec
-// matForward(m: Mat) Vec
-// matUp(m: Mat) Vec
-// matRight(m: Mat) Vec
+// getTranslationVec(m: Mat) Vec
+// getForwardVec(m: Mat) Vec
+// getUpVec(m: Mat) Vec
+// getRightVec(m: Mat) Vec
 //
 //
 // ------------------------------------------------------------------------------
@@ -28,20 +28,22 @@ const std = @import("std");
 const math = std.math;
 const expect = std.testing.expect;
 
-pub fn matTranslation(m: zm.Mat) zm.Vec {
-    return m[3];
+pub fn getTranslationVec(m: zm.Mat) zm.Vec {
+    var translation = m[3];
+    translation[3] = 0;
+    return translation;
 }
 
-pub fn matForward(m: zm.Mat) zm.Vec {
-    return zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), m));
+pub fn getForwardVec(m: zm.Mat) zm.Vec {
+    return zm.normalize3(zm.f32x4(m[2][0], m[2][1], m[2][2], 0.0));
 }
 
-pub fn matUp(m: zm.Mat) zm.Vec {
-    return zm.normalize3(zm.mul(zm.f32x4(0.0, 1.0, 0.0, 0.0), m));
+pub fn getUpVec(m: zm.Mat) zm.Vec {
+    return zm.normalize3(zm.f32x4(m[1][0], m[1][1], m[1][2], 0.0));
 }
 
-pub fn matRight(m: zm.Mat) zm.Vec {
-    return zm.normalize3(zm.mul(zm.f32x4(1.0, 0.0, 0.0, 0.0), m));
+pub fn getRightVec(m: zm.Mat) zm.Vec {
+    return zm.normalize3(zm.f32x4(m[0][0], m[0][1], m[0][2], 0.0));
 }
 
 test "zmath.util.mat.translation" {
@@ -56,42 +58,52 @@ test "zmath.util.mat.translation" {
     };
     // zig fmt: on
     const m = zm.loadMat(a[1..]);
-    const translation = matTranslation(m);
-    try expect(zm.approxEqAbs(translation, zm.f32x4(14.0, 15.0, 16.0, 17.0), 0.01));
+    const translation = getTranslationVec(m);
+    try expect(zm.approxEqAbs(translation, zm.f32x4(14.0, 15.0, 16.0, 0.0), 0.01));
 }
 
 test "zmath.util.mat.forward" {
     var a = zm.identity();
-    var forward = matForward(a);
+    var forward = getForwardVec(a);
+    std.debug.print("\nFWD 1 {}\n", .{forward});
     try expect(zm.approxEqAbs(forward, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
     const rot_yaw = zm.rotationY(degToRad(90));
     a = zm.mul(a, rot_yaw);
-    forward = matForward(a);
+    forward = getForwardVec(a);
+    std.debug.print("FWD 2 {} \nrot_yaw {any} \na       {any}\n", .{ forward, rot_yaw, a });
+    // { -6.22985467e-08, 0.0e+00,   -1.0e+00,        0.0e+00 },
+    // { 0.0e+00,         1.0e+00,    0.0e+00,        0.0e+00 },
+    // { 1.0e+00,         0.0e+00,    6.22985467e-08, 0.0e+00 },
+    // { 0.0e+00,         0.0e+00,    0.0e+00,        1.0e+00 } }
     try expect(zm.approxEqAbs(forward, zm.f32x4(1.0, 0.0, 0.0, 0), 0.01));
 }
 
 test "zmath.util.mat.up" {
     var a = zm.identity();
-    var up = matUp(a);
+    var up = getUpVec(a);
     try expect(zm.approxEqAbs(up, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
     const rot_yaw = zm.rotationY(degToRad(90));
     a = zm.mul(a, rot_yaw);
-    up = matUp(a);
+    up = getUpVec(a);
     try expect(zm.approxEqAbs(up, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
     const rot_pitch = zm.rotationX(degToRad(90));
     a = zm.mul(a, rot_pitch);
-    up = matUp(a);
+    up = getUpVec(a);
     try expect(zm.approxEqAbs(up, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
 }
 
 test "zmath.util.mat.right" {
     var a = zm.identity();
-    var right = matRight(a);
+    var right = getRightVec(a);
     try expect(zm.approxEqAbs(right, zm.f32x4(1.0, 0.0, 0.0, 0), 0.01));
     const rot_yaw = zm.rotationY(degToRad(90));
     a = zm.mul(a, rot_yaw);
-    right = matRight(a);
+    right = getRightVec(a);
     try expect(zm.approxEqAbs(right, zm.f32x4(0.0, 0.0, -1.0, 0), 0.01));
+    const rot_pitch = zm.rotationX(degToRad(90));
+    a = zm.mul(a, rot_pitch);
+    right = getRightVec(a);
+    try expect(zm.approxEqAbs(right, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
 }
 
 // ------------------------------------------------------------------------------
