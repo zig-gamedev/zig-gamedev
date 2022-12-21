@@ -92,7 +92,7 @@ pub fn Pool(
         pub const column_count = column_fields.len;
 
         pub fn ColumnType(comptime column: Column) type {
-            return meta.fieldInfo(Columns, column).field_type;
+            return meta.fieldInfo(Columns, column).type;
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -504,9 +504,9 @@ pub fn Pool(
 
         /// Call `value.deinit()` if defined.
         fn deinitColumnAt(self: Self, index: AddressableIndex, comptime column_field: StructField) void {
-            switch (@typeInfo(column_field.field_type)) {
+            switch (@typeInfo(column_field.type)) {
                 .Struct, .Enum, .Union, .Opaque => {
-                    if (@hasDecl(column_field.field_type, "deinit")) {
+                    if (@hasDecl(column_field.type, "deinit")) {
                         @field(self.columns, column_field.name)[index].deinit();
                     }
                 },
@@ -541,7 +541,7 @@ pub fn Pool(
             self._free_queue.storage = slice.items(.@"Pool._free_queue");
             self._curr_cycle = slice.items(.@"Pool._curr_cycle");
             inline for (column_fields) |column_field, i| {
-                const F = column_field.field_type;
+                const F = column_field.type;
                 const p = slice.ptrs[private_fields.len + i];
                 const f = @ptrCast([*]F, @alignCast(@alignOf(F), p));
                 @field(self.columns, column_field.name) = f[0..slice.len];

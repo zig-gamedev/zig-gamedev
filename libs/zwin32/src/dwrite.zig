@@ -65,92 +65,84 @@ pub const PARAGRAPH_ALIGNMENT = enum(UINT) {
 };
 
 pub const IFontCollection = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        fontcollect: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
-
-    pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            GetFontFamilyCount: *anyopaque,
-            GetFontFamily: *anyopaque,
-            FindFamilyName: *anyopaque,
-            GetFontFromFontFace: *anyopaque,
+            pub usingnamespace IUnknown.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        GetFontFamilyCount: *anyopaque,
+        GetFontFamily: *anyopaque,
+        FindFamilyName: *anyopaque,
+        GetFontFromFontFace: *anyopaque,
+    };
 };
 
 pub const ITextFormat = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        textformat: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn SetTextAlignment(self: *T, alignment: TEXT_ALIGNMENT) HRESULT {
-                return self.v.textformat.SetTextAlignment(self, alignment);
+                return @ptrCast(*const ITextFormat.VTable, self.v)
+                    .SetTextAlignment(@ptrCast(*ITextFormat, self), alignment);
             }
             pub inline fn SetParagraphAlignment(self: *T, alignment: PARAGRAPH_ALIGNMENT) HRESULT {
-                return self.v.textformat.SetParagraphAlignment(self, alignment);
+                return @ptrCast(*const ITextFormat.VTable, self.v)
+                    .SetParagraphAlignment(@ptrCast(*ITextFormat, self), alignment);
             }
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            SetTextAlignment: *const fn (*T, TEXT_ALIGNMENT) callconv(WINAPI) HRESULT,
-            SetParagraphAlignment: *const fn (*T, PARAGRAPH_ALIGNMENT) callconv(WINAPI) HRESULT,
-            SetWordWrapping: *anyopaque,
-            SetReadingDirection: *anyopaque,
-            SetFlowDirection: *anyopaque,
-            SetIncrementalTabStop: *anyopaque,
-            SetTrimming: *anyopaque,
-            SetLineSpacing: *anyopaque,
-            GetTextAlignment: *anyopaque,
-            GetParagraphAlignment: *anyopaque,
-            GetWordWrapping: *anyopaque,
-            GetReadingDirection: *anyopaque,
-            GetFlowDirection: *anyopaque,
-            GetIncrementalTabStop: *anyopaque,
-            GetTrimming: *anyopaque,
-            GetLineSpacing: *anyopaque,
-            GetFontCollection: *anyopaque,
-            GetFontFamilyNameLength: *anyopaque,
-            GetFontFamilyName: *anyopaque,
-            GetFontWeight: *anyopaque,
-            GetFontStyle: *anyopaque,
-            GetFontStretch: *anyopaque,
-            GetFontSize: *anyopaque,
-            GetLocaleNameLength: *anyopaque,
-            GetLocaleName: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        SetTextAlignment: *const fn (*ITextFormat, TEXT_ALIGNMENT) callconv(WINAPI) HRESULT,
+        SetParagraphAlignment: *const fn (*ITextFormat, PARAGRAPH_ALIGNMENT) callconv(WINAPI) HRESULT,
+        SetWordWrapping: *anyopaque,
+        SetReadingDirection: *anyopaque,
+        SetFlowDirection: *anyopaque,
+        SetIncrementalTabStop: *anyopaque,
+        SetTrimming: *anyopaque,
+        SetLineSpacing: *anyopaque,
+        GetTextAlignment: *anyopaque,
+        GetParagraphAlignment: *anyopaque,
+        GetWordWrapping: *anyopaque,
+        GetReadingDirection: *anyopaque,
+        GetFlowDirection: *anyopaque,
+        GetIncrementalTabStop: *anyopaque,
+        GetTrimming: *anyopaque,
+        GetLineSpacing: *anyopaque,
+        GetFontCollection: *anyopaque,
+        GetFontFamilyNameLength: *anyopaque,
+        GetFontFamilyName: *anyopaque,
+        GetFontWeight: *anyopaque,
+        GetFontStyle: *anyopaque,
+        GetFontStretch: *anyopaque,
+        GetFontSize: *anyopaque,
+        GetLocaleNameLength: *anyopaque,
+        GetLocaleName: *anyopaque,
+    };
 };
 
 pub const IFactory = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        factory: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn CreateTextFormat(
                 self: *T,
                 font_family_name: LPCWSTR,
@@ -162,8 +154,8 @@ pub const IFactory = extern struct {
                 locale_name: LPCWSTR,
                 text_format: *?*ITextFormat,
             ) HRESULT {
-                return self.v.factory.CreateTextFormat(
-                    self,
+                return @ptrCast(*const IFactory.VTable, self.v).CreateTextFormat(
+                    @ptrCast(*IFactory, self),
                     font_family_name,
                     font_collection,
                     font_weight,
@@ -177,41 +169,40 @@ pub const IFactory = extern struct {
         };
     }
 
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            GetSystemFontCollection: *anyopaque,
-            CreateCustomFontCollection: *anyopaque,
-            RegisterFontCollectionLoader: *anyopaque,
-            UnregisterFontCollectionLoader: *anyopaque,
-            CreateFontFileReference: *anyopaque,
-            CreateCustomFontFileReference: *anyopaque,
-            CreateFontFace: *anyopaque,
-            CreateRenderingParams: *anyopaque,
-            CreateMonitorRenderingParams: *anyopaque,
-            CreateCustomRenderingParams: *anyopaque,
-            RegisterFontFileLoader: *anyopaque,
-            UnregisterFontFileLoader: *anyopaque,
-            CreateTextFormat: *const fn (
-                *T,
-                LPCWSTR,
-                ?*IFontCollection,
-                FONT_WEIGHT,
-                FONT_STYLE,
-                FONT_STRETCH,
-                FLOAT,
-                LPCWSTR,
-                *?*ITextFormat,
-            ) callconv(WINAPI) HRESULT,
-            CreateTypography: *anyopaque,
-            GetGdiInterop: *anyopaque,
-            CreateTextLayout: *anyopaque,
-            CreateGdiCompatibleTextLayout: *anyopaque,
-            CreateEllipsisTrimmingSign: *anyopaque,
-            CreateTextAnalyzer: *anyopaque,
-            CreateNumberSubstitution: *anyopaque,
-            CreateGlyphRunAnalysis: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        GetSystemFontCollection: *anyopaque,
+        CreateCustomFontCollection: *anyopaque,
+        RegisterFontCollectionLoader: *anyopaque,
+        UnregisterFontCollectionLoader: *anyopaque,
+        CreateFontFileReference: *anyopaque,
+        CreateCustomFontFileReference: *anyopaque,
+        CreateFontFace: *anyopaque,
+        CreateRenderingParams: *anyopaque,
+        CreateMonitorRenderingParams: *anyopaque,
+        CreateCustomRenderingParams: *anyopaque,
+        RegisterFontFileLoader: *anyopaque,
+        UnregisterFontFileLoader: *anyopaque,
+        CreateTextFormat: *const fn (
+            *IFactory,
+            LPCWSTR,
+            ?*IFontCollection,
+            FONT_WEIGHT,
+            FONT_STYLE,
+            FONT_STRETCH,
+            FLOAT,
+            LPCWSTR,
+            *?*ITextFormat,
+        ) callconv(WINAPI) HRESULT,
+        CreateTypography: *anyopaque,
+        GetGdiInterop: *anyopaque,
+        CreateTextLayout: *anyopaque,
+        CreateGdiCompatibleTextLayout: *anyopaque,
+        CreateEllipsisTrimmingSign: *anyopaque,
+        CreateTextAnalyzer: *anyopaque,
+        CreateNumberSubstitution: *anyopaque,
+        CreateGlyphRunAnalysis: *anyopaque,
+    };
 };
 
 pub const IID_IFactory = GUID{

@@ -4,8 +4,12 @@
 // named parameters and Zig style text formatting.
 //
 //--------------------------------------------------------------------------------------------------
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 3 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 4 };
 
 pub usingnamespace @import("gui.zig");
 pub const plot = @import("plot.zig");
-pub const backend = @import("backend_glfw_wgpu.zig");
+pub const backend = switch (@import("zgui_options").backend) {
+    .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
+    .win32_d3d12 => @import("backend_glfw_wgpu.zig"),
+    .no_backend => .{},
+};

@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.398" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.900" };
 
 pub fn build(b: *std.build.Builder) void {
     ensureZigVersion() catch return;
@@ -8,6 +8,16 @@ pub fn build(b: *std.build.Builder) void {
         .build_mode = b.standardReleaseOptions(),
         .target = b.standardTargetOptions(.{}),
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
+        .zd3d12_enable_debug_layer = b.option(
+            bool,
+            "zd3d12-enable-debug-layer",
+            "Enable DirectX 12 debug layer",
+        ) orelse false,
+        .zd3d12_enable_gbv = b.option(
+            bool,
+            "zd3d12-enable-gbv",
+            "Enable DirectX 12 GPU-Based Validation (GBV)",
+        ) orelse false,
     };
     ensureTarget(options.target) catch return;
     ensureGit(b.allocator) catch return;
@@ -45,7 +55,14 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
 
     if (@import("builtin").target.os.tag == .windows) {
-        //installDemo(b, minimal.build(b, options), "minimal");
+        installDemo(b, minimal.build(b, options), "minimal");
+        installDemo(b, triangle.build(b, options), "triangle");
+        installDemo(b, textured_quad.build(b, options), "textured_quad");
+        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
+        installDemo(b, rasterization.build(b, options), "rasterization");
+        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
+        installDemo(b, bindless.build(b, options), "bindless");
+        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
     }
 
     //
@@ -113,8 +130,6 @@ pub fn build(b: *std.build.Builder) void {
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
-const zwin32 = @import("libs/zwin32/src/zwin32.zig");
-
 const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
@@ -126,13 +141,24 @@ const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
 const layers_wgpu = @import("samples/layers_wgpu/build.zig");
 const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
 const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+
 const minimal = @import("samples/minimal/build.zig");
+const triangle = @import("samples/triangle/build.zig");
+const textured_quad = @import("samples/textured_quad/build.zig");
+const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
+const rasterization = @import("samples/rasterization/build.zig");
+const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
+const bindless = @import("samples/bindless/build.zig");
+const simple_raytracer = @import("samples/simple_raytracer/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 
     ztracy_enable: bool,
+
+    zd3d12_enable_debug_layer: bool,
+    zd3d12_enable_gbv: bool,
 };
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {

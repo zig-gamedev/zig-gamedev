@@ -1393,87 +1393,89 @@ pub const INFO_QUEUE_FILTER = extern struct {
 
 pub const IID_IInfoQueue = GUID.parse("{6543dbb6-1b48-42f5-ab82-e97ec74326f6}");
 pub const IInfoQueue = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        info: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetMessage(
                 self: *T,
                 MessageIndex: UINT64,
                 pMessage: ?*MESSAGE,
                 pMessageByteLength: *SIZE_T,
             ) HRESULT {
-                return self.v.info.GetMessage(
-                    self,
+                return @ptrCast(*const IInfoQueue.VTable, self.v).GetMessage(
+                    @ptrCast(*IInfoQueue, self),
                     MessageIndex,
                     pMessage,
                     pMessageByteLength,
                 );
             }
             pub inline fn GetNumStoredMessages(self: *T) UINT64 {
-                return self.v.info.GetNumStoredMessages(self);
+                return @ptrCast(*const IInfoQueue.VTable, self.v)
+                    .GetNumStoredMessages(@ptrCast(*IInfoQueue, self));
             }
             pub inline fn AddStorageFilterEntries(self: *T, filter: *INFO_QUEUE_FILTER) HRESULT {
-                return self.v.info.AddStorageFilterEntries(self, filter);
+                return @ptrCast(*const IInfoQueue.VTable, self.v)
+                    .AddStorageFilterEntries(@ptrCast(*IInfoQueue, self), filter);
             }
             pub inline fn PushEmptyStorageFilter(self: *T) HRESULT {
-                return self.v.info.PushEmptyStorageFilter(self);
+                return @ptrCast(*const IInfoQueue.VTable, self.v)
+                    .PushEmptyStorageFilter(@ptrCast(*IInfoQueue, self));
             }
             pub inline fn PushStorageFilter(self: *T, filter: *INFO_QUEUE_FILTER) HRESULT {
-                return self.v.info.PushStorageFilter(self, filter);
+                return @ptrCast(*const IInfoQueue.VTable, self.v)
+                    .PushStorageFilter(@ptrCast(*IInfoQueue, self), filter);
             }
             pub inline fn PopStorageFilter(self: *T) void {
-                self.v.info.PopStorageFilter(self);
+                @ptrCast(*const IInfoQueue.VTable, self.v).PopStorageFilter();
             }
             pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
-                self.v.info.SetMuteDebugOutput(self, mute);
+                @ptrCast(*const IInfoQueue.VTable, self.v).SetMuteDebugOutput(@ptrCast(*IInfoQueue, self), mute);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            SetMessageCountLimit: *anyopaque,
-            ClearStoredMessages: *anyopaque,
-            GetMessage: fn (*T, UINT64, ?*MESSAGE, *SIZE_T) callconv(WINAPI) HRESULT,
-            GetNumMessagesAllowedByStorageFilter: *anyopaque,
-            GetNumMessagesDeniedByStorageFilter: *anyopaque,
-            GetNumStoredMessages: fn (*T) callconv(WINAPI) UINT64,
-            GetNumStoredMessagesAllowedByRetrievalFilter: *anyopaque,
-            GetNumMessagesDiscardedByMessageCountLimit: *anyopaque,
-            GetMessageCountLimit: *anyopaque,
-            AddStorageFilterEntries: fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
-            GetStorageFilter: *anyopaque,
-            ClearStorageFilter: *anyopaque,
-            PushEmptyStorageFilter: fn (*T) callconv(WINAPI) HRESULT,
-            PushCopyOfStorageFilter: *anyopaque,
-            PushStorageFilter: fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
-            PopStorageFilter: fn (*T) callconv(WINAPI) void,
-            GetStorageFilterStackSize: *anyopaque,
-            AddRetrievalFilterEntries: *anyopaque,
-            GetRetrievalFilter: *anyopaque,
-            ClearRetrievalFilter: *anyopaque,
-            PushEmptyRetrievalFilter: *anyopaque,
-            PushCopyOfRetrievalFilter: *anyopaque,
-            PushRetrievalFilter: *anyopaque,
-            PopRetrievalFilter: *anyopaque,
-            GetRetrievalFilterStackSize: *anyopaque,
-            AddMessage: *anyopaque,
-            AddApplicationMessage: *anyopaque,
-            SetBreakOnCategory: *anyopaque,
-            SetBreakOnSeverity: *anyopaque,
-            SetBreakOnID: *anyopaque,
-            GetBreakOnCategory: *anyopaque,
-            GetBreakOnSeverity: *anyopaque,
-            GetBreakOnID: *anyopaque,
-            SetMuteDebugOutput: fn (*T, BOOL) callconv(WINAPI) void,
-            GetMuteDebugOutput: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        const T = IInfoQueue;
+        base: IUnknown.VTable,
+        SetMessageCountLimit: *anyopaque,
+        ClearStoredMessages: *anyopaque,
+        GetMessage: *const fn (*T, UINT64, ?*MESSAGE, *SIZE_T) callconv(WINAPI) HRESULT,
+        GetNumMessagesAllowedByStorageFilter: *anyopaque,
+        GetNumMessagesDeniedByStorageFilter: *anyopaque,
+        GetNumStoredMessages: *const fn (*T) callconv(WINAPI) UINT64,
+        GetNumStoredMessagesAllowedByRetrievalFilter: *anyopaque,
+        GetNumMessagesDiscardedByMessageCountLimit: *anyopaque,
+        GetMessageCountLimit: *anyopaque,
+        AddStorageFilterEntries: *const fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
+        GetStorageFilter: *anyopaque,
+        ClearStorageFilter: *anyopaque,
+        PushEmptyStorageFilter: *const fn (*T) callconv(WINAPI) HRESULT,
+        PushCopyOfStorageFilter: *anyopaque,
+        PushStorageFilter: *const fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
+        PopStorageFilter: *const fn (*T) callconv(WINAPI) void,
+        GetStorageFilterStackSize: *anyopaque,
+        AddRetrievalFilterEntries: *anyopaque,
+        GetRetrievalFilter: *anyopaque,
+        ClearRetrievalFilter: *anyopaque,
+        PushEmptyRetrievalFilter: *anyopaque,
+        PushCopyOfRetrievalFilter: *anyopaque,
+        PushRetrievalFilter: *anyopaque,
+        PopRetrievalFilter: *anyopaque,
+        GetRetrievalFilterStackSize: *anyopaque,
+        AddMessage: *anyopaque,
+        AddApplicationMessage: *anyopaque,
+        SetBreakOnCategory: *anyopaque,
+        SetBreakOnSeverity: *anyopaque,
+        SetBreakOnID: *anyopaque,
+        GetBreakOnCategory: *anyopaque,
+        GetBreakOnSeverity: *anyopaque,
+        GetBreakOnID: *anyopaque,
+        SetMuteDebugOutput: *const fn (*T, BOOL) callconv(WINAPI) void,
+        GetMuteDebugOutput: *anyopaque,
+    };
 };

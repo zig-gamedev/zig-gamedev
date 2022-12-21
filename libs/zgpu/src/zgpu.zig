@@ -1614,27 +1614,27 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
 
     const FnType = switch (args_meta.len) {
         0 => *const fn (@TypeOf(obj), objc.SEL) callconv(.C) ReturnType,
-        1 => *const fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type) callconv(.C) ReturnType,
+        1 => *const fn (@TypeOf(obj), objc.SEL, args_meta[0].type) callconv(.C) ReturnType,
         2 => *const fn (
             @TypeOf(obj),
             objc.SEL,
-            args_meta[0].field_type,
-            args_meta[1].field_type,
+            args_meta[0].type,
+            args_meta[1].type,
         ) callconv(.C) ReturnType,
         3 => *const fn (
             @TypeOf(obj),
             objc.SEL,
-            args_meta[0].field_type,
-            args_meta[1].field_type,
-            args_meta[2].field_type,
+            args_meta[0].type,
+            args_meta[1].type,
+            args_meta[2].type,
         ) callconv(.C) ReturnType,
         4 => *const fn (
             @TypeOf(obj),
             objc.SEL,
-            args_meta[0].field_type,
-            args_meta[1].field_type,
-            args_meta[2].field_type,
-            args_meta[3].field_type,
+            args_meta[0].type,
+            args_meta[1].type,
+            args_meta[2].type,
+            args_meta[3].type,
         ) callconv(.C) ReturnType,
         else => @compileError("[zgpu] Unsupported number of args"),
     };
@@ -1642,7 +1642,7 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
     const func = @ptrCast(FnType, &objc.objc_msgSend);
     const sel = objc.sel_getUid(sel_name.ptr);
 
-    return @call(.{}, func, .{ obj, sel } ++ args);
+    return @call(.never_inline, func, .{ obj, sel } ++ args);
 }
 
 fn logUnhandledError(

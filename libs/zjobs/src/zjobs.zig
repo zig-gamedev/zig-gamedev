@@ -891,12 +891,12 @@ pub fn JobQueue(
                 );
 
                 compileAssert(
-                    fn_info.args.len > 0,
+                    fn_info.params.len > 0,
                     "{s}.exec() must have at least one parameter",
                     .{@typeName(Job)},
                 );
 
-                const arg_type_0 = fn_info.args[0].arg_type;
+                const arg_type_0 = fn_info.params[0].type;
 
                 compileAssert(
                     arg_type_0 == *Job or arg_type_0 == *const Job,
