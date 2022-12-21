@@ -32,22 +32,24 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
+    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
+    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
 
     exe.addPackage(zmesh_pkg);
     exe.addPackage(zgpu_pkg);
-    exe.addPackage(zgui.pkg);
+    exe.addPackage(zgui_pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(zglfw.pkg);
     exe.addPackage(zstbi.pkg);
 
     zmesh.link(exe, zmesh_options);
     zgpu.link(exe, zgpu_options);
+    zgui.link(exe, zgui_options);
     zglfw.link(exe);
     zstbi.link(exe);
-    zgui.link(exe);
 
     return exe;
 }

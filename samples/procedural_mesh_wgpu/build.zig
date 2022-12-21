@@ -31,14 +31,16 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
     const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = true, .enable_fibers = true });
+    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
     const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
+    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
 
     exe.addPackage(zmesh_pkg);
     exe.addPackage(zgpu_pkg);
-    exe.addPackage(zgui.pkg);
+    exe.addPackage(zgui_pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(znoise.pkg);
     exe.addPackage(zglfw.pkg);
@@ -47,9 +49,9 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     ztracy.link(exe, ztracy_options);
     zgpu.link(exe, zgpu_options);
     zmesh.link(exe, zmesh_options);
+    zgui.link(exe, zgui_options);
     znoise.link(exe);
     zglfw.link(exe);
-    zgui.link(exe);
 
     return exe;
 }
