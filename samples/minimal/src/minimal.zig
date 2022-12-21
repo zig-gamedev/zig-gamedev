@@ -5,7 +5,7 @@ const d3d12 = zwin32.d3d12;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
 
-pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKVersion: u32 = 608;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;
