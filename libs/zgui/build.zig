@@ -3,7 +3,6 @@ const std = @import("std");
 pub const Backend = enum {
     no_backend,
     glfw_wgpu,
-    win32_d3d12,
 };
 
 pub const BuildOptions = struct {
@@ -67,7 +66,6 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
             exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", cflags);
             exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", cflags);
         },
-        .win32_d3d12 => {},
         .no_backend => {},
     }
 }
