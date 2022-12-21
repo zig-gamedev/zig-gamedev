@@ -113,7 +113,7 @@ All sample applications support the following build options:
 
 Addidtional options for Windows applications:
 * `-Dzd3d12-enable-debug-layer=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
-* `-Dzd3d12-enable-gbv=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Dzd3d12-enable-debug-layer=true)
+* `-Dzd3d12-enable-gbv=[bool]` - Direct3D 12 GPU-Based Validation enabled
 
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
