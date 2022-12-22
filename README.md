@@ -70,6 +70,8 @@ Some of the sample applications are listed below. More can be found in [samples]
     
 ## Sample applications (DirectX 12)
 
+Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
+
 1. [bindless](samples/bindless): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. It uses bindless textures and HLSL 6.6 dynamic resources.<br />`zig build bindless-run`
 
     <a href="samples/bindless"><img src="samples/bindless/screenshot.png" alt="bindless" height="200"></a>
