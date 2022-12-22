@@ -2,10 +2,10 @@
 
 # zig-gamedev project
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021.
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday since July 2021. Please consider [supporting the project](https://github.com/sponsors/michal-z). We create:
 
-* Cross-platform sample [applications](#sample-applications)
-* DirectX 12 sample [applications](#sample-applications)
+* Cross-platform sample [applications](#sample-applications-native-wgpu)
+* DirectX 12 sample [applications](#sample-applications-directx-12)
 * DirectX 12 introductory [applications](samples/intro)
 * Cross-platform and composable [libraries](#libraries)
 * Mini-games (in planning)
@@ -69,6 +69,8 @@ Some of the sample applications are listed below. More can be found in [samples]
     <a href="samples/gui_test_wgpu"><img src="samples/gui_test_wgpu/screenshot.png" alt="gui test (wgpu)" height="200"></a>
     
 ## Sample applications (DirectX 12)
+
+Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
 1. [bindless](samples/bindless): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. It uses bindless textures and HLSL 6.6 dynamic resources.<br />`zig build bindless-run`
 
