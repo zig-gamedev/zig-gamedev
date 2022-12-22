@@ -2,16 +2,19 @@
 #include <stdlib.h>
 #include <assert.h>
 //--------------------------------------------------------------------------------------------------
-extern void* zaudioMalloc(size_t size, void* user_data);
-extern void* zaudioRealloc(void* ptr, size_t size, void* user_data);
-extern void zaudioFree(void* ptr, void* user_data);
+void* (*zaudioMallocPtr)(size_t size, void* user_data) = NULL;
+void* (*zaudioReallocPtr)(void* ptr, size_t size, void* user_data) = NULL;
+void (*zaudioFreePtr)(void* ptr, void* user_data) = NULL;
 
-static ma_allocation_callbacks s_mem = {
-    .pUserData = NULL,
-    .onMalloc = zaudioMalloc,
-    .onRealloc = zaudioRealloc,
-    .onFree = zaudioFree,
-};
+static ma_allocation_callbacks s_mem;
+
+void zaudioMemInit(void) {
+    assert(zaudioMallocPtr && zaudioReallocPtr && zaudioFreePtr);
+    s_mem.pUserData = NULL;
+    s_mem.onMalloc = zaudioMallocPtr;
+    s_mem.onRealloc = zaudioReallocPtr;
+    s_mem.onFree = zaudioFreePtr;
+}
 //--------------------------------------------------------------------------------------------------
 void zaudioNoiseConfigInit(
     ma_format format,

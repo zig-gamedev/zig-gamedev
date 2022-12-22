@@ -11,7 +11,14 @@ pub fn init(allocator: std.mem.Allocator) void {
     mem_allocator = allocator;
     mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
     mem_allocations.?.ensureTotalCapacity(16) catch @panic("zaudio: out of memory");
+
+    zaudioMallocPtr = zaudioMalloc;
+    zaudioReallocPtr = zaudioRealloc;
+    zaudioFreePtr = zaudioFree;
+
+    zaudioMemInit();
 }
+extern fn zaudioMemInit() callconv(.C) void;
 
 pub fn deinit() void {
     assert(mem_allocator != null);
@@ -2511,7 +2518,9 @@ var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
-export fn zaudioMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
+extern var zaudioMallocPtr: ?*const fn (size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque;
+
+fn zaudioMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -2526,7 +2535,9 @@ export fn zaudioMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
-export fn zaudioRealloc(ptr: ?*anyopaque, size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
+extern var zaudioReallocPtr: ?*const fn (ptr: ?*anyopaque, size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque;
+
+fn zaudioRealloc(ptr: ?*anyopaque, size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -2548,7 +2559,9 @@ export fn zaudioRealloc(ptr: ?*anyopaque, size: usize, _: ?*anyopaque) callconv(
     return new_mem.ptr;
 }
 
-export fn zaudioFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
+extern var zaudioFreePtr: ?*const fn (maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void;
+
+fn zaudioFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
         mem_mutex.lock();
         defer mem_mutex.unlock();
