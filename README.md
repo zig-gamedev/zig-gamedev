@@ -2,10 +2,10 @@
 
 # zig-gamedev project
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021.
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday since July 2021.
 
-* Cross-platform sample [applications](#sample-applications)
-* DirectX 12 sample [applications](#sample-applications)
+* Cross-platform sample [applications](#sample-applications-native-wgpu)
+* DirectX 12 sample [applications](#sample-applications-directx-12)
 * DirectX 12 introductory [applications](samples/intro)
 * Cross-platform and composable [libraries](#libraries)
 * Mini-games (in planning)
