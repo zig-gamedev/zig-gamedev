@@ -64,6 +64,12 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
         installDemo(b, bindless.build(b, options), "bindless");
         installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
+
+        comptime var intro_index: u32 = 0;
+        inline while (intro_index < 7) : (intro_index += 1) {
+            const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
+            installDemo(b, intro.build(b, options, intro_index), name);
+        }
     }
 
     //
@@ -156,6 +162,7 @@ const rasterization = @import("samples/rasterization/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const bindless = @import("samples/bindless/build.zig");
 const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+const intro = @import("samples/intro/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,

@@ -934,7 +934,7 @@ pub const Shape = opaque {
 // Memory allocation
 //
 //--------------------------------------------------------------------------------------------------
-export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
+fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -949,7 +949,7 @@ export fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
-export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
+fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -965,7 +965,7 @@ export fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*any
     return ptr;
 }
 
-export fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
+fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
         mem_mutex.lock();
         defer mem_mutex.unlock();

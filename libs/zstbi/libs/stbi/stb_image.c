@@ -1,12 +1,12 @@
 #include <stdlib.h>
 
-extern void* zstbiMalloc(size_t size);
-extern void* zstbiRealloc(void* ptr, size_t size);
-extern void zstbiFree(void* ptr);
+void* (*zstbiMallocPtr)(size_t size) = NULL;
+void* (*zstbiReallocPtr)(void* ptr, size_t size) = NULL;
+void (*zstbiFreePtr)(void* ptr) = NULL;
 
-#define STBI_MALLOC(size) zstbiMalloc(size)
-#define STBI_REALLOC(ptr, size) zstbiRealloc(ptr, size)
-#define STBI_FREE(ptr) zstbiFree(ptr)
+#define STBI_MALLOC(size) zstbiMallocPtr(size)
+#define STBI_REALLOC(ptr, size) zstbiReallocPtr(ptr, size)
+#define STBI_FREE(ptr) zstbiFreePtr(ptr)
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"

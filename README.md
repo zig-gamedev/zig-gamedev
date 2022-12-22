@@ -4,9 +4,11 @@
 
 We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021.
 
-* Sample [applications](#sample-applications)
+* Cross-platform sample [applications](#sample-applications)
+* DirectX 12 sample [applications](#sample-applications)
+* DirectX 12 introductory [applications](samples/intro)
 * Cross-platform and composable [libraries](#libraries)
-* Mini-games (coming soon)
+* Mini-games (in planning)
 
 To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```
