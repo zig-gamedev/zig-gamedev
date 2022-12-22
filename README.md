@@ -32,7 +32,7 @@ Library | Latest version | Description
 **[zbullet](libs/zbullet)** | 0.2.0 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 **[zwin32](libs/zwin32)** | 0.1.0 | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi)
 **[zd3d12](libs/zd3d12)** | 0.1.0 | Helper library for working with DirectX 12
-**[zpix](libs/zpix)** | 0.1.0 | Support for GPU profiling with PIX for Windows (events, markers and programmatic captures)
+**[zpix](libs/zpix)** | 0.1.0 | Support for GPU profiling with PIX for Windows
 
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs
@@ -119,6 +119,7 @@ All sample applications support the following build options:
 Addidtional options for Windows applications:
 * `-Dzd3d12-enable-debug-layer=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Dzd3d12-enable-gbv=[bool]` - Direct3D 12 GPU-Based Validation (GBV) enabled
+* `-Dzpix-enable=[bool]` - PIX markers and events enabled
 
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
