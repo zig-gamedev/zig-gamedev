@@ -1,4 +1,4 @@
-[Libraries](#libraries) - [Sample applications](#sample-applications) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
+[Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
 
 # zig-gamedev project
 
