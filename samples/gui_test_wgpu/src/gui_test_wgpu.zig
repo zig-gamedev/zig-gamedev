@@ -541,13 +541,13 @@ fn update(demo: *DemoState) !void {
     }
     zgui.end();
 
-    // TODO Will not draw on screen for now, need another render-pass
+    // TODO: will not draw on screen for now
     demo.draw_list.reset();
     demo.draw_list.addCircle(.{
         .p = .{ 200, 700 },
         .r = 30,
         .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 0 }),
-        .thickness = 30 * @floatCast(f32, @sin(demo.gctx.stats.time)),
+        .thickness = 15 + 15 * @floatCast(f32, @sin(demo.gctx.stats.time)),
     });
 }
 
