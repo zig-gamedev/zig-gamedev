@@ -17,6 +17,7 @@ const DemoState = struct {
     texture_view: zgpu.TextureViewHandle,
     font_normal: zgui.Font,
     font_large: zgui.Font,
+    draw_list: zgui.DrawList,
 };
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
@@ -108,12 +109,15 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         plot_style.marker_size = 5.0;
     }
 
+    const draw_list = zgui.createDrawList();
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
         .texture_view = texture_view,
         .font_normal = font_normal,
         .font_large = font_large,
+        .draw_list = draw_list,
     };
 
     return demo;
@@ -122,6 +126,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
 fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     zgui.backend.deinit();
     zgui.plot.deinit();
+    zgui.destroyDrawList(demo.draw_list);
     zgui.deinit();
     demo.gctx.destroy(allocator);
     allocator.destroy(demo);
@@ -535,6 +540,15 @@ fn update(demo: *DemoState) !void {
         }
     }
     zgui.end();
+
+    // TODO: will not draw on screen for now
+    demo.draw_list.reset();
+    demo.draw_list.addCircle(.{
+        .p = .{ 200, 700 },
+        .r = 30,
+        .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 0 }),
+        .thickness = 15 + 15 * @floatCast(f32, @sin(demo.gctx.stats.time)),
+    });
 }
 
 fn draw(demo: *DemoState) void {

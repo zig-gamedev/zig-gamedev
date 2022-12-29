@@ -1528,6 +1528,22 @@ ZGUI_API ImDrawList *zguiGetForegroundDrawList(void) {
     return ImGui::GetForegroundDrawList();
 }
 
+ZGUI_API ImDrawList *zguiCreateDrawList(void) {
+    return IM_NEW(ImDrawList)(ImGui::GetDrawListSharedData());
+}
+
+ZGUI_API void zguiDestroyDrawList(ImDrawList *draw_list) {
+  IM_DELETE(draw_list);
+}
+
+ZGUI_API const char *zguiDrawList_GetOwnerName(ImDrawList *draw_list) {
+    return draw_list->_OwnerName;
+}
+
+ZGUI_API void zguiDrawList_ResetForNewFrame(ImDrawList *draw_list) {
+    draw_list->_ResetForNewFrame();
+}
+
 ZGUI_API int zguiDrawList_GetVertexBufferLength(ImDrawList *draw_list) {
     return draw_list->VtxBuffer.size();
 }
