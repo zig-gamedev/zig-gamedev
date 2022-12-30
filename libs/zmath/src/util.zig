@@ -107,34 +107,6 @@ test "zmath.util.mat.right" {
 }
 
 // ------------------------------------------------------------------------------
-//
-// 2. Angle functions
-//
-// ------------------------------------------------------------------------------
-
-pub fn angleMod(angle: f32) f32 {
-    const mod = @mod(angle, 2 * math.pi);
-    return mod;
-}
-
-test "zmath.util.angle" {
-    const degToRad = std.math.degreesToRadians;
-    const radToDeg = std.math.radiansToDegrees;
-    try expect(math.approxEqAbs(f32, degToRad(f32, 0), 0, 0.01));
-    try expect(math.approxEqAbs(f32, degToRad(f32, 360), math.pi * 2, 0.01));
-    try expect(math.approxEqAbs(f32, radToDeg(f32, 0), 0, 0.01));
-    try expect(math.approxEqAbs(f32, radToDeg(f32, math.pi * 2), 360, 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 0)), degToRad(f32, 0), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 0.5)), degToRad(f32, 0.5), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 1)), degToRad(f32, 1), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 361.5)), degToRad(f32, 1.5), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 721)), degToRad(f32, 1), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, -1.5)), degToRad(f32, 358.5), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, -359)), degToRad(f32, 1), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, -361)), degToRad(f32, 359), 0.01));
-}
-
-// ------------------------------------------------------------------------------
 // This software is available under 2 licenses -- choose whichever you prefer.
 // ------------------------------------------------------------------------------
 // ALTERNATIVE A - MIT License
