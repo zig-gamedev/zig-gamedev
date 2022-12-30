@@ -3,7 +3,7 @@ const std = @import("std");
 pub const Backend = enum {
     no_backend,
     glfw_wgpu,
-    win32_d3d12,
+    win32_dx12,
 };
 
 pub const BuildOptions = struct {
@@ -44,6 +44,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     bos.addTo(exe);
 
     exe.addIncludePath(thisDir() ++ "/libs");
+    exe.addIncludePath(thisDir() ++ "/libs/imgui");
 
     exe.linkSystemLibraryName("c");
     exe.linkSystemLibraryName("c++");
@@ -64,10 +65,15 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
 
     switch (bos.options.backend) {
         .glfw_wgpu => {
-            exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", cflags);
-            exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", cflags);
+            exe.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
+            exe.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", cflags);
         },
-        .win32_d3d12 => {},
+        .win32_dx12 => {
+            exe.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp", cflags);
+            exe.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_dx12.cpp", cflags);
+            exe.linkSystemLibraryName("d3dcompiler_47");
+            exe.linkSystemLibraryName("dwmapi");
+        },
         .no_backend => {},
     }
 }

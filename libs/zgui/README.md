@@ -1,4 +1,4 @@
-# zgui v0.9.3 - dear imgui bindings
+# zgui v0.9.4 - dear imgui bindings
 
 Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. For a test application please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu).
 
@@ -26,9 +26,12 @@ const zpool = @import("libs/zpool/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    exe.addPackage(zgui.pkg);
+    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
+    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
 
-    zgui.link(exe);
+    exe.addPackage(zgui_pkg);
+
+    zgui.link(exe, zgui_options);
     
     // Needed for glfw/wgpu rendering backend
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});

@@ -18,6 +18,7 @@ pub fn build(b: *std.build.Builder) void {
             "zd3d12-enable-gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
+        .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
     };
     ensureTarget(options.target) catch return;
     ensureGit(b.allocator) catch return;
@@ -63,6 +64,12 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
         installDemo(b, bindless.build(b, options), "bindless");
         installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
+
+        comptime var intro_index: u32 = 0;
+        inline while (intro_index < 7) : (intro_index += 1) {
+            const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
+            installDemo(b, intro.build(b, options, intro_index), name);
+        }
     }
 
     //
@@ -97,7 +104,12 @@ pub fn build(b: *std.build.Builder) void {
     const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zaudio_tests.step);
 
-    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(b, options.build_mode, options.target, .{});
+    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+        .{},
+    );
     test_step.dependOn(&zphysics_tests.step);
 
     const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
@@ -150,6 +162,7 @@ const rasterization = @import("samples/rasterization/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const bindless = @import("samples/bindless/build.zig");
 const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+const intro = @import("samples/intro/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -159,6 +172,8 @@ pub const Options = struct {
 
     zd3d12_enable_debug_layer: bool,
     zd3d12_enable_gbv: bool,
+
+    zpix_enable: bool,
 };
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {

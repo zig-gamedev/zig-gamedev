@@ -12,7 +12,7 @@ const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
-//const zpix = @import("zpix");
+const zpix = @import("zpix");
 
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
@@ -441,12 +441,12 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    //_ = zpix.loadGpuCapturerLibrary();
-    //_ = zpix.setTargetWindow(window);
-    //_ = zpix.beginCapture(
-    //    zpix.CAPTURE_GPU,
-    //    &zpix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
-    //);
+    _ = zpix.loadGpuCapturerLibrary();
+    _ = zpix.setTargetWindow(window);
+    _ = zpix.beginCapture(
+        zpix.CAPTURE_GPU,
+        &.{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
+    );
 
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
@@ -965,7 +965,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     gctx.endFrame();
     gctx.finishGpuCommands();
 
-    //_ = zpix.endCapture();
+    _ = zpix.endCapture();
 
     mipgen_rgba8.deinit(&gctx);
     for (temp_resources.items) |resource| {
@@ -1148,8 +1148,8 @@ fn draw(demo: *DemoState) void {
 
     // Z Pre Pass.
     {
-        //zpix.beginEvent(gctx.cmdlist, "Z Pre Pass");
-        //defer zpix.endEvent(gctx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Z Pre Pass");
+        defer zpix.endEvent(gctx.cmdlist);
 
         const object_to_clip = cam_world_to_clip;
 
@@ -1176,8 +1176,8 @@ fn draw(demo: *DemoState) void {
 
     // Generate shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        //zpix.beginEvent(gctx.cmdlist, "Generate shadow rays.");
-        //defer zpix.endEvent(gctx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Generate shadow rays");
+        defer zpix.endEvent(gctx.cmdlist);
 
         gctx.cmdlist.OMSetRenderTargets(
             1,
@@ -1226,8 +1226,8 @@ fn draw(demo: *DemoState) void {
 
     // Trace shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        //zpix.beginEvent(gctx.cmdlist, "Trace Shadow Rays");
-        //defer zpix.endEvent(gctx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Trace Shadow Rays");
+        defer zpix.endEvent(gctx.cmdlist);
 
         // Upload 'shader table' content (in this demo it could be done only once at init time).
         {
@@ -1323,8 +1323,8 @@ fn draw(demo: *DemoState) void {
 
     // Draw Sponza.
     {
-        //zpix.beginEvent(gctx.cmdlist, "Main Pass");
-        //defer zpix.endEvent(gctx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Main Pass");
+        defer zpix.endEvent(gctx.cmdlist);
 
         const object_to_world = vm.Mat4.initIdentity();
         const object_to_clip = object_to_world.mul(cam_world_to_clip);

@@ -6,6 +6,10 @@ pub fn init(allocator: std.mem.Allocator) void {
     assert(mem_allocator == null);
     mem_allocator = allocator;
     mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
+
+    zstbiMallocPtr = zstbiMalloc;
+    zstbiReallocPtr = zstbiRealloc;
+    zstbiFreePtr = zstbiFree;
 }
 
 pub fn deinit() void {
@@ -197,7 +201,9 @@ var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
-export fn zstbiMalloc(size: usize) callconv(.C) ?*anyopaque {
+extern var zstbiMallocPtr: ?*const fn (size: usize) callconv(.C) ?*anyopaque;
+
+fn zstbiMalloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -212,7 +218,9 @@ export fn zstbiMalloc(size: usize) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
-export fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
+extern var zstbiReallocPtr: ?*const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+
+fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -234,7 +242,9 @@ export fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     return new_mem.ptr;
 }
 
-export fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
+extern var zstbiFreePtr: ?*const fn (maybe_ptr: ?*anyopaque) callconv(.C) void;
+
+fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
         mem_mutex.lock();
         defer mem_mutex.unlock();

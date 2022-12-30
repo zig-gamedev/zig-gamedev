@@ -1,7 +1,7 @@
 const std = @import("std");
 const zwin32 = @import("../../libs/zwin32/build.zig");
 const zd3d12 = @import("../../libs/zd3d12/build.zig");
-//const zpix = @import("../../libs/zpix/build.zig");
+const zpix = @import("../../libs/zpix/build.zig");
 const common = @import("../../libs/common/build.zig");
 
 const Options = @import("../../build.zig").Options;
@@ -30,9 +30,9 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    //const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable_zpix = options.zpix_enable });
-    //const zpix_pkg = zpix.getPkg(&.{zpix_options.getPkg()});
-    //exe.addPackage(zpix_pkg);
+    const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable_zpix = options.zpix_enable });
+    const zpix_pkg = zpix.getPkg(&.{zpix_options.getPkg()});
+    exe.addPackage(zpix_pkg);
 
     const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
         .enable_debug_layer = options.zd3d12_enable_debug_layer,

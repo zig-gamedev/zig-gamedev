@@ -59,7 +59,7 @@ var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
-export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
+fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
@@ -74,7 +74,7 @@ export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
-export fn zguiMemFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
+fn zguiMemFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
         mem_mutex.lock();
         defer mem_mutex.unlock();
@@ -3233,11 +3233,33 @@ pub const getWindowDrawList = zguiGetWindowDrawList;
 pub const getBackgroundDrawList = zguiGetBackgroundDrawList;
 pub const getForegroundDrawList = zguiGetForegroundDrawList;
 
+pub const createDrawList = zguiCreateDrawList;
+pub fn destroyDrawList(draw_list: DrawList) void {
+    if (draw_list.getOwnerName()) |owner| {
+        @panic(format("zgui: illegally destroying DrawList of {s}", .{owner}));
+    }
+    zguiDestroyDrawList(draw_list);
+}
+
 extern fn zguiGetWindowDrawList() DrawList;
 extern fn zguiGetBackgroundDrawList() DrawList;
 extern fn zguiGetForegroundDrawList() DrawList;
+extern fn zguiCreateDrawList() DrawList;
+extern fn zguiDestroyDrawList(draw_list: DrawList) void;
 
 pub const DrawList = *opaque {
+    pub const getOwnerName = zguiDrawList_GetOwnerName;
+    extern fn zguiDrawList_GetOwnerName(draw_list: DrawList) ?[*:0]const u8;
+
+    pub fn reset(draw_list: DrawList) void {
+        if (draw_list.getOwnerName()) |owner| {
+            @panic(format("zgui: illegally resetting DrawList of {s}", .{owner}));
+        }
+        zguiDrawList_ResetForNewFrame(draw_list);
+    }
+    extern fn zguiDrawList_ResetForNewFrame(draw_list: DrawList) void;
+
+    //----------------------------------------------------------------------------------------------
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
