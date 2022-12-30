@@ -7,18 +7,21 @@
 // 1. Matrix functions
 // ------------------------------------------------------------------------------
 //
+// As an example, in a left handed Y-up system:
+//   getAxisX is equivalent to the right vector
+//   getAxisY is equivalent to the up vector
+//   getAxisZ is equivalent to the forward vector
+//
 // getTranslationVec(m: Mat) Vec
-// getForwardVec(m: Mat) Vec
-// getUpVec(m: Mat) Vec
-// getRightVec(m: Mat) Vec
+// getAxisX(m: Mat) Vec
+// getAxisY(m: Mat) Vec
+// getAxisZ(m: Mat) Vec
 //
 //
 // ------------------------------------------------------------------------------
 // 2. Angle functions
 // ------------------------------------------------------------------------------
 //
-// degToRad(angle: f32) f32
-// radToDeg(angle: f32) f32
 // angleMod(angle: f32) f32
 //
 // ==============================================================================
@@ -34,21 +37,21 @@ pub fn getTranslationVec(m: zm.Mat) zm.Vec {
     return translation;
 }
 
-pub fn getForwardVec(m: zm.Mat) zm.Vec {
-    return zm.normalize3(zm.f32x4(m[2][0], m[2][1], m[2][2], 0.0));
+pub fn getAxisX(m: zm.Mat) zm.Vec {
+    return zm.normalize3(zm.f32x4(m[0][0], m[0][1], m[0][2], 0.0));
 }
 
-pub fn getUpVec(m: zm.Mat) zm.Vec {
+pub fn getAxisY(m: zm.Mat) zm.Vec {
     return zm.normalize3(zm.f32x4(m[1][0], m[1][1], m[1][2], 0.0));
 }
 
-pub fn getRightVec(m: zm.Mat) zm.Vec {
-    return zm.normalize3(zm.f32x4(m[0][0], m[0][1], m[0][2], 0.0));
+pub fn getAxisZ(m: zm.Mat) zm.Vec {
+    return zm.normalize3(zm.f32x4(m[2][0], m[2][1], m[2][2], 0.0));
 }
 
 test "zmath.util.mat.translation" {
     // zig fmt: off
-    const a = [18]f32{
+    const mat_data = [18]f32{
         1.0,
         2.0, 3.0, 4.0, 5.0,
         6.0, 7.0, 8.0, 9.0,
@@ -57,52 +60,49 @@ test "zmath.util.mat.translation" {
         18.0,
     };
     // zig fmt: on
-    const m = zm.loadMat(a[1..]);
-    const translation = getTranslationVec(m);
+    const mat = zm.loadMat(mat_data[1..]);
+    const translation = getTranslationVec(mat);
     try expect(zm.approxEqAbs(translation, zm.f32x4(14.0, 15.0, 16.0, 0.0), 0.01));
 }
 
-test "zmath.util.mat.forward" {
-    var a = zm.identity();
-    var forward = getForwardVec(a);
-    std.debug.print("\nFWD 1 {}\n", .{forward});
-    try expect(zm.approxEqAbs(forward, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
-    const rot_yaw = zm.rotationY(degToRad(90));
-    a = zm.mul(a, rot_yaw);
-    forward = getForwardVec(a);
-    std.debug.print("FWD 2 {} \nrot_yaw {any} \na       {any}\n", .{ forward, rot_yaw, a });
-    // { -6.22985467e-08, 0.0e+00,   -1.0e+00,        0.0e+00 },
-    // { 0.0e+00,         1.0e+00,    0.0e+00,        0.0e+00 },
-    // { 1.0e+00,         0.0e+00,    6.22985467e-08, 0.0e+00 },
-    // { 0.0e+00,         0.0e+00,    0.0e+00,        1.0e+00 } }
-    try expect(zm.approxEqAbs(forward, zm.f32x4(1.0, 0.0, 0.0, 0), 0.01));
+test "zmath.util.mat.z_vec" {
+    const degToRad = std.math.degreesToRadians;
+    var identity = zm.identity();
+    var z_vec = getAxisZ(identity);
+    try expect(zm.approxEqAbs(z_vec, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
+    const rot_yaw = zm.rotationY(degToRad(f32, 90));
+    identity = zm.mul(identity, rot_yaw);
+    z_vec = getAxisZ(identity);
+    try expect(zm.approxEqAbs(z_vec, zm.f32x4(1.0, 0.0, 0.0, 0), 0.01));
 }
 
-test "zmath.util.mat.up" {
-    var a = zm.identity();
-    var up = getUpVec(a);
-    try expect(zm.approxEqAbs(up, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
-    const rot_yaw = zm.rotationY(degToRad(90));
-    a = zm.mul(a, rot_yaw);
-    up = getUpVec(a);
-    try expect(zm.approxEqAbs(up, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
-    const rot_pitch = zm.rotationX(degToRad(90));
-    a = zm.mul(a, rot_pitch);
-    up = getUpVec(a);
-    try expect(zm.approxEqAbs(up, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
+test "zmath.util.mat.y_vec" {
+    const degToRad = std.math.degreesToRadians;
+    var identity = zm.identity();
+    var y_vec = getAxisY(identity);
+    try expect(zm.approxEqAbs(y_vec, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
+    const rot_yaw = zm.rotationY(degToRad(f32, 90));
+    identity = zm.mul(identity, rot_yaw);
+    y_vec = getAxisY(identity);
+    try expect(zm.approxEqAbs(y_vec, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
+    const rot_pitch = zm.rotationX(degToRad(f32, 90));
+    identity = zm.mul(identity, rot_pitch);
+    y_vec = getAxisY(identity);
+    try expect(zm.approxEqAbs(y_vec, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
 }
 
 test "zmath.util.mat.right" {
-    var a = zm.identity();
-    var right = getRightVec(a);
+    const degToRad = std.math.degreesToRadians;
+    var identity = zm.identity();
+    var right = getAxisX(identity);
     try expect(zm.approxEqAbs(right, zm.f32x4(1.0, 0.0, 0.0, 0), 0.01));
-    const rot_yaw = zm.rotationY(degToRad(90));
-    a = zm.mul(a, rot_yaw);
-    right = getRightVec(a);
+    const rot_yaw = zm.rotationY(degToRad(f32, 90));
+    identity = zm.mul(identity, rot_yaw);
+    right = getAxisX(identity);
     try expect(zm.approxEqAbs(right, zm.f32x4(0.0, 0.0, -1.0, 0), 0.01));
-    const rot_pitch = zm.rotationX(degToRad(90));
-    a = zm.mul(a, rot_pitch);
-    right = getRightVec(a);
+    const rot_pitch = zm.rotationX(degToRad(f32, 90));
+    identity = zm.mul(identity, rot_pitch);
+    right = getAxisX(identity);
     try expect(zm.approxEqAbs(right, zm.f32x4(0.0, 1.0, 0.0, 0), 0.01));
 }
 
@@ -112,32 +112,26 @@ test "zmath.util.mat.right" {
 //
 // ------------------------------------------------------------------------------
 
-pub fn degToRad(angle: f32) f32 {
-    return angle * math.pi / 180.0;
-}
-
-pub fn radToDeg(angle: f32) f32 {
-    return angle * 180.0 / math.pi;
-}
-
 pub fn angleMod(angle: f32) f32 {
     const mod = @mod(angle, 2 * math.pi);
     return mod;
 }
 
 test "zmath.util.angle" {
-    try expect(math.approxEqAbs(f32, degToRad(0), 0, 0.01));
-    try expect(math.approxEqAbs(f32, degToRad(360), math.pi * 2, 0.01));
-    try expect(math.approxEqAbs(f32, radToDeg(0), 0, 0.01));
-    try expect(math.approxEqAbs(f32, radToDeg(math.pi * 2), 360, 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(0)), degToRad(0), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(0.5)), degToRad(0.5), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(1)), degToRad(1), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(361.5)), degToRad(1.5), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(721)), degToRad(1), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(-1.5)), degToRad(358.5), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(-359)), degToRad(1), 0.01));
-    try expect(math.approxEqAbs(f32, angleMod(degToRad(-361)), degToRad(359), 0.01));
+    const degToRad = std.math.degreesToRadians;
+    const radToDeg = std.math.radiansToDegrees;
+    try expect(math.approxEqAbs(f32, degToRad(f32, 0), 0, 0.01));
+    try expect(math.approxEqAbs(f32, degToRad(f32, 360), math.pi * 2, 0.01));
+    try expect(math.approxEqAbs(f32, radToDeg(f32, 0), 0, 0.01));
+    try expect(math.approxEqAbs(f32, radToDeg(f32, math.pi * 2), 360, 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 0)), degToRad(f32, 0), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 0.5)), degToRad(f32, 0.5), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 1)), degToRad(f32, 1), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 361.5)), degToRad(f32, 1.5), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, 721)), degToRad(f32, 1), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, -1.5)), degToRad(f32, 358.5), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, -359)), degToRad(f32, 1), 0.01));
+    try expect(math.approxEqAbs(f32, angleMod(degToRad(f32, -361)), degToRad(f32, 359), 0.01));
 }
 
 // ------------------------------------------------------------------------------
@@ -145,7 +139,7 @@ test "zmath.util.angle" {
 // ------------------------------------------------------------------------------
 // ALTERNATIVE A - MIT License
 // Copyright (c) 2022 Michal Ziulek
-// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// Permission is hereby granted, free of charge, to any person obtaining identity copy of
 // this software and associated documentation files (the "Software"), to deal in
 // the Software without restriction, including without limitation the rights to
 // use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
@@ -164,7 +158,7 @@ test "zmath.util.angle" {
 // ALTERNATIVE B - Public Domain (www.unlicense.org)
 // This is free and unencumbered software released into the public domain.
 // Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
-// software, either in source code form or as a compiled binary, for any purpose,
+// software, either in source code form or as identity compiled binary, for any purpose,
 // commercial or non-commercial, and by any means.
 // In jurisdictions that recognize copyright laws, the author or authors of this
 // software dedicate any and all copyright interest in the software to the public
