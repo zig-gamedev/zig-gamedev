@@ -2769,7 +2769,7 @@ pub const BeginTable = struct {
     inner_width: f32 = 0,
 };
 pub fn beginTable(name: [:0]const u8, args: BeginTable) void {
-    zguiBeginTable(name, args.columns, args.flags, &args.outer_size, args.inner_width);
+    zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
 }
 extern fn zguiBeginTable(
     str_id: [*:0]const u8,
