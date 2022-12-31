@@ -91,6 +91,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 ## Others using zig-gamedev
 
 * [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
+* [Pixi](https://github.com/foxnne/pixi) - Pixel art editor made with Zig
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
 * [elvengroin legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
 * [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles Zig demonstrator
