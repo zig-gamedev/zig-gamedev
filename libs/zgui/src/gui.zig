@@ -2766,11 +2766,12 @@ pub const BeginTable = struct {
     flags: TableFlags = .{},
     outer_size: [2]f32 = .{ 0, 0 },
     inner_width: f32 = 0,
+    columns: i32 = 1,
 };
 pub fn beginTable(name: [:0]const u8, args: BeginTable) void {
-    zguiBeginTable(name, args.flags, args.outer_size, args.inner_width);
+    zguiBeginTable(name, args.columns, args.flags, &args.outer_size, args.inner_width);
 }
-extern fn zguiBeginTable(str_id: [*:0]const u8, column: i32, flags: TableFlags, outer_size: [2]f32, inner_width: f32) void;
+extern fn zguiBeginTable(str_id: [*:0]const u8, column: i32, flags: TableFlags, outer_size: *const [2]f32, inner_width: f32) void;
 
 pub fn endTable() void {
     zguiEndTable();
