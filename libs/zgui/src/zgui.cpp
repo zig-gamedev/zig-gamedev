@@ -1413,7 +1413,7 @@ ZGUI_API void zguiBeginTable(
     const char* str_id,
     int column,
     ImGuiTableFlags flags,
-    float outer_size[2],
+    const float outer_size[2],
     float inner_width
 ) {
     ImGui::BeginTable(str_id, column, flags, { outer_size[0], outer_size[1] }, inner_width);
