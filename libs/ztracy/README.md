@@ -1,6 +1,6 @@
 # ztracy v0.9.0 - performance markers for Tracy 0.9
 
-Zig bindings taken from: https://github.com/SpexGuy/Zig-Tracy
+Initial Zig bindings by [Martin Wickham](https://github.com/SpexGuy/Zig-Tracy)
 
 ## Getting started
 
