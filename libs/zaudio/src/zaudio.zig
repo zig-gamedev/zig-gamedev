@@ -665,6 +665,23 @@ pub const AudioBuffer = opaque {
             return config;
         }
     };
+
+    pub fn create(config: Config) Error!*AudioBuffer {
+        var handle: ?*AudioBuffer = null;
+        try maybeError(zaudioAudioBufferCreate(&config, &handle));
+        return handle.?;
+    }
+    extern fn zaudioAudioBufferCreate(config: *const Config, out_handle: ?*?*AudioBuffer) Result;
+
+    pub const destroy = zaudioAudioBufferDestroy;
+    extern fn zaudioAudioBufferDestroy(handle: *AudioBuffer) void;
+
+    pub fn asDataSource(audio_buffer: *const AudioBuffer) *const DataSource {
+        return @ptrCast(*const DataSource, audio_buffer);
+    }
+    pub fn asDataSourceMut(audio_buffer: *AudioBuffer) *DataSource {
+        return @ptrCast(*DataSource, audio_buffer);
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -2776,8 +2793,35 @@ test "zaudio.node_graph.basic" {
 }
 
 test "zaudio.audio_buffer" {
-    const config = AudioBuffer.Config.init(.float32, 2, 1000, null);
-    _ = config;
+    init(std.testing.allocator);
+    defer deinit();
+
+    var samples = try std.ArrayList(f32).initCapacity(std.testing.allocator, 1000);
+    defer samples.deinit();
+
+    var prng = std.rand.DefaultPrng.init(0);
+    const rand = prng.random();
+
+    samples.expandToCapacity();
+    for (samples.items) |*sample| {
+        sample.* = -1.0 + 2.0 * rand.float(f32);
+    }
+
+    const audio_buffer = try AudioBuffer.create(
+        AudioBuffer.Config.init(.float32, 1, samples.capacity, samples.items.ptr),
+    );
+    defer audio_buffer.destroy();
+
+    const engine = try Engine.create(null);
+    defer engine.destroy();
+
+    const sound = try engine.createSoundFromDataSource(audio_buffer.asDataSourceMut(), .{}, null);
+    defer sound.destroy();
+
+    sound.setLooping(true);
+    try sound.start();
+
+    std.time.sleep(1e8);
 }
 
 test {

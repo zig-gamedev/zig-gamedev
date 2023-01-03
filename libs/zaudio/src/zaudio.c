@@ -611,6 +611,20 @@ void zaudioAudioBufferConfigInit(
     assert(out_config != NULL);
     *out_config = ma_audio_buffer_config_init(format, channels, size_in_frames, data, &s_mem);
 }
+
+ma_result zaudioAudioBufferCreate(const ma_audio_buffer_config* config, ma_audio_buffer** out_handle) {
+    assert(config && out_handle != NULL);
+    ma_result res = ma_audio_buffer_alloc_and_init(config, out_handle);
+    if (res != MA_SUCCESS) {
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioAudioBufferDestroy(ma_audio_buffer* handle) {
+    assert(handle != NULL);
+    ma_audio_buffer_uninit_and_free(handle);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // C ABI workarounds
