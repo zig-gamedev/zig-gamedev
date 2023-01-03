@@ -2808,7 +2808,7 @@ test "zaudio.audio_buffer" {
     }
 
     const audio_buffer = try AudioBuffer.create(
-        AudioBuffer.Config.init(.float32, 1, samples.capacity, samples.items.ptr),
+        AudioBuffer.Config.init(.float32, 1, samples.items.len, samples.items.ptr),
     );
     defer audio_buffer.destroy();
 
