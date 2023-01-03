@@ -1098,6 +1098,19 @@ extern fn zguiGetTextLineHeightWithSpacing() f32;
 extern fn zguiGetFrameHeight() f32;
 extern fn zguiGetFrameHeightWithSpacing() f32;
 //--------------------------------------------------------------------------------------------------
+pub fn getItemRectMax() [2]f32 {
+    var rect: [2]f32 = undefined;
+    zguiGetItemRectMax(&rect);
+    return rect;
+}
+pub fn getItemRectMin() [2]f32 {
+    var rect: [2]f32 = undefined;
+    zguiGetItemRectMin(&rect);
+    return rect;
+}
+extern fn zguiGetItemRectMax(rect: *[2]f32) void;
+extern fn zguiGetItemRectMin(rect: *[2]f32) void;
+//--------------------------------------------------------------------------------------------------
 //
 // ID stack/scopes
 //

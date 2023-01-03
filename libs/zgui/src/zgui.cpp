@@ -186,6 +186,18 @@ ZGUI_API void zguiEndGroup(void) {
     ImGui::EndGroup();
 }
 
+ZGUI_API void zguiGetItemRectMax(float rect[2]) {
+    const ImVec2 r = ImGui::GetItemRectMax();
+    rect[0] = r.x;
+    rect[1] = r.y;
+}
+
+ZGUI_API void zguiGetItemRectMin(float rect[2]) {
+    const ImVec2 r = ImGui::GetItemRectMin();
+    rect[0] = r.x;
+    rect[1] = r.y;
+}
+
 ZGUI_API void zguiGetCursorPos(float pos[2]) {
     const ImVec2 p = ImGui::GetCursorPos();
     pos[0] = p.x;
