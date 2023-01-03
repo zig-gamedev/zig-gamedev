@@ -619,14 +619,7 @@ pub const Noise = opaque {
             amplitude: f64,
         ) Config {
             var config: Config = undefined;
-            zaudioNoiseConfigInit(
-                format,
-                num_channels,
-                noise_type,
-                seed,
-                amplitude,
-                &config,
-            );
+            zaudioNoiseConfigInit(format, num_channels, noise_type, seed, amplitude, &config);
             return config;
         }
         extern fn zaudioNoiseConfigInit(
@@ -637,6 +630,40 @@ pub const Noise = opaque {
             amplitude: f64,
             out_config: *Config,
         ) void;
+    };
+};
+//--------------------------------------------------------------------------------------------------
+//
+// AudioBuffer
+//
+//--------------------------------------------------------------------------------------------------
+pub const AudioBuffer = opaque {
+    pub const Config = extern struct {
+        format: Format,
+        channels: u32,
+        sample_rate: u32,
+        size_in_frames: u64,
+        data: ?*const anyopaque,
+        allocation_callbacks: AllocationCallbacks,
+
+        extern fn zaudioAudioBufferConfigInit(
+            format: Format,
+            channels: u32,
+            size_in_frames: u64,
+            data: ?*const anyopaque,
+            out_config: *Config,
+        ) void;
+
+        pub fn init(
+            format: Format,
+            channels: u32,
+            size_in_frames: u64,
+            data: ?*const anyopaque,
+        ) Config {
+            var config: Config = undefined;
+            zaudioAudioBufferConfigInit(format, channels, size_in_frames, data, &config);
+            return config;
+        }
     };
 };
 //--------------------------------------------------------------------------------------------------
@@ -2746,6 +2773,11 @@ test "zaudio.node_graph.basic" {
     const node_graph = try NodeGraph.create(config);
     defer node_graph.destroy();
     _ = node_graph.getTime();
+}
+
+test "zaudio.audio_buffer" {
+    const config = AudioBuffer.Config.init(.float32, 2, 1000, null);
+    _ = config;
 }
 
 test {
