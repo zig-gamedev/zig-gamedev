@@ -126,6 +126,9 @@ pub fn build(b: *std.build.Builder) void {
     const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zstbi_tests.step);
 
+    const zstbtt_tests = @import("libs/zstbtt/build.zig").buildTests(b, options.build_mode);
+    test_step.dependOn(&zstbtt_tests.step);
+
     const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&znetwork_tests.step);
 
