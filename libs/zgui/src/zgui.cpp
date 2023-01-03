@@ -1566,7 +1566,7 @@ ZGUI_API ImDrawCmd *zguiDrawList_GetCmdBufferData(ImDrawList *draw_list) {
 }
 
 ZGUI_API void zguiDrawList_SetFlags(ImDrawList *draw_list, ImDrawListFlags flags) {
-    return draw_list->Flags = flags;
+    draw_list->Flags = flags;
 }
 ZGUI_API ImDrawListFlags zguiDrawList_GetFlags(ImDrawList *draw_list) {
     return draw_list->Flags;
