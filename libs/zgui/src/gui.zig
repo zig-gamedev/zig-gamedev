@@ -3288,7 +3288,7 @@ pub const DrawList = *opaque {
         anti_aliased_fill: bool = false,
         allow_vtx_offset: bool = false,
 
-        _padding: u28,
+        _padding: u28 = 0,
     };
 
     pub const setDrawListFlags = zguiDrawList_SetFlags;
