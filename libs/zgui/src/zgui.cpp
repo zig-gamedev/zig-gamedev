@@ -1564,6 +1564,10 @@ ZGUI_API int zguiDrawList_GetCmdBufferLength(ImDrawList *draw_list) {
 ZGUI_API ImDrawCmd *zguiDrawList_GetCmdBufferData(ImDrawList *draw_list) {
     return draw_list->CmdBuffer.begin();
 }
+
+ZGUI_API void zguiDrawList_SetFlags(ImDrawList *draw_list, ImDrawListFlags flags) {
+    draw_list->Flags = flags;
+}
 ZGUI_API ImDrawListFlags zguiDrawList_GetFlags(ImDrawList *draw_list) {
     return draw_list->Flags;
 }
