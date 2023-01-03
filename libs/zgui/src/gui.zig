@@ -3291,6 +3291,8 @@ pub const DrawList = *opaque {
         _padding: u28,
     };
 
+    pub const setDrawListFlags = zguiDrawList_SetFlags;
+    extern fn zguiDrawList_SetFlags(draw_list: DrawList, flags: DrawListFlags) void;
     pub const getDrawListFlags = zguiDrawList_GetFlags;
     extern fn zguiDrawList_GetFlags(draw_list: DrawList) DrawListFlags;
 
