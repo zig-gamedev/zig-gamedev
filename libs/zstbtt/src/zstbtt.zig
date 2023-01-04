@@ -68,6 +68,9 @@ pub usingnamespace @import("texture_baking_api_simple.zig");
 /// The improved texture baking API
 pub usingnamespace @import("texture_baking_api.zig");
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// ZIGIFIED WRAPPER
+
 pub const FontVMetrics = struct {
     ascent: i16,
     descent: i16,
@@ -118,6 +121,9 @@ pub fn getCodepointHMetrics(font_info: *const FontInfo, codepoint: u32) GlyphHMe
         .bearing = @intCast(i16, bearing),
     };
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// C BINDINGS
 
 /// stbtt_fontinfo
 const FontInfo = extern struct {
@@ -447,6 +453,9 @@ extern fn stbtt_GetCodepointSDF(
     xoff: *c_int,
     yoff: *c_int,
 ) ?[*]u8;
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// TESTS
 
 test {
     std.testing.refAllDecls(@This());
