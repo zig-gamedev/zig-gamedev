@@ -1,8 +1,9 @@
 const std = @import("std");
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    // exe.linkSystemLibraryName("c");
-    exe.addCSourceFile(thisDir() ++ "/src/stb_truetype.c", &.{
+    // TODO: Remove libc dependency by overriding std functions (also see TODOs in zstbtt.c and zstbtt.zig)
+    exe.linkSystemLibraryName("c");
+    exe.addCSourceFile(thisDir() ++ "/src/zstbtt.c", &.{
         "-std=c99",
         "-fno-sanitize=undefined",
     });

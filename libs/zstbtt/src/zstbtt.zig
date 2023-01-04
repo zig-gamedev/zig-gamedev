@@ -11,6 +11,8 @@ var mem_allocator: ?std.mem.Allocator = null;
 var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 const mem_alignment = 16;
 
+// TODO: So that libc dependency can be removed, define remaining fns listed by TODO in zstbtt.c
+
 extern var zstbttMallocPtr: ?*const fn (
     size: usize,
     userdata: ?*anyopaque,
