@@ -11,21 +11,33 @@ var mem_allocator: ?std.mem.Allocator = null;
 var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 const mem_alignment = 16;
 
-extern var zstbttMallocPtr: ?*const fn (size: usize, userdata: ?*anyopaque) callconv(.C) ?*anyopaque;
-extern var zstbttFreePtr: ?*const fn (maybe_ptr: ?*anyopaque, userdata: ?*anyopaque) callconv(.C) void;
+extern var zstbttMallocPtr: ?*const fn (
+    size: usize,
+    userdata: ?*anyopaque,
+) callconv(.C) ?*anyopaque;
+extern var zstbttFreePtr: ?*const fn (
+    maybe_ptr: ?*anyopaque,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
 
 fn zstbttMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     const mem = mem_allocator.?.alignedAlloc(u8, mem_alignment, size) catch {
         @panic("zstbtt: out of memory");
     };
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zstbtt: out of memory");
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch {
+        @panic("zstbtt: out of memory");
+    };
     return mem.ptr;
 }
 
 fn zstbttFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
         const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
+        const aligned_slice = @ptrCast(
+            [*]align(mem_alignment) u8,
+            @alignCast(mem_alignment, ptr),
+        );
+        const mem = aligned_slice[0..size];
         mem_allocator.?.free(mem);
     }
 }
@@ -97,6 +109,134 @@ pub fn getCodepointHMetrics(font_info: *const FontInfo, codepoint: u32) GlyphHMe
         .bearing = @intCast(i16, bearing),
     };
 }
+
+pub const STBRP_Coord = c_int;
+
+pub const STBRPContext = struct {
+    width: c_int,
+    height: c_int,
+    x: c_int,
+    y: c_int,
+    bottom_y: c_int,
+};
+
+pub const STBRPRect = struct {
+    x: STBRP_Coord,
+    y: STBRP_Coord,
+    id: c_int,
+    w: c_int,
+    h: c_int,
+    was_packed: c_int,
+};
+
+pub const PackContext = extern struct {
+    user_allocator_context: ?*anyopaque,
+    pack_info: ?*anyopaque,
+    width: c_int,
+    height: c_int,
+    stride_in_bytes: c_int,
+    padding: c_int,
+    skip_missing: c_int,
+    h_oversample: c_int,
+    v_oversample: c_int,
+    pixels: [*c]u8,
+    nodes: ?*anyopaque,
+};
+
+pub const PackedChar = extern struct {
+    x0: c_ushort,
+    y0: c_ushort,
+    x1: c_ushort,
+    y1: c_ushort,
+    xoff: f32,
+    yoff: f32,
+    xadvance: f32,
+    xoff2: f32,
+    yoff2: f32,
+};
+
+pub const PackRange = extern struct {
+    font_size: f32,
+    first_unicode_codepoint_in_range: c_int,
+    array_of_unicode_codepoints: [*c]c_int,
+    num_chars: c_int,
+    chardata_for_range: *PackedChar,
+    h_oversample: u8,
+    v_oversample: u8,
+};
+
+pub const AlignedQuad = extern struct {
+    x0: f32,
+    y0: f32,
+    s0: f32,
+    t0: f32,
+    x1: f32,
+    y1: f32,
+    s1: f32,
+    t1: f32,
+};
+
+extern fn stbtt_PackBegin(
+    spc: *PackContext,
+    pixels: [*c]u8,
+    width: c_int,
+    height: c_int,
+    stride_in_bytes: c_int,
+    padding: c_int,
+    alloc_context: ?*anyopaque,
+) c_int;
+extern fn stbtt_PackEnd(spc: *PackContext) void;
+extern fn stbtt_PackFontRange(
+    spc: *PackContext,
+    fontdata: [*c]const u8,
+    font_index: c_int,
+    font_size: f32,
+    first_unicode_char_in_range: c_int,
+    num_chars_in_range: c_int,
+    chardata_for_range: *PackedChar,
+) c_int;
+extern fn stbtt_PackFontRanges(
+    spc: *PackContext,
+    fontdata: [*c]const u8,
+    font_index: c_int,
+    ranges: [*c]PackRange,
+    num_ranges: c_int,
+) c_int;
+extern fn stbtt_PackSetOversampling(
+    spc: *PackContext,
+    h_oversample: c_uint,
+    v_oversample: c_uint,
+) void;
+extern fn stbtt_PackSetSkipMissingCodepoints(spc: *PackContext, skip: c_int) void;
+extern fn stbtt_GetPackedQuad(
+    chardata: [*c]const PackedChar,
+    pw: c_int,
+    ph: c_int,
+    char_index: c_int,
+    xpos: *f32,
+    ypos: *f32,
+    q: *AlignedQuad,
+    align_to_integer: c_int,
+) void;
+extern fn stbtt_PackFontRangesGatherRects(
+    spc: *PackContext,
+    info: *const FontInfo,
+    ranges: [*c]PackRange,
+    num_ranges: c_int,
+    rects: [*c]STBRPRect,
+) c_int;
+extern fn stbtt_PackFontRangesPackRects(
+    spc: *PackContext,
+    rects: [*c]STBRPRect,
+    num_rects: c_int,
+) void;
+extern fn stbtt_PackFontRangesRenderIntoRects(
+    spc: *PackContext,
+    info: *const FontInfo,
+    ranges: [*c]PackRange,
+    num_ranges: c_int,
+    rects: [*c]STBRPRect,
+) c_int;
 
 pub const FontInfo = extern struct {
     userdata: *anyopaque,
