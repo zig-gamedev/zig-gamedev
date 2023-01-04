@@ -45,7 +45,7 @@ fn zstbttFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
 }
 
 pub fn init(allocator: std.mem.Allocator) void {
-    std.debug.assert(mem_allocator == null);
+    assert(mem_allocator == null);
     mem_allocator = allocator;
     mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
 
@@ -54,12 +54,19 @@ pub fn init(allocator: std.mem.Allocator) void {
 }
 
 pub fn deinit() void {
-    std.debug.assert(mem_allocator != null);
-    std.debug.assert(mem_allocations.?.count() == 0);
+    assert(mem_allocator != null);
+    assert(mem_allocations.?.count() == 0);
     mem_allocations.?.deinit();
     mem_allocations = null;
     mem_allocator = null;
 }
+
+/// NOTE: It's not recommended to ship code using the simple texture baking API but it's
+/// ok for tools or a quick start
+pub usingnamespace @import("texture_baking_api_simple.zig");
+
+/// The improved texture baking API
+pub usingnamespace @import("texture_baking_api.zig");
 
 pub const FontVMetrics = struct {
     ascent: i16,
@@ -112,137 +119,10 @@ pub fn getCodepointHMetrics(font_info: *const FontInfo, codepoint: u32) GlyphHMe
     };
 }
 
-pub const STBRP_Coord = c_int;
-
-pub const STBRPContext = struct {
-    width: c_int,
-    height: c_int,
-    x: c_int,
-    y: c_int,
-    bottom_y: c_int,
-};
-
-pub const STBRPRect = struct {
-    x: STBRP_Coord,
-    y: STBRP_Coord,
-    id: c_int,
-    w: c_int,
-    h: c_int,
-    was_packed: c_int,
-};
-
-pub const PackContext = extern struct {
-    user_allocator_context: ?*anyopaque,
-    pack_info: ?*anyopaque,
-    width: c_int,
-    height: c_int,
-    stride_in_bytes: c_int,
-    padding: c_int,
-    skip_missing: c_int,
-    h_oversample: c_int,
-    v_oversample: c_int,
-    pixels: [*c]u8,
-    nodes: ?*anyopaque,
-};
-
-pub const PackedChar = extern struct {
-    x0: c_ushort,
-    y0: c_ushort,
-    x1: c_ushort,
-    y1: c_ushort,
-    xoff: f32,
-    yoff: f32,
-    xadvance: f32,
-    xoff2: f32,
-    yoff2: f32,
-};
-
-pub const PackRange = extern struct {
-    font_size: f32,
-    first_unicode_codepoint_in_range: c_int,
-    array_of_unicode_codepoints: [*c]c_int,
-    num_chars: c_int,
-    chardata_for_range: *PackedChar,
-    h_oversample: u8,
-    v_oversample: u8,
-};
-
-pub const AlignedQuad = extern struct {
-    x0: f32,
-    y0: f32,
-    s0: f32,
-    t0: f32,
-    x1: f32,
-    y1: f32,
-    s1: f32,
-    t1: f32,
-};
-
-extern fn stbtt_PackBegin(
-    spc: *PackContext,
-    pixels: [*c]u8,
-    width: c_int,
-    height: c_int,
-    stride_in_bytes: c_int,
-    padding: c_int,
-    alloc_context: ?*anyopaque,
-) c_int;
-extern fn stbtt_PackEnd(spc: *PackContext) void;
-extern fn stbtt_PackFontRange(
-    spc: *PackContext,
-    fontdata: [*c]const u8,
-    font_index: c_int,
-    font_size: f32,
-    first_unicode_char_in_range: c_int,
-    num_chars_in_range: c_int,
-    chardata_for_range: *PackedChar,
-) c_int;
-extern fn stbtt_PackFontRanges(
-    spc: *PackContext,
-    fontdata: [*c]const u8,
-    font_index: c_int,
-    ranges: [*c]PackRange,
-    num_ranges: c_int,
-) c_int;
-extern fn stbtt_PackSetOversampling(
-    spc: *PackContext,
-    h_oversample: c_uint,
-    v_oversample: c_uint,
-) void;
-extern fn stbtt_PackSetSkipMissingCodepoints(spc: *PackContext, skip: c_int) void;
-extern fn stbtt_GetPackedQuad(
-    chardata: [*c]const PackedChar,
-    pw: c_int,
-    ph: c_int,
-    char_index: c_int,
-    xpos: *f32,
-    ypos: *f32,
-    q: *AlignedQuad,
-    align_to_integer: c_int,
-) void;
-extern fn stbtt_PackFontRangesGatherRects(
-    spc: *PackContext,
-    info: *const FontInfo,
-    ranges: [*c]PackRange,
-    num_ranges: c_int,
-    rects: [*c]STBRPRect,
-) c_int;
-extern fn stbtt_PackFontRangesPackRects(
-    spc: *PackContext,
-    rects: [*c]STBRPRect,
-    num_rects: c_int,
-) void;
-extern fn stbtt_PackFontRangesRenderIntoRects(
-    spc: *PackContext,
-    info: *const FontInfo,
-    ranges: [*c]PackRange,
-    num_ranges: c_int,
-    rects: [*c]STBRPRect,
-) c_int;
-
-pub const FontInfo = extern struct {
+/// stbtt_fontinfo
+const FontInfo = extern struct {
     userdata: *anyopaque,
-    data: [*c]const u8,
+    data: [*]const u8,
     fontstart: c_int,
     numGlyphs: c_int,
     loca: c_int,
@@ -256,14 +136,15 @@ pub const FontInfo = extern struct {
     indexToLocFormat: c_int,
 };
 
-pub const KerningEntry = extern struct {
+/// stbtt_kerningentry
+const KerningEntry = extern struct {
     glyph1: c_int,
     glyph2: c_int,
     advance: c_int,
 };
 
-// TODO: Provide a way to override vertex definition like underlying API allows stbtt_vertex to be overidden
-pub const Vertex = extern struct {
+/// stbtt_vertex
+const Vertex = extern struct {
     const vertex_type = c_short;
 
     x: vertex_type,
@@ -276,131 +157,131 @@ pub const Vertex = extern struct {
     padding: u8,
 };
 
-extern fn stbtt_GetNumberOfFonts(data: [*c]const u8) c_int;
-extern fn stbtt_GetFontOffsetForIndex(data: [*c]const u8, index: c_int) c_int;
-extern fn stbtt_InitFont(info: *FontInfo, data: [*c]const u8, offset: c_int) c_int;
+extern fn stbtt_GetNumberOfFonts(data: [*]const u8) c_int;
+extern fn stbtt_GetFontOffsetForIndex(data: [*]const u8, index: c_int) c_int;
+extern fn stbtt_InitFont(info: *FontInfo, data: [*]const u8, offset: c_int) c_int;
 extern fn stbtt_FindGlyphIndex(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     unicode_codepoint: c_int,
 ) c_int;
-extern fn stbtt_ScaleForPixelHeight(info: [*c]const FontInfo, pixels: f32) f32;
-extern fn stbtt_ScaleForMappingEmToPixels(info: [*c]const FontInfo, pixels: f32) f32;
+extern fn stbtt_ScaleForPixelHeight(info: *const FontInfo, pixels: f32) f32;
+extern fn stbtt_ScaleForMappingEmToPixels(info: *const FontInfo, pixels: f32) f32;
 extern fn stbtt_GetFontVMetrics(
-    info: [*c]const FontInfo,
-    ascent: [*c]c_int,
-    descent: [*c]c_int,
-    lineGap: [*c]c_int,
+    info: *const FontInfo,
+    ascent: *c_int,
+    descent: *c_int,
+    lineGap: *c_int,
 ) void;
 extern fn stbtt_GetFontVMetricsOS2(
-    info: [*c]const FontInfo,
-    typoAscent: [*c]c_int,
-    typoDescent: [*c]c_int,
-    typoLineGap: [*c]c_int,
+    info: *const FontInfo,
+    typoAscent: *c_int,
+    typoDescent: *c_int,
+    typoLineGap: *c_int,
 ) c_int;
 extern fn stbtt_GetFontBoundingBox(
-    info: [*c]const FontInfo,
-    x0: [*c]c_int,
-    y0: [*c]c_int,
-    x1: [*c]c_int,
-    y1: [*c]c_int,
+    info: *const FontInfo,
+    x0: *c_int,
+    y0: *c_int,
+    x1: *c_int,
+    y1: *c_int,
 ) void;
 extern fn stbtt_GetCodepointHMetrics(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     codepoint: c_int,
-    advanceWidth: [*c]c_int,
-    leftSideBearing: [*c]c_int,
+    advanceWidth: *c_int,
+    leftSideBearing: *c_int,
 ) void;
 extern fn stbtt_GetCodepointKernAdvance(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     ch1: c_int,
     ch2: c_int,
 ) c_int;
 extern fn stbtt_GetCodepointBox(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     codepoint: c_int,
-    x0: [*c]c_int,
-    y0: [*c]c_int,
-    x1: [*c]c_int,
-    y1: [*c]c_int,
+    x0: *c_int,
+    y0: *c_int,
+    x1: *c_int,
+    y1: *c_int,
 ) c_int;
 extern fn stbtt_GetGlyphHMetrics(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     glyph_index: c_int,
-    advanceWidth: [*c]c_int,
-    leftSideBearing: [*c]c_int,
+    advanceWidth: *c_int,
+    leftSideBearing: *c_int,
 ) void;
 extern fn stbtt_GetGlyphKernAdvance(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     glyph1: c_int,
     glyph2: c_int,
 ) c_int;
 extern fn stbtt_GetGlyphBox(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     glyph_index: c_int,
-    x0: [*c]c_int,
-    y0: [*c]c_int,
-    x1: [*c]c_int,
-    y1: [*c]c_int,
+    x0: *c_int,
+    y0: *c_int,
+    x1: *c_int,
+    y1: *c_int,
 ) c_int;
-extern fn stbtt_GetKerningTableLength(info: [*c]const FontInfo) c_int;
+extern fn stbtt_GetKerningTableLength(info: *const FontInfo) c_int;
 extern fn stbtt_GetKerningTable(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     table: *KerningEntry,
     table_length: c_int,
 ) c_int;
-extern fn stbtt_IsGlyphEmpty(info: [*c]const FontInfo, glyph_index: c_int) c_int;
+extern fn stbtt_IsGlyphEmpty(info: *const FontInfo, glyph_index: c_int) c_int;
 extern fn stbtt_GetCodepointShape(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     unicode_codepoint: c_int,
-    vertices: [*c][*c]Vertex,
+    vertices: [*]Vertex,
 ) c_int;
 extern fn stbtt_GetGlyphShape(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     glyph_index: c_int,
-    vertices: [*c][*c]Vertex,
+    vertices: [*]Vertex,
 ) c_int;
 extern fn stbtt_FreeShape(
-    info: [*c]const FontInfo,
-    vertices: [*]*Vertex,
+    info: *const FontInfo,
+    vertices: [*]Vertex,
 ) void;
-extern fn stbtt_FindSVGDoc(info: [*c]const FontInfo, gl: c_int) ?[*c]u8;
+extern fn stbtt_FindSVGDoc(info: *const FontInfo, gl: c_int) ?[*]u8;
 extern fn stbtt_GetCodepointSVG(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     unicode_codepoint: c_int,
-    svg: [*c]const [*c]const u8,
+    svg: [*]const u8,
 ) c_int;
 extern fn stbtt_GetGlyphSVG(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     gl: c_int,
-    svg: [*c]const [*c]const u8,
+    svg: [*]const u8,
 ) c_int;
 
-extern fn stbtt_FreeBitmap(bitmap: [*c]u8, userdata: ?[*c]anyopaque) void;
+extern fn stbtt_FreeBitmap(bitmap: [*]u8, userdata: ?*anyopaque) void;
 extern fn stbtt_GetCodepointBitmap(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     scale_x: f32,
     scale_y: f32,
     codepoint: c_int,
-    width: [*c]c_int,
-    height: [*c]c_int,
-    xoff: [*c]c_int,
-    yoff: [*c]c_int,
-) ?[*c]u8;
+    width: *c_int,
+    height: *c_int,
+    xoff: *c_int,
+    yoff: *c_int,
+) ?[*]u8;
 extern fn stbtt_GetCodepointBitmapSubpixel(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     scale_x: f32,
     scale_y: f32,
     shift_x: f32,
     shift_y: f32,
     codepoint: c_int,
-    width: [*c]c_int,
-    height: [*c]c_int,
-    xoff: [*c]c_int,
-    yoff: [*c]c_int,
-) ?[*c]u8;
+    width: *c_int,
+    height: *c_int,
+    xoff: *c_int,
+    yoff: *c_int,
+) ?[*]u8;
 extern fn stbtt_MakeCodepointBitmap(
-    info: [*c]const FontInfo,
-    output: [*c]u8,
+    info: *const FontInfo,
+    output: [*]u8,
     out_w: c_int,
     out_h: c_int,
     out_stride: c_int,
@@ -409,8 +290,8 @@ extern fn stbtt_MakeCodepointBitmap(
     codepoint: c_int,
 ) void;
 extern fn stbtt_MakeCodepointBitmapSubpixel(
-    info: [*c]const FontInfo,
-    output: [*c]u8,
+    info: *const FontInfo,
+    output: [*]u8,
     out_w: c_int,
     out_h: c_int,
     out_stride: c_int,
@@ -421,8 +302,8 @@ extern fn stbtt_MakeCodepointBitmapSubpixel(
     codepoint: c_int,
 ) void;
 extern fn stbtt_MakeCodepointBitmapSubpixelPrefilter(
-    info: [*c]const FontInfo,
-    output: [*c]u8,
+    info: *const FontInfo,
+    output: [*]u8,
     out_w: c_int,
     out_h: c_int,
     out_stride: c_int,
@@ -432,57 +313,57 @@ extern fn stbtt_MakeCodepointBitmapSubpixelPrefilter(
     shift_y: f32,
     oversample_x: c_int,
     oversample_y: c_int,
-    sub_x: [*c]f32,
-    sub_y: [*c]f32,
+    sub_x: *f32,
+    sub_y: *f32,
     codepoint: c_int,
 ) void;
 extern fn stbtt_GetCodepointBitmapBox(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     codepoint: c_int,
     scale_x: f32,
     scale_y: f32,
-    ix0: [*c]c_int,
-    iy0: [*c]c_int,
-    ix1: [*c]c_int,
-    iy1: [*c]c_int,
+    ix0: *c_int,
+    iy0: *c_int,
+    ix1: *c_int,
+    iy1: *c_int,
 ) void;
 extern fn stbtt_GetCodepointBitmapBoxSubpixel(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     codepoint: c_int,
     scale_x: f32,
     scale_y: f32,
     shift_x: f32,
     shift_y: f32,
-    ix0: [*c]c_int,
-    iy0: [*c]c_int,
-    ix1: [*c]c_int,
-    iy1: [*c]c_int,
+    ix0: *c_int,
+    iy0: *c_int,
+    ix1: *c_int,
+    iy1: *c_int,
 ) void;
 extern fn stbtt_GetGlyphBitmap(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     scale_x: f32,
     scale_y: f32,
     glyph: c_int,
-    width: [*c]c_int,
-    height: [*c]c_int,
-    xoff: [*c]c_int,
-    yoff: [*c]c_int,
-) ?[*c]u8;
+    width: *c_int,
+    height: *c_int,
+    xoff: *c_int,
+    yoff: *c_int,
+) ?[*]u8;
 extern fn stbtt_GetGlyphBitmapSubpixel(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     scale_x: f32,
     scale_y: f32,
     shift_x: f32,
     shift_y: f32,
     glyph: c_int,
-    width: [*c]c_int,
-    height: [*c]c_int,
-    xoff: [*c]c_int,
-    yoff: [*c]c_int,
-) ?[*c]u8;
+    width: *c_int,
+    height: *c_int,
+    xoff: *c_int,
+    yoff: *c_int,
+) ?[*]u8;
 extern fn stbtt_MakeGlyphBitmap(
-    info: [*c]const FontInfo,
-    output: [*c]u8,
+    info: *const FontInfo,
+    output: [*]u8,
     out_w: c_int,
     out_h: c_int,
     out_stride: c_int,
@@ -491,8 +372,8 @@ extern fn stbtt_MakeGlyphBitmap(
     glyph: c_int,
 ) void;
 extern fn stbtt_MakeGlyphBitmapSubpixel(
-    info: [*c]const FontInfo,
-    output: [*c]u8,
+    info: *const FontInfo,
+    output: [*]u8,
     out_w: c_int,
     out_h: c_int,
     out_stride: c_int,
@@ -503,8 +384,8 @@ extern fn stbtt_MakeGlyphBitmapSubpixel(
     glyph: c_int,
 ) void;
 extern fn stbtt_MakeGlyphBitmapSubpixelPrefilter(
-    info: [*c]const FontInfo,
-    output: [*c]u8,
+    info: *const FontInfo,
+    output: [*]u8,
     out_w: c_int,
     out_h: c_int,
     out_stride: c_int,
@@ -514,58 +395,58 @@ extern fn stbtt_MakeGlyphBitmapSubpixelPrefilter(
     shift_y: f32,
     oversample_x: c_int,
     oversample_y: c_int,
-    sub_x: [*c]f32,
-    sub_y: [*c]f32,
+    sub_x: *f32,
+    sub_y: *f32,
     glyph: c_int,
 ) void;
 extern fn stbtt_GetGlyphBitmapBox(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     glyph: c_int,
     scale_x: f32,
     scale_y: f32,
-    ix0: [*c]c_int,
-    iy0: [*c]c_int,
-    ix1: [*c]c_int,
-    iy1: [*c]c_int,
+    ix0: *c_int,
+    iy0: *c_int,
+    ix1: *c_int,
+    iy1: *c_int,
 ) void;
 extern fn stbtt_GetGlyphBitmapBoxSubpixel(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     glyph: c_int,
     scale_x: f32,
     scale_y: f32,
     shift_x: f32,
     shift_y: f32,
-    ix0: [*c]c_int,
-    iy0: [*c]c_int,
-    ix1: [*c]c_int,
-    iy1: [*c]c_int,
+    ix0: *c_int,
+    iy0: *c_int,
+    ix1: *c_int,
+    iy1: *c_int,
 ) void;
 
-extern fn stbtt_FreeSDF(bitmap: [*c]u8, userdata: ?[*c]anyopaque) void;
+extern fn stbtt_FreeSDF(bitmap: [*]u8, userdata: ?*anyopaque) void;
 extern fn stbtt_GetGlyphSDF(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     scale: f32,
     glyph: c_int,
     padding: c_int,
     onedge_value: c_uint,
     pixel_dist_scale: f32,
-    width: [*c]c_int,
-    height: [*c]c_int,
-    xoff: [*c]c_int,
-    yoff: [*c]c_int,
-) ?[*c]u8;
+    width: *c_int,
+    height: *c_int,
+    xoff: *c_int,
+    yoff: *c_int,
+) ?[*]u8;
 extern fn stbtt_GetCodepointSDF(
-    info: [*c]const FontInfo,
+    info: *const FontInfo,
     scale: f32,
     codepoint: c_int,
     padding: c_int,
     onedge_value: c_uint,
     pixel_dist_scale: f32,
-    width: [*c]c_int,
-    height: [*c]c_int,
-    xoff: [*c]c_int,
-    yoff: [*c]c_int,
-) ?[*c]u8;
+    width: *c_int,
+    height: *c_int,
+    xoff: *c_int,
+    yoff: *c_int,
+) ?[*]u8;
 
 test {
     std.testing.refAllDecls(@This());
