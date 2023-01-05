@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 // TODO: So that libc dependency can be removed, define the following:
 //
 // for stb_rect_pack:
@@ -15,18 +13,21 @@
 //      STBTT_cos
 //      STBTT_acos
 //      STBTT_fabs
-//      STBTT_assert
 //      STBTT_strlen
 //      STBTT_memcpy
 //      STBTT_memset
 //
 // Also see TODOs in zstbtt.zig and build.zig
 
-void* (*zstbttMallocPtr)(size_t size, void *userdata) = NULL;
-void (*zstbttFreePtr)(void* ptr, void *userdata) = NULL;
+void* (*zstbttMallocPtr)(unsigned long long size, void *userdata) = 0;
+void (*zstbttFreePtr)(void* ptr, void *userdata) = 0;
+void (*zstbttAssertPtr)(int condition) = 0;
+
+#define STBRP_ASSERT(condition) zstbttAssertPtr(condition)
 
 #define STBTT_malloc(size, userdata) zstbttMallocPtr(size, userdata)
 #define STBTT_free(ptr, userdata) zstbttFreePtr(ptr, userdata)
+#define STBTT_assert(condition) zstbttAssertPtr(condition)
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "stb_rect_pack.h"

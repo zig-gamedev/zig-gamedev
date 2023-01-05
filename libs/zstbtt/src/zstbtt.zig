@@ -13,20 +13,23 @@ const mem_alignment = 16;
 
 // TODO: So that libc dependency can be removed, define remaining fns listed by TODO in zstbtt.c
 
-extern var zstbttMallocPtr: ?*const fn (
-    size: usize,
-    userdata: ?*anyopaque,
-) callconv(.C) ?*anyopaque;
 extern var zstbttFreePtr: ?*const fn (
     maybe_ptr: ?*anyopaque,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-fn zstbttMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
-    const mem = mem_allocator.?.alignedAlloc(u8, mem_alignment, size) catch {
+extern var zstbttMallocPtr: ?*const fn (
+    size: usize,
+    userdata: ?*anyopaque,
+) callconv(.C) ?*anyopaque;
+
+extern var zstbttAssertPtr: ?*const fn (condition: c_int) callconv(.C) void;
+
+fn zstbttMalloc(size: c_ulonglong, _: ?*anyopaque) callconv(.C) ?*anyopaque {
+    const mem = mem_allocator.?.alignedAlloc(u8, mem_alignment, @intCast(usize, size)) catch {
         @panic("zstbtt: out of memory");
     };
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch {
+    mem_allocations.?.put(@ptrToInt(mem.ptr), @intCast(usize, size)) catch {
         @panic("zstbtt: out of memory");
     };
     return mem.ptr;
@@ -44,6 +47,10 @@ fn zstbttFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
     }
 }
 
+fn zstbttAssert(condition: c_int) callconv(.C) void {
+    assert(condition != 0);
+}
+
 pub fn init(allocator: std.mem.Allocator) void {
     assert(mem_allocator == null);
     mem_allocator = allocator;
@@ -51,6 +58,7 @@ pub fn init(allocator: std.mem.Allocator) void {
 
     zstbttMallocPtr = zstbttMalloc;
     zstbttFreePtr = zstbttFree;
+    zstbttAssertPtr = zstbttAssert;
 }
 
 pub fn deinit() void {
