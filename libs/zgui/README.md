@@ -1,4 +1,4 @@
-# zgui v0.9.4 - dear imgui bindings
+# zgui v0.9.5 - dear imgui bindings
 
 Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. For a test application please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu).
 
