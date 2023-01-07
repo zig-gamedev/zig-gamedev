@@ -90,23 +90,30 @@ pub const HEAP_PROPERTIES = extern struct {
     }
 };
 
-pub const HEAP_FLAGS = UINT;
-pub const HEAP_FLAG_NONE = 0;
-pub const HEAP_FLAG_SHARED = 0x1;
-pub const HEAP_FLAG_DENY_BUFFERS = 0x4;
-pub const HEAP_FLAG_ALLOW_DISPLAY = 0x8;
-pub const HEAP_FLAG_SHARED_CROSS_ADAPTER = 0x20;
-pub const HEAP_FLAG_DENY_RT_DS_TEXTURES = 0x40;
-pub const HEAP_FLAG_DENY_NON_RT_DS_TEXTURES = 0x80;
-pub const HEAP_FLAG_HARDWARE_PROTECTED = 0x100;
-pub const HEAP_FLAG_ALLOW_WRITE_WATCH = 0x200;
-pub const HEAP_FLAG_ALLOW_SHADER_ATOMICS = 0x400;
-pub const HEAP_FLAG_CREATE_NOT_RESIDENT = 0x800;
-pub const HEAP_FLAG_CREATE_NOT_ZEROED = 0x1000;
-pub const HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES = 0;
-pub const HEAP_FLAG_ALLOW_ONLY_BUFFERS = 0xc0;
-pub const HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES = 0x44;
-pub const HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = 0x84;
+pub const HEAP_FLAGS = packed struct(UINT) {
+    SHARED: bool = false,
+    __unused0: bool = false,
+    DENY_BUFFERS: bool = false,
+    ALLOW_DISPLAY: bool = false,
+    __unused1: bool = false,
+    SHARED_CROSS_ADAPTER: bool = false,
+    DENY_RT_DS_TEXTURES: bool = false,
+    DENY_NON_RT_DS_TEXTURES: bool = false,
+    HARDWARE_PROTECTED: bool = false,
+    ALLOW_WRITE_WATCH: bool = false,
+    ALLOW_SHADER_ATOMICS: bool = false,
+    CREATE_NOT_RESIDENT: bool = false,
+    CREATE_NOT_ZEROED: bool = false,
+    __unused: u19 = 0,
+
+    pub const ALLOW_ALL_BUFFERS_AND_TEXTURES = HEAP_FLAGS{};
+    pub const ALLOW_ONLY_NON_RT_DS_TEXTURES = HEAP_FLAGS{ .DENY_BUFFERS = true, .DENY_RT_DS_TEXTURES = true };
+    pub const ALLOW_ONLY_BUFFERS = HEAP_FLAGS{ .DENY_RT_DS_TEXTURES = true, .DENY_NON_RT_DS_TEXTURES = true };
+    pub const HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = HEAP_FLAGS{
+        .DENY_BUFFERS = true,
+        .DENY_NON_RT_DS_TEXTURES = true,
+    };
+};
 
 pub const HEAP_DESC = extern struct {
     SizeInBytes: UINT64,
@@ -140,8 +147,8 @@ pub const RESOURCE_DIMENSION = enum(UINT) {
 pub const TEXTURE_LAYOUT = enum(UINT) {
     UNKNOWN = 0,
     ROW_MAJOR = 1,
-    _64KB_UNDEFINED_SWIZZLE = 2,
-    _64KB_STANDARD_SWIZZLE = 3,
+    @"64KB_UNDEFINED_SWIZZLE" = 2,
+    @"64KB_STANDARD_SWIZZLE" = 3,
 };
 
 pub const RESOURCE_FLAGS = UINT;
@@ -259,7 +266,7 @@ pub const ROOT_DESCRIPTOR = extern struct {
 
 pub const ROOT_PARAMETER_TYPE = enum(UINT) {
     DESCRIPTOR_TABLE = 0,
-    _32BIT_CONSTANTS = 1,
+    @"32BIT_CONSTANTS" = 1,
     CBV = 2,
     SRV = 3,
     UAV = 4,
@@ -562,8 +569,8 @@ pub const RESOURCE_STATE_VIDEO_ENCODE_WRITE = 0x800000;
 
 pub const INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
     DISABLED = 0,
-    _0xFFFF = 1,
-    _0xFFFFFFFF = 2,
+    @"0xFFFF" = 1,
+    @"0xFFFFFFFF" = 2,
 };
 
 pub const VERTEX_BUFFER_VIEW = extern struct {
@@ -5641,12 +5648,14 @@ pub const IProtectedResourceSession = extern struct {
 };
 
 pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT;
+
 pub extern "d3d12" fn D3D12CreateDevice(
     ?*IUnknown,
     d3d.FEATURE_LEVEL,
     *const GUID,
     ?*?*anyopaque,
 ) callconv(WINAPI) HRESULT;
+
 pub extern "d3d12" fn D3D12SerializeVersionedRootSignature(
     *const VERSIONED_ROOT_SIGNATURE_DESC,
     ?*?*d3d.IBlob,
@@ -5798,7 +5807,8 @@ pub const IID_IGraphicsCommandList6 = GUID{
     .Data4 = .{ 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 },
 };
 
-// Error return codes from https://docs.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues
+// Error return codes from:
+// https://docs.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues
 pub const ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0001));
 pub const ERROR_DRIVER_VERSION_MISMATCH = @bitCast(HRESULT, @as(c_ulong, 0x887E0002));
 

@@ -79,7 +79,7 @@ const DemoState = struct {
 
         const vertex_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(num_mipmaps * 4 * @sizeOf(Vertex)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
@@ -87,7 +87,7 @@ const DemoState = struct {
 
         const index_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(4 * @sizeOf(u32)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,

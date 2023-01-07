@@ -150,7 +150,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Create vertex buffer and return a *handle* to the underlying Direct3D12 resource.
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -159,7 +159,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Create index buffer and return a *handle* to the underlying Direct3D12 resource.
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u32)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -168,7 +168,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Create depth texture resource.
     const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;

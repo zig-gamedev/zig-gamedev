@@ -1488,7 +1488,7 @@ pub const GraphicsContext = struct {
         };
         const texture = try gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initTex2d(
                     dxgi_format,
@@ -1554,7 +1554,7 @@ pub const MipmapGenerator = struct {
         for (scratch_textures) |_, texture_index| {
             scratch_textures[texture_index] = gctx.createCommittedResource(
                 .DEFAULT,
-                d3d12.HEAP_FLAG_NONE,
+                .{},
                 &blk: {
                     var desc = d3d12.RESOURCE_DESC.initTex2d(format, width, height, 1);
                     desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -2049,7 +2049,7 @@ const GpuMemoryHeap = struct {
             var resource: *d3d12.IResource = undefined;
             hrPanicOnFail(device.CreateCommittedResource(
                 &d3d12.HEAP_PROPERTIES.initType(heap_type),
-                d3d12.HEAP_FLAG_NONE,
+                .{},
                 &d3d12.RESOURCE_DESC.initBuffer(capacity),
                 d3d12.RESOURCE_STATE_GENERIC_READ,
                 null,

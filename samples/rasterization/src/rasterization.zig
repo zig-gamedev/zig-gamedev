@@ -231,7 +231,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Pso_Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -239,7 +239,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u32)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -247,7 +247,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
@@ -266,7 +266,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const pixel_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_ALLOW_SHADER_ATOMICS,
+        .{ .ALLOW_SHADER_ATOMICS = true },
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
                 (gctx.viewport_width * gctx.viewport_height + 1) * @sizeOf(Pso_Pixel),
@@ -305,7 +305,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const pixel_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS | d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET;

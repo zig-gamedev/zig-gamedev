@@ -63,7 +63,7 @@ pub fn main() !void {
 
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(vm.Vec3)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -71,7 +71,7 @@ pub fn main() !void {
 
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,

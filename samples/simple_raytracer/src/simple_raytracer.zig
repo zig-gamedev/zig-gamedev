@@ -422,7 +422,7 @@ fn loadScene(
     const texture_4x4 = ResourceView{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, 4, 4, 0),
             d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             null,
@@ -558,7 +558,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const trace_shadow_rays_table = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(64 * 1024),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -566,7 +566,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
@@ -600,7 +600,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const shadow_rays_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(
                 .R32G32B32A32_FLOAT,
@@ -631,7 +631,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const shadow_mask_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.R32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -689,7 +689,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const vertex_buffer = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
@@ -709,7 +709,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const index_buffer = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
@@ -806,7 +806,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const blas_scratch_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ScratchDataSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -819,7 +819,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const blas_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ResultDataMaxSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -848,7 +848,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         // DXR is not supported. Create a dummy BLAS buffer to simplify code.
         break :blk_blas gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(1),
             d3d12.RESOURCE_STATE_COMMON,
             null,
@@ -874,7 +874,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const instance_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(@sizeOf(d3d12.RAYTRACING_INSTANCE_DESC)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
@@ -913,7 +913,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const tlas_scratch_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ScratchDataSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -926,7 +926,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const tlas_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ResultDataMaxSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -955,7 +955,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         // DXR is not supported. Create a dummy TLAS buffer to simplify code.
         break :blk_tlas gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(1),
             d3d12.RESOURCE_STATE_COMMON,
             null,

@@ -44,7 +44,7 @@ pub fn init(
 
     const font = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, font_info.width, font_info.height, 1),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -129,7 +129,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
         const new_size = (num_vertices + 5_000) * @sizeOf(c.ImDrawVert);
         vb = gctx.createCommittedResource(
             .UPLOAD,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(new_size),
             d3d12.RESOURCE_STATE_GENERIC_READ,
             null,
@@ -150,7 +150,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
         const new_size = (num_indices + 10_000) * @sizeOf(c.ImDrawIdx);
         ib = gctx.createCommittedResource(
             .UPLOAD,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(new_size),
             d3d12.RESOURCE_STATE_GENERIC_READ,
             null,

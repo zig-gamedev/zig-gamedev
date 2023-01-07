@@ -377,7 +377,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const depth_texture = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
@@ -404,7 +404,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const vertex_buffer = blk: {
         var vertex_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
@@ -427,7 +427,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const index_buffer = blk: {
         var index_buffer = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
@@ -461,7 +461,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         const equirect_texture = .{
             .resource = gctx.createCommittedResource(
                 .DEFAULT,
-                d3d12.HEAP_FLAG_NONE,
+                .{},
                 &d3d12.RESOURCE_DESC.initTex2d(.R16G16B16A16_FLOAT, image.width, image.height, 1),
                 d3d12.RESOURCE_STATE_COPY_DEST,
                 null,
@@ -600,7 +600,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const env_texture = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC{
                 .Dimension = .TEXTURE2D,
                 .Alignment = 0,
@@ -638,7 +638,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const irradiance_texture = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC{
                 .Dimension = .TEXTURE2D,
                 .Alignment = 0,
@@ -676,7 +676,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const prefiltered_env_texture = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &d3d12.RESOURCE_DESC{
                 .Dimension = .TEXTURE2D,
                 .Alignment = 0,
@@ -714,7 +714,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const brdf_integration_texture = .{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
+            .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initTex2d(
                     .R16G16_FLOAT,

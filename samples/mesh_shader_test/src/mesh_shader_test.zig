@@ -357,7 +357,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -379,7 +379,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -397,7 +397,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const meshlet_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_meshlets.items.len * @sizeOf(Meshlet)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -419,7 +419,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const meshlet_data_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_meshlets_data.items.len * @sizeOf(u32)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -441,7 +441,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;

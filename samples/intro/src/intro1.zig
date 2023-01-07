@@ -86,7 +86,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Create vertex buffer and return a *handle* to the underlying Direct3D12 resource.
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
@@ -95,7 +95,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Create index buffer and return a *handle* to the underlying Direct3D12 resource.
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
-        d3d12.HEAP_FLAG_NONE,
+        .{},
         &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u16)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
