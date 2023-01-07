@@ -18,6 +18,7 @@ const hrErrorOnFail = zwin32.hrErrorOnFail;
 const enable_debug_layer = @import("zd3d12_options").enable_debug_layer;
 const enable_gbv = @import("zd3d12_options").enable_gbv;
 const enable_d2d = @import("zd3d12_options").enable_d2d;
+const upload_heap_capacity = @import("zd3d12_options").upload_heap_capacity;
 
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
@@ -47,7 +48,6 @@ pub const GraphicsContext = struct {
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
     const num_cbv_srv_uav_gpu_descriptors = 8 * 1024;
     const max_num_buffered_resource_barriers = 16;
-    const upload_heap_capacity = 24 * 1024 * 1024;
 
     device: *d3d12.IDevice9,
     cmdqueue: *d3d12.ICommandQueue,

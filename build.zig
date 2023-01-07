@@ -18,6 +18,11 @@ pub fn build(b: *std.build.Builder) void {
             "zd3d12-enable-gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
+        .zd3d12_upload_heap_capacity = b.option(
+            u32,
+            "zd3d12-upload-heap-capacity",
+            "DirectX 12 Upload Heap Capacity",
+        ) orelse 24 * 1024 * 1024,
         .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
     };
     ensureTarget(options.target) catch return;
@@ -172,6 +177,7 @@ pub const Options = struct {
 
     zd3d12_enable_debug_layer: bool,
     zd3d12_enable_gbv: bool,
+    zd3d12_upload_heap_capacity: u32,
 
     zpix_enable: bool,
 };
