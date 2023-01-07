@@ -4,6 +4,7 @@ pub const BuildOptions = struct {
     enable_debug_layer: bool = false,
     enable_gbv: bool = false,
     enable_d2d: bool = false,
+    upload_heap_capacity: u32 = 24 * 1024 * 1024,
 };
 
 pub const BuildOptionsStep = struct {
@@ -18,6 +19,7 @@ pub const BuildOptionsStep = struct {
         bos.step.addOption(bool, "enable_debug_layer", bos.options.enable_debug_layer);
         bos.step.addOption(bool, "enable_gbv", bos.options.enable_gbv);
         bos.step.addOption(bool, "enable_d2d", bos.options.enable_d2d);
+        bos.step.addOption(u32, "upload_heap_capacity", bos.options.upload_heap_capacity);
         return bos;
     }
 
