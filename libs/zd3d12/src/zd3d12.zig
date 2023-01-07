@@ -1402,7 +1402,7 @@ pub const GraphicsContext = struct {
         path: []const u8,
         params: struct {
             num_mip_levels: u32 = 0,
-            texture_flags: d3d12.RESOURCE_FLAGS = d3d12.RESOURCE_FLAG_NONE,
+            texture_flags: d3d12.RESOURCE_FLAGS = .{},
         },
     ) HResultError!ResourceHandle {
         assert(gctx.is_cmdlist_opened);
@@ -1557,7 +1557,7 @@ pub const MipmapGenerator = struct {
                 .{},
                 &blk: {
                     var desc = d3d12.RESOURCE_DESC.initTex2d(format, width, height, 1);
-                    desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                    desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                     break :blk desc;
                 },
                 d3d12.RESOURCE_STATE_UNORDERED_ACCESS,

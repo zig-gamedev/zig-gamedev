@@ -151,16 +151,17 @@ pub const TEXTURE_LAYOUT = enum(UINT) {
     @"64KB_STANDARD_SWIZZLE" = 3,
 };
 
-pub const RESOURCE_FLAGS = UINT;
-pub const RESOURCE_FLAG_NONE = 0;
-pub const RESOURCE_FLAG_ALLOW_RENDER_TARGET = 0x1;
-pub const RESOURCE_FLAG_ALLOW_DEPTH_STENCIL = 0x2;
-pub const RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS = 0x4;
-pub const RESOURCE_FLAG_DENY_SHADER_RESOURCE = 0x8;
-pub const RESOURCE_FLAG_ALLOW_CROSS_ADAPTER = 0x10;
-pub const RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS = 0x20;
-pub const RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY = 0x40;
-pub const RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY = 0x80;
+pub const RESOURCE_FLAGS = packed struct(UINT) {
+    ALLOW_RENDER_TARGET: bool = false,
+    ALLOW_DEPTH_STENCIL: bool = false,
+    ALLOW_UNORDERED_ACCESS: bool = false,
+    DENY_SHADER_RESOURCE: bool = false,
+    ALLOW_CROSS_ADAPTER: bool = false,
+    ALLOW_SIMULTANEOUS_ACCESS: bool = false,
+    VIDEO_DECODE_REFERENCE_ONLY: bool = false,
+    VIDEO_ENCODE_REFERENCE_ONLY: bool = false,
+    __unused: u24 = 0,
+};
 
 pub const RESOURCE_DESC = extern struct {
     Dimension: RESOURCE_DIMENSION,
@@ -186,7 +187,7 @@ pub const RESOURCE_DESC = extern struct {
             .Format = .UNKNOWN,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .ROW_MAJOR,
-            .Flags = RESOURCE_FLAG_NONE,
+            .Flags = .{},
         };
         return v;
     }
@@ -203,7 +204,7 @@ pub const RESOURCE_DESC = extern struct {
             .Format = format,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .UNKNOWN,
-            .Flags = RESOURCE_FLAG_NONE,
+            .Flags = .{},
         };
         return v;
     }

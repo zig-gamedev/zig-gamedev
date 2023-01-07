@@ -444,7 +444,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
-            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true, .DENY_SHADER_RESOURCE = true };
             break :blk desc;
         },
         d3d12.RESOURCE_STATE_DEPTH_WRITE,

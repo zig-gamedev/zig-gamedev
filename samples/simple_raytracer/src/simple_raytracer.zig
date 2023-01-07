@@ -569,7 +569,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
-            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+            desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true };
             break :blk desc;
         },
         d3d12.RESOURCE_STATE_DEPTH_WRITE,
@@ -608,7 +608,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 gctx.viewport_height,
                 1,
             );
-            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+            desc.Flags = .{ .ALLOW_RENDER_TARGET = true };
             break :blk desc;
         },
         d3d12.RESOURCE_STATE_RENDER_TARGET,
@@ -634,7 +634,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.R32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
-            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+            desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;
         },
         d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
@@ -809,7 +809,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ScratchDataSizeInBytes);
-                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
@@ -822,7 +822,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ResultDataMaxSizeInBytes);
-                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
             d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
@@ -916,7 +916,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ScratchDataSizeInBytes);
-                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
@@ -929,7 +929,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{},
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ResultDataMaxSizeInBytes);
-                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
             d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
