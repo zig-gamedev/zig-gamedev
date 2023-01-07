@@ -35,7 +35,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
         .enable_debug_layer = options.zd3d12_enable_debug_layer,
         .enable_gbv = options.zd3d12_enable_gbv,
-        .upload_heap_capacity = options.zd3d12_upload_heap_capacity,
+        .upload_heap_capacity = 32 * 1024 * 1024,
     });
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
 
