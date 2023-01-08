@@ -46,12 +46,12 @@ pub fn init(
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, font_info.width, font_info.height, 1),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
     gctx.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
-    gctx.addTransitionBarrier(font, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    gctx.addTransitionBarrier(font, .{ .PIXEL_SHADER_RESOURCE = true });
 
     const font_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     gctx.device.CreateShaderResourceView(gctx.lookupResource(font).?, null, font_srv);
@@ -131,7 +131,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
             .UPLOAD,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(new_size),
-            d3d12.RESOURCE_STATE_GENERIC_READ,
+            d3d12.RESOURCE_STATES.GENERIC_READ,
             null,
         ) catch |err| hrPanic(err);
         gui.vb[gctx.frame_index] = vb;
@@ -152,7 +152,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
             .UPLOAD,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(new_size),
-            d3d12.RESOURCE_STATE_GENERIC_READ,
+            d3d12.RESOURCE_STATES.GENERIC_READ,
             null,
         ) catch |err| hrPanic(err);
         gui.ib[gctx.frame_index] = ib;

@@ -37,7 +37,7 @@ pub fn main() !void {
         gctx.beginFrame();
 
         const back_buffer = gctx.getBackBuffer();
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
 
         gctx.cmdlist.OMSetRenderTargets(
@@ -48,7 +48,7 @@ pub fn main() !void {
         );
         gctx.cmdlist.ClearRenderTargetView(back_buffer.descriptor_handle, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
 
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
         gctx.flushResourceBarriers();
 
         gctx.endFrame();

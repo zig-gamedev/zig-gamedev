@@ -92,10 +92,10 @@ pub const HEAP_PROPERTIES = extern struct {
 
 pub const HEAP_FLAGS = packed struct(UINT) {
     SHARED: bool = false,
-    __unused0: bool = false,
+    __unused1: bool = false,
     DENY_BUFFERS: bool = false,
     ALLOW_DISPLAY: bool = false,
-    __unused1: bool = false,
+    __unused4: bool = false,
     SHARED_CROSS_ADAPTER: bool = false,
     DENY_RT_DS_TEXTURES: bool = false,
     DENY_NON_RT_DS_TEXTURES: bool = false,
@@ -210,11 +210,12 @@ pub const RESOURCE_DESC = extern struct {
     }
 };
 
-pub const FENCE_FLAGS = UINT;
-pub const FENCE_FLAG_NONE = 0;
-pub const FENCE_FLAG_SHARED = 0x1;
-pub const FENCE_FLAG_SHARED_CROSS_ADAPTER = 0x2;
-pub const FENCE_FLAG_NON_MONITORED = 0x4;
+pub const FENCE_FLAGS = packed struct(UINT) {
+    SHARED: bool = false,
+    SHARED_CROSS_ADAPTER: bool = false,
+    NON_MONITORED: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const DESCRIPTOR_HEAP_TYPE = enum(UINT) {
     CBV_SRV_UAV = 0,
@@ -223,9 +224,10 @@ pub const DESCRIPTOR_HEAP_TYPE = enum(UINT) {
     DSV = 3,
 };
 
-pub const DESCRIPTOR_HEAP_FLAGS = UINT;
-pub const DESCRIPTOR_HEAP_FLAG_NONE = 0;
-pub const DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE = 0x1;
+pub const DESCRIPTOR_HEAP_FLAGS = packed struct(UINT) {
+    SHADER_VISIBLE: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const DESCRIPTOR_HEAP_DESC = extern struct {
     Type: DESCRIPTOR_HEAP_TYPE,
@@ -316,20 +318,21 @@ pub const STATIC_SAMPLER_DESC = extern struct {
     ShaderVisibility: SHADER_VISIBILITY,
 };
 
-pub const ROOT_SIGNATURE_FLAGS = UINT;
-pub const ROOT_SIGNATURE_FLAG_NONE: ROOT_SIGNATURE_FLAGS = 0;
-pub const ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT: ROOT_SIGNATURE_FLAGS = 0x1;
-pub const ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x2;
-pub const ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x4;
-pub const ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x8;
-pub const ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x10;
-pub const ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x20;
-pub const ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT: ROOT_SIGNATURE_FLAGS = 0x40;
-pub const ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE: ROOT_SIGNATURE_FLAGS = 0x80;
-pub const ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x100;
-pub const ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x200;
-pub const ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED: ROOT_SIGNATURE_FLAGS = 0x400;
-pub const ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED: ROOT_SIGNATURE_FLAGS = 0x800;
+pub const ROOT_SIGNATURE_FLAGS = packed struct(UINT) {
+    ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT: bool = false,
+    DENY_VERTEX_SHADER_ROOT_ACCESS: bool = false,
+    DENY_HULL_SHADER_ROOT_ACCESS: bool = false,
+    DENY_DOMAIN_SHADER_ROOT_ACCESS: bool = false,
+    DENY_GEOMETRY_SHADER_ROOT_ACCESS: bool = false,
+    DENY_PIXEL_SHADER_ROOT_ACCESS: bool = false,
+    ALLOW_STREAM_OUTPUT: bool = false,
+    LOCAL_ROOT_SIGNATURE: bool = false,
+    DENY_AMPLIFICATION_SHADER_ROOT_ACCESS: bool = false,
+    DENY_MESH_SHADER_ROOT_ACCESS: bool = false,
+    CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED: bool = false,
+    SAMPLER_HEAP_DIRECTLY_INDEXED: bool = false,
+    __unused: u20 = 0,
+};
 
 pub const ROOT_SIGNATURE_DESC = extern struct {
     NumParamenters: UINT,
@@ -339,13 +342,26 @@ pub const ROOT_SIGNATURE_DESC = extern struct {
     Flags: ROOT_SIGNATURE_FLAGS,
 };
 
-pub const DESCRIPTOR_RANGE_FLAGS = UINT;
-pub const DESCRIPTOR_RANGE_FLAG_NONE: DESCRIPTOR_RANGE_FLAGS = 0;
-pub const DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE: DESCRIPTOR_RANGE_FLAGS = 0x1;
-pub const DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE: DESCRIPTOR_RANGE_FLAGS = 0x2;
-pub const DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE: DESCRIPTOR_RANGE_FLAGS = 0x4;
-pub const DESCRIPTOR_RANGE_FLAG_DATA_STATIC: DESCRIPTOR_RANGE_FLAGS = 0x8;
-pub const DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS: DESCRIPTOR_RANGE_FLAGS = 0x10000;
+pub const DESCRIPTOR_RANGE_FLAGS = packed struct(UINT) {
+    DESCRIPTORS_VOLATILE: bool = false, // 0x1
+    DATA_VOLATILE: bool = false,
+    DATA_STATIC_WHILE_SET_AT_EXECUTE: bool = false,
+    DATA_STATIC: bool = false,
+    __unused4: bool = false, // 0x10
+    __unused5: bool = false,
+    __unused6: bool = false,
+    __unused7: bool = false,
+    __unused8: bool = false, // 0x100
+    __unused9: bool = false,
+    __unused10: bool = false,
+    __unused11: bool = false,
+    __unused12: bool = false, // 0x1000
+    __unused13: bool = false,
+    __unused14: bool = false,
+    __unused15: bool = false,
+    DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS: bool = false, // 0x10000
+    __unused: u15 = 0,
+};
 
 pub const DESCRIPTOR_RANGE1 = extern struct {
     RangeType: DESCRIPTOR_RANGE_TYPE,
@@ -361,11 +377,12 @@ pub const ROOT_DESCRIPTOR_TABLE1 = extern struct {
     pDescriptorRanges: ?[*]const DESCRIPTOR_RANGE1,
 };
 
-pub const ROOT_DESCRIPTOR_FLAGS = UINT;
-pub const ROOT_DESCRIPTOR_FLAG_NONE: ROOT_DESCRIPTOR_FLAGS = 0;
-pub const ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE: ROOT_DESCRIPTOR_FLAGS = 0x2;
-pub const ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE: ROOT_DESCRIPTOR_FLAGS = 0x4;
-pub const ROOT_DESCRIPTOR_FLAG_DATA_STATIC: ROOT_DESCRIPTOR_FLAGS = 0x8;
+pub const ROOT_DESCRIPTOR_FLAGS = packed struct(UINT) {
+    __unused0: bool = false,
+    DATA_VOLATILE: bool = false,
+    DATA_STATIC_WHILE_SET_AT_EXECUTE: bool = false,
+    DATA_STATIC: bool = false,
+};
 
 pub const ROOT_DESCRIPTOR1 = extern struct {
     ShaderRegister: UINT,
@@ -436,10 +453,11 @@ pub const RESOURCE_UAV_BARRIER = extern struct {
     pResource: *IResource,
 };
 
-pub const RESOURCE_BARRIER_FLAGS = UINT;
-pub const RESOURCE_BARRIER_FLAG_NONE = 0;
-pub const RESOURCE_BARRIER_FLAG_BEGIN_ONLY = 0x1;
-pub const RESOURCE_BARRIER_FLAG_END_ONLY = 0x2;
+pub const RESOURCE_BARRIER_FLAGS = packed struct(UINT) {
+    BEGIN_ONLY: bool = false,
+    END_ONLY: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const RESOURCE_BARRIER = extern struct {
     Type: RESOURCE_BARRIER_TYPE,
@@ -452,7 +470,7 @@ pub const RESOURCE_BARRIER = extern struct {
 
     pub fn initUav(resource: *IResource) RESOURCE_BARRIER {
         var v = std.mem.zeroes(@This());
-        v = .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = resource } } };
+        v = .{ .Type = .UAV, .Flags = .{}, .u = .{ .UAV = .{ .pResource = resource } } };
         return v;
     }
 };
@@ -499,11 +517,12 @@ pub const TILE_REGION_SIZE = extern struct {
     Depth: UINT16,
 };
 
-pub const TILE_RANGE_FLAGS = UINT;
-pub const TILE_RANGE_FLAG_NONE = 0;
-pub const TILE_RANGE_FLAG_NULL = 0x1;
-pub const TILE_RANGE_FLAG_SKIP = 0x2;
-pub const TILE_RANGE_FLAG_REUSE_SINGLE_TILE = 0x4;
+pub const TILE_RANGE_FLAGS = packed struct(UINT) {
+    NULL: bool = false,
+    SKIP: bool = false,
+    REUSE_SINGLE_TILE: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const SUBRESOURCE_TILING = extern struct {
     WidthInTiles: UINT,
@@ -518,15 +537,17 @@ pub const TILE_SHAPE = extern struct {
     DepthInTexels: UINT,
 };
 
-pub const TILE_MAPPING_FLAGS = UINT;
-pub const TILE_MAPPING_FLAG_NONE = 0;
-pub const TILE_MAPPING_FLAG_NO_HAZARD = 0x1;
+pub const TILE_MAPPING_FLAGS = packed struct(UINT) {
+    NO_HAZARD: bool = false,
+    __unused: u31 = 0,
+};
 
-pub const TILE_COPY_FLAGS = UINT;
-pub const TILE_COPY_FLAG_NONE = 0;
-pub const TILE_COPY_FLAG_NO_HAZARD = 0x1;
-pub const TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE = 0x2;
-pub const TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER = 0x4;
+pub const TILE_COPY_FLAGS = packed struct(UINT) {
+    NO_HAZARD: bool = false,
+    LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE: bool = false,
+    SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const VIEWPORT = extern struct {
     TopLeftX: FLOAT,
@@ -539,39 +560,55 @@ pub const VIEWPORT = extern struct {
 
 pub const RECT = windows.RECT;
 
-pub const RESOURCE_STATES = UINT;
-pub const RESOURCE_STATE_COMMON = 0;
-pub const RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1;
-pub const RESOURCE_STATE_INDEX_BUFFER = 0x2;
-pub const RESOURCE_STATE_RENDER_TARGET = 0x4;
-pub const RESOURCE_STATE_UNORDERED_ACCESS = 0x8;
-pub const RESOURCE_STATE_DEPTH_WRITE = 0x10;
-pub const RESOURCE_STATE_DEPTH_READ = 0x20;
-pub const RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40;
-pub const RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80;
-pub const RESOURCE_STATE_STREAM_OUT = 0x100;
-pub const RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200;
-pub const RESOURCE_STATE_COPY_DEST = 0x400;
-pub const RESOURCE_STATE_COPY_SOURCE = 0x800;
-pub const RESOURCE_STATE_RESOLVE_DEST = 0x1000;
-pub const RESOURCE_STATE_RESOLVE_SOURCE = 0x2000;
-pub const RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x400000;
-pub const RESOURCE_STATE_SHADING_RATE_SOURCE = 0x1000000;
-pub const RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800);
-pub const RESOURCE_STATE_ALL_SHADER_RESOURCE = (0x40 | 0x80);
-pub const RESOURCE_STATE_PRESENT = 0;
-pub const RESOURCE_STATE_PREDICATION = 0x200;
-pub const RESOURCE_STATE_VIDEO_DECODE_READ = 0x10000;
-pub const RESOURCE_STATE_VIDEO_DECODE_WRITE = 0x20000;
-pub const RESOURCE_STATE_VIDEO_PROCESS_READ = 0x40000;
-pub const RESOURCE_STATE_VIDEO_PROCESS_WRITE = 0x80000;
-pub const RESOURCE_STATE_VIDEO_ENCODE_READ = 0x200000;
-pub const RESOURCE_STATE_VIDEO_ENCODE_WRITE = 0x800000;
+pub const RESOURCE_STATES = packed struct(UINT) {
+    VERTEX_AND_CONSTANT_BUFFER: bool = false, // 0x1
+    INDEX_BUFFER: bool = false,
+    RENDER_TARGET: bool = false,
+    UNORDERED_ACCESS: bool = false,
+    DEPTH_WRITE: bool = false, // 0x10
+    DEPTH_READ: bool = false,
+    NON_PIXEL_SHADER_RESOURCE: bool = false,
+    PIXEL_SHADER_RESOURCE: bool = false,
+    STREAM_OUT: bool = false, // 0x100
+    INDIRECT_ARGUMENT: bool = false,
+    COPY_DEST: bool = false,
+    COPY_SOURCE: bool = false,
+    RESOLVE_DEST: bool = false, // 0x1000
+    RESOLVE_SOURCE: bool = false,
+    __unused14: bool = false,
+    __unused15: bool = false,
+    VIDEO_DECODE_READ: bool = false, // 0x10000
+    VIDEO_DECODE_WRITE: bool = false,
+    VIDEO_PROCESS_READ: bool = false,
+    VIDEO_PROCESS_WRITE: bool = false,
+    __unused20: bool = false, // 0x100000
+    VIDEO_ENCODE_READ: bool = false,
+    RAYTRACING_ACCELERATION_STRUCTURE: bool = false,
+    VIDEO_ENCODE_WRITE: bool = false,
+    SHADING_RATE_SOURCE: bool = false, // 0x1000000
+    __unused: u7 = 0,
+
+    pub const COMMON = RESOURCE_STATES{};
+    pub const PRESENT = RESOURCE_STATES{};
+    pub const PREDICATION = RESOURCE_STATES{ .INDIRECT_ARGUMENT = true };
+    pub const GENERIC_READ = RESOURCE_STATES{
+        .VERTEX_AND_CONSTANT_BUFFER = true,
+        .INDEX_BUFFER = true,
+        .NON_PIXEL_SHADER_RESOURCE = true,
+        .PIXEL_SHADER_RESOURCE = true,
+        .INDIRECT_ARGUMENT = true,
+        .COPY_SOURCE = true,
+    };
+    pub const ALL_SHADER_RESOURCE = RESOURCE_STATES{
+        .NON_PIXEL_SHADER_RESOURCE = true,
+        .PIXEL_SHADER_RESOURCE = true,
+    };
+};
 
 pub const INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
     DISABLED = 0,
-    @"0xFFFF" = 1,
-    @"0xFFFFFFFF" = 2,
+    OxFFFF = 1,
+    OxFFFFFFFF = 2,
 };
 
 pub const VERTEX_BUFFER_VIEW = extern struct {

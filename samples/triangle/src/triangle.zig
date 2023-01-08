@@ -65,7 +65,7 @@ pub fn main() !void {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(vm.Vec3)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -73,7 +73,7 @@ pub fn main() !void {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -108,8 +108,8 @@ pub fn main() !void {
         upload_indices.cpu_slice.len * @sizeOf(u32),
     );
 
-    gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+    gctx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
+    gctx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
     gctx.flushResourceBarriers();
 
     gctx.endFrame();
@@ -137,7 +137,7 @@ pub fn main() !void {
 
         const back_buffer = gctx.getBackBuffer();
 
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
 
         gctx.cmdlist.OMSetRenderTargets(
@@ -178,7 +178,7 @@ pub fn main() !void {
 
         guir.draw(&gctx);
 
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
         gctx.flushResourceBarriers();
 
         gctx.endFrame();

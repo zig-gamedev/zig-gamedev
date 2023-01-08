@@ -279,14 +279,14 @@ pub const GraphicsContext = struct {
         var resource_pool = ResourcePool.init(allocator);
         var pipeline_pool = PipelinePool.init(allocator);
 
-        var rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, d3d12.DESCRIPTOR_HEAP_FLAG_NONE);
-        var dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, d3d12.DESCRIPTOR_HEAP_FLAG_NONE);
+        var rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
+        var dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, .{});
 
         var cbv_srv_uav_cpu_heap = DescriptorHeap.init(
             device,
             num_cbv_srv_uav_cpu_descriptors,
             .CBV_SRV_UAV,
-            d3d12.DESCRIPTOR_HEAP_FLAG_NONE,
+            .{},
         );
 
         var cbv_srv_uav_gpu_heaps: [max_num_buffered_frames + 1]DescriptorHeap = undefined;
@@ -299,7 +299,7 @@ pub const GraphicsContext = struct {
                     device,
                     num_cbv_srv_uav_gpu_descriptors * (max_num_buffered_frames + 1),
                     .CBV_SRV_UAV,
-                    d3d12.DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+                    .{ .SHADER_VISIBLE = true },
                 );
                 cbv_srv_uav_gpu_heaps[0].capacity = @divExact(
                     cbv_srv_uav_gpu_heaps[0].capacity,
@@ -349,7 +349,7 @@ pub const GraphicsContext = struct {
                 );
                 swapchain_buffers[buffer_index] = resource_pool.addResource(
                     swapbuffers[buffer_index],
-                    d3d12.RESOURCE_STATE_PRESENT,
+                    d3d12.RESOURCE_STATES.PRESENT,
                 );
             }
             break :blk swapchain_buffers;
@@ -452,8 +452,8 @@ pub const GraphicsContext = struct {
                             .CPUAccessFlags = 0,
                             .StructureByteStride = 0,
                         },
-                        d3d12.RESOURCE_STATE_RENDER_TARGET,
-                        d3d12.RESOURCE_STATE_PRESENT,
+                        .{ .RENDER_TARGET = true },
+                        d3d12.RESOURCE_STATES.PRESENT,
                         &d3d11.IID_IResource,
                         @ptrCast(*?*anyopaque, &swapbuffers11[buffer_index]),
                     ));
@@ -503,12 +503,7 @@ pub const GraphicsContext = struct {
 
         const frame_fence = blk: {
             var frame_fence: *d3d12.IFence = undefined;
-            hrPanicOnFail(device.CreateFence(
-                0,
-                d3d12.FENCE_FLAG_NONE,
-                &d3d12.IID_IFence,
-                @ptrCast(*?*anyopaque, &frame_fence),
-            ));
+            hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(*?*anyopaque, &frame_fence)));
             break :blk frame_fence;
         };
 
@@ -745,7 +740,7 @@ pub const GraphicsContext = struct {
         // Above calls will set back buffer state to PRESENT. We need to reflect this change
         // in 'resource_pool' by manually setting state.
         gctx.resource_pool.lookupResource(gctx.swapchain_buffers[gctx.back_buffer_index]).?.state =
-            d3d12.RESOURCE_STATE_PRESENT;
+            d3d12.RESOURCE_STATES.PRESENT;
     }
 
     fn flushGpuCommands(gctx: *GraphicsContext) void {
@@ -857,7 +852,7 @@ pub const GraphicsContext = struct {
                 if (gctx.resource_pool.isResourceValid(barrier.resource)) {
                     d3d12_barriers[num_valid_barriers] = .{
                         .Type = .TRANSITION,
-                        .Flags = d3d12.RESOURCE_BARRIER_FLAG_NONE,
+                        .Flags = .{},
                         .u = .{
                             .Transition = .{
                                 .pResource = gctx.lookupResource(barrier.resource).?,
@@ -886,7 +881,7 @@ pub const GraphicsContext = struct {
         if (resource == null)
             return;
 
-        if (state_after != resource.?.state) {
+        if (@bitCast(u32, state_after) != @bitCast(u32, resource.?.state)) {
             if (gctx.transition_resource_barriers.items.len == max_num_buffered_resource_barriers)
                 gctx.flushResourceBarriers();
 
@@ -1383,7 +1378,7 @@ pub const GraphicsContext = struct {
             }
         }
 
-        gctx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_COPY_DEST);
+        gctx.addTransitionBarrier(texture, .{ .COPY_DEST = true });
         gctx.flushResourceBarriers();
 
         gctx.cmdlist.CopyTextureRegion(&.{
@@ -1499,7 +1494,7 @@ pub const GraphicsContext = struct {
                 desc.Flags = params.texture_flags;
                 break :blk desc;
             },
-            d3d12.RESOURCE_STATE_COPY_DEST,
+            .{ .COPY_DEST = true },
             null,
         );
 
@@ -1560,7 +1555,7 @@ pub const MipmapGenerator = struct {
                     desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                     break :blk desc;
                 },
-                d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+                .{ .UNORDERED_ACCESS = true },
                 null,
             ) catch |err| hrPanic(err);
             width /= 2;
@@ -1647,9 +1642,9 @@ pub const MipmapGenerator = struct {
 
             while (true) {
                 for (mipgen.scratch_textures) |scratch_texture| {
-                    gctx.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+                    gctx.addTransitionBarrier(scratch_texture, .{ .UNORDERED_ACCESS = true });
                 }
-                gctx.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                gctx.addTransitionBarrier(texture_handle, .{ .NON_PIXEL_SHADER_RESOURCE = true });
                 gctx.flushResourceBarriers();
 
                 const dispatch_num_mips = if (total_num_mips >= 4) 4 else total_num_mips;
@@ -1667,9 +1662,9 @@ pub const MipmapGenerator = struct {
                 gctx.cmdlist.Dispatch(num_groups_x, num_groups_y, 1);
 
                 for (mipgen.scratch_textures) |scratch_texture| {
-                    gctx.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_COPY_SOURCE);
+                    gctx.addTransitionBarrier(scratch_texture, .{ .COPY_SOURCE = true });
                 }
-                gctx.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_COPY_DEST);
+                gctx.addTransitionBarrier(texture_handle, .{ .COPY_DEST = true });
                 gctx.flushResourceBarriers();
 
                 var mip_index: u32 = 0;
@@ -1737,7 +1732,7 @@ const ResourcePool = struct {
                 for (resources) |*res| {
                     res.* = .{
                         .raw = null,
-                        .state = d3d12.RESOURCE_STATE_COMMON,
+                        .state = d3d12.RESOURCE_STATES.COMMON,
                         .desc = d3d12.RESOURCE_DESC.initBuffer(0),
                     };
                 }
@@ -1794,7 +1789,7 @@ const ResourcePool = struct {
         _ = resource.?.raw.?.Release();
         resource.?.* = .{
             .raw = null,
-            .state = d3d12.RESOURCE_STATE_COMMON,
+            .state = d3d12.RESOURCE_STATES.COMMON,
             .desc = d3d12.RESOURCE_DESC.initBuffer(0),
         };
     }
@@ -1995,7 +1990,7 @@ const DescriptorHeap = struct {
             .base = .{
                 .cpu_handle = heap.GetCPUDescriptorHandleForHeapStart(),
                 .gpu_handle = blk: {
-                    if ((flags & d3d12.DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) != 0)
+                    if (flags.SHADER_VISIBLE)
                         break :blk heap.GetGPUDescriptorHandleForHeapStart();
                     break :blk d3d12.GPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
                 },
@@ -2051,7 +2046,7 @@ const GpuMemoryHeap = struct {
                 &d3d12.HEAP_PROPERTIES.initType(heap_type),
                 .{},
                 &d3d12.RESOURCE_DESC.initBuffer(capacity),
-                d3d12.RESOURCE_STATE_GENERIC_READ,
+                d3d12.RESOURCE_STATES.GENERIC_READ,
                 null,
                 &d3d12.IID_IResource,
                 @ptrCast(*?*anyopaque, &resource),

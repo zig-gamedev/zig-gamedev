@@ -359,7 +359,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -381,7 +381,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -399,7 +399,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_meshlets.items.len * @sizeOf(Meshlet)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -421,7 +421,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(all_meshlets_data.items.len * @sizeOf(u32)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -447,7 +447,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true, .DENY_SHADER_RESOURCE = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        .{ .DEPTH_WRITE = true },
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
@@ -475,7 +475,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(vertex_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
     }
 
@@ -490,7 +490,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(index_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
     }
 
@@ -505,7 +505,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(meshlet_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(meshlet_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
     }
 
@@ -520,7 +520,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(meshlet_data_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(meshlet_data_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
     }
 
@@ -711,7 +711,7 @@ fn draw(demo: *DemoState) void {
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
     const back_buffer = gctx.getBackBuffer();
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.OMSetRenderTargets(
@@ -816,7 +816,7 @@ fn draw(demo: *DemoState) void {
 
     demo.guir.draw(gctx);
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
     gctx.flushResourceBarriers();
 
     gctx.endFrame();

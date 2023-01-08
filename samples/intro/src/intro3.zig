@@ -126,7 +126,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Vertex)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -135,7 +135,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u32)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -148,7 +148,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true, .DENY_SHADER_RESOURCE = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        .{ .DEPTH_WRITE = true },
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
@@ -207,8 +207,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     }
 
     // Transition vertex and index buffers from 'copy dest' state to the state appropriate for rendering.
-    gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+    gctx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
+    gctx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
     gctx.flushResourceBarriers();
 
     // This will send command list to the GPU, call 'Present' and do some other bookkeeping.
@@ -353,7 +353,7 @@ fn draw(demo: *DemoState) void {
 
     // Get current back buffer resource and transition it to 'render target' state.
     const back_buffer = gctx.getBackBuffer();
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.OMSetRenderTargets(
@@ -430,7 +430,7 @@ fn draw(demo: *DemoState) void {
     // Draw dear imgui widgets.
     demo.guir.draw(gctx);
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
     gctx.flushResourceBarriers();
 
     // Call 'Present' and prepare for the next frame.

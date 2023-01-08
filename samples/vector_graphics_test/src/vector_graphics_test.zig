@@ -628,7 +628,7 @@ fn draw(demo: *DemoState) void {
 
     const back_buffer = gctx.getBackBuffer();
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.OMSetRenderTargets(

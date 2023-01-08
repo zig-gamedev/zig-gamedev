@@ -118,7 +118,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(max_num_vertices * @sizeOf(Vertex)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -142,7 +142,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true, .DENY_SHADER_RESOURCE = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        .{ .DEPTH_WRITE = true },
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
@@ -342,7 +342,7 @@ fn draw(demo: *DemoState) void {
 
     // Get current back buffer resource and transition it to 'render target' state.
     const back_buffer = gctx.getBackBuffer();
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.OMSetRenderTargets(
@@ -378,7 +378,7 @@ fn draw(demo: *DemoState) void {
             verts.cpu_slice[i].position = [3]f32{ xslice[i], yslice[i], zslice[i] };
         }
 
-        gctx.addTransitionBarrier(demo.vertex_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+        gctx.addTransitionBarrier(demo.vertex_buffer, .{ .COPY_DEST = true });
         gctx.flushResourceBarriers();
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(demo.vertex_buffer).?,
@@ -387,7 +387,7 @@ fn draw(demo: *DemoState) void {
             verts.buffer_offset,
             verts.cpu_slice.len * @sizeOf(@TypeOf(verts.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(demo.vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        gctx.addTransitionBarrier(demo.vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
         gctx.flushResourceBarriers();
     }
 
@@ -422,7 +422,7 @@ fn draw(demo: *DemoState) void {
     // Draw dear imgui widgets.
     demo.guir.draw(gctx);
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
     gctx.flushResourceBarriers();
 
     // Call 'Present' and prepare for the next frame.

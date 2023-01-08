@@ -81,7 +81,7 @@ const DemoState = struct {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(num_mipmaps * 4 * @sizeOf(Vertex)),
-            d3d12.RESOURCE_STATE_COPY_DEST,
+            .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err);
 
@@ -89,7 +89,7 @@ const DemoState = struct {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(4 * @sizeOf(u32)),
-            d3d12.RESOURCE_STATE_COPY_DEST,
+            .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err);
 
@@ -175,9 +175,9 @@ const DemoState = struct {
             );
         }
 
-        gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
-        gctx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
+        gctx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
+        gctx.addTransitionBarrier(texture, .{ .PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
 
         gctx.endFrame();
@@ -232,7 +232,7 @@ const DemoState = struct {
 
         const back_buffer = gctx.getBackBuffer();
 
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
 
         gctx.cmdlist.OMSetRenderTargets(
@@ -264,7 +264,7 @@ const DemoState = struct {
 
         demo.guir.draw(gctx);
 
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
         gctx.flushResourceBarriers();
 
         gctx.endFrame();

@@ -424,7 +424,7 @@ fn loadScene(
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, 4, 4, 0),
-            d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+            .{ .PIXEL_SHADER_RESOURCE = true },
             null,
         ) catch |err| hrPanic(err),
         .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
@@ -560,7 +560,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(64 * 1024),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -572,7 +572,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        .{ .DEPTH_WRITE = true },
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
@@ -611,7 +611,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_RENDER_TARGET = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_RENDER_TARGET,
+        .{ .RENDER_TARGET = true },
         &d3d12.CLEAR_VALUE.initColor(.R32G32B32A32_FLOAT, &.{ 0.0, 0.0, 0.0, 0.0 }),
     ) catch |err| hrPanic(err);
 
@@ -637,7 +637,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+        .{ .UNORDERED_ACCESS = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -682,7 +682,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     for (all_textures.items) |texture| {
         mipgen_rgba8.generateMipmaps(&gctx, texture.resource);
-        gctx.addTransitionBarrier(texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(texture.resource, .{ .PIXEL_SHADER_RESOURCE = true });
     }
     gctx.flushResourceBarriers();
 
@@ -691,7 +691,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
-            d3d12.RESOURCE_STATE_COPY_DEST,
+            .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err),
         .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
@@ -711,7 +711,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
-            d3d12.RESOURCE_STATE_COPY_DEST,
+            .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err),
         .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
@@ -735,7 +735,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(vertex_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(vertex_buffer.resource, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
     }
 
@@ -752,7 +752,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        gctx.addTransitionBarrier(index_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(index_buffer.resource, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
     }
 
@@ -812,7 +812,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
-            d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+            .{ .UNORDERED_ACCESS = true },
             null,
         ) catch |err| hrPanic(err);
         temp_resources.append(blas_scratch_buffer) catch unreachable;
@@ -825,7 +825,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
-            d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+            .{ .RAYTRACING_ACCELERATION_STRUCTURE = true },
             null,
         ) catch |err| hrPanic(err);
 
@@ -850,7 +850,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(1),
-            d3d12.RESOURCE_STATE_COMMON,
+            d3d12.RESOURCE_STATES.COMMON,
             null,
         ) catch |err| hrPanic(err);
     };
@@ -876,7 +876,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(@sizeOf(d3d12.RAYTRACING_INSTANCE_DESC)),
-            d3d12.RESOURCE_STATE_COPY_DEST,
+            .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err);
         temp_resources.append(instance_buffer) catch unreachable;
@@ -893,7 +893,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 upload.buffer_offset,
                 upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
             );
-            gctx.addTransitionBarrier(instance_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            gctx.addTransitionBarrier(instance_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
             gctx.flushResourceBarriers();
         }
 
@@ -919,7 +919,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
-            d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+            .{ .UNORDERED_ACCESS = true },
             null,
         ) catch |err| hrPanic(err);
         temp_resources.append(tlas_scratch_buffer) catch unreachable;
@@ -932,7 +932,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
                 break :blk desc;
             },
-            d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+            .{ .RAYTRACING_ACCELERATION_STRUCTURE = true },
             null,
         ) catch |err| hrPanic(err);
 
@@ -957,7 +957,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(1),
-            d3d12.RESOURCE_STATE_COMMON,
+            d3d12.RESOURCE_STATES.COMMON,
             null,
         ) catch |err| hrPanic(err);
     };
@@ -1128,7 +1128,7 @@ fn draw(demo: *DemoState) void {
 
     const back_buffer = gctx.getBackBuffer();
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.OMSetRenderTargets(
@@ -1171,7 +1171,7 @@ fn draw(demo: *DemoState) void {
         }
     }
 
-    gctx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(demo.shadow_rays_texture, .{ .RENDER_TARGET = true });
     gctx.flushResourceBarriers();
 
     // Generate shadow rays.
@@ -1220,8 +1220,8 @@ fn draw(demo: *DemoState) void {
         );
     }
 
-    gctx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    gctx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    gctx.addTransitionBarrier(demo.shadow_rays_texture, .{ .NON_PIXEL_SHADER_RESOURCE = true });
+    gctx.addTransitionBarrier(demo.shadow_mask_texture, .{ .UNORDERED_ACCESS = true });
     gctx.flushResourceBarriers();
 
     // Trace shadow rays.
@@ -1231,7 +1231,7 @@ fn draw(demo: *DemoState) void {
 
         // Upload 'shader table' content (in this demo it could be done only once at init time).
         {
-            gctx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_COPY_DEST);
+            gctx.addTransitionBarrier(demo.trace_shadow_rays_table, .{ .COPY_DEST = true });
             gctx.flushResourceBarriers();
 
             const total_table_size = 192;
@@ -1273,7 +1273,7 @@ fn draw(demo: *DemoState) void {
                 upload.buffer_offset,
                 total_table_size,
             );
-            gctx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            gctx.addTransitionBarrier(demo.trace_shadow_rays_table, .{ .NON_PIXEL_SHADER_RESOURCE = true });
             gctx.flushResourceBarriers();
         }
 
@@ -1318,7 +1318,7 @@ fn draw(demo: *DemoState) void {
         );
     }
 
-    gctx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    gctx.addTransitionBarrier(demo.shadow_mask_texture, .{ .PIXEL_SHADER_RESOURCE = true });
     gctx.flushResourceBarriers();
 
     // Draw Sponza.
@@ -1367,7 +1367,7 @@ fn draw(demo: *DemoState) void {
 
     demo.guir.draw(gctx);
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
     gctx.flushResourceBarriers();
 
     gctx.endFrame();

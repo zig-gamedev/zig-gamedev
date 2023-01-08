@@ -233,7 +233,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Pso_Vertex)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -241,7 +241,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .DEFAULT,
         .{},
         &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u32)),
-        d3d12.RESOURCE_STATE_COPY_DEST,
+        .{ .COPY_DEST = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -253,7 +253,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_DEPTH_STENCIL = true, .DENY_SHADER_RESOURCE = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        .{ .DEPTH_WRITE = true },
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
@@ -274,7 +274,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+        .{ .UNORDERED_ACCESS = true },
         null,
     ) catch |err| hrPanic(err);
 
@@ -311,7 +311,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true, .ALLOW_RENDER_TARGET = true };
             break :blk desc;
         },
-        d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+        .{ .UNORDERED_ACCESS = true },
         &d3d12.CLEAR_VALUE.initColor(.R8G8B8A8_UNORM, &.{ 0.2, 0.4, 0.8, 1.0 }),
     ) catch |err| hrPanic(err);
 
@@ -364,7 +364,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         defer mipgen.deinit(&gctx);
         for (mesh_textures) |texture| {
             mipgen.generateMipmaps(&gctx, texture);
-            gctx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            gctx.addTransitionBarrier(texture, .{ .PIXEL_SHADER_RESOURCE = true });
         }
         gctx.finishGpuCommands(); // Wait for the GPU so that we can release the generator.
     }
@@ -404,8 +404,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         );
     }
 
-    gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+    gctx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
+    gctx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
     gctx.flushResourceBarriers();
 
     gctx.endFrame();
@@ -613,7 +613,7 @@ fn draw(demo: *DemoState) void {
         }
         gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
 
-        gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
+        gctx.addTransitionBarrier(demo.pixel_texture, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
 
         gctx.cmdlist.OMSetRenderTargets(
@@ -656,10 +656,10 @@ fn draw(demo: *DemoState) void {
                     .Dest = gctx.lookupResource(demo.pixel_buffer).?.GetGPUVirtualAddress(),
                     .Value = 0,
                 }};
-                gctx.addTransitionBarrier(demo.pixel_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+                gctx.addTransitionBarrier(demo.pixel_buffer, .{ .COPY_DEST = true });
                 gctx.flushResourceBarriers();
                 gctx.cmdlist.WriteBufferImmediate(param.len, &param, null);
-                gctx.addTransitionBarrier(demo.pixel_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+                gctx.addTransitionBarrier(demo.pixel_buffer, .{ .UNORDERED_ACCESS = true });
                 gctx.flushResourceBarriers();
             }
 
@@ -733,8 +733,8 @@ fn draw(demo: *DemoState) void {
             demo.num_pixel_groups = gctx.viewport_width * gctx.viewport_height / compute_group_size;
         }
 
-        gctx.addTransitionBarrier(demo.pixel_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+        gctx.addTransitionBarrier(demo.pixel_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
+        gctx.addTransitionBarrier(demo.pixel_texture, .{ .UNORDERED_ACCESS = true });
         gctx.flushResourceBarriers();
 
         //
@@ -755,8 +755,8 @@ fn draw(demo: *DemoState) void {
     const back_buffer = gctx.getBackBuffer();
 
     // Copy pixel texture to the back buffer.
-    gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_COPY_SOURCE);
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_COPY_DEST);
+    gctx.addTransitionBarrier(demo.pixel_texture, .{ .COPY_SOURCE = true });
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .COPY_DEST = true });
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.CopyResource(
@@ -764,8 +764,8 @@ fn draw(demo: *DemoState) void {
         gctx.lookupResource(demo.pixel_texture).?,
     );
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
+    gctx.addTransitionBarrier(demo.pixel_texture, .{ .UNORDERED_ACCESS = true });
     gctx.flushResourceBarriers();
 
     // Set back buffer as a render target (for UI and Direct2D).
@@ -778,7 +778,7 @@ fn draw(demo: *DemoState) void {
 
     demo.guir.draw(gctx);
 
-    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
     gctx.flushResourceBarriers();
 
     gctx.endFrame();
