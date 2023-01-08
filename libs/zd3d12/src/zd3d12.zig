@@ -229,7 +229,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
-                .Flags = d3d12.COMMAND_QUEUE_FLAG_NONE,
+                .Flags = .{},
                 .NodeMask = 0,
             }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &cmdqueue)));
             break :blk cmdqueue;

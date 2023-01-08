@@ -720,7 +720,7 @@ fn draw(demo: *DemoState) void {
         w32.TRUE,
         &demo.depth_texture_dsv,
     );
-    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.1, 0.2, 0.4, 1.0 },

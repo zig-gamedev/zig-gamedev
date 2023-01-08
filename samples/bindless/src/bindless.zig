@@ -958,7 +958,7 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
-    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, .{ .DEPTH = true }, 1.0, 0, 0, null);
 
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{

@@ -629,9 +629,11 @@ pub const STREAM_OUTPUT_BUFFER_VIEW = extern struct {
     BufferFilledSizeLocation: GPU_VIRTUAL_ADDRESS,
 };
 
-pub const CLEAR_FLAGS = UINT;
-pub const CLEAR_FLAG_DEPTH: CLEAR_FLAGS = 0x1;
-pub const CLEAR_FLAG_STENCIL: CLEAR_FLAGS = 0x2;
+pub const CLEAR_FLAGS = packed struct(UINT) {
+    DEPTH: bool = false,
+    STENCIL: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const DISCARD_REGION = extern struct {
     NumRects: UINT,
@@ -722,9 +724,10 @@ pub const PACKED_MIP_INFO = extern struct {
     StartTileIndexInOverallResource: UINT,
 };
 
-pub const COMMAND_QUEUE_FLAGS = UINT;
-pub const COMMAND_QUEUE_FLAG_NONE = 0;
-pub const COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT = 0x1;
+pub const COMMAND_QUEUE_FLAGS = packed struct(UINT) {
+    DISABLE_GPU_TIMEOUT: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const COMMAND_QUEUE_PRIORITY = enum(UINT) {
     NORMAL = 0,
@@ -797,16 +800,15 @@ pub const BLEND_OP = enum(UINT) {
     MAX = 5,
 };
 
-pub const COLOR_WRITE_ENABLE = UINT;
-pub const COLOR_WRITE_ENABLE_RED = 0x1;
-pub const COLOR_WRITE_ENABLE_GREEN = 0x2;
-pub const COLOR_WRITE_ENABLE_BLUE = 0x4;
-pub const COLOR_WRITE_ENABLE_ALPHA = 0x8;
-pub const COLOR_WRITE_ENABLE_ALL =
-    COLOR_WRITE_ENABLE_RED |
-    COLOR_WRITE_ENABLE_GREEN |
-    COLOR_WRITE_ENABLE_BLUE |
-    COLOR_WRITE_ENABLE_ALPHA;
+pub const COLOR_WRITE_ENABLE = packed struct(UINT) {
+    RED: bool = false,
+    GREEN: bool = false,
+    BLUE: bool = false,
+    ALPHA: bool = false,
+    __unused: u28 = 0,
+
+    pub const ALL = COLOR_WRITE_ENABLE{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
+};
 
 pub const LOGIC_OP = enum(UINT) {
     CLEAR = 0,
@@ -1075,9 +1077,10 @@ pub const CACHED_PIPELINE_STATE = extern struct {
     }
 };
 
-pub const PIPELINE_STATE_FLAGS = UINT;
-pub const PIPELINE_STATE_FLAG_NONE = 0;
-pub const PIPELINE_STATE_FLAG_TOOL_DEBUG = 0x1;
+pub const PIPELINE_STATE_FLAGS = packed struct(UINT) {
+    TOOL_DEBUG: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
     pRootSignature: ?*IRootSignature,
@@ -1125,7 +1128,7 @@ pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
             .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
-            .Flags = PIPELINE_STATE_FLAG_NONE,
+            .Flags = .{},
         };
         return v;
     }
@@ -1145,7 +1148,7 @@ pub const COMPUTE_PIPELINE_STATE_DESC = extern struct {
             .CS = SHADER_BYTECODE.initZero(),
             .NodeMask = 0,
             .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
-            .Flags = PIPELINE_STATE_FLAG_NONE,
+            .Flags = .{},
         };
         return v;
     }
@@ -1208,10 +1211,11 @@ pub const RESOURCE_HEAP_TIER = enum(UINT) {
     TIER_2 = 2,
 };
 
-pub const SHADER_MIN_PRECISION_SUPPORT = UINT;
-pub const SHADER_MIN_PRECISION_SUPPORT_NONE: SHADER_MIN_PRECISION_SUPPORT = 0;
-pub const SHADER_MIN_PRECISION_SUPPORT_10_BIT: SHADER_MIN_PRECISION_SUPPORT = 0x1;
-pub const SHADER_MIN_PRECISION_SUPPORT_16_BIT: SHADER_MIN_PRECISION_SUPPORT = 0x2;
+pub const SHADER_MIN_PRECISION_SUPPORT = packed struct(UINT) {
+    @"10_BIT": bool = false,
+    @"16_BIT": bool = false,
+    __unused: u30 = 0,
+};
 
 pub const TILED_RESOURCES_TIER = enum(UINT) {
     NOT_SUPPORTED = 0,
@@ -1286,15 +1290,16 @@ pub const FEATURE_DATA_D3D12_OPTIONS7 = extern struct {
     SamplerFeedbackTier: SAMPLER_FEEDBACK_TIER,
 };
 
-pub const COMMAND_LIST_SUPPORT_FLAGS = UINT;
-pub const COMMAND_LIST_SUPPORT_FLAG_NONE: COMMAND_LIST_SUPPORT_FLAGS = 0x0;
-pub const COMMAND_LIST_SUPPORT_FLAG_DIRECT: COMMAND_LIST_SUPPORT_FLAGS = 0x1;
-pub const COMMAND_LIST_SUPPORT_FLAG_BUNDLE: COMMAND_LIST_SUPPORT_FLAGS = 0x2;
-pub const COMMAND_LIST_SUPPORT_FLAG_COMPUTE: COMMAND_LIST_SUPPORT_FLAGS = 0x4;
-pub const COMMAND_LIST_SUPPORT_FLAG_COPY: COMMAND_LIST_SUPPORT_FLAGS = 0x8;
-pub const COMMAND_LIST_SUPPORT_FLAG_VIDEO_DECODE: COMMAND_LIST_SUPPORT_FLAGS = 0x10;
-pub const COMMAND_LIST_SUPPORT_FLAG_VIDEO_PROCESS: COMMAND_LIST_SUPPORT_FLAGS = 0x20;
-pub const COMMAND_LIST_SUPPORT_FLAG_VIDEO_ENCODE: COMMAND_LIST_SUPPORT_FLAGS = 0x40;
+pub const COMMAND_LIST_SUPPORT_FLAGS = packed struct(UINT) {
+    DIRECT: bool = false,
+    BUNDLE: bool = false,
+    COMPUTE: bool = false,
+    COPY: bool = false,
+    VIDEO_DECODE: bool = false,
+    VIDEO_PROCESS: bool = false,
+    VIDEO_ENCODE: bool = false,
+    __unused: u25 = 0,
+};
 
 pub const VIEW_INSTANCING_TIER = enum(UINT) {
     NOT_SUPPORTED = 0,
@@ -1328,9 +1333,10 @@ pub inline fn encodeShader4ComponentMapping(src0: UINT, src1: UINT, src2: UINT, 
 }
 pub const DEFAULT_SHADER_4_COMPONENT_MAPPING = encodeShader4ComponentMapping(0, 1, 2, 3);
 
-pub const BUFFER_SRV_FLAGS = UINT;
-pub const BUFFER_SRV_FLAG_NONE = 0;
-pub const BUFFER_SRV_FLAG_RAW = 0x1;
+pub const BUFFER_SRV_FLAGS = packed struct(UINT) {
+    RAW: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const BUFFER_SRV = extern struct {
     FirstElement: UINT64,
@@ -1444,7 +1450,7 @@ pub const SHADER_RESOURCE_VIEW_DESC = extern struct {
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = 0,
-                    .Flags = BUFFER_SRV_FLAG_NONE,
+                    .Flags = .{},
                 },
             },
         };
@@ -1466,7 +1472,7 @@ pub const SHADER_RESOURCE_VIEW_DESC = extern struct {
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = stride,
-                    .Flags = BUFFER_SRV_FLAG_NONE,
+                    .Flags = .{},
                 },
             },
         };
@@ -1546,9 +1552,10 @@ pub const SAMPLER_DESC = extern struct {
     MaxLOD: FLOAT,
 };
 
-pub const BUFFER_UAV_FLAGS = UINT;
-pub const BUFFER_UAV_FLAG_NONE = 0;
-pub const BUFFER_UAV_FLAG_RAW = 0x1;
+pub const BUFFER_UAV_FLAGS = packed struct(UINT) {
+    RAW: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const BUFFER_UAV = extern struct {
     FirstElement: UINT64,
@@ -1624,7 +1631,7 @@ pub const UNORDERED_ACCESS_VIEW_DESC = extern struct {
                     .NumElements = num_elements,
                     .StructureByteStride = 0,
                     .CounterOffsetInBytes = counter_offset,
-                    .Flags = BUFFER_SRV_FLAG_NONE,
+                    .Flags = .{},
                 },
             },
         };
@@ -1647,7 +1654,7 @@ pub const UNORDERED_ACCESS_VIEW_DESC = extern struct {
                     .NumElements = num_elements,
                     .StructureByteStride = stride,
                     .CounterOffsetInBytes = counter_offset,
-                    .Flags = BUFFER_SRV_FLAG_NONE,
+                    .Flags = .{},
                 },
             },
         };
@@ -1753,10 +1760,11 @@ pub const TEX2DMS_ARRAY_DSV = extern struct {
     ArraySize: UINT,
 };
 
-pub const DSV_FLAGS = UINT;
-pub const DSV_FLAG_NONE = 0;
-pub const DSV_FLAG_READ_ONLY_DEPTH = 0x1;
-pub const DSV_FLAG_READ_ONLY_STENCIL = 0x2;
+pub const DSV_FLAGS = packed struct(UINT) {
+    READ_ONLY_DEPTH: bool = false,
+    READ_ONLY_STENCIL: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const DSV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
@@ -4746,7 +4754,7 @@ pub const MESH_SHADER_PIPELINE_STATE_DESC = extern struct {
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
             .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
-            .Flags = PIPELINE_STATE_FLAG_NONE,
+            .Flags = .{},
         };
         return v;
     }

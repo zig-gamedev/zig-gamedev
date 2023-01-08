@@ -368,7 +368,7 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
-    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);
 
     // Set graphics state and draw.
     gctx.setCurrentPipeline(demo.intro3_pso);
