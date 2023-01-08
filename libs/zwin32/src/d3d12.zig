@@ -570,7 +570,7 @@ pub const RESOURCE_STATES = packed struct(UINT) {
     NON_PIXEL_SHADER_RESOURCE: bool = false,
     PIXEL_SHADER_RESOURCE: bool = false,
     STREAM_OUT: bool = false, // 0x100
-    INDIRECT_ARGUMENT: bool = false,
+    INDIRECT_ARGUMENT_OR_PREDICATION: bool = false,
     COPY_DEST: bool = false,
     COPY_SOURCE: bool = false,
     RESOLVE_DEST: bool = false, // 0x1000
@@ -590,13 +590,12 @@ pub const RESOURCE_STATES = packed struct(UINT) {
 
     pub const COMMON = RESOURCE_STATES{};
     pub const PRESENT = RESOURCE_STATES{};
-    pub const PREDICATION = RESOURCE_STATES{ .INDIRECT_ARGUMENT = true };
     pub const GENERIC_READ = RESOURCE_STATES{
         .VERTEX_AND_CONSTANT_BUFFER = true,
         .INDEX_BUFFER = true,
         .NON_PIXEL_SHADER_RESOURCE = true,
         .PIXEL_SHADER_RESOURCE = true,
-        .INDIRECT_ARGUMENT = true,
+        .INDIRECT_ARGUMENT_OR_PREDICATION = true,
         .COPY_SOURCE = true,
     };
     pub const ALL_SHADER_RESOURCE = RESOURCE_STATES{
@@ -5652,6 +5651,126 @@ pub const IDevice9 = extern struct {
             *?*anyopaque,
         ) callconv(WINAPI) HRESULT,
     };
+};
+
+pub const BARRIER_LAYOUT = enum(UINT) {
+    PRESENT,
+    GENERIC_READ,
+    RENDER_TARGET,
+    UNORDERED_ACCESS,
+    DEPTH_STENCIL_WRITE,
+    DEPTH_STENCIL_READ,
+    SHADER_RESOURCE,
+    COPY_SOURCE,
+    COPY_DEST,
+    RESOLVE_SOURCE,
+    RESOLVE_DEST,
+    SHADING_RATE_SOURCE,
+    VIDEO_DECODE_READ,
+    VIDEO_DECODE_WRITE,
+    VIDEO_PROCESS_READ,
+    VIDEO_PROCESS_WRITE,
+    VIDEO_ENCODE_READ,
+    VIDEO_ENCODE_WRITE,
+    DIRECT_QUEUE_COMMON,
+    DIRECT_QUEUE_GENERIC_READ,
+    DIRECT_QUEUE_UNORDERED_ACCESS,
+    DIRECT_QUEUE_SHADER_RESOURCE,
+    DIRECT_QUEUE_COPY_SOURCE,
+    DIRECT_QUEUE_COPY_DEST,
+    COMPUTE_QUEUE_COMMON,
+    COMPUTE_QUEUE_GENERIC_READ,
+    COMPUTE_QUEUE_UNORDERED_ACCESS,
+    COMPUTE_QUEUE_SHADER_RESOURCE,
+    COMPUTE_QUEUE_COPY_SOURCE,
+    COMPUTE_QUEUE_COPY_DEST,
+    VIDEO_QUEUE_COMMON,
+    UNDEFINED = 0xffffffff,
+
+    pub const COMMON = .PRESENT;
+};
+
+pub const BARRIER_SYNC = packed struct(UINT) {
+    ALL: bool = false, // 0x1
+    DRAW: bool = false,
+    INDEX_INPUT: bool = false,
+    VERTEX_SHADING: bool = false,
+    PIXEL_SHADING: bool = false, // 0x10
+    DEPTH_STENCIL: bool = false,
+    RENDER_TARGET: bool = false,
+    COMPUTE_SHADING: bool = false,
+    RAYTRACING: bool = false, // 0x100
+    COPY: bool = false,
+    RESOLVE: bool = false,
+    EXECUTE_INDIRECT_OR_PREDICATION: bool = false,
+    ALL_SHADING: bool = false, // 0x1000
+    NON_PIXEL_SHADING: bool = false,
+    EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO: bool = false,
+    CLEAR_UNORDERED_ACCESS_VIEW: bool = false,
+    __unused16: bool = false, // 0x10000
+    __unused17: bool = false,
+    __unused18: bool = false,
+    __unused19: bool = false,
+    VIDEO_DECODE: bool = false, // 0x100000
+    VIDEO_PROCESS: bool = false,
+    VIDEO_ENCODE: bool = false,
+    BUILD_RAYTRACING_ACCELERATION_STRUCTURE: bool = false,
+    COPY_RAYTRACING_ACCELERATION_STRUCTURE: bool = false, // 0x1000000
+    __unused25: bool = false,
+    __unused26: bool = false,
+    __unused27: bool = false,
+    __unused28: bool = false, // 0x10000000
+    __unused29: bool = false,
+    __unused30: bool = false,
+    SPLIT: bool = false,
+};
+
+pub const D3D12_BARRIER_ACCESS = packed struct(UINT) {
+    VERTEX_BUFFER: bool = false,
+    CONSTANT_BUFFER: bool = false,
+    INDEX_BUFFER: bool = false,
+    RENDER_TARGET: bool = false,
+    UNORDERED_ACCESS: bool = false,
+    DEPTH_STENCIL_WRITE: bool = false,
+    DEPTH_STENCIL_READ: bool = false,
+    SHADER_RESOURCE: bool = false,
+    STREAM_OUTPUT: bool = false,
+    INDIRECT_ARGUMENT_OR_PREDICATION: bool = false,
+    COPY_DEST: bool = false,
+    COPY_SOURCE: bool = false,
+    RESOLVE_DEST: bool = false,
+    RESOLVE_SOURCE: bool = false,
+    RAYTRACING_ACCELERATION_STRUCTURE_READ: bool = false,
+    RAYTRACING_ACCELERATION_STRUCTURE_WRITE: bool = false,
+    SHADING_RATE_SOURCE: bool = false,
+    VIDEO_DECODE_READ: bool = false,
+    VIDEO_DECODE_WRITE: bool = false,
+    VIDEO_PROCESS_READ: bool = false,
+    VIDEO_PROCESS_WRITE: bool = false,
+    VIDEO_ENCODE_READ: bool = false,
+    VIDEO_ENCODE_WRITE: bool = false,
+    __unused23: bool = false,
+    __unused24: bool = false,
+    __unused25: bool = false,
+    __unused26: bool = false,
+    __unused27: bool = false,
+    __unused28: bool = false,
+    __unused29: bool = false,
+    __unused30: bool = false,
+    NO_ACCESS: bool = false,
+
+    pub const COMMON = D3D12_BARRIER_ACCESS{};
+};
+
+pub const D3D12_BARRIER_TYPE = enum(UINT) {
+    GLOBAL,
+    TEXTURE,
+    BUFFER,
+};
+
+pub const D3D12_TEXTURE_BARRIER_FLAGS = packed struct(UINT) {
+    DISCARD: bool = false,
+    __unused: u31 = 0,
 };
 
 pub const PROTECTED_SESSION_STATUS = enum(UINT) {
