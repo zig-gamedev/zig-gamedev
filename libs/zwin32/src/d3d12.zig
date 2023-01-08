@@ -3177,11 +3177,12 @@ pub const RENDER_PASS_DEPTH_STENCIL_DESC = extern struct {
     StencilEndingAccess: RENDER_PASS_ENDING_ACCESS,
 };
 
-pub const RENDER_PASS_FLAGS = UINT;
-pub const RENDER_PASS_FLAG_NONE = 0;
-pub const RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1;
-pub const RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2;
-pub const RENDER_PASS_FLAG_RESUMING_PASS = 0x4;
+pub const RENDER_PASS_FLAGS = packed struct(UINT) {
+    ALLOW_UAV_WRITES: bool = false,
+    SUSPENDING_PASS: bool = false,
+    RESUMING_PASS: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     FLOAT = 0,
@@ -3191,9 +3192,11 @@ pub const META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     GPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV = 4,
 };
 
-pub const META_COMMAND_PARAMETER_FLAGS = UINT;
-pub const META_COMMAND_PARAMETER_FLAG_INPUT = 0x1;
-pub const META_COMMAND_PARAMETER_FLAG_OUTPUT = 0x2;
+pub const META_COMMAND_PARAMETER_FLAGS = packed struct(UINT) {
+    INPUT: bool = false,
+    OUTPUT: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const META_COMMAND_PARAMETER_STAGE = enum(UINT) {
     CREATION = 0,
@@ -3209,25 +3212,26 @@ pub const META_COMMAND_PARAMETER_DESC = extern struct {
     StructureOffset: UINT,
 };
 
-pub const GRAPHICS_STATES = UINT;
-pub const GRAPHICS_STATE_NONE = 0;
-pub const GRAPHICS_STATE_IA_VERTEX_BUFFERS = (1 << 0);
-pub const GRAPHICS_STATE_IA_INDEX_BUFFER = (1 << 1);
-pub const GRAPHICS_STATE_IA_PRIMITIVE_TOPOLOGY = (1 << 2);
-pub const GRAPHICS_STATE_DESCRIPTOR_HEAP = (1 << 3);
-pub const GRAPHICS_STATE_GRAPHICS_ROOT_SIGNATURE = (1 << 4);
-pub const GRAPHICS_STATE_COMPUTE_ROOT_SIGNATURE = (1 << 5);
-pub const GRAPHICS_STATE_RS_VIEWPORTS = (1 << 6);
-pub const GRAPHICS_STATE_RS_SCISSOR_RECTS = (1 << 7);
-pub const GRAPHICS_STATE_PREDICATION = (1 << 8);
-pub const GRAPHICS_STATE_OM_RENDER_TARGETS = (1 << 9);
-pub const GRAPHICS_STATE_OM_STENCIL_REF = (1 << 10);
-pub const GRAPHICS_STATE_OM_BLEND_FACTOR = (1 << 11);
-pub const GRAPHICS_STATE_PIPELINE_STATE = (1 << 12);
-pub const GRAPHICS_STATE_SO_TARGETS = (1 << 13);
-pub const GRAPHICS_STATE_OM_DEPTH_BOUNDS = (1 << 14);
-pub const GRAPHICS_STATE_SAMPLE_POSITIONS = (1 << 15);
-pub const GRAPHICS_STATE_VIEW_INSTANCE_MASK = (1 << 16);
+pub const GRAPHICS_STATES = packed struct(UINT) {
+    IA_VERTEX_BUFFERS: bool = false,
+    IA_INDEX_BUFFER: bool = false,
+    IA_PRIMITIVE_TOPOLOGY: bool = false,
+    DESCRIPTOR_HEAP: bool = false,
+    GRAPHICS_ROOT_SIGNATURE: bool = false,
+    COMPUTE_ROOT_SIGNATURE: bool = false,
+    RS_VIEWPORTS: bool = false,
+    RS_SCISSOR_RECTS: bool = false,
+    PREDICATION: bool = false,
+    OM_RENDER_TARGETS: bool = false,
+    OM_STENCIL_REF: bool = false,
+    OM_BLEND_FACTOR: bool = false,
+    PIPELINE_STATE: bool = false,
+    SO_TARGETS: bool = false,
+    OM_DEPTH_BOUNDS: bool = false,
+    SAMPLE_POSITIONS: bool = false,
+    VIEW_INSTANCE_MASK: bool = false,
+    __unused: u15 = 0,
+};
 
 pub const META_COMMAND_DESC = extern struct {
     Id: GUID,
@@ -3287,11 +3291,12 @@ pub const STATE_SUBOBJECT = extern struct {
     pDesc: *const anyopaque,
 };
 
-pub const STATE_OBJECT_FLAGS = UINT;
-pub const STATE_OBJECT_FLAG_NONE = 0;
-pub const STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS = 0x1;
-pub const STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS = 0x2;
-pub const STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS = 0x4;
+pub const STATE_OBJECT_FLAGS = packed struct(UINT) {
+    ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS: bool = false,
+    ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS: bool = false,
+    ALLOW_STATE_OBJECT_ADDITIONS: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const STATE_OBJECT_CONFIG = extern struct {
     Flags: STATE_OBJECT_FLAGS,
@@ -3309,7 +3314,9 @@ pub const NODE_MASK = extern struct {
     NodeMask: UINT,
 };
 
-pub const EXPORT_FLAGS = UINT;
+pub const EXPORT_FLAGS = packed struct(UINT) {
+    __unused: u32 = 0,
+};
 
 pub const EXPORT_DESC = extern struct {
     Name: LPCWSTR,
@@ -3363,10 +3370,19 @@ pub const RAYTRACING_PIPELINE_CONFIG = extern struct {
     MaxTraceRecursionDepth: UINT,
 };
 
-pub const RAYTRACING_PIPELINE_FLAGS = UINT;
-pub const RAYTRACING_PIPELINE_FLAG_NONE = 0;
-pub const RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES = 0x100;
-pub const RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES = 0x200;
+pub const RAYTRACING_PIPELINE_FLAGS = packed struct(UINT) {
+    __unused0: bool = false, // 0x1
+    __unused1: bool = false,
+    __unused2: bool = false,
+    __unused3: bool = false,
+    __unused4: bool = false, // 0x10
+    __unused5: bool = false,
+    __unused6: bool = false,
+    __unused7: bool = false,
+    SKIP_TRIANGLES: bool = false, // 0x100
+    SKIP_PROCEDURAL_PRIMITIVES: bool = false,
+    __unused: u22 = 0,
+};
 
 pub const RAYTRACING_PIPELINE_CONFIG1 = extern struct {
     MaxTraceRecursionDepth: UINT,
@@ -3384,22 +3400,24 @@ pub const STATE_OBJECT_DESC = extern struct {
     pSubobjects: [*]const STATE_SUBOBJECT,
 };
 
-pub const RAYTRACING_GEOMETRY_FLAGS = UINT;
-pub const RAYTRACING_GEOMETRY_FLAG_NONE = 0;
-pub const RAYTRACING_GEOMETRY_FLAG_OPAQUE = 0x1;
-pub const RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION = 0x2;
+pub const RAYTRACING_GEOMETRY_FLAGS = packed struct(UINT) {
+    OPAQUE: bool = false,
+    NO_DUPLICATE_ANYHIT_INVOCATION: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
     TRIANGLES = 0,
     PROCEDURAL_PRIMITIVE_AABBS = 1,
 };
 
-pub const RAYTRACING_INSTANCE_FLAGS = UINT;
-pub const RAYTRACING_INSTANCE_FLAG_NONE = 0;
-pub const RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE = 0x1;
-pub const RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE = 0x2;
-pub const RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE = 0x4;
-pub const RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE = 0x8;
+pub const RAYTRACING_INSTANCE_FLAGS = packed struct(UINT) {
+    TRIANGLE_CULL_DISABLE: bool = false,
+    TRIANGLE_FRONT_COUNTERCLOCKWISE: bool = false,
+    FORCE_OPAQUE: bool = false,
+    FORCE_NON_OPAQUE: bool = false,
+    __unused: u28 = 0,
+};
 
 pub const GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
     StartAddress: GPU_VIRTUAL_ADDRESS,
@@ -3441,14 +3459,15 @@ pub const RAYTRACING_GEOMETRY_AABBS_DESC = extern struct {
     AABBs: GPU_VIRTUAL_ADDRESS_AND_STRIDE,
 };
 
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = UINT;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE = 0;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE = 0x1;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION = 0x2;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE = 0x4;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD = 0x8;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY = 0x10;
-pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE = 0x20;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = packed struct(UINT) {
+    ALLOW_UPDATE: bool = false,
+    ALLOW_COMPACTION: bool = false,
+    PREFER_FAST_TRACE: bool = false,
+    PREFER_FAST_BUILD: bool = false,
+    MINIMIZE_MEMORY: bool = false,
+    PERFORM_UPDATE: bool = false,
+    __unused: u26 = 0,
+};
 
 pub const RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
     CLONE = 0,
@@ -4843,9 +4862,10 @@ pub const IDevice2 = extern struct {
     };
 };
 
-pub const RESIDENCY_FLAGS = UINT;
-pub const RESIDENCY_FLAG_NONE = 0;
-pub const RESIDENCY_FLAG_DENY_OVERBUDGET = 0x1;
+pub const RESIDENCY_FLAGS = packed struct(UINT) {
+    DENY_OVERBUDGET: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const IDevice3 = extern struct {
     v: *const VTable,
@@ -4915,7 +4935,9 @@ pub const IDevice3 = extern struct {
     };
 };
 
-pub const COMMAND_LIST_FLAGS = UINT;
+pub const COMMAND_LIST_FLAGS = packed struct(UINT) {
+    __unused: u32 = 0,
+};
 
 pub const RESOURCE_ALLOCATION_INFO1 = extern struct {
     Offset: UINT64,
@@ -5533,26 +5555,31 @@ pub const IDevice8 = extern struct {
     };
 };
 
-pub const SHADER_CACHE_KIND_FLAGS = UINT;
-pub const SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CACHE_FOR_DRIVER = 0x1;
-pub const SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CONVERSIONS = 0x2;
-pub const SHADER_CACHE_KIND_FLAG_IMPLICIT_DRIVER_MANAGED = 0x4;
-pub const SHADER_CACHE_KIND_FLAG_APPLICATION_MANAGED = 0x8;
+pub const SHADER_CACHE_KIND_FLAGS = packed struct(UINT) {
+    IMPLICIT_D3D_CACHE_FOR_DRIVER: bool = false,
+    IMPLICIT_D3D_CONVERSIONS: bool = false,
+    IMPLICIT_DRIVER_MANAGED: bool = false,
+    APPLICATION_MANAGED: bool = false,
+    __unused: u28 = 0,
+};
 
-pub const SHADER_CACHE_CONTROL_FLAGS = UINT;
-pub const SHADER_CACHE_CONTROL_FLAG_DISABLE = 0x1;
-pub const SHADER_CACHE_CONTROL_FLAG_ENABLE = 0x2;
-pub const SHADER_CACHE_CONTROL_FLAG_CLEAR = 0x4;
+pub const SHADER_CACHE_CONTROL_FLAGS = packed struct(UINT) {
+    DISABLE: bool = false,
+    ENABLE: bool = false,
+    CLEAR: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const SHADER_CACHE_MODE = enum(UINT) {
     MEMORY = 0,
     DISK = 1,
 };
 
-pub const SHADER_CACHE_FLAGS = UINT;
-pub const SHADER_CACHE_FLAG_NONE = 0;
-pub const SHADER_CACHE_FLAG_DRIVER_VERSIONED = 0x1;
-pub const SHADER_CACHE_FLAG_USE_WORKING_DIR = 0x2;
+pub const SHADER_CACHE_FLAGS = packed struct(UINT) {
+    DRIVER_VERSIONED: bool = false,
+    USE_WORKING_DIR: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const SHADER_CACHE_SESSION_DESC = extern struct {
     Identifier: GUID,
@@ -5659,7 +5686,9 @@ pub const IProtectedSession = extern struct {
     };
 };
 
-pub const PROTECTED_RESOURCE_SESSION_FLAGS = UINT;
+pub const PROTECTED_RESOURCE_SESSION_FLAGS = packed struct(UINT) {
+    __unused: u32 = 0,
+};
 
 pub const PROTECTED_RESOURCE_SESSION_DESC = extern struct {
     NodeMask: UINT,

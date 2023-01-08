@@ -770,7 +770,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         for (all_meshes.items) |mesh| {
             const desc = d3d12.RAYTRACING_GEOMETRY_DESC{
-                .Flags = d3d12.RAYTRACING_GEOMETRY_FLAG_OPAQUE,
+                .Flags = .{ .OPAQUE = true },
                 .Type = .TRIANGLES,
                 .u = .{
                     .Triangles = .{
@@ -792,7 +792,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const blas_inputs = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
             .Type = .BOTTOM_LEVEL,
-            .Flags = d3d12.RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
+            .Flags = .{ .PREFER_FAST_TRACE = true },
             .NumDescs = @intCast(u32, geometry_descs.items.len),
             .DescsLayout = .ARRAY,
             .u = .{
@@ -899,7 +899,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const tlas_inputs = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
             .Type = .TOP_LEVEL,
-            .Flags = d3d12.RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
+            .Flags = .{ .PREFER_FAST_TRACE = true },
             .NumDescs = 1,
             .DescsLayout = .ARRAY,
             .u = .{
