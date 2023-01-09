@@ -28,13 +28,13 @@ pub fn deinit() void {
     mem_allocator = null;
 }
 
-pub const JpegWriteSettings = struct {
+pub const JpgWriteSettings = struct {
     quality: u32,
 };
 
 pub const ImageWriteFormat = union(enum) {
-    Png,
-    Jpeg: JpegWriteSettings,
+    png,
+    jpg: JpgWriteSettings,
 };
 
 pub const ImageWriteError = error{
@@ -214,13 +214,13 @@ pub const Image = struct {
         };
     }
 
-    pub fn write_to_file(self: *const Image, filename: [:0]const u8, image_format: ImageWriteFormat) ImageWriteError!void {
+    pub fn writeToFile(self: *const Image, filename: [:0]const u8, image_format: ImageWriteFormat) ImageWriteError!void {
         const w = @intCast(c_int, self.width);
         const h = @intCast(c_int, self.height);
         const comp = @intCast(c_int, self.num_components);
         const result = switch (image_format) {
-            .Png => stbi_write_png(filename.ptr, w, h, comp, self.data.ptr, 0),
-            .Jpeg => |settings| stbi_write_jpg(
+            .png => stbi_write_png(filename.ptr, w, h, comp, self.data.ptr, 0),
+            .jpg => |settings| stbi_write_jpg(
                 filename.ptr,
                 w,
                 h,
