@@ -293,8 +293,8 @@ pub const RATIONAL = extern struct {
 };
 
 // The following values are used with SAMPLE_DESC::Quality:
-pub const STANDARD_MULTISAMPLE_QUALITY_PATTERN: UINT = 0xffffffff;
-pub const CENTER_MULTISAMPLE_QUALITY_PATTERN: UINT = 0xfffffffe;
+pub const STANDARD_MULTISAMPLE_QUALITY_PATTERN = 0xffffffff;
+pub const CENTER_MULTISAMPLE_QUALITY_PATTERN = 0xfffffffe;
 
 pub const SAMPLE_DESC = extern struct {
     Count: UINT,
@@ -397,14 +397,20 @@ pub const MODE_DESC = extern struct {
     Scaling: MODE_SCALING,
 };
 
-pub const USAGE = UINT;
-pub const USAGE_SHADER_INPUT: USAGE = 0x00000010;
-pub const USAGE_RENDER_TARGET_OUTPUT: USAGE = 0x00000020;
-pub const USAGE_BACK_BUFFER: USAGE = 0x00000040;
-pub const USAGE_SHARED: USAGE = 0x00000080;
-pub const USAGE_READ_ONLY: USAGE = 0x00000100;
-pub const USAGE_DISCARD_ON_PRESENT: USAGE = 0x00000200;
-pub const USAGE_UNORDERED_ACCESS: USAGE = 0x00000400;
+pub const USAGE = packed struct(UINT) {
+    __unused0: bool = false,
+    __unused1: bool = false,
+    __unused2: bool = false,
+    __unused3: bool = false,
+    SHADER_INPUT: bool = false,
+    RENDER_TARGET_OUTPUT: bool = false,
+    BACK_BUFFER: bool = false,
+    SHARED: bool = false,
+    READ_ONLY: bool = false,
+    DISCARD_ON_PRESENT: bool = false,
+    UNORDERED_ACCESS: bool = false,
+    __unused: u21 = 0,
+};
 
 pub const FRAME_STATISTICS = extern struct {
     PresentCount: UINT,
@@ -471,20 +477,22 @@ pub const SWAP_EFFECT = enum(UINT) {
     FLIP_DISCARD = 4,
 };
 
-pub const SWAP_CHAIN_FLAG = UINT;
-pub const SWAP_CHAIN_FLAG_NONPREROTATED: SWAP_CHAIN_FLAG = 1;
-pub const SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: SWAP_CHAIN_FLAG = 2;
-pub const SWAP_CHAIN_FLAG_GDI_COMPATIBLE: SWAP_CHAIN_FLAG = 4;
-pub const SWAP_CHAIN_FLAG_RESTRICTED_CONTENT: SWAP_CHAIN_FLAG = 8;
-pub const SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER: SWAP_CHAIN_FLAG = 16;
-pub const SWAP_CHAIN_FLAG_DISPLAY_ONLY: SWAP_CHAIN_FLAG = 32;
-pub const SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT: SWAP_CHAIN_FLAG = 64;
-pub const SWAP_CHAIN_FLAG_FOREGROUND_LAYER: SWAP_CHAIN_FLAG = 128;
-pub const SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO: SWAP_CHAIN_FLAG = 256;
-pub const SWAP_CHAIN_FLAG_YUV_VIDEO: SWAP_CHAIN_FLAG = 512;
-pub const SWAP_CHAIN_FLAG_HW_PROTECTED: SWAP_CHAIN_FLAG = 1024;
-pub const SWAP_CHAIN_FLAG_ALLOW_TEARING: SWAP_CHAIN_FLAG = 2048;
-pub const SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS: SWAP_CHAIN_FLAG = 4096;
+pub const SWAP_CHAIN_FLAG = packed struct(UINT) {
+    NONPREROTATED: bool = false,
+    ALLOW_MODE_SWITCH: bool = false,
+    GDI_COMPATIBLE: bool = false,
+    RESTRICTED_CONTENT: bool = false,
+    RESTRICT_SHARED_RESOURCE_DRIVER: bool = false,
+    DISPLAY_ONLY: bool = false,
+    FRAME_LATENCY_WAITABLE_OBJECT: bool = false,
+    FOREGROUND_LAYER: bool = false,
+    FULLSCREEN_VIDEO: bool = false,
+    YUV_VIDEO: bool = false,
+    HW_PROTECTED: bool = false,
+    ALLOW_TEARING: bool = false,
+    RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS: bool = false,
+    __unused: u19 = 0,
+};
 
 pub const SWAP_CHAIN_DESC = extern struct {
     BufferDesc: MODE_DESC,
@@ -624,9 +632,12 @@ pub const IKeyedMutex = extern struct {
     };
 };
 
-pub const MAP_READ: UINT = 0x1;
-pub const MAP_WRITE: UINT = 0x2;
-pub const MAP_DISCARD: UINT = 0x4;
+pub const MAP_FLAG = packed struct(UINT) {
+    READ: bool = false,
+    WRITE: bool = false,
+    DISCARD: bool = false,
+    __unused: u29 = 0,
+};
 
 pub const ISurface = extern struct {
     v: *const VTable,
@@ -640,7 +651,7 @@ pub const ISurface = extern struct {
             pub inline fn GetDesc(self: *T, desc: *SURFACE_DESC) HRESULT {
                 return @ptrCast(*const ISurface.VTable, self.v).GetDesc(@ptrCast(*ISurface, self), desc);
             }
-            pub inline fn Map(self: *T, locked_rect: *MAPPED_RECT, flags: UINT) HRESULT {
+            pub inline fn Map(self: *T, locked_rect: *MAPPED_RECT, flags: MAP_FLAG) HRESULT {
                 return @ptrCast(*const ISurface.VTable, self.v).Map(@ptrCast(*ISurface, self), locked_rect, flags);
             }
             pub inline fn Unmap(self: *T) HRESULT {
@@ -652,7 +663,7 @@ pub const ISurface = extern struct {
     pub const VTable = extern struct {
         base: IDeviceSubObject.VTable,
         GetDesc: *const fn (*ISurface, *SURFACE_DESC) callconv(WINAPI) HRESULT,
-        Map: *const fn (*ISurface, *MAPPED_RECT, UINT) callconv(WINAPI) HRESULT,
+        Map: *const fn (*ISurface, *MAPPED_RECT, MAP_FLAG) callconv(WINAPI) HRESULT,
         Unmap: *const fn (*ISurface) callconv(WINAPI) HRESULT,
     };
 };
@@ -688,10 +699,13 @@ pub const IAdapter = extern struct {
     };
 };
 
-pub const ENUM_MODES_INTERLACED: UINT = 0x1;
-pub const ENUM_MODES_SCALING: UINT = 0x2;
-pub const ENUM_MODES_STEREO: UINT = 0x4;
-pub const ENUM_MODES_DISABLED_STEREO: UINT = 0x8;
+pub const ENUM_MODES = packed struct(UINT) {
+    INTERLACED: bool = false,
+    SCALING: bool = false,
+    STEREO: bool = false,
+    DISABLED_STEREO: bool = false,
+    __unused: u28 = 0,
+};
 
 pub const IOutput = extern struct {
     v: *const VTable,
@@ -708,7 +722,7 @@ pub const IOutput = extern struct {
             pub inline fn GetDisplayModeList(
                 self: *T,
                 enum_format: FORMAT,
-                flags: UINT,
+                flags: ENUM_MODES,
                 num_nodes: *UINT,
                 desc: ?*MODE_DESC,
             ) HRESULT {
@@ -766,7 +780,7 @@ pub const IOutput = extern struct {
         const T = IOutput;
         base: IObject.VTable,
         GetDesc: *const fn (self: *T, desc: *OUTPUT_DESC) callconv(WINAPI) HRESULT,
-        GetDisplayModeList: *const fn (*T, FORMAT, UINT, *UINT, ?*MODE_DESC) callconv(WINAPI) HRESULT,
+        GetDisplayModeList: *const fn (*T, FORMAT, ENUM_MODES, *UINT, ?*MODE_DESC) callconv(WINAPI) HRESULT,
         FindClosestMatchingMode: *const fn (
             *T,
             *const MODE_DESC,
@@ -787,15 +801,19 @@ pub const IOutput = extern struct {
 
 pub const MAX_SWAP_CHAIN_BUFFERS = 16;
 
-pub const PRESENT_TEST: UINT = 0x00000001;
-pub const PRESENT_DO_NOT_SEQUENCE: UINT = 0x00000002;
-pub const PRESENT_RESTART: UINT = 0x00000004;
-pub const PRESENT_DO_NOT_WAIT: UINT = 0x00000008;
-pub const PRESENT_STEREO_PREFER_RIGHT: UINT = 0x00000010;
-pub const PRESENT_STEREO_TEMPORARY_MONO: UINT = 0x00000020;
-pub const PRESENT_RESTRICT_TO_OUTPUT: UINT = 0x00000040;
-pub const PRESENT_USE_DURATION: UINT = 0x00000100;
-pub const PRESENT_ALLOW_TEARING: UINT = 0x00000200;
+pub const PRESENT_FLAG = packed struct(UINT) {
+    TEST: bool = false,
+    DO_NOT_SEQUENCE: bool = false,
+    RESTART: bool = false,
+    DO_NOT_WAIT: bool = false,
+    STEREO_PREFER_RIGHT: bool = false,
+    STEREO_TEMPORARY_MONO: bool = false,
+    RESTRICT_TO_OUTPUT: bool = false,
+    __unused7: bool = false,
+    USE_DURATION: bool = false,
+    ALLOW_TEARING: bool = false,
+    __unused: u22 = 0,
+};
 
 pub const ISwapChain = extern struct {
     v: *const VTable,
@@ -806,7 +824,7 @@ pub const ISwapChain = extern struct {
         return extern struct {
             pub usingnamespace IDeviceSubObject.Methods(T);
 
-            pub inline fn Present(self: *T, sync_interval: UINT, flags: UINT) HRESULT {
+            pub inline fn Present(self: *T, sync_interval: UINT, flags: PRESENT_FLAG) HRESULT {
                 return @ptrCast(*const ISwapChain.VTable, self.v)
                     .Present(@ptrCast(*ISwapChain, self), sync_interval, flags);
             }
@@ -857,7 +875,7 @@ pub const ISwapChain = extern struct {
     pub const VTable = extern struct {
         const T = ISwapChain;
         base: IDeviceSubObject.VTable,
-        Present: *const fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
+        Present: *const fn (*T, UINT, PRESENT_FLAG) callconv(WINAPI) HRESULT,
         GetBuffer: *const fn (*T, u32, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         SetFullscreenState: *const fn (*T, ?*IOutput) callconv(WINAPI) HRESULT,
         GetFullscreenState: *const fn (*T, ?*BOOL, ?*?*IOutput) callconv(WINAPI) HRESULT,
@@ -990,10 +1008,11 @@ pub const IDevice = extern struct {
     };
 };
 
-pub const ADAPTER_FLAGS = UINT;
-pub const ADAPTER_FLAG_NONE: ADAPTER_FLAGS = 0;
-pub const ADAPTER_FLAG_REMOTE: ADAPTER_FLAGS = 0x1;
-pub const ADAPTER_FLAG_SOFTWARE: ADAPTER_FLAGS = 0x2;
+pub const ADAPTER_FLAGS = packed struct(UINT) {
+    REMOTE: bool = false,
+    SOFTWARE: bool = false,
+    __unused: u30 = 0,
+};
 
 pub const ADAPTER_DESC1 = extern struct {
     Description: [128]WCHAR,
@@ -1133,10 +1152,11 @@ pub const IFactory5 = extern struct {
     };
 };
 
-pub const GPU_PREFERENCE = UINT;
-pub const GPU_PREFERENCE_UNSPECIFIED: GPU_PREFERENCE = 0;
-pub const GPU_PREFERENCE_MINIMUM: GPU_PREFERENCE = 1;
-pub const GPU_PREFERENCE_HIGH_PERFORMANCE: GPU_PREFERENCE = 2;
+pub const GPU_PREFERENCE = enum(UINT) {
+    UNSPECIFIED,
+    MINIMUM,
+    HIGH_PERFORMANCE,
+};
 
 pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
 pub const IFactory6 = extern struct {
@@ -1249,7 +1269,7 @@ pub const IID_ISurface = GUID{
     .Data4 = .{ 0xbf, 0x47, 0x9e, 0x23, 0xbb, 0xd2, 0x60, 0xec },
 };
 
-pub const CREATE_FACTORY_DEBUG: UINT = 0x1;
+pub const CREATE_FACTORY_DEBUG = 0x1;
 pub extern "dxgi" fn CreateDXGIFactory2(UINT, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT;
 
 pub const SCALING = enum(UINT) {
@@ -1319,7 +1339,7 @@ pub const ISwapChain1 = extern struct {
             pub inline fn Present1(
                 self: *T,
                 sync_interval: UINT,
-                flags: UINT,
+                flags: PRESENT_FLAG,
                 params: *const PRESENT_PARAMETERS,
             ) HRESULT {
                 return @ptrCast(*const ISwapChain1.VTable, self.v)
@@ -1359,7 +1379,7 @@ pub const ISwapChain1 = extern struct {
         GetFullscreenDesc: *const fn (*T, *SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
         GetHwnd: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
         GetCoreWindow: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-        Present1: *const fn (*T, UINT, UINT, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
+        Present1: *const fn (*T, UINT, PRESENT_FLAG, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
         IsTemporaryMonoSupported: *const fn (*T) callconv(WINAPI) BOOL,
         GetRestrictToOutput: *const fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
         SetBackgroundColor: *const fn (*T, *const RGBA) callconv(WINAPI) HRESULT,

@@ -6,9 +6,10 @@ const GUID = windows.GUID;
 const UINT = windows.UINT;
 const BOOL = windows.BOOL;
 
-pub const GPU_BASED_VALIDATION_FLAGS = UINT;
-pub const GPU_BASED_VALIDATION_FLAG_NONE = 0;
-pub const GPU_BASED_VALIDATION_FLAG_DISABLE_STATE_TRACKING = 0x1;
+pub const GPU_BASED_VALIDATION_FLAGS = packed struct(UINT) {
+    DISABLE_STATE_TRACKING: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const IDebug = extern struct {
     v: *const VTable,

@@ -1,4 +1,4 @@
-# zstbi v0.9.1 - stb_image bindings
+# zstbi v0.9.2 - stb_image bindings
 
 ## Features
 
@@ -6,6 +6,7 @@
 * Supports decoding most popular formats
 * Supports HDR images
 * Supports 8-bits and 16-bits per channel
+* Supports image resizing
 
 ## Getting started
 
@@ -43,6 +44,8 @@ _ = image.num_components;
 _ = image.bytes_per_component;
 _ = image.bytes_per_row;
 _ = image.is_hdr;
+
+const new_resized_image = image.resize(1024, 1024);
 ```
 
 Get image info without loading:

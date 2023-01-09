@@ -103,7 +103,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
     // Enable vsync.
-    gctx.present_flags = 0;
+    gctx.present_flags = .{};
     gctx.present_interval = 1;
 
     const z_pre_pass_pso = blk: {

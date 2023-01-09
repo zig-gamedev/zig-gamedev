@@ -245,7 +245,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
     // V-Sync
-    gctx.present_flags = 0;
+    gctx.present_flags = .{};
     gctx.present_interval = 1;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);

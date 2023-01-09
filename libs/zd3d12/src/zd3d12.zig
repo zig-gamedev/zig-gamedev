@@ -75,7 +75,7 @@ pub const GraphicsContext = struct {
     is_cmdlist_opened: bool,
     d2d: ?D2dState,
     wic_factory: *wic.IImagingFactory,
-    present_flags: w32.UINT,
+    present_flags: dxgi.PRESENT_FLAG,
     present_interval: w32.UINT,
 
     pub fn init(allocator: std.mem.Allocator, window: w32.HWND) GraphicsContext {
@@ -102,7 +102,7 @@ pub const GraphicsContext = struct {
         };
         defer _ = factory.Release();
 
-        var present_flags: w32.UINT = 0;
+        var present_flags: dxgi.PRESENT_FLAG = .{};
         var present_interval: w32.UINT = 0;
         {
             var allow_tearing: w32.BOOL = w32.FALSE;
@@ -113,7 +113,7 @@ pub const GraphicsContext = struct {
             );
 
             if (hr == w32.S_OK and allow_tearing == w32.TRUE) {
-                present_flags |= dxgi.PRESENT_ALLOW_TEARING;
+                present_flags.ALLOW_TEARING = true;
             }
         }
 
@@ -136,7 +136,7 @@ pub const GraphicsContext = struct {
 
             while (factory.EnumAdapterByGpuPreference(
                 adapter_index,
-                dxgi.GPU_PREFERENCE_HIGH_PERFORMANCE,
+                .HIGH_PERFORMANCE,
                 &dxgi.IID_IAdapter1,
                 &optional_adapter1,
             ) == w32.S_OK) {
@@ -144,7 +144,7 @@ pub const GraphicsContext = struct {
                 if (optional_adapter1) |adapter1| {
                     var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
                     if (adapter1.GetDesc1(&adapter1_desc) == w32.S_OK) {
-                        if ((adapter1_desc.Flags & dxgi.ADAPTER_FLAG_SOFTWARE) != 0) {
+                        if (adapter1_desc.Flags.SOFTWARE) {
                             // Don't select the Basic Render Driver adapter.
                             continue;
                         }
@@ -254,15 +254,12 @@ pub const GraphicsContext = struct {
                         .Scaling = .UNSPECIFIED,
                     },
                     .SampleDesc = .{ .Count = 1, .Quality = 0 },
-                    .BufferUsage = dxgi.USAGE_RENDER_TARGET_OUTPUT,
+                    .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
                     .BufferCount = num_swapbuffers,
                     .OutputWindow = window,
                     .Windowed = w32.TRUE,
                     .SwapEffect = .FLIP_DISCARD,
-                    .Flags = if ((present_flags & dxgi.PRESENT_ALLOW_TEARING) != 0)
-                        dxgi.SWAP_CHAIN_FLAG_ALLOW_TEARING
-                    else
-                        0,
+                    .Flags = .{ .ALLOW_TEARING = present_flags.ALLOW_TEARING },
                 },
                 @ptrCast(*?*dxgi.ISwapChain, &swapchain),
             ));
@@ -361,10 +358,7 @@ pub const GraphicsContext = struct {
                 var device_context11: *d3d11.IDeviceContext = undefined;
                 hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
                     @ptrCast(*w32.IUnknown, device),
-                    if (enable_debug_layer)
-                        d3d11.CREATE_DEVICE_DEBUG | d3d11.CREATE_DEVICE_BGRA_SUPPORT
-                    else
-                        d3d11.CREATE_DEVICE_BGRA_SUPPORT,
+                    .{ .DEBUG = enable_debug_layer, .BGRA_SUPPORT = true },
                     null,
                     0,
                     &[_]*w32.IUnknown{@ptrCast(*w32.IUnknown, cmdqueue)},
@@ -447,9 +441,9 @@ pub const GraphicsContext = struct {
                             resource_pool.lookupResource(swapchain_buffers[buffer_index]).?.raw.?,
                         ),
                         &d3d11on12.RESOURCE_FLAGS{
-                            .BindFlags = d3d11.BIND_RENDER_TARGET,
-                            .MiscFlags = 0,
-                            .CPUAccessFlags = 0,
+                            .BindFlags = .{ .RENDER_TARGET = true },
+                            .MiscFlags = .{},
+                            .CPUAccessFlags = .{},
                             .StructureByteStride = 0,
                         },
                         .{ .RENDER_TARGET = true },

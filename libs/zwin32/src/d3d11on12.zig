@@ -9,9 +9,9 @@ const GUID = windows.GUID;
 const HRESULT = windows.HRESULT;
 
 pub const RESOURCE_FLAGS = extern struct {
-    BindFlags: UINT,
-    MiscFlags: UINT,
-    CPUAccessFlags: UINT,
+    BindFlags: d3d11.BIND_FLAG,
+    MiscFlags: d3d11.RESOURCE_MISC_FLAG,
+    CPUAccessFlags: d3d11.CPU_ACCCESS_FLAG,
     StructureByteStride: UINT,
 };
 

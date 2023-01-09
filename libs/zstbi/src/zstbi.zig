@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 1 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 2 };
 const std = @import("std");
 const assert = std.debug.assert;
 
@@ -168,30 +168,30 @@ pub const Image = struct {
         };
     }
 
-    pub fn resize(self: *const Image, new_width: u32, new_height: u32) Image {
-        const new_bytes_per_row = new_width * self.num_components * self.bytes_per_component;
+    pub fn resize(image: *const Image, new_width: u32, new_height: u32) Image {
+        // TODO: Add support for HDR images
+        const new_bytes_per_row = new_width * image.num_components * image.bytes_per_component;
         const new_size = new_height * new_bytes_per_row;
-        const new_data_ptr = zstbiMalloc(new_size).?;
-        const new_data = @ptrCast([*]u8, new_data_ptr);
+        const new_data = @ptrCast([*]u8, zstbiMalloc(new_size));
         stbir_resize_uint8(
-            self.data.ptr,
-            @intCast(c_int, self.width),
-            @intCast(c_int, self.height),
+            image.data.ptr,
+            @intCast(c_int, image.width),
+            @intCast(c_int, image.height),
             0,
             new_data,
             @intCast(c_int, new_width),
             @intCast(c_int, new_height),
             0,
-            @intCast(c_int, self.num_components),
+            @intCast(c_int, image.num_components),
         );
-        return Image{
+        return .{
             .data = new_data[0..new_size],
             .width = new_width,
             .height = new_height,
-            .num_components = self.num_components,
-            .bytes_per_component = self.bytes_per_component,
+            .num_components = image.num_components,
+            .bytes_per_component = image.bytes_per_component,
             .bytes_per_row = new_bytes_per_row,
-            .is_hdr = self.is_hdr,
+            .is_hdr = image.is_hdr,
         };
     }
 
@@ -214,11 +214,11 @@ pub const setLdrToHdrScale = stbi_ldr_to_hdr_scale;
 pub const setLdrToHdrGamma = stbi_ldr_to_hdr_gamma;
 
 pub fn isHdr(filename: [:0]const u8) bool {
-    return stbi_is_hdr(filename) == 1;
+    return stbi_is_hdr(filename) != 0;
 }
 
 pub fn is16bit(filename: [:0]const u8) bool {
-    return stbi_is_16_bit(filename) == 1;
+    return stbi_is_16_bit(filename) != 0;
 }
 
 pub fn setFlipVerticallyOnLoad(should_flip: bool) void {
@@ -286,15 +286,13 @@ fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
 
 extern var zstbirMallocPtr: ?*const fn (size: usize, maybe_context: ?*anyopaque) callconv(.C) ?*anyopaque;
 
-fn zstbirMalloc(size: usize, maybe_context: ?*anyopaque) callconv(.C) ?*anyopaque {
-    _ = maybe_context;
+fn zstbirMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     return zstbiMalloc(size);
 }
 
 extern var zstbirFreePtr: ?*const fn (maybe_ptr: ?*anyopaque, maybe_context: ?*anyopaque) callconv(.C) void;
 
-fn zstbirFree(maybe_ptr: ?*anyopaque, maybe_context: ?*anyopaque) callconv(.C) void {
-    _ = maybe_context;
+fn zstbirFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
     zstbiFree(maybe_ptr);
 }
 

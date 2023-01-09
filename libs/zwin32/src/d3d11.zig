@@ -20,30 +20,38 @@ const DRIVER_TYPE = d3dcommon.DRIVER_TYPE;
 
 const dxgi = @import("dxgi.zig");
 
-pub const CREATE_DEVICE_FLAG = UINT;
-pub const CREATE_DEVICE_SINGLETHREADED = 0x1;
-pub const CREATE_DEVICE_DEBUG = 0x2;
-pub const CREATE_DEVICE_SWITCH_TO_REF = 0x4;
-pub const CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS = 0x8;
-pub const CREATE_DEVICE_BGRA_SUPPORT = 0x20;
-pub const CREATE_DEVICE_DEBUGGABLE = 0x40;
-pub const CREATE_DEVICE_PREVENT_ALTERING_LAYER_SETTINGS_FROM_REGISTRY = 0x80;
-pub const CREATE_DEVICE_DISABLE_GPU_TIMEOUT = 0x100;
-pub const CREATE_DEVICE_VIDEO_SUPPORT = 0x800;
+pub const CREATE_DEVICE_FLAG = packed struct(UINT) {
+    SINGLETHREADED: bool = false,
+    DEBUG: bool = false,
+    SWITCH_TO_REF: bool = false,
+    PREVENT_INTERNAL_THREADING_OPTIMIZATIONS: bool = false,
+    __unused4: bool = false,
+    BGRA_SUPPORT: bool = false,
+    DEBUGGABLE: bool = false,
+    PREVENT_ALTERING_LAYER_SETTINGS_FROM_REGISTRY: bool = false,
+    DISABLE_GPU_TIMEOUT: bool = false,
+    __unused9: bool = false,
+    __unused10: bool = false,
+    VIDEO_SUPPORT: bool = false,
+    __unused: u20 = 0,
+};
 
-pub const SDK_VERSION: UINT = 7;
+pub const SDK_VERSION = 7;
 
-pub const BIND_FLAG = UINT;
-pub const BIND_VERTEX_BUFFER = 0x1;
-pub const BIND_INDEX_BUFFER = 0x2;
-pub const BIND_CONSTANT_BUFFER = 0x4;
-pub const BIND_SHADER_RESOURCE = 0x8;
-pub const BIND_STREAM_OUTPUT = 0x10;
-pub const BIND_RENDER_TARGET = 0x20;
-pub const BIND_DEPTH_STENCIL = 0x40;
-pub const BIND_UNORDERED_ACCESS = 0x80;
-pub const BIND_DECODER = 0x200;
-pub const BIND_VIDEO_ENCODER = 0x400;
+pub const BIND_FLAG = packed struct(UINT) {
+    VERTEX_BUFFER: bool = false,
+    INDEX_BUFFER: bool = false,
+    CONSTANT_BUFFER: bool = false,
+    SHADER_RESOURCE: bool = false,
+    STREAM_OUTPUT: bool = false,
+    RENDER_TARGET: bool = false,
+    DEPTH_STENCIL: bool = false,
+    UNORDERED_ACCESS: bool = false,
+    __unused8: bool = false,
+    DECODER: bool = false,
+    VIDEO_ENCODER: bool = false,
+    __unused: u21 = 0,
+};
 
 pub const RECT = windows.RECT;
 
@@ -149,22 +157,49 @@ pub const SUBRESOURCE_DATA = extern struct {
     SysMemSlicePitch: UINT = 0,
 };
 
-pub const USAGE = UINT;
-pub const USAGE_DEFAULT = 0;
-pub const USAGE_IMMUTABLE = 1;
-pub const USAGE_DYNAMIC = 2;
-pub const USAGE_STAGING = 3;
+pub const USAGE = enum(UINT) {
+    DEFAULT,
+    IMMUTABLE,
+    DYNAMIC,
+    STAGING,
+};
 
-pub const CPU_ACCCESS_FLAG = UINT;
-pub const CPU_ACCESS_WRITE = 0x10000;
-pub const CPU_ACCESS_READ = 0x20000;
+pub const CPU_ACCCESS_FLAG = packed struct(UINT) {
+    WRITE: bool = false,
+    READ: bool = false,
+    __unused: u30 = 0,
+};
+
+pub const RESOURCE_MISC_FLAG = packed struct(UINT) {
+    GENERATE_MIPS: bool = false,
+    SHARED: bool = false,
+    TEXTURECUBE: bool = false,
+    __unused3: bool = false,
+    DRAWINDIRECT_ARGS: bool = false,
+    BUFFER_ALLOW_RAW_VIEWS: bool = false,
+    BUFFER_STRUCTURED: bool = false,
+    RESOURCE_CLAMP: bool = false,
+    SHARED_KEYEDMUTEX: bool = false,
+    GDI_COMPATIBLE: bool = false,
+    __unused10: bool = false,
+    SHARED_NTHANDLE: bool = false,
+    RESTRICTED_CONTENT: bool = false,
+    RESTRICT_SHARED_RESOURCE: bool = false,
+    RESTRICT_SHARED_RESOURCE_DRIVER: bool = false,
+    GUARDED: bool = false,
+    __unused16: bool = false,
+    TILE_POOL: bool = false,
+    TILED: bool = false,
+    HW_PROTECTED: bool = false,
+    __unused: u12 = 0,
+};
 
 pub const BUFFER_DESC = extern struct {
     ByteWidth: UINT,
     Usage: USAGE,
     BindFlags: BIND_FLAG,
-    CPUAccessFlags: CPU_ACCCESS_FLAG = 0,
-    MiscFlags: UINT = 0,
+    CPUAccessFlags: CPU_ACCCESS_FLAG = .{},
+    MiscFlags: RESOURCE_MISC_FLAG = .{},
     StructureByteStride: UINT = 0,
 };
 
@@ -189,8 +224,10 @@ pub const MAP = enum(UINT) {
     WRITE_NO_OVERWRITE = 5,
 };
 
-pub const MAP_FLAG = UINT;
-pub const MAP_FLAG_DO_NOT_WAIT = 0x100000;
+pub const MAP_FLAG = packed struct(UINT) {
+    DO_NOT_WAIT: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const MAPPED_SUBRESOURCE = extern struct {
     pData: *anyopaque,
@@ -212,8 +249,8 @@ pub const CULL_MODE = enum(UINT) {
 };
 
 pub const RASTERIZER_DESC = extern struct {
-    FillMode: FILL_MODE = FILL_MODE.SOLID,
-    CullMode: CULL_MODE = CULL_MODE.BACK,
+    FillMode: FILL_MODE = .SOLID,
+    CullMode: CULL_MODE = .BACK,
     FrontCounterClockwise: BOOL = FALSE,
     DepthBias: INT = 0,
     DepthBiasClamp: FLOAT = 0,
@@ -252,12 +289,15 @@ pub const BLEND_OP = enum(UINT) {
     MAX = 5,
 };
 
-pub const COLOR_WRITE_ENABLE = UINT;
-pub const COLOR_WRITE_ENABLE_RED = 1;
-pub const COLOR_WRITE_ENABLE_GREEN = 2;
-pub const COLOR_WRITE_ENABLE_BLUE = 4;
-pub const COLOR_WRITE_ENABLE_ALPHA = 8;
-pub const COLOR_WRITE_ENABLE_ALL = COLOR_WRITE_ENABLE_RED | COLOR_WRITE_ENABLE_GREEN | COLOR_WRITE_ENABLE_BLUE | COLOR_WRITE_ENABLE_ALPHA;
+pub const COLOR_WRITE_ENABLE = packed struct(UINT) {
+    RED: bool = false,
+    GREEN: bool = false,
+    BLUE: bool = false,
+    ALPHA: bool = false,
+    __unused: u28 = 0,
+
+    pub const ALL = COLOR_WRITE_ENABLE{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
+};
 
 pub const RENDER_TARGET_BLEND_DESC = extern struct {
     BlendEnable: BOOL,
@@ -286,7 +326,7 @@ pub const TEXTURE2D_DESC = struct {
     Usage: USAGE,
     BindFlags: BIND_FLAG,
     CPUAccessFlags: CPU_ACCCESS_FLAG,
-    MiscFlags: UINT,
+    MiscFlags: RESOURCE_MISC_FLAG,
 };
 
 pub const BUFFER_SRV = extern struct {
@@ -344,8 +384,10 @@ pub const TEX2DMS_ARRAY_SRV = extern struct {
     ArraySize: UINT,
 };
 
-pub const BUFFEREX_SRV_FLAG = UINT;
-pub const BUFFEREX_SRV_FLAG_RAW = 0x1;
+pub const BUFFEREX_SRV_FLAG = packed struct(UINT) {
+    RAW: bool = false,
+    __unused: u31 = 0,
+};
 
 pub const BUFFEREX_SRV = extern struct {
     FirstElement: UINT,
@@ -1392,7 +1434,8 @@ pub extern "d3d11" fn D3D11CreateDeviceAndSwapChain(
     ppImmediateContext: ?*?*IDeviceContext,
 ) callconv(WINAPI) HRESULT;
 
-// Return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d11-graphics-reference-returnvalues
+// Return codes as defined here:
+// https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d11-graphics-reference-returnvalues
 pub const ERROR_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887C0002));
 pub const ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS = @bitCast(HRESULT, @as(c_ulong, 0x887C0001));
 pub const ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS = @bitCast(HRESULT, @as(c_ulong, 0x887C0003));
