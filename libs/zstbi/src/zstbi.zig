@@ -10,6 +10,8 @@ pub fn init(allocator: std.mem.Allocator) void {
     zstbiMallocPtr = zstbiMalloc;
     zstbiReallocPtr = zstbiRealloc;
     zstbiFreePtr = zstbiFree;
+    zstbirMallocPtr = zstbirMalloc;
+    zstbirFreePtr = zstbirFree;
 }
 
 pub fn deinit() void {
@@ -166,6 +168,33 @@ pub const Image = struct {
         };
     }
 
+    pub fn resize(self: *const Image, new_width: u32, new_height: u32) Image {
+        const new_bytes_per_row = new_width * self.num_components * self.bytes_per_component;
+        const new_size = new_height * new_bytes_per_row;
+        const new_data_ptr = zstbiMalloc(new_size).?;
+        const new_data = @ptrCast([*]u8, new_data_ptr);
+        stbir_resize_uint8(
+            self.data.ptr,
+            @intCast(c_int, self.width),
+            @intCast(c_int, self.height),
+            0,
+            new_data,
+            @intCast(c_int, new_width),
+            @intCast(c_int, new_height),
+            0,
+            @intCast(c_int, self.num_components),
+        );
+        return Image{
+            .data = new_data[0..new_size],
+            .width = new_width,
+            .height = new_height,
+            .num_components = self.num_components,
+            .bytes_per_component = self.bytes_per_component,
+            .bytes_per_row = new_bytes_per_row,
+            .is_hdr = self.is_hdr,
+        };
+    }
+
     pub fn deinit(image: *Image) void {
         stbi_image_free(image.data.ptr);
         image.* = undefined;
@@ -255,6 +284,20 @@ fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
     }
 }
 
+extern var zstbirMallocPtr: ?*const fn (size: usize, maybe_context: ?*anyopaque) callconv(.C) ?*anyopaque;
+
+fn zstbirMalloc(size: usize, maybe_context: ?*anyopaque) callconv(.C) ?*anyopaque {
+    _ = maybe_context;
+    return zstbiMalloc(size);
+}
+
+extern var zstbirFreePtr: ?*const fn (maybe_ptr: ?*anyopaque, maybe_context: ?*anyopaque) callconv(.C) void;
+
+fn zstbirFree(maybe_ptr: ?*anyopaque, maybe_context: ?*anyopaque) callconv(.C) void {
+    _ = maybe_context;
+    zstbiFree(maybe_ptr);
+}
+
 extern fn stbi_info(filename: [*:0]const u8, x: *c_int, y: *c_int, comp: *c_int) c_int;
 
 extern fn stbi_load(
@@ -301,6 +344,18 @@ extern fn stbi_is_16_bit(filename: [*:0]const u8) c_int;
 extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
 
 extern fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: c_int) void;
+
+extern fn stbir_resize_uint8(
+    input_pixels: [*]const u8,
+    input_w: c_int,
+    input_h: c_int,
+    input_stride_in_bytes: c_int,
+    output_pixels: [*]u8,
+    output_w: c_int,
+    output_h: c_int,
+    output_stride_in_bytes: c_int,
+    num_channels: c_int,
+) void;
 
 test "zstbi.basic" {
     init(std.testing.allocator);
