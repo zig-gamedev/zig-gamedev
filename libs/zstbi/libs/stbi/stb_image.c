@@ -19,3 +19,14 @@ void (*zstbirFreePtr)(void* ptr, void* context) = NULL;
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize.h"
+
+void* (*zstbiwMallocPtr)(size_t size) = NULL;
+void* (*zstbiwReallocPtr)(void* ptr, size_t size) = NULL;
+void (*zstbiwFreePtr)(void* ptr) = NULL;
+
+#define STBIW_MALLOC(size) zstbiwMallocPtr(size)
+#define STBIW_REALLOC(ptr, size) zstbiwReallocPtr(ptr, size)
+#define STBIW_FREE(ptr) zstbiwFreePtr(ptr)
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"

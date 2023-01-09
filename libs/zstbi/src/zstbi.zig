@@ -7,11 +7,17 @@ pub fn init(allocator: std.mem.Allocator) void {
     mem_allocator = allocator;
     mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
 
+    // stb image
     zstbiMallocPtr = zstbiMalloc;
     zstbiReallocPtr = zstbiRealloc;
     zstbiFreePtr = zstbiFree;
+    // stb image resize
     zstbirMallocPtr = zstbirMalloc;
     zstbirFreePtr = zstbirFree;
+    // stb image write
+    zstbiwMallocPtr = zstbiMalloc;
+    zstbiwReallocPtr = zstbiRealloc;
+    zstbiwFreePtr = zstbiFree;
 }
 
 pub fn deinit() void {
@@ -21,6 +27,19 @@ pub fn deinit() void {
     mem_allocations = null;
     mem_allocator = null;
 }
+
+pub const JpgWriteSettings = struct {
+    quality: u32,
+};
+
+pub const ImageWriteFormat = union(enum) {
+    png,
+    jpg: JpgWriteSettings,
+};
+
+pub const ImageWriteError = error{
+    CouldNotWriteImage,
+};
 
 pub const Image = struct {
     data: []u8,
@@ -195,6 +214,27 @@ pub const Image = struct {
         };
     }
 
+    pub fn writeToFile(self: *const Image, filename: [:0]const u8, image_format: ImageWriteFormat) ImageWriteError!void {
+        const w = @intCast(c_int, self.width);
+        const h = @intCast(c_int, self.height);
+        const comp = @intCast(c_int, self.num_components);
+        const result = switch (image_format) {
+            .png => stbi_write_png(filename.ptr, w, h, comp, self.data.ptr, 0),
+            .jpg => |settings| stbi_write_jpg(
+                filename.ptr,
+                w,
+                h,
+                comp,
+                self.data.ptr,
+                @intCast(c_int, settings.quality),
+            ),
+        };
+        // if the result is 0 then it means an error occured (per stb image write docs)
+        if (result == 0) {
+            return ImageWriteError.CouldNotWriteImage;
+        }
+    }
+
     pub fn deinit(image: *Image) void {
         stbi_image_free(image.data.ptr);
         image.* = undefined;
@@ -231,6 +271,7 @@ var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
 extern var zstbiMallocPtr: ?*const fn (size: usize) callconv(.C) ?*anyopaque;
+extern var zstbiwMallocPtr: ?*const fn (size: usize) callconv(.C) ?*anyopaque;
 
 fn zstbiMalloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
@@ -248,6 +289,7 @@ fn zstbiMalloc(size: usize) callconv(.C) ?*anyopaque {
 }
 
 extern var zstbiReallocPtr: ?*const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+extern var zstbiwReallocPtr: ?*const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
 
 fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
@@ -272,6 +314,7 @@ fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
 }
 
 extern var zstbiFreePtr: ?*const fn (maybe_ptr: ?*anyopaque) callconv(.C) void;
+extern var zstbiwFreePtr: ?*const fn (maybe_ptr: ?*anyopaque) callconv(.C) void;
 
 fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
@@ -354,6 +397,23 @@ extern fn stbir_resize_uint8(
     output_stride_in_bytes: c_int,
     num_channels: c_int,
 ) void;
+
+extern fn stbi_write_jpg(
+    filename: [*:0]const u8,
+    w: c_int,
+    h: c_int,
+    comp: c_int,
+    data: [*]const u8,
+    quality: c_int,
+) c_int;
+extern fn stbi_write_png(
+    filename: [*:0]const u8,
+    w: c_int,
+    h: c_int,
+    comp: c_int,
+    data: [*]const u8,
+    stride_in_bytes: c_int,
+) c_int;
 
 test "zstbi.basic" {
     init(std.testing.allocator);
