@@ -243,6 +243,9 @@ pub const io = struct {
     pub const addKeyEvent = zguiIoAddKeyEvent;
     extern fn zguiIoAddKeyEvent(key: Key, down: bool) void;
 
+    pub const addInputCharactersUTF8 = zguiIoAddInputCharactersUTF8;
+    extern fn zguiIoAddInputCharactersUTF8(utf8_chars: ?[*:0]const u8) void;
+
     pub const setKeyEventNativeData = zguiIoSetKeyEventNativeData;
     extern fn zguiIoSetKeyEventNativeData(key: Key, keycode: i32, scancode: i32) void;
 
@@ -298,7 +301,7 @@ pub const Key = enum(u32) {
     four,
     five,
     six,
-    severn,
+    seven,
     eight,
     nine,
     a,
@@ -407,11 +410,11 @@ pub const Key = enum(u32) {
     mouse_wheel_x,
     mouse_wheel_y,
 
-    pub const mod_ctrl: u32 = 1 << 12;
-    pub const mod_shift: u32 = 1 << 13;
-    pub const mod_alt: u32 = 1 << 14;
-    pub const mod_super: u32 = 1 << 15;
-    pub const mod_mask_: u32 = 0xf000;
+    mod_ctrl = 1 << 12,
+    mod_shift = 1 << 13,
+    mod_alt = 1 << 14,
+    mod_super = 1 << 15,
+    mod_mask_ = 0xf000,
 };
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct(u32) {

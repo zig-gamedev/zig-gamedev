@@ -1256,6 +1256,10 @@ ZGUI_API void zguiIoAddKeyEvent(ImGuiKey key, bool down) {
     ImGui::GetIO().AddKeyEvent(key, down);
 }
 
+ZGUI_API void zguiIoAddInputCharactersUTF8(const char* utf8_chars) {
+    ImGui::GetIO().AddInputCharactersUTF8(utf8_chars);
+}
+
 ZGUI_API void zguiIoSetKeyEventNativeData(ImGuiKey key, int keycode, int scancode) {
     ImGui::GetIO().SetKeyEventNativeData(key, keycode, scancode);
 }
