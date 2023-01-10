@@ -2252,6 +2252,7 @@ pub const ICommandList = extern struct {
     };
 };
 
+pub const IID_IGraphicsCommandList = GUID.parse("{5b160d0f-ac1b-4185-8ba8-b3ae42a5a455}");
 pub const IGraphicsCommandList = extern struct {
     v: *const VTable,
 
@@ -2903,6 +2904,7 @@ pub const RESOLVE_MODE = enum(UINT) {
     DECODE_SAMPLER_FEEDBACK = 5,
 };
 
+pub const IID_IGraphicsCommandList1 = GUID.parse("{553103fb-1fe7-4557-bb38-946d7d0e7ca7}");
 pub const IGraphicsCommandList1 = extern struct {
     v: *const VTable,
 
@@ -3055,6 +3057,7 @@ pub const WRITEBUFFERIMMEDIATE_MODE = enum(UINT) {
     MARKER_OUT = 0x2,
 };
 
+pub const IID_IGraphicsCommandList2 = GUID.parse("{38C3E585-FF17-412C-9150-4FC6F9D72A28}");
 pub const IGraphicsCommandList2 = extern struct {
     v: *const VTable,
 
@@ -3087,6 +3090,7 @@ pub const IGraphicsCommandList2 = extern struct {
     };
 };
 
+pub const IID_IGraphicsCommandList3 = GUID.parse("{6FDA83A7-B84C-4E38-9AC8-C7BD22016B3D}");
 pub const IGraphicsCommandList3 = extern struct {
     v: *const VTable,
 
@@ -3659,6 +3663,7 @@ pub const DISPATCH_RAYS_DESC = extern struct {
     Depth: UINT,
 };
 
+pub const IID_IGraphicsCommandList4 = GUID.parse("{8754318e-d3a9-4541-98cf-645b50dc4874}");
 pub const IGraphicsCommandList4 = extern struct {
     v: *const VTable,
 
@@ -3803,13 +3808,13 @@ pub const IGraphicsCommandList4 = extern struct {
 pub const RS_SET_SHADING_RATE_COMBINER_COUNT = 2;
 
 pub const SHADING_RATE = enum(UINT) {
-    _1X1 = 0,
-    _1X2 = 0x1,
-    _2X1 = 0x4,
-    _2X2 = 0x5,
-    _2X4 = 0x6,
-    _4X2 = 0x9,
-    _4X4 = 0xa,
+    @"1X1" = 0,
+    @"1X2" = 0x1,
+    @"2X1" = 0x4,
+    @"2X2" = 0x5,
+    @"2X4" = 0x6,
+    @"4X2" = 0x9,
+    @"4X4" = 0xa,
 };
 
 pub const SHADING_RATE_COMBINER = enum(UINT) {
@@ -3820,6 +3825,7 @@ pub const SHADING_RATE_COMBINER = enum(UINT) {
     COMBINER_SUM = 4,
 };
 
+pub const IID_IGraphicsCommandList5 = GUID.parse("{55050859-4024-474c-87f5-6472eaee44ea}");
 pub const IGraphicsCommandList5 = extern struct {
     v: *const VTable,
 
@@ -3855,6 +3861,7 @@ pub const IGraphicsCommandList5 = extern struct {
     };
 };
 
+pub const IID_IGraphicsCommandList6 = GUID.parse("{c3827890-e548-4cfa-96cf-5689a9370f80}");
 pub const IGraphicsCommandList6 = extern struct {
     v: *const VTable,
 
@@ -3883,6 +3890,36 @@ pub const IGraphicsCommandList6 = extern struct {
     pub const VTable = extern struct {
         base: IGraphicsCommandList5.VTable,
         DispatchMesh: *const fn (*IGraphicsCommandList6, UINT, UINT, UINT) callconv(WINAPI) void,
+    };
+};
+
+pub const IID_IGraphicsCommandList7 = GUID.parse("{dd171223-8b61-4769-90e3-160ccde4e2c1}");
+pub const IGraphicsCommandList7 = extern struct {
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IGraphicsCommandList6.Methods(T);
+
+            pub inline fn Barrier(
+                self: *T,
+                num_barrier_groups: UINT32,
+                barrier_groups: [*]const BARRIER_GROUP,
+            ) void {
+                @ptrCast(*const IGraphicsCommandList7.VTable, self.v).Barrier(
+                    @ptrCast(*IGraphicsCommandList7, self),
+                    num_barrier_groups,
+                    barrier_groups,
+                );
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList6.VTable,
+        Barrier: *const fn (*IGraphicsCommandList7, UINT32, [*]const BARRIER_GROUP) callconv(WINAPI) void,
     };
 };
 
@@ -5725,7 +5762,7 @@ pub const BARRIER_SYNC = packed struct(UINT) {
     SPLIT: bool = false,
 };
 
-pub const D3D12_BARRIER_ACCESS = packed struct(UINT) {
+pub const BARRIER_ACCESS = packed struct(UINT) {
     VERTEX_BUFFER: bool = false,
     CONSTANT_BUFFER: bool = false,
     INDEX_BUFFER: bool = false,
@@ -5759,18 +5796,66 @@ pub const D3D12_BARRIER_ACCESS = packed struct(UINT) {
     __unused30: bool = false,
     NO_ACCESS: bool = false,
 
-    pub const COMMON = D3D12_BARRIER_ACCESS{};
+    pub const COMMON = BARRIER_ACCESS{};
 };
 
-pub const D3D12_BARRIER_TYPE = enum(UINT) {
+pub const BARRIER_TYPE = enum(UINT) {
     GLOBAL,
     TEXTURE,
     BUFFER,
 };
 
-pub const D3D12_TEXTURE_BARRIER_FLAGS = packed struct(UINT) {
+pub const TEXTURE_BARRIER_FLAGS = packed struct(UINT) {
     DISCARD: bool = false,
     __unused: u31 = 0,
+};
+
+pub const BARRIER_SUBRESOURCE_RANGE = extern struct {
+    IndexOrFirstMipLevel: UINT,
+    NumMipLevels: UINT,
+    FirstArraySlice: UINT,
+    NumArraySlices: UINT,
+    FirstPlane: UINT,
+    NumPlanes: UINT,
+};
+
+pub const GLOBAL_BARRIER = extern struct {
+    SyncBefore: BARRIER_SYNC,
+    SyncAfter: BARRIER_SYNC,
+    AccessBefore: BARRIER_ACCESS,
+    AccessAfter: BARRIER_ACCESS,
+};
+
+pub const TEXTURE_BARRIER = extern struct {
+    SyncBefore: BARRIER_SYNC,
+    SyncAfter: BARRIER_SYNC,
+    AccessBefore: BARRIER_ACCESS,
+    AccessAfter: BARRIER_ACCESS,
+    LayoutBefore: BARRIER_LAYOUT,
+    LayoutAfter: BARRIER_LAYOUT,
+    pResource: *IResource,
+    Subresources: BARRIER_SUBRESOURCE_RANGE,
+    Flags: TEXTURE_BARRIER_FLAGS,
+};
+
+pub const BUFFER_BARRIER = extern struct {
+    SyncBefore: BARRIER_SYNC,
+    SyncAfter: BARRIER_SYNC,
+    AccessBefore: BARRIER_ACCESS,
+    AccessAfter: BARRIER_ACCESS,
+    pResource: *IResource,
+    Offset: UINT64,
+    Size: UINT64,
+};
+
+pub const BARRIER_GROUP = extern struct {
+    Type: BARRIER_TYPE,
+    NumBarriers: UINT32,
+    u: extern union {
+        pGlobalBarriers: [*]const GLOBAL_BARRIER,
+        pTextureBarriers: [*]const TEXTURE_BARRIER,
+        pBufferBarriers: [*]const BUFFER_BARRIER,
+    },
 };
 
 pub const PROTECTED_SESSION_STATUS = enum(UINT) {
@@ -5957,48 +6042,6 @@ pub const IID_IRootSignature = GUID{
     .Data2 = 0x72df,
     .Data3 = 0x4ee8,
     .Data4 = .{ 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 },
-};
-pub const IID_IGraphicsCommandList = GUID{
-    .Data1 = 0x5b160d0f,
-    .Data2 = 0xac1b,
-    .Data3 = 0x4185,
-    .Data4 = .{ 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 },
-};
-pub const IID_IGraphicsCommandList1 = GUID{
-    .Data1 = 0x553103fb,
-    .Data2 = 0x1fe7,
-    .Data3 = 0x4557,
-    .Data4 = .{ 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 },
-};
-pub const IID_IGraphicsCommandList2 = GUID{
-    .Data1 = 0x38C3E584,
-    .Data2 = 0xFF17,
-    .Data3 = 0x412C,
-    .Data4 = .{ 0x91, 0x50, 0x4F, 0xC6, 0xF9, 0xD7, 0x2A, 0x28 },
-};
-pub const IID_IGraphicsCommandList3 = GUID{
-    .Data1 = 0x6FDA83A7,
-    .Data2 = 0xB84C,
-    .Data3 = 0x4E38,
-    .Data4 = .{ 0x9A, 0xC8, 0xC7, 0xBD, 0x22, 0x01, 0x6B, 0x3D },
-};
-pub const IID_IGraphicsCommandList4 = GUID{
-    .Data1 = 0x8754318e,
-    .Data2 = 0xd3a9,
-    .Data3 = 0x4541,
-    .Data4 = .{ 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 },
-};
-pub const IID_IGraphicsCommandList5 = GUID{
-    .Data1 = 0x55050859,
-    .Data2 = 0x4024,
-    .Data3 = 0x474c,
-    .Data4 = .{ 0x87, 0xf5, 0x64, 0x72, 0xea, 0xee, 0x44, 0xea },
-};
-pub const IID_IGraphicsCommandList6 = GUID{
-    .Data1 = 0xc3827890,
-    .Data2 = 0xe548,
-    .Data3 = 0x4cfa,
-    .Data4 = .{ 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 },
 };
 pub const IID_IQueryHeap = GUID{
     .Data1 = 0x0d9658ae,

@@ -47,6 +47,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
+    gctx.present_flags = .{};
+    gctx.present_interval = 1;
+
     var ink_points = std.ArrayList(d2d1.POINT_2F).init(allocator);
 
     const brush = blk: {
