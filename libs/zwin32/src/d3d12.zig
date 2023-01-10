@@ -6000,6 +6000,12 @@ pub const IID_IGraphicsCommandList6 = GUID{
     .Data3 = 0x4cfa,
     .Data4 = .{ 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 },
 };
+pub const IID_IQueryHeap = GUID{
+    .Data1 = 0x0d9658ae,
+    .Data2 = 0xed45,
+    .Data3 = 0x469e,
+    .Data4 = .{ 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 },
+};
 
 // Error return codes from:
 // https://docs.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues
