@@ -6083,6 +6083,55 @@ pub const IDevice10 = extern struct {
     };
 };
 
+pub const SAMPLER_FLAGS = packed struct(UINT) {
+    UINT_BORDER_COLOR: bool = false,
+    __unused: u31 = 0,
+};
+
+pub const SAMPLER_DESC2 = extern struct {
+    Filter: FILTER,
+    AddressU: TEXTURE_ADDRESS_MODE,
+    AddressV: TEXTURE_ADDRESS_MODE,
+    AddressW: TEXTURE_ADDRESS_MODE,
+    MipLODBias: FLOAT,
+    MaxAnisotropy: UINT,
+    ComparisonFunc: COMPARISON_FUNC,
+    u: extern union {
+        FloatBorderColor: [4]FLOAT,
+        UintBorderColor: [4]UINT,
+    },
+    MinLOD: FLOAT,
+    MaxLOD: FLOAT,
+    Flags: SAMPLER_FLAGS,
+};
+
+pub const IID_IDevice11 = GUID.parse("{5405c344-d457-444e-b4dd-2366e45aee39}");
+pub const IDevice11 = extern struct {
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IDevice10.Methods(T);
+
+            pub inline fn CreateSampler2(
+                self: *T,
+                desc: *const SAMPLER_DESC2,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                @ptrCast(*const IDevice11.VTable, self.v)
+                    .CreateSampler2(@ptrCast(*IDevice11, self), desc, dst_descriptor);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IDevice10.VTable,
+        CreateSampler2: *const fn (*IDevice11, *const SAMPLER_DESC2, CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+    };
+};
+
 pub const PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
