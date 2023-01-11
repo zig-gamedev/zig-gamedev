@@ -1,4 +1,4 @@
-# zstbi v0.9.2 - stb_image bindings
+# zstbi v0.9.2 - stb image bindings
 
 ## Features
 
@@ -7,6 +7,7 @@
 * Supports HDR images
 * Supports 8-bits and 16-bits per channel
 * Supports image resizing
+* Supports image writing (.png, .jpg)
 
 ## Getting started
 
