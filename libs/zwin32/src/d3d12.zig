@@ -3923,6 +3923,81 @@ pub const IGraphicsCommandList7 = extern struct {
     };
 };
 
+pub const IID_IGraphicsCommandList8 = GUID.parse("{ee936ef9-599d-4d28-938e-23c4ad05ce51}");
+pub const IGraphicsCommandList8 = extern struct {
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IGraphicsCommandList7.Methods(T);
+
+            pub inline fn OMSetFrontAndBackStencilRef(
+                self: *T,
+                front_stencil_ref: UINT,
+                back_stencil_ref: UINT,
+            ) void {
+                @ptrCast(*const IGraphicsCommandList8.VTable, self.v).OMSetFrontAndBackStencilRef(
+                    @ptrCast(*IGraphicsCommandList8, self),
+                    front_stencil_ref,
+                    back_stencil_ref,
+                );
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList7.VTable,
+        Barrier: *const fn (*IGraphicsCommandList8, UINT, UINT) callconv(WINAPI) void,
+    };
+};
+
+pub const IID_IGraphicsCommandList9 = GUID.parse("{34ed2808-ffe6-4c2b-b11a-cabd2b0c59e1}");
+pub const IGraphicsCommandList9 = extern struct {
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IGraphicsCommandList8.Methods(T);
+
+            pub inline fn RSSetDepthBias(
+                self: *T,
+                depth_bias: FLOAT,
+                depth_bias_clamp: FLOAT,
+                slope_scaled_depth_bias: FLOAT,
+            ) void {
+                @ptrCast(*const IGraphicsCommandList9.VTable, self.v).RSSetDepthBias(
+                    @ptrCast(*IGraphicsCommandList9, self),
+                    depth_bias,
+                    depth_bias_clamp,
+                    slope_scaled_depth_bias,
+                );
+            }
+            pub inline fn IASetIndexBufferStripCutValue(
+                self: *T,
+                cut_value: INDEX_BUFFER_STRIP_CUT_VALUE,
+            ) void {
+                @ptrCast(*const IGraphicsCommandList9.VTable, self.v).IASetIndexBufferStripCutValue(
+                    @ptrCast(*IGraphicsCommandList9, self),
+                    cut_value,
+                );
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IGraphicsCommandList8.VTable,
+        RSSetDepthBias: *const fn (*IGraphicsCommandList9, FLOAT, FLOAT, FLOAT) callconv(WINAPI) void,
+        IASetIndexBufferStripCutValue: *const fn (
+            *IGraphicsCommandList9,
+            INDEX_BUFFER_STRIP_CUT_VALUE,
+        ) callconv(WINAPI) void,
+    };
+};
+
 pub const ICommandQueue = extern struct {
     v: *const VTable,
 
