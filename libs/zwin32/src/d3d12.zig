@@ -1078,7 +1078,10 @@ pub const CACHED_PIPELINE_STATE = extern struct {
 
 pub const PIPELINE_STATE_FLAGS = packed struct(UINT) {
     TOOL_DEBUG: bool = false,
-    __unused: u31 = 0,
+    __unused1: bool = false,
+    DYNAMIC_DEPTH_BIAS: bool = false,
+    DYNAMIC_INDEX_BUFFER_STRIP_CUT: bool = false,
+    __unused: u28 = 0,
 };
 
 pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
@@ -2098,7 +2101,7 @@ pub const ICommandAllocator = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IPageable.Methods(T);
 
@@ -2119,7 +2122,7 @@ pub const IFence = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IPageable.Methods(T);
 
@@ -3063,7 +3066,7 @@ pub const IGraphicsCommandList2 = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IGraphicsCommandList1.Methods(T);
 
@@ -4003,7 +4006,7 @@ pub const ICommandQueue = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IPageable.Methods(T);
 
@@ -4129,12 +4132,13 @@ pub const ICommandQueue = extern struct {
     };
 };
 
+pub const IID_IDevice = GUID.parse("{189819f1-1db6-4b57-be54-1821339b85f7}");
 pub const IDevice = extern struct {
     v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IObject.Methods(T);
 
@@ -4733,12 +4737,13 @@ pub const RESIDENCY_PRIORITY = enum(UINT) {
     MAXIMUM = 0xc8000000,
 };
 
+pub const IID_IDevice1 = GUID.parse("{77acce80-638e-4e65-8895-c1f23386863e}");
 pub const IDevice1 = extern struct {
     v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IDevice.Methods(T);
 
@@ -4941,12 +4946,13 @@ pub const PIPELINE_MESH_STATE_STREAM = extern struct {
     }
 };
 
+pub const IID_IDevice2 = GUID.parse("{30baa41e-b15b-475c-a0bb-1af5c5b64328}");
 pub const IDevice2 = extern struct {
     v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IDevice1.Methods(T);
 
@@ -4978,6 +4984,7 @@ pub const RESIDENCY_FLAGS = packed struct(UINT) {
     __unused: u31 = 0,
 };
 
+pub const IID_IDevice3 = GUID.parse("{81dadc15-2bad-4392-93c5-101345c4aa98}");
 pub const IDevice3 = extern struct {
     v: *const VTable,
 
@@ -5056,6 +5063,7 @@ pub const RESOURCE_ALLOCATION_INFO1 = extern struct {
     SizeInBytes: UINT64,
 };
 
+pub const IID_IDevice4 = GUID.parse("{e865df17-a9ee-46f9-a463-3098315aa2e5}");
 pub const IDevice4 = extern struct {
     v: *const VTable,
 
@@ -5223,7 +5231,7 @@ pub const ILifetimeOwner = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
@@ -5240,6 +5248,7 @@ pub const ILifetimeOwner = extern struct {
     };
 };
 
+pub const IID_IDevice5 = GUID.parse("{8b4f173b-2fea-4b80-8f58-4307191ab95d}");
 pub const IDevice5 = extern struct {
     v: *const VTable,
 
@@ -5392,12 +5401,13 @@ pub const MEASUREMENTS_ACTION = enum(UINT) {
     DISCARD_PREVIOUS = 3,
 };
 
+pub const IID_IDevice6 = GUID.parse("{c70b221b-40e4-4a17-89af-025a0727a6dc}");
 pub const IDevice6 = extern struct {
     v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IDevice5.Methods(T);
             pub inline fn SetBackgroundProcessingMode(
@@ -5436,12 +5446,13 @@ pub const PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
     ProtectionType: GUID,
 };
 
+pub const IID_IDevice7 = GUID.parse("{5c014b53-68a1-4b9b-8bd1-dd6046b9358b}");
 pub const IDevice7 = extern struct {
     v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IDevice6.Methods(T);
 
@@ -5505,6 +5516,7 @@ pub const RESOURCE_DESC1 = extern struct {
     SamplerFeedbackMipRegion: MIP_REGION,
 };
 
+pub const IID_IDevice8 = GUID.parse("{9218E6BB-F944-4F7E-A75C-B1B2C7B701F3}");
 pub const IDevice8 = extern struct {
     v: *const VTable,
 
@@ -5702,6 +5714,7 @@ pub const SHADER_CACHE_SESSION_DESC = extern struct {
     Version: UINT64,
 };
 
+pub const IID_IDevice9 = GUID.parse("{4c80e962-f032-4f60-bc9e-ebc2cfa1d83c}");
 pub const IDevice9 = extern struct {
     v: *const VTable,
 
@@ -5979,7 +5992,7 @@ pub const IProtectedResourceSession = extern struct {
 
     pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IProtectedSession.Methods(T);
 
@@ -6016,66 +6029,6 @@ pub extern "d3d12" fn D3D12SerializeVersionedRootSignature(
     ?*?*d3d.IBlob,
 ) callconv(WINAPI) HRESULT;
 
-pub const IID_IDevice = GUID{
-    .Data1 = 0x189819f1,
-    .Data2 = 0x1db6,
-    .Data3 = 0x4b57,
-    .Data4 = .{ 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 },
-};
-pub const IID_IDevice1 = GUID{
-    .Data1 = 0x77acce80,
-    .Data2 = 0x638e,
-    .Data3 = 0x4e65,
-    .Data4 = .{ 0x88, 0x95, 0xc1, 0xf2, 0x33, 0x86, 0x86, 0x3e },
-};
-pub const IID_IDevice2 = GUID{
-    .Data1 = 0x30baa41e,
-    .Data2 = 0xb15b,
-    .Data3 = 0x475c,
-    .Data4 = .{ 0xa0, 0xbb, 0x1a, 0xf5, 0xc5, 0xb6, 0x43, 0x28 },
-};
-pub const IID_IDevice3 = GUID{
-    .Data1 = 0x81dadc15,
-    .Data2 = 0x2bad,
-    .Data3 = 0x4392,
-    .Data4 = .{ 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 },
-};
-pub const IID_IDevice4 = GUID{
-    .Data1 = 0xe865df17,
-    .Data2 = 0xa9ee,
-    .Data3 = 0x46f9,
-    .Data4 = .{ 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 },
-};
-pub const IID_IDevice5 = GUID{
-    .Data1 = 0x8b4f173a,
-    .Data2 = 0x2fea,
-    .Data3 = 0x4b80,
-    .Data4 = .{ 0x8f, 0x58, 0x43, 0x07, 0x19, 0x1a, 0xb9, 0x5d },
-};
-pub const IID_IDevice6 = GUID{
-    .Data1 = 0xc70b221b,
-    .Data2 = 0x40e4,
-    .Data3 = 0x4a17,
-    .Data4 = .{ 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc },
-};
-pub const IID_IDevice7 = GUID{
-    .Data1 = 0x5c014b53,
-    .Data2 = 0x68a1,
-    .Data3 = 0x4b9b,
-    .Data4 = .{ 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b },
-};
-pub const IID_IDevice8 = GUID{
-    .Data1 = 0x9218E6BB,
-    .Data2 = 0xF944,
-    .Data3 = 0x4F7E,
-    .Data4 = .{ 0xA7, 0x5C, 0xB1, 0xB2, 0xC7, 0xB7, 0x01, 0xF3 },
-};
-pub const IID_IDevice9 = GUID{
-    .Data1 = 0x4c80e962,
-    .Data2 = 0xf032,
-    .Data3 = 0x4f60,
-    .Data4 = .{ 0xbc, 0x9e, 0xeb, 0xc2, 0xcf, 0xa1, 0xd8, 0x3c },
-};
 pub const IID_ICommandQueue = GUID{
     .Data1 = 0x0ec870a6,
     .Data2 = 0x5d7e,
