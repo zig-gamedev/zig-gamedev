@@ -43,133 +43,134 @@ pub extern "mfreadwrite" fn MFCreateSourceReaderFromURL(
 ) callconv(WINAPI) HRESULT;
 
 pub const IAttributes = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        attribs: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetUINT32(self: *T, guid: *const GUID, value: *UINT32) HRESULT {
-                return self.v.attribs.GetUINT32(self, guid, value);
+                return @ptrCast(*const IAttributes.VTable, self.v).GetUINT32(
+                    @ptrCast(*IAttributes, self),
+                    guid,
+                    value,
+                );
             }
             pub inline fn GetGUID(self: *T, key: *const GUID, value: *GUID) HRESULT {
-                return self.v.attribs.GetGUID(self, key, value);
+                return @ptrCast(*const IAttributes.VTable, self.v)
+                    .GetGUID(@ptrCast(*IAttributes, self), key, value);
             }
             pub inline fn SetUINT32(self: *T, guid: *const GUID, value: UINT32) HRESULT {
-                return self.v.attribs.SetUINT32(self, guid, value);
+                return @ptrCast(*const IAttributes.VTable, self.v)
+                    .SetUINT32(@ptrCast(*IAttributes, self), guid, value);
             }
             pub inline fn SetGUID(self: *T, key: *const GUID, value: *const GUID) HRESULT {
-                return self.v.attribs.SetGUID(self, key, value);
+                return @ptrCast(*const IAttributes.VTable, self.v)
+                    .SetGUID(@ptrCast(*IAttributes, self), key, value);
             }
             pub inline fn SetUnknown(self: *T, guid: *const GUID, unknown: ?*IUnknown) HRESULT {
-                return self.v.attribs.SetUnknown(self, guid, unknown);
+                return @ptrCast(*const IAttributes.VTable, self.v)
+                    .SetUnknown(@ptrCast(*IAttributes, self), guid, unknown);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetItem: *anyopaque,
-            GetItemType: *anyopaque,
-            CompareItem: *anyopaque,
-            Compare: *anyopaque,
-            GetUINT32: fn (*T, *const GUID, *UINT32) callconv(WINAPI) HRESULT,
-            GetUINT64: *anyopaque,
-            GetDouble: *anyopaque,
-            GetGUID: fn (*T, *const GUID, *GUID) callconv(WINAPI) HRESULT,
-            GetStringLength: *anyopaque,
-            GetString: *anyopaque,
-            GetAllocatedString: *anyopaque,
-            GetBlobSize: *anyopaque,
-            GetBlob: *anyopaque,
-            GetAllocatedBlob: *anyopaque,
-            GetUnknown: *anyopaque,
-            SetItem: *anyopaque,
-            DeleteItem: *anyopaque,
-            DeleteAllItems: *anyopaque,
-            SetUINT32: fn (*T, *const GUID, UINT32) callconv(WINAPI) HRESULT,
-            SetUINT64: *anyopaque,
-            SetDouble: *anyopaque,
-            SetGUID: fn (*T, *const GUID, *const GUID) callconv(WINAPI) HRESULT,
-            SetString: *anyopaque,
-            SetBlob: *anyopaque,
-            SetUnknown: fn (*T, *const GUID, ?*IUnknown) callconv(WINAPI) HRESULT,
-            LockStore: *anyopaque,
-            UnlockStore: *anyopaque,
-            GetCount: *anyopaque,
-            GetItemByIndex: *anyopaque,
-            CopyAllItems: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        GetItem: *anyopaque,
+        GetItemType: *anyopaque,
+        CompareItem: *anyopaque,
+        Compare: *anyopaque,
+        GetUINT32: *const fn (*IAttributes, *const GUID, *UINT32) callconv(WINAPI) HRESULT,
+        GetUINT64: *anyopaque,
+        GetDouble: *anyopaque,
+        GetGUID: *const fn (*IAttributes, *const GUID, *GUID) callconv(WINAPI) HRESULT,
+        GetStringLength: *anyopaque,
+        GetString: *anyopaque,
+        GetAllocatedString: *anyopaque,
+        GetBlobSize: *anyopaque,
+        GetBlob: *anyopaque,
+        GetAllocatedBlob: *anyopaque,
+        GetUnknown: *anyopaque,
+        SetItem: *anyopaque,
+        DeleteItem: *anyopaque,
+        DeleteAllItems: *anyopaque,
+        SetUINT32: *const fn (*IAttributes, *const GUID, UINT32) callconv(WINAPI) HRESULT,
+        SetUINT64: *anyopaque,
+        SetDouble: *anyopaque,
+        SetGUID: *const fn (*IAttributes, *const GUID, *const GUID) callconv(WINAPI) HRESULT,
+        SetString: *anyopaque,
+        SetBlob: *anyopaque,
+        SetUnknown: *const fn (*IAttributes, *const GUID, ?*IUnknown) callconv(WINAPI) HRESULT,
+        LockStore: *anyopaque,
+        UnlockStore: *anyopaque,
+        GetCount: *anyopaque,
+        GetItemByIndex: *anyopaque,
+        CopyAllItems: *anyopaque,
+    };
 };
 
 pub const IMediaEvent = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        attribs: IAttributes.VTable(Self),
-        event: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IAttributes.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IAttributes.Methods(T);
+
             pub inline fn GetType(self: *T, met: *MediaEventType) HRESULT {
-                return self.v.event.GetType(self, met);
+                return @ptrCast(*const IMediaEvent.VTable, self.v).GetType(@ptrCast(*IMediaEvent, self), met);
             }
             pub inline fn GetExtendedType(self: *T, ex_met: *GUID) HRESULT {
-                return self.v.event.GetExtendedType(self, ex_met);
+                return @ptrCast(*const IMediaEvent.VTable, self.v)
+                    .GetExtendedType(@ptrCast(*IMediaEvent, self), ex_met);
             }
             pub inline fn GetStatus(self: *T, status: *HRESULT) HRESULT {
-                return self.v.event.GetStatus(self, status);
+                return @ptrCast(*const IMediaEvent.VTable, self.v).GetStatus(@ptrCast(*IMediaEvent, self), status);
             }
             pub inline fn GetValue(self: *T, value: *PROPVARIANT) HRESULT {
-                return self.v.event.GetValue(self, value);
+                return @ptrCast(*const IMediaEvent.VTable, self.v).GetValue(@ptrCast(*IMediaEvent, self), value);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetType: fn (*T, *MediaEventType) callconv(WINAPI) HRESULT,
-            GetExtendedType: fn (*T, *GUID) callconv(WINAPI) HRESULT,
-            GetStatus: fn (*T, *HRESULT) callconv(WINAPI) HRESULT,
-            GetValue: fn (*T, *PROPVARIANT) callconv(WINAPI) HRESULT,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IAttributes.VTable,
+        GetType: *const fn (*IMediaEvent, *MediaEventType) callconv(WINAPI) HRESULT,
+        GetExtendedType: *const fn (*IMediaEvent, *GUID) callconv(WINAPI) HRESULT,
+        GetStatus: *const fn (*IMediaEvent, *HRESULT) callconv(WINAPI) HRESULT,
+        GetValue: *const fn (*IMediaEvent, *PROPVARIANT) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const ISourceReader = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        reader: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetNativeMediaType(
                 self: *T,
                 stream_index: DWORD,
                 media_type_index: DWORD,
                 media_type: **IMediaType,
             ) HRESULT {
-                return self.v.reader.GetNativeMediaType(self, stream_index, media_type_index, media_type);
+                return @ptrCast(*const ISourceReader.VTable, self.v)
+                    .GetNativeMediaType(@ptrCast(*ISourceReader, self), stream_index, media_type_index, media_type);
             }
             pub inline fn GetCurrentMediaType(
                 self: *T,
                 stream_index: DWORD,
                 media_type: **IMediaType,
             ) HRESULT {
-                return self.v.reader.GetCurrentMediaType(self, stream_index, media_type);
+                return @ptrCast(*const ISourceReader.VTable, self.v)
+                    .GetCurrentMediaType(@ptrCast(*ISourceReader, self), stream_index, media_type);
             }
             pub inline fn SetCurrentMediaType(
                 self: *T,
@@ -177,7 +178,8 @@ pub const ISourceReader = extern struct {
                 reserved: ?*DWORD,
                 media_type: *IMediaType,
             ) HRESULT {
-                return self.v.reader.SetCurrentMediaType(self, stream_index, reserved, media_type);
+                return @ptrCast(*const ISourceReader.VTable, self.v)
+                    .SetCurrentMediaType(@ptrCast(*ISourceReader, self), stream_index, reserved, media_type);
             }
             pub inline fn ReadSample(
                 self: *T,
@@ -188,8 +190,8 @@ pub const ISourceReader = extern struct {
                 timestamp: ?*LONGLONG,
                 sample: ?*?*ISample,
             ) HRESULT {
-                return self.v.reader.ReadSample(
-                    self,
+                return @ptrCast(*const ISourceReader.VTable, self.v).ReadSample(
+                    @ptrCast(*ISourceReader, self),
                     stream_index,
                     control_flags,
                     actual_stream_index,
@@ -199,154 +201,149 @@ pub const ISourceReader = extern struct {
                 );
             }
             pub inline fn SetCurrentPosition(self: *T, guid: *const GUID, prop: *const PROPVARIANT) HRESULT {
-                return self.v.reader.SetCurrentPosition(self, guid, prop);
+                return @ptrCast(*const ISourceReader.VTable, self.v)
+                    .SetCurrentPosition(@ptrCast(*ISourceReader, self), guid, prop);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetStreamSelection: *anyopaque,
-            SetStreamSelection: *anyopaque,
-            GetNativeMediaType: fn (*T, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
-            GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
-            SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
-            SetCurrentPosition: fn (*T, *const GUID, *const PROPVARIANT) callconv(WINAPI) HRESULT,
-            ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, ?*?*ISample) callconv(WINAPI) HRESULT,
-            Flush: *anyopaque,
-            GetServiceForStream: *anyopaque,
-            GetPresentationAttribute: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        GetStreamSelection: *anyopaque,
+        SetStreamSelection: *anyopaque,
+        GetNativeMediaType: *const fn (*ISourceReader, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
+        GetCurrentMediaType: *const fn (*ISourceReader, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
+        SetCurrentMediaType: *const fn (*ISourceReader, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
+        SetCurrentPosition: *const fn (*ISourceReader, *const GUID, *const PROPVARIANT) callconv(WINAPI) HRESULT,
+        ReadSample: *const fn (
+            *ISourceReader,
+            DWORD,
+            DWORD,
+            ?*DWORD,
+            ?*DWORD,
+            ?*LONGLONG,
+            ?*?*ISample,
+        ) callconv(WINAPI) HRESULT,
+        Flush: *anyopaque,
+        GetServiceForStream: *anyopaque,
+        GetPresentationAttribute: *anyopaque,
+    };
 };
 
 pub const IMediaType = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        attribs: IAttributes.VTable(Self),
-        mediatype: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IAttributes.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
-    }
+    pub usingnamespace Methods(@This());
 
-    fn VTable(comptime T: type) type {
-        _ = T;
+    pub fn Methods(comptime T: type) type {
         return extern struct {
-            GetMajorType: *anyopaque,
-            IsCompressedFormat: *anyopaque,
-            IsEqual: *anyopaque,
-            GetRepresentation: *anyopaque,
-            FreeRepresentation: *anyopaque,
+            pub usingnamespace IAttributes.Methods(T);
         };
     }
+
+    pub const VTable = extern struct {
+        base: IAttributes.VTable,
+        GetMajorType: *anyopaque,
+        IsCompressedFormat: *anyopaque,
+        IsEqual: *anyopaque,
+        GetRepresentation: *anyopaque,
+        FreeRepresentation: *anyopaque,
+    };
 };
 
 pub const ISample = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        attribs: IAttributes.VTable(Self),
-        sample: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace IAttributes.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IAttributes.Methods(T);
+
             pub inline fn ConvertToContiguousBuffer(self: *T, buffer: **IMediaBuffer) HRESULT {
-                return self.v.sample.ConvertToContiguousBuffer(self, buffer);
+                return @ptrCast(*const ISample.VTable, self.v)
+                    .ConvertToContiguousBuffer(@ptrCast(*ISample, self), buffer);
             }
             pub inline fn GetBufferByIndex(self: *T, index: DWORD, buffer: **IMediaBuffer) HRESULT {
-                return self.v.sample.GetBufferByIndex(self, index, buffer);
+                return @ptrCast(*const ISample.VTable, self.v)
+                    .GetBufferByIndex(@ptrCast(*ISample, self), index, buffer);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            GetSampleFlags: *anyopaque,
-            SetSampleFlags: *anyopaque,
-            GetSampleTime: *anyopaque,
-            SetSampleTime: *anyopaque,
-            GetSampleDuration: *anyopaque,
-            SetSampleDuration: *anyopaque,
-            GetBufferCount: *anyopaque,
-            GetBufferByIndex: fn (*T, DWORD, **IMediaBuffer) callconv(WINAPI) HRESULT,
-            ConvertToContiguousBuffer: fn (*T, **IMediaBuffer) callconv(WINAPI) HRESULT,
-            AddBuffer: *anyopaque,
-            RemoveBufferByIndex: *anyopaque,
-            RemoveAllBuffers: *anyopaque,
-            GetTotalLength: *anyopaque,
-            CopyToBuffer: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IAttributes.VTable,
+        GetSampleFlags: *anyopaque,
+        SetSampleFlags: *anyopaque,
+        GetSampleTime: *anyopaque,
+        SetSampleTime: *anyopaque,
+        GetSampleDuration: *anyopaque,
+        SetSampleDuration: *anyopaque,
+        GetBufferCount: *anyopaque,
+        GetBufferByIndex: *const fn (*ISample, DWORD, **IMediaBuffer) callconv(WINAPI) HRESULT,
+        ConvertToContiguousBuffer: *const fn (*ISample, **IMediaBuffer) callconv(WINAPI) HRESULT,
+        AddBuffer: *anyopaque,
+        RemoveBufferByIndex: *anyopaque,
+        RemoveAllBuffers: *anyopaque,
+        GetTotalLength: *anyopaque,
+        CopyToBuffer: *anyopaque,
+    };
 };
 
 pub const IMediaBuffer = extern struct {
-    const Self = @This();
-    v: *const extern struct {
-        unknown: IUnknown.VTable(Self),
-        buffer: VTable(Self),
-    },
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    v: *const VTable,
 
-    fn Methods(comptime T: type) type {
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn Lock(self: *T, ptr: *[*]BYTE, max_len: ?*DWORD, current_len: ?*DWORD) HRESULT {
-                return self.v.buffer.Lock(self, ptr, max_len, current_len);
+                return @ptrCast(*const IMediaBuffer.VTable, self.v)
+                    .Lock(@ptrCast(*IMediaBuffer, self), ptr, max_len, current_len);
             }
             pub inline fn Unlock(self: *T) HRESULT {
-                return self.v.buffer.Unlock(self);
+                return @ptrCast(*const IMediaBuffer.VTable, self.v).Unlock(@ptrCast(*IMediaBuffer, self));
             }
             pub inline fn GetCurrentLength(self: *T, length: *DWORD) HRESULT {
-                return self.v.buffer.GetCurrentLength(self, length);
+                return @ptrCast(*const IMediaBuffer.VTable, self.v)
+                    .GetCurrentLength(@ptrCast(*IMediaBuffer, self), length);
             }
         };
     }
 
-    fn VTable(comptime T: type) type {
-        return extern struct {
-            Lock: fn (*T, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
-            Unlock: fn (*T) callconv(WINAPI) HRESULT,
-            GetCurrentLength: fn (*T, *DWORD) callconv(WINAPI) HRESULT,
-            SetCurrentLength: *anyopaque,
-            GetMaxLength: *anyopaque,
-        };
-    }
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        Lock: *const fn (*IMediaBuffer, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
+        Unlock: *const fn (*IMediaBuffer) callconv(WINAPI) HRESULT,
+        GetCurrentLength: *const fn (*IMediaBuffer, *DWORD) callconv(WINAPI) HRESULT,
+        SetCurrentLength: *anyopaque,
+        GetMaxLength: *anyopaque,
+    };
 };
 
 pub const MediaEventType = DWORD;
 
 pub fn ISourceReaderCallbackVTable(comptime T: type) type {
     return extern struct {
-        unknown: IUnknown.VTable(T),
-        cb: extern struct {
-            OnReadSample: fn (*T, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
-            OnFlush: fn (*T, DWORD) callconv(WINAPI) HRESULT,
-            OnEvent: fn (*T, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
-        },
+        base: IUnknown.VTable(T),
+        OnReadSample: *const fn (*T, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
+        OnFlush: *const fn (*T, DWORD) callconv(WINAPI) HRESULT,
+        OnEvent: *const fn (*T, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
     };
 }
 
 pub const IID_ISourceReaderCallback = GUID.parse("{deec8d99-fa1d-4d82-84c2-2c8969944867}");
 pub const ISourceReaderCallback = extern struct {
-    v: *const ISourceReaderCallbackVTable(Self),
+    v: *const VTable,
 
-    const Self = @This();
-    usingnamespace IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    pub usingnamespace Methods(@This());
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn OnReadSample(
                 self: *T,
                 status: HRESULT,
@@ -355,16 +352,27 @@ pub const ISourceReaderCallback = extern struct {
                 timestamp: LONGLONG,
                 sample: ?*ISample,
             ) HRESULT {
-                return self.v.cb.OnReadSample(self, status, stream_index, stream_flags, timestamp, sample);
+                return @ptrCast(*const ISourceReaderCallback.VTable, self.v).OnReadSample(
+                    @ptrCast(*ISourceReaderCallback, self),
+                    status,
+                    stream_index,
+                    stream_flags,
+                    timestamp,
+                    sample,
+                );
             }
             pub inline fn OnFlush(self: *T, stream_index: DWORD) HRESULT {
-                return self.v.cb.OnFlush(self, stream_index);
+                return @ptrCast(*const ISourceReaderCallback.VTable, self.v)
+                    .OnFlush(@ptrCast(*ISourceReaderCallback, self), stream_index);
             }
             pub inline fn OnEvent(self: *T, stream_index: DWORD, event: *IMediaEvent) HRESULT {
-                return self.v.cb.OnEvent(self, stream_index, event);
+                return @ptrCast(*const ISourceReaderCallback.VTable, self.v)
+                    .OnEvent(@ptrCast(*ISourceReaderCallback, self), stream_index, event);
             }
         };
     }
+
+    pub const VTable = ISourceReaderCallbackVTable(@This());
 };
 
 pub const LOW_LATENCY = GUID.parse("{9C27891A-ED7A-40e1-88E8-B22727A024EE}"); // {UINT32 (BOOL)}
