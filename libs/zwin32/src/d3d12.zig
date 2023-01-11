@@ -4787,17 +4787,16 @@ pub const IDevice1 = extern struct {
     }
 
     pub const VTable = extern struct {
-        const T = IDevice1;
         base: IDevice.VTable,
         CreatePipelineLibrary: *const fn (
-            *T,
+            *IDevice1,
             *const anyopaque,
             SIZE_T,
             *const GUID,
             *?*anyopaque,
         ) callconv(WINAPI) HRESULT,
         SetEventOnMultipleFenceCompletion: *const fn (
-            *T,
+            *IDevice1,
             [*]const *IFence,
             [*]const UINT64,
             UINT,
@@ -4805,7 +4804,7 @@ pub const IDevice1 = extern struct {
             HANDLE,
         ) callconv(WINAPI) HRESULT,
         SetResidencyPriority: *const fn (
-            *T,
+            *IDevice1,
             UINT,
             [*]const *IPageable,
             [*]const RESIDENCY_PRIORITY,
@@ -5033,17 +5032,21 @@ pub const IDevice3 = extern struct {
     }
 
     pub const VTable = extern struct {
-        const T = IDevice3;
         base: IDevice2.VTable,
         OpenExistingHeapFromAddress: *const fn (
-            *T,
+            *IDevice3,
             *const anyopaque,
             *const GUID,
             *?*anyopaque,
         ) callconv(WINAPI) HRESULT,
-        OpenExistingHeapFromFileMapping: *const fn (*T, HANDLE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+        OpenExistingHeapFromFileMapping: *const fn (
+            *IDevice3,
+            HANDLE,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
         EnqueueMakeResident: *const fn (
-            *T,
+            *IDevice3,
             RESIDENCY_FLAGS,
             UINT,
             [*]const *IPageable,
@@ -5348,7 +5351,12 @@ pub const IDevice5 = extern struct {
     pub const VTable = extern struct {
         const T = IDevice5;
         base: IDevice4.VTable,
-        CreateLifetimeTracker: *const fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+        CreateLifetimeTracker: *const fn (
+            *T,
+            *ILifetimeOwner,
+            *const GUID,
+            *?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
         RemoveDevice: *const fn (self: *T) callconv(WINAPI) void,
         EnumerateMetaCommands: *const fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
         EnumerateMetaCommandParameters: *const fn (
@@ -5410,6 +5418,7 @@ pub const IDevice6 = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub usingnamespace IDevice5.Methods(T);
+
             pub inline fn SetBackgroundProcessingMode(
                 self: *T,
                 mode: BACKGROUND_PROCESSING_MODE,
@@ -5718,7 +5727,7 @@ pub const IID_IDevice9 = GUID.parse("{4c80e962-f032-4f60-bc9e-ebc2cfa1d83c}");
 pub const IDevice9 = extern struct {
     v: *const VTable,
 
-    pub usingnamespace IDevice9.Methods(@This());
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
@@ -5755,21 +5764,20 @@ pub const IDevice9 = extern struct {
     }
 
     pub const VTable = extern struct {
-        const T = IDevice9;
         base: IDevice8.VTable,
         CreateShaderCacheSession: *const fn (
-            *T,
+            *IDevice9,
             *const SHADER_CACHE_SESSION_DESC,
             *const GUID,
             ?*?*anyopaque,
         ) callconv(WINAPI) HRESULT,
         ShaderCacheControl: *const fn (
-            *T,
+            *IDevice9,
             SHADER_CACHE_KIND_FLAGS,
             SHADER_CACHE_CONTROL_FLAGS,
         ) callconv(WINAPI) HRESULT,
         CreateCommandQueue1: *const fn (
-            *T,
+            *IDevice9,
             *const COMMAND_QUEUE_DESC,
             *const GUID,
             *const GUID,
@@ -5944,6 +5952,135 @@ pub const BARRIER_GROUP = extern struct {
         pTextureBarriers: [*]const TEXTURE_BARRIER,
         pBufferBarriers: [*]const BUFFER_BARRIER,
     },
+};
+
+pub const IID_IDevice10 = GUID.parse("{517f8718-aa66-49f9-b02b-a7ab89c06031}");
+pub const IDevice10 = extern struct {
+    v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IDevice9.Methods(T);
+
+            pub inline fn CreateCommittedResource3(
+                self: *T,
+                heap_properties: *const HEAP_PROPERTIES,
+                heap_flags: HEAP_FLAGS,
+                desc: *const RESOURCE_DESC1,
+                initial_layout: BARRIER_LAYOUT,
+                clear_value: ?*const CLEAR_VALUE,
+                prsession: ?*IProtectedResourceSession,
+                num_castable_formats: UINT32,
+                castable_formats: ?[*]dxgi.FORMAT,
+                guid: *const GUID,
+                resource: ?*?*anyopaque,
+            ) HRESULT {
+                return @ptrCast(*const IDevice10.VTable, self.v).CreateCommittedResource3(
+                    @ptrCast(*IDevice10, self),
+                    heap_properties,
+                    heap_flags,
+                    desc,
+                    initial_layout,
+                    clear_value,
+                    prsession,
+                    num_castable_formats,
+                    castable_formats,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreatePlacedResource2(
+                self: *T,
+                heap: *IHeap,
+                heap_offset: UINT64,
+                desc: *const RESOURCE_DESC1,
+                initial_layout: BARRIER_LAYOUT,
+                clear_value: ?*const CLEAR_VALUE,
+                num_castable_formats: UINT32,
+                castable_formats: ?[*]dxgi.FORMAT,
+                guid: *const GUID,
+                resource: ?*?*anyopaque,
+            ) HRESULT {
+                return @ptrCast(*const IDevice10.VTable, self.v).CreatePlacedResource2(
+                    @ptrCast(*IDevice10, self),
+                    heap,
+                    heap_offset,
+                    desc,
+                    initial_layout,
+                    clear_value,
+                    num_castable_formats,
+                    castable_formats,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreateReservedResource2(
+                self: *T,
+                desc: *const RESOURCE_DESC,
+                initial_layout: BARRIER_LAYOUT,
+                clear_value: ?*const CLEAR_VALUE,
+                psession: ?*IProtectedResourceSession,
+                num_castable_formats: UINT32,
+                castable_formats: ?[*]dxgi.FORMAT,
+                guid: *const GUID,
+                resource: ?*?*anyopaque,
+            ) HRESULT {
+                return @ptrCast(*const IDevice10.VTable, self.v).CreateReservedResource2(
+                    @ptrCast(*IDevice10, self),
+                    desc,
+                    initial_layout,
+                    clear_value,
+                    psession,
+                    num_castable_formats,
+                    castable_formats,
+                    guid,
+                    resource,
+                );
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IDevice9.VTable,
+        CreateCommittedResource3: *const fn (
+            *IDevice10,
+            *const HEAP_PROPERTIES,
+            HEAP_FLAGS,
+            *const RESOURCE_DESC1,
+            BARRIER_LAYOUT,
+            ?*const CLEAR_VALUE,
+            ?*IProtectedResourceSession,
+            UINT32,
+            ?[*]dxgi.FORMAT,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreatePlacedResource2: *const fn (
+            *IDevice10,
+            *IHeap,
+            UINT64,
+            *const RESOURCE_DESC1,
+            BARRIER_LAYOUT,
+            ?*const CLEAR_VALUE,
+            UINT32,
+            ?[*]dxgi.FORMAT,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+        CreateReservedResource2: *const fn (
+            *IDevice10,
+            *const RESOURCE_DESC,
+            BARRIER_LAYOUT,
+            ?*const CLEAR_VALUE,
+            ?*IProtectedResourceSession,
+            UINT32,
+            ?[*]dxgi.FORMAT,
+            *const GUID,
+            ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const PROTECTED_SESSION_STATUS = enum(UINT) {
