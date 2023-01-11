@@ -376,7 +376,11 @@ pub const IVoice = extern struct {
             ) HRESULT {
                 return self.v.voice.SetOutputFilterParameters(self, dst_voice, params, operation_set);
             }
-            pub inline fn GetOutputFilterParameters(self: *T, dst_voice: ?*IVoice, params: *FILTER_PARAMETERS) void {
+            pub inline fn GetOutputFilterParameters(
+                self: *T,
+                dst_voice: ?*IVoice,
+                params: *FILTER_PARAMETERS,
+            ) void {
                 self.v.voice.GetOutputFilterParameters(self, dst_voice, params);
             }
             pub inline fn SetVolume(self: *T, volume: f32) HRESULT {
@@ -444,7 +448,11 @@ pub const ISourceVoice = extern struct {
             pub inline fn Stop(self: *T, flags: UINT32, operation_set: UINT32) HRESULT {
                 return self.v.srcvoice.Stop(self, flags, operation_set);
             }
-            pub inline fn SubmitSourceBuffer(self: *T, buffer: *const BUFFER, wmabuffer: ?*const BUFFER_WMA) HRESULT {
+            pub inline fn SubmitSourceBuffer(
+                self: *T,
+                buffer: *const BUFFER,
+                wmabuffer: ?*const BUFFER_WMA,
+            ) HRESULT {
                 return self.v.srcvoice.SubmitSourceBuffer(self, buffer, wmabuffer);
             }
             pub inline fn FlushSourceBuffers(self: *T) HRESULT {

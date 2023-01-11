@@ -304,7 +304,7 @@ pub const Joystick = struct {
         var count: i32 = undefined;
         const state = glfwGetJoystickAxes(@intCast(i32, self.jid), &count);
         if (count == 0) {
-            return @as([*]const ButtonAction, undefined)[0..0];
+            return @as([*]const f32, undefined)[0..0];
         }
         return state[0..@intCast(usize, count)];
     }
@@ -314,7 +314,7 @@ pub const Joystick = struct {
         var count: i32 = undefined;
         const state = glfwGetJoystickButtons(@intCast(i32, self.jid), &count);
         if (count == 0) {
-            return @as([*]const f32, undefined)[0..0];
+            return @as([*]const ButtonAction, undefined)[0..0];
         }
         return @ptrCast([]const ButtonAction, state[0..@intCast(usize, count)]);
     }
