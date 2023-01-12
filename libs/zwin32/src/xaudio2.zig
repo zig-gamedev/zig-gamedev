@@ -18,39 +18,39 @@ const L = std.unicode.utf8ToUtf16LeStringLiteral;
 // xaudio2redist.h uses tight field packing so we need align each field with `align(1)`
 // in all non-interface structure definitions.
 
-pub const COMMIT_NOW: UINT32 = 0;
-pub const COMMIT_ALL: UINT32 = 0;
-pub const INVALID_OPSET: UINT32 = 0xffff_ffff;
-pub const NO_LOOP_REGION: UINT32 = 0;
-pub const LOOP_INFINITE: UINT32 = 255;
-pub const DEFAULT_CHANNELS: UINT32 = 0;
-pub const DEFAULT_SAMPLERATE: UINT32 = 0;
+pub const COMMIT_NOW = 0;
+pub const COMMIT_ALL = 0;
+pub const INVALID_OPSET = 0xffff_ffff;
+pub const NO_LOOP_REGION = 0;
+pub const LOOP_INFINITE = 255;
+pub const DEFAULT_CHANNELS = 0;
+pub const DEFAULT_SAMPLERATE = 0;
 
-pub const MAX_BUFFER_BYTES: UINT32 = 0x8000_0000;
-pub const MAX_QUEUED_BUFFERS: UINT32 = 64;
-pub const MAX_BUFFERS_SYSTEM: UINT32 = 2;
-pub const MAX_AUDIO_CHANNELS: UINT32 = 64;
-pub const MIN_SAMPLE_RATE: UINT32 = 1000;
-pub const MAX_SAMPLE_RATE: UINT32 = 200000;
-pub const MAX_VOLUME_LEVEL: f32 = 16777216.0;
-pub const MIN_FREQ_RATIO: f32 = 1.0 / 1024.0;
-pub const MAX_FREQ_RATIO: f32 = 1024.0;
-pub const DEFAULT_FREQ_RATIO: f32 = 2.0;
-pub const MAX_FILTER_ONEOVERQ: f32 = 1.5;
-pub const MAX_FILTER_FREQUENCY: f32 = 1.0;
-pub const MAX_LOOP_COUNT: UINT32 = 254;
-pub const MAX_INSTANCES: UINT32 = 8;
+pub const MAX_BUFFER_BYTES = 0x8000_0000;
+pub const MAX_QUEUED_BUFFERS = 64;
+pub const MAX_BUFFERS_SYSTEM = 2;
+pub const MAX_AUDIO_CHANNELS = 64;
+pub const MIN_SAMPLE_RATE = 1000;
+pub const MAX_SAMPLE_RATE = 200000;
+pub const MAX_VOLUME_LEVEL = 16777216.0;
+pub const MIN_FREQ_RATIO = 1.0 / 1024.0;
+pub const MAX_FREQ_RATIO = 1024.0;
+pub const DEFAULT_FREQ_RATIO = 2.0;
+pub const MAX_FILTER_ONEOVERQ = 1.5;
+pub const MAX_FILTER_FREQUENCY = 1.0;
+pub const MAX_LOOP_COUNT = 254;
+pub const MAX_INSTANCES = 8;
 
-pub const DEBUG_ENGINE: UINT32 = 0x0001;
-pub const VOICE_NOPITCH: UINT32 = 0x0002;
-pub const VOICE_NOSRC: UINT32 = 0x0004;
-pub const VOICE_USEFILTER: UINT32 = 0x0008;
-pub const PLAY_TAILS: UINT32 = 0x0020;
-pub const END_OF_STREAM: UINT32 = 0x0040;
-pub const SEND_USEFILTER: UINT32 = 0x0080;
-pub const VOICE_NOSAMPLESPLAYED: UINT32 = 0x0100;
-pub const STOP_ENGINE_WHEN_IDLE: UINT32 = 0x2000;
-pub const NO_VIRTUAL_AUDIO_CLIENT: UINT32 = 0x10000;
+pub const DEBUG_ENGINE = 0x0001;
+pub const VOICE_NOPITCH = 0x0002;
+pub const VOICE_NOSRC = 0x0004;
+pub const VOICE_USEFILTER = 0x0008;
+pub const PLAY_TAILS = 0x0020;
+pub const END_OF_STREAM = 0x0040;
+pub const SEND_USEFILTER = 0x0080;
+pub const VOICE_NOSAMPLESPLAYED = 0x0100;
+pub const STOP_ENGINE_WHEN_IDLE = 0x2000;
+pub const NO_VIRTUAL_AUDIO_CLIENT = 0x10000;
 
 pub const VOICE_DETAILS = extern struct {
     CreationFlags: UINT32 align(1),
