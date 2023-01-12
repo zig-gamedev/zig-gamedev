@@ -1,16 +1,17 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const w = @import("windows.zig");
-const BYTE = w.BYTE;
-const HRESULT = w.HRESULT;
-const WINAPI = w.WINAPI;
-const UINT32 = w.UINT32;
-const BOOL = w.BOOL;
-const FALSE = w.FALSE;
-const WCHAR = w.WCHAR;
-const GUID = w.GUID;
-const ULONG = w.ULONG;
+const w32 = @import("windows.zig");
+const BYTE = w32.BYTE;
+const HRESULT = w32.HRESULT;
+const WINAPI = w32.WINAPI;
+const UINT32 = w32.UINT32;
+const BOOL = w32.BOOL;
+const FALSE = w32.FALSE;
+const WCHAR = w32.WCHAR;
+const GUID = w32.GUID;
+const ULONG = w32.ULONG;
+const IUnknown = w32.IUnknown;
 const wasapi = @import("wasapi.zig");
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
@@ -29,22 +30,22 @@ pub const FLAG_BUFFERCOUNT_MUST_MATCH: UINT32 = 0x00000008;
 pub const FLAG_INPLACE_REQUIRED: UINT32 = 0x00000020;
 pub const FLAG_INPLACE_SUPPORTED: UINT32 = 0x00000010;
 
-pub const REGISTRATION_PROPERTIES = packed struct {
-    clsid: GUID,
-    FriendlyName: [REGISTRATION_STRING_LENGTH]WCHAR,
-    CopyrightInfo: [REGISTRATION_STRING_LENGTH]WCHAR,
-    MajorVersion: UINT32,
-    MinorVersion: UINT32,
-    Flags: UINT32,
-    MinInputBufferCount: UINT32,
-    MaxInputBufferCount: UINT32,
-    MinOutputBufferCount: UINT32,
-    MaxOutputBufferCount: UINT32,
+pub const REGISTRATION_PROPERTIES = extern struct {
+    clsid: GUID align(1),
+    FriendlyName: [REGISTRATION_STRING_LENGTH]WCHAR align(1),
+    CopyrightInfo: [REGISTRATION_STRING_LENGTH]WCHAR align(1),
+    MajorVersion: UINT32 align(1),
+    MinorVersion: UINT32 align(1),
+    Flags: UINT32 align(1),
+    MinInputBufferCount: UINT32 align(1),
+    MaxInputBufferCount: UINT32 align(1),
+    MinOutputBufferCount: UINT32 align(1),
+    MaxOutputBufferCount: UINT32 align(1),
 };
 
-pub const LOCKFORPROCESS_BUFFER_PARAMETERS = packed struct {
-    pFormat: *const WAVEFORMATEX,
-    MaxFrameCount: UINT32,
+pub const LOCKFORPROCESS_BUFFER_PARAMETERS = extern struct {
+    pFormat: *const WAVEFORMATEX align(1),
+    MaxFrameCount: UINT32 align(1),
 };
 
 pub const BUFFER_FLAGS = enum(UINT32) {
@@ -52,65 +53,25 @@ pub const BUFFER_FLAGS = enum(UINT32) {
     VALID,
 };
 
-pub const PROCESS_BUFFER_PARAMETERS = packed struct {
-    pBuffer: *anyopaque,
-    BufferFlags: BUFFER_FLAGS,
-    ValidFrameCount: UINT32,
+pub const PROCESS_BUFFER_PARAMETERS = extern struct {
+    pBuffer: *anyopaque align(1),
+    BufferFlags: BUFFER_FLAGS align(1),
+    ValidFrameCount: UINT32 align(1),
 };
-
-pub fn IXAPOVTable(comptime T: type) type {
-    return extern struct {
-        unknown: w.IUnknown.VTable(T),
-        xapo: extern struct {
-            GetRegistrationProperties: fn (*T, **REGISTRATION_PROPERTIES) callconv(WINAPI) HRESULT,
-            IsInputFormatSupported: fn (
-                *T,
-                *const WAVEFORMATEX,
-                *const WAVEFORMATEX,
-                ?**WAVEFORMATEX,
-            ) callconv(WINAPI) HRESULT,
-            IsOutputFormatSupported: fn (
-                *T,
-                *const WAVEFORMATEX,
-                *const WAVEFORMATEX,
-                ?**WAVEFORMATEX,
-            ) callconv(WINAPI) HRESULT,
-            Initialize: fn (*T, ?*const anyopaque, UINT32) callconv(WINAPI) HRESULT,
-            Reset: fn (*T) callconv(WINAPI) void,
-            LockForProcess: fn (
-                *T,
-                UINT32,
-                ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
-                UINT32,
-                ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
-            ) callconv(WINAPI) HRESULT,
-            UnlockForProcess: fn (*T) callconv(WINAPI) void,
-            Process: fn (
-                *T,
-                UINT32,
-                ?[*]const PROCESS_BUFFER_PARAMETERS,
-                UINT32,
-                ?[*]PROCESS_BUFFER_PARAMETERS,
-                BOOL,
-            ) callconv(WINAPI) void,
-            CalcInputFrames: fn (*T, UINT32) callconv(WINAPI) UINT32,
-            CalcOutputFrames: fn (*T, UINT32) callconv(WINAPI) UINT32,
-        },
-    };
-}
 
 pub const IID_IXAPO = GUID.parse("{A410B984-9839-4819-A0BE-2856AE6B3ADB}");
 pub const IXAPO = extern struct {
-    v: *const IXAPOVTable(Self),
+    v: *const VTable,
 
-    const Self = @This();
-    usingnamespace w.IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn GetRegistrationProperties(self: *T, props: **REGISTRATION_PROPERTIES) HRESULT {
-                return self.v.xapo.GetRegistrationProperties(self, props);
+                return @ptrCast(*const IXAPO.VTable, self.v)
+                    .GetRegistrationProperties(@ptrCast(*IXAPO, self), props);
             }
             pub inline fn IsInputFormatSupported(
                 self: *T,
@@ -118,8 +79,8 @@ pub const IXAPO = extern struct {
                 requested_input_format: *const WAVEFORMATEX,
                 supported_input_format: ?**WAVEFORMATEX,
             ) HRESULT {
-                return self.v.xapo.IsInputFormatSupported(
-                    self,
+                return @ptrCast(*const IXAPO.VTable, self.v).IsInputFormatSupported(
+                    @ptrCast(*IXAPO, self),
                     output_format,
                     requested_input_format,
                     supported_input_format,
@@ -131,18 +92,19 @@ pub const IXAPO = extern struct {
                 requested_output_format: *const WAVEFORMATEX,
                 supported_output_format: ?**WAVEFORMATEX,
             ) HRESULT {
-                return self.v.xapo.IsOutputFormatSupported(
-                    self,
+                return @ptrCast(*const IXAPO.VTable, self.v).IsOutputFormatSupported(
+                    @ptrCast(*IXAPO, self),
                     input_format,
                     requested_output_format,
                     supported_output_format,
                 );
             }
             pub inline fn Initialize(self: *T, data: ?*const anyopaque, data_size: UINT32) HRESULT {
-                return self.v.xapo.Initialize(self, data, data_size);
+                return @ptrCast(*const IXAPO.VTable, self.v)
+                    .Initialize(@ptrCast(*IXAPO, self), data, data_size);
             }
             pub inline fn Reset(self: *T) void {
-                self.v.xapo.Reset(self);
+                @ptrCast(*const IXAPO.VTable, self.v).Reset(@ptrCast(*IXAPO, self));
             }
             pub inline fn LockForProcess(
                 self: *T,
@@ -151,8 +113,8 @@ pub const IXAPO = extern struct {
                 num_output_params: UINT32,
                 output_params: ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
             ) HRESULT {
-                return self.v.xapo.LockForProcess(
-                    self,
+                return @ptrCast(*const IXAPO.VTable, self.v).LockForProcess(
+                    @ptrCast(*IXAPO, self),
                     num_input_params,
                     input_params,
                     num_output_params,
@@ -160,7 +122,7 @@ pub const IXAPO = extern struct {
                 );
             }
             pub inline fn UnlockForProcess(self: *T) void {
-                self.v.xapo.UnlockForProcess(self);
+                @ptrCast(*const IXAPO.VTable, self.v).UnlockForProcess(@ptrCast(*IXAPO, self));
             }
             pub inline fn Process(
                 self: *T,
@@ -170,8 +132,8 @@ pub const IXAPO = extern struct {
                 output_params: ?[*]PROCESS_BUFFER_PARAMETERS,
                 is_enabled: BOOL,
             ) void {
-                return self.v.xapo.Process(
-                    self,
+                return @ptrCast(*const IXAPO.VTable, self.v).Process(
+                    @ptrCast(*IXAPO, self),
                     num_input_params,
                     input_params,
                     num_output_params,
@@ -180,42 +142,80 @@ pub const IXAPO = extern struct {
                 );
             }
             pub inline fn CalcInputFrames(self: *T, num_output_frames: UINT32) UINT32 {
-                return self.v.xapo.CalcInputFrames(self, num_output_frames);
+                return @ptrCast(*const IXAPO.VTable, self.v)
+                    .CalcInputFrames(@ptrCast(*IXAPO, self), num_output_frames);
             }
             pub inline fn CalcOutputFrames(self: *T, num_input_frames: UINT32) UINT32 {
-                return self.v.xapo.CalcOutputFrames(self, num_input_frames);
+                return @ptrCast(*const IXAPO.VTable, self.v)
+                    .CalcOutputFrames(@ptrCast(*IXAPO, self), num_input_frames);
             }
         };
     }
+
+    pub const VTable = extern struct {
+        const T = IXAPO;
+        base: IUnknown.VTable,
+        GetRegistrationProperties: *const fn (*T, **REGISTRATION_PROPERTIES) callconv(WINAPI) HRESULT,
+        IsInputFormatSupported: *const fn (
+            *T,
+            *const WAVEFORMATEX,
+            *const WAVEFORMATEX,
+            ?**WAVEFORMATEX,
+        ) callconv(WINAPI) HRESULT,
+        IsOutputFormatSupported: *const fn (
+            *T,
+            *const WAVEFORMATEX,
+            *const WAVEFORMATEX,
+            ?**WAVEFORMATEX,
+        ) callconv(WINAPI) HRESULT,
+        Initialize: *const fn (*T, ?*const anyopaque, UINT32) callconv(WINAPI) HRESULT,
+        Reset: *const fn (*T) callconv(WINAPI) void,
+        LockForProcess: *const fn (
+            *T,
+            UINT32,
+            ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
+            UINT32,
+            ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
+        ) callconv(WINAPI) HRESULT,
+        UnlockForProcess: *const fn (*T) callconv(WINAPI) void,
+        Process: *const fn (
+            *T,
+            UINT32,
+            ?[*]const PROCESS_BUFFER_PARAMETERS,
+            UINT32,
+            ?[*]PROCESS_BUFFER_PARAMETERS,
+            BOOL,
+        ) callconv(WINAPI) void,
+        CalcInputFrames: *const fn (*T, UINT32) callconv(WINAPI) UINT32,
+        CalcOutputFrames: *const fn (*T, UINT32) callconv(WINAPI) UINT32,
+    };
 };
 
-pub fn IXAPOParametersVTable(comptime T: type) type {
-    return extern struct {
-        unknown: w.IUnknown.VTable(T),
-        params: extern struct {
-            SetParameters: fn (*T, *const anyopaque, UINT32) callconv(WINAPI) void,
-            GetParameters: fn (*T, *anyopaque, UINT32) callconv(WINAPI) void,
-        },
-    };
-}
-
 pub const IXAPOParameters = extern struct {
-    v: *const IXAPOParametersVTable(Self),
+    v: *const VTable,
 
-    const Self = @This();
-    usingnamespace w.IUnknown.Methods(Self);
-    usingnamespace Methods(Self);
+    pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
             pub inline fn SetParameters(self: *T, params: *const anyopaque, size: UINT32) void {
-                self.v.params.SetParameters(self, params, size);
+                @ptrCast(*const IXAPOParameters.VTable, self.v)
+                    .SetParameters(@ptrCast(*IXAPOParameters, self), params, size);
             }
             pub inline fn GetParameters(self: *T, params: *anyopaque, size: UINT32) void {
-                self.v.params.GetParameters(self, params, size);
+                @ptrCast(*const IXAPOParameters.VTable, self.v)
+                    .GetParameters(@ptrCast(*IXAPOParameters, self), params, size);
             }
         };
     }
+
+    const VTable = extern struct {
+        base: IUnknown.VTable,
+        SetParameters: *const fn (*IXAPOParameters, *const anyopaque, UINT32) callconv(WINAPI) void,
+        GetParameters: *const fn (*IXAPOParameters, *anyopaque, UINT32) callconv(WINAPI) void,
+    };
 };
 
 pub const E_FORMAT_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x88970001));

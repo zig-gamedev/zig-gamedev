@@ -9,40 +9,40 @@ const BOOL = windows.BOOL;
 const FALSE = windows.FALSE;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
-pub const VOLUMEMETER_LEVELS = packed struct {
-    pPeakLevels: ?[*]f32,
-    pRMSLevels: ?[*]f32,
-    ChannelCount: UINT32,
+pub const VOLUMEMETER_LEVELS = extern struct {
+    pPeakLevels: ?[*]f32 align(1),
+    pRMSLevels: ?[*]f32 align(1),
+    ChannelCount: UINT32 align(1),
 };
 
 pub const REVERB_MIN_FRAMERATE: UINT32 = 20000;
 pub const REVERB_MAX_FRAMERATE: UINT32 = 48000;
 
-pub const REVERB_PARAMETERS = packed struct {
-    WetDryMix: f32,
-    ReflectionsDelay: UINT32,
-    ReverbDelay: BYTE,
-    RearDelay: BYTE,
-    SideDelay: BYTE,
-    PositionLeft: BYTE,
-    PositionRight: BYTE,
-    PositionMatrixLeft: BYTE,
-    PositionMatrixRight: BYTE,
-    EarlyDiffusion: BYTE,
-    LateDiffusion: BYTE,
-    LowEQGain: BYTE,
-    LowEQCutoff: BYTE,
-    HighEQGain: BYTE,
-    HighEQCutoff: BYTE,
-    RoomFilterFreq: f32,
-    RoomFilterMain: f32,
-    RoomFilterHF: f32,
-    ReflectionsGain: f32,
-    ReverbGain: f32,
-    DecayTime: f32,
-    Density: f32,
-    RoomSize: f32,
-    DisableLateField: BOOL,
+pub const REVERB_PARAMETERS = extern struct {
+    WetDryMix: f32 align(1),
+    ReflectionsDelay: UINT32 align(1),
+    ReverbDelay: BYTE align(1),
+    RearDelay: BYTE align(1),
+    SideDelay: BYTE align(1),
+    PositionLeft: BYTE align(1),
+    PositionRight: BYTE align(1),
+    PositionMatrixLeft: BYTE align(1),
+    PositionMatrixRight: BYTE align(1),
+    EarlyDiffusion: BYTE align(1),
+    LateDiffusion: BYTE align(1),
+    LowEQGain: BYTE align(1),
+    LowEQCutoff: BYTE align(1),
+    HighEQGain: BYTE align(1),
+    HighEQCutoff: BYTE align(1),
+    RoomFilterFreq: f32 align(1),
+    RoomFilterMain: f32 align(1),
+    RoomFilterHF: f32 align(1),
+    ReflectionsGain: f32 align(1),
+    ReverbGain: f32 align(1),
+    DecayTime: f32 align(1),
+    Density: f32 align(1),
+    RoomSize: f32 align(1),
+    DisableLateField: BOOL align(1),
 
     pub fn initDefault() REVERB_PARAMETERS {
         return .{
@@ -145,7 +145,7 @@ pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
         xaudio2_dll = (std.DynLib.openZ("d3d12/xaudio2_9redist.dll") catch unreachable).dll;
     }
 
-    var CreateAudioVolumeMeter: fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
+    var CreateAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
     CreateAudioVolumeMeter = @ptrCast(
         @TypeOf(CreateAudioVolumeMeter),
         windows.kernel32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?,
@@ -160,7 +160,7 @@ pub fn createReverb(apo: *?*IUnknown, _: UINT32) HRESULT {
         xaudio2_dll = (std.DynLib.openZ("d3d12/xaudio2_9redist.dll") catch unreachable).dll;
     }
 
-    var CreateAudioReverb: fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
+    var CreateAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
     CreateAudioReverb = @ptrCast(
         @TypeOf(CreateAudioReverb),
         windows.kernel32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?,

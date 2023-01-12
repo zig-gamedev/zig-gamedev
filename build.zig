@@ -65,6 +65,7 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, bindless.build(b, options), "bindless");
         installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
         installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
+        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
 
         comptime var intro_index: u32 = 0;
         inline while (intro_index < 7) : (intro_index += 1) {
@@ -165,6 +166,7 @@ const bindless = @import("samples/bindless/build.zig");
 const simple_raytracer = @import("samples/simple_raytracer/build.zig");
 const intro = @import("samples/intro/build.zig");
 const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+const audio_experiments = @import("samples/audio_experiments/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,

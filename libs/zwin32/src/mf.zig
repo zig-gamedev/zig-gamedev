@@ -325,15 +325,6 @@ pub const IMediaBuffer = extern struct {
 
 pub const MediaEventType = DWORD;
 
-pub fn ISourceReaderCallbackVTable(comptime T: type) type {
-    return extern struct {
-        base: IUnknown.VTable(T),
-        OnReadSample: *const fn (*T, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
-        OnFlush: *const fn (*T, DWORD) callconv(WINAPI) HRESULT,
-        OnEvent: *const fn (*T, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
-    };
-}
-
 pub const IID_ISourceReaderCallback = GUID.parse("{deec8d99-fa1d-4d82-84c2-2c8969944867}");
 pub const ISourceReaderCallback = extern struct {
     v: *const VTable,
@@ -372,7 +363,12 @@ pub const ISourceReaderCallback = extern struct {
         };
     }
 
-    pub const VTable = ISourceReaderCallbackVTable(@This());
+    pub const VTable = extern struct {
+        base: IUnknown.VTable,
+        OnReadSample: *const fn (*ISourceReaderCallback, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
+        OnFlush: *const fn (*ISourceReaderCallback, DWORD) callconv(WINAPI) HRESULT,
+        OnEvent: *const fn (*ISourceReaderCallback, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
+    };
 };
 
 pub const LOW_LATENCY = GUID.parse("{9C27891A-ED7A-40e1-88E8-B22727A024EE}"); // {UINT32 (BOOL)}
