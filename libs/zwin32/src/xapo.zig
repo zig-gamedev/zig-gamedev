@@ -15,20 +15,23 @@ const IUnknown = w32.IUnknown;
 const wasapi = @import("wasapi.zig");
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
-pub const MIN_CHANNELS: UINT32 = 1;
-pub const MAX_CHANNELS: UINT32 = 64;
+pub const MIN_CHANNELS = 1;
+pub const MAX_CHANNELS = 64;
 
-pub const MIN_FRAMERATE: UINT32 = 1000;
-pub const MAX_FRAMERATE: UINT32 = 200000;
+pub const MIN_FRAMERATE = 1000;
+pub const MAX_FRAMERATE = 200000;
 
-pub const REGISTRATION_STRING_LENGTH: UINT32 = 256;
+pub const REGISTRATION_STRING_LENGTH = 256;
 
-pub const FLAG_CHANNELS_MUST_MATCH: UINT32 = 0x00000001;
-pub const FLAG_FRAMERATE_MUST_MATCH: UINT32 = 0x00000002;
-pub const FLAG_BITSPERSAMPLE_MUST_MATCH: UINT32 = 0x00000004;
-pub const FLAG_BUFFERCOUNT_MUST_MATCH: UINT32 = 0x00000008;
-pub const FLAG_INPLACE_REQUIRED: UINT32 = 0x00000020;
-pub const FLAG_INPLACE_SUPPORTED: UINT32 = 0x00000010;
+pub const FLAGS = packed struct(UINT32) {
+    CHANNELS_MUST_MATCH: bool = false,
+    FRAMERATE_MUST_MATCH: bool = false,
+    BITSPERSAMPLE_MUST_MATCH: bool = false,
+    BUFFERCOUNT_MUST_MATCH: bool = false,
+    INPLACE_SUPPORTED: bool = false,
+    INPLACE_REQUIRED: bool = false,
+    __unused: u26 = 0,
+};
 
 pub const REGISTRATION_PROPERTIES = extern struct {
     clsid: GUID align(1),
@@ -36,7 +39,7 @@ pub const REGISTRATION_PROPERTIES = extern struct {
     CopyrightInfo: [REGISTRATION_STRING_LENGTH]WCHAR align(1),
     MajorVersion: UINT32 align(1),
     MinorVersion: UINT32 align(1),
-    Flags: UINT32 align(1),
+    Flags: FLAGS align(1),
     MinInputBufferCount: UINT32 align(1),
     MaxInputBufferCount: UINT32 align(1),
     MinOutputBufferCount: UINT32 align(1),

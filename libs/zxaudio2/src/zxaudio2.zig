@@ -674,12 +674,14 @@ const SimpleAudioProcessor = extern struct {
         .CopyrightInfo = [_]w32.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
         .MajorVersion = 1,
         .MinorVersion = 0,
-        .Flags = xapo.FLAG_CHANNELS_MUST_MATCH |
-            xapo.FLAG_FRAMERATE_MUST_MATCH |
-            xapo.FLAG_BITSPERSAMPLE_MUST_MATCH |
-            xapo.FLAG_BUFFERCOUNT_MUST_MATCH |
-            xapo.FLAG_INPLACE_SUPPORTED |
-            xapo.FLAG_INPLACE_REQUIRED,
+        .Flags = .{
+            .CHANNELS_MUST_MATCH = true,
+            .FRAMERATE_MUST_MATCH = true,
+            .BITSPERSAMPLE_MUST_MATCH = true,
+            .BUFFERCOUNT_MUST_MATCH = true,
+            .INPLACE_SUPPORTED = true,
+            .INPLACE_REQUIRED = true,
+        },
         .MinInputBufferCount = 1,
         .MaxInputBufferCount = 1,
         .MinOutputBufferCount = 1,
