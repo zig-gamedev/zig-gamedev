@@ -16,7 +16,7 @@ pub const RESOURCE_FLAGS = extern struct {
 };
 
 pub const IDevice = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -33,7 +33,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource11: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateWrappedResource(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateWrappedResource(
                     @ptrCast(*IDevice, self),
                     resource12,
                     flags11,
@@ -48,7 +48,7 @@ pub const IDevice = extern struct {
                 resources: [*]const *d3d11.IResource,
                 num_resources: UINT,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .ReleaseWrappedResources(@ptrCast(*IDevice, self), resources, num_resources);
             }
             pub inline fn AcquireWrappedResources(
@@ -56,7 +56,7 @@ pub const IDevice = extern struct {
                 resources: [*]const *d3d11.IResource,
                 num_resources: UINT,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .AcquireWrappedResources(@ptrCast(*IDevice, self), resources, num_resources);
             }
         };
@@ -79,7 +79,7 @@ pub const IDevice = extern struct {
 };
 
 pub const IDevice1 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -96,7 +96,7 @@ pub const IDevice1 = extern struct {
 };
 
 pub const IDevice2 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 

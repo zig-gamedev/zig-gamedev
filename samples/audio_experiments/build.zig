@@ -36,20 +36,23 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .enable_debug_layer = options.zd3d12_enable_debug_layer,
         .enable_gbv = options.zd3d12_enable_gbv,
     });
+    const zxaudio2_options = zxaudio2.BuildOptionsStep.init(b, .{
+        .enable_debug_layer = options.zd3d12_enable_debug_layer,
+    });
 
     const zd3d12_pkg = zd3d12.getPkg(&.{ zwin32.pkg, zd3d12_options.getPkg() });
+    const zxaudio2_pkg = zxaudio2.getPkg(&.{ zwin32.pkg, zxaudio2_options.getPkg() });
     const common_pkg = common.getPkg(&.{ zd3d12_pkg, zwin32.pkg });
-    const zxaudio2_pkg = zxaudio2.getPkg(&.{zwin32.pkg});
 
-    exe.addPackage(zd3d12_pkg);
-    exe.addPackage(common_pkg);
     exe.addPackage(zwin32.pkg);
-    exe.addPackage(zxaudio2_pkg);
     exe.addPackage(zmath.pkg);
+    exe.addPackage(zd3d12_pkg);
+    exe.addPackage(zxaudio2_pkg);
+    exe.addPackage(common_pkg);
 
     zd3d12.link(exe, zd3d12_options);
+    zxaudio2.link(exe, zxaudio2_options);
     common.link(exe);
-    zxaudio2.link(exe, false); // TODO: Add option
 
     return exe;
 }

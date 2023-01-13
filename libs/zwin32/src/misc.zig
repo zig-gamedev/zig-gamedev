@@ -78,21 +78,21 @@ pub inline fn HIWORD(dword: DWORD) WORD {
 
 pub const IID_IUnknown = GUID.parse("{00000000-0000-0000-C000-000000000046}");
 pub const IUnknown = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
-                return @ptrCast(*const IUnknown.VTable, self.v)
+                return @ptrCast(*const IUnknown.VTable, self.__v)
                     .QueryInterface(@ptrCast(*IUnknown, self), guid, outobj);
             }
             pub inline fn AddRef(self: *T) ULONG {
-                return @ptrCast(*const IUnknown.VTable, self.v).AddRef(@ptrCast(*IUnknown, self));
+                return @ptrCast(*const IUnknown.VTable, self.__v).AddRef(@ptrCast(*IUnknown, self));
             }
             pub inline fn Release(self: *T) ULONG {
-                return @ptrCast(*const IUnknown.VTable, self.v).Release(@ptrCast(*IUnknown, self));
+                return @ptrCast(*const IUnknown.VTable, self.__v).Release(@ptrCast(*IUnknown, self));
             }
         };
     }

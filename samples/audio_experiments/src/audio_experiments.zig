@@ -139,7 +139,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         actx.device,
         L(content_dir ++ "Broke For Free - Night Owl.mp3"),
     );
-    hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
+    hrPanicOnFail(music.voice.Start(.{}, xaudio2.COMMIT_NOW));
 
     {
         var reverb_apo: ?*w32.IUnknown = null;
@@ -316,9 +316,9 @@ fn update(demo: *DemoState) void {
     )) {
         demo.music_is_playing = !demo.music_is_playing;
         if (demo.music_is_playing) {
-            hrPanicOnFail(demo.music.voice.Start(0, xaudio2.COMMIT_NOW));
+            hrPanicOnFail(demo.music.voice.Start(.{}, xaudio2.COMMIT_NOW));
         } else {
-            hrPanicOnFail(demo.music.voice.Stop(0, xaudio2.COMMIT_NOW));
+            hrPanicOnFail(demo.music.voice.Stop(.{}, xaudio2.COMMIT_NOW));
         }
     }
     c.igSameLine(0.0, -1.0);

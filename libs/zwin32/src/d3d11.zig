@@ -501,7 +501,7 @@ pub const SAMPLER_DESC = extern struct {
 
 pub const IID_IDeviceChild = GUID.parse("{1841e5c8-16b0-489b-bcc8-44cfb0d5deae}");
 pub const IDeviceChild = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -522,7 +522,7 @@ pub const IDeviceChild = extern struct {
 
 pub const IID_IClassLinkage = GUID.parse("{ddf57cba-9543-46e4-a12b-f207a0fe7fed}");
 pub const IClassLinkage = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -541,7 +541,7 @@ pub const IClassLinkage = extern struct {
 
 pub const IID_IClassInstance = GUID.parse("{a6cd7faa-b0b7-4a2f-9436-8662a65797cb}");
 pub const IClassInstance = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -562,7 +562,7 @@ pub const IClassInstance = extern struct {
 
 pub const IID_IResource = GUID.parse("{dc8e63f3-d12b-4952-b47b-5e45026a862d}");
 pub const IResource = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -582,7 +582,7 @@ pub const IResource = extern struct {
 
 pub const IID_IDeviceContext = GUID.parse("{c0bfa96c-e089-44fb-8eaf-26f8796190da}");
 pub const IDeviceContext = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -596,7 +596,7 @@ pub const IDeviceContext = extern struct {
                 NumBuffers: UINT,
                 ppConstantBuffers: ?[*]const *IBuffer,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).VSSetConstantBuffers(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).VSSetConstantBuffers(
                     @ptrCast(*IDeviceContext, self),
                     StartSlot,
                     NumBuffers,
@@ -609,7 +609,7 @@ pub const IDeviceContext = extern struct {
                 NumViews: UINT,
                 ppShaderResourceViews: ?[*]const *IShaderResourceView,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).PSSetShaderResources(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).PSSetShaderResources(
                     @ptrCast(*IDeviceContext, self),
                     StartSlot,
                     NumViews,
@@ -622,7 +622,7 @@ pub const IDeviceContext = extern struct {
                 ppClassInstance: ?[*]const *IClassInstance,
                 NumClassInstances: UINT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).PSSetShader(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).PSSetShader(
                     @ptrCast(*IDeviceContext, self),
                     pPixelShader,
                     ppClassInstance,
@@ -635,7 +635,7 @@ pub const IDeviceContext = extern struct {
                 NumSamplers: UINT,
                 ppSamplers: ?[*]const *ISamplerState,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).PSSetSamplers(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).PSSetSamplers(
                     @ptrCast(*IDeviceContext, self),
                     StartSlot,
                     NumSamplers,
@@ -648,7 +648,7 @@ pub const IDeviceContext = extern struct {
                 ppClassInstance: ?[*]const *IClassInstance,
                 NumClassInstances: UINT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).VSSetShader(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).VSSetShader(
                     @ptrCast(*IDeviceContext, self),
                     pVertexShader,
                     ppClassInstance,
@@ -660,7 +660,7 @@ pub const IDeviceContext = extern struct {
                 VertexCount: UINT,
                 StartVertexLocation: UINT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .Draw(@ptrCast(*IDeviceContext, self), VertexCount, StartVertexLocation);
             }
             pub inline fn Map(
@@ -671,7 +671,7 @@ pub const IDeviceContext = extern struct {
                 MapFlags: MAP_FLAG,
                 pMappedResource: ?*MAPPED_SUBRESOURCE,
             ) HRESULT {
-                return @ptrCast(*const IDeviceContext.VTable, self.v).Map(
+                return @ptrCast(*const IDeviceContext.VTable, self.__v).Map(
                     @ptrCast(*IDeviceContext, self),
                     pResource,
                     Subresource,
@@ -681,7 +681,7 @@ pub const IDeviceContext = extern struct {
                 );
             }
             pub inline fn Unmap(self: *T, pResource: *IResource, Subresource: UINT) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .Unmap(@ptrCast(*IDeviceContext, self), pResource, Subresource);
             }
             pub inline fn PSSetConstantBuffers(
@@ -690,7 +690,7 @@ pub const IDeviceContext = extern struct {
                 NumBuffers: UINT,
                 ppConstantBuffers: ?[*]const *IBuffer,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).PSSetConstantBuffers(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).PSSetConstantBuffers(
                     @ptrCast(*IDeviceContext, self),
                     StartSlot,
                     NumBuffers,
@@ -698,7 +698,7 @@ pub const IDeviceContext = extern struct {
                 );
             }
             pub inline fn IASetInputLayout(self: *T, pInputLayout: ?*IInputLayout) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .IASetInputLayout(@ptrCast(*IDeviceContext, self), pInputLayout);
             }
             pub inline fn IASetVertexBuffers(
@@ -709,7 +709,7 @@ pub const IDeviceContext = extern struct {
                 pStrides: ?[*]const UINT,
                 pOffsets: ?[*]const UINT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).IASetVertexBuffers(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).IASetVertexBuffers(
                     @ptrCast(*IDeviceContext, self),
                     StartSlot,
                     NumBuffers,
@@ -719,7 +719,7 @@ pub const IDeviceContext = extern struct {
                 );
             }
             pub inline fn IASetPrimitiveTopology(self: *T, Topology: PRIMITIVE_TOPOLOGY) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .IASetPrimitiveTopology(@ptrCast(*IDeviceContext, self), Topology);
             }
             pub inline fn VSSetShaderResources(
@@ -728,7 +728,7 @@ pub const IDeviceContext = extern struct {
                 NumViews: UINT,
                 ppShaderResourceViews: ?[*]const *IShaderResourceView,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).VSSetShaderResources(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).VSSetShaderResources(
                     @ptrCast(*IDeviceContext, self),
                     StartSlot,
                     NumViews,
@@ -741,7 +741,7 @@ pub const IDeviceContext = extern struct {
                 ppRenderTargetViews: ?[*]const IRenderTargetView,
                 pDepthStencilView: ?*IDepthStencilView,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).OMSetRenderTargets(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).OMSetRenderTargets(
                     @ptrCast(*IDeviceContext, self),
                     NumViews,
                     ppRenderTargetViews,
@@ -754,7 +754,7 @@ pub const IDeviceContext = extern struct {
                 BlendFactor: ?*const [4]FLOAT,
                 SampleMask: UINT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).OMSetBlendState(
+                @ptrCast(*const IDeviceContext.VTable, self.__v).OMSetBlendState(
                     @ptrCast(*IDeviceContext, self),
                     pBlendState,
                     BlendFactor,
@@ -762,7 +762,7 @@ pub const IDeviceContext = extern struct {
                 );
             }
             pub inline fn RSSetState(self: *T, pRasterizerState: ?*IRasterizerState) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .RSSetState(@ptrCast(*IDeviceContext, self), pRasterizerState);
             }
             pub inline fn RSSetViewports(
@@ -770,11 +770,11 @@ pub const IDeviceContext = extern struct {
                 NumViewports: UINT,
                 pViewports: [*]const VIEWPORT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .RSSetViewports(@ptrCast(*IDeviceContext, self), NumViewports, pViewports);
             }
             pub inline fn RSSetScissorRects(self: *T, NumRects: UINT, pRects: ?[*]const RECT) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .RSSetScissorRects(@ptrCast(*IDeviceContext, self), NumRects, pRects);
             }
             pub inline fn ClearRenderTargetView(
@@ -782,11 +782,11 @@ pub const IDeviceContext = extern struct {
                 pRenderTargetView: *IRenderTargetView,
                 ColorRGBA: *const [4]FLOAT,
             ) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v)
+                @ptrCast(*const IDeviceContext.VTable, self.__v)
                     .ClearRenderTargetView(@ptrCast(*IDeviceContext, self), pRenderTargetView, ColorRGBA);
             }
             pub inline fn Flush(self: *T) void {
-                @ptrCast(*const IDeviceContext.VTable, self.v).Flush(@ptrCast(*IDeviceContext, self));
+                @ptrCast(*const IDeviceContext.VTable, self.__v).Flush(@ptrCast(*IDeviceContext, self));
             }
         };
     }
@@ -966,7 +966,7 @@ pub const IDeviceContext = extern struct {
 
 pub const IID_IDevice = GUID.parse("{db6f6ddb-ac77-4e88-8253-819df9bbf140}");
 pub const IDevice = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -980,7 +980,7 @@ pub const IDevice = extern struct {
                 pInitialData: ?*const SUBRESOURCE_DATA,
                 ppBuffer: *?*IBuffer,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateBuffer(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateBuffer(
                     @ptrCast(*IDevice, self),
                     pDesc,
                     pInitialData,
@@ -993,7 +993,7 @@ pub const IDevice = extern struct {
                 pInitialData: ?*const SUBRESOURCE_DATA,
                 ppTexture2D: ?*?*ITexture2D,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateTexture2D(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateTexture2D(
                     @ptrCast(*IDevice, self),
                     pDesc,
                     pInitialData,
@@ -1006,7 +1006,7 @@ pub const IDevice = extern struct {
                 pDesc: ?*const SHADER_RESOURCE_VIEW_DESC,
                 ppSRView: ?*?*IShaderResourceView,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateShaderResourceView(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateShaderResourceView(
                     @ptrCast(*IDevice, self),
                     pResource,
                     pDesc,
@@ -1019,7 +1019,7 @@ pub const IDevice = extern struct {
                 pDesc: ?*const RENDER_TARGET_VIEW_DESC,
                 ppRTView: ?*?*IRenderTargetView,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateRenderTargetView(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateRenderTargetView(
                     @ptrCast(*IDevice, self),
                     pResource,
                     pDesc,
@@ -1034,7 +1034,7 @@ pub const IDevice = extern struct {
                 BytecodeLength: SIZE_T,
                 ppInputLayout: *?*IInputLayout,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateInputLayout(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateInputLayout(
                     @ptrCast(*IDevice, self),
                     pInputElementDescs,
                     NumElements,
@@ -1050,7 +1050,7 @@ pub const IDevice = extern struct {
                 pClassLinkage: ?*IClassLinkage,
                 ppVertexShader: ?*?*IVertexShader,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateVertexShader(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateVertexShader(
                     @ptrCast(*IDevice, self),
                     pShaderBytecode,
                     BytecodeLength,
@@ -1065,7 +1065,7 @@ pub const IDevice = extern struct {
                 pClassLinkage: ?*IClassLinkage,
                 ppPixelShader: ?*?*IPixelShader,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreatePixelShader(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreatePixelShader(
                     @ptrCast(*IDevice, self),
                     pShaderBytecode,
                     BytecodeLength,
@@ -1078,7 +1078,7 @@ pub const IDevice = extern struct {
                 pBlendStateDesc: *const BLEND_DESC,
                 ppBlendState: ?*?*IBlendState,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateBlendState(@ptrCast(*IDevice, self), pBlendStateDesc, ppBlendState);
             }
             pub inline fn CreateRasterizerState(
@@ -1086,7 +1086,7 @@ pub const IDevice = extern struct {
                 pRasterizerDesc: *const RASTERIZER_DESC,
                 ppRasterizerState: ?*?*IRasterizerState,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateRasterizerState(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateRasterizerState(
                     @ptrCast(*IDevice, self),
                     pRasterizerDesc,
                     ppRasterizerState,
@@ -1097,7 +1097,7 @@ pub const IDevice = extern struct {
                 pSamplerDesc: *const SAMPLER_DESC,
                 ppSamplerState: ?*?*ISamplerState,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateSamplerState(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateSamplerState(
                     @ptrCast(*IDevice, self),
                     pSamplerDesc,
                     ppSamplerState,
@@ -1205,7 +1205,7 @@ pub const IDevice = extern struct {
 
 pub const IID_IView = GUID.parse("{839d1216-bb2e-412b-b7f4-a9dbebe08ed1}");
 pub const IView = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1223,7 +1223,7 @@ pub const IView = extern struct {
 
 pub const IID_IRenderTargetView = GUID.parse("{dfdba067-0b8d-4865-875b-d7b4516cc164}");
 pub const IRenderTargetView = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1241,7 +1241,7 @@ pub const IRenderTargetView = extern struct {
 
 pub const IID_IDepthStencilView = GUID.parse("{9fdac92a-1876-48c3-afad-25b94f84a9b6}");
 pub const IDepthStencilView = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1259,7 +1259,7 @@ pub const IDepthStencilView = extern struct {
 
 pub const IID_IShaderResourceView = GUID.parse("{b0e06fe0-8192-4e1a-b1ca-36d7414710b}");
 pub const IShaderResourceView = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1277,7 +1277,7 @@ pub const IShaderResourceView = extern struct {
 
 pub const IID_IVertexShader = GUID("{3b301d64-d678-4289-8897-22f8928b72f3}");
 pub const IVertexShader = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1295,7 +1295,7 @@ pub const IVertexShader = extern struct {
 
 pub const IID_IPixelShader = GUID("{ea82e40d-51dc-4f33-93d4-db7c9125ae8c}");
 pub const IPixelShader = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1313,7 +1313,7 @@ pub const IPixelShader = extern struct {
 
 pub const IID_IInputLayout = GUID.parse("{e4819ddc-4cf0-4025-bd26-5de82a3e07b7}");
 pub const IInputLayout = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1331,7 +1331,7 @@ pub const IInputLayout = extern struct {
 
 pub const IID_IRasterizerState = GUID.parse("{9bb4ab81-ab1a-4d8f-b506-fc04200b6ee7}");
 pub const IRasterizerState = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1349,7 +1349,7 @@ pub const IRasterizerState = extern struct {
 
 pub const IID_BlendState = GUID.parse("{75b68faa-347d-4159-8f45-a0640f01cd9a}");
 pub const IBlendState = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1367,7 +1367,7 @@ pub const IBlendState = extern struct {
 
 pub const IID_SamplerState = GUID.parse("{da6fea51-564c-4487-9810-f0d0f9b4e3a5}");
 pub const ISamplerState = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1385,7 +1385,7 @@ pub const ISamplerState = extern struct {
 
 pub const IID_IBuffer = GUID.parse("{48570b85-d1ee-4fcd-a250-eb350722b037}");
 pub const IBuffer = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1403,7 +1403,7 @@ pub const IBuffer = extern struct {
 
 pub const IID_ITexture2D = GUID.parse("{6f15aaf2-d208-4e89-9ab4-489535d34f9c}");
 pub const ITexture2D = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 

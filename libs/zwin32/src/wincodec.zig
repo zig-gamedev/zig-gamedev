@@ -40,7 +40,7 @@ pub const BitmapPaletteType = enum(UINT) {
 };
 
 pub const IPalette = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -66,7 +66,7 @@ pub const IPalette = extern struct {
 };
 
 pub const IBitmapDecoder = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -75,7 +75,7 @@ pub const IBitmapDecoder = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetFrame(self: *T, index: UINT, frame: ?*?*IBitmapFrameDecode) HRESULT {
-                return @ptrCast(*const IBitmapDecoder.VTable, self.v)
+                return @ptrCast(*const IBitmapDecoder.VTable, self.__v)
                     .GetFrame(@ptrCast(*IBitmapDecoder, self), index, frame);
             }
         };
@@ -98,7 +98,7 @@ pub const IBitmapDecoder = extern struct {
 };
 
 pub const IBitmapSource = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -107,11 +107,11 @@ pub const IBitmapSource = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetSize(self: *T, width: *UINT, height: *UINT) HRESULT {
-                return @ptrCast(*const IBitmapSource.VTable, self.v)
+                return @ptrCast(*const IBitmapSource.VTable, self.__v)
                     .GetSize(@ptrCast(*IBitmapSource, self), width, height);
             }
             pub inline fn GetPixelFormat(self: *T, guid: *PixelFormatGUID) HRESULT {
-                return @ptrCast(*const IBitmapSource.VTable, self.v)
+                return @ptrCast(*const IBitmapSource.VTable, self.__v)
                     .GetPixelFormat(@ptrCast(*IBitmapSource, self), guid);
             }
             pub inline fn CopyPixels(
@@ -121,7 +121,7 @@ pub const IBitmapSource = extern struct {
                 size: UINT,
                 buffer: [*]BYTE,
             ) HRESULT {
-                return @ptrCast(*const IBitmapSource.VTable, self.v)
+                return @ptrCast(*const IBitmapSource.VTable, self.__v)
                     .CopyPixels(@ptrCast(*IBitmapSource, self), rect, stride, size, buffer);
             }
         };
@@ -138,7 +138,7 @@ pub const IBitmapSource = extern struct {
 };
 
 pub const IBitmapFrameDecode = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -157,7 +157,7 @@ pub const IBitmapFrameDecode = extern struct {
 };
 
 pub const IBitmap = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -187,7 +187,7 @@ pub const BitmapDitherType = enum(UINT) {
 };
 
 pub const IFormatConverter = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -204,7 +204,7 @@ pub const IFormatConverter = extern struct {
                 alpha_threshold_percent: f64,
                 palette_translate: BitmapPaletteType,
             ) HRESULT {
-                return @ptrCast(*const IFormatConverter.VTable, self.v).Initialize(
+                return @ptrCast(*const IFormatConverter.VTable, self.__v).Initialize(
                     @ptrCast(*IFormatConverter, self),
                     source,
                     dest_format,
@@ -233,7 +233,7 @@ pub const IFormatConverter = extern struct {
 };
 
 pub const IImagingFactory = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -249,7 +249,7 @@ pub const IImagingFactory = extern struct {
                 metadata: DecodeOptions,
                 decoder: ?*?*IBitmapDecoder,
             ) HRESULT {
-                return @ptrCast(*const IImagingFactory.VTable, self.v).CreateDecoderFromFilename(
+                return @ptrCast(*const IImagingFactory.VTable, self.__v).CreateDecoderFromFilename(
                     @ptrCast(*IImagingFactory, self),
                     filename,
                     vendor,
@@ -259,7 +259,7 @@ pub const IImagingFactory = extern struct {
                 );
             }
             pub inline fn CreateFormatConverter(self: *T, converter: ?*?*IFormatConverter) HRESULT {
-                return @ptrCast(*const IImagingFactory.VTable, self.v)
+                return @ptrCast(*const IImagingFactory.VTable, self.__v)
                     .CreateFormatConverter(@ptrCast(*IImagingFactory, self), converter);
             }
         };

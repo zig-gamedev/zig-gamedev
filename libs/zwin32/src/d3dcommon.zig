@@ -86,7 +86,7 @@ pub const INCLUDE_TYPE = enum(UINT) {
 
 pub const IID_IBlob = GUID("{8BA5FB08-5195-40e2-AC58-0D989C3A0102}");
 pub const IBlob = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -95,10 +95,10 @@ pub const IBlob = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetBufferPointer(self: *T) *anyopaque {
-                return @ptrCast(*const IBlob.VTable, self.v).GetBufferPointer(@ptrCast(*IBlob, self));
+                return @ptrCast(*const IBlob.VTable, self.__v).GetBufferPointer(@ptrCast(*IBlob, self));
             }
             pub inline fn GetBufferSize(self: *T) SIZE_T {
-                return @ptrCast(*const IBlob.VTable, self.v).GetBufferSize(@ptrCast(*IBlob, self));
+                return @ptrCast(*const IBlob.VTable, self.__v).GetBufferSize(@ptrCast(*IBlob, self));
             }
         };
     }
@@ -111,7 +111,7 @@ pub const IBlob = extern struct {
 };
 
 pub const IInclude = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub const VTable = extern struct {
         Open: *const fn (*IInclude, INCLUDE_TYPE, LPCSTR, *anyopaque, **anyopaque, *UINT) callconv(WINAPI) void,

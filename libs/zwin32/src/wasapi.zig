@@ -28,7 +28,7 @@ pub const ERole = enum(UINT) {
 };
 
 pub const IMMDevice = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -43,7 +43,7 @@ pub const IMMDevice = extern struct {
                 params: ?*PROPVARIANT,
                 iface: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IMMDevice.VTable, self.v)
+                return @ptrCast(*const IMMDevice.VTable, self.__v)
                     .Activate(@ptrCast(*IMMDevice, self), guid, clsctx, params, iface);
             }
         };
@@ -65,7 +65,7 @@ pub const IMMDevice = extern struct {
 };
 
 pub const IMMDeviceEnumerator = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -79,7 +79,7 @@ pub const IMMDeviceEnumerator = extern struct {
                 role: ERole,
                 endpoint: *?*IMMDevice,
             ) HRESULT {
-                return @ptrCast(*const IMMDeviceEnumerator.VTable, self.v)
+                return @ptrCast(*const IMMDeviceEnumerator.VTable, self.__v)
                     .GetDefaultAudioEndpoint(@ptrCast(*IMMDeviceEnumerator, self), flow, role, endpoint);
             }
         };
@@ -147,7 +147,7 @@ pub const AUDCLNT_BUFFERFLAGS_SILENT: UINT = 0x2;
 pub const AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR: UINT = 0x4;
 
 pub const IAudioClient = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -164,7 +164,7 @@ pub const IAudioClient = extern struct {
                 format: *const WAVEFORMATEX,
                 audio_session: ?*?*GUID,
             ) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v).Initialize(
+                return @ptrCast(*const IAudioClient.VTable, self.__v).Initialize(
                     @ptrCast(*IAudioClient, self),
                     mode,
                     stream_flags,
@@ -175,15 +175,15 @@ pub const IAudioClient = extern struct {
                 );
             }
             pub inline fn GetBufferSize(self: *T, size: *UINT32) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .GetBufferSize(@ptrCast(*IAudioClient, self), size);
             }
             pub inline fn GetStreamLatency(self: *T, latency: *REFERENCE_TIME) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .GetStreamLatency(@ptrCast(*IAudioClient, self), latency);
             }
             pub inline fn GetCurrentPadding(self: *T, padding: *UINT32) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .GetCurrentPadding(@ptrCast(*IAudioClient, self), padding);
             }
             pub inline fn IsFormatSupported(
@@ -192,32 +192,32 @@ pub const IAudioClient = extern struct {
                 format: *const WAVEFORMATEX,
                 closest_format: ?*?*WAVEFORMATEX,
             ) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .IsFormatSupported(@ptrCast(*IAudioClient, self), mode, format, closest_format);
             }
             pub inline fn GetMixFormat(self: *T, format: **WAVEFORMATEX) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .GetMixFormat(@ptrCast(*IAudioClient, self), format);
             }
             pub inline fn GetDevicePeriod(self: *T, default: ?*REFERENCE_TIME, minimum: ?*REFERENCE_TIME) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .GetDevicePeriod(@ptrCast(*IAudioClient, self), default, minimum);
             }
             pub inline fn Start(self: *T) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v).Start(@ptrCast(*IAudioClient, self));
+                return @ptrCast(*const IAudioClient.VTable, self.__v).Start(@ptrCast(*IAudioClient, self));
             }
             pub inline fn Stop(self: *T) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v).Stop(@ptrCast(*IAudioClient, self));
+                return @ptrCast(*const IAudioClient.VTable, self.__v).Stop(@ptrCast(*IAudioClient, self));
             }
             pub inline fn Reset(self: *T) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v).Reset(@ptrCast(*IAudioClient, self));
+                return @ptrCast(*const IAudioClient.VTable, self.__v).Reset(@ptrCast(*IAudioClient, self));
             }
             pub inline fn SetEventHandle(self: *T, handle: HANDLE) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .SetEventHandle(@ptrCast(*IAudioClient, self), handle);
             }
             pub inline fn GetService(self: *T, guid: *const GUID, iface: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IAudioClient.VTable, self.v)
+                return @ptrCast(*const IAudioClient.VTable, self.__v)
                     .GetService(@ptrCast(*IAudioClient, self), guid, iface);
             }
         };
@@ -254,7 +254,7 @@ pub const IAudioClient = extern struct {
 };
 
 pub const IAudioClient2 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -274,7 +274,7 @@ pub const IAudioClient2 = extern struct {
 
 // NOTE(mziulek): IAudioClient3 interface is available on Windows 10 and newer.
 pub const IAudioClient3 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -293,7 +293,7 @@ pub const IAudioClient3 = extern struct {
 };
 
 pub const IAudioRenderClient = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -302,11 +302,11 @@ pub const IAudioRenderClient = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: ?*?[*]BYTE) HRESULT {
-                return @ptrCast(*const IAudioRenderClient.VTable, self.v)
+                return @ptrCast(*const IAudioRenderClient.VTable, self.__v)
                     .GetBuffer(@ptrCast(*IAudioRenderClient, self), num_frames_requested, data);
             }
             pub inline fn ReleaseBuffer(self: *T, num_frames_written: UINT32, flags: DWORD) HRESULT {
-                return @ptrCast(*const IAudioRenderClient.VTable, self.v)
+                return @ptrCast(*const IAudioRenderClient.VTable, self.__v)
                     .ReleaseBuffer(@ptrCast(*IAudioRenderClient, self), num_frames_written, flags);
             }
         };

@@ -215,7 +215,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         var audio_samples = std.ArrayList(i16).init(allocator);
         while (true) {
-            var flags: w32.DWORD = 0;
+            var flags: mf.SOURCE_READER_FLAG = .{};
             var sample: ?*mf.ISample = null;
             defer {
                 if (sample != null) {
@@ -224,13 +224,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             }
             hrPanicOnFail(source_reader.ReadSample(
                 mf.SOURCE_READER_FIRST_AUDIO_STREAM,
-                0,
+                .{},
                 null,
                 &flags,
                 null,
                 &sample,
             ));
-            if ((flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
+            if (flags.END_OF_STREAM) {
                 break;
             }
 

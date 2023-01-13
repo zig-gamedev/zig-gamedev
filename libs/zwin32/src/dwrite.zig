@@ -65,7 +65,7 @@ pub const PARAGRAPH_ALIGNMENT = enum(UINT) {
 };
 
 pub const IFontCollection = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -85,7 +85,7 @@ pub const IFontCollection = extern struct {
 };
 
 pub const ITextFormat = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -94,11 +94,11 @@ pub const ITextFormat = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn SetTextAlignment(self: *T, alignment: TEXT_ALIGNMENT) HRESULT {
-                return @ptrCast(*const ITextFormat.VTable, self.v)
+                return @ptrCast(*const ITextFormat.VTable, self.__v)
                     .SetTextAlignment(@ptrCast(*ITextFormat, self), alignment);
             }
             pub inline fn SetParagraphAlignment(self: *T, alignment: PARAGRAPH_ALIGNMENT) HRESULT {
-                return @ptrCast(*const ITextFormat.VTable, self.v)
+                return @ptrCast(*const ITextFormat.VTable, self.__v)
                     .SetParagraphAlignment(@ptrCast(*ITextFormat, self), alignment);
             }
         };
@@ -135,7 +135,7 @@ pub const ITextFormat = extern struct {
 };
 
 pub const IFactory = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -154,7 +154,7 @@ pub const IFactory = extern struct {
                 locale_name: LPCWSTR,
                 text_format: *?*ITextFormat,
             ) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.v).CreateTextFormat(
+                return @ptrCast(*const IFactory.VTable, self.__v).CreateTextFormat(
                     @ptrCast(*IFactory, self),
                     font_family_name,
                     font_collection,

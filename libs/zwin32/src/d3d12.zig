@@ -1829,7 +1829,7 @@ pub const CLEAR_VALUE = extern struct {
 };
 
 pub const IObject = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1838,7 +1838,7 @@ pub const IObject = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: ?*anyopaque) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.v)
+                return @ptrCast(*const IObject.VTable, self.__v)
                     .GetPrivateData(@ptrCast(*IObject, self), guid, data_size, data);
             }
             pub inline fn SetPrivateData(
@@ -1847,15 +1847,15 @@ pub const IObject = extern struct {
                 data_size: UINT,
                 data: ?*const anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.v)
+                return @ptrCast(*const IObject.VTable, self.__v)
                     .SetPrivateData(@ptrCast(*IObject, self), guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.v)
+                return @ptrCast(*const IObject.VTable, self.__v)
                     .SetPrivateDataInterface(@ptrCast(*IObject, self), guid, data);
             }
             pub inline fn SetName(self: *T, name: LPCWSTR) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.v).SetName(@ptrCast(*IObject, self), name);
+                return @ptrCast(*const IObject.VTable, self.__v).SetName(@ptrCast(*IObject, self), name);
             }
         };
     }
@@ -1870,7 +1870,7 @@ pub const IObject = extern struct {
 };
 
 pub const IDeviceChild = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1879,7 +1879,7 @@ pub const IDeviceChild = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IDeviceChild.VTable, self.v)
+                return @ptrCast(*const IDeviceChild.VTable, self.__v)
                     .GetDevice(@ptrCast(*IDeviceChild, self), guid, device);
             }
         };
@@ -1892,7 +1892,7 @@ pub const IDeviceChild = extern struct {
 };
 
 pub const IPageable = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1908,7 +1908,7 @@ pub const IPageable = extern struct {
 };
 
 pub const IRootSignature = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1924,7 +1924,7 @@ pub const IRootSignature = extern struct {
 };
 
 pub const IQueryHeap = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1940,7 +1940,7 @@ pub const IQueryHeap = extern struct {
 };
 
 pub const ICommandSignature = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1956,7 +1956,7 @@ pub const ICommandSignature = extern struct {
 };
 
 pub const IHeap = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1966,7 +1966,7 @@ pub const IHeap = extern struct {
 
             pub inline fn GetDesc(self: *T) HEAP_DESC {
                 var desc: HEAP_DESC = undefined;
-                _ = @ptrCast(*const IHeap.VTable, self.v).GetDesc(@ptrCast(*IHeap, self), &desc);
+                _ = @ptrCast(*const IHeap.VTable, self.__v).GetDesc(@ptrCast(*IHeap, self), &desc);
                 return desc;
             }
         };
@@ -1979,7 +1979,7 @@ pub const IHeap = extern struct {
 };
 
 pub const IResource = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -1988,20 +1988,20 @@ pub const IResource = extern struct {
             pub usingnamespace IPageable.Methods(T);
 
             pub inline fn Map(self: *T, subresource: UINT, read_range: ?*const RANGE, data: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.v)
+                return @ptrCast(*const IResource.VTable, self.__v)
                     .Map(@ptrCast(*IResource, self), subresource, read_range, data);
             }
             pub inline fn Unmap(self: *T, subresource: UINT, written_range: ?*const RANGE) void {
-                @ptrCast(*const IResource.VTable, self.v)
+                @ptrCast(*const IResource.VTable, self.__v)
                     .Unmap(@ptrCast(*IResource, self), subresource, written_range);
             }
             pub inline fn GetDesc(self: *T) RESOURCE_DESC {
                 var desc: RESOURCE_DESC = undefined;
-                _ = @ptrCast(*const IResource.VTable, self.v).GetDesc(@ptrCast(*IResource, self), &desc);
+                _ = @ptrCast(*const IResource.VTable, self.__v).GetDesc(@ptrCast(*IResource, self), &desc);
                 return desc;
             }
             pub inline fn GetGPUVirtualAddress(self: *T) GPU_VIRTUAL_ADDRESS {
-                return @ptrCast(*const IResource.VTable, self.v).GetGPUVirtualAddress(@ptrCast(*IResource, self));
+                return @ptrCast(*const IResource.VTable, self.__v).GetGPUVirtualAddress(@ptrCast(*IResource, self));
             }
             pub inline fn WriteToSubresource(
                 self: *T,
@@ -2011,7 +2011,7 @@ pub const IResource = extern struct {
                 src_row_pitch: UINT,
                 src_depth_pitch: UINT,
             ) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.v).WriteToSubresource(
+                return @ptrCast(*const IResource.VTable, self.__v).WriteToSubresource(
                     @ptrCast(*IResource, self),
                     dst_subresource,
                     dst_box,
@@ -2028,7 +2028,7 @@ pub const IResource = extern struct {
                 src_subresource: UINT,
                 src_box: ?*const BOX,
             ) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.v).ReadFromSubresource(
+                return @ptrCast(*const IResource.VTable, self.__v).ReadFromSubresource(
                     @ptrCast(*IResource, self),
                     dst_data,
                     dst_row_pitch,
@@ -2042,7 +2042,7 @@ pub const IResource = extern struct {
                 properties: ?*HEAP_PROPERTIES,
                 flags: ?*HEAP_FLAGS,
             ) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.v)
+                return @ptrCast(*const IResource.VTable, self.__v)
                     .GetHeapProperties(@ptrCast(*IResource, self), properties, flags);
             }
         };
@@ -2075,7 +2075,7 @@ pub const IResource = extern struct {
 };
 
 pub const IResource1 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2084,7 +2084,7 @@ pub const IResource1 = extern struct {
             pub usingnamespace IResource.Methods(T);
 
             pub inline fn GetProtectedResourceSession(self: *T, guid: *const GUID, session: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IResource1.VTable, self.v)
+                return @ptrCast(*const IResource1.VTable, self.__v)
                     .GetProtectedResourceSession(@ptrCast(*IResource1, self), guid, session);
             }
         };
@@ -2097,7 +2097,7 @@ pub const IResource1 = extern struct {
 };
 
 pub const ICommandAllocator = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2106,7 +2106,7 @@ pub const ICommandAllocator = extern struct {
             pub usingnamespace IPageable.Methods(T);
 
             pub inline fn Reset(self: *T) HRESULT {
-                return @ptrCast(*const ICommandAllocator.VTable, self.v).Reset(@ptrCast(*ICommandAllocator, self));
+                return @ptrCast(*const ICommandAllocator.VTable, self.__v).Reset(@ptrCast(*ICommandAllocator, self));
             }
         };
     }
@@ -2118,7 +2118,7 @@ pub const ICommandAllocator = extern struct {
 };
 
 pub const IFence = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2127,14 +2127,14 @@ pub const IFence = extern struct {
             pub usingnamespace IPageable.Methods(T);
 
             pub inline fn GetCompletedValue(self: *T) UINT64 {
-                return @ptrCast(*const IFence.VTable, self.v).GetCompletedValue(@ptrCast(*IFence, self));
+                return @ptrCast(*const IFence.VTable, self.__v).GetCompletedValue(@ptrCast(*IFence, self));
             }
             pub inline fn SetEventOnCompletion(self: *T, value: UINT64, event: HANDLE) HRESULT {
-                return @ptrCast(*const IFence.VTable, self.v)
+                return @ptrCast(*const IFence.VTable, self.__v)
                     .SetEventOnCompletion(@ptrCast(*IFence, self), value, event);
             }
             pub inline fn Signal(self: *T, value: UINT64) HRESULT {
-                return @ptrCast(*const IFence.VTable, self.v).Signal(@ptrCast(*IFence, self), value);
+                return @ptrCast(*const IFence.VTable, self.__v).Signal(@ptrCast(*IFence, self), value);
             }
         };
     }
@@ -2148,7 +2148,7 @@ pub const IFence = extern struct {
 };
 
 pub const IFence1 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2157,7 +2157,7 @@ pub const IFence1 = extern struct {
             pub usingnamespace IFence.Methods(T);
 
             pub inline fn GetCreationFlags(self: *T) FENCE_FLAGS {
-                return @ptrCast(*const IFence1.VTable, self.v).GetCreationFlags(@ptrCast(*IFence1, self));
+                return @ptrCast(*const IFence1.VTable, self.__v).GetCreationFlags(@ptrCast(*IFence1, self));
             }
         };
     }
@@ -2169,7 +2169,7 @@ pub const IFence1 = extern struct {
 };
 
 pub const IPipelineState = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2178,7 +2178,7 @@ pub const IPipelineState = extern struct {
             pub usingnamespace IPageable.Methods(T);
 
             pub inline fn GetCachedBlob(self: *T, blob: **d3d.IBlob) HRESULT {
-                return @ptrCast(*const IPipelineState.VTable, self.v)
+                return @ptrCast(*const IPipelineState.VTable, self.__v)
                     .GetCachedBlob(@ptrCast(*IPipelineState, self), blob);
             }
         };
@@ -2191,7 +2191,7 @@ pub const IPipelineState = extern struct {
 };
 
 pub const IDescriptorHeap = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2201,19 +2201,19 @@ pub const IDescriptorHeap = extern struct {
 
             pub inline fn GetDesc(self: *T) DESCRIPTOR_HEAP_DESC {
                 var desc: DESCRIPTOR_HEAP_DESC = undefined;
-                _ = @ptrCast(*const IDescriptorHeap.VTable, self.v)
+                _ = @ptrCast(*const IDescriptorHeap.VTable, self.__v)
                     .GetDesc(@ptrCast(*IDescriptorHeap, self), &desc);
                 return desc;
             }
             pub inline fn GetCPUDescriptorHandleForHeapStart(self: *T) CPU_DESCRIPTOR_HANDLE {
                 var handle: CPU_DESCRIPTOR_HANDLE = undefined;
-                _ = @ptrCast(*const IDescriptorHeap.VTable, self.v)
+                _ = @ptrCast(*const IDescriptorHeap.VTable, self.__v)
                     .GetCPUDescriptorHandleForHeapStart(@ptrCast(*IDescriptorHeap, self), &handle);
                 return handle;
             }
             pub inline fn GetGPUDescriptorHandleForHeapStart(self: *T) GPU_DESCRIPTOR_HANDLE {
                 var handle: GPU_DESCRIPTOR_HANDLE = undefined;
-                _ = @ptrCast(*const IDescriptorHeap.VTable, self.v)
+                _ = @ptrCast(*const IDescriptorHeap.VTable, self.__v)
                     .GetGPUDescriptorHandleForHeapStart(@ptrCast(*IDescriptorHeap, self), &handle);
                 return handle;
             }
@@ -2235,7 +2235,7 @@ pub const IDescriptorHeap = extern struct {
 };
 
 pub const ICommandList = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2244,7 +2244,7 @@ pub const ICommandList = extern struct {
             pub usingnamespace IDeviceChild.Methods(T);
 
             pub inline fn GetType(self: *T) COMMAND_LIST_TYPE {
-                return @ptrCast(*const ICommandList.VTable, self.v).GetType(@ptrCast(*ICommandList, self));
+                return @ptrCast(*const ICommandList.VTable, self.__v).GetType(@ptrCast(*ICommandList, self));
             }
         };
     }
@@ -2257,7 +2257,7 @@ pub const ICommandList = extern struct {
 
 pub const IID_IGraphicsCommandList = GUID.parse("{5b160d0f-ac1b-4185-8ba8-b3ae42a5a455}");
 pub const IGraphicsCommandList = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2266,15 +2266,15 @@ pub const IGraphicsCommandList = extern struct {
             pub usingnamespace ICommandList.Methods(T);
 
             pub inline fn Close(self: *T) HRESULT {
-                return @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                return @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .Close(@ptrCast(*IGraphicsCommandList, self));
             }
             pub inline fn Reset(self: *T, alloc: *ICommandAllocator, initial_state: ?*IPipelineState) HRESULT {
-                return @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                return @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .Reset(@ptrCast(*IGraphicsCommandList, self), alloc, initial_state);
             }
             pub inline fn ClearState(self: *T, pso: ?*IPipelineState) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .ClearState(@ptrCast(*IGraphicsCommandList, self), pso);
             }
             pub inline fn DrawInstanced(
@@ -2284,7 +2284,7 @@ pub const IGraphicsCommandList = extern struct {
                 start_vertex_location: UINT,
                 start_instance_location: UINT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).DrawInstanced(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).DrawInstanced(
                     @ptrCast(*IGraphicsCommandList, self),
                     vertex_count_per_instance,
                     instance_count,
@@ -2300,7 +2300,7 @@ pub const IGraphicsCommandList = extern struct {
                 base_vertex_location: INT,
                 start_instance_location: UINT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).DrawIndexedInstanced(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).DrawIndexedInstanced(
                     @ptrCast(*IGraphicsCommandList, self),
                     index_count_per_instance,
                     instance_count,
@@ -2310,7 +2310,7 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn Dispatch(self: *T, count_x: UINT, count_y: UINT, count_z: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .Dispatch(@ptrCast(*IGraphicsCommandList, self), count_x, count_y, count_z);
             }
             pub inline fn CopyBufferRegion(
@@ -2321,7 +2321,7 @@ pub const IGraphicsCommandList = extern struct {
                 src_offset: UINT64,
                 num_bytes: UINT64,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).CopyBufferRegion(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).CopyBufferRegion(
                     @ptrCast(*IGraphicsCommandList, self),
                     dst_buffer,
                     dst_offset,
@@ -2339,7 +2339,7 @@ pub const IGraphicsCommandList = extern struct {
                 src: *const TEXTURE_COPY_LOCATION,
                 src_box: ?*const BOX,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).CopyTextureRegion(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).CopyTextureRegion(
                     @ptrCast(*IGraphicsCommandList, self),
                     dst,
                     dst_x,
@@ -2350,7 +2350,7 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn CopyResource(self: *T, dst: *IResource, src: *IResource) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .CopyResource(@ptrCast(*IGraphicsCommandList, self), dst, src);
             }
             pub inline fn CopyTiles(
@@ -2362,7 +2362,7 @@ pub const IGraphicsCommandList = extern struct {
                 buffer_start_offset_in_bytes: UINT64,
                 flags: TILE_COPY_FLAGS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).CopyTiles(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).CopyTiles(
                     @ptrCast(*IGraphicsCommandList, self),
                     tiled_resource,
                     tile_region_start_coordinate,
@@ -2380,7 +2380,7 @@ pub const IGraphicsCommandList = extern struct {
                 src_subresource: UINT,
                 format: dxgi.FORMAT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ResolveSubresource(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ResolveSubresource(
                     @ptrCast(*IGraphicsCommandList, self),
                     dst_resource,
                     dst_subresource,
@@ -2390,47 +2390,47 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn IASetPrimitiveTopology(self: *T, topology: PRIMITIVE_TOPOLOGY) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .IASetPrimitiveTopology(@ptrCast(*IGraphicsCommandList, self), topology);
             }
             pub inline fn RSSetViewports(self: *T, num: UINT, viewports: [*]const VIEWPORT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .RSSetViewports(@ptrCast(*IGraphicsCommandList, self), num, viewports);
             }
             pub inline fn RSSetScissorRects(self: *T, num: UINT, rects: [*]const RECT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .RSSetScissorRects(@ptrCast(*IGraphicsCommandList, self), num, rects);
             }
             pub inline fn OMSetBlendFactor(self: *T, blend_factor: *const [4]FLOAT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .OMSetBlendFactor(@ptrCast(*IGraphicsCommandList, self), blend_factor);
             }
             pub inline fn OMSetStencilRef(self: *T, stencil_ref: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .OMSetStencilRef(@ptrCast(*IGraphicsCommandList, self), stencil_ref);
             }
             pub inline fn SetPipelineState(self: *T, pso: *IPipelineState) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .SetPipelineState(@ptrCast(*IGraphicsCommandList, self), pso);
             }
             pub inline fn ResourceBarrier(self: *T, num: UINT, barriers: [*]const RESOURCE_BARRIER) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .ResourceBarrier(@ptrCast(*IGraphicsCommandList, self), num, barriers);
             }
             pub inline fn ExecuteBundle(self: *T, cmdlist: *IGraphicsCommandList) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .ExecuteBundle(@ptrCast(*IGraphicsCommandList, self), cmdlist);
             }
             pub inline fn SetDescriptorHeaps(self: *T, num: UINT, heaps: [*]const *IDescriptorHeap) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .SetDescriptorHeaps(@ptrCast(*IGraphicsCommandList, self), num, heaps);
             }
             pub inline fn SetComputeRootSignature(self: *T, root_signature: ?*IRootSignature) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .SetComputeRootSignature(@ptrCast(*IGraphicsCommandList, self), root_signature);
             }
             pub inline fn SetGraphicsRootSignature(self: *T, root_signature: ?*IRootSignature) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .SetGraphicsRootSignature(@ptrCast(*IGraphicsCommandList, self), root_signature);
             }
             pub inline fn SetComputeRootDescriptorTable(
@@ -2438,7 +2438,7 @@ pub const IGraphicsCommandList = extern struct {
                 root_index: UINT,
                 base_descriptor: GPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootDescriptorTable(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetComputeRootDescriptorTable(
                     @ptrCast(*IGraphicsCommandList, self),
                     root_index,
                     base_descriptor,
@@ -2449,14 +2449,14 @@ pub const IGraphicsCommandList = extern struct {
                 root_index: UINT,
                 base_descriptor: GPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootDescriptorTable(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetGraphicsRootDescriptorTable(
                     @ptrCast(*IGraphicsCommandList, self),
                     root_index,
                     base_descriptor,
                 );
             }
             pub inline fn SetComputeRoot32BitConstant(self: *T, index: UINT, data: UINT, off: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRoot32BitConstant(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetComputeRoot32BitConstant(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     data,
@@ -2464,7 +2464,7 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn SetGraphicsRoot32BitConstant(self: *T, index: UINT, data: UINT, off: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRoot32BitConstant(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetGraphicsRoot32BitConstant(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     data,
@@ -2478,7 +2478,7 @@ pub const IGraphicsCommandList = extern struct {
                 data: *const anyopaque,
                 offset: UINT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRoot32BitConstants(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetComputeRoot32BitConstants(
                     @ptrCast(*IGraphicsCommandList, self),
                     root_index,
                     num,
@@ -2493,7 +2493,7 @@ pub const IGraphicsCommandList = extern struct {
                 data: *const anyopaque,
                 offset: UINT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRoot32BitConstants(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetGraphicsRoot32BitConstants(
                     @ptrCast(*IGraphicsCommandList, self),
                     root_index,
                     num,
@@ -2506,7 +2506,7 @@ pub const IGraphicsCommandList = extern struct {
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootConstantBufferView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetComputeRootConstantBufferView(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     buffer_location,
@@ -2517,7 +2517,7 @@ pub const IGraphicsCommandList = extern struct {
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootConstantBufferView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetGraphicsRootConstantBufferView(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     buffer_location,
@@ -2528,7 +2528,7 @@ pub const IGraphicsCommandList = extern struct {
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootShaderResourceView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetComputeRootShaderResourceView(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     buffer_location,
@@ -2539,7 +2539,7 @@ pub const IGraphicsCommandList = extern struct {
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootShaderResourceView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetGraphicsRootShaderResourceView(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     buffer_location,
@@ -2550,7 +2550,7 @@ pub const IGraphicsCommandList = extern struct {
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetComputeRootUnorderedAccessView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetComputeRootUnorderedAccessView(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     buffer_location,
@@ -2561,14 +2561,14 @@ pub const IGraphicsCommandList = extern struct {
                 index: UINT,
                 buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetGraphicsRootUnorderedAccessView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetGraphicsRootUnorderedAccessView(
                     @ptrCast(*IGraphicsCommandList, self),
                     index,
                     buffer_location,
                 );
             }
             pub inline fn IASetIndexBuffer(self: *T, view: ?*const INDEX_BUFFER_VIEW) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .IASetIndexBuffer(@ptrCast(*IGraphicsCommandList, self), view);
             }
             pub inline fn IASetVertexBuffers(
@@ -2577,7 +2577,7 @@ pub const IGraphicsCommandList = extern struct {
                 num_views: UINT,
                 views: ?[*]const VERTEX_BUFFER_VIEW,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).IASetVertexBuffers(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).IASetVertexBuffers(
                     @ptrCast(*IGraphicsCommandList, self),
                     start_slot,
                     num_views,
@@ -2590,7 +2590,7 @@ pub const IGraphicsCommandList = extern struct {
                 num_views: UINT,
                 views: ?[*]const STREAM_OUTPUT_BUFFER_VIEW,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .SOSetTargets(@ptrCast(*IGraphicsCommandList, self), start_slot, num_views, views);
             }
             pub inline fn OMSetRenderTargets(
@@ -2600,7 +2600,7 @@ pub const IGraphicsCommandList = extern struct {
                 single_handle: BOOL,
                 ds_descriptors: ?*const CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).OMSetRenderTargets(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).OMSetRenderTargets(
                     @ptrCast(*IGraphicsCommandList, self),
                     num_rt_descriptors,
                     rt_descriptors,
@@ -2617,7 +2617,7 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearDepthStencilView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ClearDepthStencilView(
                     @ptrCast(*IGraphicsCommandList, self),
                     ds_view,
                     clear_flags,
@@ -2634,7 +2634,7 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearRenderTargetView(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ClearRenderTargetView(
                     @ptrCast(*IGraphicsCommandList, self),
                     rt_view,
                     rgba,
@@ -2651,7 +2651,7 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearUnorderedAccessViewUint(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ClearUnorderedAccessViewUint(
                     @ptrCast(*IGraphicsCommandList, self),
                     gpu_view,
                     cpu_view,
@@ -2670,7 +2670,7 @@ pub const IGraphicsCommandList = extern struct {
                 num_rects: UINT,
                 rects: ?[*]const RECT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ClearUnorderedAccessViewFloat(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ClearUnorderedAccessViewFloat(
                     @ptrCast(*IGraphicsCommandList, self),
                     gpu_view,
                     cpu_view,
@@ -2681,15 +2681,15 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn DiscardResource(self: *T, resource: *IResource, region: ?*const DISCARD_REGION) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .DiscardResource(@ptrCast(*IGraphicsCommandList, self), resource, region);
             }
             pub inline fn BeginQuery(self: *T, query: *IQueryHeap, query_type: QUERY_TYPE, index: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .BeginQuery(@ptrCast(*IGraphicsCommandList, self), query, query_type, index);
             }
             pub inline fn EndQuery(self: *T, query: *IQueryHeap, query_type: QUERY_TYPE, index: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .EndQuery(@ptrCast(*IGraphicsCommandList, self), query, query_type, index);
             }
             pub inline fn ResolveQueryData(
@@ -2701,7 +2701,7 @@ pub const IGraphicsCommandList = extern struct {
                 dst_resource: *IResource,
                 buffer_offset: UINT64,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ResolveQueryData(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ResolveQueryData(
                     @ptrCast(*IGraphicsCommandList, self),
                     query,
                     query_type,
@@ -2717,7 +2717,7 @@ pub const IGraphicsCommandList = extern struct {
                 buffer_offset: UINT64,
                 operation: PREDICATION_OP,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).SetPredication(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).SetPredication(
                     @ptrCast(*IGraphicsCommandList, self),
                     buffer,
                     buffer_offset,
@@ -2725,15 +2725,15 @@ pub const IGraphicsCommandList = extern struct {
                 );
             }
             pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .SetMarker(@ptrCast(*IGraphicsCommandList, self), metadata, data, size);
             }
             pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .BeginEvent(@ptrCast(*IGraphicsCommandList, self), metadata, data, size);
             }
             pub inline fn EndEvent(self: *T) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v)
                     .EndEvent(@ptrCast(*IGraphicsCommandList, self));
             }
             pub inline fn ExecuteIndirect(
@@ -2745,7 +2745,7 @@ pub const IGraphicsCommandList = extern struct {
                 count_buffer: ?*IResource,
                 count_buffer_offset: UINT64,
             ) void {
-                @ptrCast(*const IGraphicsCommandList.VTable, self.v).ExecuteIndirect(
+                @ptrCast(*const IGraphicsCommandList.VTable, self.__v).ExecuteIndirect(
                     @ptrCast(*IGraphicsCommandList, self),
                     command_signature,
                     max_command_count,
@@ -2909,7 +2909,7 @@ pub const RESOLVE_MODE = enum(UINT) {
 
 pub const IID_IGraphicsCommandList1 = GUID.parse("{553103fb-1fe7-4557-bb38-946d7d0e7ca7}");
 pub const IGraphicsCommandList1 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -2927,7 +2927,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 dependent_resources: [*]const *IResource,
                 dependent_subresource_ranges: [*]const SUBRESOURCE_RANGE_UINT64,
             ) void {
-                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).AtomicCopyBufferUINT(
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.__v).AtomicCopyBufferUINT(
                     @ptrCast(*IGraphicsCommandList1, self),
                     dst_buffer,
                     dst_offset,
@@ -2948,7 +2948,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 dependent_resources: [*]const *IResource,
                 dependent_subresource_ranges: [*]const SUBRESOURCE_RANGE_UINT64,
             ) void {
-                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).AtomicCopyBufferUINT64(
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.__v).AtomicCopyBufferUINT64(
                     @ptrCast(*IGraphicsCommandList1, self),
                     dst_buffer,
                     dst_offset,
@@ -2960,7 +2960,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 );
             }
             pub inline fn OMSetDepthBounds(self: *T, min: FLOAT, max: FLOAT) void {
-                @ptrCast(*const IGraphicsCommandList1.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.__v)
                     .OMSetDepthBounds(@ptrCast(*IGraphicsCommandList1, self), min, max);
             }
             pub inline fn SetSamplePositions(
@@ -2969,7 +2969,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 num_pixels: UINT,
                 sample_positions: *SAMPLE_POSITION,
             ) void {
-                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).SetSamplePositions(
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.__v).SetSamplePositions(
                     @ptrCast(*IGraphicsCommandList1, self),
                     num_samples,
                     num_pixels,
@@ -2988,7 +2988,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 format: dxgi.FORMAT,
                 resolve_mode: RESOLVE_MODE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList1.VTable, self.v).ResolveSubresourceRegion(
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.__v).ResolveSubresourceRegion(
                     @ptrCast(*IGraphicsCommandList1, self),
                     dst_resource,
                     dst_subresource,
@@ -3002,7 +3002,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 );
             }
             pub inline fn SetViewInstanceMask(self: *T, mask: UINT) void {
-                @ptrCast(*const IGraphicsCommandList1.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList1.VTable, self.__v)
                     .SetViewInstanceMask(@ptrCast(*IGraphicsCommandList1, self), mask);
             }
         };
@@ -3062,7 +3062,7 @@ pub const WRITEBUFFERIMMEDIATE_MODE = enum(UINT) {
 
 pub const IID_IGraphicsCommandList2 = GUID.parse("{38C3E585-FF17-412C-9150-4FC6F9D72A28}");
 pub const IGraphicsCommandList2 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3076,7 +3076,7 @@ pub const IGraphicsCommandList2 = extern struct {
                 params: [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
                 modes: ?[*]const WRITEBUFFERIMMEDIATE_MODE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList2.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList2.VTable, self.__v)
                     .WriteBufferImmediate(@ptrCast(*IGraphicsCommandList2, self), count, params, modes);
             }
         };
@@ -3095,7 +3095,7 @@ pub const IGraphicsCommandList2 = extern struct {
 
 pub const IID_IGraphicsCommandList3 = GUID.parse("{6FDA83A7-B84C-4E38-9AC8-C7BD22016B3D}");
 pub const IGraphicsCommandList3 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3104,7 +3104,7 @@ pub const IGraphicsCommandList3 = extern struct {
             pub usingnamespace IGraphicsCommandList2.Methods(T);
 
             pub inline fn SetProtectedResourceSession(self: *T, prsession: ?*IProtectedResourceSession) void {
-                @ptrCast(*const IGraphicsCommandList3.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList3.VTable, self.__v)
                     .SetProtectedResourceSession(@ptrCast(*IGraphicsCommandList3, self), prsession);
             }
         };
@@ -3247,7 +3247,7 @@ pub const META_COMMAND_DESC = extern struct {
 };
 
 pub const IMetaCommand = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3260,7 +3260,7 @@ pub const IMetaCommand = extern struct {
                 stage: META_COMMAND_PARAMETER_STAGE,
                 param_index: UINT,
             ) UINT64 {
-                return @ptrCast(*const IMetaCommand.VTable, self.v)
+                return @ptrCast(*const IMetaCommand.VTable, self.__v)
                     .GetRequiredParameterResourceSize(@ptrCast(*IMetaCommand, self), stage, param_index);
             }
         };
@@ -3602,7 +3602,7 @@ pub const RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = extern struct {
 
 pub const IID_IStateObject = GUID.parse("{47016943-fca8-4594-93ea-af258b55346d}");
 pub const IStateObject = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3619,7 +3619,7 @@ pub const IStateObject = extern struct {
 
 pub const IID_IStateObjectProperties = GUID.parse("{de5fa827-9bf9-4f26-89ff-d7f56fde3860}");
 pub const IStateObjectProperties = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3628,19 +3628,19 @@ pub const IStateObjectProperties = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetShaderIdentifier(self: *T, export_name: LPCWSTR) *anyopaque {
-                return @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                return @ptrCast(*const IStateObjectProperties.VTable, self.__v)
                     .GetShaderIdentifier(@ptrCast(*IStateObjectProperties, self), export_name);
             }
             pub inline fn GetShaderStackSize(self: *T, export_name: LPCWSTR) UINT64 {
-                return @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                return @ptrCast(*const IStateObjectProperties.VTable, self.__v)
                     .GetShaderStackSize(@ptrCast(*IStateObjectProperties, self), export_name);
             }
             pub inline fn GetPipelineStackSize(self: *T) UINT64 {
-                return @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                return @ptrCast(*const IStateObjectProperties.VTable, self.__v)
                     .GetPipelineStackSize(@ptrCast(*IStateObjectProperties, self));
             }
             pub inline fn SetPipelineStackSize(self: *T, stack_size: UINT64) void {
-                @ptrCast(*const IStateObjectProperties.VTable, self.v)
+                @ptrCast(*const IStateObjectProperties.VTable, self.__v)
                     .SetPipelineStackSize(@ptrCast(*IStateObjectProperties, self), stack_size);
             }
         };
@@ -3668,7 +3668,7 @@ pub const DISPATCH_RAYS_DESC = extern struct {
 
 pub const IID_IGraphicsCommandList4 = GUID.parse("{8754318e-d3a9-4541-98cf-645b50dc4874}");
 pub const IGraphicsCommandList4 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3683,7 +3683,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 depth_stencil: ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
                 flags: RENDER_PASS_FLAGS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).BeginRenderPass(
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v).BeginRenderPass(
                     @ptrCast(*IGraphicsCommandList4, self),
                     num_render_targets,
                     render_targets,
@@ -3692,7 +3692,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 );
             }
             pub inline fn EndRenderPass(self: *T) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v)
                     .EndRenderPass(@ptrCast(*IGraphicsCommandList4, self));
             }
             pub inline fn InitializeMetaCommand(
@@ -3701,7 +3701,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 init_param_data: ?*const anyopaque,
                 data_size: SIZE_T,
             ) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).InitializeMetaCommand(
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v).InitializeMetaCommand(
                     @ptrCast(*IGraphicsCommandList4, self),
                     meta_cmd,
                     init_param_data,
@@ -3714,7 +3714,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 exe_param_data: ?*const anyopaque,
                 data_size: SIZE_T,
             ) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).InitializeMetaCommand(
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v).InitializeMetaCommand(
                     @ptrCast(*IGraphicsCommandList4, self),
                     meta_cmd,
                     exe_param_data,
@@ -3727,7 +3727,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 num_post_build_descs: UINT,
                 post_build_descs: ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
             ) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).BuildRaytracingAccelerationStructure(
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v).BuildRaytracingAccelerationStructure(
                     @ptrCast(*IGraphicsCommandList4, self),
                     desc,
                     num_post_build_descs,
@@ -3740,7 +3740,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 num_src_accel_structs: UINT,
                 src_accel_struct_data: [*]const GPU_VIRTUAL_ADDRESS,
             ) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v)
                     .EmitRaytracingAccelerationStructurePostbuildInfo(
                     @ptrCast(*IGraphicsCommandList4, self),
                     desc,
@@ -3754,7 +3754,7 @@ pub const IGraphicsCommandList4 = extern struct {
                 src_data: GPU_VIRTUAL_ADDRESS,
                 mode: RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v).CopyRaytracingAccelerationStructure(
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v).CopyRaytracingAccelerationStructure(
                     @ptrCast(*IGraphicsCommandList4, self),
                     dst_data,
                     src_data,
@@ -3762,11 +3762,11 @@ pub const IGraphicsCommandList4 = extern struct {
                 );
             }
             pub inline fn SetPipelineState1(self: *T, state_obj: *IStateObject) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v)
                     .SetPipelineState1(@ptrCast(*IGraphicsCommandList4, self), state_obj);
             }
             pub inline fn DispatchRays(self: *T, desc: *const DISPATCH_RAYS_DESC) void {
-                @ptrCast(*const IGraphicsCommandList4.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList4.VTable, self.__v)
                     .DispatchRays(@ptrCast(*IGraphicsCommandList4, self), desc);
             }
         };
@@ -3830,7 +3830,7 @@ pub const SHADING_RATE_COMBINER = enum(UINT) {
 
 pub const IID_IGraphicsCommandList5 = GUID.parse("{55050859-4024-474c-87f5-6472eaee44ea}");
 pub const IGraphicsCommandList5 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3843,11 +3843,11 @@ pub const IGraphicsCommandList5 = extern struct {
                 base_shading_rate: SHADING_RATE,
                 combiners: ?*const [RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
             ) void {
-                @ptrCast(*const IGraphicsCommandList5.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList5.VTable, self.__v)
                     .RSSetShadingRate(@ptrCast(*IGraphicsCommandList5, self), base_shading_rate, combiners);
             }
             pub inline fn RSSetShadingRateImage(self: *T, shading_rate_img: ?*IResource) void {
-                @ptrCast(*const IGraphicsCommandList5.VTable, self.v)
+                @ptrCast(*const IGraphicsCommandList5.VTable, self.__v)
                     .RSSetShadingRateImage(@ptrCast(*IGraphicsCommandList5, self), shading_rate_img);
             }
         };
@@ -3866,7 +3866,7 @@ pub const IGraphicsCommandList5 = extern struct {
 
 pub const IID_IGraphicsCommandList6 = GUID.parse("{c3827890-e548-4cfa-96cf-5689a9370f80}");
 pub const IGraphicsCommandList6 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3880,7 +3880,7 @@ pub const IGraphicsCommandList6 = extern struct {
                 thread_group_count_y: UINT,
                 thread_group_count_z: UINT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList6.VTable, self.v).DispatchMesh(
+                @ptrCast(*const IGraphicsCommandList6.VTable, self.__v).DispatchMesh(
                     @ptrCast(*IGraphicsCommandList6, self),
                     thread_group_count_x,
                     thread_group_count_y,
@@ -3898,7 +3898,7 @@ pub const IGraphicsCommandList6 = extern struct {
 
 pub const IID_IGraphicsCommandList7 = GUID.parse("{dd171223-8b61-4769-90e3-160ccde4e2c1}");
 pub const IGraphicsCommandList7 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3911,7 +3911,7 @@ pub const IGraphicsCommandList7 = extern struct {
                 num_barrier_groups: UINT32,
                 barrier_groups: [*]const BARRIER_GROUP,
             ) void {
-                @ptrCast(*const IGraphicsCommandList7.VTable, self.v).Barrier(
+                @ptrCast(*const IGraphicsCommandList7.VTable, self.__v).Barrier(
                     @ptrCast(*IGraphicsCommandList7, self),
                     num_barrier_groups,
                     barrier_groups,
@@ -3928,7 +3928,7 @@ pub const IGraphicsCommandList7 = extern struct {
 
 pub const IID_IGraphicsCommandList8 = GUID.parse("{ee936ef9-599d-4d28-938e-23c4ad05ce51}");
 pub const IGraphicsCommandList8 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3941,7 +3941,7 @@ pub const IGraphicsCommandList8 = extern struct {
                 front_stencil_ref: UINT,
                 back_stencil_ref: UINT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList8.VTable, self.v).OMSetFrontAndBackStencilRef(
+                @ptrCast(*const IGraphicsCommandList8.VTable, self.__v).OMSetFrontAndBackStencilRef(
                     @ptrCast(*IGraphicsCommandList8, self),
                     front_stencil_ref,
                     back_stencil_ref,
@@ -3958,7 +3958,7 @@ pub const IGraphicsCommandList8 = extern struct {
 
 pub const IID_IGraphicsCommandList9 = GUID.parse("{34ed2808-ffe6-4c2b-b11a-cabd2b0c59e1}");
 pub const IGraphicsCommandList9 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -3972,7 +3972,7 @@ pub const IGraphicsCommandList9 = extern struct {
                 depth_bias_clamp: FLOAT,
                 slope_scaled_depth_bias: FLOAT,
             ) void {
-                @ptrCast(*const IGraphicsCommandList9.VTable, self.v).RSSetDepthBias(
+                @ptrCast(*const IGraphicsCommandList9.VTable, self.__v).RSSetDepthBias(
                     @ptrCast(*IGraphicsCommandList9, self),
                     depth_bias,
                     depth_bias_clamp,
@@ -3983,7 +3983,7 @@ pub const IGraphicsCommandList9 = extern struct {
                 self: *T,
                 cut_value: INDEX_BUFFER_STRIP_CUT_VALUE,
             ) void {
-                @ptrCast(*const IGraphicsCommandList9.VTable, self.v).IASetIndexBufferStripCutValue(
+                @ptrCast(*const IGraphicsCommandList9.VTable, self.__v).IASetIndexBufferStripCutValue(
                     @ptrCast(*IGraphicsCommandList9, self),
                     cut_value,
                 );
@@ -4002,7 +4002,7 @@ pub const IGraphicsCommandList9 = extern struct {
 };
 
 pub const ICommandQueue = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -4023,7 +4023,7 @@ pub const ICommandQueue = extern struct {
                 range_tile_counts: ?[*]const UINT,
                 flags: TILE_MAPPING_FLAGS,
             ) void {
-                @ptrCast(*const ICommandQueue.VTable, self.v).UpdateTileMappings(
+                @ptrCast(*const ICommandQueue.VTable, self.__v).UpdateTileMappings(
                     @ptrCast(*ICommandQueue, self),
                     resource,
                     num_resource_regions,
@@ -4046,7 +4046,7 @@ pub const ICommandQueue = extern struct {
                 region_size: *const TILE_REGION_SIZE,
                 flags: TILE_MAPPING_FLAGS,
             ) void {
-                @ptrCast(*const ICommandQueue.VTable, self.v).CopyTileMappings(
+                @ptrCast(*const ICommandQueue.VTable, self.__v).CopyTileMappings(
                     @ptrCast(*ICommandQueue, self),
                     dst_resource,
                     dst_region_start_coordinate,
@@ -4057,39 +4057,39 @@ pub const ICommandQueue = extern struct {
                 );
             }
             pub inline fn ExecuteCommandLists(self: *T, num: UINT, cmdlists: [*]const *ICommandList) void {
-                @ptrCast(*const ICommandQueue.VTable, self.v)
+                @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .ExecuteCommandLists(@ptrCast(*ICommandQueue, self), num, cmdlists);
             }
             pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                @ptrCast(*const ICommandQueue.VTable, self.v)
+                @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .SetMarker(@ptrCast(*ICommandQueue, self), metadata, data, size);
             }
             pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
-                @ptrCast(*const ICommandQueue.VTable, self.v)
+                @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .BeginEvent(@ptrCast(*ICommandQueue, self), metadata, data, size);
             }
             pub inline fn EndEvent(self: *T) void {
-                @ptrCast(*const ICommandQueue.VTable, self.v).EndEvent(@ptrCast(*ICommandQueue, self));
+                @ptrCast(*const ICommandQueue.VTable, self.__v).EndEvent(@ptrCast(*ICommandQueue, self));
             }
             pub inline fn Signal(self: *T, fence: *IFence, value: UINT64) HRESULT {
-                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                return @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .Signal(@ptrCast(*ICommandQueue, self), fence, value);
             }
             pub inline fn Wait(self: *T, fence: *IFence, value: UINT64) HRESULT {
-                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                return @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .Wait(@ptrCast(*ICommandQueue, self), fence, value);
             }
             pub inline fn GetTimestampFrequency(self: *T, frequency: *UINT64) HRESULT {
-                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                return @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .GetTimestampFrequency(@ptrCast(*ICommandQueue, self), frequency);
             }
             pub inline fn GetClockCalibration(self: *T, gpu_timestamp: *UINT64, cpu_timestamp: *UINT64) HRESULT {
-                return @ptrCast(*const ICommandQueue.VTable, self.v)
+                return @ptrCast(*const ICommandQueue.VTable, self.__v)
                     .GetClockCalibration(@ptrCast(*ICommandQueue, self), gpu_timestamp, cpu_timestamp);
             }
             pub inline fn GetDesc(self: *T) COMMAND_QUEUE_DESC {
                 var desc: COMMAND_QUEUE_DESC = undefined;
-                _ = @ptrCast(*const ICommandQueue.VTable, self.v).GetDesc(@ptrCast(*ICommandQueue, self), &desc);
+                _ = @ptrCast(*const ICommandQueue.VTable, self.__v).GetDesc(@ptrCast(*ICommandQueue, self), &desc);
                 return desc;
             }
         };
@@ -4134,7 +4134,7 @@ pub const ICommandQueue = extern struct {
 
 pub const IID_IDevice = GUID.parse("{189819f1-1db6-4b57-be54-1821339b85f7}");
 pub const IDevice = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -4143,7 +4143,7 @@ pub const IDevice = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn GetNodeCount(self: *T) UINT {
-                return @ptrCast(*const IDevice.VTable, self.v).GetNodeCount(@ptrCast(*IDevice, self));
+                return @ptrCast(*const IDevice.VTable, self.__v).GetNodeCount(@ptrCast(*IDevice, self));
             }
             pub inline fn CreateCommandQueue(
                 self: *T,
@@ -4151,7 +4151,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 obj: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateCommandQueue(@ptrCast(*IDevice, self), desc, guid, obj);
             }
             pub inline fn CreateCommandAllocator(
@@ -4160,7 +4160,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 obj: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateCommandAllocator(@ptrCast(*IDevice, self), cmdlist_type, guid, obj);
             }
             pub inline fn CreateGraphicsPipelineState(
@@ -4169,7 +4169,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 pso: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateGraphicsPipelineState(@ptrCast(*IDevice, self), desc, guid, pso);
             }
             pub inline fn CreateComputePipelineState(
@@ -4178,7 +4178,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 pso: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateComputePipelineState(@ptrCast(*IDevice, self), desc, guid, pso);
             }
             pub inline fn CreateCommandList(
@@ -4190,7 +4190,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 cmdlist: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateCommandList(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateCommandList(
                     @ptrCast(*IDevice, self),
                     node_mask,
                     cmdlist_type,
@@ -4206,7 +4206,7 @@ pub const IDevice = extern struct {
                 data: *anyopaque,
                 data_size: UINT,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CheckFeatureSupport(@ptrCast(*IDevice, self), feature, data, data_size);
             }
             pub inline fn CreateDescriptorHeap(
@@ -4215,11 +4215,11 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 heap: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateDescriptorHeap(@ptrCast(*IDevice, self), desc, guid, heap);
             }
             pub inline fn GetDescriptorHandleIncrementSize(self: *T, heap_type: DESCRIPTOR_HEAP_TYPE) UINT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .GetDescriptorHandleIncrementSize(@ptrCast(*IDevice, self), heap_type);
             }
             pub inline fn CreateRootSignature(
@@ -4230,7 +4230,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 signature: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateRootSignature(@ptrCast(*IDevice, self), node_mask, blob, blob_size, guid, signature);
             }
             pub inline fn CreateConstantBufferView(
@@ -4238,7 +4238,7 @@ pub const IDevice = extern struct {
                 desc: ?*const CONSTANT_BUFFER_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateConstantBufferView(@ptrCast(*IDevice, self), desc, dst_descriptor);
             }
             pub inline fn CreateShaderResourceView(
@@ -4247,7 +4247,7 @@ pub const IDevice = extern struct {
                 desc: ?*const SHADER_RESOURCE_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateShaderResourceView(@ptrCast(*IDevice, self), resource, desc, dst_descriptor);
             }
             pub inline fn CreateUnorderedAccessView(
@@ -4257,7 +4257,7 @@ pub const IDevice = extern struct {
                 desc: ?*const UNORDERED_ACCESS_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v).CreateUnorderedAccessView(
+                @ptrCast(*const IDevice.VTable, self.__v).CreateUnorderedAccessView(
                     @ptrCast(*IDevice, self),
                     resource,
                     counter_resource,
@@ -4271,7 +4271,7 @@ pub const IDevice = extern struct {
                 desc: ?*const RENDER_TARGET_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateRenderTargetView(@ptrCast(*IDevice, self), resource, desc, dst_descriptor);
             }
             pub inline fn CreateDepthStencilView(
@@ -4280,7 +4280,7 @@ pub const IDevice = extern struct {
                 desc: ?*const DEPTH_STENCIL_VIEW_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateDepthStencilView(@ptrCast(*IDevice, self), resource, desc, dst_descriptor);
             }
             pub inline fn CreateSampler(
@@ -4288,7 +4288,7 @@ pub const IDevice = extern struct {
                 desc: *const SAMPLER_DESC,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateSampler(@ptrCast(*IDevice, self), desc, dst_descriptor);
             }
             pub inline fn CopyDescriptors(
@@ -4301,7 +4301,7 @@ pub const IDevice = extern struct {
                 src_range_sizes: ?[*]const UINT,
                 heap_type: DESCRIPTOR_HEAP_TYPE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v).CopyDescriptors(
+                @ptrCast(*const IDevice.VTable, self.__v).CopyDescriptors(
                     @ptrCast(*IDevice, self),
                     num_dst_ranges,
                     dst_range_starts,
@@ -4319,7 +4319,7 @@ pub const IDevice = extern struct {
                 src_range_start: CPU_DESCRIPTOR_HANDLE,
                 heap_type: DESCRIPTOR_HEAP_TYPE,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v).CopyDescriptorsSimple(
+                @ptrCast(*const IDevice.VTable, self.__v).CopyDescriptorsSimple(
                     @ptrCast(*IDevice, self),
                     num,
                     dst_range_start,
@@ -4334,7 +4334,7 @@ pub const IDevice = extern struct {
                 descs: [*]const RESOURCE_DESC,
             ) RESOURCE_ALLOCATION_INFO {
                 var info: RESOURCE_ALLOCATION_INFO = undefined;
-                @ptrCast(*const IDevice.VTable, self.v).GetResourceAllocationInfo(
+                @ptrCast(*const IDevice.VTable, self.__v).GetResourceAllocationInfo(
                     @ptrCast(*IDevice, self),
                     &info,
                     visible_mask,
@@ -4349,7 +4349,7 @@ pub const IDevice = extern struct {
                 heap_type: HEAP_TYPE,
             ) HEAP_PROPERTIES {
                 var props: HEAP_PROPERTIES = undefined;
-                @ptrCast(*const IDevice.VTable, self.v)
+                @ptrCast(*const IDevice.VTable, self.__v)
                     .GetCustomHeapProperties(@ptrCast(*IDevice, self), &props, node_mask, heap_type);
                 return props;
             }
@@ -4363,7 +4363,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreateCommittedResource(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreateCommittedResource(
                     @ptrCast(*IDevice, self),
                     heap_props,
                     heap_flags,
@@ -4380,7 +4380,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 heap: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateHeap(@ptrCast(*IDevice, self), desc, guid, heap);
             }
             pub inline fn CreatePlacedResource(
@@ -4393,7 +4393,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).CreatePlacedResource(
+                return @ptrCast(*const IDevice.VTable, self.__v).CreatePlacedResource(
                     @ptrCast(*IDevice, self),
                     heap,
                     heap_offset,
@@ -4412,7 +4412,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateReservedResource(@ptrCast(*IDevice, self), desc, state, clear_value, guid, resource);
             }
             pub inline fn CreateSharedHandle(
@@ -4423,7 +4423,7 @@ pub const IDevice = extern struct {
                 name: ?LPCWSTR,
                 handle: ?*HANDLE,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateSharedHandle(@ptrCast(*IDevice, self), object, attributes, access, name, handle);
             }
             pub inline fn OpenSharedHandle(
@@ -4432,18 +4432,18 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 object: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .OpenSharedHandle(@ptrCast(*IDevice, self), handle, guid, object);
             }
             pub inline fn OpenSharedHandleByName(self: *T, name: LPCWSTR, access: DWORD, handle: ?*HANDLE) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .OpenSharedHandleByName(@ptrCast(*IDevice, self), name, access, handle);
             }
             pub inline fn MakeResident(self: *T, num: UINT, objects: [*]const *IPageable) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).MakeResident(@ptrCast(*IDevice, self), num, objects);
+                return @ptrCast(*const IDevice.VTable, self.__v).MakeResident(@ptrCast(*IDevice, self), num, objects);
             }
             pub inline fn Evict(self: *T, num: UINT, objects: [*]const *IPageable) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).Evict(@ptrCast(*IDevice, self), num, objects);
+                return @ptrCast(*const IDevice.VTable, self.__v).Evict(@ptrCast(*IDevice, self), num, objects);
             }
             pub inline fn CreateFence(
                 self: *T,
@@ -4452,11 +4452,11 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 fence: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateFence(@ptrCast(*IDevice, self), initial_value, flags, guid, fence);
             }
             pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v).GetDeviceRemovedReason(@ptrCast(*IDevice, self));
+                return @ptrCast(*const IDevice.VTable, self.__v).GetDeviceRemovedReason(@ptrCast(*IDevice, self));
             }
             pub inline fn GetCopyableFootprints(
                 self: *T,
@@ -4469,7 +4469,7 @@ pub const IDevice = extern struct {
                 row_size: ?[*]UINT64,
                 total_sizie: ?*UINT64,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v).GetCopyableFootprints(
+                @ptrCast(*const IDevice.VTable, self.__v).GetCopyableFootprints(
                     @ptrCast(*IDevice, self),
                     desc,
                     first_subresource,
@@ -4487,11 +4487,11 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 query_heap: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateQueryHeap(@ptrCast(*IDevice, self), desc, guid, query_heap);
             }
             pub inline fn SetStablePowerState(self: *T, enable: BOOL) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .SetStablePowerState(@ptrCast(*IDevice, self), enable);
             }
             pub inline fn CreateCommandSignature(
@@ -4501,7 +4501,7 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 cmd_signature: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.v)
+                return @ptrCast(*const IDevice.VTable, self.__v)
                     .CreateCommandSignature(@ptrCast(*IDevice, self), desc, root_signature, guid, cmd_signature);
             }
             pub inline fn GetResourceTiling(
@@ -4514,7 +4514,7 @@ pub const IDevice = extern struct {
                 first_subresource: UINT,
                 subresource_tiling_for_non_packed_mips: [*]SUBRESOURCE_TILING,
             ) void {
-                @ptrCast(*const IDevice.VTable, self.v).GetResourceTiling(
+                @ptrCast(*const IDevice.VTable, self.__v).GetResourceTiling(
                     @ptrCast(*IDevice, self),
                     resource,
                     num_resource_tiles,
@@ -4527,7 +4527,7 @@ pub const IDevice = extern struct {
             }
             pub inline fn GetAdapterLuid(self: *T) LUID {
                 var luid: LUID = undefined;
-                @ptrCast(*const IDevice.VTable, self.v).GetAdapterLuid(@ptrCast(*IDevice, self), &luid);
+                @ptrCast(*const IDevice.VTable, self.__v).GetAdapterLuid(@ptrCast(*IDevice, self), &luid);
                 return luid;
             }
         };
@@ -4739,7 +4739,7 @@ pub const RESIDENCY_PRIORITY = enum(UINT) {
 
 pub const IID_IDevice1 = GUID.parse("{77acce80-638e-4e65-8895-c1f23386863e}");
 pub const IDevice1 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -4754,7 +4754,7 @@ pub const IDevice1 = extern struct {
                 guid: *const GUID,
                 library: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice1.VTable, self.v)
+                return @ptrCast(*const IDevice1.VTable, self.__v)
                     .CreatePipelineLibrary(@ptrCast(*IDevice1, self), blob, blob_length, guid, library);
             }
             pub inline fn SetEventOnMultipleFenceCompletion(
@@ -4765,7 +4765,7 @@ pub const IDevice1 = extern struct {
                 flags: MULTIPLE_FENCE_WAIT_FLAGS,
                 event: HANDLE,
             ) HRESULT {
-                return @ptrCast(*const IDevice1.VTable, self.v).SetEventOnMultipleFenceCompletion(
+                return @ptrCast(*const IDevice1.VTable, self.__v).SetEventOnMultipleFenceCompletion(
                     @ptrCast(*IDevice1, self),
                     fences,
                     fence_values,
@@ -4780,7 +4780,7 @@ pub const IDevice1 = extern struct {
                 objects: [*]const *IPageable,
                 priorities: [*]const RESIDENCY_PRIORITY,
             ) HRESULT {
-                return @ptrCast(*const IDevice1.VTable, self.v)
+                return @ptrCast(*const IDevice1.VTable, self.__v)
                     .SetResidencyPriority(@ptrCast(*IDevice1, self), num_objects, objects, priorities);
             }
         };
@@ -4947,7 +4947,7 @@ pub const PIPELINE_MESH_STATE_STREAM = extern struct {
 
 pub const IID_IDevice2 = GUID.parse("{30baa41e-b15b-475c-a0bb-1af5c5b64328}");
 pub const IDevice2 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -4961,7 +4961,7 @@ pub const IDevice2 = extern struct {
                 guid: *const GUID,
                 pso: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice2.VTable, self.v)
+                return @ptrCast(*const IDevice2.VTable, self.__v)
                     .CreatePipelineState(@ptrCast(*IDevice2, self), desc, guid, pso);
             }
         };
@@ -4985,7 +4985,7 @@ pub const RESIDENCY_FLAGS = packed struct(UINT) {
 
 pub const IID_IDevice3 = GUID.parse("{81dadc15-2bad-4392-93c5-101345c4aa98}");
 pub const IDevice3 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -4999,7 +4999,7 @@ pub const IDevice3 = extern struct {
                 guid: *const GUID,
                 heap: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice3.VTable, self.v)
+                return @ptrCast(*const IDevice3.VTable, self.__v)
                     .OpenExistingHeapFromAddress(@ptrCast(*IDevice3, self), address, guid, heap);
             }
             pub inline fn OpenExistingHeapFromFileMapping(
@@ -5008,7 +5008,7 @@ pub const IDevice3 = extern struct {
                 guid: *const GUID,
                 heap: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice3.VTable, self.v)
+                return @ptrCast(*const IDevice3.VTable, self.__v)
                     .OpenExistingHeapFromFileMapping(@ptrCast(*IDevice3, self), file_mapping, guid, heap);
             }
             pub inline fn EnqueueMakeResident(
@@ -5019,7 +5019,7 @@ pub const IDevice3 = extern struct {
                 fence_to_signal: *IFence,
                 fence_value_to_signal: UINT64,
             ) HRESULT {
-                return @ptrCast(*const IDevice3.VTable, self.v).EnqueueMakeResident(
+                return @ptrCast(*const IDevice3.VTable, self.__v).EnqueueMakeResident(
                     @ptrCast(*IDevice3, self),
                     flags,
                     num_objects,
@@ -5068,7 +5068,7 @@ pub const RESOURCE_ALLOCATION_INFO1 = extern struct {
 
 pub const IID_IDevice4 = GUID.parse("{e865df17-a9ee-46f9-a463-3098315aa2e5}");
 pub const IDevice4 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5084,7 +5084,7 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 cmdlist: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice4.VTable, self.v)
+                return @ptrCast(*const IDevice4.VTable, self.__v)
                     .CreateCommandList1(@ptrCast(*IDevice4, self), node_mask, cmdlist_type, flags, guid, cmdlist);
             }
             pub inline fn CreateProtectedResourceSession(
@@ -5093,7 +5093,7 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 session: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice4.VTable, self.v)
+                return @ptrCast(*const IDevice4.VTable, self.__v)
                     .CreateProtectedResourceSession(@ptrCast(*IDevice4, self), desc, guid, session);
             }
             pub inline fn CreateCommittedResource1(
@@ -5107,7 +5107,7 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice4.VTable, self.v).CreateCommittedResource1(
+                return @ptrCast(*const IDevice4.VTable, self.__v).CreateCommittedResource1(
                     @ptrCast(*IDevice4, self),
                     heap_properties,
                     heap_flags,
@@ -5126,7 +5126,7 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 heap: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice4.VTable, self.v)
+                return @ptrCast(*const IDevice4.VTable, self.__v)
                     .CreateHeap1(@ptrCast(*IDevice4, self), desc, psession, guid, heap);
             }
             pub inline fn CreateReservedResource1(
@@ -5138,7 +5138,7 @@ pub const IDevice4 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice4.VTable, self.v).CreateReservedResource1(
+                return @ptrCast(*const IDevice4.VTable, self.__v).CreateReservedResource1(
                     @ptrCast(*IDevice4, self),
                     desc,
                     initial_state,
@@ -5156,7 +5156,7 @@ pub const IDevice4 = extern struct {
                 alloc_info: ?[*]RESOURCE_ALLOCATION_INFO1,
             ) RESOURCE_ALLOCATION_INFO {
                 var desc: RESOURCE_ALLOCATION_INFO = undefined;
-                @ptrCast(*const IDevice4.VTable, self.v).GetResourceAllocationInfo1(
+                @ptrCast(*const IDevice4.VTable, self.__v).GetResourceAllocationInfo1(
                     @ptrCast(*IDevice4, self),
                     &desc,
                     visible_mask,
@@ -5230,7 +5230,7 @@ pub const LIFETIME_STATE = enum(UINT) {
 };
 
 pub const ILifetimeOwner = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5239,7 +5239,7 @@ pub const ILifetimeOwner = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn LifetimeStateUpdated(self: *T, new_state: LIFETIME_STATE) void {
-                @ptrCast(*const ILifetimeOwner.VTable, self.v)
+                @ptrCast(*const ILifetimeOwner.VTable, self.__v)
                     .LifetimeStateUpdated(@ptrCast(*ILifetimeOwner, self), new_state);
             }
         };
@@ -5253,7 +5253,7 @@ pub const ILifetimeOwner = extern struct {
 
 pub const IID_IDevice5 = GUID.parse("{8b4f173b-2fea-4b80-8f58-4307191ab95d}");
 pub const IDevice5 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5267,18 +5267,18 @@ pub const IDevice5 = extern struct {
                 guid: *const GUID,
                 tracker: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice5.VTable, self.v)
+                return @ptrCast(*const IDevice5.VTable, self.__v)
                     .CreateLifetimeTracker(@ptrCast(*IDevice5, self), owner, guid, tracker);
             }
             pub inline fn RemoveDevice(self: *T) void {
-                @ptrCast(*const IDevice5.VTable, self.v).RemoveDevice();
+                @ptrCast(*const IDevice5.VTable, self.__v).RemoveDevice();
             }
             pub inline fn EnumerateMetaCommands(
                 self: *T,
                 num_meta_cmds: *UINT,
                 descs: ?[*]META_COMMAND_DESC,
             ) HRESULT {
-                return @ptrCast(*const IDevice5.VTable, self.v)
+                return @ptrCast(*const IDevice5.VTable, self.__v)
                     .EnumerateMetaCommands(@ptrCast(*IDevice5, self), num_meta_cmds, descs);
             }
             pub inline fn EnumerateMetaCommandParameters(
@@ -5289,7 +5289,7 @@ pub const IDevice5 = extern struct {
                 param_count: *UINT,
                 param_descs: ?[*]META_COMMAND_PARAMETER_DESC,
             ) HRESULT {
-                return @ptrCast(*const IDevice5.VTable, self.v).EnumerateMetaCommandParameters(
+                return @ptrCast(*const IDevice5.VTable, self.__v).EnumerateMetaCommandParameters(
                     @ptrCast(*IDevice5, self),
                     cmd_id,
                     stage,
@@ -5307,7 +5307,7 @@ pub const IDevice5 = extern struct {
                 guid: *const GUID,
                 meta_cmd: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice5.VTable, self.v).CreateMetaCommand(
+                return @ptrCast(*const IDevice5.VTable, self.__v).CreateMetaCommand(
                     @ptrCast(*IDevice5, self),
                     cmd_id,
                     node_mask,
@@ -5323,7 +5323,7 @@ pub const IDevice5 = extern struct {
                 guid: *const GUID,
                 state_object: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice5.VTable, self.v)
+                return @ptrCast(*const IDevice5.VTable, self.__v)
                     .CreateStateObject(@ptrCast(*IDevice5, self), desc, guid, state_object);
             }
             pub inline fn GetRaytracingAccelerationStructurePrebuildInfo(
@@ -5331,7 +5331,7 @@ pub const IDevice5 = extern struct {
                 desc: *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
                 info: *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
             ) void {
-                @ptrCast(*const IDevice5.VTable, self.v)
+                @ptrCast(*const IDevice5.VTable, self.__v)
                     .GetRaytracingAccelerationStructurePrebuildInfo(@ptrCast(*IDevice5, self), desc, info);
             }
             pub inline fn CheckDriverMatchingIdentifier(
@@ -5339,7 +5339,7 @@ pub const IDevice5 = extern struct {
                 serialized_data_type: SERIALIZED_DATA_TYPE,
                 identifier_to_check: *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
             ) DRIVER_MATCHING_IDENTIFIER_STATUS {
-                return @ptrCast(*const IDevice5.VTable, self.v).CheckDriverMatchingIdentifier(
+                return @ptrCast(*const IDevice5.VTable, self.__v).CheckDriverMatchingIdentifier(
                     @ptrCast(*IDevice5, self),
                     serialized_data_type,
                     identifier_to_check,
@@ -5411,7 +5411,7 @@ pub const MEASUREMENTS_ACTION = enum(UINT) {
 
 pub const IID_IDevice6 = GUID.parse("{c70b221b-40e4-4a17-89af-025a0727a6dc}");
 pub const IDevice6 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5426,7 +5426,7 @@ pub const IDevice6 = extern struct {
                 event_to_signal_upon_completion: ?HANDLE,
                 further_measurements_desired: ?*BOOL,
             ) HRESULT {
-                return @ptrCast(*const IDevice6.VTable, self.v).SetBackgroundProcessingMode(
+                return @ptrCast(*const IDevice6.VTable, self.__v).SetBackgroundProcessingMode(
                     @ptrCast(*IDevice6, self),
                     mode,
                     measurements_action,
@@ -5457,7 +5457,7 @@ pub const PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
 
 pub const IID_IDevice7 = GUID.parse("{5c014b53-68a1-4b9b-8bd1-dd6046b9358b}");
 pub const IDevice7 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5472,7 +5472,7 @@ pub const IDevice7 = extern struct {
                 guid: *const GUID,
                 new_state_object: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice7.VTable, self.v)
+                return @ptrCast(*const IDevice7.VTable, self.__v)
                     .AddToStateObject(@ptrCast(*IDevice7, self), addition, state_object, guid, new_state_object);
             }
             pub inline fn CreateProtectedResourceSession1(
@@ -5481,7 +5481,7 @@ pub const IDevice7 = extern struct {
                 guid: *const GUID,
                 session: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice7.VTable, self.v)
+                return @ptrCast(*const IDevice7.VTable, self.__v)
                     .CreateProtectedResourceSession1(@ptrCast(*IDevice7, self), desc, guid, session);
             }
         };
@@ -5527,7 +5527,7 @@ pub const RESOURCE_DESC1 = extern struct {
 
 pub const IID_IDevice8 = GUID.parse("{9218E6BB-F944-4F7E-A75C-B1B2C7B701F3}");
 pub const IDevice8 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5543,7 +5543,7 @@ pub const IDevice8 = extern struct {
                 alloc_info: ?[*]RESOURCE_ALLOCATION_INFO1,
             ) RESOURCE_ALLOCATION_INFO {
                 var desc: RESOURCE_ALLOCATION_INFO = undefined;
-                @ptrCast(*const IDevice8.VTable, self.v).GetResourceAllocationInfo2(
+                @ptrCast(*const IDevice8.VTable, self.__v).GetResourceAllocationInfo2(
                     @ptrCast(*IDevice8, self),
                     &desc,
                     visible_mask,
@@ -5564,7 +5564,7 @@ pub const IDevice8 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice8.VTable, self.v).CreateCommittedResource2(
+                return @ptrCast(*const IDevice8.VTable, self.__v).CreateCommittedResource2(
                     @ptrCast(*IDevice8, self),
                     heap_properties,
                     heap_flags,
@@ -5586,7 +5586,7 @@ pub const IDevice8 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice8.VTable, self.v).CreatePlacedResource1(
+                return @ptrCast(*const IDevice8.VTable, self.__v).CreatePlacedResource1(
                     @ptrCast(*IDevice8, self),
                     heap,
                     heap_offset,
@@ -5603,7 +5603,7 @@ pub const IDevice8 = extern struct {
                 feedback_resource: ?*IResource,
                 dest_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice8.VTable, self.v).CreateSamplerFeedbackUnorderedAccessView(
+                @ptrCast(*const IDevice8.VTable, self.__v).CreateSamplerFeedbackUnorderedAccessView(
                     @ptrCast(*IDevice8, self),
                     targeted_resource,
                     feedback_resource,
@@ -5621,7 +5621,7 @@ pub const IDevice8 = extern struct {
                 row_size_in_bytes: ?[*]UINT64,
                 total_bytes: ?*UINT64,
             ) void {
-                @ptrCast(*const IDevice8.VTable, self.v).GetCopyableFootprints1(
+                @ptrCast(*const IDevice8.VTable, self.__v).GetCopyableFootprints1(
                     @ptrCast(*IDevice8, self),
                     desc,
                     first_subresource,
@@ -5725,7 +5725,7 @@ pub const SHADER_CACHE_SESSION_DESC = extern struct {
 
 pub const IID_IDevice9 = GUID.parse("{4c80e962-f032-4f60-bc9e-ebc2cfa1d83c}");
 pub const IDevice9 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5739,7 +5739,7 @@ pub const IDevice9 = extern struct {
                 guid: *const GUID,
                 session: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice9.VTable, self.v)
+                return @ptrCast(*const IDevice9.VTable, self.__v)
                     .CreateShaderCacheSession(@ptrCast(*IDevice9, self), desc, guid, session);
             }
             pub inline fn ShaderCacheControl(
@@ -5747,7 +5747,7 @@ pub const IDevice9 = extern struct {
                 kinds: SHADER_CACHE_KIND_FLAGS,
                 control: SHADER_CACHE_CONTROL_FLAGS,
             ) HRESULT {
-                return @ptrCast(*const IDevice9.VTable, self.v)
+                return @ptrCast(*const IDevice9.VTable, self.__v)
                     .ShaderCacheControl(@ptrCast(*IDevice9, self), kinds, control);
             }
             pub inline fn CreateCommandQueue1(
@@ -5757,7 +5757,7 @@ pub const IDevice9 = extern struct {
                 guid: *const GUID,
                 cmdqueue: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice9.VTable, self.v)
+                return @ptrCast(*const IDevice9.VTable, self.__v)
                     .CreateCommandQueue1(@ptrCast(*IDevice9, self), desc, creator_id, guid, cmdqueue);
             }
         };
@@ -5956,7 +5956,7 @@ pub const BARRIER_GROUP = extern struct {
 
 pub const IID_IDevice10 = GUID.parse("{517f8718-aa66-49f9-b02b-a7ab89c06031}");
 pub const IDevice10 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -5977,7 +5977,7 @@ pub const IDevice10 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice10.VTable, self.v).CreateCommittedResource3(
+                return @ptrCast(*const IDevice10.VTable, self.__v).CreateCommittedResource3(
                     @ptrCast(*IDevice10, self),
                     heap_properties,
                     heap_flags,
@@ -6003,7 +6003,7 @@ pub const IDevice10 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice10.VTable, self.v).CreatePlacedResource2(
+                return @ptrCast(*const IDevice10.VTable, self.__v).CreatePlacedResource2(
                     @ptrCast(*IDevice10, self),
                     heap,
                     heap_offset,
@@ -6027,7 +6027,7 @@ pub const IDevice10 = extern struct {
                 guid: *const GUID,
                 resource: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice10.VTable, self.v).CreateReservedResource2(
+                return @ptrCast(*const IDevice10.VTable, self.__v).CreateReservedResource2(
                     @ptrCast(*IDevice10, self),
                     desc,
                     initial_layout,
@@ -6107,7 +6107,7 @@ pub const SAMPLER_DESC2 = extern struct {
 
 pub const IID_IDevice11 = GUID.parse("{5405c344-d457-444e-b4dd-2366e45aee39}");
 pub const IDevice11 = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -6120,7 +6120,7 @@ pub const IDevice11 = extern struct {
                 desc: *const SAMPLER_DESC2,
                 dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
-                @ptrCast(*const IDevice11.VTable, self.v)
+                @ptrCast(*const IDevice11.VTable, self.__v)
                     .CreateSampler2(@ptrCast(*IDevice11, self), desc, dst_descriptor);
             }
         };
@@ -6138,7 +6138,7 @@ pub const PROTECTED_SESSION_STATUS = enum(UINT) {
 };
 
 pub const IProtectedSession = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -6147,11 +6147,11 @@ pub const IProtectedSession = extern struct {
             pub usingnamespace IDeviceChild.Methods(T);
 
             pub inline fn GetStatusFence(self: *T, guid: *const GUID, fence: ?*?*anyopaque) HRESULT {
-                return @ptrCast(*const IProtectedSession.VTable, self.v)
+                return @ptrCast(*const IProtectedSession.VTable, self.__v)
                     .GetStatusFence(@ptrCast(*IProtectedSession, self), guid, fence);
             }
             pub inline fn GetSessionStatus(self: *T) PROTECTED_SESSION_STATUS {
-                return @ptrCast(*const IProtectedSession.VTable, self.v)
+                return @ptrCast(*const IProtectedSession.VTable, self.__v)
                     .GetSessionStatus(@ptrCast(*IProtectedSession, self));
             }
         };
@@ -6174,7 +6174,7 @@ pub const PROTECTED_RESOURCE_SESSION_DESC = extern struct {
 };
 
 pub const IProtectedResourceSession = extern struct {
-    v: *const VTable,
+    __v: *const VTable,
 
     pub usingnamespace Methods(@This());
 
@@ -6184,7 +6184,7 @@ pub const IProtectedResourceSession = extern struct {
 
             pub inline fn GetDesc(self: *T) PROTECTED_RESOURCE_SESSION_DESC {
                 var desc: PROTECTED_RESOURCE_SESSION_DESC = undefined;
-                _ = @ptrCast(*const IProtectedResourceSession.VTable, self.v)
+                _ = @ptrCast(*const IProtectedResourceSession.VTable, self.__v)
                     .GetDesc(@ptrCast(*IProtectedResourceSession, self), &desc);
                 return desc;
             }
