@@ -318,7 +318,7 @@ pub const Stream = struct {
         ));
     }
 
-    fn endOfStream(stream: *Stream, buffer: *mf.IMediaBuffer) void {
+    fn endOfStreamChunk(stream: *Stream, buffer: *mf.IMediaBuffer) void {
         w32.kernel32.EnterCriticalSection(&stream.critical_section);
         defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
 
@@ -366,7 +366,7 @@ pub const Stream = struct {
             .LoopBegin = 0,
             .LoopLength = 0,
             .LoopCount = 0,
-            .pContext = buffer, // Store pointer to the buffer so that we can release it in endOfStream()
+            .pContext = buffer, // Store pointer to the buffer so that we can release it in endOfStreamChunk()
         }, null));
     }
 };
@@ -387,7 +387,7 @@ const StreamVoiceCallback = struct {
 
     fn onBufferEndImpl(i_voice_callback: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
         const voice_cb = @ptrCast(*StreamVoiceCallback, i_voice_callback);
-        voice_cb.stream.?.endOfStream(@ptrCast(*mf.IMediaBuffer, @alignCast(@sizeOf(usize), context)));
+        voice_cb.stream.?.endOfStreamChunk(@ptrCast(*mf.IMediaBuffer, @alignCast(@sizeOf(usize), context)));
     }
 };
 
