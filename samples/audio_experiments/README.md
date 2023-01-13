@@ -1,3 +1,3 @@
-## audio experiments (wip)
+## audio experiments
 
 ![image](screenshot.png)
