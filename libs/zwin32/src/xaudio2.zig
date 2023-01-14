@@ -623,10 +623,17 @@ pub const IEngineCallback = extern struct {
     }
 
     pub const VTable = extern struct {
-        OnProcessingPassStart: *const fn (*IEngineCallback) callconv(WINAPI) void,
-        OnProcessingPassEnd: *const fn (*IEngineCallback) callconv(WINAPI) void,
-        OnCriticalError: *const fn (*IEngineCallback, HRESULT) callconv(WINAPI) void,
+        OnProcessingPassStart: *const fn (*IEngineCallback) callconv(WINAPI) void = onProcessingPassStartDef,
+
+        OnProcessingPassEnd: *const fn (*IEngineCallback) callconv(WINAPI) void = onProcessingPassEndDef,
+
+        OnCriticalError: *const fn (*IEngineCallback, HRESULT) callconv(WINAPI) void = onCriticalErrorDef,
     };
+
+    // Default implementations
+    fn onProcessingPassStartDef(_: *IEngineCallback) callconv(WINAPI) void {}
+    fn onProcessingPassEndDef(_: *IEngineCallback) callconv(WINAPI) void {}
+    fn onCriticalErrorDef(_: *IEngineCallback, _: HRESULT) callconv(WINAPI) void {}
 };
 
 pub const IVoiceCallback = extern struct {
