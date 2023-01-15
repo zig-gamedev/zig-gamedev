@@ -2893,6 +2893,8 @@ pub const MouseButton = enum(u32) {
     right = 1,
     middle = 2,
 };
+/// `pub fn isMouseDoubleClicked(mouse_button: MouseButton) bool`
+pub const isMouseDoubleClicked = zguiIsMouseDoubleClicked;
 /// `pub fn isItemClicked(mouse_button: MouseButton) bool`
 pub const isItemClicked = zguiIsItemClicked;
 /// `pub fn isItemVisible() bool`
@@ -2913,6 +2915,7 @@ pub const isAnyItemHovered = zguiIsAnyItemHovered;
 pub const isAnyItemActive = zguiIsAnyItemActive;
 /// `pub fn isAnyItemFocused() bool`
 pub const isAnyItemFocused = zguiIsAnyItemFocused;
+extern fn zguiIsMouseDoubleClicked(mouse_button: MouseButton) bool;
 extern fn zguiIsItemHovered(flags: HoveredFlags) bool;
 extern fn zguiIsItemActive() bool;
 extern fn zguiIsItemFocused() bool;

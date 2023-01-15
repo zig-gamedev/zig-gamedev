@@ -1285,6 +1285,10 @@ ZGUI_API bool zguiIsItemClicked(ImGuiMouseButton mouse_button) {
     return ImGui::IsItemClicked(mouse_button);
 }
 
+ZGUI_API bool zguiIsMouseDoubleClicked(ImGuiMouseButton button) {
+    return ImGui::IsMouseDoubleClicked(button);
+}
+
 ZGUI_API bool zguiIsItemVisible(void) {
     return ImGui::IsItemVisible();
 }
