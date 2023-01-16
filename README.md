@@ -33,7 +33,7 @@ Library | Latest version | Description
 **[zbullet](libs/zbullet)** | 0.2.0 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 **[zwin32](libs/zwin32)** | 0.9.0 | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)
 **[zd3d12](libs/zd3d12)** | 0.9.0 | Helper library for DirectX 12
-**[zxaudio2](libs/zxaudio2)** | 0.9.0 | Helper library XAudio2
+**[zxaudio2](libs/zxaudio2)** | 0.9.0 | Helper library for XAudio2
 **[zpix](libs/zpix)** | 0.9.0 | Support for GPU profiling with PIX for Windows
 
 ## Vision
