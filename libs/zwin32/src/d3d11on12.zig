@@ -1,12 +1,12 @@
-const RESOURCE_STATES = @import("d3d12.zig").RESOURCE_STATES;
-const windows = @import("windows.zig");
+const w32 = @import("w32.zig");
+const IUnknown = w32.IUnknown;
+const UINT = w32.UINT;
+const WINAPI = w32.WINAPI;
+const GUID = w32.GUID;
+const HRESULT = w32.HRESULT;
 const d3d = @import("d3dcommon.zig");
 const d3d11 = @import("d3d11.zig");
-const IUnknown = windows.IUnknown;
-const UINT = windows.UINT;
-const WINAPI = windows.WINAPI;
-const GUID = windows.GUID;
-const HRESULT = windows.HRESULT;
+const RESOURCE_STATES = @import("d3d12.zig").RESOURCE_STATES;
 
 pub const RESOURCE_FLAGS = extern struct {
     BindFlags: d3d11.BIND_FLAG,

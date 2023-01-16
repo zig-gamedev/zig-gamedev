@@ -20,7 +20,7 @@ Now in your code you may import and use zwin32:
 
 ```zig
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const dwrite = zwin32.dwrite;
 const dxgi = zwin32.dxgi;
 const d3d12 = zwin32.d3d12;

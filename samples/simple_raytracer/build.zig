@@ -31,7 +31,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.rdynamic = true;
 
     const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable_zpix = options.zpix_enable });
-    const zpix_pkg = zpix.getPkg(&.{zpix_options.getPkg()});
+    const zpix_pkg = zpix.getPkg(&.{ zwin32.pkg, zpix_options.getPkg() });
     exe.addPackage(zpix_pkg);
 
     const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{

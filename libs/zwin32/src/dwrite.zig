@@ -1,11 +1,11 @@
-const windows = @import("windows.zig");
-const UINT = windows.UINT;
-const IUnknown = windows.IUnknown;
-const GUID = windows.GUID;
-const HRESULT = windows.HRESULT;
-const WINAPI = windows.WINAPI;
-const LPCWSTR = windows.LPCWSTR;
-const FLOAT = windows.FLOAT;
+const w32 = @import("w32.zig");
+const UINT = w32.UINT;
+const IUnknown = w32.IUnknown;
+const GUID = w32.GUID;
+const HRESULT = w32.HRESULT;
+const WINAPI = w32.WINAPI;
+const LPCWSTR = w32.LPCWSTR;
+const FLOAT = w32.FLOAT;
 
 pub const MEASURING_MODE = enum(UINT) {
     NATURAL = 0,

@@ -1,6 +1,6 @@
 const std = @import("std");
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;

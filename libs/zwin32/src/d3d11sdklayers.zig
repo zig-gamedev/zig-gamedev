@@ -1,12 +1,12 @@
-const windows = @import("windows.zig");
-const IUnknown = windows.IUnknown;
-const HRESULT = windows.HRESULT;
-const WINAPI = windows.WINAPI;
-const GUID = windows.GUID;
-const UINT = windows.UINT;
-const UINT64 = windows.UINT64;
-const SIZE_T = windows.SIZE_T;
-const BOOL = windows.BOOL;
+const w32 = @import("w32.zig");
+const IUnknown = w32.IUnknown;
+const HRESULT = w32.HRESULT;
+const WINAPI = w32.WINAPI;
+const GUID = w32.GUID;
+const UINT = w32.UINT;
+const UINT64 = w32.UINT64;
+const SIZE_T = w32.SIZE_T;
+const BOOL = w32.BOOL;
 
 pub const MESSAGE_CATEGORY = enum(UINT) {
     APPLICATION_DEFINED = 0,

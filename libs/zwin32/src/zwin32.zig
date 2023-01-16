@@ -1,4 +1,4 @@
-pub const base = @import("windows.zig");
+pub const w32 = @import("w32.zig");
 pub const dwrite = @import("dwrite.zig");
 pub const dxgi = @import("dxgi.zig");
 pub const d3d11 = @import("d3d11.zig");
@@ -21,8 +21,8 @@ pub const xinput = @import("xinput.zig");
 /// Not recommended. Precompile your shaders with dxc instead.
 pub const d3dcompiler = @import("d3dcompiler.zig");
 
-const HRESULT = base.HRESULT;
-const S_OK = base.S_OK;
+const HRESULT = w32.HRESULT;
+const S_OK = w32.S_OK;
 
 const std = @import("std");
 const panic = std.debug.panic;
@@ -30,7 +30,8 @@ const assert = std.debug.assert;
 
 // TODO: Handle more error codes from https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
 pub const HResultError =
-    base.MiscError || base.Error || dxgi.Error || d3d12.Error || d3d11.Error || wasapi.Error || dwrite.Error || xapo.Error || xinput.Error;
+    w32.MiscError || w32.Error || dxgi.Error || d3d12.Error || d3d11.Error ||
+    wasapi.Error || dwrite.Error || xapo.Error || xinput.Error;
 
 pub fn hrPanic(err: HResultError) noreturn {
     panic(
@@ -55,15 +56,15 @@ pub fn hrToError(hr: HRESULT) HResultError {
     assert(hr != S_OK);
     return switch (hr) {
         //
-        base.E_UNEXPECTED => base.Error.UNEXPECTED,
-        base.E_NOTIMPL => base.Error.NOTIMPL,
-        base.E_OUTOFMEMORY => base.Error.OUTOFMEMORY,
-        base.E_INVALIDARG => base.Error.INVALIDARG,
-        base.E_POINTER => base.Error.POINTER,
-        base.E_HANDLE => base.Error.HANDLE,
-        base.E_ABORT => base.Error.ABORT,
-        base.E_FAIL => base.Error.FAIL,
-        base.E_ACCESSDENIED => base.Error.ACCESSDENIED,
+        w32.E_UNEXPECTED => w32.Error.UNEXPECTED,
+        w32.E_NOTIMPL => w32.Error.NOTIMPL,
+        w32.E_OUTOFMEMORY => w32.Error.OUTOFMEMORY,
+        w32.E_INVALIDARG => w32.Error.INVALIDARG,
+        w32.E_POINTER => w32.Error.POINTER,
+        w32.E_HANDLE => w32.Error.HANDLE,
+        w32.E_ABORT => w32.Error.ABORT,
+        w32.E_FAIL => w32.Error.FAIL,
+        w32.E_ACCESSDENIED => w32.Error.ACCESSDENIED,
         //
         dxgi.ERROR_ACCESS_DENIED => dxgi.Error.ACCESS_DENIED,
         dxgi.ERROR_ACCESS_LOST => dxgi.Error.ACCESS_LOST,
@@ -131,27 +132,27 @@ pub fn hrToError(hr: HRESULT) HResultError {
         xinput.ERROR_EMPTY => xinput.Error.EMPTY,
         xinput.ERROR_DEVICE_NOT_CONNECTED => xinput.Error.DEVICE_NOT_CONNECTED,
         //
-        base.E_FILE_NOT_FOUND => base.MiscError.E_FILE_NOT_FOUND,
-        base.S_FALSE => base.MiscError.S_FALSE,
+        w32.E_FILE_NOT_FOUND => w32.MiscError.E_FILE_NOT_FOUND,
+        w32.S_FALSE => w32.MiscError.S_FALSE,
         // treat unknown error return codes as E_FAIL
         else => blk: {
             std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
-            break :blk base.Error.FAIL;
+            break :blk w32.Error.FAIL;
         },
     };
 }
 
 pub fn errorToHRESULT(err: HResultError) HRESULT {
     return switch (err) {
-        base.Error.UNEXPECTED => base.E_UNEXPECTED,
-        base.Error.NOTIMPL => base.E_NOTIMPL,
-        base.Error.OUTOFMEMORY => base.E_OUTOFMEMORY,
-        base.Error.INVALIDARG => base.E_INVALIDARG,
-        base.Error.POINTER => base.E_POINTER,
-        base.Error.HANDLE => base.E_HANDLE,
-        base.Error.ABORT => base.E_ABORT,
-        base.Error.FAIL => base.E_FAIL,
-        base.Error.ACCESSDENIED => base.E_ACCESSDENIED,
+        w32.Error.UNEXPECTED => w32.E_UNEXPECTED,
+        w32.Error.NOTIMPL => w32.E_NOTIMPL,
+        w32.Error.OUTOFMEMORY => w32.E_OUTOFMEMORY,
+        w32.Error.INVALIDARG => w32.E_INVALIDARG,
+        w32.Error.POINTER => w32.E_POINTER,
+        w32.Error.HANDLE => w32.E_HANDLE,
+        w32.Error.ABORT => w32.E_ABORT,
+        w32.Error.FAIL => w32.E_FAIL,
+        w32.Error.ACCESSDENIED => w32.E_ACCESSDENIED,
         //
         dxgi.Error.ACCESS_DENIED => dxgi.ERROR_ACCESS_DENIED,
         dxgi.Error.ACCESS_LOST => dxgi.ERROR_ACCESS_LOST,
@@ -218,7 +219,7 @@ pub fn errorToHRESULT(err: HResultError) HRESULT {
         xinput.Error.EMPTY => xinput.ERROR_EMPTY,
         xinput.Error.DEVICE_NOT_CONNECTED => xinput.ERROR_DEVICE_NOT_CONNECTED,
         //
-        base.MiscError.E_FILE_NOT_FOUND => base.E_FILE_NOT_FOUND,
-        base.MiscError.S_FALSE => base.S_FALSE,
+        w32.MiscError.E_FILE_NOT_FOUND => w32.E_FILE_NOT_FOUND,
+        w32.MiscError.S_FALSE => w32.S_FALSE,
     };
 }
