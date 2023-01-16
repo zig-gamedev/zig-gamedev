@@ -30,9 +30,8 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable_zpix = options.zpix_enable });
+    const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable = options.zpix_enable });
     const zpix_pkg = zpix.getPkg(&.{ zwin32.pkg, zpix_options.getPkg() });
-    exe.addPackage(zpix_pkg);
 
     const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
         .enable_debug_layer = options.zd3d12_enable_debug_layer,
@@ -45,6 +44,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zd3d12_pkg);
     exe.addPackage(zwin32.pkg);
     exe.addPackage(common_pkg);
+    exe.addPackage(zpix_pkg);
 
     zd3d12.link(exe, zd3d12_options);
     common.link(exe);

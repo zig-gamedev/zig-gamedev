@@ -444,7 +444,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     _ = zpix.loadGpuCapturerLibrary();
     _ = zpix.setTargetWindow(window);
     _ = zpix.beginCapture(
-        zpix.CAPTURE_GPU,
+        .{ .GPU = true },
         &.{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 

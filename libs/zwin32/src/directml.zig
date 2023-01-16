@@ -1,5 +1,4 @@
 const std = @import("std");
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const assert = std.debug.assert;
 const w32 = @import("w32.zig");
 const UINT = w32.UINT;

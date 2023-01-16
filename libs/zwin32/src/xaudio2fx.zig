@@ -7,7 +7,6 @@ const WINAPI = w32.WINAPI;
 const UINT32 = w32.UINT32;
 const BOOL = w32.BOOL;
 const FALSE = w32.FALSE;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub const VOLUMEMETER_LEVELS = extern struct {
     pPeakLevels: ?[*]f32 align(1),

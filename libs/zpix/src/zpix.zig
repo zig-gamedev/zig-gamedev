@@ -1,6 +1,5 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const w32 = @import("zwin32").w32;
 const HMODULE = w32.HMODULE;
 const HRESULT = w32.HRESULT;
@@ -16,18 +15,20 @@ const DWORD = w32.DWORD;
 const UINT32 = u32;
 
 const options = @import("zpix_options");
-const enable_pix = if (@hasDecl(options, "enable_zpix")) options.enable_zpix else false;
+const enable = if (@hasDecl(options, "enable")) options.enable else false;
 
-pub const CAPTURE_TIMING = (1 << 0);
-pub const CAPTURE_GPU = (1 << 1);
-pub const CAPTURE_FUNCTION_SUMMARY = (1 << 2);
-pub const CAPTURE_FUNCTION_DETAILS = (1 << 3);
-pub const CAPTURE_CALLGRAPH = (1 << 4);
-pub const CAPTURE_INSTRUCTION_TRACE = (1 << 5);
-pub const CAPTURE_SYSTEM_MONITOR_COUNTERS = (1 << 6);
-pub const CAPTURE_VIDEO = (1 << 7);
-pub const CAPTURE_AUDIO = (1 << 8);
-pub const CAPTURE_RESERVED = (1 << 15);
+pub const CAPTURE_FLAGS = packed struct(UINT32) {
+    TIMING: bool = false,
+    GPU: bool = false,
+    FUNCTION_SUMMARY: bool = false,
+    FUNCTION_DETAILS: bool = false,
+    CALLGRAPH: bool = false,
+    INSTRUCTION_TRACE: bool = false,
+    SYSTEM_MONITOR_COUNTERS: bool = false,
+    VIDEO: bool = false,
+    AUDIO: bool = false,
+    __unused: u23 = 0,
+};
 
 pub const CaptureStorage = enum(u32) {
     Memory = 0,
@@ -61,15 +62,15 @@ pub const CaptureParameters = extern union {
     timing_capture_params: TimingCaptureParameters,
 };
 
-pub const loadGpuCapturerLibrary = if (enable_pix) impl.loadGpuCapturerLibrary else empty.loadGpuCapturerLibrary;
-pub const beginCapture = if (enable_pix) impl.beginCapture else empty.beginCapture;
-pub const endCapture = if (enable_pix) impl.endCapture else empty.endCapture;
-pub const setTargetWindow = if (enable_pix) impl.setTargetWindow else empty.setTargetWindow;
-pub const gpuCaptureNextFrames = if (enable_pix) impl.gpuCaptureNextFrames else empty.gpuCaptureNextFrames;
+pub const loadGpuCapturerLibrary = if (enable) impl.loadGpuCapturerLibrary else empty.loadGpuCapturerLibrary;
+pub const beginCapture = if (enable) impl.beginCapture else empty.beginCapture;
+pub const endCapture = if (enable) impl.endCapture else empty.endCapture;
+pub const setTargetWindow = if (enable) impl.setTargetWindow else empty.setTargetWindow;
+pub const gpuCaptureNextFrames = if (enable) impl.gpuCaptureNextFrames else empty.gpuCaptureNextFrames;
 
-pub const setMarker = if (enable_pix) impl.setMarker else empty.setMarker;
-pub const beginEvent = if (enable_pix) impl.beginEvent else empty.beginEvent;
-pub const endEvent = if (enable_pix) impl.endEvent else empty.endEvent;
+pub const setMarker = if (enable) impl.setMarker else empty.setMarker;
+pub const beginEvent = if (enable) impl.beginEvent else empty.beginEvent;
+pub const endEvent = if (enable) impl.endEvent else empty.endEvent;
 
 fn getFunctionPtr(func_name: LPCSTR) ?FARPROC {
     const module = w32.GetModuleHandleA("WinPixGpuCapturer.dll");
@@ -199,8 +200,8 @@ const impl = struct {
         return if (w32.LoadLibraryA(dll_path.ptr)) |lib| lib else null;
     }
 
-    fn beginCapture(flags: DWORD, params: ?*const CaptureParameters) HRESULT {
-        if (flags == CAPTURE_GPU) {
+    fn beginCapture(flags: CAPTURE_FLAGS, params: ?*const CaptureParameters) HRESULT {
+        if (flags.GPU) {
             const beginProgrammaticGpuCapture = @ptrCast(
                 ?*const fn (?*const CaptureParameters) callconv(WINAPI) HRESULT,
                 getFunctionPtr("BeginProgrammaticGpuCapture"),
@@ -327,7 +328,7 @@ const empty = struct {
     fn loadGpuCapturerLibrary() ?HMODULE {
         return null;
     }
-    fn beginCapture(flags: DWORD, params: ?*const CaptureParameters) HRESULT {
+    fn beginCapture(flags: CAPTURE_FLAGS, params: ?*const CaptureParameters) HRESULT {
         _ = flags;
         _ = params;
         return w32.S_OK;

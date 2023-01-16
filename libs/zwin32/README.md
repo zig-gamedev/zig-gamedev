@@ -29,19 +29,19 @@ const dml = zwin32.directml;
 
 pub fn main() !void {
     ...
-    const winclass = w32.user32.WNDCLASSEXA{
+    const winclass = w32.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(w32.HINSTANCE, w32.kernel32.GetModuleHandleW(null)),
+        .hInstance = @ptrCast(w32.HINSTANCE, w32.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = w.LoadCursorA(null, @intToPtr(w32.LPCSTR, 32512)),
+        .hCursor = w32.LoadCursorA(null, @intToPtr(w32.LPCSTR, 32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = name,
         .hIconSm = null,
     };
-    _ = try w32.user32.registerClassExA(&winclass);
+    _ = w32.RegisterClassExA(&winclass);
 }
 ```

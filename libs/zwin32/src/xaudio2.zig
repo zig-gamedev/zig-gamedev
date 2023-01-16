@@ -12,7 +12,6 @@ const DWORD = w32.DWORD;
 const GUID = w32.GUID;
 const HRESULT = w32.HRESULT;
 const WAVEFORMATEX = @import("wasapi.zig").WAVEFORMATEX;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 // NOTE(mziulek):
 // xaudio2redist.h uses tight field packing so we need align each field with `align(1)`

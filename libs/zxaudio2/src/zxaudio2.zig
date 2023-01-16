@@ -1,6 +1,5 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w32 = zwin32.w32;
 const IUnknown = w32.IUnknown;

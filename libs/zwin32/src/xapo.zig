@@ -1,6 +1,5 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const w32 = @import("w32.zig");
 const BYTE = w32.BYTE;
 const HRESULT = w32.HRESULT;
