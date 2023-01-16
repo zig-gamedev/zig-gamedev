@@ -44,6 +44,10 @@ ZGUI_API void zguiSetNextWindowBgAlpha(float alpha) {
     ImGui::SetNextWindowBgAlpha(alpha);
 }
 
+ZGUI_API void zguiSetKeyboardFocusHere(int offset) {
+    ImGui::SetKeyboardFocusHere(offset);
+}
+
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
     return ImGui::Begin(name, p_open, flags);
 }
@@ -1407,6 +1411,10 @@ ZGUI_API void zguiBeginTooltip(void) {
 
 ZGUI_API void zguiEndTooltip(void) {
     ImGui::EndTooltip();
+}
+
+ZGUI_API bool zguiBeginPopupContextWindow(void) {
+    return ImGui::BeginPopupContextWindow();
 }
 
 ZGUI_API bool zguiBeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags flags) {
