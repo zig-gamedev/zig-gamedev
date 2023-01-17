@@ -127,7 +127,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     hrPanicOnFail(dml.createDevice(
         @ptrCast(*d3d12.IDevice, gctx.device),
         .{ .DEBUG = enable_dx_debug },
-        .@"5_0",
+        .@"4_1",
         &dml.IID_IDevice1,
         @ptrCast(*?*anyopaque, &dml_device),
     ));
