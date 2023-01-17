@@ -151,7 +151,7 @@ pub const GraphicsContext = struct {
 
                         const hr = d3d12.D3D12CreateDevice(
                             @ptrCast(*w32.IUnknown, adapter1),
-                            .FL_11_1,
+                            .@"11_1",
                             &d3d12.IID_IDevice9,
                             null,
                         );
@@ -172,7 +172,7 @@ pub const GraphicsContext = struct {
             var device: *d3d12.IDevice9 = undefined;
             const hr = d3d12.D3D12CreateDevice(
                 if (suitable_adapter) |adapter| @ptrCast(*w32.IUnknown, adapter) else null,
-                .FL_11_1,
+                .@"11_1",
                 &d3d12.IID_IDevice9,
                 @ptrCast(*?*anyopaque, &device),
             );
@@ -192,9 +192,9 @@ pub const GraphicsContext = struct {
 
         // Check for Shader Model 6.6 support.
         {
-            var data: d3d12.FEATURE_DATA_SHADER_MODEL = .{ .HighestShaderModel = .SM_6_7 };
+            var data: d3d12.FEATURE_DATA_SHADER_MODEL = .{ .HighestShaderModel = .@"6_7" };
             const hr = device.CheckFeatureSupport(.SHADER_MODEL, &data, @sizeOf(d3d12.FEATURE_DATA_SHADER_MODEL));
-            if (hr != w32.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_6)) {
+            if (hr != w32.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.@"6_6")) {
                 _ = w32.MessageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Shader Model 6.6. " ++
