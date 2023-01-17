@@ -37,6 +37,33 @@ pub fn getTranslationVec(m: zm.Mat) zm.Vec {
     return translation;
 }
 
+pub fn getScaleVec(m: zm.Mat) zm.Vec {
+    const scale_x = zm.length3(zm.f32x4(m[0][0], m[1][0], m[2][0], 0))[0];
+    const scale_y = zm.length3(zm.f32x4(m[0][1], m[1][1], m[2][1], 0))[0];
+    const scale_z = zm.length3(zm.f32x4(m[0][2], m[1][2], m[2][2], 0))[0];
+    return zm.f32x4(scale_x, scale_y, scale_z, 0);
+}
+
+pub fn getRotationQuat(_m: zm.Mat) zm.Quat {
+    // Ortho normalize given matrix.
+    const c1 = zm.normalize3(zm.f32x4(_m[0][0], _m[1][0], _m[2][0], 0));
+    const c2 = zm.normalize3(zm.f32x4(_m[0][1], _m[1][1], _m[2][1], 0));
+    const c3 = zm.normalize3(zm.f32x4(_m[0][2], _m[1][2], _m[2][2], 0));
+    var m = _m;
+    m[0][0] = c1[0];
+    m[1][0] = c1[1];
+    m[2][0] = c1[2];
+    m[0][1] = c2[0];
+    m[1][1] = c2[1];
+    m[2][1] = c2[2];
+    m[0][2] = c3[0];
+    m[1][2] = c3[1];
+    m[2][2] = c3[2];
+
+    // Extract rotation
+    return zm.quatFromMat(m);
+}
+
 pub fn getAxisX(m: zm.Mat) zm.Vec {
     return zm.normalize3(zm.f32x4(m[0][0], m[0][1], m[0][2], 0.0));
 }
@@ -62,18 +89,33 @@ test "zmath.util.mat.translation" {
     // zig fmt: on
     const mat = zm.loadMat(mat_data[1..]);
     const translation = getTranslationVec(mat);
-    try expect(zm.approxEqAbs(translation, zm.f32x4(14.0, 15.0, 16.0, 0.0), 0.01));
+    try expect(zm.approxEqAbs(translation, zm.f32x4(14.0, 15.0, 16.0, 0.0), 0.0001));
+}
+
+test "zmath.util.mat.scale" {
+    const mat = zm.mul(zm.scaling(3, 4, 5), zm.translation(6, 7, 8));
+    const scale = getScaleVec(mat);
+    try expect(zm.approxEqAbs(scale, zm.f32x4(3.0, 4.0, 5.0, 0.0), 0.0001));
+}
+
+test "zmath.util.mat.rotation" {
+    const rotate_origin = zm.matFromRollPitchYaw(0.1, 1.2, 2.3);
+    const mat = zm.mul(zm.mul(rotate_origin, zm.scaling(3, 4, 5)), zm.translation(6, 7, 8));
+    const rotate_get = getRotationQuat(mat);
+    const v0 = zm.mul(zm.f32x4s(1), rotate_origin);
+    const v1 = zm.mul(zm.f32x4s(1), zm.quatToMat(rotate_get));
+    try expect(zm.approxEqAbs(v0, v1, 0.0001));
 }
 
 test "zmath.util.mat.z_vec" {
     const degToRad = std.math.degreesToRadians;
     var identity = zm.identity();
     var z_vec = getAxisZ(identity);
-    try expect(zm.approxEqAbs(z_vec, zm.f32x4(0.0, 0.0, 1.0, 0), 0.01));
+    try expect(zm.approxEqAbs(z_vec, zm.f32x4(0.0, 0.0, 1.0, 0), 0.0001));
     const rot_yaw = zm.rotationY(degToRad(f32, 90));
     identity = zm.mul(identity, rot_yaw);
     z_vec = getAxisZ(identity);
-    try expect(zm.approxEqAbs(z_vec, zm.f32x4(1.0, 0.0, 0.0, 0), 0.01));
+    try expect(zm.approxEqAbs(z_vec, zm.f32x4(1.0, 0.0, 0.0, 0), 0.0001));
 }
 
 test "zmath.util.mat.y_vec" {
