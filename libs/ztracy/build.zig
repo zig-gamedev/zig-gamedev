@@ -54,10 +54,10 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
         exe.linkSystemLibraryName("c++");
 
         if (exe.target.isWindows()) {
-            exe.linkSystemLibraryName("Advapi32");
-            exe.linkSystemLibraryName("User32");
-            exe.linkSystemLibraryName("Ws2_32");
-            exe.linkSystemLibraryName("DbgHelp");
+            exe.linkSystemLibraryName("advapi32");
+            exe.linkSystemLibraryName("user32");
+            exe.linkSystemLibraryName("ws2_32");
+            exe.linkSystemLibraryName("dbghelp");
         }
     }
 }
