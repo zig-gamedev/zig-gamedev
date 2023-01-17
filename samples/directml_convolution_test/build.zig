@@ -1,20 +1,23 @@
 const std = @import("std");
 const zwin32 = @import("../../libs/zwin32/build.zig");
 const zd3d12 = @import("../../libs/zd3d12/build.zig");
-const zpix = @import("../../libs/zpix/build.zig");
 const common = @import("../../libs/common/build.zig");
 
 const Options = @import("../../build.zig").Options;
-const content_dir = "simple_raytracer_content/";
+const content_dir = "directml_convolution_test_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("simple_raytracer", thisDir() ++ "/src/simple_raytracer.zig");
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
+    const exe = b.addExecutable(
+        "directml_convolution_test",
+        thisDir() ++ "/src/directml_convolution_test.zig",
+    );
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
+
+    exe.setBuildMode(options.build_mode);
+    exe.setTarget(options.target);
 
     const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
@@ -25,13 +28,35 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     install_content_step.step.dependOn(dxc_step);
     exe.step.dependOn(&install_content_step.step);
 
+    exe.step.dependOn(
+        &b.addInstallFile(
+            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.dll" },
+            "bin/DirectML.dll",
+        ).step,
+    );
+    exe.step.dependOn(
+        &b.addInstallFile(
+            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.pdb" },
+            "bin/DirectML.pdb",
+        ).step,
+    );
+    exe.step.dependOn(
+        &b.addInstallFile(
+            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.Debug.dll" },
+            "bin/DirectML.Debug.dll",
+        ).step,
+    );
+    exe.step.dependOn(
+        &b.addInstallFile(
+            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.Debug.pdb" },
+            "bin/DirectML.Debug.pdb",
+        ).step,
+    );
+
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
-
-    const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable = options.zpix_enable });
-    const zpix_pkg = zpix.getPkg(&.{ zwin32.pkg, zpix_options.getPkg() });
 
     const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
         .enable_debug_layer = options.zd3d12_enable_debug_layer,
@@ -42,9 +67,8 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const common_pkg = common.getPkg(&.{ zd3d12_pkg, zwin32.pkg });
 
     exe.addPackage(zd3d12_pkg);
-    exe.addPackage(zwin32.pkg);
     exe.addPackage(common_pkg);
-    exe.addPackage(zpix_pkg);
+    exe.addPackage(zwin32.pkg);
 
     zd3d12.link(exe, zd3d12_options);
     common.link(exe);
@@ -53,7 +77,10 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("simple_raytracer-dxc", "Build shaders for 'simple raytracer' demo");
+    const dxc_step = b.step(
+        "directml_convolution_test-dxc",
+        "Build shaders for 'directml convolution test' demo",
+    );
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",
@@ -73,71 +100,37 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "../../libs/common/src/hlsl/common.hlsl",
-        "csGenerateMipmaps",
-        "generate_mipmaps.cs.cso",
+        "src/directml_convolution_test.hlsl",
+        "vsDrawTexture",
+        "draw_texture.vs.cso",
+        "vs",
+        "PSO__DRAW_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/directml_convolution_test.hlsl",
+        "psDrawTexture",
+        "draw_texture.ps.cso",
+        "ps",
+        "PSO__DRAW_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/directml_convolution_test.hlsl",
+        "csTextureToBuffer",
+        "texture_to_buffer.cs.cso",
         "cs",
-        "PSO__GENERATE_MIPMAPS",
+        "PSO__TEXTURE_TO_BUFFER",
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "vsRastStaticMesh",
-        "rast_static_mesh.vs.cso",
-        "vs",
-        "PSO__RAST_STATIC_MESH",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "psRastStaticMesh",
-        "rast_static_mesh.ps.cso",
-        "ps",
-        "PSO__RAST_STATIC_MESH",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "vsZPrePass",
-        "z_pre_pass.vs.cso",
-        "vs",
-        "PSO__Z_PRE_PASS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "psZPrePass",
-        "z_pre_pass.ps.cso",
-        "ps",
-        "PSO__Z_PRE_PASS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "vsGenShadowRays",
-        "gen_shadow_rays.vs.cso",
-        "vs",
-        "PSO__GEN_SHADOW_RAYS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "psGenShadowRays",
-        "gen_shadow_rays.ps.cso",
-        "ps",
-        "PSO__GEN_SHADOW_RAYS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "",
-        "trace_shadow_rays.lib.cso",
-        "lib",
-        "PSO__TRACE_SHADOW_RAYS",
+        "src/directml_convolution_test.hlsl",
+        "csBufferToTexture",
+        "buffer_to_texture.cs.cso",
+        "cs",
+        "PSO__BUFFER_TO_TEXTURE",
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     return dxc_step;
@@ -155,7 +148,7 @@ fn makeDxcCmd(
     return [9][]const u8{
         thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
         thisDir() ++ "/" ++ input_path,
-        if (entry_point.len == 0) "" else "/E " ++ entry_point,
+        "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
         "/T " ++ profile ++ "_" ++ shader_ver,
         if (define.len == 0) "" else "/D " ++ define,

@@ -31,9 +31,10 @@ Library | Latest version | Description
 **[znoise](libs/znoise)** | 0.1.0 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
 **[zjobs](libs/zjobs)** | 0.1.0 | Generic job queue implementation
 **[zbullet](libs/zbullet)** | 0.2.0 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
-**[zwin32](libs/zwin32)** | 0.1.0 | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi)
-**[zd3d12](libs/zd3d12)** | 0.1.0 | Helper library for working with DirectX 12
-**[zpix](libs/zpix)** | 0.1.0 | Support for GPU profiling with PIX for Windows
+**[zwin32](libs/zwin32)** | 0.9.0 | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)
+**[zd3d12](libs/zd3d12)** | 0.9.0 | Helper library for DirectX 12
+**[zxaudio2](libs/zxaudio2)** | 0.9.0 | Helper library for XAudio2
+**[zpix](libs/zpix)** | 0.9.0 | Support for GPU profiling with PIX for Windows
 
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs

@@ -3,7 +3,7 @@ const assert = std.debug.assert;
 const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const d3d12 = zwin32.d3d12;
 const dml = zwin32.directml;
 const hrPanic = zwin32.hrPanic;
@@ -256,14 +256,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS7),
         );
         if (options7.MeshShaderTier == .NOT_SUPPORTED or res != w32.S_OK) {
-            _ = w32.user32.messageBoxA(
+            _ = w32.MessageBoxA(
                 window,
                 "This applications requires graphics card that supports Mesh Shader " ++
                     "(NVIDIA GeForce Turing or newer, AMD Radeon RX 6000 or newer).",
                 "No DirectX 12 Mesh Shader support",
-                w32.user32.MB_OK | w32.user32.MB_ICONERROR,
-            ) catch 0;
-            w32.kernel32.ExitProcess(0);
+                w32.MB_OK | w32.MB_ICONERROR,
+            );
+            w32.ExitProcess(0);
         }
     }
 

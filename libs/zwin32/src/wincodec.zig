@@ -1,15 +1,15 @@
-const windows = @import("windows.zig");
-const IUnknown = windows.IUnknown;
-const WINAPI = windows.WINAPI;
-const HRESULT = windows.HRESULT;
-const GUID = windows.GUID;
-const LPCWSTR = windows.LPCWSTR;
-const DWORD = windows.DWORD;
-const UINT = windows.UINT;
-const INT = windows.INT;
-const BYTE = windows.BYTE;
+const w32 = @import("w32.zig");
+const IUnknown = w32.IUnknown;
+const WINAPI = w32.WINAPI;
+const HRESULT = w32.HRESULT;
+const GUID = w32.GUID;
+const LPCWSTR = w32.LPCWSTR;
+const DWORD = w32.DWORD;
+const UINT = w32.UINT;
+const INT = w32.INT;
+const BYTE = w32.BYTE;
 
-pub const PixelFormatGUID = windows.GUID;
+pub const PixelFormatGUID = w32.GUID;
 
 pub const Rect = extern struct {
     X: INT,

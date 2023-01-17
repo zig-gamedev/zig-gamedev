@@ -3,7 +3,7 @@ const panic = std.debug.panic;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const dwrite = zwin32.dwrite;
 const d2d1 = zwin32.d2d1;
 
@@ -79,45 +79,45 @@ fn processWindowMessage(
     var ui = c.igGetIO().?;
     var ui_backend = @ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData));
     switch (message) {
-        w32.user32.WM_LBUTTONDOWN,
-        w32.user32.WM_RBUTTONDOWN,
-        w32.user32.WM_MBUTTONDOWN,
-        w32.user32.WM_LBUTTONDBLCLK,
-        w32.user32.WM_RBUTTONDBLCLK,
-        w32.user32.WM_MBUTTONDBLCLK,
+        w32.WM_LBUTTONDOWN,
+        w32.WM_RBUTTONDOWN,
+        w32.WM_MBUTTONDOWN,
+        w32.WM_LBUTTONDBLCLK,
+        w32.WM_RBUTTONDBLCLK,
+        w32.WM_MBUTTONDBLCLK,
         => {
             var button: u32 = 0;
-            if (message == w32.user32.WM_LBUTTONDOWN or message == w32.user32.WM_LBUTTONDBLCLK) button = 0;
-            if (message == w32.user32.WM_RBUTTONDOWN or message == w32.user32.WM_RBUTTONDBLCLK) button = 1;
-            if (message == w32.user32.WM_MBUTTONDOWN or message == w32.user32.WM_MBUTTONDBLCLK) button = 2;
+            if (message == w32.WM_LBUTTONDOWN or message == w32.WM_LBUTTONDBLCLK) button = 0;
+            if (message == w32.WM_RBUTTONDOWN or message == w32.WM_RBUTTONDBLCLK) button = 1;
+            if (message == w32.WM_MBUTTONDOWN or message == w32.WM_MBUTTONDBLCLK) button = 2;
             if (ui_backend.*.mouse_buttons_down == 0 and w32.GetCapture() == null) {
                 _ = w32.SetCapture(window);
             }
             ui_backend.*.mouse_buttons_down |= @as(u32, 1) << @intCast(u5, button);
             c.ImGuiIO_AddMouseButtonEvent(ui, @intCast(i32, button), true);
         },
-        w32.user32.WM_LBUTTONUP,
-        w32.user32.WM_RBUTTONUP,
-        w32.user32.WM_MBUTTONUP,
+        w32.WM_LBUTTONUP,
+        w32.WM_RBUTTONUP,
+        w32.WM_MBUTTONUP,
         => {
             var button: u32 = 0;
-            if (message == w32.user32.WM_LBUTTONUP) button = 0;
-            if (message == w32.user32.WM_RBUTTONUP) button = 1;
-            if (message == w32.user32.WM_MBUTTONUP) button = 2;
+            if (message == w32.WM_LBUTTONUP) button = 0;
+            if (message == w32.WM_RBUTTONUP) button = 1;
+            if (message == w32.WM_MBUTTONUP) button = 2;
             ui_backend.*.mouse_buttons_down &= ~(@as(u32, 1) << @intCast(u5, button));
             if (ui_backend.*.mouse_buttons_down == 0 and w32.GetCapture() == window) {
                 _ = w32.ReleaseCapture();
             }
             c.ImGuiIO_AddMouseButtonEvent(ui, @intCast(i32, button), false);
         },
-        w32.user32.WM_MOUSEWHEEL => {
+        w32.WM_MOUSEWHEEL => {
             c.ImGuiIO_AddMouseWheelEvent(
                 ui,
                 0.0,
                 @intToFloat(f32, w32.GET_WHEEL_DELTA_WPARAM(wparam)) / @intToFloat(f32, w32.WHEEL_DELTA),
             );
         },
-        w32.user32.WM_MOUSEMOVE => {
+        w32.WM_MOUSEMOVE => {
             ui_backend.*.mouse_window = window;
             if (ui_backend.*.mouse_tracked == false) {
                 var tme = w32.TRACKMOUSEEVENT{
@@ -135,22 +135,22 @@ fn processWindowMessage(
                 @intToFloat(f32, w32.GET_Y_LPARAM(lparam)),
             );
         },
-        w32.user32.WM_MOUSELEAVE => {
+        w32.WM_MOUSELEAVE => {
             if (ui_backend.*.mouse_window == window) {
                 ui_backend.*.mouse_window = null;
             }
             ui_backend.*.mouse_tracked = false;
             c.ImGuiIO_AddMousePosEvent(ui, -c.igGET_FLT_MAX(), -c.igGET_FLT_MAX());
         },
-        w32.user32.WM_KEYDOWN,
-        w32.user32.WM_KEYUP,
-        w32.user32.WM_SYSKEYDOWN,
-        w32.user32.WM_SYSKEYUP,
+        w32.WM_KEYDOWN,
+        w32.WM_KEYUP,
+        w32.WM_SYSKEYDOWN,
+        w32.WM_SYSKEYUP,
         => {
             if (wparam == w32.VK_ESCAPE) {
-                w32.user32.PostQuitMessage(0);
+                w32.PostQuitMessage(0);
             }
-            const down = if (message == w32.user32.WM_KEYDOWN or message == w32.user32.WM_SYSKEYDOWN) true else false;
+            const down = if (message == w32.WM_KEYDOWN or message == w32.WM_SYSKEYDOWN) true else false;
             if (wparam < 256) {
                 c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModCtrl, isVkKeyDown(w32.VK_CONTROL));
                 c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModShift, isVkKeyDown(w32.VK_SHIFT));
@@ -184,21 +184,21 @@ fn processWindowMessage(
                 }
             }
         },
-        w32.user32.WM_SETFOCUS,
-        w32.user32.WM_KILLFOCUS,
+        w32.WM_SETFOCUS,
+        w32.WM_KILLFOCUS,
         => {
-            c.ImGuiIO_AddFocusEvent(ui, if (message == w32.user32.WM_SETFOCUS) true else false);
+            c.ImGuiIO_AddFocusEvent(ui, if (message == w32.WM_SETFOCUS) true else false);
         },
-        w32.user32.WM_CHAR => {
+        w32.WM_CHAR => {
             if (wparam > 0 and wparam < 0x10000) {
                 c.ImGuiIO_AddInputCharacterUTF16(ui, @intCast(u16, wparam & 0xffff));
             }
         },
-        w32.user32.WM_DESTROY => {
-            w32.user32.PostQuitMessage(0);
+        w32.WM_DESTROY => {
+            w32.PostQuitMessage(0);
         },
         else => {
-            return w32.user32.defWindowProcA(window, message, wparam, lparam);
+            return w32.DefWindowProcA(window, message, wparam, lparam);
         },
     }
     return 0;
@@ -230,12 +230,12 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
     ui.*.BackendPlatformUserData = ui_backend;
     ui.*.BackendFlags |= c.ImGuiBackendFlags_RendererHasVtxOffset;
 
-    const winclass = w32.user32.WNDCLASSEXA{
+    const winclass = w32.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(w32.HINSTANCE, w32.kernel32.GetModuleHandleW(null)),
+        .hInstance = @ptrCast(w32.HINSTANCE, w32.GetModuleHandleA(null)),
         .hIcon = null,
         .hCursor = w32.LoadCursorA(null, @intToPtr(w32.LPCSTR, 32512)),
         .hbrBackground = null,
@@ -243,25 +243,25 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
         .lpszClassName = name,
         .hIconSm = null,
     };
-    _ = try w32.user32.registerClassExA(&winclass);
+    _ = w32.RegisterClassExA(&winclass);
 
-    const style = w32.user32.WS_OVERLAPPED +
-        w32.user32.WS_SYSMENU +
-        w32.user32.WS_CAPTION +
-        w32.user32.WS_MINIMIZEBOX;
+    const style = w32.WS_OVERLAPPED +
+        w32.WS_SYSMENU +
+        w32.WS_CAPTION +
+        w32.WS_MINIMIZEBOX;
 
     var rect = w32.RECT{ .left = 0, .top = 0, .right = @intCast(i32, width), .bottom = @intCast(i32, height) };
     // HACK(mziulek): For exact FullHD window size it is better to stick to requested total window size
     // (looks better on 1920x1080 displays).
     if (width != 1920 and height != 1080) {
-        try w32.user32.adjustWindowRectEx(&rect, style, false, 0);
+        _ = w32.AdjustWindowRectEx(&rect, style, w32.FALSE, 0);
     }
 
-    const window = try w32.user32.createWindowExA(
+    const window = w32.CreateWindowExA(
         0,
         name,
         name,
-        style + w32.user32.WS_VISIBLE,
+        style + w32.WS_VISIBLE,
         -1,
         -1,
         rect.right - rect.left,
@@ -270,7 +270,7 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
         null,
         winclass.hInstance,
         null,
-    );
+    ).?;
     ui_backend.*.window = window;
 
     c.igGetStyle().?.*.WindowRounding = 0.0;
@@ -286,11 +286,11 @@ pub fn deinitWindow(allocator: std.mem.Allocator) void {
 }
 
 pub fn handleWindowEvents() bool {
-    var message = std.mem.zeroes(w32.user32.MSG);
-    while (w32.user32.peekMessageA(&message, null, 0, 0, w32.user32.PM_REMOVE) catch false) {
-        _ = w32.user32.translateMessage(&message);
-        _ = w32.user32.dispatchMessageA(&message);
-        if (message.message == w32.user32.WM_QUIT) {
+    var message = std.mem.zeroes(w32.MSG);
+    while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
+        _ = w32.TranslateMessage(&message);
+        _ = w32.DispatchMessageA(&message);
+        if (message.message == w32.WM_QUIT) {
             return false;
         }
     }
@@ -465,15 +465,12 @@ pub fn drawText(
 }
 
 pub fn init() void {
-    _ = w32.ole32.CoInitializeEx(
-        null,
-        @enumToInt(w32.COINIT_APARTMENTTHREADED) | @enumToInt(w32.COINIT_DISABLE_OLE1DDE),
-    );
+    _ = w32.CoInitializeEx(null, w32.COINIT_APARTMENTTHREADED | w32.COINIT_DISABLE_OLE1DDE);
     _ = w32.SetProcessDPIAware();
 
     // Check if Windows version is supported.
     var version: w32.OSVERSIONINFOW = undefined;
-    _ = w32.ntdll.RtlGetVersion(&version);
+    _ = w32.RtlGetVersion(&version);
 
     var os_is_supported = false;
     if (version.dwMajorVersion > 10) {
@@ -482,15 +479,15 @@ pub fn init() void {
         os_is_supported = true;
     }
 
-    const d3d12core_dll = w32.kernel32.LoadLibraryW(L("D3D12Core.dll"));
+    const d3d12core_dll = w32.LoadLibraryA("D3D12Core.dll");
     if (d3d12core_dll == null) {
         os_is_supported = false;
     } else {
-        _ = w32.kernel32.FreeLibrary(d3d12core_dll.?);
+        _ = w32.FreeLibrary(d3d12core_dll.?);
     }
 
     if (!os_is_supported) {
-        _ = w32.user32.messageBoxA(
+        _ = w32.MessageBoxA(
             null,
             \\This application can't run on currently installed version of Windows.
             \\Following versions are supported:
@@ -503,9 +500,9 @@ pub fn init() void {
             \\Please update your Windows version and try again.
         ,
             "Error",
-            w32.user32.MB_OK | w32.user32.MB_ICONERROR,
-        ) catch 0;
-        w32.kernel32.ExitProcess(0);
+            w32.MB_OK | w32.MB_ICONERROR,
+        );
+        w32.ExitProcess(0);
     }
 
     // Change directory to where an executable is located.
@@ -514,21 +511,21 @@ pub fn init() void {
     std.os.chdir(exe_path) catch {};
 
     // Check if 'd3d12' folder is present next to an executable.
-    const local_d3d12core_dll = w32.kernel32.LoadLibraryW(L("d3d12/D3D12Core.dll"));
+    const local_d3d12core_dll = w32.LoadLibraryA("d3d12/D3D12Core.dll");
     if (local_d3d12core_dll == null) {
-        _ = w32.user32.messageBoxA(
+        _ = w32.MessageBoxA(
             null,
             \\Looks like 'd3d12' folder is missing. It has to be distributed together with an application.
         ,
             "Error",
-            w32.user32.MB_OK | w32.user32.MB_ICONERROR,
-        ) catch 0;
-        w32.kernel32.ExitProcess(0);
+            w32.MB_OK | w32.MB_ICONERROR,
+        );
+        w32.ExitProcess(0);
     } else {
-        _ = w32.kernel32.FreeLibrary(local_d3d12core_dll.?);
+        _ = w32.FreeLibrary(local_d3d12core_dll.?);
     }
 }
 
 pub fn deinit() void {
-    w32.ole32.CoUninitialize();
+    w32.CoUninitialize();
 }

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub const BuildOptions = struct {
-    enable_zpix: bool = false,
+    enable: bool = false,
 };
 
 pub const BuildOptionsStep = struct {
@@ -13,7 +13,7 @@ pub const BuildOptionsStep = struct {
             .options = options,
             .step = b.addOptions(),
         };
-        bos.step.addOption(bool, "enable_zpix", bos.options.enable_zpix);
+        bos.step.addOption(bool, "enable", bos.options.enable);
         return bos;
     }
 

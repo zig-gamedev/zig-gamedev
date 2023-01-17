@@ -1,4 +1,4 @@
-# zxaudio2 - helper library for working with XAudio2
+# zxaudio2 - helper library for XAudio2
 
 ## Getting started
 
@@ -13,25 +13,23 @@ const zxaudio2 = @import("libs/zxaudio2/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const enable_dx_debug = b.option( bool, "enable-dx-debug", "Enable debug layer for XAudio2") orelse false;
-
-    const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
-    exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
-
-    const options_pkg = exe_options.getPackage("build_options");
-    const zxaudio2_pkg = zxaudio2.getPkg(&.{ options_pkg, zwin32.pkg });
+    const zxaudio2_options = zxaudio2.BuildOptionsStep.init(b, .{
+        .enable_debug_layer = false,
+    });
+    const zxaudio2_pkg = zxaudio2.getPkg(&.{ zwin32.pkg, zxaudio2_options.getPkg() });
 
     exe.addPackage(zwin32.pkg);
     exe.addPackage(zxaudio2_pkg);
 
-    zxaudio2.link(exe, enable_dx_debug);
+    zxaudio2.link(exe, zxaudio2_options);
 }
 ```
 
 Now in your code you may import and use zxaudio2:
 
 ```zig
+const std = @import("std");
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zxaudio2 = @import("zxaudio2");
 
 pub fn main() !void {

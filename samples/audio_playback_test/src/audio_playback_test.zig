@@ -3,7 +3,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const d3d12 = zwin32.d3d12;
 const wasapi = zwin32.wasapi;
 const mf = zwin32.mf;
@@ -85,7 +85,7 @@ fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
 
     fillAudioBuffer(audio);
     while (true) {
-        w32.WaitForSingleObject(audio.buffer_ready_event, w32.INFINITE) catch return 0;
+        _ = w32.WaitForSingleObject(audio.buffer_ready_event, w32.INFINITE);
         fillAudioBuffer(audio);
     }
 
@@ -173,12 +173,12 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         break :blk audio_render_client;
     };
 
-    const audio_buffer_ready_event = w32.CreateEventEx(
+    const audio_buffer_ready_event = w32.CreateEventExA(
         null,
         "audio_buffer_ready_event",
         0,
         w32.EVENT_ALL_ACCESS,
-    ) catch unreachable;
+    ).?;
 
     hrPanicOnFail(audio_client.SetEventHandle(audio_buffer_ready_event));
 
@@ -341,8 +341,8 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
 
     while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
     _ = w32.TerminateThread(demo.audio.thread_handle.?, 0);
-    w32.CloseHandle(demo.audio.buffer_ready_event);
-    w32.CloseHandle(demo.audio.thread_handle.?);
+    _ = w32.CloseHandle(demo.audio.buffer_ready_event);
+    _ = w32.CloseHandle(demo.audio.thread_handle.?);
     hrPanicOnFail(demo.audio.client.Stop());
     _ = demo.audio.render_client.Release();
     _ = demo.audio.client.Release();
@@ -452,7 +452,7 @@ pub fn main() !void {
     var demo = try init(allocator);
     defer deinit(&demo, allocator);
 
-    demo.audio.thread_handle = w32.kernel32.CreateThread(
+    demo.audio.thread_handle = w32.CreateThread(
         null,
         0,
         audioThread,

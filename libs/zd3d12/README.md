@@ -1,4 +1,4 @@
-# zd3d12 - helper library for working with DirectX 12
+# zd3d12 - helper library for DirectX 12
 
 ## Features
 
@@ -15,48 +15,29 @@ Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intr
 
 ## Getting started
 
-Copy `zd3d12`, `zwin32` and `ztracy` folders to a `libs` subdirectory of the root of your project.
+Copy `zd3d12` and `zwin32` folders to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
 const zwin32 = @import("libs/zwin32/build.zig");
-const ztracy = @import("libs/ztracy/build.zig");
 const zd3d12 = @import("libs/zd3d12/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const enable_dx_debug = b.option(
-        bool,
-        "enable-dx-debug",
-        "Enable debug layer for D3D12, D2D1, and DXGI",
-    ) orelse false;
-    const enable_dx_gpu_debug = b.option(
-        bool,
-        "enable-dx-gpu-debug",
-        "Enable GPU-based validation for D3D12",
-    ) orelse false;
-    const ztracy_enable = b.option(bool, "ztracy_enable", "Enable Tracy profiler") orelse false;
+    const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
+        .enable_debug_layer = false,
+        .enable_gbv = false,
+        .enable_d2d = false,
+        .upload_heap_capacity = 32 * 1024 * 1024,
+    });
+    const zd3d12_pkg = zd3d12.getPkg(&.{ zwin32.pkg, zd3d12_options.getPkg() });
 
-    const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
-
-    exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
-    exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_d2d", false);
-    exe_options.addOption(bool, "ztracy_enable", ztracy_enable);
-
-    const options_pkg = exe_options.getPackage("build_options");
-    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
-    const zd3d12_pkg = zd3d12.getPkg(&.{ ztracy_pkg, zwin32.pkg, options_pkg });
-
-    exe.addPackage(ztracy_pkg);
     exe.addPackage(zd3d12_pkg);
     exe.addPackage(zwin32.pkg);
 
-    ztracy.link(tracy, ztracy_enable, .{});
-    zd3d12.link(exe);
+    zd3d12.link(exe, zd3d12_options);
 }
 ```
 

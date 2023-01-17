@@ -1,8 +1,7 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const IUnknown = w32.IUnknown;
 const WINAPI = w32.WINAPI;
 const UINT32 = w32.UINT32;
@@ -211,7 +210,7 @@ pub const Stream = struct {
         };
 
         var cs: w32.CRITICAL_SECTION = undefined;
-        w32.kernel32.InitializeCriticalSection(&cs);
+        w32.InitializeCriticalSection(&cs);
 
         const source_reader_cb = blk: {
             var cb = allocator.create(SourceReaderCallback) catch unreachable;
@@ -296,15 +295,15 @@ pub const Stream = struct {
             const refcount = stream.reader_cb.Release();
             assert(refcount == 0);
         }
-        w32.kernel32.DeleteCriticalSection(&stream.critical_section);
+        w32.DeleteCriticalSection(&stream.critical_section);
         stream.voice.DestroyVoice();
         stream.allocator.destroy(stream.voice_cb);
         stream.allocator.destroy(stream);
     }
 
     pub fn setCurrentPosition(stream: *Stream, position: i64) void {
-        w32.kernel32.EnterCriticalSection(&stream.critical_section);
-        defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
+        w32.EnterCriticalSection(&stream.critical_section);
+        defer w32.LeaveCriticalSection(&stream.critical_section);
 
         const pos = w32.PROPVARIANT{ .vt = w32.VT_I8, .u = .{ .hVal = position } };
         hrPanicOnFail(stream.reader.SetCurrentPosition(&w32.GUID_NULL, &pos));
@@ -319,8 +318,8 @@ pub const Stream = struct {
     }
 
     fn endOfStreamChunk(stream: *Stream, buffer: *mf.IMediaBuffer) void {
-        w32.kernel32.EnterCriticalSection(&stream.critical_section);
-        defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
+        w32.EnterCriticalSection(&stream.critical_section);
+        defer w32.LeaveCriticalSection(&stream.critical_section);
 
         hrPanicOnFail(buffer.Unlock());
         const refcount = buffer.Release();
@@ -338,8 +337,8 @@ pub const Stream = struct {
         _: LONGLONG,
         sample: ?*mf.ISample,
     ) void {
-        w32.kernel32.EnterCriticalSection(&stream.critical_section);
-        defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
+        w32.EnterCriticalSection(&stream.critical_section);
+        defer w32.LeaveCriticalSection(&stream.critical_section);
 
         if (stream_flags.END_OF_STREAM) {
             setCurrentPosition(stream, 0);
@@ -691,7 +690,7 @@ const SimpleAudioProcessor = struct {
         const audio_processor = @ptrCast(*SimpleAudioProcessor, i_unknown);
         const prev_refcount = @atomicRmw(u32, &audio_processor.refcount, .Sub, 1, .Monotonic);
         if (prev_refcount == 1) {
-            w32.ole32.CoTaskMemFree(audio_processor);
+            w32.CoTaskMemFree(audio_processor);
         }
         return prev_refcount - 1;
     }

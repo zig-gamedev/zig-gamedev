@@ -3,7 +3,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w32 = zwin32.base;
+const w32 = zwin32.w32;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -444,7 +444,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     _ = zpix.loadGpuCapturerLibrary();
     _ = zpix.setTargetWindow(window);
     _ = zpix.beginCapture(
-        zpix.CAPTURE_GPU,
+        .{ .GPU = true },
         &.{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 

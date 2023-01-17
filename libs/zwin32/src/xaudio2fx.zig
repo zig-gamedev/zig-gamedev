@@ -1,13 +1,12 @@
 const std = @import("std");
-const windows = @import("windows.zig");
-const IUnknown = windows.IUnknown;
-const BYTE = windows.BYTE;
-const HRESULT = windows.HRESULT;
-const WINAPI = windows.WINAPI;
-const UINT32 = windows.UINT32;
-const BOOL = windows.BOOL;
-const FALSE = windows.FALSE;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const w32 = @import("w32.zig");
+const IUnknown = w32.IUnknown;
+const BYTE = w32.BYTE;
+const HRESULT = w32.HRESULT;
+const WINAPI = w32.WINAPI;
+const UINT32 = w32.UINT32;
+const BOOL = w32.BOOL;
+const FALSE = w32.FALSE;
 
 pub const VOLUMEMETER_LEVELS = extern struct {
     pPeakLevels: ?[*]f32 align(1),
@@ -140,31 +139,31 @@ pub const REVERB_DEFAULT_ROOM_SIZE = 100.0;
 pub const REVERB_DEFAULT_DISABLE_LATE_FIELD = FALSE;
 
 pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
-    var xaudio2_dll = windows.kernel32.GetModuleHandleW(L("xaudio2_9redist.dll"));
+    var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = (std.DynLib.openZ("d3d12/xaudio2_9redist.dll") catch unreachable).dll;
+        xaudio2_dll = w32.LoadLibraryA("d3d12/xaudio2_9redist.dll");
     }
 
-    var CreateAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
-    CreateAudioVolumeMeter = @ptrCast(
-        @TypeOf(CreateAudioVolumeMeter),
-        windows.kernel32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?,
+    var createAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
+    createAudioVolumeMeter = @ptrCast(
+        @TypeOf(createAudioVolumeMeter),
+        w32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?,
     );
 
-    return CreateAudioVolumeMeter(apo);
+    return createAudioVolumeMeter(apo);
 }
 
 pub fn createReverb(apo: *?*IUnknown, _: UINT32) HRESULT {
-    var xaudio2_dll = windows.kernel32.GetModuleHandleW(L("xaudio2_9redist.dll"));
+    var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = (std.DynLib.openZ("d3d12/xaudio2_9redist.dll") catch unreachable).dll;
+        xaudio2_dll = w32.LoadLibraryA("d3d12/xaudio2_9redist.dll");
     }
 
-    var CreateAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
-    CreateAudioReverb = @ptrCast(
-        @TypeOf(CreateAudioReverb),
-        windows.kernel32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?,
+    var createAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
+    createAudioReverb = @ptrCast(
+        @TypeOf(createAudioReverb),
+        w32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?,
     );
 
-    return CreateAudioReverb(apo);
+    return createAudioReverb(apo);
 }

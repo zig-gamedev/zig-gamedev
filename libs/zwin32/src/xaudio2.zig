@@ -1,18 +1,17 @@
 const std = @import("std");
-const windows = @import("windows.zig");
-const IUnknown = windows.IUnknown;
-const BYTE = windows.BYTE;
-const UINT = windows.UINT;
-const UINT32 = windows.UINT32;
-const UINT64 = windows.UINT64;
-const WINAPI = windows.WINAPI;
-const LPCWSTR = windows.LPCWSTR;
-const BOOL = windows.BOOL;
-const DWORD = windows.DWORD;
-const GUID = windows.GUID;
-const HRESULT = windows.HRESULT;
+const w32 = @import("w32.zig");
+const IUnknown = w32.IUnknown;
+const BYTE = w32.BYTE;
+const UINT = w32.UINT;
+const UINT32 = w32.UINT32;
+const UINT64 = w32.UINT64;
+const WINAPI = w32.WINAPI;
+const LPCWSTR = w32.LPCWSTR;
+const BOOL = w32.BOOL;
+const DWORD = w32.DWORD;
+const GUID = w32.GUID;
+const HRESULT = w32.HRESULT;
 const WAVEFORMATEX = @import("wasapi.zig").WAVEFORMATEX;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 // NOTE(mziulek):
 // xaudio2redist.h uses tight field packing so we need align each field with `align(1)`
@@ -707,15 +706,15 @@ pub fn create(
     flags: FLAGS, // .{}
     processor: UINT32, // 0
 ) HRESULT {
-    var xaudio2_dll = windows.kernel32.GetModuleHandleW(L("xaudio2_9redist.dll"));
+    var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = (std.DynLib.openZ("xaudio2_9redist.dll") catch unreachable).dll;
+        xaudio2_dll = w32.LoadLibraryA("xaudio2_9redist.dll");
     }
 
     var xaudio2Create: *const fn (*?*IXAudio2, FLAGS, UINT32) callconv(WINAPI) HRESULT = undefined;
     xaudio2Create = @ptrCast(
         @TypeOf(xaudio2Create),
-        windows.kernel32.GetProcAddress(xaudio2_dll.?, "XAudio2Create").?,
+        w32.GetProcAddress(xaudio2_dll.?, "XAudio2Create").?,
     );
 
     return xaudio2Create(ppv, flags, processor);
