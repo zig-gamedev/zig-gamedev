@@ -1275,7 +1275,7 @@ pub const IShaderResourceView = extern struct {
     };
 };
 
-pub const IID_IVertexShader = GUID("{3b301d64-d678-4289-8897-22f8928b72f3}");
+pub const IID_IVertexShader = GUID.parse("{3b301d64-d678-4289-8897-22f8928b72f3}");
 pub const IVertexShader = extern struct {
     __v: *const VTable,
 
@@ -1293,7 +1293,7 @@ pub const IVertexShader = extern struct {
     };
 };
 
-pub const IID_IPixelShader = GUID("{ea82e40d-51dc-4f33-93d4-db7c9125ae8c}");
+pub const IID_IPixelShader = GUID.parse("{ea82e40d-51dc-4f33-93d4-db7c9125ae8c}");
 pub const IPixelShader = extern struct {
     __v: *const VTable,
 
