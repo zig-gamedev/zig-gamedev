@@ -1,7 +1,5 @@
 const std = @import("std");
 const zwin32 = @import("../../libs/zwin32/build.zig");
-const zd3d12 = @import("../../libs/zd3d12/build.zig");
-const common = @import("../../libs/common/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "minimal/";
@@ -18,20 +16,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     exe.rdynamic = true;
 
-    const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
-        .enable_debug_layer = options.zd3d12_enable_debug_layer,
-        .enable_gbv = options.zd3d12_enable_gbv,
-    });
-
-    const zd3d12_pkg = zd3d12.getPkg(&.{ zwin32.pkg, zd3d12_options.getPkg() });
-    const common_pkg = common.getPkg(&.{ zd3d12_pkg, zwin32.pkg });
-
-    exe.addPackage(zd3d12_pkg);
-    exe.addPackage(common_pkg);
     exe.addPackage(zwin32.pkg);
-
-    zd3d12.link(exe, zd3d12_options);
-    common.link(exe);
 
     return exe;
 }
