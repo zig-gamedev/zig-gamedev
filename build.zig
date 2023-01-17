@@ -55,8 +55,11 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
     installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
 
-    if (@import("builtin").target.os.tag == .windows) {
+    if (options.target.isWindows()) {
         installDemo(b, minimal.build(b, options), "minimal");
+    }
+
+    if (@import("builtin").target.os.tag == .windows) {
         installDemo(b, triangle.build(b, options), "triangle");
         installDemo(b, textured_quad.build(b, options), "textured_quad");
         installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
