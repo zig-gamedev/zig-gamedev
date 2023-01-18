@@ -1148,6 +1148,14 @@ ZGUI_API ImGuiID zguiGetPtrId(const void* ptr_id) {
     return ImGui::GetID(ptr_id);
 }
 
+ZGUI_API void zguiSetClipboardText(const char* text) {
+    ImGui::SetClipboardText(text);
+}
+
+ZGUI_API const char* zguiGetClipboardText() {
+    return ImGui::GetClipboardText();
+}
+
 ZGUI_API ImFont* zguiIoAddFontFromFileWithConfig(
     const char* filename,
     float size_pixels,
