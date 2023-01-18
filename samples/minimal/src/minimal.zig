@@ -278,6 +278,7 @@ pub fn main() !void {
         break :command_list cmdlist.?;
     };
     defer _ = command_list.Release();
+    hrPanicOnFail(command_list.Close());
 
     var frame_index: u32 = 0;
     var frame_fence_counter: u64 = 0;
