@@ -252,6 +252,16 @@ pub const io = struct {
     pub const addCharacterEvent = zguiIoAddCharacterEvent;
     extern fn zguiIoAddCharacterEvent(char: i32) void;
 };
+
+pub fn setClipboardText(value: [:0]const u8) void {
+    zguiSetClipboardText(value.ptr);
+}
+pub fn getClipboardText() [:0]const u8 {
+    const value = zguiGetClipboardText();
+    return std.mem.span(value);
+}
+extern fn zguiSetClipboardText(text: [*:0]const u8) void;
+extern fn zguiGetClipboardText() [*:0]const u8;
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};
 pub const DrawData = *extern struct {
