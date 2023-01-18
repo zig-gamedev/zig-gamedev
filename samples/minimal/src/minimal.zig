@@ -60,7 +60,7 @@ pub fn main() !void {
     };
     _ = w32.RegisterClassExA(&winclass);
 
-    const style = w32.WS_OVERLAPPED + w32.WS_SYSMENU + w32.WS_CAPTION + w32.WS_MINIMIZEBOX;
+    const style = w32.WS_OVERLAPPEDWINDOW;
     var rect = w32.RECT{
         .left = 0,
         .top = 0,
