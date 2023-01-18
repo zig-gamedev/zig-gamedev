@@ -1,7 +1,9 @@
 const std = @import("std");
 const zwin32 = @import("zwin32");
 const w32 = zwin32.w32;
+const dxgi = zwin32.dxgi;
 const d3d12 = zwin32.d3d12;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
 
 pub export const D3D12SDKVersion: u32 = 608;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -40,6 +42,9 @@ pub fn main() !void {
 
     _ = w32.SetProcessDPIAware();
 
+    //
+    // Window
+    //
     const winclass = w32.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
@@ -79,12 +84,29 @@ pub fn main() !void {
         null,
     ).?;
 
+    //
+    // DXGI Factory
+    //
+    const dxgi_factory = dxgi_factory: {
+        var factory: ?*dxgi.IFactory6 = undefined;
+        hrPanicOnFail(dxgi.CreateDXGIFactory2(
+            0,
+            &dxgi.IID_IFactory6,
+            @ptrCast(*?*anyopaque, &factory),
+        ));
+        break :dxgi_factory factory.?;
+    };
+    defer _ = dxgi_factory.Release();
+
+    //
+    // D3D12 Device
+    //
     const device = blk: {
-        var device: ?*d3d12.IDevice11 = null;
+        var device: ?*d3d12.IDevice = null;
         const hr = d3d12.CreateDevice(
             null,
             .@"11_0",
-            &d3d12.IID_IDevice11,
+            &d3d12.IID_IDevice,
             @ptrCast(?*?*anyopaque, &device),
         );
         if (hr != w32.S_OK) {
@@ -101,6 +123,168 @@ pub fn main() !void {
     };
     defer _ = device.Release();
 
+    std.debug.print("D3D12 device created\n", .{});
+
+    //
+    // Command Queue
+    //
+    const command_queue = command_queue: {
+        var cmdqueue: ?*d3d12.ICommandQueue = null;
+        hrPanicOnFail(device.CreateCommandQueue(&.{
+            .Type = .DIRECT,
+            .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
+            .Flags = .{},
+            .NodeMask = 0,
+        }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &cmdqueue)));
+        break :command_queue cmdqueue.?;
+    };
+    defer _ = command_queue.Release();
+
+    std.debug.print("D3D12 command queue created\n", .{});
+
+    //
+    // Swap Chain
+    //
+    const swap_chain = swap_chain: {
+        var swap_chain: *dxgi.ISwapChain = undefined;
+        hrPanicOnFail(dxgi_factory.CreateSwapChain(
+            @ptrCast(*w32.IUnknown, command_queue),
+            &dxgi.SWAP_CHAIN_DESC{
+                .BufferDesc = .{
+                    .Width = window_width,
+                    .Height = window_height,
+                    .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
+                    .Format = .R8G8B8A8_UNORM,
+                    .ScanlineOrdering = .UNSPECIFIED,
+                    .Scaling = .UNSPECIFIED,
+                },
+                .SampleDesc = .{ .Count = 1, .Quality = 0 },
+                .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
+                .BufferCount = 2,
+                .OutputWindow = window,
+                .Windowed = w32.TRUE,
+                .SwapEffect = .FLIP_DISCARD,
+                .Flags = .{},
+            },
+            @ptrCast(*?*dxgi.ISwapChain, &swap_chain),
+        ));
+        defer _ = swap_chain.Release();
+
+        var swap_chain3: ?*dxgi.ISwapChain3 = null;
+        hrPanicOnFail(swap_chain.QueryInterface(
+            &dxgi.IID_ISwapChain3,
+            @ptrCast(*?*anyopaque, &swap_chain3),
+        ));
+        break :swap_chain swap_chain3.?;
+    };
+    defer _ = swap_chain.Release();
+
+    var swap_chain_textures: [2]*d3d12.IResource = undefined;
+
+    hrPanicOnFail(swap_chain.GetBuffer(
+        0,
+        &d3d12.IID_IResource,
+        @ptrCast(*?*anyopaque, &swap_chain_textures[0]),
+    ));
+    defer _ = swap_chain_textures[0].Release();
+
+    hrPanicOnFail(swap_chain.GetBuffer(
+        0,
+        &d3d12.IID_IResource,
+        @ptrCast(*?*anyopaque, &swap_chain_textures[1]),
+    ));
+    defer _ = swap_chain_textures[1].Release();
+
+    std.debug.print("D3D12 swap chain created\n", .{});
+
+    //
+    // Render Target View Heap
+    //
+    const rtv_heap = rtv_heap: {
+        var heap: ?*d3d12.IDescriptorHeap = null;
+        hrPanicOnFail(device.CreateDescriptorHeap(&.{
+            .Type = .RTV,
+            .NumDescriptors = 16,
+            .Flags = .{},
+            .NodeMask = 0,
+        }, &d3d12.IID_IDescriptorHeap, @ptrCast(*?*anyopaque, &heap)));
+        break :rtv_heap heap.?;
+    };
+    defer _ = rtv_heap.Release();
+
+    const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
+
+    device.CreateRenderTargetView(
+        swap_chain_textures[0],
+        null,
+        rtv_heap_start,
+    );
+    device.CreateRenderTargetView(
+        swap_chain_textures[1],
+        null,
+        .{ .ptr = rtv_heap_start.ptr + device.GetDescriptorHandleIncrementSize(.RTV) },
+    );
+
+    //
+    // Frame Fence
+    //
+    const frame_fence = frame_fence: {
+        var frame_fence: *d3d12.IFence = undefined;
+        hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(*?*anyopaque, &frame_fence)));
+        break :frame_fence frame_fence;
+    };
+    defer _ = frame_fence.Release();
+
+    const frame_fence_event = w32.CreateEventExA(
+        null,
+        "frame_fence_event",
+        0,
+        w32.EVENT_ALL_ACCESS,
+    ).?;
+    defer _ = w32.CloseHandle(frame_fence_event);
+
+    //
+    // Command Allocators
+    //
+    var command_allocators: [2]*d3d12.ICommandAllocator = undefined;
+
+    hrPanicOnFail(device.CreateCommandAllocator(
+        .DIRECT,
+        &d3d12.IID_ICommandAllocator,
+        @ptrCast(*?*anyopaque, &command_allocators[0]),
+    ));
+    defer _ = command_allocators[0].Release();
+
+    hrPanicOnFail(device.CreateCommandAllocator(
+        .DIRECT,
+        &d3d12.IID_ICommandAllocator,
+        @ptrCast(*?*anyopaque, &command_allocators[1]),
+    ));
+    defer _ = command_allocators[1].Release();
+
+    //
+    // Command List
+    //
+    const command_list = command_list: {
+        var cmdlist: ?*d3d12.IGraphicsCommandList = null;
+        hrPanicOnFail(device.CreateCommandList(
+            0,
+            .DIRECT,
+            command_allocators[0],
+            null,
+            &d3d12.IID_IGraphicsCommandList,
+            @ptrCast(*?*anyopaque, &cmdlist),
+        ));
+        break :command_list cmdlist.?;
+    };
+    defer _ = command_list.Release();
+
+    var frame_index: u32 = 0;
+    var frame_fence_counter: u64 = 0;
+
+    //
+    // Main Loop
+    //
     main_loop: while (true) {
         var message = std.mem.zeroes(w32.MSG);
         while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
@@ -110,5 +294,43 @@ pub fn main() !void {
                 break :main_loop;
             }
         }
+
+        const command_allocator = command_allocators[frame_index];
+
+        hrPanicOnFail(command_allocator.Reset());
+        hrPanicOnFail(command_list.Reset(command_allocator, null));
+
+        command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
+            .TopLeftX = 0.0,
+            .TopLeftY = 0.0,
+            .Width = @intToFloat(f32, window_width),
+            .Height = @intToFloat(f32, window_height),
+            .MinDepth = 0.0,
+            .MaxDepth = 1.0,
+        }});
+        command_list.RSSetScissorRects(1, &[_]d3d12.RECT{.{
+            .left = 0,
+            .top = 0,
+            .right = @intCast(c_long, window_width),
+            .bottom = @intCast(c_long, window_height),
+        }});
+
+        hrPanicOnFail(command_list.Close());
+        command_queue.ExecuteCommandLists(
+            1,
+            &[_]*d3d12.ICommandList{@ptrCast(*d3d12.ICommandList, command_list)},
+        );
+
+        frame_fence_counter += 1;
+        hrPanicOnFail(swap_chain.Present(1, .{}));
+        hrPanicOnFail(command_queue.Signal(frame_fence, frame_fence_counter));
+
+        const gpu_frame_counter = frame_fence.GetCompletedValue();
+        if ((frame_fence_counter - gpu_frame_counter) >= 2) {
+            hrPanicOnFail(frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, frame_fence_event));
+            _ = w32.WaitForSingleObject(frame_fence_event, w32.INFINITE);
+        }
+
+        frame_index = (frame_index + 1) % 2;
     }
 }
