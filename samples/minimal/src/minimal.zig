@@ -84,6 +84,8 @@ pub fn main() !void {
         null,
     ).?;
 
+    std.log.info("Application window created", .{});
+
     //
     // DXGI Factory
     //
@@ -97,6 +99,8 @@ pub fn main() !void {
         break :dxgi_factory factory.?;
     };
     defer _ = dxgi_factory.Release();
+
+    std.log.info("DXGI factory created", .{});
 
     //
     // D3D12 Device
@@ -123,7 +127,7 @@ pub fn main() !void {
     };
     defer _ = device.Release();
 
-    std.debug.print("D3D12 device created\n", .{});
+    std.log.info("D3D12 device created", .{});
 
     //
     // Command Queue
@@ -140,7 +144,7 @@ pub fn main() !void {
     };
     defer _ = command_queue.Release();
 
-    std.debug.print("D3D12 command queue created\n", .{});
+    std.log.info("D3D12 command queue created", .{});
 
     //
     // Swap Chain
@@ -189,13 +193,13 @@ pub fn main() !void {
     defer _ = swap_chain_textures[0].Release();
 
     hrPanicOnFail(swap_chain.GetBuffer(
-        0,
+        1,
         &d3d12.IID_IResource,
         @ptrCast(*?*anyopaque, &swap_chain_textures[1]),
     ));
     defer _ = swap_chain_textures[1].Release();
 
-    std.debug.print("D3D12 swap chain created\n", .{});
+    std.log.info("Swap chain created", .{});
 
     //
     // Render Target View Heap
@@ -214,16 +218,14 @@ pub fn main() !void {
 
     const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
 
-    device.CreateRenderTargetView(
-        swap_chain_textures[0],
-        null,
-        rtv_heap_start,
-    );
+    device.CreateRenderTargetView(swap_chain_textures[0], null, rtv_heap_start);
     device.CreateRenderTargetView(
         swap_chain_textures[1],
         null,
         .{ .ptr = rtv_heap_start.ptr + device.GetDescriptorHandleIncrementSize(.RTV) },
     );
+
+    std.log.info("Render target view (RTV) heap created ", .{});
 
     //
     // Frame Fence
@@ -235,13 +237,10 @@ pub fn main() !void {
     };
     defer _ = frame_fence.Release();
 
-    const frame_fence_event = w32.CreateEventExA(
-        null,
-        "frame_fence_event",
-        0,
-        w32.EVENT_ALL_ACCESS,
-    ).?;
+    const frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
     defer _ = w32.CloseHandle(frame_fence_event);
+
+    std.log.info("Frame fence created ", .{});
 
     //
     // Command Allocators
@@ -262,6 +261,8 @@ pub fn main() !void {
     ));
     defer _ = command_allocators[1].Release();
 
+    std.log.info("Command allocators created ", .{});
+
     //
     // Command List
     //
@@ -280,6 +281,8 @@ pub fn main() !void {
     defer _ = command_list.Release();
     hrPanicOnFail(command_list.Close());
 
+    std.log.info("Command list created ", .{});
+
     var frame_index: u32 = 0;
     var frame_fence_counter: u64 = 0;
 
@@ -287,12 +290,14 @@ pub fn main() !void {
     // Main Loop
     //
     main_loop: while (true) {
-        var message = std.mem.zeroes(w32.MSG);
-        while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
-            _ = w32.TranslateMessage(&message);
-            _ = w32.DispatchMessageA(&message);
-            if (message.message == w32.WM_QUIT) {
-                break :main_loop;
+        {
+            var message = std.mem.zeroes(w32.MSG);
+            while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
+                _ = w32.TranslateMessage(&message);
+                _ = w32.DispatchMessageA(&message);
+                if (message.message == w32.WM_QUIT) {
+                    break :main_loop;
+                }
             }
         }
 
@@ -316,14 +321,53 @@ pub fn main() !void {
             .bottom = @intCast(c_long, window_height),
         }});
 
+        const back_buffer_index = swap_chain.GetCurrentBackBufferIndex();
+        const back_buffer_descriptor = d3d12.CPU_DESCRIPTOR_HANDLE{
+            .ptr = rtv_heap_start.ptr + back_buffer_index * device.GetDescriptorHandleIncrementSize(.RTV),
+        };
+
+        command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
+            .Type = .TRANSITION,
+            .Flags = .{},
+            .u = .{
+                .Transition = .{
+                    .pResource = swap_chain_textures[back_buffer_index],
+                    .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                    .StateBefore = d3d12.RESOURCE_STATES.PRESENT,
+                    .StateAfter = .{ .RENDER_TARGET = true },
+                },
+            },
+        }});
+
+        command_list.OMSetRenderTargets(
+            1,
+            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
+            w32.TRUE,
+            null,
+        );
+        command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+
+        command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
+            .Type = .TRANSITION,
+            .Flags = .{},
+            .u = .{
+                .Transition = .{
+                    .pResource = swap_chain_textures[back_buffer_index],
+                    .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                    .StateBefore = .{ .RENDER_TARGET = true },
+                    .StateAfter = d3d12.RESOURCE_STATES.PRESENT,
+                },
+            },
+        }});
         hrPanicOnFail(command_list.Close());
+
         command_queue.ExecuteCommandLists(
             1,
             &[_]*d3d12.ICommandList{@ptrCast(*d3d12.ICommandList, command_list)},
         );
 
         frame_fence_counter += 1;
-        hrPanicOnFail(swap_chain.Present(1, .{}));
+        hrPanicOnFail(swap_chain.Present(0, .{}));
         hrPanicOnFail(command_queue.Signal(frame_fence, frame_fence_counter));
 
         const gpu_frame_counter = frame_fence.GetCompletedValue();
@@ -334,4 +378,9 @@ pub fn main() !void {
 
         frame_index = (frame_index + 1) % 2;
     }
+
+    frame_fence_counter += 1;
+    hrPanicOnFail(command_queue.Signal(frame_fence, frame_fence_counter));
+    hrPanicOnFail(frame_fence.SetEventOnCompletion(frame_fence_counter, frame_fence_event));
+    _ = w32.WaitForSingleObject(frame_fence_event, w32.INFINITE);
 }
