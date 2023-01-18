@@ -64,7 +64,7 @@ pub fn main() !void {
     };
     _ = w32.AdjustWindowRectEx(&rect, style, w32.FALSE, 0);
 
-    _ = w32.CreateWindowExA(
+    const window = w32.CreateWindowExA(
         0,
         window_name,
         window_name,
@@ -78,6 +78,28 @@ pub fn main() !void {
         winclass.hInstance,
         null,
     ).?;
+
+    const device = blk: {
+        var device: ?*d3d12.IDevice11 = null;
+        const hr = d3d12.CreateDevice(
+            null,
+            .@"11_0",
+            &d3d12.IID_IDevice11,
+            @ptrCast(?*?*anyopaque, &device),
+        );
+        if (hr != w32.S_OK) {
+            _ = w32.MessageBoxA(
+                window,
+                "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
+                    "with DirectX 12 Feature Level 11.0 support.",
+                "Your graphics card driver may be old",
+                w32.MB_OK | w32.MB_ICONERROR,
+            );
+            w32.ExitProcess(0);
+        }
+        break :blk device.?;
+    };
+    defer _ = device.Release();
 
     main_loop: while (true) {
         var message = std.mem.zeroes(w32.MSG);

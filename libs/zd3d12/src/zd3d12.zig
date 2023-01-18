@@ -119,7 +119,7 @@ pub const GraphicsContext = struct {
 
         if (enable_debug_layer) {
             var maybe_debug: ?*d3d12d.IDebug1 = null;
-            _ = d3d12.D3D12GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*anyopaque, &maybe_debug));
+            _ = d3d12.GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*anyopaque, &maybe_debug));
             if (maybe_debug) |debug| {
                 debug.EnableDebugLayer();
                 if (enable_gbv) {
@@ -149,7 +149,7 @@ pub const GraphicsContext = struct {
                             continue;
                         }
 
-                        const hr = d3d12.D3D12CreateDevice(
+                        const hr = d3d12.CreateDevice(
                             @ptrCast(*w32.IUnknown, adapter1),
                             .@"11_1",
                             &d3d12.IID_IDevice9,
@@ -170,7 +170,7 @@ pub const GraphicsContext = struct {
 
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
-            const hr = d3d12.D3D12CreateDevice(
+            const hr = d3d12.CreateDevice(
                 if (suitable_adapter) |adapter| @ptrCast(*w32.IUnknown, adapter) else null,
                 .@"11_1",
                 &d3d12.IID_IDevice9,

@@ -6200,20 +6200,24 @@ pub const IProtectedResourceSession = extern struct {
     };
 };
 
-pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT;
+extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT;
 
-pub extern "d3d12" fn D3D12CreateDevice(
+extern "d3d12" fn D3D12CreateDevice(
     ?*IUnknown,
     d3d.FEATURE_LEVEL,
     *const GUID,
     ?*?*anyopaque,
 ) callconv(WINAPI) HRESULT;
 
-pub extern "d3d12" fn D3D12SerializeVersionedRootSignature(
+extern "d3d12" fn D3D12SerializeVersionedRootSignature(
     *const VERSIONED_ROOT_SIGNATURE_DESC,
     ?*?*d3d.IBlob,
     ?*?*d3d.IBlob,
 ) callconv(WINAPI) HRESULT;
+
+pub const CreateDevice = D3D12CreateDevice;
+pub const GetDebugInterface = D3D12GetDebugInterface;
+pub const SerializeVersionedRootSignature = D3D12SerializeVersionedRootSignature;
 
 pub const IID_ICommandQueue = GUID{
     .Data1 = 0x0ec870a6,
