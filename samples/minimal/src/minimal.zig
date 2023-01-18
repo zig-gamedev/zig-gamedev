@@ -286,6 +286,9 @@ pub fn main() !void {
     var frame_index: u32 = 0;
     var frame_fence_counter: u64 = 0;
 
+    var frac: f32 = 0.0;
+    var frac_delta: f32 = 0.005;
+
     //
     // Main Loop
     //
@@ -345,7 +348,7 @@ pub fn main() !void {
             w32.TRUE,
             null,
         );
-        command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+        command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, frac, 0.8, 1.0 }, 0, null);
 
         command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
             .Type = .TRANSITION,
@@ -367,7 +370,7 @@ pub fn main() !void {
         );
 
         frame_fence_counter += 1;
-        hrPanicOnFail(swap_chain.Present(0, .{}));
+        hrPanicOnFail(swap_chain.Present(1, .{}));
         hrPanicOnFail(command_queue.Signal(frame_fence, frame_fence_counter));
 
         const gpu_frame_counter = frame_fence.GetCompletedValue();
@@ -377,6 +380,11 @@ pub fn main() !void {
         }
 
         frame_index = (frame_index + 1) % 2;
+
+        frac += frac_delta;
+        if (frac > 1.0 or frac < 0.0) {
+            frac_delta = -frac_delta;
+        }
     }
 
     frame_fence_counter += 1;
