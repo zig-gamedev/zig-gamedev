@@ -309,19 +309,21 @@ pub fn main() !void {
         hrPanicOnFail(command_allocator.Reset());
         hrPanicOnFail(command_list.Reset(command_allocator, null));
 
+        _ = w32.GetClientRect(window, &rect);
+
         command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = @intToFloat(f32, window_width),
-            .Height = @intToFloat(f32, window_height),
+            .Width = @intToFloat(f32, rect.right),
+            .Height = @intToFloat(f32, rect.bottom),
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
         command_list.RSSetScissorRects(1, &[_]d3d12.RECT{.{
             .left = 0,
             .top = 0,
-            .right = @intCast(c_long, window_width),
-            .bottom = @intCast(c_long, window_height),
+            .right = @intCast(c_long, rect.right),
+            .bottom = @intCast(c_long, rect.bottom),
         }});
 
         const back_buffer_index = swap_chain.GetCurrentBackBufferIndex();
