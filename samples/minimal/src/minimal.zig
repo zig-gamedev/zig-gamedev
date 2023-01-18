@@ -160,7 +160,7 @@ pub fn main() !void {
                     .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
                     .Format = .R8G8B8A8_UNORM,
                     .ScanlineOrdering = .UNSPECIFIED,
-                    .Scaling = .UNSPECIFIED,
+                    .Scaling = .STRETCHED,
                 },
                 .SampleDesc = .{ .Count = 1, .Quality = 0 },
                 .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
