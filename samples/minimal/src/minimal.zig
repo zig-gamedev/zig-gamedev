@@ -13,9 +13,6 @@ const window_name = "zig-gamedev: minimal";
 const window_width = 1600;
 const window_height = 1200;
 
-const vs_cso = @embedFile("./minimal.vs.cso");
-const ps_cso = @embedFile("./minimal.ps.cso");
-
 fn processWindowMessage(
     window: w32.HWND,
     message: w32.UINT,
@@ -93,6 +90,9 @@ pub fn main() !void {
     defer dx12.deinit();
 
     const pipeline = pipeline: {
+        const vs_cso = @embedFile("./minimal.vs.cso");
+        const ps_cso = @embedFile("./minimal.ps.cso");
+
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
