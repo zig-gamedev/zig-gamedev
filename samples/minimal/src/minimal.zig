@@ -268,20 +268,13 @@ const Dx12State = struct {
         //
         var swap_chain: *dxgi.ISwapChain3 = undefined;
         {
-            var rect: w32.RECT = undefined;
-            _ = w32.GetClientRect(window, &rect);
-            const width = @intCast(u32, rect.right - rect.left) + 100;
-            const height = @intCast(u32, rect.bottom - rect.top) + 100;
-
-            std.log.info("Window {d}x{d}", .{ width, height });
-
             var temp_swap_chain: *dxgi.ISwapChain = undefined;
             hrPanicOnFail(dxgi_factory.CreateSwapChain(
                 @ptrCast(*w32.IUnknown, command_queue),
                 &dxgi.SWAP_CHAIN_DESC{
                     .BufferDesc = .{
-                        .Width = width,
-                        .Height = height,
+                        .Width = window_width,
+                        .Height = window_height,
                         .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
                         .Format = .R8G8B8A8_UNORM,
                         .ScanlineOrdering = .UNSPECIFIED,
