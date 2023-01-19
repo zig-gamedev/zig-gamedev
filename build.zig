@@ -27,7 +27,7 @@ pub fn build(b: *std.build.Builder) void {
     ensureGitLfsContent("/samples/triangle_wgpu/triangle_wgpu_content/Roboto-Medium.ttf") catch return;
 
     // Fetch the latest Dawn/WebGPU binaries.
-    const skip_dawn_update = b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
+    const skip_dawn_update = true; //b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
     if (!skip_dawn_update) {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
         child.cwd = thisDir();
