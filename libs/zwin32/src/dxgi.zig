@@ -855,7 +855,8 @@ pub const ISwapChain = extern struct {
                     .ResizeBuffers(@ptrCast(*ISwapChain, self), count, width, height, format, flags);
             }
             pub inline fn ResizeTarget(self: *T, params: *const MODE_DESC) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v).ResizeTarget(@ptrCast(*ISwapChain, self), params);
+                return @ptrCast(*const ISwapChain.VTable, self.__v)
+                    .ResizeTarget(@ptrCast(*ISwapChain, self), params);
             }
             pub inline fn GetContainingOutput(self: *T, output: *?*IOutput) HRESULT {
                 return @ptrCast(*const ISwapChain.VTable, self.__v)
@@ -888,6 +889,13 @@ pub const ISwapChain = extern struct {
     };
 };
 
+pub const MWA_FLAGS = packed struct(UINT) {
+    NO_WINDOW_CHANGES: bool = false,
+    NO_ALT_ENTER: bool = false,
+    NO_PRINT_SCREEN: bool = false,
+    __unused: u29 = 0,
+};
+
 pub const IFactory = extern struct {
     __v: *const VTable,
 
@@ -901,7 +909,7 @@ pub const IFactory = extern struct {
                 return @ptrCast(*const IFactory.VTable, self.__v)
                     .EnumAdapters(@ptrCast(*IFactory, self), index, adapter);
             }
-            pub inline fn MakeWindowAssociation(self: *T, window: HWND, flags: UINT) HRESULT {
+            pub inline fn MakeWindowAssociation(self: *T, window: HWND, flags: MWA_FLAGS) HRESULT {
                 return @ptrCast(*const IFactory.VTable, self.__v)
                     .MakeWindowAssociation(@ptrCast(*IFactory, self), window, flags);
             }
@@ -929,7 +937,7 @@ pub const IFactory = extern struct {
         const T = IFactory;
         base: IObject.VTable,
         EnumAdapters: *const fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
-        MakeWindowAssociation: *const fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
+        MakeWindowAssociation: *const fn (*T, HWND, MWA_FLAGS) callconv(WINAPI) HRESULT,
         GetWindowAssociation: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
         CreateSwapChain: *const fn (*T, *IUnknown, *SWAP_CHAIN_DESC, *?*ISwapChain) callconv(WINAPI) HRESULT,
         CreateSoftwareAdapter: *const fn (*T, *?*IAdapter) callconv(WINAPI) HRESULT,

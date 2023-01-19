@@ -197,6 +197,8 @@ pub extern "user32" fn CreateWindowExA(
     lpParam: ?LPVOID,
 ) callconv(WINAPI) ?HWND;
 
+pub extern "user32" fn DestroyWindow(hWnd: HWND) BOOL;
+
 pub extern "user32" fn PostQuitMessage(nExitCode: i32) callconv(WINAPI) void;
 
 pub extern "user32" fn DefWindowProcA(
@@ -339,6 +341,8 @@ pub extern "kernel32" fn InitializeCriticalSection(lpCriticalSection: *CRITICAL_
 pub extern "kernel32" fn EnterCriticalSection(lpCriticalSection: *CRITICAL_SECTION) callconv(WINAPI) void;
 pub extern "kernel32" fn LeaveCriticalSection(lpCriticalSection: *CRITICAL_SECTION) callconv(WINAPI) void;
 pub extern "kernel32" fn DeleteCriticalSection(lpCriticalSection: *CRITICAL_SECTION) callconv(WINAPI) void;
+
+pub extern "kernel32" fn Sleep(dwMilliseconds: DWORD) void;
 
 pub extern "ntdll" fn RtlGetVersion(lpVersionInformation: *OSVERSIONINFOW) callconv(WINAPI) NTSTATUS;
 

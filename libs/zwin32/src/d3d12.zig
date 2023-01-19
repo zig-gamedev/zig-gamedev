@@ -5271,7 +5271,7 @@ pub const IDevice5 = extern struct {
                     .CreateLifetimeTracker(@ptrCast(*IDevice5, self), owner, guid, tracker);
             }
             pub inline fn RemoveDevice(self: *T) void {
-                @ptrCast(*const IDevice5.VTable, self.__v).RemoveDevice();
+                @ptrCast(*const IDevice5.VTable, self.__v).RemoveDevice(@ptrCast(*IDevice5, self));
             }
             pub inline fn EnumerateMetaCommands(
                 self: *T,

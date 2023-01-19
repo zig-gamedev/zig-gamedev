@@ -3,6 +3,7 @@ const zwin32 = @import("zwin32");
 const w32 = zwin32.w32;
 const dxgi = zwin32.dxgi;
 const d3d12 = zwin32.d3d12;
+const d3d12d = zwin32.d3d12d;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 
 pub export const D3D12SDKVersion: u32 = 608;
@@ -36,15 +37,7 @@ fn processWindowMessage(
     return w32.DefWindowProcA(window, message, wparam, lparam);
 }
 
-pub fn main() !void {
-    _ = w32.CoInitializeEx(null, w32.COINIT_MULTITHREADED);
-    defer w32.CoUninitialize();
-
-    _ = w32.SetProcessDPIAware();
-
-    //
-    // Window
-    //
+fn createWindow() w32.HWND {
     const winclass = w32.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
@@ -86,205 +79,17 @@ pub fn main() !void {
 
     std.log.info("Application window created", .{});
 
-    //
-    // DXGI Factory
-    //
-    const dxgi_factory = dxgi_factory: {
-        var factory: ?*dxgi.IFactory6 = undefined;
-        hrPanicOnFail(dxgi.CreateDXGIFactory2(
-            0,
-            &dxgi.IID_IFactory6,
-            @ptrCast(*?*anyopaque, &factory),
-        ));
-        break :dxgi_factory factory.?;
-    };
-    defer _ = dxgi_factory.Release();
+    return window;
+}
 
-    std.log.info("DXGI factory created", .{});
+pub fn main() !void {
+    _ = w32.CoInitializeEx(null, w32.COINIT_MULTITHREADED);
+    defer w32.CoUninitialize();
 
-    //
-    // D3D12 Device
-    //
-    const device = blk: {
-        var device: ?*d3d12.IDevice = null;
-        const hr = d3d12.CreateDevice(
-            null,
-            .@"11_0",
-            &d3d12.IID_IDevice,
-            @ptrCast(?*?*anyopaque, &device),
-        );
-        if (hr != w32.S_OK) {
-            _ = w32.MessageBoxA(
-                window,
-                "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
-                    "with DirectX 12 Feature Level 11.0 support.",
-                "Your graphics card driver may be old",
-                w32.MB_OK | w32.MB_ICONERROR,
-            );
-            w32.ExitProcess(0);
-        }
-        break :blk device.?;
-    };
-    defer _ = device.Release();
+    _ = w32.SetProcessDPIAware();
 
-    std.log.info("D3D12 device created", .{});
-
-    //
-    // Command Queue
-    //
-    const command_queue = command_queue: {
-        var cmdqueue: ?*d3d12.ICommandQueue = null;
-        hrPanicOnFail(device.CreateCommandQueue(&.{
-            .Type = .DIRECT,
-            .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
-            .Flags = .{},
-            .NodeMask = 0,
-        }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &cmdqueue)));
-        break :command_queue cmdqueue.?;
-    };
-    defer _ = command_queue.Release();
-
-    std.log.info("D3D12 command queue created", .{});
-
-    //
-    // Swap Chain
-    //
-    const swap_chain = swap_chain: {
-        var swap_chain: *dxgi.ISwapChain = undefined;
-        hrPanicOnFail(dxgi_factory.CreateSwapChain(
-            @ptrCast(*w32.IUnknown, command_queue),
-            &dxgi.SWAP_CHAIN_DESC{
-                .BufferDesc = .{
-                    .Width = window_width,
-                    .Height = window_height,
-                    .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
-                    .Format = .R8G8B8A8_UNORM,
-                    .ScanlineOrdering = .UNSPECIFIED,
-                    .Scaling = .STRETCHED,
-                },
-                .SampleDesc = .{ .Count = 1, .Quality = 0 },
-                .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
-                .BufferCount = 2,
-                .OutputWindow = window,
-                .Windowed = w32.TRUE,
-                .SwapEffect = .FLIP_DISCARD,
-                .Flags = .{},
-            },
-            @ptrCast(*?*dxgi.ISwapChain, &swap_chain),
-        ));
-        defer _ = swap_chain.Release();
-
-        var swap_chain3: ?*dxgi.ISwapChain3 = null;
-        hrPanicOnFail(swap_chain.QueryInterface(
-            &dxgi.IID_ISwapChain3,
-            @ptrCast(*?*anyopaque, &swap_chain3),
-        ));
-        break :swap_chain swap_chain3.?;
-    };
-    defer _ = swap_chain.Release();
-
-    var swap_chain_textures: [2]*d3d12.IResource = undefined;
-
-    hrPanicOnFail(swap_chain.GetBuffer(
-        0,
-        &d3d12.IID_IResource,
-        @ptrCast(*?*anyopaque, &swap_chain_textures[0]),
-    ));
-    defer _ = swap_chain_textures[0].Release();
-
-    hrPanicOnFail(swap_chain.GetBuffer(
-        1,
-        &d3d12.IID_IResource,
-        @ptrCast(*?*anyopaque, &swap_chain_textures[1]),
-    ));
-    defer _ = swap_chain_textures[1].Release();
-
-    std.log.info("Swap chain created", .{});
-
-    //
-    // Render Target View Heap
-    //
-    const rtv_heap = rtv_heap: {
-        var heap: ?*d3d12.IDescriptorHeap = null;
-        hrPanicOnFail(device.CreateDescriptorHeap(&.{
-            .Type = .RTV,
-            .NumDescriptors = 16,
-            .Flags = .{},
-            .NodeMask = 0,
-        }, &d3d12.IID_IDescriptorHeap, @ptrCast(*?*anyopaque, &heap)));
-        break :rtv_heap heap.?;
-    };
-    defer _ = rtv_heap.Release();
-
-    const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
-
-    device.CreateRenderTargetView(swap_chain_textures[0], null, rtv_heap_start);
-    device.CreateRenderTargetView(
-        swap_chain_textures[1],
-        null,
-        .{ .ptr = rtv_heap_start.ptr + device.GetDescriptorHandleIncrementSize(.RTV) },
-    );
-
-    std.log.info("Render target view (RTV) heap created ", .{});
-
-    //
-    // Frame Fence
-    //
-    const frame_fence = frame_fence: {
-        var frame_fence: *d3d12.IFence = undefined;
-        hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(*?*anyopaque, &frame_fence)));
-        break :frame_fence frame_fence;
-    };
-    defer _ = frame_fence.Release();
-
-    const frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
-    defer _ = w32.CloseHandle(frame_fence_event);
-
-    std.log.info("Frame fence created ", .{});
-
-    //
-    // Command Allocators
-    //
-    var command_allocators: [2]*d3d12.ICommandAllocator = undefined;
-
-    hrPanicOnFail(device.CreateCommandAllocator(
-        .DIRECT,
-        &d3d12.IID_ICommandAllocator,
-        @ptrCast(*?*anyopaque, &command_allocators[0]),
-    ));
-    defer _ = command_allocators[0].Release();
-
-    hrPanicOnFail(device.CreateCommandAllocator(
-        .DIRECT,
-        &d3d12.IID_ICommandAllocator,
-        @ptrCast(*?*anyopaque, &command_allocators[1]),
-    ));
-    defer _ = command_allocators[1].Release();
-
-    std.log.info("Command allocators created ", .{});
-
-    //
-    // Command List
-    //
-    const command_list = command_list: {
-        var cmdlist: ?*d3d12.IGraphicsCommandList = null;
-        hrPanicOnFail(device.CreateCommandList(
-            0,
-            .DIRECT,
-            command_allocators[0],
-            null,
-            &d3d12.IID_IGraphicsCommandList,
-            @ptrCast(*?*anyopaque, &cmdlist),
-        ));
-        break :command_list cmdlist.?;
-    };
-    defer _ = command_list.Release();
-    hrPanicOnFail(command_list.Close());
-
-    std.log.info("Command list created ", .{});
-
-    var frame_index: u32 = 0;
-    var frame_fence_counter: u64 = 0;
+    var dx12 = Dx12State.init(createWindow());
+    defer dx12.deinit();
 
     var frac: f32 = 0.0;
     var frac_delta: f32 = 0.005;
@@ -304,39 +109,38 @@ pub fn main() !void {
             }
         }
 
-        const command_allocator = command_allocators[frame_index];
+        const command_allocator = dx12.command_allocators[dx12.frame_index];
 
         hrPanicOnFail(command_allocator.Reset());
-        hrPanicOnFail(command_list.Reset(command_allocator, null));
+        hrPanicOnFail(dx12.command_list.Reset(command_allocator, null));
 
-        _ = w32.GetClientRect(window, &rect);
-
-        command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
+        dx12.command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = @intToFloat(f32, rect.right),
-            .Height = @intToFloat(f32, rect.bottom),
+            .Width = @intToFloat(f32, window_width),
+            .Height = @intToFloat(f32, window_height),
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
-        command_list.RSSetScissorRects(1, &[_]d3d12.RECT{.{
+        dx12.command_list.RSSetScissorRects(1, &[_]d3d12.RECT{.{
             .left = 0,
             .top = 0,
-            .right = @intCast(c_long, rect.right),
-            .bottom = @intCast(c_long, rect.bottom),
+            .right = @intCast(c_long, window_width),
+            .bottom = @intCast(c_long, window_height),
         }});
 
-        const back_buffer_index = swap_chain.GetCurrentBackBufferIndex();
+        const back_buffer_index = dx12.swap_chain.GetCurrentBackBufferIndex();
         const back_buffer_descriptor = d3d12.CPU_DESCRIPTOR_HANDLE{
-            .ptr = rtv_heap_start.ptr + back_buffer_index * device.GetDescriptorHandleIncrementSize(.RTV),
+            .ptr = dx12.rtv_heap_start.ptr +
+                back_buffer_index * dx12.device.GetDescriptorHandleIncrementSize(.RTV),
         };
 
-        command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
+        dx12.command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
             .Type = .TRANSITION,
             .Flags = .{},
             .u = .{
                 .Transition = .{
-                    .pResource = swap_chain_textures[back_buffer_index],
+                    .pResource = dx12.swap_chain_textures[back_buffer_index],
                     .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
                     .StateBefore = d3d12.RESOURCE_STATES.PRESENT,
                     .StateAfter = .{ .RENDER_TARGET = true },
@@ -344,44 +148,34 @@ pub fn main() !void {
             },
         }});
 
-        command_list.OMSetRenderTargets(
+        dx12.command_list.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
             w32.TRUE,
             null,
         );
-        command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, frac, 0.8, 1.0 }, 0, null);
+        dx12.command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, frac, 0.8, 1.0 }, 0, null);
 
-        command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
+        dx12.command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
             .Type = .TRANSITION,
             .Flags = .{},
             .u = .{
                 .Transition = .{
-                    .pResource = swap_chain_textures[back_buffer_index],
+                    .pResource = dx12.swap_chain_textures[back_buffer_index],
                     .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
                     .StateBefore = .{ .RENDER_TARGET = true },
                     .StateAfter = d3d12.RESOURCE_STATES.PRESENT,
                 },
             },
         }});
-        hrPanicOnFail(command_list.Close());
+        hrPanicOnFail(dx12.command_list.Close());
 
-        command_queue.ExecuteCommandLists(
+        dx12.command_queue.ExecuteCommandLists(
             1,
-            &[_]*d3d12.ICommandList{@ptrCast(*d3d12.ICommandList, command_list)},
+            &[_]*d3d12.ICommandList{@ptrCast(*d3d12.ICommandList, dx12.command_list)},
         );
 
-        frame_fence_counter += 1;
-        hrPanicOnFail(swap_chain.Present(1, .{}));
-        hrPanicOnFail(command_queue.Signal(frame_fence, frame_fence_counter));
-
-        const gpu_frame_counter = frame_fence.GetCompletedValue();
-        if ((frame_fence_counter - gpu_frame_counter) >= 2) {
-            hrPanicOnFail(frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, frame_fence_event));
-            _ = w32.WaitForSingleObject(frame_fence_event, w32.INFINITE);
-        }
-
-        frame_index = (frame_index + 1) % 2;
+        dx12.present();
 
         frac += frac_delta;
         if (frac > 1.0 or frac < 0.0) {
@@ -389,8 +183,259 @@ pub fn main() !void {
         }
     }
 
-    frame_fence_counter += 1;
-    hrPanicOnFail(command_queue.Signal(frame_fence, frame_fence_counter));
-    hrPanicOnFail(frame_fence.SetEventOnCompletion(frame_fence_counter, frame_fence_event));
-    _ = w32.WaitForSingleObject(frame_fence_event, w32.INFINITE);
+    dx12.finishGpuCommands();
 }
+
+const Dx12State = struct {
+    dxgi_factory: *dxgi.IFactory6,
+    device: *d3d12.IDevice,
+
+    swap_chain: *dxgi.ISwapChain3,
+    swap_chain_textures: [2]*d3d12.IResource,
+
+    rtv_heap: *d3d12.IDescriptorHeap,
+    rtv_heap_start: d3d12.CPU_DESCRIPTOR_HANDLE,
+
+    frame_fence: *d3d12.IFence,
+    frame_fence_event: w32.HANDLE,
+    frame_fence_counter: u64 = 0,
+    frame_index: u32 = 0,
+
+    command_queue: *d3d12.ICommandQueue,
+    command_allocators: [2]*d3d12.ICommandAllocator,
+    command_list: *d3d12.IGraphicsCommandList,
+
+    fn init(window: w32.HWND) Dx12State {
+        //
+        // DXGI Factory
+        //
+        var dxgi_factory: *dxgi.IFactory6 = undefined;
+        hrPanicOnFail(dxgi.CreateDXGIFactory2(
+            0,
+            &dxgi.IID_IFactory6,
+            @ptrCast(*?*anyopaque, &dxgi_factory),
+        ));
+
+        std.log.info("DXGI factory created", .{});
+
+        {
+            var maybe_debug: ?*d3d12d.IDebug1 = null;
+            _ = d3d12.GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*anyopaque, &maybe_debug));
+            if (maybe_debug) |debug| {
+                // Uncomment below line to enable debug layer
+                //debug.EnableDebugLayer();
+                _ = debug.Release();
+            }
+        }
+
+        //
+        // D3D12 Device
+        //
+        var device: *d3d12.IDevice = undefined;
+        if (d3d12.CreateDevice(
+            null,
+            .@"11_0",
+            &d3d12.IID_IDevice,
+            @ptrCast(?*?*anyopaque, &device),
+        ) != w32.S_OK) {
+            _ = w32.MessageBoxA(
+                window,
+                "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
+                    "with DirectX 12 Feature Level 11.0 support.",
+                "Your graphics card driver may be old",
+                w32.MB_OK | w32.MB_ICONERROR,
+            );
+            w32.ExitProcess(0);
+        }
+
+        std.log.info("D3D12 device created", .{});
+
+        //
+        // Command Queue
+        //
+        var command_queue: *d3d12.ICommandQueue = undefined;
+        hrPanicOnFail(device.CreateCommandQueue(&.{
+            .Type = .DIRECT,
+            .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
+            .Flags = .{},
+            .NodeMask = 0,
+        }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &command_queue)));
+
+        std.log.info("D3D12 command queue created", .{});
+
+        //
+        // Swap Chain
+        //
+        var swap_chain: *dxgi.ISwapChain3 = undefined;
+        {
+            var rect: w32.RECT = undefined;
+            _ = w32.GetClientRect(window, &rect);
+            const width = @intCast(u32, rect.right - rect.left) + 100;
+            const height = @intCast(u32, rect.bottom - rect.top) + 100;
+
+            std.log.info("Window {d}x{d}", .{ width, height });
+
+            var temp_swap_chain: *dxgi.ISwapChain = undefined;
+            hrPanicOnFail(dxgi_factory.CreateSwapChain(
+                @ptrCast(*w32.IUnknown, command_queue),
+                &dxgi.SWAP_CHAIN_DESC{
+                    .BufferDesc = .{
+                        .Width = width,
+                        .Height = height,
+                        .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
+                        .Format = .R8G8B8A8_UNORM,
+                        .ScanlineOrdering = .UNSPECIFIED,
+                        .Scaling = .UNSPECIFIED,
+                    },
+                    .SampleDesc = .{ .Count = 1, .Quality = 0 },
+                    .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
+                    .BufferCount = 2,
+                    .OutputWindow = window,
+                    .Windowed = w32.TRUE,
+                    .SwapEffect = .FLIP_DISCARD,
+                    .Flags = .{},
+                },
+                @ptrCast(*?*dxgi.ISwapChain, &temp_swap_chain),
+            ));
+            defer _ = temp_swap_chain.Release();
+
+            hrPanicOnFail(temp_swap_chain.QueryInterface(
+                &dxgi.IID_ISwapChain3,
+                @ptrCast(*?*anyopaque, &swap_chain),
+            ));
+        }
+
+        // Disable ALT + ENTER
+        hrPanicOnFail(dxgi_factory.MakeWindowAssociation(window, .{ .NO_WINDOW_CHANGES = true }));
+
+        var swap_chain_textures: [2]*d3d12.IResource = undefined;
+
+        hrPanicOnFail(swap_chain.GetBuffer(
+            0,
+            &d3d12.IID_IResource,
+            @ptrCast(*?*anyopaque, &swap_chain_textures[0]),
+        ));
+        hrPanicOnFail(swap_chain.GetBuffer(
+            1,
+            &d3d12.IID_IResource,
+            @ptrCast(*?*anyopaque, &swap_chain_textures[1]),
+        ));
+
+        std.log.info("Swap chain created", .{});
+
+        //
+        // Render Target View Heap
+        //
+        var rtv_heap: *d3d12.IDescriptorHeap = undefined;
+        hrPanicOnFail(device.CreateDescriptorHeap(&.{
+            .Type = .RTV,
+            .NumDescriptors = 16,
+            .Flags = .{},
+            .NodeMask = 0,
+        }, &d3d12.IID_IDescriptorHeap, @ptrCast(*?*anyopaque, &rtv_heap)));
+
+        const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
+
+        device.CreateRenderTargetView(swap_chain_textures[0], null, rtv_heap_start);
+        device.CreateRenderTargetView(
+            swap_chain_textures[1],
+            null,
+            .{ .ptr = rtv_heap_start.ptr + device.GetDescriptorHandleIncrementSize(.RTV) },
+        );
+
+        std.log.info("Render target view (RTV) heap created ", .{});
+
+        //
+        // Frame Fence
+        //
+        var frame_fence: *d3d12.IFence = undefined;
+        hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(*?*anyopaque, &frame_fence)));
+
+        var frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
+
+        std.log.info("Frame fence created ", .{});
+
+        //
+        // Command Allocators
+        //
+        var command_allocators: [2]*d3d12.ICommandAllocator = undefined;
+
+        hrPanicOnFail(device.CreateCommandAllocator(
+            .DIRECT,
+            &d3d12.IID_ICommandAllocator,
+            @ptrCast(*?*anyopaque, &command_allocators[0]),
+        ));
+        hrPanicOnFail(device.CreateCommandAllocator(
+            .DIRECT,
+            &d3d12.IID_ICommandAllocator,
+            @ptrCast(*?*anyopaque, &command_allocators[1]),
+        ));
+
+        std.log.info("Command allocators created ", .{});
+
+        //
+        // Command List
+        //
+        var command_list: *d3d12.IGraphicsCommandList = undefined;
+        hrPanicOnFail(device.CreateCommandList(
+            0,
+            .DIRECT,
+            command_allocators[0],
+            null,
+            &d3d12.IID_IGraphicsCommandList,
+            @ptrCast(*?*anyopaque, &command_list),
+        ));
+        hrPanicOnFail(command_list.Close());
+
+        return .{
+            .dxgi_factory = dxgi_factory,
+            .device = device,
+            .command_queue = command_queue,
+            .swap_chain = swap_chain,
+            .swap_chain_textures = swap_chain_textures,
+            .rtv_heap = rtv_heap,
+            .rtv_heap_start = rtv_heap_start,
+            .frame_fence = frame_fence,
+            .frame_fence_event = frame_fence_event,
+            .command_allocators = command_allocators,
+            .command_list = command_list,
+        };
+    }
+
+    fn deinit(dx12: *Dx12State) void {
+        _ = dx12.command_list.Release();
+        _ = dx12.command_allocators[0].Release();
+        _ = dx12.command_allocators[1].Release();
+        _ = dx12.frame_fence.Release();
+        _ = w32.CloseHandle(dx12.frame_fence_event);
+        _ = dx12.rtv_heap.Release();
+        _ = dx12.swap_chain_textures[0].Release();
+        _ = dx12.swap_chain_textures[1].Release();
+        _ = dx12.swap_chain.Release();
+        _ = dx12.command_queue.Release();
+        _ = dx12.device.Release();
+        _ = dx12.dxgi_factory.Release();
+        dx12.* = undefined;
+    }
+
+    fn present(dx12: *Dx12State) void {
+        dx12.frame_fence_counter += 1;
+        hrPanicOnFail(dx12.swap_chain.Present(1, .{}));
+        hrPanicOnFail(dx12.command_queue.Signal(dx12.frame_fence, dx12.frame_fence_counter));
+
+        const gpu_frame_counter = dx12.frame_fence.GetCompletedValue();
+        if ((dx12.frame_fence_counter - gpu_frame_counter) >= 2) {
+            hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, dx12.frame_fence_event));
+            _ = w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE);
+        }
+
+        dx12.frame_index = (dx12.frame_index + 1) % 2;
+    }
+
+    fn finishGpuCommands(dx12: *Dx12State) void {
+        dx12.frame_fence_counter += 1;
+        hrPanicOnFail(dx12.command_queue.Signal(dx12.frame_fence, dx12.frame_fence_counter));
+        hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(dx12.frame_fence_counter, dx12.frame_fence_event));
+        _ = w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE);
+    }
+};
