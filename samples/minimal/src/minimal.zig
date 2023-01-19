@@ -9,11 +9,12 @@ const hrPanicOnFail = zwin32.hrPanicOnFail;
 pub export const D3D12SDKVersion: u32 = 608;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const content_dir = @import("build_options").content_dir;
-
 const window_name = "zig-gamedev: minimal";
 const window_width = 1600;
 const window_height = 1200;
+
+const vs_cso = @embedFile("./minimal.vs.cso");
+const ps_cso = @embedFile("./minimal.ps.cso");
 
 fn processWindowMessage(
     window: w32.HWND,
@@ -90,6 +91,35 @@ pub fn main() !void {
 
     var dx12 = Dx12State.init(createWindow());
     defer dx12.deinit();
+
+    const pipeline = pipeline: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = .{ .pShaderBytecode = vs_cso, .BytecodeLength = vs_cso.len };
+        pso_desc.PS = .{ .pShaderBytecode = ps_cso, .BytecodeLength = ps_cso.len };
+
+        var rs: *d3d12.IRootSignature = undefined;
+        hrPanicOnFail(dx12.device.CreateRootSignature(
+            0,
+            pso_desc.VS.pShaderBytecode.?,
+            pso_desc.VS.BytecodeLength,
+            &d3d12.IID_IRootSignature,
+            @ptrCast(*?*anyopaque, &rs),
+        ));
+
+        var pso: *d3d12.IPipelineState = undefined;
+        hrPanicOnFail(dx12.device.CreateGraphicsPipelineState(
+            &pso_desc,
+            &d3d12.IID_IPipelineState,
+            @ptrCast(*?*anyopaque, &pso),
+        ));
+        break :pipeline pso;
+    };
+    _ = pipeline;
 
     var frac: f32 = 0.0;
     var frac_delta: f32 = 0.005;

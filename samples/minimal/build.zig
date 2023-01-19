@@ -2,14 +2,9 @@ const std = @import("std");
 const zwin32 = @import("../../libs/zwin32/build.zig");
 
 const Options = @import("../../build.zig").Options;
-const content_dir = "minimal_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe = b.addExecutable("minimal", thisDir() ++ "/src/minimal.zig");
-
-    const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
-    exe_options.addOption([]const u8, "content_dir", content_dir);
 
     exe.step.dependOn(
         &exe.builder.addInstallFile(
@@ -40,13 +35,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const dxc_step = buildShaders(b);
-    const install_content_step = b.addInstallDirectory(.{
-        .source_dir = thisDir() ++ "/" ++ content_dir,
-        .install_dir = .{ .custom = "" },
-        .install_subdir = "bin/" ++ content_dir,
-    });
-    install_content_step.step.dependOn(dxc_step);
-    exe.step.dependOn(&install_content_step.step);
+    exe.step.dependOn(dxc_step);
 
     exe.rdynamic = true;
 
@@ -94,7 +83,7 @@ fn makeDxcCmd(
     comptime define: []const u8,
 ) [9][]const u8 {
     const shader_ver = "6_6";
-    const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
+    const shader_dir = thisDir() ++ "/src/";
     return [9][]const u8{
         if (@import("builtin").target.os.tag == .windows)
             thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
