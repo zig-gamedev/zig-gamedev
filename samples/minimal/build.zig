@@ -82,7 +82,7 @@ fn makeDxcCmd(
     comptime profile: []const u8,
     comptime define: []const u8,
 ) [9][]const u8 {
-    const shader_ver = "6_6";
+    const shader_ver = "6_0";
     const shader_dir = thisDir() ++ "/src/";
     return [9][]const u8{
         if (@import("builtin").target.os.tag == .windows)
