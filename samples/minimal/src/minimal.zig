@@ -89,7 +89,9 @@ pub fn main() !void {
     var dx12 = Dx12State.init(createWindow());
     defer dx12.deinit();
 
-    const pipeline = pipeline: {
+    var root_signature: *d3d12.IRootSignature = undefined;
+    var pipeline: *d3d12.IPipelineState = undefined;
+    {
         const vs_cso = @embedFile("./minimal.vs.cso");
         const ps_cso = @embedFile("./minimal.ps.cso");
 
@@ -102,24 +104,23 @@ pub fn main() !void {
         pso_desc.VS = .{ .pShaderBytecode = vs_cso, .BytecodeLength = vs_cso.len };
         pso_desc.PS = .{ .pShaderBytecode = ps_cso, .BytecodeLength = ps_cso.len };
 
-        var rs: *d3d12.IRootSignature = undefined;
         hrPanicOnFail(dx12.device.CreateRootSignature(
             0,
             pso_desc.VS.pShaderBytecode.?,
             pso_desc.VS.BytecodeLength,
             &d3d12.IID_IRootSignature,
-            @ptrCast(*?*anyopaque, &rs),
+            @ptrCast(*?*anyopaque, &root_signature),
         ));
 
-        var pso: *d3d12.IPipelineState = undefined;
         hrPanicOnFail(dx12.device.CreateGraphicsPipelineState(
             &pso_desc,
             &d3d12.IID_IPipelineState,
-            @ptrCast(*?*anyopaque, &pso),
+            @ptrCast(*?*anyopaque, &pipeline),
         ));
-        break :pipeline pso;
-    };
-    _ = pipeline;
+    }
+    // Just release for now.
+    defer _ = pipeline.Release();
+    defer _ = root_signature.Release();
 
     var frac: f32 = 0.0;
     var frac_delta: f32 = 0.005;
