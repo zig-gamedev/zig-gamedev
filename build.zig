@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.900" };
@@ -55,11 +56,13 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
     installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
 
-    if (options.target.isWindows()) {
+    if (options.target.isWindows() and
+        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
+    {
         installDemo(b, minimal.build(b, options), "minimal");
     }
 
-    if (@import("builtin").target.os.tag == .windows) {
+    if (builtin.target.os.tag == .windows) {
         installDemo(b, triangle.build(b, options), "triangle");
         installDemo(b, textured_quad.build(b, options), "textured_quad");
         installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
