@@ -51,7 +51,9 @@ fn createWindow() w32.HWND {
     };
     _ = w32.RegisterClassExA(&winclass);
 
-    const style = w32.WS_OVERLAPPEDWINDOW;
+    //const style = w32.WS_OVERLAPPEDWINDOW;
+    const style = w32.WS_OVERLAPPED + w32.WS_SYSMENU + w32.WS_CAPTION + w32.WS_MINIMIZEBOX;
+
     var rect = w32.RECT{
         .left = 0,
         .top = 0,
@@ -118,7 +120,6 @@ pub fn main() !void {
             @ptrCast(*?*anyopaque, &pipeline),
         ));
     }
-    // Just release for now.
     defer _ = pipeline.Release();
     defer _ = root_signature.Release();
 
@@ -186,6 +187,11 @@ pub fn main() !void {
             null,
         );
         dx12.command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, frac, 0.8, 1.0 }, 0, null);
+
+        dx12.command_list.IASetPrimitiveTopology(.TRIANGLELIST);
+        dx12.command_list.SetPipelineState(pipeline);
+        dx12.command_list.SetGraphicsRootSignature(root_signature);
+        dx12.command_list.DrawInstanced(3, 1, 0, 0);
 
         dx12.command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
             .Type = .TRANSITION,
