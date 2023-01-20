@@ -1,4 +1,4 @@
-# zwin32 - standalone Zig bindings for Win32 API
+# zwin32 - Zig bindings for Win32 API
 
 ## Getting started
 
