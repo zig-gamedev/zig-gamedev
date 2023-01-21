@@ -61,6 +61,7 @@ pub fn build(b: *std.build.Builder) void {
     {
         installDemo(b, minimal.build(b, options), "minimal");
         installDemo(b, triangle.build(b, options), "triangle");
+        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
     }
 
     if (builtin.target.os.tag == .windows) {
@@ -69,7 +70,6 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, rasterization.build(b, options), "rasterization");
         installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
         installDemo(b, bindless.build(b, options), "bindless");
-        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
         installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
         installDemo(b, audio_experiments.build(b, options), "audio_experiments");
         installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
