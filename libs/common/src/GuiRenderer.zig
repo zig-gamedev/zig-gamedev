@@ -29,7 +29,13 @@ pub fn init(
 
     const io = c.igGetIO().?;
 
-    _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, content_dir ++ "Roboto-Medium.ttf", 25.0, null, null);
+    const full_path = std.fs.path.joinZ(arena, &.{
+        std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+        content_dir,
+        "Roboto-Medium.ttf",
+    }) catch unreachable;
+
+    _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, full_path, 25.0, null, null);
     const font_info = blk: {
         var pp: [*c]u8 = undefined;
         var ww: i32 = undefined;

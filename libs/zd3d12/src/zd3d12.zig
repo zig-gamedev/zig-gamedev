@@ -927,7 +927,11 @@ pub const GraphicsContext = struct {
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
         if (vs_cso_path) |path| {
-            const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const vs_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer vs_file.close();
             const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
@@ -936,14 +940,22 @@ pub const GraphicsContext = struct {
         }
 
         if (gs_cso_path) |path| {
-            const gs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const gs_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer gs_file.close();
             const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
         }
 
         if (ps_cso_path) |path| {
-            const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const ps_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer ps_file.close();
             const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };

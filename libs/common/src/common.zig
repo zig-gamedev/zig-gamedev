@@ -468,62 +468,64 @@ pub fn init() void {
     _ = w32.CoInitializeEx(null, w32.COINIT_APARTMENTTHREADED | w32.COINIT_DISABLE_OLE1DDE);
     _ = w32.SetProcessDPIAware();
 
-    // Check if Windows version is supported.
-    var version: w32.OSVERSIONINFOW = undefined;
-    _ = w32.RtlGetVersion(&version);
+    if (false and @import("builtin").target.os.tag == .windows) {
+        // Check if Windows version is supported.
+        var version: w32.OSVERSIONINFOW = undefined;
+        _ = w32.RtlGetVersion(&version);
 
-    var os_is_supported = false;
-    if (version.dwMajorVersion > 10) {
-        os_is_supported = true;
-    } else if (version.dwMajorVersion == 10 and version.dwBuildNumber >= 18363) {
-        os_is_supported = true;
-    }
+        var os_is_supported = false;
+        if (version.dwMajorVersion > 10) {
+            os_is_supported = true;
+        } else if (version.dwMajorVersion == 10 and version.dwBuildNumber >= 18363) {
+            os_is_supported = true;
+        }
 
-    const d3d12core_dll = w32.LoadLibraryA("D3D12Core.dll");
-    if (d3d12core_dll == null) {
-        os_is_supported = false;
-    } else {
-        _ = w32.FreeLibrary(d3d12core_dll.?);
-    }
+        const d3d12core_dll = w32.LoadLibraryA("D3D12Core.dll");
+        if (d3d12core_dll == null) {
+            os_is_supported = false;
+        } else {
+            _ = w32.FreeLibrary(d3d12core_dll.?);
+        }
 
-    if (!os_is_supported) {
-        _ = w32.MessageBoxA(
-            null,
-            \\This application can't run on currently installed version of Windows.
-            \\Following versions are supported:
-            \\
-            \\Windows 10 May 2021 (Build 19043) or newer
-            \\Windows 10 October 2020 (Build 19042.789+)
-            \\Windows 10 May 2020 (Build 19041.789+)
-            \\Windows 10 November 2019 (Build 18363.1350+)
-            \\
-            \\Please update your Windows version and try again.
-        ,
-            "Error",
-            w32.MB_OK | w32.MB_ICONERROR,
-        );
-        w32.ExitProcess(0);
+        if (!os_is_supported) {
+            _ = w32.MessageBoxA(
+                null,
+                \\This application can't run on currently installed version of Windows.
+                \\Following versions are supported:
+                \\
+                \\Windows 10 May 2021 (Build 19043) or newer
+                \\Windows 10 October 2020 (Build 19042.789+)
+                \\Windows 10 May 2020 (Build 19041.789+)
+                \\Windows 10 November 2019 (Build 18363.1350+)
+                \\
+                \\Please update your Windows version and try again.
+            ,
+                "Error",
+                w32.MB_OK | w32.MB_ICONERROR,
+            );
+            w32.ExitProcess(0);
+        }
+
+        // Check if 'd3d12' folder is present next to an executable.
+        const local_d3d12core_dll = w32.LoadLibraryA("d3d12/D3D12Core.dll");
+        if (local_d3d12core_dll == null) {
+            _ = w32.MessageBoxA(
+                null,
+                \\Looks like 'd3d12' folder is missing. It has to be distributed together with an application.
+            ,
+                "Error",
+                w32.MB_OK | w32.MB_ICONERROR,
+            );
+            w32.ExitProcess(0);
+        } else {
+            _ = w32.FreeLibrary(local_d3d12core_dll.?);
+        }
     }
 
     // Change directory to where an executable is located.
     var exe_path_buffer: [1024]u8 = undefined;
     const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
     std.os.chdir(exe_path) catch {};
-
-    // Check if 'd3d12' folder is present next to an executable.
-    const local_d3d12core_dll = w32.LoadLibraryA("d3d12/D3D12Core.dll");
-    if (local_d3d12core_dll == null) {
-        _ = w32.MessageBoxA(
-            null,
-            \\Looks like 'd3d12' folder is missing. It has to be distributed together with an application.
-        ,
-            "Error",
-            w32.MB_OK | w32.MB_ICONERROR,
-        );
-        w32.ExitProcess(0);
-    } else {
-        _ = w32.FreeLibrary(local_d3d12core_dll.?);
-    }
 }
 
 pub fn deinit() void {

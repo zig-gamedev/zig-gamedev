@@ -60,10 +60,10 @@ pub fn build(b: *std.build.Builder) void {
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
         installDemo(b, minimal.build(b, options), "minimal");
+        installDemo(b, triangle.build(b, options), "triangle");
     }
 
     if (builtin.target.os.tag == .windows) {
-        installDemo(b, triangle.build(b, options), "triangle");
         installDemo(b, textured_quad.build(b, options), "textured_quad");
         installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
         installDemo(b, rasterization.build(b, options), "rasterization");
