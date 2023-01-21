@@ -1050,14 +1050,22 @@ pub const GraphicsContext = struct {
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
         if (as_cso_path) |path| {
-            const as_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const as_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer as_file.close();
             const as_code = as_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.AS = .{ .pShaderBytecode = as_code.ptr, .BytecodeLength = as_code.len };
         }
 
         if (ms_cso_path) |path| {
-            const ms_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const ms_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer ms_file.close();
             const ms_code = ms_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.MS = .{ .pShaderBytecode = ms_code.ptr, .BytecodeLength = ms_code.len };
@@ -1066,7 +1074,11 @@ pub const GraphicsContext = struct {
         }
 
         if (ps_cso_path) |path| {
-            const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const ps_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer ps_file.close();
             const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
@@ -1144,7 +1156,11 @@ pub const GraphicsContext = struct {
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
         if (cs_cso_path) |path| {
-            const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            const full_path = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                path,
+            }) catch unreachable;
+            const cs_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
             defer cs_file.close();
             const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
@@ -1409,15 +1425,27 @@ pub const GraphicsContext = struct {
         assert(gctx.is_cmdlist_opened);
 
         // TODO(mziulek): Hardcoded array size. Make it more robust.
-        var path_u16: [300]u16 = undefined;
-        assert(path.len < path_u16.len - 1);
-        const path_len = std.unicode.utf8ToUtf16Le(path_u16[0..], path) catch unreachable;
-        path_u16[path_len] = 0;
+        var full_path = std.BoundedArray(u8, 1024).init(0) catch unreachable;
+
+        full_path.appendSlice(
+            std.fs.selfExeDirPath(full_path.buffer[0..]) catch unreachable,
+        ) catch unreachable;
+        full_path.append('/') catch unreachable;
+        full_path.appendSlice(path) catch unreachable;
+        full_path.append(0) catch unreachable;
+
+        // Convert from utf-8 to utf-16 because this what WIC functions expect
+        var full_path_u16: [1024]u16 = undefined;
+        const full_path_len = std.unicode.utf8ToUtf16Le(
+            full_path_u16[0..],
+            full_path.slice(),
+        ) catch unreachable;
+        full_path_u16[full_path_len] = 0;
 
         const bmp_decoder = blk: {
             var maybe_bmp_decoder: ?*wic.IBitmapDecoder = undefined;
             hrPanicOnFail(gctx.wic_factory.CreateDecoderFromFilename(
-                @ptrCast(w32.LPCWSTR, &path_u16),
+                @ptrCast(w32.LPCWSTR, &full_path_u16),
                 null,
                 w32.GENERIC_READ,
                 .MetadataCacheOnDemand,

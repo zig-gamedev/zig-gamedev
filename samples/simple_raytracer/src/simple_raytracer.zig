@@ -134,17 +134,32 @@ const DemoState = struct {
     dxr_draw_mode: i32, // 0 - no shadows, 1 - shadows, 2 - shadow mask
 };
 
-fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
+fn parseAndLoadGltfFile(path: []const u8) *c.cgltf_data {
     var data: *c.cgltf_data = undefined;
     const options = std.mem.zeroes(c.cgltf_options);
+
+    // TODO(mziulek): Hardcoded array size. Make it more robust.
+    var full_path = std.BoundedArray(u8, 1024).init(0) catch unreachable;
+
+    full_path.appendSlice(
+        std.fs.selfExeDirPath(full_path.buffer[0..]) catch unreachable,
+    ) catch unreachable;
+    full_path.append('/') catch unreachable;
+    full_path.appendSlice(path) catch unreachable;
+    full_path.append(0) catch unreachable;
+
     // Parse.
     {
-        const result = c.cgltf_parse_file(&options, gltf_path.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
+        const result = c.cgltf_parse_file(
+            &options,
+            full_path.slice().ptr,
+            @ptrCast([*c][*c]c.cgltf_data, &data),
+        );
         assert(result == c.cgltf_result_success);
     }
     // Load.
     {
-        const result = c.cgltf_load_buffers(&options, data, gltf_path.ptr);
+        const result = c.cgltf_load_buffers(&options, data, full_path.slice().ptr);
         assert(result == c.cgltf_result_success);
     }
     return data;
@@ -517,10 +532,12 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var trace_shadow_rays_stateobj: ?*d3d12.IStateObject = null;
     var trace_shadow_rays_rs: ?*d3d12.IRootSignature = null;
     if (dxr_is_supported) {
-        const cso_file = std.fs.cwd().openFile(
+        const full_path = std.fs.path.join(arena_allocator, &.{
+            std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
             content_dir ++ "shaders/trace_shadow_rays.lib.cso",
-            .{},
-        ) catch unreachable;
+        }) catch unreachable;
+
+        const cso_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
         defer cso_file.close();
 
         const cso_code = cso_file.reader().readAllAlloc(arena_allocator, 256 * 1024) catch unreachable;

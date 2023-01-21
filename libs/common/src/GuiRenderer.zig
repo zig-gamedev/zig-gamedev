@@ -31,8 +31,7 @@ pub fn init(
 
     const full_path = std.fs.path.joinZ(arena, &.{
         std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-        content_dir,
-        "Roboto-Medium.ttf",
+        content_dir ++ "Roboto-Medium.ttf",
     }) catch unreachable;
 
     _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, full_path, 25.0, null, null);

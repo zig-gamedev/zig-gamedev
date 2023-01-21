@@ -55,91 +55,127 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
     const dxc_step = b.step("simple_raytracer-dxc", "Build shaders for 'simple raytracer' demo");
 
-    var dxc_command = makeDxcCmd(
-        "../../libs/common/src/hlsl/common.hlsl",
-        "vsImGui",
-        "imgui.vs.cso",
-        "vs",
-        "PSO__IMGUI",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "../../libs/common/src/hlsl/common.hlsl",
-        "psImGui",
-        "imgui.ps.cso",
-        "ps",
-        "PSO__IMGUI",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    {
+        var dxc_command = makeDxcCmd(
+            "../../libs/common/src/hlsl/common.hlsl",
+            "vsImGui",
+            "imgui.vs.cso",
+            "vs",
+            "PSO__IMGUI",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "../../libs/common/src/hlsl/common.hlsl",
+            "psImGui",
+            "imgui.ps.cso",
+            "ps",
+            "PSO__IMGUI",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "../../libs/common/src/hlsl/common.hlsl",
+            "csGenerateMipmaps",
+            "generate_mipmaps.cs.cso",
+            "cs",
+            "PSO__GENERATE_MIPMAPS",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "vsRastStaticMesh",
+            "rast_static_mesh.vs.cso",
+            "vs",
+            "PSO__RAST_STATIC_MESH",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "psRastStaticMesh",
+            "rast_static_mesh.ps.cso",
+            "ps",
+            "PSO__RAST_STATIC_MESH",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "vsZPrePass",
+            "z_pre_pass.vs.cso",
+            "vs",
+            "PSO__Z_PRE_PASS",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "psZPrePass",
+            "z_pre_pass.ps.cso",
+            "ps",
+            "PSO__Z_PRE_PASS",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "vsGenShadowRays",
+            "gen_shadow_rays.vs.cso",
+            "vs",
+            "PSO__GEN_SHADOW_RAYS",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "psGenShadowRays",
+            "gen_shadow_rays.ps.cso",
+            "ps",
+            "PSO__GEN_SHADOW_RAYS",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
+    {
+        var dxc_command = makeDxcCmd(
+            "src/simple_raytracer.hlsl",
+            "",
+            "trace_shadow_rays.lib.cso",
+            "lib",
+            "PSO__TRACE_SHADOW_RAYS",
+        );
+        const cmd_step = b.addSystemCommand(&dxc_command);
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        dxc_step.dependOn(&cmd_step.step);
+    }
 
-    dxc_command = makeDxcCmd(
-        "../../libs/common/src/hlsl/common.hlsl",
-        "csGenerateMipmaps",
-        "generate_mipmaps.cs.cso",
-        "cs",
-        "PSO__GENERATE_MIPMAPS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "vsRastStaticMesh",
-        "rast_static_mesh.vs.cso",
-        "vs",
-        "PSO__RAST_STATIC_MESH",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "psRastStaticMesh",
-        "rast_static_mesh.ps.cso",
-        "ps",
-        "PSO__RAST_STATIC_MESH",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "vsZPrePass",
-        "z_pre_pass.vs.cso",
-        "vs",
-        "PSO__Z_PRE_PASS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "psZPrePass",
-        "z_pre_pass.ps.cso",
-        "ps",
-        "PSO__Z_PRE_PASS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "vsGenShadowRays",
-        "gen_shadow_rays.vs.cso",
-        "vs",
-        "PSO__GEN_SHADOW_RAYS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "psGenShadowRays",
-        "gen_shadow_rays.ps.cso",
-        "ps",
-        "PSO__GEN_SHADOW_RAYS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
-        "src/simple_raytracer.hlsl",
-        "",
-        "trace_shadow_rays.lib.cso",
-        "lib",
-        "PSO__TRACE_SHADOW_RAYS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     return dxc_step;
 }
 
@@ -153,7 +189,10 @@ fn makeDxcCmd(
     const shader_ver = "6_6";
     const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
     return [9][]const u8{
-        thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
+        if (@import("builtin").target.os.tag == .windows)
+            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
+        else if (@import("builtin").target.os.tag == .linux)
+            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
         thisDir() ++ "/" ++ input_path,
         if (entry_point.len == 0) "" else "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
