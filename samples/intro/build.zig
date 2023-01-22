@@ -72,98 +72,93 @@ fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *st
         "Build shaders for 'intro" ++ intro_index_str ++ "' demo",
     );
 
-    var dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "../../libs/common/src/hlsl/common.hlsl",
         "vsImGui",
         "imgui.vs.cso",
         "vs",
         "PSO__IMGUI",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "../../libs/common/src/hlsl/common.hlsl",
         "psImGui",
         "imgui.ps.cso",
         "ps",
         "PSO__IMGUI",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "../../libs/common/src/hlsl/common.hlsl",
         "csGenerateMipmaps",
         "generate_mipmaps.cs.cso",
         "cs",
         "PSO__GENERATE_MIPMAPS",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro1.hlsl", "vsMain", "intro1.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/intro1.hlsl", "psMain", "intro1.ps.cso", "ps", "");
 
-    dxc_command = makeDxcCmd("src/intro1.hlsl", "vsMain", "intro1.vs.cso", "vs", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro1.hlsl", "psMain", "intro1.ps.cso", "ps", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro2.hlsl", "vsMain", "intro2.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/intro2.hlsl", "psMain", "intro2.ps.cso", "ps", "");
 
-    dxc_command = makeDxcCmd("src/intro2.hlsl", "vsMain", "intro2.vs.cso", "vs", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro2.hlsl", "psMain", "intro2.ps.cso", "ps", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro3.hlsl", "vsMain", "intro3.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/intro3.hlsl", "psMain", "intro3.ps.cso", "ps", "");
 
-    dxc_command = makeDxcCmd("src/intro3.hlsl", "vsMain", "intro3.vs.cso", "vs", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro3.hlsl", "psMain", "intro3.ps.cso", "ps", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro4.hlsl", "vsMain", "intro4.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/intro4.hlsl", "psMain", "intro4.ps.cso", "ps", "");
 
-    dxc_command = makeDxcCmd("src/intro4.hlsl", "vsMain", "intro4.vs.cso", "vs", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4.ps.cso", "ps", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro4.hlsl", "vsMain", "intro4_bindless.vs.cso", "vs", "PSO__BINDLESS");
+    makeDxcCmd(b, dxc_step, "src/intro4.hlsl", "psMain", "intro4_bindless.ps.cso", "ps", "PSO__BINDLESS");
 
-    dxc_command = makeDxcCmd("src/intro4.hlsl", "vsMain", "intro4_bindless.vs.cso", "vs", "PSO__BINDLESS");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4_bindless.ps.cso", "ps", "PSO__BINDLESS");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro5.hlsl", "vsMain", "intro5.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/intro5.hlsl", "psMain", "intro5.ps.cso", "ps", "");
 
-    dxc_command = makeDxcCmd("src/intro5.hlsl", "vsMain", "intro5.vs.cso", "vs", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro5.hlsl", "psMain", "intro5.ps.cso", "ps", "");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    makeDxcCmd(b, dxc_step, "src/intro6.hlsl", "vsMain", "simple.vs.cso", "vs", "PSO__SIMPLE");
+    makeDxcCmd(b, dxc_step, "src/intro6.hlsl", "psMain", "simple.ps.cso", "ps", "PSO__SIMPLE");
 
-    dxc_command = makeDxcCmd("src/intro6.hlsl", "vsMain", "simple.vs.cso", "vs", "PSO__SIMPLE");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/intro6.hlsl", "psMain", "simple.ps.cso", "ps", "PSO__SIMPLE");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "src/intro6.hlsl",
         "vsPhysicsDebug",
         "physics_debug.vs.cso",
         "vs",
         "PSO__PHYSICS_DEBUG",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "src/intro6.hlsl",
         "psPhysicsDebug",
         "physics_debug.ps.cso",
         "ps",
         "PSO__PHYSICS_DEBUG",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     return dxc_step;
 }
 
 fn makeDxcCmd(
+    b: *std.build.Builder,
+    dxc_step: *std.build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,
     comptime profile: []const u8,
     comptime define: []const u8,
-) [9][]const u8 {
+) void {
     const shader_ver = "6_6";
     const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
-    return [9][]const u8{
-        thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
+
+    const dxc_command = [9][]const u8{
+        if (@import("builtin").target.os.tag == .windows)
+            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
+        else if (@import("builtin").target.os.tag == .linux)
+            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
         thisDir() ++ "/" ++ input_path,
         "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
@@ -173,6 +168,11 @@ fn makeDxcCmd(
         "/Ges",
         "/O3",
     };
+
+    const cmd_step = b.addSystemCommand(&dxc_command);
+    if (@import("builtin").target.os.tag == .linux)
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+    dxc_step.dependOn(&cmd_step.step);
 }
 
 inline fn thisDir() []const u8 {

@@ -51,68 +51,43 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
     const dxc_step = b.step("triangle-dxc", "Build shaders for 'triangle' demo");
 
-    {
-        var dxc_command = makeDxcCmd(
-            "../../libs/common/src/hlsl/common.hlsl",
-            "vsImGui",
-            "imgui.vs.cso",
-            "vs",
-            "PSO__IMGUI",
-        );
-        const cmd_step = b.addSystemCommand(&dxc_command);
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-        dxc_step.dependOn(&cmd_step.step);
-    }
-    {
-        var dxc_command = makeDxcCmd(
-            "../../libs/common/src/hlsl/common.hlsl",
-            "psImGui",
-            "imgui.ps.cso",
-            "ps",
-            "PSO__IMGUI",
-        );
-        const cmd_step = b.addSystemCommand(&dxc_command);
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-        dxc_step.dependOn(&cmd_step.step);
-    }
-    {
-        var dxc_command = makeDxcCmd(
-            "src/triangle.hlsl",
-            "vsTriangle",
-            "triangle.vs.cso",
-            "vs",
-            "",
-        );
-        const cmd_step = b.addSystemCommand(&dxc_command);
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-        dxc_step.dependOn(&cmd_step.step);
-    }
-    {
-        var dxc_command = makeDxcCmd(
-            "src/triangle.hlsl",
-            "psTriangle",
-            "triangle.ps.cso",
-            "ps",
-            "",
-        );
-        const cmd_step = b.addSystemCommand(&dxc_command);
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-        dxc_step.dependOn(&cmd_step.step);
-    }
+    makeDxcCmd(
+        b,
+        dxc_step,
+        "../../libs/common/src/hlsl/common.hlsl",
+        "vsImGui",
+        "imgui.vs.cso",
+        "vs",
+        "PSO__IMGUI",
+    );
+    makeDxcCmd(
+        b,
+        dxc_step,
+        "../../libs/common/src/hlsl/common.hlsl",
+        "psImGui",
+        "imgui.ps.cso",
+        "ps",
+        "PSO__IMGUI",
+    );
+    makeDxcCmd(b, dxc_step, "src/triangle.hlsl", "vsTriangle", "triangle.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/triangle.hlsl", "psTriangle", "triangle.ps.cso", "ps", "");
 
     return dxc_step;
 }
 
 fn makeDxcCmd(
+    b: *std.build.Builder,
+    dxc_step: *std.build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,
     comptime profile: []const u8,
     comptime define: []const u8,
-) [9][]const u8 {
+) void {
     const shader_ver = "6_6";
     const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
-    return [9][]const u8{
+
+    const dxc_command = [9][]const u8{
         if (@import("builtin").target.os.tag == .windows)
             thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
         else if (@import("builtin").target.os.tag == .linux)
@@ -126,6 +101,11 @@ fn makeDxcCmd(
         "/Ges",
         "/O3",
     };
+
+    const cmd_step = b.addSystemCommand(&dxc_command);
+    if (@import("builtin").target.os.tag == .linux)
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+    dxc_step.dependOn(&cmd_step.step);
 }
 
 inline fn thisDir() []const u8 {

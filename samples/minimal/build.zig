@@ -47,44 +47,25 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
     const dxc_step = b.step("minimal-dxc", "Build shaders for 'minimal' demo");
 
-    {
-        var dxc_command = makeDxcCmd(
-            "src/minimal.hlsl",
-            "vsMinimal",
-            "minimal.vs.cso",
-            "vs",
-            "",
-        );
-        const cmd_step = b.addSystemCommand(&dxc_command);
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-        dxc_step.dependOn(&cmd_step.step);
-    }
-    {
-        var dxc_command = makeDxcCmd(
-            "src/minimal.hlsl",
-            "psMinimal",
-            "minimal.ps.cso",
-            "ps",
-            "",
-        );
-        const cmd_step = b.addSystemCommand(&dxc_command);
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-        dxc_step.dependOn(&cmd_step.step);
-    }
+    makeDxcCmd(b, dxc_step, "src/minimal.hlsl", "vsMinimal", "minimal.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/minimal.hlsl", "psMinimal", "minimal.ps.cso", "ps", "");
 
     return dxc_step;
 }
 
 fn makeDxcCmd(
+    b: *std.build.Builder,
+    dxc_step: *std.build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,
     comptime profile: []const u8,
     comptime define: []const u8,
-) [9][]const u8 {
+) void {
     const shader_ver = "6_0";
     const shader_dir = thisDir() ++ "/src/";
-    return [9][]const u8{
+
+    const dxc_command = [9][]const u8{
         if (@import("builtin").target.os.tag == .windows)
             thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
         else if (@import("builtin").target.os.tag == .linux)
@@ -98,6 +79,11 @@ fn makeDxcCmd(
         "/Ges",
         "/O3",
     };
+
+    const cmd_step = b.addSystemCommand(&dxc_command);
+    if (@import("builtin").target.os.tag == .linux)
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+    dxc_step.dependOn(&cmd_step.step);
 }
 
 inline fn thisDir() []const u8 {

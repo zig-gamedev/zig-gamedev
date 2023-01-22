@@ -51,71 +51,81 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
     const dxc_step = b.step("audio_playback_test-dxc", "Build shaders for 'audio playback test' demo");
 
-    var dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "../../libs/common/src/hlsl/common.hlsl",
         "vsImGui",
         "imgui.vs.cso",
         "vs",
         "PSO__IMGUI",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "../../libs/common/src/hlsl/common.hlsl",
         "psImGui",
         "imgui.ps.cso",
         "ps",
         "PSO__IMGUI",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "src/audio_playback_test.hlsl",
         "vsLines",
         "lines.vs.cso",
         "vs",
         "PSO__LINES",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "src/audio_playback_test.hlsl",
         "psLines",
         "lines.ps.cso",
         "ps",
         "PSO__LINES",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "src/audio_playback_test.hlsl",
         "vsImage",
         "image.vs.cso",
         "vs",
         "PSO__IMAGE",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
+    makeDxcCmd(
+        b,
+        dxc_step,
         "src/audio_playback_test.hlsl",
         "psImage",
         "image.ps.cso",
         "ps",
         "PSO__IMAGE",
     );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     return dxc_step;
 }
 
 fn makeDxcCmd(
+    b: *std.build.Builder,
+    dxc_step: *std.build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,
     comptime profile: []const u8,
     comptime define: []const u8,
-) [9][]const u8 {
+) void {
     const shader_ver = "6_6";
     const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
-    return [9][]const u8{
-        thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
+
+    const dxc_command = [9][]const u8{
+        if (@import("builtin").target.os.tag == .windows)
+            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
+        else if (@import("builtin").target.os.tag == .linux)
+            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
         thisDir() ++ "/" ++ input_path,
         "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
@@ -125,6 +135,11 @@ fn makeDxcCmd(
         "/Ges",
         "/O3",
     };
+
+    const cmd_step = b.addSystemCommand(&dxc_command);
+    if (@import("builtin").target.os.tag == .linux)
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+    dxc_step.dependOn(&cmd_step.step);
 }
 
 inline fn thisDir() []const u8 {
