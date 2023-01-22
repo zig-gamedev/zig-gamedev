@@ -138,28 +138,27 @@ fn parseAndLoadGltfFile(path: []const u8) *c.cgltf_data {
     var data: *c.cgltf_data = undefined;
     const options = std.mem.zeroes(c.cgltf_options);
 
-    // TODO(mziulek): Hardcoded array size. Make it more robust.
-    var full_path = std.BoundedArray(u8, 1024).init(0) catch unreachable;
+    var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+    const allocator = fba.allocator();
 
-    full_path.appendSlice(
-        std.fs.selfExeDirPath(full_path.buffer[0..]) catch unreachable,
-    ) catch unreachable;
-    full_path.append('/') catch unreachable;
-    full_path.appendSlice(path) catch unreachable;
-    full_path.append(0) catch unreachable;
+    const full_path = std.fs.path.joinZ(allocator, &.{
+        std.fs.selfExeDirPathAlloc(allocator) catch unreachable,
+        path,
+    }) catch unreachable;
 
     // Parse.
     {
         const result = c.cgltf_parse_file(
             &options,
-            full_path.slice().ptr,
+            full_path.ptr,
             @ptrCast([*c][*c]c.cgltf_data, &data),
         );
         assert(result == c.cgltf_result_success);
     }
     // Load.
     {
-        const result = c.cgltf_load_buffers(&options, data, full_path.slice().ptr);
+        const result = c.cgltf_load_buffers(&options, data, full_path.ptr);
         assert(result == c.cgltf_result_success);
     }
     return data;
@@ -420,14 +419,13 @@ fn loadScene(
     while (image_index < num_images) : (image_index += 1) {
         const image = &data.images[image_index];
 
-        var buffer: [64]u8 = undefined;
-        const path = std.fmt.bufPrint(
-            buffer[0..],
+        const relpath = std.fmt.allocPrint(
+            arena,
             content_dir ++ "Sponza/{s}",
             .{image.uri},
         ) catch unreachable;
 
-        const texture = gctx.createAndUploadTex2dFromFile(path, .{}) catch unreachable;
+        const texture = gctx.createAndUploadTex2dFromFile(relpath, .{}) catch unreachable;
         const view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         gctx.device.CreateShaderResourceView(gctx.lookupResource(texture).?, null, view);
 

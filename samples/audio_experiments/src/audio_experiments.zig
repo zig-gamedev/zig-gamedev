@@ -130,14 +130,14 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 fn init(allocator: std.mem.Allocator) !DemoState {
     var actx = zxaudio2.AudioContext.init(allocator);
 
-    const sound1 = actx.loadSound(L(content_dir ++ "drum_bass_hard.flac"));
-    const sound2 = actx.loadSound(L(content_dir ++ "tabla_tas1.flac"));
-    const sound3 = actx.loadSound(L(content_dir ++ "loop_mika.flac"));
+    const sound1 = actx.loadSound(content_dir ++ "drum_bass_hard.flac");
+    const sound2 = actx.loadSound(content_dir ++ "tabla_tas1.flac");
+    const sound3 = actx.loadSound(content_dir ++ "loop_mika.flac");
 
     var music = zxaudio2.Stream.create(
         allocator,
         actx.device,
-        L(content_dir ++ "Broke For Free - Night Owl.mp3"),
+        content_dir ++ "Broke For Free - Night Owl.mp3",
     );
     hrPanicOnFail(music.voice.Start(.{}, xaudio2.COMMIT_NOW));
 

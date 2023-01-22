@@ -125,7 +125,7 @@ const DemoState = struct {
 
 fn loadMesh(
     arena: std.mem.Allocator,
-    file_path: [:0]const u8,
+    path: [:0]const u8,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -139,7 +139,12 @@ fn loadMesh(
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;
 
-    const data = try zmesh.io.parseAndLoadFile(file_path);
+    const pathname = std.fs.path.joinZ(arena, &.{
+        std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+        path,
+    }) catch unreachable;
+
+    const data = try zmesh.io.parseAndLoadFile(pathname);
     defer zmesh.io.freeData(data);
     try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
@@ -452,7 +457,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     //
     const equirect_texture = blk: {
         zstbi.setFlipVerticallyOnLoad(true);
-        var image = zstbi.Image.init(content_dir ++ "Newport_Loft.hdr", 4) catch unreachable;
+
+        const pathname = std.fs.path.joinZ(arena_allocator, &.{
+            std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
+            content_dir ++ "Newport_Loft.hdr",
+        }) catch unreachable;
+
+        var image = zstbi.Image.init(pathname, 4) catch unreachable;
         defer {
             image.deinit();
             zstbi.setFlipVerticallyOnLoad(false);

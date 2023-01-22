@@ -36,10 +36,10 @@ pub fn main() !void {
     ...
     var actx = zxaudio2.AudioContext.init(allocator);
 
-    const sound_handle = actx.loadSound(L("content/drum_bass_hard.flac"));
+    const sound_handle = actx.loadSound("content/drum_bass_hard.flac");
     actx.playSound(sound_handle, .{});
 
-    var music = zxaudio2.Stream.create(allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
+    var music = zxaudio2.Stream.create(allocator, actx.device, "content/Broke For Free - Night Owl.mp3");
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
     ...
 }

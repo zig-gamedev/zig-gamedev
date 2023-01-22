@@ -50,7 +50,7 @@ pub const Image = struct {
     bytes_per_row: u32,
     is_hdr: bool,
 
-    pub fn info(filename: [:0]const u8) struct {
+    pub fn info(pathname: [:0]const u8) struct {
         is_supported: bool,
         width: u32,
         height: u32,
@@ -59,7 +59,7 @@ pub const Image = struct {
         var w: c_int = 0;
         var h: c_int = 0;
         var c: c_int = 0;
-        const is_supported = stbi_info(filename, &w, &h, &c);
+        const is_supported = stbi_info(pathname, &w, &h, &c);
         return .{
             .is_supported = is_supported,
             .width = @intCast(u32, w),
@@ -68,7 +68,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn init(filename: [:0]const u8, forced_num_channels: u32) !Image {
+    pub fn init(pathname: [:0]const u8, forced_num_channels: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -76,12 +76,12 @@ pub const Image = struct {
         var bytes_per_row: u32 = 0;
         var is_hdr = false;
 
-        const data = if (isHdr(filename)) data: {
+        const data = if (isHdr(pathname)) data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
             const ptr = stbi_loadf(
-                filename,
+                pathname,
                 &x,
                 &y,
                 &ch,
@@ -108,15 +108,15 @@ pub const Image = struct {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
-            const is_16bit = is16bit(filename);
+            const is_16bit = is16bit(pathname);
             const ptr = if (is_16bit) @ptrCast(?[*]u8, stbi_load_16(
-                filename,
+                pathname,
                 &x,
                 &y,
                 &ch,
                 @intCast(c_int, forced_num_channels),
             )) else stbi_load(
-                filename,
+                pathname,
                 &x,
                 &y,
                 &ch,
@@ -214,7 +214,11 @@ pub const Image = struct {
         };
     }
 
-    pub fn writeToFile(self: *const Image, filename: [:0]const u8, image_format: ImageWriteFormat) ImageWriteError!void {
+    pub fn writeToFile(
+        self: *const Image,
+        filename: [:0]const u8,
+        image_format: ImageWriteFormat,
+    ) ImageWriteError!void {
         const w = @intCast(c_int, self.width);
         const h = @intCast(c_int, self.height);
         const comp = @intCast(c_int, self.num_components);

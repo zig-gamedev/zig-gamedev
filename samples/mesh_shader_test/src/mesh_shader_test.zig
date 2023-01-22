@@ -109,7 +109,7 @@ const DemoState = struct {
 
 fn loadMeshAndGenerateMeshlets(
     arena_allocator: std.mem.Allocator,
-    file_path: [:0]const u8,
+    relpath: [:0]const u8,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -120,7 +120,12 @@ fn loadMeshAndGenerateMeshlets(
     var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
-    const data = try zmesh.io.parseAndLoadFile(file_path);
+    const abspath = std.fs.path.joinZ(arena_allocator, &.{
+        std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
+        relpath,
+    }) catch unreachable;
+
+    const data = try zmesh.io.parseAndLoadFile(abspath);
     defer zmesh.io.freeData(data);
     try zmesh.io.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 

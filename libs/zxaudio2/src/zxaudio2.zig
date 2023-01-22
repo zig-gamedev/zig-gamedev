@@ -188,8 +188,20 @@ pub const AudioContext = struct {
         hrPanicOnFail(voice.Start(.{}, xaudio2.COMMIT_NOW));
     }
 
-    pub fn loadSound(actx: *AudioContext, sound_file_path: [:0]const u16) SoundHandle {
-        const data = loadBufferData(actx.allocator, sound_file_path);
+    pub fn loadSound(actx: *AudioContext, relpath: []const u8) SoundHandle {
+        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+        const allocator = fba.allocator();
+
+        const abspath = std.fs.path.join(allocator, &.{
+            std.fs.selfExeDirPathAlloc(allocator) catch unreachable,
+            relpath,
+        }) catch unreachable;
+
+        var abspath_w: [std.os.windows.PATH_MAX_WIDE:0]u16 = undefined;
+        abspath_w[std.unicode.utf8ToUtf16Le(abspath_w[0..], abspath) catch unreachable] = 0;
+
+        const data = loadBufferData(actx.allocator, abspath_w[0..]);
         return actx.sound_pool.addSound(data);
     }
 };
@@ -202,7 +214,7 @@ pub const Stream = struct {
     reader: *mf.ISourceReader,
     reader_cb: *SourceReaderCallback,
 
-    pub fn create(allocator: std.mem.Allocator, device: *xaudio2.IXAudio2, file_path: [:0]const u16) *Stream {
+    pub fn create(allocator: std.mem.Allocator, device: *xaudio2.IXAudio2, relpath: []const u8) *Stream {
         const voice_cb = blk: {
             var cb = allocator.create(StreamVoiceCallback) catch unreachable;
             cb.* = StreamVoiceCallback.init();
@@ -229,8 +241,20 @@ pub const Stream = struct {
                 @ptrCast(*w32.IUnknown, source_reader_cb),
             ));
 
+            var arena_state = std.heap.ArenaAllocator.init(allocator);
+            defer arena_state.deinit();
+            const arena = arena_state.allocator();
+
+            const abspath = std.fs.path.join(arena, &.{
+                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
+                relpath,
+            }) catch unreachable;
+
+            var abspath_w: [std.os.windows.PATH_MAX_WIDE:0]u16 = undefined;
+            abspath_w[std.unicode.utf8ToUtf16Le(abspath_w[0..], abspath) catch unreachable] = 0;
+
             var source_reader: *mf.ISourceReader = undefined;
-            hrPanicOnFail(mf.MFCreateSourceReaderFromURL(file_path, attribs, &source_reader));
+            hrPanicOnFail(mf.MFCreateSourceReaderFromURL(&abspath_w, attribs, &source_reader));
 
             var media_type: *mf.IMediaType = undefined;
             hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));

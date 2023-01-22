@@ -922,16 +922,15 @@ pub const GraphicsContext = struct {
         arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         root_signature: ?*d3d12.IRootSignature,
-        vs_cso_path: ?[]const u8,
-        gs_cso_path: ?[]const u8,
-        ps_cso_path: ?[]const u8,
+        vs_cso_relpath: ?[]const u8,
+        gs_cso_relpath: ?[]const u8,
+        ps_cso_relpath: ?[]const u8,
     ) PipelineHandle {
-        if (vs_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
-                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
-            }) catch unreachable;
-            const vs_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+        const self_exe_dir_path = std.fs.selfExeDirPathAlloc(arena) catch unreachable;
+
+        if (vs_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{ self_exe_dir_path, relpath }) catch unreachable;
+            const vs_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer vs_file.close();
             const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
@@ -939,23 +938,17 @@ pub const GraphicsContext = struct {
             assert(pso_desc.VS.pShaderBytecode != null);
         }
 
-        if (gs_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
-                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
-            }) catch unreachable;
-            const gs_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+        if (gs_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{ self_exe_dir_path, relpath }) catch unreachable;
+            const gs_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer gs_file.close();
             const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
         }
 
-        if (ps_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
-                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
-            }) catch unreachable;
-            const ps_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+        if (ps_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{ self_exe_dir_path, relpath }) catch unreachable;
+            const ps_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer ps_file.close();
             const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
@@ -1045,27 +1038,23 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.MESH_SHADER_PIPELINE_STATE_DESC,
-        as_cso_path: ?[]const u8,
-        ms_cso_path: ?[]const u8,
-        ps_cso_path: ?[]const u8,
+        as_cso_relpath: ?[]const u8,
+        ms_cso_relpath: ?[]const u8,
+        ps_cso_relpath: ?[]const u8,
     ) PipelineHandle {
-        if (as_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
-                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
-            }) catch unreachable;
-            const as_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+        const self_exe_dir_path = std.fs.selfExeDirPathAlloc(arena) catch unreachable;
+
+        if (as_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{ self_exe_dir_path, relpath }) catch unreachable;
+            const as_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer as_file.close();
             const as_code = as_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.AS = .{ .pShaderBytecode = as_code.ptr, .BytecodeLength = as_code.len };
         }
 
-        if (ms_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
-                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
-            }) catch unreachable;
-            const ms_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+        if (ms_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{ self_exe_dir_path, relpath }) catch unreachable;
+            const ms_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer ms_file.close();
             const ms_code = ms_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.MS = .{ .pShaderBytecode = ms_code.ptr, .BytecodeLength = ms_code.len };
@@ -1073,12 +1062,9 @@ pub const GraphicsContext = struct {
             assert(pso_desc.MS.pShaderBytecode != null);
         }
 
-        if (ps_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
-                std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
-            }) catch unreachable;
-            const ps_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+        if (ps_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{ self_exe_dir_path, relpath }) catch unreachable;
+            const ps_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer ps_file.close();
             const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
@@ -1153,14 +1139,14 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
-        cs_cso_path: ?[]const u8,
+        cs_cso_relpath: ?[]const u8,
     ) PipelineHandle {
-        if (cs_cso_path) |path| {
-            const full_path = std.fs.path.join(arena, &.{
+        if (cs_cso_relpath) |relpath| {
+            const abspath = std.fs.path.join(arena, &.{
                 std.fs.selfExeDirPathAlloc(arena) catch unreachable,
-                path,
+                relpath,
             }) catch unreachable;
-            const cs_file = std.fs.openFileAbsolute(full_path, .{}) catch unreachable;
+            const cs_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
             defer cs_file.close();
             const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
@@ -1416,36 +1402,30 @@ pub const GraphicsContext = struct {
 
     pub fn createAndUploadTex2dFromFile(
         gctx: *GraphicsContext,
-        path: []const u8,
-        params: struct {
+        relpath: []const u8,
+        args: struct {
             num_mip_levels: u32 = 0,
             texture_flags: d3d12.RESOURCE_FLAGS = .{},
         },
     ) HResultError!ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
-        // TODO(mziulek): Hardcoded array size. Make it more robust.
-        var full_path = std.BoundedArray(u8, 1024).init(0) catch unreachable;
+        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+        const allocator = fba.allocator();
 
-        full_path.appendSlice(
-            std.fs.selfExeDirPath(full_path.buffer[0..]) catch unreachable,
-        ) catch unreachable;
-        full_path.append('/') catch unreachable;
-        full_path.appendSlice(path) catch unreachable;
-        full_path.append(0) catch unreachable;
+        const abspath = std.fs.path.join(allocator, &.{
+            std.fs.selfExeDirPathAlloc(allocator) catch unreachable,
+            relpath,
+        }) catch unreachable;
 
-        // Convert from utf-8 to utf-16 because this what WIC functions expect
-        var full_path_u16: [1024]u16 = undefined;
-        const full_path_len = std.unicode.utf8ToUtf16Le(
-            full_path_u16[0..],
-            full_path.slice(),
-        ) catch unreachable;
-        full_path_u16[full_path_len] = 0;
+        var abspath_w: [std.os.windows.PATH_MAX_WIDE:0]u16 = undefined;
+        abspath_w[std.unicode.utf8ToUtf16Le(abspath_w[0..], abspath) catch unreachable] = 0;
 
         const bmp_decoder = blk: {
             var maybe_bmp_decoder: ?*wic.IBitmapDecoder = undefined;
             hrPanicOnFail(gctx.wic_factory.CreateDecoderFromFilename(
-                @ptrCast(w32.LPCWSTR, &full_path_u16),
+                &abspath_w,
                 null,
                 w32.GENERIC_READ,
                 .MetadataCacheOnDemand,
@@ -1519,13 +1499,8 @@ pub const GraphicsContext = struct {
             .DEFAULT,
             .{},
             &blk: {
-                var desc = d3d12.RESOURCE_DESC.initTex2d(
-                    dxgi_format,
-                    image_wh.w,
-                    image_wh.h,
-                    params.num_mip_levels,
-                );
-                desc.Flags = params.texture_flags;
+                var desc = d3d12.RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w, image_wh.h, args.num_mip_levels);
+                desc.Flags = args.texture_flags;
                 break :blk desc;
             },
             .{ .COPY_DEST = true },

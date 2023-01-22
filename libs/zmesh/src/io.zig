@@ -3,7 +3,7 @@ const assert = std.debug.assert;
 const mem = @import("memory.zig");
 const zcgltf = @import("zcgltf.zig");
 
-pub fn parseAndLoadFile(gltf_path: [:0]const u8) zcgltf.Error!*zcgltf.Data {
+pub fn parseAndLoadFile(pathname: [:0]const u8) zcgltf.Error!*zcgltf.Data {
     const options = zcgltf.Options{
         .memory = .{
             .alloc_func = mem.zmeshAllocUser,
@@ -11,10 +11,10 @@ pub fn parseAndLoadFile(gltf_path: [:0]const u8) zcgltf.Error!*zcgltf.Data {
         },
     };
 
-    const data = try zcgltf.parseFile(options, gltf_path);
+    const data = try zcgltf.parseFile(options, pathname);
     errdefer zcgltf.free(data);
 
-    try zcgltf.loadBuffers(options, data, gltf_path);
+    try zcgltf.loadBuffers(options, data, pathname);
 
     return data;
 }

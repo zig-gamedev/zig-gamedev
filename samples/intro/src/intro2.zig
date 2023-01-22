@@ -106,7 +106,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     {
         zmesh.init(arena_allocator);
         defer zmesh.deinit();
-        const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
+
+        const abspath = std.fs.path.joinZ(arena_allocator, &.{
+            std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
+            content_dir ++ "cube.gltf",
+        }) catch unreachable;
+
+        const data = try zmesh.io.parseAndLoadFile(abspath);
         defer zmesh.io.freeData(data);
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
     }

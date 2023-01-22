@@ -194,12 +194,16 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         defer _ = config_attribs.Release();
         hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w32.TRUE));
 
+        const abspath = std.fs.path.join(arena_allocator, &.{
+            std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
+            content_dir ++ "acid_walk.mp3",
+        }) catch unreachable;
+
+        var abspath_w: [std.os.windows.PATH_MAX_WIDE:0]u16 = undefined;
+        abspath_w[std.unicode.utf8ToUtf16Le(abspath_w[0..], abspath) catch unreachable] = 0;
+
         var source_reader: *mf.ISourceReader = undefined;
-        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(
-            L(content_dir ++ "acid_walk.mp3"),
-            config_attribs,
-            &source_reader,
-        ));
+        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(&abspath_w, config_attribs, &source_reader));
         defer _ = source_reader.Release();
 
         var media_type: *mf.IMediaType = undefined;
