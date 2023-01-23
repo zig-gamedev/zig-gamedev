@@ -2,7 +2,7 @@
 
 This sample application shows how to draw a triangle using D3D12 API. It has no dependencies except our [zwin32](https://github.com/michal-z/zig-gamedev/tree/main/libs/zwin32) bindings.
 
-You can build and run it on **Windows** and **Linux** (via Wine).
+You can build and run it on **Windows** and **Linux**.
 
 To build and run on Windows:
 ```
