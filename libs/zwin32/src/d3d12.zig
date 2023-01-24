@@ -4334,7 +4334,7 @@ pub const IDevice = extern struct {
                 descs: [*]const RESOURCE_DESC,
             ) RESOURCE_ALLOCATION_INFO {
                 var info: RESOURCE_ALLOCATION_INFO = undefined;
-                @ptrCast(*const IDevice.VTable, self.__v).GetResourceAllocationInfo(
+                _ = @ptrCast(*const IDevice.VTable, self.__v).GetResourceAllocationInfo(
                     @ptrCast(*IDevice, self),
                     &info,
                     visible_mask,
@@ -6266,6 +6266,12 @@ pub const IID_IQueryHeap = GUID{
     .Data2 = 0xed45,
     .Data3 = 0x469e,
     .Data4 = .{ 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 },
+};
+pub const IID_IHeap = GUID{
+    .Data1 = 0x6b3b2502,
+    .Data2 = 0x6e51,
+    .Data3 = 0x45b3,
+    .Data4 = .{ 0x90, 0xee, 0x98, 0x84, 0x26, 0x5e, 0x8d, 0xf3 },
 };
 
 // Error return codes from:
