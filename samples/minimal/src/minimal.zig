@@ -277,7 +277,7 @@ const Dx12State = struct {
 
     command_queue: *d3d12.ICommandQueue,
     command_allocators: [num_frames]*d3d12.ICommandAllocator,
-    command_list: *d3d12.IGraphicsCommandList7,
+    command_list: *d3d12.IGraphicsCommandList6,
 
     const num_frames = 2;
 
@@ -443,13 +443,13 @@ const Dx12State = struct {
         //
         // Command List
         //
-        var command_list: *d3d12.IGraphicsCommandList7 = undefined;
+        var command_list: *d3d12.IGraphicsCommandList6 = undefined;
         hrPanicOnFail(device.CreateCommandList(
             0,
             .DIRECT,
             command_allocators[0],
             null,
-            &d3d12.IID_IGraphicsCommandList7,
+            &d3d12.IID_IGraphicsCommandList6,
             @ptrCast(*?*anyopaque, &command_list),
         ));
         hrPanicOnFail(command_list.Close());
