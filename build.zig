@@ -62,23 +62,23 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, minimal.build(b, options), "minimal");
         installDemo(b, triangle.build(b, options), "triangle");
         installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
-    }
-
-    if (builtin.target.os.tag == .windows) {
-        installDemo(b, textured_quad.build(b, options), "textured_quad");
-        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-        installDemo(b, rasterization.build(b, options), "rasterization");
-        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
         installDemo(b, bindless.build(b, options), "bindless");
-        installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
-        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
-        installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+        installDemo(b, textured_quad.build(b, options), "textured_quad");
+        installDemo(b, rasterization.build(b, options), "rasterization");
+        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
 
         comptime var intro_index: u32 = 0;
         inline while (intro_index < 7) : (intro_index += 1) {
             const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
             installDemo(b, intro.build(b, options, intro_index), name);
         }
+    }
+
+    if (builtin.target.os.tag == .windows) {
+        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
+        installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
+        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
+        installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
     }
 
     //
