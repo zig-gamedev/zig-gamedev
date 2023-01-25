@@ -1,8 +1,19 @@
 ## zig-gamedev project: intro
 
 Learn low-level graphics programming, game programming and how to use some of the zig-gamedev libraries. Intro applications have been designed for learning purposes, I try to keep code as simple as possible and comment new functionality added in each subsequent program.
-<br />
-<br />
+
+You can build and run them on **Windows** and **Linux**.
+
+For example, to build and run `intro3` on Windows:
+```
+zig build intro3-run
+```
+To build and run on `intro3` Linux ([Wine](https://www.winehq.org/) with [VKD3D-Proton](https://github.com/HansKristian-Work/vkd3d-proton) is needed):
+```
+zig build -Dtarget=x86_64-windows-gnu intro3
+wine zig-out/bin/intro3.exe
+```
+Tested on Ubuntu 22.04 with Wine 8.0-rc4 and VK3D-Proton v2.8
 
 ### intro 0
 
