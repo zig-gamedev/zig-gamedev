@@ -47,6 +47,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
     installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
+    installDemo(b, transparent_quads_wgpu.build(b, options), "transparent_quads_wgpu");
     installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
     installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
     installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
@@ -151,6 +152,7 @@ const zglfw = @import("libs/zglfw/build.zig");
 const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
+const transparent_quads_wgpu = @import("samples/transparent_quads_wgpu/build.zig");
 const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
 const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
 const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
