@@ -70,7 +70,7 @@ Some of the sample applications are listed below. More can be found in [samples]
     
 ## Sample applications (DirectX 12)
 
-Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
+Some of the sample applications are listed below. More can be found in [samples](samples/) directory. They can be built and run on Windows and Linux (Wine + VKD3d-Proton 2.8):
 
 1. [bindless](samples/bindless): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. It uses bindless textures and HLSL 6.6 dynamic resources.<br />`zig build bindless-run`
 
@@ -94,7 +94,6 @@ Some of the sample applications are listed below. More can be found in [samples]
 * [Pixi](https://github.com/foxnne/pixi) - Pixel art editor made with Zig
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
 * [elvengroin legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
-* [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles Zig demonstrator
 * [jok](https://github.com/jack-ji/jok) - A minimal 2D/3D game framework for Zig
 
 ## Building sample applications
