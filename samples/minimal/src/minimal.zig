@@ -174,6 +174,7 @@ pub fn main() !void {
                         .{ .ptr = rtv_heap_start.ptr + i * dx12.device.GetDescriptorHandleIncrementSize(.RTV) },
                     );
                 }
+                w32.Sleep(10);
             }
             window_rect = rect;
         }
