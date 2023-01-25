@@ -8,7 +8,7 @@ For example, to build and run `intro3` on Windows:
 ```
 zig build intro3-run
 ```
-To build and run on `intro3` Linux ([Wine](https://www.winehq.org/) with [VKD3D-Proton](https://github.com/HansKristian-Work/vkd3d-proton) is needed):
+To build and run `intro3` on Linux ([Wine](https://www.winehq.org/) with [VKD3D-Proton](https://github.com/HansKristian-Work/vkd3d-proton) is needed):
 ```
 zig build -Dtarget=x86_64-windows-gnu intro3
 wine zig-out/bin/intro3.exe
