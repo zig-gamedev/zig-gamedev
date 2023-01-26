@@ -49,7 +49,8 @@ const broad_phase_layers = struct {
 };
 
 const BroadPhaseLayerInterface = extern struct {
-    vtable_ptr: *const zphy.BroadPhaseLayerInterfaceVTable = &vtable,
+    __v: *const zphy.BroadPhaseLayerInterfaceVTable = &vtable,
+
     object_to_broad_phase: [object_layers.len]zphy.BroadPhaseLayer = undefined,
 
     const vtable = zphy.BroadPhaseLayerInterfaceVTable{
@@ -69,32 +70,56 @@ const BroadPhaseLayerInterface = extern struct {
     }
 
     fn getBroadPhaseLayer(
-        raw_self: *const anyopaque,
+        typeless_self: *const anyopaque,
         layer: zphy.ObjectLayer,
     ) callconv(.C) zphy.BroadPhaseLayer {
-        const self = @ptrCast(*const BroadPhaseLayerInterface, @alignCast(@sizeOf(usize), raw_self));
+        const self = @ptrCast(*const BroadPhaseLayerInterface, @alignCast(@sizeOf(usize), typeless_self));
         return self.object_to_broad_phase[layer];
     }
 };
 
-fn broadPhaseCanCollide(layer1: zphy.ObjectLayer, layer2: zphy.BroadPhaseLayer) callconv(.C) bool {
-    return switch (layer1) {
-        object_layers.non_moving => layer2 == broad_phase_layers.moving,
-        object_layers.moving => true,
-        else => unreachable,
-    };
-}
+const ObjectVsBroadPhaseLayerFilter = extern struct {
+    __v: *const zphy.ObjectVsBroadPhaseLayerFilterVTable = &vtable,
 
-fn objectCanCollide(object1: zphy.ObjectLayer, object2: zphy.ObjectLayer) callconv(.C) bool {
-    return switch (object1) {
-        object_layers.non_moving => object2 == object_layers.moving,
-        object_layers.moving => true,
-        else => unreachable,
+    const vtable = zphy.ObjectVsBroadPhaseLayerFilterVTable{
+        .shouldCollide = shouldCollideImpl,
     };
-}
+
+    fn shouldCollideImpl(
+        _: *const anyopaque,
+        layer1: zphy.ObjectLayer,
+        layer2: zphy.BroadPhaseLayer,
+    ) callconv(.C) bool {
+        return switch (layer1) {
+            object_layers.non_moving => layer2 == broad_phase_layers.moving,
+            object_layers.moving => true,
+            else => unreachable,
+        };
+    }
+};
+
+const ObjectLayerPairFilter = extern struct {
+    __v: *const zphy.ObjectLayerPairFilterVTable = &vtable,
+
+    const vtable = zphy.ObjectLayerPairFilterVTable{
+        .shouldCollide = shouldCollideImpl,
+    };
+
+    fn shouldCollideImpl(
+        _: *const anyopaque,
+        object1: zphy.ObjectLayer,
+        object2: zphy.ObjectLayer,
+    ) callconv(.C) bool {
+        return switch (object1) {
+            object_layers.non_moving => object2 == object_layers.moving,
+            object_layers.moving => true,
+            else => unreachable,
+        };
+    }
+};
 
 const ContactListener = extern struct {
-    vtable_ptr: *const zphy.ContactListenerVTable = &vtable,
+    __v: *const zphy.ContactListenerVTable = &vtable,
 
     const vtable = zphy.ContactListenerVTable{ .onContactValidate = onContactValidate };
 
@@ -129,6 +154,8 @@ const DemoState = struct {
     meshes: std.ArrayList(Mesh),
 
     broad_phase_layer_interface: *BroadPhaseLayerInterface,
+    object_vs_broad_phase_layer_filter: *ObjectVsBroadPhaseLayerFilter,
+    object_layer_pair_filter: *ObjectLayerPairFilter,
     contact_listener: *ContactListener,
     physics_system: *zphy.PhysicsSystem,
 
@@ -282,13 +309,19 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     const broad_phase_layer_interface = try allocator.create(BroadPhaseLayerInterface);
     broad_phase_layer_interface.* = BroadPhaseLayerInterface.init();
 
+    const object_vs_broad_phase_layer_filter = try allocator.create(ObjectVsBroadPhaseLayerFilter);
+    object_vs_broad_phase_layer_filter.* = .{};
+
+    const object_layer_pair_filter = try allocator.create(ObjectLayerPairFilter);
+    object_layer_pair_filter.* = .{};
+
     const contact_listener = try allocator.create(ContactListener);
     contact_listener.* = .{};
 
     const physics_system = try zphy.PhysicsSystem.create(
         broad_phase_layer_interface,
-        broadPhaseCanCollide,
-        objectCanCollide,
+        object_vs_broad_phase_layer_filter,
+        object_layer_pair_filter,
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -350,6 +383,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .depth_texv = depth.texv,
         .meshes = meshes,
         .broad_phase_layer_interface = broad_phase_layer_interface,
+        .object_vs_broad_phase_layer_filter = object_vs_broad_phase_layer_filter,
+        .object_layer_pair_filter = object_layer_pair_filter,
         .contact_listener = contact_listener,
         .physics_system = physics_system,
     };
@@ -385,6 +420,8 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.meshes.deinit();
     demo.physics_system.destroy();
     allocator.destroy(demo.contact_listener);
+    allocator.destroy(demo.object_vs_broad_phase_layer_filter);
+    allocator.destroy(demo.object_layer_pair_filter);
     allocator.destroy(demo.broad_phase_layer_interface);
     zphy.deinit();
     demo.gctx.destroy(allocator);

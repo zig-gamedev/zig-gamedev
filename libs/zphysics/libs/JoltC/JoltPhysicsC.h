@@ -153,12 +153,6 @@ typedef void (*JPC_FreeFunction)(void *in_block);
 
 typedef void *(*JPC_AlignedAllocateFunction)(size_t in_size, size_t in_alignment);
 typedef void (*JPC_AlignedFreeFunction)(void *in_block);
-
-typedef bool
-(*JPC_ObjectLayerPairFilter)(JPC_ObjectLayer in_layer1, JPC_ObjectLayer in_layer2);
-
-typedef bool
-(*JPC_ObjectVsBroadPhaseLayerFilter)(JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2);
 //--------------------------------------------------------------------------------------------------
 //
 // Opaque Types
@@ -399,6 +393,20 @@ typedef struct JPC_BroadPhaseLayerInterfaceVTable
     (*GetBroadPhaseLayer)(const void *in_self, JPC_ObjectLayer in_layer);
 } JPC_BroadPhaseLayerInterfaceVTable;
 
+typedef struct JPC_ObjectVsBroadPhaseLayerFilterVTable
+{
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollide)(const void *in_self, JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2);
+} JPC_ObjectVsBroadPhaseLayerFilterVTable;
+
+typedef struct JPC_ObjectLayerPairFilterVTable
+{
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollide)(const void *in_self, JPC_ObjectLayer in_layer1, JPC_ObjectLayer in_layer2);
+} JPC_ObjectLayerPairFilterVTable;
+
 typedef struct JPC_BodyActivationListenerVTable
 {
     // Required, *cannot* be NULL.
@@ -627,8 +635,8 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
                          uint32_t in_max_body_pairs,
                          uint32_t in_max_contact_constraints,
                          const void *in_broad_phase_layer_interface,
-                         JPC_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
-                         JPC_ObjectLayerPairFilter in_object_layer_pair_filter);
+                         const void *in_object_vs_broad_phase_layer_filter,
+                         const void *in_object_layer_pair_filter);
 JPC_API void
 JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system);
 

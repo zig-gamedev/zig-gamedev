@@ -24,9 +24,6 @@ pub const ObjectLayer = c.JPC_ObjectLayer;
 pub const BodyId = c.JPC_BodyID;
 pub const SubShapeId = c.JPC_SubShapeID;
 
-pub const ObjectVsBroadPhaseLayerFilter = *const fn (ObjectLayer, BroadPhaseLayer) callconv(.C) bool;
-pub const ObjectLayerPairFilter = *const fn (ObjectLayer, ObjectLayer) callconv(.C) bool;
-
 pub const max_physics_jobs: u32 = c.JPC_MAX_PHYSICS_JOBS;
 pub const max_physics_barriers: u32 = c.JPC_MAX_PHYSICS_BARRIERS;
 
@@ -71,6 +68,18 @@ pub const BroadPhaseLayerInterfaceVTable = extern struct {
             "GetBroadPhaseLayer",
         ));
     }
+};
+
+pub const ObjectVsBroadPhaseLayerFilterVTable = extern struct {
+    shouldCollide: *const fn (
+        self: *const anyopaque,
+        layer1: ObjectLayer,
+        layer2: BroadPhaseLayer,
+    ) callconv(.C) bool,
+};
+
+pub const ObjectLayerPairFilterVTable = extern struct {
+    shouldCollide: *const fn (self: *const anyopaque, ObjectLayer, ObjectLayer) callconv(.C) bool,
 };
 
 pub const BodyActivationListenerVTable = extern struct {
@@ -346,8 +355,8 @@ pub fn deinit() void {
 pub const PhysicsSystem = opaque {
     pub fn create(
         broad_phase_layer_interface: *const anyopaque,
-        object_vs_broad_phase_layer_filter: ObjectVsBroadPhaseLayerFilter,
-        object_layer_pair_filter: ObjectLayerPairFilter,
+        object_vs_broad_phase_layer_filter: *const anyopaque,
+        object_layer_pair_filter: *const anyopaque,
         args: struct {
             max_bodies: u32 = 1024,
             num_body_mutexes: u32 = 0,

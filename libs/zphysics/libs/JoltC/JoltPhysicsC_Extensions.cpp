@@ -47,7 +47,9 @@ JPC_PhysicsSystem_GetBodyIDs(const JPC_PhysicsSystem *in_physics_system,
 
     auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
 
-    JPH::UniqueLock lock(physics_system->mBodyManager.mBodiesMutex, JPH::EPhysicsLockTypes::BodiesList);
+    JPH::UniqueLock lock(
+        physics_system->mBodyManager.mBodiesMutex
+        JPH_IF_ENABLE_ASSERTS(, &physics_system->mBodyManager, JPH::EPhysicsLockTypes::BodiesList));
 
     if (out_num_body_ids) *out_num_body_ids = 0;
 
@@ -74,7 +76,9 @@ JPC_PhysicsSystem_GetActiveBodyIDs(const JPC_PhysicsSystem *in_physics_system,
 
     auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
 
-    JPH::UniqueLock lock(physics_system->mBodyManager.mActiveBodiesMutex, JPH::EPhysicsLockTypes::BodiesList);
+    JPH::UniqueLock lock(
+        physics_system->mBodyManager.mBodiesMutex
+        JPH_IF_ENABLE_ASSERTS(, &physics_system->mBodyManager, JPH::EPhysicsLockTypes::BodiesList));
 
     if (out_num_body_ids) *out_num_body_ids = 0;
 

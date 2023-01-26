@@ -112,7 +112,6 @@ pub fn main() !void {
             &d3d12.IID_IRootSignature,
             @ptrCast(*?*anyopaque, &root_signature),
         ));
-
         hrPanicOnFail(dx12.device.CreateGraphicsPipelineState(
             &pso_desc,
             &d3d12.IID_IPipelineState,
@@ -144,9 +143,15 @@ pub fn main() !void {
 
             var rect: w32.RECT = undefined;
             _ = w32.GetClientRect(window, &rect);
+            if (rect.right == 0 and rect.bottom == 0) {
+                // Window is minimized
+                w32.Sleep(10);
+                continue :main_loop;
+            }
+
             if (rect.right != window_rect.right or rect.bottom != window_rect.bottom) {
-                if (window_rect.right < 4) window_rect.right = 4;
-                if (window_rect.bottom < 4) window_rect.bottom = 4;
+                rect.right = std.math.max(1, rect.right);
+                rect.bottom = std.math.max(1, rect.bottom);
                 std.log.info(
                     "Window resized to {d}x{d}",
                     .{ window_rect.right, window_rect.bottom },
@@ -165,16 +170,15 @@ pub fn main() !void {
                         @ptrCast(*?*anyopaque, &texture.*),
                     ));
                 }
-                const rtv_heap_start = dx12.rtv_heap.GetCPUDescriptorHandleForHeapStart();
 
                 for (dx12.swap_chain_textures) |texture, i| {
                     dx12.device.CreateRenderTargetView(
                         texture,
                         null,
-                        .{ .ptr = rtv_heap_start.ptr + i * dx12.device.GetDescriptorHandleIncrementSize(.RTV) },
+                        .{ .ptr = dx12.rtv_heap_start.ptr +
+                            i * dx12.device.GetDescriptorHandleIncrementSize(.RTV) },
                     );
                 }
-                w32.Sleep(10);
             }
             window_rect = rect;
         }

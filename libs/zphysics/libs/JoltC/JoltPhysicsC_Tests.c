@@ -44,19 +44,17 @@ BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPC_ObjectLayer in_laye
     return self->object_to_broad_phase[in_layer];
 }
 
-static const JPC_BroadPhaseLayerInterfaceVTable
-g_bp_layer_interface_vtable =
-{
-    .GetNumBroadPhaseLayers = BPLayerInterface_GetNumBroadPhaseLayers,
-    .GetBroadPhaseLayer     = BPLayerInterface_GetBroadPhaseLayer,
-};
-
 static BPLayerInterfaceImpl
 BPLayerInterface_Init(void)
 {
+    static const JPC_BroadPhaseLayerInterfaceVTable vtable =
+    {
+        .GetNumBroadPhaseLayers = BPLayerInterface_GetNumBroadPhaseLayers,
+        .GetBroadPhaseLayer     = BPLayerInterface_GetBroadPhaseLayer,
+    };
     BPLayerInterfaceImpl impl =
     {
-        .vtable = &g_bp_layer_interface_vtable,
+        .vtable = &vtable,
     };
     impl.object_to_broad_phase[OBJ_LAYER_NON_MOVING] = BP_LAYER_NON_MOVING;
     impl.object_to_broad_phase[OBJ_LAYER_MOVING]     = BP_LAYER_MOVING;
@@ -139,21 +137,19 @@ MyContactListener_OnContactRemoved(void *in_self, const JPC_SubShapeIDPair *in_s
 #endif
 }
 
-static const JPC_ContactListenerVTable
-g_contact_listener_vtable =
-{
-    .OnContactValidate  = MyContactListener_OnContactValidate,
-    .OnContactAdded     = MyContactListener_OnContactAdded,
-    .OnContactPersisted = MyContactListener_OnContactPersisted,
-    .OnContactRemoved   = MyContactListener_OnContactRemoved,
-};
-
 static MyContactListener
 MyContactListener_Init(void)
 {
+    static const JPC_ContactListenerVTable vtable =
+    {
+        .OnContactValidate  = MyContactListener_OnContactValidate,
+        .OnContactAdded     = MyContactListener_OnContactAdded,
+        .OnContactPersisted = MyContactListener_OnContactPersisted,
+        .OnContactRemoved   = MyContactListener_OnContactRemoved,
+    };
     MyContactListener impl =
     {
-        .vtable = &g_contact_listener_vtable,
+        .vtable = &vtable,
     };
     return impl;
 }
@@ -185,25 +181,30 @@ MyActivationListener_OnBodyDeactivated(void *in_self, JPC_BodyID in_body_id, uin
 #endif
 }
 
-static const JPC_BodyActivationListenerVTable
-g_activation_listener_vtable =
-{
-    .OnBodyActivated   = MyActivationListener_OnBodyActivated,
-    .OnBodyDeactivated = MyActivationListener_OnBodyDeactivated,
-};
-
 static MyActivationListener
 MyActivationListener_Init(void)
 {
+    static const JPC_BodyActivationListenerVTable vtable =
+    {
+        .OnBodyActivated   = MyActivationListener_OnBodyActivated,
+        .OnBodyDeactivated = MyActivationListener_OnBodyDeactivated,
+    };
     MyActivationListener impl =
     {
-        .vtable = &g_activation_listener_vtable,
+        .vtable = &vtable,
     };
     return impl;
 }
 //--------------------------------------------------------------------------------------------------
+// MyObjectFilter
+//--------------------------------------------------------------------------------------------------
+typedef struct MyObjectFilter
+{
+    const JPC_ObjectLayerPairFilterVTable *vtable; // VTable has to be the first field in the struct.
+} MyObjectFilter;
+
 static bool
-MyObjectCanCollide(JPC_ObjectLayer in_object1, JPC_ObjectLayer in_object2)
+MyObjectFilter_ShouldCollide(const void *in_self, JPC_ObjectLayer in_object1, JPC_ObjectLayer in_object2)
 {
     switch (in_object1)
     {
@@ -216,9 +217,30 @@ MyObjectCanCollide(JPC_ObjectLayer in_object1, JPC_ObjectLayer in_object2)
             return false;
     }
 }
+
+static MyObjectFilter
+MyObjectFilter_Init(void)
+{
+    static const JPC_ObjectLayerPairFilterVTable vtable =
+    {
+        .ShouldCollide = MyObjectFilter_ShouldCollide,
+    };
+    MyObjectFilter impl =
+    {
+        .vtable = &vtable,
+    };
+    return impl;
+}
 //--------------------------------------------------------------------------------------------------
+// MyBroadPhaseFilter
+//--------------------------------------------------------------------------------------------------
+typedef struct MyBroadPhaseFilter
+{
+    const JPC_ObjectVsBroadPhaseLayerFilterVTable *vtable; // VTable has to be the first field in the struct.
+} MyBroadPhaseFilter;
+
 static bool
-MyBroadPhaseCanCollide(JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2)
+MyBroadPhaseFilter_ShouldCollide(const void *in_self, JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2)
 {
     switch (in_layer1)
     {
@@ -230,6 +252,20 @@ MyBroadPhaseCanCollide(JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2)
             assert(false);
             return false;
     }
+}
+
+static MyBroadPhaseFilter
+MyBroadPhaseFilter_Init(void)
+{
+    static const JPC_ObjectVsBroadPhaseLayerFilterVTable vtable =
+    {
+        .ShouldCollide = MyBroadPhaseFilter_ShouldCollide,
+    };
+    MyBroadPhaseFilter impl =
+    {
+        .vtable = &vtable,
+    };
+    return impl;
 }
 //--------------------------------------------------------------------------------------------------
 // Basic1
@@ -246,16 +282,23 @@ JoltCTest_Basic1(void)
     const uint32_t max_body_pairs = 1024;
     const uint32_t max_contact_constraints = 1024;
 
-    BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+    BPLayerInterfaceImpl *broad_phase_layer_interface = malloc(sizeof(BPLayerInterfaceImpl));
+    *broad_phase_layer_interface = BPLayerInterface_Init();
+
+    MyBroadPhaseFilter *broad_phase_filter = malloc(sizeof(MyBroadPhaseFilter));
+    *broad_phase_filter = MyBroadPhaseFilter_Init();
+
+    MyObjectFilter *object_filter = malloc(sizeof(MyObjectFilter));
+    *object_filter = MyObjectFilter_Init();
 
     JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
         max_bodies,
         num_body_mutexes,
         max_body_pairs,
         max_contact_constraints,
-        &broad_phase_layer_interface,
-        MyBroadPhaseCanCollide,
-        MyObjectCanCollide);
+        broad_phase_layer_interface,
+        broad_phase_filter,
+        object_filter);
 
     const float half_extent[3] = { 10.0, 20.0, 30.0 };
     JPC_BoxShapeSettings *box_settings = JPC_BoxShapeSettings_Create(half_extent);
@@ -317,6 +360,8 @@ JoltCTest_Basic2(void)
     const uint32_t max_contact_constraints = 1024;
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+    MyBroadPhaseFilter broad_phase_filter = MyBroadPhaseFilter_Init();
+    MyObjectFilter object_filter = MyObjectFilter_Init();
 
     JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
         max_bodies,
@@ -324,8 +369,8 @@ JoltCTest_Basic2(void)
         max_body_pairs,
         max_contact_constraints,
         &broad_phase_layer_interface,
-        MyBroadPhaseCanCollide,
-        MyObjectCanCollide);
+        &broad_phase_filter,
+        &object_filter);
 
     MyActivationListener body_activation_listener = MyActivationListener_Init();
     JPC_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);
@@ -426,6 +471,8 @@ JoltCTest_HelloWorld(void)
     const uint32_t max_contact_constraints = 1024;
 
     BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+    MyBroadPhaseFilter broad_phase_filter = MyBroadPhaseFilter_Init();
+    MyObjectFilter object_filter = MyObjectFilter_Init();
 
     JPC_PhysicsSystem *physics_system = JPC_PhysicsSystem_Create(
         max_bodies,
@@ -433,8 +480,8 @@ JoltCTest_HelloWorld(void)
         max_body_pairs,
         max_contact_constraints,
         &broad_phase_layer_interface,
-        MyBroadPhaseCanCollide,
-        MyObjectCanCollide);
+        &broad_phase_filter,
+        &object_filter);
 
     MyActivationListener body_activation_listener = MyActivationListener_Init();
     JPC_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);

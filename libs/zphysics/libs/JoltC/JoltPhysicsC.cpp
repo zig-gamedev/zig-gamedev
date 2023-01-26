@@ -423,6 +423,38 @@ public:
     const CListener *c_listener;
 };
 
+class ObjectVsBroadPhaseLayerFilter : public JPH::ObjectVsBroadPhaseLayerFilter
+{
+public:
+	bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
+    {
+        assert(c_listener->vtbl->ShouldCollide);
+        return c_listener->vtbl->ShouldCollide(c_listener, toJpc(inLayer1), toJpc(inLayer2));
+    }
+
+    struct CListener
+    {
+        JPC_ObjectVsBroadPhaseLayerFilterVTable *vtbl;
+    };
+    const CListener *c_listener;
+};
+
+class ObjectLayerPairFilter : public JPH::ObjectLayerPairFilter
+{
+public:
+	bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::ObjectLayer inLayer2) const override
+    {
+        assert(c_listener->vtbl->ShouldCollide);
+        return c_listener->vtbl->ShouldCollide(c_listener, toJpc(inLayer1), toJpc(inLayer2));
+    }
+
+    struct CListener
+    {
+        JPC_ObjectLayerPairFilterVTable *vtbl;
+    };
+    const CListener *c_listener;
+};
+
 class BodyActivationListener : public JPH::BodyActivationListener
 {
 public:
@@ -511,6 +543,8 @@ struct PhysicsSystemData
     uint64_t safety_token = 0xC0DEC0DEC0DEC0DE;
     ContactListener *contact_listener = nullptr;
     BroadPhaseLayerInterface *broad_phase_layer_interface = nullptr;
+    ObjectVsBroadPhaseLayerFilter *object_broad_phase_filter = nullptr;
+    ObjectLayerPairFilter *object_pair_filter = nullptr;
     BodyActivationListener *body_activation_listener = nullptr;
 };
 
@@ -520,8 +554,8 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
                          uint32_t in_max_body_pairs,
                          uint32_t in_max_contact_constraints,
                          const void *in_broad_phase_layer_interface,
-                         JPC_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
-                         JPC_ObjectLayerPairFilter in_object_layer_pair_filter)
+                         const void *in_object_vs_broad_phase_layer_filter,
+                         const void *in_object_layer_pair_filter)
 {
     assert(in_broad_phase_layer_interface != nullptr);
     assert(in_object_vs_broad_phase_layer_filter != nullptr);
@@ -540,8 +574,22 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
         static_cast<BroadPhaseLayerInterface *>(JPH::Allocate(sizeof(BroadPhaseLayerInterface)));
     ::new (data->broad_phase_layer_interface) BroadPhaseLayerInterface();
 
+    data->object_broad_phase_filter =
+        static_cast<ObjectVsBroadPhaseLayerFilter*>(JPH::Allocate(sizeof(ObjectVsBroadPhaseLayerFilter)));
+    ::new (data->object_broad_phase_filter) ObjectVsBroadPhaseLayerFilter();
+
+    data->object_pair_filter =
+        static_cast<ObjectLayerPairFilter*>(JPH::Allocate(sizeof(ObjectLayerPairFilter)));
+    ::new (data->object_pair_filter) ObjectLayerPairFilter();
+
     data->broad_phase_layer_interface->c_listener =
         static_cast<const BroadPhaseLayerInterface::CListener *>(in_broad_phase_layer_interface);
+
+    data->object_broad_phase_filter->c_listener =
+        static_cast<const ObjectVsBroadPhaseLayerFilter::CListener *>(in_object_vs_broad_phase_layer_filter);
+
+    data->object_pair_filter->c_listener =
+        static_cast<const ObjectLayerPairFilter::CListener *>(in_object_layer_pair_filter);
 
     physics_system->Init(
         in_max_bodies,
@@ -549,8 +597,8 @@ JPC_PhysicsSystem_Create(uint32_t in_max_bodies,
         in_max_body_pairs,
         in_max_contact_constraints,
         *data->broad_phase_layer_interface,
-        reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
-        reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
+        *data->object_broad_phase_filter,
+        *data->object_pair_filter);
 
     return toJpc(physics_system);
 }
@@ -566,6 +614,16 @@ JPC_PhysicsSystem_Destroy(JPC_PhysicsSystem *in_physics_system)
     {
         data->broad_phase_layer_interface->~BroadPhaseLayerInterface();
         JPH::Free(data->broad_phase_layer_interface);
+    }
+    if (data->object_broad_phase_filter)
+    {
+        data->object_broad_phase_filter->~ObjectVsBroadPhaseLayerFilter();
+        JPH::Free(data->object_broad_phase_filter);
+    }
+    if (data->object_pair_filter)
+    {
+        data->object_pair_filter->~ObjectLayerPairFilter();
+        JPH::Free(data->object_pair_filter);
     }
     if (data->contact_listener)
     {
