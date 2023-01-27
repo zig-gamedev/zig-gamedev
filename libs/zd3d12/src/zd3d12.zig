@@ -50,6 +50,7 @@ pub const GraphicsContext = struct {
     const max_num_buffered_resource_barriers = 16;
 
     device: *d3d12.IDevice9,
+    adapter: *dxgi.IAdapter3,
     cmdqueue: *d3d12.ICommandQueue,
     cmdlist: *d3d12.IGraphicsCommandList6,
     cmdallocs: [max_num_buffered_frames]*d3d12.ICommandAllocator,
@@ -130,33 +131,33 @@ pub const GraphicsContext = struct {
         }
 
         const suitable_adapter = blk: {
-            var adapter: ?*dxgi.IAdapter1 = null;
+            var adapter: ?*dxgi.IAdapter3 = null;
             var adapter_index: u32 = 0;
-            var optional_adapter1: ?*dxgi.IAdapter1 = null;
+            var optional_adapter3: ?*dxgi.IAdapter3 = null;
 
             while (factory.EnumAdapterByGpuPreference(
                 adapter_index,
                 .HIGH_PERFORMANCE,
-                &dxgi.IID_IAdapter1,
-                &optional_adapter1,
+                &dxgi.IID_IAdapter3,
+                &optional_adapter3,
             ) == w32.S_OK) {
                 adapter_index += 1;
-                if (optional_adapter1) |adapter1| {
-                    var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
-                    if (adapter1.GetDesc1(&adapter1_desc) == w32.S_OK) {
-                        if (adapter1_desc.Flags.SOFTWARE) {
+                if (optional_adapter3) |adapter3| {
+                    var adapter2_desc: dxgi.ADAPTER_DESC2 = undefined;
+                    if (adapter3.GetDesc2(&adapter2_desc) == w32.S_OK) {
+                        if (adapter2_desc.Flags.SOFTWARE) {
                             // Don't select the Basic Render Driver adapter.
                             continue;
                         }
 
                         const hr = d3d12.CreateDevice(
-                            @ptrCast(*w32.IUnknown, adapter1),
+                            @ptrCast(*w32.IUnknown, adapter3),
                             .@"11_1",
                             &d3d12.IID_IDevice9,
                             null,
                         );
                         if (hr == w32.S_OK or hr == w32.S_FALSE) {
-                            adapter = adapter1;
+                            adapter = adapter3;
                             break;
                         }
                     }
@@ -164,9 +165,6 @@ pub const GraphicsContext = struct {
             }
             break :blk adapter;
         };
-        defer {
-            if (suitable_adapter) |adapter| _ = adapter.Release();
-        }
 
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
@@ -540,6 +538,7 @@ pub const GraphicsContext = struct {
 
         return GraphicsContext{
             .device = device,
+            .adapter = suitable_adapter.?,
             .cmdqueue = cmdqueue,
             .cmdlist = cmdlist,
             .cmdallocs = cmdallocs,
@@ -574,6 +573,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
+        _ = gctx.adapter.Release();
         gctx.finishGpuCommands();
         gctx.transition_resource_barriers.deinit(allocator);
         _ = w32.CloseHandle(gctx.frame_fence_event);

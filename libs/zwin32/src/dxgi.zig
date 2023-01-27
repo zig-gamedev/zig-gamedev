@@ -1035,6 +1035,37 @@ pub const ADAPTER_DESC1 = extern struct {
     Flags: ADAPTER_FLAGS,
 };
 
+pub const GRAPHICS_PREEMPTION_GRANULARITY = enum(UINT) {
+    DMA_BUFFER_BOUNDARY = 0,
+    PRIMITIVE_BOUNDARY = 1,
+    TRIANGLE_BOUNDARY = 2,
+    PIXEL_BOUNDARY = 3,
+    INSTRUCTION_BOUNDARY = 4,
+};
+
+pub const COMPUTE_PREEMPTION_GRANULARITY = enum(UINT) {
+    DMA_BUFFER_BOUNDARY = 0,
+    PRIMITIVE_BOUNDARY = 1,
+    TRIANGLE_BOUNDARY = 2,
+    PIXEL_BOUNDARY = 3,
+    INSTRUCTION_BOUNDARY = 4,
+};
+
+pub const ADAPTER_DESC2 = extern struct {
+    Description: [128]WCHAR,
+    VendorId: UINT,
+    DeviceId: UINT,
+    SubSysId: UINT,
+    Revision: UINT,
+    DedicatedVideoMemory: SIZE_T,
+    DedicatedSystemMemory: SIZE_T,
+    SharedSystemMemory: SIZE_T,
+    AdapterLuid: LUID,
+    Flags: ADAPTER_FLAGS,
+    GraphicsPreemptionGranularity: GRAPHICS_PREEMPTION_GRANULARITY,
+    ComputePreemptionGranularity: COMPUTE_PREEMPTION_GRANULARITY,
+};
+
 pub const IFactory1 = extern struct {
     __v: *const VTable,
 
@@ -1181,7 +1212,7 @@ pub const IFactory6 = extern struct {
                 adapter_index: UINT,
                 gpu_preference: GPU_PREFERENCE,
                 riid: *const GUID,
-                adapter: *?*IAdapter1,
+                adapter: *?*IAdapter3,
             ) HRESULT {
                 return @ptrCast(*const IFactory6.VTable, self.__v).EnumAdapterByGpuPreference(
                     @ptrCast(*IFactory6, self),
@@ -1201,7 +1232,7 @@ pub const IFactory6 = extern struct {
             UINT,
             GPU_PREFERENCE,
             *const GUID,
-            *?*IAdapter1,
+            *?*IAdapter3,
         ) callconv(WINAPI) HRESULT,
     };
 };
@@ -1226,6 +1257,94 @@ pub const IAdapter1 = extern struct {
     pub const VTable = extern struct {
         base: IAdapter.VTable,
         GetDesc1: *const fn (*IAdapter1, *ADAPTER_DESC1) callconv(WINAPI) HRESULT,
+    };
+};
+
+pub const IID_IAdapter2 = GUID.parse("{0AA1AE0A-FA0E-4B84-8644-E05FF8E5ACB5}");
+pub const IAdapter2 = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IAdapter1.Methods(T);
+
+            pub inline fn GetDesc2(self: *T, desc: *ADAPTER_DESC2) HRESULT {
+                return @ptrCast(*const IAdapter2.VTable, self.__v)
+                    .GetDesc2(@ptrCast(*IAdapter2, self), desc);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IAdapter1.VTable,
+        GetDesc2: *const fn (*IAdapter2, *ADAPTER_DESC2) callconv(WINAPI) HRESULT,
+    };
+};
+
+pub const MEMORY_SEGMENT_GROUP = enum(UINT) {
+    LOCAL = 0,
+    NON_LOCAL = 1,
+};
+
+pub const QUERY_VIDEO_MEMORY_INFO = extern struct {
+    Budget: UINT64,
+    CurrentUsage: UINT64,
+    AvailableForReservation: UINT64,
+    CurrentReservation: UINT64,
+};
+
+pub const IID_IAdapter3 = GUID.parse("{645967A4-1392-4310-A798-8053CE3E93FD}");
+pub const IAdapter3 = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IAdapter2.Methods(T);
+
+            pub inline fn RegisterHardwareContentProtectionTeardownStatusEvent(self: *T, event: HANDLE, cookie: *DWORD) HRESULT {
+                return @ptrCast(*const IAdapter3.VTable, self.__v)
+                    .RegisterHardwareContentProtectionTeardownStatusEvent(@ptrCast(*IAdapter3, self), event, cookie);
+            }
+
+            pub inline fn UnregisterHardwareContentProtectionTeardownStatus(self: *T, cookie: DWORD) void {
+                return @ptrCast(*const IAdapter3.VTable, self.__v)
+                    .UnregisterHardwareContentProtectionTeardownStatus(@ptrCast(*IAdapter3, self), cookie);
+            }
+
+            pub inline fn QueryVideoMemoryInfo(self: *T, node_index: UINT, memory_segment_group: MEMORY_SEGMENT_GROUP, video_memory_info: *QUERY_VIDEO_MEMORY_INFO) HRESULT {
+                return @ptrCast(*const IAdapter3.VTable, self.__v)
+                    .RegisterHardwareContentProtectionTeardownStatusEvent(@ptrCast(*IAdapter3, self), node_index, memory_segment_group, video_memory_info);
+            }
+
+            pub inline fn SetVideoMemoryReservation(self: *T, node_index: UINT, memory_segment_group: MEMORY_SEGMENT_GROUP, reservation: UINT64) HRESULT {
+                return @ptrCast(*const IAdapter3.VTable, self.__v)
+                    .SetVideoMemoryReservation(@ptrCast(*IAdapter3, self), node_index, memory_segment_group, reservation);
+            }
+
+            pub inline fn RegisterVideoMemoryBudgetChangeNotificationEvent(self: *T, event: HANDLE, cookie: *DWORD) HRESULT {
+                return @ptrCast(*const IAdapter3.VTable, self.__v)
+                    .RegisterVideoMemoryBudgetChangeNotificationEvent(@ptrCast(*IAdapter3, self), event, cookie);
+            }
+
+            pub inline fn UnregisterVideoMemoryBudgetChangeNotification(self: *T, cookie: DWORD) void {
+                return @ptrCast(*const IAdapter3.VTable, self.__v)
+                    .UnregisterVideoMemoryBudgetChangeNotification(@ptrCast(*IAdapter3, self), cookie);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        base: IAdapter2.VTable,
+        RegisterHardwareContentProtectionTeardownStatusEvent: *const fn (*IAdapter3, HANDLE, *DWORD) callconv(WINAPI) HRESULT,
+        UnregisterHardwareContentProtectionTeardownStatus: *const fn (*IAdapter3, DWORD) callconv(WINAPI) void,
+        QueryVideoMemoryInfo: *const fn (*IAdapter3, UINT, MEMORY_SEGMENT_GROUP, *QUERY_VIDEO_MEMORY_INFO) callconv(WINAPI) HRESULT,
+        SetVideoMemoryReservation: *const fn (*IAdapter3, UINT, MEMORY_SEGMENT_GROUP, UINT64) callconv(WINAPI) HRESULT,
+        RegisterVideoMemoryBudgetChangeNotificationEvent: *const fn (*IAdapter3, HANDLE, *DWORD) callconv(WINAPI) HRESULT,
+        UnregisterVideoMemoryBudgetChangeNotification: *const fn (*IAdapter3, DWORD) callconv(WINAPI) void,
     };
 };
 
