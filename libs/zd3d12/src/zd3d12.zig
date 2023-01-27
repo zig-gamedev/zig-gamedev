@@ -352,6 +352,9 @@ pub const GraphicsContext = struct {
             break :blk swapchain_buffers;
         };
 
+        // Disable ALT + ENTER
+        hrPanicOnFail(factory.MakeWindowAssociation(window, .{ .NO_WINDOW_CHANGES = true }));
+
         const d2d_state = if (enable_d2d) blk_d2d: {
             const dx11 = blk: {
                 var device11: *d3d11.IDevice = undefined;
