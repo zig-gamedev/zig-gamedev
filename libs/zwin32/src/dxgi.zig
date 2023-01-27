@@ -1317,7 +1317,7 @@ pub const IAdapter3 = extern struct {
 
             pub inline fn QueryVideoMemoryInfo(self: *T, node_index: UINT, memory_segment_group: MEMORY_SEGMENT_GROUP, video_memory_info: *QUERY_VIDEO_MEMORY_INFO) HRESULT {
                 return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .RegisterHardwareContentProtectionTeardownStatusEvent(@ptrCast(*IAdapter3, self), node_index, memory_segment_group, video_memory_info);
+                    .QueryVideoMemoryInfo(@ptrCast(*IAdapter3, self), node_index, memory_segment_group, video_memory_info);
             }
 
             pub inline fn SetVideoMemoryReservation(self: *T, node_index: UINT, memory_segment_group: MEMORY_SEGMENT_GROUP, reservation: UINT64) HRESULT {
