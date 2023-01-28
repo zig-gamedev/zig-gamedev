@@ -366,6 +366,13 @@ pub const GUID_PixelFormat32bppPBGRA = PixelFormatGUID{
     .Data4 = .{ 0xb1, 0x85, 0x3d, 0x77, 0x76, 0x8d, 0xc9, 0x10 },
 };
 
+pub const GUID_PixelFormat64bppRGBA = PixelFormatGUID{
+    .Data1 = 0x6fddc324,
+    .Data2 = 0x4e03,
+    .Data3 = 0x4bfe,
+    .Data4 = .{ 0xb1, 0x85, 0x3d, 0x77, 0x76, 0x8d, 0xc9, 0x16 },
+};
+
 pub const GUID_PixelFormat8bppGray = PixelFormatGUID{
     .Data1 = 0x6fddc324,
     .Data2 = 0x4e03,
