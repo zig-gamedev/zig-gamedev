@@ -408,9 +408,9 @@ const StreamVoiceCallback = struct {
         return .{ .stream = null };
     }
 
-    fn onBufferEndImpl(i_voice_callback: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
-        const voice_cb = @ptrCast(*StreamVoiceCallback, i_voice_callback);
-        voice_cb.stream.?.endOfStreamChunk(@ptrCast(*mf.IMediaBuffer, @alignCast(@sizeOf(usize), context)));
+    fn onBufferEndImpl(iself: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
+        const self = @ptrCast(*StreamVoiceCallback, iself);
+        self.stream.?.endOfStreamChunk(@ptrCast(*mf.IMediaBuffer, @alignCast(@sizeOf(usize), context)));
     }
 };
 
@@ -439,20 +439,20 @@ const SourceReaderCallback = struct {
     }
 
     fn queryInterfaceImpl(
-        i_unknown: *IUnknown,
+        iself: *IUnknown,
         guid: *const w32.GUID,
         outobj: ?*?*anyopaque,
     ) callconv(WINAPI) HRESULT {
         assert(outobj != null);
-        const source_reader_cb = @ptrCast(*SourceReaderCallback, i_unknown);
+        const self = @ptrCast(*SourceReaderCallback, iself);
 
         if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w32.IID_IUnknown))) {
-            outobj.?.* = source_reader_cb;
-            _ = source_reader_cb.AddRef();
+            outobj.?.* = self;
+            _ = self.AddRef();
             return w32.S_OK;
         } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&mf.IID_ISourceReaderCallback))) {
-            outobj.?.* = source_reader_cb;
-            _ = source_reader_cb.AddRef();
+            outobj.?.* = self;
+            _ = self.AddRef();
             return w32.S_OK;
         }
 
@@ -460,32 +460,32 @@ const SourceReaderCallback = struct {
         return w32.E_NOINTERFACE;
     }
 
-    fn addRefImpl(i_unknown: *IUnknown) callconv(WINAPI) ULONG {
-        const source_reader_cb = @ptrCast(*SourceReaderCallback, i_unknown);
-        const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Add, 1, .Monotonic);
+    fn addRefImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+        const self = @ptrCast(*SourceReaderCallback, iself);
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic);
         return prev_refcount + 1;
     }
 
-    fn releaseImpl(i_unknown: *IUnknown) callconv(WINAPI) ULONG {
-        const source_reader_cb = @ptrCast(*SourceReaderCallback, i_unknown);
-        const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Sub, 1, .Monotonic);
+    fn releaseImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+        const self = @ptrCast(*SourceReaderCallback, iself);
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         assert(prev_refcount > 0);
         if (prev_refcount == 1) {
-            source_reader_cb.allocator.destroy(source_reader_cb);
+            self.allocator.destroy(self);
         }
         return prev_refcount - 1;
     }
 
     fn onReadSampleImpl(
-        i_source_reader_callback: *mf.ISourceReaderCallback,
+        iself: *mf.ISourceReaderCallback,
         status: HRESULT,
         stream_index: DWORD,
         stream_flags: mf.SOURCE_READER_FLAG,
         timestamp: LONGLONG,
         sample: ?*mf.ISample,
     ) callconv(WINAPI) HRESULT {
-        const source_reader_cb = @ptrCast(*SourceReaderCallback, i_source_reader_callback);
-        source_reader_cb.stream.?.playStreamChunk(status, stream_index, stream_flags, timestamp, sample);
+        const self = @ptrCast(*SourceReaderCallback, iself);
+        self.stream.?.playStreamChunk(status, stream_index, stream_flags, timestamp, sample);
         return w32.S_OK;
     }
 };
@@ -684,20 +684,20 @@ const SimpleAudioProcessor = struct {
     };
 
     fn queryInterfaceImpl(
-        i_unknown: *IUnknown,
+        iself: *IUnknown,
         guid: *const w32.GUID,
         outobj: ?*?*anyopaque,
     ) callconv(WINAPI) HRESULT {
         assert(outobj != null);
-        const audio_processor = @ptrCast(*SimpleAudioProcessor, i_unknown);
+        const self = @ptrCast(*SimpleAudioProcessor, iself);
 
         if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w32.IID_IUnknown))) {
-            outobj.?.* = audio_processor;
-            _ = audio_processor.AddRef();
+            outobj.?.* = self;
+            _ = self.AddRef();
             return w32.S_OK;
         } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&xapo.IID_IXAPO))) {
-            outobj.?.* = audio_processor;
-            _ = audio_processor.AddRef();
+            outobj.?.* = self;
+            _ = self.AddRef();
             return w32.S_OK;
         }
 
@@ -705,16 +705,16 @@ const SimpleAudioProcessor = struct {
         return w32.E_NOINTERFACE;
     }
 
-    fn addRefImpl(i_unknown: *IUnknown) callconv(WINAPI) ULONG {
-        const audio_processor = @ptrCast(*SimpleAudioProcessor, i_unknown);
-        return @atomicRmw(u32, &audio_processor.refcount, .Add, 1, .Monotonic) + 1;
+    fn addRefImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+        const self = @ptrCast(*SimpleAudioProcessor, iself);
+        return @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic) + 1;
     }
 
-    fn releaseImpl(i_unknown: *IUnknown) callconv(WINAPI) ULONG {
-        const audio_processor = @ptrCast(*SimpleAudioProcessor, i_unknown);
-        const prev_refcount = @atomicRmw(u32, &audio_processor.refcount, .Sub, 1, .Monotonic);
+    fn releaseImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+        const self = @ptrCast(*SimpleAudioProcessor, iself);
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         if (prev_refcount == 1) {
-            w32.CoTaskMemFree(audio_processor);
+            w32.CoTaskMemFree(self);
         }
         return prev_refcount - 1;
     }
@@ -805,13 +805,13 @@ const SimpleAudioProcessor = struct {
     fn resetImpl(_: *xapo.IXAPO) callconv(WINAPI) void {}
 
     fn lockForProcessImpl(
-        i_xapo: *xapo.IXAPO,
+        iself: *xapo.IXAPO,
         num_input_params: UINT32,
         input_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
         num_output_params: UINT32,
         output_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
     ) callconv(WINAPI) HRESULT {
-        const self = @ptrCast(*SimpleAudioProcessor, i_xapo);
+        const self = @ptrCast(*SimpleAudioProcessor, iself);
         assert(self.is_locked == false);
         assert(num_input_params == 1 and num_output_params == 1);
         assert(input_params != null and output_params != null);
@@ -827,22 +827,22 @@ const SimpleAudioProcessor = struct {
         return w32.S_OK;
     }
 
-    fn unlockForProcessImpl(i_xapo: *xapo.IXAPO) callconv(WINAPI) void {
-        const self = @ptrCast(*SimpleAudioProcessor, i_xapo);
+    fn unlockForProcessImpl(iself: *xapo.IXAPO) callconv(WINAPI) void {
+        const self = @ptrCast(*SimpleAudioProcessor, iself);
         assert(self.is_locked == true);
         self.num_channels = 0;
         self.is_locked = false;
     }
 
     fn processImpl(
-        i_xapo: *xapo.IXAPO,
+        iself: *xapo.IXAPO,
         num_input_params: UINT32,
         input_params: ?[*]const xapo.PROCESS_BUFFER_PARAMETERS,
         num_output_params: UINT32,
         output_params: ?[*]xapo.PROCESS_BUFFER_PARAMETERS,
         is_enabled: BOOL,
     ) callconv(WINAPI) void {
-        const self = @ptrCast(*SimpleAudioProcessor, i_xapo);
+        const self = @ptrCast(*SimpleAudioProcessor, iself);
         assert(self.is_locked and self.num_channels > 0);
         assert(num_input_params == 1 and num_output_params == 1);
         assert(input_params != null and output_params != null);

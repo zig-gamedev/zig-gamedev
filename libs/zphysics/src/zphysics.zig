@@ -57,81 +57,238 @@ pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
     return if (isValidBodyPointer(body) and body.id == body_id) body else null;
 }
 
-pub const BroadPhaseLayerInterfaceVTable = extern struct {
-    getNumBroadPhaseLayers: *const fn (self: *const anyopaque) callconv(.C) u32,
-    getBroadPhaseLayer: *const fn (self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer,
+pub const BroadPhaseLayerInterface = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn getNumBroadPhaseLayers(self: *const T) u32 {
+                return @ptrCast(*const BroadPhaseLayerInterface.VTable, self.__v)
+                    .getNumBroadPhaseLayers(@ptrCast(*const BroadPhaseLayerInterface, self));
+            }
+            pub inline fn getBroadPhaseLayer(self: *const T, layer: ObjectLayer) u32 {
+                return @ptrCast(*const BroadPhaseLayerInterface.VTable, self.__v)
+                    .getBroadPhaseLayer(@ptrCast(*const BroadPhaseLayerInterface, self), layer);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        getNumBroadPhaseLayers: *const fn (self: *const BroadPhaseLayerInterface) callconv(.C) u32,
+        getBroadPhaseLayer: *const fn (
+            self: *const BroadPhaseLayerInterface,
+            layer: ObjectLayer,
+        ) callconv(.C) BroadPhaseLayer,
+    };
 
     comptime {
-        assert(@sizeOf(BroadPhaseLayerInterfaceVTable) == @sizeOf(c.JPC_BroadPhaseLayerInterfaceVTable));
-        assert(@offsetOf(BroadPhaseLayerInterfaceVTable, "getBroadPhaseLayer") == @offsetOf(
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_BroadPhaseLayerInterfaceVTable));
+        assert(@offsetOf(VTable, "getBroadPhaseLayer") == @offsetOf(
             c.JPC_BroadPhaseLayerInterfaceVTable,
             "GetBroadPhaseLayer",
         ));
     }
 };
 
-pub const ObjectVsBroadPhaseLayerFilterVTable = extern struct {
-    shouldCollide: *const fn (
-        self: *const anyopaque,
-        layer1: ObjectLayer,
-        layer2: BroadPhaseLayer,
-    ) callconv(.C) bool,
-};
+pub const ObjectVsBroadPhaseLayerFilter = extern struct {
+    __v: *const VTable,
 
-pub const ObjectLayerPairFilterVTable = extern struct {
-    shouldCollide: *const fn (self: *const anyopaque, ObjectLayer, ObjectLayer) callconv(.C) bool,
-};
+    pub usingnamespace Methods(@This());
 
-pub const BodyActivationListenerVTable = extern struct {
-    onBodyActivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
-    onBodyDeactivated: *const fn (self: *anyopaque, body_id: BodyId, user_data: u64) callconv(.C) void,
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn shouldCollide(self: *const T, layer1: ObjectLayer, layer2: BroadPhaseLayer) bool {
+                return @ptrCast(*const ObjectVsBroadPhaseLayerFilter.VTable, self.__v)
+                    .shouldCollide(@ptrCast(*const ObjectVsBroadPhaseLayerFilter, self), layer1, layer2);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        shouldCollide: *const fn (
+            self: *const ObjectVsBroadPhaseLayerFilter,
+            layer1: ObjectLayer,
+            layer2: BroadPhaseLayer,
+        ) callconv(.C) bool,
+    };
 
     comptime {
-        assert(@sizeOf(BodyActivationListenerVTable) == @sizeOf(c.JPC_BodyActivationListenerVTable));
-        assert(@offsetOf(BodyActivationListenerVTable, "onBodyDeactivated") == @offsetOf(
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_ObjectVsBroadPhaseLayerFilterVTable));
+        assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(
+            c.JPC_ObjectVsBroadPhaseLayerFilterVTable,
+            "ShouldCollide",
+        ));
+    }
+};
+
+pub const ObjectLayerPairFilter = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn shouldCollide(self: *const T, layer1: ObjectLayer, layer2: ObjectLayer) bool {
+                return @ptrCast(*const ObjectLayerPairFilter.VTable, self.__v)
+                    .shouldCollide(@ptrCast(*const ObjectLayerPairFilter, self), layer1, layer2);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        shouldCollide: *const fn (self: *const ObjectLayerPairFilter, ObjectLayer, ObjectLayer) callconv(.C) bool,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_ObjectLayerPairFilterVTable));
+        assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(
+            c.JPC_ObjectLayerPairFilterVTable,
+            "ShouldCollide",
+        ));
+    }
+};
+
+pub const BodyActivationListener = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn onBodyActivated(
+                self: *T,
+                body_id: BodyId,
+                user_data: u64,
+            ) void {
+                @ptrCast(*const BodyActivationListener.VTable, self.__v)
+                    .onBodyActivated(@ptrCast(*const BodyActivationListener, self), body_id, user_data);
+            }
+            pub inline fn onBodyDeactivated(
+                self: *T,
+                body_id: BodyId,
+                user_data: u64,
+            ) void {
+                @ptrCast(*const BodyActivationListener.VTable, self.__v)
+                    .onBodyDeactivated(@ptrCast(*const BodyActivationListener, self), body_id, user_data);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        onBodyActivated: *const fn (
+            self: *BodyActivationListener,
+            body_id: BodyId,
+            user_data: u64,
+        ) callconv(.C) void,
+        onBodyDeactivated: *const fn (
+            self: *BodyActivationListener,
+            body_id: BodyId,
+            user_data: u64,
+        ) callconv(.C) void,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_BodyActivationListenerVTable));
+        assert(@offsetOf(VTable, "onBodyDeactivated") == @offsetOf(
             c.JPC_BodyActivationListenerVTable,
             "OnBodyDeactivated",
         ));
     }
 };
 
-pub const ContactListenerVTable = extern struct {
-    onContactValidate: ?*const fn (
-        self: *anyopaque,
-        body1: *const Body,
-        body2: *const Body,
-        in_base_offset: *const [3]Real,
-        collision_result: *const CollideShapeResult,
-    ) callconv(.C) ValidateResult = null,
+pub const ContactListener = extern struct {
+    __v: *const VTable,
 
-    onContactAdded: ?*const fn (
-        self: *anyopaque,
-        body1: *const Body,
-        body2: *const Body,
-        manifold: *const ContactManifold,
-        settings: *ContactSettings,
-    ) callconv(.C) void = null,
+    pub usingnamespace Methods(@This());
 
-    onContactPersisted: ?*const fn (
-        self: *anyopaque,
-        body1: *const Body,
-        body2: *const Body,
-        manifold: *const ContactManifold,
-        settings: *ContactSettings,
-    ) callconv(.C) void = null,
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn onContactValidate(
+                self: *T,
+                body1: *const Body,
+                body2: *const Body,
+                base_offset: *const [3]Real,
+                collision_result: *const CollideShapeResult,
+            ) ValidateResult {
+                return @ptrCast(*const ContactListener.VTable, self.__v)
+                    .onContactValidate(
+                    @ptrCast(*const ContactListener, self),
+                    body1,
+                    body2,
+                    base_offset,
+                    collision_result,
+                );
+            }
+            pub inline fn onContactAdded(
+                self: *T,
+                body1: *const Body,
+                body2: *const Body,
+                manifold: *const ContactManifold,
+                settings: *ContactSettings,
+            ) void {
+                @ptrCast(*const ContactListener.VTable, self.__v)
+                    .onContactAdded(@ptrCast(*const ContactListener, self), body1, body2, manifold, settings);
+            }
+            pub inline fn onContactPersisted(
+                self: *T,
+                body1: *const Body,
+                body2: *const Body,
+                manifold: *const ContactManifold,
+                settings: *ContactSettings,
+            ) void {
+                @ptrCast(*const ContactListener.VTable, self.__v)
+                    .onContactPersisted(@ptrCast(*const ContactListener, self), body1, body2, manifold, settings);
+            }
+            pub inline fn onContactRemoved(
+                self: *T,
+                sub_shape_pair: *const SubShapeIdPair,
+            ) void {
+                @ptrCast(*const ContactListener.VTable, self.__v)
+                    .onContactRemoved(@ptrCast(*const ContactListener, self), sub_shape_pair);
+            }
+        };
+    }
 
-    onContactRemoved: ?*const fn (
-        self: *anyopaque,
-        sub_shape_pair: *const SubShapeIdPair,
-    ) callconv(.C) void = null,
+    pub const VTable = extern struct {
+        onContactValidate: ?*const fn (
+            self: *ContactListener,
+            body1: *const Body,
+            body2: *const Body,
+            base_offset: *const [3]Real,
+            collision_result: *const CollideShapeResult,
+        ) callconv(.C) ValidateResult = null,
+
+        onContactAdded: ?*const fn (
+            self: *ContactListener,
+            body1: *const Body,
+            body2: *const Body,
+            manifold: *const ContactManifold,
+            settings: *ContactSettings,
+        ) callconv(.C) void = null,
+
+        onContactPersisted: ?*const fn (
+            self: *ContactListener,
+            body1: *const Body,
+            body2: *const Body,
+            manifold: *const ContactManifold,
+            settings: *ContactSettings,
+        ) callconv(.C) void = null,
+
+        onContactRemoved: ?*const fn (
+            self: *ContactListener,
+            sub_shape_pair: *const SubShapeIdPair,
+        ) callconv(.C) void = null,
+    };
 
     comptime {
-        assert(@sizeOf(ContactListenerVTable) == @sizeOf(c.JPC_ContactListenerVTable));
-        assert(@offsetOf(ContactListenerVTable, "onContactAdded") == @offsetOf(
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_ContactListenerVTable));
+        assert(@offsetOf(VTable, "onContactAdded") == @offsetOf(
             c.JPC_ContactListenerVTable,
             "OnContactAdded",
         ));
-        assert(@offsetOf(ContactListenerVTable, "onContactRemoved") == @offsetOf(
+        assert(@offsetOf(VTable, "onContactRemoved") == @offsetOf(
             c.JPC_ContactListenerVTable,
             "OnContactRemoved",
         ));
@@ -354,9 +511,9 @@ pub fn deinit() void {
 //--------------------------------------------------------------------------------------------------
 pub const PhysicsSystem = opaque {
     pub fn create(
-        broad_phase_layer_interface: *const anyopaque,
-        object_vs_broad_phase_layer_filter: *const anyopaque,
-        object_layer_pair_filter: *const anyopaque,
+        broad_phase_layer_interface: *const BroadPhaseLayerInterface,
+        object_vs_broad_phase_layer_filter: *const ObjectVsBroadPhaseLayerFilter,
+        object_layer_pair_filter: *const ObjectLayerPairFilter,
         args: struct {
             max_bodies: u32 = 1024,
             num_body_mutexes: u32 = 0,
@@ -1048,12 +1205,14 @@ test "zphysics.basic" {
     try init(std.testing.allocator, .{});
     defer deinit();
 
-    const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        &broad_phase_layer_interface,
-        test_cb1.myBroadPhaseCanCollide,
-        test_cb1.myObjectCanCollide,
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -1144,12 +1303,14 @@ test "zphysics.body.basic" {
     try init(std.testing.allocator, .{});
     defer deinit();
 
-    const broad_phase_layer_interface = test_cb1.BPLayerInterfaceImpl.init();
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        &broad_phase_layer_interface,
-        test_cb1.myBroadPhaseCanCollide,
-        test_cb1.myObjectCanCollide,
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -1173,7 +1334,7 @@ test "zphysics.body.basic" {
         .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
         .shape = floor_shape,
         .motion_type = .static,
-        .object_layer = test_cb1.layers.non_moving,
+        .object_layer = test_cb1.object_layers.non_moving,
     };
     const body_id = try body_interface_mut.createAndAddBody(floor_settings, .dont_activate);
     defer {
@@ -1280,7 +1441,7 @@ test "jolt_c.helloworld" {
 }
 
 const test_cb1 = struct {
-    const layers = struct {
+    const object_layers = struct {
         const non_moving: ObjectLayer = 0;
         const moving: ObjectLayer = 1;
         const len: u32 = 2;
@@ -1292,47 +1453,76 @@ const test_cb1 = struct {
         const len: u32 = 2;
     };
 
-    const BPLayerInterfaceImpl = extern struct {
-        vtable_ptr: *const BroadPhaseLayerInterfaceVTable = &vtable,
-        object_to_broad_phase: [layers.len]BroadPhaseLayer = undefined,
+    const MyBroadphaseLayerInterface = extern struct {
+        usingnamespace BroadPhaseLayerInterface.Methods(@This());
+        __v: *const BroadPhaseLayerInterface.VTable = &vtable,
 
-        const vtable = BroadPhaseLayerInterfaceVTable{
-            .getNumBroadPhaseLayers = getNumBroadPhaseLayers,
-            .getBroadPhaseLayer = getBroadPhaseLayer,
+        object_to_broad_phase: [object_layers.len]BroadPhaseLayer = undefined,
+
+        const vtable = BroadPhaseLayerInterface.VTable{
+            .getNumBroadPhaseLayers = getNumBroadPhaseLayersImpl,
+            .getBroadPhaseLayer = getBroadPhaseLayerImpl,
         };
 
-        fn init() BPLayerInterfaceImpl {
-            var layer_interface: BPLayerInterfaceImpl = .{};
-            layer_interface.object_to_broad_phase[layers.non_moving] = broad_phase_layers.non_moving;
-            layer_interface.object_to_broad_phase[layers.moving] = broad_phase_layers.moving;
+        fn init() MyBroadphaseLayerInterface {
+            var layer_interface: MyBroadphaseLayerInterface = .{};
+            layer_interface.object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
+            layer_interface.object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
             return layer_interface;
         }
 
-        fn getNumBroadPhaseLayers(self: *const anyopaque) callconv(.C) u32 {
-            const layer_interface = @ptrCast(*const BPLayerInterfaceImpl, @alignCast(@sizeOf(usize), self));
-            return @intCast(u32, layer_interface.object_to_broad_phase.len);
+        fn getNumBroadPhaseLayersImpl(iself: *const BroadPhaseLayerInterface) callconv(.C) u32 {
+            const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
+            return @intCast(u32, self.object_to_broad_phase.len);
         }
 
-        fn getBroadPhaseLayer(self: *const anyopaque, layer: ObjectLayer) callconv(.C) BroadPhaseLayer {
-            const layer_interface = @ptrCast(*const BPLayerInterfaceImpl, @alignCast(@sizeOf(usize), self));
-            return layer_interface.object_to_broad_phase[@intCast(usize, layer)];
+        fn getBroadPhaseLayerImpl(
+            iself: *const BroadPhaseLayerInterface,
+            layer: ObjectLayer,
+        ) callconv(.C) BroadPhaseLayer {
+            const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
+            return self.object_to_broad_phase[@intCast(usize, layer)];
         }
     };
 
-    fn myBroadPhaseCanCollide(layer1: ObjectLayer, layer2: BroadPhaseLayer) callconv(.C) bool {
-        return switch (layer1) {
-            layers.non_moving => layer2 == broad_phase_layers.moving,
-            layers.moving => true,
-            else => unreachable,
-        };
-    }
+    const MyObjectVsBroadPhaseLayerFilter = extern struct {
+        usingnamespace ObjectVsBroadPhaseLayerFilter.Methods(@This());
+        __v: *const ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
 
-    fn myObjectCanCollide(object1: ObjectLayer, object2: ObjectLayer) callconv(.C) bool {
-        return switch (object1) {
-            layers.non_moving => object2 == layers.moving,
-            layers.moving => true,
-            else => unreachable,
+        const vtable = ObjectVsBroadPhaseLayerFilter.VTable{
+            .shouldCollide = shouldCollideImpl,
         };
-    }
+
+        fn shouldCollideImpl(
+            _: *const ObjectVsBroadPhaseLayerFilter,
+            layer1: ObjectLayer,
+            layer2: BroadPhaseLayer,
+        ) callconv(.C) bool {
+            return switch (layer1) {
+                object_layers.non_moving => layer2 == broad_phase_layers.moving,
+                object_layers.moving => true,
+                else => unreachable,
+            };
+        }
+    };
+
+    const MyObjectLayerPairFilter = extern struct {
+        usingnamespace ObjectLayerPairFilter.Methods(@This());
+        __v: *const ObjectLayerPairFilter.VTable = &vtable,
+
+        const vtable = ObjectLayerPairFilter.VTable{ .shouldCollide = shouldCollideImpl };
+
+        fn shouldCollideImpl(
+            _: *const ObjectLayerPairFilter,
+            object1: ObjectLayer,
+            object2: ObjectLayer,
+        ) callconv(.C) bool {
+            return switch (object1) {
+                object_layers.non_moving => object2 == object_layers.moving,
+                object_layers.moving => true,
+                else => unreachable,
+            };
+        }
+    };
 };
 //--------------------------------------------------------------------------------------------------
