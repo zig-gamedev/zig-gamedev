@@ -48,15 +48,15 @@ const broad_phase_layers = struct {
     const len: u32 = 2;
 };
 
-const BroadPhaseLayerInterface = extern struct {
+const BroadPhaseLayerInterface = struct {
     usingnamespace zphy.BroadPhaseLayerInterface.Methods(@This());
     __v: *const zphy.BroadPhaseLayerInterface.VTable = &vtable,
 
     object_to_broad_phase: [object_layers.len]zphy.BroadPhaseLayer = undefined,
 
     const vtable = zphy.BroadPhaseLayerInterface.VTable{
-        .getNumBroadPhaseLayers = getNumBroadPhaseLayersImpl,
-        .getBroadPhaseLayer = getBroadPhaseLayerImpl,
+        .getNumBroadPhaseLayers = _getNumBroadPhaseLayers,
+        .getBroadPhaseLayer = _getBroadPhaseLayer,
     };
 
     fn init() BroadPhaseLayerInterface {
@@ -66,11 +66,11 @@ const BroadPhaseLayerInterface = extern struct {
         return layer_interface;
     }
 
-    fn getNumBroadPhaseLayersImpl(_: *const zphy.BroadPhaseLayerInterface) callconv(.C) u32 {
+    fn _getNumBroadPhaseLayers(_: *const zphy.BroadPhaseLayerInterface) callconv(.C) u32 {
         return broad_phase_layers.len;
     }
 
-    fn getBroadPhaseLayerImpl(
+    fn _getBroadPhaseLayer(
         iself: *const zphy.BroadPhaseLayerInterface,
         layer: zphy.ObjectLayer,
     ) callconv(.C) zphy.BroadPhaseLayer {
@@ -79,13 +79,13 @@ const BroadPhaseLayerInterface = extern struct {
     }
 };
 
-const ObjectVsBroadPhaseLayerFilter = extern struct {
+const ObjectVsBroadPhaseLayerFilter = struct {
     usingnamespace zphy.ObjectVsBroadPhaseLayerFilter.Methods(@This());
     __v: *const zphy.ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
 
-    const vtable = zphy.ObjectVsBroadPhaseLayerFilter.VTable{ .shouldCollide = shouldCollideImpl };
+    const vtable = zphy.ObjectVsBroadPhaseLayerFilter.VTable{ .shouldCollide = _shouldCollide };
 
-    fn shouldCollideImpl(
+    fn _shouldCollide(
         _: *const zphy.ObjectVsBroadPhaseLayerFilter,
         layer1: zphy.ObjectLayer,
         layer2: zphy.BroadPhaseLayer,
@@ -98,13 +98,13 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
     }
 };
 
-const ObjectLayerPairFilter = extern struct {
+const ObjectLayerPairFilter = struct {
     usingnamespace zphy.ObjectLayerPairFilter.Methods(@This());
     __v: *const zphy.ObjectLayerPairFilter.VTable = &vtable,
 
-    const vtable = zphy.ObjectLayerPairFilter.VTable{ .shouldCollide = shouldCollideImpl };
+    const vtable = zphy.ObjectLayerPairFilter.VTable{ .shouldCollide = _shouldCollide };
 
-    fn shouldCollideImpl(
+    fn _shouldCollide(
         _: *const zphy.ObjectLayerPairFilter,
         object1: zphy.ObjectLayer,
         object2: zphy.ObjectLayer,
@@ -117,13 +117,13 @@ const ObjectLayerPairFilter = extern struct {
     }
 };
 
-const ContactListener = extern struct {
+const ContactListener = struct {
     usingnamespace zphy.ContactListener.Methods(@This());
     __v: *const zphy.ContactListener.VTable = &vtable,
 
-    const vtable = zphy.ContactListener.VTable{ .onContactValidate = onContactValidateImpl };
+    const vtable = zphy.ContactListener.VTable{ .onContactValidate = _onContactValidate };
 
-    fn onContactValidateImpl(
+    fn _onContactValidate(
         self: *zphy.ContactListener,
         body1: *const zphy.Body,
         body2: *const zphy.Body,

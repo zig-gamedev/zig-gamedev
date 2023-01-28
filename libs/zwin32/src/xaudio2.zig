@@ -622,17 +622,17 @@ pub const IEngineCallback = extern struct {
     }
 
     pub const VTable = extern struct {
-        OnProcessingPassStart: *const fn (*IEngineCallback) callconv(WINAPI) void = onProcessingPassStartDef,
+        OnProcessingPassStart: *const fn (*IEngineCallback) callconv(WINAPI) void = _onProcessingPassStart,
 
-        OnProcessingPassEnd: *const fn (*IEngineCallback) callconv(WINAPI) void = onProcessingPassEndDef,
+        OnProcessingPassEnd: *const fn (*IEngineCallback) callconv(WINAPI) void = _onProcessingPassEnd,
 
-        OnCriticalError: *const fn (*IEngineCallback, HRESULT) callconv(WINAPI) void = onCriticalErrorDef,
+        OnCriticalError: *const fn (*IEngineCallback, HRESULT) callconv(WINAPI) void = _onCriticalError,
     };
 
     // Default implementations
-    fn onProcessingPassStartDef(_: *IEngineCallback) callconv(WINAPI) void {}
-    fn onProcessingPassEndDef(_: *IEngineCallback) callconv(WINAPI) void {}
-    fn onCriticalErrorDef(_: *IEngineCallback, _: HRESULT) callconv(WINAPI) void {}
+    fn _onProcessingPassStart(_: *IEngineCallback) callconv(WINAPI) void {}
+    fn _onProcessingPassEnd(_: *IEngineCallback) callconv(WINAPI) void {}
+    fn _onCriticalError(_: *IEngineCallback, _: HRESULT) callconv(WINAPI) void {}
 };
 
 pub const IVoiceCallback = extern struct {
@@ -675,30 +675,30 @@ pub const IVoiceCallback = extern struct {
 
     pub const VTable = extern struct {
         OnVoiceProcessingPassStart: *const fn (*IVoiceCallback, UINT32) callconv(WINAPI) void =
-            onVoiceProcessingPassStartDef,
+            _onVoiceProcessingPassStart,
 
         OnVoiceProcessingPassEnd: *const fn (*IVoiceCallback) callconv(WINAPI) void =
-            onVoiceProcessingPassEndDef,
+            _onVoiceProcessingPassEnd,
 
-        OnStreamEnd: *const fn (*IVoiceCallback) callconv(WINAPI) void = onStreamEndDef,
+        OnStreamEnd: *const fn (*IVoiceCallback) callconv(WINAPI) void = _onStreamEnd,
 
-        OnBufferStart: *const fn (*IVoiceCallback, ?*anyopaque) callconv(WINAPI) void = onBufferStartDef,
+        OnBufferStart: *const fn (*IVoiceCallback, ?*anyopaque) callconv(WINAPI) void = _onBufferStart,
 
-        OnBufferEnd: *const fn (*IVoiceCallback, ?*anyopaque) callconv(WINAPI) void = onBufferEndDef,
+        OnBufferEnd: *const fn (*IVoiceCallback, ?*anyopaque) callconv(WINAPI) void = _onBufferEnd,
 
-        OnLoopEnd: *const fn (*IVoiceCallback, ?*anyopaque) callconv(WINAPI) void = onLoopEndDef,
+        OnLoopEnd: *const fn (*IVoiceCallback, ?*anyopaque) callconv(WINAPI) void = _onLoopEnd,
 
-        OnVoiceError: *const fn (*IVoiceCallback, ?*anyopaque, HRESULT) callconv(WINAPI) void = onVoiceErrorDef,
+        OnVoiceError: *const fn (*IVoiceCallback, ?*anyopaque, HRESULT) callconv(WINAPI) void = _onVoiceError,
     };
 
     // Default implementations
-    fn onVoiceProcessingPassStartDef(_: *IVoiceCallback, _: UINT32) callconv(WINAPI) void {}
-    fn onVoiceProcessingPassEndDef(_: *IVoiceCallback) callconv(WINAPI) void {}
-    fn onStreamEndDef(_: *IVoiceCallback) callconv(WINAPI) void {}
-    fn onBufferStartDef(_: *IVoiceCallback, _: ?*anyopaque) callconv(WINAPI) void {}
-    fn onBufferEndDef(_: *IVoiceCallback, _: ?*anyopaque) callconv(WINAPI) void {}
-    fn onLoopEndDef(_: *IVoiceCallback, _: ?*anyopaque) callconv(WINAPI) void {}
-    fn onVoiceErrorDef(_: *IVoiceCallback, _: ?*anyopaque, _: HRESULT) callconv(WINAPI) void {}
+    fn _onVoiceProcessingPassStart(_: *IVoiceCallback, _: UINT32) callconv(WINAPI) void {}
+    fn _onVoiceProcessingPassEnd(_: *IVoiceCallback) callconv(WINAPI) void {}
+    fn _onStreamEnd(_: *IVoiceCallback) callconv(WINAPI) void {}
+    fn _onBufferStart(_: *IVoiceCallback, _: ?*anyopaque) callconv(WINAPI) void {}
+    fn _onBufferEnd(_: *IVoiceCallback, _: ?*anyopaque) callconv(WINAPI) void {}
+    fn _onLoopEnd(_: *IVoiceCallback, _: ?*anyopaque) callconv(WINAPI) void {}
+    fn _onVoiceError(_: *IVoiceCallback, _: ?*anyopaque, _: HRESULT) callconv(WINAPI) void {}
 };
 
 pub fn create(

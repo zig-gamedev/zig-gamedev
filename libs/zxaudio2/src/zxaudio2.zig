@@ -34,11 +34,9 @@ const StopOnBufferEndVoiceCallback = struct {
     usingnamespace xaudio2.IVoiceCallback.Methods(@This());
     __v: *const xaudio2.IVoiceCallback.VTable = &vtable,
 
-    const vtable = xaudio2.IVoiceCallback.VTable{
-        .OnBufferEnd = onBufferEndImpl,
-    };
+    const vtable = xaudio2.IVoiceCallback.VTable{ .OnBufferEnd = _onBufferEnd };
 
-    fn onBufferEndImpl(_: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
+    fn _onBufferEnd(_: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
         const voice = @ptrCast(*xaudio2.ISourceVoice, @alignCast(@sizeOf(usize), context));
         hrPanicOnFail(voice.Stop(.{}, xaudio2.COMMIT_NOW));
     }
@@ -400,15 +398,13 @@ const StreamVoiceCallback = struct {
 
     stream: ?*Stream,
 
-    const vtable = xaudio2.IVoiceCallback.VTable{
-        .OnBufferEnd = onBufferEndImpl,
-    };
+    const vtable = xaudio2.IVoiceCallback.VTable{ .OnBufferEnd = _onBufferEnd };
 
     fn init() StreamVoiceCallback {
         return .{ .stream = null };
     }
 
-    fn onBufferEndImpl(iself: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
+    fn _onBufferEnd(iself: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
         const self = @ptrCast(*StreamVoiceCallback, iself);
         self.stream.?.endOfStreamChunk(@ptrCast(*mf.IMediaBuffer, @alignCast(@sizeOf(usize), context)));
     }
@@ -424,11 +420,11 @@ const SourceReaderCallback = struct {
 
     const vtable = mf.ISourceReaderCallback.VTable{
         .base = .{
-            .QueryInterface = queryInterfaceImpl,
-            .AddRef = addRefImpl,
-            .Release = releaseImpl,
+            .QueryInterface = _queryInterface,
+            .AddRef = _addRef,
+            .Release = _release,
         },
-        .OnReadSample = onReadSampleImpl,
+        .OnReadSample = _onReadSample,
     };
 
     fn init(allocator: std.mem.Allocator) SourceReaderCallback {
@@ -438,7 +434,7 @@ const SourceReaderCallback = struct {
         };
     }
 
-    fn queryInterfaceImpl(
+    fn _queryInterface(
         iself: *IUnknown,
         guid: *const w32.GUID,
         outobj: ?*?*anyopaque,
@@ -460,13 +456,13 @@ const SourceReaderCallback = struct {
         return w32.E_NOINTERFACE;
     }
 
-    fn addRefImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+    fn _addRef(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @ptrCast(*SourceReaderCallback, iself);
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic);
         return prev_refcount + 1;
     }
 
-    fn releaseImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+    fn _release(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @ptrCast(*SourceReaderCallback, iself);
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         assert(prev_refcount > 0);
@@ -476,7 +472,7 @@ const SourceReaderCallback = struct {
         return prev_refcount - 1;
     }
 
-    fn onReadSampleImpl(
+    fn _onReadSample(
         iself: *mf.ISourceReaderCallback,
         status: HRESULT,
         stream_index: DWORD,
@@ -647,20 +643,20 @@ const SimpleAudioProcessor = struct {
 
     const vtable = xapo.IXAPO.VTable{
         .base = .{
-            .QueryInterface = queryInterfaceImpl,
-            .AddRef = addRefImpl,
-            .Release = releaseImpl,
+            .QueryInterface = _queryInterface,
+            .AddRef = _addRef,
+            .Release = _release,
         },
-        .GetRegistrationProperties = getRegistrationPropertiesImpl,
-        .IsInputFormatSupported = isInputFormatSupportedImpl,
-        .IsOutputFormatSupported = isOutputFormatSupportedImpl,
-        .Initialize = initializeImpl,
-        .Reset = resetImpl,
-        .LockForProcess = lockForProcessImpl,
-        .UnlockForProcess = unlockForProcessImpl,
-        .Process = processImpl,
-        .CalcInputFrames = calcInputFramesImpl,
-        .CalcOutputFrames = calcOutputFramesImpl,
+        .GetRegistrationProperties = _getRegistrationProperties,
+        .IsInputFormatSupported = _isInputFormatSupported,
+        .IsOutputFormatSupported = _isOutputFormatSupported,
+        .Initialize = _initialize,
+        .Reset = _reset,
+        .LockForProcess = _lockForProcess,
+        .UnlockForProcess = _unlockForProcess,
+        .Process = _process,
+        .CalcInputFrames = _calcInputFrames,
+        .CalcOutputFrames = _calcOutputFrames,
     };
 
     const info = xapo.REGISTRATION_PROPERTIES{
@@ -683,7 +679,7 @@ const SimpleAudioProcessor = struct {
         .MaxOutputBufferCount = 1,
     };
 
-    fn queryInterfaceImpl(
+    fn _queryInterface(
         iself: *IUnknown,
         guid: *const w32.GUID,
         outobj: ?*?*anyopaque,
@@ -705,12 +701,12 @@ const SimpleAudioProcessor = struct {
         return w32.E_NOINTERFACE;
     }
 
-    fn addRefImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+    fn _addRef(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @ptrCast(*SimpleAudioProcessor, iself);
         return @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic) + 1;
     }
 
-    fn releaseImpl(iself: *IUnknown) callconv(WINAPI) ULONG {
+    fn _release(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @ptrCast(*SimpleAudioProcessor, iself);
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         if (prev_refcount == 1) {
@@ -719,7 +715,7 @@ const SimpleAudioProcessor = struct {
         return prev_refcount - 1;
     }
 
-    fn getRegistrationPropertiesImpl(
+    fn _getRegistrationProperties(
         _: *xapo.IXAPO,
         props: **xapo.REGISTRATION_PROPERTIES,
     ) callconv(WINAPI) HRESULT {
@@ -732,7 +728,7 @@ const SimpleAudioProcessor = struct {
         return w32.E_FAIL;
     }
 
-    fn isInputFormatSupportedImpl(
+    fn _isInputFormatSupported(
         _: *xapo.IXAPO,
         _: *const WAVEFORMATEX,
         requested_input_format: *const WAVEFORMATEX,
@@ -764,7 +760,7 @@ const SimpleAudioProcessor = struct {
         return w32.S_OK;
     }
 
-    fn isOutputFormatSupportedImpl(
+    fn _isOutputFormatSupported(
         _: *xapo.IXAPO,
         _: *const WAVEFORMATEX,
         requested_output_format: *const WAVEFORMATEX,
@@ -796,15 +792,15 @@ const SimpleAudioProcessor = struct {
         return w32.S_OK;
     }
 
-    fn initializeImpl(_: *xapo.IXAPO, data: ?*const anyopaque, data_size: UINT32) callconv(WINAPI) HRESULT {
+    fn _initialize(_: *xapo.IXAPO, data: ?*const anyopaque, data_size: UINT32) callconv(WINAPI) HRESULT {
         _ = data;
         _ = data_size;
         return w32.S_OK;
     }
 
-    fn resetImpl(_: *xapo.IXAPO) callconv(WINAPI) void {}
+    fn _reset(_: *xapo.IXAPO) callconv(WINAPI) void {}
 
-    fn lockForProcessImpl(
+    fn _lockForProcess(
         iself: *xapo.IXAPO,
         num_input_params: UINT32,
         input_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
@@ -827,14 +823,14 @@ const SimpleAudioProcessor = struct {
         return w32.S_OK;
     }
 
-    fn unlockForProcessImpl(iself: *xapo.IXAPO) callconv(WINAPI) void {
+    fn _unlockForProcess(iself: *xapo.IXAPO) callconv(WINAPI) void {
         const self = @ptrCast(*SimpleAudioProcessor, iself);
         assert(self.is_locked == true);
         self.num_channels = 0;
         self.is_locked = false;
     }
 
-    fn processImpl(
+    fn _process(
         iself: *xapo.IXAPO,
         num_input_params: UINT32,
         input_params: ?[*]const xapo.PROCESS_BUFFER_PARAMETERS,
@@ -863,11 +859,11 @@ const SimpleAudioProcessor = struct {
         output_params.?[0].BufferFlags = input_params.?[0].BufferFlags;
     }
 
-    fn calcInputFramesImpl(_: *xapo.IXAPO, num_output_frames: UINT32) callconv(WINAPI) UINT32 {
+    fn _calcInputFrames(_: *xapo.IXAPO, num_output_frames: UINT32) callconv(WINAPI) UINT32 {
         return num_output_frames;
     }
 
-    fn calcOutputFramesImpl(_: *xapo.IXAPO, num_input_frames: UINT32) callconv(WINAPI) UINT32 {
+    fn _calcOutputFrames(_: *xapo.IXAPO, num_input_frames: UINT32) callconv(WINAPI) UINT32 {
         return num_input_frames;
     }
 };

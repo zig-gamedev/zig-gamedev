@@ -1453,15 +1453,15 @@ const test_cb1 = struct {
         const len: u32 = 2;
     };
 
-    const MyBroadphaseLayerInterface = extern struct {
+    const MyBroadphaseLayerInterface = struct {
         usingnamespace BroadPhaseLayerInterface.Methods(@This());
         __v: *const BroadPhaseLayerInterface.VTable = &vtable,
 
         object_to_broad_phase: [object_layers.len]BroadPhaseLayer = undefined,
 
         const vtable = BroadPhaseLayerInterface.VTable{
-            .getNumBroadPhaseLayers = getNumBroadPhaseLayersImpl,
-            .getBroadPhaseLayer = getBroadPhaseLayerImpl,
+            .getNumBroadPhaseLayers = _getNumBroadPhaseLayers,
+            .getBroadPhaseLayer = _getBroadPhaseLayer,
         };
 
         fn init() MyBroadphaseLayerInterface {
@@ -1471,12 +1471,12 @@ const test_cb1 = struct {
             return layer_interface;
         }
 
-        fn getNumBroadPhaseLayersImpl(iself: *const BroadPhaseLayerInterface) callconv(.C) u32 {
+        fn _getNumBroadPhaseLayers(iself: *const BroadPhaseLayerInterface) callconv(.C) u32 {
             const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
             return @intCast(u32, self.object_to_broad_phase.len);
         }
 
-        fn getBroadPhaseLayerImpl(
+        fn _getBroadPhaseLayer(
             iself: *const BroadPhaseLayerInterface,
             layer: ObjectLayer,
         ) callconv(.C) BroadPhaseLayer {
@@ -1485,15 +1485,13 @@ const test_cb1 = struct {
         }
     };
 
-    const MyObjectVsBroadPhaseLayerFilter = extern struct {
+    const MyObjectVsBroadPhaseLayerFilter = struct {
         usingnamespace ObjectVsBroadPhaseLayerFilter.Methods(@This());
         __v: *const ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
 
-        const vtable = ObjectVsBroadPhaseLayerFilter.VTable{
-            .shouldCollide = shouldCollideImpl,
-        };
+        const vtable = ObjectVsBroadPhaseLayerFilter.VTable{ .shouldCollide = _shouldCollide };
 
-        fn shouldCollideImpl(
+        fn _shouldCollide(
             _: *const ObjectVsBroadPhaseLayerFilter,
             layer1: ObjectLayer,
             layer2: BroadPhaseLayer,
@@ -1506,13 +1504,13 @@ const test_cb1 = struct {
         }
     };
 
-    const MyObjectLayerPairFilter = extern struct {
+    const MyObjectLayerPairFilter = struct {
         usingnamespace ObjectLayerPairFilter.Methods(@This());
         __v: *const ObjectLayerPairFilter.VTable = &vtable,
 
-        const vtable = ObjectLayerPairFilter.VTable{ .shouldCollide = shouldCollideImpl };
+        const vtable = ObjectLayerPairFilter.VTable{ .shouldCollide = _shouldCollide };
 
-        fn shouldCollideImpl(
+        fn _shouldCollide(
             _: *const ObjectLayerPairFilter,
             object1: ObjectLayer,
             object2: ObjectLayer,
