@@ -1040,6 +1040,10 @@ ZGUI_API void zguiSetNextItemWidth(float item_width) {
     ImGui::SetNextItemWidth(item_width);
 }
 
+ZGUI_API void zguiSetItemDefaultFocus() {
+    ImGui::SetItemDefaultFocus();
+}
+
 ZGUI_API ImFont* zguiGetFont(void) {
     return ImGui::GetFont();
 }
