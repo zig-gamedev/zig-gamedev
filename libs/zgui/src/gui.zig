@@ -953,9 +953,12 @@ pub const pushItemWidth = zguiPushItemWidth;
 pub const popItemWidth = zguiPopItemWidth;
 /// `void setNextItemWidth(item_width: f32) void`
 pub const setNextItemWidth = zguiSetNextItemWidth;
+/// `void setItemDefaultFocus() void`
+pub const setItemDefaultFocus = zguiSetItemDefaultFocus;
 extern fn zguiPushItemWidth(item_width: f32) void;
 extern fn zguiPopItemWidth() void;
 extern fn zguiSetNextItemWidth(item_width: f32) void;
+extern fn zguiSetItemDefaultFocus() void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn getFont() Font`
 pub const getFont = zguiGetFont;
