@@ -76,6 +76,8 @@ pub const BroadPhaseLayerInterface = extern struct {
     }
 
     pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
         getNumBroadPhaseLayers: *const fn (self: *const BroadPhaseLayerInterface) callconv(.C) u32,
         getBroadPhaseLayer: *const fn (
             self: *const BroadPhaseLayerInterface,
@@ -107,6 +109,8 @@ pub const ObjectVsBroadPhaseLayerFilter = extern struct {
     }
 
     pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
         shouldCollide: *const fn (
             self: *const ObjectVsBroadPhaseLayerFilter,
             layer1: ObjectLayer,
@@ -138,6 +142,8 @@ pub const ObjectLayerPairFilter = extern struct {
     }
 
     pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
         shouldCollide: *const fn (self: *const ObjectLayerPairFilter, ObjectLayer, ObjectLayer) callconv(.C) bool,
     };
 
@@ -159,7 +165,7 @@ pub const BodyActivationListener = extern struct {
         return extern struct {
             pub inline fn onBodyActivated(
                 self: *T,
-                body_id: BodyId,
+                body_id: *const BodyId,
                 user_data: u64,
             ) void {
                 @ptrCast(*const BodyActivationListener.VTable, self.__v)
@@ -167,7 +173,7 @@ pub const BodyActivationListener = extern struct {
             }
             pub inline fn onBodyDeactivated(
                 self: *T,
-                body_id: BodyId,
+                body_id: *const BodyId,
                 user_data: u64,
             ) void {
                 @ptrCast(*const BodyActivationListener.VTable, self.__v)
@@ -177,14 +183,16 @@ pub const BodyActivationListener = extern struct {
     }
 
     pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
         onBodyActivated: *const fn (
             self: *BodyActivationListener,
-            body_id: BodyId,
+            body_id: *const BodyId,
             user_data: u64,
         ) callconv(.C) void,
         onBodyDeactivated: *const fn (
             self: *BodyActivationListener,
-            body_id: BodyId,
+            body_id: *const BodyId,
             user_data: u64,
         ) callconv(.C) void,
     };
@@ -1453,7 +1461,7 @@ const test_cb1 = struct {
         const len: u32 = 2;
     };
 
-    const MyBroadphaseLayerInterface = struct {
+    const MyBroadphaseLayerInterface = extern struct {
         usingnamespace BroadPhaseLayerInterface.Methods(@This());
         __v: *const BroadPhaseLayerInterface.VTable = &vtable,
 
@@ -1485,7 +1493,7 @@ const test_cb1 = struct {
         }
     };
 
-    const MyObjectVsBroadPhaseLayerFilter = struct {
+    const MyObjectVsBroadPhaseLayerFilter = extern struct {
         usingnamespace ObjectVsBroadPhaseLayerFilter.Methods(@This());
         __v: *const ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
 
@@ -1504,7 +1512,7 @@ const test_cb1 = struct {
         }
     };
 
-    const MyObjectLayerPairFilter = struct {
+    const MyObjectLayerPairFilter = extern struct {
         usingnamespace ObjectLayerPairFilter.Methods(@This());
         __v: *const ObjectLayerPairFilter.VTable = &vtable,
 

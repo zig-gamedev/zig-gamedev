@@ -30,7 +30,7 @@ const optimal_voice_format = WAVEFORMATEX{
     .cbSize = @sizeOf(WAVEFORMATEX),
 };
 
-const StopOnBufferEndVoiceCallback = struct {
+const StopOnBufferEndVoiceCallback = extern struct {
     usingnamespace xaudio2.IVoiceCallback.Methods(@This());
     __v: *const xaudio2.IVoiceCallback.VTable = &vtable,
 
@@ -213,20 +213,14 @@ pub const Stream = struct {
     reader_cb: *SourceReaderCallback,
 
     pub fn create(allocator: std.mem.Allocator, device: *xaudio2.IXAudio2, relpath: []const u8) *Stream {
-        const voice_cb = blk: {
-            var cb = allocator.create(StreamVoiceCallback) catch unreachable;
-            cb.* = StreamVoiceCallback.init();
-            break :blk cb;
-        };
+        const voice_cb = allocator.create(StreamVoiceCallback) catch unreachable;
+        voice_cb.* = .{};
 
         var cs: w32.CRITICAL_SECTION = undefined;
         w32.InitializeCriticalSection(&cs);
 
-        const source_reader_cb = blk: {
-            var cb = allocator.create(SourceReaderCallback) catch unreachable;
-            cb.* = SourceReaderCallback.init(allocator);
-            break :blk cb;
-        };
+        const source_reader_cb = allocator.create(SourceReaderCallback) catch unreachable;
+        source_reader_cb.* = .{};
 
         var sample_rate: u32 = 0;
         const source_reader = blk: {
@@ -320,6 +314,7 @@ pub const Stream = struct {
         w32.DeleteCriticalSection(&stream.critical_section);
         stream.voice.DestroyVoice();
         stream.allocator.destroy(stream.voice_cb);
+        stream.allocator.destroy(stream.reader_cb);
         stream.allocator.destroy(stream);
     }
 
@@ -392,17 +387,13 @@ pub const Stream = struct {
     }
 };
 
-const StreamVoiceCallback = struct {
+const StreamVoiceCallback = extern struct {
     usingnamespace xaudio2.IVoiceCallback.Methods(@This());
     __v: *const xaudio2.IVoiceCallback.VTable = &vtable,
 
-    stream: ?*Stream,
+    stream: ?*Stream = null,
 
     const vtable = xaudio2.IVoiceCallback.VTable{ .OnBufferEnd = _onBufferEnd };
-
-    fn init() StreamVoiceCallback {
-        return .{ .stream = null };
-    }
 
     fn _onBufferEnd(iself: *xaudio2.IVoiceCallback, context: ?*anyopaque) callconv(WINAPI) void {
         const self = @ptrCast(*StreamVoiceCallback, iself);
@@ -410,13 +401,12 @@ const StreamVoiceCallback = struct {
     }
 };
 
-const SourceReaderCallback = struct {
+const SourceReaderCallback = extern struct {
     usingnamespace mf.ISourceReaderCallback.Methods(@This());
     __v: *const mf.ISourceReaderCallback.VTable = &vtable,
 
     refcount: u32 = 1,
-    allocator: std.mem.Allocator,
-    stream: ?*Stream,
+    stream: ?*Stream = null,
 
     const vtable = mf.ISourceReaderCallback.VTable{
         .base = .{
@@ -426,13 +416,6 @@ const SourceReaderCallback = struct {
         },
         .OnReadSample = _onReadSample,
     };
-
-    fn init(allocator: std.mem.Allocator) SourceReaderCallback {
-        return .{
-            .allocator = allocator,
-            .stream = null,
-        };
-    }
 
     fn _queryInterface(
         iself: *IUnknown,
@@ -466,9 +449,6 @@ const SourceReaderCallback = struct {
         const self = @ptrCast(*SourceReaderCallback, iself);
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         assert(prev_refcount > 0);
-        if (prev_refcount == 1) {
-            self.allocator.destroy(self);
-        }
         return prev_refcount - 1;
     }
 
@@ -631,7 +611,7 @@ const SoundPool = struct {
     }
 };
 
-const SimpleAudioProcessor = struct {
+const SimpleAudioProcessor = extern struct {
     usingnamespace xapo.IXAPO.Methods(@This());
     __v: *const xapo.IXAPO.VTable = &vtable,
 

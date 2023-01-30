@@ -162,22 +162,22 @@ typedef struct MyActivationListener
 } MyActivationListener;
 
 static void
-MyActivationListener_OnBodyActivated(void *in_self, JPC_BodyID in_body_id, uint64_t in_user_data)
+MyActivationListener_OnBodyActivated(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data)
 {
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnBodyActivated(): BodyID is (%d, %d)\n",
-            JPC_BodyID_GetSequenceNumber(in_body_id),
-            JPC_BodyID_GetIndex(in_body_id));
+            JPC_BodyID_GetSequenceNumber(*in_body_id),
+            JPC_BodyID_GetIndex(*in_body_id));
 #endif
 }
 
 static void
-MyActivationListener_OnBodyDeactivated(void *in_self, JPC_BodyID in_body_id, uint64_t in_user_data)
+MyActivationListener_OnBodyDeactivated(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data)
 {
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnBodyDeactivated(): BodyID is (%d, %d)\n",
-            JPC_BodyID_GetSequenceNumber(in_body_id),
-            JPC_BodyID_GetIndex(in_body_id));
+            JPC_BodyID_GetSequenceNumber(*in_body_id),
+            JPC_BodyID_GetIndex(*in_body_id));
 #endif
 }
 

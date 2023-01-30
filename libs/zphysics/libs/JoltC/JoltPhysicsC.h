@@ -385,6 +385,9 @@ typedef struct JPC_BodyLockWrite
 //--------------------------------------------------------------------------------------------------
 typedef struct JPC_BroadPhaseLayerInterfaceVTable
 {
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
+
     // Required, *cannot* be NULL.
     uint32_t
     (*GetNumBroadPhaseLayers)(const void *in_self);
@@ -396,28 +399,71 @@ typedef struct JPC_BroadPhaseLayerInterfaceVTable
 
 typedef struct JPC_ObjectVsBroadPhaseLayerFilterVTable
 {
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
+
     // Required, *cannot* be NULL.
     bool
     (*ShouldCollide)(const void *in_self, JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2);
 } JPC_ObjectVsBroadPhaseLayerFilterVTable;
 
+typedef struct JPC_BroadPhaseLayerFilter
+{
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
+
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollide)(const void *in_self, JPC_BroadPhaseLayer in_layer);
+} JPC_BroadPhaseLayerFilter;
+
 typedef struct JPC_ObjectLayerPairFilterVTable
 {
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
+
     // Required, *cannot* be NULL.
     bool
     (*ShouldCollide)(const void *in_self, JPC_ObjectLayer in_layer1, JPC_ObjectLayer in_layer2);
 } JPC_ObjectLayerPairFilterVTable;
 
+typedef struct JPC_ObjectLayerFilterVTable
+{
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
+
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollide)(const void *in_self, JPC_ObjectLayer in_layer);
+} JPC_ObjectLayerFilterVTable;
+
 typedef struct JPC_BodyActivationListenerVTable
 {
-    // Required, *cannot* be NULL.
-    void
-    (*OnBodyActivated)(void *in_self, JPC_BodyID in_body_id, uint64_t in_user_data);
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
 
     // Required, *cannot* be NULL.
     void
-    (*OnBodyDeactivated)(void *in_self, JPC_BodyID in_body_id, uint64_t in_user_data);
+    (*OnBodyActivated)(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data);
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnBodyDeactivated)(void *in_self, const JPC_BodyID *in_body_id, uint64_t in_user_data);
 } JPC_BodyActivationListenerVTable;
+
+typedef struct JPC_BodyFilterVTable
+{
+    const void *__unused0; // Unused, *must* be NULL.
+    const void *__unused1; // Unused, *must* be NULL.
+
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollide)(const void *in_self, const JPC_BodyID *in_body_id);
+
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollideLocked)(const void *in_self, const JPC_Body *in_body);
+} JPC_BodyFilterVTable;
 
 typedef struct JPC_ContactListenerVTable
 {

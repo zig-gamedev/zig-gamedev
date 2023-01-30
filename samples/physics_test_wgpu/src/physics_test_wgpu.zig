@@ -48,7 +48,7 @@ const broad_phase_layers = struct {
     const len: u32 = 2;
 };
 
-const BroadPhaseLayerInterface = struct {
+const BroadPhaseLayerInterface = extern struct {
     usingnamespace zphy.BroadPhaseLayerInterface.Methods(@This());
     __v: *const zphy.BroadPhaseLayerInterface.VTable = &vtable,
 
@@ -79,7 +79,7 @@ const BroadPhaseLayerInterface = struct {
     }
 };
 
-const ObjectVsBroadPhaseLayerFilter = struct {
+const ObjectVsBroadPhaseLayerFilter = extern struct {
     usingnamespace zphy.ObjectVsBroadPhaseLayerFilter.Methods(@This());
     __v: *const zphy.ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
 
@@ -98,7 +98,7 @@ const ObjectVsBroadPhaseLayerFilter = struct {
     }
 };
 
-const ObjectLayerPairFilter = struct {
+const ObjectLayerPairFilter = extern struct {
     usingnamespace zphy.ObjectLayerPairFilter.Methods(@This());
     __v: *const zphy.ObjectLayerPairFilter.VTable = &vtable,
 
@@ -117,7 +117,7 @@ const ObjectLayerPairFilter = struct {
     }
 };
 
-const ContactListener = struct {
+const ContactListener = extern struct {
     usingnamespace zphy.ContactListener.Methods(@This());
     __v: *const zphy.ContactListener.VTable = &vtable,
 
