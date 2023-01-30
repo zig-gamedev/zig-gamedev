@@ -19,6 +19,7 @@
 #include <Jolt/Physics/Collision/Shape/TaperedCapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
+#include <Jolt/Physics/Collision/Shape/HeightFieldShape.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
@@ -131,6 +132,19 @@ FN(toJph)(JPC_ConvexHullShapeSettings *in) {
 FN(toJpc)(JPH::ConvexHullShapeSettings *in) {
     assert(in);
     return reinterpret_cast<JPC_ConvexHullShapeSettings *>(in);
+}
+
+FN(toJph)(const JPC_HeightFieldShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::HeightFieldShapeSettings);
+    return reinterpret_cast<const JPH::HeightFieldShapeSettings *>(in);
+}
+FN(toJph)(JPC_HeightFieldShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::HeightFieldShapeSettings);
+    return reinterpret_cast<JPH::HeightFieldShapeSettings *>(in);
+}
+FN(toJpc)(JPH::HeightFieldShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_HeightFieldShapeSettings *>(in);
 }
 
 FN(toJph)(const JPC_ConvexShapeSettings *in) {
@@ -1173,6 +1187,47 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
                                              float in_hull_tolerance)
 {
     toJph(in_settings)->mHullTolerance = in_hull_tolerance;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_HeightFieldShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_HeightFieldShapeSettings *
+JPC_HeightFieldShapeSettings_Create(const float *in_samples,
+                                    const float in_offset[3],
+                                    const float in_scale[3],
+                                    uint32_t in_num_samples)
+{
+    assert(in_samples != nullptr && in_num_samples > 0);
+    auto settings = new JPH::HeightFieldShapeSettings(
+        in_samples, loadVec3(in_offset), loadVec3(in_scale), in_num_samples);
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_HeightFieldShapeSettings_GetOffset(const JPC_HeightFieldShapeSettings *in_settings, float out_offset[3])
+{
+    storeVec3(out_offset, toJph(in_settings)->mOffset);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_HeightFieldShapeSettings_SetOffset(JPC_HeightFieldShapeSettings *in_settings, const float in_offset[3])
+{
+    toJph(in_settings)->mOffset = loadVec3(in_offset);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_HeightFieldShapeSettings_GetScale(const JPC_HeightFieldShapeSettings *in_settings, float out_scale[3])
+{
+    storeVec3(out_scale, toJph(in_settings)->mScale);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_HeightFieldShapeSettings_SetScale(JPC_HeightFieldShapeSettings *in_settings, const float in_scale[3])
+{
+    toJph(in_settings)->mScale = loadVec3(in_scale);
 }
 //--------------------------------------------------------------------------------------------------
 //

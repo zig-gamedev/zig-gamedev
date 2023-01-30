@@ -172,6 +172,7 @@ typedef struct JPC_CapsuleShapeSettings        JPC_CapsuleShapeSettings;
 typedef struct JPC_TaperedCapsuleShapeSettings JPC_TaperedCapsuleShapeSettings;
 typedef struct JPC_CylinderShapeSettings       JPC_CylinderShapeSettings;
 typedef struct JPC_ConvexHullShapeSettings     JPC_ConvexHullShapeSettings;
+typedef struct JPC_HeightFieldShapeSettings    JPC_HeightFieldShapeSettings;
 
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
@@ -922,6 +923,25 @@ JPC_ConvexHullShapeSettings_GetHullTolerance(const JPC_ConvexHullShapeSettings *
 JPC_API void
 JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_settings,
                                              float in_hull_tolerance);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_HeightFieldShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_HeightFieldShapeSettings*
+JPC_HeightFieldShapeSettings_Create(const float *in_samples, const float in_offset[3], const float in_scale[3],
+                                    uint32_t in_num_samples);
+JPC_API void
+JPC_HeightFieldShapeSettings_GetOffset(const JPC_HeightFieldShapeSettings *in_settings, float out_offset[3]);
+
+JPC_API void
+JPC_HeightFieldShapeSettings_SetOffset(JPC_HeightFieldShapeSettings *in_settings, const float in_offset[3]);
+
+JPC_API void
+JPC_HeightFieldShapeSettings_GetScale(const JPC_HeightFieldShapeSettings *in_settings, float out_scale[3]);
+
+JPC_API void
+JPC_HeightFieldShapeSettings_SetScale(JPC_HeightFieldShapeSettings *in_settings, const float in_scale[3]);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_Shape
