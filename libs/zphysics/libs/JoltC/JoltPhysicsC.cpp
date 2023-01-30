@@ -999,14 +999,14 @@ JPC_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radiu
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
-JPC_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPC_CapsuleShapeSettings *in_settings)
+JPC_CapsuleShapeSettings_GetHalfHeight(const JPC_CapsuleShapeSettings *in_settings)
 {
     return toJph(in_settings)->mHalfHeightOfCylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPC_CapsuleShapeSettings *in_settings,
-                                                 float in_half_height_of_cylinder)
+JPC_CapsuleShapeSettings_SetHalfHeight(JPC_CapsuleShapeSettings *in_settings,
+                                       float in_half_height_of_cylinder)
 {
     toJph(in_settings)->mHalfHeightOfCylinder = in_half_height_of_cylinder;
 }
@@ -1036,14 +1036,14 @@ JPC_TaperedCapsuleShapeSettings_Create(float in_half_height, float in_top_radius
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float
-JPC_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPC_TaperedCapsuleShapeSettings *in_settings)
+JPC_TaperedCapsuleShapeSettings_GetHalfHeight(const JPC_TaperedCapsuleShapeSettings *in_settings)
 {
     return toJph(in_settings)->mHalfHeightOfTaperedCylinder;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder(JPC_TaperedCapsuleShapeSettings *in_settings,
-                                                               float in_half_height)
+JPC_TaperedCapsuleShapeSettings_SetHalfHeight(JPC_TaperedCapsuleShapeSettings *in_settings,
+                                              float in_half_height)
 {
     toJph(in_settings)->mHalfHeightOfTaperedCylinder = in_half_height;
 }
@@ -1626,12 +1626,6 @@ JPC_Body_GetMotionProperties(JPC_Body *in_body)
     return toJpc(toJph(in_body)->GetMotionProperties());
 }
 //--------------------------------------------------------------------------------------------------
-JPC_API JPC_MotionProperties *
-JPC_Body_GetMotionPropertiesUnchecked(JPC_Body *in_body)
-{
-    return toJpc(toJph(in_body)->GetMotionPropertiesUnchecked());
-}
-//--------------------------------------------------------------------------------------------------
 JPC_API uint64_t
 JPC_Body_GetUserData(const JPC_Body *in_body)
 {
@@ -1788,12 +1782,6 @@ JPC_MotionProperties_GetInverseMass(const JPC_MotionProperties *in_properties)
     return toJph(in_properties)->GetInverseMass();
 }
 //--------------------------------------------------------------------------------------------------
-JPC_API float
-JPC_MotionProperties_GetInverseMassUnchecked(const JPC_MotionProperties *in_properties)
-{
-    return toJph(in_properties)->GetInverseMassUnchecked();
-}
-//--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetInverseMass(JPC_MotionProperties *in_properties, float in_inv_mass)
 {
@@ -1829,13 +1817,6 @@ JPC_MotionProperties_GetLocalSpaceInverseInertia(const JPC_MotionProperties *in_
                                                  float out_matrix[16])
 {
     storeMat44(out_matrix, toJph(in_properties)->GetLocalSpaceInverseInertia());
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(const JPC_MotionProperties *in_properties,
-                                                          float out_matrix[16])
-{
-    storeMat44(out_matrix, toJph(in_properties)->GetLocalSpaceInverseInertiaUnchecked());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void

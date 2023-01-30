@@ -538,9 +538,6 @@ JPC_MotionProperties_SetMassProperties(JPC_MotionProperties *in_properties,
 JPC_API float
 JPC_MotionProperties_GetInverseMass(const JPC_MotionProperties *in_properties);
 
-JPC_API float
-JPC_MotionProperties_GetInverseMassUnchecked(const JPC_MotionProperties *in_properties);
-
 JPC_API void
 JPC_MotionProperties_SetInverseMass(JPC_MotionProperties *in_properties, float in_inv_mass);
 
@@ -557,9 +554,6 @@ JPC_MotionProperties_SetInverseInertia(JPC_MotionProperties *in_properties,
 JPC_API void
 JPC_MotionProperties_GetLocalSpaceInverseInertia(const JPC_MotionProperties *in_properties,
                                                  float out_matrix[16]);
-JPC_API void
-JPC_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(const JPC_MotionProperties *in_properties,
-                                                          float out_matrix[16]);
 JPC_API void
 JPC_MotionProperties_GetInverseInertiaForRotation(const JPC_MotionProperties *in_properties,
                                                   const float in_rotation_matrix[4],
@@ -840,11 +834,11 @@ JPC_API JPC_CapsuleShapeSettings *
 JPC_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radius);
 
 JPC_API float
-JPC_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPC_CapsuleShapeSettings *in_settings);
+JPC_CapsuleShapeSettings_GetHalfHeight(const JPC_CapsuleShapeSettings *in_settings);
 
 JPC_API void
-JPC_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPC_CapsuleShapeSettings *in_settings,
-                                                 float in_half_height_of_cylinder);
+JPC_CapsuleShapeSettings_SetHalfHeight(JPC_CapsuleShapeSettings *in_settings,
+                                       float in_half_height_of_cylinder);
 JPC_API float
 JPC_CapsuleShapeSettings_GetRadius(const JPC_CapsuleShapeSettings *in_settings);
 
@@ -859,11 +853,11 @@ JPC_API JPC_TaperedCapsuleShapeSettings *
 JPC_TaperedCapsuleShapeSettings_Create(float in_half_height, float in_top_radius, float in_bottom_radius);
 
 JPC_API float
-JPC_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPC_TaperedCapsuleShapeSettings *in_settings);
+JPC_TaperedCapsuleShapeSettings_GetHalfHeight(const JPC_TaperedCapsuleShapeSettings *in_settings);
 
 JPC_API void
-JPC_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder(JPC_TaperedCapsuleShapeSettings *in_settings,
-                                                               float in_half_height);
+JPC_TaperedCapsuleShapeSettings_SetHalfHeight(JPC_TaperedCapsuleShapeSettings *in_settings,
+                                              float in_half_height);
 JPC_API float
 JPC_TaperedCapsuleShapeSettings_GetTopRadius(const JPC_TaperedCapsuleShapeSettings *in_settings);
 
@@ -1150,9 +1144,6 @@ JPC_Body_GetWorldSpaceBounds(const JPC_Body *in_body, float out_min[3], float ou
 
 JPC_API JPC_MotionProperties *
 JPC_Body_GetMotionProperties(JPC_Body *in_body);
-
-JPC_API JPC_MotionProperties *
-JPC_Body_GetMotionPropertiesUnchecked(JPC_Body *in_body);
 
 JPC_API uint64_t
 JPC_Body_GetUserData(const JPC_Body *in_body);
