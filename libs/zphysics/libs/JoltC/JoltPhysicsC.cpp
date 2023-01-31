@@ -21,6 +21,7 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/HeightFieldShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
@@ -150,6 +151,19 @@ FN(toJph)(JPC_HeightFieldShapeSettings *in) {
 FN(toJpc)(JPH::HeightFieldShapeSettings *in) {
     assert(in);
     return reinterpret_cast<JPC_HeightFieldShapeSettings *>(in);
+}
+
+FN(toJph)(const JPC_MeshShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::MeshShapeSettings);
+    return reinterpret_cast<const JPH::MeshShapeSettings *>(in);
+}
+FN(toJph)(JPC_MeshShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::MeshShapeSettings);
+    return reinterpret_cast<JPH::MeshShapeSettings *>(in);
+}
+FN(toJpc)(JPH::MeshShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_MeshShapeSettings *>(in);
 }
 
 FN(toJph)(const JPC_ConvexShapeSettings *in) {
@@ -1059,16 +1073,18 @@ JPC_CylinderShapeSettings_SetRadius(JPC_CylinderShapeSettings *in_settings, floa
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ConvexHullShapeSettings *
-JPC_ConvexHullShapeSettings_Create(const float in_points[][3], int in_num_points)
+JPC_ConvexHullShapeSettings_Create(const void *in_vertices, uint32_t in_num_vertices, uint32_t in_vertex_size)
 {
-    assert(in_points != nullptr && in_num_points > 0);
+    assert(in_vertices && in_num_vertices >= 3);
+    assert(in_vertex_size >= 3 * sizeof(float));
 
     JPH::Array<JPH::Vec3> points;
-    points.reserve(in_num_points);
+    points.reserve(in_num_vertices);
 
-    for (int i = 0; i < in_num_points; ++i)
+    for (uint32_t i = 0; i < in_num_vertices; ++i)
     {
-        points.push_back(loadVec3(in_points[i]));
+        const uint8_t *base = static_cast<const uint8_t *>(in_vertices) + i * in_vertex_size;
+        points.push_back(loadVec3(reinterpret_cast<const float *>(base)));
     }
 
     auto settings = new JPH::ConvexHullShapeSettings(points);
@@ -1121,9 +1137,9 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_HeightFieldShapeSettings *
 JPC_HeightFieldShapeSettings_Create(const float *in_samples,
+                                    uint32_t in_num_samples,
                                     const float in_offset[3],
-                                    const float in_scale[3],
-                                    uint32_t in_num_samples)
+                                    const float in_scale[3])
 {
     assert(in_samples != nullptr && in_num_samples > 0);
     auto settings = new JPH::HeightFieldShapeSettings(
@@ -1154,6 +1170,52 @@ JPC_API void
 JPC_HeightFieldShapeSettings_SetScale(JPC_HeightFieldShapeSettings *in_settings, const float in_scale[3])
 {
     toJph(in_settings)->mScale = loadVec3(in_scale);
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_MeshShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_MeshShapeSettings *
+JPC_MeshShapeSettings_Create(const void *in_vertices,
+                             uint32_t in_num_vertices,
+                             uint32_t in_vertex_size,
+                             const uint32_t *in_indices,
+                             uint32_t in_num_indices)
+{
+    assert(in_vertices && in_indices);
+    assert(in_num_vertices >= 3);
+    assert(in_vertex_size >= 3 * sizeof(float));
+    assert(in_num_indices >= 3 && in_num_indices % 3 == 0);
+
+    JPH::VertexList vertices;
+    vertices.reserve(in_num_vertices);
+
+    for (uint32_t i = 0; i < in_num_vertices; ++i)
+    {
+        const float *base = reinterpret_cast<const float *>(
+            static_cast<const uint8_t *>(in_vertices) + i * in_vertex_size);
+        vertices.push_back(JPH::Float3(base[0], base[1], base[2]));
+    }
+
+    JPH::IndexedTriangleList triangles;
+    triangles.reserve(in_num_indices / 3);
+
+    for (uint32_t i = 0; i < in_num_indices / 3; ++i)
+    {
+        triangles.push_back(
+            JPH::IndexedTriangle(in_indices[i * 3], in_indices[i * 3 + 1], in_indices[i * 3 + 2], 0));
+    }
+
+    auto settings = new JPH::MeshShapeSettings(vertices, triangles);
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings)
+{
+    toJph(in_settings)->Sanitize();
 }
 //--------------------------------------------------------------------------------------------------
 //

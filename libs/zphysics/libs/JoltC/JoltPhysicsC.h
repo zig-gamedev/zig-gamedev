@@ -1,4 +1,4 @@
-// JoltPhysicsC v0.0.2 - C API for Jolt Physics C++ library
+// JoltPhysicsC v0.0.3 - C API for Jolt Physics C++ library
 
 #pragma once
 #include <stdlib.h>
@@ -181,6 +181,7 @@ typedef struct JPC_TaperedCapsuleShapeSettings JPC_TaperedCapsuleShapeSettings;
 typedef struct JPC_CylinderShapeSettings       JPC_CylinderShapeSettings;
 typedef struct JPC_ConvexHullShapeSettings     JPC_ConvexHullShapeSettings;
 typedef struct JPC_HeightFieldShapeSettings    JPC_HeightFieldShapeSettings;
+typedef struct JPC_MeshShapeSettings           JPC_MeshShapeSettings;
 
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
@@ -1002,7 +1003,7 @@ JPC_CylinderShapeSettings_SetRadius(JPC_CylinderShapeSettings *in_settings, floa
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ConvexHullShapeSettings *
-JPC_ConvexHullShapeSettings_Create(const float in_points[][3], int in_num_points);
+JPC_ConvexHullShapeSettings_Create(const void *in_vertices, uint32_t in_num_vertices, uint32_t in_vertex_size);
 
 JPC_API float
 JPC_ConvexHullShapeSettings_GetMaxConvexRadius(const JPC_ConvexHullShapeSettings *in_settings);
@@ -1027,9 +1028,11 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
 // JPC_HeightFieldShapeSettings (-> JPC_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
-JPC_API JPC_HeightFieldShapeSettings*
-JPC_HeightFieldShapeSettings_Create(const float *in_samples, const float in_offset[3], const float in_scale[3],
-                                    uint32_t in_num_samples);
+JPC_API JPC_HeightFieldShapeSettings *
+JPC_HeightFieldShapeSettings_Create(const float *in_samples,
+                                    uint32_t in_num_samples,
+                                    const float in_offset[3],
+                                    const float in_scale[3]);
 JPC_API void
 JPC_HeightFieldShapeSettings_GetOffset(const JPC_HeightFieldShapeSettings *in_settings, float out_offset[3]);
 
@@ -1041,6 +1044,19 @@ JPC_HeightFieldShapeSettings_GetScale(const JPC_HeightFieldShapeSettings *in_set
 
 JPC_API void
 JPC_HeightFieldShapeSettings_SetScale(JPC_HeightFieldShapeSettings *in_settings, const float in_scale[3]);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_MeshShapeSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_MeshShapeSettings *
+JPC_MeshShapeSettings_Create(const void *in_vertices,
+                             uint32_t in_num_vertices,
+                             uint32_t in_vertex_size,
+                             const uint32_t *in_indices,
+                             uint32_t in_num_indices);
+JPC_API void
+JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_Shape
