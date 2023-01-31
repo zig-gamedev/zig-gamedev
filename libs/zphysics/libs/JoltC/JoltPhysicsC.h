@@ -387,7 +387,7 @@ typedef struct JPC_BodyLockWrite
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
 
-// NOTE: Needs to be kept in sync with JPH::RayCast
+// NOTE: Needs to be kept in sync with JPH::RRayCast
 typedef struct JPC_RRayCast
 {
     JPC_RVEC_ALIGN JPC_Real origin[4]; // 4th element is ignored
@@ -437,7 +437,7 @@ typedef struct JPC_ObjectVsBroadPhaseLayerFilterVTable
     (*ShouldCollide)(const void *in_self, JPC_ObjectLayer in_layer1, JPC_BroadPhaseLayer in_layer2);
 } JPC_ObjectVsBroadPhaseLayerFilterVTable;
 
-typedef struct JPC_BroadPhaseLayerFilter
+typedef struct JPC_BroadPhaseLayerFilterVTable
 {
     const void *__unused0; // Unused, *must* be NULL.
     const void *__unused1; // Unused, *must* be NULL.
@@ -445,7 +445,7 @@ typedef struct JPC_BroadPhaseLayerFilter
     // Required, *cannot* be NULL.
     bool
     (*ShouldCollide)(const void *in_self, JPC_BroadPhaseLayer in_layer);
-} JPC_BroadPhaseLayerFilter;
+} JPC_BroadPhaseLayerFilterVTable;
 
 typedef struct JPC_ObjectLayerPairFilterVTable
 {
@@ -804,19 +804,31 @@ JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system);
 // JPC_BodyLock*
 //
 //--------------------------------------------------------------------------------------------------
-void JPC_API
+JPC_API void
 JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
                       const JPC_BodyLockInterface *in_lock_interface,
                       JPC_BodyID in_body_id);
-void JPC_API
+JPC_API void
 JPC_BodyLockRead_Unlock(JPC_BodyLockRead *io_lock);
 
-void JPC_API
+JPC_API void
 JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
                        const JPC_BodyLockInterface *in_lock_interface,
                        JPC_BodyID in_body_id);
-void JPC_API
+JPC_API void
 JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_NarrowPhaseQuery
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API bool
+JPC_NarrowPhaseQuery_CastRay(const JPC_NarrowPhaseQuery *in_query,
+                             const JPC_RRayCast *in_ray,
+                             JPC_RayCastResult *io_hit,
+                             const void *in_broad_phase_layer_filter,
+                             const void *in_object_layer_filter,
+                             const void *in_body_filter);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_ShapeSettings

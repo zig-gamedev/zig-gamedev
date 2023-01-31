@@ -11,6 +11,7 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
 #include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
@@ -675,7 +676,7 @@ JPC_PhysicsSystem_GetNarrowPhaseQueryNoLock(const JPC_PhysicsSystem *in_physics_
 // JPC_BodyLock*
 //
 //--------------------------------------------------------------------------------------------------
-void JPC_API
+JPC_API void
 JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
                       const JPC_BodyLockInterface *in_lock_interface,
                       JPC_BodyID in_body_id)
@@ -684,13 +685,13 @@ JPC_BodyLockRead_Lock(JPC_BodyLockRead *out_lock,
     ::new (out_lock) JPH::BodyLockRead(*toJph(in_lock_interface), toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
-void JPC_API
+JPC_API void
 JPC_BodyLockRead_Unlock(JPC_BodyLockRead *io_lock)
 {
     toJph(io_lock)->~BodyLockRead();
 }
 //--------------------------------------------------------------------------------------------------
-void JPC_API
+JPC_API void
 JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
                        const JPC_BodyLockInterface *in_lock_interface,
                        JPC_BodyID in_body_id)
@@ -699,10 +700,41 @@ JPC_BodyLockWrite_Lock(JPC_BodyLockWrite *out_lock,
     ::new (out_lock) JPH::BodyLockWrite(*toJph(in_lock_interface), toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
-void JPC_API
+JPC_API void
 JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock)
 {
     toJph(io_lock)->~BodyLockWrite();
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_NarrowPhaseQuery
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API bool
+JPC_NarrowPhaseQuery_CastRay(const JPC_NarrowPhaseQuery *in_query,
+                             const JPC_RRayCast *in_ray,
+                             JPC_RayCastResult *io_hit,
+                             const void *in_broad_phase_layer_filter,
+                             const void *in_object_layer_filter,
+                             const void *in_body_filter)
+{
+    assert(in_query && in_ray && io_hit);
+
+    const JPH::BroadPhaseLayerFilter broad_phase_layer_filter{};
+    const JPH::ObjectLayerFilter object_layer_filter{};
+    const JPH::BodyFilter body_filter{};
+
+    auto query = reinterpret_cast<const JPH::NarrowPhaseQuery *>(in_query);
+    return query->CastRay(
+        *reinterpret_cast<const JPH::RRayCast *>(in_ray),
+        *reinterpret_cast<JPH::RayCastResult *>(io_hit),
+        in_broad_phase_layer_filter ?
+            *static_cast<const JPH::BroadPhaseLayerFilter *>(in_broad_phase_layer_filter) :
+            broad_phase_layer_filter,
+        in_object_layer_filter ?
+            *static_cast<const JPH::ObjectLayerFilter *>(in_object_layer_filter) : object_layer_filter,
+        in_body_filter ?
+            *static_cast<const JPH::BodyFilter *>(in_body_filter) : body_filter);
 }
 //--------------------------------------------------------------------------------------------------
 //
