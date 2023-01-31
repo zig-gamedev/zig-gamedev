@@ -1001,9 +1001,8 @@ JPC_CylinderShapeSettings_SetRadius(JPC_CylinderShapeSettings *in_settings, floa
 // JPC_ConvexHullShapeSettings (-> JPC_ConvexShapeSettings -> JPC_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
-/// `in_points` needs to be aligned to 16 bytes
 JPC_API JPC_ConvexHullShapeSettings *
-JPC_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points);
+JPC_ConvexHullShapeSettings_Create(const float in_points[][3], int in_num_points);
 
 JPC_API float
 JPC_ConvexHullShapeSettings_GetMaxConvexRadius(const JPC_ConvexHullShapeSettings *in_settings);

@@ -1059,12 +1059,19 @@ JPC_CylinderShapeSettings_SetRadius(JPC_CylinderShapeSettings *in_settings, floa
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_ConvexHullShapeSettings *
-JPC_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points)
+JPC_ConvexHullShapeSettings_Create(const float in_points[][3], int in_num_points)
 {
     assert(in_points != nullptr && in_num_points > 0);
-    assert((reinterpret_cast<uintptr_t>(&in_points[0][0]) & 0xf) == 0);
-    auto settings = new JPH::ConvexHullShapeSettings(
-        reinterpret_cast<const JPH::Vec3 *>(&in_points[0][0]), in_num_points);
+
+    JPH::Array<JPH::Vec3> points;
+    points.reserve(in_num_points);
+
+    for (int i = 0; i < in_num_points; ++i)
+    {
+        points.push_back(loadVec3(in_points[i]));
+    }
+
+    auto settings = new JPH::ConvexHullShapeSettings(points);
     settings->AddRef();
     return toJpc(settings);
 }
