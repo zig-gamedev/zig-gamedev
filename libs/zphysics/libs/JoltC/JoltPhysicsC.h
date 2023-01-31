@@ -133,6 +133,13 @@ typedef enum JPC_ValidateResult
     JPC_VALIDATE_RESULT_REJECT_ALL_CONTACTS = 3,
     _JPC_VALIDATE_RESULT_FORCEU32           = 0x7fffffff
 } JPC_ValidateResult;
+
+typedef uint8_t JPC_BackFaceMode;
+enum
+{
+    JPC_BACK_FACE_IGNORE  = 0,
+    JPC_BACK_FACE_COLLIDE = 1
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Types
@@ -162,6 +169,7 @@ typedef struct JPC_TempAllocator     JPC_TempAllocator;
 typedef struct JPC_JobSystem         JPC_JobSystem;
 typedef struct JPC_BodyInterface     JPC_BodyInterface;
 typedef struct JPC_BodyLockInterface JPC_BodyLockInterface;
+typedef struct JPC_NarrowPhaseQuery  JPC_NarrowPhaseQuery;
 
 typedef struct JPC_ShapeSettings               JPC_ShapeSettings;
 typedef struct JPC_ConvexShapeSettings         JPC_ConvexShapeSettings;
@@ -378,6 +386,28 @@ typedef struct JPC_BodyLockWrite
     JPC_SharedMutex *            mutex;
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
+
+// NOTE: Needs to be kept in sync with JPH::RayCast
+typedef struct JPC_RRayCast
+{
+    JPC_RVEC_ALIGN JPC_Real origin[4]; // 4th element is ignored
+    alignas(16) float       direction[4]; // 4th element is ignored
+} JPC_RRayCast;
+
+// NOTE: Needs to be kept in sync with JPH::RayCastResult
+typedef struct JPC_RayCastResult
+{
+    JPC_BodyID     body_id;
+    float          fraction;
+    JPC_SubShapeID sub_shape_id;
+} JPC_RayCastResult;
+
+// NOTE: Needs to be kept in sync with JPH::RayCastSettings
+typedef struct JPC_RayCastSettings
+{
+    JPC_BackFaceMode back_face_mode;
+    bool             treat_convex_as_solid;
+} JPC_RayCastSettings;
 //--------------------------------------------------------------------------------------------------
 //
 // Interfaces (virtual tables)
@@ -702,6 +732,12 @@ JPC_PhysicsSystem_GetNumActiveBodies(const JPC_PhysicsSystem *in_physics_system)
 JPC_API uint32_t
 JPC_PhysicsSystem_GetMaxBodies(const JPC_PhysicsSystem *in_physics_system);
 
+JPC_API void
+JPC_PhysicsSystem_GetGravity(const JPC_PhysicsSystem *in_physics_system, float out_gravity[3]);
+
+JPC_API void
+JPC_PhysicsSystem_SetGravity(JPC_PhysicsSystem *in_physics_system, const float in_gravity[3]);
+
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system);
 
@@ -724,6 +760,12 @@ JPC_PhysicsSystem_GetBodyLockInterface(const JPC_PhysicsSystem *in_physics_syste
 
 JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system);
+
+JPC_API const JPC_NarrowPhaseQuery *
+JPC_PhysicsSystem_GetNarrowPhaseQuery(const JPC_PhysicsSystem *in_physics_system);
+
+JPC_API const JPC_NarrowPhaseQuery *
+JPC_PhysicsSystem_GetNarrowPhaseQueryNoLock(const JPC_PhysicsSystem *in_physics_system);
 
 /// Get copy of the list of all bodies under protection of a lock.
 JPC_API void

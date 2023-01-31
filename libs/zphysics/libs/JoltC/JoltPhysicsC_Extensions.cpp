@@ -14,6 +14,8 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
@@ -113,6 +115,7 @@ ENSURE_SIZE_ALIGN(JPH::EShapeType,              JPC_ShapeType)
 ENSURE_SIZE_ALIGN(JPH::EShapeSubType,           JPC_ShapeSubType)
 ENSURE_SIZE_ALIGN(JPH::EMotionType,             JPC_MotionType)
 ENSURE_SIZE_ALIGN(JPH::EMotionQuality,          JPC_MotionQuality)
+ENSURE_SIZE_ALIGN(JPH::EBackFaceMode,           JPC_BackFaceMode)
 ENSURE_SIZE_ALIGN(JPH::EOverrideMassProperties, JPC_OverrideMassProperties)
 ENSURE_SIZE_ALIGN(JPH::EActivation,             JPC_Activation)
 ENSURE_SIZE_ALIGN(JPH::ValidateResult,          JPC_ValidateResult)
@@ -135,6 +138,10 @@ ENSURE_SIZE_ALIGN(JPH::Body,                 JPC_Body)
 
 ENSURE_SIZE_ALIGN(JPH::BodyLockRead,  JPC_BodyLockRead)
 ENSURE_SIZE_ALIGN(JPH::BodyLockWrite, JPC_BodyLockWrite)
+
+ENSURE_SIZE_ALIGN(JPH::RRayCast, JPC_RRayCast)
+ENSURE_SIZE_ALIGN(JPH::RayCastResult, JPC_RayCastResult)
+ENSURE_SIZE_ALIGN(JPH::RayCastSettings, JPC_RayCastSettings)
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -199,6 +206,9 @@ ENSURE_ENUM_EQ(JPC_VALIDATE_RESULT_REJECT_ALL_CONTACTS,
 
 ENSURE_ENUM_EQ(JPC_MAX_PHYSICS_JOBS,     JPH::cMaxPhysicsJobs);
 ENSURE_ENUM_EQ(JPC_MAX_PHYSICS_BARRIERS, JPH::cMaxPhysicsBarriers);
+
+ENSURE_ENUM_EQ(JPC_BACK_FACE_IGNORE,  JPH::EBackFaceMode::IgnoreBackFaces);
+ENSURE_ENUM_EQ(JPC_BACK_FACE_COLLIDE, JPH::EBackFaceMode::CollideWithBackFaces);
 //--------------------------------------------------------------------------------------------------
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
@@ -256,4 +266,15 @@ static_assert(offsetof(JPH::Body, mID) == offsetof(JPC_Body, id));
 static_assert(offsetof(JPH::BodyLockRead, mBodyLockInterface) == offsetof(JPC_BodyLockRead, lock_interface));
 static_assert(offsetof(JPH::BodyLockRead, mBodyLockMutex) == offsetof(JPC_BodyLockRead, mutex));
 static_assert(offsetof(JPH::BodyLockRead, mBody) == offsetof(JPC_BodyLockRead, body));
+
+static_assert(offsetof(JPH::RayCastResult, mBodyID) == offsetof(JPC_RayCastResult, body_id));
+static_assert(offsetof(JPH::RayCastResult, mFraction) == offsetof(JPC_RayCastResult, fraction));
+static_assert(offsetof(JPH::RayCastResult, mSubShapeID2) == offsetof(JPC_RayCastResult, sub_shape_id));
+
+static_assert(offsetof(JPH::RayCastSettings, mBackFaceMode) == offsetof(JPC_RayCastSettings, back_face_mode));
+static_assert(offsetof(JPH::RayCastSettings, mTreatConvexAsSolid) ==
+    offsetof(JPC_RayCastSettings, treat_convex_as_solid));
+
+static_assert(offsetof(JPH::RRayCast, mOrigin) == offsetof(JPC_RRayCast, origin));
+static_assert(offsetof(JPH::RRayCast, mDirection) == offsetof(JPC_RRayCast, direction));
 //--------------------------------------------------------------------------------------------------

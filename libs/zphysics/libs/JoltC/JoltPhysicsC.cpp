@@ -173,6 +173,10 @@ FN(toJpc)(const JPH::BodyLockInterface *in) {
     assert(in); return reinterpret_cast<const JPC_BodyLockInterface *>(in);
 }
 
+FN(toJpc)(const JPH::NarrowPhaseQuery *in) {
+    assert(in); return reinterpret_cast<const JPC_NarrowPhaseQuery *>(in);
+}
+
 FN(toJph)(const JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<const JPH::PhysicsSystem *>(in); }
 FN(toJph)(JPC_PhysicsSystem *in) { assert(in); return reinterpret_cast<JPH::PhysicsSystem *>(in); }
 FN(toJpc)(JPH::PhysicsSystem *in) { assert(in); return reinterpret_cast<JPC_PhysicsSystem *>(in); }
@@ -599,6 +603,18 @@ JPC_PhysicsSystem_GetMaxBodies(const JPC_PhysicsSystem *in_physics_system)
     return toJph(in_physics_system)->GetMaxBodies();
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_GetGravity(const JPC_PhysicsSystem *in_physics_system, float out_gravity[3])
+{
+    storeVec3(out_gravity, toJph(in_physics_system)->GetGravity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_SetGravity(JPC_PhysicsSystem *in_physics_system, const float in_gravity[3])
+{
+    toJph(in_physics_system)->SetGravity(loadVec3(in_gravity));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API JPC_BodyInterface *
 JPC_PhysicsSystem_GetBodyInterface(JPC_PhysicsSystem *in_physics_system)
 {
@@ -642,6 +658,17 @@ JPC_API const JPC_BodyLockInterface *
 JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(const JPC_PhysicsSystem *in_physics_system)
 {
     return toJpc(&toJph(in_physics_system)->GetBodyLockInterfaceNoLock());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API const JPC_NarrowPhaseQuery *
+JPC_PhysicsSystem_GetNarrowPhaseQuery(const JPC_PhysicsSystem *in_physics_system)
+{
+    return toJpc(&toJph(in_physics_system)->GetNarrowPhaseQuery());
+}
+JPC_API const JPC_NarrowPhaseQuery *
+JPC_PhysicsSystem_GetNarrowPhaseQueryNoLock(const JPC_PhysicsSystem *in_physics_system)
+{
+    return toJpc(&toJph(in_physics_system)->GetNarrowPhaseQueryNoLock());
 }
 //--------------------------------------------------------------------------------------------------
 //
