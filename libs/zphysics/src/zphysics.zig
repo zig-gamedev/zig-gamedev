@@ -1279,6 +1279,57 @@ pub const TaperedCapsuleShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// CylinderShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const CylinderShapeSettings = opaque {
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
+
+    pub fn create(half_height: f32, radius: f32) !*CylinderShapeSettings {
+        const cylinder_shape_settings = c.JPC_CylinderShapeSettings_Create(half_height, radius);
+        if (cylinder_shape_settings == null)
+            return error.FailedToCreateCylinderShapeSettings;
+        return @ptrCast(*CylinderShapeSettings, cylinder_shape_settings);
+    }
+
+    pub fn getConvexRadius(cylinder_shape_settings: *const CylinderShapeSettings) f32 {
+        return c.JPC_CylinderShapeSettings_GetConvexRadius(
+            @ptrCast(*const c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+        );
+    }
+    pub fn setConvexRadius(cylinder_shape_settings: *CylinderShapeSettings, convex_radius: f32) void {
+        c.JPC_CylinderShapeSettings_SetConvexRadius(
+            @ptrCast(*c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            convex_radius,
+        );
+    }
+
+    pub fn getHalfHeight(cylinder_shape_settings: *const CylinderShapeSettings) f32 {
+        return c.JPC_CylinderShapeSettings_GetHalfHeight(
+            @ptrCast(*const c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+        );
+    }
+    pub fn setHalfHeight(cylinder_shape_settings: *CylinderShapeSettings, half_height: f32) void {
+        c.JPC_CylinderShapeSettings_SetHalfHeight(
+            @ptrCast(*c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            half_height,
+        );
+    }
+
+    pub fn getRadius(cylinder_shape_settings: *const CylinderShapeSettings) f32 {
+        return c.JPC_CylinderShapeSettings_GetRadius(
+            @ptrCast(*const c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+        );
+    }
+    pub fn setRadius(cylinder_shape_settings: *CylinderShapeSettings, radius: f32) void {
+        c.JPC_CylinderShapeSettings_SetRadius(
+            @ptrCast(*c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            radius,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -1687,6 +1738,48 @@ test "zphysics.shape.taperedcapsule" {
 
     capsule_shape.setUserData(1146);
     try expect(capsule_shape.getUserData() == 1146);
+}
+
+test "zphysics.shape.cylinder" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const cylinder_shape_settings = try CylinderShapeSettings.create(10.0, 2.0);
+    defer cylinder_shape_settings.release();
+
+    try expect(cylinder_shape_settings.getRadius() == 2.0);
+    try expect(cylinder_shape_settings.getHalfHeight() == 10.0);
+
+    cylinder_shape_settings.setRadius(4.0);
+    try expect(cylinder_shape_settings.getRadius() == 4.0);
+
+    cylinder_shape_settings.setHalfHeight(1.0);
+    try expect(cylinder_shape_settings.getHalfHeight() == 1.0);
+
+    cylinder_shape_settings.setConvexRadius(0.5);
+    try expect(cylinder_shape_settings.getConvexRadius() == 0.5);
+
+    const cylinder_shape = try cylinder_shape_settings.createShape();
+    defer cylinder_shape.release();
+
+    try expect(cylinder_shape.getRefCount() == 2);
+    try expect(cylinder_shape.getType() == .convex);
+    try expect(cylinder_shape.getSubType() == .cylinder);
+
+    cylinder_shape.setUserData(146);
+    try expect(cylinder_shape.getUserData() == 146);
 }
 
 test "zphysics.body.basic" {
