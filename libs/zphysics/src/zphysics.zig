@@ -17,6 +17,7 @@ pub const rvec_align = if (Real == f64) 32 else 16;
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};
 pub const BodyLockInterface = opaque {};
+pub const NarrowPhaseQuery = opaque {};
 pub const SharedMutex = opaque {};
 
 pub const BroadPhaseLayer = c.JPC_BroadPhaseLayer;
@@ -127,6 +128,37 @@ pub const ObjectVsBroadPhaseLayerFilter = extern struct {
     }
 };
 
+pub const BroadPhaseLayerFilter = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn shouldCollide(self: *const T, layer: BroadPhaseLayer) bool {
+                return @ptrCast(*const BroadPhaseLayerFilter.VTable, self.__v)
+                    .shouldCollide(@ptrCast(*const BroadPhaseLayerFilter, self), layer);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
+        shouldCollide: *const fn (
+            self: *const BroadPhaseLayerFilter,
+            layer: BroadPhaseLayer,
+        ) callconv(.C) bool,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_BroadPhaseLayerFilterVTable));
+        assert(
+            @offsetOf(VTable, "shouldCollide") == @offsetOf(c.JPC_BroadPhaseLayerFilterVTable, "ShouldCollide"),
+        );
+    }
+};
+
 pub const ObjectLayerPairFilter = extern struct {
     __v: *const VTable,
 
@@ -149,10 +181,35 @@ pub const ObjectLayerPairFilter = extern struct {
 
     comptime {
         assert(@sizeOf(VTable) == @sizeOf(c.JPC_ObjectLayerPairFilterVTable));
-        assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(
-            c.JPC_ObjectLayerPairFilterVTable,
-            "ShouldCollide",
-        ));
+        assert(
+            @offsetOf(VTable, "shouldCollide") == @offsetOf(c.JPC_ObjectLayerPairFilterVTable, "ShouldCollide"),
+        );
+    }
+};
+
+pub const ObjectLayerFilter = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn shouldCollide(self: *const T, layer: ObjectLayer) bool {
+                return @ptrCast(*const ObjectLayerFilter.VTable, self.__v)
+                    .shouldCollide(@ptrCast(*const ObjectLayerFilter, self), layer);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
+        shouldCollide: *const fn (self: *const ObjectLayerFilter, ObjectLayer) callconv(.C) bool,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_ObjectLayerFilterVTable));
+        assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(c.JPC_ObjectLayerFilterVTable, "ShouldCollide"));
     }
 };
 
@@ -296,10 +353,43 @@ pub const ContactListener = extern struct {
             c.JPC_ContactListenerVTable,
             "OnContactAdded",
         ));
-        assert(@offsetOf(VTable, "onContactRemoved") == @offsetOf(
-            c.JPC_ContactListenerVTable,
-            "OnContactRemoved",
-        ));
+        assert(
+            @offsetOf(VTable, "onContactRemoved") == @offsetOf(c.JPC_ContactListenerVTable, "OnContactRemoved"),
+        );
+    }
+};
+
+pub const BodyFilter = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn shouldCollide(self: *const T, body_id: *const BodyId) bool {
+                return @ptrCast(*const BodyFilter.VTable, self.__v)
+                    .shouldCollide(@ptrCast(*const BodyFilter, self), body_id);
+            }
+            pub inline fn shouldCollideLocked(self: *const T, body: *const Body) bool {
+                return @ptrCast(*const BodyFilter.VTable, self.__v)
+                    .shouldCollideLocked(@ptrCast(*const BodyFilter, self), body);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __unused0: ?*const anyopaque = null,
+        __unused1: ?*const anyopaque = null,
+        shouldCollide: *const fn (self: *const BodyFilter, body_id: *const BodyId) callconv(.C) bool,
+        shouldCollideLocked: *const fn (self: *const BodyFilter, body: *const Body) callconv(.C) bool,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_BodyFilterVTable));
+        assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(c.JPC_BodyFilterVTable, "ShouldCollide"));
+        assert(
+            @offsetOf(VTable, "shouldCollideLocked") == @offsetOf(c.JPC_BodyFilterVTable, "ShouldCollideLocked"),
+        );
     }
 };
 
@@ -554,6 +644,15 @@ pub const PhysicsSystem = opaque {
         return c.JPC_PhysicsSystem_GetMaxBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
     }
 
+    pub fn getGravity(physics_system: *const PhysicsSystem) [3]f32 {
+        var gravity: [3]f32 = undefined;
+        c.JPC_PhysicsSystem_GetGravity(@ptrCast(*const c.JPC_PhysicsSystem, physics_system), &gravity);
+        return gravity;
+    }
+    pub fn setGravity(physics_system: *PhysicsSystem, gravity: [3]f32) void {
+        c.JPC_PhysicsSystem_SetGravity(@ptrCast(*c.JPC_PhysicsSystem, physics_system), &gravity);
+    }
+
     pub fn getBodyInterface(physics_system: *const PhysicsSystem) *const BodyInterface {
         return @ptrCast(
             *const BodyInterface,
@@ -576,6 +675,19 @@ pub const PhysicsSystem = opaque {
         return @ptrCast(
             *BodyInterface,
             c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
+        );
+    }
+
+    pub fn getNarrowPhaseQuery(physics_system: *const PhysicsSystem) *const NarrowPhaseQuery {
+        return @ptrCast(
+            *const NarrowPhaseQuery,
+            c.JPC_PhysicsSystem_GetNarrowPhaseQuery(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
+        );
+    }
+    pub fn getNarrowPhaseQueryNoLock(physics_system: *const PhysicsSystem) *const NarrowPhaseQuery {
+        return @ptrCast(
+            *const NarrowPhaseQuery,
+            c.JPC_PhysicsSystem_GetNarrowPhaseQueryNoLock(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
         );
     }
 
@@ -1234,6 +1346,12 @@ test "zphysics.basic" {
     try expect(physics_system.getNumActiveBodies() == 0);
     try expect(physics_system.getMaxBodies() == 1024);
 
+    {
+        physics_system.setGravity(.{ 0, -10.0, 0 });
+        const gravity = physics_system.getGravity();
+        try expect(gravity[0] == 0 and gravity[1] == -10.0 and gravity[2] == 0);
+    }
+
     try expect(physics_system.getBodyActivationListener() == null);
     physics_system.setBodyActivationListener(null);
     try expect(physics_system.getBodyActivationListener() == null);
@@ -1248,6 +1366,8 @@ test "zphysics.basic" {
     _ = physics_system.getBodyInterfaceMutNoLock();
     _ = physics_system.getBodyLockInterface();
     _ = physics_system.getBodyLockInterfaceNoLock();
+    _ = physics_system.getNarrowPhaseQuery();
+    _ = physics_system.getNarrowPhaseQueryNoLock();
 
     physics_system.optimizeBroadPhase();
     physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
