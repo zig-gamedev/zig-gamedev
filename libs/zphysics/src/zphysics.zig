@@ -1330,6 +1330,33 @@ pub const CylinderShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// ConvexHullShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const ConvexHullShapeSettings = opaque {
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
+
+    pub fn create(vertices: *const anyopaque, num_vertices: u32, vertex_size: u32) !*ConvexHullShapeSettings {
+        const settings = c.JPC_ConvexHullShapeSettings_Create(vertices, num_vertices, vertex_size);
+        if (settings == null)
+            return error.FailedToCreateConvexHullShapeSettings;
+        return @ptrCast(*ConvexHullShapeSettings, settings);
+    }
+
+    pub fn getMaxConvexRadius(settings: *const ConvexHullShapeSettings) f32 {
+        return c.JPC_ConvexHullShapeSettings_GetMaxConvexRadius(
+            @ptrCast(*const c.JPC_ConvexHullShapeSettings, settings),
+        );
+    }
+    pub fn setMaxConvexRadius(settings: *ConvexHullShapeSettings, radius: f32) void {
+        c.JPC_ConvexHullShapeSettings_SetMaxConvexRadius(
+            @ptrCast(*c.JPC_ConvexHullShapeSettings, settings),
+            radius,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -1780,6 +1807,41 @@ test "zphysics.shape.cylinder" {
 
     cylinder_shape.setUserData(146);
     try expect(cylinder_shape.getUserData() == 146);
+}
+
+test "zphysics.shape.convexhull" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const points = [_]f32{ 0, 0, 0, 1, 1, 1, 1, 1, 0 };
+
+    const settings = try ConvexHullShapeSettings.create(&points, 3, 12);
+    defer settings.release();
+
+    settings.setMaxConvexRadius(0.1);
+    try expect(settings.getMaxConvexRadius() == 0.1);
+
+    const shape = try settings.createShape();
+    defer shape.release();
+
+    try expect(shape.getRefCount() == 2);
+    try expect(shape.getType() == .convex);
+    try expect(shape.getSubType() == .convex_hull);
+
+    shape.setUserData(111);
+    try expect(shape.getUserData() == 111);
 }
 
 test "zphysics.body.basic" {
