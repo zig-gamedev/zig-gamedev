@@ -177,6 +177,7 @@
 // lookAtRh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
+// perspectiveFovLhGl(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // perspectiveFovRhGl(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat
 // orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat
@@ -2238,6 +2239,26 @@ pub fn perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
         f32x4(0.0, h, 0.0, 0.0),
         f32x4(0.0, 0.0, r, -1.0),
         f32x4(0.0, 0.0, r * near, 0.0),
+    };
+}
+
+// Produces Z values in [-1.0, 1.0] range (OpenGL defaults)
+pub fn perspectiveFovLhGl(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
+    const scfov = sincos(0.5 * fovy);
+
+    assert(near > 0.0 and far > 0.0 and far > near);
+    assert(!math.approxEqAbs(f32, scfov[0], 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+    assert(!math.approxEqAbs(f32, aspect, 0.0, 0.01));
+
+    const h = scfov[1] / scfov[0];
+    const w = h / aspect;
+    const r = far - near;
+    return .{
+        f32x4(w, 0.0, 0.0, 0.0),
+        f32x4(0.0, h, 0.0, 0.0),
+        f32x4(0.0, 0.0, (near + far) / r, 1.0),
+        f32x4(0.0, 0.0, 2.0 * near * far / -r, 0.0),
     };
 }
 
