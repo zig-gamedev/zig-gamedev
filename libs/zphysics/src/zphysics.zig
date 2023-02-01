@@ -1158,6 +1158,72 @@ pub const SphereShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// TriangleShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const TriangleShapeSettings = opaque {
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
+
+    pub fn create(v1: [3]f32, v2: [3]f32, v3: [3]f32) !*TriangleShapeSettings {
+        const triangle_shape_settings = c.JPC_TriangleShapeSettings_Create(&v1, &v2, &v3);
+        if (triangle_shape_settings == null)
+            return error.FailedToCreateTriangleShapeSettings;
+        return @ptrCast(*TriangleShapeSettings, triangle_shape_settings);
+    }
+
+    pub fn getConvexRadius(triangle_shape_settings: *const TriangleShapeSettings) f32 {
+        return c.JPC_TriangleShapeSettings_GetConvexRadius(
+            @ptrCast(*const c.JPC_TriangleShapeSettings, triangle_shape_settings),
+        );
+    }
+    pub fn setConvexRadius(triangle_shape_settings: *TriangleShapeSettings, convex_radius: f32) void {
+        c.JPC_TriangleShapeSettings_SetConvexRadius(
+            @ptrCast(*c.JPC_TriangleShapeSettings, triangle_shape_settings),
+            convex_radius,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// CapsuleShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const CapsuleShapeSettings = opaque {
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
+
+    pub fn create(half_height: f32, radius: f32) !*CapsuleShapeSettings {
+        const capsule_shape_settings = c.JPC_CapsuleShapeSettings_Create(half_height, radius);
+        if (capsule_shape_settings == null)
+            return error.FailedToCreateCapsuleShapeSettings;
+        return @ptrCast(*CapsuleShapeSettings, capsule_shape_settings);
+    }
+
+    pub fn getHalfHeight(capsule_shape_settings: *const CapsuleShapeSettings) f32 {
+        return c.JPC_CapsuleShapeSettings_GetHalfHeight(
+            @ptrCast(*const c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+        );
+    }
+    pub fn setHalfHeight(capsule_shape_settings: *CapsuleShapeSettings, half_height: f32) void {
+        c.JPC_CapsuleShapeSettings_SetHalfHeight(
+            @ptrCast(*c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+            half_height,
+        );
+    }
+
+    pub fn getRadius(capsule_shape_settings: *const CapsuleShapeSettings) f32 {
+        return c.JPC_CapsuleShapeSettings_GetRadius(
+            @ptrCast(*const c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+        );
+    }
+    pub fn setRadius(capsule_shape_settings: *CapsuleShapeSettings, radius: f32) void {
+        c.JPC_CapsuleShapeSettings_SetRadius(
+            @ptrCast(*c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+            radius,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -1477,6 +1543,55 @@ test "zphysics.shape.sphere" {
 
     sphere_shape_settings.setRadius(2.0);
     try expect(sphere_shape_settings.getRadius() == 2.0);
+
+    const sphere_shape = try sphere_shape_settings.createShape();
+    defer sphere_shape.release();
+
+    try expect(sphere_shape.getRefCount() == 2);
+    try expect(sphere_shape.getType() == .convex);
+    try expect(sphere_shape.getSubType() == .sphere);
+
+    sphere_shape.setUserData(1456);
+    try expect(sphere_shape.getUserData() == 1456);
+}
+
+test "zphysics.shape.capsule" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const capsule_shape_settings = try CapsuleShapeSettings.create(10.0, 2.0);
+    defer capsule_shape_settings.release();
+
+    try expect(capsule_shape_settings.getRadius() == 2.0);
+    try expect(capsule_shape_settings.getHalfHeight() == 10.0);
+
+    capsule_shape_settings.setRadius(4.0);
+    try expect(capsule_shape_settings.getRadius() == 4.0);
+
+    capsule_shape_settings.setHalfHeight(1.0);
+    try expect(capsule_shape_settings.getHalfHeight() == 1.0);
+
+    const capsule_shape = try capsule_shape_settings.createShape();
+    defer capsule_shape.release();
+
+    try expect(capsule_shape.getRefCount() == 2);
+    try expect(capsule_shape.getType() == .convex);
+    try expect(capsule_shape.getSubType() == .capsule);
+
+    capsule_shape.setUserData(146);
+    try expect(capsule_shape.getUserData() == 146);
 }
 
 test "zphysics.body.basic" {
