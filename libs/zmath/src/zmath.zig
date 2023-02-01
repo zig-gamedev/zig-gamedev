@@ -2313,26 +2313,24 @@ pub fn orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat {
 pub fn orthographicOffCenterLh(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat {
     assert(!math.approxEqAbs(f32, far, near, 0.001));
 
-    const r = 1.0 / (far - near);
-
+    const r = 1 / (far - near);
     return .{
-        f32x4(2 / (right - left), 0.0, 0.0, -(right + left) / (right - left)),
-        f32x4(0.0, 2 / (top - bottom), 0.0, -(top + bottom) / (top - bottom)),
-        f32x4(0.0, 0.0, r, -r * near),
-        f32x4(0.0, 0.0, 0.0, 1.0),
+        f32x4(2 / (right - left), 0.0, 0.0, 0.0),
+        f32x4(0.0, 2 / (top - bottom), 0.0, 0.0),
+        f32x4(0.0, 0.0, r, 0.0),
+        f32x4(-(right + left) / (right - left), -(top + bottom) / (top - bottom), -r * near, 1.0),
     };
 }
 
 pub fn orthographicOffCenterRh(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat {
     assert(!math.approxEqAbs(f32, far, near, 0.001));
 
-    const r = 1.0 / (near - far);
-
+    const r = 1 / (near - far);
     return .{
-        f32x4(2 / (right - left), 0.0, 0.0, -(right + left) / (right - left)),
-        f32x4(0.0, 2 / (top - bottom), 0.0, -(top + bottom) / (top - bottom)),
-        f32x4(0.0, 0.0, r, r * near),
-        f32x4(0.0, 0.0, 0.0, 1.0),
+        f32x4(2 / (right - left), 0.0, 0.0, 0.0),
+        f32x4(0.0, 2 / (top - bottom), 0.0, 0.0),
+        f32x4(0.0, 0.0, r, 0.0),
+        f32x4(-(right + left) / (right - left), -(top + bottom) / (top - bottom), r * near, 1.0),
     };
 }
 
