@@ -1131,6 +1131,33 @@ pub const BoxShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// SphereShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const SphereShapeSettings = opaque {
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
+
+    pub fn create(radius: f32) !*SphereShapeSettings {
+        const sphere_shape_settings = c.JPC_SphereShapeSettings_Create(radius);
+        if (sphere_shape_settings == null)
+            return error.FailedToCreateSphereShapeSettings;
+        return @ptrCast(*SphereShapeSettings, sphere_shape_settings);
+    }
+
+    pub fn getRadius(sphere_shape_settings: *const SphereShapeSettings) f32 {
+        return c.JPC_SphereShapeSettings_GetRadius(
+            @ptrCast(*const c.JPC_SphereShapeSettings, sphere_shape_settings),
+        );
+    }
+    pub fn setRadius(sphere_shape_settings: *SphereShapeSettings, radius: f32) void {
+        c.JPC_SphereShapeSettings_SetRadius(
+            @ptrCast(*c.JPC_SphereShapeSettings, sphere_shape_settings),
+            radius,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -1425,6 +1452,31 @@ test "zphysics.basic" {
 
     box_shape.setUserData(456);
     try expect(box_shape.getUserData() == 456);
+}
+
+test "zphysics.shape.sphere" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const sphere_shape_settings = try SphereShapeSettings.create(10.0);
+    defer sphere_shape_settings.release();
+
+    try expect(sphere_shape_settings.getRadius() == 10.0);
+
+    sphere_shape_settings.setRadius(2.0);
+    try expect(sphere_shape_settings.getRadius() == 2.0);
 }
 
 test "zphysics.body.basic" {
