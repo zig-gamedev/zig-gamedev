@@ -1,3 +1,5 @@
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 0, .patch = 3 };
+
 const std = @import("std");
 const assert = std.debug.assert;
 const options = @import("zphysics_options");
@@ -17,7 +19,6 @@ pub const rvec_align = if (Real == f64) 32 else 16;
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};
 pub const BodyLockInterface = opaque {};
-pub const NarrowPhaseQuery = opaque {};
 pub const SharedMutex = opaque {};
 
 pub const BroadPhaseLayer = c.JPC_BroadPhaseLayer;
@@ -25,8 +26,8 @@ pub const ObjectLayer = c.JPC_ObjectLayer;
 pub const BodyId = c.JPC_BodyID;
 pub const SubShapeId = c.JPC_SubShapeID;
 
-pub const max_physics_jobs: u32 = c.JPC_MAX_PHYSICS_JOBS;
-pub const max_physics_barriers: u32 = c.JPC_MAX_PHYSICS_BARRIERS;
+pub const max_physics_jobs = c.JPC_MAX_PHYSICS_JOBS;
+pub const max_physics_barriers = c.JPC_MAX_PHYSICS_BARRIERS;
 
 pub const body_id_invalid: BodyId = c.JPC_BODY_ID_INVALID;
 pub const body_id_index_bits: BodyId = c.JPC_BODY_ID_INDEX_BITS;
@@ -914,6 +915,20 @@ pub const BodyInterface = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// NarrowPhaseQuery
+//
+//--------------------------------------------------------------------------------------------------
+pub const NarrowPhaseQuery = opaque {
+    //JPC_API bool
+    //pub fn castRay(query: *const NarrowPhaseQuery,
+    //                             *const JPC_RRayCast *in_ray,
+    //                             JPC_RayCastResult *io_hit,
+    //                             const void *in_broad_phase_layer_filter,
+    //                             const void *in_object_layer_filter,
+    //                             const void *in_body_filter);
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Body
 //
 //--------------------------------------------------------------------------------------------------
@@ -963,6 +978,268 @@ pub const Body = extern struct {
     }
     pub fn setIsSensor(body: *Body, is_sensor: bool) void {
         c.JPC_Body_SetIsSensor(@ptrCast(*c.JPC_Body, body), is_sensor);
+    }
+
+    pub fn getMotionType(body: *const Body) MotionType {
+        return @intToEnum(MotionType, c.JPC_Body_GetMotionType(@ptrCast(*const c.JPC_Body, body)));
+    }
+    pub fn setMotionType(body: *Body, motion_type: MotionType) void {
+        return c.JPC_Body_SetMotionType(@ptrCast(*c.JPC_Body, body), @enumToInt(motion_type));
+    }
+
+    pub fn getBroadPhaseLayer(body: *const Body) BroadPhaseLayer {
+        return c.JPC_Body_GetBroadPhaseLayer(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn getObjectLayer(body: *const Body) ObjectLayer {
+        return c.JPC_Body_GetObjectLayer(@ptrCast(*const c.JPC_Body, body));
+    }
+
+    pub fn getCollisionGroup(body: *const Body) *const CollisionGroup {
+        return @ptrCast(
+            *const CollisionGroup,
+            c.JPC_Body_GetCollisionGroup(@intToPtr(*c.JPC_Body, @ptrToInt(body))),
+        );
+    }
+    pub fn getCollisionGroupMut(body: *Body) *CollisionGroup {
+        return @ptrCast(
+            *CollisionGroup,
+            c.JPC_Body_GetCollisionGroup(@ptrCast(*c.JPC_Body, body)),
+        );
+    }
+    pub fn setCollisionGroup(body: *Body, group: CollisionGroup) void {
+        c.JPC_Body_SetCollisionGroup(
+            @ptrCast(*c.JPC_Body, body),
+            @ptrCast(*const c.JPC_CollisionGroup, &group),
+        );
+    }
+
+    pub fn getAllowSleeping(body: *const Body) bool {
+        return c.JPC_Body_GetAllowSleeping(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn setAllowSleeping(body: *Body, allow: bool) void {
+        c.JPC_Body_SetAllowSleeping(@ptrCast(*c.JPC_Body, body), allow);
+    }
+
+    pub fn getFriction(body: *const Body) f32 {
+        return c.JPC_Body_GetFriction(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn setFriction(body: *Body, friction: f32) void {
+        c.JPC_Body_SetFriction(@ptrCast(*c.JPC_Body, body), friction);
+    }
+
+    pub fn getRestitution(body: *const Body) f32 {
+        return c.JPC_Body_GetRestitution(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn setRestitution(body: *Body, restitution: f32) void {
+        c.JPC_Body_SetRestitution(@ptrCast(*c.JPC_Body, body), restitution);
+    }
+
+    pub fn getLinearVelocity(body: *const Body) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_Body_GetLinearVelocity(@ptrCast(*const c.JPC_Body, body), &velocity);
+        return velocity;
+    }
+    pub fn setLinearVelocity(body: *Body, velocity: [3]f32) void {
+        c.JPC_Body_SetLinearVelocity(@ptrCast(*c.JPC_Body, body), &velocity);
+    }
+    pub fn setLinearVelocityClamped(body: *Body, velocity: [3]f32) void {
+        c.JPC_Body_SetLinearVelocityClamped(@ptrCast(*c.JPC_Body, body), &velocity);
+    }
+
+    pub fn getAngularVelocity(body: *const Body) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_Body_GetAngularVelocity(@ptrCast(*const c.JPC_Body, body), &velocity);
+        return velocity;
+    }
+    pub fn setAngularVelocity(body: *Body, velocity: [3]f32) void {
+        c.JPC_Body_SetAnglularVelocity(@ptrCast(*c.JPC_Body, body), &velocity);
+    }
+    pub fn setAngularVelocityClamped(body: *Body, velocity: [3]f32) void {
+        c.JPC_Body_SetAnglularVelocityClamped(@ptrCast(*c.JPC_Body, body), &velocity);
+    }
+
+    /// `point` is relative to the center of mass (com)
+    pub fn getPointVelocityCom(body: *const Body, point: [3]f32) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_Body_GetPointVelocityCOM(@ptrCast(*const c.JPC_Body, body), &point, &velocity);
+        return velocity;
+    }
+    /// `point` is in the world space
+    pub fn getPointVelocity(body: *const Body, point: [3]Real) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_Body_GetPointVelocity(@ptrCast(*const c.JPC_Body, body), &point, &velocity);
+        return velocity;
+    }
+
+    pub fn addForce(body: *Body, force: [3]f32) void {
+        c.JPC_Body_AddForce(@ptrCast(*c.JPC_Body, body), &force);
+    }
+    pub fn addForceAtPosition(body: *Body, force: [3]f32, position: [3]Real) void {
+        c.JPC_Body_AddForceAtPosition(@ptrCast(*c.JPC_Body, body), &force, &position);
+    }
+
+    pub fn addTorque(body: *Body, torque: [3]f32) void {
+        c.JPC_Body_AddTorque(@ptrCast(*c.JPC_Body, body), &torque);
+    }
+
+    pub fn getInverseInertia(body: *const Body) [16]f32 {
+        var inverse_inertia: [16]f32 = undefined;
+        c.JPC_Body_GetInverseInertia(@ptrCast(*const c.JPC_Body, body), &inverse_inertia);
+        return inverse_inertia;
+    }
+
+    pub fn addImpulse(body: *Body, impulse: [3]f32) void {
+        c.JPC_Body_AddImpulse(@ptrCast(*c.JPC_Body, body), &impulse);
+    }
+    pub fn addImpulseAtPosition(body: *Body, impulse: [3]f32, position: [3]Real) void {
+        c.JPC_Body_AddImpulseAtPosition(@ptrCast(*c.JPC_Body, body), &impulse, &position);
+    }
+
+    pub fn addAngularImpulse(body: *Body, impulse: [3]f32) void {
+        c.JPC_Body_AddAngularImpulse(@ptrCast(*c.JPC_Body, body), &impulse);
+    }
+
+    pub fn moveKinematic(
+        body: *Body,
+        target_position: [3]Real,
+        target_rotation: [4]f32,
+        delta_time: f32,
+    ) void {
+        c.JPC_Body_MoveKinematic(
+            @ptrCast(*c.JPC_Body, body),
+            &target_position,
+            &target_rotation,
+            delta_time,
+        );
+    }
+
+    pub fn applyBuoyancyImpulse(
+        body: *Body,
+        surface_position: [3]Real,
+        surface_normal: [3]f32,
+        buoyancy: f32,
+        linear_drag: f32,
+        angular_drag: f32,
+        fluid_velocity: [3]f32,
+        gravity: [3]f32,
+        delta_time: f32,
+    ) void {
+        c.JPC_Body_ApplyBuoyancyImpulse(
+            @ptrCast(*c.JPC_Body, body),
+            &surface_position,
+            &surface_normal,
+            buoyancy,
+            linear_drag,
+            angular_drag,
+            &fluid_velocity,
+            &gravity,
+            delta_time,
+        );
+    }
+
+    pub fn isInBroadPhase(body: *const Body) bool {
+        return c.JPC_Body_IsInBroadPhase(@ptrCast(*const c.JPC_Body, body));
+    }
+
+    pub fn isCollisionCacheInvalid(body: *const Body) bool {
+        return c.JPC_Body_IsCollisionCacheInvalid(@ptrCast(*const c.JPC_Body, body));
+    }
+
+    pub fn getShape(body: *const Body) *const Shape {
+        return @ptrCast(*const Shape, c.JPC_Body_GetShape(@ptrCast(*const c.JPC_Body, body)));
+    }
+
+    pub fn getPosition(body: *const Body) [3]Real {
+        var position: [3]Real = undefined;
+        c.JPC_Body_GetPosition(@ptrCast(*const c.JPC_Body, body), &position);
+        return position;
+    }
+
+    pub fn getRotation(body: *const Body) [4]f32 {
+        var rotation: [4]f32 = undefined;
+        c.JPC_Body_GetRotation(@ptrCast(*const c.JPC_Body, body), &rotation);
+        return rotation;
+    }
+
+    pub fn getWorldTransform(body: *const Body) struct {
+        rotation: [9]f32,
+        position: [3]Real,
+    } {
+        var rotation: [9]f32 = undefined;
+        var position: [3]Real = undefined;
+        c.JPC_Body_GetWorldTransform(@ptrCast(*const c.JPC_Body, body), &rotation, &position);
+        return .{ .rotation = rotation, .position = position };
+    }
+
+    pub fn getCenterOfMassPosition(body: *const Body) [3]Real {
+        var position: [3]Real = undefined;
+        c.JPC_Body_GetCenterOfMassPosition(@ptrCast(*const c.JPC_Body, body), &position);
+        return position;
+    }
+
+    pub fn getCenterOfMassTransform(body: *const Body) struct {
+        rotation: [9]f32,
+        position: [3]Real,
+    } {
+        var rotation: [9]f32 = undefined;
+        var position: [3]Real = undefined;
+        c.JPC_Body_GetCenterOfMassTransform(@ptrCast(*const c.JPC_Body, body), &rotation, &position);
+        return .{ .rotation = rotation, .position = position };
+    }
+
+    pub fn getInverseCenterOfMassTransform(body: *const Body) struct {
+        rotation: [9]f32,
+        position: [3]Real,
+    } {
+        var rotation: [9]f32 = undefined;
+        var position: [3]Real = undefined;
+        c.JPC_Body_GetInverseCenterOfMassTransform(@ptrCast(*const c.JPC_Body, body), &rotation, &position);
+        return .{ .rotation = rotation, .position = position };
+    }
+
+    pub fn getWorldSpaceBounds(body: *const Body) struct {
+        min: [3]f32,
+        max: [3]f32,
+    } {
+        var min: [3]f32 = undefined;
+        var max: [3]f32 = undefined;
+        c.JPC_Body_GetWorldSpaceBounds(@ptrCast(*const c.JPC_Body, body), &min, &max);
+        return .{ .min = min, .max = max };
+    }
+
+    pub fn getMotionProperties(body: *const Body) *const MotionProperties {
+        return @ptrCast(
+            *const MotionProperties,
+            c.JPC_Body_GetMotionProperties(@intToPtr(*c.JPC_Body, @ptrToInt(body))),
+        );
+    }
+    pub fn getMotionPropertiesMut(body: *Body) *MotionProperties {
+        return @ptrCast(
+            *MotionProperties,
+            c.JPC_Body_GetMotionProperties(@ptrCast(*c.JPC_Body, body)),
+        );
+    }
+
+    pub fn getUserData(body: *const Body) u64 {
+        return c.JPC_Body_GetUserData(@ptrCast(*const c.JPC_Body, body));
+    }
+    pub fn setUserData(body: *Body, user_data: u64) void {
+        return c.JPC_Body_SetUserData(@ptrCast(*c.JPC_Body, body), user_data);
+    }
+
+    pub fn getWorldSpaceSurfaceNormal(
+        body: *const Body,
+        sub_shape_id: SubShapeId,
+        position: [3]Real,
+    ) [3]f32 {
+        var normal: [3]f32 = undefined;
+        c.JPC_Body_GetWorldSpaceSurfaceNormal(
+            @ptrCast(*const c.JPC_Body, body),
+            sub_shape_id,
+            &position,
+            &normal,
+        );
+        return normal;
     }
 
     comptime {
@@ -1357,20 +1634,116 @@ pub const ConvexHullShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// HeightFieldShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+// HeightFieldShapeSettings (-> ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 pub const HeightFieldShapeSettings = opaque {
-    pub usingnamespace ConvexShapeSettings.Methods(@This());
+    pub usingnamespace ShapeSettings.Methods(@This());
 
     pub fn create(
-        samples: [*]const f32, // height_field_size ^ 2 samples
+        samples: [*]const f32, // height_field_size^2 samples
         height_field_size: u32, //  height_field_size / block_size must be a power of 2 and minimally 2
     ) !*HeightFieldShapeSettings {
         const settings = c.JPC_HeightFieldShapeSettings_Create(samples, height_field_size);
         if (settings == null)
             return error.FailedToCreateHeightFieldShapeSettings;
         return @ptrCast(*HeightFieldShapeSettings, settings);
+    }
+
+    pub fn getBlockSize(settings: *const HeightFieldShapeSettings) u32 {
+        return c.JPC_HeightFieldShapeSettings_GetBlockSize(
+            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+        );
+    }
+    pub fn setBlockSize(settings: *HeightFieldShapeSettings, block_size: u32) void {
+        c.JPC_HeightFieldShapeSettings_SetBlockSize(
+            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            block_size,
+        );
+    }
+
+    pub fn getBitsPerSample(settings: *const HeightFieldShapeSettings) u32 {
+        return c.JPC_HeightFieldShapeSettings_GetBitsPerSample(
+            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+        );
+    }
+    pub fn setBitsPerSample(settings: *HeightFieldShapeSettings, num_bits: u32) void {
+        c.JPC_HeightFieldShapeSettings_SetBitsPerSample(
+            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            num_bits,
+        );
+    }
+
+    pub fn getOffset(settings: *const HeightFieldShapeSettings) [3]f32 {
+        var offset: [3]f32 = undefined;
+        c.JPC_HeightFieldShapeSettings_GetOffset(
+            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+            &offset,
+        );
+        return offset;
+    }
+    pub fn setOffset(settings: *HeightFieldShapeSettings, offset: [3]f32) void {
+        c.JPC_HeightFieldShapeSettings_SetOffset(
+            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            &offset,
+        );
+    }
+
+    pub fn getScale(settings: *const HeightFieldShapeSettings) [3]f32 {
+        var scale: [3]f32 = undefined;
+        c.JPC_HeightFieldShapeSettings_GetScale(
+            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+            &scale,
+        );
+        return scale;
+    }
+    pub fn setScale(settings: *HeightFieldShapeSettings, scale: [3]f32) void {
+        c.JPC_HeightFieldShapeSettings_SetScale(
+            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            &scale,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// MeshShapeSettings (-> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const MeshShapeSettings = opaque {
+    pub usingnamespace ShapeSettings.Methods(@This());
+
+    pub fn create(
+        vertices: *const anyopaque,
+        num_vertices: u32,
+        vertex_size: u32,
+        indices: []const u32,
+    ) !*MeshShapeSettings {
+        const settings = c.JPC_MeshShapeSettings_Create(
+            vertices,
+            num_vertices,
+            vertex_size,
+            indices.ptr,
+            @intCast(u32, indices.len),
+        );
+        if (settings == null)
+            return error.FailedToCreateMeshShapeSettings;
+        return @ptrCast(*MeshShapeSettings, settings);
+    }
+
+    pub fn getMaxTrianglesPerLeaf(settings: *const MeshShapeSettings) u32 {
+        return c.JPC_MeshShapeSettings_GetMaxTrianglesPerLeaf(
+            @ptrCast(*const c.JPC_MeshShapeSettings, settings),
+        );
+    }
+    pub fn setMaxTrianglesPerLeaf(settings: *MeshShapeSettings, max_triangles: u32) void {
+        c.JPC_MeshShapeSettings_SetMaxTrianglesPerLeaf(
+            @ptrCast(*c.JPC_MeshShapeSettings, settings),
+            max_triangles,
+        );
+    }
+
+    pub fn sanitize(settings: *MeshShapeSettings) void {
+        c.JPC_MeshShapeSettings_Sanitize(@ptrCast(*c.JPC_MeshShapeSettings, settings));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -1695,6 +2068,12 @@ test "zphysics.shape.sphere" {
     sphere_shape_settings.setRadius(2.0);
     try expect(sphere_shape_settings.getRadius() == 2.0);
 
+    sphere_shape_settings.setDensity(2.0);
+    try expect(sphere_shape_settings.getDensity() == 2.0);
+
+    sphere_shape_settings.setMaterial(null);
+    try expect(sphere_shape_settings.getMaterial() == null);
+
     const sphere_shape = try sphere_shape_settings.createShape();
     defer sphere_shape.release();
 
@@ -1862,6 +2241,91 @@ test "zphysics.shape.convexhull" {
     try expect(shape.getUserData() == 111);
 }
 
+test "zphysics.shape.heightfield" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const points = [16]f32{ 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2 };
+
+    // Height field size is 4x4
+    const settings = try HeightFieldShapeSettings.create(&points, 4);
+    defer settings.release();
+
+    settings.setBlockSize(2);
+    settings.setBitsPerSample(6);
+    settings.setOffset(.{ 1, 2, 3 });
+    settings.setScale(.{ 4, 5, 6 });
+
+    try expect(settings.getBlockSize() == 2);
+    try expect(settings.getBitsPerSample() == 6);
+    try expect(settings.getOffset()[0] == 1);
+    try expect(settings.getOffset()[1] == 2);
+    try expect(settings.getOffset()[2] == 3);
+    try expect(settings.getScale()[0] == 4);
+    try expect(settings.getScale()[1] == 5);
+    try expect(settings.getScale()[2] == 6);
+
+    const shape = try settings.createShape();
+    defer shape.release();
+
+    try expect(shape.getRefCount() == 2);
+    try expect(shape.getType() == .height_field);
+    try expect(shape.getSubType() == .height_field);
+
+    shape.setUserData(1112);
+    try expect(shape.getUserData() == 1112);
+}
+
+test "zphysics.shape.meshshape" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const vertices = [9]f32{ 0, 0, 0, 1, 1, 1, 1, -1, 1 };
+    const indices = [3]u32{ 0, 1, 2 };
+
+    const settings = try MeshShapeSettings.create(&vertices, 3, @sizeOf([3]f32), &indices);
+    defer settings.release();
+
+    settings.setMaxTrianglesPerLeaf(4);
+    settings.sanitize();
+
+    try expect(settings.getMaxTrianglesPerLeaf() == 4);
+
+    const shape = try settings.createShape();
+    defer shape.release();
+
+    try expect(shape.getRefCount() == 2);
+    try expect(shape.getType() == .mesh);
+    try expect(shape.getSubType() == .mesh);
+
+    shape.setUserData(1112);
+    try expect(shape.getUserData() == 1112);
+}
+
 test "zphysics.body.basic" {
     try init(std.testing.allocator, .{});
     defer deinit();
@@ -1965,6 +2429,21 @@ test "zphysics.body.basic" {
         const body1 = try body_interface_mut.createBody(floor_settings);
         defer body_interface_mut.destroyBody(body1.id);
         try expect(body_interface.isAdded(body1.getId()) == false);
+
+        const xform = body1.getWorldTransform();
+        try expect(xform.rotation[0] == 1.0);
+        try expect(xform.position[1] == -1.0);
+
+        body1.setUserData(12345);
+        try expect(body1.getUserData() == 12345);
+
+        body1.setMotionType(.static);
+        try expect(body1.getMotionType() == .static);
+
+        body1.setCollisionGroup(.{ .group_id = 123 });
+        try expect(body1.getCollisionGroup().group_id == 123);
+        body1.getCollisionGroupMut().group_id += 1;
+        try expect(body1.getCollisionGroup().group_id == 124);
 
         body_interface_mut.addBody(body1.getId(), .activate);
         try expect(body_interface_mut.isAdded(body1.getId()) == true);

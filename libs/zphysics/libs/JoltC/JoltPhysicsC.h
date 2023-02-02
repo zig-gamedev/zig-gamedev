@@ -237,9 +237,9 @@ typedef struct JPC_MotionProperties
 // NOTE: Needs to be kept in sync with JPH::CollisionGroup
 typedef struct JPC_CollisionGroup
 {
-    const JPC_GroupFilter *  filter;
-    JPC_CollisionGroupID     group_id;
-    JPC_CollisionSubGroupID  sub_group_id;
+    const JPC_GroupFilter * filter;
+    JPC_CollisionGroupID    group_id;
+    JPC_CollisionSubGroupID sub_group_id;
 } JPC_CollisionGroup;
 
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
@@ -1042,9 +1042,21 @@ JPC_HeightFieldShapeSettings_GetScale(const JPC_HeightFieldShapeSettings *in_set
 
 JPC_API void
 JPC_HeightFieldShapeSettings_SetScale(JPC_HeightFieldShapeSettings *in_settings, const float in_scale[3]);
+
+JPC_API uint32_t
+JPC_HeightFieldShapeSettings_GetBlockSize(const JPC_HeightFieldShapeSettings *in_settings);
+
+JPC_API void
+JPC_HeightFieldShapeSettings_SetBlockSize(JPC_HeightFieldShapeSettings *in_settings, uint32_t in_block_size);
+
+JPC_API uint32_t
+JPC_HeightFieldShapeSettings_GetBitsPerSample(const JPC_HeightFieldShapeSettings *in_settings);
+
+JPC_API void
+JPC_HeightFieldShapeSettings_SetBitsPerSample(JPC_HeightFieldShapeSettings *in_settings, uint32_t in_num_bits);
 //--------------------------------------------------------------------------------------------------
 //
-// JPC_MeshShapeSettings
+// JPC_MeshShapeSettings (-> JPC_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_MeshShapeSettings *
@@ -1053,6 +1065,12 @@ JPC_MeshShapeSettings_Create(const void *in_vertices,
                              uint32_t in_vertex_size,
                              const uint32_t *in_indices,
                              uint32_t in_num_indices);
+JPC_API uint32_t
+JPC_MeshShapeSettings_GetMaxTrianglesPerLeaf(const JPC_MeshShapeSettings *in_settings);
+
+JPC_API void
+JPC_MeshShapeSettings_SetMaxTrianglesPerLeaf(JPC_MeshShapeSettings *in_settings, uint32_t in_max_triangles);
+
 JPC_API void
 JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
@@ -1184,7 +1202,7 @@ JPC_API void
 JPC_Body_SetRestitution(JPC_Body *in_body, float in_restitution);
 
 JPC_API void
-JPC_Body_GetLinearVelocity(const JPC_Body *in_body, float out_angular_velocity[3]);
+JPC_Body_GetLinearVelocity(const JPC_Body *in_body, float out_linear_velocity[3]);
 
 JPC_API void
 JPC_Body_SetLinearVelocity(JPC_Body *in_body, const float in_linear_velocity[3]);
@@ -1206,13 +1224,13 @@ JPC_Body_GetPointVelocityCOM(const JPC_Body *in_body,
                              const float in_point_relative_to_com[3],
                              float out_velocity[3]);
 JPC_API void
-JPC_Body_GetPointVelocity(const JPC_Body *in_body, const float in_point[3], float out_velocity[3]);
+JPC_Body_GetPointVelocity(const JPC_Body *in_body, const JPC_Real in_point[3], float out_velocity[3]);
 
 JPC_API void
 JPC_Body_AddForce(JPC_Body *in_body, const float in_force[3]);
 
 JPC_API void
-JPC_Body_AddForceAtPosition(JPC_Body *in_body, const float in_force[3], const float in_position[3]);
+JPC_Body_AddForceAtPosition(JPC_Body *in_body, const float in_force[3], const JPC_Real in_position[3]);
 
 JPC_API void
 JPC_Body_AddTorque(JPC_Body *in_body, const float in_torque[3]);
@@ -1231,7 +1249,8 @@ JPC_Body_AddAngularImpulse(JPC_Body *in_body, const float in_angular_impulse[3])
 
 JPC_API void
 JPC_Body_MoveKinematic(JPC_Body *in_body,
-                       const JPC_Real in_target_rotation[4],
+                       const JPC_Real in_target_position[3],
+                       const float in_target_rotation[4],
                        float in_delta_time);
 JPC_API void
 JPC_Body_ApplyBuoyancyImpulse(JPC_Body *in_body,
@@ -1286,14 +1305,9 @@ JPC_Body_SetUserData(JPC_Body *in_body, uint64_t in_user_data);
 
 JPC_API void
 JPC_Body_GetWorldSpaceSurfaceNormal(const JPC_Body *in_body,
-                                    const JPC_SubShapeID *in_sub_shape_id,
+                                    JPC_SubShapeID in_sub_shape_id,
                                     const JPC_Real in_position[3],
                                     float out_normal_vector[3]);
-JPC_API void
-JPC_Body_GetTransformedShape(const JPC_Body *in_body, JPC_TransformedShape *out_shape);
-
-JPC_API void
-JPC_Body_GetBodyCreationSettings(const JPC_Body *in_body, JPC_BodyCreationSettings *out_settings);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BodyID

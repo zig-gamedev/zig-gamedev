@@ -51,8 +51,8 @@ FN(toJph)(const JPC_Body *in) { assert(in); return reinterpret_cast<const JPH::B
 FN(toJpc)(JPH::Body *in) { assert(in); return reinterpret_cast<JPC_Body *>(in); }
 FN(toJph)(JPC_Body *in) { assert(in); return reinterpret_cast<JPH::Body *>(in); }
 
-FN(toJph)(const JPC_PhysicsMaterial *in) { assert(in); return reinterpret_cast<const JPH::PhysicsMaterial *>(in); }
-FN(toJpc)(const JPH::PhysicsMaterial *in) { assert(in); return reinterpret_cast<const JPC_PhysicsMaterial *>(in); }
+FN(toJph)(const JPC_PhysicsMaterial *in) { return reinterpret_cast<const JPH::PhysicsMaterial *>(in); }
+FN(toJpc)(const JPH::PhysicsMaterial *in) { return reinterpret_cast<const JPC_PhysicsMaterial *>(in); }
 
 FN(toJph)(const JPC_ShapeSettings *in) {
     ENSURE_TYPE(in, JPH::ShapeSettings);
@@ -1169,6 +1169,30 @@ JPC_HeightFieldShapeSettings_SetScale(JPC_HeightFieldShapeSettings *in_settings,
     toJph(in_settings)->mScale = loadVec3(in_scale);
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_HeightFieldShapeSettings_GetBlockSize(const JPC_HeightFieldShapeSettings *in_settings)
+{
+    return toJph(in_settings)->mBlockSize;
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_HeightFieldShapeSettings_SetBlockSize(JPC_HeightFieldShapeSettings *in_settings, uint32_t in_block_size)
+{
+    toJph(in_settings)->mBlockSize = in_block_size;
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_HeightFieldShapeSettings_GetBitsPerSample(const JPC_HeightFieldShapeSettings *in_settings)
+{
+    return toJph(in_settings)->mBitsPerSample;
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_HeightFieldShapeSettings_SetBitsPerSample(JPC_HeightFieldShapeSettings *in_settings, uint32_t in_num_bits)
+{
+    toJph(in_settings)->mBitsPerSample = in_num_bits;
+}
+//--------------------------------------------------------------------------------------------------
 //
 // JPC_MeshShapeSettings (-> JPC_ShapeSettings)
 //
@@ -1207,6 +1231,18 @@ JPC_MeshShapeSettings_Create(const void *in_vertices,
     auto settings = new JPH::MeshShapeSettings(vertices, triangles);
     settings->AddRef();
     return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_MeshShapeSettings_GetMaxTrianglesPerLeaf(const JPC_MeshShapeSettings *in_settings)
+{
+    return toJph(in_settings)->mMaxTrianglesPerLeaf;
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_MeshShapeSettings_SetMaxTrianglesPerLeaf(JPC_MeshShapeSettings *in_settings, uint32_t in_max_triangles)
+{
+    toJph(in_settings)->mMaxTrianglesPerLeaf = in_max_triangles;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1680,27 +1716,13 @@ JPC_Body_SetUserData(JPC_Body *in_body, uint64_t in_user_data)
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Body_GetWorldSpaceSurfaceNormal(const JPC_Body *in_body,
-                                    const JPC_SubShapeID *in_sub_shape_id,
+                                    JPC_SubShapeID in_sub_shape_id,
                                     const JPC_Real in_position[3],
                                     float out_normal_vector[3])
 {
     const JPH::Vec3 v = toJph(in_body)->GetWorldSpaceSurfaceNormal(
-        *toJph(in_sub_shape_id), loadRVec3(in_position));
+        *toJph(&in_sub_shape_id), loadRVec3(in_position));
     storeVec3(out_normal_vector, v);
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_Body_GetTransformedShape(const JPC_Body *in_body, JPC_TransformedShape *out_shape)
-{
-    const JPH::TransformedShape transformed_shape = toJph(in_body)->GetTransformedShape();
-    *out_shape = *toJpc(&transformed_shape);
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_Body_GetBodyCreationSettings(const JPC_Body *in_body, JPC_BodyCreationSettings *out_settings)
-{
-    const JPH::BodyCreationSettings settings = toJph(in_body)->GetBodyCreationSettings();
-    *out_settings = *toJpc(&settings);
 }
 //--------------------------------------------------------------------------------------------------
 //
