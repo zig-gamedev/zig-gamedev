@@ -1357,6 +1357,24 @@ pub const ConvexHullShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// HeightFieldShapeSettings (-> ConvexShapeSettings -> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const HeightFieldShapeSettings = opaque {
+    pub usingnamespace ConvexShapeSettings.Methods(@This());
+
+    pub fn create(
+        samples: [*]const f32, // height_field_size ^ 2 samples
+        height_field_size: u32, //  height_field_size / block_size must be a power of 2 and minimally 2
+    ) !*HeightFieldShapeSettings {
+        const settings = c.JPC_HeightFieldShapeSettings_Create(samples, height_field_size);
+        if (settings == null)
+            return error.FailedToCreateHeightFieldShapeSettings;
+        return @ptrCast(*HeightFieldShapeSettings, settings);
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------

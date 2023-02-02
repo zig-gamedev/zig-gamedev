@@ -1029,10 +1029,8 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_HeightFieldShapeSettings *
-JPC_HeightFieldShapeSettings_Create(const float *in_samples,
-                                    uint32_t in_num_samples,
-                                    const float in_offset[3],
-                                    const float in_scale[3]);
+JPC_HeightFieldShapeSettings_Create(const float *in_samples, uint32_t in_height_field_size);
+
 JPC_API void
 JPC_HeightFieldShapeSettings_GetOffset(const JPC_HeightFieldShapeSettings *in_settings, float out_offset[3]);
 

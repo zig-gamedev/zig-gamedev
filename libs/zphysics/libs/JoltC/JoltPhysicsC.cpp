@@ -1136,14 +1136,11 @@ JPC_ConvexHullShapeSettings_SetHullTolerance(JPC_ConvexHullShapeSettings *in_set
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_HeightFieldShapeSettings *
-JPC_HeightFieldShapeSettings_Create(const float *in_samples,
-                                    uint32_t in_num_samples,
-                                    const float in_offset[3],
-                                    const float in_scale[3])
+JPC_HeightFieldShapeSettings_Create(const float *in_samples, uint32_t in_height_field_size)
 {
-    assert(in_samples != nullptr && in_num_samples > 0);
+    assert(in_samples != nullptr && in_height_field_size >= 2);
     auto settings = new JPH::HeightFieldShapeSettings(
-        in_samples, loadVec3(in_offset), loadVec3(in_scale), in_num_samples);
+        in_samples, JPH::Vec3(0,0,0), JPH::Vec3(1,1,1), in_height_field_size);
     settings->AddRef();
     return toJpc(settings);
 }
