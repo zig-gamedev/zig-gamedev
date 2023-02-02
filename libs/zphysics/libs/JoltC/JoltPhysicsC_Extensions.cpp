@@ -277,4 +277,9 @@ static_assert(offsetof(JPH::RayCastSettings, mTreatConvexAsSolid) ==
 
 static_assert(offsetof(JPH::RRayCast, mOrigin) == offsetof(JPC_RRayCast, origin));
 static_assert(offsetof(JPH::RRayCast, mDirection) == offsetof(JPC_RRayCast, direction));
+
+static_assert(sizeof(JPH::BodyID) == 4);
+static_assert(sizeof(JPH::SubShapeID) == 4);
+static_assert(sizeof(JPH::CollisionGroup::GroupID) == 4);
+static_assert(sizeof(JPH::CollisionGroup::SubGroupID) == 4);
 //--------------------------------------------------------------------------------------------------
