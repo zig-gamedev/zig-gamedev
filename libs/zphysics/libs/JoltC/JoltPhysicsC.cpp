@@ -355,14 +355,6 @@ JPC_RegisterTypes(void)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_CollisionGroup_SetDefault(JPC_CollisionGroup *out_group)
-{
-    assert(out_group != nullptr);
-    const JPH::CollisionGroup group;
-    *out_group = *toJpc(&group);
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
 JPC_BodyCreationSettings_SetDefault(JPC_BodyCreationSettings *out_settings)
 {
     assert(out_settings != nullptr);
