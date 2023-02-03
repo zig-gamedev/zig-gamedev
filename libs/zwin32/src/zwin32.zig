@@ -136,7 +136,7 @@ pub fn hrToError(hr: HRESULT) HResultError {
         w32.S_FALSE => w32.MiscError.S_FALSE,
         // treat unknown error return codes as E_FAIL
         else => blk: {
-            std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
+            std.log.debug("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
             break :blk w32.Error.FAIL;
         },
     };
