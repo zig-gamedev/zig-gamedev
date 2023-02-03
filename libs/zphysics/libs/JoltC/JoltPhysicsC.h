@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdalign.h>
+#include <float.h>
 //--------------------------------------------------------------------------------------------------
 //
 // Const
@@ -42,6 +43,8 @@ typedef float JPC_Real;
 #define JPC_BODY_ID_INDEX_BITS 0x007fffff
 #define JPC_BODY_ID_SEQUENCE_BITS 0xff000000
 #define JPC_BODY_ID_SEQUENCE_SHIFT 24
+
+#define JPC_FLT_EPSILON FLT_EPSILON
 
 #ifdef __cplusplus
 extern "C" {
@@ -398,8 +401,8 @@ typedef struct JPC_RRayCast
 // NOTE: Needs to be kept in sync with JPH::RayCastResult
 typedef struct JPC_RayCastResult
 {
-    JPC_BodyID     body_id;
-    float          fraction;
+    JPC_BodyID     body_id; // JPC_BODY_ID_INVALID
+    float          fraction; // 1.0 + JPC_FLT_EPSILON
     JPC_SubShapeID sub_shape_id;
 } JPC_RayCastResult;
 

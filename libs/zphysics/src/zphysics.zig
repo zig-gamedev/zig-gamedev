@@ -16,6 +16,8 @@ comptime {
 
 pub const rvec_align = if (Real == f64) 32 else 16;
 
+pub const flt_epsilon = c.JPC_FLT_EPSILON;
+
 pub const Material = opaque {};
 pub const GroupFilter = opaque {};
 pub const BodyLockInterface = opaque {};
@@ -570,9 +572,9 @@ pub const RRayCast = extern struct {
 };
 
 pub const RayCastResult = extern struct {
-    body_id: BodyId,
-    fraction: f32,
-    sub_shape_id: SubShapeId,
+    body_id: BodyId = body_id_invalid,
+    fraction: f32 = 1.0 + flt_epsilon,
+    sub_shape_id: SubShapeId = undefined,
 
     comptime {
         assert(@sizeOf(RayCastResult) == @sizeOf(c.JPC_RayCastResult));
@@ -962,13 +964,26 @@ pub const BodyInterface = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const NarrowPhaseQuery = opaque {
-    //JPC_API bool
-    //pub fn castRay(query: *const NarrowPhaseQuery,
-    //                             *const JPC_RRayCast *in_ray,
-    //                             JPC_RayCastResult *io_hit,
-    //                             const void *in_broad_phase_layer_filter,
-    //                             const void *in_object_layer_filter,
-    //                             const void *in_body_filter);
+    pub fn castRay(
+        query: *const NarrowPhaseQuery,
+        ray: RRayCast,
+        args: struct {
+            broad_phase_layer_filter: ?*const BroadPhaseLayerFilter = null,
+            object_layer_filter: ?*const ObjectLayerFilter = null,
+            body_filter: ?*const BodyFilter = null,
+        },
+    ) struct { has_hit: bool, hit: RayCastResult } {
+        var hit: RayCastResult = .{};
+        const has_hit = c.JPC_NarrowPhaseQuery_CastRay(
+            @ptrCast(*const c.JPC_NarrowPhaseQuery, query),
+            @ptrCast(*const c.JPC_RRayCast, &ray),
+            @ptrCast(*c.JPC_RayCastResult, &hit),
+            args.broad_phase_layer_filter,
+            args.object_layer_filter,
+            args.body_filter,
+        );
+        return .{ .has_hit = has_hit, .hit = hit };
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -2406,10 +2421,46 @@ test "zphysics.body.basic" {
         .motion_type = .static,
         .object_layer = test_cb1.object_layers.non_moving,
     };
-    const body_id = try body_interface_mut.createAndAddBody(floor_settings, .dont_activate);
+    const body_id = try body_interface_mut.createAndAddBody(floor_settings, .activate);
     defer {
         body_interface_mut.removeBody(body_id);
         body_interface_mut.destroyBody(body_id);
+    }
+
+    physics_system.optimizeBroadPhase();
+
+    {
+        const query = physics_system.getNarrowPhaseQuery();
+
+        var result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -20, 0, 0 } }, .{});
+        try expect(result.has_hit == true);
+        try expect(std.math.approxEqAbs(f32, result.hit.fraction, 0.5, 0.001) == true);
+
+        result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, 20, 0, 0 } }, .{});
+        try expect(result.has_hit == false);
+
+        result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -5, 0, 0 } }, .{});
+        try expect(result.has_hit == false);
+
+        const ray = c.JPC_RRayCast{
+            .origin = .{ 0, 10, 0, 0 },
+            .direction = .{ 0, -20, 0, 0 },
+        };
+        var hit: c.JPC_RayCastResult = .{
+            .body_id = body_id_invalid,
+            .fraction = 1.0 + flt_epsilon,
+            .sub_shape_id = undefined,
+        };
+        const has_hit = c.JPC_NarrowPhaseQuery_CastRay(
+            @ptrCast(*const c.JPC_NarrowPhaseQuery, query),
+            &ray,
+            &hit,
+            null, // broad_phase_layer_filter
+            null, // object_layer_filter
+            null, // body_filter
+        );
+        try expect(has_hit == true);
+        try expect(std.math.approxEqAbs(f32, hit.fraction, 0.5, 0.001) == true);
     }
 
     {
