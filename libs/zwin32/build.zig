@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zwin32",
     .source = .{ .path = thisDir() ++ "/src/zwin32.zig" },
 };

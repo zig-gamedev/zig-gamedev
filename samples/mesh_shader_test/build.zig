@@ -55,7 +55,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     return exe;
 }
 
-fn buildShaders(b: *std.Build) *std.build.Step {
+fn buildShaders(b: *std.Build) *std.Build.Step {
     const dxc_step = b.step("mesh_shader_test-dxc", "Build shaders for 'mesh shader test' demo");
 
     makeDxcCmd(
@@ -136,7 +136,7 @@ fn buildShaders(b: *std.Build) *std.build.Step {
 
 fn makeDxcCmd(
     b: *std.Build,
-    dxc_step: *std.build.Step,
+    dxc_step: *std.Build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,

@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zbullet",
     .source = .{ .path = thisDir() ++ "/src/zbullet.zig" },
 };

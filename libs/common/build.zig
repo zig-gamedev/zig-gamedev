@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
     return .{
         .name = "common",
         .source = .{ .path = thisDir() ++ "/src/common.zig" },

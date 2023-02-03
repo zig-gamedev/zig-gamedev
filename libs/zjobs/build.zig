@@ -2,7 +2,7 @@ const std = @import("std");
 
 const zjobs = .{ .zig = thisDir() ++ "/src/zjobs.zig" };
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zjobs",
     .source = .{ .path = zjobs.zig },
 };

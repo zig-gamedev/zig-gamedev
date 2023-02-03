@@ -8,7 +8,7 @@ pub fn link(exe: *std.Build.CompileStep) void {
     });
 }
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zstbi",
     .source = .{ .path = thisDir() ++ "/src/zstbi.zig" },
 };

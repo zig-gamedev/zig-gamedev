@@ -16,7 +16,7 @@ pub fn buildTests(
     return tests;
 }
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zglfw",
     .source = .{ .path = thisDir() ++ "/src/zglfw.zig" },
 };

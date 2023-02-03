@@ -2,7 +2,7 @@ const std = @import("std");
 
 const main = .{ .zig = thisDir() ++ "/src/main.zig" };
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zpool",
     .source = .{ .path = main.zig },
 };

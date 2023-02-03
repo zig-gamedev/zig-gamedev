@@ -12,7 +12,7 @@ pub const BuildOptions = struct {
 
 pub const BuildOptionsStep = struct {
     options: BuildOptions,
-    step: *std.build.OptionsStep,
+    step: *std.Build.OptionsStep,
 
     pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
         const bos = .{
@@ -23,7 +23,7 @@ pub const BuildOptionsStep = struct {
         return bos;
     }
 
-    pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
+    pub fn getPkg(bos: BuildOptionsStep) std.Build.Pkg {
         return bos.step.getPackage("zgui_options");
     }
 
@@ -32,7 +32,7 @@ pub const BuildOptionsStep = struct {
     }
 };
 
-pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
     return .{
         .name = "zgui",
         .source = .{ .path = thisDir() ++ "/src/main.zig" },

@@ -24,7 +24,7 @@ const zglfw = @import("libs/zglfw/build.zig");
 const zgpu = @import("libs/zgpu/build.zig");
 const zpool = @import("libs/zpool/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
     const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});

@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const pkg = std.build.Pkg{
+pub const pkg = std.Build.Pkg{
     .name = "zaudio",
     .source = .{ .path = thisDir() ++ "/src/zaudio.zig" },
 };
