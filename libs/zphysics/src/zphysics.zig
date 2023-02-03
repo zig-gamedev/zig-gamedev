@@ -557,6 +557,49 @@ pub const BodyCreationSettings = extern struct {
         assert(@offsetOf(BodyCreationSettings, "user_data") == @offsetOf(c.JPC_BodyCreationSettings, "user_data"));
     }
 };
+
+pub const RRayCast = extern struct {
+    origin: [4]Real align(rvec_align), // 4th element is ignored
+    direction: [4]f32 align(16), // 4th element is ignored
+
+    comptime {
+        assert(@sizeOf(RRayCast) == @sizeOf(c.JPC_RRayCast));
+        assert(@offsetOf(RRayCast, "origin") == @offsetOf(c.JPC_RRayCast, "origin"));
+        assert(@offsetOf(RRayCast, "direction") == @offsetOf(c.JPC_RRayCast, "direction"));
+    }
+};
+
+pub const RayCastResult = extern struct {
+    body_id: BodyId,
+    fraction: f32,
+    sub_shape_id: SubShapeId,
+
+    comptime {
+        assert(@sizeOf(RayCastResult) == @sizeOf(c.JPC_RayCastResult));
+        assert(@offsetOf(RayCastResult, "body_id") == @offsetOf(c.JPC_RayCastResult, "body_id"));
+        assert(@offsetOf(RayCastResult, "fraction") == @offsetOf(c.JPC_RayCastResult, "fraction"));
+        assert(@offsetOf(RayCastResult, "sub_shape_id") == @offsetOf(c.JPC_RayCastResult, "sub_shape_id"));
+    }
+};
+
+pub const BackFaceMode = enum(c.JPC_BackFaceMode) {
+    ignore_back_faces = c.JPC_BACK_FACE_IGNORE,
+    collide_with_back_faces = c.JPC_BACK_FACE_COLLIDE,
+};
+
+pub const RayCastSettings = extern struct {
+    back_face_mode: BackFaceMode,
+    treat_convex_as_solid: bool,
+
+    comptime {
+        assert(@sizeOf(RayCastSettings) == @sizeOf(c.JPC_RayCastSettings));
+        assert(
+            @offsetOf(RayCastSettings, "back_face_mode") == @offsetOf(c.JPC_RayCastSettings, "back_face_mode"),
+        );
+        assert(@offsetOf(RayCastSettings, "treat_convex_as_solid") ==
+            @offsetOf(c.JPC_RayCastSettings, "treat_convex_as_solid"));
+    }
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Init/deinit and global state
