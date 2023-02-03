@@ -2506,13 +2506,17 @@ test "zphysics.body.basic" {
 
         var result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -20, 0, 0 } }, .{});
         try expect(result.has_hit == true);
+        try expect(result.hit.body_id == body_id);
+        try expect(result.hit.sub_shape_id == ~@as(SubShapeId, 0));
         try expect(std.math.approxEqAbs(f32, result.hit.fraction, 0.5, 0.001) == true);
 
         result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, 20, 0, 0 } }, .{});
         try expect(result.has_hit == false);
+        try expect(result.hit.body_id == body_id_invalid);
 
         result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -5, 0, 0 } }, .{});
         try expect(result.has_hit == false);
+        try expect(result.hit.body_id == body_id_invalid);
 
         const ray = c.JPC_RRayCast{
             .origin = .{ 0, 10, 0, 0 },
