@@ -1749,6 +1749,13 @@ JPC_MotionProperties_SetLinearVelocityClamped(JPC_MotionProperties *in_propertie
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
+JPC_MotionProperties_GetAngularVelocity(const JPC_MotionProperties *in_properties,
+                                        float out_angular_velocity[3])
+{
+    storeVec3(out_angular_velocity, toJph(in_properties)->GetAngularVelocity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
 JPC_MotionProperties_SetAngularVelocity(JPC_MotionProperties *in_properties,
                                         const float in_angular_velocity[3])
 {
@@ -1924,34 +1931,6 @@ JPC_MotionProperties_SetMaxAngularVelocity(JPC_MotionProperties *in_properties,
                                            float in_max_angular_velocity)
 {
     toJph(in_properties)->SetMaxAngularVelocity(in_max_angular_velocity);
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_MotionProperties_AddLinearVelocityStep(JPC_MotionProperties *in_properties,
-                                           const float in_linear_velocity_change[3])
-{
-    toJph(in_properties)->AddLinearVelocityStep(loadVec3(in_linear_velocity_change));
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_MotionProperties_SubLinearVelocityStep(JPC_MotionProperties *in_properties,
-                                           const float in_linear_velocity_change[3])
-{
-    toJph(in_properties)->SubLinearVelocityStep(loadVec3(in_linear_velocity_change));
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_MotionProperties_AddAngularVelocityStep(JPC_MotionProperties *in_properties,
-                                            const float in_angular_velocity_change[3])
-{
-    toJph(in_properties)->AddAngularVelocityStep(loadVec3(in_angular_velocity_change));
-}
-//--------------------------------------------------------------------------------------------------
-JPC_API void
-JPC_MotionProperties_SubAngularVelocityStep(JPC_MotionProperties *in_properties,
-                                            const float in_angular_velocity_change[3])
-{
-    toJph(in_properties)->SubAngularVelocityStep(loadVec3(in_angular_velocity_change));
 }
 //--------------------------------------------------------------------------------------------------
 //

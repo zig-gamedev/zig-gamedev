@@ -1335,6 +1335,78 @@ pub const MotionProperties = extern struct {
 
     reserved: [52 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
 
+    pub fn getMotionQuality(motion: *const MotionProperties) MotionQuality {
+        return @intToEnum(MotionQuality, c.JPC_MotionProperties_GetMotionQuality(
+            @ptrCast(*const c.JPC_MotionProperties, motion),
+        ));
+    }
+
+    pub fn getLinearVelocity(motion: *const MotionProperties) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_MotionProperties_GetLinearVelocity(@ptrCast(*const c.JPC_MotionProperties, motion), &velocity);
+        return velocity;
+    }
+    pub fn setLinearVelocity(motion: *MotionProperties, velocity: [3]f32) void {
+        c.JPC_MotionProperties_SetLinearVelocity(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+    }
+    pub fn setLinearVelocityClamped(motion: *MotionProperties, velocity: [3]f32) void {
+        c.JPC_MotionProperties_SetLinearVelocityClamped(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+    }
+
+    pub fn getAngularVelocity(motion: *const MotionProperties) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_MotionProperties_GetAngularVelocity(@ptrCast(*const c.JPC_MotionProperties, motion), &velocity);
+        return velocity;
+    }
+    pub fn setAngularVelocity(motion: *MotionProperties, velocity: [3]f32) void {
+        c.JPC_MotionProperties_SetAnglularVelocity(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+    }
+    pub fn setAngularVelocityClamped(motion: *MotionProperties, velocity: [3]f32) void {
+        c.JPC_MotionProperties_SetAnglularVelocityClamped(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+    }
+
+    pub fn moveKinematic(
+        motion: *MotionProperties,
+        delta_position: [3]f32,
+        delta_rotation: [4]f32,
+        delta_time: f32,
+    ) void {
+        c.JPC_MotionProperties_MoveKinematic(
+            @ptrCast(*c.JPC_MotionProperties, motion),
+            &delta_position,
+            &delta_rotation,
+            delta_time,
+        );
+    }
+
+    pub fn clampLinearVelocity(motion: *MotionProperties) void {
+        c.JPC_MotionProperties_ClampLinearVelocity(@ptrCast(*c.JPC_MotionProperties, motion));
+    }
+    pub fn clampAngularVelocity(motion: *MotionProperties) void {
+        c.JPC_MotionProperties_ClampAngularVelocity(@ptrCast(*c.JPC_MotionProperties, motion));
+    }
+
+    pub fn getLinearDamping(motion: *const MotionProperties) f32 {
+        return c.JPC_MotionProperties_GetLinearDamping(@ptrCast(*const c.JPC_MotionProperties, motion));
+    }
+    pub fn setLinearDamping(motion: *MotionProperties, damping: f32) void {
+        c.JPC_MotionProperties_SetLinearDamping(@ptrCast(*c.JPC_MotionProperties, motion), damping);
+    }
+
+    pub fn getAngularDamping(motion: *const MotionProperties) f32 {
+        return c.JPC_MotionProperties_GetAngularDamping(@ptrCast(*const c.JPC_MotionProperties, motion));
+    }
+    pub fn setAngularDamping(motion: *MotionProperties, damping: f32) void {
+        c.JPC_MotionProperties_SetAngularDamping(@ptrCast(*c.JPC_MotionProperties, motion), damping);
+    }
+
+    pub fn getGravityFactor(motion: *const MotionProperties) f32 {
+        return c.JPC_MotionProperties_GetGravityFactor(@ptrCast(*const c.JPC_MotionProperties, motion));
+    }
+    pub fn setGravityFactor(motion: *MotionProperties, factor: f32) void {
+        c.JPC_MotionProperties_SetGravityFactor(@ptrCast(*c.JPC_MotionProperties, motion), factor);
+    }
+
     comptime {
         assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));
         assert(@offsetOf(MotionProperties, "force") == @offsetOf(c.JPC_MotionProperties, "force"));

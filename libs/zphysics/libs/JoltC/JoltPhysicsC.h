@@ -579,6 +579,9 @@ JPC_API void
 JPC_MotionProperties_SetLinearVelocityClamped(JPC_MotionProperties *in_properties,
                                               const float in_linear_velocity[3]);
 JPC_API void
+JPC_MotionProperties_GetAngularVelocity(const JPC_MotionProperties *in_properties,
+                                        float out_angular_velocity[3]);
+JPC_API void
 JPC_MotionProperties_SetAngularVelocity(JPC_MotionProperties *in_properties,
                                         const float in_angular_velocity[3]);
 JPC_API void
@@ -660,18 +663,6 @@ JPC_MotionProperties_GetMaxAngularVelocity(const JPC_MotionProperties *in_proper
 JPC_API void
 JPC_MotionProperties_SetMaxAngularVelocity(JPC_MotionProperties *in_properties,
                                            float in_max_angular_velocity);
-JPC_API void
-JPC_MotionProperties_AddLinearVelocityStep(JPC_MotionProperties *in_properties,
-                                           const float in_linear_velocity_change[3]);
-JPC_API void
-JPC_MotionProperties_SubLinearVelocityStep(JPC_MotionProperties *in_properties,
-                                           const float in_linear_velocity_change[3]);
-JPC_API void
-JPC_MotionProperties_AddAngularVelocityStep(JPC_MotionProperties *in_properties,
-                                            const float in_linear_angular_change[3]);
-JPC_API void
-JPC_MotionProperties_SubAngularVelocityStep(JPC_MotionProperties *in_properties,
-                                            const float in_linear_angular_change[3]);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_TempAllocator
