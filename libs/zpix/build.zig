@@ -8,7 +8,7 @@ pub const BuildOptionsStep = struct {
     options: BuildOptions,
     step: *std.build.OptionsStep,
 
-    pub fn init(b: *std.build.Builder, options: BuildOptions) BuildOptionsStep {
+    pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
         const bos = .{
             .options = options,
             .step = b.addOptions(),
@@ -21,7 +21,7 @@ pub const BuildOptionsStep = struct {
         return bos.step.getPackage("zpix_options");
     }
 
-    fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
+    fn addTo(bos: BuildOptionsStep, target_step: *std.Build.CompileStep) void {
         target_step.addOptions("zpix_options", bos.step);
     }
 };
@@ -34,7 +34,7 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     };
 }
 
-pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
+pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
     bos.addTo(exe);
 }
 

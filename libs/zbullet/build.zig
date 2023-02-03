@@ -5,21 +5,23 @@ pub const pkg = std.build.Pkg{
     .source = .{ .path = thisDir() ++ "/src/zbullet.zig" },
 };
 
-pub fn build(_: *std.build.Builder) void {}
+pub fn build(_: *std.Build) void {}
 
 pub fn buildTests(
-    b: *std.build.Builder,
+    b: *std.Build,
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.build.LibExeObjStep {
-    const tests = b.addTest(pkg.source.path);
-    tests.setBuildMode(build_mode);
-    tests.setTarget(target);
+) *std.Build.CompileStep {
+    const tests = b.addTest(.{
+        .root_source_file = .{ .path = pkg.source.path },
+        .target = target,
+        .optimize = build_mode,
+    });
     link(tests);
     return tests;
 }
 
-pub fn link(exe: *std.build.LibExeObjStep) void {
+pub fn link(exe: *std.Build.CompileStep) void {
     exe.addIncludePath(thisDir() ++ "/libs/cbullet");
     exe.addIncludePath(thisDir() ++ "/libs/bullet");
     exe.linkSystemLibraryName("c");

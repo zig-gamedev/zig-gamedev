@@ -3,8 +3,13 @@ const zwin32 = @import("../../libs/zwin32/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("minimal", thisDir() ++ "/src/minimal.zig");
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = "minimal",
+        .root_source_file = .{ .path = thisDir() ++ "/src/minimal.zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     exe.step.dependOn(
         &exe.builder.addInstallFile(
@@ -31,9 +36,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         ).step,
     );
 
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
-
     const dxc_step = buildShaders(b);
     exe.step.dependOn(dxc_step);
 
@@ -44,7 +46,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder) *std.build.Step {
+fn buildShaders(b: *std.Build) *std.build.Step {
     const dxc_step = b.step("minimal-dxc", "Build shaders for 'minimal' demo");
 
     makeDxcCmd(b, dxc_step, "src/minimal.hlsl", "vsMinimal", "minimal.vs.cso", "vs", "");
@@ -54,7 +56,7 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
 }
 
 fn makeDxcCmd(
-    b: *std.build.Builder,
+    b: *std.Build,
     dxc_step: *std.build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,

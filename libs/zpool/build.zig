@@ -7,8 +7,8 @@ pub const pkg = std.build.Pkg{
     .source = .{ .path = main.zig },
 };
 
-pub fn build(b: *std.build.Builder) void {
-    const build_mode = b.standardReleaseOptions();
+pub fn build(b: *std.Build) void {
+    const build_mode = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
     const tests = buildTests(b, build_mode, target);
 
@@ -17,13 +17,15 @@ pub fn build(b: *std.build.Builder) void {
 }
 
 pub fn buildTests(
-    b: *std.build.Builder,
+    b: *std.Build,
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.build.LibExeObjStep {
-    const tests = b.addTest(main.zig);
-    tests.setBuildMode(build_mode);
-    tests.setTarget(target);
+) *std.Build.CompileStep {
+    const tests = b.addTest(.{
+        .root_source_file = .{ .path = main.zig },
+        .target = target,
+        .optimize = build_mode,
+    });
     return tests;
 }
 

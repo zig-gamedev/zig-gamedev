@@ -6,15 +6,17 @@ const common = @import("../../libs/common/build.zig");
 const Options = @import("../../build.zig").Options;
 const content_dir = "triangle_content/";
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("triangle", thisDir() ++ "/src/triangle.zig");
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = "triangle",
+        .root_source_file = .{ .path = thisDir() ++ "/src/triangle.zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
 
     const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
@@ -48,7 +50,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder) *std.build.Step {
+fn buildShaders(b: *std.Build) *std.build.Step {
     const dxc_step = b.step("triangle-dxc", "Build shaders for 'triangle' demo");
 
     makeDxcCmd(
@@ -76,7 +78,7 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
 }
 
 fn makeDxcCmd(
-    b: *std.build.Builder,
+    b: *std.Build,
     dxc_step: *std.build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,

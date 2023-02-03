@@ -5,11 +5,13 @@ const common = @import("../../libs/common/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("vector_graphics_test", thisDir() ++ "/src/vector_graphics_test.zig");
-
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = "vector_graphics_test",
+        .root_source_file = .{ .path = thisDir() ++ "/src/vector_graphics_test.zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

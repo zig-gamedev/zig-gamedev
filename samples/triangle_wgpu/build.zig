@@ -8,8 +8,13 @@ const zgui = @import("../../libs/zgui/build.zig");
 const Options = @import("../../build.zig").Options;
 const content_dir = "triangle_wgpu_content/";
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("triangle_wgpu", thisDir() ++ "/src/triangle_wgpu.zig");
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = "triangle_wgpu",
+        .root_source_file = .{ .path = thisDir() ++ "/src/triangle_wgpu.zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
@@ -21,9 +26,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .install_subdir = "bin/" ++ content_dir,
     });
     exe.step.dependOn(&install_content_step.step);
-
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
 
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
     const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });

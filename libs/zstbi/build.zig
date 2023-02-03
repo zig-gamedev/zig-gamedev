@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn link(exe: *std.build.LibExeObjStep) void {
+pub fn link(exe: *std.Build.CompileStep) void {
     exe.linkSystemLibraryName("c");
     exe.addCSourceFile(thisDir() ++ "/libs/stbi/stb_image.c", &.{
         "-std=c99",
@@ -14,13 +14,15 @@ pub const pkg = std.build.Pkg{
 };
 
 pub fn buildTests(
-    b: *std.build.Builder,
+    b: *std.Build,
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.build.LibExeObjStep {
-    const tests = b.addTest(pkg.source.path);
-    tests.setBuildMode(build_mode);
-    tests.setTarget(target);
+) *std.Build.CompileStep {
+    const tests = b.addTest(.{
+        .root_source_file = .{ .path = pkg.source.path },
+        .target = target,
+        .optimize = build_mode,
+    });
     link(tests);
     return tests;
 }

@@ -8,11 +8,11 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     };
 }
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     _ = b;
 }
 
-pub fn link(exe: *std.build.LibExeObjStep) void {
+pub fn link(exe: *std.Build.CompileStep) void {
     const lib = buildLibrary(exe);
     exe.linkLibrary(lib);
     //exe.addIncludePath(thisDir() ++ "/src/c");
@@ -21,11 +21,14 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     //exe.addIncludePath(thisDir() ++ "/../zstbi/libs/stbi");
 }
 
-fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("common", thisDir() ++ "/src/common.zig");
+fn buildLibrary(exe: *std.Build.CompileStep) *std.Build.CompileStep {
+    const lib = exe.builder.addStaticLibrary(.{
+        .name = "common",
+        .root_source_file = .{ .path = thisDir() ++ "/src/common.zig" },
+        .target = exe.target,
+        .optimize = exe.optimize,
+    });
 
-    lib.setBuildMode(exe.build_mode);
-    lib.setTarget(exe.target);
     //lib.addIncludePath(thisDir() ++ "/src/c");
 
     lib.linkSystemLibraryName("c");

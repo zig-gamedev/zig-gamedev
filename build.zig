@@ -1,12 +1,12 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.900" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1557" };
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ensureZigVersion() catch return;
     const options = Options{
-        .build_mode = b.standardReleaseOptions(),
+        .build_mode = b.standardOptimizeOption(.{}),
         .target = b.standardTargetOptions(.{}),
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
         .zd3d12_enable_debug_layer = b.option(
@@ -185,10 +185,10 @@ pub const Options = struct {
     zpix_enable: bool,
 };
 
-fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
+fn installDemo(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
-    if (exe.build_mode == .ReleaseFast)
+    if (exe.optimize == .ReleaseFast)
         exe.strip = true;
 
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;

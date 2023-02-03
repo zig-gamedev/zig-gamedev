@@ -11,7 +11,7 @@ const std = @import("std");
 const zwin32 = @import("libs/zwin32/build.zig");
 const zxaudio2 = @import("libs/zxaudio2/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const zxaudio2_options = zxaudio2.BuildOptionsStep.init(b, .{
         .enable_debug_layer = false,
