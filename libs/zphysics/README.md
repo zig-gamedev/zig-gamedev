@@ -67,6 +67,7 @@ pub fn main() !void {
         .motion_type = .dynamic,
         .object_layer = object_layers.non_moving,
     }, .activate);
+    defer body_interface.removeAndDestroyBody(body_id);
 
     physics_system.optimizeBroadPhase();
 

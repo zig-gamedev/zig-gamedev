@@ -924,7 +924,7 @@ pub const BodyInterface = opaque {
         return body_id;
     }
 
-    pub fn removeAndDestroy(body_iface: *BodyInterface, body_id: BodyId) void {
+    pub fn removeAndDestroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
         body_iface.removeBody(body_id);
         body_iface.destroyBody(body_id);
     }
@@ -2913,7 +2913,7 @@ test "zphysics.body.motion" {
         .object_layer = test_cb1.object_layers.moving,
     };
     const body_id = try body_interface.createAndAddBody(body_settings, .activate);
-    defer body_interface.removeAndDestroy(body_id);
+    defer body_interface.removeAndDestroyBody(body_id);
 
     physics_system.optimizeBroadPhase();
 
