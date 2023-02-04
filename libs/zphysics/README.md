@@ -76,7 +76,10 @@ pub fn main() !void {
         const query = physics_system.getNarrowPhaseQuery();
 
         var result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -20, 0, 0 } }, .{});
-        if (result.has_hit == true) {
+        if (result.has_hit) {
+            // result.hit.body_id
+            // result.hit.fraction
+            // result.hit.sub_shape_id
             ...
         }
     }
