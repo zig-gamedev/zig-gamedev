@@ -1407,6 +1407,20 @@ pub const MotionProperties = extern struct {
         c.JPC_MotionProperties_SetGravityFactor(@ptrCast(*c.JPC_MotionProperties, motion), factor);
     }
 
+    pub fn setMassProperties(motion: *MotionProperties, mass_properties: MassProperties) void {
+        c.JPC_MotionProperties_SetMassProperties(
+            @ptrCast(*c.JPC_MotionProperties, motion),
+            @ptrCast(*const c.JPC_MassProperties, &mass_properties),
+        );
+    }
+
+    pub fn getInverseMass(motion: *const MotionProperties) f32 {
+        return c.JPC_MotionProperties_GetInverseMass(@ptrCast(*const c.JPC_MotionProperties, motion));
+    }
+    pub fn setInverseMass(motion: *MotionProperties, inverse_mass: f32) void {
+        c.JPC_MotionProperties_SetInverseMass(@ptrCast(*c.JPC_MotionProperties, motion), inverse_mass);
+    }
+
     comptime {
         assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));
         assert(@offsetOf(MotionProperties, "force") == @offsetOf(c.JPC_MotionProperties, "force"));
