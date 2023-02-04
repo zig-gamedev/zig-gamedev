@@ -1,4 +1,4 @@
-# zphysics - Zig API and C API for Jolt Physics
+# zphysics - Zig API and C API for Jolt Physics (v0.0.4)
 
 [Jolt Physics](https://github.com/jrouwe/JoltPhysics) is a fast and modern physics library written in C++.
 
@@ -34,6 +34,7 @@ const zphy = @import("zphysics");
 
 pub fn main() !void {
     try zphy.init(allocator, .{});
+    defer zphy.deinit();
 
     ...
 
@@ -48,5 +49,6 @@ pub fn main() !void {
             .max_contact_constraints = 1024,
         },
     );
+    defer physics_system.destroy();
 }
 ```
