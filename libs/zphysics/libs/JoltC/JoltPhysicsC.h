@@ -1112,6 +1112,16 @@ JPC_API bool
 JPC_BodyInterface_IsAdded(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 
 JPC_API void
+JPC_BodyInterface_SetLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
+                                              JPC_BodyID in_body_id,
+                                              const float in_linear_velocity[3],
+                                              const float in_angular_velocity[3]);
+JPC_API void
+JPC_BodyInterface_GetLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
+                                              JPC_BodyID in_body_id,
+                                              float out_linear_velocity[3],
+                                              float out_angular_velocity[3]);
+JPC_API void
 JPC_BodyInterface_SetLinearVelocity(JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     const float in_velocity[3]);
@@ -1119,6 +1129,27 @@ JPC_API void
 JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     float out_velocity[3]);
+JPC_API void
+JPC_BodyInterface_AddLinearVelocity(const JPC_BodyInterface *in_iface,
+                                    JPC_BodyID in_body_id,
+                                    const float in_velocity[3]);
+JPC_API void
+JPC_BodyInterface_AddLinearAndAngularVelocity(const JPC_BodyInterface *in_iface,
+                                              JPC_BodyID in_body_id,
+                                              const float in_linear_velocity[3],
+                                              const float in_angular_velocity[3]);
+JPC_API void
+JPC_BodyInterface_SetAngularVelocity(JPC_BodyInterface *in_iface,
+                                     JPC_BodyID in_body_id,
+                                     const float in_velocity[3]);
+JPC_API void
+JPC_BodyInterface_GetAngularVelocity(const JPC_BodyInterface *in_iface,
+                                     JPC_BodyID in_body_id,
+                                     float out_velocity[3]);
+JPC_API void
+JPC_BodyInterface_GetPointVelocity(const JPC_BodyInterface *in_iface,
+                                   const JPC_Real in_point[3],
+                                   float out_velocity[3]);
 JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
