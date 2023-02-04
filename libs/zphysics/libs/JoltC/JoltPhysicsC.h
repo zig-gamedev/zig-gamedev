@@ -642,10 +642,10 @@ JPC_MotionProperties_GetLocalSpaceInverseInertia(const JPC_MotionProperties *in_
                                                  float out_matrix[16]);
 JPC_API void
 JPC_MotionProperties_GetInverseInertiaForRotation(const JPC_MotionProperties *in_properties,
-                                                  const float in_rotation_matrix[4],
+                                                  const float in_rotation_matrix[16],
                                                   float out_matrix[16]);
 JPC_API void
-JPC_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(JPC_MotionProperties *in_properties,
+JPC_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(const JPC_MotionProperties *in_properties,
                                                               const float in_body_rotation[4],
                                                               const float in_vector[3],
                                                               float out_vector[3]);

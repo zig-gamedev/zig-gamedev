@@ -1372,6 +1372,31 @@ pub const MotionProperties = extern struct {
         c.JPC_MotionProperties_SetAnglularVelocityClamped(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
     }
 
+    /// `point` is relative to the center of mass (com)
+    pub fn getPointVelocityCom(motion: *const MotionProperties, point: [3]f32) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_MotionProperties_GetPointVelocityCOM(
+            @ptrCast(*const c.JPC_MotionProperties, motion),
+            &point,
+            &velocity,
+        );
+        return velocity;
+    }
+
+    pub fn getMaxLinearVelocity(motion: *const MotionProperties) f32 {
+        return c.JPC_MotionProperties_GetMaxLinearVelocity(@ptrCast(*const c.JPC_MotionProperties, motion));
+    }
+    pub fn setMaxLinearVelocity(motion: *MotionProperties, velocity: f32) void {
+        c.JPC_MotionProperties_SetMaxLinearVelocity(@ptrCast(*c.JPC_MotionProperties, motion), velocity);
+    }
+
+    pub fn getMaxAngularVelocity(motion: *const MotionProperties) f32 {
+        return c.JPC_MotionProperties_GetMaxAngularVelocity(@ptrCast(*const c.JPC_MotionProperties, motion));
+    }
+    pub fn setMaxAngularVelocity(motion: *MotionProperties, velocity: f32) void {
+        c.JPC_MotionProperties_SetMaxAngularVelocity(@ptrCast(*c.JPC_MotionProperties, motion), velocity);
+    }
+
     pub fn moveKinematic(
         motion: *MotionProperties,
         delta_position: [3]f32,
@@ -1430,7 +1455,10 @@ pub const MotionProperties = extern struct {
 
     pub fn getInverseInertiaDiagonal(motion: *const MotionProperties) [3]f32 {
         var diagonal: [3]f32 = undefined;
-        c.JPC_MotionProperties_GetInverseInertiaDiagonal(@ptrCast(*const c.JPC_MotionProperties, motion), &diagonal);
+        c.JPC_MotionProperties_GetInverseInertiaDiagonal(
+            @ptrCast(*const c.JPC_MotionProperties, motion),
+            &diagonal,
+        );
         return diagonal;
     }
 
@@ -1442,6 +1470,40 @@ pub const MotionProperties = extern struct {
 
     pub fn setInverseInertia(motion: *MotionProperties, diagonal: [3]f32, rotation: [4]f32) void {
         c.JPC_MotionProperties_SetInverseInertia(@ptrCast(*c.JPC_MotionProperties, motion), &diagonal, &rotation);
+    }
+
+    pub fn getLocalSpaceInverseInertia(motion: *const MotionProperties) [16]f32 {
+        var inertia: [16]f32 = undefined;
+        c.JPC_MotionProperties_GetLocalSpaceInverseInertia(
+            @ptrCast(*const c.JPC_MotionProperties, motion),
+            &inertia,
+        );
+        return inertia;
+    }
+
+    pub fn getInverseInertiaForRotation(motion: *const MotionProperties, rotation_matrix: [16]f32) [16]f32 {
+        var inertia: [16]f32 = undefined;
+        c.JPC_MotionProperties_GetInverseInertiaForRotation(
+            @ptrCast(*const c.JPC_MotionProperties, motion),
+            &rotation_matrix,
+            &inertia,
+        );
+        return inertia;
+    }
+
+    pub fn multiplyWorldSpaceInverseInertiaByVector(
+        motion: *const MotionProperties,
+        rotation: [4]f32,
+        vector: [3]f32,
+    ) [3]f32 {
+        var out: [3]f32 = undefined;
+        c.JPC_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(
+            @ptrCast(*const c.JPC_MotionProperties, motion),
+            &rotation,
+            &vector,
+            &out,
+        );
+        return out;
     }
 
     comptime {
