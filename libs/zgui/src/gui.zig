@@ -3936,7 +3936,7 @@ pub const DrawList = *opaque {
         p3: [2]f32,
         num_segments: u32 = 0,
     };
-    pub fn pathPathBezierQuadraticCurveTo(draw_list: DrawList, args: PathBezierQuadraticCurveTo) void {
+    pub fn pathBezierQuadraticCurveTo(draw_list: DrawList, args: PathBezierQuadraticCurveTo) void {
         zguiDrawList_PathBezierQuadraticCurveTo(draw_list, &args.p2, &args.p3, args.num_segments);
     }
     extern fn zguiDrawList_PathBezierQuadraticCurveTo(
