@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 0, .patch = 3 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 0, .patch = 4 };
 
 const std = @import("std");
 const assert = std.debug.assert;
@@ -937,6 +937,34 @@ pub const BodyInterface = opaque {
         return c.JPC_BodyInterface_IsActive(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
 
+    pub fn setLinearAndAngularVelocity(
+        body_iface: *BodyInterface,
+        body_id: BodyId,
+        linear_velocity: [3]f32,
+        angular_velocity: [3]f32,
+    ) void {
+        return c.JPC_BodyInterface_SetLinearAndAngularVelocity(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &linear_velocity,
+            &angular_velocity,
+        );
+    }
+    pub fn getLinearAndAngularVelocity(
+        body_iface: *const BodyInterface,
+        body_id: BodyId,
+    ) struct { linear: [3]f32, angular: [3]f32 } {
+        var linear: [3]f32 = undefined;
+        var angular: [3]f32 = undefined;
+        c.JPC_BodyInterface_GetLinearAndAngularVelocity(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &linear,
+            &angular,
+        );
+        return .{ .linear = linear, .angular = angular };
+    }
+
     pub fn setLinearVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
         return c.JPC_BodyInterface_SetLinearVelocity(
             @ptrCast(*c.JPC_BodyInterface, body_iface),
@@ -944,12 +972,61 @@ pub const BodyInterface = opaque {
             &velocity,
         );
     }
-
     pub fn getLinearVelocity(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
         var velocity: [3]f32 = undefined;
         c.JPC_BodyInterface_GetLinearVelocity(
             @ptrCast(*const c.JPC_BodyInterface, body_iface),
             body_id,
+            &velocity,
+        );
+        return velocity;
+    }
+
+    pub fn addLinearVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
+        return c.JPC_BodyInterface_AddLinearVelocity(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &velocity,
+        );
+    }
+
+    pub fn addLinearAndAngularVelocity(
+        body_iface: *BodyInterface,
+        body_id: BodyId,
+        linear_velocity: [3]f32,
+        angular_velocity: [3]f32,
+    ) void {
+        return c.JPC_BodyInterface_AddLinearAndAngularVelocity(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &linear_velocity,
+            &angular_velocity,
+        );
+    }
+
+    pub fn setAngularVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
+        return c.JPC_BodyInterface_SetAngularVelocity(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &velocity,
+        );
+    }
+    pub fn getAngularVelocity(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_BodyInterface_GetAngularVelocity(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &velocity,
+        );
+        return velocity;
+    }
+
+    pub fn getPointVelocity(body_iface: *const BodyInterface, body_id: BodyId, point: [3]Real) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_BodyInterface_GetPointVelocity(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &point,
             &velocity,
         );
         return velocity;
@@ -963,6 +1040,80 @@ pub const BodyInterface = opaque {
             &position,
         );
         return position;
+    }
+
+    pub fn setPositionRotationAndVelocity(
+        body_iface: *BodyInterface,
+        body_id: BodyId,
+        position: [3]Real,
+        rotation: [4]f32,
+        linear_velocity: [3]f32,
+        angular_velocity: [3]f32,
+    ) void {
+        return c.JPC_BodyInterface_SetPositionRotationAndVelocity(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &position,
+            &rotation,
+            &linear_velocity,
+            &angular_velocity,
+        );
+    }
+
+    pub fn addForce(body_iface: *BodyInterface, body_id: BodyId, force: [3]f32) void {
+        return c.JPC_BodyInterface_AddForce(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &force,
+        );
+    }
+    pub fn addForceAtPosition(body_iface: *BodyInterface, body_id: BodyId, force: [3]f32, position: [3]Real) void {
+        return c.JPC_BodyInterface_AddForceAtPosition(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &force,
+            &position,
+        );
+    }
+
+    pub fn addTorque(body_iface: *BodyInterface, body_id: BodyId, torque: [3]f32) void {
+        return c.JPC_BodyInterface_AddTorque(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &torque,
+        );
+    }
+    pub fn addForceAndTorque(body_iface: *BodyInterface, body_id: BodyId, force: [3]f32, torque: [3]f32) void {
+        return c.JPC_BodyInterface_AddForceAndTorque(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &force,
+            &torque,
+        );
+    }
+
+    pub fn addImpulse(body_iface: *BodyInterface, body_id: BodyId, impulse: [3]f32) void {
+        return c.JPC_BodyInterface_AddImpulse(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &impulse,
+        );
+    }
+    pub fn addImpulseAtPosition(body_iface: *BodyInterface, body_id: BodyId, impulse: [3]f32, position: [3]Real) void {
+        return c.JPC_BodyInterface_AddImpulseAtPosition(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &impulse,
+            &position,
+        );
+    }
+
+    pub fn addAngularImpulse(body_iface: *BodyInterface, body_id: BodyId, impulse: [3]f32) void {
+        return c.JPC_BodyInterface_AddAngularImpulse(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            &impulse,
+        );
     }
 };
 //--------------------------------------------------------------------------------------------------

@@ -794,7 +794,7 @@ JPC_ShapeSettings_SetUserData(JPC_ShapeSettings *in_settings, uint64_t in_user_d
 JPC_API const JPC_PhysicsMaterial *
 JPC_ConvexShapeSettings_GetMaterial(const JPC_ConvexShapeSettings *in_settings)
 {
-    // TODO: Increment ref count
+    // TODO: Increment ref count?
     return toJpc(toJph(in_settings)->mMaterial.GetPtr());
 }
 //--------------------------------------------------------------------------------------------------
@@ -1338,14 +1338,20 @@ JPC_BodyInterface_SetLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
                                               const float in_linear_velocity[3],
                                               const float in_angular_velocity[3])
 {
+    toJph(in_iface)->SetLinearAndAngularVelocity(
+        toJph(in_body_id), loadVec3(in_linear_velocity), loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_BodyInterface_GetLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
+JPC_BodyInterface_GetLinearAndAngularVelocity(const JPC_BodyInterface *in_iface,
                                               JPC_BodyID in_body_id,
                                               float out_linear_velocity[3],
                                               float out_angular_velocity[3])
 {
+    JPH::Vec3 linear, angular;
+    toJph(in_iface)->GetLinearAndAngularVelocity(toJph(in_body_id), linear, angular);
+    storeVec3(out_linear_velocity, linear);
+    storeVec3(out_angular_velocity, angular);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1365,18 +1371,21 @@ JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_BodyInterface_AddLinearVelocity(const JPC_BodyInterface *in_iface,
+JPC_BodyInterface_AddLinearVelocity(JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     const float in_velocity[3])
 {
+    toJph(in_iface)->AddLinearVelocity(toJph(in_body_id), loadVec3(in_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_BodyInterface_AddLinearAndAngularVelocity(const JPC_BodyInterface *in_iface,
+JPC_BodyInterface_AddLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
                                               JPC_BodyID in_body_id,
                                               const float in_linear_velocity[3],
                                               const float in_angular_velocity[3])
 {
+    toJph(in_iface)->AddLinearAndAngularVelocity(
+        toJph(in_body_id), loadVec3(in_linear_velocity), loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1384,6 +1393,7 @@ JPC_BodyInterface_SetAngularVelocity(JPC_BodyInterface *in_iface,
                                      JPC_BodyID in_body_id,
                                      const float in_velocity[3])
 {
+    toJph(in_iface)->SetAngularVelocity(toJph(in_body_id), loadVec3(in_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1391,13 +1401,16 @@ JPC_BodyInterface_GetAngularVelocity(const JPC_BodyInterface *in_iface,
                                      JPC_BodyID in_body_id,
                                      float out_velocity[3])
 {
+    storeVec3(out_velocity, toJph(in_iface)->GetAngularVelocity(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_GetPointVelocity(const JPC_BodyInterface *in_iface,
+                                   JPC_BodyID in_body_id,
                                    const JPC_Real in_point[3],
                                    float out_velocity[3])
 {
+    storeVec3(out_velocity, toJph(in_iface)->GetPointVelocity(toJph(in_body_id), loadRVec3(in_point)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -1412,6 +1425,73 @@ JPC_API bool
 JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
     return toJph(in_iface)->IsActive(toJph(in_body_id));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_SetPositionRotationAndVelocity(JPC_BodyInterface *in_iface,
+                                                 JPC_BodyID in_body_id,
+                                                 const JPC_Real in_position[3],
+                                                 const float in_rotation[4],
+                                                 const float in_linear_velocity[3],
+                                                 const float in_angular_velocity[3])
+{
+    toJph(in_iface)->SetPositionRotationAndVelocity(
+        toJph(in_body_id),
+        loadRVec3(in_position),
+        JPH::Quat(loadVec4(in_rotation)),
+        loadVec3(in_linear_velocity),
+        loadVec3(in_angular_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddForce(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_force[3])
+{
+    toJph(in_iface)->AddForce(toJph(in_body_id), loadVec3(in_force));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddForceAtPosition(JPC_BodyInterface *in_iface,
+                                     JPC_BodyID in_body_id,
+                                     const float in_force[3],
+                                     const JPC_Real in_position[3])
+{
+    toJph(in_iface)->AddForce(toJph(in_body_id), loadVec3(in_force), loadRVec3(in_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddTorque(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_torque[3])
+{
+    toJph(in_iface)->AddTorque(toJph(in_body_id), loadVec3(in_torque));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddForceAndTorque(JPC_BodyInterface *in_iface,
+                                    JPC_BodyID in_body_id,
+                                    const float in_force[3],
+                                    const float in_torque[3])
+{
+    toJph(in_iface)->AddForceAndTorque(toJph(in_body_id), loadVec3(in_force), loadVec3(in_torque));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3])
+{
+    toJph(in_iface)->AddImpulse(toJph(in_body_id), loadVec3(in_impulse));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddImpulseAtPosition(JPC_BodyInterface *in_iface,
+                                       JPC_BodyID in_body_id,
+                                       const float in_impulse[3],
+                                       const JPC_Real in_position[3])
+{
+    toJph(in_iface)->AddImpulse(toJph(in_body_id), loadVec3(in_impulse), loadRVec3(in_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3])
+{
+    toJph(in_iface)->AddAngularImpulse(toJph(in_body_id), loadVec3(in_impulse));
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1539,7 +1619,7 @@ JPC_Body_SetRestitution(JPC_Body *in_body, float in_restitution)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetLinearVelocity(JPC_Body *in_body, float out_linear_velocity[3])
+JPC_Body_GetLinearVelocity(const JPC_Body *in_body, float out_linear_velocity[3])
 {
     storeVec3(out_linear_velocity, toJph(in_body)->GetLinearVelocity());
 }
@@ -1557,7 +1637,7 @@ JPC_Body_SetLinearVelocityClamped(JPC_Body *in_body, const float in_linear_veloc
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetAngularVelocity(JPC_Body *in_body, float out_angular_velocity[3])
+JPC_Body_GetAngularVelocity(const JPC_Body *in_body, float out_angular_velocity[3])
 {
     storeVec3(out_angular_velocity, toJph(in_body)->GetAngularVelocity());
 }
@@ -1575,7 +1655,7 @@ JPC_Body_SetAnglularVelocityClamped(JPC_Body *in_body, const float in_angular_ve
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetPointVelocityCOM(JPC_Body *in_body,
+JPC_Body_GetPointVelocityCOM(const JPC_Body *in_body,
                              const float in_point_relative_to_com[3],
                              float out_velocity[3])
 {
@@ -1583,7 +1663,7 @@ JPC_Body_GetPointVelocityCOM(JPC_Body *in_body,
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_GetPointVelocity(JPC_Body *in_body, const JPC_Real in_point[3], float out_velocity[3])
+JPC_Body_GetPointVelocity(const JPC_Body *in_body, const JPC_Real in_point[3], float out_velocity[3])
 {
     storeVec3(out_velocity, toJph(in_body)->GetPointVelocity(loadRVec3(in_point)));
 }
