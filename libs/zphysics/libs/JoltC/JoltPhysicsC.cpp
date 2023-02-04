@@ -1427,6 +1427,73 @@ JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body
     return toJph(in_iface)->IsActive(toJph(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_SetPositionRotationAndVelocity(JPC_BodyInterface *in_iface,
+                                                 JPC_BodyID in_body_id,
+                                                 const JPC_Real in_position[3],
+                                                 const float in_rotation[4],
+                                                 const float in_linear_velocity[3],
+                                                 const float in_angular_velocity[3])
+{
+    toJph(in_iface)->SetPositionRotationAndVelocity(
+        toJph(in_body_id),
+        loadRVec3(in_position),
+        JPH::Quat(loadVec4(in_rotation)),
+        loadVec3(in_linear_velocity),
+        loadVec3(in_angular_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddForce(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_force[3])
+{
+    toJph(in_iface)->AddForce(toJph(in_body_id), loadVec3(in_force));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddForceAtPosition(JPC_BodyInterface *in_iface,
+                                     JPC_BodyID in_body_id,
+                                     const float in_force[3],
+                                     const JPC_Real in_position[3])
+{
+    toJph(in_iface)->AddForce(toJph(in_body_id), loadVec3(in_force), loadRVec3(in_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddTorque(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_torque[3])
+{
+    toJph(in_iface)->AddTorque(toJph(in_body_id), loadVec3(in_torque));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddForceAndTorque(JPC_BodyInterface *in_iface,
+                                    JPC_BodyID in_body_id,
+                                    const float in_force[3],
+                                    const float in_torque[3])
+{
+    toJph(in_iface)->AddForceAndTorque(toJph(in_body_id), loadVec3(in_force), loadVec3(in_torque));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3])
+{
+    toJph(in_iface)->AddImpulse(toJph(in_body_id), loadVec3(in_impulse));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddImpulseAtPosition(JPC_BodyInterface *in_iface,
+                                       JPC_BodyID in_body_id,
+                                       const float in_impulse[3],
+                                       const JPC_Real in_position[3])
+{
+    toJph(in_iface)->AddImpulse(toJph(in_body_id), loadVec3(in_impulse), loadRVec3(in_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3])
+{
+    toJph(in_iface)->AddAngularImpulse(toJph(in_body_id), loadVec3(in_impulse));
+}
+//--------------------------------------------------------------------------------------------------
 //
 // JPC_Body
 //
