@@ -1428,6 +1428,22 @@ pub const MotionProperties = extern struct {
         c.JPC_MotionProperties_SetInverseMass(@ptrCast(*c.JPC_MotionProperties, motion), inverse_mass);
     }
 
+    pub fn getInverseInertiaDiagonal(motion: *const MotionProperties) [3]f32 {
+        var diagonal: [3]f32 = undefined;
+        c.JPC_MotionProperties_GetInverseInertiaDiagonal(@ptrCast(*const c.JPC_MotionProperties, motion), &diagonal);
+        return diagonal;
+    }
+
+    pub fn getInertiaRotation(motion: *const MotionProperties) [4]f32 {
+        var rotation: [4]f32 = undefined;
+        c.JPC_MotionProperties_GetInertiaRotation(@ptrCast(*const c.JPC_MotionProperties, motion), &rotation);
+        return rotation;
+    }
+
+    pub fn setInverseInertia(motion: *MotionProperties, diagonal: [3]f32, rotation: [4]f32) void {
+        c.JPC_MotionProperties_SetInverseInertia(@ptrCast(*c.JPC_MotionProperties, motion), &diagonal, &rotation);
+    }
+
     comptime {
         assert(@sizeOf(MotionProperties) == @sizeOf(c.JPC_MotionProperties));
         assert(@offsetOf(MotionProperties, "force") == @offsetOf(c.JPC_MotionProperties, "force"));
@@ -2728,12 +2744,15 @@ test "zphysics.body.motion" {
 
     motion.setLinearDamping(0.5);
     motion.setAngularDamping(0.25);
+    motion.setGravityFactor(0.5);
 
     try expect(motion.allow_sleeping == false);
     try expect(motion.getLinearDamping() == 0.5);
     try expect(motion.linear_damping == 0.5);
     try expect(motion.getAngularDamping() == 0.25);
     try expect(motion.angular_damping == 0.25);
+    try expect(motion.getGravityFactor() == 0.5);
+    try expect(motion.gravity_factor == 0.5);
 }
 
 test {
