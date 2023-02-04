@@ -84,7 +84,7 @@ pub fn main() !void {
     while (...) {
         physics_system.update(1.0 / 60.0, .{});
 
-        // Draw all dynamic bodies.
+        // Draw all bodies
         const bodies = physics_system.getBodiesUnsafe();
         for (bodies) |body| {
             if (!zphy.isValidBodyPointer(body)) continue;
