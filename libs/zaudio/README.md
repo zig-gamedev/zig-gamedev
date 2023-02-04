@@ -44,7 +44,7 @@ Then in your `build.zig` add:
 const std = @import("std");
 const zaudio = @import("libs/zaudio/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     exe.addPackage(zaudio.pkg);
 

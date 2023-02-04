@@ -7,10 +7,13 @@ const common = @import("../../libs/common/build.zig");
 const Options = @import("../../build.zig").Options;
 const content_dir = "simple_raytracer_content/";
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("simple_raytracer", thisDir() ++ "/src/simple_raytracer.zig");
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = "simple_raytracer",
+        .root_source_file = .{ .path = thisDir() ++ "/src/simple_raytracer.zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
@@ -52,7 +55,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder) *std.build.Step {
+fn buildShaders(b: *std.Build) *std.Build.Step {
     const dxc_step = b.step("simple_raytracer-dxc", "Build shaders for 'simple raytracer' demo");
 
     makeDxcCmd(
@@ -150,8 +153,8 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
 }
 
 fn makeDxcCmd(
-    b: *std.build.Builder,
-    dxc_step: *std.build.Step,
+    b: *std.Build,
+    dxc_step: *std.Build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,

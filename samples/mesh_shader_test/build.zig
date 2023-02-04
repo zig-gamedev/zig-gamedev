@@ -7,15 +7,17 @@ const common = @import("../../libs/common/build.zig");
 const Options = @import("../../build.zig").Options;
 const content_dir = "mesh_shader_test_content/";
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable("mesh_shader_test", thisDir() ++ "/src/mesh_shader_test.zig");
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = "mesh_shader_test",
+        .root_source_file = .{ .path = thisDir() ++ "/src/mesh_shader_test.zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
 
     const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
@@ -53,7 +55,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder) *std.build.Step {
+fn buildShaders(b: *std.Build) *std.Build.Step {
     const dxc_step = b.step("mesh_shader_test-dxc", "Build shaders for 'mesh shader test' demo");
 
     makeDxcCmd(
@@ -133,8 +135,8 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
 }
 
 fn makeDxcCmd(
-    b: *std.build.Builder,
-    dxc_step: *std.build.Step,
+    b: *std.Build,
+    dxc_step: *std.Build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,

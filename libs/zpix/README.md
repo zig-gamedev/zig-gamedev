@@ -11,7 +11,7 @@ const std = @import("std");
 const zpix = @import("libs/zpix/build.zig");
 const zwin32 = @import("libs/zwin32/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable = true });
     const zpix_pkg = zpix.getPkg(&.{ zwin32.pkg, zpix_options.getPkg() });

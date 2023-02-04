@@ -101,6 +101,7 @@ static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInv
 static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
 static_assert(JPC_BODY_ID_INDEX_BITS                == JPH::BodyID::cMaxBodyIndex);
 static_assert(_JPC_IS_FREED_BODY_BIT                == JPH::BodyManager::cIsFreedBody);
+static_assert(JPC_SUB_SHAPE_ID_EMPTY                == JPH::SubShapeID::cEmpty);
 
 static_assert((JPC_BODY_ID_SEQUENCE_BITS >> JPC_BODY_ID_SEQUENCE_SHIFT) == JPH::BodyID::cMaxSequenceNumber);
 //--------------------------------------------------------------------------------------------------
@@ -277,4 +278,9 @@ static_assert(offsetof(JPH::RayCastSettings, mTreatConvexAsSolid) ==
 
 static_assert(offsetof(JPH::RRayCast, mOrigin) == offsetof(JPC_RRayCast, origin));
 static_assert(offsetof(JPH::RRayCast, mDirection) == offsetof(JPC_RRayCast, direction));
+
+static_assert(sizeof(JPH::BodyID) == 4);
+static_assert(sizeof(JPH::SubShapeID) == 4);
+static_assert(sizeof(JPH::CollisionGroup::GroupID) == 4);
+static_assert(sizeof(JPH::CollisionGroup::SubGroupID) == 4);
 //--------------------------------------------------------------------------------------------------

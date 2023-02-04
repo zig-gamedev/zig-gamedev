@@ -11,8 +11,13 @@ const Options = @import("../../build.zig").Options;
 const demo_name = "gui_test_wgpu";
 const content_dir = demo_name ++ "_content/";
 
-pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable(demo_name, thisDir() ++ "/src/" ++ demo_name ++ ".zig");
+pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+    const exe = b.addExecutable(.{
+        .name = demo_name,
+        .root_source_file = .{ .path = thisDir() ++ "/src/" ++ demo_name ++ ".zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
@@ -24,9 +29,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .install_subdir = "bin/" ++ content_dir,
     });
     exe.step.dependOn(&install_content_step.step);
-
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
 
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
     const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });

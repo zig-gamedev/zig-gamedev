@@ -24,7 +24,7 @@ const std = @import("std");
 const zwin32 = @import("libs/zwin32/build.zig");
 const zd3d12 = @import("libs/zd3d12/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
         .enable_debug_layer = false,

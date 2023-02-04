@@ -22,7 +22,7 @@ Then in your `build.zig` add:
 const std = @import("std");
 const zmesh = @import("libs/zmesh/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
 

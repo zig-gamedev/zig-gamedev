@@ -10,19 +10,18 @@ const common = @import("../../libs/common/build.zig");
 const Options = @import("../../build.zig").Options;
 const content_dir = "intro_content/";
 
-pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32) *std.build.LibExeObjStep {
+pub fn build(b: *std.Build, options: Options, comptime intro_index: u32) *std.Build.CompileStep {
     const intro_index_str = comptime std.fmt.comptimePrint("{}", .{intro_index});
-    const exe = b.addExecutable(
-        "intro" ++ intro_index_str,
-        thisDir() ++ "/src/intro" ++ intro_index_str ++ ".zig",
-    );
+    const exe = b.addExecutable(.{
+        .name = "intro" ++ intro_index_str,
+        .root_source_file = .{ .path = thisDir() ++ "/src/intro" ++ intro_index_str ++ ".zig" },
+        .target = options.target,
+        .optimize = options.build_mode,
+    });
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
 
     const dxc_step = buildShaders(b, intro_index_str);
     const install_content_step = b.addInstallDirectory(.{
@@ -66,7 +65,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *std.build.Step {
+fn buildShaders(b: *std.Build, comptime intro_index_str: []const u8) *std.Build.Step {
     const dxc_step = b.step(
         "intro" ++ intro_index_str ++ "-dxc",
         "Build shaders for 'intro" ++ intro_index_str ++ "' demo",
@@ -143,8 +142,8 @@ fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *st
 }
 
 fn makeDxcCmd(
-    b: *std.build.Builder,
-    dxc_step: *std.build.Step,
+    b: *std.Build,
+    dxc_step: *std.Build.Step,
     comptime input_path: []const u8,
     comptime entry_point: []const u8,
     comptime output_filename: []const u8,

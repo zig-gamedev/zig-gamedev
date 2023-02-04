@@ -12,7 +12,7 @@ Then in your `build.zig` add:
 const std = @import("std");
 const ztracy = @import("libs/ztracy/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const ztracy_enable = builder.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
 

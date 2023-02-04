@@ -25,7 +25,7 @@ const zgpu = @import("libs/zgpu/build.zig");
 const zpool = @import("libs/zpool/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
     const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
@@ -85,7 +85,7 @@ pub const BuildOptions = struct {
 ```
 You can override default values in your `build.zig`:
 ```zig
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     ...
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
         .uniforms_buffer_size = 8 * 1024 * 1024,
