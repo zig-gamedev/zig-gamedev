@@ -38,13 +38,9 @@ pub fn main() !void {
     try zphy.init(allocator, .{});
     defer zphy.deinit();
 
-    ...
-
     // Create physics system
     const physics_system = try zphy.PhysicsSystem.create(
-        @ptrCast(*const zphy.BroadPhaseLayerInterface, broad_phase_layer_interface),
-        @ptrCast(*const zphy.ObjectVsBroadPhaseLayerFilter, object_vs_broad_phase_layer_filter),
-        @ptrCast(*const zphy.ObjectLayerPairFilter, object_layer_pair_filter),
+        ... // layer interfaces - please see sample application
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -80,6 +76,29 @@ pub fn main() !void {
 
         var result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -20, 0, 0 } }, .{});
         if (result.has_hit == true) {
+            ...
+        }
+    }
+
+    // Main loop
+    while (...) {
+        physics_system.update(1.0 / 60.0, .{});
+
+        // Draw all dynamic bodies.
+        const bodies = demo.physics_system.getBodiesUnsafe();
+        for (bodies) |body| {
+            if (!zphy.isValidBodyPointer(body)) continue;
+
+            const object_to_world = object_to_world: {
+                const position = zm.loadArr4(body.position);
+                const rotation = zm.loadArr4(body.rotation);
+                var xform = zm.matFromQuat(rotation);
+                xform[3] = position;
+                xform[3][3] = 1.0;
+                break :object_to_world xform;
+            };
+
+            // Issue a draw call
             ...
         }
     }
