@@ -1117,7 +1117,7 @@ JPC_BodyInterface_SetLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
                                               const float in_linear_velocity[3],
                                               const float in_angular_velocity[3]);
 JPC_API void
-JPC_BodyInterface_GetLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
+JPC_BodyInterface_GetLinearAndAngularVelocity(const JPC_BodyInterface *in_iface,
                                               JPC_BodyID in_body_id,
                                               float out_linear_velocity[3],
                                               float out_angular_velocity[3]);
@@ -1130,11 +1130,11 @@ JPC_BodyInterface_GetLinearVelocity(const JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     float out_velocity[3]);
 JPC_API void
-JPC_BodyInterface_AddLinearVelocity(const JPC_BodyInterface *in_iface,
+JPC_BodyInterface_AddLinearVelocity(JPC_BodyInterface *in_iface,
                                     JPC_BodyID in_body_id,
                                     const float in_velocity[3]);
 JPC_API void
-JPC_BodyInterface_AddLinearAndAngularVelocity(const JPC_BodyInterface *in_iface,
+JPC_BodyInterface_AddLinearAndAngularVelocity(JPC_BodyInterface *in_iface,
                                               JPC_BodyID in_body_id,
                                               const float in_linear_velocity[3],
                                               const float in_angular_velocity[3]);
