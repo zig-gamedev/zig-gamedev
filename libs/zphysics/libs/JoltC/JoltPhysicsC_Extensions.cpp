@@ -101,6 +101,7 @@ static_assert(JPC_COLLISION_GROUP_INVALID_SUB_GROUP == JPH::CollisionGroup::cInv
 static_assert(JPC_BODY_ID_INVALID                   == JPH::BodyID::cInvalidBodyID);
 static_assert(JPC_BODY_ID_INDEX_BITS                == JPH::BodyID::cMaxBodyIndex);
 static_assert(_JPC_IS_FREED_BODY_BIT                == JPH::BodyManager::cIsFreedBody);
+static_assert(JPC_SUB_SHAPE_ID_EMPTY                == JPH::SubShapeID::cEmpty);
 
 static_assert((JPC_BODY_ID_SEQUENCE_BITS >> JPC_BODY_ID_SEQUENCE_SHIFT) == JPH::BodyID::cMaxSequenceNumber);
 //--------------------------------------------------------------------------------------------------

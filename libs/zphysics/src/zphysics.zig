@@ -36,6 +36,8 @@ pub const body_id_index_bits: BodyId = c.JPC_BODY_ID_INDEX_BITS;
 pub const body_id_sequence_bits: BodyId = c.JPC_BODY_ID_SEQUENCE_BITS;
 pub const body_id_sequence_shift: BodyId = c.JPC_BODY_ID_SEQUENCE_SHIFT;
 
+pub const sub_shape_id_empty: SubShapeId = c.JPC_SUB_SHAPE_ID_EMPTY;
+
 const TempAllocator = opaque {};
 const JobSystem = opaque {};
 
@@ -922,6 +924,11 @@ pub const BodyInterface = opaque {
         return body_id;
     }
 
+    pub fn removeAndDestroy(body_iface: *BodyInterface, body_id: BodyId) void {
+        body_iface.removeBody(body_id);
+        body_iface.destroyBody(body_id);
+    }
+
     pub fn isAdded(body_iface: *const BodyInterface, body_id: BodyId) bool {
         return c.JPC_BodyInterface_IsAdded(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
@@ -1288,7 +1295,7 @@ pub const Body = extern struct {
     pub fn getWorldSpaceSurfaceNormal(
         body: *const Body,
         sub_shape_id: SubShapeId,
-        position: [3]Real,
+        position: [3]Real, // world space
     ) [3]f32 {
         var normal: [3]f32 = undefined;
         c.JPC_Body_GetWorldSpaceSurfaceNormal(
@@ -2521,7 +2528,7 @@ test "zphysics.body.basic" {
         var result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -20, 0, 0 } }, .{});
         try expect(result.has_hit == true);
         try expect(result.hit.body_id == body_id);
-        try expect(result.hit.sub_shape_id == ~@as(SubShapeId, 0));
+        try expect(result.hit.sub_shape_id == sub_shape_id_empty);
         try expect(std.math.approxEqAbs(f32, result.hit.fraction, 0.5, 0.001) == true);
 
         result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, 20, 0, 0 } }, .{});
@@ -2588,12 +2595,12 @@ test "zphysics.body.basic" {
     }
     {
         const lock_interface = physics_system.getBodyLockInterface();
+
         var write_lock: BodyLockWrite = .{};
         write_lock.lock(lock_interface, body_id);
+        defer write_lock.unlock();
 
         if (write_lock.body) |locked_body| {
-            defer write_lock.unlock();
-
             const all_bodies_mut: []const *Body = physics_system.getBodiesMutUnsafe();
 
             try expect(isValidBodyPointer(all_bodies_mut[body_id & body_id_index_bits]));
@@ -2642,6 +2649,91 @@ test "zphysics.body.basic" {
 
     try expect(physics_system.getNumBodies() == 1);
     try expect(physics_system.getNumActiveBodies() == 0);
+}
+
+test "zphysics.body.motion" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const body_interface = physics_system.getBodyInterfaceMut();
+    const lock_interface = physics_system.getBodyLockInterface();
+
+    const shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
+    defer shape_settings.release();
+
+    const shape = try shape_settings.createShape();
+    defer shape.release();
+
+    const body_settings = BodyCreationSettings{
+        .position = .{ 0.0, 10.0, 0.0, 1.0 },
+        .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+        .shape = shape,
+        .motion_type = .dynamic,
+        .object_layer = test_cb1.object_layers.moving,
+    };
+    const body_id = try body_interface.createAndAddBody(body_settings, .activate);
+    defer body_interface.removeAndDestroy(body_id);
+
+    physics_system.optimizeBroadPhase();
+
+    var write_lock: BodyLockWrite = .{};
+    write_lock.lock(lock_interface, body_id);
+    defer write_lock.unlock();
+    const body = write_lock.body.?;
+
+    body.setRestitution(0.5);
+    body.setFriction(0.25);
+    body.setUserData(0xC0DE_C0DE_C0DE_C0DE);
+    body.setAllowSleeping(false);
+
+    try expect(body.getFriction() == 0.25);
+    try expect(body.friction == 0.25);
+    try expect(body.getRestitution() == 0.5);
+    try expect(body.restitution == 0.5);
+    try expect(body.isInBroadPhase() == true);
+    try expect(body.isDynamic() == true);
+    try expect(body.isStatic() == false);
+    try expect(body.isSensor() == false);
+    try expect(body.getShape() == shape);
+    try expect(body.shape == shape);
+    try expect(body.getUserData() == 0xC0DE_C0DE_C0DE_C0DE);
+    try expect(body.user_data == 0xC0DE_C0DE_C0DE_C0DE);
+    try expect(body.getAllowSleeping() == false);
+
+    const normal0 = body.getWorldSpaceSurfaceNormal(sub_shape_id_empty, .{ 0, 12, 0 });
+    const normal1 = body.getWorldSpaceSurfaceNormal(sub_shape_id_empty, .{ -1, 10, 0 });
+
+    try expect(std.math.approxEqAbs(f32, normal0[0], 0.0, 0.001) == true);
+    try expect(std.math.approxEqAbs(f32, normal0[1], 1.0, 0.001) == true);
+    try expect(std.math.approxEqAbs(f32, normal0[2], 0.0, 0.001) == true);
+    try expect(std.math.approxEqAbs(f32, normal1[0], -1.0, 0.001) == true);
+    try expect(std.math.approxEqAbs(f32, normal1[1], 0.0, 0.001) == true);
+    try expect(std.math.approxEqAbs(f32, normal1[2], 0.0, 0.001) == true);
+
+    const motion = body.getMotionPropertiesMut();
+
+    try expect(body.motion_properties.? == motion);
+
+    motion.setLinearDamping(0.5);
+    motion.setAngularDamping(0.25);
+
+    try expect(motion.allow_sleeping == false);
+    try expect(motion.getLinearDamping() == 0.5);
+    try expect(motion.linear_damping == 0.5);
+    try expect(motion.getAngularDamping() == 0.25);
+    try expect(motion.angular_damping == 0.25);
 }
 
 test {

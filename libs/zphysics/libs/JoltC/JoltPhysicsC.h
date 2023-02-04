@@ -44,6 +44,8 @@ typedef float JPC_Real;
 #define JPC_BODY_ID_SEQUENCE_BITS 0xff000000
 #define JPC_BODY_ID_SEQUENCE_SHIFT 24
 
+#define JPC_SUB_SHAPE_ID_EMPTY 0xffffffff
+
 #define JPC_FLT_EPSILON FLT_EPSILON
 
 #ifdef __cplusplus
@@ -395,7 +397,7 @@ typedef struct JPC_BodyLockWrite
 typedef struct JPC_RRayCast
 {
     JPC_RVEC_ALIGN JPC_Real origin[4]; // 4th element is ignored
-    alignas(16) float       direction[4]; // 4th element is ignored
+    alignas(16) float       direction[4]; // length of the vector is important; 4th element is ignored
 } JPC_RRayCast;
 
 // NOTE: Needs to be kept in sync with JPH::RayCastResult
@@ -599,7 +601,7 @@ JPC_API void
 JPC_MotionProperties_ClampAngularVelocity(JPC_MotionProperties *in_properties);
 
 JPC_API float
-JPC_MotionProperties_GetLinearDamping(JPC_MotionProperties *in_properties);
+JPC_MotionProperties_GetLinearDamping(const JPC_MotionProperties *in_properties);
 
 JPC_API void
 JPC_MotionProperties_SetLinearDamping(JPC_MotionProperties *in_properties,
@@ -813,10 +815,10 @@ JPC_BodyLockWrite_Unlock(JPC_BodyLockWrite *io_lock);
 JPC_API bool
 JPC_NarrowPhaseQuery_CastRay(const JPC_NarrowPhaseQuery *in_query,
                              const JPC_RRayCast *in_ray,
-                             JPC_RayCastResult *io_hit,
-                             const void *in_broad_phase_layer_filter,
-                             const void *in_object_layer_filter,
-                             const void *in_body_filter);
+                             JPC_RayCastResult *io_hit, // *Must* be default initialized (see JPC_RayCastResult)
+                             const void *in_broad_phase_layer_filter, // Can be NULL (no filter)
+                             const void *in_object_layer_filter, // Can be NULL (no filter)
+                             const void *in_body_filter); // Can be NULL (no filter)
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_ShapeSettings
@@ -1293,7 +1295,7 @@ JPC_Body_SetUserData(JPC_Body *in_body, uint64_t in_user_data);
 JPC_API void
 JPC_Body_GetWorldSpaceSurfaceNormal(const JPC_Body *in_body,
                                     JPC_SubShapeID in_sub_shape_id,
-                                    const JPC_Real in_position[3],
+                                    const JPC_Real in_position[3], // world space
                                     float out_normal_vector[3]);
 //--------------------------------------------------------------------------------------------------
 //
