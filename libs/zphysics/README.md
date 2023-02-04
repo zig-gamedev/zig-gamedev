@@ -4,6 +4,8 @@
 
 This project aims to provide high-performance, consistent and roboust [C API](libs) and Zig API for Jolt.
 
+For a simple sample applications please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/physics_test_wgpu/src/physics_test_wgpu.zig).
+
 ## Getting started
 
 Copy `zphysics` folder to a `libs` subdirectory of the root of your project.
@@ -38,6 +40,7 @@ pub fn main() !void {
 
     ...
 
+    // Create physics system
     const physics_system = try zphy.PhysicsSystem.create(
         @ptrCast(*const zphy.BroadPhaseLayerInterface, broad_phase_layer_interface),
         @ptrCast(*const zphy.ObjectVsBroadPhaseLayerFilter, object_vs_broad_phase_layer_filter),
@@ -50,5 +53,35 @@ pub fn main() !void {
         },
     );
     defer physics_system.destroy();
+
+    // Create shape
+    const body_interface = physics_system.getBodyInterfaceMut();
+
+    const shape_settings = try zphy.BoxShapeSettings.create(.{ 1.0, 1.0, 1.0 });
+    defer shape_settings.release();
+
+    const shape = try shape_settings.createShape();
+    defer shape.release();
+
+    // Create body
+    const body_id = try body_interface.createAndAddBody(.{
+        .position = .{ 0.0, -1.0, 0.0, 1.0 },
+        .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+        .shape = shape,
+        .motion_type = .dynamic,
+        .object_layer = object_layers.non_moving,
+    }, .activate);
+
+    physics_system.optimizeBroadPhase();
+
+    // Perform ray cast
+    {
+        const query = physics_system.getNarrowPhaseQuery();
+
+        var result = query.castRay(.{ .origin = .{ 0, 10, 0, 1 }, .direction = .{ 0, -20, 0, 0 } }, .{});
+        if (result.has_hit == true) {
+            ...
+        }
+    }
 }
 ```
