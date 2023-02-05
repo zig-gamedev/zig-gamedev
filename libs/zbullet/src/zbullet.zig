@@ -697,6 +697,15 @@ const BodyImpl = opaque {
     pub const setFriction = cbtBodySetFriction;
     extern fn cbtBodySetFriction(body: Body, friction: f32) void;
 
+    pub const setRollingFriction = cbtBodySetRollingFriction;
+    extern fn cbtBodySetRollingFriction(body: Body, friction: f32) void;
+
+    pub const setSpinningFriction = cbtBodySetSpinningFriction;
+    extern fn cbtBodySetSpinningFriction(body: Body, friction: f32) void;
+
+    pub const setAnisotropicFriction = cbtBodySetAnisotropicFriction;
+    extern fn cbtBodySetAnisotropicFriction(body: Body, friction: f32) void;
+
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
     extern fn cbtBodyGetGraphicsWorldTransform(
         body: Body,
