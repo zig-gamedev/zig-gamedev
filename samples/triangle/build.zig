@@ -32,27 +32,24 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    const zwin32_pkg = zwin32.package(b, .{}, .{});
-    const zd3d12_pkg = zd3d12.package(
-        b,
-        .{
+    const zwin32_pkg = zwin32.package(b, .{});
+    const zd3d12_pkg = zd3d12.package(b, .{
+        .options = .{
             .enable_debug_layer = options.zd3d12_enable_debug_layer,
             .enable_gbv = options.zd3d12_enable_gbv,
         },
-        .{ .zwin32_module = zwin32_pkg.module },
-    );
-    const common_pkg = common.package(
-        b,
-        .{},
-        .{ .zwin32_module = zwin32_pkg.module, .zd3d12_module = zd3d12_pkg.module },
-    );
+        .deps = .{ .zwin32 = zwin32_pkg.module },
+    });
+    const common_pkg = common.package(b, .{
+        .deps = .{ .zwin32 = zwin32_pkg.module, .zd3d12 = zd3d12_pkg.module },
+    });
 
     exe.addModule("zd3d12", zd3d12_pkg.module);
     exe.addModule("common", common_pkg.module);
     exe.addModule("zwin32", zwin32_pkg.module);
 
-    zd3d12.link(exe, zd3d12_pkg.options);
-    common.link(exe, .{});
+    zd3d12.link(exe);
+    common.link(exe);
 
     return exe;
 }

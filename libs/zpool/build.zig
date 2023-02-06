@@ -1,12 +1,10 @@
 const std = @import("std");
 
-pub const Options = struct {};
-
 pub const Package = struct {
     module: *std.Build.Module,
 };
 
-pub fn package(b: *std.Build, _: Options, _: struct {}) Package {
+pub fn package(b: *std.Build, _: struct {}) Package {
     const module = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
     });

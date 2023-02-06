@@ -10,9 +10,14 @@ pub const Package = struct {
     options_module: *std.Build.Module,
 };
 
-pub fn package(b: *std.Build, options: Options, _: struct {}) Package {
+pub fn package(
+    b: *std.Build,
+    args: struct {
+        options: Options = .{},
+    },
+) Package {
     const step = b.addOptions();
-    step.addOption(bool, "shape_use_32bit_indices", options.shape_use_32bit_indices);
+    step.addOption(bool, "shape_use_32bit_indices", args.options.shape_use_32bit_indices);
 
     const options_module = step.createModule();
 
@@ -25,7 +30,7 @@ pub fn package(b: *std.Build, options: Options, _: struct {}) Package {
 
     return .{
         .module = module,
-        .options = options,
+        .options = args.options,
         .options_module = options_module,
     };
 }

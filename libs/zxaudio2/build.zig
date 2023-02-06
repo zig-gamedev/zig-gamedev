@@ -12,11 +12,13 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    options: Options,
-    deps: struct { zwin32_module: *std.Build.Module },
+    args: struct {
+        options: Options = .{},
+        deps: struct { zwin32: *std.Build.Module },
+    },
 ) Package {
     const step = b.addOptions();
-    step.addOption(bool, "enable_debug_layer", options.enable_debug_layer);
+    step.addOption(bool, "enable_debug_layer", args.options.enable_debug_layer);
 
     const options_module = step.createModule();
 
@@ -24,13 +26,13 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
         .dependencies = &.{
             .{ .name = "zxaudio2_options", .module = options_module },
-            .{ .name = "zwin32", .module = deps.zwin32_module },
+            .{ .name = "zwin32", .module = args.deps.zwin32 },
         },
     });
 
     return .{
         .module = module,
-        .options = options,
+        .options = args.options,
         .options_module = options_module,
     };
 }

@@ -30,16 +30,16 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     });
     exe.step.dependOn(&install_content_step.step);
 
-    const zstbi_pkg = zstbi.package(b, .{}, .{});
-    const zmath_pkg = zmath.package(b, .{}, .{});
-    const zglfw_pkg = zglfw.package(b, .{}, .{});
-    const zpool_pkg = zpool.package(b, .{}, .{});
-    const zgui_pkg = zgui.package(b, .{ .backend = .glfw_wgpu }, .{});
-    const zgpu_pkg = zgpu.package(
-        b,
-        .{},
-        .{ .zpool_module = zpool_pkg.module, .zglfw_module = zglfw_pkg.module },
-    );
+    const zstbi_pkg = zstbi.package(b, .{});
+    const zmath_pkg = zmath.package(b, .{});
+    const zglfw_pkg = zglfw.package(b, .{});
+    const zpool_pkg = zpool.package(b, .{});
+    const zgui_pkg = zgui.package(b, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
+    const zgpu_pkg = zgpu.package(b, .{
+        .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
+    });
 
     exe.addModule("zgpu", zgpu_pkg.module);
     exe.addModule("zgui", zgui_pkg.module);
@@ -47,10 +47,10 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     exe.addModule("zglfw", zglfw_pkg.module);
     exe.addModule("zstbi", zstbi_pkg.module);
 
-    zgpu.link(exe, zgpu_pkg.options);
+    zgpu.link(exe);
     zgui.link(exe, zgui_pkg.options);
-    zglfw.link(exe, .{});
-    zstbi.link(exe, .{});
+    zglfw.link(exe);
+    zstbi.link(exe);
 
     return exe;
 }

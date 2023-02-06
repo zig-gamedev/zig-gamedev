@@ -12,11 +12,13 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    options: Options,
-    deps: struct { zwin32_module: *std.Build.Module },
+    args: struct {
+        options: Options = .{},
+        deps: struct { zwin32: *std.Build.Module },
+    },
 ) Package {
     const step = b.addOptions();
-    step.addOption(bool, "enable", options.enable);
+    step.addOption(bool, "enable", args.options.enable);
 
     const options_module = step.createModule();
 
@@ -24,13 +26,13 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zpix.zig" },
         .dependencies = &.{
             .{ .name = "zpix_options", .module = options_module },
-            .{ .name = "zwin32", .module = deps.zwin32_module },
+            .{ .name = "zwin32", .module = args.deps.zwin32 },
         },
     });
 
     return .{
         .module = module,
-        .options = options,
+        .options = args.options,
         .options_module = options_module,
     };
 }

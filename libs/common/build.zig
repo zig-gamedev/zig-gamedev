@@ -1,25 +1,24 @@
 const std = @import("std");
 
-pub const Options = struct {};
-
 pub const Package = struct {
     module: *std.Build.Module,
 };
 
 pub fn package(
     b: *std.Build,
-    _: Options,
-    deps: struct {
-        zwin32_module: *std.Build.Module,
-        zd3d12_module: *std.Build.Module,
+    args: struct {
+        deps: struct {
+            zwin32: *std.Build.Module,
+            zd3d12: *std.Build.Module,
+        },
     },
 ) Package {
     return .{
         .module = b.createModule(.{
             .source_file = .{ .path = thisDir() ++ "/src/common.zig" },
             .dependencies = &.{
-                .{ .name = "zwin32", .module = deps.zwin32_module },
-                .{ .name = "zd3d12", .module = deps.zd3d12_module },
+                .{ .name = "zwin32", .module = args.deps.zwin32 },
+                .{ .name = "zd3d12", .module = args.deps.zd3d12 },
             },
         }),
     };
@@ -27,7 +26,7 @@ pub fn package(
 
 pub fn build(_: *std.Build) void {}
 
-pub fn link(exe: *std.Build.CompileStep, _: Options) void {
+pub fn link(exe: *std.Build.CompileStep) void {
     const lib = buildLibrary(exe);
     exe.linkLibrary(lib);
     //exe.addIncludePath(thisDir() ++ "/src/c");

@@ -1,19 +1,17 @@
 const std = @import("std");
 
-pub const Options = struct {};
-
 pub const Package = struct {
     module: *std.Build.Module,
 };
 
-pub fn package(b: *std.Build, _: Options, _: struct {}) Package {
+pub fn package(b: *std.Build, _: struct {}) Package {
     const module = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
     });
     return .{ .module = module };
 }
 
-pub fn link(exe: *std.Build.CompileStep, _: Options) void {
+pub fn link(exe: *std.Build.CompileStep) void {
     exe.linkSystemLibraryName("c");
     exe.addCSourceFile(thisDir() ++ "/libs/stbi/stb_image.c", &.{
         "-std=c99",
@@ -31,7 +29,7 @@ pub fn buildTests(
         .target = target,
         .optimize = build_mode,
     });
-    link(tests, .{});
+    link(tests);
     return tests;
 }
 

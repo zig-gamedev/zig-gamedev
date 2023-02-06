@@ -15,14 +15,16 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    options: Options,
-    deps: struct { zwin32_module: *std.Build.Module },
+    args: struct {
+        options: Options = .{},
+        deps: struct { zwin32: *std.Build.Module },
+    },
 ) Package {
     const step = b.addOptions();
-    step.addOption(bool, "enable_debug_layer", options.enable_debug_layer);
-    step.addOption(bool, "enable_gbv", options.enable_gbv);
-    step.addOption(bool, "enable_d2d", options.enable_d2d);
-    step.addOption(u32, "upload_heap_capacity", options.upload_heap_capacity);
+    step.addOption(bool, "enable_debug_layer", args.options.enable_debug_layer);
+    step.addOption(bool, "enable_gbv", args.options.enable_gbv);
+    step.addOption(bool, "enable_d2d", args.options.enable_d2d);
+    step.addOption(u32, "upload_heap_capacity", args.options.upload_heap_capacity);
 
     const options_module = step.createModule();
 
@@ -30,20 +32,20 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
         .dependencies = &.{
             .{ .name = "zd3d12_options", .module = options_module },
-            .{ .name = "zwin32", .module = deps.zwin32_module },
+            .{ .name = "zwin32", .module = args.deps.zwin32 },
         },
     });
 
     return .{
         .module = module,
-        .options = options,
+        .options = args.options,
         .options_module = options_module,
     };
 }
 
 pub fn build(_: *std.Build) void {}
 
-pub fn link(exe: *std.Build.CompileStep, _: Options) void {
+pub fn link(exe: *std.Build.CompileStep) void {
     exe.step.dependOn(
         &exe.builder.addInstallFile(
             .{ .path = thisDir() ++ "/../zwin32/bin/x64/D3D12Core.dll" },

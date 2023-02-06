@@ -63,8 +63,8 @@ pub fn build(b: *std.Build) void {
     {
         installDemo(b, minimal.build(b, options), "minimal");
         installDemo(b, triangle.build(b, options), "triangle");
-        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
         installDemo(b, bindless.build(b, options), "bindless");
+        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
         installDemo(b, textured_quad.build(b, options), "textured_quad");
         installDemo(b, rasterization.build(b, options), "rasterization");
         installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
@@ -99,8 +99,7 @@ pub fn build(b: *std.Build) void {
 
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&znoise_tests.step);
-
-    const zmath_pkg = zmath.package(b, .{}, .{});
+    const zmath_pkg = zmath.package(b, .{});
 
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     zbullet_tests.addModule("zmath", zmath_pkg.module);
@@ -114,7 +113,7 @@ pub fn build(b: *std.Build) void {
 
     const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
     zgpu_tests.want_lto = false; // TODO: Problems with LTO on Windows.
-    zglfw.link(zgpu_tests, .{});
+    zglfw.link(zgpu_tests);
     test_step.dependOn(&zgpu_tests.step);
 
     if (false) {

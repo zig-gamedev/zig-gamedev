@@ -16,9 +16,14 @@ pub const Package = struct {
     options_module: *std.Build.Module,
 };
 
-pub fn package(b: *std.Build, options: Options, _: struct {}) Package {
+pub fn package(
+    b: *std.Build,
+    args: struct {
+        options: Options,
+    },
+) Package {
     const step = b.addOptions();
-    step.addOption(Backend, "backend", options.backend);
+    step.addOption(Backend, "backend", args.options.backend);
 
     const options_module = step.createModule();
 
@@ -31,7 +36,7 @@ pub fn package(b: *std.Build, options: Options, _: struct {}) Package {
 
     return .{
         .module = module,
-        .options = options,
+        .options = args.options,
         .options_module = options_module,
     };
 }
