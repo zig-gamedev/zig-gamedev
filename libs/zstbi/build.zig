@@ -11,13 +11,7 @@ pub fn package(b: *std.Build, _: struct {}) Package {
     return .{ .module = module };
 }
 
-pub fn link(exe: *std.Build.CompileStep) void {
-    exe.linkSystemLibraryName("c");
-    exe.addCSourceFile(thisDir() ++ "/libs/stbi/stb_image.c", &.{
-        "-std=c99",
-        "-fno-sanitize=undefined",
-    });
-}
+pub fn build(_: *std.Build) void {}
 
 pub fn buildTests(
     b: *std.Build,
@@ -31,6 +25,14 @@ pub fn buildTests(
     });
     link(tests);
     return tests;
+}
+
+pub fn link(exe: *std.Build.CompileStep) void {
+    exe.linkSystemLibraryName("c");
+    exe.addCSourceFile(thisDir() ++ "/libs/stbi/stb_image.c", &.{
+        "-std=c99",
+        "-fno-sanitize=undefined",
+    });
 }
 
 inline fn thisDir() []const u8 {
