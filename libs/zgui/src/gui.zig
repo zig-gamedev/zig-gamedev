@@ -3305,6 +3305,14 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_ResetForNewFrame(draw_list: DrawList) void;
 
+    pub fn clearMemory(draw_list: DrawList) void {
+        if (draw_list.getOwnerName()) |owner| {
+            @panic(format("zgui: illegally clearing memory DrawList of {s}", .{owner}));
+        }
+        zguiDrawList_ClearFreeMemory(draw_list);
+    }
+    extern fn zguiDrawList_ClearFreeMemory(draw_list: DrawList) void;
+
     //----------------------------------------------------------------------------------------------
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
@@ -3961,6 +3969,61 @@ pub const DrawList = *opaque {
         rect_max: *const [2]f32,
         rounding: f32,
         flags: DrawFlags,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    pub const primReserve = zguiDrawList_PrimReserve;
+    pub const primUnreserve = zguiDrawList_PrimUnreserve;
+    pub const primRect = zguiDrawList_PrimRect;
+    pub const primRectUV = zguiDrawList_PrimRectUV;
+    pub const primQuadUV = zguiDrawList_PrimQuadUV;
+    pub const primWriteVtx = zguiDrawList_PrimWriteVtx;
+    pub const primWriteIdx = zguiDrawList_PrimWriteIdx;
+
+    extern fn zguiDrawList_PrimReserve(
+        draw_list: DrawList,
+        idx_count: i32,
+        vtx_count: i32,
+    ) void;
+    extern fn zguiDrawList_PrimUnreserve(
+        draw_list: DrawList,
+        idx_count: i32,
+        vtx_count: i32,
+    ) void;
+    extern fn zguiDrawList_PrimRect(
+        draw_list: DrawList,
+        a: [2]f32,
+        b: [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimRectUV(
+        draw_list: DrawList,
+        a: [2]f32,
+        b: [2]f32,
+        uv_a: [2]f32,
+        uv_b: [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimQuadUV(
+        draw_list: DrawList,
+        a: [2]f32,
+        b: [2]f32,
+        c: [2]f32,
+        d: [2]f32,
+        uv_a: [2]f32,
+        uv_b: [2]f32,
+        uv_c: [2]f32,
+        uv_d: [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimWriteVtx(
+        draw_list: DrawList,
+        pos: [2]f32,
+        uv: [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimWriteIdx(
+        draw_list: DrawList,
+        idx: DrawIdx,
     ) void;
     //----------------------------------------------------------------------------------------------
 };
