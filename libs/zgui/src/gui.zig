@@ -3305,6 +3305,14 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_ResetForNewFrame(draw_list: DrawList) void;
 
+    pub fn clearMemory(draw_list: DrawList) void {
+        if (draw_list.getOwnerName()) |owner| {
+            @panic(format("zgui: illegally clearing memory DrawList of {s}", .{owner}));
+        }
+        zguiDrawList_ClearFreeMemory(draw_list);
+    }
+    extern fn zguiDrawList_ClearFreeMemory(draw_list: DrawList) void;
+
     //----------------------------------------------------------------------------------------------
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
@@ -3842,7 +3850,7 @@ pub const DrawList = *opaque {
         uvmax: *const [2]f32,
         col: u32,
         rounding: f32,
-        flags: u32,
+        flags: DrawFlags,
     ) void;
     //----------------------------------------------------------------------------------------------
     pub const pathClear = zguiDrawList_PathClear;
@@ -3961,6 +3969,97 @@ pub const DrawList = *opaque {
         rect_max: *const [2]f32,
         rounding: f32,
         flags: DrawFlags,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    pub const primReserve = zguiDrawList_PrimReserve;
+    pub const primUnreserve = zguiDrawList_PrimUnreserve;
+    pub fn primRect(
+        draw_list: DrawList,
+        a: [2]f32,
+        b: [2]f32,
+        col: u32,
+    ) void {
+        return zguiDrawList_PrimRect(draw_list, &a, &b, col);
+    }
+    pub fn primRectUV(
+        draw_list: DrawList,
+        a: [2]f32,
+        b: [2]f32,
+        uv_a: [2]f32,
+        uv_b: [2]f32,
+        col: u32,
+    ) void {
+        return zguiDrawList_PrimRectUV(draw_list, &a, &b, &uv_a, &uv_b, col);
+    }
+    pub fn primQuadUV(
+        draw_list: DrawList,
+        a: [2]f32,
+        b: [2]f32,
+        c: [2]f32,
+        d: [2]f32,
+        uv_a: [2]f32,
+        uv_b: [2]f32,
+        uv_c: [2]f32,
+        uv_d: [2]f32,
+        col: u32,
+    ) void {
+        return zguiDrawList_PrimQuadUV(draw_list, &a, &b, &c, &d, &uv_a, &uv_b, &uv_c, &uv_d, col);
+    }
+    pub fn primWriteVtx(
+        draw_list: DrawList,
+        pos: [2]f32,
+        uv: [2]f32,
+        col: u32,
+    ) void {
+        return zguiDrawList_PrimWriteVtx(draw_list, &pos, &uv, col);
+    }
+    pub const primWriteIdx = zguiDrawList_PrimWriteIdx;
+
+    extern fn zguiDrawList_PrimReserve(
+        draw_list: DrawList,
+        idx_count: i32,
+        vtx_count: i32,
+    ) void;
+    extern fn zguiDrawList_PrimUnreserve(
+        draw_list: DrawList,
+        idx_count: i32,
+        vtx_count: i32,
+    ) void;
+    extern fn zguiDrawList_PrimRect(
+        draw_list: DrawList,
+        a: *const [2]f32,
+        b: *const [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimRectUV(
+        draw_list: DrawList,
+        a: *const [2]f32,
+        b: *const [2]f32,
+        uv_a: *const [2]f32,
+        uv_b: *const [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimQuadUV(
+        draw_list: DrawList,
+        a: *const [2]f32,
+        b: *const [2]f32,
+        c: *const [2]f32,
+        d: *const [2]f32,
+        uv_a: *const [2]f32,
+        uv_b: *const [2]f32,
+        uv_c: *const [2]f32,
+        uv_d: *const [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimWriteVtx(
+        draw_list: DrawList,
+        pos: *const [2]f32,
+        uv: *const [2]f32,
+        col: u32,
+    ) void;
+    extern fn zguiDrawList_PrimWriteIdx(
+        draw_list: DrawList,
+        idx: DrawIdx,
     ) void;
     //----------------------------------------------------------------------------------------------
 };
