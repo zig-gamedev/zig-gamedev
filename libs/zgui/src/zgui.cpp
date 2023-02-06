@@ -1993,20 +1993,12 @@ ZGUI_API void zguiDrawList_PathRect(
     draw_list->PathRect({ rect_min[0], rect_min[1] }, { rect_max[0], rect_max[1] }, rounding, flags);
 }
 
-ZGUI_API void zguiDrawList_PrimReserve(
-    ImDrawList* draw_list,
-    int idx_count,
-    int vtx_count
-) {
-  draw_list->PrimReserve(idx_count, vtx_count);
+ZGUI_API void zguiDrawList_PrimReserve( ImDrawList* draw_list, int idx_count, int vtx_count) {
+    draw_list->PrimReserve(idx_count, vtx_count);
 }
 
-ZGUI_API void zguiDrawList_PrimUnreserve(
-    ImDrawList* draw_list,
-    int idx_count,
-    int vtx_count
-) {
-  draw_list->PrimUnreserve(idx_count, vtx_count);
+ZGUI_API void zguiDrawList_PrimUnreserve( ImDrawList* draw_list, int idx_count, int vtx_count) {
+    draw_list->PrimUnreserve(idx_count, vtx_count);
 }
 
 ZGUI_API void zguiDrawList_PrimRect(
@@ -2015,7 +2007,7 @@ ZGUI_API void zguiDrawList_PrimRect(
     const float b[2],
     unsigned int col
 ) {
-  draw_list->PrimRect({a[0], a[1]}, {b[0], b[1]}, col);
+    draw_list->PrimRect({ a[0], a[1] }, { b[0], b[1] }, col);
 }
 
 ZGUI_API void zguiDrawList_PrimRectUV(
@@ -2026,7 +2018,7 @@ ZGUI_API void zguiDrawList_PrimRectUV(
     const float uv_b[2],
     unsigned int col
 ) {
-  draw_list->PrimRectUV({a[0], a[1]}, {b[0], b[1]}, {uv_a[0], uv_a[1]}, {uv_b[0], uv_b[1]}, col);
+    draw_list->PrimRectUV({ a[0], a[1] }, { b[0], b[1] }, { uv_a[0], uv_a[1] }, { uv_b[0], uv_b[1] }, col);
 }
 
 ZGUI_API void zguiDrawList_PrimQuadUV(
@@ -2041,7 +2033,11 @@ ZGUI_API void zguiDrawList_PrimQuadUV(
     const float uv_d[2],
     unsigned int col
 ) {
-  draw_list->PrimQuadUV({a[0], a[1]}, {b[0], b[1]}, {c[0], c[1]}, {d[0], d[1]}, {uv_a[0], uv_a[1]}, {uv_b[0], uv_b[1]}, {uv_c[0], uv_c[1]}, {uv_d[0], uv_d[1]}, col);
+    draw_list->PrimQuadUV(
+        { a[0], a[1] }, { b[0], b[1] }, { c[0], c[1] }, { d[0], d[1] },
+        { uv_a[0], uv_a[1] }, { uv_b[0], uv_b[1] }, { uv_c[0], uv_c[1] }, { uv_d[0], uv_d[1] },
+        col
+    );
 }
 
 ZGUI_API void zguiDrawList_PrimWriteVtx(
@@ -2050,16 +2046,12 @@ ZGUI_API void zguiDrawList_PrimWriteVtx(
     const float uv[2],
     unsigned int col
 ) {
-  draw_list->PrimWriteVtx({pos[0], pos[1]}, {uv[0], uv[1]}, col);
+    draw_list->PrimWriteVtx({ pos[0], pos[1] }, { uv[0], uv[1] }, col);
 }
 
-ZGUI_API void zguiDrawList_PrimWriteIdx(
-    ImDrawList* draw_list,
-    ImDrawIdx idx
-) {
-  draw_list->PrimWriteIdx(idx);
+ZGUI_API void zguiDrawList_PrimWriteIdx( ImDrawList* draw_list, ImDrawIdx idx) {
+    draw_list->PrimWriteIdx(idx);
 }
-
 //--------------------------------------------------------------------------------------------------
 //
 // Viewport
