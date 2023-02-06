@@ -1,5 +1,18 @@
 const std = @import("std");
 
+pub const Options = struct {};
+
+pub const Package = struct {
+    module: *std.Build.Module,
+};
+
+pub fn package(b: *std.Build, _: Options, _: struct {}) Package {
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
+    });
+    return .{ .module = module };
+}
+
 pub fn build(_: *std.Build) void {}
 
 pub fn buildTests(
@@ -8,20 +21,15 @@ pub fn buildTests(
     target: std.zig.CrossTarget,
 ) *std.Build.CompileStep {
     const tests = b.addTest(.{
-        .root_source_file = .{ .path = pkg.source.path },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
         .target = target,
         .optimize = build_mode,
     });
-    link(tests);
+    link(tests, .{});
     return tests;
 }
 
-pub const pkg = std.Build.Pkg{
-    .name = "zglfw",
-    .source = .{ .path = thisDir() ++ "/src/zglfw.zig" },
-};
-
-pub fn link(exe: *std.Build.CompileStep) void {
+pub fn link(exe: *std.Build.CompileStep, _: Options) void {
     exe.addIncludePath(thisDir() ++ "/libs/glfw/include");
     exe.linkSystemLibraryName("c");
 

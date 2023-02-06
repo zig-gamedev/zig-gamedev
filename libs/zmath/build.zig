@@ -1,9 +1,34 @@
 const std = @import("std");
 
-pub const pkg = std.Build.Pkg{
-    .name = "zmath",
-    .source = .{ .path = thisDir() ++ "/src/main.zig" },
+pub const Options = struct {
+    force_determinism: bool = false,
 };
+
+pub const Package = struct {
+    module: *std.Build.Module,
+    options: Options,
+    options_module: *std.Build.Module,
+};
+
+pub fn package(b: *std.Build, options: Options, _: struct {}) Package {
+    const step = b.addOptions();
+    step.addOption(bool, "force_determinism", options.force_determinism);
+
+    const options_module = step.createModule();
+
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .dependencies = &.{
+            .{ .name = "zmath_options", .module = options_module },
+        },
+    });
+
+    return .{
+        .module = module,
+        .options = options,
+        .options_module = options_module,
+    };
+}
 
 pub fn build(b: *std.Build) void {
     const build_mode = b.standardOptimizeOption(.{});
@@ -37,7 +62,8 @@ pub fn buildBenchmarks(
         .target = target,
         .optimize = .ReleaseFast,
     });
-    exe.addPackage(pkg);
+    const zmath_pkg = package(b, .{}, .{});
+    exe.addModule("zmath", zmath_pkg.module);
     return exe;
 }
 

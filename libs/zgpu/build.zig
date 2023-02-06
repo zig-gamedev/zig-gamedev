@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const BuildOptions = struct {
+pub const Options = struct {
     uniforms_buffer_size: u64 = 4 * 1024 * 1024,
 
     dawn_skip_validation: bool = false,
@@ -16,45 +16,52 @@ pub const BuildOptions = struct {
     pipeline_layout_pool_size: u32 = 32,
 };
 
-pub const BuildOptionsStep = struct {
-    options: BuildOptions,
-    step: *std.Build.OptionsStep,
-
-    pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
-        const bos = BuildOptionsStep{
-            .options = options,
-            .step = b.addOptions(),
-        };
-        bos.step.addOption(u64, "uniforms_buffer_size", bos.options.uniforms_buffer_size);
-        bos.step.addOption(bool, "dawn_skip_validation", bos.options.dawn_skip_validation);
-        bos.step.addOption(u32, "buffer_pool_size", bos.options.buffer_pool_size);
-        bos.step.addOption(u32, "texture_pool_size", bos.options.texture_pool_size);
-        bos.step.addOption(u32, "texture_view_pool_size", bos.options.texture_view_pool_size);
-        bos.step.addOption(u32, "sampler_pool_size", bos.options.sampler_pool_size);
-        bos.step.addOption(u32, "render_pipeline_pool_size", bos.options.render_pipeline_pool_size);
-        bos.step.addOption(u32, "compute_pipeline_pool_size", bos.options.compute_pipeline_pool_size);
-        bos.step.addOption(u32, "bind_group_pool_size", bos.options.bind_group_pool_size);
-        bos.step.addOption(u32, "bind_group_layout_pool_size", bos.options.bind_group_layout_pool_size);
-        bos.step.addOption(u32, "pipeline_layout_pool_size", bos.options.pipeline_layout_pool_size);
-        return bos;
-    }
-
-    pub fn getPkg(bos: BuildOptionsStep) std.Build.Pkg {
-        return bos.step.getPackage("zgpu_options");
-    }
-
-    fn addTo(bos: BuildOptionsStep, target_step: *std.Build.CompileStep) void {
-        target_step.addOptions("zgpu_options", bos.step);
-    }
+pub const Package = struct {
+    module: *std.Build.Module,
+    options: Options,
+    options_module: *std.Build.Module,
 };
 
-pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
+pub fn package(
+    b: *std.Build,
+    options: Options,
+    deps: struct {
+        zglfw_module: *std.Build.Module,
+        zpool_module: *std.Build.Module,
+    },
+) Package {
+    const step = b.addOptions();
+    step.addOption(u64, "uniforms_buffer_size", options.uniforms_buffer_size);
+    step.addOption(bool, "dawn_skip_validation", options.dawn_skip_validation);
+    step.addOption(u32, "buffer_pool_size", options.buffer_pool_size);
+    step.addOption(u32, "texture_pool_size", options.texture_pool_size);
+    step.addOption(u32, "texture_view_pool_size", options.texture_view_pool_size);
+    step.addOption(u32, "sampler_pool_size", options.sampler_pool_size);
+    step.addOption(u32, "render_pipeline_pool_size", options.render_pipeline_pool_size);
+    step.addOption(u32, "compute_pipeline_pool_size", options.compute_pipeline_pool_size);
+    step.addOption(u32, "bind_group_pool_size", options.bind_group_pool_size);
+    step.addOption(u32, "bind_group_layout_pool_size", options.bind_group_layout_pool_size);
+    step.addOption(u32, "pipeline_layout_pool_size", options.pipeline_layout_pool_size);
+
+    const options_module = step.createModule();
+
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+        .dependencies = &.{
+            .{ .name = "zgpu_options", .module = options_module },
+            .{ .name = "zglfw", .module = deps.zglfw_module },
+            .{ .name = "zpool", .module = deps.zpool_module },
+        },
+    });
+
     return .{
-        .name = "zgpu",
-        .source = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-        .dependencies = dependencies,
+        .module = module,
+        .options = options,
+        .options_module = options_module,
     };
 }
+
+pub fn build(_: *std.Build) void {}
 
 pub fn buildTests(
     b: *std.Build,
@@ -66,13 +73,11 @@ pub fn buildTests(
         .target = target,
         .optimize = build_mode,
     });
-    link(tests, BuildOptionsStep.init(b, .{}));
+    link(tests, .{});
     return tests;
 }
 
-pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
-    bos.addTo(exe);
-
+pub fn link(exe: *std.Build.CompileStep, _: Options) void {
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
     switch (target.os.tag) {

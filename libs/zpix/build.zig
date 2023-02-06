@@ -1,41 +1,38 @@
 const std = @import("std");
 
-pub const BuildOptions = struct {
+pub const Options = struct {
     enable: bool = false,
 };
 
-pub const BuildOptionsStep = struct {
-    options: BuildOptions,
-    step: *std.Build.OptionsStep,
-
-    pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
-        const bos = .{
-            .options = options,
-            .step = b.addOptions(),
-        };
-        bos.step.addOption(bool, "enable", bos.options.enable);
-        return bos;
-    }
-
-    pub fn getPkg(bos: BuildOptionsStep) std.Build.Pkg {
-        return bos.step.getPackage("zpix_options");
-    }
-
-    fn addTo(bos: BuildOptionsStep, target_step: *std.Build.CompileStep) void {
-        target_step.addOptions("zpix_options", bos.step);
-    }
+pub const Package = struct {
+    module: *std.Build.Module,
+    options: Options,
+    options_module: *std.Build.Module,
 };
 
-pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
-    return .{
-        .name = "zpix",
-        .source = .{ .path = thisDir() ++ "/src/zpix.zig" },
-        .dependencies = dependencies,
-    };
-}
+pub fn package(
+    b: *std.Build,
+    options: Options,
+    deps: struct { zwin32_module: *std.Build.Module },
+) Package {
+    const step = b.addOptions();
+    step.addOption(bool, "enable", options.enable);
 
-pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
-    bos.addTo(exe);
+    const options_module = step.createModule();
+
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zpix.zig" },
+        .dependencies = &.{
+            .{ .name = "zpix_options", .module = options_module },
+            .{ .name = "zwin32", .module = deps.zwin32_module },
+        },
+    });
+
+    return .{
+        .module = module,
+        .options = options,
+        .options_module = options_module,
+    };
 }
 
 inline fn thisDir() []const u8 {

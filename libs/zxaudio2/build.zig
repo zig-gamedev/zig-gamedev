@@ -1,45 +1,44 @@
 const std = @import("std");
 
-pub const BuildOptions = struct {
+pub const Options = struct {
     enable_debug_layer: bool = false,
 };
 
-pub const BuildOptionsStep = struct {
-    options: BuildOptions,
-    step: *std.build.OptionsStep,
-
-    pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
-        const bos = .{
-            .options = options,
-            .step = b.addOptions(),
-        };
-        bos.step.addOption(bool, "enable_debug_layer", bos.options.enable_debug_layer);
-        return bos;
-    }
-
-    pub fn getPkg(bos: BuildOptionsStep) std.Build.Pkg {
-        return bos.step.getPackage("zxaudio2_options");
-    }
-
-    fn addTo(bos: BuildOptionsStep, target_step: *std.Build.CompileStep) void {
-        target_step.addOptions("zxaudio2_options", bos.step);
-    }
+pub const Package = struct {
+    module: *std.Build.Module,
+    options: Options,
+    options_module: *std.Build.Module,
 };
 
-pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
+pub fn package(
+    b: *std.Build,
+    options: Options,
+    deps: struct { zwin32_module: *std.Build.Module },
+) Package {
+    const step = b.addOptions();
+    step.addOption(bool, "enable_debug_layer", options.enable_debug_layer);
+
+    const options_module = step.createModule();
+
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
+        .dependencies = &.{
+            .{ .name = "zxaudio2_options", .module = options_module },
+            .{ .name = "zwin32", .module = deps.zwin32_module },
+        },
+    });
+
     return .{
-        .name = "zxaudio2",
-        .source = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
-        .dependencies = dependencies,
+        .module = module,
+        .options = options,
+        .options_module = options_module,
     };
 }
 
 pub fn build(_: *std.Build) void {}
 
-pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
-    bos.addTo(exe);
-
-    if (bos.options.enable_debug_layer) {
+pub fn link(exe: *std.Build.CompileStep, options: Options) void {
+    if (options.enable_debug_layer) {
         exe.step.dependOn(
             &exe.builder.addInstallFile(
                 .{ .path = thisDir() ++ "/../zwin32/bin/x64/xaudio2_9redist_debug.dll" },

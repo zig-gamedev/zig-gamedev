@@ -33,24 +33,36 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable = options.zpix_enable });
-    const zpix_pkg = zpix.getPkg(&.{ zwin32.pkg, zpix_options.getPkg() });
+    const zwin32_pkg = zwin32.package(b, .{}, .{});
 
-    const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
-        .enable_debug_layer = options.zd3d12_enable_debug_layer,
-        .enable_gbv = options.zd3d12_enable_gbv,
-    });
+    const zpix_pkg = zpix.package(
+        b,
+        .{ .enable = options.zpix_enable },
+        .{ .zwin32_module = zwin32_pkg.module },
+    );
 
-    const zd3d12_pkg = zd3d12.getPkg(&.{ zwin32.pkg, zd3d12_options.getPkg() });
-    const common_pkg = common.getPkg(&.{ zd3d12_pkg, zwin32.pkg });
+    const zd3d12_pkg = zd3d12.package(
+        b,
+        .{
+            .enable_debug_layer = options.zd3d12_enable_debug_layer,
+            .enable_gbv = options.zd3d12_enable_gbv,
+        },
+        .{ .zwin32_module = zwin32_pkg.module },
+    );
 
-    exe.addPackage(zd3d12_pkg);
-    exe.addPackage(zwin32.pkg);
-    exe.addPackage(common_pkg);
-    exe.addPackage(zpix_pkg);
+    const common_pkg = common.package(
+        b,
+        .{},
+        .{ .zwin32_module = zwin32_pkg.module, .zd3d12_module = zd3d12_pkg.module },
+    );
 
-    zd3d12.link(exe, zd3d12_options);
-    common.link(exe);
+    exe.addModule("zd3d12", zd3d12_pkg.module);
+    exe.addModule("common", common_pkg.module);
+    exe.addModule("zwin32", zwin32_pkg.module);
+    exe.addModule("zpix", zpix_pkg.module);
+
+    zd3d12.link(exe, zd3d12_pkg.options);
+    common.link(exe, .{});
 
     return exe;
 }

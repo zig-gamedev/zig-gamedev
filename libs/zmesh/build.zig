@@ -1,36 +1,32 @@
 const std = @import("std");
 
-pub const BuildOptions = struct {
+pub const Options = struct {
     shape_use_32bit_indices: bool = false,
 };
 
-pub const BuildOptionsStep = struct {
-    options: BuildOptions,
-    step: *std.Build.OptionsStep,
-
-    pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
-        const bos = .{
-            .options = options,
-            .step = b.addOptions(),
-        };
-        bos.step.addOption(bool, "shape_use_32bit_indices", bos.options.shape_use_32bit_indices);
-        return bos;
-    }
-
-    pub fn getPkg(bos: BuildOptionsStep) std.Build.Pkg {
-        return bos.step.getPackage("zmesh_options");
-    }
-
-    fn addTo(bos: BuildOptionsStep, target_step: *std.Build.CompileStep) void {
-        target_step.addOptions("zmesh_options", bos.step);
-    }
+pub const Package = struct {
+    module: *std.Build.Module,
+    options: Options,
+    options_module: *std.Build.Module,
 };
 
-pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
+pub fn package(b: *std.Build, options: Options, _: struct {}) Package {
+    const step = b.addOptions();
+    step.addOption(bool, "shape_use_32bit_indices", options.shape_use_32bit_indices);
+
+    const options_module = step.createModule();
+
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .dependencies = &.{
+            .{ .name = "zmesh_options", .module = options_module },
+        },
+    });
+
     return .{
-        .name = "zmesh",
-        .source = .{ .path = thisDir() ++ "/src/main.zig" },
-        .dependencies = dependencies,
+        .module = module,
+        .options = options,
+        .options_module = options_module,
     };
 }
 
@@ -46,17 +42,15 @@ pub fn buildTests(
         .target = target,
         .optimize = build_mode,
     });
-    link(tests, BuildOptionsStep.init(b, .{}));
+    link(tests, .{});
     return tests;
 }
 
-pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
-    bos.addTo(exe);
-
+pub fn link(exe: *std.Build.CompileStep, options: Options) void {
     exe.linkSystemLibraryName("c");
     exe.linkSystemLibraryName("c++");
 
-    const par_shapes_t = if (bos.options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
+    const par_shapes_t = if (options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
 
     exe.addIncludePath(thisDir() ++ "/libs/par_shapes");
     exe.addCSourceFile(

@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1557" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1580" };
 
 pub fn build(b: *std.Build) void {
     ensureZigVersion() catch return;
@@ -44,17 +44,19 @@ pub fn build(b: *std.Build) void {
     //
     // Sample applications
     //
-    installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
     installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-    installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
     installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     installDemo(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
-    installDemo(b, layers_wgpu.build(b, options), "layers_wgpu");
     installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
-    installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
+    installDemo(b, layers_wgpu.build(b, options), "layers_wgpu");
+    if (false) {
+        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
+        installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
+        installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
+    }
 
     if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
@@ -86,54 +88,58 @@ pub fn build(b: *std.Build) void {
     //
     const test_step = b.step("test", "Run all tests");
 
-    const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zjobs_tests.step);
+    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zmesh_tests.step);
+
+    const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zstbi_tests.step);
+
+    const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zmath_tests.step);
+
+    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&znoise_tests.step);
+
+    const zmath_pkg = zmath.package(b, .{}, .{});
+
+    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
+    zbullet_tests.addModule("zmath", zmath_pkg.module);
+    test_step.dependOn(&zbullet_tests.step);
+
+    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zglfw_tests.step);
 
     const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zpool_tests.step);
 
     const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
     zgpu_tests.want_lto = false; // TODO: Problems with LTO on Windows.
-    zglfw.link(zgpu_tests);
+    zglfw.link(zgpu_tests, .{});
     test_step.dependOn(&zgpu_tests.step);
 
-    const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zmath_tests.step);
+    if (false) {
+        const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zjobs_tests.step);
 
-    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
-    zbullet_tests.addPackage(zmath.pkg);
-    test_step.dependOn(&zbullet_tests.step);
+        const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zaudio_tests.step);
 
-    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&znoise_tests.step);
+        const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
+            b,
+            options.build_mode,
+            options.target,
+            .{},
+        );
+        test_step.dependOn(&zphysics_tests.step);
 
-    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zmesh_tests.step);
-
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zaudio_tests.step);
-
-    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-        .{},
-    );
-    test_step.dependOn(&zphysics_tests.step);
-
-    const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-        .{ .use_double_precision = true },
-    );
-    test_step.dependOn(&zphysics_f64_tests.step);
-
-    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zglfw_tests.step);
-
-    const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zstbi_tests.step);
+        const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
+            b,
+            options.build_mode,
+            options.target,
+            .{ .use_double_precision = true },
+        );
+        test_step.dependOn(&zphysics_f64_tests.step);
+    }
 
     //
     // Benchmarks

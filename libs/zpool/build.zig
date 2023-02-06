@@ -1,11 +1,17 @@
 const std = @import("std");
 
-const main = .{ .zig = thisDir() ++ "/src/main.zig" };
+pub const Options = struct {};
 
-pub const pkg = std.Build.Pkg{
-    .name = "zpool",
-    .source = .{ .path = main.zig },
+pub const Package = struct {
+    module: *std.Build.Module,
 };
+
+pub fn package(b: *std.Build, _: Options, _: struct {}) Package {
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+    });
+    return .{ .module = module };
+}
 
 pub fn build(b: *std.Build) void {
     const build_mode = b.standardOptimizeOption(.{});
@@ -22,7 +28,7 @@ pub fn buildTests(
     target: std.zig.CrossTarget,
 ) *std.Build.CompileStep {
     const tests = b.addTest(.{
-        .root_source_file = .{ .path = main.zig },
+        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .target = target,
         .optimize = build_mode,
     });

@@ -30,20 +30,24 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     });
     exe.step.dependOn(&install_content_step.step);
 
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
+    const zmath_pkg = zmath.package(b, .{}, .{});
+    const zglfw_pkg = zglfw.package(b, .{}, .{});
+    const zpool_pkg = zpool.package(b, .{}, .{});
+    const zgui_pkg = zgui.package(b, .{ .backend = .glfw_wgpu }, .{});
+    const zgpu_pkg = zgpu.package(
+        b,
+        .{},
+        .{ .zpool_module = zpool_pkg.module, .zglfw_module = zglfw_pkg.module },
+    );
 
-    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
-    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
+    exe.addModule("zgpu", zgpu_pkg.module);
+    exe.addModule("zgui", zgui_pkg.module);
+    exe.addModule("zmath", zmath_pkg.module);
+    exe.addModule("zglfw", zglfw_pkg.module);
 
-    exe.addPackage(zgpu_pkg);
-    exe.addPackage(zgui_pkg);
-    exe.addPackage(zmath.pkg);
-    exe.addPackage(zglfw.pkg);
-
-    zgpu.link(exe, zgpu_options);
-    zgui.link(exe, zgui_options);
-    zglfw.link(exe);
+    zgpu.link(exe, zgpu_pkg.options);
+    zgui.link(exe, zgui_pkg.options);
+    zglfw.link(exe, .{});
 
     return exe;
 }

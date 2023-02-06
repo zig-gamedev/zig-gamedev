@@ -37,30 +37,39 @@ pub fn build(b: *std.Build, options: Options, comptime intro_index: u32) *std.Bu
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
-        .enable_debug_layer = options.zd3d12_enable_debug_layer,
-        .enable_gbv = options.zd3d12_enable_gbv,
-        .enable_d2d = if (intro_index == 0) true else false,
-    });
-    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
+    const zbullet_pkg = zbullet.package(b, .{}, .{});
+    const znoise_pkg = znoise.package(b, .{}, .{});
+    const zmath_pkg = zmath.package(b, .{}, .{});
+    const zmesh_pkg = zmesh.package(b, .{}, .{});
+    const zwin32_pkg = zwin32.package(b, .{}, .{});
+    const zd3d12_pkg = zd3d12.package(
+        b,
+        .{
+            .enable_debug_layer = options.zd3d12_enable_debug_layer,
+            .enable_gbv = options.zd3d12_enable_gbv,
+            .enable_d2d = if (intro_index == 0) true else false,
+        },
+        .{ .zwin32_module = zwin32_pkg.module },
+    );
+    const common_pkg = common.package(
+        b,
+        .{},
+        .{ .zwin32_module = zwin32_pkg.module, .zd3d12_module = zd3d12_pkg.module },
+    );
 
-    const zd3d12_pkg = zd3d12.getPkg(&.{ zwin32.pkg, zd3d12_options.getPkg() });
-    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
-    const common_pkg = common.getPkg(&.{ zd3d12_pkg, zwin32.pkg });
+    exe.addModule("zmesh", zmesh_pkg.module);
+    exe.addModule("zd3d12", zd3d12_pkg.module);
+    exe.addModule("common", common_pkg.module);
+    exe.addModule("zwin32", zwin32_pkg.module);
+    exe.addModule("zmath", zmath_pkg.module);
+    exe.addModule("znoise", znoise_pkg.module);
+    exe.addModule("zbullet", zbullet_pkg.module);
 
-    exe.addPackage(zmesh_pkg);
-    exe.addPackage(zd3d12_pkg);
-    exe.addPackage(common_pkg);
-    exe.addPackage(zwin32.pkg);
-    exe.addPackage(zmath.pkg);
-    exe.addPackage(znoise.pkg);
-    exe.addPackage(zbullet.pkg);
-
-    zmesh.link(exe, zmesh_options);
-    zd3d12.link(exe, zd3d12_options);
-    common.link(exe);
-    znoise.link(exe);
-    zbullet.link(exe);
+    zd3d12.link(exe, zd3d12_pkg.options);
+    zmesh.link(exe, zmesh_pkg.options);
+    common.link(exe, .{});
+    znoise.link(exe, .{});
+    zbullet.link(exe, .{});
 
     return exe;
 }
