@@ -51,9 +51,9 @@ pub fn build(b: *std.Build) void {
     installDemo(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
     installDemo(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
     installDemo(b, layers_wgpu.build(b, options), "layers_wgpu");
+    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
     if (false) {
-        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
         installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
         installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     }
@@ -116,13 +116,13 @@ pub fn build(b: *std.Build) void {
     zglfw.link(zgpu_tests);
     test_step.dependOn(&zgpu_tests.step);
 
+    const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zjobs_tests.step);
+
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zaudio_tests.step);
+
     if (false) {
-        const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.build_mode, options.target);
-        test_step.dependOn(&zjobs_tests.step);
-
-        const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
-        test_step.dependOn(&zaudio_tests.step);
-
         const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
             b,
             options.build_mode,

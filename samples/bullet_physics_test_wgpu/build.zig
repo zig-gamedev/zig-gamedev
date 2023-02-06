@@ -31,30 +31,36 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     });
     exe.step.dependOn(&install_content_step.step);
 
-    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{ .shape_use_32bit_indices = true });
-    const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
-    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
+    //exe.addPackage(zbullet.pkg);
 
-    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
-    const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
-    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
+    //zbullet.link(exe);
 
-    exe.addPackage(zmesh_pkg);
-    exe.addPackage(ztracy_pkg);
-    exe.addPackage(zgpu_pkg);
-    exe.addPackage(zgui_pkg);
-    exe.addPackage(zmath.pkg);
-    exe.addPackage(zbullet.pkg);
-    exe.addPackage(zglfw.pkg);
+    const zmesh_pkg = zmesh.package(b, .{
+        .options = .{ .shape_use_32bit_indices = true },
+    });
+    const zmath_pkg = zmath.package(b, .{});
+    const zbullet_pkg = zbullet.package(b, .{});
+    const zglfw_pkg = zglfw.package(b, .{});
+    const zpool_pkg = zpool.package(b, .{});
+    const zgui_pkg = zgui.package(b, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
+    const zgpu_pkg = zgpu.package(b, .{
+        .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
+    });
 
-    zmesh.link(exe, zmesh_options);
-    ztracy.link(exe, ztracy_options);
-    zgpu.link(exe, zgpu_options);
-    zgui.link(exe, zgui_options);
-    zbullet.link(exe);
+    exe.addModule("zgpu", zgpu_pkg.module);
+    exe.addModule("zgui", zgui_pkg.module);
+    exe.addModule("zmath", zmath_pkg.module);
+    exe.addModule("zglfw", zglfw_pkg.module);
+    exe.addModule("zmesh", zmesh_pkg.module);
+    exe.addModule("zbullet", zbullet_pkg.module);
+
+    zgpu.link(exe);
+    zgui.link(exe, zgui_pkg.options);
+    zmesh.link(exe, zmesh_pkg.options);
     zglfw.link(exe);
+    zbullet.link(exe);
 
     return exe;
 }
