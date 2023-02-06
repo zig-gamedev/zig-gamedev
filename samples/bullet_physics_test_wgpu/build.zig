@@ -31,13 +31,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     });
     exe.step.dependOn(&install_content_step.step);
 
-    //exe.addPackage(zbullet.pkg);
-
-    //zbullet.link(exe);
-
-    const zmesh_pkg = zmesh.package(b, .{
-        .options = .{ .shape_use_32bit_indices = true },
-    });
     const zmath_pkg = zmath.package(b, .{});
     const zbullet_pkg = zbullet.package(b, .{});
     const zglfw_pkg = zglfw.package(b, .{});
@@ -48,6 +41,9 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zgpu_pkg = zgpu.package(b, .{
         .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
     });
+    const zmesh_pkg = zmesh.package(b, .{
+        .options = .{ .shape_use_32bit_indices = true },
+    });
 
     exe.addModule("zgpu", zgpu_pkg.module);
     exe.addModule("zgui", zgui_pkg.module);
@@ -56,9 +52,9 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     exe.addModule("zmesh", zmesh_pkg.module);
     exe.addModule("zbullet", zbullet_pkg.module);
 
-    zgpu.link(exe);
     zgui.link(exe, zgui_pkg.options);
     zmesh.link(exe, zmesh_pkg.options);
+    zgpu.link(exe);
     zglfw.link(exe);
     zbullet.link(exe);
 

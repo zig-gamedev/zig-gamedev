@@ -1,38 +1,39 @@
 const std = @import("std");
 
-pub const BuildOptions = struct {
+pub const Options = struct {
     use_double_precision: bool = false,
     enable_asserts: bool = false,
 };
 
-pub const BuildOptionsStep = struct {
-    options: BuildOptions,
-    step: *std.Build.OptionsStep,
-
-    pub fn init(b: *std.Build, options: BuildOptions) BuildOptionsStep {
-        const bos = .{
-            .options = options,
-            .step = b.addOptions(),
-        };
-        bos.step.addOption(bool, "use_double_precision", bos.options.use_double_precision);
-        bos.step.addOption(bool, "enable_asserts", bos.options.enable_asserts);
-        return bos;
-    }
-
-    pub fn getPkg(bos: BuildOptionsStep) std.Build.Pkg {
-        return bos.step.getPackage("zphysics_options");
-    }
-
-    fn addTo(bos: BuildOptionsStep, target_step: *std.Build.CompileStep) void {
-        target_step.addOptions("zphysics_options", bos.step);
-    }
+pub const Package = struct {
+    module: *std.Build.Module,
+    options: Options,
+    options_module: *std.Build.Module,
 };
 
-pub fn getPkg(dependencies: []const std.Build.Pkg) std.Build.Pkg {
+pub fn package(
+    b: *std.Build,
+    args: struct {
+        options: Options = .{},
+    },
+) Package {
+    const step = b.addOptions();
+    step.addOption(bool, "use_double_precision", args.options.use_double_precision);
+    step.addOption(bool, "enable_asserts", args.options.enable_asserts);
+
+    const options_module = step.createModule();
+
+    const module = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
+        .dependencies = &.{
+            .{ .name = "zphysics_options", .module = options_module },
+        },
+    });
+
     return .{
-        .name = "zphysics",
-        .source = .{ .path = thisDir() ++ "/src/zphysics.zig" },
-        .dependencies = dependencies,
+        .module = module,
+        .options = args.options,
+        .options_module = options_module,
     };
 }
 
@@ -49,7 +50,7 @@ pub fn buildTests(
     b: *std.Build,
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
-    options: BuildOptions,
+    options: Options,
 ) *std.Build.CompileStep {
     const tests = b.addTest(.{
         .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
@@ -64,13 +65,13 @@ pub fn buildTests(
             if (options.enable_asserts or tests.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         },
     );
-    link(tests, BuildOptionsStep.init(b, options));
+    const zphysics_pkg = package(b, .{ .options = options });
+    tests.addModule("zphysics_options", zphysics_pkg.options_module);
+    link(tests, options);
     return tests;
 }
 
-pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
-    bos.addTo(exe);
-
+pub fn link(exe: *std.Build.CompileStep, options: Options) void {
     exe.addIncludePath(thisDir() ++ "/libs");
     exe.addIncludePath(thisDir() ++ "/libs/JoltC");
     exe.linkSystemLibraryName("c");
@@ -79,8 +80,8 @@ pub fn link(exe: *std.Build.CompileStep, bos: BuildOptionsStep) void {
     const flags = &.{
         "-std=c++17",
         "-DJPH_COMPILER_MINGW",
-        if (bos.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
-        if (bos.options.enable_asserts or exe.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+        if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
+        if (options.enable_asserts or exe.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         "-fno-sanitize=undefined",
     };
     exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp", flags);

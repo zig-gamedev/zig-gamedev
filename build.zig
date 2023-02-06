@@ -53,10 +53,8 @@ pub fn build(b: *std.Build) void {
     installDemo(b, layers_wgpu.build(b, options), "layers_wgpu");
     installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
     installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-    if (false) {
-        installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
-        installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
-    }
+    installDemo(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
+    installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
 
     if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
@@ -122,23 +120,21 @@ pub fn build(b: *std.Build) void {
     const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zaudio_tests.step);
 
-    if (false) {
-        const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
-            b,
-            options.build_mode,
-            options.target,
-            .{},
-        );
-        test_step.dependOn(&zphysics_tests.step);
+    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+        .{},
+    );
+    test_step.dependOn(&zphysics_tests.step);
 
-        const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
-            b,
-            options.build_mode,
-            options.target,
-            .{ .use_double_precision = true },
-        );
-        test_step.dependOn(&zphysics_f64_tests.step);
-    }
+    const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+        .{ .use_double_precision = true },
+    );
+    test_step.dependOn(&zphysics_f64_tests.step);
 
     //
     // Benchmarks

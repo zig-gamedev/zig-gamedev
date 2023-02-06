@@ -29,28 +29,32 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     });
     exe.step.dependOn(&install_content_step.step);
 
-    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
-    const zphysics_options = zphysics.BuildOptionsStep.init(b, .{ .use_double_precision = false });
-    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
+    const zmesh_pkg = zmesh.package(b, .{});
+    const zmath_pkg = zmath.package(b, .{});
+    const zglfw_pkg = zglfw.package(b, .{});
+    const zpool_pkg = zpool.package(b, .{});
+    const zgui_pkg = zgui.package(b, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
+    const zgpu_pkg = zgpu.package(b, .{
+        .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
+    });
+    const zphysics_pkg = zphysics.package(b, .{
+        .options = .{ .use_double_precision = false },
+    });
 
-    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
-    const zphysics_pkg = zphysics.getPkg(&.{zphysics_options.getPkg()});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
-    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
+    exe.addModule("zgpu", zgpu_pkg.module);
+    exe.addModule("zgui", zgui_pkg.module);
+    exe.addModule("zmath", zmath_pkg.module);
+    exe.addModule("zglfw", zglfw_pkg.module);
+    exe.addModule("zmesh", zmesh_pkg.module);
+    exe.addModule("zphysics", zphysics_pkg.module);
 
-    exe.addPackage(zmesh_pkg);
-    exe.addPackage(zgpu_pkg);
-    exe.addPackage(zphysics_pkg);
-    exe.addPackage(zgui_pkg);
-    exe.addPackage(zmath.pkg);
-    exe.addPackage(zglfw.pkg);
-
-    zmesh.link(exe, zmesh_options);
-    zgpu.link(exe, zgpu_options);
-    zphysics.link(exe, zphysics_options);
-    zgui.link(exe, zgui_options);
+    zgpu.link(exe);
     zglfw.link(exe);
+    zgui.link(exe, zgui_pkg.options);
+    zmesh.link(exe, zmesh_pkg.options);
+    zphysics.link(exe, zphysics_pkg.options);
 
     return exe;
 }
