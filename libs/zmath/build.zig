@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub const Options = struct {
-    force_determinism: bool = false,
+    prefer_determinism: bool = false,
 };
 
 pub const Package = struct {
@@ -17,7 +17,7 @@ pub fn package(
     },
 ) Package {
     const step = b.addOptions();
-    step.addOption(bool, "force_determinism", args.options.force_determinism);
+    step.addOption(bool, "prefer_determinism", args.options.prefer_determinism);
 
     const options_module = step.createModule();
 
@@ -54,6 +54,8 @@ pub fn buildTests(
         .target = target,
         .optimize = build_mode,
     });
+    const zmath_pkg = package(b, .{});
+    tests.addModule("zmath_options", zmath_pkg.options_module);
     return tests;
 }
 
