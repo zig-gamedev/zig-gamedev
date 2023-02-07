@@ -365,7 +365,7 @@ JPC_BodyCreationSettings_SetDefault(JPC_BodyCreationSettings *out_settings)
 JPC_API void
 JPC_BodyCreationSettings_Set(JPC_BodyCreationSettings *out_settings,
                              const JPC_Shape *in_shape,
-                             const float in_position[3],
+                             const JPC_Real in_position[3],
                              const float in_rotation[4],
                              JPC_MotionType in_motion_type,
                              JPC_ObjectLayer in_layer)

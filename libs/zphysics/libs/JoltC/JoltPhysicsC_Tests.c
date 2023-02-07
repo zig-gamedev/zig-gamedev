@@ -391,7 +391,7 @@ JoltCTest_Basic2(void)
     JPC_BodyCreationSettings_Set(
         &floor_settings,
         floor_shape,
-        (float[]){ 0.0f, -1.0f, 0.0f },
+        (JPC_Real[]){ 0.0f, -1.0f, 0.0f },
         (float[]){ 0.0f, 0.0f, 0.0f, 1.0f },
         JPC_MOTION_TYPE_STATIC,
         OBJ_LAYER_NON_MOVING);
@@ -497,7 +497,7 @@ JoltCTest_HelloWorld(void)
     JPC_BodyCreationSettings_Set(
         &floor_settings,
         floor_shape,
-        (float[]){ 0.0f, -1.0f, 0.0f },
+        (JPC_Real[]){ 0.0f, -1.0f, 0.0f },
         (float[]){ 0.0f, 0.0f, 0.0f, 1.0f },
         JPC_MOTION_TYPE_STATIC,
         OBJ_LAYER_NON_MOVING);
@@ -516,7 +516,7 @@ JoltCTest_HelloWorld(void)
     JPC_BodyCreationSettings_Set(
         &sphere_settings,
         sphere_shape,
-        (float[]){ 0.0f, 2.0f, 0.0f },
+        (JPC_Real[]){ 0.0f, 2.0f, 0.0f },
         (float[]){ 0.0f, 0.0f, 0.0f, 1.0f },
         JPC_MOTION_TYPE_DYNAMIC,
         OBJ_LAYER_MOVING);
