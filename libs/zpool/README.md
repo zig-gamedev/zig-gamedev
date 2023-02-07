@@ -33,7 +33,9 @@ const zpool = @import("libs/zpool/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    exe.addPackage(zpool.pkg);
+    const zpool_pkg = zpool.package(b, .{});
+
+    exe.addModule("zpool", zpool_pkg.module);
 }
 ```
 

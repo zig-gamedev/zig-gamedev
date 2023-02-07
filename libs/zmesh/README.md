@@ -24,13 +24,13 @@ const zmesh = @import("libs/zmesh/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
+    const zmesh_pkg = zmesh.package(b, .{
+        .options = .{ .shape_use_32bit_indices = true },
+    });
 
-    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
+    exe.addModule("zmesh", zmesh_pkg.module);
 
-    exe.addPackage(zmesh_pkg);
-
-    zmesh.link(exe, zmesh_options);
+    zmesh.link(exe, zmesh_pkg.options);
 }
 ```
 

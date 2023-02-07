@@ -14,15 +14,13 @@ const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const ztracy_enable = builder.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
+    const ztracy_pkg = ztracy.package(b, .{
+        .options = .{ .enable_ztracy = true, .enable_fibers = true },
+    });
 
-    const ztracy_options = ztracy.BuildOptionsStep.init(builder, .{ .enable_ztracy = ztracy_enable });
+    exe.addModule("ztracy", ztracy_pkg.module);
 
-    const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
-
-    exe.addPackage(ztracy_pkg);
-
-    ztracy.link(exe, ztracy_options);
+    ztracy.link(exe, ztracy_pkg.options);
 }
 ```
 

@@ -38,7 +38,10 @@ const zbullet = @import("libs/zbullet/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    exe.addPackage(zbullet.pkg);
+    const zbullet_pkg = zbullet.package(b, .{});
+
+    exe.addModule("zbullet", zbullet_pkg.module);
+
     zbullet.link(exe);
 }
 ```

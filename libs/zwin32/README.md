@@ -25,7 +25,9 @@ const zwin32 = @import("libs/zwin32/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    exe.addPackage(zwin32.pkg);
+    const zwin32_pkg = zwin32.package(b, .{});
+
+    exe.addModule("zwin32", zwin32_pkg.module);
 }
 ```
 

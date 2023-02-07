@@ -26,18 +26,19 @@ const zd3d12 = @import("libs/zd3d12/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zd3d12_options = zd3d12.BuildOptionsStep.init(b, .{
-        .enable_debug_layer = false,
-        .enable_gbv = false,
-        .enable_d2d = false,
-        .upload_heap_capacity = 32 * 1024 * 1024,
+    const zwin32_pkg = zwin32.package(b, .{});
+    const zd3d12_pkg = zd3d12.package(b, .{
+        .options = .{
+            .enable_debug_layer = false,
+            .enable_gbv = false,
+        },
+        .deps = .{ .zwin32 = zwin32_pkg.module },
     });
-    const zd3d12_pkg = zd3d12.getPkg(&.{ zwin32.pkg, zd3d12_options.getPkg() });
 
-    exe.addPackage(zd3d12_pkg);
-    exe.addPackage(zwin32.pkg);
+    exe.addModule("zd3d12", zd3d12_pkg.module);
+    exe.addModule("zwin32", zwin32_pkg.module);
 
-    zd3d12.link(exe, zd3d12_options);
+    zd3d12.link(exe);
 }
 ```
 

@@ -14,18 +14,17 @@ Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zphy = @import("libs/zphysics/build.zig");
+const zphysics = @import("libs/zphysics/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zphy_options = zphy.BuildOptionsStep.init(b, .{
-        .use_double_precision = false,
+    const zphysics_pkg = zphysics.package(b, .{
+        .options = .{ .use_double_precision = false },
     });
-    const zphy_pkg = zphy.getPkg(&.{zphy_options.getPkg()});
 
-    exe.addPackage(zphy_pkg);
+    exe.addModule("zphysics", zphysics_pkg.module);
 
-    zphy.link(exe, zphy_options);
+    zphysics.link(exe, zphysics_pkg.options);
 }
 ```
 
