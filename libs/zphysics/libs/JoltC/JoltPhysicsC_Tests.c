@@ -300,8 +300,7 @@ JoltCTest_Basic1(void)
         broad_phase_filter,
         object_filter);
 
-    const float half_extent[3] = { 10.0, 20.0, 30.0 };
-    JPC_BoxShapeSettings *box_settings = JPC_BoxShapeSettings_Create(half_extent);
+    JPC_BoxShapeSettings *box_settings = JPC_BoxShapeSettings_Create((float[]){ 10.0, 20.0, 30.0 });
 
     if (JPC_ShapeSettings_GetRefCount((JPC_ShapeSettings *)box_settings) != 1) return 0;
     JPC_ShapeSettings_AddRef((JPC_ShapeSettings *)box_settings);
@@ -380,8 +379,7 @@ JoltCTest_Basic2(void)
     JPC_PhysicsSystem_SetContactListener(physics_system, NULL);
     JPC_PhysicsSystem_SetContactListener(physics_system, &contact_listener);
 
-    const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
-    JPC_BoxShapeSettings *floor_shape_settings = JPC_BoxShapeSettings_Create(floor_half_extent);
+    JPC_BoxShapeSettings *floor_shape_settings = JPC_BoxShapeSettings_Create((float[]){ 100.0f, 1.0f, 100.0f });
     if (JPC_ShapeSettings_GetRefCount((JPC_ShapeSettings *)floor_shape_settings) != 1) return 0;
 
     JPC_Shape *floor_shape = JPC_ShapeSettings_CreateShape((JPC_ShapeSettings *)floor_shape_settings);
@@ -389,14 +387,12 @@ JoltCTest_Basic2(void)
     if (JPC_ShapeSettings_GetRefCount((JPC_ShapeSettings *)floor_shape_settings) != 1) return 0;
     if (JPC_Shape_GetRefCount(floor_shape) != 2) return 0;
 
-    const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
-    const float floor_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     JPC_BodyCreationSettings floor_settings;
     JPC_BodyCreationSettings_Set(
         &floor_settings,
         floor_shape,
-        floor_position,
-        floor_rotation,
+        (float[]){ 0.0f, -1.0f, 0.0f },
+        (float[]){ 0.0f, 0.0f, 0.0f, 1.0f },
         JPC_MOTION_TYPE_STATIC,
         OBJ_LAYER_NON_MOVING);
 
@@ -494,18 +490,15 @@ JoltCTest_HelloWorld(void)
     //
     // Static floor
     //
-    const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
-    JPC_BoxShapeSettings *floor_shape_settings = JPC_BoxShapeSettings_Create(floor_half_extent);
+    JPC_BoxShapeSettings *floor_shape_settings = JPC_BoxShapeSettings_Create((float[]){ 100.0, 1.0, 100.0 });
     JPC_Shape *floor_shape = JPC_ShapeSettings_CreateShape((JPC_ShapeSettings *)floor_shape_settings);
 
-    const float identity_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
     JPC_BodyCreationSettings floor_settings;
     JPC_BodyCreationSettings_Set(
         &floor_settings,
         floor_shape,
-        floor_position,
-        identity_rotation,
+        (float[]){ 0.0f, -1.0f, 0.0f },
+        (float[]){ 0.0f, 0.0f, 0.0f, 1.0f },
         JPC_MOTION_TYPE_STATIC,
         OBJ_LAYER_NON_MOVING);
 
@@ -519,13 +512,12 @@ JoltCTest_HelloWorld(void)
     JPC_SphereShapeSettings *sphere_shape_settings = JPC_SphereShapeSettings_Create(0.5f);
     JPC_Shape *sphere_shape = JPC_ShapeSettings_CreateShape((JPC_ShapeSettings *)sphere_shape_settings);
 
-    const float sphere_position[3] = { 0.0f, 2.0f, 0.0f };
     JPC_BodyCreationSettings sphere_settings;
     JPC_BodyCreationSettings_Set(
         &sphere_settings,
         sphere_shape,
-        sphere_position,
-        identity_rotation,
+        (float[]){ 0.0f, 2.0f, 0.0f },
+        (float[]){ 0.0f, 0.0f, 0.0f, 1.0f },
         JPC_MOTION_TYPE_DYNAMIC,
         OBJ_LAYER_MOVING);
 
@@ -537,8 +529,7 @@ JoltCTest_HelloWorld(void)
     if (JPC_Body_IsStatic(floor) == false) return 0;
     if (JPC_Body_IsDynamic(floor) == true) return 0;
 
-    const float sphere_velocity[3] = { 0.0f, -5.0f, 0.0f };
-    JPC_BodyInterface_SetLinearVelocity(body_interface, sphere_id, sphere_velocity);
+    JPC_BodyInterface_SetLinearVelocity(body_interface, sphere_id, (float[]){ 0.0f, -5.0f, 0.0f });
 
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
 
