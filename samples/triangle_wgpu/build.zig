@@ -34,6 +34,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .options = .{ .backend = .glfw_wgpu },
     });
     const zgpu_pkg = zgpu.package(b, .{
+        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
         .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
     });
 
@@ -43,8 +44,8 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     exe.addModule("zglfw", zglfw_pkg.module);
 
     zgpu.link(exe);
-    zgui.link(exe, zgui_pkg.options);
     zglfw.link(exe);
+    zgui.link(exe, zgui_pkg.options);
 
     return exe;
 }
