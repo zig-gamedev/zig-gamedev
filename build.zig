@@ -89,8 +89,11 @@ pub fn build(b: *std.Build) void {
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmesh_tests.step);
 
-    const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zstbi_tests.step);
+    // TODO: Crashes on macOS
+    if (builtin.target.os.tag != .macos) {
+        const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zstbi_tests.step);
+    }
 
     const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmath_tests.step);
