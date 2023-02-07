@@ -26,22 +26,26 @@ const zpool = @import("libs/zpool/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zgui_options = zgui.BuildOptionsStep.init(b, .{ .backend = .glfw_wgpu });
-    const zgui_pkg = zgui.getPkg(&.{zgui_options.getPkg()});
+    const zgui_pkg = zgui.package(b, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
 
-    exe.addPackage(zgui_pkg);
+    exe.addModule("zgui", zgui_pkg.module);
 
-    zgui.link(exe, zgui_options);
+    zgui.link(exe, zgui_pkg.options);
     
     // Needed for glfw/wgpu rendering backend
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
+    const zglfw_pkg = zglfw.package(b, .{});
+    const zpool_pkg = zpool.package(b, .{});
+    const zgpu_pkg = zgpu.package(b, .{
+        .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
+    });
 
-    exe.addPackage(zglfw.pkg);
-    exe.addPackage(zgpu_pkg);
+    exe.addModule("zgpu", zgpu_pkg.module);
+    exe.addModule("zglfw", zglfw_pkg.module);
 
     zglfw.link(exe);
-    zgpu.link(exe, zgpu_options);
+    zgpu.link(exe);
 }
 ```
 Now in your code you may import and use `zgui`:
