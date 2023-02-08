@@ -599,15 +599,15 @@ JoltCTest_HelloWorld(void)
             for (uint32_t i = 0; i < num_body_ids; ++i)
             {
                 JPC_BodyLockRead lock;
-                JPC_BodyLockRead_Lock(&lock, lock_iface, body_ids[i]);
+                JPC_BodyLockInterface_LockRead(lock_iface, body_ids[i], &lock);
                 //JPC_BodyLockWrite lock;
-                //JPC_BodyLockWrite_Lock(&lock, lock_iface, body_ids[i]);
+                //JPC_BodyLockInterface_LockWrite(lock_iface, body_ids[i], &lock);
                 if (lock.body)
                 {
                     // Body has been locked, you can safely use `JPC_Body_*()` functions.
                 }
-                JPC_BodyLockRead_Unlock(&lock);
-                //JPC_BodyLockWrite_Unlock(&lock);
+                JPC_BodyLockInterface_UnlockRead(lock_iface, &lock);
+                //JPC_BodyLockInterface_UnlockWrite(lock_iface, &lock);
             }
         }
 
@@ -641,8 +641,10 @@ JoltCTest_HelloWorld(void)
         {
             JPC_Body **bodies = JPC_PhysicsSystem_GetBodiesUnsafe(physics_system);
 
+            const JPC_BodyLockInterface *lock_iface = JPC_PhysicsSystem_GetBodyLockInterface(physics_system);
+
             JPC_BodyLockRead lock;
-            JPC_BodyLockRead_Lock(&lock, JPC_PhysicsSystem_GetBodyLockInterface(physics_system), sphere_id);
+            JPC_BodyLockInterface_LockRead(lock_iface, sphere_id, &lock);
             if (lock.body)
             {
                 JPC_Body *body = bodies[sphere_id & JPC_BODY_ID_INDEX_BITS];
@@ -659,7 +661,7 @@ JoltCTest_HelloWorld(void)
                 if (body != lock.body) return 0;
                 if (body->id != sphere_id) return 0;
             }
-            JPC_BodyLockRead_Unlock(&lock);
+            JPC_BodyLockInterface_UnlockRead(lock_iface, &lock);
         }
     }
 

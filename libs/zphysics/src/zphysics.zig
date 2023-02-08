@@ -840,15 +840,18 @@ pub const BodyLockRead = extern struct {
         lock_interface: *const BodyLockInterface,
         body_id: BodyId,
     ) void {
-        c.JPC_BodyLockRead_Lock(
-            @ptrCast(*c.JPC_BodyLockRead, read_lock),
+        c.JPC_BodyLockInterface_LockRead(
             @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
             body_id,
+            @ptrCast(*c.JPC_BodyLockRead, read_lock),
         );
     }
 
     pub fn unlock(read_lock: *BodyLockRead) void {
-        c.JPC_BodyLockRead_Unlock(@ptrCast(*c.JPC_BodyLockRead, read_lock));
+        c.JPC_BodyLockInterface_UnlockRead(
+            @ptrCast(*const c.JPC_BodyLockInterface, read_lock.lock_interface),
+            @ptrCast(*c.JPC_BodyLockRead, read_lock),
+        );
     }
 
     comptime {
@@ -868,15 +871,18 @@ pub const BodyLockWrite = extern struct {
         lock_interface: *const BodyLockInterface,
         body_id: BodyId,
     ) void {
-        c.JPC_BodyLockWrite_Lock(
-            @ptrCast(*c.JPC_BodyLockWrite, write_lock),
+        c.JPC_BodyLockInterface_LockWrite(
             @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
             body_id,
+            @ptrCast(*c.JPC_BodyLockWrite, write_lock),
         );
     }
 
     pub fn unlock(write_lock: *BodyLockWrite) void {
-        c.JPC_BodyLockWrite_Unlock(@ptrCast(*c.JPC_BodyLockWrite, write_lock));
+        c.JPC_BodyLockInterface_UnlockWrite(
+            @ptrCast(*const c.JPC_BodyLockInterface, write_lock.lock_interface),
+            @ptrCast(*c.JPC_BodyLockWrite, write_lock),
+        );
     }
 
     comptime {
