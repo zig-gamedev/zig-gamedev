@@ -123,6 +123,9 @@ pub fn build(b: *std.Build) void {
     const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zaudio_tests.step);
 
+    //const zflecs_tests = @import("libs/zflecs/build.zig").buildTests(b, options.build_mode, options.target);
+    //test_step.dependOn(&zflecs_tests.step);
+
     const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
         b,
         options.build_mode,
