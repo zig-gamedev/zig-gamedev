@@ -292,7 +292,7 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
-        .cwd = ".",
+        .cwd = thisDir(),
     }) catch { // e.g. FileNotFound
         printErrorMsg();
         return error.GitNotFound;
@@ -326,7 +326,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
-        .cwd = ".",
+        .cwd = thisDir(),
     }) catch { // e.g. FileNotFound
         printNoGitLfs();
         return error.GitLfsNotFound;
