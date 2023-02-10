@@ -50,8 +50,8 @@ pub const Package = struct {
                 "-fno-sanitize=undefined",
             });
 
-            ztracy_c_cpp.linkLibC();
-            ztracy_c_cpp.linkLibCpp();
+            ztracy_c_cpp.linkSystemLibraryName("c");
+            ztracy_c_cpp.linkSystemLibraryName("c++");
 
             if (ztracy_c_cpp.target.isWindows()) {
                 ztracy_c_cpp.linkSystemLibraryName("advapi32");
