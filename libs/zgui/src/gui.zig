@@ -892,9 +892,16 @@ const PopStyleColor = struct {
 pub fn popStyleColor(args: PopStyleColor) void {
     zguiPopStyleColor(args.count);
 }
+/// `fn pushTextWrapPos(wrap_pos_x: f32) void`
+pub const pushTextWrapPos = zguiPushTextWrapPos;
+/// `fn popTextWrapPos() void`
+pub const popTextWrapPos = zguiPopTextWrapPos;
 extern fn zguiPushStyleColor4f(idx: StyleCol, col: *const [4]f32) void;
 extern fn zguiPushStyleColor1u(idx: StyleCol, col: u32) void;
 extern fn zguiPopStyleColor(count: i32) void;
+extern fn zguiPushTextWrapPos(wrap_pos_x: f32) void;
+extern fn zguiPopTextWrapPos() void;
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 pub const StyleVar = enum(u32) {
     alpha, // 1f
