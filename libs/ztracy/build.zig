@@ -1,68 +1,84 @@
 const std = @import("std");
 
-pub const Options = struct {
-    enable_ztracy: bool = false,
-    enable_fibers: bool = false,
-};
-
 pub const Package = struct {
-    module: *std.Build.Module,
-    options: Options,
-    options_module: *std.Build.Module,
-};
-
-pub fn package(
-    b: *std.Build,
-    args: struct {
-        options: Options = .{},
-    },
-) Package {
-    const step = b.addOptions();
-    step.addOption(bool, "enable_ztracy", args.options.enable_ztracy);
-
-    const options_module = step.createModule();
-
-    const module = b.createModule(.{
-        .source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
-        .dependencies = &.{
-            .{ .name = "ztracy_options", .module = options_module },
-        },
-    });
-
-    return .{
-        .module = module,
-        .options = args.options,
-        .options_module = options_module,
+    pub const Options = struct {
+        enable_ztracy: bool = false,
+        enable_fibers: bool = false,
     };
-}
 
-pub fn build(_: *std.Build) void {}
+    options: Options,
+    ztracy: *std.Build.Module,
+    ztracy_options: *std.Build.Module,
+    ztracy_c_cpp: ?*std.Build.CompileStep,
 
-pub fn link(exe: *std.Build.CompileStep, options: Options) void {
-    if (options.enable_ztracy) {
-        const enable_fibers = if (options.enable_fibers) "-DTRACY_FIBERS" else "";
+    pub fn build(
+        b: *std.Build,
+        target: std.zig.CrossTarget,
+        optimize: std.builtin.Mode,
+        args: struct {
+            options: Options = .{},
+        },
+    ) Package {
+        const step = b.addOptions();
+        step.addOption(bool, "enable_ztracy", args.options.enable_ztracy);
 
-        exe.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
-        exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
-            "-DTRACY_ENABLE",
-            enable_fibers,
-            // MinGW doesn't have all the newfangled windows features,
-            // so we need to pretend to have an older windows version.
-            "-D_WIN32_WINNT=0x601",
-            "-fno-sanitize=undefined",
+        const ztracy_options = step.createModule();
+
+        const ztracy = b.createModule(.{
+            .source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
+            .dependencies = &.{
+                .{ .name = "ztracy_options", .module = ztracy_options },
+            },
         });
 
-        exe.linkSystemLibraryName("c");
-        exe.linkSystemLibraryName("c++");
+        const ztracy_c_cpp = if (args.options.enable_ztracy) ztracy_c_cpp: {
+            const enable_fibers = if (args.options.enable_fibers) "-DTRACY_FIBERS" else "";
 
-        if (exe.target.isWindows()) {
-            exe.linkSystemLibraryName("advapi32");
-            exe.linkSystemLibraryName("user32");
-            exe.linkSystemLibraryName("ws2_32");
-            exe.linkSystemLibraryName("dbghelp");
+            const ztracy_c_cpp = b.addStaticLibrary(.{
+                .name = "ztracy",
+                .target = target,
+                .optimize = optimize,
+            });
+
+            ztracy_c_cpp.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
+            ztracy_c_cpp.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
+                "-DTRACY_ENABLE",
+                enable_fibers,
+                // MinGW doesn't have all the newfangled windows features,
+                // so we need to pretend to have an older windows version.
+                "-D_WIN32_WINNT=0x601",
+                "-fno-sanitize=undefined",
+            });
+
+            ztracy_c_cpp.linkLibC();
+            ztracy_c_cpp.linkLibCpp();
+
+            if (ztracy_c_cpp.target.isWindows()) {
+                ztracy_c_cpp.linkSystemLibraryName("advapi32");
+                ztracy_c_cpp.linkSystemLibraryName("user32");
+                ztracy_c_cpp.linkSystemLibraryName("ws2_32");
+                ztracy_c_cpp.linkSystemLibraryName("dbghelp");
+            }
+            break :ztracy_c_cpp ztracy_c_cpp;
+        } else null;
+
+        return .{
+            .options = args.options,
+            .ztracy = ztracy,
+            .ztracy_options = ztracy_options,
+            .ztracy_c_cpp = ztracy_c_cpp,
+        };
+    }
+
+    pub fn link(ztracy_pkg: Package, exe: *std.Build.CompileStep) void {
+        if (ztracy_pkg.ztracy_c_cpp) |lib| {
+            exe.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
+            exe.linkLibrary(lib);
         }
     }
-}
+};
+
+pub fn build(_: *std.Build) void {}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

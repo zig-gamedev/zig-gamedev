@@ -1,20 +1,20 @@
 const std = @import("std");
 
 pub const Package = struct {
-    module: *std.Build.Module,
+    zpool: *std.Build.Module,
+
+    pub fn build(b: *std.Build, _: struct {}) Package {
+        const zpool = b.createModule(.{
+            .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        });
+        return .{ .zpool = zpool };
+    }
 };
 
-pub fn package(b: *std.Build, _: struct {}) Package {
-    const module = b.createModule(.{
-        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
-    });
-    return .{ .module = module };
-}
-
 pub fn build(b: *std.Build) void {
-    const build_mode = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, build_mode, target);
+    const tests = buildTests(b, optimize, target);
 
     const test_step = b.step("test", "Run zpool tests");
     test_step.dependOn(&tests.step);
@@ -22,13 +22,13 @@ pub fn build(b: *std.Build) void {
 
 pub fn buildTests(
     b: *std.Build,
-    build_mode: std.builtin.Mode,
+    optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.Build.CompileStep {
     const tests = b.addTest(.{
         .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .target = target,
-        .optimize = build_mode,
+        .optimize = optimize,
     });
     return tests;
 }

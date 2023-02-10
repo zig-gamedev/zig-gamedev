@@ -1,5 +1,4 @@
 const std = @import("std");
-const zwin32 = @import("../../libs/zwin32/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
@@ -8,7 +7,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .name = "minimal",
         .root_source_file = .{ .path = thisDir() ++ "/src/minimal.zig" },
         .target = options.target,
-        .optimize = options.build_mode,
+        .optimize = options.optimize,
     });
 
     exe.step.dependOn(
@@ -40,10 +39,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     exe.step.dependOn(dxc_step);
 
     exe.rdynamic = true;
-
-    const zwin32_pkg = zwin32.package(b, .{});
-
-    exe.addModule("zwin32", zwin32_pkg.module);
 
     return exe;
 }

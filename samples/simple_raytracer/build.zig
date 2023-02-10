@@ -1,8 +1,4 @@
 const std = @import("std");
-const zwin32 = @import("../../libs/zwin32/build.zig");
-const zd3d12 = @import("../../libs/zd3d12/build.zig");
-const zpix = @import("../../libs/zpix/build.zig");
-const common = @import("../../libs/common/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "simple_raytracer_content/";
@@ -12,7 +8,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .name = "simple_raytracer",
         .root_source_file = .{ .path = thisDir() ++ "/src/simple_raytracer.zig" },
         .target = options.target,
-        .optimize = options.build_mode,
+        .optimize = options.optimize,
     });
 
     const exe_options = b.addOptions();
@@ -32,30 +28,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
-
-    const zwin32_pkg = zwin32.package(b, .{});
-    const zpix_pkg = zpix.package(b, .{
-        .options = .{ .enable = options.zpix_enable },
-        .deps = .{ .zwin32 = zwin32_pkg.module },
-    });
-    const zd3d12_pkg = zd3d12.package(b, .{
-        .options = .{
-            .enable_debug_layer = options.zd3d12_enable_debug_layer,
-            .enable_gbv = options.zd3d12_enable_gbv,
-        },
-        .deps = .{ .zwin32 = zwin32_pkg.module },
-    });
-    const common_pkg = common.package(b, .{
-        .deps = .{ .zwin32 = zwin32_pkg.module, .zd3d12 = zd3d12_pkg.module },
-    });
-
-    exe.addModule("zd3d12", zd3d12_pkg.module);
-    exe.addModule("common", common_pkg.module);
-    exe.addModule("zwin32", zwin32_pkg.module);
-    exe.addModule("zpix", zpix_pkg.module);
-
-    zd3d12.link(exe);
-    common.link(exe);
 
     return exe;
 }

@@ -1,16 +1,16 @@
 const std = @import("std");
 
 pub const Package = struct {
-    module: *std.Build.Module,
-};
+    zwin32: *std.Build.Module,
 
-pub fn package(b: *std.Build, _: struct {}) Package {
-    return .{
-        .module = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/zwin32.zig" },
-        }),
-    };
-}
+    pub fn build(b: *std.Build, _: struct {}) Package {
+        return .{
+            .zwin32 = b.createModule(.{
+                .source_file = .{ .path = thisDir() ++ "/src/zwin32.zig" },
+            }),
+        };
+    }
+};
 
 pub fn build(_: *std.Build) void {}
 

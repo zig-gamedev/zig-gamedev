@@ -1,44 +1,44 @@
 const std = @import("std");
 
-pub const Options = struct {
-    prefer_determinism: bool = false,
-};
-
 pub const Package = struct {
-    module: *std.Build.Module,
-    options: Options,
-    options_module: *std.Build.Module,
-};
-
-pub fn package(
-    b: *std.Build,
-    args: struct {
-        options: Options = .{},
-    },
-) Package {
-    const step = b.addOptions();
-    step.addOption(bool, "prefer_determinism", args.options.prefer_determinism);
-
-    const options_module = step.createModule();
-
-    const module = b.createModule(.{
-        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
-        .dependencies = &.{
-            .{ .name = "zmath_options", .module = options_module },
-        },
-    });
-
-    return .{
-        .module = module,
-        .options = args.options,
-        .options_module = options_module,
+    pub const Options = struct {
+        prefer_determinism: bool = false,
     };
-}
+
+    options: Options,
+    zmath: *std.Build.Module,
+    zmath_options: *std.Build.Module,
+
+    pub fn build(
+        b: *std.Build,
+        args: struct {
+            options: Options = .{},
+        },
+    ) Package {
+        const step = b.addOptions();
+        step.addOption(bool, "prefer_determinism", args.options.prefer_determinism);
+
+        const zmath_options = step.createModule();
+
+        const zmath = b.createModule(.{
+            .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+            .dependencies = &.{
+                .{ .name = "zmath_options", .module = zmath_options },
+            },
+        });
+
+        return .{
+            .options = args.options,
+            .zmath = zmath,
+            .zmath_options = zmath_options,
+        };
+    }
+};
 
 pub fn build(b: *std.Build) void {
-    const build_mode = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, build_mode, target);
+    const tests = buildTests(b, optimize, target);
 
     const test_step = b.step("test", "Run zmath tests");
     test_step.dependOn(&tests.step);
@@ -46,16 +46,14 @@ pub fn build(b: *std.Build) void {
 
 pub fn buildTests(
     b: *std.Build,
-    build_mode: std.builtin.Mode,
+    optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.Build.CompileStep {
     const tests = b.addTest(.{
         .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .target = target,
-        .optimize = build_mode,
+        .optimize = optimize,
     });
-    const zmath_pkg = package(b, .{});
-    tests.addModule("zmath_options", zmath_pkg.options_module);
     return tests;
 }
 
@@ -69,8 +67,6 @@ pub fn buildBenchmarks(
         .target = target,
         .optimize = .ReleaseFast,
     });
-    const zmath_pkg = package(b, .{});
-    exe.addModule("zmath", zmath_pkg.module);
     return exe;
 }
 
