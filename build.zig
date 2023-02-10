@@ -232,7 +232,7 @@ pub fn build(b: *std.Build) void {
             .options = .{ .enable = options.zpix_enable },
             .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
         });
-        const common_pkg = common.Package.build(b, .{
+        const common_pkg = common.Package.build(b, options.target, options.optimize, .{
             .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
         });
 

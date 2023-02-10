@@ -6,6 +6,8 @@ pub const Package = struct {
 
     pub fn build(
         b: *std.Build,
+        target: std.zig.CrossTarget,
+        optimize: std.builtin.Mode,
         args: struct {
             deps: struct {
                 zwin32: *std.Build.Module,
@@ -15,9 +17,8 @@ pub const Package = struct {
     ) Package {
         const lib = b.addStaticLibrary(.{
             .name = "common",
-            .root_source_file = .{ .path = thisDir() ++ "/src/common.zig" },
-            .target = .{},
-            .optimize = .Debug,
+            .target = target,
+            .optimize = optimize,
         });
 
         lib.linkLibC();
@@ -48,8 +49,6 @@ pub const Package = struct {
     }
 
     pub fn link(common_pkg: Package, exe: *std.Build.CompileStep) void {
-        common_pkg.common_c_cpp.target = exe.target;
-        common_pkg.common_c_cpp.optimize = exe.optimize;
         exe.linkLibrary(common_pkg.common_c_cpp);
         exe.addIncludePath(thisDir() ++ "/libs/imgui");
         exe.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");

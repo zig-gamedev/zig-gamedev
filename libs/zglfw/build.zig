@@ -117,6 +117,21 @@ pub const Package = struct {
     }
 
     pub fn link(zglfw_pkg: Package, exe: *std.Build.CompileStep) void {
+        const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+        switch (host.os.tag) {
+            .windows => {},
+            .macos => {
+                exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
+            },
+            else => {
+                // We assume Linux (X11)
+                if (host.cpu.arch.isX86()) {
+                    exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu");
+                } else {
+                    exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu");
+                }
+            },
+        }
         exe.linkLibrary(zglfw_pkg.zglfw_c_cpp);
     }
 };
