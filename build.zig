@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
         .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
     const ztracy_pkg = ztracy.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .enable_ztracy = true, .enable_fibers = true },
+        .options = .{ .enable_ztracy = false, .enable_fibers = false },
     });
     const zphysics_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
         .options = .{ .use_double_precision = false },
