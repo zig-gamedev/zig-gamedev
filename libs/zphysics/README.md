@@ -18,13 +18,13 @@ const zphysics = @import("libs/zphysics/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zphysics_pkg = zphysics.package(b, .{
+    const zphysics_pkg = zphysics.Package.build(b, target, optimize, .{
         .options = .{ .use_double_precision = false },
     });
 
-    exe.addModule("zphysics", zphysics_pkg.module);
+    exe.addModule("zphysics", zphysics_pkg.zphysics);
 
-    zphysics.link(exe, zphysics_pkg.options);
+    zphysics_pkg.link(exe);
 }
 ```
 

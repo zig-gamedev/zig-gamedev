@@ -26,17 +26,17 @@ const zpool = @import("libs/zpool/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
 pub fn build(b: *std.Build) void {
-    const zglfw_pkg = zglfw.package(b, .{});
-    const zpool_pkg = zpool.package(b, .{});
-    const zgpu_pkg = zgpu.package(b, .{
-        .deps = .{ .zpool = zpool_pkg.module, .zglfw = zglfw_pkg.module },
+    const zglfw_pkg = zglfw.Package.build(b, target, optimize, .{});
+    const zpool_pkg = zpool.Package.build(b, .{});
+    const zgpu_pkg = zgpu.Package.build(b, .{
+        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
 
-    exe.addModule("zgpu", zgpu_pkg.module);
-    exe.addModule("zglfw", zglfw_pkg.module);
+    exe.addModule("zgpu", zgpu_pkg.zgpu);
+    exe.addModule("zglfw", zglfw_pkg.zglfw);
 
-    zgpu.link(exe);
-    zglfw.link(exe);
+    zgpu_pkg.link(exe);
+    zglfw_pkg.link(exe);
 }
 ```
 ------------

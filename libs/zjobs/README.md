@@ -20,9 +20,9 @@ const zjobs = @import("libs/zjobs/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zjobs_pkg = zjobs.package(b, .{});
+    const zjobs_pkg = zjobs.Package.build(b, .{});
 
-    exe.addModule("zjobs", zjobs_pkg.module);
+    exe.addModule("zjobs", zjobs_pkg.zjobs);
 }
 ```
 

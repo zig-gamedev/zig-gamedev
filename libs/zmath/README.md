@@ -24,9 +24,9 @@ const zmath = @import("libs/zmath/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zmath_pkg = zmath.package(b, .{});
+    const zmath_pkg = zmath.Package.build(b, .{});
 
-    exe.addModule("zmath", zmath_pkg.module);
+    exe.addModule("zmath", zmath_pkg.zmath);
 }
 ```
 

@@ -14,13 +14,13 @@ const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const ztracy_pkg = ztracy.package(b, .{
-        .options = .{ .enable_ztracy = true, .enable_fibers = true },
+    const ztracy_pkg = ztracy.Package.build(b, target, optimize, .{
+        .options = .{ .enable_ztracy = true },
     });
 
-    exe.addModule("ztracy", ztracy_pkg.module);
+    exe.addModule("ztracy", ztracy_pkg.ztracy);
 
-    ztracy.link(exe, ztracy_pkg.options);
+    ztracy_pkg.link(exe);
 }
 ```
 
@@ -44,18 +44,15 @@ pub fn main() !void {
 
 Tracy has support for marking fibers (also called green threads,
 coroutines, and other forms of cooperative multitasking). This support requires
-an additional option passed through when compiling the Tracy library, so change
-the `link()` call in your `build.zig` to:
+an additional option passed through when compiling the Tracy library, so:
 
 ```zig
-const ztracy_options = ztracy.BuildOptionsStep.init(
-    builder,
-    .{ .enable_ztracy = true, .enable_fibers = true },
-);
+    ...
+    const ztracy_pkg = ztracy.Package.build(b, target, optimize, .{
+        .options = .{ .enable_ztracy = true, .enable_fibers = true },
+    });
 
-const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
+    exe.addModule("ztracy", ztracy_pkg.ztracy);
 
-exe.addPackage(ztracy_pkg);
-
-ztracy.link(exe, ztracy_options);
+    ztracy_pkg.link(exe);
 ```

@@ -46,11 +46,11 @@ const zaudio = @import("libs/zaudio/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zaudio_pkg = zaudio.package(b, .{});
+    const zaudio_pkg = zaudio.Package.build(b, target, optimize, .{});
 
-    exe.addModule("zaudio", zaudio_pkg.module);
+    exe.addModule("zaudio", zaudio_pkg.zaudio);
 
-    zaudio.link(exe);
+    zaudio_pkg.link(exe);
 }
 ```
 

@@ -10,11 +10,11 @@ const zglfw = @import("libs/zglfw/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zglfw_pkg = zglfw.package(b, .{});
+    const zglfw_pkg = zglfw.Package.build(b, target, optimize, .{});
 
-    exe.addModule("zglfw", zglfw_pkg.module);
+    exe.addModule("zglfw", zglfw_pkg.zglfw);
 
-    zglfw.link(exe);
+    zglfw_pkg.link(exe);
 }
 ```
 Now in your code you may import and use `zglfw`:

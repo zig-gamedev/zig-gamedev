@@ -19,11 +19,11 @@ const zstbi = @import("libs/zstbi/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zstbi_pkg = zstbi.package(b, .{});
+    const zstbi_pkg = zstbi.Package.build(b, target, optimize, .{});
 
-    exe.addModule("zstbi", zstbi_pkg.module);
+    exe.addModule("zstbi", zstbi_pkg.zstbi);
 
-    zstbi.link(exe);
+    zstbi_pkg.link(exe);
 }
 ```
 Now in your code you may import and use `zstbi`.

@@ -1,15 +1,15 @@
 const std = @import("std");
 
 pub const Package = struct {
-    module: *std.Build.Module,
-};
+    zjobs: *std.Build.Module,
 
-pub fn package(b: *std.Build, _: struct {}) Package {
-    const module = b.createModule(.{
-        .source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
-    });
-    return .{ .module = module };
-}
+    pub fn build(b: *std.Build, _: struct {}) Package {
+        const zjobs = b.createModule(.{
+            .source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
+        });
+        return .{ .zjobs = zjobs };
+    }
+};
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
