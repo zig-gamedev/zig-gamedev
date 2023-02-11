@@ -111,12 +111,6 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     });
     zaudio_pkg = zaudio.Package.build(b, options.target, options.optimize, .{});
     zflecs_pkg = zflecs.Package.build(b, options.target, options.optimize, .{});
-
-    if (options.target.isWindows() and
-        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
-    {
-        if (builtin.target.os.tag == .windows) {}
-    }
 }
 
 fn packagesWindowsLinux(b: *std.Build, options: Options) void {
