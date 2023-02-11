@@ -14,7 +14,7 @@ const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const ztracy_pkg = ztracy.Package.build(b, target, optimize, .{
+    const ztracy_pkg = ztracy.Package.build(b, .{
         .options = .{ .enable_ztracy = true },
     });
 
@@ -48,7 +48,7 @@ an additional option passed through when compiling the Tracy library, so:
 
 ```zig
     ...
-    const ztracy_pkg = ztracy.Package.build(b, target, optimize, .{
+    const ztracy_pkg = ztracy.Package.build(b, .{
         .options = .{ .enable_ztracy = true, .enable_fibers = true },
     });
 
