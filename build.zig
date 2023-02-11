@@ -47,20 +47,30 @@ pub fn build(b: *std.Build) void {
     //
     // Packages
     //
-    packages(b, options);
-
-    //
-    // Sample applications
-    //
-    samplesWebGpu(b, options);
+    packagesCrossPlatform(b, options);
 
     if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
-        samplesDx12WindowsLinux(b, options);
+        packagesWindowsLinux(b, options);
 
         if (builtin.target.os.tag == .windows) {
-            samplesDx12Windows(b, options);
+            packagesWindows(b, options);
+        }
+    }
+
+    //
+    // Sample applications
+    //
+    samplesCrossPlatform(b, options);
+
+    if (options.target.isWindows() and
+        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
+    {
+        samplesWindowsLinux(b, options);
+
+        if (builtin.target.os.tag == .windows) {
+            samplesWindows(b, options);
         }
     }
 
@@ -75,7 +85,7 @@ pub fn build(b: *std.Build) void {
     benchmarks(b, options);
 }
 
-fn packages(b: *std.Build, options: Options) void {
+fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     zmath_pkg = zmath.Package.build(b, .{});
     zpool_pkg = zpool.Package.build(b, .{});
     zmesh_pkg = zmesh.Package.build(b, options.target, options.optimize, .{});
@@ -105,38 +115,42 @@ fn packages(b: *std.Build, options: Options) void {
     if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
-        zwin32_pkg = zwin32.Package.build(b, .{});
-        zd3d12_pkg = zd3d12.Package.build(b, .{
-            .options = .{
-                .enable_debug_layer = options.zd3d12_enable_debug_layer,
-                .enable_gbv = options.zd3d12_enable_gbv,
-                .upload_heap_capacity = 32 * 1024 * 1024,
-            },
-            .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-        });
-        zpix_pkg = zpix.Package.build(b, .{
-            .options = .{ .enable = options.zpix_enable },
-            .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-        });
-        common_pkg = common.Package.build(b, options.target, options.optimize, .{
-            .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
-        });
-
-        if (builtin.target.os.tag == .windows) {
-            zd3d12_d2d_pkg = zd3d12.Package.build(b, .{
-                .options = .{
-                    .enable_debug_layer = options.zd3d12_enable_debug_layer,
-                    .enable_gbv = options.zd3d12_enable_gbv,
-                    .enable_d2d = true,
-                },
-                .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-            });
-            zxaudio2_pkg = zxaudio2.Package.build(b, .{
-                .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
-                .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-            });
-        }
+        if (builtin.target.os.tag == .windows) {}
     }
+}
+
+fn packagesWindowsLinux(b: *std.Build, options: Options) void {
+    zwin32_pkg = zwin32.Package.build(b, .{});
+    zd3d12_pkg = zd3d12.Package.build(b, .{
+        .options = .{
+            .enable_debug_layer = options.zd3d12_enable_debug_layer,
+            .enable_gbv = options.zd3d12_enable_gbv,
+            .upload_heap_capacity = 32 * 1024 * 1024,
+        },
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    });
+    zpix_pkg = zpix.Package.build(b, .{
+        .options = .{ .enable = options.zpix_enable },
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    });
+    common_pkg = common.Package.build(b, options.target, options.optimize, .{
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
+    });
+}
+
+fn packagesWindows(b: *std.Build, options: Options) void {
+    zd3d12_d2d_pkg = zd3d12.Package.build(b, .{
+        .options = .{
+            .enable_debug_layer = options.zd3d12_enable_debug_layer,
+            .enable_gbv = options.zd3d12_enable_gbv,
+            .enable_d2d = true,
+        },
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    });
+    zxaudio2_pkg = zxaudio2.Package.build(b, .{
+        .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    });
 }
 
 fn tests(b: *std.Build, options: Options) void {
@@ -217,7 +231,7 @@ fn benchmarks(b: *std.Build, options: Options) void {
     }
 }
 
-fn samplesDx12WindowsLinux(b: *std.Build, options: Options) void {
+fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     { // bindless
         const exe = bindless.build(b, options);
         exe.addModule("zmesh", zmesh_pkg.zmesh);
@@ -309,7 +323,7 @@ fn samplesDx12WindowsLinux(b: *std.Build, options: Options) void {
     }
 }
 
-fn samplesDx12Windows(b: *std.Build, options: Options) void {
+fn samplesWindows(b: *std.Build, options: Options) void {
     { // intro 0
         const exe = intro.build(b, options, 0);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
@@ -361,7 +375,7 @@ fn samplesDx12Windows(b: *std.Build, options: Options) void {
     }
 }
 
-fn samplesWebGpu(b: *std.Build, options: Options) void {
+fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     { // triangle wgpu
         const exe = triangle_wgpu.build(b, options);
         exe.addModule("zgpu", zgpu_pkg.zgpu);
