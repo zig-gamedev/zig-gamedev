@@ -4,6 +4,9 @@ const std = @import("std");
 const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1580" };
 
 pub fn build(b: *std.Build) void {
+    //
+    // Options and system checks
+    //
     ensureZigVersion() catch return;
     const options = Options{
         .optimize = b.standardOptimizeOption(.{}),
@@ -41,35 +44,324 @@ pub fn build(b: *std.Build) void {
     }
     ensureGitLfsContent("/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib") catch return;
 
-    const zmath_pkg = zmath.Package.build(b, .{});
-    const zpool_pkg = zpool.Package.build(b, .{});
-    const zmesh_pkg = zmesh.Package.build(b, options.target, options.optimize, .{});
-    const zglfw_pkg = zglfw.Package.build(b, options.target, options.optimize, .{});
-    const znoise_pkg = znoise.Package.build(b, options.target, options.optimize, .{});
-    const zstbi_pkg = zstbi.Package.build(b, options.target, options.optimize, .{});
-    const zbullet_pkg = zbullet.Package.build(b, options.target, options.optimize, .{});
-    const zgui_pkg = zgui.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .backend = .glfw_wgpu },
-    });
-    const zgpu_pkg = zgpu.Package.build(b, .{
-        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
-        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
-    });
-    const ztracy_pkg = ztracy.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .enable_ztracy = false, .enable_fibers = false },
-    });
-    const zphysics_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .use_double_precision = false },
-    });
-    const zphysics_f64_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .use_double_precision = true },
-    });
-    const zaudio_pkg = zaudio.Package.build(b, options.target, options.optimize, .{});
-    const zflecs_pkg = zflecs.Package.build(b, options.target, options.optimize, .{});
+    //
+    // Packages
+    //
+    packages(b, options);
 
     //
     // Sample applications
     //
+    samplesWebGpu(b, options);
+
+    if (options.target.isWindows() and
+        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
+    {
+        samplesDx12WindowsLinux(b, options);
+
+        if (builtin.target.os.tag == .windows) {
+            samplesDx12Windows(b, options);
+        }
+    }
+
+    //
+    // Tests
+    //
+    tests(b, options);
+
+    //
+    // Benchmarks
+    //
+    benchmarks(b, options);
+}
+
+fn packages(b: *std.Build, options: Options) void {
+    zmath_pkg = zmath.Package.build(b, .{});
+    zpool_pkg = zpool.Package.build(b, .{});
+    zmesh_pkg = zmesh.Package.build(b, options.target, options.optimize, .{});
+    zglfw_pkg = zglfw.Package.build(b, options.target, options.optimize, .{});
+    znoise_pkg = znoise.Package.build(b, options.target, options.optimize, .{});
+    zstbi_pkg = zstbi.Package.build(b, options.target, options.optimize, .{});
+    zbullet_pkg = zbullet.Package.build(b, options.target, options.optimize, .{});
+    zgui_pkg = zgui.Package.build(b, options.target, options.optimize, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
+    zgpu_pkg = zgpu.Package.build(b, .{
+        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
+        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
+    });
+    ztracy_pkg = ztracy.Package.build(b, options.target, options.optimize, .{
+        .options = .{ .enable_ztracy = false, .enable_fibers = false },
+    });
+    zphysics_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
+        .options = .{ .use_double_precision = false },
+    });
+    zphysics_f64_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
+        .options = .{ .use_double_precision = true },
+    });
+    zaudio_pkg = zaudio.Package.build(b, options.target, options.optimize, .{});
+    zflecs_pkg = zflecs.Package.build(b, options.target, options.optimize, .{});
+
+    if (options.target.isWindows() and
+        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
+    {
+        zwin32_pkg = zwin32.Package.build(b, .{});
+        zd3d12_pkg = zd3d12.Package.build(b, .{
+            .options = .{
+                .enable_debug_layer = options.zd3d12_enable_debug_layer,
+                .enable_gbv = options.zd3d12_enable_gbv,
+                .upload_heap_capacity = 32 * 1024 * 1024,
+            },
+            .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+        });
+        zpix_pkg = zpix.Package.build(b, .{
+            .options = .{ .enable = options.zpix_enable },
+            .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+        });
+        common_pkg = common.Package.build(b, options.target, options.optimize, .{
+            .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
+        });
+
+        if (builtin.target.os.tag == .windows) {
+            zd3d12_d2d_pkg = zd3d12.Package.build(b, .{
+                .options = .{
+                    .enable_debug_layer = options.zd3d12_enable_debug_layer,
+                    .enable_gbv = options.zd3d12_enable_gbv,
+                    .enable_d2d = true,
+                },
+                .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+            });
+            zxaudio2_pkg = zxaudio2.Package.build(b, .{
+                .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
+                .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+            });
+        }
+    }
+}
+
+fn tests(b: *std.Build, options: Options) void {
+    const test_step = b.step("test", "Run all tests");
+
+    const zmath_tests = zmath.buildTests(b, options.optimize, options.target);
+    zmath_tests.addModule("zmath_options", zmath_pkg.zmath_options);
+    test_step.dependOn(&zmath_tests.step);
+
+    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.optimize, options.target);
+    zmesh_pkg.link(zmesh_tests);
+    test_step.dependOn(&zmesh_tests.step);
+
+    const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.optimize, options.target);
+    zstbi_pkg.link(zstbi_tests);
+    test_step.dependOn(&zstbi_tests.step);
+
+    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.optimize, options.target);
+    znoise_pkg.link(znoise_tests);
+    test_step.dependOn(&znoise_tests.step);
+
+    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.optimize, options.target);
+    zbullet_tests.addModule("zmath", zmath_pkg.zmath);
+    zbullet_pkg.link(zbullet_tests);
+    test_step.dependOn(&zbullet_tests.step);
+
+    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.optimize, options.target);
+    zglfw_pkg.link(zglfw_tests);
+    test_step.dependOn(&zglfw_tests.step);
+
+    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.optimize, options.target);
+    test_step.dependOn(&zpool_tests.step);
+
+    const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.optimize, options.target);
+    test_step.dependOn(&zjobs_tests.step);
+
+    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.optimize, options.target);
+    zgpu_tests.want_lto = false; // TODO: Problems with LTO on Windows.
+    zgpu_pkg.link(zgpu_tests);
+    test_step.dependOn(&zgpu_tests.step);
+
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.optimize, options.target);
+    zaudio_pkg.link(zaudio_tests);
+    test_step.dependOn(&zaudio_tests.step);
+
+    const zflecs_tests = @import("libs/zflecs/build.zig").buildTests(b, options.optimize, options.target);
+    zflecs_tests.addModule("zflecs_options", zflecs_pkg.zflecs_options);
+    zflecs_pkg.link(zflecs_tests);
+    test_step.dependOn(&zflecs_tests.step);
+
+    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
+        b,
+        options.optimize,
+        options.target,
+        false,
+    );
+    zphysics_tests.addModule("zphysics_options", zphysics_pkg.zphysics_options);
+    zphysics_pkg.link(zphysics_tests);
+    test_step.dependOn(&zphysics_tests.step);
+
+    const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
+        b,
+        options.optimize,
+        options.target,
+        true,
+    );
+    zphysics_f64_tests.addModule("zphysics_options", zphysics_f64_pkg.zphysics_options);
+    zphysics_f64_pkg.link(zphysics_f64_tests);
+    test_step.dependOn(&zphysics_f64_tests.step);
+}
+
+fn benchmarks(b: *std.Build, options: Options) void {
+    const benchmark_step = b.step("benchmark", "Run all benchmarks");
+    {
+        const exe = zmath.buildBenchmarks(b, options.target);
+        exe.addModule("zmath", zmath_pkg.zmath);
+        benchmark_step.dependOn(&exe.run().step);
+    }
+}
+
+fn samplesDx12WindowsLinux(b: *std.Build, options: Options) void {
+    { // bindless
+        const exe = bindless.build(b, options);
+        exe.addModule("zmesh", zmesh_pkg.zmesh);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zstbi", zstbi_pkg.zstbi);
+        zmesh_pkg.link(exe);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        zstbi_pkg.link(exe);
+        installDemo(b, exe, "bindless");
+    }
+    { // minimal
+        const exe = minimal.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        installDemo(b, exe, "minimal");
+    }
+    { // triangle
+        const exe = triangle.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "triangle");
+    }
+    { // simple raytracer
+        const exe = simple_raytracer.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zpix", zpix_pkg.zpix);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "simple_raytracer");
+    }
+    { // textured quad
+        const exe = textured_quad.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "textured_quad");
+    }
+    { // rasterization
+        const exe = rasterization.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zmath", zmath_pkg.zmath);
+        exe.addModule("zmesh", zmesh_pkg.zmesh);
+        zmesh_pkg.link(exe);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "rasterization");
+    }
+    { // mesh shader test
+        const exe = mesh_shader_test.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zmesh", zmesh_pkg.zmesh);
+        zmesh_pkg.link(exe);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "mesh_shader_test");
+    }
+    { // intros
+        comptime var intro_index: u32 = 1;
+        inline while (intro_index < 7) : (intro_index += 1) {
+            const exe = intro.build(b, options, intro_index);
+            exe.addModule("zmesh", zmesh_pkg.zmesh);
+            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+            exe.addModule("common", common_pkg.common);
+            exe.addModule("zwin32", zwin32_pkg.zwin32);
+            exe.addModule("zmath", zmath_pkg.zmath);
+            exe.addModule("znoise", znoise_pkg.znoise);
+            exe.addModule("zbullet", zbullet_pkg.zbullet);
+            zmesh_pkg.link(exe);
+            znoise_pkg.link(exe);
+            zd3d12_pkg.link(exe);
+            common_pkg.link(exe);
+            zbullet_pkg.link(exe);
+            const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
+            installDemo(b, exe, name);
+        }
+    }
+}
+
+fn samplesDx12Windows(b: *std.Build, options: Options) void {
+    { // intro 0
+        const exe = intro.build(b, options, 0);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        zd3d12_d2d_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "intro0");
+    }
+    { // vector graphics test
+        const exe = vector_graphics_test.build(b, options);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        zd3d12_d2d_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "vector_graphics_test");
+    }
+    { // directml convolution test
+        const exe = directml_convolution_test.build(b, options);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("zd3d12_options", zd3d12_pkg.zd3d12_options);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "directml_convolution_test");
+    }
+    { // audio playback test
+        const exe = audio_playback_test.build(b, options);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        installDemo(b, exe, "audio_playback_test");
+    }
+    { // audio experiments
+        const exe = audio_experiments.build(b, options);
+        exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+        exe.addModule("common", common_pkg.common);
+        exe.addModule("zwin32", zwin32_pkg.zwin32);
+        exe.addModule("zmath", zmath_pkg.zmath);
+        exe.addModule("zxaudio2", zxaudio2_pkg.zxaudio2);
+        zd3d12_pkg.link(exe);
+        common_pkg.link(exe);
+        zxaudio2_pkg.link(exe);
+        installDemo(b, exe, "audio_experiments");
+    }
+}
+
+fn samplesWebGpu(b: *std.Build, options: Options) void {
     { // triangle wgpu
         const exe = triangle_wgpu.build(b, options);
         exe.addModule("zgpu", zgpu_pkg.zgpu);
@@ -215,263 +507,29 @@ pub fn build(b: *std.Build) void {
         zaudio_pkg.link(exe);
         installDemo(b, exe, "audio_experiments_wgpu");
     }
-
-    if (options.target.isWindows() and
-        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
-    {
-        const zwin32_pkg = zwin32.Package.build(b, .{});
-        const zd3d12_pkg = zd3d12.Package.build(b, .{
-            .options = .{
-                .enable_debug_layer = options.zd3d12_enable_debug_layer,
-                .enable_gbv = options.zd3d12_enable_gbv,
-                .upload_heap_capacity = 32 * 1024 * 1024,
-            },
-            .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-        });
-        const zpix_pkg = zpix.Package.build(b, .{
-            .options = .{ .enable = options.zpix_enable },
-            .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-        });
-        const common_pkg = common.Package.build(b, options.target, options.optimize, .{
-            .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
-        });
-
-        { // bindless
-            const exe = bindless.build(b, options);
-            exe.addModule("zmesh", zmesh_pkg.zmesh);
-            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-            exe.addModule("common", common_pkg.common);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            exe.addModule("zstbi", zstbi_pkg.zstbi);
-            zmesh_pkg.link(exe);
-            zd3d12_pkg.link(exe);
-            common_pkg.link(exe);
-            zstbi_pkg.link(exe);
-            installDemo(b, exe, "bindless");
-        }
-        { // minimal
-            const exe = minimal.build(b, options);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            installDemo(b, exe, "minimal");
-        }
-        { // triangle
-            const exe = triangle.build(b, options);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-            exe.addModule("common", common_pkg.common);
-            zd3d12_pkg.link(exe);
-            common_pkg.link(exe);
-            installDemo(b, exe, "triangle");
-        }
-        { // simple raytracer
-            const exe = simple_raytracer.build(b, options);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-            exe.addModule("common", common_pkg.common);
-            exe.addModule("zpix", zpix_pkg.zpix);
-            zd3d12_pkg.link(exe);
-            common_pkg.link(exe);
-            installDemo(b, exe, "simple_raytracer");
-        }
-        { // textured quad
-            const exe = textured_quad.build(b, options);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-            exe.addModule("common", common_pkg.common);
-            zd3d12_pkg.link(exe);
-            common_pkg.link(exe);
-            installDemo(b, exe, "textured_quad");
-        }
-        { // rasterization
-            const exe = rasterization.build(b, options);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-            exe.addModule("common", common_pkg.common);
-            exe.addModule("zmath", zmath_pkg.zmath);
-            exe.addModule("zmesh", zmesh_pkg.zmesh);
-            zmesh_pkg.link(exe);
-            zd3d12_pkg.link(exe);
-            common_pkg.link(exe);
-            installDemo(b, exe, "rasterization");
-        }
-        { // mesh shader test
-            const exe = mesh_shader_test.build(b, options);
-            exe.addModule("zwin32", zwin32_pkg.zwin32);
-            exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-            exe.addModule("common", common_pkg.common);
-            exe.addModule("zmesh", zmesh_pkg.zmesh);
-            zmesh_pkg.link(exe);
-            zd3d12_pkg.link(exe);
-            common_pkg.link(exe);
-            installDemo(b, exe, "mesh_shader_test");
-        }
-        { // intros
-            comptime var intro_index: u32 = 1;
-            inline while (intro_index < 7) : (intro_index += 1) {
-                const exe = intro.build(b, options, intro_index);
-                exe.addModule("zmesh", zmesh_pkg.zmesh);
-                exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-                exe.addModule("common", common_pkg.common);
-                exe.addModule("zwin32", zwin32_pkg.zwin32);
-                exe.addModule("zmath", zmath_pkg.zmath);
-                exe.addModule("znoise", znoise_pkg.znoise);
-                exe.addModule("zbullet", zbullet_pkg.zbullet);
-                zmesh_pkg.link(exe);
-                znoise_pkg.link(exe);
-                zd3d12_pkg.link(exe);
-                common_pkg.link(exe);
-                zbullet_pkg.link(exe);
-                const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
-                installDemo(b, exe, name);
-            }
-        }
-
-        if (builtin.target.os.tag == .windows) {
-            const zd3d12_d2d_pkg = zd3d12.Package.build(b, .{
-                .options = .{
-                    .enable_debug_layer = options.zd3d12_enable_debug_layer,
-                    .enable_gbv = options.zd3d12_enable_gbv,
-                    .enable_d2d = true,
-                },
-                .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-            });
-            const zxaudio2_pkg = zxaudio2.Package.build(b, .{
-                .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
-                .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
-            });
-
-            { // intro 0
-                const exe = intro.build(b, options, 0);
-                exe.addModule("zwin32", zwin32_pkg.zwin32);
-                exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-                exe.addModule("common", common_pkg.common);
-                zd3d12_d2d_pkg.link(exe);
-                common_pkg.link(exe);
-                installDemo(b, exe, "intro0");
-            }
-            { // vector graphics test
-                const exe = vector_graphics_test.build(b, options);
-                exe.addModule("zwin32", zwin32_pkg.zwin32);
-                exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-                exe.addModule("common", common_pkg.common);
-                zd3d12_d2d_pkg.link(exe);
-                common_pkg.link(exe);
-                installDemo(b, exe, "vector_graphics_test");
-            }
-            { // directml convolution test
-                const exe = directml_convolution_test.build(b, options);
-                exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-                exe.addModule("zd3d12_options", zd3d12_pkg.zd3d12_options);
-                exe.addModule("common", common_pkg.common);
-                exe.addModule("zwin32", zwin32_pkg.zwin32);
-                zd3d12_pkg.link(exe);
-                common_pkg.link(exe);
-                installDemo(b, exe, "directml_convolution_test");
-            }
-            { // audio playback test
-                const exe = audio_playback_test.build(b, options);
-                exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-                exe.addModule("common", common_pkg.common);
-                exe.addModule("zwin32", zwin32_pkg.zwin32);
-                zd3d12_pkg.link(exe);
-                common_pkg.link(exe);
-                installDemo(b, exe, "audio_playback_test");
-            }
-            { // audio experiments
-                const exe = audio_experiments.build(b, options);
-                exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-                exe.addModule("common", common_pkg.common);
-                exe.addModule("zwin32", zwin32_pkg.zwin32);
-                exe.addModule("zmath", zmath_pkg.zmath);
-                exe.addModule("zxaudio2", zxaudio2_pkg.zxaudio2);
-                zd3d12_pkg.link(exe);
-                common_pkg.link(exe);
-                zxaudio2_pkg.link(exe);
-                installDemo(b, exe, "audio_experiments");
-            }
-        }
-    }
-
-    //
-    // Tests
-    //
-    const test_step = b.step("test", "Run all tests");
-
-    const zmath_tests = zmath.buildTests(b, options.optimize, options.target);
-    zmath_tests.addModule("zmath_options", zmath_pkg.zmath_options);
-    test_step.dependOn(&zmath_tests.step);
-
-    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.optimize, options.target);
-    zmesh_pkg.link(zmesh_tests);
-    test_step.dependOn(&zmesh_tests.step);
-
-    const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.optimize, options.target);
-    zstbi_pkg.link(zstbi_tests);
-    test_step.dependOn(&zstbi_tests.step);
-
-    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.optimize, options.target);
-    znoise_pkg.link(znoise_tests);
-    test_step.dependOn(&znoise_tests.step);
-
-    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.optimize, options.target);
-    zbullet_tests.addModule("zmath", zmath_pkg.zmath);
-    zbullet_pkg.link(zbullet_tests);
-    test_step.dependOn(&zbullet_tests.step);
-
-    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.optimize, options.target);
-    zglfw_pkg.link(zglfw_tests);
-    test_step.dependOn(&zglfw_tests.step);
-
-    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.optimize, options.target);
-    test_step.dependOn(&zpool_tests.step);
-
-    const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.optimize, options.target);
-    test_step.dependOn(&zjobs_tests.step);
-
-    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.optimize, options.target);
-    zgpu_tests.want_lto = false; // TODO: Problems with LTO on Windows.
-    zgpu_pkg.link(zgpu_tests);
-    test_step.dependOn(&zgpu_tests.step);
-
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.optimize, options.target);
-    zaudio_pkg.link(zaudio_tests);
-    test_step.dependOn(&zaudio_tests.step);
-
-    const zflecs_tests = @import("libs/zflecs/build.zig").buildTests(b, options.optimize, options.target);
-    zflecs_tests.addModule("zflecs_options", zflecs_pkg.zflecs_options);
-    zflecs_pkg.link(zflecs_tests);
-    test_step.dependOn(&zflecs_tests.step);
-
-    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
-        b,
-        options.optimize,
-        options.target,
-        false,
-    );
-    zphysics_tests.addModule("zphysics_options", zphysics_pkg.zphysics_options);
-    zphysics_pkg.link(zphysics_tests);
-    test_step.dependOn(&zphysics_tests.step);
-
-    const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
-        b,
-        options.optimize,
-        options.target,
-        true,
-    );
-    zphysics_f64_tests.addModule("zphysics_options", zphysics_f64_pkg.zphysics_options);
-    zphysics_f64_pkg.link(zphysics_f64_tests);
-    test_step.dependOn(&zphysics_f64_tests.step);
-
-    //
-    // Benchmarks
-    //
-    const benchmark_step = b.step("benchmark", "Run all benchmarks");
-    {
-        const exe = zmath.buildBenchmarks(b, options.target);
-        exe.addModule("zmath", zmath_pkg.zmath);
-        benchmark_step.dependOn(&exe.run().step);
-    }
 }
+
+var zmath_pkg: zmath.Package = undefined;
+var zpool_pkg: zpool.Package = undefined;
+var zmesh_pkg: zmesh.Package = undefined;
+var zglfw_pkg: zglfw.Package = undefined;
+var znoise_pkg: znoise.Package = undefined;
+var zstbi_pkg: zstbi.Package = undefined;
+var zbullet_pkg: zbullet.Package = undefined;
+var zgui_pkg: zgui.Package = undefined;
+var zgpu_pkg: zgpu.Package = undefined;
+var ztracy_pkg: ztracy.Package = undefined;
+var zphysics_pkg: zphysics.Package = undefined;
+var zphysics_f64_pkg: zphysics.Package = undefined;
+var zaudio_pkg: zaudio.Package = undefined;
+var zflecs_pkg: zflecs.Package = undefined;
+
+var zwin32_pkg: zwin32.Package = undefined;
+var zd3d12_pkg: zd3d12.Package = undefined;
+var zpix_pkg: zpix.Package = undefined;
+var common_pkg: common.Package = undefined;
+var zd3d12_d2d_pkg: zd3d12.Package = undefined;
+var zxaudio2_pkg: zxaudio2.Package = undefined;
 
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
