@@ -1369,6 +1369,10 @@ ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
     ImGui::PushTextWrapPos(wrap_pos_x);
 }
 
+ZGUI_API void zguiPopTextWrapPos() {
+    ImGui::PopTextWrapPos();
+}
+
 ZGUI_API bool zguiBeginTabBar(const char* string, ImGuiTabBarFlags flags) {
     return ImGui::BeginTabBar(string, flags);
 }
