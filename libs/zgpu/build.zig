@@ -99,8 +99,8 @@ pub const Package = struct {
         }
 
         exe.linkSystemLibraryName("dawn");
-        exe.linkSystemLibraryName("c");
-        exe.linkSystemLibraryName("c++");
+        exe.linkLibC();
+        exe.linkLibCpp();
 
         exe.addIncludePath(thisDir() ++ "/libs/dawn/include");
         exe.addIncludePath(thisDir() ++ "/src");

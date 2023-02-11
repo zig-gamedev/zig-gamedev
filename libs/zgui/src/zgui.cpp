@@ -1369,7 +1369,7 @@ ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
     ImGui::PushTextWrapPos(wrap_pos_x);
 }
 
-ZGUI_API void zguiPopTextWrapPos() {
+ZGUI_API void zguiPopTextWrapPos(void) {
     ImGui::PopTextWrapPos();
 }
 

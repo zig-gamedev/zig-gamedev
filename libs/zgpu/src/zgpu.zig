@@ -1709,6 +1709,8 @@ fn formatToShaderFormat(format: wgpu.TextureFormat) []const u8 {
 const expect = std.testing.expect;
 
 test "zgpu.wgpu.init" {
+    if (@import("builtin").target.os.tag == .macos) return error.SkipZigTest;
+
     dawnProcSetProcs(dnGetProcs());
 
     const native_instance = dniCreate();
