@@ -101,7 +101,10 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
         .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
     ztracy_pkg = ztracy.Package.build(b, .{
-        .options = .{ .enable_ztracy = true, .enable_fibers = true },
+        .options = .{
+            .enable_ztracy = !options.target.isDarwin(), // TODO: ztracy fails to compile on macOS.
+            .enable_fibers = !options.target.isDarwin(),
+        },
     });
     zphysics_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
         .options = .{ .use_double_precision = false },
