@@ -45,14 +45,13 @@ pub const Package = struct {
 
         zflecs_c_cpp.addIncludePath(thisDir() ++ "/libs/flecs");
         zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
-            "-std=c99",
             "-fno-sanitize=undefined",
             pipeline_def,
             http_def,
         });
 
         if (zflecs_c_cpp.target.isWindows()) {
-            zflecs_c_cpp.linkSystemLibrary("ws2_32");
+            zflecs_c_cpp.linkSystemLibraryName("ws2_32");
         }
 
         return .{
