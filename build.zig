@@ -11,7 +11,6 @@ pub fn build(b: *std.Build) void {
     const options = Options{
         .optimize = b.standardOptimizeOption(.{}),
         .target = b.standardTargetOptions(.{}),
-        .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
         .zd3d12_enable_debug_layer = b.option(
             bool,
             "zd3d12-enable-debug-layer",
@@ -597,8 +596,6 @@ const directml_convolution_test = @import("samples/directml_convolution_test/bui
 pub const Options = struct {
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-
-    ztracy_enable: bool,
 
     zd3d12_enable_debug_layer: bool,
     zd3d12_enable_gbv: bool,
