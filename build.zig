@@ -100,7 +100,7 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
         .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
         .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
-    ztracy_pkg = ztracy.Package.build(b, .{
+    ztracy_pkg = ztracy.Package.build(b, options.target, options.optimize, .{
         .options = .{
             .enable_ztracy = !options.target.isDarwin(), // TODO: ztracy fails to compile on macOS.
             .enable_fibers = !options.target.isDarwin(),

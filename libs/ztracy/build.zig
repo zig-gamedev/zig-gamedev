@@ -9,9 +9,12 @@ pub const Package = struct {
     options: Options,
     ztracy: *std.Build.Module,
     ztracy_options: *std.Build.Module,
+    ztracy_c_cpp: *std.Build.CompileStep,
 
     pub fn build(
         b: *std.Build,
+        target: std.zig.CrossTarget,
+        optimize: std.builtin.Mode,
         args: struct {
             options: Options = .{},
         },
@@ -28,19 +31,17 @@ pub const Package = struct {
             },
         });
 
-        return .{
-            .options = args.options,
-            .ztracy = ztracy,
-            .ztracy_options = ztracy_options,
-        };
-    }
+        const ztracy_c_cpp = if (args.options.enable_ztracy) ztracy_c_cpp: {
+            const enable_fibers = if (args.options.enable_fibers) "-DTRACY_FIBERS" else "";
 
-    pub fn link(ztracy_pkg: Package, exe: *std.Build.CompileStep) void {
-        if (ztracy_pkg.options.enable_ztracy) {
-            const enable_fibers = if (ztracy_pkg.options.enable_fibers) "-DTRACY_FIBERS" else "";
+            const ztracy_c_cpp = b.addStaticLibrary(.{
+                .name = "ztracy",
+                .target = target,
+                .optimize = optimize,
+            });
 
-            exe.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
-            exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
+            ztracy_c_cpp.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
+            ztracy_c_cpp.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
                 "-DTRACY_ENABLE",
                 enable_fibers,
                 // MinGW doesn't have all the newfangled windows features,
@@ -49,13 +50,29 @@ pub const Package = struct {
                 "-fno-sanitize=undefined",
             });
 
-            exe.linkLibC();
-            exe.linkLibCpp();
+            ztracy_c_cpp.linkLibC();
+            ztracy_c_cpp.linkLibCpp();
 
-            if (exe.target.isWindows()) {
-                exe.linkSystemLibraryName("ws2_32");
-                exe.linkSystemLibraryName("dbghelp");
+            if (ztracy_c_cpp.target.isWindows()) {
+                ztracy_c_cpp.linkSystemLibraryName("ws2_32");
+                ztracy_c_cpp.linkSystemLibraryName("dbghelp");
             }
+
+            break :ztracy_c_cpp ztracy_c_cpp;
+        } else undefined;
+
+        return .{
+            .options = args.options,
+            .ztracy = ztracy,
+            .ztracy_options = ztracy_options,
+            .ztracy_c_cpp = ztracy_c_cpp,
+        };
+    }
+
+    pub fn link(ztracy_pkg: Package, exe: *std.Build.CompileStep) void {
+        if (ztracy_pkg.options.enable_ztracy) {
+            exe.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
+            exe.linkLibrary(ztracy_pkg.ztracy_c_cpp);
         }
     }
 };
