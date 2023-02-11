@@ -154,48 +154,48 @@ fn tests(b: *std.Build, options: Options) void {
     zmath_tests.addModule("zmath_options", zmath_pkg.zmath_options);
     test_step.dependOn(&zmath_tests.step);
 
-    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.optimize, options.target);
+    const zmesh_tests = zmesh.buildTests(b, options.optimize, options.target);
     zmesh_pkg.link(zmesh_tests);
     test_step.dependOn(&zmesh_tests.step);
 
-    const zstbi_tests = @import("libs/zstbi/build.zig").buildTests(b, options.optimize, options.target);
+    const zstbi_tests = zstbi.buildTests(b, options.optimize, options.target);
     zstbi_pkg.link(zstbi_tests);
     test_step.dependOn(&zstbi_tests.step);
 
-    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.optimize, options.target);
+    const znoise_tests = znoise.buildTests(b, options.optimize, options.target);
     znoise_pkg.link(znoise_tests);
     test_step.dependOn(&znoise_tests.step);
 
-    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.optimize, options.target);
+    const zbullet_tests = zbullet.buildTests(b, options.optimize, options.target);
     zbullet_tests.addModule("zmath", zmath_pkg.zmath);
     zbullet_pkg.link(zbullet_tests);
     test_step.dependOn(&zbullet_tests.step);
 
-    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.optimize, options.target);
+    const zglfw_tests = zglfw.buildTests(b, options.optimize, options.target);
     zglfw_pkg.link(zglfw_tests);
     test_step.dependOn(&zglfw_tests.step);
 
-    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.optimize, options.target);
+    const zpool_tests = zpool.buildTests(b, options.optimize, options.target);
     test_step.dependOn(&zpool_tests.step);
 
-    const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.optimize, options.target);
+    const zjobs_tests = zjobs.buildTests(b, options.optimize, options.target);
     test_step.dependOn(&zjobs_tests.step);
 
-    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.optimize, options.target);
+    const zgpu_tests = zjobs.buildTests(b, options.optimize, options.target);
     zgpu_tests.want_lto = false; // TODO: Problems with LTO on Windows.
     zgpu_pkg.link(zgpu_tests);
     test_step.dependOn(&zgpu_tests.step);
 
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.optimize, options.target);
+    const zaudio_tests = zaudio.buildTests(b, options.optimize, options.target);
     zaudio_pkg.link(zaudio_tests);
     test_step.dependOn(&zaudio_tests.step);
 
-    const zflecs_tests = @import("libs/zflecs/build.zig").buildTests(b, options.optimize, options.target);
+    const zflecs_tests = zflecs.buildTests(b, options.optimize, options.target);
     zflecs_tests.addModule("zflecs_options", zflecs_pkg.zflecs_options);
     zflecs_pkg.link(zflecs_tests);
     test_step.dependOn(&zflecs_tests.step);
 
-    const zphysics_tests = @import("libs/zphysics/build.zig").buildTests(
+    const zphysics_tests = zphysics.buildTests(
         b,
         options.optimize,
         options.target,
@@ -205,7 +205,7 @@ fn tests(b: *std.Build, options: Options) void {
     zphysics_pkg.link(zphysics_tests);
     test_step.dependOn(&zphysics_tests.step);
 
-    const zphysics_f64_tests = @import("libs/zphysics/build.zig").buildTests(
+    const zphysics_f64_tests = zphysics.buildTests(
         b,
         options.optimize,
         options.target,
@@ -542,6 +542,7 @@ var zxaudio2_pkg: zxaudio2.Package = undefined;
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 const zpool = @import("libs/zpool/build.zig");
+const zjobs = @import("libs/zjobs/build.zig");
 const zmesh = @import("libs/zmesh/build.zig");
 const znoise = @import("libs/znoise/build.zig");
 const zstbi = @import("libs/zstbi/build.zig");
