@@ -1,35 +1,18 @@
 const std = @import("std");
 
 pub const Package = struct {
-    pub const Options = struct {
-        no_pipeline_support: bool = false,
-        no_http_support: bool = false,
-    };
-
-    options: Options,
     zflecs: *std.Build.Module,
-    zflecs_options: *std.Build.Module,
     zflecs_c_cpp: *std.Build.CompileStep,
 
     pub fn build(
         b: *std.Build,
         target: std.zig.CrossTarget,
         optimize: std.builtin.Mode,
-        args: struct {
-            options: Options = .{},
-        },
+        _: struct {},
     ) Package {
-        const step = b.addOptions();
-        step.addOption(bool, "no_pipeline_support", args.options.no_pipeline_support);
-        step.addOption(bool, "no_http_support", args.options.no_http_support);
-
-        const zflecs_options = step.createModule();
-
         const zflecs = b.createModule(.{
             .source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
-            .dependencies = &.{
-                .{ .name = "zflecs_options", .module = zflecs_options },
-            },
+            .dependencies = &.{},
         });
 
         const zflecs_c_cpp = b.addStaticLibrary(.{
@@ -37,17 +20,11 @@ pub const Package = struct {
             .target = target,
             .optimize = optimize,
         });
-
         zflecs_c_cpp.linkLibC();
-
-        const pipeline_def = if (args.options.no_pipeline_support) "-DFLECS_NO_PIPELINE" else "";
-        const http_def = if (args.options.no_http_support) "-DFLECS_NO_HTTP" else "";
-
         zflecs_c_cpp.addIncludePath(thisDir() ++ "/libs/flecs");
         zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
             "-fno-sanitize=undefined",
-            pipeline_def,
-            http_def,
+            "-DFLECS_NO_CPP",
         });
 
         if (zflecs_c_cpp.target.isWindows()) {
@@ -55,9 +32,7 @@ pub const Package = struct {
         }
 
         return .{
-            .options = args.options,
             .zflecs = zflecs,
-            .zflecs_options = zflecs_options,
             .zflecs_c_cpp = zflecs_c_cpp,
         };
     }

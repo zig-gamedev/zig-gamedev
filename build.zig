@@ -496,7 +496,6 @@ fn tests(b: *std.Build, options: Options) void {
     }
     { // zflecs
         const exe = zflecs.buildTests(b, options.optimize, options.target);
-        exe.addModule("zflecs_options", zflecs_pkg.zflecs_options);
         zflecs_pkg.link(exe);
         test_step.dependOn(&exe.step);
     }
