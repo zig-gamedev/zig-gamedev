@@ -1520,6 +1520,12 @@ void cbtBodySetCcdMotionThreshold(CbtBodyHandle body_handle, float threshold) {
     body->setCcdMotionThreshold(threshold);
 }
 
+void cbtBodySetCollisionFlags(CbtBodyHandle body_handle, int flags) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    body->setCollisionFlags(flags);
+}
+
 CbtBodyHandle cbtConGetFixedBody(void) {
     return (CbtBodyHandle)&btTypedConstraint::getFixedBody();
 }

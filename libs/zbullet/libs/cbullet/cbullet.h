@@ -390,6 +390,8 @@ void cbtBodySetCcdSweptSphereRadius(CbtBodyHandle body_handle, float radius);
 float cbtBodyGetCcdMotionThreshold(CbtBodyHandle body_handle);
 void cbtBodySetCcdMotionThreshold(CbtBodyHandle body_handle, float threshold);
 
+void cbtBodySetCollisionFlags(CbtBodyHandle body_handle, int flags);
+
 //
 // Constraints
 //

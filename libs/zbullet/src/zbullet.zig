@@ -643,6 +643,21 @@ pub const BodyActivationState = enum(c_int) {
     simulation_disabled = 5,
 };
 
+pub const CollisionFlags = packed struct(c_int) {
+    static_object: bool = false,
+    kinematic_object: bool = false,
+    no_contact_response: bool = false,
+    custom_material_callback: bool = false,
+    character_object: bool = false,
+    disable_visualize_object: bool = false,
+    disable_spu_collision_processing: bool = false,
+    has_contact_stiffness_damping: bool = false,
+    has_custom_debug_rendering_color: bool = false,
+    has_friction_anchor: bool = false,
+    has_collision_sound_trigger: bool = false,
+    _padding: u21 = 0,
+};
+
 pub fn initBody(
     mass: f32,
     transform: *const [12]f32,
@@ -744,6 +759,11 @@ const BodyImpl = opaque {
 
     pub const setCcdMotionThreshold = cbtBodySetCcdMotionThreshold;
     extern fn cbtBodySetCcdMotionThreshold(body: Body, threshold: f32) void;
+
+    pub fn setCollisionFlags(body: Body, flags: CollisionFlags) void {
+        cbtBodySetCollisionFlags(body, @bitCast(c_int, flags));
+    }
+    extern fn cbtBodySetCollisionFlags(body: Body, flags: c_int) void;
 
     pub const setMassProps = cbtBodySetMassProps;
     extern fn cbtBodySetMassProps(body: Body, mass: f32, inertia: *const [3]f32) void;
