@@ -115,12 +115,7 @@ To list all available sample names run `zig build --help` and navigate to `Steps
 
 #### Build options
 
-All sample applications support the following build options:
-
-* `-Drelease-safe=[bool]` - Optimizations on and safety on
-* `-Drelease-fast=[bool]` - Optimizations on and safety off
-
-Addidtional options for Windows applications:
+Options for Windows applications:
 * `-Dzd3d12-enable-debug-layer=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Dzd3d12-enable-gbv=[bool]` - Direct3D 12 GPU-Based Validation (GBV) enabled
 * `-Dzpix-enable=[bool]` - PIX markers and events enabled
