@@ -484,10 +484,12 @@ fn tests(b: *std.Build, options: Options) void {
         test_step.dependOn(&exe.step);
     }
     { // zgpu
-        const exe = zjobs.buildTests(b, options.optimize, options.target);
-        exe.want_lto = false; // TODO: Problems with LTO on Windows.
-        zgpu_pkg.link(exe);
-        test_step.dependOn(&exe.step);
+        if (!options.target.isDarwin()) { // TODO: Linker error on macOS.
+            const exe = zjobs.buildTests(b, options.optimize, options.target);
+            exe.want_lto = false; // TODO: Problems with LTO on Windows.
+            zgpu_pkg.link(exe);
+            test_step.dependOn(&exe.step);
+        }
     }
     { // zaudio
         const exe = zaudio.buildTests(b, options.optimize, options.target);
