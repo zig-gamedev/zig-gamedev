@@ -5,8 +5,15 @@ const std = @import("std");
 //
 //--------------------------------------------------------------------------------------------------
 pub const world_t = opaque {};
-pub const entity_t = u64;
+pub const poly_t = anyopaque;
+pub const id_t = u64;
+pub const entity_t = id_t;
 pub const ftime_t = f32;
+pub const size_t = i32;
+pub const flags8_t = u8;
+pub const flags16_t = u16;
+pub const flags32_t = u32;
+pub const flags64_t = u64;
 
 pub const world_info_t = extern struct {
     last_component_id: entity_t,
@@ -210,6 +217,42 @@ pub const get_context = ecs_get_context;
 extern fn ecs_get_world_info(world: *const world_t) *const world_info_t;
 /// `pub fn ecs_get_world_info(world: *const world_t) *const world_info_t`
 pub const get_world_info = ecs_get_world_info;
+
+extern fn ecs_dim(world: *world_t, entity_count: i32) void;
+/// `pub fn dim(world: *world_t, entity_count: i32) void`
+pub const dim = ecs_dim;
+
+extern fn ecs_set_entity_range(world: *world_t, id_start: entity_t, id_end: entity_t) void;
+/// `pub fn set_entity_range(world: *world_t, id_start: entity_t, id_end: entity_t) void`
+pub const set_entity_range = ecs_set_entity_range;
+
+extern fn ecs_enable_range_check(world: *world_t, enable: bool) bool;
+/// `pub fn enable_range_check(world: *world_t, enable: bool) bool`
+pub const enable_range_check = ecs_enable_range_check;
+
+extern fn ecs_run_aperiodic(world: *world_t, flags: flags32_t) void;
+/// `pub fn run_aperiodic(world: *world_t, flags: flags32_t) void`
+pub const run_aperiodic = ecs_run_aperiodic;
+
+extern fn ecs_delete_empty_tables(
+    world: *world_t,
+    id: id_t,
+    clear_generation: u16,
+    delete_generation: u16,
+    min_id_count: i32,
+    time_budget_seconds: f64,
+) i32;
+/// ```
+/// pub fn delete_empty_tables(
+///     world: *world_t,
+///     id: id_t,
+///     clear_generation: u16,
+///     delete_generation: u16,
+///     min_id_count: i32,
+///     time_budget_seconds: f64,
+/// ) i32;
+/// ```
+pub const delete_empty_tables = ecs_delete_empty_tables;
 //--------------------------------------------------------------------------------------------------
 comptime {
     _ = @import("tests.zig");
