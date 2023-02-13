@@ -1605,6 +1605,9 @@ ZGUI_API int zguiDrawList_GetIndexBufferLength(ImDrawList *draw_list) {
 ZGUI_API ImDrawIdx *zguiDrawList_GetIndexBufferData(ImDrawList *draw_list) {
     return draw_list->IdxBuffer.begin();
 }
+ZGUI_API unsigned int zguiDrawList_GetCurrentIndex(ImDrawList *draw_list) {
+    return draw_list->_VtxCurrentIdx;
+}
 
 ZGUI_API int zguiDrawList_GetCmdBufferLength(ImDrawList *draw_list) {
     return draw_list->CmdBuffer.size();
