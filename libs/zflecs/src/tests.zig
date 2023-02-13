@@ -9,8 +9,8 @@ test "zflecs.basic" {
 
     try expect(ecs.is_fini(world) == false);
 
-    const world_info = ecs.get_world_info(world);
-    std.debug.print("\n{any}\n", .{world_info});
-
     ecs.dim(world, 100);
+
+    const e = ecs.entity_init(world, &.{ .name = "aaa" });
+    try expect(e != 0);
 }
