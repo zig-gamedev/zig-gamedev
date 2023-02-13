@@ -183,6 +183,30 @@ extern fn ecs_stage_is_readonly(world: *const world_t) bool;
 /// `pub fn stage_is_readonly(world: *const world_t) bool`
 pub const stage_is_readonly = ecs_stage_is_readonly;
 
+extern fn ecs_async_stage_new(world: *world_t) *world_t;
+/// `pub fn async_stage_new(world: *world_t) *world_t`
+pub const async_stage_new = ecs_async_stage_new;
+
+extern fn ecs_async_stage_free(world: *world_t) *world_t;
+/// `pub fn async_stage_free(world: *world_t) *world_t`
+pub const async_stage_free = ecs_async_stage_free;
+
+extern fn ecs_stage_is_async(world: *const world_t) bool;
+/// `pub fn stage_is_async(world: *const world_t) bool`
+pub const stage_is_async = ecs_stage_is_async;
+//--------------------------------------------------------------------------------------------------
+//
+// Misc
+//
+//--------------------------------------------------------------------------------------------------
+extern fn ecs_set_context(world: *world_t, ctx: ?*anyopaque) void;
+/// `pub fn set_context(world: *world_t, ctx: ?*anyopaque) void`
+pub const set_context = ecs_set_context;
+
+extern fn ecs_get_context(world: *const world_t) ?*anyopaque;
+/// `pub fn get_context(world: *const world_t) ?*anyopaque`
+pub const get_context = ecs_get_context;
+
 extern fn ecs_get_world_info(world: *const world_t) *const world_info_t;
 /// `pub fn ecs_get_world_info(world: *const world_t) *const world_info_t`
 pub const get_world_info = ecs_get_world_info;
