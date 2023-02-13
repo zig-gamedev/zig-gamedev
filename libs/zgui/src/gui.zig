@@ -3330,6 +3330,8 @@ pub const DrawList = *opaque {
     extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) i32;
     pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
     extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]const DrawIdx;
+    pub const getCurrentIndex = zguiDrawList_GetCurrentIndex;
+    extern fn zguiDrawList_GetCurrentIndex(draw_list: DrawList) u32;
 
     pub const getCmdBufferLength = zguiDrawList_GetCmdBufferLength;
     extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) i32;
