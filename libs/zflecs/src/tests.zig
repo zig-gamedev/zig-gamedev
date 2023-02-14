@@ -13,4 +13,10 @@ test "zflecs.basic" {
 
     const e = ecs.entity_init(world, &.{ .name = "aaa" });
     try expect(e != 0);
+
+    const Position = struct {
+        x: f32,
+        y: f32,
+    };
+    std.debug.print("{d}\n", .{ecs.id(Position)});
 }

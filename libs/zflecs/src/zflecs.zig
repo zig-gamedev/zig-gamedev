@@ -5,6 +5,9 @@ const std = @import("std");
 //
 //--------------------------------------------------------------------------------------------------
 pub const world_t = opaque {};
+pub const table_t = opaque {};
+pub const table_record_t = opaque {};
+pub const id_record_t = opaque {};
 pub const poly_t = anyopaque;
 pub const id_t = u64;
 pub const entity_t = id_t;
@@ -80,6 +83,19 @@ pub const entity_desc_t = extern struct {
     use_low_id: bool = false,
     add: [ID_CACHE_SIZE]id_t = [_]id_t{0} ** ID_CACHE_SIZE,
     add_expr: ?[*:0]const u8 = null,
+};
+
+pub const record_t = extern struct {
+    idr: *id_record_t,
+    table: *table_t,
+    row: u32,
+};
+
+pub const ref_t = extern struct {
+    entity: entity_t,
+    id: entity_t,
+    tr: *table_record_t,
+    record: *record_t,
 };
 
 pub const fini_action_t = *const fn (*world_t, ?*anyopaque) callconv(.C) void;
@@ -308,12 +324,84 @@ extern fn ecs_delete_with(world: *world_t, id: id_t) void;
 /// `pub fn delete_with(world: *world_t, id: id_t) void`
 pub const delete_with = ecs_delete_with;
 //--------------------------------------------------------------------------------------------------
+//
+// Functions for adding and removing components.
+//
+//--------------------------------------------------------------------------------------------------
+extern fn ecs_add_id(world: *world_t, entity: entity_t, id: id_t) void;
+/// `pub fn add_id(world: *world_t, entity: entity_t, id: id_t) void`
+pub const add_id = ecs_add_id;
+
+extern fn ecs_remove_id(world: *world_t, entity: entity_t, id: id_t) void;
+/// `pub fn remove_id(world: *world_t, entity: entity_t, id: id_t) void`
+pub const remove_id = ecs_remove_id;
+
+extern fn ecs_override_id(world: *world_t, entity: entity_t, id: id_t) void;
+/// `pub fn override_id(world: *world_t, entity: entity_t, id: id_t) void`
+pub const override_id = ecs_remove_id;
+
+extern fn ecs_clear(world: *world_t, entity: entity_t) void;
+/// `pub fn clear(world: *world_t, entity: entity_t) void`
+pub const clear = ecs_clear;
+
+extern fn ecs_remove_all(world: *world_t, id: id_t) void;
+/// `pub fn remove_all(world: *world_t, id: id_t) void`
+pub const remove_all = ecs_remove_all;
+
+extern fn ecs_set_with(world: *world_t, id: id_t) id_t;
+/// `pub fn set_with(world: *world_t, id: id_t) void`
+pub const set_with = ecs_set_with;
+
+extern fn ecs_get_with(world: *const world_t) id_t;
+/// `pub fn get_with(world: *const world_t) id_t`
+pub const get_with = ecs_get_with;
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for enabling/disabling entities and components.
+//
+//--------------------------------------------------------------------------------------------------
+extern fn ecs_enable(world: *world_t, entity: entity_t, enable: bool) void;
+/// `pub fn enable(world: *const world_t, entity: entity_t, enable: bool) void`
+pub const enable = ecs_enable;
+
+extern fn ecs_enable_id(world: *world_t, entity: entity_t, id: id_t, enable: bool) void;
+/// `pub fn enable_id(world: *const world_t, entity: entity_t, id: id_t, enable: bool) void`
+pub const enable_id = ecs_enable_id;
+
+extern fn ecs_is_enabled_id(world: *const world_t, entity: entity_t, id: id_t) bool;
+/// `pub fn is_enabled_id(world: *const world_t, entity: entity_t, id: id_t) bool`
+pub const is_enabled_id = ecs_is_enabled_id;
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for getting/setting components.
+//
+//--------------------------------------------------------------------------------------------------
+extern fn ecs_get_id(world: *const world_t, entity: entity_t, id: id_t) ?*const anyopaque;
+/// `pub fn get_id(world: *const world_t, entity: entity_t, id: id_t) ?*const anyopaque`
+pub const get_id = ecs_get_id;
+
+extern fn ecs_ref_init_id(world: *const world_t, entity: entity_t, id: id_t) ref_t;
+/// `pub fn ref_init_id(world: *const world_t, entity: entity_t, id: id_t) ref_t`
+pub const ref_init_id = ecs_ref_init_id;
+
+extern fn ecs_ref_get_id(world: *const world_t, ref: *ref_t, id: id_t) ?*anyopaque;
+/// `pub fn ref_get_id(world: *const world_t, ref: *ref_t, id: id_t) ?*anyopaque`
+pub const ref_get_id = ecs_ref_get_id;
+
+extern fn ecs_ref_update(world: *const world_t, ref: *ref_t) void;
+/// `pub fn ref_get_id(world: *const world_t, ref: *ref_t) void`
+pub const ref_update = ecs_ref_update;
+
+extern fn ecs_get_mut_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque;
+/// `pub fn get_mut_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque`
+pub const get_mut_id = ecs_get_mut_id;
+//--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
         var handle: id_t = 0;
     };
 }
-pub inline fn idof(comptime T: type) id_t {
+pub inline fn id(comptime T: type) id_t {
     return id_handle_ptr(T).*;
 }
 inline fn id_handle_ptr(comptime T: type) *id_t {
