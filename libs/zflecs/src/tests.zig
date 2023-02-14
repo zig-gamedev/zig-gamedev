@@ -11,8 +11,22 @@ test "zflecs.basic" {
 
     ecs.dim(world, 100);
 
-    const e = ecs.entity_init(world, &.{ .name = "aaa" });
-    try expect(e != 0);
+    const e0 = ecs.entity_init(world, &.{ .name = "aaa" });
+    try expect(e0 != 0);
+    try expect(ecs.is_alive(world, e0));
+    try expect(ecs.is_valid(world, e0));
+
+    const e1 = ecs.new_id(world);
+    try expect(ecs.is_alive(world, e1));
+    try expect(ecs.is_valid(world, e1));
+
+    _ = ecs.clone(world, e1, e0, false);
+    try expect(ecs.is_alive(world, e1));
+    try expect(ecs.is_valid(world, e1));
+
+    ecs.delete(world, e1);
+    try expect(!ecs.is_alive(world, e1));
+    try expect(!ecs.is_valid(world, e1));
 
     const Position = struct {
         x: f32,

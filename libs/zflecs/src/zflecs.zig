@@ -432,6 +432,47 @@ extern fn ecs_set_id(world: *world_t, entity: entity_t, id: id_t, size: usize, p
 /// `pub fn set_id(world: *world_t, entity: entity_t, id: id_t, size: usize, ptr: ?*const anyopaque) entity_t`
 pub const set_id = ecs_set_id;
 //--------------------------------------------------------------------------------------------------
+//
+// Functions for testing and modifying entity liveliness.
+//
+//--------------------------------------------------------------------------------------------------
+extern fn ecs_is_valid(world: *const world_t, entity: entity_t) bool;
+/// `pub fn is_valid(world: *const world_t, entity: entity_t) bool`
+pub const is_valid = ecs_is_valid;
+
+extern fn ecs_is_alive(world: *const world_t, entity: entity_t) bool;
+/// `pub fn is_alive(world: *const world_t, entity: entity_t) bool`
+pub const is_alive = ecs_is_alive;
+
+extern fn ecs_strip_generation(entity: entity_t) id_t;
+/// `pub fn strip_generation(entity: entity_t) id_t`
+pub const strip_generation = ecs_strip_generation;
+
+extern fn ecs_set_entity_generation(world: *world_t, entity: entity_t) void;
+/// `pub fn set_entity_generation(world: *world_t, entity: entity_t) void`
+pub const set_entity_generation = ecs_set_entity_generation;
+
+extern fn ecs_get_alive(world: *const world_t, entity: entity_t) entity_t;
+/// `pub fn get_alive(world: *const world_t, entity: entity_t) entity_t`
+pub const get_alive = ecs_get_alive;
+
+extern fn ecs_ensure(world: *world_t, entity: entity_t) void;
+/// `pub fn ensure(world: *world_t, entity: entity_t) void`
+pub const ensure = ecs_ensure;
+
+extern fn ecs_ensure_id(world: *world_t, id: id_t) void;
+/// `pub fn ensure_id(world: *world_t, id: id_t) void`
+pub const ensure_id = ecs_ensure_id;
+
+extern fn ecs_exists(world: *const world_t, entity: entity_t) bool;
+/// `pub fn exists(world: *const world_t, entity: entity_t) bool`
+pub const exists = ecs_exists;
+//--------------------------------------------------------------------------------------------------
+//
+// Get information from entity.
+//
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
         var handle: id_t = 0;
