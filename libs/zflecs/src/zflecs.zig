@@ -195,6 +195,294 @@ extern var ecs_os_api: os_api_t;
 pub fn os_free(ptr: ?*anyopaque) void {
     ecs_os_api.free_(ptr);
 }
+
+pub const stack_page_t = opaque {};
+
+pub const stack_cursor_t = extern struct {
+    cur: ?*stack_page_t,
+    sp: i16,
+};
+
+pub const iter_cache_t = extern struct {
+    stack_cursor: stack_cursor_t,
+    used: flags8_t,
+    allocated: flags8_t,
+};
+
+pub const term_iter_t = extern struct {
+    term: term_t,
+    self_index: ?*id_record_t,
+    set_index: ?*id_record_t,
+    cur: ?*id_record_t,
+    it: table_cache_iter_t,
+    index: i32,
+    observed_table_count: i32,
+    table: ?*table_t,
+    cur_match: i32,
+    match_count: i32,
+    last_column: i32,
+    empty_tables: bool,
+    id: id_t,
+    column: i32,
+    subject: entity_t,
+    size: size_t,
+    ptr: ?*anyopaque,
+};
+
+pub const mixins_t = opaque {};
+
+pub const header_t = extern struct {
+    magic: i32,
+    type: i32,
+    mixins: ?*mixins_t,
+};
+
+pub const iter_init_action_t = *const fn (?*const world_t, ?*const poly_t, [*c]iter_t, [*c]term_t) callconv(.C) void;
+
+pub const poly_dtor_t = *const fn (?*poly_t) callconv(.C) void;
+
+pub const iterable_t = extern struct {
+    init: iter_init_action_t,
+};
+
+pub const filter_t = extern struct {
+    hdr: header_t,
+    terms: [*c]term_t,
+    term_count: i32,
+    field_count: i32,
+    owned: bool,
+    terms_owned: bool,
+    flags: flags32_t,
+    variable_names: [1][*c]u8,
+    entity: entity_t,
+    world: ?*world_t,
+    iterable: iterable_t,
+    dtor: poly_dtor_t,
+};
+
+pub const table_cache_hdr_t = opaque {};
+
+pub const table_cache_iter_t = extern struct {
+    cur: ?*table_cache_hdr_t,
+    next: ?*table_cache_hdr_t,
+    next_list: ?*table_cache_hdr_t,
+};
+
+pub const iter_kind_t = enum(i32) {
+    EvalCondition,
+    EvalTables,
+    EvalChain,
+    EvalNone,
+};
+
+pub const filter_iter_t = extern struct {
+    filter: [*c]const filter_t,
+    kind: iter_kind_t,
+    term_iter: term_iter_t,
+    matches_left: i32,
+    pivot_term: i32,
+};
+
+pub const query_t = opaque {};
+pub const query_table_node_t = opaque {};
+pub const rule_t = opaque {};
+pub const vector_t = opaque {};
+
+pub const query_iter_t = extern struct {
+    query: ?*query_t,
+    node: ?*query_table_node_t,
+    prev: ?*query_table_node_t,
+    last: ?*query_table_node_t,
+    sparse_smallest: i32,
+    sparse_first: i32,
+    bitset_first: i32,
+    skip_count: i32,
+};
+pub const rule_op_ctx_t = opaque {};
+
+pub const rule_iter_t = extern struct {
+    rule: ?*const rule_t,
+    registers: [*c]var_t,
+    op_ctx: ?*rule_op_ctx_t,
+    columns: [*c]i32,
+    entity: entity_t,
+    redo: bool,
+    op: i32,
+    sp: i32,
+};
+
+pub const snapshot_iter_t = extern struct {
+    filter: filter_t,
+    tables: ?*vector_t,
+    index: i32,
+};
+
+pub const page_iter_t = extern struct {
+    offset: i32,
+    limit: i32,
+    remaining: i32,
+};
+
+pub const worker_iter_t = extern struct {
+    index: i32,
+    count: i32,
+};
+
+pub const iter_private_t = extern struct {
+    iter: extern union {
+        term: term_iter_t,
+        filter: filter_iter_t,
+        query: query_iter_t,
+        rule: rule_iter_t,
+        snapshot: snapshot_iter_t,
+        page: page_iter_t,
+        worker: worker_iter_t,
+    },
+    entity_iter: ?*anyopaque,
+    cache: iter_cache_t,
+};
+
+pub const inout_kind_t = enum(i32) {
+    InOutDefault,
+    InOutNone,
+    InOut,
+    In,
+    Out,
+};
+
+pub const oper_kind_t = enum(i32) {
+    And,
+    Or,
+    Not,
+    Optional,
+    AndFrom,
+    OrFrom,
+    NotFrom,
+};
+
+pub const term_id_t = extern struct {
+    id: entity_t,
+    name: [*c]u8,
+    trav: entity_t,
+    flags: flags32_t,
+};
+
+pub const term_t = extern struct {
+    id: id_t,
+    src: term_id_t,
+    first: term_id_t,
+    second: term_id_t,
+    inout: inout_kind_t,
+    oper: oper_kind_t,
+    id_flags: id_t,
+    name: [*c]u8,
+    field_index: i32,
+    idr: ?*id_record_t,
+    move: bool,
+};
+
+pub const table_range_t = extern struct {
+    table: ?*table_t,
+    offset: i32,
+    count: i32,
+};
+pub const var_t = extern struct {
+    range: table_range_t,
+    entity: entity_t,
+};
+
+pub const xtor_t = *const fn (*anyopaque, i32, *const type_info_t) callconv(.C) void;
+pub const copy_t = *const fn (*anyopaque, *const anyopaque, i32, *const type_info_t) callconv(.C) void;
+pub const move_t = *const fn (*anyopaque, *anyopaque, i32, *const type_info_t) callconv(.C) void;
+
+// TODO: Compiler bug (dependency loop detected)
+//pub const iter_next_action_t = *const fn (*iter_t) callconv(.C) bool;
+pub const iter_next_action_t = *const fn (*anyopaque) callconv(.C) bool;
+
+// TODO: Compiler bug (dependency loop detected)
+//pub const iter_action_t = *const fn (*iter_t) callconv(.C) void;
+pub const iter_action_t = *const fn (*anyopaque) callconv(.C) void;
+
+// TODO: Compiler bug (dependency loop detected)
+//pub const iter_fini_action_t = *const fn (*iter_t) callconv(.C) void;
+pub const iter_fini_action_t = *const fn (*anyopaque) callconv(.C) void;
+
+pub const ctx_free_t = *const fn (?*anyopaque) callconv(.C) void;
+
+pub const iter_t = extern struct {
+    world: ?*world_t,
+    real_world: ?*world_t,
+    entities: [*c]entity_t,
+    ptrs: [*c]?*anyopaque,
+    sizes: [*c]size_t,
+    table: ?*table_t,
+    other_table: ?*table_t,
+    ids: [*c]id_t,
+    variables: [*c]var_t,
+    columns: [*c]i32,
+    sources: [*c]entity_t,
+    match_indices: [*c]i32,
+    references: [*c]ref_t,
+    constrained_vars: flags64_t,
+    group_id: u64,
+    field_count: i32,
+    system: entity_t,
+    event: entity_t,
+    event_id: id_t,
+    terms: [*c]term_t,
+    table_count: i32,
+    term_index: i32,
+    variable_count: i32,
+    variable_names: [*c][*c]u8,
+    param: ?*anyopaque,
+    ctx: ?*anyopaque,
+    binding_ctx: ?*anyopaque,
+    delta_time: f32,
+    delta_system_time: f32,
+    frame_offset: i32,
+    offset: i32,
+    count: i32,
+    instance_count: i32,
+    flags: flags32_t,
+    interrupted_by: entity_t,
+    priv: iter_private_t,
+    next: iter_next_action_t,
+    callback: iter_action_t,
+    fini: iter_fini_action_t,
+    chain_it: [*c]iter_t,
+};
+
+pub const type_hooks_t = extern struct {
+    ctor: ?xtor_t = null,
+    dtor: ?xtor_t = null,
+    copy: ?copy_t = null,
+    move: ?move_t = null,
+    copy_ctor: ?copy_t = null,
+    move_ctor: ?move_t = null,
+    ctor_move_dtor: ?move_t = null,
+    move_dtor: ?move_t = null,
+    on_add: ?iter_action_t = null,
+    on_set: ?iter_action_t = null,
+    on_remove: ?iter_action_t = null,
+    ctx: ?*anyopaque = null,
+    binding_ctx: ?*anyopaque = null,
+    ctx_free: ?ctx_free_t = null,
+    binding_ctx_free: ?ctx_free_t = null,
+};
+
+pub const type_info_t = extern struct {
+    size: size_t,
+    alignment: size_t,
+    hooks: type_hooks_t = .{},
+    component: entity_t = 0,
+    name: ?[*:0]const u8 = null,
+};
+
+pub const component_desc_t = extern struct {
+    _canary: i32 = 0,
+    entity: entity_t,
+    type: type_info_t,
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Creation & Deletion
@@ -672,7 +960,7 @@ extern fn ecs_get_path_w_sep(
     prefix: ?[*:0]const u8,
 ) ?[*]u8;
 /// ```
-/// extern fn ecs_get_path_w_sep(
+/// pub fn ecs_get_path_w_sep(
 ///     world: *const world_t,
 ///     parent: entity_t,
 ///     child: entity_t,
@@ -690,7 +978,7 @@ extern fn ecs_new_from_path_w_sep(
     prefix: ?[*:0]const u8,
 ) entity_t;
 /// ```
-/// extern fn ecs_new_from_path_w_sep(
+/// pub fn ecs_new_from_path_w_sep(
 ///     world: *world_t,
 ///     parent: entity_t,
 ///     path: ?[*:0]const u8,
@@ -709,7 +997,7 @@ extern fn ecs_add_path_w_sep(
     prefix: ?[*:0]const u8,
 ) entity_t;
 /// ```
-/// extern fn ecs_add_path_w_sep(
+/// pub fn ecs_add_path_w_sep(
 ///     world: *world_t,
 ///     entity: entity_t,
 ///     parent: entity_t,
@@ -744,17 +1032,48 @@ pub const get_lookup_path = ecs_get_lookup_path;
 // Functions for registering and working with components.
 //
 //--------------------------------------------------------------------------------------------------
+extern fn ecs_component_init(world: *world_t, desc: *const component_desc_t) entity_t;
+/// `pub fn component_init(world: *world_t, desc: *const component_desc_t) entity_t`
+pub const component_init = ecs_component_init;
 //--------------------------------------------------------------------------------------------------
-fn IdHandle(comptime _: type) type {
+pub fn component(world: *world_t, comptime T: type) void {
+    if (@typeInfo(T) != .Struct and @typeInfo(T) != .Type and @typeInfo(T) != .Enum)
+        @compileError("T must be .Struct, .Type or .Enum");
+
+    const type_id_ptr = typeIdPtr(T);
+
+    const edesc: entity_desc_t = .{
+        .id = type_id_ptr.*,
+        .use_low_id = @sizeOf(T) > 0,
+        .name = @typeName(T),
+        .symbol = @typeName(T),
+    };
+
+    if (@sizeOf(T) == 0) {
+        type_id_ptr.* = ecs_entity_init(world, &edesc);
+    } else {
+        const desc: component_desc_t = .{
+            .entity = ecs_entity_init(world, &edesc),
+            .type = .{
+                .alignment = @alignOf(T),
+                .size = @sizeOf(T),
+            },
+        };
+        type_id_ptr.* = ecs_component_init(world, &desc);
+    }
+}
+
+pub inline fn id(comptime T: type) id_t {
+    return typeIdPtr(T).*;
+}
+//--------------------------------------------------------------------------------------------------
+fn TypeId(comptime _: type) type {
     return struct {
-        var handle: id_t = 0;
+        var id: id_t = 0;
     };
 }
-pub inline fn id(comptime T: type) id_t {
-    return id_handle_ptr(T).*;
-}
-inline fn id_handle_ptr(comptime T: type) *id_t {
-    return comptime &IdHandle(T).handle;
+inline fn typeIdPtr(comptime T: type) *id_t {
+    return comptime &TypeId(T).id;
 }
 //--------------------------------------------------------------------------------------------------
 comptime {

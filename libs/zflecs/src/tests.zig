@@ -48,5 +48,13 @@ test "zflecs.basic" {
         x: f32,
         y: f32,
     };
-    std.debug.print("{d}\n", .{ecs.id(Position)});
+    ecs.component(world, Position);
+
+    {
+        const str = ecs.type_str(world, ecs.get_type(world, ecs.id(Position)));
+        defer ecs.os_free(str);
+        std.debug.print("{s}\n", .{str});
+    }
+
+    std.debug.print("ecs.id({s}) = {d}\n", .{ @typeName(Position), ecs.id(Position) });
 }
