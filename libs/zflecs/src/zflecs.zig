@@ -98,7 +98,103 @@ pub const ref_t = extern struct {
     record: *record_t,
 };
 
+pub const type_t = extern struct {
+    array: [*]id_t,
+    count: i32,
+};
+
 pub const fini_action_t = *const fn (*world_t, ?*anyopaque) callconv(.C) void;
+
+pub const time_t = extern struct {
+    sec: u32,
+    nanosec: u32,
+};
+pub const os_thread_t = usize;
+pub const os_cond_t = usize;
+pub const os_mutex_t = usize;
+pub const os_dl_t = usize;
+pub const os_sock_t = usize;
+pub const os_thread_id_t = u64;
+pub const os_proc_t = *const fn () callconv(.C) void;
+pub const os_api_init_t = *const fn () callconv(.C) void;
+pub const os_api_fini_t = *const fn () callconv(.C) void;
+pub const os_api_malloc_t = *const fn (size_t) callconv(.C) ?*anyopaque;
+pub const os_api_free_t = *const fn (?*anyopaque) callconv(.C) void;
+pub const os_api_realloc_t = *const fn (?*anyopaque, size_t) callconv(.C) ?*anyopaque;
+pub const os_api_calloc_t = *const fn (size_t) callconv(.C) ?*anyopaque;
+pub const os_api_strdup_t = *const fn ([*:0]const u8) callconv(.C) [*c]u8;
+pub const os_thread_callback_t = *const fn (?*anyopaque) callconv(.C) ?*anyopaque;
+pub const os_api_thread_new_t = *const fn (os_thread_callback_t, ?*anyopaque) callconv(.C) os_thread_t;
+pub const os_api_thread_join_t = *const fn (os_thread_t) callconv(.C) ?*anyopaque;
+pub const os_api_thread_self_t = *const fn () callconv(.C) os_thread_id_t;
+pub const os_api_ainc_t = *const fn (*i32) callconv(.C) i32;
+pub const os_api_lainc_t = *const fn (*i64) callconv(.C) i64;
+pub const os_api_mutex_new_t = *const fn () callconv(.C) os_mutex_t;
+pub const os_api_mutex_lock_t = *const fn (os_mutex_t) callconv(.C) void;
+pub const os_api_mutex_unlock_t = *const fn (os_mutex_t) callconv(.C) void;
+pub const os_api_mutex_free_t = *const fn (os_mutex_t) callconv(.C) void;
+pub const os_api_cond_new_t = *const fn () callconv(.C) os_cond_t;
+pub const os_api_cond_free_t = *const fn (os_cond_t) callconv(.C) void;
+pub const os_api_cond_signal_t = *const fn (os_cond_t) callconv(.C) void;
+pub const os_api_cond_broadcast_t = *const fn (os_cond_t) callconv(.C) void;
+pub const os_api_cond_wait_t = *const fn (os_cond_t, os_mutex_t) callconv(.C) void;
+pub const os_api_sleep_t = *const fn (i32, i32) callconv(.C) void;
+pub const os_api_enable_high_timer_resolution_t = *const fn (bool) callconv(.C) void;
+pub const os_api_get_time_t = *const fn (*time_t) callconv(.C) void;
+pub const os_api_now_t = *const fn () callconv(.C) u64;
+pub const os_api_log_t = *const fn (i32, [*c]const u8, i32, [*:0]const u8) callconv(.C) void;
+pub const os_api_abort_t = *const fn () callconv(.C) void;
+pub const os_api_dlopen_t = *const fn ([*:0]const u8) callconv(.C) os_dl_t;
+pub const os_api_dlproc_t = *const fn (os_dl_t, [*:0]const u8) callconv(.C) os_proc_t;
+pub const os_api_dlclose_t = *const fn (os_dl_t) callconv(.C) void;
+pub const os_api_module_to_path_t = *const fn ([*:0]const u8) callconv(.C) [*:0]u8;
+
+const os_api_t = extern struct {
+    init_: os_api_init_t,
+    fini_: os_api_fini_t,
+    malloc_: os_api_malloc_t,
+    realloc_: os_api_realloc_t,
+    calloc_: os_api_calloc_t,
+    free_: os_api_free_t,
+    strdup_: os_api_strdup_t,
+    thread_new_: os_api_thread_new_t,
+    thread_join_: os_api_thread_join_t,
+    thread_self_: os_api_thread_self_t,
+    ainc_: os_api_ainc_t,
+    adec_: os_api_ainc_t,
+    lainc_: os_api_lainc_t,
+    ladec_: os_api_lainc_t,
+    mutex_new_: os_api_mutex_new_t,
+    mutex_free_: os_api_mutex_free_t,
+    mutex_lock_: os_api_mutex_lock_t,
+    mutex_unlock_: os_api_mutex_lock_t,
+    cond_new_: os_api_cond_new_t,
+    cond_free_: os_api_cond_free_t,
+    cond_signal_: os_api_cond_signal_t,
+    cond_broadcast_: os_api_cond_broadcast_t,
+    cond_wait_: os_api_cond_wait_t,
+    sleep_: os_api_sleep_t,
+    now_: os_api_now_t,
+    get_time_: os_api_get_time_t,
+    log_: os_api_log_t,
+    abort_: os_api_abort_t,
+    dlopen_: os_api_dlopen_t,
+    dlproc_: os_api_dlproc_t,
+    dlclose_: os_api_dlclose_t,
+    module_to_dl_: os_api_module_to_path_t,
+    module_to_etc_: os_api_module_to_path_t,
+    log_level_: i32,
+    log_indent_: i32,
+    log_last_error_: i32,
+    log_last_timestamp_: i64,
+    flags_: flags32_t,
+};
+
+extern var ecs_os_api: os_api_t;
+
+pub fn os_free(ptr: ?*anyopaque) void {
+    ecs_os_api.free_(ptr);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // Creation & Deletion
@@ -472,6 +568,25 @@ pub const exists = ecs_exists;
 // Get information from entity.
 //
 //--------------------------------------------------------------------------------------------------
+extern fn ecs_get_type(world: *const world_t, entity: entity_t) ?*const type_t;
+/// `pub fn get_type(world: *const world_t, entity: entity_t) ?*const type_t`
+pub const get_type = ecs_get_type;
+
+extern fn ecs_get_table(world: *const world_t, entity: entity_t) ?*const table_t;
+/// `pub fn get_table(world: *const world_t, entity: entity_t) ?*const table_t`
+pub const get_table = ecs_get_table;
+
+extern fn ecs_type_str(world: *const world_t, type: ?*const type_t) [*:0]u8;
+/// `pub fn type_str(world: *const world_t, type: ?*const type_t) [*:0]u8`
+pub const type_str = ecs_type_str;
+
+extern fn ecs_table_str(world: *const world_t, table: ?*const table_t) ?[*:0]u8;
+/// `pub fn table_str(world: *const world_t, table: ?*const table_t) ?[*:0]u8`
+pub const table_str = ecs_table_str;
+
+extern fn ecs_entity_str(world: *const world_t, entity: entity_t) ?[*:0]u8;
+/// `pub fn entity_str(world: *const world_t, entity: entity_t) ?[*:0]u8`
+pub const entity_str = ecs_entity_str;
 //--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
