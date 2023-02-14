@@ -979,6 +979,13 @@ extern fn zguiPushFont(font: Font) void;
 /// `void popFont() void`
 pub const popFont = zguiPopFont;
 extern fn zguiPopFont() void;
+
+pub fn getFontTexUvWhitePixel() [2]f32 {
+    var uv: [2]f32 = undefined;
+    zguiGetFontTexUvWhitePixel(&uv);
+    return uv;
+}
+extern fn zguiGetFontTexUvWhitePixel(uv: *[2]f32) void;
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 const BeginDisabled = struct {
