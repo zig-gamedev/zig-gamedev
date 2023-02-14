@@ -612,6 +612,113 @@ pub const count_id = ecs_count_id;
 // Functions for working with entity names and paths.
 //
 //--------------------------------------------------------------------------------------------------
+extern fn ecs_get_name(world: *const world_t, entity: entity_t) ?[*:0]const u8;
+/// `pub fn get_name(world: *const world_t, entity: entity_t) ?[*:0]const u8`
+pub const get_name = ecs_get_name;
+
+extern fn ecs_get_symbol(world: *const world_t, entity: entity_t) ?[*:0]const u8;
+/// `pub fn get_symbol(world: *const world_t, entity: entity_t) ?[*:0]const u8`
+pub const get_symbol = ecs_get_symbol;
+
+extern fn ecs_set_name(world: *world_t, entity: entity_t, name: ?[*:0]const u8) entity_t;
+/// `pub fn set_name(world: *world_t, entity: entity_t, name: ?[*:0]const u8) entity_t`
+pub const set_name = ecs_set_name;
+
+extern fn ecs_set_symbol(world: *world_t, entity: entity_t, name: ?[*:0]const u8) entity_t;
+/// `pub fn set_symbol(world: *world_t, entity: entity_t, name: ?[*:0]const u8) entity_t`
+pub const set_symbol = ecs_set_symbol;
+
+extern fn ecs_set_alias(world: *world_t, entity: entity_t, name: ?[*:0]const u8) void;
+/// `pub fn set_alias(world: *world_t, entity: entity_t, name: ?[*:0]const u8) void`
+pub const set_alias = ecs_set_alias;
+
+extern fn ecs_lookup(world: *const world_t, name: ?[*:0]const u8) entity_t;
+/// `pub fn lookup(world: *const world_t, name: ?[*:0]const u8) entity_t`
+pub const lookup = ecs_lookup;
+
+extern fn ecs_lookup_child(world: *const world_t, parent: entity_t, name: ?[*:0]const u8) entity_t;
+/// `pub fn lookup_child(world: *const world_t, parent: entity_t, name: ?[*:0]const u8) entity_t`
+pub const lookup_child = ecs_lookup_child;
+
+extern fn ecs_lookup_path_w_sep(
+    world: *const world_t,
+    parent: entity_t,
+    path: ?[*:0]const u8,
+    sep: ?[*:0]const u8,
+    prefix: ?[*:0]const u8,
+    recursive: bool,
+) entity_t;
+/// ```
+/// pub fn lookup_path_w_sep(
+///     world: *const world_t,
+///     parent: entity_t,
+///     path: ?[*:0]const u8,
+///     sep: ?[*:0]const u8,
+///     prefix: ?[*:0]const u8,
+///    recursive: bool,
+/// ) entity_t;
+/// ```
+pub const lookup_path_w_sep = ecs_lookup_path_w_sep;
+
+extern fn ecs_lookup_symbol(world: *const world_t, symbol: ?[*:0]const u8, lookup_as_path: bool) entity_t;
+/// `pub fn lookup_symbol(world: *const world_t, symbol: ?[*:0]const u8, lookup_as_path: bool) entity_t`
+pub const lookup_symbol = ecs_lookup_symbol;
+
+extern fn ecs_get_path_w_sep(
+    world: *const world_t,
+    parent: entity_t,
+    child: entity_t,
+    sep: ?[*:0]const u8,
+    prefix: ?[*:0]const u8,
+) ?[*]u8;
+/// ```
+/// extern fn ecs_get_path_w_sep(
+///     world: *const world_t,
+///     parent: entity_t,
+///     child: entity_t,
+///     sep: ?[*:0]const u8,
+///     prefix: ?[*:0]const u8,
+/// ) ?[*]u8;
+/// ```
+pub const get_path_w_sep = ecs_get_path_w_sep;
+
+extern fn ecs_new_from_path_w_sep(
+    world: *world_t,
+    parent: entity_t,
+    path: ?[*:0]const u8,
+    sep: ?[*:0]const u8,
+    prefix: ?[*:0]const u8,
+) entity_t;
+/// ```
+/// extern fn ecs_new_from_path_w_sep(
+///     world: *world_t,
+///     parent: entity_t,
+///     path: ?[*:0]const u8,
+///     sep: ?[*:0]const u8,
+///     prefix: ?[*:0]const u8,
+/// ) entity_t;
+/// ```
+pub const new_from_path_w_sep = ecs_new_from_path_w_sep;
+
+extern fn ecs_add_path_w_sep(
+    world: *world_t,
+    entity: entity_t,
+    parent: entity_t,
+    path: ?[*:0]const u8,
+    sep: ?[*:0]const u8,
+    prefix: ?[*:0]const u8,
+) entity_t;
+/// ```
+/// extern fn ecs_add_path_w_sep(
+///     world: *world_t,
+///     entity: entity_t,
+///     parent: entity_t,
+///     path: ?[*:0]const u8,
+///     sep: ?[*:0]const u8,
+///     prefix: ?[*:0]const u8,
+/// ) entity_t;
+/// ```
+pub const add_path_w_sep = ecs_add_path_w_sep;
 //--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
