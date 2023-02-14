@@ -587,6 +587,31 @@ pub const table_str = ecs_table_str;
 extern fn ecs_entity_str(world: *const world_t, entity: entity_t) ?[*:0]u8;
 /// `pub fn entity_str(world: *const world_t, entity: entity_t) ?[*:0]u8`
 pub const entity_str = ecs_entity_str;
+
+extern fn ecs_has_id(world: *const world_t, entity: entity_t, id: id_t) bool;
+/// `pub fn has_id(world: *const world_t, entity: entity_t, id: id_t) bool`
+pub const has_id = ecs_has_id;
+
+extern fn ecs_get_target(world: *const world_t, entity: entity_t, rel: entity_t, index: i32) entity_t;
+/// `pub fn get_target(world: *const world_t, entity: entity_t, rel: entity_t, index: i32) entity_t`
+pub const get_target = ecs_get_target;
+
+extern fn ecs_get_target_for_id(world: *const world_t, entity: entity_t, rel: entity_t, id: id_t) entity_t;
+/// `pub fn get_target_for_id(world: *const world_t, entity: entity_t, rel: entity_t, id: id_t) entity_t`
+pub const get_target_for_id = ecs_get_target_for_id;
+
+extern fn ecs_get_depth(world: *const world_t, entity: entity_t, rel: entity_t) i32;
+/// `pub fn get_depth(world: *const world_t, entity: entity_t, rel: entity_t) i32`
+pub const get_depth = ecs_get_depth;
+
+extern fn ecs_count_id(world: *const world_t, entity: entity_t) i32;
+/// `pub fn count_id(world: *const world_t, entity: entity_t) i32`
+pub const count_id = ecs_count_id;
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for working with entity names and paths.
+//
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
