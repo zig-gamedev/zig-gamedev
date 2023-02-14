@@ -719,6 +719,31 @@ extern fn ecs_add_path_w_sep(
 /// ) entity_t;
 /// ```
 pub const add_path_w_sep = ecs_add_path_w_sep;
+
+extern fn ecs_set_scope(world: *world_t, scope: entity_t) entity_t;
+/// `pub fn set_scope(world: *world_t, scope: entity_t) entity_t`
+pub const set_scope = ecs_set_scope;
+
+extern fn ecs_get_scope(world: *const world_t) entity_t;
+/// `pub fn get_scope(world: *const world_t) entity_t`
+pub const get_scope = ecs_get_scope;
+
+extern fn ecs_set_name_prefix(world: *world_t, prefix: ?[*:0]const u8) ?[*:0]const u8;
+/// `pub fn set_name_prefix(world: *world_t, prefix: ?[*:0]const u8) ?[*:0]const u8`
+pub const set_name_prefix = ecs_set_name_prefix;
+
+extern fn ecs_set_lookup_path(world: *world_t, lookup_path: ?[*]const entity_t) ?[*]entity_t;
+/// `pub fn set_lookup_path(world: *world_t, lookup_path: ?[*]const entity_t) ?[*]entity_t`
+pub const set_lookup_path = ecs_set_lookup_path;
+
+extern fn ecs_get_lookup_path(world: *const world_t) ?[*]entity_t;
+/// `pub fn get_lookup_path(world: *const world_t) ?[*]entity_t`
+pub const get_lookup_path = ecs_get_lookup_path;
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for registering and working with components.
+//
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
