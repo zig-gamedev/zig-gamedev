@@ -395,6 +395,42 @@ pub const ref_update = ecs_ref_update;
 extern fn ecs_get_mut_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque;
 /// `pub fn get_mut_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque`
 pub const get_mut_id = ecs_get_mut_id;
+
+extern fn ecs_write_begin(world: *world_t, entity: entity_t) ?*record_t;
+/// `pub fn write_begin(world: *world_t, entity: entity_t) ?*record_t`
+pub const write_begin = ecs_write_begin;
+
+extern fn ecs_write_end(record: *record_t) void;
+/// `pub fn write_end(record: *record_t) void`
+pub const write_end = ecs_write_end;
+
+extern fn ecs_read_begin(world: *world_t, entity: entity_t) ?*const record_t;
+/// `pub fn read_begin(world: *world_t, entity: entity_t) ?*const record_t`
+pub const read_begin = ecs_read_begin;
+
+extern fn ecs_read_end(record: *const record_t) void;
+/// `pub fn read_end(record: *const record_t) void`
+pub const read_end = ecs_read_end;
+
+extern fn ecs_record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque;
+/// `pub fn record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque`
+pub const record_get_id = ecs_record_get_id;
+
+extern fn ecs_record_get_mut_id(world: *world_t, record: *record_t, id: id_t) ?*anyopaque;
+/// `pub fn record_get_mut_id(world: *world_t, record: *record_t, id: id_t) ?*anyopaque`
+pub const record_get_mut_id = ecs_record_get_mut_id;
+
+extern fn ecs_emplace_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque;
+/// `pub fn emplace_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque`
+pub const emplace_id = ecs_emplace_id;
+
+extern fn ecs_modified_id(world: *world_t, entity: entity_t, id: id_t) void;
+/// `pub fn modified_id(world: *world_t, entity: entity_t, id: id_t) void`
+pub const modified_id = ecs_modified_id;
+
+extern fn ecs_set_id(world: *world_t, entity: entity_t, id: id_t, size: usize, ptr: ?*const anyopaque) entity_t;
+/// `pub fn set_id(world: *world_t, entity: entity_t, id: id_t, size: usize, ptr: ?*const anyopaque) entity_t`
+pub const set_id = ecs_set_id;
 //--------------------------------------------------------------------------------------------------
 fn IdHandle(comptime _: type) type {
     return struct {
