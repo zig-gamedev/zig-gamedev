@@ -1052,6 +1052,12 @@ ZGUI_API float zguiGetFontSize(void) {
     return ImGui::GetFontSize();
 }
 
+ZGUI_API void zguiGetFontTexUvWhitePixel(float uv[2]) {
+    const ImVec2 cs = ImGui::GetFontTexUvWhitePixel();
+    uv[0] = cs[0];
+    uv[1] = cs[1];
+}
+
 ZGUI_API void zguiPushFont(ImFont* font) {
     ImGui::PushFont(font);
 }
