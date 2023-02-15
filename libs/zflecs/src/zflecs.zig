@@ -1105,39 +1105,34 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
     if (@sizeOf(T) == 0)
         @compileError("Size of the type must be greater than zero");
 
-    const type_id_ptr = typeIdPtr(T);
+    const type_id_ptr = perTypeGlobalVarPtr(T);
 
-    const edesc: entity_desc_t = .{
-        .id = type_id_ptr.*,
-        .use_low_id = true,
-        .name = @typeName(T),
-        .symbol = @typeName(T),
-    };
-
-    const desc: component_desc_t = .{
-        .entity = ecs_entity_init(world, &edesc),
+    type_id_ptr.* = ecs_component_init(world, &.{
+        .entity = ecs_entity_init(world, &.{
+            .id = type_id_ptr.*,
+            .use_low_id = true,
+            .name = @typeName(T),
+            .symbol = @typeName(T),
+        }),
         .type = .{
             .alignment = @alignOf(T),
             .size = @sizeOf(T),
         },
-    };
-    type_id_ptr.* = ecs_component_init(world, &desc);
+    });
 }
 
 pub fn TAG(world: *world_t, comptime T: type) void {
     if (@sizeOf(T) != 0)
         @compileError("Size of the type must be zero");
 
-    const type_id_ptr = typeIdPtr(T);
+    const type_id_ptr = perTypeGlobalVarPtr(T);
 
-    const edesc: entity_desc_t = .{
+    type_id_ptr.* = ecs_entity_init(world, &.{
         .id = type_id_ptr.*,
         .use_low_id = false,
         .name = @typeName(T),
         .symbol = @typeName(T),
-    };
-
-    type_id_ptr.* = ecs_entity_init(world, &edesc);
+    });
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1161,16 +1156,16 @@ pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
 }
 
 pub inline fn id(comptime T: type) id_t {
-    return typeIdPtr(T).*;
+    return perTypeGlobalVarPtr(T).*;
 }
 //--------------------------------------------------------------------------------------------------
-fn TypeId(comptime _: type) type {
+fn PerTypeGlobalVar(comptime _: type) type {
     return struct {
         var id: id_t = 0;
     };
 }
-inline fn typeIdPtr(comptime T: type) *id_t {
-    return comptime &TypeId(T).id;
+inline fn perTypeGlobalVarPtr(comptime T: type) *id_t {
+    return comptime &PerTypeGlobalVar(T).id;
 }
 //--------------------------------------------------------------------------------------------------
 comptime {

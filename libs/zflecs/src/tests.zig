@@ -49,6 +49,7 @@ test "zflecs.basic" {
     ecs.COMPONENT(world, *Position);
     ecs.COMPONENT(world, Position);
     ecs.COMPONENT(world, Direction);
+    ecs.COMPONENT(world, u31);
 
     ecs.TAG(world, Walking);
 
@@ -58,12 +59,15 @@ test "zflecs.basic" {
     std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Position)), ecs.id(Position) });
     std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Direction)), ecs.id(Direction) });
     std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Walking)), ecs.id(Walking) });
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(u31)), ecs.id(u31) });
 
     const p: Position = .{ .x = 1.0, .y = 2.0 };
     _ = ecs.set(world, e0, *const Position, &p);
     _ = ecs.set(world, e0, ?*const Position, null);
     _ = ecs.set(world, e0, Position, .{ .x = 1.0, .y = 2.0 });
     _ = ecs.set(world, e0, Direction, .west);
+    _ = ecs.set(world, e0, u31, 123);
+    _ = ecs.set(world, e0, u31, 1234);
 
     ecs.add(world, e0, Walking);
 
