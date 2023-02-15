@@ -3,9 +3,23 @@ const ecs = @import("zflecs.zig");
 
 const expect = std.testing.expect;
 
+const Position = struct { x: f32, y: f32 };
+const Walking = struct {};
+const Direction = enum { north, south, east, west };
+
+test "zflecs.entities.basics" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    //    const bob = ecs.set_name(world, 0, "Bob");
+
+}
+
 test "zflecs.basic" {
     const world = ecs.init();
     defer _ = ecs.fini(world);
+
+    std.debug.print("\n", .{});
 
     try expect(ecs.is_fini(world) == false);
 
@@ -28,6 +42,31 @@ test "zflecs.basic" {
     try expect(!ecs.is_alive(world, e1));
     try expect(!ecs.is_valid(world, e1));
 
+    try expect(ecs.table_str(world, null) == null);
+
+    ecs.COMPONENT(world, *const Position);
+    ecs.COMPONENT(world, ?*const Position);
+    ecs.COMPONENT(world, *Position);
+    ecs.COMPONENT(world, Position);
+    ecs.COMPONENT(world, Direction);
+
+    ecs.TAG(world, Walking);
+
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*const Position)), ecs.id(*const Position) });
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(?*const Position)), ecs.id(?*const Position) });
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*Position)), ecs.id(*Position) });
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Position)), ecs.id(Position) });
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Direction)), ecs.id(Direction) });
+    std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Walking)), ecs.id(Walking) });
+
+    const p: Position = .{ .x = 1.0, .y = 2.0 };
+    _ = ecs.set(world, e0, *const Position, &p);
+    _ = ecs.set(world, e0, ?*const Position, null);
+    _ = ecs.set(world, e0, Position, .{ .x = 1.0, .y = 2.0 });
+    _ = ecs.set(world, e0, Direction, .west);
+
+    ecs.add(world, e0, Walking);
+
     const e0_type_str = ecs.type_str(world, ecs.get_type(world, e0));
     defer ecs.os_free(e0_type_str);
 
@@ -37,18 +76,9 @@ test "zflecs.basic" {
     const e0_str = ecs.entity_str(world, e0);
     defer ecs.os_free(e0_str);
 
-    try expect(ecs.table_str(world, null) == null);
-
-    std.debug.print("\n", .{});
     std.debug.print("type str: {s}\n", .{e0_type_str});
     std.debug.print("table str: {?s}\n", .{e0_table_str});
     std.debug.print("entity str: {?s}\n", .{e0_str});
-
-    const Position = struct {
-        x: f32,
-        y: f32,
-    };
-    ecs.component(world, Position);
 
     {
         const str = ecs.type_str(world, ecs.get_type(world, ecs.id(Position)));
@@ -60,6 +90,4 @@ test "zflecs.basic" {
         defer ecs.os_free(str);
         std.debug.print("{?s}\n", .{str});
     }
-
-    std.debug.print("ecs.id({s}) = {d}\n", .{ @typeName(Position), ecs.id(Position) });
 }

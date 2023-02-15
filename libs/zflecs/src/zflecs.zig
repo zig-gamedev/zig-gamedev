@@ -1,4 +1,5 @@
 const std = @import("std");
+const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
 //
 // Types
@@ -1090,32 +1091,73 @@ extern fn ecs_id_str(world: *const world_t, id: id_t) ?[*:0]u8;
 /// `pub fn id_str(world: *const world_t, id: id_t) ?[*]u8`
 pub const id_str = ecs_id_str;
 //--------------------------------------------------------------------------------------------------
+//
+// Functions for working with `ecs_term_t` and `ecs_filter_t`.
+//
 //--------------------------------------------------------------------------------------------------
-pub fn component(world: *world_t, comptime T: type) void {
-    if (@typeInfo(T) != .Struct and @typeInfo(T) != .Type and @typeInfo(T) != .Enum)
-        @compileError("T must be .Struct, .Type or .Enum");
+// TODO:
+//--------------------------------------------------------------------------------------------------
+//
+// Declarative functions (ECS_* macros in flecs)
+//
+//--------------------------------------------------------------------------------------------------
+pub fn COMPONENT(world: *world_t, comptime T: type) void {
+    if (@sizeOf(T) == 0)
+        @compileError("Size of the type must be greater than zero");
 
     const type_id_ptr = typeIdPtr(T);
 
     const edesc: entity_desc_t = .{
         .id = type_id_ptr.*,
-        .use_low_id = @sizeOf(T) > 0,
+        .use_low_id = true,
         .name = @typeName(T),
         .symbol = @typeName(T),
     };
 
-    if (@sizeOf(T) == 0) {
-        type_id_ptr.* = ecs_entity_init(world, &edesc);
-    } else {
-        const desc: component_desc_t = .{
-            .entity = ecs_entity_init(world, &edesc),
-            .type = .{
-                .alignment = @alignOf(T),
-                .size = @sizeOf(T),
-            },
-        };
-        type_id_ptr.* = ecs_component_init(world, &desc);
-    }
+    const desc: component_desc_t = .{
+        .entity = ecs_entity_init(world, &edesc),
+        .type = .{
+            .alignment = @alignOf(T),
+            .size = @sizeOf(T),
+        },
+    };
+    type_id_ptr.* = ecs_component_init(world, &desc);
+}
+
+pub fn TAG(world: *world_t, comptime T: type) void {
+    if (@sizeOf(T) != 0)
+        @compileError("Size of the type must be zero");
+
+    const type_id_ptr = typeIdPtr(T);
+
+    const edesc: entity_desc_t = .{
+        .id = type_id_ptr.*,
+        .use_low_id = false,
+        .name = @typeName(T),
+        .symbol = @typeName(T),
+    };
+
+    type_id_ptr.* = ecs_entity_init(world, &edesc);
+}
+//--------------------------------------------------------------------------------------------------
+//
+// Function wrappers (ecs_* macros in flecs)
+//
+//--------------------------------------------------------------------------------------------------
+pub fn set(world: *world_t, entity: entity_t, comptime T: type, val: T) entity_t {
+    return ecs_set_id(world, entity, id(T), @sizeOf(T), @ptrCast(*const anyopaque, &val));
+}
+
+pub fn add(world: *world_t, entity: entity_t, comptime T: type) void {
+    ecs_add_id(world, entity, id(T));
+}
+
+pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
+    return @ptrCast(*const T, @alignCast(@alignOf(T), val));
+}
+
+pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
+    return @ptrCast(*T, @alignCast(@alignOf(T), val));
 }
 
 pub inline fn id(comptime T: type) id_t {
