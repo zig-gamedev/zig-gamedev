@@ -1035,6 +1035,61 @@ pub const get_lookup_path = ecs_get_lookup_path;
 extern fn ecs_component_init(world: *world_t, desc: *const component_desc_t) entity_t;
 /// `pub fn component_init(world: *world_t, desc: *const component_desc_t) entity_t`
 pub const component_init = ecs_component_init;
+
+extern fn ecs_set_hooks_id(world: *world_t, id: entity_t, hooks: *const type_hooks_t) void;
+/// `pub fn set_hooks_id(world: *world_t, id: entity_t, hooks: *const type_hooks_t) void`
+pub const set_hooks_id = ecs_set_hooks_id;
+
+extern fn ecs_get_hooks_id(world: *const world_t, id: entity_t) *const type_hooks_t;
+/// `pub fn get_hooks_id(world: *const world_t, id: entity_t) *const type_hooks_t`
+pub const get_hooks_id = ecs_get_hooks_id;
+
+// TODO: flecs upstream: missing const
+extern fn ecs_id_is_tag(world: *const world_t, id: id_t) bool;
+/// `pub fn id_is_tag(world: *const world_t, id: id_t) bool;
+pub const id_is_tag = ecs_id_is_tag;
+
+// TODO: flecs upstream: missing const
+extern fn ecs_id_in_use(world: *const world_t, id: id_t) bool;
+/// `pub fn id_in_use(world: *const world_t, id: id_t) bool`
+pub const id_in_use = ecs_id_in_use;
+
+extern fn ecs_get_type_info(world: *const world_t, id: id_t) *const type_info_t;
+/// `pub fn get_type_info(world: *const world_t, id: id_t) *const type_info_t`
+pub const get_type_info = ecs_get_type_info;
+
+extern fn ecs_get_typeid(world: *const world_t, id: id_t) entity_t;
+/// `pub fn get_typeid(world: *const world_t, id: id_t) entity_t`
+pub const get_typeid = ecs_get_typeid;
+
+extern fn ecs_id_match(id: id_t, pattern: id_t) bool;
+/// `pub fn id_match(id: id_t, pattern: id_t) bool`
+pub const id_match = ecs_id_match;
+
+extern fn ecs_id_is_pair(id: id_t) bool;
+/// `pub fn id_is_pair(id: id_t) bool`
+pub const id_is_pair = ecs_id_is_pair;
+
+extern fn ecs_id_is_wildcard(id: id_t) bool;
+/// `pub fn id_is_wildcard(id: id_t) bool`
+pub const id_is_wildcard = ecs_id_is_wildcard;
+
+extern fn ecs_id_is_valid(world: *const world_t, id: id_t) bool;
+/// `pub fn id_is_valid(world: *const world_t, id: id_t) bool`
+pub const id_is_valid = ecs_id_is_valid;
+
+extern fn ecs_id_get_flags(world: *const world_t, id: id_t) flags32_t;
+/// `pub fn id_get_flags(world: *const world_t, id: id_t) flags32_t`
+pub const id_get_flags = ecs_id_get_flags;
+
+extern fn ecs_id_flag_str(id_flags: id_t) ?[*:0]const u8;
+/// `pub fn id_flag_str(id_flags: id_t) ?[*]const u8`
+pub const id_flag_str = ecs_id_flag_str;
+
+extern fn ecs_id_str(world: *const world_t, id: id_t) ?[*:0]u8;
+/// `pub fn id_str(world: *const world_t, id: id_t) ?[*]u8`
+pub const id_str = ecs_id_str;
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 pub fn component(world: *world_t, comptime T: type) void {
     if (@typeInfo(T) != .Struct and @typeInfo(T) != .Type and @typeInfo(T) != .Enum)

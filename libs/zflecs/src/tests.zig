@@ -55,6 +55,11 @@ test "zflecs.basic" {
         defer ecs.os_free(str);
         std.debug.print("{s}\n", .{str});
     }
+    {
+        const str = ecs.id_str(world, ecs.id(Position));
+        defer ecs.os_free(str);
+        std.debug.print("{?s}\n", .{str});
+    }
 
     std.debug.print("ecs.id({s}) = {d}\n", .{ @typeName(Position), ecs.id(Position) });
 }
