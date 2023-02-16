@@ -1111,8 +1111,8 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
         .entity = ecs_entity_init(world, &.{
             .id = type_id_ptr.*,
             .use_low_id = true,
-            .name = @typeName(T),
-            .symbol = @typeName(T),
+            .name = typeName(T),
+            .symbol = typeName(T),
         }),
         .type = .{
             .alignment = @alignOf(T),
@@ -1129,10 +1129,25 @@ pub fn TAG(world: *world_t, comptime T: type) void {
 
     type_id_ptr.* = ecs_entity_init(world, &.{
         .id = type_id_ptr.*,
-        .use_low_id = false,
         .name = @typeName(T),
-        .symbol = @typeName(T),
     });
+}
+
+// flecs internally reserves names like u16, u32, f32, etc. so we re-map them to uppercase to avoid collisions
+fn typeName(comptime T: type) @TypeOf(@typeName(T)) {
+    return switch (T) {
+        u8 => return "U8",
+        u16 => return "U16",
+        u32 => return "U32",
+        u64 => return "U64",
+        i8 => return "I8",
+        i16 => return "I16",
+        i32 => return "I32",
+        i64 => return "I64",
+        f32 => return "F32",
+        f64 => return "F64",
+        else => return @typeName(T),
+    };
 }
 //--------------------------------------------------------------------------------------------------
 //

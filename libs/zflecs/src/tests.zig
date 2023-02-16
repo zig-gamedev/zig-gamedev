@@ -50,6 +50,11 @@ test "zflecs.basic" {
     ecs.COMPONENT(world, Position);
     ecs.COMPONENT(world, Direction);
     ecs.COMPONENT(world, u31);
+    ecs.COMPONENT(world, u32);
+    ecs.COMPONENT(world, f32);
+    ecs.COMPONENT(world, f64);
+    ecs.COMPONENT(world, i8);
+    ecs.COMPONENT(world, ?*const i8);
 
     ecs.TAG(world, Walking);
 
