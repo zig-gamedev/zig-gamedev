@@ -1164,7 +1164,7 @@ pub const term_fini = ecs_term_fini;
 // Declarative functions (ECS_* macros in flecs)
 //
 //--------------------------------------------------------------------------------------------------
-// TODO: We support only one `world_t` at the time because type ids are stored in global static memory.
+// TODO: We support only one `world_t` at the time because type ids are stored in a global static memory.
 // We need to reset those ids to zero when the world is destroyed.
 var num_worlds: u32 = 0;
 var component_ids_hm = std.AutoHashMap(*id_t, u0).init(std.heap.page_allocator);
@@ -1174,12 +1174,13 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
         @compileError("Size of the type must be greater than zero");
 
     const type_id_ptr = perTypeGlobalVarPtr(T);
+    if (type_id_ptr.* != 0)
+        return;
 
     component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
 
     type_id_ptr.* = ecs_component_init(world, &.{
         .entity = ecs_entity_init(world, &.{
-            .id = type_id_ptr.*,
             .use_low_id = true,
             .name = typeName(T),
             .symbol = typeName(T),
@@ -1196,13 +1197,12 @@ pub fn TAG(world: *world_t, comptime T: type) void {
         @compileError("Size of the type must be zero");
 
     const type_id_ptr = perTypeGlobalVarPtr(T);
+    if (type_id_ptr.* != 0)
+        return;
 
     component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
 
-    type_id_ptr.* = ecs_entity_init(world, &.{
-        .id = type_id_ptr.*,
-        .name = typeName(T),
-    });
+    type_id_ptr.* = ecs_entity_init(world, &.{ .name = typeName(T) });
 }
 
 // flecs internally reserves names like u16, u32, f32, etc. so we re-map them to uppercase to avoid collisions

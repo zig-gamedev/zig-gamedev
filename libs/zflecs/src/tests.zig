@@ -14,6 +14,7 @@ test "zflecs.entities.basics" {
     defer _ = ecs.fini(world);
 
     ecs.COMPONENT(world, Position);
+    ecs.COMPONENT(world, Position);
     ecs.TAG(world, Walking);
 
     const bob = ecs.set_name(world, 0, "Bob");
@@ -70,7 +71,9 @@ test "zflecs.basic" {
     ecs.COMPONENT(world, ?*const Position);
     ecs.COMPONENT(world, *Position);
     ecs.COMPONENT(world, Position);
+    ecs.COMPONENT(world, ?*const Position);
     ecs.COMPONENT(world, Direction);
+    ecs.COMPONENT(world, f64);
     ecs.COMPONENT(world, u31);
     ecs.COMPONENT(world, u32);
     ecs.COMPONENT(world, f32);
