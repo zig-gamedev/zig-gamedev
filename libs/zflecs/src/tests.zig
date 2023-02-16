@@ -73,10 +73,12 @@ test "zflecs.basic" {
     _ = ecs.set(world, e0, Direction, .west);
     _ = ecs.set(world, e0, u31, 123);
     _ = ecs.set(world, e0, u31, 1234);
+    _ = ecs.set(world, e0, u32, 987);
 
     ecs.add(world, e0, Walking);
 
     try expect(ecs.get(world, e0, u31).?.* == 1234);
+    try expect(ecs.get(world, e0, u32).?.* == 987);
     try expect(ecs.get(world, e0, ?*const Position).?.* == null);
     try expect(ecs.get(world, e0, *const Position).?.* == &p);
     if (ecs.get(world, e0, Position)) |pos| {
