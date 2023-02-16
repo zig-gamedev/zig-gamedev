@@ -38,6 +38,11 @@ test "zflecs.entities.basics" {
     ecs.remove(world, alice, Walking);
 }
 
+fn registerComponents(world: *ecs.world_t) void {
+    ecs.COMPONENT(world, *const Position);
+    ecs.COMPONENT(world, ?*const Position);
+}
+
 test "zflecs.basic" {
     std.debug.print("\n", .{});
 
@@ -67,8 +72,7 @@ test "zflecs.basic" {
 
     try expect(ecs.table_str(world, null) == null);
 
-    ecs.COMPONENT(world, *const Position);
-    ecs.COMPONENT(world, ?*const Position);
+    registerComponents(world);
     ecs.COMPONENT(world, *Position);
     ecs.COMPONENT(world, Position);
     ecs.COMPONENT(world, ?*const Position);
