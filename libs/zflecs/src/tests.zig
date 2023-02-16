@@ -8,18 +8,40 @@ const Walking = struct {};
 const Direction = enum { north, south, east, west };
 
 test "zflecs.entities.basics" {
+    std.debug.print("\n", .{});
+
     const world = ecs.init();
     defer _ = ecs.fini(world);
 
-    //    const bob = ecs.set_name(world, 0, "Bob");
+    ecs.COMPONENT(world, Position);
+    ecs.TAG(world, Walking);
 
+    const bob = ecs.set_name(world, 0, "Bob");
+
+    _ = ecs.set(world, bob, Position, .{ .x = 10, .y = 20 });
+    ecs.add(world, bob, Walking);
+
+    const ptr = ecs.get(world, bob, Position).?;
+    std.debug.print("({d}, {d})\n", .{ ptr.x, ptr.y });
+
+    _ = ecs.set(world, bob, Position, .{ .x = 20, .y = 30 });
+
+    const alice = ecs.set_name(world, 0, "Alice");
+    _ = ecs.set(world, alice, Position, .{ .x = 10, .y = 20 });
+    ecs.add(world, alice, Walking);
+
+    const str = ecs.type_str(world, ecs.get_type(world, alice));
+    defer ecs.os_free(str);
+    std.debug.print("[{s}]\n", .{str});
+
+    ecs.remove(world, alice, Walking);
 }
 
 test "zflecs.basic" {
+    std.debug.print("\n", .{});
+
     const world = ecs.init();
     defer _ = ecs.fini(world);
-
-    std.debug.print("\n", .{});
 
     try expect(ecs.is_fini(world) == false);
 

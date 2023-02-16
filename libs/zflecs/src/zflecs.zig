@@ -363,7 +363,7 @@ pub const oper_kind_t = enum(i32) {
 
 pub const term_id_t = extern struct {
     id: entity_t,
-    name: [*c]u8,
+    name: [*:0]u8,
     trav: entity_t,
     flags: flags32_t,
 };
@@ -376,9 +376,9 @@ pub const term_t = extern struct {
     inout: inout_kind_t,
     oper: oper_kind_t,
     id_flags: id_t,
-    name: [*c]u8,
+    name: [*:0]u8,
     field_index: i32,
-    idr: ?*id_record_t,
+    idr: *id_record_t,
     move: bool,
 };
 
@@ -411,8 +411,8 @@ pub const iter_fini_action_t = *const fn (*anyopaque) callconv(.C) void;
 pub const ctx_free_t = *const fn (?*anyopaque) callconv(.C) void;
 
 pub const iter_t = extern struct {
-    world: ?*world_t,
-    real_world: ?*world_t,
+    world: *world_t,
+    real_world: *world_t,
     entities: [*c]entity_t,
     ptrs: [*c]?*anyopaque,
     sizes: [*c]size_t,
@@ -491,15 +491,28 @@ pub const component_desc_t = extern struct {
 //--------------------------------------------------------------------------------------------------
 extern fn ecs_init() *world_t;
 /// `pub fn init() *world_t`
-pub const init = ecs_init;
-
-extern fn ecs_mini() *world_t;
-/// `pub fn mini() *world_t`
-pub const mini = ecs_mini;
+pub fn init() *world_t {
+    assert(num_worlds == 0);
+    num_worlds += 1;
+    component_ids_hm.ensureTotalCapacity(32) catch @panic("OOM");
+    return ecs_init();
+}
 
 extern fn ecs_fini(world: *world_t) i32;
 /// `pub fn fini(world: *world_t) i32`
-pub const fini = ecs_fini;
+pub fn fini(world: *world_t) i32 {
+    assert(num_worlds == 1);
+    num_worlds -= 1;
+
+    var it = component_ids_hm.iterator();
+    while (it.next()) |kv| {
+        const ptr = kv.key_ptr.*;
+        ptr.* = 0;
+    }
+    component_ids_hm.clearRetainingCapacity();
+
+    return ecs_fini(world);
+}
 
 extern fn ecs_is_fini(world: *const world_t) bool;
 /// `pub fn is_fini(world: *const world_t) bool`
@@ -1095,17 +1108,74 @@ pub const id_str = ecs_id_str;
 // Functions for working with `ecs_term_t` and `ecs_filter_t`.
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+extern fn ecs_term_iter(world: *const world_t, term: *term_t) iter_t;
+/// `pub fn term_iter(world: *const world_t, term: *term_t) iter_t`
+pub const term_iter = ecs_term_iter;
+
+extern fn ecs_term_chain_iter(world: *const world_t, term: *term_t) iter_t;
+/// `pub fn term_chain_iter(world: *const world_t, term: *term_t) iter_t`
+pub const term_chain_iter = ecs_term_chain_iter;
+
+extern fn ecs_term_next(it: *iter_t) bool;
+/// `pub fn term_next(it: *iter_t) bool`
+pub const term_next = ecs_term_next;
+
+extern fn ecs_children(world: *const world_t, parent: entity_t) iter_t;
+/// `pub fn children(world: *const world_t, parent: entity_t) iter_t`
+pub const children = ecs_children;
+
+extern fn ecs_children_next(it: *iter_t) bool;
+/// `pub fn children_next(it: *iter_t) bool`
+pub const children_next = ecs_children_next;
+
+extern fn ecs_term_id_is_set(id: *term_id_t) bool;
+/// `pub fn term_id_is_set(id: *term_id_t) bool`
+pub const term_id_is_set = ecs_term_id_is_set;
+
+extern fn ecs_term_is_initialized(term: *const term_t) bool;
+/// `pub fn term_is_initialized(term: *const term_t) bool`
+pub const term_is_initialized = ecs_term_is_initialized;
+
+extern fn ecs_term_match_this(term: *const term_t) bool;
+/// `pub fn term_match_this(term: *const term_t) bool`
+pub const term_match_this = ecs_term_match_this;
+
+extern fn ecs_term_match_0(term: *const term_t) bool;
+/// `pub fn term_match_0(term: *const term_t) bool`
+pub const term_match_0 = ecs_term_match_0;
+
+extern fn ecs_term_finalize(world: *const world_t, term: *term_t) i32;
+/// `pub fn term_finalize(world: *const world_t, term: *term_t) i32`
+pub const term_finalize = ecs_term_finalize;
+
+extern fn ecs_term_copy(src: *const term_t) term_t;
+/// `pub fn term_copy(src: *const term_t) term_t`
+pub const term_copy = ecs_term_copy;
+
+extern fn ecs_term_move(src: *term_t) term_t;
+/// `pub fn term_move(src: *term_t) term_t`
+pub const term_move = ecs_term_move;
+
+extern fn ecs_term_fini(term: *term_t) void;
+/// `pub fn term_fini(term: *term_t) void`
+pub const term_fini = ecs_term_fini;
 //--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)
 //
 //--------------------------------------------------------------------------------------------------
+// TODO: We support only one `world_t` at the time because type ids are stored in global static memory.
+// We need to reset those ids to zero when the world is destroyed.
+var num_worlds: u32 = 0;
+var component_ids_hm = std.AutoHashMap(*id_t, u0).init(std.heap.page_allocator);
+
 pub fn COMPONENT(world: *world_t, comptime T: type) void {
     if (@sizeOf(T) == 0)
         @compileError("Size of the type must be greater than zero");
 
     const type_id_ptr = perTypeGlobalVarPtr(T);
+
+    component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
 
     type_id_ptr.* = ecs_component_init(world, &.{
         .entity = ecs_entity_init(world, &.{
@@ -1127,14 +1197,16 @@ pub fn TAG(world: *world_t, comptime T: type) void {
 
     const type_id_ptr = perTypeGlobalVarPtr(T);
 
+    component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
+
     type_id_ptr.* = ecs_entity_init(world, &.{
         .id = type_id_ptr.*,
-        .name = @typeName(T),
+        .name = typeName(T),
     });
 }
 
 // flecs internally reserves names like u16, u32, f32, etc. so we re-map them to uppercase to avoid collisions
-fn typeName(comptime T: type) @TypeOf(@typeName(T)) {
+pub fn typeName(comptime T: type) @TypeOf(@typeName(T)) {
     return switch (T) {
         u8 => return "U8",
         u16 => return "U16",
@@ -1169,11 +1241,15 @@ pub fn add(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_add_id(world, entity, id(T));
 }
 
-pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
+pub fn remove(world: *world_t, entity: entity_t, comptime T: type) void {
+    ecs_remove_id(world, entity, id(T));
+}
+
+fn cast(comptime T: type, val: ?*const anyopaque) *const T {
     return @ptrCast(*const T, @alignCast(@alignOf(T), val));
 }
 
-pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
+fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @ptrCast(*T, @alignCast(@alignOf(T), val));
 }
 
