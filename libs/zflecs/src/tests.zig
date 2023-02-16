@@ -76,6 +76,13 @@ test "zflecs.basic" {
 
     ecs.add(world, e0, Walking);
 
+    try expect(ecs.get(world, e0, u31).?.* == 1234);
+    try expect(ecs.get(world, e0, ?*const Position).?.* == null);
+    try expect(ecs.get(world, e0, *const Position).?.* == &p);
+    if (ecs.get(world, e0, Position)) |pos| {
+        try expect(pos.x == p.x and pos.y == p.y);
+    }
+
     const e0_type_str = ecs.type_str(world, ecs.get_type(world, e0));
     defer ecs.os_free(e0_type_str);
 

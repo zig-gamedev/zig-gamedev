@@ -1158,6 +1158,13 @@ pub fn set(world: *world_t, entity: entity_t, comptime T: type, val: T) entity_t
     return ecs_set_id(world, entity, id(T), @sizeOf(T), @ptrCast(*const anyopaque, &val));
 }
 
+pub fn get(world: *const world_t, entity: entity_t, comptime T: type) ?*const T {
+    if (get_id(world, entity, id(T))) |ptr| {
+        return cast(T, ptr);
+    }
+    return null;
+}
+
 pub fn add(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_add_id(world, entity, id(T));
 }
