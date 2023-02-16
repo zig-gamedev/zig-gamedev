@@ -81,6 +81,11 @@ test "zflecs.basic" {
     ecs.COMPONENT(world, i8);
     ecs.COMPONENT(world, ?*const i8);
 
+    const S0 = struct {
+        a: f32 = 3.0,
+    };
+    ecs.COMPONENT(world, S0);
+
     ecs.TAG(world, Walking);
 
     std.debug.print("{?s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*const Position)), ecs.id(*const Position) });
@@ -99,11 +104,13 @@ test "zflecs.basic" {
     _ = ecs.set(world, e0, u31, 123);
     _ = ecs.set(world, e0, u31, 1234);
     _ = ecs.set(world, e0, u32, 987);
+    _ = ecs.set(world, e0, S0, .{});
 
     ecs.add(world, e0, Walking);
 
     try expect(ecs.get(world, e0, u31).?.* == 1234);
     try expect(ecs.get(world, e0, u32).?.* == 987);
+    try expect(ecs.get(world, e0, S0).?.a == 3.0);
     try expect(ecs.get(world, e0, ?*const Position).?.* == null);
     try expect(ecs.get(world, e0, *const Position).?.* == &p);
     if (ecs.get(world, e0, Position)) |pos| {

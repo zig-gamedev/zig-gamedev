@@ -1174,8 +1174,8 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
         @compileError("Size of the type must be greater than zero");
 
     const type_id_ptr = perTypeGlobalVarPtr(T);
-    if (type_id_ptr.* != 0)
-        return;
+    //if (type_id_ptr.* != 0)
+    //return;
 
     component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
 
