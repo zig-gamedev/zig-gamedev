@@ -1307,8 +1307,8 @@ extern fn ecs_worker_iter(it: *const iter_t, index: i32, count: i32) iter_t;
 /// `pub fn worker_iter(it: *const iter_t, index: i32, count: i32) iter_t`
 pub const worker_iter = ecs_worker_iter;
 
-extern fn ecs_field_w_size(it: *const iter_t, size: usize, index: i32) iter_t;
-/// `pub fn field_w_size(it: *const iter_t, size: usize, index: i32) iter_t`
+extern fn ecs_field_w_size(it: *const iter_t, size: usize, index: i32) ?*anyopaque;
+/// `pub fn field_w_size(it: *const iter_t, size: usize, index: i32) ?*anyopaque`
 pub const field_w_size = ecs_field_w_size;
 
 extern fn ecs_field_is_readonly(it: *const iter_t, index: i32) bool;
@@ -1428,16 +1428,24 @@ pub fn remove(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_remove_id(world, entity, id(T));
 }
 
+pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
+    if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
+        const ptr = @ptrCast([*]T, @alignCast(@alignOf(T), anyptr));
+        return ptr[0..@intCast(usize, it.count)];
+    }
+    return null;
+}
+
+pub inline fn id(comptime T: type) id_t {
+    return perTypeGlobalVarPtr(T).*;
+}
+
 fn cast(comptime T: type, val: ?*const anyopaque) *const T {
     return @ptrCast(*const T, @alignCast(@alignOf(T), val));
 }
 
 fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @ptrCast(*T, @alignCast(@alignOf(T), val));
-}
-
-pub inline fn id(comptime T: type) id_t {
-    return perTypeGlobalVarPtr(T).*;
 }
 //--------------------------------------------------------------------------------------------------
 fn PerTypeGlobalVar(comptime _: type) type {

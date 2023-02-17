@@ -14,7 +14,6 @@ test "zflecs.entities.basics" {
     defer _ = ecs.fini(world);
 
     ecs.COMPONENT(world, Position);
-    ecs.COMPONENT(world, Position);
     ecs.TAG(world, Walking);
 
     const bob = ecs.set_name(world, 0, "Bob");
@@ -37,10 +36,12 @@ test "zflecs.entities.basics" {
 
     ecs.remove(world, alice, Walking);
 
-    {
-        var it = ecs.term_iter(world, &.{ .id = ecs.id(Position) });
-
-        while (ecs.term_next(&it)) {}
+    var it = ecs.term_iter(world, &.{ .id = ecs.id(Position) });
+    while (ecs.term_next(&it)) {
+        const positions = ecs.field(&it, Position, 1);
+        for (positions.?) |p, i| {
+            std.debug.print("{?s}: ({d}, {d})\n", .{ ecs.get_name(world, it.entities.?[i]), p.x, p.y });
+        }
     }
 }
 
