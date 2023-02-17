@@ -1290,6 +1290,58 @@ pub const iter_get_var_as_table = ecs_iter_get_var_as_table;
 extern fn ecs_iter_get_var_as_range(it: *iter_t, var_id: i32) table_range_t;
 /// `pub fn iter_get_var_as_range(it: *iter_t, var_id: i32) table_range_t`
 pub const iter_get_var_as_range = ecs_iter_get_var_as_range;
+
+extern fn ecs_iter_var_is_constrained(it: *iter_t, var_id: i32) bool;
+/// `pub fn iter_var_is_constrained(it: *iter_t, var_id: i32) bool`
+pub const iter_var_is_constrained = ecs_iter_var_is_constrained;
+
+extern fn ecs_page_iter(it: *const iter_t, offset: i32, limit: i32) iter_t;
+/// `pub fn page_iter(it: *const iter_t, offset: i32, limit: i32) iter_t`
+pub const page_iter = ecs_page_iter;
+
+extern fn ecs_page_next(it: *iter_t) bool;
+/// `pub fn page_next(it: *iter_t) bool`
+pub const page_next = ecs_page_next;
+
+extern fn ecs_worker_iter(it: *const iter_t, index: i32, count: i32) iter_t;
+/// `pub fn worker_iter(it: *const iter_t, index: i32, count: i32) iter_t`
+pub const worker_iter = ecs_worker_iter;
+
+extern fn ecs_field_w_size(it: *const iter_t, size: usize, index: i32) iter_t;
+/// `pub fn field_w_size(it: *const iter_t, size: usize, index: i32) iter_t`
+pub const field_w_size = ecs_field_w_size;
+
+extern fn ecs_field_is_readonly(it: *const iter_t, index: i32) bool;
+/// `pub fn field_is_readonly(it: *const iter_t, index: i32) bool`
+pub const field_is_readonly = ecs_field_is_readonly;
+
+extern fn ecs_field_is_writeonly(it: *const iter_t, index: i32) bool;
+/// `pub fn field_is_writeonly(it: *const iter_t, index: i32) bool`
+pub const field_is_writeonly = ecs_field_is_writeonly;
+
+extern fn ecs_field_is_set(it: *const iter_t, index: i32) bool;
+/// `pub fn field_is_set(it: *const iter_t, index: i32) bool`
+pub const field_is_set = ecs_field_is_set;
+
+extern fn ecs_field_id(it: *const iter_t, index: i32) id_t;
+/// `pub fn field_id(it: *const iter_t, index: i32) id_t`
+pub const field_id = ecs_field_id;
+
+extern fn ecs_field_src(it: *const iter_t, index: i32) entity_t;
+/// `pub fn field_src(it: *const iter_t, index: i32) entity_t`
+pub const field_src = ecs_field_src;
+
+extern fn ecs_field_size(it: *const iter_t, index: i32) usize;
+/// `pub fn field_size(it: *const iter_t, index: i32) usize`
+pub const field_size = ecs_field_size;
+
+extern fn ecs_field_is_self(it: *const iter_t, index: i32) bool;
+/// `pub fn field_is_self(it: *const iter_t, index: i32) bool`
+pub const field_is_self = ecs_field_is_self;
+
+extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
+/// `pub fn iter_str(it: *const iter_t) ?[*:0]u8`
+pub const iter_str = ecs_iter_str;
 //--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)
