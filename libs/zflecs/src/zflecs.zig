@@ -20,6 +20,7 @@ pub const flags32_t = u32;
 pub const flags64_t = u64;
 
 const ID_CACHE_SIZE = 32;
+const TERM_DESC_CACHE_SIZE = 16;
 
 pub const world_info_t = extern struct {
     last_component_id: entity_t,
@@ -234,31 +235,33 @@ pub const mixins_t = opaque {};
 
 pub const header_t = extern struct {
     magic: i32,
-    type: i32,
-    mixins: ?*mixins_t,
+    type: i32 = 0,
+    mixins: ?*mixins_t = null,
 };
 
-pub const iter_init_action_t = *const fn (?*const world_t, ?*const poly_t, [*c]iter_t, [*c]term_t) callconv(.C) void;
+pub const iter_init_action_t = *const fn (*const world_t, *const poly_t, *iter_t, *term_t) callconv(.C) void;
 
-pub const poly_dtor_t = *const fn (?*poly_t) callconv(.C) void;
+pub const poly_dtor_t = *const fn (*poly_t) callconv(.C) void;
 
 pub const iterable_t = extern struct {
-    init: iter_init_action_t,
+    init: ?iter_init_action_t = null,
 };
 
+const filter_t_magic = 0x65637366;
+
 pub const filter_t = extern struct {
-    hdr: header_t,
-    terms: [*c]term_t,
-    term_count: i32,
-    field_count: i32,
-    owned: bool,
-    terms_owned: bool,
-    flags: flags32_t,
-    variable_names: [1][*c]u8,
-    entity: entity_t,
-    world: ?*world_t,
-    iterable: iterable_t,
-    dtor: poly_dtor_t,
+    hdr: header_t = .{ .magic = filter_t_magic },
+    terms: ?[*]term_t = null,
+    term_count: i32 = 0,
+    field_count: i32 = 0,
+    owned: bool = false,
+    terms_owned: bool = false,
+    flags: flags32_t = 0,
+    variable_names: ?[*][*:0]u8 = null, // Only `variable_names[0]` is valid?
+    entity: entity_t = 0,
+    world: ?*world_t = null,
+    iterable: iterable_t = .{},
+    dtor: ?poly_dtor_t = null,
 };
 
 pub const table_cache_hdr_t = opaque {};
@@ -362,24 +365,36 @@ pub const oper_kind_t = enum(i32) {
 };
 
 pub const term_id_t = extern struct {
-    id: entity_t,
-    name: [*:0]u8,
-    trav: entity_t,
-    flags: flags32_t,
+    id: entity_t = 0,
+    name: ?[*:0]u8 = null,
+    trav: entity_t = 0,
+    flags: flags32_t = 0,
+};
+
+pub const filter_desc_t = extern struct {
+    _canary: i32 = 0,
+    terms: [TERM_DESC_CACHE_SIZE]term_t = [_]term_t{.{}} ** TERM_DESC_CACHE_SIZE,
+    terms_buffer: ?[*]term_t = null,
+    terms_buffer_count: i32 = 0,
+    storage: ?*filter_t = null,
+    instanced: bool = false,
+    flags: flags32_t = 0,
+    expr: ?[*:0]const u8 = null,
+    entity: entity_t = 0,
 };
 
 pub const term_t = extern struct {
-    id: id_t,
-    src: term_id_t,
-    first: term_id_t,
-    second: term_id_t,
-    inout: inout_kind_t,
-    oper: oper_kind_t,
-    id_flags: id_t,
-    name: [*:0]u8,
-    field_index: i32,
-    idr: *id_record_t,
-    move: bool,
+    id: id_t = 0,
+    src: term_id_t = .{},
+    first: term_id_t = .{},
+    second: term_id_t = .{},
+    inout: inout_kind_t = .InOutDefault,
+    oper: oper_kind_t = .And,
+    id_flags: id_t = 0,
+    name: ?[*:0]u8 = null,
+    field_index: i32 = 0,
+    idr: ?*id_record_t = null,
+    move: bool = true,
 };
 
 pub const table_range_t = extern struct {
@@ -413,28 +428,28 @@ pub const ctx_free_t = *const fn (?*anyopaque) callconv(.C) void;
 pub const iter_t = extern struct {
     world: *world_t,
     real_world: *world_t,
-    entities: [*c]entity_t,
-    ptrs: [*c]?*anyopaque,
-    sizes: [*c]size_t,
+    entities: ?[*]entity_t,
+    ptrs: ?[*]*anyopaque,
+    sizes: ?[*]size_t,
     table: ?*table_t,
     other_table: ?*table_t,
-    ids: [*c]id_t,
-    variables: [*c]var_t,
-    columns: [*c]i32,
-    sources: [*c]entity_t,
-    match_indices: [*c]i32,
-    references: [*c]ref_t,
+    ids: ?[*]id_t,
+    variables: ?[*]var_t,
+    columns: ?[*]i32,
+    sources: ?[*]entity_t,
+    match_indices: ?[*]i32,
+    references: ?[*]ref_t,
     constrained_vars: flags64_t,
     group_id: u64,
     field_count: i32,
     system: entity_t,
     event: entity_t,
     event_id: id_t,
-    terms: [*c]term_t,
+    terms: ?[*]term_t,
     table_count: i32,
     term_index: i32,
     variable_count: i32,
-    variable_names: [*c][*c]u8,
+    variable_names: ?[*][*:0]u8,
     param: ?*anyopaque,
     ctx: ?*anyopaque,
     binding_ctx: ?*anyopaque,
@@ -450,7 +465,7 @@ pub const iter_t = extern struct {
     next: iter_next_action_t,
     callback: iter_action_t,
     fini: iter_fini_action_t,
-    chain_it: [*c]iter_t,
+    chain_it: ?*iter_t,
 };
 
 pub const type_hooks_t = extern struct {
@@ -1159,6 +1174,64 @@ pub const term_move = ecs_term_move;
 extern fn ecs_term_fini(term: *term_t) void;
 /// `pub fn term_fini(term: *term_t) void`
 pub const term_fini = ecs_term_fini;
+
+extern fn ecs_filter_init(world: *world_t, desc: *const filter_desc_t) ?*filter_t;
+/// `pub fn filter_init(world: *world_t, desc: *const filter_desc_t) ?*filter_t;`
+pub const filter_init = filter_init;
+
+extern fn ecs_filter_fini(filter: *filter_t) void;
+/// `pub fn filter_fini(filter: *filter_t) void`
+pub const filter_fini = ecs_filter_fini;
+
+extern fn ecs_filter_finalize(world: *const world_t, filter: *filter_t) i32;
+/// `pub fn filter_finalize(world: *const world_t, filter: *filter_t) i32`
+pub const filter_finalize = ecs_filter_finalize;
+
+extern fn ecs_filter_find_this_var(filter: *const filter_t) i32;
+/// `pub fn filter_find_this_var(filter: *const filter_t) i32`
+pub const filter_find_this_var = ecs_filter_find_this_var;
+
+extern fn ecs_term_str(world: *const world_t, term: *const term_t) ?[*:0]u8;
+/// `pub fn term_str(world: *const world_t, term: *const term_t) ?[*:0]u8`
+pub const term_str = ecs_term_str;
+
+extern fn ecs_filter_str(world: *const world_t, filter: *const filter_t) ?[*:0]u8;
+/// `pub fn filter_str(world: *const world_t, filter: *const filter_t) ?[*:0]u8`
+pub const filter_str = ecs_filter_str;
+
+extern fn ecs_filter_iter(world: *const world_t, filter: *const filter_t) iter_t;
+/// `pub fn filter_iter(world: *const world_t, filter: *const filter_t) iter_t;`
+pub const filter_iter = ecs_filter_iter;
+
+extern fn ecs_filter_chain_iter(world: *const world_t, filter: *const filter_t) iter_t;
+/// `pub fn filter_chain_iter(world: *const world_t, filter: *const filter_t) iter_t`
+pub const filter_chain_iter = ecs_filter_chain_iter;
+
+extern fn ecs_filter_pivot_term(world: *const world_t, filter: *const filter_t) i32;
+/// `pub fn filter_pivot_term(world: *const world_t, filter: *const filter_t) i32;`
+pub const filter_pivot_term = ecs_filter_pivot_term;
+
+extern fn ecs_filter_next(it: *iter_t) bool;
+/// `pub fn filter_next(it: *iter_t) bool`
+pub const filter_next = ecs_filter_next;
+
+extern fn ecs_filter_next_instanced(it: *iter_t) bool;
+/// `pub fn filter_next_instanced(it: *iter_t) bool`
+pub const filter_next_instanced = ecs_filter_next_instanced;
+
+extern fn ecs_filter_move(dst: *filter_t, src: *filter_t) void;
+/// `pub fn filter_move(dst: *filter_t, src: *filter_t) void`
+pub const filter_move = ecs_filter_move;
+
+extern fn ecs_filter_copy(dst: *filter_t, src: *const filter_t) void;
+/// `pub fn filter_copy(dst: *filter_t, src: *const filter_t) void`
+pub const filter_copy = ecs_filter_copy;
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for working with `ecs_query_t`.
+//
+//--------------------------------------------------------------------------------------------------
+// TODO:
 //--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)

@@ -36,6 +36,12 @@ test "zflecs.entities.basics" {
     std.debug.print("[{s}]\n", .{str});
 
     ecs.remove(world, alice, Walking);
+
+    {
+        var it = ecs.term_iter(world, &.{ .id = ecs.id(Position) });
+
+        while (ecs.term_next(&it)) {}
+    }
 }
 
 fn registerComponents(world: *ecs.world_t) void {
