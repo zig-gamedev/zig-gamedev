@@ -1234,6 +1234,64 @@ pub const filter_copy = ecs_filter_copy;
 // TODO:
 //--------------------------------------------------------------------------------------------------
 //
+// Functions for working with events and observers.
+//
+//--------------------------------------------------------------------------------------------------
+// TODO:
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for working with `ecs_iter_t`.
+//
+//--------------------------------------------------------------------------------------------------
+extern fn ecs_iter_poly(world: *const world_t, poly: *const poly_t, iter: [*]iter_t, filter: ?*term_t) void;
+/// `pub fn iter_poly(world: *const world_t, poly: *const poly_t, iter: [*]iter_t, filter: ?*term_t) void`
+pub const iter_poly = ecs_iter_poly;
+
+extern fn ecs_iter_next(it: *iter_t) bool;
+/// `pub fn iter_next(it: *iter_t) bool`
+pub const iter_next = ecs_iter_next;
+
+extern fn ecs_iter_fini(it: *iter_t) void;
+/// `pub fn iter_fini(it: *iter_t) void`
+pub const iter_fini = ecs_iter_fini;
+
+extern fn ecs_iter_count(it: *iter_t) i32;
+/// `pub fn iter_count(it: *iter_t) i32`
+pub const iter_count = ecs_iter_count;
+
+extern fn ecs_iter_is_true(it: *iter_t) bool;
+/// `pub fn iter_is_true(it: *iter_t) bool`
+pub const iter_is_true = ecs_iter_is_true;
+
+extern fn ecs_iter_first(it: *iter_t) entity_t;
+/// `pub fn iter_first(it: *iter_t) entity_t`
+pub const iter_first = ecs_iter_first;
+
+extern fn ecs_iter_set_var(it: *iter_t, var_id: i32, entity: entity_t) void;
+/// `pub fn iter_set_var(it: *iter_t, var_id: i32, entity: entity_t) void`
+pub const iter_set_var = ecs_iter_set_var;
+
+extern fn ecs_iter_set_var_as_table(it: *iter_t, var_id: i32, table: *const table_t) void;
+/// `pub fn iter_set_var_as_table(it: *iter_t, var_id: i32, table: *const table_t) void`
+pub const iter_set_var_as_table = ecs_iter_set_var_as_table;
+
+extern fn ecs_iter_set_var_as_range(it: *iter_t, var_id: i32, range: *const table_range_t) void;
+/// `pub fn iter_set_var_as_range(it: *iter_t, var_id: i32, range: *const table_range_t) void`
+pub const iter_set_var_as_range = ecs_iter_set_var_as_range;
+
+extern fn ecs_iter_get_var(it: *iter_t, var_id: i32) entity_t;
+/// `pub fn iter_get_var(it: *iter_t, var_id: i32) entity_t`
+pub const iter_get_var = ecs_iter_get_var;
+
+extern fn ecs_iter_get_var_as_table(it: *iter_t, var_id: i32) ?*table_t;
+/// `pub fn iter_get_var_as_table(it: *iter_t, var_id: i32) ?*table_t`
+pub const iter_get_var_as_table = ecs_iter_get_var_as_table;
+
+extern fn ecs_iter_get_var_as_range(it: *iter_t, var_id: i32) table_range_t;
+/// `pub fn iter_get_var_as_range(it: *iter_t, var_id: i32) table_range_t`
+pub const iter_get_var_as_range = ecs_iter_get_var_as_range;
+//--------------------------------------------------------------------------------------------------
+//
 // Declarative functions (ECS_* macros in flecs)
 //
 //--------------------------------------------------------------------------------------------------
