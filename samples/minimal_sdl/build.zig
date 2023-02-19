@@ -30,6 +30,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
             exe.addLibraryPath(thisDir() ++ "/../../libs/zsdl/libs/x86_64-linux-gnu/lib");
             exe.linkSystemLibraryName("SDL2-2.0");
             exe.addRPath(".");
+            exe.addRPath("$ORIGIN");
 
             exe.step.dependOn(
                 &exe.builder.addInstallFile(
@@ -42,6 +43,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
             exe.addFrameworkPath(thisDir() ++ "/../../libs/zsdl/libs/macos/Frameworks");
             exe.linkFramework("SDL2");
             exe.addRPath(".");
+            exe.addRPath("$ORIGIN");
 
             exe.step.dependOn(
                 &exe.builder.addInstallFile(
