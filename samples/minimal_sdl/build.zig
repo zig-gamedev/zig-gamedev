@@ -9,20 +9,52 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .optimize = options.optimize,
     });
 
-    exe.linkLibC();
-    exe.addIncludePath(thisDir() ++ "/../../libs/system-sdk/include");
-    exe.addIncludePath(thisDir() ++ "/../../libs/system-sdk/linux/include/x86_64-linux-gnu");
-    exe.addLibraryPath(thisDir() ++ "/../../libs/system-sdk/linux/lib/x86_64-linux-gnu");
-    exe.linkSystemLibraryName("SDL2-2.0");
-    exe.addCSourceFile(thisDir() ++ "/src/minimal_sdl.c", &.{});
-    exe.addRPath(".");
+    const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
-    exe.step.dependOn(
-        &exe.builder.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/system-sdk/linux/lib/x86_64-linux-gnu/libSDL2-2.0.so.0" },
-            "bin/libSDL2-2.0.so.0",
-        ).step,
-    );
+    switch (target.os.tag) {
+        .windows => {
+            exe.addIncludePath(thisDir() ++ "/../../libs/zsdl/libs/x86_64-windows-gnu/include");
+            exe.addLibraryPath(thisDir() ++ "/../../libs/zsdl/libs/x86_64-windows-gnu/lib");
+            exe.linkSystemLibraryName("SDL2");
+            exe.linkSystemLibraryName("SDL2main");
+
+            exe.step.dependOn(
+                &exe.builder.addInstallFile(
+                    .{ .path = thisDir() ++ "/../../libs/zsdl/libs/x86_64-windows-gnu/bin/SDL2.dll" },
+                    "bin/SDL2.dll",
+                ).step,
+            );
+        },
+        .linux => {
+            exe.addIncludePath(thisDir() ++ "/../../libs/zsdl/libs/x86_64-linux-gnu/include");
+            exe.addLibraryPath(thisDir() ++ "/../../libs/zsdl/libs/x86_64-linux-gnu/lib");
+            exe.linkSystemLibraryName("SDL2-2.0");
+            exe.addRPath(".");
+
+            exe.step.dependOn(
+                &exe.builder.addInstallFile(
+                    .{ .path = thisDir() ++ "/../../libs/zsdl/libs/x86_64-linux-gnu/lib/libSDL2-2.0.so.0" },
+                    "bin/libSDL2-2.0.so.0",
+                ).step,
+            );
+        },
+        .macos => {
+            exe.addFrameworkPath(thisDir() ++ "/../../libs/zsdl/libs/macos/Frameworks");
+            exe.linkFramework("SDL2");
+            exe.addRPath(".");
+
+            exe.step.dependOn(
+                &exe.builder.addInstallFile(
+                    .{ .path = thisDir() ++ "/../../libs/zsdl/libs/macos/Frameworks/SDL2.framework/SDL2" },
+                    "bin/SDL2",
+                ).step,
+            );
+        },
+        else => unreachable,
+    }
+
+    exe.addCSourceFile(thisDir() ++ "/src/minimal_sdl.c", &.{});
+    exe.linkLibC();
 
     return exe;
 }

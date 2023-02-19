@@ -23,4 +23,4 @@
 *.a filter=lfs diff=lfs merge=lfs -text
 libs/zwin32/bin/x64/dxc filter=lfs diff=lfs merge=lfs -text
 libs/zwin32/bin/x64/libdxcompiler.so.3.7 filter=lfs diff=lfs merge=lfs -text
-libs/system-sdk/linux/lib/x86_64-linux-gnu/libSDL2-2.0.so.0 filter=lfs diff=lfs merge=lfs -text
+libs/zsdl/libs/macos/Frameworks/SDL2.framework/SDL2 filter=lfs diff=lfs merge=lfs -text

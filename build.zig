@@ -151,8 +151,8 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     { // minimal sdl
-        //const exe = minimal_sdl.build(b, options);
-        //installDemo(b, exe, "minimal_sdl");
+        const exe = minimal_sdl.build(b, options);
+        installDemo(b, exe, "minimal_sdl");
     }
     { // triangle wgpu
         const exe = triangle_wgpu.build(b, options);
