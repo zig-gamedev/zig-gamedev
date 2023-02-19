@@ -35,6 +35,7 @@
 
 !/libs/system-sdk/**
 !/libs/zgpu/libs/**
+!/libs/zsdl/libs/**
 !/libs/zwin32/bin/x64/*
 
 # Ignore some special directories
