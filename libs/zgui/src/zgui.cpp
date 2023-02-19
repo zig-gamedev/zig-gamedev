@@ -1439,6 +1439,10 @@ ZGUI_API bool zguiBeginPopupContextWindow(void) {
     return ImGui::BeginPopupContextWindow();
 }
 
+ZGUI_API bool zguiBeginPopupContextItem(void) {
+    return ImGui::BeginPopupContextItem();
+}
+
 ZGUI_API bool zguiBeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags flags) {
     return ImGui::BeginPopupModal(name, p_open, flags);
 }
