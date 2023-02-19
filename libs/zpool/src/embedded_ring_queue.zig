@@ -130,7 +130,7 @@ test "EmbeddedRingQueue basics" {
     try expectEqual(true, queue.empty());
     try expectEqual(false, queue.full());
 
-    for (buffer) |_, i| {
+    for (buffer, 0..) |_, i| {
         try expectEqual(i, queue.len());
         try queue.enqueue(i);
         try expectEqual(i, buffer[i]);
@@ -141,7 +141,7 @@ test "EmbeddedRingQueue basics" {
     try expectEqual(false, queue.empty());
     try expectEqual(true, queue.full());
 
-    for (buffer) |_, i| {
+    for (buffer, 0..) |_, i| {
         try expectEqual(buffer.len - i, queue.len());
         const j = try queue.dequeue();
         try expectEqual(i, j);
@@ -152,7 +152,7 @@ test "EmbeddedRingQueue basics" {
     try expectEqual(true, queue.empty());
     try expectEqual(false, queue.full());
 
-    for (buffer) |_, i| {
+    for (buffer, 0..) |_, i| {
         try expectEqual(i, queue.len());
         try queue.enqueue(i);
         try expectEqual(i, buffer[i]);

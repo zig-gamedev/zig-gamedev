@@ -659,7 +659,7 @@ pub const GraphicsContext = struct {
         var bind_group_info = BindGroupInfo{ .num_entries = @intCast(u32, entries.len) };
         var gpu_bind_group_entries: [max_num_bindings_per_group]wgpu.BindGroupEntry = undefined;
 
-        for (entries) |entry, i| {
+        for (entries, 0..) |entry, i| {
             bind_group_info.entries[i] = entry;
 
             if (entries[i].buffer_handle) |handle| {
@@ -712,7 +712,7 @@ pub const GraphicsContext = struct {
             }),
             .num_entries = @intCast(u32, entries.len),
         };
-        for (entries) |entry, i| {
+        for (entries, 0..) |entry, i| {
             bind_group_layout_info.entries[i] = entry;
             bind_group_layout_info.entries[i].next_in_chain = null;
             bind_group_layout_info.entries[i].buffer.next_in_chain = null;
@@ -741,7 +741,7 @@ pub const GraphicsContext = struct {
         var info: PipelineLayoutInfo = .{ .num_bind_group_layouts = @intCast(u32, bind_group_layouts.len) };
         var gpu_bind_group_layouts: [max_num_bind_groups_per_pipeline]wgpu.BindGroupLayout = undefined;
 
-        for (bind_group_layouts) |bgl, i| {
+        for (bind_group_layouts, 0..) |bgl, i| {
             info.bind_group_layouts[i] = bgl;
             gpu_bind_group_layouts[i] = gctx.lookupResource(bgl).?;
         }
@@ -935,7 +935,7 @@ pub const GraphicsContext = struct {
                 .sample_count = 1,
             });
 
-            for (mipgen.scratch_texture_views) |*view, i| {
+            for (&mipgen.scratch_texture_views, 0..) |*view, i| {
                 view.* = gctx.createTextureView(mipgen.scratch_texture, .{
                     .base_mip_level = @intCast(u32, i),
                     .mip_level_count = 1,

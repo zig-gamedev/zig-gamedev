@@ -396,7 +396,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         defer vertex_data.deinit();
         vertex_data.resize(total_num_vertices) catch unreachable;
 
-        for (meshes_positions.items) |_, i| {
+        for (meshes_positions.items, 0..) |_, i| {
             vertex_data.items[i].position = meshes_positions.items[i];
             vertex_data.items[i].normal = meshes_normals.items[i];
         }

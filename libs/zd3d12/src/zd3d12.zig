@@ -285,7 +285,7 @@ pub const GraphicsContext = struct {
         );
 
         var cbv_srv_uav_gpu_heaps: [max_num_buffered_frames + 1]DescriptorHeap = undefined;
-        for (cbv_srv_uav_gpu_heaps) |_, heap_index| {
+        for (cbv_srv_uav_gpu_heaps, 0..) |_, heap_index| {
             // We create one large descriptor heap and then split it into ranges:
             //   - range 0: contains persistent descriptors (each descriptor lives until heap is destroyed)
             //   - range 1,2,..max_num_buffered_frames: contains non-persistent descriptors (1 frame lifetime)
@@ -315,14 +315,14 @@ pub const GraphicsContext = struct {
         }
 
         var upload_heaps: [max_num_buffered_frames]GpuMemoryHeap = undefined;
-        for (upload_heaps) |_, heap_index| {
+        for (upload_heaps, 0..) |_, heap_index| {
             upload_heaps[heap_index] = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD);
         }
 
         const swapchain_buffers = blk: {
             var swapchain_buffers: [num_swapbuffers]ResourceHandle = undefined;
             var swapbuffers: [num_swapbuffers]*d3d12.IResource = undefined;
-            for (swapbuffers) |_, buffer_index| {
+            for (swapbuffers, 0..) |_, buffer_index| {
                 hrPanicOnFail(swapchain.GetBuffer(
                     @intCast(u32, buffer_index),
                     &d3d12.IID_IResource,
@@ -435,7 +435,7 @@ pub const GraphicsContext = struct {
 
             const swapbuffers11 = blk: {
                 var swapbuffers11: [num_swapbuffers]*d3d11.IResource = undefined;
-                for (swapbuffers11) |_, buffer_index| {
+                for (swapbuffers11, 0..) |_, buffer_index| {
                     hrPanicOnFail(device11on12.CreateWrappedResource(
                         @ptrCast(
                             *w32.IUnknown,
@@ -458,7 +458,7 @@ pub const GraphicsContext = struct {
 
             const d2d_targets = blk: {
                 var d2d_targets: [num_swapbuffers]*d2d1.IBitmap1 = undefined;
-                for (d2d_targets) |_, target_index| {
+                for (d2d_targets, 0..) |_, target_index| {
                     const swapbuffer11 = swapbuffers11[target_index];
 
                     var surface: *dxgi.ISurface = undefined;
@@ -511,7 +511,7 @@ pub const GraphicsContext = struct {
 
         const cmdallocs = blk: {
             var cmdallocs: [max_num_buffered_frames]*d3d12.ICommandAllocator = undefined;
-            for (cmdallocs) |_, cmdalloc_index| {
+            for (cmdallocs, 0..) |_, cmdalloc_index| {
                 hrPanicOnFail(device.CreateCommandAllocator(
                     .DIRECT,
                     &d3d12.IID_ICommandAllocator,
@@ -595,9 +595,9 @@ pub const GraphicsContext = struct {
             for (gctx.d2d.?.swapbuffers11) |swapbuffer11|
                 _ = swapbuffer11.Release();
         }
-        for (gctx.cbv_srv_uav_gpu_heaps) |*heap|
+        for (&gctx.cbv_srv_uav_gpu_heaps) |*heap|
             heap.deinit();
-        for (gctx.upload_memory_heaps) |*heap|
+        for (&gctx.upload_memory_heaps) |*heap|
             heap.deinit();
         _ = gctx.device.Release();
         _ = gctx.cmdqueue.Release();
@@ -1559,7 +1559,7 @@ pub const MipmapGenerator = struct {
         var height: u32 = 2048 / 2;
 
         var scratch_textures: [num_scratch_textures]ResourceHandle = undefined;
-        for (scratch_textures) |_, texture_index| {
+        for (scratch_textures, 0..) |_, texture_index| {
             scratch_textures[texture_index] = gctx.createCommittedResource(
                 .DEFAULT,
                 .{},
@@ -1577,7 +1577,7 @@ pub const MipmapGenerator = struct {
 
         const base_uav = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, num_scratch_textures);
         var cpu_handle = base_uav;
-        for (scratch_textures) |_, texture_index| {
+        for (scratch_textures, 0..) |_, texture_index| {
             gctx.device.CreateUnorderedAccessView(
                 gctx.lookupResource(scratch_textures[texture_index]).?,
                 null,
@@ -1603,7 +1603,7 @@ pub const MipmapGenerator = struct {
     }
 
     pub fn deinit(mipgen: *MipmapGenerator, gctx: *GraphicsContext) void {
-        for (mipgen.scratch_textures) |_, texture_index| {
+        for (mipgen.scratch_textures, 0..) |_, texture_index| {
             gctx.destroyResource(mipgen.scratch_textures[texture_index]);
         }
         mipgen.* = undefined;

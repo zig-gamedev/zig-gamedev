@@ -380,7 +380,7 @@ fn draw(demo: *DemoState) void {
         const frame = demo.audio.current_frame_index;
 
         const upload = gctx.allocateUploadBufferRegion(Vec2, num_vis_samples);
-        for (upload.cpu_slice) |_, i| {
+        for (upload.cpu_slice, 0..) |_, i| {
             const y = blk: {
                 if ((frame + i) * 2 >= demo.audio.samples.items.len) {
                     break :blk 0.0;

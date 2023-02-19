@@ -3964,7 +3964,7 @@ test "zmath.fftN" {
             -32.000000, 0.000000, -38.992113,  0.000000, -47.891384,  0.000000, -59.867789,  0.000000,
             -77.254834, 0.000000, -105.489863, 0.000000, -160.874864, 0.000000, -324.901452, 0.000000,
         };
-        for (expected) |e, ie| {
+        for (expected, 0..) |e, ie| {
             try expect(std.math.approxEqAbs(f32, e, im[(ie / 4)][ie % 4], epsilon));
         }
     }
@@ -4027,7 +4027,7 @@ test "zmath.fftN" {
             -154.509668, 0.000000, 0.000000, 0.000000, -210.979725, 0.000000, 0.000000, 0.000000,
             -321.749727, 0.000000, 0.000000, 0.000000, -649.802905, 0.000000, 0.000000, 0.000000,
         };
-        for (expected) |e, ie| {
+        for (expected, 0..) |e, ie| {
             try expect(std.math.approxEqAbs(f32, e, im[(ie / 4)][ie % 4], epsilon));
         }
     }
@@ -4193,7 +4193,7 @@ pub fn ifft(re: []F32x4, im: []const F32x4, unity_table: []const F32x4) void {
     const rnp = f32x4s(1.0 / @intToFloat(f32, length));
     const rnm = f32x4s(-1.0 / @intToFloat(f32, length));
 
-    for (re) |_, i| {
+    for (re, 0..) |_, i| {
         re_temp[i] = re[i] * rnp;
         im_temp[i] = im[i] * rnm;
     }
@@ -4260,7 +4260,7 @@ test "zmath.ifft" {
         var re: [128]F32x4 = undefined;
         var im = [_]F32x4{f32x4s(0.0)} ** 128;
 
-        for (re) |*v, i| {
+        for (&re, 0..) |*v, i| {
             const f = @intToFloat(f32, i * 4);
             v.* = f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0);
         }
@@ -4268,14 +4268,14 @@ test "zmath.ifft" {
         fftInitUnityTable(unity_table[0..512]);
         fft(re[0..], im[0..], unity_table[0..512]);
 
-        for (re) |v, i| {
+        for (re, 0..) |v, i| {
             const f = @intToFloat(f32, i * 4);
             try expect(!approxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
         }
 
         ifft(re[0..], im[0..], unity_table[0..512]);
 
-        for (re) |v, i| {
+        for (re, 0..) |v, i| {
             const f = @intToFloat(f32, i * 4);
             try expect(approxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
         }

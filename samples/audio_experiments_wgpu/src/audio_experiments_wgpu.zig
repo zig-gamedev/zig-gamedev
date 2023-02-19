@@ -542,7 +542,7 @@ fn update(demo: *DemoState) !void {
             const selected_item = @enumToInt(demo.waveform_config.waveform_type);
             const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
-                for (names) |name, index| {
+                for (names, 0..) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
@@ -591,7 +591,7 @@ fn update(demo: *DemoState) !void {
             const selected_item = @enumToInt(demo.noise_config.noise_type);
             const names = [_][:0]const u8{ "White", "Pink" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
-                for (names) |name, index| {
+                for (names, 0..) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
@@ -629,7 +629,7 @@ fn update(demo: *DemoState) !void {
 
         const selected_item = @enumToInt(demo.audio_filter.current_type);
         if (zgui.beginCombo("Type", .{ .preview_value = AudioFilterType.names[selected_item] })) {
-            for (AudioFilterType.names) |name, index| {
+            for (AudioFilterType.names, 0..) |name, index| {
                 if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                     selected_item != index)
                 {
