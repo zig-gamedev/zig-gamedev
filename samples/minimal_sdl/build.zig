@@ -33,7 +33,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
 
             exe.step.dependOn(
                 &exe.builder.addInstallFile(
-                    .{ .path = thisDir() ++ "/../../libs/zsdl/libs/x86_64-linux-gnu/lib/libSDL2-2.0.so.0" },
+                    .{ .path = thisDir() ++ "/../../libs/zsdl/libs/x86_64-linux-gnu/lib/libSDL2-2.0.so" },
                     "bin/libSDL2-2.0.so.0",
                 ).step,
             );
