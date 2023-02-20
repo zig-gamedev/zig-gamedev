@@ -25,6 +25,7 @@ pub const Package = struct {
         zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
             "-fno-sanitize=undefined",
             "-DFLECS_NO_CPP",
+            if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
         });
 
         if (zflecs_c_cpp.target.isWindows()) {
