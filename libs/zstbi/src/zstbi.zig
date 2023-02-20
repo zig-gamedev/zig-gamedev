@@ -239,6 +239,33 @@ pub const Image = struct {
         }
     }
 
+    pub fn writeToFn(
+        self: *const Image,
+        write_fn: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
+        context: ?*anyopaque,
+        image_format: ImageWriteFormat,
+    ) ImageWriteError!void {
+        const w = @intCast(c_int, self.width);
+        const h = @intCast(c_int, self.height);
+        const comp = @intCast(c_int, self.num_components);
+        const result = switch (image_format) {
+            .png => stbi_write_png_to_func(write_fn, context, w, h, comp, self.data.ptr, 0),
+            .jpg => |settings| stbi_write_jpg_to_func(
+                write_fn,
+                context,
+                w,
+                h,
+                comp,
+                self.data.ptr,
+                @intCast(c_int, settings.quality),
+            ),
+        };
+        // if the result is 0 then it means an error occured (per stb image write docs)
+        if (result == 0) {
+            return ImageWriteError.CouldNotWriteImage;
+        }
+    }
+
     pub fn deinit(image: *Image) void {
         stbi_image_free(image.data.ptr);
         image.* = undefined;
@@ -417,6 +444,26 @@ extern fn stbi_write_png(
     comp: c_int,
     data: [*]const u8,
     stride_in_bytes: c_int,
+) c_int;
+
+extern fn stbi_write_png_to_func(
+    func: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
+    context: ?*anyopaque,
+    w: c_int,
+    h: c_int,
+    comp: c_int,
+    data: [*]const u8,
+    stride_in_bytes: c_int,
+) c_int;
+
+extern fn stbi_write_jpg_to_func(
+    func: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
+    context: ?*anyopaque,
+    x: c_int,
+    y: c_int,
+    comp: c_int,
+    data: [*]const u8,
+    quality: c_int,
 ) c_int;
 
 test "zstbi.basic" {
