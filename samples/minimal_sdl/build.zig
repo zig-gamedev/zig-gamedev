@@ -43,12 +43,12 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
             exe.linkFramework("SDL2");
             exe.addRPath("@executable_path/Frameworks");
 
-            const install_dir_step = b.addInstallDirectory(.{
-                .source_dir = thisDir() ++ "/../../libs/zsdl/libs/macos/Frameworks/SDL2.framework",
-                .install_dir = .{ .custom = "" },
-                .install_subdir = "bin/Frameworks/SDL2.framework",
-            });
-            exe.step.dependOn(&install_dir_step.step);
+            exe.step.dependOn(
+                &exe.builder.addInstallFile(
+                    .{ .path = thisDir() ++ "/../../libs/zsdl/libs/macos/Frameworks/SDL2.framework/SDL2" },
+                    "bin/Frameworks/SDL2.framework/Versions/A/SDL2",
+                ).step,
+            );
         },
         else => unreachable,
     }
