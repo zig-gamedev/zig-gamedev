@@ -9,24 +9,17 @@ pub const Package = struct {
     zmath: *std.Build.Module,
     zmath_options: *std.Build.Module,
 
-    const Args = struct {
-            options: Options = .{},
-    };
-
-    pub fn options(
-        b: *std.Build,
-        args: Args,
-    ) *std.Build.Module {
-        const step = b.addOptions();
-        step.addOption(bool, "prefer_determinism", args.options.prefer_determinism);
-        return step.createModule();
-    }
-
     pub fn build(
         b: *std.Build,
-        args: Args,
+        args: struct {
+            options: Options = .{},
+        },
     ) Package {
-        const zmath_options = Package.options(b, args);
+        const step = b.addOptions();
+        step.addOption(bool, "prefer_determinism", args.options.prefer_determinism);
+
+        const zmath_options = step.createModule();
+
         const zmath = b.createModule(.{
             .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
             .dependencies = &.{
@@ -45,7 +38,11 @@ pub const Package = struct {
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
+
+    const zmath_pkg = Package.build(b, .{});
+
     const tests = buildTests(b, optimize, target);
+    tests.addModule("zmath_options", zmath_pkg.zmath_options);
 
     const test_step = b.step("test", "Run zmath tests");
     test_step.dependOn(&tests.step);
@@ -61,10 +58,6 @@ pub fn buildTests(
         .target = target,
         .optimize = optimize,
     });
-
-    const zmath_options = Package.options(b, .{});
-    tests.addModule("zmath_options", zmath_options);
-
     return tests;
 }
 
