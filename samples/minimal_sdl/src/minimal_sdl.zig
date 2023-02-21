@@ -12,6 +12,7 @@ pub fn main() !void {
     try sdl.gl.setAttribute(.red_size, 8);
     try sdl.gl.setAttribute(.green_size, 8);
     try sdl.gl.setAttribute(.blue_size, 8);
+
     const window = try sdl.Window.create(
         "zig-gamedev-window",
         sdl.Window.pos_undefined,
@@ -25,7 +26,7 @@ pub fn main() !void {
     const gl_context = try sdl.gl.createContext(window);
     defer sdl.gl.deleteContext(gl_context);
 
-    try sdl.gl.makeContextCurrent(window, gl_context);
+    try sdl.gl.makeCurrent(window, gl_context);
 
     _ = sdl.gl.getProcAddress("glBindBuffer");
 

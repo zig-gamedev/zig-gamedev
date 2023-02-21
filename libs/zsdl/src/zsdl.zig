@@ -199,11 +199,11 @@ pub const gl = struct {
     }
     extern fn SDL_GL_SetSwapInterval(interval: i32) i32;
 
-    /// `pub fn getGlSwapInterval() i32`
+    /// `pub fn getSwapInterval() i32`
     pub const getSwapInterval = SDL_GL_GetSwapInterval;
     extern fn SDL_GL_GetSwapInterval() i32;
 
-    /// `pub fn swapGlWindow(window: *Window) void`
+    /// `pub fn swapWindow(window: *Window) void`
     pub const swapWindow = SDL_GL_SwapWindow;
     extern fn SDL_GL_SwapWindow(window: *Window) void;
 
@@ -222,12 +222,12 @@ pub const gl = struct {
     }
     extern fn SDL_GL_CreateContext(window: *Window) ?Context;
 
-    pub fn makeContextCurrent(window: *Window, context: Context) Error!void {
+    pub fn makeCurrent(window: *Window, context: Context) Error!void {
         if (SDL_GL_MakeCurrent(window, context) < 0) return makeError();
     }
     extern fn SDL_GL_MakeCurrent(window: *Window, context: Context) i32;
 
-    /// `pub fn deleteGlContext(context: GlContext) void`
+    /// `pub fn deleteContext(context: GlContext) void`
     pub const deleteContext = SDL_GL_DeleteContext;
     extern fn SDL_GL_DeleteContext(context: Context) void;
 };
