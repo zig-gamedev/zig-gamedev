@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1580" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1711" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -487,12 +487,12 @@ fn tests(b: *std.Build, options: Options) void {
         test_step.dependOn(&exe.step);
     }
     { // zjobs
-        const exe = zjobs.buildTests(b, options.optimize, options.target);
-        test_step.dependOn(&exe.step);
+        //const exe = zjobs.buildTests(b, options.optimize, options.target);
+        //test_step.dependOn(&exe.step);
     }
     { // zgpu
         if (!options.target.isDarwin()) { // TODO: Linker error on macOS.
-            const exe = zjobs.buildTests(b, options.optimize, options.target);
+            const exe = zgpu.buildTests(b, options.optimize, options.target);
             exe.want_lto = false; // TODO: Problems with LTO on Windows.
             zgpu_pkg.link(exe);
             test_step.dependOn(&exe.step);

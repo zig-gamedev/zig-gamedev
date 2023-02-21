@@ -1108,7 +1108,7 @@ test "JobQueue throughput" {
 
             assert(@ptrToInt(self.workload) % 64 == 0);
             const thread: u64 = self.stat.thread;
-            for (self.workload.units) |*unit, index| {
+            for (self.workload.units, 0..) |*unit, index| {
                 unit.* = thread +% index;
             }
         }
@@ -1118,7 +1118,7 @@ test "JobQueue throughput" {
     defer jobs.deinit();
 
     // schedule job_count jobs to fill some arrays
-    for (job_stats) |*job_stat, i| {
+    for (job_stats, 0..) |*job_stat, i| {
         _ = try jobs.schedule(.none, FillJob{
             .stat = job_stat,
             .workload = &job_workloads[i % job_count],
@@ -1141,7 +1141,7 @@ test "JobQueue throughput" {
     const main_ms = stopped.since(started) / std.time.ns_per_ms;
     var job_ms: u64 = 0;
 
-    for (job_stats) |job_stat, i| {
+    for (job_stats, 0..) |job_stat, i| {
         print("    job {} {}\n", .{ i, job_stat });
         job_ms += job_stat.ms();
     }
@@ -1189,7 +1189,7 @@ test "combine jobs respect prereq" {
         }
 
         var prereqs: [prereq_count]JobId = undefined;
-        for (chain_data) |step, i| {
+        for (chain_data, 0..) |step, i| {
             prereqs[i] = try jobs.schedule(JobId.none, step);
         }
 
