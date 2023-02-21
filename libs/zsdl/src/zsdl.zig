@@ -45,8 +45,13 @@ extern fn SDL_Init(flags: InitFlags) i32;
 pub const quit = SDL_Quit;
 extern fn SDL_Quit() void;
 
-/// `pub fn getError() ?[*:0]const u8`
-pub const getError = SDL_GetError;
+pub fn getError() ?[:0]const u8 {
+    if (SDL_GetError()) |cstr| {
+        return std.mem.sliceTo(cstr, 0);
+    } else {
+        return null;
+    }
+}
 extern fn SDL_GetError() ?[*:0]const u8;
 
 pub const Error = error{SdlError};
@@ -119,6 +124,8 @@ pub const Window = opaque {
     extern fn SDL_DestroyWindow(window: *Window) void;
 };
 
+pub const GlContext = *anyopaque;
+
 pub const GlAttr = enum(i32) {
     red_size,
     green_size,
@@ -185,3 +192,40 @@ pub fn getGlAttr(attr: GlAttr) Error!i32 {
     return value;
 }
 extern fn SDL_GL_GetAttribute(attr: GlAttr, value: i32) i32;
+
+pub fn setGlSwapInterval(interval: i32) Error!void {
+    if (SDL_GL_SetSwapInterval(interval) < 0) return makeError();
+}
+extern fn SDL_GL_SetSwapInterval(interval: i32) i32;
+
+/// `pub fn getGlSwapInterval() i32`
+pub const getGlSwapInterval = SDL_GL_GetSwapInterval;
+extern fn SDL_GL_GetSwapInterval() i32;
+
+/// `pub fn swapGlWindow(window: *Window) void`
+pub const swapGlWindow = SDL_GL_SwapWindow;
+extern fn SDL_GL_SwapWindow(window: *Window) void;
+
+pub fn getGlProcAddress(proc: [:0]const u8) ?*anyopaque {
+    return SDL_GL_GetProcAddress(proc);
+}
+extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) ?*anyopaque;
+
+pub fn isGlExtensionSupported(extension: [:0]const u8) bool {
+    return SDL_GL_ExtensionSupported(extension) != 0;
+}
+extern fn SDL_GL_ExtensionSupported(extension: ?[*:0]const u8) i32;
+
+pub fn createGlContext(window: *Window) Error!GlContext {
+    return SDL_GL_CreateContext(window) orelse return makeError();
+}
+extern fn SDL_GL_CreateContext(window: *Window) ?GlContext;
+
+pub fn makeGlContextCurrent(window: *Window, context: GlContext) Error!void {
+    if (SDL_GL_MakeCurrent(window, context) < 0) return makeError();
+}
+extern fn SDL_GL_MakeCurrent(window: *Window, context: GlContext) i32;
+
+/// `pub fn deleteGlContext(context: GlContext) void`
+pub const deleteGlContext = SDL_GL_DeleteContext;
+extern fn SDL_GL_DeleteContext(context: GlContext) void;

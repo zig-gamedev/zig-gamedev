@@ -22,5 +22,14 @@ pub fn main() !void {
     );
     defer window.destroy();
 
+    const gl_context = try sdl.createGlContext(window);
+    defer sdl.deleteGlContext(gl_context);
+
+    try sdl.makeGlContextCurrent(window, gl_context);
+
+    _ = sdl.getGlProcAddress("glBindBuffer");
+
+    sdl.swapGlWindow(window);
+
     std.debug.print("All OK\n", .{});
 }
