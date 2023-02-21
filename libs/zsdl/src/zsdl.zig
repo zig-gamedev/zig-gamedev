@@ -14,14 +14,14 @@ pub const InitFlags = packed struct(u32) {
     __unused10: bool = false,
     __unused11: bool = false,
     haptic: bool = false,
-    game_controller: bool = false,
+    gamecontroller: bool = false,
     events: bool = false,
     sensor: bool = false,
     __unused16: bool = false,
     __unused17: bool = false,
     __unused18: bool = false,
     __unused19: bool = false,
-    no_parachute: bool = false,
+    noparachute: bool = false,
     __unused: u11 = 0,
 
     pub const everything: InitFlags = .{
@@ -31,23 +31,23 @@ pub const InitFlags = packed struct(u32) {
         .events = true,
         .joystick = true,
         .haptic = true,
-        .game_controller = true,
+        .gamecontroller = true,
         .sensor = true,
     };
 };
 
-extern fn SDL_Init(flags: InitFlags) i32;
 pub fn init(flags: InitFlags) Error!void {
     if (SDL_Init(flags) < 0) return makeError();
 }
+extern fn SDL_Init(flags: InitFlags) i32;
 
-extern fn SDL_Quit() void;
 /// `pub fn quit() void`
 pub const quit = SDL_Quit;
+extern fn SDL_Quit() void;
 
-extern fn SDL_GetError() ?[*:0]const u8;
 /// `pub fn getError() ?[*:0]const u8`
 pub const getError = SDL_GetError;
+extern fn SDL_GetError() ?[*:0]const u8;
 
 pub const Error = error{SdlError};
 
@@ -109,12 +109,79 @@ pub const Window = opaque {
     const pos_undefined_mask: i32 = 0x1fff_0000;
     const pos_centered_mask: i32 = 0x2fff_0000;
 
-    extern fn SDL_CreateWindow(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) ?*Window;
     pub fn create(title: [:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) Error!*Window {
         return SDL_CreateWindow(title, x, y, w, h, flags) orelse return makeError();
     }
+    extern fn SDL_CreateWindow(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) ?*Window;
 
-    extern fn SDL_DestroyWindow(window: *Window) void;
     /// `pub fn destroy(window: *Window) void`
     pub const destroy = SDL_DestroyWindow;
+    extern fn SDL_DestroyWindow(window: *Window) void;
 };
+
+pub const GlAttr = enum(i32) {
+    red_size,
+    green_size,
+    blue_size,
+    alpha_size,
+    buffer_size,
+    doublebuffer,
+    depth_size,
+    stencil_size,
+    accum_red_size,
+    accum_green_size,
+    accum_blue_size,
+    accum_alpha_size,
+    stereo,
+    multisamplebuffers,
+    multisamplesamples,
+    accelerated_visual,
+    retained_backing,
+    context_major_version,
+    context_minor_version,
+    context_egl,
+    context_flags,
+    context_profile_mask,
+    share_with_current_context,
+    framebuffer_srgb_capable,
+    context_release_behavior,
+    context_reset_notification,
+    context_no_error,
+    floatbuffers,
+};
+
+pub const GlProfile = enum(i32) {
+    core = 0x0001,
+    compatibility = 0x0002,
+    es = 0x0004,
+};
+
+pub const GlContextFlags = packed struct(i32) {
+    debug: bool = false,
+    forward_compatible: bool = false,
+    robust_access: bool = false,
+    reset_isolation: bool = false,
+    __unused: i28 = 0,
+};
+
+pub const GlContextReleaseFlags = packed struct(i32) {
+    flush: bool = false,
+    __unused: i31 = 0,
+};
+
+pub const GlContextResetNotification = enum(i32) {
+    no_notification = 0x0000,
+    lose_context = 0x0001,
+};
+
+pub fn setGlAttr(attr: GlAttr, value: i32) Error!void {
+    if (SDL_GL_SetAttribute(attr, value) < 0) return makeError();
+}
+extern fn SDL_GL_SetAttribute(attr: GlAttr, value: i32) i32;
+
+pub fn getGlAttr(attr: GlAttr) Error!i32 {
+    var value: i32 = undefined;
+    if (SDL_GL_GetAttribute(attr, &value) < 0) return makeError();
+    return value;
+}
+extern fn SDL_GL_GetAttribute(attr: GlAttr, value: i32) i32;
