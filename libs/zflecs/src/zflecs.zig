@@ -654,7 +654,6 @@ pub const world_info_t = extern struct {
 //
 //--------------------------------------------------------------------------------------------------
 extern fn ecs_init() *world_t;
-/// `pub fn init() *world_t`
 pub fn init() *world_t {
     assert(num_worlds == 0);
     num_worlds += 1;
@@ -663,7 +662,6 @@ pub fn init() *world_t {
 }
 
 extern fn ecs_fini(world: *world_t) i32;
-/// `pub fn fini(world: *world_t) i32`
 pub fn fini(world: *world_t) i32 {
     assert(num_worlds == 1);
     num_worlds -= 1;
