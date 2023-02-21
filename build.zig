@@ -487,8 +487,8 @@ fn tests(b: *std.Build, options: Options) void {
         test_step.dependOn(&exe.step);
     }
     { // zjobs
-        //const exe = zjobs.buildTests(b, options.optimize, options.target);
-        //test_step.dependOn(&exe.step);
+        const exe = zjobs.buildTests(b, options.optimize, options.target);
+        test_step.dependOn(&exe.step);
     }
     { // zgpu
         if (!options.target.isDarwin()) { // TODO: Linker error on macOS.

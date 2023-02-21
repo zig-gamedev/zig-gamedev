@@ -1108,7 +1108,7 @@ test "JobQueue throughput" {
 
             assert(@ptrToInt(self.workload) % 64 == 0);
             const thread: u64 = self.stat.thread;
-            for (self.workload.units, 0..) |*unit, index| {
+            for (&self.workload.units, 0..) |*unit, index| {
                 unit.* = thread +% index;
             }
         }
@@ -1118,7 +1118,7 @@ test "JobQueue throughput" {
     defer jobs.deinit();
 
     // schedule job_count jobs to fill some arrays
-    for (job_stats, 0..) |*job_stat, i| {
+    for (&job_stats, 0..) |*job_stat, i| {
         _ = try jobs.schedule(.none, FillJob{
             .stat = job_stat,
             .workload = &job_workloads[i % job_count],
@@ -1184,7 +1184,7 @@ test "combine jobs respect prereq" {
         // Generate more prereqs than fit in a single CombinePrereqsJob
         const prereq_count = Jobs.CombinePrereqsJob.max_prereqs + 2;
         var chain_data: [prereq_count]PrereqJob = undefined;
-        for (chain_data) |*step| {
+        for (&chain_data) |*step| {
             step.* = PrereqJob{ .counter = counter };
         }
 
