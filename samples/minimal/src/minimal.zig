@@ -163,7 +163,7 @@ pub fn main() !void {
 
                 hrPanicOnFail(dx12.swap_chain.ResizeBuffers(0, 0, 0, .UNKNOWN, .{}));
 
-                for (dx12.swap_chain_textures) |*texture, i| {
+                for (&dx12.swap_chain_textures, 0..) |*texture, i| {
                     hrPanicOnFail(dx12.swap_chain.GetBuffer(
                         @intCast(u32, i),
                         &d3d12.IID_IResource,
@@ -171,7 +171,7 @@ pub fn main() !void {
                     ));
                 }
 
-                for (dx12.swap_chain_textures) |texture, i| {
+                for (dx12.swap_chain_textures, 0..) |texture, i| {
                     dx12.device.CreateRenderTargetView(
                         texture,
                         null,
@@ -387,7 +387,7 @@ const Dx12State = struct {
 
         var swap_chain_textures: [num_frames]*d3d12.IResource = undefined;
 
-        for (swap_chain_textures) |*texture, i| {
+        for (&swap_chain_textures, 0..) |*texture, i| {
             hrPanicOnFail(swap_chain.GetBuffer(
                 @intCast(u32, i),
                 &d3d12.IID_IResource,
@@ -410,7 +410,7 @@ const Dx12State = struct {
 
         const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
 
-        for (swap_chain_textures) |texture, i| {
+        for (swap_chain_textures, 0..) |texture, i| {
             device.CreateRenderTargetView(
                 texture,
                 null,
@@ -435,7 +435,7 @@ const Dx12State = struct {
         //
         var command_allocators: [num_frames]*d3d12.ICommandAllocator = undefined;
 
-        for (command_allocators) |*cmdalloc| {
+        for (&command_allocators) |*cmdalloc| {
             hrPanicOnFail(device.CreateCommandAllocator(
                 .DIRECT,
                 &d3d12.IID_ICommandAllocator,

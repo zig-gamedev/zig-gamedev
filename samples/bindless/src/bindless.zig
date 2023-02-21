@@ -160,7 +160,7 @@ fn loadMesh(
     }
 
     try all_vertices.ensureTotalCapacity(positions.items.len);
-    for (positions.items) |_, index| {
+    for (positions.items, 0..) |_, index| {
         all_vertices.appendAssumeCapacity(.{
             .position = positions.items[index],
             .normal = normals.items[index],
@@ -415,7 +415,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             null,
         ) catch |err| hrPanic(err);
         const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
-        for (all_vertices.items) |vertex, i| {
+        for (all_vertices.items, 0..) |vertex, i| {
             upload.cpu_slice[i] = vertex;
         }
         gctx.cmdlist.CopyBufferRegion(
@@ -438,7 +438,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             null,
         ) catch |err| hrPanic(err);
         const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
-        for (all_indices.items) |index, i| {
+        for (all_indices.items, 0..) |index, i| {
             upload.cpu_slice[i] = index;
         }
         gctx.cmdlist.CopyBufferRegion(

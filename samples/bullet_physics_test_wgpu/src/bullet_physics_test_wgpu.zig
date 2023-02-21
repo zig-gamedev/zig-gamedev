@@ -154,7 +154,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         defer vertex_data.deinit();
         try vertex_data.resize(total_num_vertices);
 
-        for (positions.items) |_, i| {
+        for (positions.items, 0..) |_, i| {
             vertex_data.items[i].position = positions.items[i];
             vertex_data.items[i].normal = normals.items[i];
         }
@@ -1165,7 +1165,7 @@ fn initMeshes(
 
         // "Unweld" mesh, this creates un-optimized mesh with duplicated vertices.
         // We need it for wireframes and facet look.
-        for (indices.items) |ind, i| {
+        for (indices.items, 0..) |ind, i| {
             try all_positions.append(positions.items[ind]);
             try all_normals.append(normals.items[ind]);
             try all_indices.append(@intCast(u32, i));
