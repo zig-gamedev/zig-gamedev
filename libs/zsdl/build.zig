@@ -17,6 +17,8 @@ pub const Package = struct {
     }
 
     pub fn link(_: Package, exe: *std.Build.CompileStep) void {
+        exe.linkLibC();
+
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
         switch (target.os.tag) {
@@ -64,8 +66,6 @@ pub const Package = struct {
             },
             else => unreachable,
         }
-
-        exe.linkLibC();
     }
 };
 
