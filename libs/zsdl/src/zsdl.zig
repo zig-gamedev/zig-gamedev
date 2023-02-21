@@ -124,108 +124,110 @@ pub const Window = opaque {
     extern fn SDL_DestroyWindow(window: *Window) void;
 };
 
-pub const GlContext = *anyopaque;
+pub const gl = struct {
+    pub const Context = *anyopaque;
 
-pub const GlAttr = enum(i32) {
-    red_size,
-    green_size,
-    blue_size,
-    alpha_size,
-    buffer_size,
-    doublebuffer,
-    depth_size,
-    stencil_size,
-    accum_red_size,
-    accum_green_size,
-    accum_blue_size,
-    accum_alpha_size,
-    stereo,
-    multisamplebuffers,
-    multisamplesamples,
-    accelerated_visual,
-    retained_backing,
-    context_major_version,
-    context_minor_version,
-    context_egl,
-    context_flags,
-    context_profile_mask,
-    share_with_current_context,
-    framebuffer_srgb_capable,
-    context_release_behavior,
-    context_reset_notification,
-    context_no_error,
-    floatbuffers,
+    pub const Attr = enum(i32) {
+        red_size,
+        green_size,
+        blue_size,
+        alpha_size,
+        buffer_size,
+        doublebuffer,
+        depth_size,
+        stencil_size,
+        accum_red_size,
+        accum_green_size,
+        accum_blue_size,
+        accum_alpha_size,
+        stereo,
+        multisamplebuffers,
+        multisamplesamples,
+        accelerated_visual,
+        retained_backing,
+        context_major_version,
+        context_minor_version,
+        context_egl,
+        context_flags,
+        context_profile_mask,
+        share_with_current_context,
+        framebuffer_srgb_capable,
+        context_release_behavior,
+        context_reset_notification,
+        context_no_error,
+        floatbuffers,
+    };
+
+    pub const Profile = enum(i32) {
+        core = 0x0001,
+        compatibility = 0x0002,
+        es = 0x0004,
+    };
+
+    pub const ContextFlags = packed struct(i32) {
+        debug: bool = false,
+        forward_compatible: bool = false,
+        robust_access: bool = false,
+        reset_isolation: bool = false,
+        __unused: i28 = 0,
+    };
+
+    pub const ContextReleaseFlags = packed struct(i32) {
+        flush: bool = false,
+        __unused: i31 = 0,
+    };
+
+    pub const ContextResetNotification = enum(i32) {
+        no_notification = 0x0000,
+        lose_context = 0x0001,
+    };
+
+    pub fn setAttribute(attr: Attr, value: i32) Error!void {
+        if (SDL_GL_SetAttribute(attr, value) < 0) return makeError();
+    }
+    extern fn SDL_GL_SetAttribute(attr: Attr, value: i32) i32;
+
+    pub fn getAttribute(attr: Attr) Error!i32 {
+        var value: i32 = undefined;
+        if (SDL_GL_GetAttribute(attr, &value) < 0) return makeError();
+        return value;
+    }
+    extern fn SDL_GL_GetAttribute(attr: Attr, value: i32) i32;
+
+    pub fn setSwapInterval(interval: i32) Error!void {
+        if (SDL_GL_SetSwapInterval(interval) < 0) return makeError();
+    }
+    extern fn SDL_GL_SetSwapInterval(interval: i32) i32;
+
+    /// `pub fn getGlSwapInterval() i32`
+    pub const getSwapInterval = SDL_GL_GetSwapInterval;
+    extern fn SDL_GL_GetSwapInterval() i32;
+
+    /// `pub fn swapGlWindow(window: *Window) void`
+    pub const swapWindow = SDL_GL_SwapWindow;
+    extern fn SDL_GL_SwapWindow(window: *Window) void;
+
+    pub fn getProcAddress(proc: [:0]const u8) ?*anyopaque {
+        return SDL_GL_GetProcAddress(proc);
+    }
+    extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) ?*anyopaque;
+
+    pub fn isExtensionSupported(extension: [:0]const u8) bool {
+        return SDL_GL_ExtensionSupported(extension) != 0;
+    }
+    extern fn SDL_GL_ExtensionSupported(extension: ?[*:0]const u8) i32;
+
+    pub fn createContext(window: *Window) Error!Context {
+        return SDL_GL_CreateContext(window) orelse return makeError();
+    }
+    extern fn SDL_GL_CreateContext(window: *Window) ?Context;
+
+    pub fn makeContextCurrent(window: *Window, context: Context) Error!void {
+        if (SDL_GL_MakeCurrent(window, context) < 0) return makeError();
+    }
+    extern fn SDL_GL_MakeCurrent(window: *Window, context: Context) i32;
+
+    /// `pub fn deleteGlContext(context: GlContext) void`
+    pub const deleteContext = SDL_GL_DeleteContext;
+    extern fn SDL_GL_DeleteContext(context: Context) void;
 };
-
-pub const GlProfile = enum(i32) {
-    core = 0x0001,
-    compatibility = 0x0002,
-    es = 0x0004,
-};
-
-pub const GlContextFlags = packed struct(i32) {
-    debug: bool = false,
-    forward_compatible: bool = false,
-    robust_access: bool = false,
-    reset_isolation: bool = false,
-    __unused: i28 = 0,
-};
-
-pub const GlContextReleaseFlags = packed struct(i32) {
-    flush: bool = false,
-    __unused: i31 = 0,
-};
-
-pub const GlContextResetNotification = enum(i32) {
-    no_notification = 0x0000,
-    lose_context = 0x0001,
-};
-
-pub fn setGlAttr(attr: GlAttr, value: i32) Error!void {
-    if (SDL_GL_SetAttribute(attr, value) < 0) return makeError();
-}
-extern fn SDL_GL_SetAttribute(attr: GlAttr, value: i32) i32;
-
-pub fn getGlAttr(attr: GlAttr) Error!i32 {
-    var value: i32 = undefined;
-    if (SDL_GL_GetAttribute(attr, &value) < 0) return makeError();
-    return value;
-}
-extern fn SDL_GL_GetAttribute(attr: GlAttr, value: i32) i32;
-
-pub fn setGlSwapInterval(interval: i32) Error!void {
-    if (SDL_GL_SetSwapInterval(interval) < 0) return makeError();
-}
-extern fn SDL_GL_SetSwapInterval(interval: i32) i32;
-
-/// `pub fn getGlSwapInterval() i32`
-pub const getGlSwapInterval = SDL_GL_GetSwapInterval;
-extern fn SDL_GL_GetSwapInterval() i32;
-
-/// `pub fn swapGlWindow(window: *Window) void`
-pub const swapGlWindow = SDL_GL_SwapWindow;
-extern fn SDL_GL_SwapWindow(window: *Window) void;
-
-pub fn getGlProcAddress(proc: [:0]const u8) ?*anyopaque {
-    return SDL_GL_GetProcAddress(proc);
-}
-extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) ?*anyopaque;
-
-pub fn isGlExtensionSupported(extension: [:0]const u8) bool {
-    return SDL_GL_ExtensionSupported(extension) != 0;
-}
-extern fn SDL_GL_ExtensionSupported(extension: ?[*:0]const u8) i32;
-
-pub fn createGlContext(window: *Window) Error!GlContext {
-    return SDL_GL_CreateContext(window) orelse return makeError();
-}
-extern fn SDL_GL_CreateContext(window: *Window) ?GlContext;
-
-pub fn makeGlContextCurrent(window: *Window, context: GlContext) Error!void {
-    if (SDL_GL_MakeCurrent(window, context) < 0) return makeError();
-}
-extern fn SDL_GL_MakeCurrent(window: *Window, context: GlContext) i32;
-
-/// `pub fn deleteGlContext(context: GlContext) void`
-pub const deleteGlContext = SDL_GL_DeleteContext;
-extern fn SDL_GL_DeleteContext(context: GlContext) void;

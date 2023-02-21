@@ -5,13 +5,13 @@ pub fn main() !void {
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
 
-    try sdl.setGlAttr(.context_profile_mask, @enumToInt(sdl.GlProfile.core));
-    try sdl.setGlAttr(.context_major_version, 4);
-    try sdl.setGlAttr(.context_minor_version, 1);
-    try sdl.setGlAttr(.context_flags, @bitCast(i32, sdl.GlContextFlags{ .forward_compatible = true }));
-    try sdl.setGlAttr(.red_size, 8);
-    try sdl.setGlAttr(.green_size, 8);
-    try sdl.setGlAttr(.blue_size, 8);
+    try sdl.gl.setAttribute(.context_profile_mask, @enumToInt(sdl.gl.Profile.core));
+    try sdl.gl.setAttribute(.context_major_version, 4);
+    try sdl.gl.setAttribute(.context_minor_version, 1);
+    try sdl.gl.setAttribute(.context_flags, @bitCast(i32, sdl.gl.ContextFlags{ .forward_compatible = true }));
+    try sdl.gl.setAttribute(.red_size, 8);
+    try sdl.gl.setAttribute(.green_size, 8);
+    try sdl.gl.setAttribute(.blue_size, 8);
     const window = try sdl.Window.create(
         "zig-gamedev-window",
         sdl.Window.pos_undefined,
@@ -22,14 +22,14 @@ pub fn main() !void {
     );
     defer window.destroy();
 
-    const gl_context = try sdl.createGlContext(window);
-    defer sdl.deleteGlContext(gl_context);
+    const gl_context = try sdl.gl.createContext(window);
+    defer sdl.gl.deleteContext(gl_context);
 
-    try sdl.makeGlContextCurrent(window, gl_context);
+    try sdl.gl.makeContextCurrent(window, gl_context);
 
-    _ = sdl.getGlProcAddress("glBindBuffer");
+    _ = sdl.gl.getProcAddress("glBindBuffer");
 
-    sdl.swapGlWindow(window);
+    sdl.gl.swapWindow(window);
 
     std.debug.print("All OK\n", .{});
 }
