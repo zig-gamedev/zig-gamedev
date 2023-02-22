@@ -202,27 +202,11 @@ pub const EventType = enum(u32) {
     lastevent = 0xffff,
 };
 
-pub const CommonEvent = extern struct {
-    type: EventType,
-    timestamp: u32,
-};
-
 pub const DisplayEventId = enum(u8) {
     none,
     orientation,
     connected,
     disconnected,
-};
-
-pub const DisplayEvent = extern struct {
-    type: EventType,
-    timestamp: u32,
-    display: u32,
-    event: DisplayEventId,
-    padding1: u8,
-    padding2: u8,
-    padding3: u8,
-    data1: i32,
 };
 
 pub const WindowEventId = enum(u8) {
@@ -251,21 +235,14 @@ pub const WindowEventId = enum(u8) {
     display_changed,
 };
 
-pub const WindowEvent = extern struct {
-    type: EventType,
-    timestamp: u32,
-    window_id: u32,
-    event: WindowEventId,
-    padding1: u8,
-    padding2: u8,
-    padding3: u8,
-    data1: i32,
-    data2: i32,
-};
-
-pub const KeyOrButtonState = enum(u8) {
+pub const ReleasedOrPressed = enum(u8) {
     released,
     pressed,
+};
+
+pub const MouseWheelDirection = enum(u32) {
+    normal,
+    flipped,
 };
 
 pub const Scancode = enum(u32) {
@@ -776,15 +753,109 @@ pub const Keysym = extern struct {
     unused: u32,
 };
 
+pub const CommonEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+};
+
+pub const DisplayEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    display: u32,
+    event: DisplayEventId,
+    padding1: u8,
+    padding2: u8,
+    padding3: u8,
+    data1: i32,
+};
+
+pub const WindowEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    window_id: u32,
+    event: WindowEventId,
+    padding1: u8,
+    padding2: u8,
+    padding3: u8,
+    data1: i32,
+    data2: i32,
+};
+
 pub const KeyboardEvent = extern struct {
     type: EventType,
     timestamp: u32,
     window_id: u32,
-    state: KeyOrButtonState,
+    state: ReleasedOrPressed,
     repeat: u8,
     padding2: u8,
     padding3: u8,
     keysym: Keysym,
+};
+
+pub const TextEditingEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    window_id: u32,
+    text: [text_size]u8,
+    start: i32,
+    length: i32,
+
+    const text_size = 32;
+};
+
+pub const TextEditingExtEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    window_id: u32,
+    text: [*:0]u8,
+    start: i32,
+    length: i32,
+};
+
+pub const TextInputEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    window_id: u32,
+    text: [text_size]u8,
+
+    const text_size = 32;
+};
+
+pub const MouseMotionEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    windowID: u32,
+    which: u32,
+    state: u32,
+    x: i32,
+    y: i32,
+    xrel: i32,
+    yrel: i32,
+};
+
+pub const MouseButtonEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    windowID: u32,
+    which: u32,
+    button: u8,
+    state: ReleasedOrPressed,
+    clicks: u8,
+    padding1: u8,
+    x: i32,
+    y: i32,
+};
+
+pub const MouseWheelEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    window_id: u32,
+    which: u32,
+    x: i32,
+    y: i32,
+    direction: MouseWheelDirection,
+    preciseX: f32,
+    preciseY: f32,
 };
 
 pub const gl = struct {
