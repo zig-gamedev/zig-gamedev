@@ -1,4 +1,5 @@
 const std = @import("std");
+const assert = std.debug.assert;
 
 pub const InitFlags = packed struct(u32) {
     timer: bool = false,
@@ -857,6 +858,39 @@ pub const MouseWheelEvent = extern struct {
     preciseX: f32,
     preciseY: f32,
 };
+
+pub const Event = extern union {
+    type: EventType,
+    common: CommonEvent,
+    display: DisplayEvent,
+    window: WindowEvent,
+    key: KeyboardEvent,
+    edit: TextEditingEvent,
+    editExt: TextEditingExtEvent,
+    text: TextInputEvent,
+    motion: MouseMotionEvent,
+    button: MouseButtonEvent,
+    wheel: MouseWheelEvent,
+    quit: QuitEvent,
+
+    padding: [size]u8,
+
+    const size = if (@sizeOf(usize) <= 8) 56 else if (@sizeOf(usize) == 16) 64 else 3 * @sizeOf(usize);
+
+    comptime {
+        assert(@sizeOf(Event) == size);
+    }
+};
+
+pub const QuitEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+};
+
+pub fn pollEvent(event: ?*Event) bool {
+    return SDL_PollEvent(event) != 0;
+}
+extern fn SDL_PollEvent(event: ?*Event) i32;
 
 pub const gl = struct {
     pub const Context = *anyopaque;

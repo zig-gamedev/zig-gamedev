@@ -30,10 +30,17 @@ pub fn main() !void {
     defer sdl.gl.deleteContext(gl_context);
 
     try sdl.gl.makeCurrent(window, gl_context);
+    try sdl.gl.setSwapInterval(0);
 
     _ = sdl.gl.getProcAddress("glBindBuffer");
 
-    sdl.gl.swapWindow(window);
+    main_loop: while (true) {
+        var event: sdl.Event = undefined;
+        while (sdl.pollEvent(&event)) {
+            if (event.type == .quit) break :main_loop;
+        }
+        sdl.gl.swapWindow(window);
+    }
 
     std.debug.print("All OK\n", .{});
 }
