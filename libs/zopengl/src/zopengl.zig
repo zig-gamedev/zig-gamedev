@@ -195,9 +195,9 @@ pub var pointSize: *const fn (size: Float) callconv(.C) void = undefined;
 pub var polygonMode: *const fn (face: Enum, mode: Enum) callconv(.C) void = undefined;
 pub var scissor: *const fn (x: Int, y: Int, width: Sizei, height: Sizei) callconv(.C) void = undefined;
 pub var texParameterf: *const fn (target: Enum, pname: Enum, param: Float) callconv(.C) void = undefined;
-pub var texParameterfv: *const fn (target: Enum, pname: Enum, params: [*]const Float) callconv(.C) void = undefined;
+pub var texParameterfv: *const fn (target: Enum, pname: Enum, params: [*c]const Float) callconv(.C) void = undefined;
 pub var texParameteri: *const fn (target: Enum, pname: Enum, param: Int) callconv(.C) void = undefined;
-pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*]const Int) callconv(.C) void = undefined;
+pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
 pub var texImage1D: *const fn (
     target: Enum,
     level: Int,
@@ -253,11 +253,11 @@ pub var readPixels: *const fn (
     type: Enum,
     pixels: *anyopaque,
 ) callconv(.C) void = undefined;
-pub var getBooleanv: *const fn (pname: Enum, data: [*]Boolean) callconv(.C) void = undefined;
-pub var getDoublev: *const fn (pname: Enum, data: [*]Double) callconv(.C) void = undefined;
+pub var getBooleanv: *const fn (pname: Enum, data: [*c]Boolean) callconv(.C) void = undefined;
+pub var getDoublev: *const fn (pname: Enum, data: [*c]Double) callconv(.C) void = undefined;
 pub var getError: *const fn () callconv(.C) Enum = undefined;
-pub var getFloatv: *const fn (pname: Enum, data: [*]Float) callconv(.C) void = undefined;
-pub var glGetIntegerv: *const fn (pname: Enum, data: [*]Int) callconv(.C) void = undefined;
+pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
+pub var glGetIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
 pub var getString: *const fn (name: Enum) callconv(.C) ?[*:0]const Ubyte = undefined;
 pub var getTexImage: *const fn (
     target: Enum,
@@ -266,19 +266,19 @@ pub var getTexImage: *const fn (
     type: Enum,
     pixels: *anyopaque,
 ) callconv(.C) void = undefined;
-pub var getTexParameterfv: *const fn (target: Enum, pname: Enum, params: [*]Float) callconv(.C) void = undefined;
-pub var getTexParameteriv: *const fn (target: Enum, pname: Enum, params: [*]Int) callconv(.C) void = undefined;
+pub var getTexParameterfv: *const fn (target: Enum, pname: Enum, params: [*c]Float) callconv(.C) void = undefined;
+pub var getTexParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 pub var getTexLevelParameterfv: *const fn (
     target: Enum,
     level: Int,
     pname: Enum,
-    params: [*]Float,
+    params: [*c]Float,
 ) callconv(.C) void = undefined;
 pub var getTexLevelParameteriv: *const fn (
     target: Enum,
     level: Int,
     pname: Enum,
-    params: [*]Int,
+    params: [*c]Int,
 ) callconv(.C) void = undefined;
 pub var isEnabled: *const fn (cap: Enum) callconv(.C) Boolean = undefined;
 pub var depthRange: *const fn (n: Double, f: Double) callconv(.C) void = undefined;
