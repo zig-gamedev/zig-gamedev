@@ -859,6 +859,11 @@ pub const MouseWheelEvent = extern struct {
     preciseY: f32,
 };
 
+pub const QuitEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+};
+
 pub const Event = extern union {
     type: EventType,
     common: CommonEvent,
@@ -880,11 +885,6 @@ pub const Event = extern union {
     comptime {
         assert(@sizeOf(Event) == size);
     }
-};
-
-pub const QuitEvent = extern struct {
-    type: EventType,
-    timestamp: u32,
 };
 
 pub fn pollEvent(event: ?*Event) bool {

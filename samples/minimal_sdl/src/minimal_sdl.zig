@@ -37,7 +37,11 @@ pub fn main() !void {
     main_loop: while (true) {
         var event: sdl.Event = undefined;
         while (sdl.pollEvent(&event)) {
-            if (event.type == .quit) break :main_loop;
+            if (event.type == .quit) {
+                break :main_loop;
+            } else if (event.type == .keydown) {
+                if (event.key.keysym.sym == .escape) break :main_loop;
+            }
         }
         sdl.gl.swapWindow(window);
     }
