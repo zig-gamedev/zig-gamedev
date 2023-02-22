@@ -23,6 +23,9 @@ pub fn main() !void {
     );
     defer window.destroy();
 
+    _ = sdl.Scancode;
+    _ = sdl.Keycode;
+
     const gl_context = try sdl.gl.createContext(window);
     defer sdl.gl.deleteContext(gl_context);
 
