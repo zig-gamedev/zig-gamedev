@@ -669,3 +669,74 @@ pub var pointParameteriv: *const fn (pname: Enum, params: [*c]const Int) callcon
 pub var blendColor: *const fn (red: Float, green: Float, blue: Float, alpha: Float) callconv(.C) void = undefined;
 pub var blendEquation: *const fn (mode: Enum) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
+//
+// OpenGL 1.5 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const Sizeiptr = isize;
+pub const Intptr = isize;
+
+pub const BUFFER_SIZE = 0x8764;
+pub const BUFFER_USAGE = 0x8765;
+pub const QUERY_COUNTER_BITS = 0x8864;
+pub const CURRENT_QUERY = 0x8865;
+pub const QUERY_RESULT = 0x8866;
+pub const QUERY_RESULT_AVAILABLE = 0x8867;
+pub const ARRAY_BUFFER = 0x8892;
+pub const ELEMENT_ARRAY_BUFFER = 0x8893;
+pub const ARRAY_BUFFER_BINDING = 0x8894;
+pub const ELEMENT_ARRAY_BUFFER_BINDING = 0x8895;
+pub const VERTEX_ATTRIB_ARRAY_BUFFER_BINDING = 0x889F;
+pub const READ_ONLY = 0x88B8;
+pub const WRITE_ONLY = 0x88B9;
+pub const READ_WRITE = 0x88BA;
+pub const BUFFER_ACCESS = 0x88BB;
+pub const BUFFER_MAPPED = 0x88BC;
+pub const BUFFER_MAP_POINTER = 0x88BD;
+pub const STREAM_DRAW = 0x88E0;
+pub const STREAM_READ = 0x88E1;
+pub const STREAM_COPY = 0x88E2;
+pub const STATIC_DRAW = 0x88E4;
+pub const STATIC_READ = 0x88E5;
+pub const STATIC_COPY = 0x88E6;
+pub const DYNAMIC_DRAW = 0x88E8;
+pub const DYNAMIC_READ = 0x88E9;
+pub const DYNAMIC_COPY = 0x88EA;
+pub const SAMPLES_PASSED = 0x8914;
+pub const SRC1_ALPHA = 0x8589;
+
+pub var genQueries: *const fn (n: Sizei, ids: [*c]Uint) callconv(.C) void = undefined;
+pub var deleteQueries: *const fn (n: Sizei, ids: [*c]const Uint) callconv(.C) void = undefined;
+pub var isQuery: *const fn (id: Uint) callconv(.C) Boolean = undefined;
+pub var beginQuery: *const fn (target: Enum, id: Uint) callconv(.C) void = undefined;
+pub var endQuery: *const fn (target: Enum) callconv(.C) void = undefined;
+pub var getQueryiv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getQueryObjectiv: *const fn (id: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getQueryObjectuiv: *const fn (id: Uint, pname: Enum, params: [*c]Uint) callconv(.C) void = undefined;
+pub var bindBuffer: *const fn (target: Enum, buffer: Uint) callconv(.C) void = undefined;
+pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
+pub var genBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
+pub var isBuffer: *const fn (buffer: Uint) callconv(.C) Boolean = undefined;
+pub var bufferData: *const fn (
+    target: Enum,
+    size: Sizeiptr,
+    data: ?*const anyopaque,
+    usage: Enum,
+) callconv(.C) void = undefined;
+pub var bufferSubData: *const fn (
+    target: Enum,
+    offset: Intptr,
+    size: Sizeiptr,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var getBufferSubData: *const fn (
+    target: Enum,
+    offset: Intptr,
+    size: Sizeiptr,
+    data: ?*anyopaque,
+) callconv(.C) void = undefined;
+pub var mapBuffer: *const fn (target: Enum, access: Enum) callconv(.C) ?*anyopaque = undefined;
+pub var unmapBuffer: *const fn (target: Enum) callconv(.C) Boolean = undefined;
+pub var getBufferParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getBufferPointerv: *const fn (target: Enum, pname: Enum, params: *?*anyopaque) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
