@@ -1052,3 +1052,61 @@ pub var vertexAttribPointer: *const fn (
     pointer: ?*const anyopaque,
 ) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
+//
+// OpenGL 2.1 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const PIXEL_PACK_BUFFER = 0x88EB;
+pub const PIXEL_UNPACK_BUFFER = 0x88EC;
+pub const PIXEL_PACK_BUFFER_BINDING = 0x88ED;
+pub const PIXEL_UNPACK_BUFFER_BINDING = 0x88EF;
+pub const FLOAT_MAT2x3 = 0x8B65;
+pub const FLOAT_MAT2x4 = 0x8B66;
+pub const FLOAT_MAT3x2 = 0x8B67;
+pub const FLOAT_MAT3x4 = 0x8B68;
+pub const FLOAT_MAT4x2 = 0x8B69;
+pub const FLOAT_MAT4x3 = 0x8B6A;
+pub const SRGB = 0x8C40;
+pub const SRGB8 = 0x8C41;
+pub const SRGB_ALPHA = 0x8C42;
+pub const SRGB8_ALPHA8 = 0x8C43;
+pub const COMPRESSED_SRGB = 0x8C48;
+pub const COMPRESSED_SRGB_ALPHA = 0x8C49;
+
+pub var uniformMatrix2x3fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix3x2fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix2x4fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix4x2fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix3x4fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix4x3fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
