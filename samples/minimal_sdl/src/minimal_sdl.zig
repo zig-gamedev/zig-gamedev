@@ -38,6 +38,7 @@ pub fn main() !void {
                 if (event.key.keysym.sym == .escape) break :main_loop;
             }
         }
+        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
         sdl.gl.swapWindow(window);
     }
 }
