@@ -6,18 +6,20 @@ pub fn main() !void {
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
 
+    const gl_major = 3;
+    const gl_minor = 3;
     try sdl.gl.setAttribute(.context_profile_mask, @enumToInt(sdl.gl.Profile.core));
-    try sdl.gl.setAttribute(.context_major_version, 3);
-    try sdl.gl.setAttribute(.context_minor_version, 3);
+    try sdl.gl.setAttribute(.context_major_version, gl_major);
+    try sdl.gl.setAttribute(.context_minor_version, gl_minor);
     try sdl.gl.setAttribute(.context_flags, @bitCast(i32, sdl.gl.ContextFlags{ .forward_compatible = true }));
 
     const window = try sdl.Window.create(
         "zig-gamedev-window",
         sdl.Window.pos_undefined,
-        200,
-        400,
-        400,
-        .{ .shown = true, .opengl = true },
+        sdl.Window.pos_undefined,
+        600,
+        600,
+        .{ .opengl = true },
     );
     defer window.destroy();
 
@@ -27,7 +29,7 @@ pub fn main() !void {
     try sdl.gl.makeCurrent(window, gl_context);
     try sdl.gl.setSwapInterval(0);
 
-    try gl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
+    try gl.loadCoreProfile(sdl.gl.getProcAddress, gl_major, gl_minor);
 
     main_loop: while (true) {
         var event: sdl.Event = undefined;
