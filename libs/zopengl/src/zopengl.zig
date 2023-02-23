@@ -611,3 +611,61 @@ pub var compressedTexSubImage1D: *const fn (
 ) callconv(.C) void = undefined;
 pub var getCompressedTexImage: *const fn (target: Enum, level: Int, img: ?*anyopaque) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
+//
+// OpenGL 1.4 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const BLEND_DST_RGB = 0x80C8;
+pub const BLEND_SRC_RGB = 0x80C9;
+pub const BLEND_DST_ALPHA = 0x80CA;
+pub const BLEND_SRC_ALPHA = 0x80CB;
+pub const POINT_FADE_THRESHOLD_SIZE = 0x8128;
+pub const DEPTH_COMPONENT16 = 0x81A5;
+pub const DEPTH_COMPONENT24 = 0x81A6;
+pub const DEPTH_COMPONENT32 = 0x81A7;
+pub const MIRRORED_REPEAT = 0x8370;
+pub const MAX_TEXTURE_LOD_BIAS = 0x84FD;
+pub const TEXTURE_LOD_BIAS = 0x8501;
+pub const INCR_WRAP = 0x8507;
+pub const DECR_WRAP = 0x8508;
+pub const TEXTURE_DEPTH_SIZE = 0x884A;
+pub const TEXTURE_COMPARE_MODE = 0x884C;
+pub const TEXTURE_COMPARE_FUNC = 0x884D;
+pub const BLEND_COLOR = 0x8005;
+pub const BLEND_EQUATION = 0x8009;
+pub const CONSTANT_COLOR = 0x8001;
+pub const ONE_MINUS_CONSTANT_COLOR = 0x8002;
+pub const CONSTANT_ALPHA = 0x8003;
+pub const ONE_MINUS_CONSTANT_ALPHA = 0x8004;
+pub const FUNC_ADD = 0x8006;
+pub const FUNC_REVERSE_SUBTRACT = 0x800B;
+pub const FUNC_SUBTRACT = 0x800A;
+pub const MIN = 0x8007;
+pub const MAX = 0x8008;
+
+pub var blendFuncSeparate: *const fn (
+    sfactorRGB: Enum,
+    dfactorRGB: Enum,
+    sfactorAlpha: Enum,
+    dfactorAlpha: Enum,
+) callconv(.C) void = undefined;
+pub var multiDrawArrays: *const fn (
+    mode: Enum,
+    first: [*]const Int,
+    count: [*]const Sizei,
+    drawcount: Sizei,
+) callconv(.C) void = undefined;
+pub var multiDrawElements: *const fn (
+    mode: Enum,
+    count: [*]const Sizei,
+    type: Enum,
+    indices: [*]?*const anyopaque,
+    drawcount: Sizei,
+) callconv(.C) void = undefined;
+pub var pointParameterf: *const fn (pname: Enum, param: Float) callconv(.C) void = undefined;
+pub var pointParameterfv: *const fn (pname: Enum, params: [*c]const Float) callconv(.C) void = undefined;
+pub var pointParameteri: *const fn (pname: Enum, param: Int) callconv(.C) void = undefined;
+pub var pointParameteriv: *const fn (pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
+pub var blendColor: *const fn (red: Float, green: Float, blue: Float, alpha: Float) callconv(.C) void = undefined;
+pub var blendEquation: *const fn (mode: Enum) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
