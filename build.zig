@@ -399,7 +399,7 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
-    { // intro 0
+    if (false) { // intro 0
         const exe = intro.build(b, options, 0);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
         exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
@@ -408,7 +408,7 @@ fn samplesWindows(b: *std.Build, options: Options) void {
         common_pkg.link(exe);
         installDemo(b, exe, "intro0");
     }
-    { // vector graphics test
+    if (false) { // vector graphics test
         const exe = vector_graphics_test.build(b, options);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
         exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
