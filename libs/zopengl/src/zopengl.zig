@@ -1558,19 +1558,167 @@ pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
 // OpenGL 3.1 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+pub const SAMPLER_2D_RECT = 0x8B63;
+pub const SAMPLER_2D_RECT_SHADOW = 0x8B64;
+pub const SAMPLER_BUFFER = 0x8DC2;
+pub const INT_SAMPLER_2D_RECT = 0x8DCD;
+pub const INT_SAMPLER_BUFFER = 0x8DD0;
+pub const UNSIGNED_INT_SAMPLER_2D_RECT = 0x8DD5;
+pub const UNSIGNED_INT_SAMPLER_BUFFER = 0x8DD8;
+pub const TEXTURE_BUFFER = 0x8C2A;
+pub const MAX_TEXTURE_BUFFER_SIZE = 0x8C2B;
+pub const TEXTURE_BINDING_BUFFER = 0x8C2C;
+pub const TEXTURE_BUFFER_DATA_STORE_BINDING = 0x8C2D;
+pub const TEXTURE_RECTANGLE = 0x84F5;
+pub const TEXTURE_BINDING_RECTANGLE = 0x84F6;
+pub const PROXY_TEXTURE_RECTANGLE = 0x84F7;
+pub const MAX_RECTANGLE_TEXTURE_SIZE = 0x84F8;
+pub const R8_SNORM = 0x8F94;
+pub const RG8_SNORM = 0x8F95;
+pub const RGB8_SNORM = 0x8F96;
+pub const RGBA8_SNORM = 0x8F97;
+pub const R16_SNORM = 0x8F98;
+pub const RG16_SNORM = 0x8F99;
+pub const RGB16_SNORM = 0x8F9A;
+pub const RGBA16_SNORM = 0x8F9B;
+pub const SIGNED_NORMALIZED = 0x8F9C;
+pub const PRIMITIVE_RESTART = 0x8F9D;
+pub const PRIMITIVE_RESTART_INDEX = 0x8F9E;
+pub const COPY_READ_BUFFER = 0x8F36;
+pub const COPY_WRITE_BUFFER = 0x8F37;
+pub const UNIFORM_BUFFER = 0x8A11;
+pub const UNIFORM_BUFFER_BINDING = 0x8A28;
+pub const UNIFORM_BUFFER_START = 0x8A29;
+pub const UNIFORM_BUFFER_SIZE = 0x8A2A;
+pub const MAX_VERTEX_UNIFORM_BLOCKS = 0x8A2B;
+pub const MAX_GEOMETRY_UNIFORM_BLOCKS = 0x8A2C;
+pub const MAX_FRAGMENT_UNIFORM_BLOCKS = 0x8A2D;
+pub const MAX_COMBINED_UNIFORM_BLOCKS = 0x8A2E;
+pub const MAX_UNIFORM_BUFFER_BINDINGS = 0x8A2F;
+pub const MAX_UNIFORM_BLOCK_SIZE = 0x8A30;
+pub const MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS = 0x8A31;
+pub const MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS = 0x8A32;
+pub const MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS = 0x8A33;
+pub const UNIFORM_BUFFER_OFFSET_ALIGNMENT = 0x8A34;
+pub const ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH = 0x8A35;
+pub const ACTIVE_UNIFORM_BLOCKS = 0x8A36;
+pub const UNIFORM_TYPE = 0x8A37;
+pub const UNIFORM_SIZE = 0x8A38;
+pub const UNIFORM_NAME_LENGTH = 0x8A39;
+pub const UNIFORM_BLOCK_INDEX = 0x8A3A;
+pub const UNIFORM_OFFSET = 0x8A3B;
+pub const UNIFORM_ARRAY_STRIDE = 0x8A3C;
+pub const UNIFORM_MATRIX_STRIDE = 0x8A3D;
+pub const UNIFORM_IS_ROW_MAJOR = 0x8A3E;
+pub const UNIFORM_BLOCK_BINDING = 0x8A3F;
+pub const UNIFORM_BLOCK_DATA_SIZE = 0x8A40;
+pub const UNIFORM_BLOCK_NAME_LENGTH = 0x8A41;
+pub const UNIFORM_BLOCK_ACTIVE_UNIFORMS = 0x8A42;
+pub const UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES = 0x8A43;
+pub const UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER = 0x8A44;
+pub const UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER = 0x8A45;
+pub const UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER = 0x8A46;
+pub const INVALID_INDEX = 0xFFFFFFFF;
+
+// TODO: Add functions.
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 3.2 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+pub const Sync = *opaque {};
+pub const Uint64 = u64;
+pub const Int64 = i64;
+
+pub const CONTEXT_CORE_PROFILE_BIT = 0x00000001;
+pub const CONTEXT_COMPATIBILITY_PROFILE_BIT = 0x00000002;
+pub const LINES_ADJACENCY = 0x000A;
+pub const LINE_STRIP_ADJACENCY = 0x000B;
+pub const TRIANGLES_ADJACENCY = 0x000C;
+pub const TRIANGLE_STRIP_ADJACENCY = 0x000D;
+pub const PROGRAM_POINT_SIZE = 0x8642;
+pub const MAX_GEOMETRY_TEXTURE_IMAGE_UNITS = 0x8C29;
+pub const FRAMEBUFFER_ATTACHMENT_LAYERED = 0x8DA7;
+pub const FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS = 0x8DA8;
+pub const GEOMETRY_SHADER = 0x8DD9;
+pub const GEOMETRY_VERTICES_OUT = 0x8916;
+pub const GEOMETRY_INPUT_TYPE = 0x8917;
+pub const GEOMETRY_OUTPUT_TYPE = 0x8918;
+pub const MAX_GEOMETRY_UNIFORM_COMPONENTS = 0x8DDF;
+pub const MAX_GEOMETRY_OUTPUT_VERTICES = 0x8DE0;
+pub const MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS = 0x8DE1;
+pub const MAX_VERTEX_OUTPUT_COMPONENTS = 0x9122;
+pub const MAX_GEOMETRY_INPUT_COMPONENTS = 0x9123;
+pub const MAX_GEOMETRY_OUTPUT_COMPONENTS = 0x9124;
+pub const MAX_FRAGMENT_INPUT_COMPONENTS = 0x9125;
+pub const CONTEXT_PROFILE_MASK = 0x9126;
+pub const DEPTH_CLAMP = 0x864F;
+pub const QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION = 0x8E4C;
+pub const FIRST_VERTEX_CONVENTION = 0x8E4D;
+pub const LAST_VERTEX_CONVENTION = 0x8E4E;
+pub const PROVOKING_VERTEX = 0x8E4F;
+pub const TEXTURE_CUBE_MAP_SEAMLESS = 0x884F;
+pub const MAX_SERVER_WAIT_TIMEOUT = 0x9111;
+pub const OBJECT_TYPE = 0x9112;
+pub const SYNC_CONDITION = 0x9113;
+pub const SYNC_STATUS = 0x9114;
+pub const SYNC_FLAGS = 0x9115;
+pub const SYNC_FENCE = 0x9116;
+pub const SYNC_GPU_COMMANDS_COMPLETE = 0x9117;
+pub const UNSIGNALED = 0x9118;
+pub const SIGNALED = 0x9119;
+pub const ALREADY_SIGNALED = 0x911A;
+pub const TIMEOUT_EXPIRED = 0x911B;
+pub const CONDITION_SATISFIED = 0x911C;
+pub const WAIT_FAILED = 0x911D;
+pub const TIMEOUT_IGNORED = 0xFFFFFFFFFFFFFFFF;
+pub const SYNC_FLUSH_COMMANDS_BIT = 0x00000001;
+pub const SAMPLE_POSITION = 0x8E50;
+pub const SAMPLE_MASK = 0x8E51;
+pub const SAMPLE_MASK_VALUE = 0x8E52;
+pub const MAX_SAMPLE_MASK_WORDS = 0x8E59;
+pub const TEXTURE_2D_MULTISAMPLE = 0x9100;
+pub const PROXY_TEXTURE_2D_MULTISAMPLE = 0x9101;
+pub const TEXTURE_2D_MULTISAMPLE_ARRAY = 0x9102;
+pub const PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY = 0x9103;
+pub const TEXTURE_BINDING_2D_MULTISAMPLE = 0x9104;
+pub const TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY = 0x9105;
+pub const TEXTURE_SAMPLES = 0x9106;
+pub const TEXTURE_FIXED_SAMPLE_LOCATIONS = 0x9107;
+pub const SAMPLER_2D_MULTISAMPLE = 0x9108;
+pub const INT_SAMPLER_2D_MULTISAMPLE = 0x9109;
+pub const UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE = 0x910A;
+pub const SAMPLER_2D_MULTISAMPLE_ARRAY = 0x910B;
+pub const INT_SAMPLER_2D_MULTISAMPLE_ARRAY = 0x910C;
+pub const UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY = 0x910D;
+pub const MAX_COLOR_TEXTURE_SAMPLES = 0x910E;
+pub const MAX_DEPTH_TEXTURE_SAMPLES = 0x910F;
+pub const MAX_INTEGER_SAMPLES = 0x9110;
+
+// TODO: Add functions.
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 3.3 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+pub const VERTEX_ATTRIB_ARRAY_DIVISOR = 0x88FE;
+pub const SRC1_COLOR = 0x88F9;
+pub const ONE_MINUS_SRC1_COLOR = 0x88FA;
+pub const ONE_MINUS_SRC1_ALPHA = 0x88FB;
+pub const MAX_DUAL_SOURCE_DRAW_BUFFERS = 0x88FC;
+pub const ANY_SAMPLES_PASSED = 0x8C2F;
+pub const SAMPLER_BINDING = 0x8919;
+pub const RGB10_A2UI = 0x906F;
+pub const TEXTURE_SWIZZLE_R = 0x8E42;
+pub const TEXTURE_SWIZZLE_G = 0x8E43;
+pub const TEXTURE_SWIZZLE_B = 0x8E44;
+pub const TEXTURE_SWIZZLE_A = 0x8E45;
+pub const TEXTURE_SWIZZLE_RGBA = 0x8E46;
+pub const TIME_ELAPSED = 0x88BF;
+pub const TIMESTAMP = 0x8E28;
+pub const INT_2_10_10_10_REV = 0x8D9F;
+
+// TODO: Add functions.
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for loading OpenGL function pointers
@@ -1725,7 +1873,10 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
         deleteProgram = try getProcAddress(@TypeOf(deleteProgram), "glDeleteProgram");
         deleteShader = try getProcAddress(@TypeOf(deleteShader), "glDeleteShader");
         detachShader = try getProcAddress(@TypeOf(detachShader), "glDetachShader");
-        disableVertexAttribArray = try getProcAddress(@TypeOf(disableVertexAttribArray), "glDisableVertexAttribArray");
+        disableVertexAttribArray = try getProcAddress(
+            @TypeOf(disableVertexAttribArray),
+            "glDisableVertexAttribArray",
+        );
         enableVertexAttribArray = try getProcAddress(@TypeOf(enableVertexAttribArray), "glEnableVertexAttribArray");
         getActiveAttrib = try getProcAddress(@TypeOf(getActiveAttrib), "glGetActiveAttrib");
         getActiveUniform = try getProcAddress(@TypeOf(getActiveUniform), "glGetActiveUniform");
@@ -1829,8 +1980,14 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
         endTransformFeedback = try getProcAddress(@TypeOf(endTransformFeedback), "glEndTransformFeedback");
         bindBufferRange = try getProcAddress(@TypeOf(bindBufferRange), "glBindBufferRange");
         bindBufferBase = try getProcAddress(@TypeOf(bindBufferBase), "glBindBufferBase");
-        transformFeedbackVaryings = try getProcAddress(@TypeOf(transformFeedbackVaryings), "glTransformFeedbackVaryings");
-        getTransformFeedbackVarying = try getProcAddress(@TypeOf(getTransformFeedbackVarying), "glGetTransformFeedbackVarying");
+        transformFeedbackVaryings = try getProcAddress(
+            @TypeOf(transformFeedbackVaryings),
+            "glTransformFeedbackVaryings",
+        );
+        getTransformFeedbackVarying = try getProcAddress(
+            @TypeOf(getTransformFeedbackVarying),
+            "glGetTransformFeedbackVarying",
+        );
         clampColor = try getProcAddress(@TypeOf(clampColor), "glClampColor");
         beginConditionalRender = try getProcAddress(@TypeOf(beginConditionalRender), "glBeginConditionalRender");
         endConditionalRender = try getProcAddress(@TypeOf(endConditionalRender), "glEndConditionalRender");
@@ -1882,7 +2039,10 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
         deleteRenderbuffers = try getProcAddress(@TypeOf(deleteRenderbuffers), "glDeleteRenderbuffers");
         genRenderbuffers = try getProcAddress(@TypeOf(genRenderbuffers), "glGenRenderbuffers");
         renderbufferStorage = try getProcAddress(@TypeOf(renderbufferStorage), "glRenderbufferStorage");
-        getRenderbufferParameteriv = try getProcAddress(@TypeOf(getRenderbufferParameteriv), "glGetRenderbufferParameteriv");
+        getRenderbufferParameteriv = try getProcAddress(
+            @TypeOf(getRenderbufferParameteriv),
+            "glGetRenderbufferParameteriv",
+        );
         isFramebuffer = try getProcAddress(@TypeOf(isFramebuffer), "glIsFramebuffer");
         bindFramebuffer = try getProcAddress(@TypeOf(bindFramebuffer), "glBindFramebuffer");
         deleteFramebuffers = try getProcAddress(@TypeOf(deleteFramebuffers), "glDeleteFramebuffers");
@@ -1892,10 +2052,16 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
         framebufferTexture2D = try getProcAddress(@TypeOf(framebufferTexture2D), "glFramebufferTexture2D");
         framebufferTexture3D = try getProcAddress(@TypeOf(framebufferTexture3D), "glFramebufferTexture3D");
         framebufferRenderbuffer = try getProcAddress(@TypeOf(framebufferRenderbuffer), "glFramebufferRenderbuffer");
-        getFramebufferAttachmentParameteriv = try getProcAddress(@TypeOf(getFramebufferAttachmentParameteriv), "glGetFramebufferAttachmentParameteriv");
+        getFramebufferAttachmentParameteriv = try getProcAddress(
+            @TypeOf(getFramebufferAttachmentParameteriv),
+            "glGetFramebufferAttachmentParameteriv",
+        );
         generateMipmap = try getProcAddress(@TypeOf(generateMipmap), "glGenerateMipmap");
         blitFramebuffer = try getProcAddress(@TypeOf(blitFramebuffer), "glBlitFramebuffer");
-        renderbufferStorageMultisample = try getProcAddress(@TypeOf(renderbufferStorageMultisample), "glRenderbufferStorageMultisample");
+        renderbufferStorageMultisample = try getProcAddress(
+            @TypeOf(renderbufferStorageMultisample),
+            "glRenderbufferStorageMultisample",
+        );
         framebufferTextureLayer = try getProcAddress(@TypeOf(framebufferTextureLayer), "glFramebufferTextureLayer");
         mapBufferRange = try getProcAddress(@TypeOf(mapBufferRange), "glMapBufferRange");
         flushMappedBufferRange = try getProcAddress(@TypeOf(flushMappedBufferRange), "glFlushMappedBufferRange");
