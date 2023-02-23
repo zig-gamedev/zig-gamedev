@@ -201,7 +201,7 @@ pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]const 
 pub var texImage1D: *const fn (
     target: Enum,
     level: Int,
-    internalformat: Int,
+    internalformat: Enum,
     width: Sizei,
     border: Int,
     format: Enum,
@@ -211,7 +211,7 @@ pub var texImage1D: *const fn (
 pub var texImage2D: *const fn (
     target: Enum,
     level: Int,
-    internalformat: Int,
+    internalformat: Enum,
     width: Sizei,
     height: Sizei,
     border: Int,
@@ -283,3 +283,113 @@ pub var getTexLevelParameteriv: *const fn (
 pub var isEnabled: *const fn (cap: Enum) callconv(.C) Boolean = undefined;
 pub var depthRange: *const fn (n: Double, f: Double) callconv(.C) void = undefined;
 pub var viewport: *const fn (x: Int, y: Int, width: Sizei, height: Sizei) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 1.1 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const Clampf = Float;
+pub const Clampd = Double;
+
+pub const COLOR_LOGIC_OP = 0x0BF2;
+pub const POLYGON_OFFSET_UNITS = 0x2A00;
+pub const POLYGON_OFFSET_POINT = 0x2A01;
+pub const POLYGON_OFFSET_LINE = 0x2A02;
+pub const POLYGON_OFFSET_FILL = 0x8037;
+pub const POLYGON_OFFSET_FACTOR = 0x8038;
+pub const TEXTURE_BINDING_1D = 0x8068;
+pub const TEXTURE_BINDING_2D = 0x8069;
+pub const TEXTURE_INTERNAL_FORMAT = 0x1003;
+pub const TEXTURE_RED_SIZE = 0x805C;
+pub const TEXTURE_GREEN_SIZE = 0x805D;
+pub const TEXTURE_BLUE_SIZE = 0x805E;
+pub const TEXTURE_ALPHA_SIZE = 0x805F;
+pub const DOUBLE = 0x140A;
+pub const PROXY_TEXTURE_1D = 0x8063;
+pub const PROXY_TEXTURE_2D = 0x8064;
+pub const R3_G3_B2 = 0x2A10;
+pub const RGB4 = 0x804F;
+pub const RGB5 = 0x8050;
+pub const RGB8 = 0x8051;
+pub const RGB10 = 0x8052;
+pub const RGB12 = 0x8053;
+pub const RGB16 = 0x8054;
+pub const RGBA2 = 0x8055;
+pub const RGBA4 = 0x8056;
+pub const RGB5_A1 = 0x8057;
+pub const RGBA8 = 0x8058;
+pub const RGB10_A2 = 0x8059;
+pub const RGBA12 = 0x805A;
+pub const RGBA16 = 0x805B;
+pub const VERTEX_ARRAY = 0x8074;
+
+pub var drawArrays: *const fn (mode: Enum, first: Int, count: Sizei) callconv(.C) void = undefined;
+pub var drawElements: *const fn (
+    mode: Enum,
+    count: Sizei,
+    type: Enum,
+    indices: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var polygonOffset: *const fn (factor: Float, units: Float) callconv(.C) void = undefined;
+pub var copyTexImage1D: *const fn (
+    target: Enum,
+    level: Int,
+    internalformat: Enum,
+    x: Int,
+    y: Int,
+    width: Sizei,
+    border: Int,
+) callconv(.C) void = undefined;
+pub var copyTexImage2D: *const fn (
+    target: Enum,
+    level: Int,
+    internalformat: Enum,
+    x: Int,
+    y: Int,
+    width: Sizei,
+    height: Sizei,
+    border: Int,
+) callconv(.C) void = undefined;
+pub var copyTexSubImage1D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    x: Int,
+    y: Int,
+    width: Sizei,
+) callconv(.C) void = undefined;
+pub var copyTexSubImage2D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    yoffset: Int,
+    x: Int,
+    y: Int,
+    width: Sizei,
+    height: Sizei,
+) callconv(.C) void = undefined;
+pub var texSubImage1D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    width: Sizei,
+    format: Enum,
+    type: Enum,
+    pixels: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var texSubImage2D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    yoffset: Int,
+    width: Sizei,
+    height: Sizei,
+    format: Enum,
+    type: Enum,
+    pixels: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var bindTexture: *const fn (target: Enum, texture: Uint) callconv(.C) void = undefined;
+pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
+pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
+pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
+//--------------------------------------------------------------------------------------------------
