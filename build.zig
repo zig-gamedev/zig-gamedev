@@ -145,6 +145,9 @@ fn packagesWindows(b: *std.Build, options: Options) void {
         },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
+    common_d2d_pkg = common.Package.build(b, options.target, options.optimize, .{
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_d2d_pkg.zd3d12 },
+    });
     zxaudio2_pkg = zxaudio2.Package.build(b, .{
         .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
@@ -399,22 +402,22 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
-    if (false) { // intro 0
+    { // intro 0
         const exe = intro.build(b, options, 0);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
         exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-        exe.addModule("common", common_pkg.common);
+        exe.addModule("common", common_d2d_pkg.common);
         zd3d12_d2d_pkg.link(exe);
         common_pkg.link(exe);
         installDemo(b, exe, "intro0");
     }
-    if (false) { // vector graphics test
+    { // vector graphics test
         const exe = vector_graphics_test.build(b, options);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
         exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-        exe.addModule("common", common_pkg.common);
+        exe.addModule("common", common_d2d_pkg.common);
         zd3d12_d2d_pkg.link(exe);
-        common_pkg.link(exe);
+        common_d2d_pkg.link(exe);
         installDemo(b, exe, "vector_graphics_test");
     }
     { // directml convolution test
@@ -557,6 +560,7 @@ var zwin32_pkg: zwin32.Package = undefined;
 var zd3d12_pkg: zd3d12.Package = undefined;
 var zpix_pkg: zpix.Package = undefined;
 var common_pkg: common.Package = undefined;
+var common_d2d_pkg: common.Package = undefined;
 var zd3d12_d2d_pkg: zd3d12.Package = undefined;
 var zxaudio2_pkg: zxaudio2.Package = undefined;
 
