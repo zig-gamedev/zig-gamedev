@@ -86,6 +86,7 @@ pub fn build(b: *std.Build) void {
 
 fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     zsdl_pkg = zsdl.Package.build(b, .{});
+    zopengl_pkg = zopengl.Package.build(b, .{});
     zmath_pkg = zmath.Package.build(b, .{});
     zpool_pkg = zpool.Package.build(b, .{});
     zmesh_pkg = zmesh.Package.build(b, options.target, options.optimize, .{});
@@ -154,6 +155,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     { // minimal sdl
         const exe = minimal_sdl.build(b, options);
         exe.addModule("zsdl", zsdl_pkg.zsdl);
+        exe.addModule("zopengl", zopengl_pkg.zopengl);
         zsdl_pkg.link(exe);
         installDemo(b, exe, "minimal_sdl");
     }
@@ -535,6 +537,7 @@ fn benchmarks(b: *std.Build, options: Options) void {
 }
 
 var zsdl_pkg: zsdl.Package = undefined;
+var zopengl_pkg: zopengl.Package = undefined;
 var zmath_pkg: zmath.Package = undefined;
 var zpool_pkg: zpool.Package = undefined;
 var zmesh_pkg: zmesh.Package = undefined;
@@ -558,6 +561,7 @@ var zd3d12_d2d_pkg: zd3d12.Package = undefined;
 var zxaudio2_pkg: zxaudio2.Package = undefined;
 
 const zsdl = @import("libs/zsdl/build.zig");
+const zopengl = @import("libs/zopengl/build.zig");
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 const zpool = @import("libs/zpool/build.zig");

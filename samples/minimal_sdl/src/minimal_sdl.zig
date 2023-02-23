@@ -1,17 +1,15 @@
 const std = @import("std");
 const sdl = @import("zsdl");
+const gl = @import("zopengl");
 
 pub fn main() !void {
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
 
     try sdl.gl.setAttribute(.context_profile_mask, @enumToInt(sdl.gl.Profile.core));
-    try sdl.gl.setAttribute(.context_major_version, 4);
-    try sdl.gl.setAttribute(.context_minor_version, 1);
+    try sdl.gl.setAttribute(.context_major_version, 3);
+    try sdl.gl.setAttribute(.context_minor_version, 3);
     try sdl.gl.setAttribute(.context_flags, @bitCast(i32, sdl.gl.ContextFlags{ .forward_compatible = true }));
-    try sdl.gl.setAttribute(.red_size, 8);
-    try sdl.gl.setAttribute(.green_size, 8);
-    try sdl.gl.setAttribute(.blue_size, 8);
 
     const window = try sdl.Window.create(
         "zig-gamedev-window",
@@ -23,16 +21,13 @@ pub fn main() !void {
     );
     defer window.destroy();
 
-    _ = sdl.Scancode;
-    _ = sdl.Keycode;
-
     const gl_context = try sdl.gl.createContext(window);
     defer sdl.gl.deleteContext(gl_context);
 
     try sdl.gl.makeCurrent(window, gl_context);
     try sdl.gl.setSwapInterval(0);
 
-    _ = sdl.gl.getProcAddress("glBindBuffer");
+    try gl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
 
     main_loop: while (true) {
         var event: sdl.Event = undefined;
@@ -45,6 +40,4 @@ pub fn main() !void {
         }
         sdl.gl.swapWindow(window);
     }
-
-    std.debug.print("All OK\n", .{});
 }
