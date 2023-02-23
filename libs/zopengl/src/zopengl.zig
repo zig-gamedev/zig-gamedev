@@ -251,7 +251,7 @@ pub var readPixels: *const fn (
     height: Sizei,
     format: Enum,
     type: Enum,
-    pixels: *anyopaque,
+    pixels: ?*anyopaque,
 ) callconv(.C) void = undefined;
 pub var getBooleanv: *const fn (pname: Enum, data: [*c]Boolean) callconv(.C) void = undefined;
 pub var getDoublev: *const fn (pname: Enum, data: [*c]Double) callconv(.C) void = undefined;
@@ -264,7 +264,7 @@ pub var getTexImage: *const fn (
     level: Int,
     format: Enum,
     type: Enum,
-    pixels: *anyopaque,
+    pixels: ?*anyopaque,
 ) callconv(.C) void = undefined;
 pub var getTexParameterfv: *const fn (target: Enum, pname: Enum, params: [*c]Float) callconv(.C) void = undefined;
 pub var getTexParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
@@ -388,8 +388,95 @@ pub var texSubImage2D: *const fn (
     type: Enum,
     pixels: ?*const anyopaque,
 ) callconv(.C) void = undefined;
+
 pub var bindTexture: *const fn (target: Enum, texture: Uint) callconv(.C) void = undefined;
 pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
 pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
 pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 1.2 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const UNSIGNED_BYTE_3_3_2 = 0x8032;
+pub const UNSIGNED_SHORT_4_4_4_4 = 0x8033;
+pub const UNSIGNED_SHORT_5_5_5_1 = 0x8034;
+pub const UNSIGNED_INT_8_8_8_8 = 0x8035;
+pub const UNSIGNED_INT_10_10_10_2 = 0x8036;
+pub const TEXTURE_BINDING_3D = 0x806A;
+pub const PACK_SKIP_IMAGES = 0x806B;
+pub const PACK_IMAGE_HEIGHT = 0x806C;
+pub const UNPACK_SKIP_IMAGES = 0x806D;
+pub const UNPACK_IMAGE_HEIGHT = 0x806E;
+pub const TEXTURE_3D = 0x806F;
+pub const PROXY_TEXTURE_3D = 0x8070;
+pub const TEXTURE_DEPTH = 0x8071;
+pub const TEXTURE_WRAP_R = 0x8072;
+pub const MAX_3D_TEXTURE_SIZE = 0x8073;
+pub const UNSIGNED_BYTE_2_3_3_REV = 0x8362;
+pub const UNSIGNED_SHORT_5_6_5 = 0x8363;
+pub const UNSIGNED_SHORT_5_6_5_REV = 0x8364;
+pub const UNSIGNED_SHORT_4_4_4_4_REV = 0x8365;
+pub const UNSIGNED_SHORT_1_5_5_5_REV = 0x8366;
+pub const UNSIGNED_INT_8_8_8_8_REV = 0x8367;
+pub const UNSIGNED_INT_2_10_10_10_REV = 0x8368;
+pub const BGR = 0x80E0;
+pub const BGRA = 0x80E1;
+pub const MAX_ELEMENTS_VERTICES = 0x80E8;
+pub const MAX_ELEMENTS_INDICES = 0x80E9;
+pub const CLAMP_TO_EDGE = 0x812F;
+pub const TEXTURE_MIN_LOD = 0x813A;
+pub const TEXTURE_MAX_LOD = 0x813B;
+pub const TEXTURE_BASE_LEVEL = 0x813C;
+pub const TEXTURE_MAX_LEVEL = 0x813D;
+pub const SMOOTH_POINT_SIZE_RANGE = 0x0B12;
+pub const SMOOTH_POINT_SIZE_GRANULARITY = 0x0B13;
+pub const SMOOTH_LINE_WIDTH_RANGE = 0x0B22;
+pub const SMOOTH_LINE_WIDTH_GRANULARITY = 0x0B23;
+pub const ALIASED_LINE_WIDTH_RANGE = 0x846E;
+
+pub var drawRangeElements: *const fn (
+    mode: Enum,
+    start: Uint,
+    end: Uint,
+    count: Sizei,
+    type: Enum,
+    indices: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var texImage3D: *const fn (
+    target: Enum,
+    level: Int,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+    depth: Sizei,
+    border: Int,
+    format: Enum,
+    type: Enum,
+    pixels: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var texSubImage3D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    yoffset: Int,
+    zoffset: Int,
+    width: Sizei,
+    height: Sizei,
+    depth: Sizei,
+    format: Enum,
+    type: Enum,
+    pixels: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var copyTexSubImage3D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    yoffset: Int,
+    zoffset: Int,
+    x: Int,
+    y: Int,
+    width: Sizei,
+    height: Sizei,
+) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
