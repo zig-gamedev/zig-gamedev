@@ -659,7 +659,7 @@ pub var multiDrawElements: *const fn (
     mode: Enum,
     count: [*]const Sizei,
     type: Enum,
-    indices: [*]?*const anyopaque,
+    indices: [*]const ?*const anyopaque,
     drawcount: Sizei,
 ) callconv(.C) void = undefined;
 pub var pointParameterf: *const fn (pname: Enum, param: Float) callconv(.C) void = undefined;
@@ -1109,4 +1109,449 @@ pub var uniformMatrix4x3fv: *const fn (
     transpose: Boolean,
     value: [*]const Float,
 ) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 3.0 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const Half = u16;
+
+pub const COMPARE_REF_TO_TEXTURE = 0x884E;
+pub const CLIP_DISTANCE0 = 0x3000;
+pub const CLIP_DISTANCE1 = 0x3001;
+pub const CLIP_DISTANCE2 = 0x3002;
+pub const CLIP_DISTANCE3 = 0x3003;
+pub const CLIP_DISTANCE4 = 0x3004;
+pub const CLIP_DISTANCE5 = 0x3005;
+pub const CLIP_DISTANCE6 = 0x3006;
+pub const CLIP_DISTANCE7 = 0x3007;
+pub const MAX_CLIP_DISTANCES = 0x0D32;
+pub const MAJOR_VERSION = 0x821B;
+pub const MINOR_VERSION = 0x821C;
+pub const NUM_EXTENSIONS = 0x821D;
+pub const CONTEXT_FLAGS = 0x821E;
+pub const COMPRESSED_RED = 0x8225;
+pub const COMPRESSED_RG = 0x8226;
+pub const CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT = 0x00000001;
+pub const RGBA32F = 0x8814;
+pub const RGB32F = 0x8815;
+pub const RGBA16F = 0x881A;
+pub const RGB16F = 0x881B;
+pub const VERTEX_ATTRIB_ARRAY_INTEGER = 0x88FD;
+pub const MAX_ARRAY_TEXTURE_LAYERS = 0x88FF;
+pub const MIN_PROGRAM_TEXEL_OFFSET = 0x8904;
+pub const MAX_PROGRAM_TEXEL_OFFSET = 0x8905;
+pub const CLAMP_READ_COLOR = 0x891C;
+pub const FIXED_ONLY = 0x891D;
+pub const MAX_VARYING_COMPONENTS = 0x8B4B;
+pub const TEXTURE_1D_ARRAY = 0x8C18;
+pub const PROXY_TEXTURE_1D_ARRAY = 0x8C19;
+pub const TEXTURE_2D_ARRAY = 0x8C1A;
+pub const PROXY_TEXTURE_2D_ARRAY = 0x8C1B;
+pub const TEXTURE_BINDING_1D_ARRAY = 0x8C1C;
+pub const TEXTURE_BINDING_2D_ARRAY = 0x8C1D;
+pub const R11F_G11F_B10F = 0x8C3A;
+pub const UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B;
+pub const RGB9_E5 = 0x8C3D;
+pub const UNSIGNED_INT_5_9_9_9_REV = 0x8C3E;
+pub const TEXTURE_SHARED_SIZE = 0x8C3F;
+pub const TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH = 0x8C76;
+pub const TRANSFORM_FEEDBACK_BUFFER_MODE = 0x8C7F;
+pub const MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS = 0x8C80;
+pub const TRANSFORM_FEEDBACK_VARYINGS = 0x8C83;
+pub const TRANSFORM_FEEDBACK_BUFFER_START = 0x8C84;
+pub const TRANSFORM_FEEDBACK_BUFFER_SIZE = 0x8C85;
+pub const PRIMITIVES_GENERATED = 0x8C87;
+pub const TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN = 0x8C88;
+pub const RASTERIZER_DISCARD = 0x8C89;
+pub const MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS = 0x8C8A;
+pub const MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS = 0x8C8B;
+pub const INTERLEAVED_ATTRIBS = 0x8C8C;
+pub const SEPARATE_ATTRIBS = 0x8C8D;
+pub const TRANSFORM_FEEDBACK_BUFFER = 0x8C8E;
+pub const TRANSFORM_FEEDBACK_BUFFER_BINDING = 0x8C8F;
+pub const RGBA32UI = 0x8D70;
+pub const RGB32UI = 0x8D71;
+pub const RGBA16UI = 0x8D76;
+pub const RGB16UI = 0x8D77;
+pub const RGBA8UI = 0x8D7C;
+pub const RGB8UI = 0x8D7D;
+pub const RGBA32I = 0x8D82;
+pub const RGB32I = 0x8D83;
+pub const RGBA16I = 0x8D88;
+pub const RGB16I = 0x8D89;
+pub const RGBA8I = 0x8D8E;
+pub const RGB8I = 0x8D8F;
+pub const RED_INTEGER = 0x8D94;
+pub const GREEN_INTEGER = 0x8D95;
+pub const BLUE_INTEGER = 0x8D96;
+pub const RGB_INTEGER = 0x8D98;
+pub const RGBA_INTEGER = 0x8D99;
+pub const BGR_INTEGER = 0x8D9A;
+pub const BGRA_INTEGER = 0x8D9B;
+pub const SAMPLER_1D_ARRAY = 0x8DC0;
+pub const SAMPLER_2D_ARRAY = 0x8DC1;
+pub const SAMPLER_1D_ARRAY_SHADOW = 0x8DC3;
+pub const SAMPLER_2D_ARRAY_SHADOW = 0x8DC4;
+pub const SAMPLER_CUBE_SHADOW = 0x8DC5;
+pub const UNSIGNED_INT_VEC2 = 0x8DC6;
+pub const UNSIGNED_INT_VEC3 = 0x8DC7;
+pub const UNSIGNED_INT_VEC4 = 0x8DC8;
+pub const INT_SAMPLER_1D = 0x8DC9;
+pub const INT_SAMPLER_2D = 0x8DCA;
+pub const INT_SAMPLER_3D = 0x8DCB;
+pub const INT_SAMPLER_CUBE = 0x8DCC;
+pub const INT_SAMPLER_1D_ARRAY = 0x8DCE;
+pub const INT_SAMPLER_2D_ARRAY = 0x8DCF;
+pub const UNSIGNED_INT_SAMPLER_1D = 0x8DD1;
+pub const UNSIGNED_INT_SAMPLER_2D = 0x8DD2;
+pub const UNSIGNED_INT_SAMPLER_3D = 0x8DD3;
+pub const UNSIGNED_INT_SAMPLER_CUBE = 0x8DD4;
+pub const UNSIGNED_INT_SAMPLER_1D_ARRAY = 0x8DD6;
+pub const UNSIGNED_INT_SAMPLER_2D_ARRAY = 0x8DD7;
+pub const QUERY_WAIT = 0x8E13;
+pub const QUERY_NO_WAIT = 0x8E14;
+pub const QUERY_BY_REGION_WAIT = 0x8E15;
+pub const QUERY_BY_REGION_NO_WAIT = 0x8E16;
+pub const BUFFER_ACCESS_FLAGS = 0x911F;
+pub const BUFFER_MAP_LENGTH = 0x9120;
+pub const BUFFER_MAP_OFFSET = 0x9121;
+pub const DEPTH_COMPONENT32F = 0x8CAC;
+pub const DEPTH32F_STENCIL8 = 0x8CAD;
+pub const FLOAT_32_UNSIGNED_INT_24_8_REV = 0x8DAD;
+pub const INVALID_FRAMEBUFFER_OPERATION = 0x0506;
+pub const FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING = 0x8210;
+pub const FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE = 0x8211;
+pub const FRAMEBUFFER_ATTACHMENT_RED_SIZE = 0x8212;
+pub const FRAMEBUFFER_ATTACHMENT_GREEN_SIZE = 0x8213;
+pub const FRAMEBUFFER_ATTACHMENT_BLUE_SIZE = 0x8214;
+pub const FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE = 0x8215;
+pub const FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE = 0x8216;
+pub const FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE = 0x8217;
+pub const FRAMEBUFFER_DEFAULT = 0x8218;
+pub const FRAMEBUFFER_UNDEFINED = 0x8219;
+pub const DEPTH_STENCIL_ATTACHMENT = 0x821A;
+pub const MAX_RENDERBUFFER_SIZE = 0x84E8;
+pub const DEPTH_STENCIL = 0x84F9;
+pub const UNSIGNED_INT_24_8 = 0x84FA;
+pub const DEPTH24_STENCIL8 = 0x88F0;
+pub const TEXTURE_STENCIL_SIZE = 0x88F1;
+pub const TEXTURE_RED_TYPE = 0x8C10;
+pub const TEXTURE_GREEN_TYPE = 0x8C11;
+pub const TEXTURE_BLUE_TYPE = 0x8C12;
+pub const TEXTURE_ALPHA_TYPE = 0x8C13;
+pub const TEXTURE_DEPTH_TYPE = 0x8C16;
+pub const UNSIGNED_NORMALIZED = 0x8C17;
+pub const FRAMEBUFFER_BINDING = 0x8CA6;
+pub const DRAW_FRAMEBUFFER_BINDING = 0x8CA6;
+pub const RENDERBUFFER_BINDING = 0x8CA7;
+pub const READ_FRAMEBUFFER = 0x8CA8;
+pub const DRAW_FRAMEBUFFER = 0x8CA9;
+pub const READ_FRAMEBUFFER_BINDING = 0x8CAA;
+pub const RENDERBUFFER_SAMPLES = 0x8CAB;
+pub const FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE = 0x8CD0;
+pub const FRAMEBUFFER_ATTACHMENT_OBJECT_NAME = 0x8CD1;
+pub const FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL = 0x8CD2;
+pub const FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE = 0x8CD3;
+pub const FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER = 0x8CD4;
+pub const FRAMEBUFFER_COMPLETE = 0x8CD5;
+pub const FRAMEBUFFER_INCOMPLETE_ATTACHMENT = 0x8CD6;
+pub const FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT = 0x8CD7;
+pub const FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER = 0x8CDB;
+pub const FRAMEBUFFER_INCOMPLETE_READ_BUFFER = 0x8CDC;
+pub const FRAMEBUFFER_UNSUPPORTED = 0x8CDD;
+pub const MAX_COLOR_ATTACHMENTS = 0x8CDF;
+pub const COLOR_ATTACHMENT0 = 0x8CE0;
+pub const COLOR_ATTACHMENT1 = 0x8CE1;
+pub const COLOR_ATTACHMENT2 = 0x8CE2;
+pub const COLOR_ATTACHMENT3 = 0x8CE3;
+pub const COLOR_ATTACHMENT4 = 0x8CE4;
+pub const COLOR_ATTACHMENT5 = 0x8CE5;
+pub const COLOR_ATTACHMENT6 = 0x8CE6;
+pub const COLOR_ATTACHMENT7 = 0x8CE7;
+pub const COLOR_ATTACHMENT8 = 0x8CE8;
+pub const COLOR_ATTACHMENT9 = 0x8CE9;
+pub const COLOR_ATTACHMENT10 = 0x8CEA;
+pub const COLOR_ATTACHMENT11 = 0x8CEB;
+pub const COLOR_ATTACHMENT12 = 0x8CEC;
+pub const COLOR_ATTACHMENT13 = 0x8CED;
+pub const COLOR_ATTACHMENT14 = 0x8CEE;
+pub const COLOR_ATTACHMENT15 = 0x8CEF;
+pub const COLOR_ATTACHMENT16 = 0x8CF0;
+pub const COLOR_ATTACHMENT17 = 0x8CF1;
+pub const COLOR_ATTACHMENT18 = 0x8CF2;
+pub const COLOR_ATTACHMENT19 = 0x8CF3;
+pub const COLOR_ATTACHMENT20 = 0x8CF4;
+pub const COLOR_ATTACHMENT21 = 0x8CF5;
+pub const COLOR_ATTACHMENT22 = 0x8CF6;
+pub const COLOR_ATTACHMENT23 = 0x8CF7;
+pub const COLOR_ATTACHMENT24 = 0x8CF8;
+pub const COLOR_ATTACHMENT25 = 0x8CF9;
+pub const COLOR_ATTACHMENT26 = 0x8CFA;
+pub const COLOR_ATTACHMENT27 = 0x8CFB;
+pub const COLOR_ATTACHMENT28 = 0x8CFC;
+pub const COLOR_ATTACHMENT29 = 0x8CFD;
+pub const COLOR_ATTACHMENT30 = 0x8CFE;
+pub const COLOR_ATTACHMENT31 = 0x8CFF;
+pub const DEPTH_ATTACHMENT = 0x8D00;
+pub const STENCIL_ATTACHMENT = 0x8D20;
+pub const FRAMEBUFFER = 0x8D40;
+pub const RENDERBUFFER = 0x8D41;
+pub const RENDERBUFFER_WIDTH = 0x8D42;
+pub const RENDERBUFFER_HEIGHT = 0x8D43;
+pub const RENDERBUFFER_INTERNAL_FORMAT = 0x8D44;
+pub const STENCIL_INDEX1 = 0x8D46;
+pub const STENCIL_INDEX4 = 0x8D47;
+pub const STENCIL_INDEX8 = 0x8D48;
+pub const STENCIL_INDEX16 = 0x8D49;
+pub const RENDERBUFFER_RED_SIZE = 0x8D50;
+pub const RENDERBUFFER_GREEN_SIZE = 0x8D51;
+pub const RENDERBUFFER_BLUE_SIZE = 0x8D52;
+pub const RENDERBUFFER_ALPHA_SIZE = 0x8D53;
+pub const RENDERBUFFER_DEPTH_SIZE = 0x8D54;
+pub const RENDERBUFFER_STENCIL_SIZE = 0x8D55;
+pub const FRAMEBUFFER_INCOMPLETE_MULTISAMPLE = 0x8D56;
+pub const MAX_SAMPLES = 0x8D57;
+pub const FRAMEBUFFER_SRGB = 0x8DB9;
+pub const HALF_FLOAT = 0x140B;
+pub const MAP_READ_BIT = 0x0001;
+pub const MAP_WRITE_BIT = 0x0002;
+pub const MAP_INVALIDATE_RANGE_BIT = 0x0004;
+pub const MAP_INVALIDATE_BUFFER_BIT = 0x0008;
+pub const MAP_FLUSH_EXPLICIT_BIT = 0x0010;
+pub const MAP_UNSYNCHRONIZED_BIT = 0x0020;
+pub const COMPRESSED_RED_RGTC1 = 0x8DBB;
+pub const COMPRESSED_SIGNED_RED_RGTC1 = 0x8DBC;
+pub const COMPRESSED_RG_RGTC2 = 0x8DBD;
+pub const COMPRESSED_SIGNED_RG_RGTC2 = 0x8DBE;
+pub const RG = 0x8227;
+pub const RG_INTEGER = 0x8228;
+pub const R8 = 0x8229;
+pub const R16 = 0x822A;
+pub const RG8 = 0x822B;
+pub const RG16 = 0x822C;
+pub const R16F = 0x822D;
+pub const R32F = 0x822E;
+pub const RG16F = 0x822F;
+pub const RG32F = 0x8230;
+pub const R8I = 0x8231;
+pub const R8UI = 0x8232;
+pub const R16I = 0x8233;
+pub const R16UI = 0x8234;
+pub const R32I = 0x8235;
+pub const R32UI = 0x8236;
+pub const RG8I = 0x8237;
+pub const RG8UI = 0x8238;
+pub const RG16I = 0x8239;
+pub const RG16UI = 0x823A;
+pub const RG32I = 0x823B;
+pub const RG32UI = 0x823C;
+pub const VERTEX_ARRAY_BINDING = 0x85B5;
+
+pub var colorMaski: *const fn (
+    index: Uint,
+    r: Boolean,
+    g: Boolean,
+    b: Boolean,
+    a: Boolean,
+) callconv(.C) void = undefined;
+pub var getBooleani_v: *const fn (target: Enum, index: Uint, data: [*c]Boolean) callconv(.C) void = undefined;
+pub var getIntegeri_v: *const fn (target: Enum, index: Uint, data: [*c]Int) callconv(.C) void = undefined;
+pub var enablei: *const fn (target: Enum, index: Uint) callconv(.C) void = undefined;
+pub var disablei: *const fn (target: Enum, index: Uint) callconv(.C) void = undefined;
+pub var isEnabledi: *const fn (target: Enum, index: Uint) callconv(.C) Boolean = undefined;
+pub var beginTransformFeedback: *const fn (primitiveMode: Enum) callconv(.C) void = undefined;
+pub var endTransformFeedback: *const fn () callconv(.C) void = undefined;
+pub var bindBufferRange: *const fn (
+    target: Enum,
+    index: Uint,
+    buffer: Uint,
+    offset: Intptr,
+    size: Sizeiptr,
+) callconv(.C) void = undefined;
+pub var bindBufferBase: *const fn (target: Enum, index: Uint, buffer: Uint) callconv(.C) void = undefined;
+pub var transformFeedbackVaryings: *const fn (
+    program: Uint,
+    count: Sizei,
+    varyings: [*]const [*:0]const Char,
+    bufferMode: Enum,
+) callconv(.C) void = undefined;
+pub var getTransformFeedbackVarying: *const fn (
+    program: Uint,
+    index: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    size: ?*Sizei,
+    type: ?*Enum,
+    name: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var clampColor: *const fn (target: Enum, clamp: Enum) callconv(.C) void = undefined;
+pub var beginConditionalRender: *const fn (id: Uint, mode: Enum) callconv(.C) void = undefined;
+pub var endConditionalRender: *const fn () callconv(.C) void = undefined;
+pub var vertexAttribIPointer: *const fn (
+    index: Uint,
+    size: Int,
+    type: Enum,
+    stride: Sizei,
+    pointer: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var getVertexAttribIiv: *const fn (index: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getVertexAttribIuiv: *const fn (index: Uint, pname: Enum, params: [*c]Uint) callconv(.C) void = undefined;
+pub var vertexAttribI1i: *const fn (index: Uint, x: Int) callconv(.C) void = undefined;
+pub var vertexAttribI2i: *const fn (index: Uint, x: Int, y: Int) callconv(.C) void = undefined;
+pub var vertexAttribI3i: *const fn (index: Uint, x: Int, y: Int, z: Int) callconv(.C) void = undefined;
+pub var vertexAttribI4i: *const fn (index: Uint, x: Int, y: Int, z: Int, w: Int) callconv(.C) void = undefined;
+pub var vertexAttribI1ui: *const fn (index: Uint, x: Uint) callconv(.C) void = undefined;
+pub var vertexAttribI2ui: *const fn (index: Uint, x: Uint, y: Uint) callconv(.C) void = undefined;
+pub var vertexAttribI3ui: *const fn (index: Uint, x: Uint, y: Uint, z: Uint) callconv(.C) void = undefined;
+pub var vertexAttribI4ui: *const fn (index: Uint, x: Uint, y: Uint, z: Uint, w: Uint) callconv(.C) void = undefined;
+pub var vertexAttribI1iv: *const fn (index: Uint, v: *const Int) callconv(.C) void = undefined;
+pub var vertexAttribI2iv: *const fn (index: Uint, v: *[2]Int) callconv(.C) void = undefined;
+pub var vertexAttribI3iv: *const fn (index: Uint, v: *[3]Int) callconv(.C) void = undefined;
+pub var vertexAttribI4iv: *const fn (index: Uint, v: *[4]Int) callconv(.C) void = undefined;
+pub var vertexAttribI1uiv: *const fn (index: Uint, v: *const Uint) callconv(.C) void = undefined;
+pub var vertexAttribI2uiv: *const fn (index: Uint, v: *[2]Uint) callconv(.C) void = undefined;
+pub var vertexAttribI3uiv: *const fn (index: Uint, v: *[3]Uint) callconv(.C) void = undefined;
+pub var vertexAttribI4uiv: *const fn (index: Uint, v: *[4]Uint) callconv(.C) void = undefined;
+pub var vertexAttribI4bv: *const fn (index: Uint, v: *[4]Byte) callconv(.C) void = undefined;
+pub var vertexAttribI4sv: *const fn (index: Uint, v: *[4]Short) callconv(.C) void = undefined;
+pub var vertexAttribI4ubv: *const fn (index: Uint, v: *[4]Ubyte) callconv(.C) void = undefined;
+pub var vertexAttribI4usv: *const fn (index: Uint, v: *[4]Ushort) callconv(.C) void = undefined;
+pub var getUniformuiv: *const fn (program: Uint, location: Int, params: [*c]Uint) callconv(.C) void = undefined;
+pub var bindFragDataLocation: *const fn (
+    program: Uint,
+    color: Uint,
+    name: [*:0]const Char,
+) callconv(.C) void = undefined;
+pub var getFragDataLocation: *const fn (program: Uint, name: [*:0]const Char) callconv(.C) Int = undefined;
+pub var uniform1ui: *const fn (location: Int, v0: Uint) callconv(.C) void = undefined;
+pub var uniform2ui: *const fn (location: Int, v0: Uint, v1: Uint) callconv(.C) void = undefined;
+pub var uniform3ui: *const fn (location: Int, v0: Uint, v1: Uint, v2: Uint) callconv(.C) void = undefined;
+pub var uniform4ui: *const fn (location: Int, v0: Uint, v1: Uint, v2: Uint, v3: Uint) callconv(.C) void = undefined;
+pub var uniform1uiv: *const fn (location: Int, count: Sizei, value: [*]const Uint) callconv(.C) void = undefined;
+pub var uniform2uiv: *const fn (location: Int, count: Sizei, value: [*]const Uint) callconv(.C) void = undefined;
+pub var uniform3uiv: *const fn (location: Int, count: Sizei, value: [*]const Uint) callconv(.C) void = undefined;
+pub var uniform4uiv: *const fn (location: Int, count: Sizei, value: [*]const Uint) callconv(.C) void = undefined;
+pub var texParameterIiv: *const fn (target: Enum, pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
+pub var texParameterIuiv: *const fn (
+    target: Enum,
+    pname: Enum,
+    params: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var getTexParameterIiv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getTexParameterIuiv: *const fn (target: Enum, pname: Enum, params: [*c]Uint) callconv(.C) void = undefined;
+pub var clearBufferiv: *const fn (buffer: Enum, drawbuffer: Int, value: [*c]const Int) callconv(.C) void = undefined;
+pub var clearBufferuiv: *const fn (
+    buffer: Enum,
+    drawbuffer: Int,
+    value: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var clearBufferfv: *const fn (
+    buffer: Enum,
+    drawbuffer: Int,
+    value: [*c]const Float,
+) callconv(.C) void = undefined;
+pub var clearBufferfi: *const fn (
+    buffer: Enum,
+    drawbuffer: Int,
+    depth: Float,
+    stencil: Int,
+) callconv(.C) void = undefined;
+pub var getStringi: *const fn (name: Enum, index: Uint) callconv(.C) ?[*:0]const Ubyte = undefined;
+pub var isRenderbuffer: *const fn (renderbuffer: Uint) callconv(.C) Boolean = undefined;
+pub var bindRenderbuffer: *const fn (target: Enum, renderbuffer: Uint) callconv(.C) void = undefined;
+pub var deleteRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]const Uint) callconv(.C) void = undefined;
+pub var genRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]Uint) callconv(.C) void = undefined;
+pub var renderbufferStorage: *const fn (
+    target: Enum,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+) callconv(.C) void = undefined;
+pub var getRenderbufferParameteriv: *const fn (
+    target: Enum,
+    pname: Enum,
+    params: [*c]Int,
+) callconv(.C) void = undefined;
+pub var isFramebuffer: *const fn (framebuffer: Uint) callconv(.C) Boolean = undefined;
+pub var bindFramebuffer: *const fn (target: Enum, framebuffer: Uint) callconv(.C) void = undefined;
+pub var deleteFramebuffers: *const fn (n: Sizei, framebuffers: [*c]const Uint) callconv(.C) void = undefined;
+pub var genFramebuffers: *const fn (n: Sizei, framebuffers: [*c]Uint) callconv(.C) void = undefined;
+pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
+pub var framebufferTexture1D: *const fn (
+    target: Enum,
+    attachment: Enum,
+    textarget: Enum,
+    texture: Uint,
+    level: Int,
+) callconv(.C) void = undefined;
+pub var framebufferTexture2D: *const fn (
+    target: Enum,
+    attachment: Enum,
+    textarget: Enum,
+    texture: Uint,
+    level: Int,
+) callconv(.C) void = undefined;
+pub var framebufferTexture3D: *const fn (
+    target: Enum,
+    attachment: Enum,
+    textarget: Enum,
+    texture: Uint,
+    level: Int,
+    zoffset: Int,
+) callconv(.C) void = undefined;
+pub var framebufferRenderbuffer: *const fn (
+    target: Enum,
+    attachment: Enum,
+    renderbuffertarget: Enum,
+    renderbuffer: Uint,
+) callconv(.C) void = undefined;
+pub var getFramebufferAttachmentParameteriv: *const fn (
+    target: Enum,
+    attachment: Enum,
+    pname: Enum,
+    params: [*c]Int,
+) callconv(.C) void = undefined;
+pub var generateMipmap: *const fn (target: Enum) callconv(.C) void = undefined;
+pub var blitFramebuffer: *const fn (
+    srcX0: Int,
+    srcY0: Int,
+    srcX1: Int,
+    srcY1: Int,
+    dstX0: Int,
+    dstY0: Int,
+    dstX1: Int,
+    dstY1: Int,
+    mask: Bitfield,
+    filter: Enum,
+) callconv(.C) void = undefined;
+pub var renderbufferStorageMultisample: *const fn (
+    target: Enum,
+    samples: Sizei,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+) callconv(.C) void = undefined;
+pub var framebufferTextureLayer: *const fn (
+    target: Enum,
+    attachment: Enum,
+    texture: Uint,
+    level: Int,
+    layer: Int,
+) callconv(.C) void = undefined;
+pub var mapBufferRange: *const fn (
+    target: Enum,
+    offset: Intptr,
+    length: Sizeiptr,
+    access: Bitfield,
+) callconv(.C) ?*anyopaque = undefined;
+pub var flushMappedBufferRange: *const fn (
+    target: Enum,
+    offset: Intptr,
+    length: Sizeiptr,
+) callconv(.C) void = undefined;
+pub var bindVertexArray: *const fn (array: Uint) callconv(.C) void = undefined;
+pub var deleteVertexArrays: *const fn (n: Sizei, arrays: [*c]const Uint) callconv(.C) void = undefined;
+pub var genVertexArrays: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
+pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
 //--------------------------------------------------------------------------------------------------
