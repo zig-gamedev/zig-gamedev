@@ -480,3 +480,134 @@ pub var copyTexSubImage3D: *const fn (
     height: Sizei,
 ) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
+//
+// OpenGL 1.3 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const TEXTURE0 = 0x84C0;
+pub const TEXTURE1 = 0x84C1;
+pub const TEXTURE2 = 0x84C2;
+pub const TEXTURE3 = 0x84C3;
+pub const TEXTURE4 = 0x84C4;
+pub const TEXTURE5 = 0x84C5;
+pub const TEXTURE6 = 0x84C6;
+pub const TEXTURE7 = 0x84C7;
+pub const TEXTURE8 = 0x84C8;
+pub const TEXTURE9 = 0x84C9;
+pub const TEXTURE10 = 0x84CA;
+pub const TEXTURE11 = 0x84CB;
+pub const TEXTURE12 = 0x84CC;
+pub const TEXTURE13 = 0x84CD;
+pub const TEXTURE14 = 0x84CE;
+pub const TEXTURE15 = 0x84CF;
+pub const TEXTURE16 = 0x84D0;
+pub const TEXTURE17 = 0x84D1;
+pub const TEXTURE18 = 0x84D2;
+pub const TEXTURE19 = 0x84D3;
+pub const TEXTURE20 = 0x84D4;
+pub const TEXTURE21 = 0x84D5;
+pub const TEXTURE22 = 0x84D6;
+pub const TEXTURE23 = 0x84D7;
+pub const TEXTURE24 = 0x84D8;
+pub const TEXTURE25 = 0x84D9;
+pub const TEXTURE26 = 0x84DA;
+pub const TEXTURE27 = 0x84DB;
+pub const TEXTURE28 = 0x84DC;
+pub const TEXTURE29 = 0x84DD;
+pub const TEXTURE30 = 0x84DE;
+pub const TEXTURE31 = 0x84DF;
+pub const ACTIVE_TEXTURE = 0x84E0;
+pub const MULTISAMPLE = 0x809D;
+pub const SAMPLE_ALPHA_TO_COVERAGE = 0x809E;
+pub const SAMPLE_ALPHA_TO_ONE = 0x809F;
+pub const SAMPLE_COVERAGE = 0x80A0;
+pub const SAMPLE_BUFFERS = 0x80A8;
+pub const SAMPLES = 0x80A9;
+pub const SAMPLE_COVERAGE_VALUE = 0x80AA;
+pub const SAMPLE_COVERAGE_INVERT = 0x80AB;
+pub const TEXTURE_CUBE_MAP = 0x8513;
+pub const TEXTURE_BINDING_CUBE_MAP = 0x8514;
+pub const TEXTURE_CUBE_MAP_POSITIVE_X = 0x8515;
+pub const TEXTURE_CUBE_MAP_NEGATIVE_X = 0x8516;
+pub const TEXTURE_CUBE_MAP_POSITIVE_Y = 0x8517;
+pub const TEXTURE_CUBE_MAP_NEGATIVE_Y = 0x8518;
+pub const TEXTURE_CUBE_MAP_POSITIVE_Z = 0x8519;
+pub const TEXTURE_CUBE_MAP_NEGATIVE_Z = 0x851A;
+pub const PROXY_TEXTURE_CUBE_MAP = 0x851B;
+pub const MAX_CUBE_MAP_TEXTURE_SIZE = 0x851C;
+pub const COMPRESSED_RGB = 0x84ED;
+pub const COMPRESSED_RGBA = 0x84EE;
+pub const TEXTURE_COMPRESSION_HINT = 0x84EF;
+pub const TEXTURE_COMPRESSED_IMAGE_SIZE = 0x86A0;
+pub const TEXTURE_COMPRESSED = 0x86A1;
+pub const NUM_COMPRESSED_TEXTURE_FORMATS = 0x86A2;
+pub const COMPRESSED_TEXTURE_FORMATS = 0x86A3;
+pub const CLAMP_TO_BORDER = 0x812D;
+
+pub var activeTexture: *const fn (texture: Enum) callconv(.C) void = undefined;
+pub var sampleCoverage: *const fn (value: Float, invert: Boolean) callconv(.C) void = undefined;
+pub var compressedTexImage3D: *const fn (
+    target: Enum,
+    level: Int,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+    depth: Sizei,
+    border: Int,
+    imageSize: Sizei,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var compressedTexImage2D: *const fn (
+    target: Enum,
+    level: Int,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+    border: Int,
+    imageSize: Sizei,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var compressedTexImage1D: *const fn (
+    target: Enum,
+    level: Int,
+    internalformat: Enum,
+    width: Sizei,
+    border: Int,
+    imageSize: Sizei,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var compressedTexSubImage3D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    yoffset: Int,
+    zoffset: Int,
+    width: Sizei,
+    height: Sizei,
+    depth: Sizei,
+    format: Enum,
+    imageSize: Sizei,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var compressedTexSubImage2D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    yoffset: Int,
+    width: Sizei,
+    height: Sizei,
+    format: Enum,
+    imageSize: Sizei,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var compressedTexSubImage1D: *const fn (
+    target: Enum,
+    level: Int,
+    xoffset: Int,
+    width: Sizei,
+    format: Enum,
+    imageSize: Sizei,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var getCompressedTexImage: *const fn (target: Enum, level: Int, img: ?*anyopaque) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
