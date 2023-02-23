@@ -892,6 +892,13 @@ pub fn pollEvent(event: ?*Event) bool {
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
 
+pub const hint_windows_dpi_awareness = "SDL_WINDOWS_DPI_AWARENESS";
+
+pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
+    return SDL_SetHint(name, value) != 0;
+}
+extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) i32;
+
 pub const gl = struct {
     pub const Context = *anyopaque;
 
