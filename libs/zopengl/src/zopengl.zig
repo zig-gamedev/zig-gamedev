@@ -740,3 +740,315 @@ pub var unmapBuffer: *const fn (target: Enum) callconv(.C) Boolean = undefined;
 pub var getBufferParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 pub var getBufferPointerv: *const fn (target: Enum, pname: Enum, params: *?*anyopaque) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
+//
+// OpenGL 2.0 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const Char = i8;
+pub const Short = i16;
+pub const Byte = i8;
+pub const Ushort = u16;
+
+pub const BLEND_EQUATION_RGB = 0x8009;
+pub const VERTEX_ATTRIB_ARRAY_ENABLED = 0x8622;
+pub const VERTEX_ATTRIB_ARRAY_SIZE = 0x8623;
+pub const VERTEX_ATTRIB_ARRAY_STRIDE = 0x8624;
+pub const VERTEX_ATTRIB_ARRAY_TYPE = 0x8625;
+pub const CURRENT_VERTEX_ATTRIB = 0x8626;
+pub const VERTEX_PROGRAM_POINT_SIZE = 0x8642;
+pub const VERTEX_ATTRIB_ARRAY_POINTER = 0x8645;
+pub const STENCIL_BACK_FUNC = 0x8800;
+pub const STENCIL_BACK_FAIL = 0x8801;
+pub const STENCIL_BACK_PASS_DEPTH_FAIL = 0x8802;
+pub const STENCIL_BACK_PASS_DEPTH_PASS = 0x8803;
+pub const MAX_DRAW_BUFFERS = 0x8824;
+pub const DRAW_BUFFER0 = 0x8825;
+pub const DRAW_BUFFER1 = 0x8826;
+pub const DRAW_BUFFER2 = 0x8827;
+pub const DRAW_BUFFER3 = 0x8828;
+pub const DRAW_BUFFER4 = 0x8829;
+pub const DRAW_BUFFER5 = 0x882A;
+pub const DRAW_BUFFER6 = 0x882B;
+pub const DRAW_BUFFER7 = 0x882C;
+pub const DRAW_BUFFER8 = 0x882D;
+pub const DRAW_BUFFER9 = 0x882E;
+pub const DRAW_BUFFER10 = 0x882F;
+pub const DRAW_BUFFER11 = 0x8830;
+pub const DRAW_BUFFER12 = 0x8831;
+pub const DRAW_BUFFER13 = 0x8832;
+pub const DRAW_BUFFER14 = 0x8833;
+pub const DRAW_BUFFER15 = 0x8834;
+pub const BLEND_EQUATION_ALPHA = 0x883D;
+pub const MAX_VERTEX_ATTRIBS = 0x8869;
+pub const VERTEX_ATTRIB_ARRAY_NORMALIZED = 0x886A;
+pub const MAX_TEXTURE_IMAGE_UNITS = 0x8872;
+pub const FRAGMENT_SHADER = 0x8B30;
+pub const VERTEX_SHADER = 0x8B31;
+pub const MAX_FRAGMENT_UNIFORM_COMPONENTS = 0x8B49;
+pub const MAX_VERTEX_UNIFORM_COMPONENTS = 0x8B4A;
+pub const MAX_VARYING_FLOATS = 0x8B4B;
+pub const MAX_VERTEX_TEXTURE_IMAGE_UNITS = 0x8B4C;
+pub const MAX_COMBINED_TEXTURE_IMAGE_UNITS = 0x8B4D;
+pub const SHADER_TYPE = 0x8B4F;
+pub const FLOAT_VEC2 = 0x8B50;
+pub const FLOAT_VEC3 = 0x8B51;
+pub const FLOAT_VEC4 = 0x8B52;
+pub const INT_VEC2 = 0x8B53;
+pub const INT_VEC3 = 0x8B54;
+pub const INT_VEC4 = 0x8B55;
+pub const BOOL = 0x8B56;
+pub const BOOL_VEC2 = 0x8B57;
+pub const BOOL_VEC3 = 0x8B58;
+pub const BOOL_VEC4 = 0x8B59;
+pub const FLOAT_MAT2 = 0x8B5A;
+pub const FLOAT_MAT3 = 0x8B5B;
+pub const FLOAT_MAT4 = 0x8B5C;
+pub const SAMPLER_1D = 0x8B5D;
+pub const SAMPLER_2D = 0x8B5E;
+pub const SAMPLER_3D = 0x8B5F;
+pub const SAMPLER_CUBE = 0x8B60;
+pub const SAMPLER_1D_SHADOW = 0x8B61;
+pub const SAMPLER_2D_SHADOW = 0x8B62;
+pub const DELETE_STATUS = 0x8B80;
+pub const COMPILE_STATUS = 0x8B81;
+pub const LINK_STATUS = 0x8B82;
+pub const VALIDATE_STATUS = 0x8B83;
+pub const INFO_LOG_LENGTH = 0x8B84;
+pub const ATTACHED_SHADERS = 0x8B85;
+pub const ACTIVE_UNIFORMS = 0x8B86;
+pub const ACTIVE_UNIFORM_MAX_LENGTH = 0x8B87;
+pub const SHADER_SOURCE_LENGTH = 0x8B88;
+pub const ACTIVE_ATTRIBUTES = 0x8B89;
+pub const ACTIVE_ATTRIBUTE_MAX_LENGTH = 0x8B8A;
+pub const FRAGMENT_SHADER_DERIVATIVE_HINT = 0x8B8B;
+pub const SHADING_LANGUAGE_VERSION = 0x8B8C;
+pub const CURRENT_PROGRAM = 0x8B8D;
+pub const POINT_SPRITE_COORD_ORIGIN = 0x8CA0;
+pub const LOWER_LEFT = 0x8CA1;
+pub const UPPER_LEFT = 0x8CA2;
+pub const STENCIL_BACK_REF = 0x8CA3;
+pub const STENCIL_BACK_VALUE_MASK = 0x8CA4;
+pub const STENCIL_BACK_WRITEMASK = 0x8CA5;
+
+pub var blendEquationSeparate: *const fn (modeRGB: Enum, modeAlpha: Enum) callconv(.C) void = undefined;
+pub var drawBuffers: *const fn (n: Sizei, bufs: [*c]const Enum) callconv(.C) void = undefined;
+pub var stencilOpSeparate: *const fn (
+    face: Enum,
+    sfail: Enum,
+    dpfail: Enum,
+    dppass: Enum,
+) callconv(.C) void = undefined;
+pub var stencilFuncSeparate: *const fn (face: Enum, func: Enum, ref: Int, mask: Uint) callconv(.C) void = undefined;
+pub var stencilMaskSeparate: *const fn (face: Enum, mask: Uint) callconv(.C) void = undefined;
+pub var attachShader: *const fn (program: Uint, shader: Uint) callconv(.C) void = undefined;
+pub var bindAttribLocation: *const fn (
+    program: Uint,
+    index: Uint,
+    name: [*:0]const Char,
+) callconv(.C) void = undefined;
+pub var compileShader: *const fn (shader: Uint) callconv(.C) void = undefined;
+pub var createProgram: *const fn () callconv(.C) Uint = undefined;
+pub var createShader: *const fn (type: Enum) callconv(.C) Uint = undefined;
+pub var deleteProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+pub var deleteShader: *const fn (shader: Uint) callconv(.C) void = undefined;
+pub var detachShader: *const fn (program: Uint, shader: Uint) callconv(.C) void = undefined;
+pub var disableVertexAttribArray: *const fn (index: Uint) callconv(.C) void = undefined;
+pub var enableVertexAttribArray: *const fn (index: Uint) callconv(.C) void = undefined;
+pub var getActiveAttrib: *const fn (
+    program: Uint,
+    index: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    size: ?*Int,
+    type: ?*Enum,
+    name: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var getActiveUniform: *const fn (
+    program: Uint,
+    index: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    size: ?*Int,
+    type: ?*Enum,
+    name: ?[*:0]Char,
+) callconv(.C) Int = undefined;
+pub var getAttachedShaders: *const fn (
+    program: Uint,
+    maxCount: Sizei,
+    count: ?*Sizei,
+    shaders: ?[*]Uint,
+) callconv(.C) void = undefined;
+pub var getAttribLocation: *const fn (program: Uint, name: [*:0]const Char) callconv(.C) Int = undefined;
+pub var getProgramiv: *const fn (program: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getProgramInfoLog: *const fn (
+    program: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    infoLog: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var getShaderiv: *const fn (shader: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getShaderInfoLog: *const fn (
+    shader: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    infoLog: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var getShaderSource: *const fn (
+    shader: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    source: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var getUniformLocation: *const fn (program: Uint, name: [*:0]const Char) callconv(.C) void = undefined;
+pub var getUniformfv: *const fn (program: Uint, location: Int, params: [*c]Float) callconv(.C) void = undefined;
+pub var getUniformiv: *const fn (program: Uint, location: Int, params: [*c]Int) callconv(.C) void = undefined;
+pub var getVertexAttribdv: *const fn (index: Uint, pname: Enum, params: [*c]Double) callconv(.C) void = undefined;
+pub var getVertexAttribfv: *const fn (index: Uint, pname: Enum, params: [*c]Float) callconv(.C) void = undefined;
+pub var getVertexAttribiv: *const fn (index: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub var getVertexAttribPointerv: *const fn (
+    index: Uint,
+    pname: Enum,
+    pointer: *?*anyopaque,
+) callconv(.C) void = undefined;
+pub var isProgram: *const fn (program: Uint) callconv(.C) Boolean = undefined;
+pub var isShader: *const fn (shader: Uint) callconv(.C) Boolean = undefined;
+pub var linkProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+pub var shaderSource: *const fn (
+    shader: Uint,
+    count: Sizei,
+    string: [*][*:0]const Char,
+    length: ?[*]const Int,
+) callconv(.C) void = undefined;
+pub var useProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+pub var uniform1f: *const fn (location: Int, v0: Float) callconv(.C) void = undefined;
+pub var uniform2f: *const fn (location: Int, v0: Float, v1: Float) callconv(.C) void = undefined;
+pub var uniform3f: *const fn (location: Int, v0: Float, v1: Float, v2: Float) callconv(.C) void = undefined;
+pub var uniform4f: *const fn (
+    location: Int,
+    v0: Float,
+    v1: Float,
+    v2: Float,
+    v3: Float,
+) callconv(.C) void = undefined;
+pub var uniform1i: *const fn (location: Int, v0: Int) callconv(.C) void = undefined;
+pub var uniform2i: *const fn (location: Int, v0: Int, v1: Int) callconv(.C) void = undefined;
+pub var uniform3i: *const fn (location: Int, v0: Int, v1: Int, v2: Int) callconv(.C) void = undefined;
+pub var uniform4i: *const fn (
+    location: Int,
+    v0: Int,
+    v1: Int,
+    v2: Int,
+    v3: Int,
+) callconv(.C) void = undefined;
+pub var uniform1fv: *const fn (
+    location: Int,
+    count: Sizei,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniform2fv: *const fn (
+    location: Int,
+    count: Sizei,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniform3fv: *const fn (
+    location: Int,
+    count: Sizei,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniform4fv: *const fn (
+    location: Int,
+    count: Sizei,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniform1iv: *const fn (location: Int, count: Sizei, value: [*]const Int) callconv(.C) void = undefined;
+pub var uniform2iv: *const fn (location: Int, count: Sizei, value: [*]const Int) callconv(.C) void = undefined;
+pub var uniform3iv: *const fn (location: Int, count: Sizei, value: [*]const Int) callconv(.C) void = undefined;
+pub var uniform4iv: *const fn (location: Int, count: Sizei, value: [*]const Int) callconv(.C) void = undefined;
+pub var uniformMatrix2fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix3fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var uniformMatrix4fv: *const fn (
+    location: Int,
+    count: Sizei,
+    transpose: Boolean,
+    value: [*]const Float,
+) callconv(.C) void = undefined;
+pub var validateProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+pub var vertexAttrib1d: *const fn (index: Uint, x: Double) callconv(.C) void = undefined;
+pub var vertexAttrib1dv: *const fn (index: Uint, v: *const Double) callconv(.C) void = undefined;
+pub var vertexAttrib1f: *const fn (index: Uint, x: Float) callconv(.C) void = undefined;
+pub var vertexAttrib1fv: *const fn (index: Uint, v: *const Float) callconv(.C) void = undefined;
+pub var vertexAttrib1s: *const fn (index: Uint, x: Short) callconv(.C) void = undefined;
+pub var vertexAttrib1sv: *const fn (index: Uint, v: *const Short) callconv(.C) void = undefined;
+pub var vertexAttrib2d: *const fn (index: Uint, x: Double, y: Double) callconv(.C) void = undefined;
+pub var vertexAttrib2dv: *const fn (index: Uint, v: *[2]Double) callconv(.C) void = undefined;
+pub var vertexAttrib2f: *const fn (index: Uint, x: Float, y: Float) callconv(.C) void = undefined;
+pub var vertexAttrib2fv: *const fn (index: Uint, v: *[2]Float) callconv(.C) void = undefined;
+pub var vertexAttrib2s: *const fn (index: Uint, x: Short, y: Short) callconv(.C) void = undefined;
+pub var vertexAttrib2sv: *const fn (index: Uint, v: *[2]Short) callconv(.C) void = undefined;
+pub var vertexAttrib3d: *const fn (index: Uint, x: Double, y: Double, z: Double) callconv(.C) void = undefined;
+pub var vertexAttrib3dv: *const fn (index: Uint, v: *[3]Double) callconv(.C) void = undefined;
+pub var vertexAttrib3f: *const fn (index: Uint, x: Float, y: Float, z: Float) callconv(.C) void = undefined;
+pub var vertexAttrib3fv: *const fn (index: Uint, v: *[3]Float) callconv(.C) void = undefined;
+pub var vertexAttrib3s: *const fn (index: Uint, x: Short, y: Short, z: Short) callconv(.C) void = undefined;
+pub var vertexAttrib3sv: *const fn (index: Uint, v: *[3]Short) callconv(.C) void = undefined;
+pub var vertexAttrib4Nbv: *const fn (index: Uint, v: *[4]Byte) callconv(.C) void = undefined;
+pub var vertexAttrib4Niv: *const fn (index: Uint, v: *[4]Int) callconv(.C) void = undefined;
+pub var vertexAttrib4Nsv: *const fn (index: Uint, v: *[4]Short) callconv(.C) void = undefined;
+pub var vertexAttrib4Nub: *const fn (
+    index: Uint,
+    x: Ubyte,
+    y: Ubyte,
+    z: Ubyte,
+    w: Ubyte,
+) callconv(.C) void = undefined;
+pub var vertexAttrib4Nubv: *const fn (index: Uint, v: *[4]Ubyte) callconv(.C) void = undefined;
+pub var vertexAttrib4Nuiv: *const fn (index: Uint, v: *[4]Uint) callconv(.C) void = undefined;
+pub var vertexAttrib4Nusv: *const fn (index: Uint, v: *[4]Ushort) callconv(.C) void = undefined;
+pub var vertexAttrib4bv: *const fn (index: Uint, v: *[4]Byte) callconv(.C) void = undefined;
+pub var vertexAttrib4d: *const fn (
+    index: Uint,
+    x: Double,
+    y: Double,
+    z: Double,
+    w: Double,
+) callconv(.C) void = undefined;
+pub var vertexAttrib4dv: *const fn (index: Uint, v: *[4]Double) callconv(.C) void = undefined;
+pub var vertexAttrib4f: *const fn (
+    index: Uint,
+    x: Float,
+    y: Float,
+    z: Float,
+    w: Float,
+) callconv(.C) void = undefined;
+pub var vertexAttrib4fv: *const fn (index: Uint, v: *[4]Float) callconv(.C) void = undefined;
+pub var vertexAttrib4iv: *const fn (index: Uint, v: *[4]Int) callconv(.C) void = undefined;
+pub var vertexAttrib4s: *const fn (
+    index: Uint,
+    x: Short,
+    y: Short,
+    z: Short,
+    w: Short,
+) callconv(.C) void = undefined;
+pub var vertexAttrib4sv: *const fn (index: Uint, v: *[4]Short) callconv(.C) void = undefined;
+pub var vertexAttrib4ubv: *const fn (index: Uint, v: *[4]Ubyte) callconv(.C) void = undefined;
+pub var vertexAttrib4uiv: *const fn (index: Uint, v: *[4]Uint) callconv(.C) void = undefined;
+pub var vertexAttrib4usv: *const fn (index: Uint, v: *[4]Ushort) callconv(.C) void = undefined;
+pub var vertexAttribPointer: *const fn (
+    index: Uint,
+    size: Int,
+    type: Enum,
+    normalized: Boolean,
+    stride: Sizei,
+    pointer: ?*const anyopaque,
+) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
