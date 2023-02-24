@@ -1727,13 +1727,13 @@ pub const INT_2_10_10_10_REV = 0x8D9F;
 const std = @import("std");
 
 pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32, minor: u32) !void {
-    std.debug.assert(major >= 1 and major <= 3);
-    std.debug.assert(minor >= 0 and minor <= 3);
+    const ver = 10 * major + minor;
+    std.debug.assert(ver >= 10 and ver <= 33);
 
     loaderFunc = loader;
 
     // OpenGL 1.0
-    if (major >= 1 and minor >= 0) {
+    if (ver >= 10) {
         cullFace = try getProcAddress(@TypeOf(cullFace), "glCullFace");
         frontFace = try getProcAddress(@TypeOf(frontFace), "glFrontFace");
         hint = try getProcAddress(@TypeOf(hint), "glHint");
@@ -1785,7 +1785,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 1.1
-    if (major >= 1 and minor >= 1) {
+    if (ver >= 11) {
         drawArrays = try getProcAddress(@TypeOf(drawArrays), "glDrawArrays");
         drawElements = try getProcAddress(@TypeOf(drawElements), "glDrawElements");
         polygonOffset = try getProcAddress(@TypeOf(polygonOffset), "glPolygonOffset");
@@ -1802,7 +1802,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 1.2
-    if (major >= 1 and minor >= 2) {
+    if (ver >= 12) {
         drawRangeElements = try getProcAddress(@TypeOf(drawRangeElements), "glDrawRangeElements");
         texImage3D = try getProcAddress(@TypeOf(texImage3D), "glTexImage3D");
         texSubImage3D = try getProcAddress(@TypeOf(texSubImage3D), "glTexSubImage3D");
@@ -1810,7 +1810,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 1.3
-    if (major >= 1 and minor >= 3) {
+    if (ver >= 13) {
         activeTexture = try getProcAddress(@TypeOf(activeTexture), "glActiveTexture");
         sampleCoverage = try getProcAddress(@TypeOf(sampleCoverage), "glSampleCoverage");
         compressedTexImage3D = try getProcAddress(@TypeOf(compressedTexImage3D), "glCompressedTexImage3D");
@@ -1823,7 +1823,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 1.4
-    if (major >= 1 and minor >= 4) {
+    if (ver >= 14) {
         blendFuncSeparate = try getProcAddress(@TypeOf(blendFuncSeparate), "glBlendFuncSeparate");
         multiDrawArrays = try getProcAddress(@TypeOf(multiDrawArrays), "glMultiDrawArrays");
         multiDrawElements = try getProcAddress(@TypeOf(multiDrawElements), "glMultiDrawElements");
@@ -1836,7 +1836,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 1.5
-    if (major >= 1 and minor >= 5) {
+    if (ver >= 15) {
         genQueries = try getProcAddress(@TypeOf(genQueries), "glGenQueries");
         deleteQueries = try getProcAddress(@TypeOf(deleteQueries), "glDeleteQueries");
         isQuery = try getProcAddress(@TypeOf(isQuery), "glIsQuery");
@@ -1859,7 +1859,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 2.0
-    if (major >= 2 and minor >= 0) {
+    if (ver >= 20) {
         blendEquationSeparate = try getProcAddress(@TypeOf(blendEquationSeparate), "glBlendEquationSeparate");
         drawBuffers = try getProcAddress(@TypeOf(drawBuffers), "glDrawBuffers");
         stencilOpSeparate = try getProcAddress(@TypeOf(stencilOpSeparate), "glStencilOpSeparate");
@@ -1959,7 +1959,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 2.1
-    if (major >= 2 and minor >= 1) {
+    if (ver >= 21) {
         uniformMatrix2x3fv = try getProcAddress(@TypeOf(uniformMatrix2x3fv), "glUniformMatrix2x3fv");
         uniformMatrix3x2fv = try getProcAddress(@TypeOf(uniformMatrix3x2fv), "glUniformMatrix3x2fv");
         uniformMatrix2x4fv = try getProcAddress(@TypeOf(uniformMatrix2x4fv), "glUniformMatrix2x4fv");
@@ -1969,7 +1969,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 
     // OpenGL 3.0
-    if (major >= 3 and minor >= 0) {
+    if (ver >= 30) {
         colorMaski = try getProcAddress(@TypeOf(colorMaski), "glColorMaski");
         getBooleani_v = try getProcAddress(@TypeOf(getBooleani_v), "glGetBooleani_v");
         getIntegeri_v = try getProcAddress(@TypeOf(getIntegeri_v), "glGetIntegeri_v");
