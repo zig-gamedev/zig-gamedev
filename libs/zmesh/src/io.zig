@@ -1,7 +1,7 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = @import("memory.zig");
-const zcgltf = @import("zcgltf.zig");
+pub const zcgltf = @import("zcgltf.zig");
 
 pub fn parseAndLoadFile(pathname: [:0]const u8) zcgltf.Error!*zcgltf.Data {
     const options = zcgltf.Options{
