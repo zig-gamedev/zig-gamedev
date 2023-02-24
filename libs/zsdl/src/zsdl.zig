@@ -935,7 +935,7 @@ pub const getPerformanceCounter = SDL_GetPerformanceCounter;
 extern fn SDL_GetPerformanceCounter() u64;
 
 /// `pub fn getPerformanceFrequency() u64`
-pub const getPerformanceFrequency = SDL_GetPerformanceFrequency();
+pub const getPerformanceFrequency = SDL_GetPerformanceFrequency;
 extern fn SDL_GetPerformanceFrequency() u64;
 
 /// `pub fn delay(ms: u32) void`
