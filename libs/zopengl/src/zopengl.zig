@@ -1620,7 +1620,70 @@ pub const UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER = 0x8A45;
 pub const UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER = 0x8A46;
 pub const INVALID_INDEX = 0xFFFFFFFF;
 
-// TODO: Add functions.
+pub var drawArraysInstanced: *const fn (
+    mode: Enum,
+    first: Int,
+    count: Sizei,
+    instancecount: Sizei,
+) callconv(.C) void = undefined;
+pub var drawElementsInstanced: *const fn (
+    mode: Enum,
+    count: Sizei,
+    type: Enum,
+    indices: ?*const anyopaque,
+    instancecount: Sizei,
+) callconv(.C) void = undefined;
+pub var texBuffer: *const fn (target: Enum, internalformat: Enum, buffer: Uint) callconv(.C) void = undefined;
+pub var primitiveRestartIndex: *const fn (index: Uint) callconv(.C) void = undefined;
+pub var copyBufferSubData: *const fn (
+    readTarget: Enum,
+    writeTarget: Enum,
+    readOffset: Intptr,
+    writeOffset: Intptr,
+    size: Sizeiptr,
+) callconv(.C) void = undefined;
+pub var getUniformIndices: *const fn (
+    program: Uint,
+    uniformCount: Sizei,
+    uniformNames: [*]const [*:0]const Char,
+    uniformIndices: [*]Uint,
+) callconv(.C) void = undefined;
+pub var getActiveUniformsiv: *const fn (
+    program: Uint,
+    uniformCount: Sizei,
+    uniformIndices: [*]const Uint,
+    pname: Enum,
+    params: [*c]Int,
+) callconv(.C) void = undefined;
+pub var getActiveUniformName: *const fn (
+    program: Uint,
+    uniformIndex: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    uniformName: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var getUniformBlockIndex: *const fn (
+    program: Uint,
+    uniformBlockName: [*:0]const Char,
+) callconv(.C) Uint = undefined;
+pub var getActiveUniformBlockiv: *const fn (
+    program: Uint,
+    uniformBlockIndex: Uint,
+    pname: Enum,
+    params: [*c]Int,
+) callconv(.C) void = undefined;
+pub var getActiveUniformBlockName: *const fn (
+    program: Uint,
+    uniformBlockIndex: Uint,
+    bufSize: Sizei,
+    length: ?*Sizei,
+    uniformBlockName: ?[*:0]Char,
+) callconv(.C) void = undefined;
+pub var uniformBlockBinding: *const fn (
+    program: Uint,
+    uniformBlockIndex: Uint,
+    uniformBlockBinding: Uint,
+) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 3.2 (Core Profile)
@@ -1728,11 +1791,10 @@ const std = @import("std");
 const assert = std.debug.assert;
 
 pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32, minor: u32) !void {
-    assert(major >= 1 and major <= 3);
-    assert(minor >= 0 and minor <= 5);
-
     const ver = 10 * major + minor;
 
+    assert(major >= 1 and major <= 3);
+    assert(minor >= 0 and minor <= 5);
     assert(ver >= 10 and ver <= 33);
 
     loaderFunc = loader;
