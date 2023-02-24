@@ -1977,6 +1977,7 @@ const assert = std.debug.assert;
 pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
+    // Max. supported version is 3.3 for now.
     assert(major >= 1 and major <= 3);
     assert(minor >= 0 and minor <= 5);
     assert(ver >= 10 and ver <= 33);

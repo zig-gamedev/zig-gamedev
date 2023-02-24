@@ -3,6 +3,8 @@ const sdl = @import("zsdl");
 const gl = @import("zopengl");
 
 pub fn main() !void {
+    _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
+
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
 
@@ -19,7 +21,7 @@ pub fn main() !void {
         sdl.Window.pos_undefined,
         600,
         600,
-        .{ .opengl = true },
+        .{ .opengl = true, .allow_highdpi = true },
     );
     defer window.destroy();
 
