@@ -906,43 +906,40 @@ pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
 }
 extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) i32;
 
-pub const DisplayID = u32;
+pub const DisplayId = u32;
 
 pub const DisplayMode = DisplayMode_SDL2;
 
 const DisplayMode_SDL2 = extern struct {
     format: u32,
-    w: c_int,
-    h: c_int,
-    refresh_rate: c_int,
+    w: i32,
+    h: i32,
+    refresh_rate: i32,
     driverdata: *anyopaque,
 };
 
 const DisplayMode_SDL3 = extern struct {
-    displayID: DisplayID,
+    display_id: DisplayId,
     format: u32,
-    pixel_w: c_int,
-    pixel_h: c_int,
-    screen_w: c_int,
-    screen_h: c_int,
+    pixel_w: i32,
+    pixel_h: i32,
+    screen_w: i32,
+    screen_h: i32,
     display_scale: f32,
     refresh_rate: f32,
     driverdata: *anyopaque,
 };
 
-pub fn getPerformanceCounter() u64 {
-    return SDL_GetPerformanceCounter();
-}
+/// `pub fn getPerformanceCounter() u64`
+pub const getPerformanceCounter = SDL_GetPerformanceCounter;
 extern fn SDL_GetPerformanceCounter() u64;
 
-pub fn getPerformanceFrequency() u64 {
-    return SDL_GetPerformanceFrequency();
-}
+/// `pub fn getPerformanceFrequency() u64`
+pub const getPerformanceFrequency = SDL_GetPerformanceFrequency();
 extern fn SDL_GetPerformanceFrequency() u64;
 
-pub fn delay(ms: u32) void {
-    SDL_Delay(ms);
-}
+/// `pub fn delay(ms: u32) void`
+pub const delay = SDL_Delay;
 extern fn SDL_Delay(ms: u32) void;
 
 pub const gl = struct {
