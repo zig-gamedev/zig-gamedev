@@ -22,7 +22,7 @@ Now in your code you may import and use `zpix`:
 
 ```zig
 const std = @import("std");
-const zsdl = @import("zsdl");
+const sdl = @import("zsdl");
 
 pub fn main() !void {
     ...
