@@ -475,6 +475,18 @@ pub const RESOURCE_BARRIER = extern struct {
     }
 };
 
+pub const SUBRESOURCE_DATA = extern struct {
+    pData: ?[*]u8,
+    RowPitch: UINT,
+    SlicePitch: UINT,
+};
+
+pub const MEMCPY_DEST = extern struct {
+    pData: ?[*]u8,
+    RowPitch: UINT,
+    SlicePitch: UINT,
+};
+
 pub const SUBRESOURCE_FOOTPRINT = extern struct {
     Format: dxgi.FORMAT,
     Width: UINT,
@@ -1262,6 +1274,11 @@ pub const FEATURE_DATA_D3D12_OPTIONS = extern struct {
 
 pub const FEATURE_DATA_SHADER_MODEL = extern struct {
     HighestShaderModel: SHADER_MODEL,
+};
+
+pub const FEATURE_DATA_FORMAT_INFO = extern struct {
+    Format: dxgi.FORMAT,
+    PlaneCount: u8,
 };
 
 pub const RENDER_PASS_TIER = enum(UINT) {
