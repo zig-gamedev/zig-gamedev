@@ -9,6 +9,7 @@ const d3d12 = zwin32.d3d12;
 const d3d12d = zwin32.d3d12d;
 const d2d1 = zwin32.d2d1;
 const d3d11on12 = zwin32.d3d11on12;
+const dds_loader = zwin32.dds_loader;
 const wic = zwin32.wic;
 const HResultError = zwin32.HResultError;
 const hrPanic = zwin32.hrPanic;
@@ -1536,6 +1537,115 @@ pub const GraphicsContext = struct {
             .Type = .PLACED_FOOTPRINT,
             .u = .{ .PlacedFootprint = layout[0] },
         }, null);
+
+        return texture;
+    }
+
+    pub fn createAndUploadTex2dFromDDSFile(
+        gctx: *GraphicsContext,
+        relpath: []const u8,
+        arena: std.mem.Allocator,
+    ) !ResourceHandle {
+        assert(gctx.is_cmdlist_opened);
+
+        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+        const allocator = fba.allocator();
+
+        const abspath = std.fs.path.join(allocator, &.{
+            std.fs.selfExeDirPathAlloc(allocator) catch unreachable,
+            relpath,
+        }) catch unreachable;
+
+        // Load DDS data into D3D12_SUBRESOURCE_DATA
+        var subresources = std.ArrayList(d3d12.SUBRESOURCE_DATA).init(arena);
+        const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, &subresources);
+        assert(dds_info.resource_dimension == .TEXTURE2D);
+        assert(dds_info.cubemap == false);
+
+        var texture_desc = std.mem.zeroes(d3d12.RESOURCE_DESC);
+        texture_desc = .{
+            .Dimension = .TEXTURE2D,
+            .Alignment = 0,
+            .Width = dds_info.width,
+            .Height = dds_info.height,
+            .DepthOrArraySize = dds_info.array_size,
+            .MipLevels = @intCast(u16, dds_info.mip_count),
+            .Format = dds_info.format,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .Layout = .UNKNOWN,
+            .Flags = .{},
+        };
+
+        const texture = try gctx.createCommittedResource(
+            .DEFAULT,
+            .{},
+            &texture_desc,
+            .{ .COPY_DEST = true },
+            null,
+        );
+
+        // const resource_desc = gctx.lookupResource(texture).?.GetDesc();
+
+        var required_size: u64 = undefined;
+        var layouts = std.ArrayList(d3d12.PLACED_SUBRESOURCE_FOOTPRINT).init(arena);
+        layouts.resize(subresources.items.len) catch unreachable;
+        var num_rows = std.ArrayList(u32).init(arena);
+        num_rows.resize(subresources.items.len) catch unreachable;
+        var row_sizes_in_bytes = std.ArrayList(u64).init(arena);
+        row_sizes_in_bytes.resize(subresources.items.len) catch unreachable;
+
+        gctx.device.GetCopyableFootprints(
+            &texture_desc,
+            0,
+            @intCast(c_uint, subresources.items.len),
+            0,
+            @ptrCast([*]d3d12.PLACED_SUBRESOURCE_FOOTPRINT, layouts.items),
+            @ptrCast([*]c_uint, num_rows.items),
+            @ptrCast([*]c_ulonglong, row_sizes_in_bytes.items),
+            &required_size,
+        );
+
+        const upload = gctx.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
+
+        var subresource_index: u32 = 0;
+        while (subresource_index < subresources.items.len) : (subresource_index += 1) {
+            assert(row_sizes_in_bytes.items[subresource_index] < std.math.maxInt(u32));
+            assert(layouts.items[subresource_index].Footprint.Depth == 1);
+
+            const memcpy_dest = d3d12.MEMCPY_DEST{
+                .pData = upload.cpu_slice.ptr + layouts.items[subresource_index].Offset,
+                .RowPitch = layouts.items[subresource_index].Footprint.RowPitch,
+                .SlicePitch = @intCast(c_uint, layouts.items[subresource_index].Footprint.RowPitch) * @intCast(c_uint, num_rows.items[subresource_index]),
+            };
+
+            var subresource = &subresources.items[subresource_index];
+            var row: u32 = 0;
+            while (row < num_rows.items[subresource_index]) : (row += 1) {
+                @memcpy(
+                    memcpy_dest.pData.? + (memcpy_dest.RowPitch * row),
+                    subresource.pData.? + (subresource.RowPitch * row),
+                    row_sizes_in_bytes.items[subresource_index],
+                );
+            }
+        }
+
+        subresource_index = 0;
+        while (subresource_index < subresources.items.len) : (subresource_index += 1) {
+            const dest = d3d12.TEXTURE_COPY_LOCATION{
+                .pResource = texture,
+                .Type = .SUBRESOURCE_INDEX,
+                .u = .{ .SubresourceIndex = subresource_index },
+            };
+
+            const source = d3d12.TEXTURE_COPY_LOCATION{
+                .pResource = upload.buffer,
+                .Type = .PLACED_FOOTPRINT,
+                .u = .{ .PlacedFootprint = layouts.items[subresource_index] },
+            };
+
+            gctx.cmdlist.CopyTextureRegion(&dest, 0, 0, 0, &source, null);
+        }
 
         return texture;
     }
