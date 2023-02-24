@@ -37,6 +37,8 @@ pub const InitFlags = packed struct(u32) {
     };
 };
 
+pub const Int2 = struct { i32, i32 };
+
 pub fn init(flags: InitFlags) Error!void {
     if (SDL_Init(flags) < 0) return makeError();
 }
@@ -129,7 +131,15 @@ pub const Window = opaque {
         SDL_GetWindowDisplayMode(window, &mode);
         return mode;
     }
-    extern fn SDL_GetWindowDisplayMode(*Window, *DisplayMode) void;
+    extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) void;
+
+    pub fn getSize(window: *Window) Int2 {
+        var w: i32 = undefined;
+        var h: i32 = undefined;
+        SDL_GetWindowSize(window, &w, &h);
+        return .{ w, h };
+    }
+    extern fn SDL_GetWindowSize(window: *Window, w: ?*i32, h: ?*i32) void;
 };
 
 pub const EventType = enum(u32) {
@@ -1048,4 +1058,12 @@ pub const gl = struct {
     /// `pub fn deleteContext(context: Context) void`
     pub const deleteContext = SDL_GL_DeleteContext;
     extern fn SDL_GL_DeleteContext(context: Context) void;
+
+    pub fn getDrawableSize(window: *Window) Int2 {
+        var w: i32 = undefined;
+        var h: i32 = undefined;
+        SDL_GL_GetDrawableSize(window, &w, &h);
+        return .{ w, h };
+    }
+    extern fn SDL_GL_GetDrawableSize(window: *Window, w: ?*i32, h: ?*i32) void;
 };

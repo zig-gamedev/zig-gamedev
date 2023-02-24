@@ -33,6 +33,12 @@ pub fn main() !void {
 
     try gl.loadCoreProfile(sdl.gl.getProcAddress, gl_major, gl_minor);
 
+    const window_size = window.getSize();
+    const drawable_size = sdl.gl.getDrawableSize(window);
+
+    std.debug.print("Window size is {d}x{d}\n", .{ window_size[0], window_size[1] });
+    std.debug.print("Drawable size is {d}x{d}\n", .{ drawable_size[0], drawable_size[1] });
+
     main_loop: while (true) {
         var event: sdl.Event = undefined;
         while (sdl.pollEvent(&event)) {
