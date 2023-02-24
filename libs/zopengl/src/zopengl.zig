@@ -2076,7 +2076,7 @@ var loaderFunc: *const fn ([:0]const u8) ?*anyopaque = undefined;
 
 fn getProcAddress(comptime T: type, name: [:0]const u8) !T {
     if (loaderFunc(name)) |addr| {
-        return @ptrCast(T, addr);
+        return @ptrCast(T, @alignCast(@sizeOf(usize), addr));
     } else {
         std.log.debug("zopengl: {s} not found", .{name});
         return error.OpenGL_FunctionNotFound;
