@@ -1,0 +1,90 @@
+<!-- "borrowed" from https://github.com/floooh/pacman.zig/blob/main/src/emscripten/shell.html -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>pacman.zig</title>
+<style type="text/css">
+body {
+    margin: 0;
+    background-color: black;
+}
+.game-title {
+    pointer-events: none;
+    position: absolute;
+    bottom: 10px;
+    margin-top: 0px;
+    padding-left: 10px;
+    color: white;
+    text-decoration: none;
+    z-index: 1;
+    text-align: left;
+    font-family: "Arial Black", Gadget, sans-serif;
+    font-size: 30px;
+}
+.game-menu-item {
+    pointer-events: auto;
+    font-size: 18px;
+    padding-left: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.game-menu-link {
+    text-decoration: none;
+    color: white;
+}
+.game {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    margin: 0px;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: block;
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -o-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+</style>
+</head>
+<body style="background:black">
+  <div class="game-title">
+    <span class="game-menu-item"><a class="game-menu-link" href="https://github.com/floooh/pacman.zig/blob/main/src/pacman.zig" target="_blank">source code</a></span>
+  </div>
+  <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <script type="text/javascript">
+    var Module = {
+        preRun: [],
+        postRun: [],
+        print: (function() {
+            return function(text) {
+                text = Array.prototype.slice.call(arguments).join(' ');
+                console.log(text);
+            };
+        })(),
+        printErr: function(text) {
+            text = Array.prototype.slice.call(arguments).join(' ');
+            console.error(text);
+        },
+        canvas: (function() {
+            var canvas = document.getElementById('canvas');
+            canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
+            return canvas;
+        })(),
+        setStatus: function(text) { },
+        monitorRunDependencies: function(left) { },
+    };
+    window.onerror = function(event) {
+        console.log("onerror: " + event.message);
+    };
+  </script>
+  {{{ SCRIPT }}} 
+</body>
+</html>
