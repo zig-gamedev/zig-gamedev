@@ -43,6 +43,26 @@ pub fn build(b: *std.Build) void {
     }
     ensureGitLfsContent("/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib") catch return;
 
+    // hacky emscripten override, just for PoC, do not ship!
+    const target = (std.zig.system.NativeTargetInfo.detect(options.target) catch unreachable).target;
+    if (target.os.tag == .emscripten) {
+        zsdl_pkg = zsdl.Package.build(b, .{});
+        zopengl_pkg = zopengl.Package.build(b, .{});
+
+        { // minimal sdl
+            // Workaround zig std lib not compiling for emscripten: see https://github.com/ziglang/zig/issues/10836
+            var options_override = options;
+            options_override.target.os_tag = .freestanding;
+
+            const exe = minimal_sdl.build(b, options_override);
+            exe.addModule("zsdl", zsdl_pkg.zsdl);
+            exe.addModule("zopengl", zopengl_pkg.zopengl);
+            zsdl_pkg.link(exe, target);
+            installDemoEmsc(b, exe, "minimal_sdl");
+        }
+        return;
+    }
+
     //
     // Packages
     //
@@ -159,7 +179,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
         const exe = minimal_sdl.build(b, options);
         exe.addModule("zsdl", zsdl_pkg.zsdl);
         exe.addModule("zopengl", zopengl_pkg.zopengl);
-        zsdl_pkg.link(exe);
+        zsdl_pkg.link(exe, null);
         installDemo(b, exe, "minimal_sdl");
     }
     { // triangle wgpu
@@ -644,6 +664,52 @@ fn installDemo(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []cons
     b.getInstallStep().dependOn(install);
 }
 
+fn installDemoEmsc(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
+    comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
+    comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
+    comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
+
+    const install = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' demo");
+    install.dependOn(&b.addInstallArtifact(exe).step);
+
+    { // "borrowed" & modifed version of https://github.com/floooh/pacman.zig/blob/main/build.zig
+        const emcc_path = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "../../emcc" }) catch unreachable;
+        defer b.allocator.free(emcc_path);
+        const emrun_path = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "../../emrun" }) catch unreachable;
+        defer b.allocator.free(emrun_path);
+
+        std.fs.cwd().makePath("zig-out/web") catch unreachable;
+        const emcc = b.addSystemCommand(&.{
+            emcc_path,
+            "-Os",
+            "--closure",
+            "1",
+            "emscripten/entry.c",
+            "-ozig-out/web/test.html",
+            "--shell-file",
+            "emscripten/shell.html",
+            "-Lzig-out/lib/",
+            "-l" ++ name,
+            "-sNO_FILESYSTEM=1",
+            "-sMALLOC='emmalloc'",
+            "-sASSERTIONS=0",
+            "-sEXPORTED_FUNCTIONS=['_main']",
+            "-sUSE_SDL=2",
+        });
+        emcc.step.dependOn(&exe.install_step.?.step);
+
+        // get the emcc step to run on 'zig build'
+        b.getInstallStep().dependOn(&emcc.step);
+
+        // a seperate run step using emrun
+        const emrun = b.addSystemCommand(&.{ emrun_path, "zig-out/web/test.html" });
+        emrun.step.dependOn(&emcc.step);
+        b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' demo (emscripten)").dependOn(&emrun.step);
+    }
+
+    b.getInstallStep().dependOn(install);
+}
+
 fn ensureZigVersion() !void {
     var installed_ver = @import("builtin").zig_version;
     installed_ver.build = null;
@@ -682,13 +748,14 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
             if (target.os.version_range.semver.min.order(min_available) == .lt) break :blk false;
             break :blk true;
         },
+        .emscripten => target.cpu.arch.isWasm(),
         else => false,
     };
     if (!supported) {
         std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
-            \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
+            \\Unsupported build target.
             \\
             \\Following targets are supported:
             \\
@@ -697,6 +764,7 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
             \\x86_64-macos.12-none
             \\aarch64-linux-gnu
             \\aarch64-macos.12-none
+            \\wasm32-emscripten
             \\
             \\---------------------------------------------------------------------------
             \\

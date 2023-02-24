@@ -16,10 +16,10 @@ pub const Package = struct {
         };
     }
 
-    pub fn link(_: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(_: Package, exe: *std.Build.CompileStep, target_override: ?std.Target) void {
         exe.linkLibC();
 
-        const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+        var target = target_override orelse (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
         switch (target.os.tag) {
             .windows => {
@@ -64,6 +64,7 @@ pub const Package = struct {
                 });
                 exe.step.dependOn(&install_dir_step.step);
             },
+            .emscripten => {},
             else => unreachable,
         }
     }
