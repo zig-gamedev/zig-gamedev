@@ -894,8 +894,9 @@ pub const Event = extern union {
     }
 };
 
-pub fn pollEvent(event: ?*Event) bool {
-    return SDL_PollEvent(event) != 0;
+pub fn pollEvent() ?Event {
+    var event: Event = undefined;
+    return if (SDL_PollEvent(&event) != 0) event else null;
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
 
