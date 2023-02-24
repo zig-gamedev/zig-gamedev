@@ -225,7 +225,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Fill vertex buffer with vertex data.
     {
         const verts = gctx.allocateUploadBufferRegion(Pso_Vertex, mesh_num_vertices);
-        for (mesh_positions.items) |_, i| {
+        for (mesh_positions.items, 0..) |_, i| {
             verts.cpu_slice[i].position = mesh_positions.items[i];
             verts.cpu_slice[i].normal = mesh_normals.items[i];
         }
@@ -242,7 +242,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Fill index buffer with index data.
     {
         const indices = gctx.allocateUploadBufferRegion(u32, mesh_num_indices);
-        for (mesh_indices.items) |_, i| {
+        for (mesh_indices.items, 0..) |_, i| {
             indices.cpu_slice[i] = mesh_indices.items[i];
         }
 
@@ -509,7 +509,7 @@ fn draw(demo: *DemoState) void {
         const num_vertices = @intCast(u32, demo.physics.debug.lines.items.len);
         {
             const mem = gctx.allocateUploadMemory(zbt.DebugDrawer.Vertex, num_vertices);
-            for (demo.physics.debug.lines.items) |p, i| {
+            for (demo.physics.debug.lines.items, 0..) |p, i| {
                 mem.cpu_slice[i] = p;
             }
             gctx.cmdlist.SetGraphicsRootShaderResourceView(1, mem.gpu_base);

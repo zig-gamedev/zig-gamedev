@@ -347,7 +347,7 @@ fn loadScene(
     }
 
     all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
-    for (positions.items) |_, index| {
+    for (positions.items, 0..) |_, index| {
         all_vertices.appendAssumeCapacity(.{
             .position = positions.items[index].scale(0.008), // NOTE(mziulek): Sponza requires scaling.
             .normal = normals.items[index],
@@ -740,7 +740,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Upload vertex buffer.
     {
         const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
-        for (all_vertices.items) |vertex, i| {
+        for (all_vertices.items, 0..) |vertex, i| {
             upload.cpu_slice[i] = vertex;
         }
         gctx.cmdlist.CopyBufferRegion(
@@ -757,7 +757,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Upload index buffer.
     {
         const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
-        for (all_indices.items) |index, i| {
+        for (all_indices.items, 0..) |index, i| {
             upload.cpu_slice[i] = index;
         }
         gctx.cmdlist.CopyBufferRegion(

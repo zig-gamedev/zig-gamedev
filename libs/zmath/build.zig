@@ -38,7 +38,11 @@ pub const Package = struct {
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
+
+    const zmath_pkg = Package.build(b, .{});
+
     const tests = buildTests(b, optimize, target);
+    tests.addModule("zmath_options", zmath_pkg.zmath_options);
 
     const test_step = b.step("test", "Run zmath tests");
     test_step.dependOn(&tests.step);

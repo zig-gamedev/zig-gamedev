@@ -39,7 +39,7 @@ test "zflecs.entities.basics" {
     var it = ecs.term_iter(world, &.{ .id = ecs.id(Position) });
     while (ecs.term_next(&it)) {
         const positions = ecs.field(&it, Position, 1);
-        for (positions.?) |p, i| {
+        for (positions.?, 0..) |p, i| {
             std.debug.print("{?s}: ({d}, {d})\n", .{ ecs.get_name(world, it.entities.?[i]), p.x, p.y });
         }
     }

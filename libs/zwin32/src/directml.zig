@@ -981,7 +981,7 @@ pub fn calcBufferTensorSize(
             break :blk size * element_size_in_bytes;
         } else {
             var index_of_last_element: UINT = 0;
-            for (sizes) |_, i| {
+            for (sizes, 0..) |_, i| {
                 index_of_last_element += (sizes[i] - 1) * strides.?[i];
             }
             break :blk (index_of_last_element + 1) * element_size_in_bytes;

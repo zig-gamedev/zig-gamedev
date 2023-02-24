@@ -153,7 +153,7 @@ fn loadAllMeshes(
     }
 
     try out_vertices.ensureTotalCapacity(positions.items.len);
-    for (positions.items) |_, index| {
+    for (positions.items, 0..) |_, index| {
         out_vertices.appendAssumeCapacity(.{
             .position = positions.items[index],
             .normal = normals.items[index],
@@ -243,7 +243,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     var mesh_tex: [num_mesh_textures]zgpu.TextureHandle = undefined;
     var mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle = undefined;
 
-    for (mesh_texture_paths) |path, tex_index| {
+    for (mesh_texture_paths, 0..) |path, tex_index| {
         var image = try zstbi.Image.init(path, 4);
         defer image.deinit();
 

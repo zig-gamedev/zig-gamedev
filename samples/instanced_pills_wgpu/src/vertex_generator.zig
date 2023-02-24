@@ -25,7 +25,7 @@ pub fn pill(segments: u16, vertex_data: []Vertex, index_data: []u16) void {
             };
         }
     }
-    for (vertex_data[0..(segments + 1)]) |v, i| {
+    for (vertex_data[0..(segments + 1)], 0..) |v, i| {
         vertex_data[vertex_data.len - 1 - i] = .{
             .position = .{ -v.position[0], v.position[1] },
             .side = 1.0,

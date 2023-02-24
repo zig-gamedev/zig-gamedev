@@ -134,7 +134,7 @@ fn loadMeshAndGenerateMeshlets(
         src_positions.items.len,
     );
 
-    for (src_positions.items) |_, index| {
+    for (src_positions.items, 0..) |_, index| {
         src_vertices.appendAssumeCapacity(.{
             .position = src_positions.items[index],
             .normal = src_normals.items[index],
@@ -472,7 +472,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Upload vertex buffer.
     {
         const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
-        for (all_vertices.items) |vertex, i| upload.cpu_slice[i] = vertex;
+        for (all_vertices.items, 0..) |vertex, i| upload.cpu_slice[i] = vertex;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(vertex_buffer).?,
             0,
@@ -487,7 +487,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Upload index buffer.
     {
         const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
-        for (all_indices.items) |index, i| upload.cpu_slice[i] = index;
+        for (all_indices.items, 0..) |index, i| upload.cpu_slice[i] = index;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(index_buffer).?,
             0,
@@ -502,7 +502,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Upload meshlet buffer.
     {
         const upload = gctx.allocateUploadBufferRegion(Meshlet, @intCast(u32, all_meshlets.items.len));
-        for (all_meshlets.items) |meshlet, i| upload.cpu_slice[i] = meshlet;
+        for (all_meshlets.items, 0..) |meshlet, i| upload.cpu_slice[i] = meshlet;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(meshlet_buffer).?,
             0,
@@ -517,7 +517,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     // Upload meshlet data buffer.
     {
         const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_meshlets_data.items.len));
-        for (all_meshlets_data.items) |meshlet_data, i| upload.cpu_slice[i] = meshlet_data;
+        for (all_meshlets_data.items, 0..) |meshlet_data, i| upload.cpu_slice[i] = meshlet_data;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(meshlet_data_buffer).?,
             0,

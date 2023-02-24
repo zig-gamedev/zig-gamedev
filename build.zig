@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1580" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.1711" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -85,6 +85,8 @@ pub fn build(b: *std.Build) void {
 }
 
 fn packagesCrossPlatform(b: *std.Build, options: Options) void {
+    zsdl_pkg = zsdl.Package.build(b, .{});
+    zopengl_pkg = zopengl.Package.build(b, .{});
     zmath_pkg = zmath.Package.build(b, .{});
     zpool_pkg = zpool.Package.build(b, .{});
     zmesh_pkg = zmesh.Package.build(b, options.target, options.optimize, .{});
@@ -143,6 +145,9 @@ fn packagesWindows(b: *std.Build, options: Options) void {
         },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
+    common_d2d_pkg = common.Package.build(b, options.target, options.optimize, .{
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_d2d_pkg.zd3d12 },
+    });
     zxaudio2_pkg = zxaudio2.Package.build(b, .{
         .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
@@ -152,6 +157,9 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     { // minimal sdl
         const exe = minimal_sdl.build(b, options);
+        exe.addModule("zsdl", zsdl_pkg.zsdl);
+        exe.addModule("zopengl", zopengl_pkg.zopengl);
+        zsdl_pkg.link(exe);
         installDemo(b, exe, "minimal_sdl");
     }
     { // triangle wgpu
@@ -398,7 +406,7 @@ fn samplesWindows(b: *std.Build, options: Options) void {
         const exe = intro.build(b, options, 0);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
         exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-        exe.addModule("common", common_pkg.common);
+        exe.addModule("common", common_d2d_pkg.common);
         zd3d12_d2d_pkg.link(exe);
         common_pkg.link(exe);
         installDemo(b, exe, "intro0");
@@ -407,9 +415,9 @@ fn samplesWindows(b: *std.Build, options: Options) void {
         const exe = vector_graphics_test.build(b, options);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
         exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-        exe.addModule("common", common_pkg.common);
+        exe.addModule("common", common_d2d_pkg.common);
         zd3d12_d2d_pkg.link(exe);
-        common_pkg.link(exe);
+        common_d2d_pkg.link(exe);
         installDemo(b, exe, "vector_graphics_test");
     }
     { // directml convolution test
@@ -489,7 +497,7 @@ fn tests(b: *std.Build, options: Options) void {
     }
     { // zgpu
         if (!options.target.isDarwin()) { // TODO: Linker error on macOS.
-            const exe = zjobs.buildTests(b, options.optimize, options.target);
+            const exe = zgpu.buildTests(b, options.optimize, options.target);
             exe.want_lto = false; // TODO: Problems with LTO on Windows.
             zgpu_pkg.link(exe);
             test_step.dependOn(&exe.step);
@@ -531,6 +539,8 @@ fn benchmarks(b: *std.Build, options: Options) void {
     }
 }
 
+var zsdl_pkg: zsdl.Package = undefined;
+var zopengl_pkg: zopengl.Package = undefined;
 var zmath_pkg: zmath.Package = undefined;
 var zpool_pkg: zpool.Package = undefined;
 var zmesh_pkg: zmesh.Package = undefined;
@@ -550,9 +560,12 @@ var zwin32_pkg: zwin32.Package = undefined;
 var zd3d12_pkg: zd3d12.Package = undefined;
 var zpix_pkg: zpix.Package = undefined;
 var common_pkg: common.Package = undefined;
+var common_d2d_pkg: common.Package = undefined;
 var zd3d12_d2d_pkg: zd3d12.Package = undefined;
 var zxaudio2_pkg: zxaudio2.Package = undefined;
 
+const zsdl = @import("libs/zsdl/build.zig");
+const zopengl = @import("libs/zopengl/build.zig");
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 const zpool = @import("libs/zpool/build.zig");

@@ -540,7 +540,7 @@ pub fn Pool(
             var slice = self._storage.slice();
             self._free_queue.storage = slice.items(.@"Pool._free_queue");
             self._curr_cycle = slice.items(.@"Pool._curr_cycle");
-            inline for (column_fields) |column_field, i| {
+            inline for (column_fields, 0..) |column_field, i| {
                 const F = column_field.type;
                 const p = slice.ptrs[private_fields.len + i];
                 const f = @ptrCast([*]F, @alignCast(@alignOf(F), p));

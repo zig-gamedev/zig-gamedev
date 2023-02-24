@@ -130,7 +130,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                     zgui.text("Raw joystick: {s}", .{joystick.getGuid()});
                     zgui.indent(.{ .indent_w = 50.0 });
                     zgui.beginGroup();
-                    for (joystick.getAxes()) |axis, i| {
+                    for (joystick.getAxes(), 0..) |axis, i| {
                         zgui.progressBar(.{
                             .fraction = (axis + 1.0) / 2.0,
                             .w = 400.0,
@@ -143,7 +143,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                     zgui.endGroup();
                     zgui.sameLine(.{});
                     zgui.beginGroup();
-                    for (joystick.getButtons()) |action, i| {
+                    for (joystick.getButtons(), 0..) |action, i| {
                         zgui.progressBar(.{
                             .fraction = if (action == .press) 1.0 else 0.0,
                             .w = 400.0,
