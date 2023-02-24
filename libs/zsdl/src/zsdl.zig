@@ -123,6 +123,13 @@ pub const Window = opaque {
     /// `pub fn destroy(window: *Window) void`
     pub const destroy = SDL_DestroyWindow;
     extern fn SDL_DestroyWindow(window: *Window) void;
+
+    pub fn getDisplayMode(window: *Window) DisplayMode {
+        var mode: DisplayMode = undefined;
+        SDL_GetWindowDisplayMode(window, &mode);
+        return mode;
+    }
+    extern fn SDL_GetWindowDisplayMode(*Window, *DisplayMode) void;
 };
 
 pub const EventType = enum(u32) {
@@ -898,6 +905,45 @@ pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
     return SDL_SetHint(name, value) != 0;
 }
 extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) i32;
+
+pub const DisplayID = u32;
+
+pub const DisplayMode = DisplayMode_SDL2;
+
+const DisplayMode_SDL2 = extern struct {
+    format: u32,
+    w: c_int,
+    h: c_int,
+    refresh_rate: c_int,
+    driverdata: *anyopaque,
+};
+
+const DisplayMode_SDL3 = extern struct {
+    displayID: DisplayID,
+    format: u32,
+    pixel_w: c_int,
+    pixel_h: c_int,
+    screen_w: c_int,
+    screen_h: c_int,
+    display_scale: f32,
+    refresh_rate: f32,
+    driverdata: *anyopaque,
+};
+
+pub fn getPerformanceCounter() u64 {
+    return SDL_GetPerformanceCounter();
+}
+extern fn SDL_GetPerformanceCounter() u64;
+
+pub fn getPerformanceFrequency() u64 {
+    return SDL_GetPerformanceFrequency();
+}
+extern fn SDL_GetPerformanceFrequency() u64;
+
+pub fn delay(ms: u32) void {
+    SDL_Delay(ms);
+}
+extern fn SDL_Delay(ms: u32) void;
 
 pub const gl = struct {
     pub const Context = *anyopaque;
