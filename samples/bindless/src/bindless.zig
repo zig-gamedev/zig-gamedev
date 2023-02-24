@@ -497,15 +497,15 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         break :blk equirect_texture;
     };
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
     var mesh_textures: [4]Texture = undefined;
 
+    gctx.beginFrame();
     {
-        const resource = gctx.createAndUploadTex2dFromFile(
-            content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
-            .{},
-        ) catch |err| hrPanic(err);
-        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"));
+        const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds", arena_allocator);
+        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds"));
 
         mesh_textures[texture_ao] = blk: {
             const srv_allocation = gctx.allocatePersistentGpuDescriptors(1);
@@ -515,8 +515,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 srv_allocation.cpu_handle,
             );
 
-            mipgen_rgba8.generateMipmaps(&gctx, resource);
             gctx.addTransitionBarrier(resource, .{ .PIXEL_SHADER_RESOURCE = true });
+            gctx.flushResourceBarriers();
 
             const t = Texture{
                 .resource = resource,
@@ -526,13 +526,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
+    gctx.beginFrame();
     {
-        const resource = gctx.createAndUploadTex2dFromFile(
-            content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.png",
-            .{},
-        ) catch |err| hrPanic(err);
-        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_BaseColor.png"));
+        const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.dds", arena_allocator);
+        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_BaseColor.dds"));
 
         mesh_textures[texture_base_color] = blk: {
             const srv_allocation = gctx.allocatePersistentGpuDescriptors(1);
@@ -542,8 +542,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 srv_allocation.cpu_handle,
             );
 
-            mipgen_rgba8.generateMipmaps(&gctx, resource);
             gctx.addTransitionBarrier(resource, .{ .PIXEL_SHADER_RESOURCE = true });
+            gctx.flushResourceBarriers();
 
             const t = Texture{
                 .resource = resource,
@@ -553,13 +553,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
+    gctx.beginFrame();
     {
-        const resource = gctx.createAndUploadTex2dFromFile(
-            content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
-            .{},
-        ) catch |err| hrPanic(err);
-        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_MetallicRoughness.png"));
+        const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.dds", arena_allocator);
+        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_MetallicRoughness.dds"));
 
         mesh_textures[texture_metallic_roughness] = blk: {
             const srv_allocation = gctx.allocatePersistentGpuDescriptors(1);
@@ -569,8 +569,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 srv_allocation.cpu_handle,
             );
 
-            mipgen_rgba8.generateMipmaps(&gctx, resource);
             gctx.addTransitionBarrier(resource, .{ .PIXEL_SHADER_RESOURCE = true });
+            gctx.flushResourceBarriers();
 
             const t = Texture{
                 .resource = resource,
@@ -580,13 +580,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
+    gctx.beginFrame();
     {
-        const resource = gctx.createAndUploadTex2dFromFile(
-            content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.png",
-            .{},
-        ) catch |err| hrPanic(err);
-        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_Normal.png"));
+        const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.dds", arena_allocator);
+        _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_Normal.dds"));
 
         mesh_textures[texture_normal] = blk: {
             const srv_allocation = gctx.allocatePersistentGpuDescriptors(1);
@@ -596,8 +596,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
                 srv_allocation.cpu_handle,
             );
 
-            mipgen_rgba8.generateMipmaps(&gctx, resource);
             gctx.addTransitionBarrier(resource, .{ .PIXEL_SHADER_RESOURCE = true });
+            gctx.flushResourceBarriers();
 
             const t = Texture{
                 .resource = resource,
@@ -607,6 +607,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
+    gctx.endFrame();
+    gctx.finishGpuCommands();
+
+    gctx.beginFrame();
 
     const env_texture = .{
         .resource = gctx.createCommittedResource(

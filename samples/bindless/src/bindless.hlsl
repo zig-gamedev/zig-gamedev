@@ -130,7 +130,9 @@ void psMeshPbr(
         return;
     }
 
-    float3 n = normalize(srv_normal_texture.Sample(sam_aniso, texcoords0).rgb * 2.0 - 1.0);
+    float3 n = float3(srv_normal_texture.Sample(sam_aniso, texcoords0).rg, 0.0);
+    n.z = sqrt(1.0 - saturate(dot(n.xy, n.xy)));
+    n = normalize(n);
 
     normal = normalize(normal);
     tangent.xyz = normalize(tangent.xyz);
@@ -148,7 +150,7 @@ void psMeshPbr(
         metallic = mr.r;
         roughness = mr.g;
     }
-    const float3 base_color = pow(srv_base_color_texture.Sample(sam_aniso, texcoords0).rgb, GAMMA);
+    const float3 base_color = srv_base_color_texture.Sample(sam_aniso, texcoords0).rgb;
     const float ao = srv_ao_texture.Sample(sam_aniso, texcoords0).r;
 
     const float3 v = normalize(scene_const.camera_position - position);
