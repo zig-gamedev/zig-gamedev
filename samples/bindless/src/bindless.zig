@@ -497,12 +497,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         break :blk equirect_texture;
     };
-    gctx.endFrame();
+
     gctx.finishGpuCommands();
 
     var mesh_textures: [4]Texture = undefined;
 
-    gctx.beginFrame();
     {
         const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds", arena_allocator);
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds"));
@@ -526,10 +525,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
-    gctx.endFrame();
     gctx.finishGpuCommands();
 
-    gctx.beginFrame();
     {
         const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.dds", arena_allocator);
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_BaseColor.dds"));
@@ -553,10 +550,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
-    gctx.endFrame();
     gctx.finishGpuCommands();
 
-    gctx.beginFrame();
     {
         const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.dds", arena_allocator);
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_MetallicRoughness.dds"));
@@ -580,10 +575,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
-    gctx.endFrame();
     gctx.finishGpuCommands();
 
-    gctx.beginFrame();
     {
         const resource = try gctx.createAndUploadTex2dFromDDSFile(content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.dds", arena_allocator);
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_Normal.dds"));
@@ -607,10 +600,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             break :blk t;
         };
     }
-    gctx.endFrame();
     gctx.finishGpuCommands();
-
-    gctx.beginFrame();
 
     const env_texture = .{
         .resource = gctx.createCommittedResource(
