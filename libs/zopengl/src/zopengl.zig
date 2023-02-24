@@ -2321,6 +2321,92 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
         genVertexArrays = try getProcAddress(@TypeOf(genVertexArrays), "glGenVertexArrays");
         isVertexArray = try getProcAddress(@TypeOf(isVertexArray), "glIsVertexArray");
     }
+
+    // OpenGL 3.1
+    if (ver >= 31) {
+        drawArraysInstanced = try getProcAddress(@TypeOf(drawArraysInstanced), "glDrawArraysInstanced");
+        drawElementsInstanced = try getProcAddress(@TypeOf(drawElementsInstanced), "glDrawElementsInstanced");
+        texBuffer = try getProcAddress(@TypeOf(texBuffer), "glTexBuffer");
+        primitiveRestartIndex = try getProcAddress(@TypeOf(primitiveRestartIndex), "glPrimitiveRestartIndex");
+        copyBufferSubData = try getProcAddress(@TypeOf(copyBufferSubData), "glCopyBufferSubData");
+        getUniformIndices = try getProcAddress(@TypeOf(getUniformIndices), "glGetUniformIndices");
+        getActiveUniformsiv = try getProcAddress(@TypeOf(getActiveUniformsiv), "glGetActiveUniformsiv");
+        getActiveUniformName = try getProcAddress(@TypeOf(getActiveUniformName), "glGetActiveUniformName");
+        getUniformBlockIndex = try getProcAddress(@TypeOf(getUniformBlockIndex), "glGetUniformBlockIndex");
+        getActiveUniformBlockiv = try getProcAddress(@TypeOf(getActiveUniformBlockiv), "glGetActiveUniformBlockiv");
+        getActiveUniformBlockName = try getProcAddress(
+            @TypeOf(getActiveUniformBlockName),
+            "glGetActiveUniformBlockName",
+        );
+        uniformBlockBinding = try getProcAddress(@TypeOf(uniformBlockBinding), "glUniformBlockBinding");
+    }
+
+    // OpenGL 3.2
+    if (ver >= 32) {
+        drawElementsBaseVertex = try getProcAddress(@TypeOf(drawElementsBaseVertex), "glDrawElementsBaseVertex");
+        drawRangeElementsBaseVertex = try getProcAddress(
+            @TypeOf(drawRangeElementsBaseVertex),
+            "glDrawRangeElementsBaseVertex",
+        );
+        drawElementsInstancedBaseVertex = try getProcAddress(
+            @TypeOf(drawElementsInstancedBaseVertex),
+            "glDrawElementsInstancedBaseVertex",
+        );
+        multiDrawElementsBaseVertex = try getProcAddress(
+            @TypeOf(multiDrawElementsBaseVertex),
+            "glMultiDrawElementsBaseVertex",
+        );
+        provokingVertex = try getProcAddress(@TypeOf(provokingVertex), "glProvokingVertex");
+        fenceSync = try getProcAddress(@TypeOf(fenceSync), "glFenceSync");
+        isSync = try getProcAddress(@TypeOf(isSync), "glIsSync");
+        deleteSync = try getProcAddress(@TypeOf(deleteSync), "glDeleteSync");
+        clientWaitSync = try getProcAddress(@TypeOf(clientWaitSync), "glClientWaitSync");
+        waitSync = try getProcAddress(@TypeOf(waitSync), "glWaitSync");
+        getInteger64v = try getProcAddress(@TypeOf(getInteger64v), "glGetInteger64v");
+        getSynciv = try getProcAddress(@TypeOf(getSynciv), "glGetSynciv");
+        getInteger64i_v = try getProcAddress(@TypeOf(getInteger64i_v), "glGetInteger64i_v");
+        getBufferParameteri64v = try getProcAddress(@TypeOf(getBufferParameteri64v), "glGetBufferParameteri64v");
+        framebufferTexture = try getProcAddress(@TypeOf(framebufferTexture), "glFramebufferTexture");
+        texImage2DMultisample = try getProcAddress(@TypeOf(texImage2DMultisample), "glTexImage2DMultisample");
+        texImage3DMultisample = try getProcAddress(@TypeOf(texImage3DMultisample), "glTexImage3DMultisample");
+        getMultisamplefv = try getProcAddress(@TypeOf(getMultisamplefv), "glGetMultisamplefv");
+        sampleMaski = try getProcAddress(@TypeOf(sampleMaski), "glSampleMaski");
+    }
+
+    // OpenGL 3.3
+    if (ver >= 33) {
+        bindFragDataLocationIndexed = try getProcAddress(
+            @TypeOf(bindFragDataLocationIndexed),
+            "glBindFragDataLocationIndexed",
+        );
+        getFragDataIndex = try getProcAddress(@TypeOf(getFragDataIndex), "glGetFragDataIndex");
+        genSamplers = try getProcAddress(@TypeOf(genSamplers), "glGenSamplers");
+        deleteSamplers = try getProcAddress(@TypeOf(deleteSamplers), "glDeleteSamplers");
+        isSampler = try getProcAddress(@TypeOf(isSampler), "glIsSampler");
+        bindSampler = try getProcAddress(@TypeOf(bindSampler), "glBindSampler");
+        samplerParameteri = try getProcAddress(@TypeOf(samplerParameteri), "glSamplerParameteri");
+        samplerParameteriv = try getProcAddress(@TypeOf(samplerParameteriv), "glSamplerParameteriv");
+        samplerParameterf = try getProcAddress(@TypeOf(samplerParameterf), "glSamplerParameterf");
+        samplerParameterfv = try getProcAddress(@TypeOf(samplerParameterfv), "glSamplerParameterfv");
+        samplerParameterIiv = try getProcAddress(@TypeOf(samplerParameterIiv), "glSamplerParameterIiv");
+        samplerParameterIuiv = try getProcAddress(@TypeOf(samplerParameterIuiv), "glSamplerParameterIuiv");
+        getSamplerParameteriv = try getProcAddress(@TypeOf(getSamplerParameteriv), "glGetSamplerParameteriv");
+        getSamplerParameterIiv = try getProcAddress(@TypeOf(getSamplerParameterIiv), "glGetSamplerParameterIiv");
+        getSamplerParameterfv = try getProcAddress(@TypeOf(getSamplerParameterfv), "glGetSamplerParameterfv");
+        getSamplerParameterIuiv = try getProcAddress(@TypeOf(getSamplerParameterIuiv), "glGetSamplerParameterIuiv");
+        queryCounter = try getProcAddress(@TypeOf(queryCounter), "glQueryCounter");
+        getQueryObjecti64v = try getProcAddress(@TypeOf(getQueryObjecti64v), "glGetQueryObjecti64v");
+        getQueryObjectui64v = try getProcAddress(@TypeOf(getQueryObjectui64v), "glGetQueryObjectui64v");
+        vertexAttribDivisor = try getProcAddress(@TypeOf(vertexAttribDivisor), "glVertexAttribDivisor");
+        vertexAttribP1ui = try getProcAddress(@TypeOf(vertexAttribP1ui), "glVertexAttribP1ui");
+        vertexAttribP1uiv = try getProcAddress(@TypeOf(vertexAttribP1uiv), "glVertexAttribP1uiv");
+        vertexAttribP2ui = try getProcAddress(@TypeOf(vertexAttribP2ui), "glVertexAttribP2ui");
+        vertexAttribP2uiv = try getProcAddress(@TypeOf(vertexAttribP2uiv), "glVertexAttribP2uiv");
+        vertexAttribP3ui = try getProcAddress(@TypeOf(vertexAttribP3ui), "glVertexAttribP3ui");
+        vertexAttribP3uiv = try getProcAddress(@TypeOf(vertexAttribP3uiv), "glVertexAttribP3uiv");
+        vertexAttribP4ui = try getProcAddress(@TypeOf(vertexAttribP4ui), "glVertexAttribP4ui");
+        vertexAttribP4uiv = try getProcAddress(@TypeOf(vertexAttribP4uiv), "glVertexAttribP4uiv");
+    }
 }
 //--------------------------------------------------------------------------------------------------
 var loaderFunc: *const fn ([:0]const u8) ?*anyopaque = undefined;
