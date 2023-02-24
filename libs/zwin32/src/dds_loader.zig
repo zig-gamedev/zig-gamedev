@@ -126,7 +126,7 @@ pub const DdsError = error{
 pub fn loadTextureFromFile(
     path: []const u8,
     arena: std.mem.Allocator,
-    device: *d3d12.IDevice,
+    device: *d3d12.IDevice9,
     max_size: u32,
     resources: *std.ArrayList(d3d12.SUBRESOURCE_DATA),
 ) !DdsImageInfo {
@@ -155,7 +155,7 @@ pub fn loadTextureFromFile(
 pub fn loadTextureFromMemory(
     file_data: []u8,
     arena: std.mem.Allocator,
-    device: *d3d12.IDevice,
+    device: *d3d12.IDevice9,
     max_size: u32,
     resources: *std.ArrayList(d3d12.SUBRESOURCE_DATA)
 ) !DdsImageInfo {
@@ -239,7 +239,7 @@ pub fn loadTextureFromMemory(
             return DdsError.InvalidDDSData;
         }
 
-        format = try getDXGIFormatFromDX10(dx10);
+        format = try getDXGIFormatFromDX10(dx10, width, height);
 
         if (dx10.resourceDimension == @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE1D)) {
             // D3DX writes 1D textures with a fixed Height of 1
@@ -385,7 +385,7 @@ pub fn loadTextureFromMemory(
 
             var mip_map_index: u32 = 0;
             while (mip_map_index < header.dwMipMapCount) : (mip_map_index += 1) {
-                const surface_info = getSurfaceInfo(width, height, format);
+                const surface_info = getSurfaceInfo(w, h, format);
                 if (surface_info.num_bytes > std.math.maxInt(u32)) {
                     return DdsError.InvalidDDSData;
                 }
@@ -850,7 +850,8 @@ fn adjustPlaneResource(format: dxgi.FORMAT, height: u32, slice_plane: u32, resou
         } else {
             // Plane 1
             var offset: u32 = resource.RowPitch * height;
-            resource.pData = resource.pData[offset..];
+            // resource.pData = resource.pData[offset..];
+            resource.pData = resource.pData.? + offset;
             resource.SlicePitch = resource.RowPitch * ((height + 1) >> 1);
         }
     } else if (format == .NV11) {
@@ -860,15 +861,16 @@ fn adjustPlaneResource(format: dxgi.FORMAT, height: u32, slice_plane: u32, resou
         } else {
             // Plane 1
             var offset: u32 = resource.RowPitch * height;
-            resource.pData = resource.pData[offset..];
+            // resource.pData = resource.pData[offset..];
+            resource.pData = resource.pData.? + offset;
             resource.RowPitch = (resource.RowPitch >> 1);
             resource.SlicePitch = resource.RowPitch * height;
         }
     }
 }
 
-fn getFormatPlaneCount(device: *d3d12.IDevice, format: dxgi.FORMAT) u8 {
-    var data: d3d12.FEATURE_DATA_FORMAT_INFO = .{ .Format = format };
+fn getFormatPlaneCount(device: *d3d12.IDevice9, format: dxgi.FORMAT) u8 {
+    var data: d3d12.FEATURE_DATA_FORMAT_INFO = .{ .Format = format, .PlaneCount = 0 };
     const hr = device.CheckFeatureSupport(.FORMAT_INFO, &data, @sizeOf(d3d12.FEATURE_DATA_FORMAT_INFO));
     if (hr != w32.S_OK) {
         return 0;

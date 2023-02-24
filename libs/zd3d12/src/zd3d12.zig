@@ -1559,7 +1559,7 @@ pub const GraphicsContext = struct {
 
         // Load DDS data into D3D12_SUBRESOURCE_DATA
         var subresources = std.ArrayList(d3d12.SUBRESOURCE_DATA).init(arena);
-        const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, &subresources);
+        const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, gctx.device, 0, &subresources);
         assert(dds_info.resource_dimension == .TEXTURE2D);
         assert(dds_info.cubemap == false);
 
@@ -1569,8 +1569,8 @@ pub const GraphicsContext = struct {
             .Alignment = 0,
             .Width = dds_info.width,
             .Height = dds_info.height,
-            .DepthOrArraySize = dds_info.array_size,
-            .MipLevels = @intCast(u16, dds_info.mip_count),
+            .DepthOrArraySize = @intCast(u16, dds_info.array_size),
+            .MipLevels = @intCast(u16, dds_info.mip_map_count),
             .Format = dds_info.format,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .UNKNOWN,
@@ -1633,7 +1633,7 @@ pub const GraphicsContext = struct {
         subresource_index = 0;
         while (subresource_index < subresources.items.len) : (subresource_index += 1) {
             const dest = d3d12.TEXTURE_COPY_LOCATION{
-                .pResource = texture,
+                .pResource = gctx.lookupResource(texture).?,
                 .Type = .SUBRESOURCE_INDEX,
                 .u = .{ .SubresourceIndex = subresource_index },
             };
