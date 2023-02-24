@@ -1725,10 +1725,15 @@ pub const INT_2_10_10_10_REV = 0x8D9F;
 //
 //--------------------------------------------------------------------------------------------------
 const std = @import("std");
+const assert = std.debug.assert;
 
 pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32, minor: u32) !void {
+    assert(major >= 1 and major <= 3);
+    assert(minor >= 0 and minor <= 5);
+
     const ver = 10 * major + minor;
-    std.debug.assert(ver >= 10 and ver <= 33);
+
+    assert(ver >= 10 and ver <= 33);
 
     loaderFunc = loader;
 
@@ -2077,9 +2082,8 @@ var loaderFunc: *const fn ([:0]const u8) ?*anyopaque = undefined;
 fn getProcAddress(comptime T: type, name: [:0]const u8) !T {
     if (loaderFunc(name)) |addr| {
         return @ptrCast(T, @alignCast(@sizeOf(usize), addr));
-    } else {
-        std.log.debug("zopengl: {s} not found", .{name});
-        return error.OpenGL_FunctionNotFound;
     }
+    std.log.debug("zopengl: {s} not found", .{name});
+    return error.OpenGL_FunctionNotFound;
 }
 //--------------------------------------------------------------------------------------------------
