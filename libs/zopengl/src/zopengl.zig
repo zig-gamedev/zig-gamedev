@@ -1857,7 +1857,111 @@ pub const TIME_ELAPSED = 0x88BF;
 pub const TIMESTAMP = 0x8E28;
 pub const INT_2_10_10_10_REV = 0x8D9F;
 
-// TODO: Add functions.
+pub var bindFragDataLocationIndexed: *const fn (
+    program: Uint,
+    colorNumber: Uint,
+    index: Uint,
+    name: [*:0]const Char,
+) callconv(.C) void = undefined;
+pub var getFragDataIndex: *const fn (program: Uint, name: [*:0]const Char) callconv(.C) Int = undefined;
+pub var genSamplers: *const fn (count: Sizei, samplers: [*c]Uint) callconv(.C) void = undefined;
+pub var deleteSamplers: *const fn (count: Sizei, samplers: [*c]const Uint) callconv(.C) void = undefined;
+pub var isSampler: *const fn (sampler: Uint) callconv(.C) Boolean = undefined;
+pub var bindSampler: *const fn (unit: Uint, sampler: Uint) callconv(.C) void = undefined;
+pub var samplerParameteri: *const fn (sampler: Uint, pname: Enum, param: Int) callconv(.C) void = undefined;
+pub var samplerParameteriv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    param: [*c]const Int,
+) callconv(.C) void = undefined;
+pub var samplerParameterf: *const fn (sampler: Uint, pname: Enum, param: Float) callconv(.C) void = undefined;
+pub var samplerParameterfv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    param: [*c]const Float,
+) callconv(.C) void = undefined;
+pub var samplerParameterIiv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    param: [*c]const Int,
+) callconv(.C) void = undefined;
+pub var samplerParameterIuiv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    param: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var getSamplerParameteriv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    params: [*c]Int,
+) callconv(.C) void = undefined;
+pub var getSamplerParameterIiv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    params: [*c]Int,
+) callconv(.C) void = undefined;
+pub var getSamplerParameterfv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    params: [*c]Float,
+) callconv(.C) void = undefined;
+pub var getSamplerParameterIuiv: *const fn (
+    sampler: Uint,
+    pname: Enum,
+    params: [*c]Uint,
+) callconv(.C) void = undefined;
+pub var queryCounter: *const fn (id: Uint, target: Enum) callconv(.C) void = undefined;
+pub var getQueryObjecti64v: *const fn (id: Uint, pname: Enum, params: [*c]Int64) callconv(.C) void = undefined;
+pub var getQueryObjectui64v: *const fn (id: Uint, pname: Enum, params: [*c]Uint64) callconv(.C) void = undefined;
+pub var vertexAttribDivisor: *const fn (index: Uint, divisor: Uint) callconv(.C) void = undefined;
+pub var vertexAttribP1ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP1uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: *const Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP2ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP2uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: *[2]Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP3ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP3uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: *[3]Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP4ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP4uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: *[4]Uint,
+) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for loading OpenGL function pointers
