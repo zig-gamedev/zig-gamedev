@@ -1758,7 +1758,83 @@ pub const MAX_COLOR_TEXTURE_SAMPLES = 0x910E;
 pub const MAX_DEPTH_TEXTURE_SAMPLES = 0x910F;
 pub const MAX_INTEGER_SAMPLES = 0x9110;
 
-// TODO: Add functions.
+pub var drawElementsBaseVertex: *const fn (
+    mode: Enum,
+    count: Sizei,
+    type: Enum,
+    indices: ?*const anyopaque,
+    basevertex: Int,
+) callconv(.C) void = undefined;
+pub var drawRangeElementsBaseVertex: *const fn (
+    mode: Enum,
+    start: Uint,
+    end: Uint,
+    count: Sizei,
+    type: Enum,
+    indices: ?*const anyopaque,
+    basevertex: Int,
+) callconv(.C) void = undefined;
+pub var drawElementsInstancedBaseVertex: *const fn (
+    mode: Enum,
+    count: Sizei,
+    type: Enum,
+    indices: ?*const anyopaque,
+    instancecount: Sizei,
+    basevertex: Int,
+) callconv(.C) void = undefined;
+pub var multiDrawElementsBaseVertex: *const fn (
+    mode: Enum,
+    count: [*]const Sizei,
+    type: Enum,
+    indices: [*]const ?*const anyopaque,
+    drawcount: Sizei,
+    basevertex: [*]const Int,
+) callconv(.C) void = undefined;
+pub var provokingVertex: *const fn (mode: Enum) callconv(.C) void = undefined;
+pub var fenceSync: *const fn (condition: Enum, flags: Bitfield) callconv(.C) Sync = undefined;
+pub var isSync: *const fn (sync: Sync) callconv(.C) Boolean = undefined;
+pub var deleteSync: *const fn (sync: Sync) callconv(.C) void = undefined;
+pub var clientWaitSync: *const fn (sync: Sync, flags: Bitfield, timeout: Uint64) callconv(.C) Enum = undefined;
+pub var waitSync: *const fn (sync: Sync, flags: Bitfield, timeout: Uint64) callconv(.C) void = undefined;
+pub var getInteger64v: *const fn (pname: Enum, data: [*c]Int64) callconv(.C) void = undefined;
+pub var getSynciv: *const fn (
+    sync: Sync,
+    pname: Enum,
+    count: Sizei,
+    length: ?*Sizei,
+    values: [*c]Int,
+) callconv(.C) void = undefined;
+pub var getInteger64i_v: *const fn (target: Enum, index: Uint, data: [*c]Int64) callconv(.C) void = undefined;
+pub var getBufferParameteri64v: *const fn (
+    target: Enum,
+    pname: Enum,
+    params: [*c]Int64,
+) callconv(.C) void = undefined;
+pub var framebufferTexture: *const fn (
+    target: Enum,
+    attachment: Enum,
+    texture: Uint,
+    level: Int,
+) callconv(.C) void = undefined;
+pub var texImage2DMultisample: *const fn (
+    target: Enum,
+    samples: Sizei,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+    fixedsamplelocations: Boolean,
+) callconv(.C) void = undefined;
+pub var texImage3DMultisample: *const fn (
+    target: Enum,
+    samples: Sizei,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+    depth: Sizei,
+    fixedsamplelocations: Boolean,
+) callconv(.C) void = undefined;
+pub var getMultisamplefv: *const fn (pname: Enum, index: Uint, val: *Float) callconv(.C) void = undefined;
+pub var sampleMaski: *const fn (maskNumber: Uint, mask: Bitfield) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 3.3 (Core Profile)
