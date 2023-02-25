@@ -842,7 +842,7 @@ pub const TextInputEvent = extern struct {
 pub const MouseMotionEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    windowID: u32,
+    window_id: u32,
     which: u32,
     state: u32,
     x: i32,
@@ -854,7 +854,7 @@ pub const MouseMotionEvent = extern struct {
 pub const MouseButtonEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    windowID: u32,
+    window_id: u32,
     which: u32,
     button: u8,
     state: ReleasedOrPressed,
