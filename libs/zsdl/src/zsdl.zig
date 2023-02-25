@@ -55,11 +55,10 @@ extern fn SDL_Quit() void;
 //
 //--------------------------------------------------------------------------------------------------
 pub fn getError() ?[:0]const u8 {
-    if (SDL_GetError()) |cstr| {
-        return std.mem.sliceTo(cstr, 0);
-    } else {
-        return null;
+    if (SDL_GetError()) |ptr| {
+        return std.mem.sliceTo(ptr, 0);
     }
+    return null;
 }
 extern fn SDL_GetError() ?[*:0]const u8;
 
@@ -79,6 +78,14 @@ pub fn makeError() error{SdlError} {
 /// `pub fn getNumVideoDrivers() i32`
 pub const getNumVideoDrivers = SDL_GetNumVideoDrivers;
 extern fn SDL_GetNumVideoDrivers() i32;
+
+pub fn getVideoDriver(index: i32) ?[:0]const u8 {
+    if (SDL_GetVideoDriver(index)) |ptr| {
+        return std.mem.sliceTo(ptr, 0);
+    }
+    return null;
+}
+extern fn SDL_GetVideoDriver(index: i32) ?[*:0]const u8;
 //--------------------------------------------------------------------------------------------------
 //
 // Display
