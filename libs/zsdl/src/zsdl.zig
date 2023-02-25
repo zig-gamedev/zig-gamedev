@@ -476,6 +476,17 @@ pub fn pollEvent(event: ?*Event) bool {
     return SDL_PollEvent(event) != 0;
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
+
+pub fn getMouseFocus() *Window {
+    return SDL_GetMouseFocus();
+}
+extern fn SDL_GetMouseFocus() *Window;
+
+pub fn getMouseState(x: *i32, y: *i32) u32 {
+    return SDL_GetMouseState(x, y);
+}
+extern fn SDL_GetMouseState(x: *i32, y: *i32) u32;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Hints
