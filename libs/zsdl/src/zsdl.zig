@@ -881,6 +881,13 @@ pub const QuitEvent = extern struct {
     timestamp: u32,
 };
 
+pub const DropEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    file: ?[*:0]u8,
+    window_id: u32,
+};
+
 pub const Event = extern union {
     type: EventType,
     common: CommonEvent,
@@ -894,6 +901,7 @@ pub const Event = extern union {
     button: MouseButtonEvent,
     wheel: MouseWheelEvent,
     quit: QuitEvent,
+    drop: DropEvent,
 
     padding: [size]u8,
 
