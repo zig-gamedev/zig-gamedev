@@ -65,26 +65,26 @@ pub const Package = struct {
         zgui_c_cpp.linkLibC();
         zgui_c_cpp.linkLibCpp();
 
-        const cflags = &.{"-fno-sanitize=undefined"};
+        const cflags = .{"-fno-sanitize=undefined"};
 
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/src/zgui.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/src/zgui.cpp", &cflags);
 
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &cflags);
 
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", &cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &cflags);
 
         switch (args.options.backend) {
             .glfw_wgpu => {
                 zgui_c_cpp.addIncludePath(thisDir() ++ "/../zglfw/libs/glfw/include");
                 zgui_c_cpp.addIncludePath(thisDir() ++ "/../zgpu/libs/dawn/include");
-                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
-                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", cflags);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", &cflags);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", &cflags);
             },
             .sdl2_opengl3 => {
                 const include_path_sdl2 = std.fs.path.join(b.allocator, &.{
@@ -97,12 +97,15 @@ pub const Package = struct {
                     },
                 }) catch unreachable;
                 zgui_c_cpp.addIncludePath(include_path_sdl2);
-                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_sdl2.cpp", cflags);
-                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_opengl3.cpp", cflags);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_sdl2.cpp", &cflags);
+                zgui_c_cpp.addCSourceFile(
+                    thisDir() ++ "/libs/imgui/backends/imgui_impl_opengl3.cpp",
+                    &(cflags ++ .{"-DIMGUI_IMPL_OPENGL_LOADER_CUSTOM"}),
+                );
             },
             .win32_dx12 => {
-                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp", cflags);
-                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_dx12.cpp", cflags);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp", &cflags);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_dx12.cpp", &cflags);
                 zgui_c_cpp.linkSystemLibraryName("d3dcompiler_47");
                 zgui_c_cpp.linkSystemLibraryName("dwmapi");
             },
