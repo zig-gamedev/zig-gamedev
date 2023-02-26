@@ -73,7 +73,7 @@ pub fn writeToFile(
 
 pub fn writeToFn(
     image: *const Image,
-    write_fn: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
+    write_fn: *const fn (ctx: ?*anyopaque, data: ?*anyopaque, size: c_int) callconv(.C) void,
     context: ?*anyopaque,
     image_format: ImageWriteFormat,
 ) ImageWriteError!void
