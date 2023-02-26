@@ -179,19 +179,15 @@ pub const Window = opaque {
     pub const destroy = SDL_DestroyWindow;
     extern fn SDL_DestroyWindow(window: *Window) void;
 
-    pub fn getDisplayMode(window: *Window) DisplayMode {
+    pub fn getDisplayMode(window: *Window) Error!DisplayMode {
         var mode: DisplayMode = undefined;
-        SDL_GetWindowDisplayMode(window, &mode);
+        if (SDL_GetWindowDisplayMode(window, &mode) < 0) return makeError();
         return mode;
     }
     extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) void;
 
-    pub fn getSize(window: *Window) struct { i32, i32 } {
-        var w: i32 = undefined;
-        var h: i32 = undefined;
-        SDL_GetWindowSize(window, &w, &h);
-        return .{ w, h };
-    }
+    /// `pub fn getSize(window: *Window, w: ?*i32, h: ?*i32) void`
+    pub const getSize = SDL_GetWindowSize;
     extern fn SDL_GetWindowSize(window: *Window, w: ?*i32, h: ?*i32) void;
 };
 //--------------------------------------------------------------------------------------------------
@@ -623,12 +619,8 @@ pub const gl = struct {
     pub const deleteContext = SDL_GL_DeleteContext;
     extern fn SDL_GL_DeleteContext(context: Context) void;
 
-    pub fn getDrawableSize(window: *Window) struct { i32, i32 } {
-        var w: i32 = undefined;
-        var h: i32 = undefined;
-        SDL_GL_GetDrawableSize(window, &w, &h);
-        return .{ w, h };
-    }
+    /// `pub fn getDrawableSize(window: *Window, w: ?*i32, h: ?*i32) void`
+    pub const getDrawableSize = SDL_GL_GetDrawableSize;
     extern fn SDL_GL_GetDrawableSize(window: *Window, w: ?*i32, h: ?*i32) void;
 };
 //--------------------------------------------------------------------------------------------------
