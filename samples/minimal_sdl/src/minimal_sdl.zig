@@ -3,6 +3,8 @@ const sdl = @import("zsdl");
 const gl = @import("zopengl");
 
 pub fn main() !void {
+    _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
+
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
 
@@ -19,7 +21,7 @@ pub fn main() !void {
         sdl.Window.pos_undefined,
         600,
         600,
-        .{ .opengl = true },
+        .{ .opengl = true, .allow_highdpi = true },
     );
     defer window.destroy();
 
@@ -30,6 +32,12 @@ pub fn main() !void {
     try sdl.gl.setSwapInterval(0);
 
     try gl.loadCoreProfile(sdl.gl.getProcAddress, gl_major, gl_minor);
+
+    const window_size = window.getSize();
+    const drawable_size = sdl.gl.getDrawableSize(window);
+
+    std.debug.print("Window size is {d}x{d}\n", .{ window_size[0], window_size[1] });
+    std.debug.print("Drawable size is {d}x{d}\n", .{ drawable_size[0], drawable_size[1] });
 
     main_loop: while (true) {
         var event: sdl.Event = undefined;
