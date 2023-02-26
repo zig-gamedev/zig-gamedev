@@ -68,7 +68,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn init(pathname: [:0]const u8, forced_num_channels: u32) !Image {
+    pub fn loadFromFile(pathname: [:0]const u8, forced_num_channels: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -145,7 +145,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn initFromData(data: []const u8, forced_num_channels: u32) !Image {
+    pub fn loadFromMemory(data: []const u8, forced_num_channels: u32) !Image {
         // TODO: Add support for HDR images (https://github.com/michal-z/zig-gamedev/issues/155).
         var width: u32 = 0;
         var height: u32 = 0;

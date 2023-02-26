@@ -38,7 +38,7 @@ defer zstbi.deinit();
 
 Load image:
 ```zig
-var image = try zstbi.Image.init("data/image.png", num_desired_channels);
+var image = try zstbi.Image.loadFromFile("data/image.png", num_desired_channels);
 defer image.deinit();
 _ = image.data; // stored as []u8
 _ = image.width;

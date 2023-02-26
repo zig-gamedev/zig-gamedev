@@ -520,7 +520,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             content_dir ++ "Newport_Loft.hdr",
         }) catch unreachable;
 
-        var image = zstbi.Image.init(pathname, 4) catch unreachable;
+        var image = zstbi.Image.loadFromFile(pathname, 4) catch unreachable;
         defer {
             image.deinit();
             zstbi.setFlipVerticallyOnLoad(false);
