@@ -4,6 +4,7 @@ pub const Package = struct {
     pub const Backend = enum {
         no_backend,
         glfw_wgpu,
+        sdl2_opengl3,
         win32_dx12,
     };
     pub const Options = struct {
@@ -84,6 +85,20 @@ pub const Package = struct {
                 zgui_c_cpp.addIncludePath(thisDir() ++ "/../zgpu/libs/dawn/include");
                 zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
                 zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", cflags);
+            },
+            .sdl2_opengl3 => {
+                const include_path_sdl2 = std.fs.path.join(b.allocator, &.{
+                    thisDir(),
+                    switch (target.getOsTag()) {
+                        .windows => "../zsdl/libs/x86_64-windows-gnu/include/SDL2",
+                        .linux => "../zsdl/libs/x86_64-linux-gnu/include/SDL2",
+                        .macos => "../zsdl/libs/macos/Frameworks/SDL2.framework/Headers",
+                        else => unreachable,
+                    },
+                }) catch unreachable;
+                zgui_c_cpp.addIncludePath(include_path_sdl2);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_sdl2.cpp", cflags);
+                zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_opengl3.cpp", cflags);
             },
             .win32_dx12 => {
                 zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp", cflags);

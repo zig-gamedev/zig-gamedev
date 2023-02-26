@@ -10,6 +10,7 @@ pub usingnamespace @import("gui.zig");
 pub const plot = @import("plot.zig");
 pub const backend = switch (@import("zgui_options").backend) {
     .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
+    .sdl2_opengl3 => @import("backend_sdl2_opengl3.zig"),
     .win32_dx12 => .{}, // TODO:
     .no_backend => .{},
 };
