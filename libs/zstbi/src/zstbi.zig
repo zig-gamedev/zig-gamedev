@@ -199,8 +199,11 @@ pub const Image = struct {
 
         const size = height * bytes_per_row;
 
+        const data = @ptrCast([*]u8, zstbiMalloc(size));
+        @memset(data, 0, size);
+
         return Image{
-            .data = @ptrCast([*]u8, zstbiMalloc(size))[0..size],
+            .data = data[0..size],
             .width = width,
             .height = height,
             .num_components = num_components,
