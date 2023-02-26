@@ -2544,7 +2544,7 @@ pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
         out_det.?.* = det;
     }
 
-    if (math.approxEqAbs(f32, det[0], 0.0, 0.0001)) {
+    if (math.approxEqAbs(f32, det[0], 0.0, math.f32_epsilon)) {
         return .{
             f32x4(0.0, 0.0, 0.0, 0.0),
             f32x4(0.0, 0.0, 0.0, 0.0),
