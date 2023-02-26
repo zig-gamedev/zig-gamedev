@@ -472,6 +472,12 @@ pub const Event = extern union {
     }
 };
 
+pub const MouseState = extern struct {
+    x: i32,
+    y: i32,
+    button_mask: u32,
+};
+
 pub fn pollEvent(event: ?*Event) bool {
     return SDL_PollEvent(event) != 0;
 }
@@ -482,8 +488,11 @@ pub fn getMouseFocus() *Window {
 }
 extern fn SDL_GetMouseFocus() *Window;
 
-pub fn getMouseState(x: *i32, y: *i32) u32 {
-    return SDL_GetMouseState(x, y);
+pub fn getMouseState() MouseState {
+    var x: i32 = undefined;
+    var y: i32 = undefined;
+    const btn_mask = SDL_GetMouseState(&x, &y);
+    return .{ .x = x, .y = y, .button_mask = btn_mask };
 }
 extern fn SDL_GetMouseState(x: *i32, y: *i32) u32;
 
