@@ -187,6 +187,29 @@ pub const Image = struct {
         };
     }
 
+    pub fn createEmpty(width: u32, height: u32, num_components: u32, args: struct {
+        bytes_per_component: u32 = 0,
+        bytes_per_row: u32 = 0,
+    }) !Image {
+        const bytes_per_component = if (args.bytes_per_component == 0) 1 else args.bytes_per_component;
+        const bytes_per_row = if (args.bytes_per_row == 0)
+            width * num_components * bytes_per_component
+        else
+            args.bytes_per_row;
+
+        const size = height * bytes_per_row;
+
+        return Image{
+            .data = @ptrCast([*]u8, zstbiMalloc(size))[0..size],
+            .width = width,
+            .height = height,
+            .num_components = num_components,
+            .bytes_per_component = bytes_per_component,
+            .bytes_per_row = bytes_per_row,
+            .is_hdr = false,
+        };
+    }
+
     pub fn resize(image: *const Image, new_width: u32, new_height: u32) Image {
         // TODO: Add support for HDR images
         const new_bytes_per_row = new_width * image.num_components * image.bytes_per_component;
@@ -469,4 +492,7 @@ extern fn stbi_write_jpg_to_func(
 test "zstbi.basic" {
     init(std.testing.allocator);
     defer deinit();
+
+    var image = try Image.createEmpty(64, 64, 4, .{});
+    defer image.deinit();
 }
