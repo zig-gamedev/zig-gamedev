@@ -67,7 +67,7 @@ pub fn Handle(
     const UInt = utils.UInt;
     const AddressableUInt = utils.AddressableUInt;
 
-    return struct {
+    return extern struct {
         const Self = @This();
 
         const HandleType = Self;
