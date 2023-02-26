@@ -51,11 +51,19 @@ comptime {
     assert(@alignOf([2]Vertex) == 4);
 }
 
-// In this demo program, Mesh is just a range of vertices/indices in a single global vertex/index buffer.
-const Mesh = struct {
+// In this demo program, MeshLod is a range of indices in a single global index buffer.
+// A Mesh is an vertex offset into a single global vertex buffer and has a list of lods.
+const MeshLod = struct {
     index_offset: u32,
-    vertex_offset: u32,
     num_indices: u32,
+};
+
+const max_num_lods: u32 = 4;
+
+const Mesh = struct {
+    vertex_offset: u32,
+    num_lods: u32,
+    lods: [max_num_lods]MeshLod,
 };
 
 const Scene_Const = extern struct {
@@ -110,6 +118,7 @@ const DemoState = struct {
     brdf_integration_texture: ResourceView,
 
     draw_mode: i32,
+    current_lod: i32,
 
     camera: struct {
         position: Vec3,
@@ -129,6 +138,7 @@ fn loadMesh(
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
+    generate_lods: u32,
 ) !void {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
@@ -148,11 +158,57 @@ fn loadMesh(
     defer zmesh.io.freeData(data);
     try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
-    all_meshes.append(.{
-        .index_offset = @intCast(u32, pre_indices_len),
+    var mesh = Mesh{
         .vertex_offset = @intCast(u32, pre_positions_len),
-        .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
-    }) catch unreachable;
+        .num_lods = 1,
+        .lods = undefined,
+    };
+
+    mesh.lods[0] = .{
+        .index_offset = @intCast(u32, pre_indices_len),
+        .num_indices = @intCast(u32, indices.items.len),
+    };
+
+    if (generate_lods > 0) {
+        assert(generate_lods <= max_num_lods);
+        var all_lods_indices = std.ArrayList(u32).init(arena);
+
+        var lod_index: u32 = 1;
+        while (lod_index < generate_lods) : (lod_index += 1) {
+            mesh.num_lods += 1;
+
+            const threshold: f32 = 1.0 - @intToFloat(f32, lod_index) / @intToFloat(f32, max_num_lods);
+            const target_index_count: usize = @floatToInt(usize, @intToFloat(f32, indices.items.len) * threshold);
+            const target_error: f32 = 1e-2;
+
+            var lod_indices = std.ArrayList(u32).init(arena);
+            lod_indices.resize(indices.items.len) catch unreachable;
+            var lod_error: f32 = 0.0;
+            var lod_indices_count = zmesh.opt.simplifySloppy(
+                [3]f32,
+                lod_indices.items,
+                indices.items,
+                indices.items.len,
+                positions.items,
+                positions.items.len,
+                target_index_count,
+                target_error,
+                &lod_error,
+            );
+            lod_indices.resize(lod_indices_count) catch unreachable;
+
+            mesh.lods[lod_index] = .{
+                .index_offset = mesh.lods[lod_index - 1].index_offset + mesh.lods[lod_index - 1].num_indices,
+                .num_indices = @intCast(u32, lod_indices_count),
+            };
+
+            all_lods_indices.appendSlice(lod_indices.items) catch unreachable;
+        }
+
+        indices.appendSlice(all_lods_indices.items) catch unreachable;
+    }
+
+    all_meshes.append(mesh) catch unreachable;
 
     try all_indices.ensureTotalCapacity(indices.items.len);
     for (indices.items) |mesh_index| {
@@ -370,13 +426,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
 
-    try loadMesh(arena_allocator, content_dir ++ "cube.gltf", &all_meshes, &all_vertices, &all_indices);
+    try loadMesh(arena_allocator, content_dir ++ "cube.gltf", &all_meshes, &all_vertices, &all_indices, 0);
     try loadMesh(
         arena_allocator,
         content_dir ++ "SciFiHelmet/SciFiHelmet.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
+        max_num_lods,
     );
 
     const depth_texture = .{
@@ -847,6 +904,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .draw_mode = 0,
+        .current_lod = 0,
         .camera = .{
             .position = Vec3.init(2.2, 0.0, 2.2),
             .forward = Vec3.initZero(),
@@ -891,6 +949,7 @@ fn update(demo: *DemoState) void {
     _ = c.igRadioButton_IntPtr("Draw Metallic texture", &demo.draw_mode, 3);
     _ = c.igRadioButton_IntPtr("Draw Roughness texture", &demo.draw_mode, 4);
     _ = c.igRadioButton_IntPtr("Draw Normal texture", &demo.draw_mode, 5);
+    _ = c.igSliderInt("SciFi Helmet LOD", &demo.current_lod, 0, max_num_lods - 1, "%d", 0);
     c.igEnd();
 
     // Handle camera rotation with mouse.
@@ -1019,9 +1078,9 @@ fn draw(demo: *DemoState) void {
         });
 
         gctx.cmdlist.DrawIndexedInstanced(
-            demo.meshes.items[mesh_helmet].num_indices,
+            demo.meshes.items[mesh_helmet].lods[@intCast(usize, demo.current_lod)].num_indices,
             1,
-            demo.meshes.items[mesh_helmet].index_offset,
+            demo.meshes.items[mesh_helmet].lods[@intCast(usize, demo.current_lod)].index_offset,
             @intCast(i32, demo.meshes.items[mesh_helmet].vertex_offset),
             0,
         );
@@ -1039,9 +1098,9 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, demo.env_texture.view));
 
         gctx.cmdlist.DrawIndexedInstanced(
-            demo.meshes.items[mesh_cube].num_indices,
+            demo.meshes.items[mesh_cube].lods[0].num_indices,
             1,
-            demo.meshes.items[mesh_cube].index_offset,
+            demo.meshes.items[mesh_cube].lods[0].index_offset,
             @intCast(i32, demo.meshes.items[mesh_cube].vertex_offset),
             0,
         );

@@ -58,6 +58,7 @@ pub const Package = struct {
         zmesh_c_cpp.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/vfetchanalyzer.cpp", &.{""});
         zmesh_c_cpp.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/overdrawoptimizer.cpp", &.{""});
         zmesh_c_cpp.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/overdrawanalyzer.cpp", &.{""});
+        zmesh_c_cpp.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/simplifier.cpp", &.{""});
         zmesh_c_cpp.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/allocator.cpp", &.{""});
 
         zmesh_c_cpp.addIncludePath(thisDir() ++ "/libs/cgltf");

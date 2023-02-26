@@ -152,6 +152,57 @@ pub inline fn analyzeVertexFetch(
     return meshopt_analyzeVertexFetch(indices.ptr, indices.len, vertex_count, vertex_size);
 }
 
+// Simplifier
+pub inline fn simplify(
+    comptime T: type,
+    destination: []u32,
+    indices: []const u32,
+    index_count: usize,
+    vertices: []const T,
+    vertex_count: usize,
+    target_index_count: usize,
+    target_error: f32,
+    options: u32,
+    out_result_error: *f32,
+) usize {
+    return meshopt_simplify(
+        destination.ptr,
+        indices.ptr,
+        index_count,
+        vertices.ptr,
+        vertex_count,
+        @sizeOf(T),
+        target_index_count,
+        target_error,
+        options,
+        out_result_error,
+    );
+}
+
+pub inline fn simplifySloppy(
+    comptime T: type,
+    destination: []u32,
+    indices: []const u32,
+    index_count: usize,
+    vertices: []const T,
+    vertex_count: usize,
+    target_index_count: usize,
+    target_error: f32,
+    out_result_error: *f32,
+) usize {
+    return meshopt_simplifySloppy(
+        destination.ptr,
+        indices.ptr,
+        index_count,
+        vertices.ptr,
+        vertex_count,
+        @sizeOf(T),
+        target_index_count,
+        target_error,
+        out_result_error,
+    );
+}
+
 // Mesh shading
 pub inline fn buildMeshletsBound(index_count: usize, max_vertices: usize, max_triangles: usize) usize {
     return meshopt_buildMeshletsBound(index_count, max_vertices, max_triangles);
@@ -255,6 +306,29 @@ extern fn meshopt_analyzeVertexFetch(
     vertex_count: usize,
     vertex_size: usize,
 ) VertexFetchStatistics;
+extern fn meshopt_simplify(
+    destination: [*]u32,
+    indices: [*]const u32,
+    index_count: usize,
+    vertices: *const anyopaque,
+    vertex_count: usize,
+    vertex_stride: usize,
+    target_index_count: usize,
+    target_error: f32,
+    options: u32,
+    out_result_error: *f32,
+) usize;
+extern fn meshopt_simplifySloppy(
+    destination: [*]u32,
+    indices: [*]const u32,
+    index_count: usize,
+    vertices: *const anyopaque,
+    vertex_count: usize,
+    vertex_stride: usize,
+    target_index_count: usize,
+    target_error: f32,
+    out_result_error: *f32,
+) usize;
 extern fn meshopt_buildMeshletsBound(
     index_count: usize,
     max_vertices: usize,
