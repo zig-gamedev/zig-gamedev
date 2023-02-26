@@ -1,4 +1,4 @@
-# zstbi v0.9.2 - stb image bindings
+# zstbi v0.9.3 - stb image bindings
 
 ## Features
 
@@ -35,18 +35,31 @@ const zstbi = @import("zstbi");
 zstbi.init(allocator);
 defer zstbi.deinit();
 ```
-
-Load image:
 ```zig
-var image = try zstbi.Image.loadFromFile("data/image.png", num_desired_channels);
+pub const Image = struct {
+    data: []u8,
+    width: u32,
+    height: u32,
+    num_components: u32,
+    bytes_per_component: u32,
+    bytes_per_row: u32,
+    is_hdr: bool,
+
+    ...
+```
+```zig
+pub fn loadFromFile(pathname: [:0]const u8, forced_num_components: u32) !Image
+
+pub fn loadFromMemory(data: []const u8, forced_num_components: u32) !Image
+
+pub fn createEmpty(width: u32, height: u32, num_components: u32, args: struct {
+    bytes_per_component: u32 = 0,
+    bytes_per_row: u32 = 0,
+}) !Image
+```
+```zig
+var image = try zstbi.Image.loadFromFile("data/image.png", forced_num_components);
 defer image.deinit();
-_ = image.data; // stored as []u8
-_ = image.width;
-_ = image.height;
-_ = image.num_components;
-_ = image.bytes_per_component;
-_ = image.bytes_per_row;
-_ = image.is_hdr;
 
 const new_resized_image = image.resize(1024, 1024);
 ```

@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 2 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 3 };
 const std = @import("std");
 const assert = std.debug.assert;
 
@@ -68,7 +68,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn loadFromFile(pathname: [:0]const u8, forced_num_channels: u32) !Image {
+    pub fn loadFromFile(pathname: [:0]const u8, forced_num_components: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -85,11 +85,11 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
             bytes_per_component = 2;
@@ -114,17 +114,17 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             )) else stbi_load(
                 pathname,
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
             bytes_per_component = if (is_16bit) 2 else 1;
@@ -145,7 +145,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn loadFromMemory(data: []const u8, forced_num_channels: u32) !Image {
+    pub fn loadFromMemory(data: []const u8, forced_num_components: u32) !Image {
         // TODO: Add support for HDR images (https://github.com/michal-z/zig-gamedev/issues/155).
         var width: u32 = 0;
         var height: u32 = 0;
@@ -163,11 +163,11 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
             bytes_per_component = 1;
