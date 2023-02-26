@@ -241,21 +241,21 @@ pub const Image = struct {
     }
 
     pub fn writeToFile(
-        self: *const Image,
+        image: *const Image,
         filename: [:0]const u8,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
-        const w = @intCast(c_int, self.width);
-        const h = @intCast(c_int, self.height);
-        const comp = @intCast(c_int, self.num_components);
+        const w = @intCast(c_int, image.width);
+        const h = @intCast(c_int, image.height);
+        const comp = @intCast(c_int, image.num_components);
         const result = switch (image_format) {
-            .png => stbi_write_png(filename.ptr, w, h, comp, self.data.ptr, 0),
+            .png => stbi_write_png(filename.ptr, w, h, comp, image.data.ptr, 0),
             .jpg => |settings| stbi_write_jpg(
                 filename.ptr,
                 w,
                 h,
                 comp,
-                self.data.ptr,
+                image.data.ptr,
                 @intCast(c_int, settings.quality),
             ),
         };
@@ -266,23 +266,23 @@ pub const Image = struct {
     }
 
     pub fn writeToFn(
-        self: *const Image,
+        image: *const Image,
         write_fn: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
         context: ?*anyopaque,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
-        const w = @intCast(c_int, self.width);
-        const h = @intCast(c_int, self.height);
-        const comp = @intCast(c_int, self.num_components);
+        const w = @intCast(c_int, image.width);
+        const h = @intCast(c_int, image.height);
+        const comp = @intCast(c_int, image.num_components);
         const result = switch (image_format) {
-            .png => stbi_write_png_to_func(write_fn, context, w, h, comp, self.data.ptr, 0),
+            .png => stbi_write_png_to_func(write_fn, context, w, h, comp, image.data.ptr, 0),
             .jpg => |settings| stbi_write_jpg_to_func(
                 write_fn,
                 context,
                 w,
                 h,
                 comp,
-                self.data.ptr,
+                image.data.ptr,
                 @intCast(c_int, settings.quality),
             ),
         };

@@ -44,7 +44,6 @@ pub const Image = struct {
     bytes_per_component: u32,
     bytes_per_row: u32,
     is_hdr: bool,
-
     ...
 ```
 ```zig
@@ -56,21 +55,34 @@ pub fn createEmpty(width: u32, height: u32, num_components: u32, args: struct {
     bytes_per_component: u32 = 0,
     bytes_per_row: u32 = 0,
 }) !Image
+
+pub fn info(pathname: [:0]const u8) struct {
+    is_supported: bool,
+    width: u32,
+    height: u32,
+    num_components: u32,
+}
+
+pub fn resize(image: *const Image, new_width: u32, new_height: u32) Image
+
+pub fn writeToFile(
+    image: *const Image,
+    filename: [:0]const u8,
+    image_format: ImageWriteFormat,
+) ImageWriteError!void
+
+pub fn writeToFn(
+    image: *const Image,
+    write_fn: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
+    context: ?*anyopaque,
+    image_format: ImageWriteFormat,
+) ImageWriteError!void
 ```
 ```zig
 var image = try zstbi.Image.loadFromFile("data/image.png", forced_num_components);
 defer image.deinit();
 
 const new_resized_image = image.resize(1024, 1024);
-```
-
-Get image info without loading:
-```zig
-const image_info = zstbi.Image.info("data/image.jpg");
-_ = image_info.is_supported; // Is image format supported?
-_ = image_info.width;
-_ = image_info.height;
-_ = image_info.num_components;
 ```
 Misc functions:
 ```zig
