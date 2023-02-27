@@ -8,6 +8,7 @@ pub const Package = struct {
     };
     pub const Options = struct {
         backend: Backend,
+        shared: bool = false,
     };
 
     options: Options,
@@ -25,6 +26,7 @@ pub const Package = struct {
     ) Package {
         const step = b.addOptions();
         step.addOption(Backend, "backend", args.options.backend);
+        step.addOption(bool, "shared", args.options.shared);
 
         const zgui_options = step.createModule();
 
@@ -35,7 +37,22 @@ pub const Package = struct {
             },
         });
 
-        const zgui_c_cpp = b.addStaticLibrary(.{
+        const zgui_c_cpp = if (args.options.shared) blk: {
+            const lib = b.addSharedLibrary(.{
+                .name = "zgui",
+                .target = target,
+                .optimize = optimize,
+            });
+
+            lib.install();
+            if (target.isWindows()) {
+                lib.defineCMacro("IMGUI_API", "__declspec(dllexport)");
+                lib.defineCMacro("IMPLOT_API", "__declspec(dllexport)");
+                lib.defineCMacro("ZGUI_API", "__declspec(dllexport)");
+            }
+
+            break :blk lib;
+        } else b.addStaticLibrary(.{
             .name = "zgui",
             .target = target,
             .optimize = optimize,
