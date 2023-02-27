@@ -247,6 +247,7 @@ pub const observer_t = extern struct {
     binding_ctx_free: ctx_free_t,
     observable: [*c]observable_t,
     last_event_id: [*c]i32,
+    last_event_id_storage: i32,
     register_id: id_t,
     term_index: i32,
     is_monitor: bool,
@@ -903,6 +904,10 @@ extern fn ecs_new_low_id(world: *world_t) entity_t;
 pub const new_w_id = ecs_new_w_id;
 extern fn ecs_new_w_id(world: *world_t, id: id_t) entity_t;
 
+/// `pub fn new_w_table(world: *world_t, table: *table_t) entity_t`
+pub const new_w_table = ecs_new_w_table;
+extern fn ecs_new_w_table(world: *world_t, table: *table_t) entity_t;
+
 /// `pub fn entity_init(world: *world_t, desc: *const entity_desc_t) entity_t`
 pub const entity_init = ecs_entity_init;
 extern fn ecs_entity_init(world: *world_t, desc: *const entity_desc_t) entity_t;
@@ -1261,8 +1266,11 @@ extern fn ecs_get_hooks_id(world: *const world_t, id: entity_t) *const type_hook
 
 /// `pub fn id_is_tag(world: *const world_t, id: id_t) bool;
 pub const id_is_tag = ecs_id_is_tag;
-// TODO: flecs upstream: missing const
 extern fn ecs_id_is_tag(world: *const world_t, id: id_t) bool;
+
+/// `pub fn id_is_union(world: *const world_t, id: id_t) bool;
+pub const id_is_union = ecs_id_is_union;
+extern fn ecs_id_is_union(world: *const world_t, id: id_t) bool;
 
 /// `pub fn id_in_use(world: *const world_t, id: id_t) bool`
 pub const id_in_use = ecs_id_in_use;
@@ -1536,6 +1544,12 @@ extern fn ecs_field_is_self(it: *const iter_t, index: i32) bool;
 /// `pub fn iter_str(it: *const iter_t) ?[*:0]u8`
 pub const iter_str = ecs_iter_str;
 extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for working with `table_t`.
+//
+//--------------------------------------------------------------------------------------------------
+// TODO:
 //--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)
