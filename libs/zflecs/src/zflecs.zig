@@ -475,6 +475,13 @@ pub const iter_t = extern struct {
     callback: iter_action_t,
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
+
+    pub fn get_entities(iter: iter_t) ?[]entity_t {
+        if (iter.entities) |ptr| {
+            return ptr[0..@intCast(usize, iter.count)];
+        }
+        return null;
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //

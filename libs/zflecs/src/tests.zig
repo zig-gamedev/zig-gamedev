@@ -66,8 +66,7 @@ test "zflecs.entities.basics" {
 
         var it = ecs.filter_iter(world, filter);
         while (ecs.filter_next(&it)) {
-            const entities = it.entities.?[0..@intCast(usize, it.count)];
-            for (entities) |e| {
+            for (it.get_entities().?) |e| {
                 std.debug.print("Filter loop: {?s}\n", .{ecs.get_name(world, e)});
             }
         }
