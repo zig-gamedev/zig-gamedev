@@ -208,11 +208,11 @@ pub const term_t = extern struct {
     idr: ?*id_record_t = null,
 
     move: bool = true,
-
-    pub fn array(comptime len: comptime_int) [len]term_t {
-        return [_]term_t{.{}} ** len;
-    }
 };
+
+pub fn array(comptime T: type, comptime len: comptime_int) [len]T {
+    return [_]T{.{}} ** len;
+}
 
 pub const filter_t = extern struct {
     hdr: header_t = .{ .magic = filter_t_magic },
@@ -588,7 +588,7 @@ pub const component_desc_t = extern struct {
     type: type_info_t,
 };
 
-const ID_CACHE_SIZE = 32;
+pub const ID_CACHE_SIZE = 32;
 
 pub const entity_desc_t = extern struct {
     _canary: i32 = 0,
@@ -616,7 +616,7 @@ pub const filter_desc_t = extern struct {
     entity: entity_t = 0,
 };
 
-const OBSERVER_DESC_EVENT_COUNT_MAX = 8;
+pub const OBSERVER_DESC_EVENT_COUNT_MAX = 8;
 
 pub const observer_desc_t = extern struct {
     _canary: i32 = 0,
@@ -1418,9 +1418,14 @@ extern fn ecs_filter_copy(dst: *filter_t, src: *const filter_t) void;
 // Functions for working with `query_t`.
 //
 //--------------------------------------------------------------------------------------------------
-/// `pub fn query_init(world: *filter_t, desc: *const query_desc_t) *query_t`
-pub const query_init = ecs_query_init;
-extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) *query_t;
+pub fn query_init(world: *world_t, desc: *const query_desc_t) error_t!*query_t {
+    return ecs_query_init(world, desc) orelse return make_error();
+}
+extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) ?*query_t;
+
+/// `pub fn query_fini(query: *query_t) void`
+pub const query_fini = ecs_query_fini;
+extern fn ecs_query_fini(query: *query_t) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with events and observers.
@@ -1537,7 +1542,8 @@ extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
 //
 //--------------------------------------------------------------------------------------------------
 // TODO: We support only one `world_t` at the time because type ids are stored in a global static memory.
-// We need to reset those ids to zero when the world is destroyed.
+// We need to reset those ids to zero when the world is destroyed
+// (we do this in `pub fn fini(world: *world_t) i32`).
 var num_worlds: u32 = 0;
 var component_ids_hm = std.AutoHashMap(*id_t, u0).init(std.heap.page_allocator);
 
@@ -1654,6 +1660,7 @@ pub const time_t = extern struct {
     sec: u32,
     nanosec: u32,
 };
+
 pub const os = struct {
     pub const thread_t = usize;
     pub const cond_t = usize;

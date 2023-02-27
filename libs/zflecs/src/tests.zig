@@ -53,7 +53,8 @@ test "zflecs.entities.basics" {
     {
         var desc = ecs.filter_desc_t{};
         desc.terms[0].id = ecs.id(Position);
-        _ = try ecs.filter_init(world, &desc);
+        const filter = try ecs.filter_init(world, &desc);
+        defer ecs.filter_fini(filter);
     }
 
     {
@@ -61,8 +62,9 @@ test "zflecs.entities.basics" {
             .terms = [_]ecs.term_t{
                 .{ .id = ecs.id(Position) },
                 .{ .id = ecs.id(Walking) },
-            } ++ [_]ecs.term_t{.{}} ** (ecs.TERM_DESC_CACHE_SIZE - 2),
+            } ++ ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 2),
         });
+        defer ecs.filter_fini(filter);
 
         var it = ecs.filter_iter(world, filter);
         while (ecs.filter_next(&it)) {
@@ -72,19 +74,24 @@ test "zflecs.entities.basics" {
         }
     }
 
-    const query = _: {
-        var desc = ecs.query_desc_t{};
-        desc.filter.terms[0].id = ecs.id(Position);
-        break :_ ecs.query_init(world, &desc);
-    };
-    _ = query;
+    {
+        const query = _: {
+            var desc = ecs.query_desc_t{};
+            desc.filter.terms[0].id = ecs.id(Position);
+            break :_ try ecs.query_init(world, &desc);
+        };
+        defer ecs.query_fini(query);
+    }
 
-    _ = ecs.query_init(world, &.{
-        .filter = .{
-            .terms = [_]ecs.term_t{.{ .id = ecs.id(Position) }} ++
-                [_]ecs.term_t{.{}} ** (ecs.TERM_DESC_CACHE_SIZE - 1),
-        },
-    });
+    {
+        const query = try ecs.query_init(world, &.{
+            .filter = .{
+                .terms = [_]ecs.term_t{.{ .id = ecs.id(Position) }} ++
+                    ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 1),
+            },
+        });
+        defer ecs.query_fini(query);
+    }
 }
 
 fn registerComponents(world: *ecs.world_t) void {
