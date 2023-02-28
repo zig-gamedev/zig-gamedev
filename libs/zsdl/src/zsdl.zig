@@ -184,7 +184,7 @@ pub const Window = opaque {
         if (SDL_GetWindowDisplayMode(window, &mode) < 0) return makeError();
         return mode;
     }
-    extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) void;
+    extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) i32;
 
     /// `pub fn getSize(window: *Window, w: ?*i32, h: ?*i32) void`
     pub const getSize = SDL_GetWindowSize;
