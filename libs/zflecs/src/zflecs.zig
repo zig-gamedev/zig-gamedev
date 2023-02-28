@@ -435,7 +435,7 @@ pub const iter_private_t = extern struct {
 pub const iter_t = extern struct {
     world: *world_t,
     real_world: *world_t,
-    entities: ?[*]entity_t,
+    entities_: [*]entity_t,
     ptrs: ?[*]*anyopaque,
     sizes: ?[*]size_t,
     table: ?*table_t,
@@ -474,11 +474,8 @@ pub const iter_t = extern struct {
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
 
-    pub fn get_entities(iter: iter_t) ?[]entity_t {
-        if (iter.entities) |ptr| {
-            return ptr[0..@intCast(usize, iter.count)];
-        }
-        return null;
+    pub fn entities(iter: iter_t) []entity_t {
+        return iter.entities_[0..@intCast(usize, iter.count)];
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -1482,9 +1479,9 @@ pub const query_group_info_t = extern struct {
 pub const query_get_group_info = ecs_query_get_group_info;
 extern fn ecs_query_get_group_info(query: *query_t, group_id: u64) ?*const query_group_info_t;
 
-/// `pub fn query_orphaned(query: *query_t) bool`
+/// `pub fn query_orphaned(query: *const query_t) bool`
 pub const query_orphaned = ecs_query_orphaned;
-extern fn ecs_query_orphaned(query: *query_t) bool;
+extern fn ecs_query_orphaned(query: *const query_t) bool;
 
 /// `pub fn query_str(query: *const query_t) [*:0]u8`
 pub const query_str = ecs_query_str;
