@@ -1559,6 +1559,8 @@ pub const GraphicsContext = struct {
 
         // Load DDS data into D3D12_SUBRESOURCE_DATA
         var subresources = std.ArrayList(d3d12.SUBRESOURCE_DATA).init(arena);
+        defer subresources.deinit();
+
         const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, gctx.device, 0, &subresources);
         assert(dds_info.resource_dimension == .TEXTURE2D);
         assert(dds_info.cubemap == false);
