@@ -1431,6 +1431,76 @@ extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) ?*query_t;
 /// `pub fn query_fini(query: *query_t) void`
 pub const query_fini = ecs_query_fini;
 extern fn ecs_query_fini(query: *query_t) void;
+
+/// `pub fn query_get_filter(query: *query_t) *const filter_t`
+pub const query_get_filter = ecs_query_get_filter;
+extern fn ecs_query_get_filter(query: *query_t) *const filter_t;
+
+/// `pub fn query_iter(world: *const world_t: query: *query_t) iter_t`
+pub const query_iter = ecs_query_iter;
+extern fn ecs_query_iter(world: *const world_t, query: *query_t) iter_t;
+
+/// `pub fn query_next(iter: *iter_t) bool`
+pub const query_next = ecs_query_next;
+extern fn ecs_query_next(iter: *iter_t) bool;
+
+/// `pub fn query_next_instanced(iter: *iter_t) bool`
+pub const query_next_instanced = ecs_query_next_instanced;
+extern fn ecs_query_next_instanced(iter: *iter_t) bool;
+
+/// `pub fn query_next_table(iter: *iter_t) bool`
+pub const query_next_table = ecs_query_next_table;
+extern fn ecs_query_next_table(iter: *iter_t) bool;
+
+/// `pub fn query_populate(iter: *iter_t) bool`
+pub const query_populate = ecs_query_populate;
+extern fn ecs_query_populate(iter: *iter_t) bool;
+
+/// `pub fn query_changed(query: *query_t, iter: *const iter_t) bool`
+pub const query_changed = ecs_query_changed;
+extern fn ecs_query_changed(query: *query_t, iter: *const iter_t) bool;
+
+/// `pub fn query_skip(iter: *iter_t) void`
+pub const query_skip = ecs_query_skip;
+extern fn ecs_query_skip(iter: *iter_t) void;
+
+/// `pub fn query_set_group(iter: *iter_t, group_id: u64) void`
+pub const query_set_group = ecs_query_set_group;
+extern fn ecs_query_set_group(iter: *iter_t, group_id: u64) void;
+
+/// `pub fn query_get_group_ctx(query: *query_t, group_id: u64) ?*anyopaque`
+pub const query_get_group_ctx = ecs_query_get_group_ctx;
+extern fn ecs_query_get_group_ctx(query: *query_t, group_id: u64) ?*anyopaque;
+
+pub const query_group_info_t = extern struct {
+    match_count: i32,
+    table_count: i32,
+    ctx: ?*anyopaque,
+};
+
+/// `pub fn query_get_group_info(query: *query_t, group_id: u64) ?*const query_group_info_t`
+pub const query_get_group_info = ecs_query_get_group_info;
+extern fn ecs_query_get_group_info(query: *query_t, group_id: u64) ?*const query_group_info_t;
+
+/// `pub fn query_orphaned(query: *query_t) bool`
+pub const query_orphaned = ecs_query_orphaned;
+extern fn ecs_query_orphaned(query: *query_t) bool;
+
+/// `pub fn query_str(query: *const query_t) [*:0]u8`
+pub const query_str = ecs_query_str;
+extern fn ecs_query_str(query: *const query_t) [*:0]u8;
+
+/// `pub fn query_table_count(query: *const query_t) i32`
+pub const query_table_count = ecs_query_table_count;
+extern fn ecs_query_table_count(query: *const query_t) i32;
+
+/// `pub fn query_empty_table_count(query: *const query_t) i32`
+pub const query_empty_table_count = ecs_query_empty_table_count;
+extern fn ecs_query_empty_table_count(query: *const query_t) i32;
+
+/// `pub fn query_entity_count(query: *const query_t) i32`
+pub const query_entity_count = ecs_query_entity_count;
+extern fn ecs_query_entity_count(query: *const query_t) i32;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with events and observers.
