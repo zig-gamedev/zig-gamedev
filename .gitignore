@@ -29,6 +29,7 @@
 !*.flac
 !*.blend
 !*.hiplc
+!*.dds
 
 !.ignore
 !.vimrc

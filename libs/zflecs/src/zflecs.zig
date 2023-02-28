@@ -12,6 +12,11 @@ pub const vector_t = opaque {};
 pub const mixins_t = opaque {};
 
 const filter_t_magic = 0x65637366;
+
+pub const error_t = error{FlecsError};
+fn make_error() error{FlecsError} {
+    return error.FlecsError;
+}
 //--------------------------------------------------------------------------------------------------
 //
 // Types for core API objects.
@@ -42,9 +47,6 @@ pub const header_t = extern struct {
     type: i32 = 0,
     mixins: ?*mixins_t = null,
 };
-
-const ID_CACHE_SIZE = 32;
-const TERM_DESC_CACHE_SIZE = 16;
 //--------------------------------------------------------------------------------------------------
 //
 // Function types.
@@ -205,6 +207,10 @@ pub const term_t = extern struct {
     move: bool = true,
 };
 
+pub fn array(comptime T: type, comptime len: comptime_int) [len]T {
+    return [_]T{.{}} ** len;
+}
+
 pub const filter_t = extern struct {
     hdr: header_t = .{ .magic = filter_t_magic },
 
@@ -238,6 +244,7 @@ pub const observer_t = extern struct {
     binding_ctx_free: ctx_free_t,
     observable: [*c]observable_t,
     last_event_id: [*c]i32,
+    last_event_id_storage: i32,
     register_id: id_t,
     term_index: i32,
     is_monitor: bool,
@@ -466,6 +473,13 @@ pub const iter_t = extern struct {
     callback: iter_action_t,
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
+
+    pub fn get_entities(iter: iter_t) ?[]entity_t {
+        if (iter.entities) |ptr| {
+            return ptr[0..@intCast(usize, iter.count)];
+        }
+        return null;
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -553,17 +567,17 @@ pub const map_params_t = extern struct {
 //--------------------------------------------------------------------------------------------------
 pub const query_desc_t = extern struct {
     _canary: i32 = 0,
-    filter: filter_desc_t,
-    order_by_component: entity_t,
-    order_by: ?order_by_action_t,
-    sort_table: ?sort_table_action_t,
-    group_by_id: id_t,
-    group_by: ?group_by_action_t,
-    on_group_create: ?group_create_action_t,
-    on_group_delete: ?group_delete_action_t,
-    group_by_ctx: ?*anyopaque,
-    group_by_ctx_free: ?ctx_free_t,
-    parent: ?*query_t,
+    filter: filter_desc_t = .{},
+    order_by_component: entity_t = 0,
+    order_by: ?order_by_action_t = null,
+    sort_table: ?sort_table_action_t = null,
+    group_by_id: id_t = 0,
+    group_by: ?group_by_action_t = null,
+    on_group_create: ?group_create_action_t = null,
+    on_group_delete: ?group_delete_action_t = null,
+    group_by_ctx: ?*anyopaque = null,
+    group_by_ctx_free: ?ctx_free_t = null,
+    parent: ?*query_t = null,
 };
 
 pub const component_desc_t = extern struct {
@@ -571,6 +585,8 @@ pub const component_desc_t = extern struct {
     entity: entity_t,
     type: type_info_t,
 };
+
+pub const ID_CACHE_SIZE = 32;
 
 pub const entity_desc_t = extern struct {
     _canary: i32 = 0,
@@ -584,6 +600,8 @@ pub const entity_desc_t = extern struct {
     add_expr: ?[*:0]const u8 = null,
 };
 
+pub const TERM_DESC_CACHE_SIZE = 16;
+
 pub const filter_desc_t = extern struct {
     _canary: i32 = 0,
     terms: [TERM_DESC_CACHE_SIZE]term_t = [_]term_t{.{}} ** TERM_DESC_CACHE_SIZE,
@@ -594,6 +612,25 @@ pub const filter_desc_t = extern struct {
     flags: flags32_t = 0,
     expr: ?[*:0]const u8 = null,
     entity: entity_t = 0,
+};
+
+pub const OBSERVER_DESC_EVENT_COUNT_MAX = 8;
+
+pub const observer_desc_t = extern struct {
+    _canary: i32 = 0,
+    entity: entity_t = 0,
+    filter: filter_desc_t = .{},
+    events: [OBSERVER_DESC_EVENT_COUNT_MAX]entity_t = [_]entity_t{0} ** OBSERVER_DESC_EVENT_COUNT_MAX,
+    yield_existing: bool = false,
+    callback: iter_action_t,
+    run: ?run_action_t = null,
+    ctx: ?*anyopaque = null,
+    binding_ctx: ?*anyopaque = null,
+    ctx_free: ?ctx_free_t = null,
+    binding_ctx_free: ?ctx_free_t = null,
+    observable: ?*poly_t = null,
+    last_event_id: ?*i32 = null,
+    term_index: i32 = 0,
 };
 
 pub const world_info_t = extern struct {
@@ -863,6 +900,10 @@ extern fn ecs_new_low_id(world: *world_t) entity_t;
 /// `pub fn new_w_id(world: *world_t, id: id_t) entity_t`
 pub const new_w_id = ecs_new_w_id;
 extern fn ecs_new_w_id(world: *world_t, id: id_t) entity_t;
+
+/// `pub fn new_w_table(world: *world_t, table: *table_t) entity_t`
+pub const new_w_table = ecs_new_w_table;
+extern fn ecs_new_w_table(world: *world_t, table: *table_t) entity_t;
 
 /// `pub fn entity_init(world: *world_t, desc: *const entity_desc_t) entity_t`
 pub const entity_init = ecs_entity_init;
@@ -1222,8 +1263,11 @@ extern fn ecs_get_hooks_id(world: *const world_t, id: entity_t) *const type_hook
 
 /// `pub fn id_is_tag(world: *const world_t, id: id_t) bool;
 pub const id_is_tag = ecs_id_is_tag;
-// TODO: flecs upstream: missing const
 extern fn ecs_id_is_tag(world: *const world_t, id: id_t) bool;
+
+/// `pub fn id_is_union(world: *const world_t, id: id_t) bool;
+pub const id_is_union = ecs_id_is_union;
+extern fn ecs_id_is_union(world: *const world_t, id: id_t) bool;
 
 /// `pub fn id_in_use(world: *const world_t, id: id_t) bool`
 pub const id_in_use = ecs_id_in_use;
@@ -1322,8 +1366,9 @@ extern fn ecs_term_move(src: *term_t) term_t;
 pub const term_fini = ecs_term_fini;
 extern fn ecs_term_fini(term: *term_t) void;
 
-/// `pub fn filter_init(world: *world_t, desc: *const filter_desc_t) ?*filter_t;`
-pub const filter_init = filter_init;
+pub fn filter_init(world: *world_t, desc: *const filter_desc_t) error_t!*filter_t {
+    return ecs_filter_init(world, desc) orelse return make_error();
+}
 extern fn ecs_filter_init(world: *world_t, desc: *const filter_desc_t) ?*filter_t;
 
 /// `pub fn filter_fini(filter: *filter_t) void`
@@ -1378,7 +1423,14 @@ extern fn ecs_filter_copy(dst: *filter_t, src: *const filter_t) void;
 // Functions for working with `query_t`.
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+pub fn query_init(world: *world_t, desc: *const query_desc_t) error_t!*query_t {
+    return ecs_query_init(world, desc) orelse return make_error();
+}
+extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) ?*query_t;
+
+/// `pub fn query_fini(query: *query_t) void`
+pub const query_fini = ecs_query_fini;
+extern fn ecs_query_fini(query: *query_t) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with events and observers.
@@ -1491,11 +1543,18 @@ pub const iter_str = ecs_iter_str;
 extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
 //--------------------------------------------------------------------------------------------------
 //
+// Functions for working with `table_t`.
+//
+//--------------------------------------------------------------------------------------------------
+// TODO:
+//--------------------------------------------------------------------------------------------------
+//
 // Declarative functions (ECS_* macros in flecs)
 //
 //--------------------------------------------------------------------------------------------------
 // TODO: We support only one `world_t` at the time because type ids are stored in a global static memory.
-// We need to reset those ids to zero when the world is destroyed.
+// We need to reset those ids to zero when the world is destroyed
+// (we do this in `pub fn fini(world: *world_t) i32`).
 var num_worlds: u32 = 0;
 var component_ids_hm = std.AutoHashMap(*id_t, u0).init(std.heap.page_allocator);
 
@@ -1612,92 +1671,95 @@ pub const time_t = extern struct {
     sec: u32,
     nanosec: u32,
 };
-pub const os_thread_t = usize;
-pub const os_cond_t = usize;
-pub const os_mutex_t = usize;
-pub const os_dl_t = usize;
-pub const os_sock_t = usize;
-pub const os_thread_id_t = u64;
-pub const os_proc_t = *const fn () callconv(.C) void;
-pub const os_api_init_t = *const fn () callconv(.C) void;
-pub const os_api_fini_t = *const fn () callconv(.C) void;
-pub const os_api_malloc_t = *const fn (size_t) callconv(.C) ?*anyopaque;
-pub const os_api_free_t = *const fn (?*anyopaque) callconv(.C) void;
-pub const os_api_realloc_t = *const fn (?*anyopaque, size_t) callconv(.C) ?*anyopaque;
-pub const os_api_calloc_t = *const fn (size_t) callconv(.C) ?*anyopaque;
-pub const os_api_strdup_t = *const fn ([*:0]const u8) callconv(.C) [*c]u8;
-pub const os_thread_callback_t = *const fn (?*anyopaque) callconv(.C) ?*anyopaque;
-pub const os_api_thread_new_t = *const fn (os_thread_callback_t, ?*anyopaque) callconv(.C) os_thread_t;
-pub const os_api_thread_join_t = *const fn (os_thread_t) callconv(.C) ?*anyopaque;
-pub const os_api_thread_self_t = *const fn () callconv(.C) os_thread_id_t;
-pub const os_api_ainc_t = *const fn (*i32) callconv(.C) i32;
-pub const os_api_lainc_t = *const fn (*i64) callconv(.C) i64;
-pub const os_api_mutex_new_t = *const fn () callconv(.C) os_mutex_t;
-pub const os_api_mutex_lock_t = *const fn (os_mutex_t) callconv(.C) void;
-pub const os_api_mutex_unlock_t = *const fn (os_mutex_t) callconv(.C) void;
-pub const os_api_mutex_free_t = *const fn (os_mutex_t) callconv(.C) void;
-pub const os_api_cond_new_t = *const fn () callconv(.C) os_cond_t;
-pub const os_api_cond_free_t = *const fn (os_cond_t) callconv(.C) void;
-pub const os_api_cond_signal_t = *const fn (os_cond_t) callconv(.C) void;
-pub const os_api_cond_broadcast_t = *const fn (os_cond_t) callconv(.C) void;
-pub const os_api_cond_wait_t = *const fn (os_cond_t, os_mutex_t) callconv(.C) void;
-pub const os_api_sleep_t = *const fn (i32, i32) callconv(.C) void;
-pub const os_api_enable_high_timer_resolution_t = *const fn (bool) callconv(.C) void;
-pub const os_api_get_time_t = *const fn (*time_t) callconv(.C) void;
-pub const os_api_now_t = *const fn () callconv(.C) u64;
-pub const os_api_log_t = *const fn (i32, [*c]const u8, i32, [*:0]const u8) callconv(.C) void;
-pub const os_api_abort_t = *const fn () callconv(.C) void;
-pub const os_api_dlopen_t = *const fn ([*:0]const u8) callconv(.C) os_dl_t;
-pub const os_api_dlproc_t = *const fn (os_dl_t, [*:0]const u8) callconv(.C) os_proc_t;
-pub const os_api_dlclose_t = *const fn (os_dl_t) callconv(.C) void;
-pub const os_api_module_to_path_t = *const fn ([*:0]const u8) callconv(.C) [*:0]u8;
 
-const os_api_t = extern struct {
-    init_: os_api_init_t,
-    fini_: os_api_fini_t,
-    malloc_: os_api_malloc_t,
-    realloc_: os_api_realloc_t,
-    calloc_: os_api_calloc_t,
-    free_: os_api_free_t,
-    strdup_: os_api_strdup_t,
-    thread_new_: os_api_thread_new_t,
-    thread_join_: os_api_thread_join_t,
-    thread_self_: os_api_thread_self_t,
-    ainc_: os_api_ainc_t,
-    adec_: os_api_ainc_t,
-    lainc_: os_api_lainc_t,
-    ladec_: os_api_lainc_t,
-    mutex_new_: os_api_mutex_new_t,
-    mutex_free_: os_api_mutex_free_t,
-    mutex_lock_: os_api_mutex_lock_t,
-    mutex_unlock_: os_api_mutex_lock_t,
-    cond_new_: os_api_cond_new_t,
-    cond_free_: os_api_cond_free_t,
-    cond_signal_: os_api_cond_signal_t,
-    cond_broadcast_: os_api_cond_broadcast_t,
-    cond_wait_: os_api_cond_wait_t,
-    sleep_: os_api_sleep_t,
-    now_: os_api_now_t,
-    get_time_: os_api_get_time_t,
-    log_: os_api_log_t,
-    abort_: os_api_abort_t,
-    dlopen_: os_api_dlopen_t,
-    dlproc_: os_api_dlproc_t,
-    dlclose_: os_api_dlclose_t,
-    module_to_dl_: os_api_module_to_path_t,
-    module_to_etc_: os_api_module_to_path_t,
-    log_level_: i32,
-    log_indent_: i32,
-    log_last_error_: i32,
-    log_last_timestamp_: i64,
-    flags_: flags32_t,
+pub const os = struct {
+    pub const thread_t = usize;
+    pub const cond_t = usize;
+    pub const mutex_t = usize;
+    pub const dl_t = usize;
+    pub const sock_t = usize;
+    pub const thread_id_t = u64;
+    pub const proc_t = *const fn () callconv(.C) void;
+    pub const api_init_t = *const fn () callconv(.C) void;
+    pub const api_fini_t = *const fn () callconv(.C) void;
+    pub const api_malloc_t = *const fn (size_t) callconv(.C) ?*anyopaque;
+    pub const api_free_t = *const fn (?*anyopaque) callconv(.C) void;
+    pub const api_realloc_t = *const fn (?*anyopaque, size_t) callconv(.C) ?*anyopaque;
+    pub const api_calloc_t = *const fn (size_t) callconv(.C) ?*anyopaque;
+    pub const api_strdup_t = *const fn ([*:0]const u8) callconv(.C) [*c]u8;
+    pub const thread_callback_t = *const fn (?*anyopaque) callconv(.C) ?*anyopaque;
+    pub const api_thread_new_t = *const fn (thread_callback_t, ?*anyopaque) callconv(.C) thread_t;
+    pub const api_thread_join_t = *const fn (thread_t) callconv(.C) ?*anyopaque;
+    pub const api_thread_self_t = *const fn () callconv(.C) thread_id_t;
+    pub const api_ainc_t = *const fn (*i32) callconv(.C) i32;
+    pub const api_lainc_t = *const fn (*i64) callconv(.C) i64;
+    pub const api_mutex_new_t = *const fn () callconv(.C) mutex_t;
+    pub const api_mutex_lock_t = *const fn (mutex_t) callconv(.C) void;
+    pub const api_mutex_unlock_t = *const fn (mutex_t) callconv(.C) void;
+    pub const api_mutex_free_t = *const fn (mutex_t) callconv(.C) void;
+    pub const api_cond_new_t = *const fn () callconv(.C) cond_t;
+    pub const api_cond_free_t = *const fn (cond_t) callconv(.C) void;
+    pub const api_cond_signal_t = *const fn (cond_t) callconv(.C) void;
+    pub const api_cond_broadcast_t = *const fn (cond_t) callconv(.C) void;
+    pub const api_cond_wait_t = *const fn (cond_t, mutex_t) callconv(.C) void;
+    pub const api_sleep_t = *const fn (i32, i32) callconv(.C) void;
+    pub const api_enable_high_timer_resolution_t = *const fn (bool) callconv(.C) void;
+    pub const api_get_time_t = *const fn (*time_t) callconv(.C) void;
+    pub const api_now_t = *const fn () callconv(.C) u64;
+    pub const api_log_t = *const fn (i32, [*:0]const u8, i32, [*:0]const u8) callconv(.C) void;
+    pub const api_abort_t = *const fn () callconv(.C) void;
+    pub const api_dlopen_t = *const fn ([*:0]const u8) callconv(.C) dl_t;
+    pub const api_dlproc_t = *const fn (dl_t, [*:0]const u8) callconv(.C) proc_t;
+    pub const api_dlclose_t = *const fn (dl_t) callconv(.C) void;
+    pub const api_module_to_path_t = *const fn ([*:0]const u8) callconv(.C) [*:0]u8;
+
+    const api_t = extern struct {
+        init_: api_init_t,
+        fini_: api_fini_t,
+        malloc_: api_malloc_t,
+        realloc_: api_realloc_t,
+        calloc_: api_calloc_t,
+        free_: api_free_t,
+        strdup_: api_strdup_t,
+        thread_new_: api_thread_new_t,
+        thread_join_: api_thread_join_t,
+        thread_self_: api_thread_self_t,
+        ainc_: api_ainc_t,
+        adec_: api_ainc_t,
+        lainc_: api_lainc_t,
+        ladec_: api_lainc_t,
+        mutex_new_: api_mutex_new_t,
+        mutex_free_: api_mutex_free_t,
+        mutex_lock_: api_mutex_lock_t,
+        mutex_unlock_: api_mutex_lock_t,
+        cond_new_: api_cond_new_t,
+        cond_free_: api_cond_free_t,
+        cond_signal_: api_cond_signal_t,
+        cond_broadcast_: api_cond_broadcast_t,
+        cond_wait_: api_cond_wait_t,
+        sleep_: api_sleep_t,
+        now_: api_now_t,
+        get_time_: api_get_time_t,
+        log_: api_log_t,
+        abort_: api_abort_t,
+        dlopen_: api_dlopen_t,
+        dlproc_: api_dlproc_t,
+        dlclose_: api_dlclose_t,
+        module_to_dl_: api_module_to_path_t,
+        module_to_etc_: api_module_to_path_t,
+        log_level_: i32,
+        log_indent_: i32,
+        log_last_error_: i32,
+        log_last_timestamp_: i64,
+        flags_: flags32_t,
+    };
+
+    extern var ecs_os_api: api_t;
+
+    pub fn free(ptr: ?*anyopaque) void {
+        ecs_os_api.free_(ptr);
+    }
 };
-
-extern var ecs_os_api: os_api_t;
-
-pub fn os_free(ptr: ?*anyopaque) void {
-    ecs_os_api.free_(ptr);
-}
 //--------------------------------------------------------------------------------------------------
 comptime {
     _ = @import("tests.zig");

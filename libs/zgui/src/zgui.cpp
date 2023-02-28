@@ -1,7 +1,11 @@
 #include "./imgui/imgui.h"
 #include "./imgui/implot.h"
 
-#define ZGUI_API extern "C"
+#ifndef ZGUI_API
+#define ZGUI_API
+#endif
+
+extern "C" {
 
 /*
 #include <stdio.h>
@@ -1427,6 +1431,10 @@ ZGUI_API bool zguiMenuItem(const char* label, const char* shortcut, bool selecte
     return ImGui::MenuItem(label, shortcut, selected, enabled);
 }
 
+ZGUI_API bool zguiMenuItemPtr(const char* label, const char* shortcut, bool* selected, bool enabled) {
+    return ImGui::MenuItem(label, shortcut, selected, enabled);
+}
+
 ZGUI_API void zguiBeginTooltip(void) {
     ImGui::BeginTooltip();
 }
@@ -2300,3 +2308,4 @@ ZGUI_API void zguiPlot_EndPlot(void) {
     ImPlot::EndPlot();
 }
 //--------------------------------------------------------------------------------------------------
+} /* extern "C" */

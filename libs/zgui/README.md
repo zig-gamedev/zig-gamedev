@@ -93,6 +93,26 @@ while (...) {
 }
 ```
 
+### Building a shared library
+
+If your project spans multiple zig modules that both use ImGui, such as an exe paired with a dll, you may want to build the `zgui` dependencies (`zgui_pkg.zgui_c_cpp`) as a shared library. This can be enabled with the `shared` build option. Then, in `build.zig`, use `zgui_pkg.link` to link `zgui` to all the modules that use ImGui.
+
+When built this way, the ImGui context will be located in the shared library. However, the `zgui` zig code (which is compiled separately into each module) requires its own memory buffer which has to be initialized separately with `initNoContext`.
+
+In your executable:
+```zig
+const zgui = @import("zgui");
+zgui.init(allocator);
+defer zgui.deinit();
+```
+
+In your shared library:
+```zig
+const zgui = @import("zgui");
+zgui.initNoContext(allocator);
+defer zgui.deinitNoContxt();
+```
+
 ### DrawList API
 
 ```zig

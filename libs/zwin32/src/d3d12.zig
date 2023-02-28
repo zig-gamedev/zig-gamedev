@@ -445,12 +445,12 @@ pub const RESOURCE_TRANSITION_BARRIER = extern struct {
 };
 
 pub const RESOURCE_ALIASING_BARRIER = extern struct {
-    pResourceBefore: *IResource,
-    pResourceAfter: *IResource,
+    pResourceBefore: ?*IResource,
+    pResourceAfter: ?*IResource,
 };
 
 pub const RESOURCE_UAV_BARRIER = extern struct {
-    pResource: *IResource,
+    pResource: ?*IResource,
 };
 
 pub const RESOURCE_BARRIER_FLAGS = packed struct(UINT) {

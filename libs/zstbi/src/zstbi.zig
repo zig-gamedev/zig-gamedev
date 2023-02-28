@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 2 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 3 };
 const std = @import("std");
 const assert = std.debug.assert;
 
@@ -68,7 +68,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn init(pathname: [:0]const u8, forced_num_channels: u32) !Image {
+    pub fn loadFromFile(pathname: [:0]const u8, forced_num_components: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -85,11 +85,11 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
             bytes_per_component = 2;
@@ -114,17 +114,17 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             )) else stbi_load(
                 pathname,
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
             bytes_per_component = if (is_16bit) 2 else 1;
@@ -145,7 +145,7 @@ pub const Image = struct {
         };
     }
 
-    pub fn initFromData(data: []const u8, forced_num_channels: u32) !Image {
+    pub fn loadFromMemory(data: []const u8, forced_num_components: u32) !Image {
         // TODO: Add support for HDR images (https://github.com/michal-z/zig-gamedev/issues/155).
         var width: u32 = 0;
         var height: u32 = 0;
@@ -163,11 +163,11 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_channels),
+                @intCast(c_int, forced_num_components),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
             bytes_per_component = 1;
@@ -178,6 +178,32 @@ pub const Image = struct {
 
         return Image{
             .data = image_data,
+            .width = width,
+            .height = height,
+            .num_components = num_components,
+            .bytes_per_component = bytes_per_component,
+            .bytes_per_row = bytes_per_row,
+            .is_hdr = false,
+        };
+    }
+
+    pub fn createEmpty(width: u32, height: u32, num_components: u32, args: struct {
+        bytes_per_component: u32 = 0,
+        bytes_per_row: u32 = 0,
+    }) !Image {
+        const bytes_per_component = if (args.bytes_per_component == 0) 1 else args.bytes_per_component;
+        const bytes_per_row = if (args.bytes_per_row == 0)
+            width * num_components * bytes_per_component
+        else
+            args.bytes_per_row;
+
+        const size = height * bytes_per_row;
+
+        const data = @ptrCast([*]u8, zstbiMalloc(size));
+        @memset(data, 0, size);
+
+        return Image{
+            .data = data[0..size],
             .width = width,
             .height = height,
             .num_components = num_components,
@@ -215,21 +241,21 @@ pub const Image = struct {
     }
 
     pub fn writeToFile(
-        self: *const Image,
+        image: *const Image,
         filename: [:0]const u8,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
-        const w = @intCast(c_int, self.width);
-        const h = @intCast(c_int, self.height);
-        const comp = @intCast(c_int, self.num_components);
+        const w = @intCast(c_int, image.width);
+        const h = @intCast(c_int, image.height);
+        const comp = @intCast(c_int, image.num_components);
         const result = switch (image_format) {
-            .png => stbi_write_png(filename.ptr, w, h, comp, self.data.ptr, 0),
+            .png => stbi_write_png(filename.ptr, w, h, comp, image.data.ptr, 0),
             .jpg => |settings| stbi_write_jpg(
                 filename.ptr,
                 w,
                 h,
                 comp,
-                self.data.ptr,
+                image.data.ptr,
                 @intCast(c_int, settings.quality),
             ),
         };
@@ -240,23 +266,23 @@ pub const Image = struct {
     }
 
     pub fn writeToFn(
-        self: *const Image,
-        write_fn: *const fn (?*anyopaque, ?*anyopaque, c_int) callconv(.C) void,
+        image: *const Image,
+        write_fn: *const fn (ctx: ?*anyopaque, data: ?*anyopaque, size: c_int) callconv(.C) void,
         context: ?*anyopaque,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
-        const w = @intCast(c_int, self.width);
-        const h = @intCast(c_int, self.height);
-        const comp = @intCast(c_int, self.num_components);
+        const w = @intCast(c_int, image.width);
+        const h = @intCast(c_int, image.height);
+        const comp = @intCast(c_int, image.num_components);
         const result = switch (image_format) {
-            .png => stbi_write_png_to_func(write_fn, context, w, h, comp, self.data.ptr, 0),
+            .png => stbi_write_png_to_func(write_fn, context, w, h, comp, image.data.ptr, 0),
             .jpg => |settings| stbi_write_jpg_to_func(
                 write_fn,
                 context,
                 w,
                 h,
                 comp,
-                self.data.ptr,
+                image.data.ptr,
                 @intCast(c_int, settings.quality),
             ),
         };
@@ -469,4 +495,7 @@ extern fn stbi_write_jpg_to_func(
 test "zstbi.basic" {
     init(std.testing.allocator);
     defer deinit();
+
+    var image = try Image.createEmpty(64, 64, 4, .{});
+    defer image.deinit();
 }
