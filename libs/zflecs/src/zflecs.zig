@@ -1506,7 +1506,18 @@ extern fn ecs_query_entity_count(query: *const query_t) i32;
 // Functions for working with events and observers.
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+pub const event_desc_t = extern struct {
+    event: entity_t = 0,
+    ids: ?[*]const type_t = null,
+    table: ?*table_t = null,
+    other_table: ?*table_t = null,
+    offset: i32 = 0,
+    count: i32 = 0,
+    entity: entity_t = 0,
+    param: ?*const anyopaque = 0,
+    observable: ?*poly_t = null,
+    flags: flags32_t = 0,
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `iter_t`.
