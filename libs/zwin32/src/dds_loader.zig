@@ -46,7 +46,6 @@ const DDS_ALPHA: u32 = 0x00000002; // DDPF_ALPHA
 const DDS_PAL8: u32 = 0x00000020; // DDPF_PALETTEINDEXED8
 const DDS_BUMPDUDV: u32 = 0x00080000; // DDPF_BUMPDUDV
 
-
 inline fn makeFourCC(ch0: u8, ch1: u8, ch2: u8, ch3: u8) u32 {
     return (@intCast(u32, ch0)) | (@intCast(u32, ch1) << 8) | (@intCast(u32, ch2) << 16) | (@intCast(u32, ch3) << 24);
 }
@@ -61,12 +60,6 @@ pub const DDS_ALPHA_MODE = enum(u32) {
     premultiplied,
     @"opaque",
     custom,
-};
-
-pub const DDS_LOADER_FLAGS = packed struct {
-    default: bool,
-    force_srgb: bool,
-    ignore_srgb: bool,
 };
 
 pub const DDS_PIXELFORMAT = extern struct {
@@ -152,13 +145,7 @@ pub fn loadTextureFromFile(
     return loadTextureFromMemory(file_data, arena, device, max_size, resources);
 }
 
-pub fn loadTextureFromMemory(
-    file_data: []u8,
-    arena: std.mem.Allocator,
-    device: *d3d12.IDevice9,
-    max_size: u32,
-    resources: *std.ArrayList(d3d12.SUBRESOURCE_DATA)
-) !DdsImageInfo {
+pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: *d3d12.IDevice9, max_size: u32, resources: *std.ArrayList(d3d12.SUBRESOURCE_DATA)) !DdsImageInfo {
     if (file_data.len > std.math.maxInt(u32)) {
         return DdsError.InvalidDDSData;
     }
@@ -187,7 +174,7 @@ pub fn loadTextureFromMemory(
     var has_dx10_extension = false;
     var dx10: DDS_HEADER_DXT10 = undefined;
     if ((header.ddspf.dwFlags & DDS_FOURCC) == DDS_FOURCC and makeFourCC('D', 'X', '1', '0') == header.ddspf.dwFourCC) {
-        if(file_data.len < @sizeOf(u32) + @sizeOf(DDS_HEADER) + @sizeOf(DDS_HEADER_DXT10)) {
+        if (file_data.len < @sizeOf(u32) + @sizeOf(DDS_HEADER) + @sizeOf(DDS_HEADER_DXT10)) {
             return DdsError.InvalidDDSData;
         }
 
@@ -249,7 +236,7 @@ pub fn loadTextureFromMemory(
             height = 1;
             depth = 1;
         } else if (dx10.resourceDimension == @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) {
-            if ((dx10.miscFlag & 0x4) == 0x4) { // RESOURCE_MISC_TEXTURECUBE 
+            if ((dx10.miscFlag & 0x4) == 0x4) { // RESOURCE_MISC_TEXTURECUBE
                 array_size *= 6;
                 cubemap = true;
             }
@@ -320,23 +307,23 @@ pub fn loadTextureFromMemory(
 
     if (resource_dimension == .TEXTURE1D) {
         if (array_size > d3d12_req_texture1d_array_axis_dimension or width > d3d12_req_texture1d_u_dimension) {
-            std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (1D: array {d}, size {d}).", .{array_size, width});
+            std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (1D: array {d}, size {d}).", .{ array_size, width });
             return DdsError.NotSupported;
         }
     } else if (resource_dimension == .TEXTURE2D) {
         if (cubemap) {
             // This is the right bound because we set arraySize to (NumCubes*6) above
             if (array_size > d3d12_req_texture2d_array_axis_dimension or width > d3d12_req_texturecube_dimension or height > d3d12_req_texturecube_dimension) {
-                std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (2D cubemap: array {d}, size {d} by {d}).", .{array_size, width, height});
+                std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (2D cubemap: array {d}, size {d} by {d}).", .{ array_size, width, height });
                 return DdsError.NotSupported;
             }
         } else if (array_size > d3d12_req_texture2d_array_axis_dimension or width > d3d12_req_texture2d_u_or_v_dimension or height > d3d12_req_texture2d_u_or_v_dimension) {
-            std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (2D: array {d}, size {d} by {d}).", .{array_size, width, height});
+            std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (2D: array {d}, size {d} by {d}).", .{ array_size, width, height });
             return DdsError.NotSupported;
         }
     } else if (resource_dimension == .TEXTURE3D) {
         if (array_size > 1 or width > d3d12_req_texture3d_u_v_or_w_dimension or height > d3d12_req_texture3d_u_v_or_w_dimension or depth > d3d12_req_texture3d_u_v_or_w_dimension) {
-            std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (3D: array {d}, size {d} by {d} by {d}).", .{array_size, width, height, depth});
+            std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (3D: array {d}, size {d} by {d} by {d}).", .{ array_size, width, height, depth });
             return DdsError.NotSupported;
         }
     } else if (resource_dimension == .BUFFER) {
@@ -452,7 +439,7 @@ pub fn loadTextureFromMemory(
 }
 
 fn getDXGIFormatFromDX10(header: DDS_HEADER_DXT10, width: u32, height: u32) !dxgi.FORMAT {
-    return switch(header.dxgiFormat) {
+    return switch (header.dxgiFormat) {
         .NV12, .P010, .P016, .@"420_OPAQUE" => blk: {
             if ((header.resourceDimension != @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) or (width % 2 != 0) or (height % 2 != 0)) {
                 std.log.debug("[DDS Loader] Video texture does not meet width/height requirements.", .{});
