@@ -285,6 +285,24 @@ pub const FORMAT = enum(UINT) {
             => unreachable,
         };
     }
+
+    pub fn isDepthStencil(format: FORMAT) bool {
+        return switch (format) {
+            .R32G8X24_TYPELESS,
+            .D32_FLOAT_S8X24_UINT,
+            .R32_FLOAT_X8X24_TYPELESS,
+            .X32_TYPELESS_G8X24_UINT,
+            .D32_FLOAT,
+            .R24G8_TYPELESS,
+            .D24_UNORM_S8_UINT,
+            .R24_UNORM_X8_TYPELESS,
+            .X24_TYPELESS_G8_UINT,
+            .D16_UNORM,
+            => true,
+
+            else => false,
+        };
+    }
 };
 
 pub const RATIONAL = extern struct {
