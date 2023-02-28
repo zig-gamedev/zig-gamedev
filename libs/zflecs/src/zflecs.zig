@@ -14,10 +14,7 @@ pub const mixins_t = opaque {};
 const filter_t_magic = 0x65637366;
 
 pub const error_t = error{FlecsError};
-pub fn make_error() error{FlecsError} {
-    //if (getError()) |str| {
-    //    std.log.debug("SDL2: {s}", .{str});
-    //}
+fn make_error() error{FlecsError} {
     return error.FlecsError;
 }
 //--------------------------------------------------------------------------------------------------
