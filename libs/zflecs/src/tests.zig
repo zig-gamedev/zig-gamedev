@@ -144,6 +144,27 @@ test "zflecs.basic" {
     ecs.COMPONENT(world, i8);
     ecs.COMPONENT(world, ?*const i8);
 
+    {
+        const p0 = ecs.pair(ecs.id(u31), e0);
+        const p1 = ecs.pair(e0, e0);
+        const p2 = ecs.pair(ecs.EcsOnUpdate, ecs.id(Direction));
+        {
+            const str = ecs.id_str(world, p0);
+            defer ecs.os.free(str);
+            std.debug.print("{?s}\n", .{str});
+        }
+        {
+            const str = ecs.id_str(world, p1);
+            defer ecs.os.free(str);
+            std.debug.print("{?s}\n", .{str});
+        }
+        {
+            const str = ecs.id_str(world, p2);
+            defer ecs.os.free(str);
+            std.debug.print("{?s}\n", .{str});
+        }
+    }
+
     const S0 = struct {
         a: f32 = 3.0,
     };

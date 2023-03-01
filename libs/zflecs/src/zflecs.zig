@@ -17,6 +17,22 @@ pub const error_t = error{FlecsError};
 fn make_error() error{FlecsError} {
     return error.FlecsError;
 }
+
+pub extern const EcsOnStart: entity_t;
+pub extern const EcsPreFrame: entity_t;
+pub extern const EcsOnLoad: entity_t;
+pub extern const EcsPostLoad: entity_t;
+pub extern const EcsPreUpdate: entity_t;
+pub extern const EcsOnUpdate: entity_t;
+pub extern const EcsOnValidate: entity_t;
+pub extern const EcsPostUpdate: entity_t;
+pub extern const EcsPreStore: entity_t;
+pub extern const EcsOnStore: entity_t;
+pub extern const EcsPostFrame: entity_t;
+pub extern const EcsPhase: entity_t;
+
+pub extern const EcsIsA: entity_t;
+pub extern const EcsDependsOn: entity_t;
 //--------------------------------------------------------------------------------------------------
 //
 // Types for core API objects.
@@ -1896,6 +1912,8 @@ pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
 pub inline fn id(comptime T: type) id_t {
     return perTypeGlobalVarPtr(T).*;
 }
+
+pub const pair = make_pair;
 
 fn cast(comptime T: type, val: ?*const anyopaque) *const T {
     return @ptrCast(*const T, @alignCast(@alignOf(T), val));
