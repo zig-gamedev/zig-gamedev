@@ -143,19 +143,19 @@ pub const FORMAT = enum(UINT) {
     SAMPLER_FEEDBACK_MIN_MIP_OPAQUE = 189,
     SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE = 190,
 
-    pub fn pixelSizeInBytes(format: FORMAT) u32 {
+    pub fn pixelSizeInBits(format: FORMAT) u32 {
         return switch (format) {
             .R32G32B32A32_TYPELESS,
             .R32G32B32A32_FLOAT,
             .R32G32B32A32_UINT,
             .R32G32B32A32_SINT,
-            => 128 / 8,
+            => 128,
 
             .R32G32B32_TYPELESS,
             .R32G32B32_FLOAT,
             .R32G32B32_UINT,
             .R32G32B32_SINT,
-            => 96 / 8,
+            => 96,
 
             .R16G16B16A16_TYPELESS,
             .R16G16B16A16_FLOAT,
@@ -174,7 +174,7 @@ pub const FORMAT = enum(UINT) {
             .Y416,
             .Y210,
             .Y216,
-            => 64 / 8,
+            => 64,
 
             .R10G10B10A2_TYPELESS,
             .R10G10B10A2_UNORM,
@@ -214,11 +214,12 @@ pub const FORMAT = enum(UINT) {
             .AYUV,
             .Y410,
             .YUY2,
-            => 32 / 8,
+            => 32,
 
             .P010,
             .P016,
-            => 24 / 8,
+            .V408,
+            => 24,
 
             .R8G8_TYPELESS,
             .R8G8_UNORM,
@@ -236,7 +237,16 @@ pub const FORMAT = enum(UINT) {
             .B5G5R5A1_UNORM,
             .A8P8,
             .B4G4R4A4_UNORM,
-            => 16 / 8,
+            => 16,
+
+            .P208,
+            .V208,
+            => 16,
+
+            .@"420_OPAQUE",
+            .NV11,
+            .NV12,
+            => 12,
 
             .R8_TYPELESS,
             .R8_UNORM,
@@ -247,7 +257,7 @@ pub const FORMAT = enum(UINT) {
             .AI44,
             .IA44,
             .P8,
-            => 8 / 8,
+            => 8,
 
             .BC2_TYPELESS,
             .BC2_UNORM,
@@ -264,25 +274,41 @@ pub const FORMAT = enum(UINT) {
             .BC7_TYPELESS,
             .BC7_UNORM,
             .BC7_UNORM_SRGB,
-            => 8 / 8,
+            => 8,
 
-            .UNKNOWN,
             .R1_UNORM,
+            => 1,
+
             .BC1_TYPELESS,
             .BC1_UNORM,
             .BC1_UNORM_SRGB,
             .BC4_TYPELESS,
             .BC4_UNORM,
             .BC4_SNORM,
-            .@"420_OPAQUE",
-            .NV11,
-            .NV12,
-            .P208,
-            .V208,
-            .V408,
+            => 4,
+
+            .UNKNOWN,
             .SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE,
             .SAMPLER_FEEDBACK_MIN_MIP_OPAQUE,
             => unreachable,
+        };
+    }
+
+    pub fn isDepthStencil(format: FORMAT) bool {
+        return switch (format) {
+            .R32G8X24_TYPELESS,
+            .D32_FLOAT_S8X24_UINT,
+            .R32_FLOAT_X8X24_TYPELESS,
+            .X32_TYPELESS_G8X24_UINT,
+            .D32_FLOAT,
+            .R24G8_TYPELESS,
+            .D24_UNORM_S8_UINT,
+            .R24_UNORM_X8_TYPELESS,
+            .X24_TYPELESS_G8_UINT,
+            .D16_UNORM,
+            => true,
+
+            else => false,
         };
     }
 };

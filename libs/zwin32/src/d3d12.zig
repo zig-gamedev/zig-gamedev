@@ -26,6 +26,33 @@ const BOOL = w32.BOOL;
 const FALSE = w32.FALSE;
 const TRUE = w32.TRUE;
 
+pub const req_blend_object_count_per_device: u32 = 4096;
+pub const req_buffer_resource_texel_count_2_to_exp: u32 = 27;
+pub const req_constant_buffer_element_count: u32 = 4096;
+pub const req_depth_stencil_object_count_per_device: u32 = 4096;
+pub const req_drawindexed_index_count_2_to_exp: u32 = 32;
+pub const req_draw_vertex_count_2_to_exp: u32 = 32;
+pub const req_filtering_hw_addressable_resource_dimension: u32 = 16384;
+pub const req_gs_invocation_32bit_output_component_limit: u32 = 1024;
+pub const req_immediate_constant_buffer_element_count: u32 = 4096;
+pub const req_maxanisotropy: u32 = 16;
+pub const req_mip_levels: u32 = 15;
+pub const req_multi_element_structure_size_in_bytes: u32 = 2048;
+pub const req_rasterizer_object_count_per_device: u32 = 4096;
+pub const req_render_to_buffer_window_width: u32 = 16384;
+pub const req_resource_size_in_megabytes_expression_a_term: u32 = 128;
+pub const req_resource_size_in_megabytes_expression_b_term: f32 = 0.25;
+pub const req_resource_size_in_megabytes_expression_c_term: u32 = 2048;
+pub const req_resource_view_count_per_device_2_to_exp: u32 = 20;
+pub const req_sampler_object_count_per_device: u32 = 4096;
+pub const req_subresources: u32 = 30720;
+pub const req_texture1d_array_axis_dimension: u32 = 2024;
+pub const req_texture1d_u_dimension: u32 = 16384;
+pub const req_texture2d_array_axis_dimension: u32 = 2024;
+pub const req_texture2d_u_or_v_dimension: u32 = 16384;
+pub const req_texture3d_u_v_or_w_dimension: u32 = 2048;
+pub const req_texturecube_dimension: u32 = 16384;
+
 pub const RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffff_ffff;
 
 pub const SHADER_IDENTIFIER_SIZE_IN_BYTES = 32;
@@ -473,6 +500,18 @@ pub const RESOURCE_BARRIER = extern struct {
         v = .{ .Type = .UAV, .Flags = .{}, .u = .{ .UAV = .{ .pResource = resource } } };
         return v;
     }
+};
+
+pub const SUBRESOURCE_DATA = extern struct {
+    pData: ?[*]u8,
+    RowPitch: UINT,
+    SlicePitch: UINT,
+};
+
+pub const MEMCPY_DEST = extern struct {
+    pData: ?[*]u8,
+    RowPitch: UINT,
+    SlicePitch: UINT,
 };
 
 pub const SUBRESOURCE_FOOTPRINT = extern struct {
@@ -1262,6 +1301,11 @@ pub const FEATURE_DATA_D3D12_OPTIONS = extern struct {
 
 pub const FEATURE_DATA_SHADER_MODEL = extern struct {
     HighestShaderModel: SHADER_MODEL,
+};
+
+pub const FEATURE_DATA_FORMAT_INFO = extern struct {
+    Format: dxgi.FORMAT,
+    PlaneCount: u8,
 };
 
 pub const RENDER_PASS_TIER = enum(UINT) {

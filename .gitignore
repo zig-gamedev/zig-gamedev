@@ -21,6 +21,7 @@
 !*.bin
 !*.ttf
 !*.png
+!*.dds
 !*.jpg
 !*.hdr
 !*.wav

@@ -16,6 +16,7 @@ pub const xaudio2 = @import("xaudio2.zig");
 pub const xaudio2fx = @import("xaudio2fx.zig");
 pub const xapo = @import("xapo.zig");
 pub const xinput = @import("xinput.zig");
+pub const dds_loader = @import("dds_loader.zig");
 
 /// Bindings for D3DCompiler_47
 /// Not recommended. Precompile your shaders with dxc instead.

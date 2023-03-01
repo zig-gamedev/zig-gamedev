@@ -9,6 +9,7 @@ const d3d12 = zwin32.d3d12;
 const d3d12d = zwin32.d3d12d;
 const d2d1 = zwin32.d2d1;
 const d3d11on12 = zwin32.d3d11on12;
+const dds_loader = zwin32.dds_loader;
 const wic = zwin32.wic;
 const HResultError = zwin32.HResultError;
 const hrPanic = zwin32.hrPanic;
@@ -1380,7 +1381,7 @@ pub const GraphicsContext = struct {
         const upload = gctx.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
 
-        const pixel_size = resource.?.desc.Format.pixelSizeInBytes();
+        const pixel_size = resource.?.desc.Format.pixelSizeInBits() / 8;
         var y: u32 = 0;
         while (y < layout[0].Footprint.Height) : (y += 1) {
             var x: u32 = 0;
@@ -1536,6 +1537,90 @@ pub const GraphicsContext = struct {
             .Type = .PLACED_FOOTPRINT,
             .u = .{ .PlacedFootprint = layout[0] },
         }, null);
+
+        return texture;
+    }
+
+    pub fn createAndUploadTex2dFromDdsFile(
+        gctx: *GraphicsContext,
+        relpath: []const u8,
+        arena: std.mem.Allocator,
+    ) !ResourceHandle {
+        assert(gctx.is_cmdlist_opened);
+
+        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+        const allocator = fba.allocator();
+
+        const abspath = std.fs.path.join(allocator, &.{
+            std.fs.selfExeDirPathAlloc(allocator) catch unreachable,
+            relpath,
+        }) catch unreachable;
+
+        // Load DDS data into D3D12_SUBRESOURCE_DATA
+        var subresources = std.ArrayList(d3d12.SUBRESOURCE_DATA).init(arena);
+        defer subresources.deinit();
+
+        const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, gctx.device, 0, &subresources);
+        assert(dds_info.resource_dimension == .TEXTURE2D);
+        assert(dds_info.cubemap == false);
+        assert(dds_info.array_size == 1);
+
+        const texture = try gctx.createCommittedResource(
+            .DEFAULT,
+            .{},
+            &d3d12.RESOURCE_DESC.initTex2d(
+                dds_info.format,
+                dds_info.width,
+                dds_info.height,
+                dds_info.mip_map_count,
+            ),
+            .{ .COPY_DEST = true },
+            null,
+        );
+        const texture_desc = gctx.lookupResource(texture).?.GetDesc();
+
+        for (0..subresources.items.len) |index| {
+            const subresource_index = @intCast(u32, index);
+
+            var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
+            var num_rows: [1]u32 = undefined;
+            var row_size_in_bytes: [1]u64 = undefined;
+            var required_size: u64 = undefined;
+            gctx.device.GetCopyableFootprints(
+                &texture_desc,
+                subresource_index,
+                layout.len,
+                0,
+                &layout,
+                &num_rows,
+                &row_size_in_bytes,
+                &required_size,
+            );
+
+            const upload = gctx.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
+            layout[0].Offset = upload.buffer_offset;
+
+            var subresource = &subresources.items[subresource_index];
+            var row: u32 = 0;
+            while (row < num_rows[0]) : (row += 1) {
+                @memcpy(
+                    upload.cpu_slice.ptr + layout[0].Footprint.RowPitch * row,
+                    subresource.pData.? + row_size_in_bytes[0] * row,
+                    row_size_in_bytes[0],
+                );
+            }
+
+            gctx.cmdlist.CopyTextureRegion(&.{
+                .pResource = gctx.lookupResource(texture).?,
+                .Type = .SUBRESOURCE_INDEX,
+                .u = .{ .SubresourceIndex = subresource_index },
+            }, 0, 0, 0, &.{
+                .pResource = upload.buffer,
+                .Type = .PLACED_FOOTPRINT,
+                .u = .{ .PlacedFootprint = layout[0] },
+            }, null);
+        }
 
         return texture;
     }
