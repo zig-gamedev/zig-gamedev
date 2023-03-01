@@ -114,25 +114,27 @@ void psMeshPbr(
     Texture2D srv_normal_texture = ResourceDescriptorHeap[draw_const.normal_index];
 
     if (scene_const.draw_mode == 1) {
-        out_color = pow(srv_ao_texture.Sample(sam_aniso, texcoords0), 1.0 / GAMMA);
+        out_color = srv_ao_texture.Sample(sam_aniso, texcoords0).r;
         return;
     } else if (scene_const.draw_mode == 2) {
         out_color = srv_base_color_texture.Sample(sam_aniso, texcoords0);
         return;
     } else if (scene_const.draw_mode == 3) {
-        out_color = pow(srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).b, 1.0 / GAMMA);
+        out_color = srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).b;
         return;
     } else if (scene_const.draw_mode == 4) {
-        out_color = pow(srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).g, 1.0 / GAMMA);
+        out_color = srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).g;
         return;
     } else if (scene_const.draw_mode == 5) {
-        out_color = pow(srv_normal_texture.Sample(sam_aniso, texcoords0), 1.0 / GAMMA);
+        float3 n = float3(srv_normal_texture.Sample(sam_aniso, texcoords0).rg, 0.0);
+        n.z = sqrt(1.0 - saturate(dot(n.xy, n.xy)));
+        out_color = float4(n, 1.0);
         return;
     }
 
     float3 n = float3(srv_normal_texture.Sample(sam_aniso, texcoords0).rg, 0.0);
     n.z = sqrt(1.0 - saturate(dot(n.xy, n.xy)));
-    n = normalize(n);
+    n = normalize(2.0 * n - 1.0);
 
     normal = normalize(normal);
     tangent.xyz = normalize(tangent.xyz);
