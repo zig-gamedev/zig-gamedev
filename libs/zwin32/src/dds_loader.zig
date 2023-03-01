@@ -197,12 +197,6 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
         data_size -= @sizeOf(DDS_HEADER_DXT10);
     }
 
-    // TODO(gmodarelli): We don't need to allocate memory here, but simply offset into the file_data passed in
-    // var offset = @sizeOf(u32) + @sizeOf(DDS_HEADER);
-    // if (has_dx10_extension) {
-    //      offset += @sizeOf(DDS_HEADER_DX10);
-    // }
-    // var data = file_data[offset..];
     var data = try arena.alloc(u8, data_size);
     try reader.readNoEof(data);
 
@@ -289,40 +283,29 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
         assert(dxgi.FORMAT.pixelSizeInBits(format) != 0);
     }
 
-    // TODO: add these #define D3D12_REQ_XXX to d3d12.zig
-    const d3d12_req_mip_levels: u32 = 15;
-    const d3d12_req_texture1d_array_axis_dimension: u32 = 2024;
-    const d3d12_req_texture1d_u_dimension: u32 = 16384;
-    const d3d12_req_texture2d_array_axis_dimension: u32 = 2024;
-    const d3d12_req_texturecube_dimension: u32 = 16384;
-    const d3d12_req_texture2d_u_or_v_dimension: u32 = 16384;
-    const d3d12_req_texture3d_u_v_or_w_dimension: u32 = 2048;
-    const d3d12_req_subresources: u32 = 30720;
-
-    // Bound sizes (for security purposes we don't trust DDS file metadata larger than the Direct3D hardware requirements)
-    if (mip_count > d3d12_req_mip_levels) {
+    if (mip_count > d3d12.req_mip_levels) {
         std.log.debug("[DDS Loader] Too many mipmap levels defined for DirectX 12 ({d}).", .{mip_count});
         return DdsError.NotSupported;
     }
 
     if (resource_dimension == .TEXTURE1D) {
-        if (array_size > d3d12_req_texture1d_array_axis_dimension or width > d3d12_req_texture1d_u_dimension) {
+        if (array_size > d3d12.req_texture1d_array_axis_dimension or width > d3d12.req_texture1d_u_dimension) {
             std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (1D: array {d}, size {d}).", .{ array_size, width });
             return DdsError.NotSupported;
         }
     } else if (resource_dimension == .TEXTURE2D) {
         if (cubemap) {
             // This is the right bound because we set arraySize to (NumCubes*6) above
-            if (array_size > d3d12_req_texture2d_array_axis_dimension or width > d3d12_req_texturecube_dimension or height > d3d12_req_texturecube_dimension) {
+            if (array_size > d3d12.req_texture2d_array_axis_dimension or width > d3d12.req_texturecube_dimension or height > d3d12.req_texturecube_dimension) {
                 std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (2D cubemap: array {d}, size {d} by {d}).", .{ array_size, width, height });
                 return DdsError.NotSupported;
             }
-        } else if (array_size > d3d12_req_texture2d_array_axis_dimension or width > d3d12_req_texture2d_u_or_v_dimension or height > d3d12_req_texture2d_u_or_v_dimension) {
+        } else if (array_size > d3d12.req_texture2d_array_axis_dimension or width > d3d12.req_texture2d_u_or_v_dimension or height > d3d12.req_texture2d_u_or_v_dimension) {
             std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (2D: array {d}, size {d} by {d}).", .{ array_size, width, height });
             return DdsError.NotSupported;
         }
     } else if (resource_dimension == .TEXTURE3D) {
-        if (array_size > 1 or width > d3d12_req_texture3d_u_v_or_w_dimension or height > d3d12_req_texture3d_u_v_or_w_dimension or depth > d3d12_req_texture3d_u_v_or_w_dimension) {
+        if (array_size > 1 or width > d3d12.req_texture3d_u_v_or_w_dimension or height > d3d12.req_texture3d_u_v_or_w_dimension or depth > d3d12.req_texture3d_u_v_or_w_dimension) {
             std.log.debug("[DDS Loader] Resource dimensions too large for DirectX 12 (3D: array {d}, size {d} by {d} by {d}).", .{ array_size, width, height, depth });
             return DdsError.NotSupported;
         }
@@ -351,7 +334,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
     number_of_subresources *= mip_count;
     number_of_subresources *= number_of_planes;
 
-    if (number_of_subresources > d3d12_req_subresources) {
+    if (number_of_subresources > d3d12.req_subresources) {
         return DdsError.InvalidDDSData;
     }
 
