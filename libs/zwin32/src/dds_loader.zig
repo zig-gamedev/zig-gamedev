@@ -280,7 +280,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
             resource_dimension = .TEXTURE2D;
         }
 
-        assert(dxgi.FORMAT.pixelSizeInBits(format) != 0);
+        assert(format.pixelSizeInBits() != 0);
     }
 
     if (mip_count > d3d12.req_mip_levels) {
@@ -465,7 +465,7 @@ fn getDXGIFormatFromDX10(header: DDS_HEADER_DXT10, width: u32, height: u32) !dxg
         },
 
         else => blk: {
-            if (dxgi.FORMAT.pixelSizeInBits(header.dxgiFormat) == 0) {
+            if (header.dxgiFormat.pixelSizeInBits() == 0) {
                 std.log.debug("[DDS Loader] Unknown DXGI format {}.", .{header.dxgiFormat});
                 break :blk DdsError.NotSupported;
             } else {
@@ -764,7 +764,7 @@ fn getSurfaceInfo(
         num_bytes = (row_bytes * @intCast(u64, height)) + ((row_bytes * @intCast(u64, height) + 1) >> 1);
         num_rows = height + ((@intCast(u64, height) + 1) >> 1);
     } else {
-        const bpp = dxgi.FORMAT.pixelSizeInBits(format);
+        const bpp = format.pixelSizeInBits();
         assert(bpp > 0);
 
         row_bytes = @divFloor(@intCast(u64, width) * bpp + 7, 8); // round up to nearest byte
