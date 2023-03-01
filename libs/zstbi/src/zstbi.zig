@@ -170,7 +170,7 @@ pub const Image = struct {
             num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
-            bytes_per_component = 1;
+            bytes_per_component = 2;
             bytes_per_row = width * num_components * bytes_per_component;
             is_hdr = true;
 
