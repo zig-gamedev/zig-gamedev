@@ -1643,6 +1643,150 @@ extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
 // Functions for working with `table_t`.
 //
 //--------------------------------------------------------------------------------------------------
+/// `pub fn table_get_type(table: *const table_t) *const type_t`
+pub const table_get_type = ecs_table_get_type;
+extern fn ecs_table_get_type(table: *const table_t) *const type_t;
+
+/// `pub fn table_get_column(table: *const table_t, index: i32, offset: i32) ?*anyopaque`
+pub const table_get_column = ecs_table_get_column;
+extern fn ecs_table_get_column(table: *const table_t, index: i32, offset: i32) ?*anyopaque;
+
+/// `pub fn table_get_index(world: *const world_t, table: *const table_t, id: id_t) i32`
+pub const table_get_index = ecs_table_get_index;
+extern fn ecs_table_get_index(world: *const world_t, table: *const table_t, id: id_t) i32;
+
+/// `pub fn table_get_id(world: *const world_t, table: *const table_t, id: id_t, offset: i32) ?*anyopaque`
+pub const table_get_id = ecs_table_get_id;
+extern fn ecs_table_get_id(world: *const world_t, table: *const table_t, id: id_t, offset: i32) ?*anyopaque;
+
+/// `pub fn table_get_depth(world: *const world_t, table: *const table_t, rel: entity_t) i32`
+pub const table_get_depth = ecs_table_get_depth;
+extern fn ecs_table_get_depth(world: *const world_t, table: *const table_t, rel: entity_t) i32;
+
+/// `pub fn table_get_storage_table(table: *const table_t) *table_t`
+pub const table_get_storage_table = ecs_table_get_storage_table;
+extern fn ecs_table_get_storage_table(table: *const table_t) *table_t;
+
+/// `pub fn table_type_to_storage_index(table: *const table_t, index: i32) i32`
+pub const table_type_to_storage_index = ecs_table_type_to_storage_index;
+extern fn ecs_table_type_to_storage_index(table: *const table_t, index: i32) i32;
+
+/// `pub fn table_storage_to_type_index(table: *const table_t, index: i32) i32`
+pub const table_storage_to_type_index = ecs_table_storage_to_type_index;
+extern fn ecs_table_storage_to_type_index(table: *const table_t, index: i32) i32;
+
+/// `pub fn table_count(table: *const table_t) i32`
+pub const table_count = ecs_table_count;
+extern fn ecs_table_count(table: *const table_t) i32;
+
+/// `pub fn table_add_id(world: *world_t, table: *table_t, id: id_t) *table_t`
+pub const table_add_id = ecs_table_add_id;
+extern fn ecs_table_add_id(world: *world_t, table: *table_t, id: id_t) *table_t;
+
+/// `pub fn table_find(world: *world_t, ids: [*]const id_t, id_count: i32) *table_t`
+pub const table_find = ecs_table_find;
+extern fn ecs_table_find(world: *world_t, ids: [*]const id_t, id_count: i32) *table_t;
+
+/// `pub fn table_remove_id(world: *world_t, table: *table_t, id: id_t) *table_t`
+pub const table_remove_id = ecs_table_remove_id;
+extern fn ecs_table_remove_id(world: *world_t, table: *table_t, id: id_t) *table_t;
+
+/// `pub fn table_lock(world: *world_t, table: *table_t) void`
+pub const table_lock = ecs_table_lock;
+extern fn ecs_table_lock(world: *world_t, table: *table_t) void;
+
+/// `pub fn table_unlock(world: *world_t, table: *table_t) void`
+pub const table_unlock = ecs_table_unlock;
+extern fn ecs_table_unlock(world: *world_t, table: *table_t) void;
+
+/// `pub fn table_has_module(table: *const table_t) bool`
+pub const table_has_module = ecs_table_has_module;
+extern fn ecs_table_has_module(table: *const table_t) bool;
+
+/// `pub fn table_swap_rows(world: *world_t, table: *table_t, row_1: i32, row_2: i32) void`
+pub const table_swap_rows = ecs_table_swap_rows;
+extern fn ecs_table_swap_rows(world: *world_t, table: *table_t, row_1: i32, row_2: i32) void;
+
+/// ```
+/// extern fn commit(
+///     world: *world_t,
+///     entity: entity_t,
+///     record: ?*record_t,
+///     table: *table_t,
+///     added: ?*const type_t,
+///     removed: ?*const type_t,
+/// ) void;
+/// ```
+pub const commit = ecs_commit;
+extern fn ecs_commit(
+    world: *world_t,
+    entity: entity_t,
+    record: ?*record_t,
+    table: *table_t,
+    added: ?*const type_t,
+    removed: ?*const type_t,
+) void;
+
+/// `pub fn record_find(world: *const world_t, entity: entity_t) ?*record_t`
+pub const record_find = ecs_record_find;
+extern fn ecs_record_find(world: *const world_t, entity: entity_t) ?*record_t;
+
+/// `pub fn record_get_column(r: *const record_t, column: i32, c_size: usize) ?*anyopaque`
+pub const record_get_column = ecs_record_get_column;
+extern fn ecs_record_get_column(r: *const record_t, column: i32, c_size: usize) ?*anyopaque;
+
+/// `pub fn search(world: *const world_t, table: *const table_t, id: id_t, id_out: ?*id_t) i32`
+pub const search = ecs_search;
+extern fn ecs_search(world: *const world_t, table: *const table_t, id: id_t, id_out: ?*id_t) i32;
+
+/// ```
+/// extern fn search_offset(
+///     world: *const world_t,
+///     table: *const table_t,
+///     offset: i32,
+///     id: id_t,
+///     id_out: ?*id_t,
+/// ) i32;
+/// ```
+pub const search_offset = ecs_search_offset;
+extern fn ecs_search_offset(
+    world: *const world_t,
+    table: *const table_t,
+    offset: i32,
+    id: id_t,
+    id_out: ?*id_t,
+) i32;
+
+/// ```
+/// extern fn search_relation(
+///     world: *const world_t,
+///     table: *const table_t,
+///     offset: i32,
+///     id: id_t,
+///     rel: entity_t,
+///     flags: flags32_t,
+///     subject_out: ?*entity_t,
+///     id_out: ?*id_t,
+///     tr_out: ?**table_record_t,
+/// ) i32;
+/// ```
+pub const search_relation = ecs_search_relation;
+extern fn ecs_search_relation(
+    world: *const world_t,
+    table: *const table_t,
+    offset: i32,
+    id: id_t,
+    rel: entity_t,
+    flags: flags32_t,
+    subject_out: ?*entity_t,
+    id_out: ?*id_t,
+    tr_out: ?**table_record_t,
+) i32;
+//--------------------------------------------------------------------------------------------------
+//
+// Construct, destruct, copy and move dynamically created values.
+//
+//--------------------------------------------------------------------------------------------------
 // TODO:
 //--------------------------------------------------------------------------------------------------
 //
