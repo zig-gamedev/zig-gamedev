@@ -1381,7 +1381,7 @@ pub const GraphicsContext = struct {
         const upload = gctx.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
 
-        const pixel_size = resource.?.desc.Format.pixelSizeInBytes();
+        const pixel_size = resource.?.desc.Format.pixelSizeInBits() / 8;
         var y: u32 = 0;
         while (y < layout[0].Footprint.Height) : (y += 1) {
             var x: u32 = 0;
