@@ -1268,7 +1268,6 @@ extern fn ecs_id_is_union(world: *const world_t, id: id_t) bool;
 
 /// `pub fn id_in_use(world: *const world_t, id: id_t) bool`
 pub const id_in_use = ecs_id_in_use;
-// TODO: flecs upstream: missing const
 extern fn ecs_id_in_use(world: *const world_t, id: id_t) bool;
 
 /// `pub fn get_type_info(world: *const world_t, id: id_t) *const type_info_t`
@@ -1515,6 +1514,26 @@ pub const event_desc_t = extern struct {
     observable: ?*poly_t = null,
     flags: flags32_t = 0,
 };
+
+/// `pub fn emit(world: *world_t, desc: *event_desc_t) void`
+pub const emit = ecs_emit;
+extern fn ecs_emit(world: *world_t, desc: *event_desc_t) void;
+
+/// `pub fn observer_init(world: *world_t, desc: *const event_desc_t) entity_t`
+pub const observer_init = ecs_observer_init;
+extern fn ecs_observer_init(world: *world_t, desc: *const event_desc_t) entity_t;
+
+/// `pub fn observer_default_run_action(it: *iter_t) bool`
+pub const observer_default_run_action = ecs_observer_default_run_action;
+extern fn ecs_observer_default_run_action(it: *iter_t) bool;
+
+/// `pub fn get_observer_ctx(world: *const world_t, observer: entity_t) ?*anyopaque`
+pub const get_observer_ctx = ecs_get_observer_ctx;
+extern fn ecs_get_observer_ctx(world: *const world_t, observer: entity_t) ?*anyopaque;
+
+/// `pub fn get_observer_binding_ctx(world: *const world_t, observer: entity_t) ?*anyopaque`
+pub const get_observer_binding_ctx = ecs_get_observer_binding_ctx;
+extern fn ecs_get_observer_binding_ctx(world: *const world_t, observer: entity_t) ?*anyopaque;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `iter_t`.
