@@ -146,14 +146,43 @@ pub const Image = struct {
     }
 
     pub fn loadFromMemory(data: []const u8, forced_num_components: u32) !Image {
-        // TODO: Add support for HDR images (https://github.com/michal-z/zig-gamedev/issues/155).
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
         var bytes_per_component: u32 = 0;
         var bytes_per_row: u32 = 0;
+        var is_hdr = false;
 
-        const image_data = data: {
+        const image_data = if (isHdrFromMem(data.ptr)) data: {
+            var x: c_int = undefined;
+            var y: c_int = undefined;
+            var ch: c_int = undefined;
+            const ptr = stbi_loadf_from_memory(
+                data.ptr,
+                @intCast(c_int, data.len),
+                &x,
+                &y,
+                &ch,
+                @intCast(c_int, forced_num_components),
+            );
+            if (ptr == null) return error.ImageInitFailed;
+
+            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
+            width = @intCast(u32, x);
+            height = @intCast(u32, y);
+            bytes_per_component = 2;
+            bytes_per_row = width * num_components * bytes_per_component;
+            is_hdr = true;
+
+            // Convert each component from f32 to f16.
+            var ptr_f16 = @ptrCast([*]f16, ptr.?);
+            const num = width * height * num_components;
+            var i: u32 = 0;
+            while (i < num) : (i += 1) {
+                ptr_f16[i] = @floatCast(f16, ptr.?[i]);
+            }
+            break :data @ptrCast([*]u8, ptr_f16)[0 .. height * bytes_per_row];
+        } else data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
@@ -183,7 +212,7 @@ pub const Image = struct {
             .num_components = num_components,
             .bytes_per_component = bytes_per_component,
             .bytes_per_row = bytes_per_row,
-            .is_hdr = false,
+            .is_hdr = is_hdr,
         };
     }
 
@@ -314,6 +343,10 @@ pub fn isHdr(filename: [:0]const u8) bool {
     return stbi_is_hdr(filename) != 0;
 }
 
+pub fn isHdrFromMem(buffer: [*]const u8) bool {
+    return stbi_is_hdr_from_memory(buffer, @intCast(c_int, buffer.len)) != 0;
+}
+
 pub fn is16bit(filename: [:0]const u8) bool {
     return stbi_is_16_bit(filename) != 0;
 }
@@ -431,6 +464,15 @@ pub extern fn stbi_load_from_memory(
     desired_channels: c_int,
 ) ?[*]u8;
 
+pub extern fn stbi_loadf_from_memory(
+    buffer: [*]const u8,
+    len: c_int,
+    x: *c_int,
+    y: *c_int,
+    channels_in_file: *c_int,
+    desired_channels: c_int,
+) ?[*]f32;
+
 extern fn stbi_image_free(image_data: ?[*]u8) void;
 
 extern fn stbi_hdr_to_ldr_scale(scale: f32) void;
@@ -440,6 +482,7 @@ extern fn stbi_ldr_to_hdr_gamma(gamma: f32) void;
 
 extern fn stbi_is_16_bit(filename: [*:0]const u8) c_int;
 extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
+extern fn stbi_is_hdr_from_memory(buffer: [*]const u8, len: c_int) c_int;
 
 extern fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: c_int) void;
 
