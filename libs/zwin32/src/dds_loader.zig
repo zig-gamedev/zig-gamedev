@@ -322,7 +322,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
         return DdsError.InvalidDDSData;
     }
 
-    if (number_of_planes > 1 and dxgi.FORMAT.isDepthStencil(format)) {
+    if (number_of_planes > 1 and format.isDepthStencil()) {
         return DdsError.NotSupported;
     }
 
