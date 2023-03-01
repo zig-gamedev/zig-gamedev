@@ -234,7 +234,7 @@ pub const filter_t = extern struct {
 pub const observer_t = extern struct {
     hdr: header_t,
     filter: filter_t,
-    events: [8]entity_t,
+    events: [OBSERVER_DESC_EVENT_COUNT_MAX]entity_t,
     event_count: i32,
     callback: iter_action_t,
     run: run_action_t,
@@ -1787,7 +1787,17 @@ extern fn ecs_search_relation(
 // Construct, destruct, copy and move dynamically created values.
 //
 //--------------------------------------------------------------------------------------------------
-// TODO:
+pub fn value_init(world: *const world_t, value_type: entity_t, ptr: *anyopaque) error_t!void {
+    if (ecs_value_init(world, value_type, ptr) != 0) return make_error();
+}
+extern fn ecs_value_init(world: *const world_t, value_type: entity_t, ptr: *anyopaque) i32;
+
+pub fn value_init_w_type_info(world: *const world_t, ti: *const type_info_t, ptr: *anyopaque) error_t!void {
+    if (ecs_value_init_w_type_info(world, ti, ptr) != 0) return make_error();
+}
+extern fn ecs_value_init_w_type_info(world: *const world_t, ti: *const type_info_t, ptr: *anyopaque) i32;
+
+// TODO: Add missing functions
 //--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)
