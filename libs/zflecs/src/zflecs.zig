@@ -155,6 +155,27 @@ pub const move_t = *const fn (
 ) callconv(.C) void;
 
 pub const poly_dtor_t = *const fn (poly: *poly_t) callconv(.C) void;
+
+pub const system_desc_t = extern struct {
+    _canary: i32 = 0,
+    entity: entity_t = 0,
+    query: query_desc_t = .{},
+    run: ?run_action_t = null,
+    callback: ?iter_action_t = null,
+    ctx: ?*anyopaque = null,
+    binding_ctx: ?*anyopaque = null,
+    ctx_free: ?ctx_free_t = null,
+    binding_ctx_free: ?ctx_free_t = null,
+    interval: ftime_t = 0.0,
+    rate: i32 = 0,
+    tick_source: entity_t = 0,
+    multi_threaded: bool = false,
+    no_readonly: bool = false,
+};
+
+/// `pub fn system_init(world: *world_t, desc: *const system_desc_t) entity_t`
+pub const system_init = ecs_system_init;
+extern fn ecs_system_init(world: *world_t, desc: *const system_desc_t) entity_t;
 //--------------------------------------------------------------------------------------------------
 //
 // Mixin types for poly mechanism.
