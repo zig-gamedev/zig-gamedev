@@ -475,7 +475,7 @@ pub const iter_t = extern struct {
     entities_: [*]entity_t,
     ptrs: ?[*]*anyopaque,
     sizes: ?[*]size_t,
-    table: ?*table_t,
+    table: *table_t,
     other_table: ?*table_t,
     ids: ?[*]id_t,
     variables: ?[*]var_t,
@@ -501,7 +501,7 @@ pub const iter_t = extern struct {
     delta_system_time: f32,
     frame_offset: i32,
     offset: i32,
-    count: i32,
+    count_: i32,
     instance_count: i32,
     flags: flags32_t,
     interrupted_by: entity_t,
@@ -512,7 +512,10 @@ pub const iter_t = extern struct {
     chain_it: ?*iter_t,
 
     pub fn entities(iter: iter_t) []entity_t {
-        return iter.entities_[0..@intCast(usize, iter.count)];
+        return iter.entities_[0..@intCast(usize, iter.count_)];
+    }
+    pub fn count(iter: iter_t) usize {
+        return @intCast(usize, iter.count_);
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -1115,9 +1118,9 @@ extern fn ecs_get_type(world: *const world_t, entity: entity_t) ?*const type_t;
 pub const get_table = ecs_get_table;
 extern fn ecs_get_table(world: *const world_t, entity: entity_t) ?*const table_t;
 
-/// `pub fn type_str(world: *const world_t, type: ?*const type_t) [*:0]u8`
+/// `pub fn type_str(world: *const world_t, type: ?*const type_t) ?[*:0]u8`
 pub const type_str = ecs_type_str;
-extern fn ecs_type_str(world: *const world_t, type: ?*const type_t) [*:0]u8;
+extern fn ecs_type_str(world: *const world_t, type: ?*const type_t) ?[*:0]u8;
 
 /// `pub fn table_str(world: *const world_t, table: ?*const table_t) ?[*:0]u8`
 pub const table_str = ecs_table_str;
@@ -1836,6 +1839,10 @@ extern fn ecs_value_init_w_type_info(world: *const world_t, ti: *const type_info
 
 // TODO: Add missing functions
 //--------------------------------------------------------------------------------------------------
+/// `pub fn progress(world: *world_t, delta_time: ftime_t) bool`
+pub const progress = ecs_progress;
+extern fn ecs_progress(world: *world_t, delta_time: ftime_t) bool;
+//--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)
 //
@@ -1882,6 +1889,34 @@ pub fn TAG(world: *world_t, comptime T: type) void {
     type_id_ptr.* = ecs_entity_init(world, &.{ .name = typeName(T) });
 }
 
+pub fn SYSTEM(
+    world: *world_t,
+    name: [*:0]const u8,
+    callback: iter_action_t,
+    phase: entity_t,
+    query_desc: query_desc_t,
+) void {
+    var entity_desc = entity_desc_t{};
+    entity_desc.id = new_id(world);
+    entity_desc.name = name;
+    entity_desc.add[0] = if (phase != 0) pair(EcsDependsOn, phase) else 0;
+    entity_desc.add[1] = phase;
+
+    var system_desc = system_desc_t{};
+    system_desc.entity = entity_init(world, &entity_desc);
+    system_desc.query = query_desc;
+    system_desc.callback = callback;
+    _ = system_init(world, &system_desc);
+}
+
+pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
+    return entity_init(world, &.{ .name = name });
+}
+
+pub fn add_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {
+    add_id(world, subject, pair(first, second));
+}
+
 // flecs internally reserves names like u16, u32, f32, etc. so we re-map them to uppercase to avoid collisions
 pub fn typeName(comptime T: type) @TypeOf(@typeName(T)) {
     return switch (T) {
@@ -1925,7 +1960,7 @@ pub fn remove(world: *world_t, entity: entity_t, comptime T: type) void {
 pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
     if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
         const ptr = @ptrCast([*]T, @alignCast(@alignOf(T), anyptr));
-        return ptr[0..@intCast(usize, it.count)];
+        return ptr[0..it.count()];
     }
     return null;
 }
