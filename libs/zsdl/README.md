@@ -18,7 +18,7 @@ pub fn build(b: *std.Build) void {
 }
 ```
 
-Now in your code you may import and use `zpix`:
+Now in your code you may import and use `zsdl`:
 
 ```zig
 const std = @import("std");
