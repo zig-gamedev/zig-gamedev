@@ -1974,7 +1974,7 @@ pub var vertexAttribP4uiv: *const fn (
 const std = @import("std");
 const assert = std.debug.assert;
 
-pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32, minor: u32) !void {
+pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
     // Max. supported version is 3.3 for now.
@@ -2410,7 +2410,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*anyopaque, major: u32,
     }
 }
 //--------------------------------------------------------------------------------------------------
-var loaderFunc: *const fn ([:0]const u8) ?*anyopaque = undefined;
+var loaderFunc: *const fn ([:0]const u8) ?*const anyopaque = undefined;
 
 fn getProcAddress(comptime T: type, name: [:0]const u8) !T {
     if (loaderFunc(name)) |addr| {
