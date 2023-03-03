@@ -2416,12 +2416,13 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major
         vertexAttribP4uiv = try getProcAddress(@TypeOf(vertexAttribP4uiv), "glVertexAttribP4uiv");
     }
 }
-pub fn loadESProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major: u32, minor: u32) !void {
+
+pub fn loadEsProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
     // Max. supported version is ES 2.0 for now.
     assert(major >= 1 and major <= 2);
-    assert(minor >= 0 and minor <= 0);
+    assert(minor >= 0 and minor <= 1);
     assert(ver >= 10 and ver <= 20);
 
     loaderFunc = loader;
