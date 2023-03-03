@@ -1,5 +1,9 @@
 # zopengl - OpenGL loader
 
+Supports:
+  * OpenGL Core Profile up to version 3.3
+  * OpenGL ES up to version 2.0
+
 ## Getting started
 
 Copy `zopengl` folder to a `libs` subdirectory of the root of your project.
