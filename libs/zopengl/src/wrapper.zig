@@ -1,4 +1,392 @@
+const std = @import("std");
+const assert = std.debug.assert;
+
 pub const bindings = @import("bindings.zig");
+
+pub const Framebuffer = packed struct { _: Uint = 0 };
+pub const Shader = packed struct { _: Uint = 0 };
+pub const Program = packed struct { _: Uint = 0 };
+pub const Texture = packed struct { _: Uint = 0 };
+pub const Buffer = packed struct { _: Uint = 0 };
+pub const UniformLocation = packed struct { _: Uint = 0 };
+pub const VertexAttribLocation = packed struct { _: Uint = 0 };
+
+pub const Error = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    no_error = NO_ERROR,
+    invalid_enum = INVALID_ENUM,
+    invalid_value = INVALID_VALUE,
+    invalid_operation = INVALID_OPERATION,
+    stack_overflow = STACK_OVERFLOW,
+    stack_underflow = STACK_UNDERFLOW,
+    out_of_memory = OUT_OF_MEMORY,
+    invalid_framebuffer_operation = INVALID_FRAMEBUFFER_OPERATION,
+};
+
+pub const ShaderType = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 2.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    vertex = VERTEX_SHADER,
+    fragment = FRAGMENT_SHADER,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    geometry = GEOMETRY_SHADER,
+};
+
+pub const ShaderParameter = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 2.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    shader_type = SHADER_TYPE,
+    delete_status = DELETE_STATUS,
+    compile_status = COMPILE_STATUS,
+    info_log_length = INFO_LOG_LENGTH,
+    shader_source_length = SHADER_SOURCE_LENGTH,
+};
+
+pub const ProgramParameter = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 2.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    delete_status = DELETE_STATUS,
+    link_status = LINK_STATUS,
+    validate_status = VALIDATE_STATUS,
+    info_log_length = INFO_LOG_LENGTH,
+    attached_shaders = ATTACHED_SHADERS,
+    active_attributes = ACTIVE_ATTRIBUTES,
+    active_attribute_max_length = ACTIVE_ATTRIBUTE_MAX_LENGTH,
+    active_uniforms = ACTIVE_UNIFORMS,
+    active_uniform_blocks = ACTIVE_UNIFORM_BLOCKS,
+    active_uniform_block_max_name_length = ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH,
+    active_uniform_max_length = ACTIVE_UNIFORM_MAX_LENGTH,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    transform_feedback_buffer_mode = TRANSFORM_FEEDBACK_BUFFER_MODE,
+    transform_feedback_varyings = TRANSFORM_FEEDBACK_VARYINGS,
+    transform_feedback_varying_max_length = TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    geometry_vertices_out = GEOMETRY_VERTICES_OUT,
+    geometry_input_type = GEOMETRY_INPUT_TYPE,
+    geometry_output_type = GEOMETRY_OUTPUT_TYPE,
+};
+
+pub const VertexAttribType = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    byte = BYTE,
+    short = SHORT,
+    int = INT,
+    float = FLOAT,
+    double = DOUBLE,
+    unsigned_byte = UNSIGNED_BYTE,
+    unsigned_short = UNSIGNED_SHORT,
+    unsigned_int = UNSIGNED_INT,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    unsigned_int_2_10_10_10_rev = UNSIGNED_INT_2_10_10_10_REV,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    half_float = HALF_FLOAT,
+    unsigned_int_10_f_11_f_11_f_rev = UNSIGNED_INT_10F_11F_11F_REV,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    int_2_10_10_10_rev = INT_2_10_10_10_REV,
+};
+
+pub const TextureTarget = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texture_1d = TEXTURE_1D,
+    texture_2d = TEXTURE_2D,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texture_3d = TEXTURE_3D,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texture_cube_map = TEXTURE_CUBE_MAP,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texture_1d_array = TEXTURE_1D_ARRAY,
+    texture_2d_array = TEXTURE_2D_ARRAY,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texture_buffer = TEXTURE_BUFFER,
+    texture_rectangle = TEXTURE_RECTANGLE,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texture_2d_multisample = TEXTURE_2D_MULTISAMPLE,
+    texture_2d_multisample_array = TEXTURE_2D_MULTISAMPLE_ARRAY,
+};
+
+pub const TextureInternalFormat = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    red = RED,
+    rg = RG,
+    rgb = RGB,
+    rgba = RGBA,
+    depth_component = DEPTH_COMPONENT,
+    stencil_index = STENCIL_INDEX,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    r3_g3_b2 = R3_G3_B2,
+    rgb4 = RGB4,
+    rgb5 = RGB5,
+    rgb8 = RGB8,
+    rgb10 = RGB10,
+    rgb12 = RGB12,
+    rgba2 = RGBA2,
+    rgba4 = RGBA4,
+    rgb5_a1 = RGB5_A1,
+    rgba8 = RGBA8,
+    rgb10_a2 = RGB10_A2,
+    rgba12 = RGBA12,
+    rgba16 = RGBA16,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    bgr = BGR,
+    bgra = BGRA,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.4 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    depth_component16 = DEPTH_COMPONENT16,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 2.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    srgb8 = SRGB8,
+    srgb8_alpha8 = SRGB8_ALPHA8,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    red_integer = RED_INTEGER,
+    rg_integer = RG_INTEGER,
+    rgb_integer = RGB_INTEGER,
+    bgr_integer = BGR_INTEGER,
+    rgba_integer = RGBA_INTEGER,
+    bgra_integer = BGRA_INTEGER,
+    r8 = R8,
+    r16 = R16,
+    rg8 = RG8,
+    rg16 = RG16,
+    r16f = R16F,
+    rg16f = RG16F,
+    rgb16f = RGB16F,
+    rgba16f = RGBA16F,
+    r32f = R32F,
+    rg32f = RG32F,
+    rgb32f = RGB32F,
+    rgba32f = RGBA32F,
+    r11f_g11f_b10f = R11F_G11F_B10F,
+    rgb9_e5 = RGB9_E5,
+    r8i = R8I,
+    r8ui = R8UI,
+    r16i = R16I,
+    r16ui = R16UI,
+    r32i = R32I,
+    r32ui = R32UI,
+    rg8i = RG8I,
+    rg8ui = RG8UI,
+    rg16i = RG16I,
+    rg16ui = RG16UI,
+    rg32i = RG32I,
+    rg32ui = RG32UI,
+    rgb8i = RGB8I,
+    rgb8ui = RGB8UI,
+    rgb16i = RGB16I,
+    rgb16ui = RGB16UI,
+    rgb32i = RGB32I,
+    rgb32ui = RGB32UI,
+    rgba8i = RGBA8I,
+    rgba8ui = RGBA8UI,
+    rgba16i = RGBA16I,
+    rgba16ui = RGBA16UI,
+    rgba32i = RGBA32I,
+    rgba32ui = RGBA32UI,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    r8_snorm = R8_SNORM,
+    r16_snorm = R16_SNORM,
+    rg8_snorm = RG8_SNORM,
+    rg16_snorm = RG16_SNORM,
+    rgb8_snorm = RGB8_SNORM,
+    rgb16_snorm = RGB16_SNORM,
+    rgba8_snorm = RGBA8_SNORM,
+    rgba16_snorm = RGBA16_SNORM,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    rgb10_a2ui = RGB10_A2UI,
+};
+
+pub const PixelFormat = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    red = RED,
+    green = GREEN,
+    blue = BLUE,
+    rg = RG,
+    rgb = RGB,
+    rgba = RGBA,
+    depth_component = DEPTH_COMPONENT,
+    stencil_index = STENCIL_INDEX,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    bgr = BGR,
+    bgra = BGRA,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    depth_stencil = DEPTH_STENCIL,
+    red_integer = RED_INTEGER,
+    green_integer = GREEN_INTEGER,
+    blue_integer = BLUE_INTEGER,
+    rg_integer = RG_INTEGER,
+    rgb_integer = RGB_INTEGER,
+    bgr_integer = BGR_INTEGER,
+    rgba_integer = RGBA_INTEGER,
+    bgra_integer = BGRA_INTEGER,
+};
+
+pub const PixelType = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    unsigned_byte = UNSIGNED_BYTE,
+    byte = BYTE,
+    unsigned_short = UNSIGNED_SHORT,
+    short = SHORT,
+    unsigned_int = UNSIGNED_INT,
+    int = INT,
+    float = FLOAT,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    unsigned_byte_3_3_2 = UNSIGNED_BYTE_3_3_2,
+    unsigned_byte_2_3_3_rev = UNSIGNED_BYTE_2_3_3_REV,
+    unsigned_short_5_6_5 = UNSIGNED_SHORT_5_6_5,
+    unsigned_short_5_6_5_rev = UNSIGNED_SHORT_5_6_5_REV,
+    unsigned_short_4_4_4_4 = UNSIGNED_SHORT_4_4_4_4,
+    unsigned_short_4_4_4_4_rev = UNSIGNED_SHORT_4_4_4_4_REV,
+    unsigned_short_5_5_5_1 = UNSIGNED_SHORT_5_5_5_1,
+    unsigned_short_1_5_5_5_rev = UNSIGNED_SHORT_1_5_5_5_REV,
+    unsigned_int_8_8_8_8 = UNSIGNED_INT_8_8_8_8,
+    unsigned_int_8_8_8_8_rev = UNSIGNED_INT_8_8_8_8_REV,
+    unsigned_int_10_10_10_2 = UNSIGNED_INT_10_10_10_2,
+    unsigned_int_2_10_10_10_rev = UNSIGNED_INT_2_10_10_10_REV,
+};
+
+pub const TextureParameter = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    min_filter = TEXTURE_MIN_FILTER,
+    mag_filter = TEXTURE_MAG_FILTER,
+    wrap_s = TEXTURE_WRAP_S,
+    wrap_t = TEXTURE_WRAP_T,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    base_level = TEXTURE_BASE_LEVEL,
+    min_lod = TEXTURE_MIN_LOD,
+    max_lod = TEXTURE_MAX_LOD,
+    max_level = TEXTURE_MAX_LEVEL,
+    wrap_r = TEXTURE_WRAP_R,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.4 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    compare_func = TEXTURE_COMPARE_FUNC,
+    compare_mode = TEXTURE_COMPARE_MODE,
+    lod_bias = TEXTURE_LOD_BIAS,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    swizzle_r = TEXTURE_SWIZZLE_R,
+    swizzle_g = TEXTURE_SWIZZLE_G,
+    swizzle_b = TEXTURE_SWIZZLE_B,
+    swizzle_a = TEXTURE_SWIZZLE_A,
+};
+
+pub const BufferTarget = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.5 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    array_buffer = ARRAY_BUFFER,
+    element_array_buffer = ELEMENT_ARRAY_BUFFER,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 2.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    pixel_pack_buffer = PIXEL_PACK_BUFFER,
+    pixel_unpack_buffer = PIXEL_UNPACK_BUFFER,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    transform_feedback_buffer = TRANSFORM_FEEDBACK_BUFFER,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    copy_read_buffer = COPY_READ_BUFFER,
+    copy_write_buffer = COPY_WRITE_BUFFER,
+    texture_buffer = TEXTURE_BUFFER,
+    uniform_buffer = UNIFORM_BUFFER,
+};
+
+pub const BufferUsage = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.5 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    stream_draw = STREAM_DRAW,
+    stream_read = STREAM_READ,
+    stream_copy = STREAM_COPY,
+    static_draw = STATIC_DRAW,
+    static_read = STATIC_READ,
+    static_copy = STATIC_COPY,
+    dynamic_draw = DYNAMIC_DRAW,
+    dynamic_read = DYNAMIC_READ,
+    dynamic_copy = DYNAMIC_COPY,
+};
+
+pub const PrimitiveType = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    points = POINTS,
+    line_strip = LINE_STRIP,
+    line_loop = LINE_LOOP,
+    lines = LINES,
+    triangle_strip = TRIANGLE_STRIP,
+    triangle_fan = TRIANGLE_FAN,
+    triangles = TRIANGLES,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    line_strip_adjacency = LINE_STRIP_ADJACENCY,
+    lines_adjacency = LINES_ADJACENCY,
+    triangle_strip_adjacency = TRIANGLE_STRIP_ADJACENCY,
+    triangles_adjacency = TRIANGLES_ADJACENCY,
+};
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -198,7 +586,12 @@ pub const REPEAT = bindings.REPEAT;
 // pub var scissor: *const fn (x: Int, y: Int, width: Sizei, height: Sizei) callconv(.C) void = undefined;
 // pub var texParameterf: *const fn (target: Enum, pname: Enum, param: Float) callconv(.C) void = undefined;
 // pub var texParameterfv: *const fn (target: Enum, pname: Enum, params: [*c]const Float) callconv(.C) void = undefined;
+
 // pub var texParameteri: *const fn (target: Enum, pname: Enum, param: Int) callconv(.C) void = undefined;
+pub fn texParameteri(target: TextureTarget, pname: TextureParameter, param: Int) void {
+    bindings.texParameteri(@enumToInt(target), @enumToInt(pname), param);
+}
+
 // pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
 // pub var texImage1D: *const fn (
 //     target: Enum,
@@ -210,6 +603,7 @@ pub const REPEAT = bindings.REPEAT;
 //     type: Enum,
 //     pixels: ?*const anyopaque,
 // ) callconv(.C) void = undefined;
+
 // pub var texImage2D: *const fn (
 //     target: Enum,
 //     level: Int,
@@ -221,9 +615,41 @@ pub const REPEAT = bindings.REPEAT;
 //     type: Enum,
 //     pixels: ?*const anyopaque,
 // ) callconv(.C) void = undefined;
+pub fn texImage2D(args: struct {
+    target: TextureTarget,
+    level: usize,
+    internal_format: TextureInternalFormat,
+    width: usize,
+    height: usize,
+    format: PixelFormat,
+    pixel_type: PixelType,
+    data: ?[*]const u8,
+}) void {
+    bindings.texImage2D(
+        @enumToInt(args.target),
+        @intCast(Int, args.level),
+        @intCast(Enum, @enumToInt(args.internal_format)),
+        @intCast(Sizei, args.width),
+        @intCast(Sizei, args.height),
+        0,
+        @enumToInt(args.format),
+        @enumToInt(args.pixel_type),
+        args.data,
+    );
+}
+
 // pub var drawBuffer: *const fn (buf: Enum) callconv(.C) void = undefined;
+
 // pub var clear: *const fn (mask: Bitfield) callconv(.C) void = undefined;
+pub fn clear(mask: Bitfield) void {
+    bindings.clear(mask);
+}
+
 // pub var clearColor: *const fn (red: Float, green: Float, blue: Float, alpha: Float) callconv(.C) void = undefined;
+pub fn clearColor(r: f32, g: f32, b: f32, a: f32) void {
+    bindings.clearColor(r, g, b, a);
+}
+
 // pub var clearStencil: *const fn (s: Int) callconv(.C) void = undefined;
 // pub var clearDepth: *const fn (depth: Double) callconv(.C) void = undefined;
 // pub var stencilMask: *const fn (mask: Uint) callconv(.C) void = undefined;
@@ -257,7 +683,12 @@ pub const REPEAT = bindings.REPEAT;
 // ) callconv(.C) void = undefined;
 // pub var getBooleanv: *const fn (pname: Enum, data: [*c]Boolean) callconv(.C) void = undefined;
 // pub var getDoublev: *const fn (pname: Enum, data: [*c]Double) callconv(.C) void = undefined;
+
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
+pub fn getError() Error {
+    return @intToEnum(Error, bindings.getError());
+}
+
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
 // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
 // pub var getString: *const fn (name: Enum) callconv(.C) [*c]const Ubyte = undefined;
@@ -327,6 +758,14 @@ pub const RGBA16 = bindings.RGBA16;
 pub const VERTEX_ARRAY = bindings.VERTEX_ARRAY;
 
 // pub var drawArrays: *const fn (mode: Enum, first: Int, count: Sizei) callconv(.C) void = undefined;
+pub fn drawArrays(prim_type: PrimitiveType, first: usize, count: usize) void {
+    bindings.drawArrays(
+        @enumToInt(prim_type),
+        @intCast(Int, first),
+        @intCast(Sizei, count),
+    );
+}
+
 // pub var drawElements: *const fn (
 //     mode: Enum,
 //     count: Sizei,
@@ -391,10 +830,39 @@ pub const VERTEX_ARRAY = bindings.VERTEX_ARRAY;
 //     type: Enum,
 //     pixels: ?*const anyopaque,
 // ) callconv(.C) void = undefined;
+
 // pub var bindTexture: *const fn (target: Enum, texture: Uint) callconv(.C) void = undefined;
+pub fn bindTexture(target: TextureTarget, texture: Texture) void {
+    bindings.bindTexture(@enumToInt(target), @bitCast(Uint, texture));
+}
+
 // pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
+
 // pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
+pub fn genTextures(ptr_or_slice: anytype) void {
+    const T = @TypeOf(ptr_or_slice);
+    const type_info = @typeInfo(T);
+    if (type_info != .Pointer) {
+        @compileError("genTextures expects a single-item pointer or a slice");
+    }
+    if (type_info.Pointer.child != Texture) {
+        @compileError("genTextures expects pointer child type to be Texture");
+    }
+    switch (type_info.Pointer.size) {
+        .One => {
+            bindings.genTextures(1, @ptrCast([*c]Uint, ptr_or_slice));
+        },
+        .Slice => {
+            bindings.getShaderiv(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
+        },
+        else => {
+            @compileError("genTextures expects a single-item pointer or a slice");
+        },
+    }
+}
+
 // pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 1.2 (Core Profile)
@@ -715,22 +1183,75 @@ pub const SRC1_ALPHA = bindings.SRC1_ALPHA;
 // pub var getQueryiv: *const fn (target: Enum, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 // pub var getQueryObjectiv: *const fn (id: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 // pub var getQueryObjectuiv: *const fn (id: Uint, pname: Enum, params: [*c]Uint) callconv(.C) void = undefined;
+
 // pub var bindBuffer: *const fn (target: Enum, buffer: Uint) callconv(.C) void = undefined;
+pub fn bindBuffer(target: BufferTarget, buffer: Buffer) void {
+    assert(@bitCast(Uint, buffer) > 0);
+    bindings.bindBuffer(@enumToInt(target), @bitCast(Uint, buffer));
+}
+
 // pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
+
 // pub var genBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
+pub fn genBuffers(ptr_or_slice: anytype) void {
+    const T = @TypeOf(ptr_or_slice);
+    const type_info = @typeInfo(T);
+    if (type_info != .Pointer) {
+        @compileError("genBuffers expects a single-item pointer or a slice");
+    }
+    if (type_info.Pointer.child != Buffer) {
+        @compileError("genBuffers expects pointer child type to be Buffer");
+    }
+    switch (type_info.Pointer.size) {
+        .One => {
+            bindings.genBuffers(1, @ptrCast([*c]Uint, ptr_or_slice));
+        },
+        .Slice => {
+            bindings.getShaderiv(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
+        },
+        else => {
+            @compileError("genBuffers expects a single-item pointer or a slice");
+        },
+    }
+}
+
 // pub var isBuffer: *const fn (buffer: Uint) callconv(.C) Boolean = undefined;
+
 // pub var bufferData: *const fn (
 //     target: Enum,
 //     size: Sizeiptr,
 //     data: ?*const anyopaque,
 //     usage: Enum,
 // ) callconv(.C) void = undefined;
+pub fn bufferData(
+    target: BufferTarget,
+    size: usize,
+    bytes: ?[*]const u8,
+    usage: BufferUsage,
+) void {
+    bindings.bufferData(
+        @enumToInt(target),
+        @intCast(Sizeiptr, size),
+        bytes,
+        @enumToInt(usage),
+    );
+}
+
 // pub var bufferSubData: *const fn (
 //     target: Enum,
 //     offset: Intptr,
 //     size: Sizeiptr,
 //     data: ?*const anyopaque,
 // ) callconv(.C) void = undefined;
+pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) void {
+    bindings.bufferSubData(
+        @enumToInt(target),
+        @intCast(Intptr, offset),
+        @intCast(Sizeiptr, bytes.len),
+        bytes.ptr,
+    );
+}
+
 // pub var getBufferSubData: *const fn (
 //     target: Enum,
 //     offset: Intptr,
@@ -846,20 +1367,52 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 // ) callconv(.C) void = undefined;
 // pub var stencilFuncSeparate: *const fn (face: Enum, func: Enum, ref: Int, mask: Uint) callconv(.C) void = undefined;
 // pub var stencilMaskSeparate: *const fn (face: Enum, mask: Uint) callconv(.C) void = undefined;
+
 // pub var attachShader: *const fn (program: Uint, shader: Uint) callconv(.C) void = undefined;
+pub fn attachShader(program: Program, shader: Shader) void {
+    assert(@bitCast(Uint, program) > 0);
+    assert(@bitCast(Uint, shader) > 0);
+    bindings.attachShader(@bitCast(Uint, program), @bitCast(Uint, shader));
+}
+
 // pub var bindAttribLocation: *const fn (
 //     program: Uint,
 //     index: Uint,
 //     name: [*c]const Char,
 // ) callconv(.C) void = undefined;
+
 // pub var compileShader: *const fn (shader: Uint) callconv(.C) void = undefined;
+pub fn compileShader(shader: Shader) void {
+    assert(@bitCast(Uint, shader) > 0);
+    bindings.compileShader(@bitCast(Uint, shader));
+}
+
 // pub var createProgram: *const fn () callconv(.C) Uint = undefined;
+pub fn createProgram() Program {
+    return @bitCast(Program, bindings.createProgram());
+}
+
 // pub var createShader: *const fn (type: Enum) callconv(.C) Uint = undefined;
+pub fn createShader(@"type": ShaderType) Shader {
+    return @bitCast(Shader, bindings.createShader(@enumToInt(@"type")));
+}
+
 // pub var deleteProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+
 // pub var deleteShader: *const fn (shader: Uint) callconv(.C) void = undefined;
+pub fn deleteShader(shader: Shader) void {
+    assert(@bitCast(Uint, shader) > 0);
+    bindings.deleteShader(@bitCast(Uint, shader));
+}
+
 // pub var detachShader: *const fn (program: Uint, shader: Uint) callconv(.C) void = undefined;
 // pub var disableVertexAttribArray: *const fn (index: Uint) callconv(.C) void = undefined;
+
 // pub var enableVertexAttribArray: *const fn (index: Uint) callconv(.C) void = undefined;
+pub fn enableVertexAttribArray(location: VertexAttribLocation) void {
+    bindings.enableVertexAttribArray(@bitCast(Uint, location));
+}
+
 // pub var getActiveAttrib: *const fn (
 //     program: Uint,
 //     index: Uint,
@@ -884,28 +1437,88 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 //     count: [*c]Sizei,
 //     shaders: [*c]Uint,
 // ) callconv(.C) void = undefined;
+
 // pub var getAttribLocation: *const fn (program: Uint, name: [*c]const Char) callconv(.C) Int = undefined;
+pub fn getAttribLocation(program: Program, name: [:0]const u8) ?VertexAttribLocation {
+    assert(@bitCast(Uint, program) > 0);
+    const location = bindings.getAttribLocation(
+        @bitCast(Uint, program),
+        @ptrCast([*c]const Char, name.ptr),
+    );
+    return if (location >= 0) @bitCast(VertexAttribLocation, location) else null;
+}
+
 // pub var getProgramiv: *const fn (program: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub fn getProgramiv(program: Program, parameter: ProgramParameter) Int {
+    assert(@bitCast(Uint, program) > 0);
+    var value: Int = undefined;
+    bindings.getProgramiv(@bitCast(Uint, program), @enumToInt(parameter), &value);
+    return value;
+}
+
 // pub var getProgramInfoLog: *const fn (
 //     program: Uint,
 //     bufSize: Sizei,
 //     length: [*c]Sizei,
 //     infoLog: [*c]Char,
 // ) callconv(.C) void = undefined;
+pub fn getProgramInfoLog(program: Program, buffer: []u8) ?[]const u8 {
+    assert(@bitCast(Uint, program) > 0);
+    assert(buffer.len > 0);
+    var log_len: Sizei = 0;
+    bindings.getProgramInfoLog(
+        @bitCast(Uint, program),
+        @intCast(Sizei, buffer.len),
+        &log_len,
+        @ptrCast([*c]Char, buffer.ptr),
+    );
+    return if (log_len > 0) buffer[0..@intCast(usize, log_len)] else null;
+}
+
 // pub var getShaderiv: *const fn (shader: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+pub fn getShaderiv(shader: Shader, parameter: ShaderParameter) Int {
+    assert(@bitCast(Uint, shader) > 0);
+    var value: Int = undefined;
+    bindings.getShaderiv(@bitCast(Uint, shader), @enumToInt(parameter), &value);
+    return value;
+}
+
 // pub var getShaderInfoLog: *const fn (
 //     shader: Uint,
 //     bufSize: Sizei,
 //     length: [*c]Sizei,
 //     infoLog: [*c]Char,
 // ) callconv(.C) void = undefined;
+pub fn getShaderInfoLog(shader: Shader, buffer: []u8) ?[]const u8 {
+    assert(@bitCast(Uint, shader) > 0);
+    assert(buffer.len > 0);
+    var log_len: Sizei = 0;
+    bindings.getShaderInfoLog(
+        @bitCast(Uint, shader),
+        @intCast(Sizei, buffer.len),
+        &log_len,
+        @ptrCast([*c]Char, buffer.ptr),
+    );
+    return if (log_len > 0) buffer[0..@intCast(usize, log_len)] else null;
+}
+
 // pub var getShaderSource: *const fn (
 //     shader: Uint,
 //     bufSize: Sizei,
 //     length: [*c]Sizei,
 //     source: [*c]Char,
 // ) callconv(.C) void = undefined;
+
 // pub var getUniformLocation: *const fn (program: Uint, name: [*c]const Char) callconv(.C) Int = undefined;
+pub fn getUniformLocation(program: Program, name: [:0]const u8) ?UniformLocation {
+    assert(@bitCast(Uint, program) > 0);
+    const location = bindings.getUniformLocation(
+        @bitCast(Uint, program),
+        @ptrCast([*c]const Char, name.ptr),
+    );
+    return if (location >= 0) @bitCast(UniformLocation, location) else null;
+}
+
 // pub var getUniformfv: *const fn (program: Uint, location: Int, params: [*c]Float) callconv(.C) void = undefined;
 // pub var getUniformiv: *const fn (program: Uint, location: Int, params: [*c]Int) callconv(.C) void = undefined;
 // pub var getVertexAttribdv: *const fn (index: Uint, pname: Enum, params: [*c]Double) callconv(.C) void = undefined;
@@ -918,14 +1531,36 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 // ) callconv(.C) void = undefined;
 // pub var isProgram: *const fn (program: Uint) callconv(.C) Boolean = undefined;
 // pub var isShader: *const fn (shader: Uint) callconv(.C) Boolean = undefined;
+
 // pub var linkProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+pub fn linkProgram(program: Program) void {
+    assert(@bitCast(Uint, program) > 0);
+    bindings.linkProgram(@bitCast(Uint, program));
+}
+
 // pub var shaderSource: *const fn (
 //     shader: Uint,
 //     count: Sizei,
 //     string: [*c]const [*c]const Char,
 //     length: [*c]const Int,
 // ) callconv(.C) void = undefined;
+pub fn shaderSource(shader: Shader, src_ptrs: []const [*]const u8, src_lengths: []const usize) void {
+    assert(src_ptrs.len > 0);
+    assert(src_ptrs.len == src_lengths.len);
+    bindings.shaderSource(
+        @bitCast(Uint, shader),
+        @intCast(Sizei, src_ptrs.len),
+        @ptrCast([*c]const [*c]const Char, src_ptrs),
+        @ptrCast([*c]const Int, src_lengths),
+    );
+}
+
 // pub var useProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+pub fn useProgram(program: Program) void {
+    assert(@bitCast(Uint, program) > 0);
+    bindings.useProgram(@bitCast(Uint, program));
+}
+
 // pub var uniform1f: *const fn (location: Int, v0: Float) callconv(.C) void = undefined;
 // pub var uniform2f: *const fn (location: Int, v0: Float, v1: Float) callconv(.C) void = undefined;
 // pub var uniform3f: *const fn (location: Int, v0: Float, v1: Float, v2: Float) callconv(.C) void = undefined;
@@ -936,7 +1571,12 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 //     v2: Float,
 //     v3: Float,
 // ) callconv(.C) void = undefined;
+
 // pub var uniform1i: *const fn (location: Int, v0: Int) callconv(.C) void = undefined;
+pub fn uniform1i(location: UniformLocation, value: Int) void {
+    bindings.uniform1i(@bitCast(Int, location), value);
+}
+
 // pub var uniform2i: *const fn (location: Int, v0: Int, v1: Int) callconv(.C) void = undefined;
 // pub var uniform3i: *const fn (location: Int, v0: Int, v1: Int, v2: Int) callconv(.C) void = undefined;
 // pub var uniform4i: *const fn (
@@ -1049,6 +1689,7 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 // pub var vertexAttrib4ubv: *const fn (index: Uint, v: [*c]const Ubyte) callconv(.C) void = undefined;
 // pub var vertexAttrib4uiv: *const fn (index: Uint, v: [*c]const Uint) callconv(.C) void = undefined;
 // pub var vertexAttrib4usv: *const fn (index: Uint, v: [*c]const Ushort) callconv(.C) void = undefined;
+
 // pub var vertexAttribPointer: *const fn (
 //     index: Uint,
 //     size: Int,
@@ -1057,6 +1698,23 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 //     stride: Sizei,
 //     pointer: ?*const anyopaque,
 // ) callconv(.C) void = undefined;
+pub fn vertexAttribPointer(
+    location: VertexAttribLocation,
+    size: u32,
+    attrib_type: VertexAttribType,
+    normalised: Boolean,
+    stride: usize,
+    offset: usize,
+) void {
+    bindings.vertexAttribPointer(
+        @bitCast(Uint, location),
+        @intCast(Int, size),
+        @enumToInt(attrib_type),
+        normalised,
+        @intCast(Sizei, stride),
+        @intToPtr(*allowzero const anyopaque, offset),
+    );
+}
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 2.1 (Core Profile)
