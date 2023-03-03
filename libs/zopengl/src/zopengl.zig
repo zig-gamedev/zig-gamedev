@@ -902,7 +902,7 @@ pub var getShaderSource: *const fn (
     length: [*c]Sizei,
     source: [*c]Char,
 ) callconv(.C) void = undefined;
-pub var getUniformLocation: *const fn (program: Uint, name: [*c]const Char) callconv(.C) void = undefined;
+pub var getUniformLocation: *const fn (program: Uint, name: [*c]const Char) callconv(.C) Int = undefined;
 pub var getUniformfv: *const fn (program: Uint, location: Int, params: [*c]Float) callconv(.C) void = undefined;
 pub var getUniformiv: *const fn (program: Uint, location: Int, params: [*c]Int) callconv(.C) void = undefined;
 pub var getVertexAttribdv: *const fn (index: Uint, pname: Enum, params: [*c]Double) callconv(.C) void = undefined;
