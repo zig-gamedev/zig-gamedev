@@ -1,4 +1,4 @@
-# zopengl - OpenGL 3.3 (Core Profile) bindings
+# zopengl - OpenGL loader
 
 ## Getting started
 
