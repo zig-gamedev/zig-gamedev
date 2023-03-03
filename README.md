@@ -21,7 +21,7 @@ Library | Latest version | Description
 ------- | --------- | ---------------
 **[zphysics](libs/zphysics)** | 0.0.4 | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)
 **[zflecs](libs/zflecs)** | 0.0.1 | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS
-**[zopengl](libs/zopengl)** | 0.1.0 | OpenGL 3.3 (Core Profile) bindings
+**[zopengl](libs/zopengl)** | 0.1.0 | OpenGL loader (supports 3.3 Core Profile and ES 2.0 Profile) 
 **[zsdl](libs/zsdl)** | 0.0.1 | Bindings for SDL2 (wip)
 **[zgpu](libs/zgpu)** | 0.9.0 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
 **[zgui](libs/zgui)** | 0.9.5 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
