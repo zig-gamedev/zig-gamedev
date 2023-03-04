@@ -11,8 +11,8 @@ pub const Program = extern struct { name: Uint = 0 };
 pub const Texture = extern struct { name: Uint = 0 };
 pub const Buffer = extern struct { name: Uint = 0 };
 
-pub const UniformLocation = extern struct { location: Uint = 0 };
-pub const VertexAttribLocation = extern struct { location: Uint = 0 };
+pub const UniformLocation = extern struct { location: Uint };
+pub const VertexAttribLocation = extern struct { location: Uint };
 
 pub const Error = enum(Enum) {
     //----------------------------------------------------------------------------------------------
