@@ -5,13 +5,13 @@ const assert = std.debug.assert;
 
 pub const bindings = @import("bindings.zig");
 
-pub const Framebuffer = packed struct { _: Uint = 0 };
-pub const Shader = packed struct { _: Uint = 0 };
-pub const Program = packed struct { _: Uint = 0 };
-pub const Texture = packed struct { _: Uint = 0 };
-pub const Buffer = packed struct { _: Uint = 0 };
-pub const UniformLocation = packed struct { _: Uint = 0 };
-pub const VertexAttribLocation = packed struct { _: Uint = 0 };
+pub const Framebuffer = extern struct { name: Uint = 0 };
+pub const Shader = extern struct { name: Uint = 0 };
+pub const Program = extern struct { name: Uint = 0 };
+pub const Texture = extern struct { name: Uint = 0 };
+pub const Buffer = extern struct { name: Uint = 0 };
+pub const UniformLocation = extern struct { name: Uint = 0 };
+pub const VertexAttribLocation = extern struct { name: Uint = 0 };
 
 pub const Error = enum(Enum) {
     //----------------------------------------------------------------------------------------------
