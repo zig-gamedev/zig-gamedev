@@ -1219,7 +1219,7 @@ pub fn bufferData(
     assert(size > 0);
     if (builtin.mode == .Debug) {
         if (maybe_bytes) |bytes| {
-            assert(bytes.len >= size);
+            assert(bytes.len == size);
         }
     }
     bindings.bufferData(
