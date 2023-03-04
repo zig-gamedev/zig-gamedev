@@ -1,3 +1,5 @@
+const builtin = @import("builtin");
+
 const std = @import("std");
 const assert = std.debug.assert;
 
@@ -1226,13 +1228,19 @@ pub fn genBuffers(ptr_or_slice: anytype) void {
 pub fn bufferData(
     target: BufferTarget,
     size: usize,
-    bytes: ?[*]const u8,
+    maybe_bytes: ?[]const u8,
     usage: BufferUsage,
 ) void {
+    assert(size > 0);
+    if (builtin.mode == .Debug) {
+        if (maybe_bytes) |bytes| {
+            assert(bytes.len >= size);
+        }
+    }
     bindings.bufferData(
         @enumToInt(target),
         @intCast(Sizeiptr, size),
-        bytes,
+        if (maybe_bytes) |bytes| bytes.ptr else null,
         @enumToInt(usage),
     );
 }
