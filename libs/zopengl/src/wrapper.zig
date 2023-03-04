@@ -853,7 +853,7 @@ pub fn genTextures(ptr_or_slice: anytype) void {
             bindings.genTextures(1, @ptrCast([*c]Uint, ptr_or_slice));
         },
         .Slice => {
-            bindings.getShaderiv(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
+            bindings.genTextures(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
         },
         else => {
             @compileError("genTextures expects a single-item pointer or a slice");
@@ -1207,7 +1207,7 @@ pub fn genBuffers(ptr_or_slice: anytype) void {
             bindings.genBuffers(1, @ptrCast([*c]Uint, ptr_or_slice));
         },
         .Slice => {
-            bindings.getShaderiv(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
+            bindings.genBuffers(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
         },
         else => {
             @compileError("genBuffers expects a single-item pointer or a slice");
@@ -1545,6 +1545,7 @@ pub fn linkProgram(program: Program) void {
 //     length: [*c]const Int,
 // ) callconv(.C) void = undefined;
 pub fn shaderSource(shader: Shader, src_ptrs: []const [*]const u8, src_lengths: []const usize) void {
+    assert(@bitCast(Uint, shader) > 0);
     assert(src_ptrs.len > 0);
     assert(src_ptrs.len == src_lengths.len);
     bindings.shaderSource(
