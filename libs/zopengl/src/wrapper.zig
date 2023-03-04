@@ -689,7 +689,12 @@ pub fn clearColor(r: f32, g: f32, b: f32, a: f32) void {
 
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
 pub fn getError() Error {
-    return @intToEnum(Error, bindings.getError());
+    const try_err = std.meta.intToEnum(Error, bindings.getError());
+    if (std.meta.isError(try_err)) {
+        assert(false);
+        return .no_error;
+    }
+    return try_err catch unreachable;
 }
 
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
