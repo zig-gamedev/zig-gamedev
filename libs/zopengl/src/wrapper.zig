@@ -841,26 +841,11 @@ pub fn bindTexture(target: TextureTarget, texture: Texture) void {
 // pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
 
 // pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
-pub fn genTextures(ptr_or_slice: anytype) void {
-    const T = @TypeOf(ptr_or_slice);
-    const type_info = @typeInfo(T);
-    if (type_info != .Pointer) {
-        @compileError("genTextures expects a single-item pointer or a slice");
-    }
-    if (type_info.Pointer.child != Texture) {
-        @compileError("genTextures expects pointer child type to be Texture");
-    }
-    switch (type_info.Pointer.size) {
-        .One => {
-            bindings.genTextures(1, @ptrCast([*c]Uint, ptr_or_slice));
-        },
-        .Slice => {
-            bindings.genTextures(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
-        },
-        else => {
-            @compileError("genTextures expects a single-item pointer or a slice");
-        },
-    }
+pub fn genTexture(ptr: *Texture) void {
+    bindings.genTextures(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn genTextures(textures: []Texture) void {
+    bindings.genTextures(textures.len, @ptrCast([*c]Uint, textures.ptr));
 }
 
 // pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
