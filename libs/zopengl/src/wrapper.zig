@@ -771,8 +771,8 @@ pub const RGBA16 = bindings.RGBA16;
 pub const VERTEX_ARRAY = bindings.VERTEX_ARRAY;
 
 // pub var drawArrays: *const fn (mode: Enum, first: Int, count: Sizei) callconv(.C) void = undefined;
-pub fn drawArrays(prim_type: PrimitiveType, first: u16, count: u16) void {
-    bindings.drawArrays(@enumToInt(prim_type), first, count);
+pub fn drawArrays(prim_type: PrimitiveType, first: u32, count: u32) void {
+    bindings.drawArrays(@enumToInt(prim_type), @bitCast(Int, first), @bitCast(Sizei, count));
 }
 
 // pub var drawElements: *const fn (
@@ -1180,7 +1180,6 @@ pub const SRC1_ALPHA = bindings.SRC1_ALPHA;
 
 // pub var bindBuffer: *const fn (target: Enum, buffer: Uint) callconv(.C) void = undefined;
 pub fn bindBuffer(target: BufferTarget, buffer: Buffer) void {
-    assert(@bitCast(Uint, buffer) > 0);
     bindings.bindBuffer(@enumToInt(target), @bitCast(Uint, buffer));
 }
 
@@ -1205,19 +1204,14 @@ pub fn genBuffers(buffers: []Buffer) void {
 pub fn bufferData(
     target: BufferTarget,
     size: usize,
-    maybe_bytes: ?[]const u8,
+    bytes: ?[*]const u8,
     usage: BufferUsage,
 ) void {
     assert(size > 0);
-    if (builtin.mode == .Debug) {
-        if (maybe_bytes) |bytes| {
-            assert(bytes.len == size);
-        }
-    }
     bindings.bufferData(
         @enumToInt(target),
         @intCast(Sizeiptr, size),
-        if (maybe_bytes) |bytes| bytes.ptr else null,
+        bytes,
         @enumToInt(usage),
     );
 }
@@ -1530,22 +1524,20 @@ pub fn linkProgram(program: Program) void {
 //     string: [*c]const [*c]const Char,
 //     length: [*c]const Int,
 // ) callconv(.C) void = undefined;
-pub fn shaderSource(shader: Shader, src_ptrs: []const [*]const u8, src_lengths: []const Int) void {
+pub fn shaderSource(shader: Shader, src_ptrs: []const [*:0]const u8, src_lengths: []const u32) void {
     assert(@bitCast(Uint, shader) > 0);
     assert(src_ptrs.len > 0);
     assert(src_ptrs.len == src_lengths.len);
-    assert(src_ptrs.len <= std.math.maxInt(Int));
     bindings.shaderSource(
         @bitCast(Uint, shader),
-        @intCast(Sizei, src_ptrs.len),
+        @bitCast(Sizei, @intCast(u32, src_ptrs.len)),
         @ptrCast([*c]const [*c]const Char, src_ptrs),
-        src_lengths.ptr,
+        @ptrCast([*c]const Int, src_lengths.ptr),
     );
 }
 
 // pub var useProgram: *const fn (program: Uint) callconv(.C) void = undefined;
 pub fn useProgram(program: Program) void {
-    assert(@bitCast(Uint, program) > 0);
     bindings.useProgram(@bitCast(Uint, program));
 }
 
