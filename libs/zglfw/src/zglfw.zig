@@ -523,6 +523,71 @@ pub const Window = opaque {
     }
     extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
 
+    /// `pub fn setSize(window: *Window, width: i32, height: i32) void`
+    pub const setSize = glfwSetWindowSize;
+    extern fn glfwSetWindowSize(window: *Window, width: i32, height: i32) void;
+
+    pub fn getPos(window: *Window) [2]i32 {
+        var xpos: i32 = 0.0;
+        var ypos: i32 = 0.0;
+        glfwGetWindowPos(window, &xpos, &ypos);
+        return .{ xpos, ypos };
+    }
+    extern fn glfwGetWindowPos(window: *Window, xpos: *i32, ypos: *i32) void;
+
+    /// `pub fn setPos(window: *Window, width: i32, height: i32) void`
+    pub const setPos = glfwSetWindowPos;
+    extern fn glfwSetWindowPos(window: *Window, xpos: i32, ypos: i32) void;
+
+    pub fn setTitle(window: *Window, title: [:0]const u8) callconv(.Inline) void {
+        glfwSetWindowTitle(window, title);
+    }
+    extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
+
+    /// `pub fn setFramebufferSizeCallback(window: *Window, callback) void`
+    pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
+    extern fn glfwSetFramebufferSizeCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            width: i32,
+            height: i32,
+        ) callconv(.C) void
+    ) void;
+
+    /// `pub fn setSizeCallback(window: *Window, callback) void`
+    pub const setSizeCallback = glfwSetWindowSizeCallback;
+    extern fn glfwSetWindowSizeCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            width: i32,
+            height: i32,
+        ) callconv(.C) void,
+    ) void;
+
+    /// `pub fn setPosCallback(window: *Window, callback) void`
+    pub const setPosCallback = glfwSetWindowPosCallback;
+    extern fn glfwSetWindowPosCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            xpos: i32,
+            ypos: i32,
+        ) callconv(.C) void,
+     ) void;
+
+    /// `pub const setContentScaleCallback(window: *Window, callback) void`
+    pub const setContentScaleCallback = glfwSetWindowContentScaleCallback;
+    extern fn glfwSetWindowContentScaleCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            xscale: f32,
+            yscale: f32,
+        ) callconv(.C) void,
+    ) void;
+
     /// `pub fn setKeyCallback(window: *Window, callback) void`
     pub const setKeyCallback = glfwSetKeyCallback;
     extern fn glfwSetKeyCallback(
@@ -656,6 +721,30 @@ pub const native = struct {
 //--------------------------------------------------------------------------------------------------
 const expect = std.testing.expect;
 
+fn contentScaleCallback(window: *Window, xscale: f32, yscale: f32) callconv(.C) void {
+    _ = window;
+    _ = xscale;
+    _ = yscale;
+}
+
+fn framebufferSizeCallback(window: *Window, width: i32, height: i32) callconv(.C) void {
+    _ = window;
+    _ = width;
+    _ = height;
+}
+
+fn sizeCallback(window: *Window, width: i32, height: i32) callconv(.C) void {
+    _ = window;
+    _ = width;
+    _ = height;
+}
+
+fn posCallback(window: *Window, xpos: i32, ypos: i32) callconv(.C) void {
+    _ = window;
+    _ = xpos;
+    _ = ypos;
+}
+
 fn cursorPosCallback(window: *Window, xpos: f64, ypos: f64) callconv(.C) void {
     _ = window;
     _ = xpos;
@@ -719,11 +808,23 @@ test "zglfw.basic" {
     window.setAttribute(.resizable, false);
     try expect(window.getAttribute(.resizable) == false);
 
+    window.setContentScaleCallback(contentScaleCallback);
+    window.setFramebufferSizeCallback(framebufferSizeCallback);
+    window.setSizeCallback(sizeCallback);
+    window.setPosCallback(posCallback);
     window.setCursorPosCallback(cursorPosCallback);
     window.setMouseButtonCallback(mouseButtonCallback);
     window.setKeyCallback(keyCallback);
     window.setScrollCallback(scrollCallback);
     window.setKeyCallback(null);
+
+    window.setSize(300, 200);
+    try std.testing.expectEqualSlices(i32, &.{ 300, 200 }, &window.getSize());
+
+    window.setPos(100, 100);
+    try std.testing.expectEqualSlices(i32, &.{ 100, 100 }, &window.getPos());
+
+    window.setTitle("new title");
 
     const cursor = try Cursor.createStandard(.hand);
     defer cursor.destroy();
