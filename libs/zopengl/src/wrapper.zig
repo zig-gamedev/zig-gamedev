@@ -1189,26 +1189,11 @@ pub fn bindBuffer(target: BufferTarget, buffer: Buffer) void {
 // pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
 
 // pub var genBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
-pub fn genBuffers(ptr_or_slice: anytype) void {
-    const T = @TypeOf(ptr_or_slice);
-    const type_info = @typeInfo(T);
-    if (type_info != .Pointer) {
-        @compileError("genBuffers expects a single-item pointer or a slice");
-    }
-    if (type_info.Pointer.child != Buffer) {
-        @compileError("genBuffers expects pointer child type to be Buffer");
-    }
-    switch (type_info.Pointer.size) {
-        .One => {
-            bindings.genBuffers(1, @ptrCast([*c]Uint, ptr_or_slice));
-        },
-        .Slice => {
-            bindings.genBuffers(ptr_or_slice.len, @ptrCast([*c]Uint, ptr_or_slice.ptr));
-        },
-        else => {
-            @compileError("genBuffers expects a single-item pointer or a slice");
-        },
-    }
+pub fn genBuffer(ptr: *Buffer) void {
+    bindings.genBuffers(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn genBuffers(buffers: []Buffer) void {
+    bindings.genBuffers(buffers.len, @ptrCast([*c]Uint, buffers.ptr));
 }
 
 // pub var isBuffer: *const fn (buffer: Uint) callconv(.C) Boolean = undefined;
