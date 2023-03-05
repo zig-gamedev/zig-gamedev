@@ -14,7 +14,9 @@ pub const Package = struct {
 
     pub fn build(
         b: *std.Build,
-        args: struct { options: Options },
+        args: struct { options: Options = .{
+            .api = .raw,
+        } },
     ) Package {
         const options_step = b.addOptions();
         inline for (std.meta.fields(Options)) |option_field| {
