@@ -691,7 +691,8 @@ test "zglfw.basic" {
         _ = try getRequiredInstanceExtensions();
     }
 
-    _ = getTime();
+    setTime(100);
+    try std.testing.expectApproxEqAbs(@as(f64, 100), getTime(), 0.5);
 
     const primary_monitor = Monitor.getPrimary();
     if (primary_monitor) |monitor| {
