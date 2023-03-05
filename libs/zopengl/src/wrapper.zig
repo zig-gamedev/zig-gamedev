@@ -1445,10 +1445,11 @@ pub fn getProgramiv(program: Program, parameter: ProgramParameter) Int {
 pub fn getProgramInfoLog(program: Program, buffer: []u8) ?[]const u8 {
     assert(@bitCast(Uint, program) > 0);
     assert(buffer.len > 0);
+    assert(buffer.len <= std.math.maxInt(u32));
     var log_len: Sizei = 0;
     bindings.getProgramInfoLog(
         @bitCast(Uint, program),
-        @intCast(Sizei, buffer.len),
+        @bitCast(Sizei, @intCast(u32, buffer.len)),
         &log_len,
         @ptrCast([*c]Char, buffer.ptr),
     );
@@ -1472,10 +1473,11 @@ pub fn getShaderiv(shader: Shader, parameter: ShaderParameter) Int {
 pub fn getShaderInfoLog(shader: Shader, buffer: []u8) ?[]const u8 {
     assert(@bitCast(Uint, shader) > 0);
     assert(buffer.len > 0);
+    assert(buffer.len <= std.math.maxInt(u32));
     var log_len: Sizei = 0;
     bindings.getShaderInfoLog(
         @bitCast(Uint, shader),
-        @intCast(Sizei, buffer.len),
+        @bitCast(Sizei, @intCast(u32, buffer.len)),
         &log_len,
         @ptrCast([*c]Char, buffer.ptr),
     );
@@ -1527,6 +1529,7 @@ pub fn linkProgram(program: Program) void {
 pub fn shaderSource(shader: Shader, src_ptrs: []const [*:0]const u8, src_lengths: []const u32) void {
     assert(@bitCast(Uint, shader) > 0);
     assert(src_ptrs.len > 0);
+    assert(src_ptrs.len <= std.math.maxInt(u32));
     assert(src_ptrs.len == src_lengths.len);
     bindings.shaderSource(
         @bitCast(Uint, shader),
@@ -1684,7 +1687,7 @@ pub fn vertexAttribPointer(
     attrib_type: VertexAttribType,
     normalised: Boolean,
     stride: u32,
-    offset: u32,
+    offset: usize,
 ) void {
     bindings.vertexAttribPointer(
         @bitCast(Uint, location),
