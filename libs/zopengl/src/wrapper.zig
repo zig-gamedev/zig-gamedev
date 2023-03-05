@@ -620,10 +620,10 @@ pub fn texParameteri(target: TextureTarget, pname: TextureParameter, param: Int)
 // ) callconv(.C) void = undefined;
 pub fn texImage2D(args: struct {
     target: TextureTarget,
-    level: u16,
+    level: u32,
     internal_format: TextureInternalFormat,
-    width: u16,
-    height: u16,
+    width: u32,
+    height: u32,
     format: PixelFormat,
     pixel_type: PixelType,
     data: ?[*]const u8,
@@ -632,10 +632,10 @@ pub fn texImage2D(args: struct {
     assert(args.height > 0);
     bindings.texImage2D(
         @enumToInt(args.target),
-        args.level,
+        @bitCast(Int, args.level),
         @enumToInt(args.internal_format),
-        args.width,
-        args.height,
+        @bitCast(Sizei, args.width),
+        @bitCast(Sizei, args.height),
         0,
         @enumToInt(args.format),
         @enumToInt(args.pixel_type),
