@@ -620,20 +620,22 @@ pub fn texParameteri(target: TextureTarget, pname: TextureParameter, param: Int)
 // ) callconv(.C) void = undefined;
 pub fn texImage2D(args: struct {
     target: TextureTarget,
-    level: usize,
+    level: u16,
     internal_format: TextureInternalFormat,
-    width: usize,
-    height: usize,
+    width: u16,
+    height: u16,
     format: PixelFormat,
     pixel_type: PixelType,
     data: ?[*]const u8,
 }) void {
+    assert(args.width > 0);
+    assert(args.height > 0);
     bindings.texImage2D(
         @enumToInt(args.target),
-        @intCast(Int, args.level),
-        @intCast(Enum, @enumToInt(args.internal_format)),
-        @intCast(Sizei, args.width),
-        @intCast(Sizei, args.height),
+        args.level,
+        @enumToInt(args.internal_format),
+        args.width,
+        args.height,
         0,
         @enumToInt(args.format),
         @enumToInt(args.pixel_type),
@@ -769,12 +771,8 @@ pub const RGBA16 = bindings.RGBA16;
 pub const VERTEX_ARRAY = bindings.VERTEX_ARRAY;
 
 // pub var drawArrays: *const fn (mode: Enum, first: Int, count: Sizei) callconv(.C) void = undefined;
-pub fn drawArrays(prim_type: PrimitiveType, first: usize, count: usize) void {
-    bindings.drawArrays(
-        @enumToInt(prim_type),
-        @intCast(Int, first),
-        @intCast(Sizei, count),
-    );
+pub fn drawArrays(prim_type: PrimitiveType, first: u16, count: u16) void {
+    bindings.drawArrays(@enumToInt(prim_type), first, count);
 }
 
 // pub var drawElements: *const fn (
@@ -1231,6 +1229,7 @@ pub fn bufferData(
 //     data: ?*const anyopaque,
 // ) callconv(.C) void = undefined;
 pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) void {
+    assert(bytes.len > 0);
     bindings.bufferSubData(
         @enumToInt(target),
         @intCast(Intptr, offset),
@@ -1692,15 +1691,15 @@ pub fn vertexAttribPointer(
     size: u32,
     attrib_type: VertexAttribType,
     normalised: Boolean,
-    stride: usize,
-    offset: usize,
+    stride: u16,
+    offset: u16,
 ) void {
     bindings.vertexAttribPointer(
         @bitCast(Uint, location),
         @intCast(Int, size),
         @enumToInt(attrib_type),
         normalised,
-        @intCast(Sizei, stride),
+        stride,
         @intToPtr(*allowzero const anyopaque, offset),
     );
 }
