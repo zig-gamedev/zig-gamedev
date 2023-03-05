@@ -12,12 +12,11 @@ pub const Package = struct {
     zopengl: *std.Build.Module,
     zopengl_options: *std.Build.Module,
 
-    pub fn build(
-        b: *std.Build,
-        args: struct { options: Options = .{
+    pub fn build(b: *std.Build, args: struct {
+        options: Options = .{
             .api = .raw,
-        } },
-    ) Package {
+        },
+    }) Package {
         const options_step = b.addOptions();
         inline for (std.meta.fields(Options)) |option_field| {
             const option_val = @field(args.options, option_field.name);
