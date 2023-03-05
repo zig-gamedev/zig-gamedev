@@ -1210,7 +1210,7 @@ pub fn bufferData(
     assert(size > 0);
     bindings.bufferData(
         @enumToInt(target),
-        @intCast(Sizeiptr, size),
+        @bitCast(Sizeiptr, size),
         bytes,
         @enumToInt(usage),
     );
@@ -1226,8 +1226,8 @@ pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) voi
     assert(bytes.len > 0);
     bindings.bufferSubData(
         @enumToInt(target),
-        @intCast(Intptr, offset),
-        @intCast(Sizeiptr, bytes.len),
+        @bitCast(Intptr, offset),
+        @bitCast(Sizeiptr, bytes.len),
         bytes.ptr,
     );
 }
