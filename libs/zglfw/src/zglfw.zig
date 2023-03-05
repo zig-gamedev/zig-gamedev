@@ -50,6 +50,10 @@ extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?*?[*:0]const u8;
 pub const getTime = glfwGetTime;
 extern fn glfwGetTime() f64;
 
+/// `pub fn setTime(time: f64) void`
+pub const setTime = glfwSetTime;
+extern fn glfwSetTime(time: f64) void;
+
 pub const Error = error{
     NotInitialized,
     NoCurrentContext,
