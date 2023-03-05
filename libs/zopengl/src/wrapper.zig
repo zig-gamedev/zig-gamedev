@@ -1683,15 +1683,15 @@ pub fn vertexAttribPointer(
     size: u32,
     attrib_type: VertexAttribType,
     normalised: Boolean,
-    stride: u16,
-    offset: u16,
+    stride: u32,
+    offset: u32,
 ) void {
     bindings.vertexAttribPointer(
         @bitCast(Uint, location),
-        @intCast(Int, size),
+        @bitCast(Int, size),
         @enumToInt(attrib_type),
         normalised,
-        stride,
+        @bitCast(Sizei, stride),
         @intToPtr(*allowzero const anyopaque, offset),
     );
 }
