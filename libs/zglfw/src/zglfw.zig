@@ -50,6 +50,10 @@ extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?*?[*:0]const u8;
 pub const getTime = glfwGetTime;
 extern fn glfwGetTime() f64;
 
+/// `pub fn setTime(time: f64) void`
+pub const setTime = glfwSetTime;
+extern fn glfwSetTime(time: f64) void;
+
 pub const Error = error{
     NotInitialized,
     NoCurrentContext,
@@ -687,7 +691,8 @@ test "zglfw.basic" {
         _ = try getRequiredInstanceExtensions();
     }
 
-    _ = getTime();
+    setTime(100);
+    try std.testing.expectApproxEqAbs(@as(f64, 100), getTime(), 0.5);
 
     const primary_monitor = Monitor.getPrimary();
     if (primary_monitor) |monitor| {
