@@ -1546,15 +1546,16 @@ pub fn linkProgram(program: Program) void {
 //     string: [*c]const [*c]const Char,
 //     length: [*c]const Int,
 // ) callconv(.C) void = undefined;
-pub fn shaderSource(shader: Shader, src_ptrs: []const [*]const u8, src_lengths: []const usize) void {
+pub fn shaderSource(shader: Shader, src_ptrs: []const [*]const u8, src_lengths: []const Int) void {
     assert(@bitCast(Uint, shader) > 0);
     assert(src_ptrs.len > 0);
     assert(src_ptrs.len == src_lengths.len);
+    assert(src_ptrs.len <= std.math.maxInt(Int));
     bindings.shaderSource(
         @bitCast(Uint, shader),
         @intCast(Sizei, src_ptrs.len),
         @ptrCast([*c]const [*c]const Char, src_ptrs),
-        @ptrCast([*c]const Int, src_lengths),
+        src_lengths.ptr,
     );
 }
 
