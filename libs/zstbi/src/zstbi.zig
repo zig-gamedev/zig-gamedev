@@ -153,7 +153,7 @@ pub const Image = struct {
         var bytes_per_row: u32 = 0;
         var is_hdr = false;
 
-        const image_data = if (isHdrFromMem(data.ptr)) data: {
+        const image_data = if (isHdrFromMem(data)) data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
@@ -343,8 +343,8 @@ pub fn isHdr(filename: [:0]const u8) bool {
     return stbi_is_hdr(filename) != 0;
 }
 
-pub fn isHdrFromMem(buffer: [*]const u8) bool {
-    return stbi_is_hdr_from_memory(buffer, @intCast(c_int, buffer.len)) != 0;
+pub fn isHdrFromMem(buffer: []const u8) bool {
+    return stbi_is_hdr_from_memory(buffer.ptr, @intCast(c_int, buffer.len)) != 0;
 }
 
 pub fn is16bit(filename: [:0]const u8) bool {
