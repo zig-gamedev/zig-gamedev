@@ -56,6 +56,8 @@ pub const Image = struct {
         height: u32,
         num_components: u32,
     } {
+        assert(mem_allocator != null);
+
         var w: c_int = 0;
         var h: c_int = 0;
         var c: c_int = 0;
@@ -69,6 +71,8 @@ pub const Image = struct {
     }
 
     pub fn loadFromFile(pathname: [:0]const u8, forced_num_components: u32) !Image {
+        assert(mem_allocator != null);
+
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -146,6 +150,8 @@ pub const Image = struct {
     }
 
     pub fn loadFromMemory(data: []const u8, forced_num_components: u32) !Image {
+        assert(mem_allocator != null);
+
         var width: u32 = 0;
         var height: u32 = 0;
         var num_components: u32 = 0;
@@ -220,6 +226,8 @@ pub const Image = struct {
         bytes_per_component: u32 = 0,
         bytes_per_row: u32 = 0,
     }) !Image {
+        assert(mem_allocator != null);
+
         const bytes_per_component = if (args.bytes_per_component == 0) 1 else args.bytes_per_component;
         const bytes_per_row = if (args.bytes_per_row == 0)
             width * num_components * bytes_per_component
@@ -243,6 +251,8 @@ pub const Image = struct {
     }
 
     pub fn resize(image: *const Image, new_width: u32, new_height: u32) Image {
+        assert(mem_allocator != null);
+
         // TODO: Add support for HDR images
         const new_bytes_per_row = new_width * image.num_components * image.bytes_per_component;
         const new_size = new_height * new_bytes_per_row;
@@ -274,6 +284,8 @@ pub const Image = struct {
         filename: [:0]const u8,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
+        assert(mem_allocator != null);
+
         const w = @intCast(c_int, image.width);
         const h = @intCast(c_int, image.height);
         const comp = @intCast(c_int, image.num_components);
@@ -300,6 +312,8 @@ pub const Image = struct {
         context: ?*anyopaque,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
+        assert(mem_allocator != null);
+
         const w = @intCast(c_int, image.width);
         const h = @intCast(c_int, image.height);
         const comp = @intCast(c_int, image.num_components);
