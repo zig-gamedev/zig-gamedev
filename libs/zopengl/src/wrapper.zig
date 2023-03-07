@@ -29,6 +29,52 @@ pub const Error = enum(Enum) {
     invalid_framebuffer_operation = INVALID_FRAMEBUFFER_OPERATION,
 };
 
+pub const Capability = enum(Enum) {
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    blend = BLEND,
+    cull_face = CULL_FACE,
+    depth_test = DEPTH_TEST,
+    dither = DITHER,
+    line_smooth = LINE_SMOOTH,
+    polygon_smooth = POLYGON_SMOOTH,
+    scissor_test = SCISSOR_TEST,
+    stencil_test = STENCIL_TEST,
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 1.1 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    color_logic_op = COLOR_LOGIC_OP,
+    polygon_offset_fill = POLYGON_OFFSET_FILL,
+    polygon_offset_line = POLYGON_OFFSET_LINE,
+    polygon_offset_point = POLYGON_OFFSET_POINT,
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 1.3 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    multisample = MULTISAMPLE,
+    sample_alpha_to_coverage = SAMPLE_ALPHA_TO_COVERAGE,
+    sample_alpha_to_one = SAMPLE_ALPHA_TO_ONE,
+    sample_coverage = SAMPLE_COVERAGE,
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 2.0 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    program_point_size = PROGRAM_POINT_SIZE,
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    framebuffer_srgb = FRAMEBUFFER_SRGB,
+    rasterizer_discard = RASTERIZER_DISCARD,
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 3.1 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    primitive_restart = PRIMITIVE_RESTART,
+    //--------------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //--------------------------------------------------------------------------------------------------
+    depth_clamp = DEPTH_CLAMP,
+    sample_mask = SAMPLE_MASK,
+};
+
 pub const ShaderType = enum(Enum) {
     //----------------------------------------------------------------------------------------------
     // OpenGL 2.0 (Core Profile)
@@ -666,8 +712,17 @@ pub fn clearColor(r: f32, g: f32, b: f32, a: f32) void {
 //     alpha: Boolean,
 // ) callconv(.C) void = undefined;
 // pub var depthMask: *const fn (flag: Boolean) callconv(.C) void = undefined;
+
 // pub var disable: *const fn (cap: Enum) callconv(.C) void = undefined;
+pub fn disable(capability: Capability) void {
+    bindings.disable(@enumToInt(capability));
+}
+
 // pub var enable: *const fn (cap: Enum) callconv(.C) void = undefined;
+pub fn enable(capability: Capability) void {
+    bindings.enable(@enumToInt(capability));
+}
+
 // pub var finish: *const fn () callconv(.C) void = undefined;
 // pub var flush: *const fn () callconv(.C) void = undefined;
 // pub var blendFunc: *const fn (sfactor: Enum, dfactor: Enum) callconv(.C) void = undefined;
