@@ -2251,8 +2251,8 @@ pub fn genVertexArrays(arrays: []VertexArrayObject) void {
 }
 
 // pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
-pub fn isVertexArray(array: VertexArrayObject) Boolean {
-    return bindings.isVertexArray(@bitCast(Uint, array));
+pub fn isVertexArray(array: VertexArrayObject) bool {
+    return bindings.isVertexArray(@bitCast(Uint, array)) != 0;
 }
 
 //--------------------------------------------------------------------------------------------------
