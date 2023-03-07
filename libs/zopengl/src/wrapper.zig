@@ -1545,8 +1545,20 @@ pub fn useProgram(program: Program) void {
 }
 
 // pub var uniform1f: *const fn (location: Int, v0: Float) callconv(.C) void = undefined;
+pub fn uniform1f(location: UniformLocation, v0: f32) void {
+    bindings.uniform1f(@bitCast(Int, location), v0);
+}
+
 // pub var uniform2f: *const fn (location: Int, v0: Float, v1: Float) callconv(.C) void = undefined;
+pub fn uniform2f(location: UniformLocation, v0: f32, v1: f32) void {
+    bindings.uniform2f(@bitCast(Int, location), v0, v1);
+}
+
 // pub var uniform3f: *const fn (location: Int, v0: Float, v1: Float, v2: Float) callconv(.C) void = undefined;
+pub fn uniform3f(location: UniformLocation, v0: f32, v1: f32, v2: f32) void {
+    bindings.uniform3f(@bitCast(Int, location), v0, v1, v2);
+}
+
 // pub var uniform4f: *const fn (
 //     location: Int,
 //     v0: Float,
@@ -1554,6 +1566,9 @@ pub fn useProgram(program: Program) void {
 //     v2: Float,
 //     v3: Float,
 // ) callconv(.C) void = undefined;
+pub fn uniform4f(location: UniformLocation, v0: f32, v1: f32, v2: f32, v3: f32) void {
+    bindings.uniform4f(@bitCast(Int, location), v0, v1, v2, v3);
+}
 
 // pub var uniform1i: *const fn (location: Int, v0: Int) callconv(.C) void = undefined;
 pub fn uniform1i(location: UniformLocation, value: Int) void {
@@ -1605,12 +1620,27 @@ pub fn uniform1i(location: UniformLocation, value: Int) void {
 //     transpose: Boolean,
 //     value: [*c]const Float,
 // ) callconv(.C) void = undefined;
+
 // pub var uniformMatrix4fv: *const fn (
 //     location: Int,
 //     count: Sizei,
 //     transpose: Boolean,
 //     value: [*c]const Float,
 // ) callconv(.C) void = undefined;
+pub fn uniformMatrix4fv(
+    location: UniformLocation,
+    count: u32,
+    transpose: Boolean,
+    value: [*]const f32,
+) void {
+    bindings.uniformMatrix4fv(
+        @bitCast(Int, location),
+        @bitCast(Sizei, count),
+        transpose,
+        value,
+    );
+}
+
 // pub var validateProgram: *const fn (program: Uint) callconv(.C) void = undefined;
 // pub var vertexAttrib1d: *const fn (index: Uint, x: Double) callconv(.C) void = undefined;
 // pub var vertexAttrib1dv: *const fn (index: Uint, v: [*c]const Double) callconv(.C) void = undefined;
