@@ -10,6 +10,7 @@ pub const Shader = extern struct { name: Uint = 0 };
 pub const Program = extern struct { name: Uint = 0 };
 pub const Texture = extern struct { name: Uint = 0 };
 pub const Buffer = extern struct { name: Uint = 0 };
+pub const VertexArrayObject = extern struct { name: Uint = 0 };
 
 pub const UniformLocation = extern struct { location: Uint };
 pub const VertexAttribLocation = extern struct { location: Uint };
@@ -2227,10 +2228,33 @@ pub const VERTEX_ARRAY_BINDING = bindings.VERTEX_ARRAY_BINDING;
 //     offset: Intptr,
 //     length: Sizeiptr,
 // ) callconv(.C) void = undefined;
+
 // pub var bindVertexArray: *const fn (array: Uint) callconv(.C) void = undefined;
+pub fn bindVertexArray(array: VertexArrayObject) void {
+    bindings.bindVertexArray(@bitCast(Uint, array));
+}
+
 // pub var deleteVertexArrays: *const fn (n: Sizei, arrays: [*c]const Uint) callconv(.C) void = undefined;
+pub fn deleteVertexArray(ptr: *const VertexArrayObject) void {
+    bindings.deleteVertexArrays(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn deleteVertexArrays(arrays: []const VertexArrayObject) void {
+    bindings.deleteVertexArrays(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
+}
+
 // pub var genVertexArrays: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
+pub fn genVertexArray(ptr: *VertexArrayObject) void {
+    bindings.genVertexArrays(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn genVertexArrays(arrays: []VertexArrayObject) void {
+    bindings.genVertexArrays(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
+}
+
 // pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
+pub fn isVertexArray(array: VertexArrayObject) Boolean {
+    return bindings.isVertexArray(@bitCast(Uint, array));
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 3.1 (Core Profile)
