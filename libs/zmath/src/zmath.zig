@@ -115,6 +115,10 @@
 // saturateFast(v: F32xN) F32xN
 // lerp(v0: F32xN, v1: F32xN, t: f32) F32xN
 // lerpV(v0: F32xN, v1: F32xN, t: F32xN) F32xN
+// lerp_inverse(v0: F32xN, v1: F32xN, t: f32) F32xN
+// lerp_inverseV(v0: F32xN, v1: F32xN, t: F32xN) F32xN
+// map_linear(v: F32xN, min1: f32, max1: f32, min2: f32, max2: f32) F32xN
+// map_linearV(v: F32xN, min1: F32xN, max1: F32xN, min2: F32xN, max2: F32xN) F32xN
 // sqrt(v: F32xN) F32xN
 // abs(v: F32xN) F32xN
 // mod(v0: F32xN, v1: F32xN) F32xN
@@ -1355,6 +1359,31 @@ pub inline fn lerp(v0: anytype, v1: anytype, t: f32) @TypeOf(v0, v1) {
 
 pub inline fn lerpV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1, t) {
     return v0 + (v1 - v0) * t; // subps, addps, mulps
+}
+
+pub inline fn lerp_inverse(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1, t) {
+    const T = @TypeOf(v0, v1);
+    return (splat(T, t) - v0) / (v1 - v0);
+}
+
+pub inline fn lerp_inverseV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1, t) {
+    return (t - v0) / (v1 - v0);
+}
+
+/// To transform a vector of values from one range to another.
+pub inline fn map_linear(v: anytype, min1: anytype, max1: anytype, min2: anytype, max2: anytype) @TypeOf(v) {
+    const T = @TypeOf(min1, max1, min2, max2);
+    const min1V = splat(T, min1);
+    const max1V = splat(T, max1);
+    const min2V = splat(T, min2);
+    const max2V = splat(T, max2);
+    const dV = max1V - min1V;
+    return min2V + (v - min1V) * (max2V - min2V) / dV;
+}
+
+pub inline fn map_linearV(v: anytype, min1: anytype, max1: anytype, min2: anytype, max2: anytype) @TypeOf(v, min1, max1, min2, max2) {
+    const d = max1 - min1;
+    return min2 + (v - min1) * (max2 - min2) / d;
 }
 
 pub const F32x4Component = enum { x, y, z, w };
