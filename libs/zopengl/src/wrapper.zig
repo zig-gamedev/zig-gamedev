@@ -1026,7 +1026,11 @@ pub fn getString(name: StringName) [*:0]const u8 {
 // ) callconv(.C) void = undefined;
 // pub var isEnabled: *const fn (cap: Enum) callconv(.C) Boolean = undefined;
 // pub var depthRange: *const fn (n: Double, f: Double) callconv(.C) void = undefined;
+
 // pub var viewport: *const fn (x: Int, y: Int, width: Sizei, height: Sizei) callconv(.C) void = undefined;
+pub fn viewport(x: Int, y: Int, width: u32, height: u32) void {
+    bindings.viewport(x, y, @bitCast(Sizei, width), @bitCast(Sizei, height));
+}
 
 //--------------------------------------------------------------------------------------------------
 //
