@@ -30,9 +30,9 @@ pub const Error = enum(Enum) {
 };
 
 pub const Capability = enum(Enum) {
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     blend = BLEND,
     cull_face = CULL_FACE,
     depth_test = DEPTH_TEST,
@@ -41,38 +41,257 @@ pub const Capability = enum(Enum) {
     polygon_smooth = POLYGON_SMOOTH,
     scissor_test = SCISSOR_TEST,
     stencil_test = STENCIL_TEST,
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 1.1 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     color_logic_op = COLOR_LOGIC_OP,
     polygon_offset_fill = POLYGON_OFFSET_FILL,
     polygon_offset_line = POLYGON_OFFSET_LINE,
     polygon_offset_point = POLYGON_OFFSET_POINT,
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 1.3 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     multisample = MULTISAMPLE,
     sample_alpha_to_coverage = SAMPLE_ALPHA_TO_COVERAGE,
     sample_alpha_to_one = SAMPLE_ALPHA_TO_ONE,
     sample_coverage = SAMPLE_COVERAGE,
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 2.0 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     program_point_size = PROGRAM_POINT_SIZE,
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 3.0 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     framebuffer_srgb = FRAMEBUFFER_SRGB,
     rasterizer_discard = RASTERIZER_DISCARD,
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 3.1 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     primitive_restart = PRIMITIVE_RESTART,
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     // OpenGL 3.2 (Core Profile)
-    //--------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     depth_clamp = DEPTH_CLAMP,
     sample_mask = SAMPLE_MASK,
+};
+
+pub const Parameter = enum(Enum) {
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    cull_face = CULL_FACE,
+    polygon_mode = POLYGON_MODE,
+    polygon_smooth = POLYGON_SMOOTH,
+    polygon_smooth_hint = POLYGON_SMOOTH_HINT,
+    point_size = POINT_SIZE,
+    point_size_granularity = POINT_SIZE_GRANULARITY,
+    point_size_range = POINT_SIZE_RANGE,
+    line_smooth = LINE_SMOOTH,
+    line_smooth_hint = LINE_SMOOTH_HINT,
+    line_width = LINE_WIDTH,
+    logic_op_mode = LOGIC_OP_MODE,
+    dither = DITHER,
+    blend = BLEND,
+    color_clear_value = COLOR_CLEAR_VALUE,
+    color_writemask = COLOR_WRITEMASK,
+    depth_clear_value = DEPTH_CLEAR_VALUE,
+    depth_func = DEPTH_FUNC,
+    depth_range = DEPTH_RANGE,
+    depth_test = DEPTH_TEST,
+    depth_writemask = DEPTH_WRITEMASK,
+    stencil_clear_value = STENCIL_CLEAR_VALUE,
+    stencil_fail = STENCIL_FAIL,
+    stencil_func = STENCIL_FUNC,
+    stencil_pass_depth_fail = STENCIL_PASS_DEPTH_FAIL,
+    stencil_pass_depth_pass = STENCIL_PASS_DEPTH_PASS,
+    stencil_ref = STENCIL_REF,
+    stencil_test = STENCIL_TEST,
+    stencil_value_mask = STENCIL_VALUE_MASK,
+    stencil_writemask = STENCIL_WRITEMASK,
+    viewport = VIEWPORT,
+    doublebuffer = DOUBLEBUFFER,
+    stereo = STEREO,
+    subpixel_bits = SUBPIXEL_BITS,
+    draw_buffer = DRAW_BUFFER,
+    read_buffer = READ_BUFFER,
+    scissor_box = SCISSOR_BOX,
+    scissor_test = SCISSOR_TEST,
+    pack_alignment = PACK_ALIGNMENT,
+    pack_lsb_first = PACK_LSB_FIRST,
+    pack_row_length = PACK_ROW_LENGTH,
+    pack_skip_pixels = PACK_SKIP_PIXELS,
+    pack_skip_rows = PACK_SKIP_ROWS,
+    pack_swap_bytes = PACK_SWAP_BYTES,
+    unpack_alignment = UNPACK_ALIGNMENT,
+    unpack_lsb_first = UNPACK_LSB_FIRST,
+    unpack_row_length = UNPACK_ROW_LENGTH,
+    unpack_skip_pixels = UNPACK_SKIP_PIXELS,
+    unpack_skip_rows = UNPACK_SKIP_ROWS,
+    unpack_swap_bytes = UNPACK_SWAP_BYTES,
+    max_texture_size = MAX_TEXTURE_SIZE,
+    max_viewport_dims = MAX_VIEWPORT_DIMS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.1 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    polygon_offset_factor = POLYGON_OFFSET_FACTOR,
+    polygon_offset_fill = POLYGON_OFFSET_FILL,
+    polygon_offset_line = POLYGON_OFFSET_LINE,
+    polygon_offset_point = POLYGON_OFFSET_POINT,
+    polygon_offset_units = POLYGON_OFFSET_UNITS,
+    color_logic_op = COLOR_LOGIC_OP,
+    texture_binding_1d = TEXTURE_BINDING_1D,
+    texture_binding_2d = TEXTURE_BINDING_2D,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
+    smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
+    smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
+    pack_image_height = PACK_IMAGE_HEIGHT,
+    pack_skip_images = PACK_SKIP_IMAGES,
+    unpack_image_height = UNPACK_IMAGE_HEIGHT,
+    unpack_skip_images = UNPACK_SKIP_IMAGES,
+    texture_binding_3d = TEXTURE_BINDING_3D,
+    max_3d_texture_size = MAX_3D_TEXTURE_SIZE,
+    max_elements_indices = MAX_ELEMENTS_INDICES,
+    max_elements_vertices = MAX_ELEMENTS_VERTICES,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.3 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    active_texture = ACTIVE_TEXTURE,
+    texture_binding_cube_map = TEXTURE_BINDING_CUBE_MAP,
+    texture_compression_hint = TEXTURE_COMPRESSION_HINT,
+    compressed_texture_formats = COMPRESSED_TEXTURE_FORMATS,
+    samples = SAMPLES,
+    sample_buffers = SAMPLE_BUFFERS,
+    sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
+    sample_coverage_value = SAMPLE_COVERAGE_VALUE,
+    num_compressed_texture_formats = NUM_COMPRESSED_TEXTURE_FORMATS,
+    max_cube_map_texture_size = MAX_CUBE_MAP_TEXTURE_SIZE,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.4 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    blend_color = BLEND_COLOR,
+    blend_src_rgb = BLEND_SRC_RGB,
+    blend_src_alpha = BLEND_SRC_ALPHA,
+    blend_dst_rgb = BLEND_DST_RGB,
+    blend_dst_alpha = BLEND_DST_ALPHA,
+    point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
+    max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.5 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    array_buffer_binding = ARRAY_BUFFER_BINDING,
+    element_array_buffer_binding = ELEMENT_ARRAY_BUFFER_BINDING,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 2.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    current_program = CURRENT_PROGRAM,
+    blend_equation_rgb = BLEND_EQUATION_RGB,
+    blend_equation_alpha = BLEND_EQUATION_ALPHA,
+    stencil_back_fail = STENCIL_BACK_FAIL,
+    stencil_back_func = STENCIL_BACK_FUNC,
+    stencil_back_pass_depth_fail = STENCIL_BACK_PASS_DEPTH_FAIL,
+    stencil_back_pass_depth_pass = STENCIL_BACK_PASS_DEPTH_PASS,
+    stencil_back_ref = STENCIL_BACK_REF,
+    stencil_back_value_mask = STENCIL_BACK_VALUE_MASK,
+    stencil_back_writemask = STENCIL_BACK_WRITEMASK,
+    draw_buffer0 = DRAW_BUFFER0,
+    draw_buffer1 = DRAW_BUFFER1,
+    draw_buffer2 = DRAW_BUFFER2,
+    draw_buffer3 = DRAW_BUFFER3,
+    draw_buffer4 = DRAW_BUFFER4,
+    draw_buffer5 = DRAW_BUFFER5,
+    draw_buffer6 = DRAW_BUFFER6,
+    draw_buffer7 = DRAW_BUFFER7,
+    draw_buffer8 = DRAW_BUFFER8,
+    draw_buffer9 = DRAW_BUFFER9,
+    draw_buffer10 = DRAW_BUFFER10,
+    draw_buffer11 = DRAW_BUFFER11,
+    draw_buffer12 = DRAW_BUFFER12,
+    draw_buffer13 = DRAW_BUFFER13,
+    draw_buffer14 = DRAW_BUFFER14,
+    draw_buffer15 = DRAW_BUFFER15,
+    draw_framebuffer_binding = DRAW_FRAMEBUFFER_BINDING,
+    fragment_shader_derivative_hint = FRAGMENT_SHADER_DERIVATIVE_HINT,
+    max_combined_texture_image_units = MAX_COMBINED_TEXTURE_IMAGE_UNITS,
+    max_draw_buffers = MAX_DRAW_BUFFERS,
+    max_fragment_uniform_components = MAX_FRAGMENT_UNIFORM_COMPONENTS,
+    max_texture_image_units = MAX_TEXTURE_IMAGE_UNITS,
+    //max_varying_floats = MAX_VARYING_FLOATS, // NOTE: MAX_VARYING_FLOATS is equal to MAX_VARYING_COMPONENTS
+    max_vertex_attribs = MAX_VERTEX_ATTRIBS,
+    max_vertex_texture_image_units = MAX_VERTEX_TEXTURE_IMAGE_UNITS,
+    max_vertex_uniform_components = MAX_VERTEX_UNIFORM_COMPONENTS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 2.1 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    pixel_pack_buffer_binding = PIXEL_PACK_BUFFER_BINDING,
+    pixel_unpack_buffer_binding = PIXEL_UNPACK_BUFFER_BINDING,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    context_flags = CONTEXT_FLAGS,
+    major_version = MAJOR_VERSION,
+    minor_version = MINOR_VERSION,
+    num_extensions = NUM_EXTENSIONS,
+    texture_binding_1d_array = TEXTURE_BINDING_1D_ARRAY,
+    texture_binding_2d_array = TEXTURE_BINDING_2D_ARRAY,
+    transform_feedback_buffer_binding = TRANSFORM_FEEDBACK_BUFFER_BINDING,
+    transform_feedback_buffer_size = TRANSFORM_FEEDBACK_BUFFER_SIZE,
+    transform_feedback_buffer_start = TRANSFORM_FEEDBACK_BUFFER_START,
+    read_framebuffer_binding = READ_FRAMEBUFFER_BINDING,
+    renderbuffer_binding = RENDERBUFFER_BINDING,
+    min_program_texel_offset = MIN_PROGRAM_TEXEL_OFFSET,
+    max_array_texture_layers = MAX_ARRAY_TEXTURE_LAYERS,
+    max_clip_distances = MAX_CLIP_DISTANCES,
+    max_program_texel_offset = MAX_PROGRAM_TEXEL_OFFSET,
+    max_renderbuffer_size = MAX_RENDERBUFFER_SIZE,
+    max_varying_components = MAX_VARYING_COMPONENTS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 3.1 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    primitive_restart_index = PRIMITIVE_RESTART_INDEX,
+    texture_binding_buffer = TEXTURE_BINDING_BUFFER,
+    texture_binding_rectangle = TEXTURE_BINDING_RECTANGLE,
+    uniform_buffer_binding = UNIFORM_BUFFER_BINDING,
+    uniform_buffer_offset_alignment = UNIFORM_BUFFER_OFFSET_ALIGNMENT,
+    uniform_buffer_size = UNIFORM_BUFFER_SIZE,
+    uniform_buffer_start = UNIFORM_BUFFER_START,
+    max_combined_vertex_uniform_components = MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
+    max_combined_fragment_uniform_components = MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
+    max_combined_geometry_uniform_components = MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS,
+    max_combined_uniform_blocks = MAX_COMBINED_UNIFORM_BLOCKS,
+    max_fragment_uniform_blocks = MAX_FRAGMENT_UNIFORM_BLOCKS,
+    max_geometry_uniform_blocks = MAX_GEOMETRY_UNIFORM_BLOCKS,
+    max_rectangle_texture_size = MAX_RECTANGLE_TEXTURE_SIZE,
+    max_texture_buffer_size = MAX_TEXTURE_BUFFER_SIZE,
+    max_uniform_block_size = MAX_UNIFORM_BLOCK_SIZE,
+    max_uniform_buffer_bindings = MAX_UNIFORM_BUFFER_BINDINGS,
+    max_vertex_uniform_blocks = MAX_VERTEX_UNIFORM_BLOCKS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    program_point_size = PROGRAM_POINT_SIZE,
+    provoking_vertex = PROVOKING_VERTEX,
+    texture_binding_2d_multisample = TEXTURE_BINDING_2D_MULTISAMPLE,
+    texture_binding_2d_multisample_array = TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
+    max_color_texture_samples = MAX_COLOR_TEXTURE_SAMPLES,
+    max_depth_texture_samples = MAX_DEPTH_TEXTURE_SAMPLES,
+    max_fragment_input_components = MAX_FRAGMENT_INPUT_COMPONENTS,
+    max_geometry_input_components = MAX_GEOMETRY_INPUT_COMPONENTS,
+    max_geometry_output_components = MAX_GEOMETRY_OUTPUT_COMPONENTS,
+    max_geometry_texture_image_units = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS,
+    max_geometry_uniform_components = MAX_GEOMETRY_UNIFORM_COMPONENTS,
+    max_integer_samples = MAX_INTEGER_SAMPLES,
+    max_sample_mask_words = MAX_SAMPLE_MASK_WORDS,
+    max_server_wait_timeout = MAX_SERVER_WAIT_TIMEOUT,
+    max_vertex_output_components = MAX_VERTEX_OUTPUT_COMPONENTS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 3.3 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    max_dual_source_draw_buffers = MAX_DUAL_SOURCE_DRAW_BUFFERS,
+    sampler_binding = SAMPLER_BINDING,
+    timestamp = TIMESTAMP,
 };
 
 pub const ShaderType = enum(Enum) {
@@ -759,7 +978,17 @@ pub fn getError() Error {
 }
 
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
+
 // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
+pub fn getInteger(parameter: Parameter) Int {
+    var res: Int = undefined;
+    bindings.getIntegerv(@enumToInt(parameter), &res);
+    return res;
+}
+pub fn getIntegerv(parameter: Parameter, ptr: [*]Int) void {
+    bindings.getIntegerv(@enumToInt(parameter), ptr);
+}
+
 // pub var getString: *const fn (name: Enum) callconv(.C) [*c]const Ubyte = undefined;
 // pub var getTexImage: *const fn (
 //     target: Enum,
