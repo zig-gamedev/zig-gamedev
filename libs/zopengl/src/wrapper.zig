@@ -994,11 +994,6 @@ pub fn getError() Error {
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
 
 // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
-pub fn getInteger(pname: ParameterName) Int {
-    var res: Int = undefined;
-    bindings.getIntegerv(@enumToInt(pname), &res);
-    return res;
-}
 pub fn getIntegerv(pname: ParameterName, ptr: [*]Int) void {
     bindings.getIntegerv(@enumToInt(pname), ptr);
 }
