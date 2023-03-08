@@ -2307,7 +2307,7 @@ pub fn genVertexArrays(arrays: []VertexArrayObject) void {
 
 // pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
 pub fn isVertexArray(array: VertexArrayObject) bool {
-    return bindings.isVertexArray(@bitCast(Uint, array)) != 0;
+    return bindings.isVertexArray(@bitCast(Uint, array)) == TRUE;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2719,6 +2719,7 @@ pub const INT_2_10_10_10_REV = bindings.INT_2_10_10_10_REV;
 //     normalized: Boolean,
 //     value: [*c]const Uint,
 // ) callconv(.C) void = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL ES 1.0
@@ -2726,3 +2727,39 @@ pub const INT_2_10_10_10_REV = bindings.INT_2_10_10_10_REV;
 //--------------------------------------------------------------------------------------------------
 // pub var clearDepthf: *const fn (depth: Float) callconv(.C) void = undefined;
 // pub var depthRangef: *const fn (n: Clampf, f: Clampf) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
+// OES_vertex_array_object (OpenGL ES Extension #71)
+//
+//--------------------------------------------------------------------------------------------------
+pub const VERTEX_ARRAY_BINDING_OES = bindings.VERTEX_ARRAY_BINDING_OES; // TODO: This is a pname accepted by getBoolean, getFloat and getInteger
+
+// pub var bindVertexArrayOES: *const fn (array: Uint) callconv(.C) void = undefined;
+pub fn bindVertexArrayOES(array: VertexArrayObject) void {
+    bindings.bindVertexArrayOES(@bitCast(Uint, array));
+}
+
+// pub var deleteVertexArraysOES: *const fn (
+//     n: Sizei,
+//     arrays: [*c]const Uint,
+// ) callconv(.C) void = undefined;
+pub fn deleteVertexArrayOES(ptr: *const VertexArrayObject) void {
+    bindings.deleteVertexArraysOES(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn deleteVertexArraysOES(arrays: []const VertexArrayObject) void {
+    bindings.deleteVertexArraysOES(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
+}
+
+// pub var genVertexArraysOES: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
+pub fn genVertexArrayOES(ptr: *VertexArrayObject) void {
+    bindings.genVertexArraysOES(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn genVertexArraysOES(arrays: []VertexArrayObject) void {
+    bindings.genVertexArraysOES(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
+}
+
+// pub var isVertexArrayOES: *const fn (array: Uint) callconv(.C) Boolean = undefined;
+pub fn isVertexArrayOES(array: VertexArrayObject) bool {
+    return bindings.isVertexArrayOES(@bitCast(Uint, array)) == TRUE;
+}

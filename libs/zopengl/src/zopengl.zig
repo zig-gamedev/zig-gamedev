@@ -14,7 +14,11 @@ pub usingnamespace switch (options.api) {
 // Functions for loading OpenGL function pointers
 //
 //--------------------------------------------------------------------------------------------------
-pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major: u32, minor: u32) !void {
+pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
+pub const Extension = enum {
+    OES_vertex_array_object,
+};
+pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
     // Max. supported version is 3.3 for now.
@@ -663,7 +667,7 @@ pub fn loadCoreProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major
     }
 }
 
-pub fn loadEsProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major: u32, minor: u32) !void {
+pub fn loadEsProfile(loader: LoaderFn, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
     // Max. supported version is ES 2.0 for now.
@@ -836,8 +840,34 @@ pub fn loadEsProfile(loader: *const fn ([:0]const u8) ?*const anyopaque, major: 
         );
     }
 }
+
+pub fn loadExtension(loader: LoaderFn, extension: Extension) !void {
+    loaderFunc = loader;
+
+    switch (extension) {
+        .OES_vertex_array_object => {
+            bindings.bindVertexArrayOES = try getProcAddress(
+                @TypeOf(bindings.bindVertexArrayOES),
+                "glBindVertexArrayOES",
+            );
+            bindings.deleteVertexArraysOES = try getProcAddress(
+                @TypeOf(bindings.deleteVertexArraysOES),
+                "glDeleteVertexArraysOES",
+            );
+            bindings.genVertexArraysOES = try getProcAddress(
+                @TypeOf(bindings.genVertexArraysOES),
+                "glGenVertexArraysOES",
+            );
+            bindings.isVertexArrayOES = try getProcAddress(
+                @TypeOf(bindings.isVertexArrayOES),
+                "glIsVertexArrayOES",
+            );
+        },
+    }
+}
+
 //--------------------------------------------------------------------------------------------------
-var loaderFunc: *const fn ([:0]const u8) ?*const anyopaque = undefined;
+var loaderFunc: LoaderFn = undefined;
 
 fn getProcAddress(comptime T: type, name: [:0]const u8) !T {
     if (loaderFunc(name)) |addr| {

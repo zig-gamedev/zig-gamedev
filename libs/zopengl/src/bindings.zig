@@ -1966,6 +1966,7 @@ pub var vertexAttribP4uiv: *const fn (
     normalized: Boolean,
     value: [*c]const Uint,
 ) callconv(.C) void = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL ES 1.0
@@ -1973,3 +1974,18 @@ pub var vertexAttribP4uiv: *const fn (
 //--------------------------------------------------------------------------------------------------
 pub var clearDepthf: *const fn (depth: Float) callconv(.C) void = undefined;
 pub var depthRangef: *const fn (n: Clampf, f: Clampf) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
+// OES_vertex_array_object (OpenGL ES Extension #71)
+//
+//--------------------------------------------------------------------------------------------------
+pub const VERTEX_ARRAY_BINDING_OES = 0x85B5;
+
+pub var bindVertexArrayOES: *const fn (array: Uint) callconv(.C) void = undefined;
+pub var deleteVertexArraysOES: *const fn (
+    n: Sizei,
+    arrays: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var genVertexArraysOES: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
+pub var isVertexArrayOES: *const fn (array: Uint) callconv(.C) Boolean = undefined;
