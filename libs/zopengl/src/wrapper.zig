@@ -75,6 +75,20 @@ pub const Capability = enum(Enum) {
     sample_mask = SAMPLE_MASK,
 };
 
+pub const StringName = enum(Enum) {
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    vendor = VENDOR,
+    renderer = RENDERER,
+    version = VERSION,
+    extensions = EXTENSIONS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 2.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    shading_language_version = SHADING_LANGUAGE_VERSION,
+};
+
 pub const Parameter = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
@@ -990,6 +1004,10 @@ pub fn getIntegerv(parameter: Parameter, ptr: [*]Int) void {
 }
 
 // pub var getString: *const fn (name: Enum) callconv(.C) [*c]const Ubyte = undefined;
+pub fn getString(name: StringName) [*:0]const u8 {
+    return bindings.getString(@enumToInt(name));
+}
+
 // pub var getTexImage: *const fn (
 //     target: Enum,
 //     level: Int,
@@ -2419,7 +2437,12 @@ pub const VERTEX_ARRAY_BINDING = bindings.VERTEX_ARRAY_BINDING;
 //     depth: Float,
 //     stencil: Int,
 // ) callconv(.C) void = undefined;
+
 // pub var getStringi: *const fn (name: Enum, index: Uint) callconv(.C) [*c]const Ubyte = undefined;
+pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
+    return bindings.getStringi(@enumToInt(name), index);
+}
+
 // pub var isRenderbuffer: *const fn (renderbuffer: Uint) callconv(.C) Boolean = undefined;
 // pub var bindRenderbuffer: *const fn (target: Enum, renderbuffer: Uint) callconv(.C) void = undefined;
 // pub var deleteRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]const Uint) callconv(.C) void = undefined;
