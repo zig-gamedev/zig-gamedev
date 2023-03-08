@@ -89,7 +89,7 @@ pub const StringName = enum(Enum) {
     shading_language_version = SHADING_LANGUAGE_VERSION,
 };
 
-pub const Parameter = enum(Enum) {
+pub const ParameterName = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
     //---------------------------------------------------------------------------------------------
@@ -994,13 +994,13 @@ pub fn getError() Error {
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
 
 // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
-pub fn getInteger(parameter: Parameter) Int {
+pub fn getInteger(pname: ParameterName) Int {
     var res: Int = undefined;
-    bindings.getIntegerv(@enumToInt(parameter), &res);
+    bindings.getIntegerv(@enumToInt(pname), &res);
     return res;
 }
-pub fn getIntegerv(parameter: Parameter, ptr: [*]Int) void {
-    bindings.getIntegerv(@enumToInt(parameter), ptr);
+pub fn getIntegerv(pname: ParameterName, ptr: [*]Int) void {
+    bindings.getIntegerv(@enumToInt(pname), ptr);
 }
 
 // pub var getString: *const fn (name: Enum) callconv(.C) [*c]const Ubyte = undefined;
