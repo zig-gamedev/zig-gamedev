@@ -115,6 +115,10 @@
 // saturateFast(v: F32xN) F32xN
 // lerp(v0: F32xN, v1: F32xN, t: f32) F32xN
 // lerpV(v0: F32xN, v1: F32xN, t: F32xN) F32xN
+// lerpInverse(v0: F32xN, v1: F32xN, t: f32) F32xN
+// lerpInverseV(v0: F32xN, v1: F32xN, t: F32xN) F32xN
+// mapLinear(v: F32xN, min1: f32, max1: f32, min2: f32, max2: f32) F32xN
+// mapLinearV(v: F32xN, min1: F32xN, max1: F32xN, min2: F32xN, max2: F32xN) F32xN
 // sqrt(v: F32xN) F32xN
 // abs(v: F32xN) F32xN
 // mod(v0: F32xN, v1: F32xN) F32xN
@@ -1355,6 +1359,44 @@ pub inline fn lerp(v0: anytype, v1: anytype, t: f32) @TypeOf(v0, v1) {
 
 pub inline fn lerpV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1, t) {
     return v0 + (v1 - v0) * t; // subps, addps, mulps
+}
+
+pub inline fn lerpInverse(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1) {
+    const T = @TypeOf(v0, v1);
+    return (splat(T, t) - v0) / (v1 - v0);
+}
+
+pub inline fn lerpInverseV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1, t) {
+    return (t - v0) / (v1 - v0);
+}
+test "zmath.lerpInverse" {
+    try expect(math.approxEqAbs(f32, lerpInverseV(10.0, 100.0, 10.0), 0, 0.0005));
+    try expect(math.approxEqAbs(f32, lerpInverseV(10.0, 100.0, 100.0), 1, 0.0005));
+    try expect(math.approxEqAbs(f32, lerpInverseV(10.0, 100.0, 55.0), 0.5, 0.05));
+    try expect(approxEqAbs(lerpInverse(f32x4(0, 0, 10, 10), f32x4(100, 200, 100, 100), 10.0), f32x4(0.1, 0.05, 0, 0), 0.0005));
+}
+
+/// To transform a vector of values from one range to another.
+pub inline fn mapLinear(v: anytype, min1: anytype, max1: anytype, min2: anytype, max2: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    const min1V = splat(T, min1);
+    const max1V = splat(T, max1);
+    const min2V = splat(T, min2);
+    const max2V = splat(T, max2);
+    const dV = max1V - min1V;
+    return min2V + (v - min1V) * (max2V - min2V) / dV;
+}
+
+pub inline fn mapLinearV(v: anytype, min1: anytype, max1: anytype, min2: anytype, max2: anytype) @TypeOf(v, min1, max1, min2, max2) {
+    const d = max1 - min1;
+    return min2 + (v - min1) * (max2 - min2) / d;
+}
+test "zmath.mapLinear" {
+    try expect(math.approxEqAbs(f32, mapLinearV(0, 0, 1.2, 10, 100), 10, 0.0005));
+    try expect(math.approxEqAbs(f32, mapLinearV(1.2, 0, 1.2, 10, 100), 100, 0.0005));
+    try expect(math.approxEqAbs(f32, mapLinearV(0.6, 0, 1.2, 10, 100), 55, 0.0005));
+    try expect(approxEqAbs(mapLinearV(splat(F32x4, 0), splat(F32x4, 0), splat(F32x4, 1.2), splat(F32x4, 10), splat(F32x4, 100)), splat(F32x4, 10), 0.0005));
+    try expect(approxEqAbs(mapLinear(f32x4(0, 0, 0.6, 1.2), 0, 1.2, 10, 100), f32x4(10, 10, 55, 100), 0.0005));
 }
 
 pub const F32x4Component = enum { x, y, z, w };
