@@ -473,6 +473,14 @@ pub fn pollEvent(event: ?*Event) bool {
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
 
+/// `pub fn SDL_GetKeyboardState(numkeys: ?*i32) ?[*]const u8`
+pub fn getKeyboardState() []const u8 {
+    var numkeys: i32 = 0;
+    const ptr = SDL_GetKeyboardState(&numkeys).?;
+    return ptr[0..@intCast(usize, numkeys)];
+}
+extern fn SDL_GetKeyboardState(numkeys: ?*i32) ?[*]const u8;
+
 /// `pub fn getMouseFocus() ?*Window`
 pub const getMouseFocus = SDL_GetMouseFocus;
 extern fn SDL_GetMouseFocus() ?*Window;
