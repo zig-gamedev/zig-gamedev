@@ -1,3 +1,5 @@
+**Please note that the project requires latest Zig compiler (master/nightly). It can be downloaded [here](https://ziglang.org/download/).**
+
 [Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
 
 # zig-gamedev project
@@ -130,7 +132,5 @@ Thanks to all people who sponsor zig-gamedev project! In particular, these fine 
 * [Garett Bass (garettbass)](https://github.com/garettbass)
 * [Connor Rowland (ckrowland)](https://github.com/ckrowland)
 * Zig Software Foundation (ziglang)
-* Ian (LinuXY)
-* Simon A. Nielsen Knights (tauoverpi)
 * shintales (shintales)
 * Joran Dirk Greef (jorangreef)
