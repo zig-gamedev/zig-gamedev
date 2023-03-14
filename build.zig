@@ -155,12 +155,12 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 }
 
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
-    { // minimal sdl
-        const exe = minimal_sdl.build(b, options);
+    { // minimal gl
+        const exe = minimal_gl.build(b, options);
         exe.addModule("zsdl", zsdl_pkg.zsdl);
         exe.addModule("zopengl", zopengl_pkg.zopengl);
         zsdl_pkg.link(exe);
-        installDemo(b, exe, "minimal_sdl");
+        installDemo(b, exe, "minimal_gl");
     }
     { // triangle wgpu
         const exe = triangle_wgpu.build(b, options);
@@ -611,7 +611,7 @@ const audio_playback_test = @import("samples/audio_playback_test/build.zig");
 const audio_experiments = @import("samples/audio_experiments/build.zig");
 const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
 
-const minimal_sdl = @import("samples/minimal_sdl/build.zig");
+const minimal_gl = @import("samples/minimal_gl/build.zig");
 
 pub const Options = struct {
     optimize: std.builtin.Mode,

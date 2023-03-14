@@ -16,7 +16,7 @@ pub fn main() !void {
     try sdl.gl.setAttribute(.context_flags, @bitCast(i32, sdl.gl.ContextFlags{ .forward_compatible = true }));
 
     const window = try sdl.Window.create(
-        "zig-gamedev-window",
+        "zig-gamedev: minimal gl",
         sdl.Window.pos_undefined,
         sdl.Window.pos_undefined,
         600,
