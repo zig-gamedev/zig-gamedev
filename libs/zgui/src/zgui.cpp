@@ -1435,8 +1435,8 @@ ZGUI_API bool zguiMenuItemPtr(const char* label, const char* shortcut, bool* sel
     return ImGui::MenuItem(label, shortcut, selected, enabled);
 }
 
-ZGUI_API void zguiBeginTooltip(void) {
-    ImGui::BeginTooltip();
+ZGUI_API bool zguiBeginTooltip(void) {
+    return ImGui::BeginTooltip();
 }
 
 ZGUI_API void zguiEndTooltip(void) {

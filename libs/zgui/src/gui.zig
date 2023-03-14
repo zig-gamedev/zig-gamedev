@@ -799,6 +799,9 @@ pub const Style = extern struct {
     color_button_position: Direction,
     button_text_align: [2]f32,
     selectable_text_align: [2]f32,
+    separator_text_border_size: f32,
+    separator_text_align: [2]f32,
+    separator_text_padding: [2]f32,
     display_window_padding: [2]f32,
     display_safe_area_padding: [2]f32,
     mouse_cursor_scale: f32,
@@ -941,6 +944,9 @@ pub const StyleVar = enum(u32) {
     tab_rounding, // 1f
     button_text_align, // 2f
     selectable_text_align, // 2f
+    separator_text_border_size, // 1f
+    separator_text_align, // 2f
+    separator_text_padding, // 2f
 };
 const PushStyleVar1f = struct {
     idx: StyleVar,
@@ -2067,6 +2073,7 @@ pub const InputTextFlags = packed struct(u32) {
 };
 //--------------------------------------------------------------------------------------------------
 pub const InputTextCallbackData = extern struct {
+    ctx: *Context,
     event_flag: InputTextFlags,
     flags: InputTextFlags,
     user_data: ?*anyopaque,
@@ -3099,7 +3106,7 @@ extern fn zguiMenuItemPtr(label: [*:0]const u8, shortcut: ?[*:0]const u8, select
 pub const beginTooltip = zguiBeginTooltip;
 /// `pub fn endTooltip() void`
 pub const endTooltip = zguiEndTooltip;
-extern fn zguiBeginTooltip() void;
+extern fn zguiBeginTooltip() bool;
 extern fn zguiEndTooltip() void;
 
 /// `pub fn beginPopupContextWindow() bool`
