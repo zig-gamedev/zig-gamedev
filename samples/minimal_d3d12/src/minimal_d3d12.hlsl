@@ -1,7 +1,7 @@
 #define root_signature "RootFlags(0)"
 
 [RootSignature(root_signature)]
-void vsMinimal(
+void vsMain(
     uint vertex_id : SV_VertexID,
     out float4 out_position : SV_Position
 ) {
@@ -10,7 +10,7 @@ void vsMinimal(
 }
 
 [RootSignature(root_signature)]
-void psMinimal(
+void psMain(
     float4 position : SV_Position,
     out float4 out_color : SV_Target0
 ) {

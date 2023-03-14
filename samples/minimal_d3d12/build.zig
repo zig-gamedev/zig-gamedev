@@ -4,8 +4,8 @@ const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "minimal",
-        .root_source_file = .{ .path = thisDir() ++ "/src/minimal.zig" },
+        .name = "minimal_d3d12",
+        .root_source_file = .{ .path = thisDir() ++ "/src/minimal_d3d12.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
@@ -44,10 +44,10 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
 }
 
 fn buildShaders(b: *std.Build) *std.Build.Step {
-    const dxc_step = b.step("minimal-dxc", "Build shaders for 'minimal' demo");
+    const dxc_step = b.step("minimal_d3d12-dxc", "Build shaders for 'minimal d3d12' demo");
 
-    makeDxcCmd(b, dxc_step, "src/minimal.hlsl", "vsMinimal", "minimal.vs.cso", "vs", "");
-    makeDxcCmd(b, dxc_step, "src/minimal.hlsl", "psMinimal", "minimal.ps.cso", "ps", "");
+    makeDxcCmd(b, dxc_step, "src/minimal_d3d12.hlsl", "vsMain", "minimal_d3d12.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/minimal_d3d12.hlsl", "psMain", "minimal_d3d12.ps.cso", "ps", "");
 
     return dxc_step;
 }

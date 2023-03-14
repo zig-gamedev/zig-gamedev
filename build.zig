@@ -323,10 +323,10 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
         zstbi_pkg.link(exe);
         installDemo(b, exe, "bindless");
     }
-    { // minimal
-        const exe = minimal.build(b, options);
+    { // minimal d3d12
+        const exe = minimal_d3d12.build(b, options);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
-        installDemo(b, exe, "minimal");
+        installDemo(b, exe, "minimal_d3d12");
     }
     { // triangle
         const exe = triangle.build(b, options);
@@ -598,7 +598,7 @@ const layers_wgpu = @import("samples/layers_wgpu/build.zig");
 const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
 const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
 
-const minimal = @import("samples/minimal/build.zig");
+const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
 const triangle = @import("samples/triangle/build.zig");
 const textured_quad = @import("samples/textured_quad/build.zig");
 const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");

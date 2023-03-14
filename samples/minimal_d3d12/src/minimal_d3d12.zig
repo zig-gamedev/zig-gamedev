@@ -9,7 +9,7 @@ const hrPanicOnFail = zwin32.hrPanicOnFail;
 pub export const D3D12SDKVersion: u32 = 608;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const window_name = "zig-gamedev: minimal";
+const window_name = "zig-gamedev: minimal d3d12";
 
 fn processWindowMessage(
     window: w32.HWND,
@@ -93,8 +93,8 @@ pub fn main() !void {
     var root_signature: *d3d12.IRootSignature = undefined;
     var pipeline: *d3d12.IPipelineState = undefined;
     {
-        const vs_cso = @embedFile("./minimal.vs.cso");
-        const ps_cso = @embedFile("./minimal.ps.cso");
+        const vs_cso = @embedFile("./minimal_d3d12.vs.cso");
+        const ps_cso = @embedFile("./minimal_d3d12.ps.cso");
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
