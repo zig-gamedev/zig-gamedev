@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const Package = struct {
     pub const Options = struct {
-        prefer_determinism: bool = false,
+        enable_cross_platform_determinism: bool = true,
     };
 
     options: Options,
@@ -16,7 +16,7 @@ pub const Package = struct {
         },
     ) Package {
         const step = b.addOptions();
-        step.addOption(bool, "prefer_determinism", args.options.prefer_determinism);
+        step.addOption(bool, "enable_cross_platform_determinism", args.options.enable_cross_platform_determinism);
 
         const zmath_options = step.createModule();
 

@@ -1,4 +1,4 @@
-# zmath v0.9.5 - SIMD math library for game developers
+# zmath v0.9.6 - SIMD math library for game developers
 
 Tested on x86_64 and AArch64.
 
@@ -24,7 +24,9 @@ const zmath = @import("libs/zmath/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zmath_pkg = zmath.Package.build(b, .{});
+    const zmath_pkg = zmath.Package.build(b, .{
+        .options = { .enable_cross_platform_determinism = true },
+    });
 
     exe.addModule("zmath", zmath_pkg.zmath);
 }
