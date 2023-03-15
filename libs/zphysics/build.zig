@@ -4,6 +4,7 @@ pub const Package = struct {
     pub const Options = struct {
         use_double_precision: bool = false,
         enable_asserts: bool = false,
+        enable_cross_platform_determinism: bool = true,
     };
 
     options: Options,
@@ -22,6 +23,7 @@ pub const Package = struct {
         const step = b.addOptions();
         step.addOption(bool, "use_double_precision", args.options.use_double_precision);
         step.addOption(bool, "enable_asserts", args.options.enable_asserts);
+        step.addOption(bool, "enable_cross_platform_determinism", args.options.enable_cross_platform_determinism);
 
         const zphysics_options = step.createModule();
 
@@ -46,7 +48,7 @@ pub const Package = struct {
         const flags = &.{
             "-std=c++17",
             "-DJPH_COMPILER_MINGW",
-            "-DJPH_CROSS_PLATFORM_DETERMINISTIC",
+            if (args.options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
             if (args.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
             if (args.options.enable_asserts or zphysics_c_cpp.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
             "-fno-sanitize=undefined",
