@@ -260,6 +260,7 @@ typedef struct JPC_BodyCreationSettings
     JPC_MotionType             motion_type;
     bool                       allow_dynamic_or_kinematic;
     bool                       is_sensor;
+    bool                       use_manifold_reduction;
     JPC_MotionQuality          motion_quality;
     bool                       allow_sleeping;
     float                      friction;

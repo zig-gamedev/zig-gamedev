@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -30,7 +31,8 @@ public:
 	Vec3								mShapeOffset = Vec3::sZero();
 
 	///@name Movement settings
-	float								mPredictiveContactDistance = 0.1f;						///< How far to scan outside of the shape for predictive contacts
+	EBackFaceMode						mBackFaceMode = EBackFaceMode::CollideWithBackFaces;	///< When colliding with back faces, the character will not be able to move through back facing triangles. Use this if you have triangles that need to collide on both sides.
+	float								mPredictiveContactDistance = 0.1f;						///< How far to scan outside of the shape for predictive contacts. A value of 0 will most likely cause the character to get stuck as it properly calculate a sliding direction anymore. A value that's too high will cause ghost collisions.
 	uint								mMaxCollisionIterations = 5;							///< Max amount of collision loops
 	uint								mMaxConstraintIterations = 15;							///< How often to try stepping in the constraint solving
 	float								mMinTimeRemaining = 1.0e-4f;							///< Early out condition: If this much time is left to simulate we are done
@@ -242,6 +244,10 @@ public:
 	/// This function can be used after a character has teleported to determine the new contacts with the world.
 	void								RefreshContacts(const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter, const BodyFilter &inBodyFilter, const ShapeFilter &inShapeFilter, TempAllocator &inAllocator);
 
+	/// Use the ground body ID to get an updated estimate of the ground velocity. This function can be used if the ground body has moved / changed velocity and you want a new estimate of the ground velocity.
+	/// It will not perform collision detection, so is less accurate than RefreshContacts but a lot faster.
+	void								UpdateGroundVelocity();
+
 	/// Switch the shape of the character (e.g. for stance).
 	/// @param inShape The shape to switch to.
 	/// @param inMaxPenetrationDepth When inMaxPenetrationDepth is not FLT_MAX, it checks if the new shape collides before switching shape. This is the max penetration we're willing to accept after the switch.
@@ -399,6 +405,11 @@ private:
 	// Get the velocity of a body adjusted by the contact listener
 	void								GetAdjustedBodyVelocity(const Body& inBody, Vec3 &outLinearVelocity, Vec3 &outAngularVelocity) const;
 
+	// Calculate the ground velocity of the character assuming it's standing on an object with specified linear and angular velocity and with specified center of mass.
+	// Note that we don't just take the point velocity because a point on an object with angular velocity traces an arc,
+	// so if you just take point velocity * delta time you get an error that accumulates over time
+	Vec3								CalculateCharacterGroundVelocity(RVec3Arg inCenterOfMass, Vec3Arg inLinearVelocity, Vec3Arg inAngularVelocity, float inDeltaTime) const;
+
 	// Handle contact with physics object that we're colliding against
 	bool								HandleContact(Vec3Arg inVelocity, Constraint &ioConstraint, float inDeltaTime) const;
 
@@ -424,7 +435,8 @@ private:
 	CharacterContactListener *			mListener = nullptr;
 
 	// Movement settings
-	float								mPredictiveContactDistance;								// How far to scan outside of the shape for predictive contacts
+	EBackFaceMode						mBackFaceMode;											// When colliding with back faces, the character will not be able to move through back facing triangles. Use this if you have triangles that need to collide on both sides.
+	float								mPredictiveContactDistance;								// How far to scan outside of the shape for predictive contacts. A value of 0 will most likely cause the character to get stuck as it properly calculate a sliding direction anymore. A value that's too high will cause ghost collisions.
 	uint								mMaxCollisionIterations;								// Max amount of collision loops
 	uint								mMaxConstraintIterations;								// How often to try stepping in the constraint solving
 	float								mMinTimeRemaining;										// Early out condition: If this much time is left to simulate we are done

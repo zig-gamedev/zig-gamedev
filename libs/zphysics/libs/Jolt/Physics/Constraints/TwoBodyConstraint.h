@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -51,6 +52,9 @@ public:
 
 	/// Link bodies that are connected by this constraint in the island builder
 	virtual void				BuildIslands(uint32 inConstraintIndex, IslandBuilder &ioBuilder, BodyManager &inBodyManager) override;
+
+	/// Link bodies that are connected by this constraint in the same split. Returns the split index.
+	virtual uint				BuildIslandSplits(LargeIslandSplitter &ioSplitter) const override;
 
 protected:
 	/// The two bodies involved

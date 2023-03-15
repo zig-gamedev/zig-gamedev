@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -9,6 +10,7 @@
 #include <Jolt/Physics/Constraints/ContactConstraintManager.h>
 #include <Jolt/Physics/Constraints/ConstraintManager.h>
 #include <Jolt/Physics/IslandBuilder.h>
+#include <Jolt/Physics/LargeIslandSplitter.h>
 #include <Jolt/Physics/PhysicsUpdateContext.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 
@@ -165,6 +167,13 @@ public:
 	/// @param outBodyIDs On return, this will contain the list of BodyIDs
 	void						GetActiveBodies(BodyIDVector &outBodyIDs) const				{ return mBodyManager.GetActiveBodies(outBodyIDs); }
 
+	/// Check if 2 bodies were in contact during the last simulation step. Since contacts are only detected between active bodies, so at least one of the bodies must be active in order for this function to work.
+	/// It queries the state at the time of the last PhysicsSystem::Update and will return true if the bodies were in contact, even if one of the bodies was moved / removed afterwards.
+	/// This function can be called from any thread when the PhysicsSystem::Update is not running. During PhysicsSystem::Update this function is only valid during contact callbacks:
+	/// - During the ContactListener::OnContactAdded callback this function can be used to determine if a different contact pair between the bodies was active in the previous simulation step (function returns true) or if this is the first step that the bodies are touching (function returns false).
+	/// - During the ContactListener::OnContactRemoved callback this function can be used to determine if this is the last contact pair between the bodies (function returns false) or if there are other contacts still present (function returns true).
+	bool						WereBodiesInContact(const BodyID &inBody1ID, const BodyID &inBody2ID) const { return mContactManager.WereBodiesInContact(inBody1ID, inBody2ID); }
+
 #ifdef JPH_TRACK_BROADPHASE_STATS
 	/// Trace the accumulated broadphase stats to the TTY
 	void						ReportBroadphaseStats()										{ mBroadPhase->ReportStats(); }
@@ -183,7 +192,7 @@ private:
 	void						JobFinalizeIslands(PhysicsUpdateContext *ioContext);
 	void						JobBodySetIslandIndex();
 	void						JobSolveVelocityConstraints(PhysicsUpdateContext *ioContext, PhysicsUpdateContext::SubStep *ioSubStep);
-	void						JobPreIntegrateVelocity(PhysicsUpdateContext *ioContext, PhysicsUpdateContext::SubStep *ioSubStep) const;
+	void						JobPreIntegrateVelocity(PhysicsUpdateContext *ioContext, PhysicsUpdateContext::SubStep *ioSubStep);
 	void						JobIntegrateVelocity(const PhysicsUpdateContext *ioContext, PhysicsUpdateContext::SubStep *ioSubStep);
 	void						JobPostIntegrateVelocity(PhysicsUpdateContext *ioContext, PhysicsUpdateContext::SubStep *ioSubStep) const;
 	void						JobFindCCDContacts(const PhysicsUpdateContext *ioContext, PhysicsUpdateContext::SubStep *ioSubStep);
@@ -198,6 +207,12 @@ private:
 
 	/// Process narrow phase for a single body pair
 	void						ProcessBodyPair(ContactAllocator &ioContactAllocator, const BodyPair &inBodyPair);
+
+	/// This helper batches up bodies that need to put to sleep to avoid contention on the activation mutex
+	class BodiesToSleep;
+
+	/// Called at the end of JobSolveVelocityConstraints to check if bodies need to go to sleep and to update their bounding box in the broadphase
+	void						CheckSleepAndUpdateBounds(uint32 inIslandIndex, const PhysicsUpdateContext *ioContext, const PhysicsUpdateContext::SubStep *ioSubStep, BodiesToSleep &ioBodiesToSleep);
 
 	/// Number of constraints to process at once in JobDetermineActiveConstraints
 	static constexpr int		cDetermineActiveConstraintsBatchSize = 64;
@@ -252,6 +267,9 @@ private:
 
 	/// Keeps track of connected bodies and builds islands for multithreaded velocity/position update
 	IslandBuilder				mIslandBuilder;
+
+	/// Will split large islands into smaller groups of bodies that can be processed in parallel
+	LargeIslandSplitter			mLargeIslandSplitter;
 
 	/// Mutex protecting mStepListeners
 	Mutex						mStepListenersMutex;

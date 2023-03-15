@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -121,6 +122,17 @@ void ConstraintManager::sSetupVelocityConstraints(Constraint **inActiveConstrain
 	{
 		Constraint *c = inActiveConstraints[*constraint_idx];
 		c->SetupVelocityConstraint(inDeltaTime);
+	}
+}
+
+void ConstraintManager::sWarmStartVelocityConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inWarmStartImpulseRatio)
+{
+	JPH_PROFILE_FUNCTION();
+
+	for (const uint32 *constraint_idx = inConstraintIdxBegin; constraint_idx < inConstraintIdxEnd; ++constraint_idx)
+	{
+		Constraint *c = inActiveConstraints[*constraint_idx];
+		c->WarmStartVelocityConstraint(inWarmStartImpulseRatio);
 	}
 }
 

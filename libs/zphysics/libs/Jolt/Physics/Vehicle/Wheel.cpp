@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -50,7 +51,7 @@ void WheelSettings::RestoreBinaryState(StreamIn &inStream)
 
 Wheel::Wheel(const WheelSettings &inSettings) :
 	mSettings(&inSettings),
-	mContactLength(inSettings.mSuspensionMaxLength + inSettings.mRadius)
+	mSuspensionLength(inSettings.mSuspensionMaxLength)
 {
 	JPH_ASSERT(inSettings.mDirection.IsNormalized());
 	JPH_ASSERT(inSettings.mSuspensionMinLength >= 0.0f);

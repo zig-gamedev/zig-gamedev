@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -322,6 +323,7 @@ BodyCreationSettings Body::GetBodyCreationSettings() const
 	result.mMotionType = GetMotionType();
 	result.mAllowDynamicOrKinematic = mMotionProperties != nullptr;
 	result.mIsSensor = IsSensor();
+	result.mUseManifoldReduction = GetUseManifoldReduction();
 	result.mMotionQuality = mMotionProperties != nullptr? mMotionProperties->GetMotionQuality() : EMotionQuality::Discrete;
 	result.mAllowSleeping = mMotionProperties != nullptr? GetAllowSleeping() : true;
 	result.mFriction = GetFriction();

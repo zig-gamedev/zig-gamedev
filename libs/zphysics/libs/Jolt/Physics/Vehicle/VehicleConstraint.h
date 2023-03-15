@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -101,6 +102,7 @@ public:
 
 	/// Get the state of a wheel
 	Wheel *						GetWheel(uint inIdx)						{ return mWheels[inIdx]; }
+	const Wheel *				GetWheel(uint inIdx) const					{ return mWheels[inIdx]; }
 
 	/// Get the transform of a wheel in local space to the vehicle body, returns a matrix that transforms a cylinder aligned with the Y axis in body space (not COM space)
 	/// @param inWheelIndex Index of the wheel to fetch
@@ -121,6 +123,7 @@ public:
 	virtual bool				SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool				SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
 	virtual void				BuildIslands(uint32 inConstraintIndex, IslandBuilder &ioBuilder, BodyManager &inBodyManager) override;
+	virtual uint				BuildIslandSplits(LargeIslandSplitter &ioSplitter) const override;
 #ifdef JPH_DEBUG_RENDERER
 	virtual void				DrawConstraint(DebugRenderer *inRenderer) const override;
 	virtual void				DrawConstraintLimits(DebugRenderer *inRenderer) const override;
@@ -134,7 +137,7 @@ private:
 	virtual void				OnStep(float inDeltaTime, PhysicsSystem &inPhysicsSystem) override;
 
 	// Calculate the contact positions of the wheel in world space, relative to the center of mass of both bodies
-	void						CalculateWheelContactPoint(RMat44Arg inBodyTransform, const Wheel &inWheel, Vec3 &outR1PlusU, Vec3 &outR2) const;
+	void						CalculateWheelContactPoint(const Wheel &inWheel, Vec3 &outR1PlusU, Vec3 &outR2) const;
 
 	// Calculate the constraint properties for mPitchRollPart
 	void						CalculatePitchRollConstraintProperties(float inDeltaTime, RMat44Arg inBodyTransform);

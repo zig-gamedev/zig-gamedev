@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -20,6 +21,7 @@ JPH_NAMESPACE_BEGIN
 
 CharacterVirtual::CharacterVirtual(const CharacterVirtualSettings *inSettings, RVec3Arg inPosition, QuatArg inRotation, PhysicsSystem *inSystem) :
 	CharacterBase(inSettings, inSystem),
+	mBackFaceMode(inSettings->mBackFaceMode),
 	mPredictiveContactDistance(inSettings->mPredictiveContactDistance),
 	mMaxCollisionIterations(inSettings->mMaxCollisionIterations),
 	mMaxConstraintIterations(inSettings->mMaxConstraintIterations),
@@ -55,6 +57,24 @@ void CharacterVirtual::GetAdjustedBodyVelocity(const Body& inBody, Vec3 &outLine
 	// Allow application to override
 	if (mListener != nullptr)
 		mListener->OnAdjustBodyVelocity(this, inBody, outLinearVelocity, outAngularVelocity);
+}
+
+Vec3 CharacterVirtual::CalculateCharacterGroundVelocity(RVec3Arg inCenterOfMass, Vec3Arg inLinearVelocity, Vec3Arg inAngularVelocity, float inDeltaTime) const
+{
+	// Get angular velocity
+	float angular_velocity_len_sq = inAngularVelocity.LengthSq();
+	if (angular_velocity_len_sq < 1.0e-12f)
+		return inLinearVelocity;
+	float angular_velocity_len = sqrt(angular_velocity_len_sq);
+
+	// Calculate the rotation that the object will make in the time step
+	Quat rotation = Quat::sRotation(inAngularVelocity / angular_velocity_len, angular_velocity_len * inDeltaTime);
+
+	// Calculate where the new character position will be
+	RVec3 new_position = inCenterOfMass + rotation * Vec3(mPosition - inCenterOfMass);
+
+	// Calculate the velocity
+	return inLinearVelocity + Vec3(new_position - mPosition) / inDeltaTime;
 }
 
 template <class taCollector>
@@ -139,12 +159,16 @@ void CharacterVirtual::ContactCollector::AddHit(const CollideShapeResult &inResu
 	BodyLockRead lock(mSystem->GetBodyLockInterface(), inResult.mBodyID2);
 	if (lock.SucceededAndIsInBroadPhase())
 	{
+		// We don't collide with sensors, note that you should set up your collision layers so that sensors don't collide with the character.
+		// Rejecting the contact here means a lot of extra work for the collision detection system.
 		const Body &body = lock.GetBody();
-
-		mContacts.emplace_back();
-		Contact &contact = mContacts.back();
-		sFillContactProperties(mCharacter, contact, body, mUp, mBaseOffset, *this, inResult);
-		contact.mFraction = 0.0f;
+		if (!body.IsSensor())
+		{
+			mContacts.emplace_back();
+			Contact &contact = mContacts.back();
+			sFillContactProperties(mCharacter, contact, body, mUp, mBaseOffset, *this, inResult);
+			contact.mFraction = 0.0f;
+		}
 	}
 }
 
@@ -169,8 +193,14 @@ void CharacterVirtual::ContactCastCollector::AddHit(const ShapeCastResult &inRes
 			if (!lock.SucceededAndIsInBroadPhase())
 				return;
 
+			// We don't collide with sensors, note that you should set up your collision layers so that sensors don't collide with the character.
+			// Rejecting the contact here means a lot of extra work for the collision detection system.
+			const Body &body = lock.GetBody();
+			if (body.IsSensor())
+				return;
+
 			// Convert the hit result into a contact
-			sFillContactProperties(mCharacter, contact, lock.GetBody(), mUp, mBaseOffset, *this, inResult);
+			sFillContactProperties(mCharacter, contact, body, mUp, mBaseOffset, *this, inResult);
 		}
 			
 		contact.mFraction = inResult.mFraction;
@@ -193,7 +223,7 @@ void CharacterVirtual::CheckCollision(RVec3Arg inPosition, QuatArg inRotation, V
 	// Settings for collide shape
 	CollideShapeSettings settings;
 	settings.mActiveEdgeMode = EActiveEdgeMode::CollideOnlyWithActive;
-	settings.mBackFaceMode = EBackFaceMode::CollideWithBackFaces;
+	settings.mBackFaceMode = mBackFaceMode;
 	settings.mActiveEdgeMovementDirection = inMovementDirection;
 	settings.mMaxSeparationDistance = mCharacterPadding + inMaxSeparationDistance;
 
@@ -304,7 +334,7 @@ bool CharacterVirtual::GetFirstContactForSweep(RVec3Arg inPosition, Vec3Arg inDi
 
 	// Settings for the cast
 	ShapeCastSettings settings;
-	settings.mBackFaceModeTriangles = EBackFaceMode::CollideWithBackFaces;
+	settings.mBackFaceModeTriangles = mBackFaceMode;
 	settings.mBackFaceModeConvex = EBackFaceMode::IgnoreBackFaces;
 	settings.mActiveEdgeMode = EActiveEdgeMode::CollideOnlyWithActive;
 	settings.mUseShrunkenShapeAndConvexRadius = true;
@@ -766,48 +796,22 @@ void CharacterVirtual::UpdateSupportingContact(bool inSkipContactVelocityCheck, 
 				else
 				{
 					// For keyframed objects that support us calculate the velocity at our position rather than at the contact position so that we properly follow the object
-					// Note that we don't just take the point velocity because a point on an object with angular velocity traces an arc,
-					// so if you just take point velocity * delta time you get an error that accumulates over time
-
-					// Determine center of mass and angular velocity
-					Vec3 angular_velocity;
-					RVec3 com;
+					BodyLockRead lock(mSystem->GetBodyLockInterface(), c.mBodyB);
+					if (lock.SucceededAndIsInBroadPhase())
 					{
-						BodyLockRead lock(mSystem->GetBodyLockInterface(), c.mBodyB);
-						if (lock.SucceededAndIsInBroadPhase())
-						{
-							const Body &body = lock.GetBody();
+						const Body &body = lock.GetBody();
 
-							// Get adjusted body velocity
-							Vec3 linear_velocity;
-							GetAdjustedBodyVelocity(body, linear_velocity, angular_velocity);
-							
-							// Add the linear velocity to the average velocity
-							avg_velocity += linear_velocity;
+						// Get adjusted body velocity
+						Vec3 linear_velocity, angular_velocity;
+						GetAdjustedBodyVelocity(body, linear_velocity, angular_velocity);
 
-							com = body.GetCenterOfMassPosition();
-						}
-						else
-						{
-							angular_velocity = Vec3::sZero();
-							com = RVec3::sZero();
-						}
+						// Calculate the ground velocity
+						avg_velocity += CalculateCharacterGroundVelocity(body.GetCenterOfMassPosition(), linear_velocity, angular_velocity, mLastDeltaTime);
 					}
-
-					// Get angular velocity
-					float angular_velocity_len_sq = angular_velocity.LengthSq();
-					if (angular_velocity_len_sq > 1.0e-12f)
+					else
 					{
-						float angular_velocity_len = sqrt(angular_velocity_len_sq);
-
-						// Calculate the rotation that the object will make in the time step
-						Quat rotation = Quat::sRotation(angular_velocity / angular_velocity_len, angular_velocity_len * mLastDeltaTime);
-
-						// Calculate where the new contact position will be
-						RVec3 new_position = com + rotation * Vec3(mPosition - com);
-
-						// Calculate the velocity
-						avg_velocity += Vec3(new_position - mPosition) / mLastDeltaTime;
+						// Fall back to contact velocity
+						avg_velocity += c.mLinearVelocity;
 					}
 				}
 			}
@@ -985,7 +989,8 @@ Vec3 CharacterVirtual::CancelVelocityTowardsSteepSlopes(Vec3Arg inDesiredVelocit
 		if (c.mHadCollision
 			&& IsSlopeTooSteep(c.mSurfaceNormal))
 		{
-			Vec3 normal = c.mSurfaceNormal;
+			// Note that we use the contact normal to allow for better sliding as the surface normal may be in the opposite direction of movement.
+			Vec3 normal = c.mContactNormal;
 
 			// Remove normal vertical component
 			normal -= normal.Dot(mUp) * mUp;
@@ -1038,6 +1043,22 @@ void CharacterVirtual::RefreshContacts(const BroadPhaseLayerFilter &inBroadPhase
 	GetContactsAtPosition(mPosition, mLinearVelocity.NormalizedOr(Vec3::sZero()), mShape, contacts, inBroadPhaseLayerFilter, inObjectLayerFilter, inBodyFilter, inShapeFilter);
 
 	StoreActiveContacts(contacts, inAllocator);
+}
+
+void CharacterVirtual::UpdateGroundVelocity()
+{
+	BodyLockRead lock(mSystem->GetBodyLockInterface(), mGroundBodyID);
+	if (lock.SucceededAndIsInBroadPhase())
+	{
+		const Body &body = lock.GetBody();
+
+		// Get adjusted body velocity
+		Vec3 linear_velocity, angular_velocity;
+		GetAdjustedBodyVelocity(body, linear_velocity, angular_velocity);
+
+		// Calculate the ground velocity
+		mGroundVelocity = CalculateCharacterGroundVelocity(body.GetCenterOfMassPosition(), linear_velocity, angular_velocity, mLastDeltaTime);
+	}
 }
 
 void CharacterVirtual::MoveToContact(RVec3Arg inPosition, const Contact &inContact, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter, const BodyFilter &inBodyFilter, const ShapeFilter &inShapeFilter, TempAllocator &inAllocator)

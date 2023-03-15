@@ -1,3 +1,4 @@
+// Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
@@ -150,6 +151,16 @@ void RegisterTypes()
 	// Initialize default physics material
 	if (PhysicsMaterial::sDefault == nullptr)
 		PhysicsMaterial::sDefault = new PhysicsMaterialSimple("Default", Color::sGrey);
+}
+
+void UnregisterTypes()
+{
+	// Unregister all types
+	if (Factory::sInstance != nullptr)
+		Factory::sInstance->Clear();
+
+	// Delete default physics material
+	PhysicsMaterial::sDefault = nullptr;
 }
 
 JPH_NAMESPACE_END
