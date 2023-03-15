@@ -319,6 +319,29 @@ pub const DepthFunc = enum(Enum) {
     always = ALWAYS,
 };
 
+pub const BlendFactor = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    zero = ZERO,
+    one = ONE,
+    src_color = SRC_COLOR,
+    one_minus_src_color = ONE_MINUS_SRC_COLOR,
+    dst_color = DST_COLOR,
+    one_minus_dst_color = ONE_MINUS_DST_COLOR,
+    src_alpha = SRC_ALPHA,
+    one_minus_src_alpha = ONE_MINUS_SRC_ALPHA,
+    dst_alpha = DST_ALPHA,
+    one_minus_dst_alpha = ONE_MINUS_DST_ALPHA,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.4 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    constant_color = CONSTANT_COLOR,
+    one_minus_constant_color = ONE_MINUS_CONSTANT_COLOR,
+    constant_alpha = CONSTANT_ALPHA,
+    one_minus_constant_alpha = ONE_MINUS_CONSTANT_ALPHA,
+};
+
 pub const ShaderType = enum(Enum) {
     //----------------------------------------------------------------------------------------------
     // OpenGL 2.0 (Core Profile)
@@ -969,7 +992,12 @@ pub fn enable(capability: Capability) void {
 
 // pub var finish: *const fn () callconv(.C) void = undefined;
 // pub var flush: *const fn () callconv(.C) void = undefined;
+
 // pub var blendFunc: *const fn (sfactor: Enum, dfactor: Enum) callconv(.C) void = undefined;
+pub fn blendFunc(sfactor: BlendFactor, dfactor: BlendFactor) void {
+    bindings.blendFunc(@enumToInt(sfactor), @enumToInt(dfactor));
+}
+
 // pub var logicOp: *const fn (opcode: Enum) callconv(.C) void = undefined;
 // pub var stencilFunc: *const fn (func: Enum, ref: Int, mask: Uint) callconv(.C) void = undefined;
 // pub var stencilOp: *const fn (fail: Enum, zfail: Enum, zpass: Enum) callconv(.C) void = undefined;
