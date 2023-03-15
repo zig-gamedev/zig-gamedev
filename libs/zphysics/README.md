@@ -19,7 +19,10 @@ const zphysics = @import("libs/zphysics/build.zig");
 pub fn build(b: *std.Build) void {
     ...
     const zphysics_pkg = zphysics.Package.build(b, target, optimize, .{
-        .options = .{ .use_double_precision = false },
+        .options = .{
+            .use_double_precision = false,
+            .enable_cross_platform_determinism = true,
+        },
     });
 
     exe.addModule("zphysics", zphysics_pkg.zphysics);
