@@ -2184,6 +2184,14 @@ pub const Shape = opaque {
         user6 = c.JPC_SHAPE_SUB_TYPE_USER6,
         user7 = c.JPC_SHAPE_SUB_TYPE_USER7,
         user8 = c.JPC_SHAPE_SUB_TYPE_USER8,
+        user_convex1 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX1,
+        user_convex2 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX2,
+        user_convex3 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX3,
+        user_convex4 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX4,
+        user_convex5 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX5,
+        user_convex6 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX6,
+        user_convex7 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX7,
+        user_convex8 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX8,
     };
 
     fn Methods(comptime T: type) type {

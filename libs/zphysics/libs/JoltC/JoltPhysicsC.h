@@ -1,4 +1,4 @@
-// JoltPhysicsC v0.0.4 - C API for Jolt Physics C++ library
+// JoltPhysicsC v0.0.5 - C API for Jolt Physics C++ library
 
 #pragma once
 #include <stdlib.h>
@@ -97,7 +97,15 @@ enum
     JPC_SHAPE_SUB_TYPE_USER5                 = 18,
     JPC_SHAPE_SUB_TYPE_USER6                 = 19,
     JPC_SHAPE_SUB_TYPE_USER7                 = 20,
-    JPC_SHAPE_SUB_TYPE_USER8                 = 21
+    JPC_SHAPE_SUB_TYPE_USER8                 = 21,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX1          = 22,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX2          = 23,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX3          = 24,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX4          = 25,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX5          = 26,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX6          = 27,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX7          = 28,
+    JPC_SHAPE_SUB_TYPE_USER_CONVEX8          = 29,
 };
 
 typedef uint8_t JPC_MotionType;
