@@ -13,6 +13,22 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .optimize = options.optimize,
     });
 
+    const zgui_pkg = @import("../../build.zig").zgui_pkg;
+    const zmath_pkg = @import("../../build.zig").zmath_pkg;
+    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
+    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
+    const zaudio_pkg = @import("../../build.zig").zaudio_pkg;
+
+    exe.addModule("zgpu", zgpu_pkg.zgpu);
+    exe.addModule("zgui", zgui_pkg.zgui);
+    exe.addModule("zmath", zmath_pkg.zmath);
+    exe.addModule("zglfw", zglfw_pkg.zglfw);
+    exe.addModule("zaudio", zaudio_pkg.zaudio);
+    zgui_pkg.link(exe);
+    zgpu_pkg.link(exe);
+    zglfw_pkg.link(exe);
+    zaudio_pkg.link(exe);
+
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
