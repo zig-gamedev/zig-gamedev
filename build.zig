@@ -162,13 +162,7 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 }
 
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
-    { // minimal gl
-        const exe = minimal_gl.build(b, options);
-        exe.addModule("zsdl", zsdl_pkg.zsdl);
-        exe.addModule("zopengl", zopengl_pkg.zopengl);
-        zsdl_pkg.link(exe);
-        installDemo(b, exe, "minimal_gl");
-    }
+    installDemo(b, minimal_gl.build(b, options), "minimal_gl");
     { // triangle wgpu
         const exe = triangle_wgpu.build(b, options);
         exe.addModule("zgpu", zgpu_pkg.zgpu);
