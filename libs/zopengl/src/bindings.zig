@@ -1966,7 +1966,142 @@ pub var vertexAttribP4uiv: *const fn (
     normalized: Boolean,
     value: [*c]const Uint,
 ) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 4.2 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub var bindImageTexture: *const fn (
+    unit: Uint,
+    texture: Uint,
+    level: Int,
+    layered: Boolean,
+    layer: Int,
+    access: Enum,
+    format: Enum,
+) callconv(.C) void = undefined;
+pub var memoryBarrier: *const fn (barriers: Bitfield) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 4.4 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub var clearTexImage: *const fn (
+    texture: Uint,
+    level: Int,
+    format: Enum,
+    type: Enum,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 4.5 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub var textureStorage2D: *const fn (
+    texture: Uint,
+    levels: Sizei,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+) callconv(.C) void = undefined;
+pub var textureStorage2DMultisample: *const fn (
+    texture: Uint,
+    samples: Sizei,
+    internalformat: Enum,
+    width: Sizei,
+    height: Sizei,
+    fixedsamplelocations: Boolean,
+) callconv(.C) void = undefined;
+pub var createTextures: *const fn (target: Enum, n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
+pub var createFramebuffers: *const fn (n: Sizei, framebuffers: [*c]Uint) callconv(.C) void = undefined;
+pub var namedFramebufferTexture: *const fn (
+    framebuffer: Uint,
+    attachment: Enum,
+    texture: Uint,
+    level: Int,
+) callconv(.C) void = undefined;
+pub var blitNamedFramebuffer: *const fn (
+    readFramebuffer: Uint,
+    drawFramebuffer: Uint,
+    srcX0: Int,
+    srcY0: Int,
+    srcX1: Int,
+    srcY1: Int,
+    dstX0: Int,
+    dstY0: Int,
+    dstX1: Int,
+    dstY1: Int,
+    mask: Bitfield,
+    filter: Enum,
+) callconv(.C) void = undefined;
+pub var createBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
+pub var clearNamedFramebufferfv: *const fn (
+    framebuffer: Uint,
+    buffer: Enum,
+    drawbuffer: Int,
+    value: [*c]const Float,
+) callconv(.C) void = undefined;
+pub var namedBufferStorage: *const fn (
+    buffer: Uint,
+    size: Sizeiptr,
+    data: ?*const anyopaque,
+    flags: Bitfield,
+) callconv(.C) void = undefined;
+pub var bindTextureUnit: *const fn (unit: Uint, texture: Uint) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 1.0 and 1.1 (Compatibility Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const MODELVIEW = 0x1700;
+pub const PROJECTION = 0x1701;
 
+pub const COMPILE = 0x1300;
+pub const COMPILE_AND_EXECUTE = 0x1301;
+
+pub const QUAD_STRIP = 0x0008;
+pub const POLYGON = 0x0009;
+
+pub var begin: *const fn (mode: Enum) callconv(.C) void = undefined;
+pub var end: *const fn () callconv(.C) void = undefined;
+pub var newList: *const fn (list: Uint, mode: Enum) callconv(.C) void = undefined;
+pub var callList: *const fn (list: Uint) callconv(.C) void = undefined;
+pub var endList: *const fn () callconv(.C) void = undefined;
+pub var loadIdentity: *const fn () callconv(.C) void = undefined;
+pub var vertex2fv: *const fn (v: [*c]const Float) callconv(.C) void = undefined;
+pub var vertex3fv: *const fn (v: [*c]const Float) callconv(.C) void = undefined;
+pub var vertex4fv: *const fn (v: [*c]const Float) callconv(.C) void = undefined;
+pub var color3fv: *const fn (v: [*c]const Float) callconv(.C) void = undefined;
+pub var color4fv: *const fn (v: [*c]const Float) callconv(.C) void = undefined;
+pub var rectf: *const fn (x1: Float, y1: Float, x2: Float, y2: Float) callconv(.C) void = undefined;
+pub var matrixMode: *const fn (mode: Enum) callconv(.C) void = undefined;
+pub var vertex2f: *const fn (x: Float, y: Float) callconv(.C) void = undefined;
+pub var vertex2d: *const fn (x: Double, y: Double) callconv(.C) void = undefined;
+pub var vertex2i: *const fn (x: Int, y: Int) callconv(.C) void = undefined;
+pub var color3f: *const fn (r: Float, g: Float, b: Float) callconv(.C) void = undefined;
+pub var color4f: *const fn (r: Float, g: Float, b: Float, a: Float) callconv(.C) void = undefined;
+pub var color4ub: *const fn (r: Ubyte, g: Ubyte, b: Ubyte, a: Ubyte) callconv(.C) void = undefined;
+pub var pushMatrix: *const fn () callconv(.C) void = undefined;
+pub var popMatrix: *const fn () callconv(.C) void = undefined;
+pub var rotatef: *const fn (angle: Float, x: Float, y: Float, z: Float) callconv(.C) void = undefined;
+pub var scalef: *const fn (x: Float, y: Float, z: Float) callconv(.C) void = undefined;
+pub var translatef: *const fn (x: Float, y: Float, z: Float) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL misc. extensions (Compatibility Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub var matrixLoadIdentityEXT: *const fn (mode: Enum) callconv(.C) void = undefined;
+pub var matrixOrthoEXT: *const fn (
+    mode: Enum,
+    left: Double,
+    right: Double,
+    bottom: Double,
+    top: Double,
+    zNear: Double,
+    zFar: Double,
+) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL ES 1.0
@@ -1974,7 +2109,6 @@ pub var vertexAttribP4uiv: *const fn (
 //--------------------------------------------------------------------------------------------------
 pub var clearDepthf: *const fn (depth: Float) callconv(.C) void = undefined;
 pub var depthRangef: *const fn (n: Clampf, f: Clampf) callconv(.C) void = undefined;
-
 //--------------------------------------------------------------------------------------------------
 //
 // OES_vertex_array_object (OpenGL ES Extension #71)
@@ -1989,3 +2123,4 @@ pub var deleteVertexArraysOES: *const fn (
 ) callconv(.C) void = undefined;
 pub var genVertexArraysOES: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
 pub var isVertexArrayOES: *const fn (array: Uint) callconv(.C) Boolean = undefined;
+//--------------------------------------------------------------------------------------------------

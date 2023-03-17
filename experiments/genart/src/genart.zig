@@ -1,0 +1,157 @@
+const std = @import("std");
+const sdl = @import("zsdl");
+const gl = @import("zopengl");
+const ximpl = @import("ximpl");
+const xcommon = @import("xcommon");
+
+pub export var NvOptimusEnablement: u32 = 1;
+
+const num_msaa_samples = 8;
+
+pub fn main() !void {
+    _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
+
+    try sdl.init(.{ .audio = true, .video = true });
+    defer sdl.quit();
+
+    try sdl.gl.setAttribute(.context_profile_mask, @enumToInt(sdl.gl.Profile.compatibility));
+    try sdl.gl.setAttribute(.context_major_version, 4);
+    try sdl.gl.setAttribute(.context_minor_version, 6);
+
+    const window = try sdl.Window.create(
+        ximpl.name,
+        sdl.Window.pos_undefined,
+        sdl.Window.pos_undefined,
+        ximpl.viewport_width,
+        ximpl.viewport_height,
+        .{ .opengl = true, .allow_highdpi = true },
+    );
+    defer window.destroy();
+
+    const gl_context = try sdl.gl.createContext(window);
+    defer sdl.gl.deleteContext(gl_context);
+
+    try sdl.gl.makeCurrent(window, gl_context);
+    try sdl.gl.setSwapInterval(1);
+
+    try gl.loadCompatProfileExt(sdl.gl.getProcAddress);
+
+    std.log.info("OpenGL vendor: {s}", .{gl.getString(gl.VENDOR)});
+    std.log.info("OpenGL renderer: {s}", .{gl.getString(gl.RENDERER)});
+    std.log.info("OpenGL version: {s}", .{gl.getString(gl.VERSION)});
+
+    gl.matrixLoadIdentityEXT(gl.PROJECTION);
+    gl.matrixOrthoEXT(
+        gl.PROJECTION,
+        -ximpl.viewport_width * 0.5,
+        ximpl.viewport_width * 0.5,
+        -ximpl.viewport_height * 0.5,
+        ximpl.viewport_height * 0.5,
+        -1.0,
+        1.0,
+    );
+    gl.enable(gl.FRAMEBUFFER_SRGB);
+    gl.enable(gl.MULTISAMPLE);
+
+    var tex_srgb: gl.Uint = undefined;
+    gl.createTextures(gl.TEXTURE_2D_MULTISAMPLE, 1, &tex_srgb);
+    defer gl.deleteTextures(1, &tex_srgb);
+    gl.textureStorage2DMultisample(
+        tex_srgb,
+        num_msaa_samples,
+        gl.RGBA16F,
+        ximpl.viewport_width,
+        ximpl.viewport_height,
+        gl.FALSE,
+    );
+
+    gl.createFramebuffers(1, &xcommon.window_fbo);
+    defer gl.deleteFramebuffers(1, &xcommon.window_fbo);
+    gl.namedFramebufferTexture(xcommon.window_fbo, gl.COLOR_ATTACHMENT0, tex_srgb, 0);
+    gl.clearNamedFramebufferfv(xcommon.window_fbo, gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, xcommon.window_fbo);
+
+    try ximpl.init();
+    defer if (@hasDecl(ximpl, "deinit")) ximpl.deinit();
+
+    main_loop: while (true) {
+        var event: sdl.Event = undefined;
+        while (sdl.pollEvent(&event)) {
+            if (event.type == .quit) {
+                break :main_loop;
+            } else if (event.type == .keydown) {
+                if (event.key.keysym.sym == .escape) break :main_loop;
+            }
+        }
+
+        const stats = updateFrameStats(window, ximpl.name);
+        xcommon.frame_time = stats.time;
+        xcommon.frame_delta_time = stats.delta_time;
+
+        ximpl.draw();
+
+        gl.blitNamedFramebuffer(
+            xcommon.window_fbo,
+            0, // default fbo
+            0,
+            0,
+            ximpl.viewport_width,
+            ximpl.viewport_height,
+            0,
+            0,
+            ximpl.viewport_width,
+            ximpl.viewport_height,
+            gl.COLOR_BUFFER_BIT,
+            gl.NEAREST,
+        );
+        sdl.gl.swapWindow(window);
+
+        if (@import("builtin").mode == .Debug and gl.getError() != gl.NO_ERROR) {
+            std.debug.panic("OpenGL error detected!", .{});
+        }
+    }
+}
+
+fn updateFrameStats(window: *sdl.Window, name: [:0]const u8) struct { time: f64, delta_time: f32 } {
+    const state = struct {
+        var timer: std.time.Timer = undefined;
+        var previous_time_ns: u64 = 0;
+        var header_refresh_time_ns: u64 = 0;
+        var frame_count: u64 = ~@as(u64, 0);
+    };
+
+    if (state.frame_count == ~@as(u64, 0)) {
+        state.timer = std.time.Timer.start() catch unreachable;
+        state.previous_time_ns = 0;
+        state.header_refresh_time_ns = 0;
+        state.frame_count = 0;
+    }
+
+    const now_ns = state.timer.read();
+    const time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
+    const delta_time = @intToFloat(f32, now_ns - state.previous_time_ns) / std.time.ns_per_s;
+    state.previous_time_ns = now_ns;
+
+    if ((now_ns - state.header_refresh_time_ns) >= std.time.ns_per_s) {
+        const t = @intToFloat(f64, now_ns - state.header_refresh_time_ns) / std.time.ns_per_s;
+        const fps = @intToFloat(f64, state.frame_count) / t;
+        const ms = (1.0 / fps) * 1000.0;
+
+        var buffer = [_]u8{0} ** 128;
+        const buffer_slice = buffer[0 .. buffer.len - 1];
+        const header = std.fmt.bufPrintZ(
+            buffer_slice,
+            "[{d:.1} fps  {d:.3} ms] {s}",
+            .{ fps, ms, name.ptr },
+        ) catch name;
+
+        window.setTitle(header);
+
+        state.header_refresh_time_ns = now_ns;
+        state.frame_count = 0;
+    }
+    state.frame_count += 1;
+
+    return .{ .time = time, .delta_time = delta_time };
+}

@@ -15,16 +15,17 @@ pub usingnamespace switch (options.api) {
 //
 //--------------------------------------------------------------------------------------------------
 pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
+
 pub const Extension = enum {
     OES_vertex_array_object,
 };
+
 pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
-    // Max. supported version is 3.3 for now.
-    assert(major >= 1 and major <= 3);
-    assert(minor >= 0 and minor <= 5);
-    assert(ver >= 10 and ver <= 33);
+    assert(major >= 1 and major <= 4);
+    assert(minor >= 0 and minor <= 6);
+    assert(ver >= 10 and ver <= 46);
 
     loaderFunc = loader;
 
@@ -665,6 +666,104 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         bindings.vertexAttribP4ui = try getProcAddress(@TypeOf(bindings.vertexAttribP4ui), "glVertexAttribP4ui");
         bindings.vertexAttribP4uiv = try getProcAddress(@TypeOf(bindings.vertexAttribP4uiv), "glVertexAttribP4uiv");
     }
+
+    // OpenGL 4.0
+    if (ver >= 40) {
+        // TODO
+    }
+
+    // OpenGL 4.1
+    if (ver >= 41) {
+        // TODO
+    }
+
+    // OpenGL 4.2
+    if (ver >= 42) {
+        bindings.bindImageTexture = try getProcAddress(@TypeOf(bindings.bindImageTexture), "glBindImageTexture");
+        bindings.memoryBarrier = try getProcAddress(@TypeOf(bindings.memoryBarrier), "glMemoryBarrier");
+        // TODO
+    }
+
+    // OpenGL 4.3
+    if (ver >= 43) {
+        // TODO
+    }
+
+    // OpenGL 4.4
+    if (ver >= 44) {
+        bindings.clearTexImage = try getProcAddress(@TypeOf(bindings.clearTexImage), "glClearTexImage");
+        // TODO
+    }
+
+    // OpenGL 4.5
+    if (ver >= 45) {
+        bindings.textureStorage2D = try getProcAddress(@TypeOf(bindings.textureStorage2D), "glTextureStorage2D");
+        bindings.textureStorage2DMultisample = try getProcAddress(
+            @TypeOf(bindings.textureStorage2DMultisample),
+            "glTextureStorage2DMultisample",
+        );
+        bindings.createTextures = try getProcAddress(@TypeOf(bindings.createTextures), "glCreateTextures");
+        bindings.createFramebuffers = try getProcAddress(
+            @TypeOf(bindings.createFramebuffers),
+            "glCreateFramebuffers",
+        );
+        bindings.namedFramebufferTexture = try getProcAddress(
+            @TypeOf(bindings.namedFramebufferTexture),
+            "glNamedFramebufferTexture",
+        );
+        bindings.blitNamedFramebuffer = try getProcAddress(
+            @TypeOf(bindings.blitNamedFramebuffer),
+            "glBlitNamedFramebuffer",
+        );
+        bindings.createBuffers = try getProcAddress(@TypeOf(bindings.createBuffers), "glCreateBuffers");
+        bindings.clearNamedFramebufferfv = try getProcAddress(
+            @TypeOf(bindings.clearNamedFramebufferfv),
+            "glClearNamedFramebufferfv",
+        );
+        bindings.namedBufferStorage = try getProcAddress(
+            @TypeOf(bindings.namedBufferStorage),
+            "glNamedBufferStorage",
+        );
+        bindings.bindTextureUnit = try getProcAddress(@TypeOf(bindings.bindTextureUnit), "glBindTextureUnit");
+        // TODO
+    }
+
+    // OpenGL 4.6
+    if (ver >= 46) {
+        // TODO
+    }
+}
+
+/// Loads a subset of OpenGL 4.6 (Compatibility Profile) + some useful, multivendor (NVIDIA, AMD) extensions.
+pub fn loadCompatProfileExt(loader: LoaderFn) !void {
+    try loadCoreProfile(loader, 4, 6);
+
+    bindings.begin = try getProcAddress(@TypeOf(bindings.begin), "glBegin");
+    bindings.end = try getProcAddress(@TypeOf(bindings.end), "glEnd");
+    bindings.newList = try getProcAddress(@TypeOf(bindings.newList), "glNewList");
+    bindings.callList = try getProcAddress(@TypeOf(bindings.callList), "glCallList");
+    bindings.endList = try getProcAddress(@TypeOf(bindings.endList), "glEndList");
+    bindings.loadIdentity = try getProcAddress(@TypeOf(bindings.loadIdentity), "glLoadIdentity");
+    bindings.vertex2fv = try getProcAddress(@TypeOf(bindings.vertex2fv), "glVertex2fv");
+    bindings.vertex3fv = try getProcAddress(@TypeOf(bindings.vertex3fv), "glVertex3fv");
+    bindings.vertex4fv = try getProcAddress(@TypeOf(bindings.vertex4fv), "glVertex4fv");
+    bindings.color3fv = try getProcAddress(@TypeOf(bindings.color3fv), "glColor3fv");
+    bindings.color4fv = try getProcAddress(@TypeOf(bindings.color4fv), "glColor4fv");
+    bindings.rectf = try getProcAddress(@TypeOf(bindings.rectf), "glRectf");
+    bindings.matrixMode = try getProcAddress(@TypeOf(bindings.matrixMode), "glMatrixMode");
+    bindings.vertex2f = try getProcAddress(@TypeOf(bindings.vertex2f), "glVertex2f");
+    bindings.vertex2d = try getProcAddress(@TypeOf(bindings.vertex2d), "glVertex2d");
+    bindings.vertex2i = try getProcAddress(@TypeOf(bindings.vertex2i), "glVertex2i");
+    bindings.color3f = try getProcAddress(@TypeOf(bindings.color3f), "glColor3f");
+    bindings.color4f = try getProcAddress(@TypeOf(bindings.color4f), "glColor4f");
+    bindings.color4ub = try getProcAddress(@TypeOf(bindings.color4ub), "glColor4ub");
+    bindings.pushMatrix = try getProcAddress(@TypeOf(bindings.pushMatrix), "glPushMatrix");
+    bindings.popMatrix = try getProcAddress(@TypeOf(bindings.popMatrix), "glPopMatrix");
+    bindings.rotatef = try getProcAddress(@TypeOf(bindings.rotatef), "glRotatef");
+    bindings.scalef = try getProcAddress(@TypeOf(bindings.scalef), "glScalef");
+    bindings.translatef = try getProcAddress(@TypeOf(bindings.translatef), "glTranslatef");
+    bindings.matrixLoadIdentityEXT = try getProcAddress(@TypeOf(bindings.matrixLoadIdentityEXT), "glMatrixLoadIdentityEXT");
+    bindings.matrixOrthoEXT = try getProcAddress(@TypeOf(bindings.matrixOrthoEXT), "glMatrixOrthoEXT");
 }
 
 pub fn loadEsProfile(loader: LoaderFn, major: u32, minor: u32) !void {
@@ -865,7 +964,6 @@ pub fn loadExtension(loader: LoaderFn, extension: Extension) !void {
         },
     }
 }
-
 //--------------------------------------------------------------------------------------------------
 var loaderFunc: LoaderFn = undefined;
 
@@ -877,386 +975,385 @@ fn getProcAddress(comptime T: type, name: [:0]const u8) !T {
     return error.OpenGL_FunctionNotFound;
 }
 //--------------------------------------------------------------------------------------------------
-
-//--------------------------------------------------------------------------------------------------
 //
 // C exports
 //
 //--------------------------------------------------------------------------------------------------
+const linkage: @import("std").builtin.GlobalLinkage = .Strong;
 comptime {
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.cullFace, .{ .name = "glCullFace", .linkage = .Strong });
-    @export(bindings.frontFace, .{ .name = "glFrontFace", .linkage = .Strong });
-    @export(bindings.hint, .{ .name = "glHint", .linkage = .Strong });
-    @export(bindings.lineWidth, .{ .name = "glLineWidth", .linkage = .Strong });
-    @export(bindings.pointSize, .{ .name = "glPointSize", .linkage = .Strong });
-    @export(bindings.polygonMode, .{ .name = "glPolygonMode", .linkage = .Strong });
-    @export(bindings.scissor, .{ .name = "glScissor", .linkage = .Strong });
-    @export(bindings.texParameterf, .{ .name = "glTexParameterf", .linkage = .Strong });
-    @export(bindings.texParameterfv, .{ .name = "glTexParameterfv", .linkage = .Strong });
-    @export(bindings.texParameteri, .{ .name = "glTexParameteri", .linkage = .Strong });
-    @export(bindings.texParameteriv, .{ .name = "glTexParameteriv", .linkage = .Strong });
-    @export(bindings.texImage1D, .{ .name = "glTexImage1D", .linkage = .Strong });
-    @export(bindings.texImage2D, .{ .name = "glTexImage2D", .linkage = .Strong });
-    @export(bindings.drawBuffer, .{ .name = "glDrawBuffer", .linkage = .Strong });
-    @export(bindings.clear, .{ .name = "glClear", .linkage = .Strong });
-    @export(bindings.clearColor, .{ .name = "glClearColor", .linkage = .Strong });
-    @export(bindings.clearStencil, .{ .name = "glClearStencil", .linkage = .Strong });
-    @export(bindings.stencilMask, .{ .name = "glStencilMask", .linkage = .Strong });
-    @export(bindings.colorMask, .{ .name = "glColorMask", .linkage = .Strong });
-    @export(bindings.depthMask, .{ .name = "glDepthMask", .linkage = .Strong });
-    @export(bindings.disable, .{ .name = "glDisable", .linkage = .Strong });
-    @export(bindings.enable, .{ .name = "glEnable", .linkage = .Strong });
-    @export(bindings.finish, .{ .name = "glFinish", .linkage = .Strong });
-    @export(bindings.flush, .{ .name = "glFlush", .linkage = .Strong });
-    @export(bindings.blendFunc, .{ .name = "glBlendFunc", .linkage = .Strong });
-    @export(bindings.logicOp, .{ .name = "glLogicOp", .linkage = .Strong });
-    @export(bindings.stencilFunc, .{ .name = "glStencilFunc", .linkage = .Strong });
-    @export(bindings.stencilOp, .{ .name = "glStencilOp", .linkage = .Strong });
-    @export(bindings.depthFunc, .{ .name = "glDepthFunc", .linkage = .Strong });
-    @export(bindings.pixelStoref, .{ .name = "glPixelStoref", .linkage = .Strong });
-    @export(bindings.pixelStorei, .{ .name = "glPixelStorei", .linkage = .Strong });
-    @export(bindings.readBuffer, .{ .name = "glReadBuffer", .linkage = .Strong });
-    @export(bindings.readPixels, .{ .name = "glReadPixels", .linkage = .Strong });
-    @export(bindings.getBooleanv, .{ .name = "glGetBooleanv", .linkage = .Strong });
-    @export(bindings.getDoublev, .{ .name = "glGetDoublev", .linkage = .Strong });
-    @export(bindings.getError, .{ .name = "glGetError", .linkage = .Strong });
-    @export(bindings.getFloatv, .{ .name = "glGetFloatv", .linkage = .Strong });
-    @export(bindings.getIntegerv, .{ .name = "glGetIntegerv", .linkage = .Strong });
-    @export(bindings.getString, .{ .name = "glGetString", .linkage = .Strong });
-    @export(bindings.getTexImage, .{ .name = "glGetTexImage", .linkage = .Strong });
-    @export(bindings.getTexParameterfv, .{ .name = "glGetTexParameterfv", .linkage = .Strong });
-    @export(bindings.getTexParameteriv, .{ .name = "glGetTexParameteriv", .linkage = .Strong });
-    @export(bindings.getTexLevelParameterfv, .{ .name = "glGetTexLevelParameterfv", .linkage = .Strong });
-    @export(bindings.getTexLevelParameteriv, .{ .name = "glGetTexLevelParameteriv", .linkage = .Strong });
-    @export(bindings.isEnabled, .{ .name = "glIsEnabled", .linkage = .Strong });
-    @export(bindings.depthRange, .{ .name = "glDepthRange", .linkage = .Strong });
-    @export(bindings.viewport, .{ .name = "glViewport", .linkage = .Strong });
+    @export(bindings.cullFace, .{ .name = "glCullFace", .linkage = linkage });
+    @export(bindings.frontFace, .{ .name = "glFrontFace", .linkage = linkage });
+    @export(bindings.hint, .{ .name = "glHint", .linkage = linkage });
+    @export(bindings.lineWidth, .{ .name = "glLineWidth", .linkage = linkage });
+    @export(bindings.pointSize, .{ .name = "glPointSize", .linkage = linkage });
+    @export(bindings.polygonMode, .{ .name = "glPolygonMode", .linkage = linkage });
+    @export(bindings.scissor, .{ .name = "glScissor", .linkage = linkage });
+    @export(bindings.texParameterf, .{ .name = "glTexParameterf", .linkage = linkage });
+    @export(bindings.texParameterfv, .{ .name = "glTexParameterfv", .linkage = linkage });
+    @export(bindings.texParameteri, .{ .name = "glTexParameteri", .linkage = linkage });
+    @export(bindings.texParameteriv, .{ .name = "glTexParameteriv", .linkage = linkage });
+    @export(bindings.texImage1D, .{ .name = "glTexImage1D", .linkage = linkage });
+    @export(bindings.texImage2D, .{ .name = "glTexImage2D", .linkage = linkage });
+    @export(bindings.drawBuffer, .{ .name = "glDrawBuffer", .linkage = linkage });
+    @export(bindings.clear, .{ .name = "glClear", .linkage = linkage });
+    @export(bindings.clearColor, .{ .name = "glClearColor", .linkage = linkage });
+    @export(bindings.clearStencil, .{ .name = "glClearStencil", .linkage = linkage });
+    @export(bindings.stencilMask, .{ .name = "glStencilMask", .linkage = linkage });
+    @export(bindings.colorMask, .{ .name = "glColorMask", .linkage = linkage });
+    @export(bindings.depthMask, .{ .name = "glDepthMask", .linkage = linkage });
+    @export(bindings.disable, .{ .name = "glDisable", .linkage = linkage });
+    @export(bindings.enable, .{ .name = "glEnable", .linkage = linkage });
+    @export(bindings.finish, .{ .name = "glFinish", .linkage = linkage });
+    @export(bindings.flush, .{ .name = "glFlush", .linkage = linkage });
+    @export(bindings.blendFunc, .{ .name = "glBlendFunc", .linkage = linkage });
+    @export(bindings.logicOp, .{ .name = "glLogicOp", .linkage = linkage });
+    @export(bindings.stencilFunc, .{ .name = "glStencilFunc", .linkage = linkage });
+    @export(bindings.stencilOp, .{ .name = "glStencilOp", .linkage = linkage });
+    @export(bindings.depthFunc, .{ .name = "glDepthFunc", .linkage = linkage });
+    @export(bindings.pixelStoref, .{ .name = "glPixelStoref", .linkage = linkage });
+    @export(bindings.pixelStorei, .{ .name = "glPixelStorei", .linkage = linkage });
+    @export(bindings.readBuffer, .{ .name = "glReadBuffer", .linkage = linkage });
+    @export(bindings.readPixels, .{ .name = "glReadPixels", .linkage = linkage });
+    @export(bindings.getBooleanv, .{ .name = "glGetBooleanv", .linkage = linkage });
+    @export(bindings.getDoublev, .{ .name = "glGetDoublev", .linkage = linkage });
+    @export(bindings.getError, .{ .name = "glGetError", .linkage = linkage });
+    @export(bindings.getFloatv, .{ .name = "glGetFloatv", .linkage = linkage });
+    @export(bindings.getIntegerv, .{ .name = "glGetIntegerv", .linkage = linkage });
+    @export(bindings.getString, .{ .name = "glGetString", .linkage = linkage });
+    @export(bindings.getTexImage, .{ .name = "glGetTexImage", .linkage = linkage });
+    @export(bindings.getTexParameterfv, .{ .name = "glGetTexParameterfv", .linkage = linkage });
+    @export(bindings.getTexParameteriv, .{ .name = "glGetTexParameteriv", .linkage = linkage });
+    @export(bindings.getTexLevelParameterfv, .{ .name = "glGetTexLevelParameterfv", .linkage = linkage });
+    @export(bindings.getTexLevelParameteriv, .{ .name = "glGetTexLevelParameteriv", .linkage = linkage });
+    @export(bindings.isEnabled, .{ .name = "glIsEnabled", .linkage = linkage });
+    @export(bindings.depthRange, .{ .name = "glDepthRange", .linkage = linkage });
+    @export(bindings.viewport, .{ .name = "glViewport", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.1 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.drawArrays, .{ .name = "glDrawArrays", .linkage = .Strong });
-    @export(bindings.drawElements, .{ .name = "glDrawElements", .linkage = .Strong });
-    @export(bindings.polygonOffset, .{ .name = "glPolygonOffset", .linkage = .Strong });
-    @export(bindings.copyTexImage1D, .{ .name = "glCopyTexImage1D", .linkage = .Strong });
-    @export(bindings.copyTexImage2D, .{ .name = "glCopyTexImage2D", .linkage = .Strong });
-    @export(bindings.copyTexSubImage1D, .{ .name = "glCopyTexSubImage1D", .linkage = .Strong });
-    @export(bindings.copyTexSubImage2D, .{ .name = "glCopyTexSubImage2D", .linkage = .Strong });
-    @export(bindings.texSubImage1D, .{ .name = "glTexSubImage1D", .linkage = .Strong });
-    @export(bindings.texSubImage2D, .{ .name = "glTexSubImage2D", .linkage = .Strong });
-    @export(bindings.bindTexture, .{ .name = "glBindTexture", .linkage = .Strong });
-    @export(bindings.deleteTextures, .{ .name = "glDeleteTextures", .linkage = .Strong });
-    @export(bindings.genTextures, .{ .name = "glGenTextures", .linkage = .Strong });
-    @export(bindings.isTexture, .{ .name = "glIsTexture", .linkage = .Strong });
+    @export(bindings.drawArrays, .{ .name = "glDrawArrays", .linkage = linkage });
+    @export(bindings.drawElements, .{ .name = "glDrawElements", .linkage = linkage });
+    @export(bindings.polygonOffset, .{ .name = "glPolygonOffset", .linkage = linkage });
+    @export(bindings.copyTexImage1D, .{ .name = "glCopyTexImage1D", .linkage = linkage });
+    @export(bindings.copyTexImage2D, .{ .name = "glCopyTexImage2D", .linkage = linkage });
+    @export(bindings.copyTexSubImage1D, .{ .name = "glCopyTexSubImage1D", .linkage = linkage });
+    @export(bindings.copyTexSubImage2D, .{ .name = "glCopyTexSubImage2D", .linkage = linkage });
+    @export(bindings.texSubImage1D, .{ .name = "glTexSubImage1D", .linkage = linkage });
+    @export(bindings.texSubImage2D, .{ .name = "glTexSubImage2D", .linkage = linkage });
+    @export(bindings.bindTexture, .{ .name = "glBindTexture", .linkage = linkage });
+    @export(bindings.deleteTextures, .{ .name = "glDeleteTextures", .linkage = linkage });
+    @export(bindings.genTextures, .{ .name = "glGenTextures", .linkage = linkage });
+    @export(bindings.isTexture, .{ .name = "glIsTexture", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.2 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.drawRangeElements, .{ .name = "glDrawRangeElements", .linkage = .Strong });
-    @export(bindings.texImage3D, .{ .name = "glTexImage3D", .linkage = .Strong });
-    @export(bindings.texSubImage3D, .{ .name = "glTexSubImage3D", .linkage = .Strong });
-    @export(bindings.copyTexSubImage3D, .{ .name = "glCopyTexSubImage3D", .linkage = .Strong });
+    @export(bindings.drawRangeElements, .{ .name = "glDrawRangeElements", .linkage = linkage });
+    @export(bindings.texImage3D, .{ .name = "glTexImage3D", .linkage = linkage });
+    @export(bindings.texSubImage3D, .{ .name = "glTexSubImage3D", .linkage = linkage });
+    @export(bindings.copyTexSubImage3D, .{ .name = "glCopyTexSubImage3D", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.3 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.activeTexture, .{ .name = "glActiveTexture", .linkage = .Strong });
-    @export(bindings.sampleCoverage, .{ .name = "glSampleCoverage", .linkage = .Strong });
-    @export(bindings.compressedTexImage3D, .{ .name = "glCompressedTexImage3D", .linkage = .Strong });
-    @export(bindings.compressedTexImage2D, .{ .name = "glCompressedTexImage2D", .linkage = .Strong });
-    @export(bindings.compressedTexImage1D, .{ .name = "glCompressedTexImage1D", .linkage = .Strong });
-    @export(bindings.compressedTexSubImage3D, .{ .name = "glCompressedTexSubImage3D", .linkage = .Strong });
-    @export(bindings.compressedTexSubImage2D, .{ .name = "glCompressedTexSubImage2D", .linkage = .Strong });
-    @export(bindings.compressedTexSubImage1D, .{ .name = "glCompressedTexSubImage1D", .linkage = .Strong });
-    @export(bindings.getCompressedTexImage, .{ .name = "glGetCompressedTexImage", .linkage = .Strong });
+    @export(bindings.activeTexture, .{ .name = "glActiveTexture", .linkage = linkage });
+    @export(bindings.sampleCoverage, .{ .name = "glSampleCoverage", .linkage = linkage });
+    @export(bindings.compressedTexImage3D, .{ .name = "glCompressedTexImage3D", .linkage = linkage });
+    @export(bindings.compressedTexImage2D, .{ .name = "glCompressedTexImage2D", .linkage = linkage });
+    @export(bindings.compressedTexImage1D, .{ .name = "glCompressedTexImage1D", .linkage = linkage });
+    @export(bindings.compressedTexSubImage3D, .{ .name = "glCompressedTexSubImage3D", .linkage = linkage });
+    @export(bindings.compressedTexSubImage2D, .{ .name = "glCompressedTexSubImage2D", .linkage = linkage });
+    @export(bindings.compressedTexSubImage1D, .{ .name = "glCompressedTexSubImage1D", .linkage = linkage });
+    @export(bindings.getCompressedTexImage, .{ .name = "glGetCompressedTexImage", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.4 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.pointParameterf, .{ .name = "glPointParameterf", .linkage = .Strong });
-    @export(bindings.pointParameterfv, .{ .name = "glPointParameterfv", .linkage = .Strong });
-    @export(bindings.pointParameteri, .{ .name = "glPointParameteri", .linkage = .Strong });
-    @export(bindings.pointParameteriv, .{ .name = "glPointParameteriv", .linkage = .Strong });
-    @export(bindings.blendColor, .{ .name = "glBlendColor", .linkage = .Strong });
-    @export(bindings.blendEquation, .{ .name = "glBlendEquation", .linkage = .Strong });
+    @export(bindings.pointParameterf, .{ .name = "glPointParameterf", .linkage = linkage });
+    @export(bindings.pointParameterfv, .{ .name = "glPointParameterfv", .linkage = linkage });
+    @export(bindings.pointParameteri, .{ .name = "glPointParameteri", .linkage = linkage });
+    @export(bindings.pointParameteriv, .{ .name = "glPointParameteriv", .linkage = linkage });
+    @export(bindings.blendColor, .{ .name = "glBlendColor", .linkage = linkage });
+    @export(bindings.blendEquation, .{ .name = "glBlendEquation", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.5 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.genQueries, .{ .name = "glGenQueries", .linkage = .Strong });
-    @export(bindings.deleteQueries, .{ .name = "glDeleteQueries", .linkage = .Strong });
-    @export(bindings.isQuery, .{ .name = "glIsQuery", .linkage = .Strong });
-    @export(bindings.beginQuery, .{ .name = "glBeginQuery", .linkage = .Strong });
-    @export(bindings.endQuery, .{ .name = "glEndQuery", .linkage = .Strong });
-    @export(bindings.getQueryiv, .{ .name = "glGetQueryiv", .linkage = .Strong });
-    @export(bindings.getQueryObjectiv, .{ .name = "glGetQueryObjectiv", .linkage = .Strong });
-    @export(bindings.getQueryObjectuiv, .{ .name = "glGetQueryObjectuiv", .linkage = .Strong });
-    @export(bindings.bindBuffer, .{ .name = "glBindBuffer", .linkage = .Strong });
-    @export(bindings.deleteBuffers, .{ .name = "glDeleteBuffers", .linkage = .Strong });
-    @export(bindings.genBuffers, .{ .name = "glGenBuffers", .linkage = .Strong });
-    @export(bindings.isBuffer, .{ .name = "glIsBuffer", .linkage = .Strong });
-    @export(bindings.bufferData, .{ .name = "glBufferData", .linkage = .Strong });
-    @export(bindings.bufferSubData, .{ .name = "glBufferSubData", .linkage = .Strong });
-    @export(bindings.getBufferSubData, .{ .name = "glGetBufferSubData", .linkage = .Strong });
-    @export(bindings.mapBuffer, .{ .name = "glMapBuffer", .linkage = .Strong });
-    @export(bindings.unmapBuffer, .{ .name = "glUnmapBuffer", .linkage = .Strong });
-    @export(bindings.getBufferParameteriv, .{ .name = "glGetBufferParameteriv", .linkage = .Strong });
-    @export(bindings.getBufferPointerv, .{ .name = "glGetBufferPointerv", .linkage = .Strong });
+    @export(bindings.genQueries, .{ .name = "glGenQueries", .linkage = linkage });
+    @export(bindings.deleteQueries, .{ .name = "glDeleteQueries", .linkage = linkage });
+    @export(bindings.isQuery, .{ .name = "glIsQuery", .linkage = linkage });
+    @export(bindings.beginQuery, .{ .name = "glBeginQuery", .linkage = linkage });
+    @export(bindings.endQuery, .{ .name = "glEndQuery", .linkage = linkage });
+    @export(bindings.getQueryiv, .{ .name = "glGetQueryiv", .linkage = linkage });
+    @export(bindings.getQueryObjectiv, .{ .name = "glGetQueryObjectiv", .linkage = linkage });
+    @export(bindings.getQueryObjectuiv, .{ .name = "glGetQueryObjectuiv", .linkage = linkage });
+    @export(bindings.bindBuffer, .{ .name = "glBindBuffer", .linkage = linkage });
+    @export(bindings.deleteBuffers, .{ .name = "glDeleteBuffers", .linkage = linkage });
+    @export(bindings.genBuffers, .{ .name = "glGenBuffers", .linkage = linkage });
+    @export(bindings.isBuffer, .{ .name = "glIsBuffer", .linkage = linkage });
+    @export(bindings.bufferData, .{ .name = "glBufferData", .linkage = linkage });
+    @export(bindings.bufferSubData, .{ .name = "glBufferSubData", .linkage = linkage });
+    @export(bindings.getBufferSubData, .{ .name = "glGetBufferSubData", .linkage = linkage });
+    @export(bindings.mapBuffer, .{ .name = "glMapBuffer", .linkage = linkage });
+    @export(bindings.unmapBuffer, .{ .name = "glUnmapBuffer", .linkage = linkage });
+    @export(bindings.getBufferParameteriv, .{ .name = "glGetBufferParameteriv", .linkage = linkage });
+    @export(bindings.getBufferPointerv, .{ .name = "glGetBufferPointerv", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 2.0 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.blendEquationSeparate, .{ .name = "glBlendEquationSeparate", .linkage = .Strong });
-    @export(bindings.drawBuffers, .{ .name = "glDrawBuffers", .linkage = .Strong });
-    @export(bindings.stencilOpSeparate, .{ .name = "glStencilOpSeparate", .linkage = .Strong });
-    @export(bindings.stencilFuncSeparate, .{ .name = "glStencilFuncSeparate", .linkage = .Strong });
-    @export(bindings.stencilMaskSeparate, .{ .name = "glStencilMaskSeparate", .linkage = .Strong });
-    @export(bindings.attachShader, .{ .name = "glAttachShader", .linkage = .Strong });
-    @export(bindings.bindAttribLocation, .{ .name = "glBindAttribLocation", .linkage = .Strong });
-    @export(bindings.compileShader, .{ .name = "glCompileShader", .linkage = .Strong });
-    @export(bindings.createProgram, .{ .name = "glCreateProgram", .linkage = .Strong });
-    @export(bindings.createShader, .{ .name = "glCreateShader", .linkage = .Strong });
-    @export(bindings.deleteProgram, .{ .name = "glDeleteProgram", .linkage = .Strong });
-    @export(bindings.deleteShader, .{ .name = "glDeleteShader", .linkage = .Strong });
-    @export(bindings.detachShader, .{ .name = "glDetachShader", .linkage = .Strong });
-    @export(bindings.disableVertexAttribArray, .{ .name = "glDisableVertexAttribArray", .linkage = .Strong });
-    @export(bindings.enableVertexAttribArray, .{ .name = "glEnableVertexAttribArray", .linkage = .Strong });
-    @export(bindings.getActiveAttrib, .{ .name = "glGetActiveAttrib", .linkage = .Strong });
-    @export(bindings.getActiveUniform, .{ .name = "glGetActiveUniform", .linkage = .Strong });
-    @export(bindings.getAttachedShaders, .{ .name = "glGetAttachedShaders", .linkage = .Strong });
-    @export(bindings.getAttribLocation, .{ .name = "glGetAttribLocation", .linkage = .Strong });
-    @export(bindings.getProgramiv, .{ .name = "glGetProgramiv", .linkage = .Strong });
-    @export(bindings.getProgramInfoLog, .{ .name = "glGetProgramInfoLog", .linkage = .Strong });
-    @export(bindings.getShaderiv, .{ .name = "glGetShaderiv", .linkage = .Strong });
-    @export(bindings.getShaderInfoLog, .{ .name = "glGetShaderInfoLog", .linkage = .Strong });
-    @export(bindings.getShaderSource, .{ .name = "glGetShaderSource", .linkage = .Strong });
-    @export(bindings.getUniformLocation, .{ .name = "glGetUniformLocation", .linkage = .Strong });
-    @export(bindings.getUniformfv, .{ .name = "glGetUniformfv", .linkage = .Strong });
-    @export(bindings.getUniformiv, .{ .name = "glGetUniformiv", .linkage = .Strong });
-    @export(bindings.getVertexAttribdv, .{ .name = "glGetVertexAttribdv", .linkage = .Strong });
-    @export(bindings.getVertexAttribfv, .{ .name = "glGetVertexAttribfv", .linkage = .Strong });
-    @export(bindings.getVertexAttribiv, .{ .name = "glGetVertexAttribiv", .linkage = .Strong });
-    @export(bindings.getVertexAttribPointerv, .{ .name = "glGetVertexAttribPointerv", .linkage = .Strong });
-    @export(bindings.isProgram, .{ .name = "glIsProgram", .linkage = .Strong });
-    @export(bindings.isShader, .{ .name = "glIsShader", .linkage = .Strong });
-    @export(bindings.linkProgram, .{ .name = "glLinkProgram", .linkage = .Strong });
-    @export(bindings.shaderSource, .{ .name = "glShaderSource", .linkage = .Strong });
-    @export(bindings.useProgram, .{ .name = "glUseProgram", .linkage = .Strong });
-    @export(bindings.uniform1f, .{ .name = "glUniform1f", .linkage = .Strong });
-    @export(bindings.uniform2f, .{ .name = "glUniform2f", .linkage = .Strong });
-    @export(bindings.uniform3f, .{ .name = "glUniform3f", .linkage = .Strong });
-    @export(bindings.uniform4f, .{ .name = "glUniform4f", .linkage = .Strong });
-    @export(bindings.uniform1i, .{ .name = "glUniform1i", .linkage = .Strong });
-    @export(bindings.uniform2i, .{ .name = "glUniform2i", .linkage = .Strong });
-    @export(bindings.uniform3i, .{ .name = "glUniform3i", .linkage = .Strong });
-    @export(bindings.uniform4i, .{ .name = "glUniform4i", .linkage = .Strong });
-    @export(bindings.uniform1fv, .{ .name = "glUniform1fv", .linkage = .Strong });
-    @export(bindings.uniform2fv, .{ .name = "glUniform2fv", .linkage = .Strong });
-    @export(bindings.uniform3fv, .{ .name = "glUniform3fv", .linkage = .Strong });
-    @export(bindings.uniform4fv, .{ .name = "glUniform4fv", .linkage = .Strong });
-    @export(bindings.uniform1iv, .{ .name = "glUniform1iv", .linkage = .Strong });
-    @export(bindings.uniform2iv, .{ .name = "glUniform2iv", .linkage = .Strong });
-    @export(bindings.uniform3iv, .{ .name = "glUniform3iv", .linkage = .Strong });
-    @export(bindings.uniform4iv, .{ .name = "glUniform4iv", .linkage = .Strong });
-    @export(bindings.uniformMatrix2fv, .{ .name = "glUniformMatrix2fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix3fv, .{ .name = "glUniformMatrix3fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix4fv, .{ .name = "glUniformMatrix4fv", .linkage = .Strong });
-    @export(bindings.validateProgram, .{ .name = "glValidateProgram", .linkage = .Strong });
-    @export(bindings.vertexAttrib1d, .{ .name = "glVertexAttrib1d", .linkage = .Strong });
-    @export(bindings.vertexAttrib1dv, .{ .name = "glVertexAttrib1dv", .linkage = .Strong });
-    @export(bindings.vertexAttrib1f, .{ .name = "glVertexAttrib1f", .linkage = .Strong });
-    @export(bindings.vertexAttrib1fv, .{ .name = "glVertexAttrib1fv", .linkage = .Strong });
-    @export(bindings.vertexAttrib1s, .{ .name = "glVertexAttrib1s", .linkage = .Strong });
-    @export(bindings.vertexAttrib1sv, .{ .name = "glVertexAttrib1sv", .linkage = .Strong });
-    @export(bindings.vertexAttrib2d, .{ .name = "glVertexAttrib2d", .linkage = .Strong });
-    @export(bindings.vertexAttrib2dv, .{ .name = "glVertexAttrib2dv", .linkage = .Strong });
-    @export(bindings.vertexAttrib2f, .{ .name = "glVertexAttrib2f", .linkage = .Strong });
-    @export(bindings.vertexAttrib2fv, .{ .name = "glVertexAttrib2fv", .linkage = .Strong });
-    @export(bindings.vertexAttrib2s, .{ .name = "glVertexAttrib2s", .linkage = .Strong });
-    @export(bindings.vertexAttrib2sv, .{ .name = "glVertexAttrib2sv", .linkage = .Strong });
-    @export(bindings.vertexAttrib3d, .{ .name = "glVertexAttrib3d", .linkage = .Strong });
-    @export(bindings.vertexAttrib3dv, .{ .name = "glVertexAttrib3dv", .linkage = .Strong });
-    @export(bindings.vertexAttrib3f, .{ .name = "glVertexAttrib3f", .linkage = .Strong });
-    @export(bindings.vertexAttrib3fv, .{ .name = "glVertexAttrib3fv", .linkage = .Strong });
-    @export(bindings.vertexAttrib3s, .{ .name = "glVertexAttrib3s", .linkage = .Strong });
-    @export(bindings.vertexAttrib3sv, .{ .name = "glVertexAttrib3sv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Nbv, .{ .name = "glVertexAttrib4Nbv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Niv, .{ .name = "glVertexAttrib4Niv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Nsv, .{ .name = "glVertexAttrib4Nsv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Nub, .{ .name = "glVertexAttrib4Nub", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Nubv, .{ .name = "glVertexAttrib4Nubv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Nuiv, .{ .name = "glVertexAttrib4Nuiv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4Nusv, .{ .name = "glVertexAttrib4Nusv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4bv, .{ .name = "glVertexAttrib4bv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4d, .{ .name = "glVertexAttrib4d", .linkage = .Strong });
-    @export(bindings.vertexAttrib4dv, .{ .name = "glVertexAttrib4dv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4f, .{ .name = "glVertexAttrib4f", .linkage = .Strong });
-    @export(bindings.vertexAttrib4fv, .{ .name = "glVertexAttrib4fv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4iv, .{ .name = "glVertexAttrib4iv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4s, .{ .name = "glVertexAttrib4s", .linkage = .Strong });
-    @export(bindings.vertexAttrib4sv, .{ .name = "glVertexAttrib4sv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4ubv, .{ .name = "glVertexAttrib4ubv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4uiv, .{ .name = "glVertexAttrib4uiv", .linkage = .Strong });
-    @export(bindings.vertexAttrib4usv, .{ .name = "glVertexAttrib4usv", .linkage = .Strong });
-    @export(bindings.vertexAttribPointer, .{ .name = "glVertexAttribPointer", .linkage = .Strong });
+    @export(bindings.blendEquationSeparate, .{ .name = "glBlendEquationSeparate", .linkage = linkage });
+    @export(bindings.drawBuffers, .{ .name = "glDrawBuffers", .linkage = linkage });
+    @export(bindings.stencilOpSeparate, .{ .name = "glStencilOpSeparate", .linkage = linkage });
+    @export(bindings.stencilFuncSeparate, .{ .name = "glStencilFuncSeparate", .linkage = linkage });
+    @export(bindings.stencilMaskSeparate, .{ .name = "glStencilMaskSeparate", .linkage = linkage });
+    @export(bindings.attachShader, .{ .name = "glAttachShader", .linkage = linkage });
+    @export(bindings.bindAttribLocation, .{ .name = "glBindAttribLocation", .linkage = linkage });
+    @export(bindings.compileShader, .{ .name = "glCompileShader", .linkage = linkage });
+    @export(bindings.createProgram, .{ .name = "glCreateProgram", .linkage = linkage });
+    @export(bindings.createShader, .{ .name = "glCreateShader", .linkage = linkage });
+    @export(bindings.deleteProgram, .{ .name = "glDeleteProgram", .linkage = linkage });
+    @export(bindings.deleteShader, .{ .name = "glDeleteShader", .linkage = linkage });
+    @export(bindings.detachShader, .{ .name = "glDetachShader", .linkage = linkage });
+    @export(bindings.disableVertexAttribArray, .{ .name = "glDisableVertexAttribArray", .linkage = linkage });
+    @export(bindings.enableVertexAttribArray, .{ .name = "glEnableVertexAttribArray", .linkage = linkage });
+    @export(bindings.getActiveAttrib, .{ .name = "glGetActiveAttrib", .linkage = linkage });
+    @export(bindings.getActiveUniform, .{ .name = "glGetActiveUniform", .linkage = linkage });
+    @export(bindings.getAttachedShaders, .{ .name = "glGetAttachedShaders", .linkage = linkage });
+    @export(bindings.getAttribLocation, .{ .name = "glGetAttribLocation", .linkage = linkage });
+    @export(bindings.getProgramiv, .{ .name = "glGetProgramiv", .linkage = linkage });
+    @export(bindings.getProgramInfoLog, .{ .name = "glGetProgramInfoLog", .linkage = linkage });
+    @export(bindings.getShaderiv, .{ .name = "glGetShaderiv", .linkage = linkage });
+    @export(bindings.getShaderInfoLog, .{ .name = "glGetShaderInfoLog", .linkage = linkage });
+    @export(bindings.getShaderSource, .{ .name = "glGetShaderSource", .linkage = linkage });
+    @export(bindings.getUniformLocation, .{ .name = "glGetUniformLocation", .linkage = linkage });
+    @export(bindings.getUniformfv, .{ .name = "glGetUniformfv", .linkage = linkage });
+    @export(bindings.getUniformiv, .{ .name = "glGetUniformiv", .linkage = linkage });
+    @export(bindings.getVertexAttribdv, .{ .name = "glGetVertexAttribdv", .linkage = linkage });
+    @export(bindings.getVertexAttribfv, .{ .name = "glGetVertexAttribfv", .linkage = linkage });
+    @export(bindings.getVertexAttribiv, .{ .name = "glGetVertexAttribiv", .linkage = linkage });
+    @export(bindings.getVertexAttribPointerv, .{ .name = "glGetVertexAttribPointerv", .linkage = linkage });
+    @export(bindings.isProgram, .{ .name = "glIsProgram", .linkage = linkage });
+    @export(bindings.isShader, .{ .name = "glIsShader", .linkage = linkage });
+    @export(bindings.linkProgram, .{ .name = "glLinkProgram", .linkage = linkage });
+    @export(bindings.shaderSource, .{ .name = "glShaderSource", .linkage = linkage });
+    @export(bindings.useProgram, .{ .name = "glUseProgram", .linkage = linkage });
+    @export(bindings.uniform1f, .{ .name = "glUniform1f", .linkage = linkage });
+    @export(bindings.uniform2f, .{ .name = "glUniform2f", .linkage = linkage });
+    @export(bindings.uniform3f, .{ .name = "glUniform3f", .linkage = linkage });
+    @export(bindings.uniform4f, .{ .name = "glUniform4f", .linkage = linkage });
+    @export(bindings.uniform1i, .{ .name = "glUniform1i", .linkage = linkage });
+    @export(bindings.uniform2i, .{ .name = "glUniform2i", .linkage = linkage });
+    @export(bindings.uniform3i, .{ .name = "glUniform3i", .linkage = linkage });
+    @export(bindings.uniform4i, .{ .name = "glUniform4i", .linkage = linkage });
+    @export(bindings.uniform1fv, .{ .name = "glUniform1fv", .linkage = linkage });
+    @export(bindings.uniform2fv, .{ .name = "glUniform2fv", .linkage = linkage });
+    @export(bindings.uniform3fv, .{ .name = "glUniform3fv", .linkage = linkage });
+    @export(bindings.uniform4fv, .{ .name = "glUniform4fv", .linkage = linkage });
+    @export(bindings.uniform1iv, .{ .name = "glUniform1iv", .linkage = linkage });
+    @export(bindings.uniform2iv, .{ .name = "glUniform2iv", .linkage = linkage });
+    @export(bindings.uniform3iv, .{ .name = "glUniform3iv", .linkage = linkage });
+    @export(bindings.uniform4iv, .{ .name = "glUniform4iv", .linkage = linkage });
+    @export(bindings.uniformMatrix2fv, .{ .name = "glUniformMatrix2fv", .linkage = linkage });
+    @export(bindings.uniformMatrix3fv, .{ .name = "glUniformMatrix3fv", .linkage = linkage });
+    @export(bindings.uniformMatrix4fv, .{ .name = "glUniformMatrix4fv", .linkage = linkage });
+    @export(bindings.validateProgram, .{ .name = "glValidateProgram", .linkage = linkage });
+    @export(bindings.vertexAttrib1d, .{ .name = "glVertexAttrib1d", .linkage = linkage });
+    @export(bindings.vertexAttrib1dv, .{ .name = "glVertexAttrib1dv", .linkage = linkage });
+    @export(bindings.vertexAttrib1f, .{ .name = "glVertexAttrib1f", .linkage = linkage });
+    @export(bindings.vertexAttrib1fv, .{ .name = "glVertexAttrib1fv", .linkage = linkage });
+    @export(bindings.vertexAttrib1s, .{ .name = "glVertexAttrib1s", .linkage = linkage });
+    @export(bindings.vertexAttrib1sv, .{ .name = "glVertexAttrib1sv", .linkage = linkage });
+    @export(bindings.vertexAttrib2d, .{ .name = "glVertexAttrib2d", .linkage = linkage });
+    @export(bindings.vertexAttrib2dv, .{ .name = "glVertexAttrib2dv", .linkage = linkage });
+    @export(bindings.vertexAttrib2f, .{ .name = "glVertexAttrib2f", .linkage = linkage });
+    @export(bindings.vertexAttrib2fv, .{ .name = "glVertexAttrib2fv", .linkage = linkage });
+    @export(bindings.vertexAttrib2s, .{ .name = "glVertexAttrib2s", .linkage = linkage });
+    @export(bindings.vertexAttrib2sv, .{ .name = "glVertexAttrib2sv", .linkage = linkage });
+    @export(bindings.vertexAttrib3d, .{ .name = "glVertexAttrib3d", .linkage = linkage });
+    @export(bindings.vertexAttrib3dv, .{ .name = "glVertexAttrib3dv", .linkage = linkage });
+    @export(bindings.vertexAttrib3f, .{ .name = "glVertexAttrib3f", .linkage = linkage });
+    @export(bindings.vertexAttrib3fv, .{ .name = "glVertexAttrib3fv", .linkage = linkage });
+    @export(bindings.vertexAttrib3s, .{ .name = "glVertexAttrib3s", .linkage = linkage });
+    @export(bindings.vertexAttrib3sv, .{ .name = "glVertexAttrib3sv", .linkage = linkage });
+    @export(bindings.vertexAttrib4Nbv, .{ .name = "glVertexAttrib4Nbv", .linkage = linkage });
+    @export(bindings.vertexAttrib4Niv, .{ .name = "glVertexAttrib4Niv", .linkage = linkage });
+    @export(bindings.vertexAttrib4Nsv, .{ .name = "glVertexAttrib4Nsv", .linkage = linkage });
+    @export(bindings.vertexAttrib4Nub, .{ .name = "glVertexAttrib4Nub", .linkage = linkage });
+    @export(bindings.vertexAttrib4Nubv, .{ .name = "glVertexAttrib4Nubv", .linkage = linkage });
+    @export(bindings.vertexAttrib4Nuiv, .{ .name = "glVertexAttrib4Nuiv", .linkage = linkage });
+    @export(bindings.vertexAttrib4Nusv, .{ .name = "glVertexAttrib4Nusv", .linkage = linkage });
+    @export(bindings.vertexAttrib4bv, .{ .name = "glVertexAttrib4bv", .linkage = linkage });
+    @export(bindings.vertexAttrib4d, .{ .name = "glVertexAttrib4d", .linkage = linkage });
+    @export(bindings.vertexAttrib4dv, .{ .name = "glVertexAttrib4dv", .linkage = linkage });
+    @export(bindings.vertexAttrib4f, .{ .name = "glVertexAttrib4f", .linkage = linkage });
+    @export(bindings.vertexAttrib4fv, .{ .name = "glVertexAttrib4fv", .linkage = linkage });
+    @export(bindings.vertexAttrib4iv, .{ .name = "glVertexAttrib4iv", .linkage = linkage });
+    @export(bindings.vertexAttrib4s, .{ .name = "glVertexAttrib4s", .linkage = linkage });
+    @export(bindings.vertexAttrib4sv, .{ .name = "glVertexAttrib4sv", .linkage = linkage });
+    @export(bindings.vertexAttrib4ubv, .{ .name = "glVertexAttrib4ubv", .linkage = linkage });
+    @export(bindings.vertexAttrib4uiv, .{ .name = "glVertexAttrib4uiv", .linkage = linkage });
+    @export(bindings.vertexAttrib4usv, .{ .name = "glVertexAttrib4usv", .linkage = linkage });
+    @export(bindings.vertexAttribPointer, .{ .name = "glVertexAttribPointer", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 2.1 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.uniformMatrix2x3fv, .{ .name = "glUniformMatrix2x3fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix3x2fv, .{ .name = "glUniformMatrix3x2fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix2x4fv, .{ .name = "glUniformMatrix2x4fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix4x2fv, .{ .name = "glUniformMatrix4x2fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix3x4fv, .{ .name = "glUniformMatrix3x4fv", .linkage = .Strong });
-    @export(bindings.uniformMatrix4x3fv, .{ .name = "glUniformMatrix4x3fv", .linkage = .Strong });
+    @export(bindings.uniformMatrix2x3fv, .{ .name = "glUniformMatrix2x3fv", .linkage = linkage });
+    @export(bindings.uniformMatrix3x2fv, .{ .name = "glUniformMatrix3x2fv", .linkage = linkage });
+    @export(bindings.uniformMatrix2x4fv, .{ .name = "glUniformMatrix2x4fv", .linkage = linkage });
+    @export(bindings.uniformMatrix4x2fv, .{ .name = "glUniformMatrix4x2fv", .linkage = linkage });
+    @export(bindings.uniformMatrix3x4fv, .{ .name = "glUniformMatrix3x4fv", .linkage = linkage });
+    @export(bindings.uniformMatrix4x3fv, .{ .name = "glUniformMatrix4x3fv", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.0 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.colorMaski, .{ .name = "glColorMaski", .linkage = .Strong });
-    @export(bindings.getBooleani_v, .{ .name = "glGetBooleani_v", .linkage = .Strong });
-    @export(bindings.getIntegeri_v, .{ .name = "glGetIntegeri_v", .linkage = .Strong });
-    @export(bindings.enablei, .{ .name = "glEnablei", .linkage = .Strong });
-    @export(bindings.disablei, .{ .name = "glDisablei", .linkage = .Strong });
-    @export(bindings.isEnabledi, .{ .name = "glIsEnabledi", .linkage = .Strong });
-    @export(bindings.beginTransformFeedback, .{ .name = "glBeginTransformFeedback", .linkage = .Strong });
-    @export(bindings.endTransformFeedback, .{ .name = "glEndTransformFeedback", .linkage = .Strong });
-    @export(bindings.bindBufferRange, .{ .name = "glBindBufferRange", .linkage = .Strong });
-    @export(bindings.bindBufferBase, .{ .name = "glBindBufferBase", .linkage = .Strong });
-    @export(bindings.transformFeedbackVaryings, .{ .name = "glTransformFeedbackVaryings", .linkage = .Strong });
-    @export(bindings.getTransformFeedbackVarying, .{ .name = "glGetTransformFeedbackVarying", .linkage = .Strong });
-    @export(bindings.beginConditionalRender, .{ .name = "glBeginConditionalRender", .linkage = .Strong });
-    @export(bindings.endConditionalRender, .{ .name = "glEndConditionalRender", .linkage = .Strong });
-    @export(bindings.vertexAttribIPointer, .{ .name = "glVertexAttribIPointer", .linkage = .Strong });
-    @export(bindings.getVertexAttribIiv, .{ .name = "glGetVertexAttribIiv", .linkage = .Strong });
-    @export(bindings.getVertexAttribIuiv, .{ .name = "glGetVertexAttribIuiv", .linkage = .Strong });
-    @export(bindings.vertexAttribI1i, .{ .name = "glVertexAttribI1i", .linkage = .Strong });
-    @export(bindings.vertexAttribI2i, .{ .name = "glVertexAttribI2i", .linkage = .Strong });
-    @export(bindings.vertexAttribI3i, .{ .name = "glVertexAttribI3i", .linkage = .Strong });
-    @export(bindings.vertexAttribI4i, .{ .name = "glVertexAttribI4i", .linkage = .Strong });
-    @export(bindings.vertexAttribI1ui, .{ .name = "glVertexAttribI1ui", .linkage = .Strong });
-    @export(bindings.vertexAttribI2ui, .{ .name = "glVertexAttribI2ui", .linkage = .Strong });
-    @export(bindings.vertexAttribI3ui, .{ .name = "glVertexAttribI3ui", .linkage = .Strong });
-    @export(bindings.vertexAttribI4ui, .{ .name = "glVertexAttribI4ui", .linkage = .Strong });
-    @export(bindings.vertexAttribI1iv, .{ .name = "glVertexAttribI1iv", .linkage = .Strong });
-    @export(bindings.vertexAttribI2iv, .{ .name = "glVertexAttribI2iv", .linkage = .Strong });
-    @export(bindings.vertexAttribI3iv, .{ .name = "glVertexAttribI3iv", .linkage = .Strong });
-    @export(bindings.vertexAttribI4iv, .{ .name = "glVertexAttribI4iv", .linkage = .Strong });
-    @export(bindings.vertexAttribI1uiv, .{ .name = "glVertexAttribI1uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribI2uiv, .{ .name = "glVertexAttribI2uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribI3uiv, .{ .name = "glVertexAttribI3uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribI4uiv, .{ .name = "glVertexAttribI4uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribI4bv, .{ .name = "glVertexAttribI4bv", .linkage = .Strong });
-    @export(bindings.vertexAttribI4sv, .{ .name = "glVertexAttribI4sv", .linkage = .Strong });
-    @export(bindings.vertexAttribI4ubv, .{ .name = "glVertexAttribI4ubv", .linkage = .Strong });
-    @export(bindings.vertexAttribI4usv, .{ .name = "glVertexAttribI4usv", .linkage = .Strong });
-    @export(bindings.getUniformuiv, .{ .name = "glGetUniformuiv", .linkage = .Strong });
-    @export(bindings.bindFragDataLocation, .{ .name = "glBindFragDataLocation", .linkage = .Strong });
-    @export(bindings.getFragDataLocation, .{ .name = "glGetFragDataLocation", .linkage = .Strong });
-    @export(bindings.uniform1ui, .{ .name = "glUniform1ui", .linkage = .Strong });
-    @export(bindings.uniform2ui, .{ .name = "glUniform2ui", .linkage = .Strong });
-    @export(bindings.uniform3ui, .{ .name = "glUniform3ui", .linkage = .Strong });
-    @export(bindings.uniform4ui, .{ .name = "glUniform4ui", .linkage = .Strong });
-    @export(bindings.uniform1uiv, .{ .name = "glUniform1uiv", .linkage = .Strong });
-    @export(bindings.uniform2uiv, .{ .name = "glUniform2uiv", .linkage = .Strong });
-    @export(bindings.uniform3uiv, .{ .name = "glUniform3uiv", .linkage = .Strong });
-    @export(bindings.uniform4uiv, .{ .name = "glUniform4uiv", .linkage = .Strong });
-    @export(bindings.texParameterIiv, .{ .name = "glTexParameterIiv", .linkage = .Strong });
-    @export(bindings.texParameterIuiv, .{ .name = "glTexParameterIuiv", .linkage = .Strong });
-    @export(bindings.getTexParameterIiv, .{ .name = "glGetTexParameterIiv", .linkage = .Strong });
-    @export(bindings.getTexParameterIuiv, .{ .name = "glGetTexParameterIuiv", .linkage = .Strong });
-    @export(bindings.clearBufferiv, .{ .name = "glClearBufferiv", .linkage = .Strong });
-    @export(bindings.clearBufferuiv, .{ .name = "glClearBufferuiv", .linkage = .Strong });
-    @export(bindings.clearBufferfv, .{ .name = "glClearBufferfv", .linkage = .Strong });
-    @export(bindings.clearBufferfi, .{ .name = "glClearBufferfi", .linkage = .Strong });
-    @export(bindings.getStringi, .{ .name = "glGetStringi", .linkage = .Strong });
-    @export(bindings.isRenderbuffer, .{ .name = "glIsRenderbuffer", .linkage = .Strong });
-    @export(bindings.bindRenderbuffer, .{ .name = "glBindRenderbuffer", .linkage = .Strong });
-    @export(bindings.deleteRenderbuffers, .{ .name = "glDeleteRenderbuffers", .linkage = .Strong });
-    @export(bindings.genRenderbuffers, .{ .name = "glGenRenderbuffers", .linkage = .Strong });
-    @export(bindings.renderbufferStorage, .{ .name = "glRenderbufferStorage", .linkage = .Strong });
-    @export(bindings.getRenderbufferParameteriv, .{ .name = "glGetRenderbufferParameteriv", .linkage = .Strong });
-    @export(bindings.isFramebuffer, .{ .name = "glIsFramebuffer", .linkage = .Strong });
-    @export(bindings.bindFramebuffer, .{ .name = "glBindFramebuffer", .linkage = .Strong });
-    @export(bindings.deleteFramebuffers, .{ .name = "glDeleteFramebuffers", .linkage = .Strong });
-    @export(bindings.genFramebuffers, .{ .name = "glGenFramebuffers", .linkage = .Strong });
-    @export(bindings.checkFramebufferStatus, .{ .name = "glCheckFramebufferStatus", .linkage = .Strong });
-    @export(bindings.framebufferTexture1D, .{ .name = "glFramebufferTexture1D", .linkage = .Strong });
-    @export(bindings.framebufferTexture2D, .{ .name = "glFramebufferTexture2D", .linkage = .Strong });
-    @export(bindings.framebufferTexture3D, .{ .name = "glFramebufferTexture3D", .linkage = .Strong });
-    @export(bindings.framebufferRenderbuffer, .{ .name = "glFramebufferRenderbuffer", .linkage = .Strong });
-    @export(bindings.getFramebufferAttachmentParameteriv, .{ .name = "glGetFramebufferAttachmentParameteriv", .linkage = .Strong });
-    @export(bindings.generateMipmap, .{ .name = "glGenerateMipmap", .linkage = .Strong });
-    @export(bindings.blitFramebuffer, .{ .name = "glBlitFramebuffer", .linkage = .Strong });
-    @export(bindings.renderbufferStorageMultisample, .{ .name = "glRenderbufferStorageMultisample", .linkage = .Strong });
-    @export(bindings.framebufferTextureLayer, .{ .name = "glFramebufferTextureLayer", .linkage = .Strong });
-    @export(bindings.mapBufferRange, .{ .name = "glMapBufferRange", .linkage = .Strong });
-    @export(bindings.flushMappedBufferRange, .{ .name = "glFlushMappedBufferRange", .linkage = .Strong });
-    @export(bindings.bindVertexArray, .{ .name = "glBindVertexArray", .linkage = .Strong });
-    @export(bindings.deleteVertexArrays, .{ .name = "glDeleteVertexArrays", .linkage = .Strong });
-    @export(bindings.genVertexArrays, .{ .name = "glGenVertexArrays", .linkage = .Strong });
-    @export(bindings.isVertexArray, .{ .name = "glIsVertexArray", .linkage = .Strong });
+    @export(bindings.colorMaski, .{ .name = "glColorMaski", .linkage = linkage });
+    @export(bindings.getBooleani_v, .{ .name = "glGetBooleani_v", .linkage = linkage });
+    @export(bindings.getIntegeri_v, .{ .name = "glGetIntegeri_v", .linkage = linkage });
+    @export(bindings.enablei, .{ .name = "glEnablei", .linkage = linkage });
+    @export(bindings.disablei, .{ .name = "glDisablei", .linkage = linkage });
+    @export(bindings.isEnabledi, .{ .name = "glIsEnabledi", .linkage = linkage });
+    @export(bindings.beginTransformFeedback, .{ .name = "glBeginTransformFeedback", .linkage = linkage });
+    @export(bindings.endTransformFeedback, .{ .name = "glEndTransformFeedback", .linkage = linkage });
+    @export(bindings.bindBufferRange, .{ .name = "glBindBufferRange", .linkage = linkage });
+    @export(bindings.bindBufferBase, .{ .name = "glBindBufferBase", .linkage = linkage });
+    @export(bindings.transformFeedbackVaryings, .{ .name = "glTransformFeedbackVaryings", .linkage = linkage });
+    @export(bindings.getTransformFeedbackVarying, .{ .name = "glGetTransformFeedbackVarying", .linkage = linkage });
+    @export(bindings.beginConditionalRender, .{ .name = "glBeginConditionalRender", .linkage = linkage });
+    @export(bindings.endConditionalRender, .{ .name = "glEndConditionalRender", .linkage = linkage });
+    @export(bindings.vertexAttribIPointer, .{ .name = "glVertexAttribIPointer", .linkage = linkage });
+    @export(bindings.getVertexAttribIiv, .{ .name = "glGetVertexAttribIiv", .linkage = linkage });
+    @export(bindings.getVertexAttribIuiv, .{ .name = "glGetVertexAttribIuiv", .linkage = linkage });
+    @export(bindings.vertexAttribI1i, .{ .name = "glVertexAttribI1i", .linkage = linkage });
+    @export(bindings.vertexAttribI2i, .{ .name = "glVertexAttribI2i", .linkage = linkage });
+    @export(bindings.vertexAttribI3i, .{ .name = "glVertexAttribI3i", .linkage = linkage });
+    @export(bindings.vertexAttribI4i, .{ .name = "glVertexAttribI4i", .linkage = linkage });
+    @export(bindings.vertexAttribI1ui, .{ .name = "glVertexAttribI1ui", .linkage = linkage });
+    @export(bindings.vertexAttribI2ui, .{ .name = "glVertexAttribI2ui", .linkage = linkage });
+    @export(bindings.vertexAttribI3ui, .{ .name = "glVertexAttribI3ui", .linkage = linkage });
+    @export(bindings.vertexAttribI4ui, .{ .name = "glVertexAttribI4ui", .linkage = linkage });
+    @export(bindings.vertexAttribI1iv, .{ .name = "glVertexAttribI1iv", .linkage = linkage });
+    @export(bindings.vertexAttribI2iv, .{ .name = "glVertexAttribI2iv", .linkage = linkage });
+    @export(bindings.vertexAttribI3iv, .{ .name = "glVertexAttribI3iv", .linkage = linkage });
+    @export(bindings.vertexAttribI4iv, .{ .name = "glVertexAttribI4iv", .linkage = linkage });
+    @export(bindings.vertexAttribI1uiv, .{ .name = "glVertexAttribI1uiv", .linkage = linkage });
+    @export(bindings.vertexAttribI2uiv, .{ .name = "glVertexAttribI2uiv", .linkage = linkage });
+    @export(bindings.vertexAttribI3uiv, .{ .name = "glVertexAttribI3uiv", .linkage = linkage });
+    @export(bindings.vertexAttribI4uiv, .{ .name = "glVertexAttribI4uiv", .linkage = linkage });
+    @export(bindings.vertexAttribI4bv, .{ .name = "glVertexAttribI4bv", .linkage = linkage });
+    @export(bindings.vertexAttribI4sv, .{ .name = "glVertexAttribI4sv", .linkage = linkage });
+    @export(bindings.vertexAttribI4ubv, .{ .name = "glVertexAttribI4ubv", .linkage = linkage });
+    @export(bindings.vertexAttribI4usv, .{ .name = "glVertexAttribI4usv", .linkage = linkage });
+    @export(bindings.getUniformuiv, .{ .name = "glGetUniformuiv", .linkage = linkage });
+    @export(bindings.bindFragDataLocation, .{ .name = "glBindFragDataLocation", .linkage = linkage });
+    @export(bindings.getFragDataLocation, .{ .name = "glGetFragDataLocation", .linkage = linkage });
+    @export(bindings.uniform1ui, .{ .name = "glUniform1ui", .linkage = linkage });
+    @export(bindings.uniform2ui, .{ .name = "glUniform2ui", .linkage = linkage });
+    @export(bindings.uniform3ui, .{ .name = "glUniform3ui", .linkage = linkage });
+    @export(bindings.uniform4ui, .{ .name = "glUniform4ui", .linkage = linkage });
+    @export(bindings.uniform1uiv, .{ .name = "glUniform1uiv", .linkage = linkage });
+    @export(bindings.uniform2uiv, .{ .name = "glUniform2uiv", .linkage = linkage });
+    @export(bindings.uniform3uiv, .{ .name = "glUniform3uiv", .linkage = linkage });
+    @export(bindings.uniform4uiv, .{ .name = "glUniform4uiv", .linkage = linkage });
+    @export(bindings.texParameterIiv, .{ .name = "glTexParameterIiv", .linkage = linkage });
+    @export(bindings.texParameterIuiv, .{ .name = "glTexParameterIuiv", .linkage = linkage });
+    @export(bindings.getTexParameterIiv, .{ .name = "glGetTexParameterIiv", .linkage = linkage });
+    @export(bindings.getTexParameterIuiv, .{ .name = "glGetTexParameterIuiv", .linkage = linkage });
+    @export(bindings.clearBufferiv, .{ .name = "glClearBufferiv", .linkage = linkage });
+    @export(bindings.clearBufferuiv, .{ .name = "glClearBufferuiv", .linkage = linkage });
+    @export(bindings.clearBufferfv, .{ .name = "glClearBufferfv", .linkage = linkage });
+    @export(bindings.clearBufferfi, .{ .name = "glClearBufferfi", .linkage = linkage });
+    @export(bindings.getStringi, .{ .name = "glGetStringi", .linkage = linkage });
+    @export(bindings.isRenderbuffer, .{ .name = "glIsRenderbuffer", .linkage = linkage });
+    @export(bindings.bindRenderbuffer, .{ .name = "glBindRenderbuffer", .linkage = linkage });
+    @export(bindings.deleteRenderbuffers, .{ .name = "glDeleteRenderbuffers", .linkage = linkage });
+    @export(bindings.genRenderbuffers, .{ .name = "glGenRenderbuffers", .linkage = linkage });
+    @export(bindings.renderbufferStorage, .{ .name = "glRenderbufferStorage", .linkage = linkage });
+    @export(bindings.getRenderbufferParameteriv, .{ .name = "glGetRenderbufferParameteriv", .linkage = linkage });
+    @export(bindings.isFramebuffer, .{ .name = "glIsFramebuffer", .linkage = linkage });
+    @export(bindings.bindFramebuffer, .{ .name = "glBindFramebuffer", .linkage = linkage });
+    @export(bindings.deleteFramebuffers, .{ .name = "glDeleteFramebuffers", .linkage = linkage });
+    @export(bindings.genFramebuffers, .{ .name = "glGenFramebuffers", .linkage = linkage });
+    @export(bindings.checkFramebufferStatus, .{ .name = "glCheckFramebufferStatus", .linkage = linkage });
+    @export(bindings.framebufferTexture1D, .{ .name = "glFramebufferTexture1D", .linkage = linkage });
+    @export(bindings.framebufferTexture2D, .{ .name = "glFramebufferTexture2D", .linkage = linkage });
+    @export(bindings.framebufferTexture3D, .{ .name = "glFramebufferTexture3D", .linkage = linkage });
+    @export(bindings.framebufferRenderbuffer, .{ .name = "glFramebufferRenderbuffer", .linkage = linkage });
+    @export(bindings.getFramebufferAttachmentParameteriv, .{ .name = "glGetFramebufferAttachmentParameteriv", .linkage = linkage });
+    @export(bindings.generateMipmap, .{ .name = "glGenerateMipmap", .linkage = linkage });
+    @export(bindings.blitFramebuffer, .{ .name = "glBlitFramebuffer", .linkage = linkage });
+    @export(bindings.renderbufferStorageMultisample, .{ .name = "glRenderbufferStorageMultisample", .linkage = linkage });
+    @export(bindings.framebufferTextureLayer, .{ .name = "glFramebufferTextureLayer", .linkage = linkage });
+    @export(bindings.mapBufferRange, .{ .name = "glMapBufferRange", .linkage = linkage });
+    @export(bindings.flushMappedBufferRange, .{ .name = "glFlushMappedBufferRange", .linkage = linkage });
+    @export(bindings.bindVertexArray, .{ .name = "glBindVertexArray", .linkage = linkage });
+    @export(bindings.deleteVertexArrays, .{ .name = "glDeleteVertexArrays", .linkage = linkage });
+    @export(bindings.genVertexArrays, .{ .name = "glGenVertexArrays", .linkage = linkage });
+    @export(bindings.isVertexArray, .{ .name = "glIsVertexArray", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.1 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.drawArraysInstanced, .{ .name = "glDrawArraysInstanced", .linkage = .Strong });
-    @export(bindings.drawElementsInstanced, .{ .name = "glDrawElementsInstanced", .linkage = .Strong });
-    @export(bindings.texBuffer, .{ .name = "glTexBuffer", .linkage = .Strong });
-    @export(bindings.primitiveRestartIndex, .{ .name = "glPrimitiveRestartIndex", .linkage = .Strong });
-    @export(bindings.copyBufferSubData, .{ .name = "glCopyBufferSubData", .linkage = .Strong });
-    @export(bindings.getUniformIndices, .{ .name = "glGetUniformIndices", .linkage = .Strong });
-    @export(bindings.getActiveUniformsiv, .{ .name = "glGetActiveUniformsiv", .linkage = .Strong });
-    @export(bindings.getActiveUniformName, .{ .name = "glGetActiveUniformName", .linkage = .Strong });
-    @export(bindings.getUniformBlockIndex, .{ .name = "glGetUniformBlockIndex", .linkage = .Strong });
-    @export(bindings.getActiveUniformBlockiv, .{ .name = "glGetActiveUniformBlockiv", .linkage = .Strong });
-    @export(bindings.getActiveUniformBlockName, .{ .name = "glGetActiveUniformBlockName", .linkage = .Strong });
-    @export(bindings.uniformBlockBinding, .{ .name = "glUniformBlockBinding", .linkage = .Strong });
+    @export(bindings.drawArraysInstanced, .{ .name = "glDrawArraysInstanced", .linkage = linkage });
+    @export(bindings.drawElementsInstanced, .{ .name = "glDrawElementsInstanced", .linkage = linkage });
+    @export(bindings.texBuffer, .{ .name = "glTexBuffer", .linkage = linkage });
+    @export(bindings.primitiveRestartIndex, .{ .name = "glPrimitiveRestartIndex", .linkage = linkage });
+    @export(bindings.copyBufferSubData, .{ .name = "glCopyBufferSubData", .linkage = linkage });
+    @export(bindings.getUniformIndices, .{ .name = "glGetUniformIndices", .linkage = linkage });
+    @export(bindings.getActiveUniformsiv, .{ .name = "glGetActiveUniformsiv", .linkage = linkage });
+    @export(bindings.getActiveUniformName, .{ .name = "glGetActiveUniformName", .linkage = linkage });
+    @export(bindings.getUniformBlockIndex, .{ .name = "glGetUniformBlockIndex", .linkage = linkage });
+    @export(bindings.getActiveUniformBlockiv, .{ .name = "glGetActiveUniformBlockiv", .linkage = linkage });
+    @export(bindings.getActiveUniformBlockName, .{ .name = "glGetActiveUniformBlockName", .linkage = linkage });
+    @export(bindings.uniformBlockBinding, .{ .name = "glUniformBlockBinding", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.2 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.drawElementsBaseVertex, .{ .name = "glDrawElementsBaseVertex", .linkage = .Strong });
-    @export(bindings.drawRangeElementsBaseVertex, .{ .name = "glDrawRangeElementsBaseVertex", .linkage = .Strong });
-    @export(bindings.drawElementsInstancedBaseVertex, .{ .name = "glDrawElementsInstancedBaseVertex", .linkage = .Strong });
-    @export(bindings.multiDrawElementsBaseVertex, .{ .name = "glMultiDrawElementsBaseVertex", .linkage = .Strong });
-    @export(bindings.provokingVertex, .{ .name = "glProvokingVertex", .linkage = .Strong });
-    @export(bindings.fenceSync, .{ .name = "glFenceSync", .linkage = .Strong });
-    @export(bindings.isSync, .{ .name = "glIsSync", .linkage = .Strong });
-    @export(bindings.deleteSync, .{ .name = "glDeleteSync", .linkage = .Strong });
-    @export(bindings.clientWaitSync, .{ .name = "glClientWaitSync", .linkage = .Strong });
-    @export(bindings.waitSync, .{ .name = "glWaitSync", .linkage = .Strong });
-    @export(bindings.getInteger64v, .{ .name = "glGetInteger64v", .linkage = .Strong });
-    @export(bindings.getSynciv, .{ .name = "glGetSynciv", .linkage = .Strong });
-    @export(bindings.getInteger64i_v, .{ .name = "glGetInteger64i_v", .linkage = .Strong });
-    @export(bindings.getBufferParameteri64v, .{ .name = "glGetBufferParameteri64v", .linkage = .Strong });
-    @export(bindings.framebufferTexture, .{ .name = "glFramebufferTexture", .linkage = .Strong });
-    @export(bindings.texImage2DMultisample, .{ .name = "glTexImage2DMultisample", .linkage = .Strong });
-    @export(bindings.texImage3DMultisample, .{ .name = "glTexImage3DMultisample", .linkage = .Strong });
-    @export(bindings.getMultisamplefv, .{ .name = "glGetMultisamplefv", .linkage = .Strong });
-    @export(bindings.sampleMaski, .{ .name = "glSampleMaski", .linkage = .Strong });
+    @export(bindings.drawElementsBaseVertex, .{ .name = "glDrawElementsBaseVertex", .linkage = linkage });
+    @export(bindings.drawRangeElementsBaseVertex, .{ .name = "glDrawRangeElementsBaseVertex", .linkage = linkage });
+    @export(bindings.drawElementsInstancedBaseVertex, .{ .name = "glDrawElementsInstancedBaseVertex", .linkage = linkage });
+    @export(bindings.multiDrawElementsBaseVertex, .{ .name = "glMultiDrawElementsBaseVertex", .linkage = linkage });
+    @export(bindings.provokingVertex, .{ .name = "glProvokingVertex", .linkage = linkage });
+    @export(bindings.fenceSync, .{ .name = "glFenceSync", .linkage = linkage });
+    @export(bindings.isSync, .{ .name = "glIsSync", .linkage = linkage });
+    @export(bindings.deleteSync, .{ .name = "glDeleteSync", .linkage = linkage });
+    @export(bindings.clientWaitSync, .{ .name = "glClientWaitSync", .linkage = linkage });
+    @export(bindings.waitSync, .{ .name = "glWaitSync", .linkage = linkage });
+    @export(bindings.getInteger64v, .{ .name = "glGetInteger64v", .linkage = linkage });
+    @export(bindings.getSynciv, .{ .name = "glGetSynciv", .linkage = linkage });
+    @export(bindings.getInteger64i_v, .{ .name = "glGetInteger64i_v", .linkage = linkage });
+    @export(bindings.getBufferParameteri64v, .{ .name = "glGetBufferParameteri64v", .linkage = linkage });
+    @export(bindings.framebufferTexture, .{ .name = "glFramebufferTexture", .linkage = linkage });
+    @export(bindings.texImage2DMultisample, .{ .name = "glTexImage2DMultisample", .linkage = linkage });
+    @export(bindings.texImage3DMultisample, .{ .name = "glTexImage3DMultisample", .linkage = linkage });
+    @export(bindings.getMultisamplefv, .{ .name = "glGetMultisamplefv", .linkage = linkage });
+    @export(bindings.sampleMaski, .{ .name = "glSampleMaski", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.3 (Core Profile)
     //----------------------------------------------------------------------------------------------
-    @export(bindings.bindFragDataLocationIndexed, .{ .name = "glBindFragDataLocationIndexed", .linkage = .Strong });
-    @export(bindings.getFragDataIndex, .{ .name = "glGetFragDataIndex", .linkage = .Strong });
-    @export(bindings.genSamplers, .{ .name = "glGenSamplers", .linkage = .Strong });
-    @export(bindings.deleteSamplers, .{ .name = "glDeleteSamplers", .linkage = .Strong });
-    @export(bindings.isSampler, .{ .name = "glIsSampler", .linkage = .Strong });
-    @export(bindings.bindSampler, .{ .name = "glBindSampler", .linkage = .Strong });
-    @export(bindings.samplerParameteri, .{ .name = "glSamplerParameteri", .linkage = .Strong });
-    @export(bindings.samplerParameteriv, .{ .name = "glSamplerParameteriv", .linkage = .Strong });
-    @export(bindings.samplerParameterf, .{ .name = "glSamplerParameterf", .linkage = .Strong });
-    @export(bindings.samplerParameterfv, .{ .name = "glSamplerParameterfv", .linkage = .Strong });
-    @export(bindings.samplerParameterIiv, .{ .name = "glSamplerParameterIiv", .linkage = .Strong });
-    @export(bindings.samplerParameterIuiv, .{ .name = "glSamplerParameterIuiv", .linkage = .Strong });
-    @export(bindings.getSamplerParameteriv, .{ .name = "glGetSamplerParameteriv", .linkage = .Strong });
-    @export(bindings.getSamplerParameterIiv, .{ .name = "glGetSamplerParameterIiv", .linkage = .Strong });
-    @export(bindings.getSamplerParameterfv, .{ .name = "glGetSamplerParameterfv", .linkage = .Strong });
-    @export(bindings.getSamplerParameterIuiv, .{ .name = "glGetSamplerParameterIuiv", .linkage = .Strong });
-    @export(bindings.queryCounter, .{ .name = "glQueryCounter", .linkage = .Strong });
-    @export(bindings.getQueryObjecti64v, .{ .name = "glGetQueryObjecti64v", .linkage = .Strong });
-    @export(bindings.getQueryObjectui64v, .{ .name = "glGetQueryObjectui64v", .linkage = .Strong });
-    @export(bindings.vertexAttribDivisor, .{ .name = "glVertexAttribDivisor", .linkage = .Strong });
-    @export(bindings.vertexAttribP1ui, .{ .name = "glVertexAttribP1ui", .linkage = .Strong });
-    @export(bindings.vertexAttribP1uiv, .{ .name = "glVertexAttribP1uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribP2ui, .{ .name = "glVertexAttribP2ui", .linkage = .Strong });
-    @export(bindings.vertexAttribP2uiv, .{ .name = "glVertexAttribP2uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribP3ui, .{ .name = "glVertexAttribP3ui", .linkage = .Strong });
-    @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = .Strong });
-    @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = .Strong });
-    @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = .Strong });
+    @export(bindings.bindFragDataLocationIndexed, .{ .name = "glBindFragDataLocationIndexed", .linkage = linkage });
+    @export(bindings.getFragDataIndex, .{ .name = "glGetFragDataIndex", .linkage = linkage });
+    @export(bindings.genSamplers, .{ .name = "glGenSamplers", .linkage = linkage });
+    @export(bindings.deleteSamplers, .{ .name = "glDeleteSamplers", .linkage = linkage });
+    @export(bindings.isSampler, .{ .name = "glIsSampler", .linkage = linkage });
+    @export(bindings.bindSampler, .{ .name = "glBindSampler", .linkage = linkage });
+    @export(bindings.samplerParameteri, .{ .name = "glSamplerParameteri", .linkage = linkage });
+    @export(bindings.samplerParameteriv, .{ .name = "glSamplerParameteriv", .linkage = linkage });
+    @export(bindings.samplerParameterf, .{ .name = "glSamplerParameterf", .linkage = linkage });
+    @export(bindings.samplerParameterfv, .{ .name = "glSamplerParameterfv", .linkage = linkage });
+    @export(bindings.samplerParameterIiv, .{ .name = "glSamplerParameterIiv", .linkage = linkage });
+    @export(bindings.samplerParameterIuiv, .{ .name = "glSamplerParameterIuiv", .linkage = linkage });
+    @export(bindings.getSamplerParameteriv, .{ .name = "glGetSamplerParameteriv", .linkage = linkage });
+    @export(bindings.getSamplerParameterIiv, .{ .name = "glGetSamplerParameterIiv", .linkage = linkage });
+    @export(bindings.getSamplerParameterfv, .{ .name = "glGetSamplerParameterfv", .linkage = linkage });
+    @export(bindings.getSamplerParameterIuiv, .{ .name = "glGetSamplerParameterIuiv", .linkage = linkage });
+    @export(bindings.queryCounter, .{ .name = "glQueryCounter", .linkage = linkage });
+    @export(bindings.getQueryObjecti64v, .{ .name = "glGetQueryObjecti64v", .linkage = linkage });
+    @export(bindings.getQueryObjectui64v, .{ .name = "glGetQueryObjectui64v", .linkage = linkage });
+    @export(bindings.vertexAttribDivisor, .{ .name = "glVertexAttribDivisor", .linkage = linkage });
+    @export(bindings.vertexAttribP1ui, .{ .name = "glVertexAttribP1ui", .linkage = linkage });
+    @export(bindings.vertexAttribP1uiv, .{ .name = "glVertexAttribP1uiv", .linkage = linkage });
+    @export(bindings.vertexAttribP2ui, .{ .name = "glVertexAttribP2ui", .linkage = linkage });
+    @export(bindings.vertexAttribP2uiv, .{ .name = "glVertexAttribP2uiv", .linkage = linkage });
+    @export(bindings.vertexAttribP3ui, .{ .name = "glVertexAttribP3ui", .linkage = linkage });
+    @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
+    @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
+    @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
 }

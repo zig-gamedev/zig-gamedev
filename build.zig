@@ -82,6 +82,13 @@ pub fn build(b: *std.Build) void {
     // Benchmarks
     //
     benchmarks(b, options);
+
+    //
+    // Experiments
+    //
+    if (b.option(bool, "experiments", "Build our prototypes and experimental programs") orelse false) {
+        @import("experiments/build.zig").build(b, options);
+    }
 }
 
 fn packagesCrossPlatform(b: *std.Build, options: Options) void {
@@ -539,13 +546,13 @@ fn benchmarks(b: *std.Build, options: Options) void {
     }
 }
 
-var zsdl_pkg: zsdl.Package = undefined;
-var zopengl_pkg: zopengl.Package = undefined;
-var zmath_pkg: zmath.Package = undefined;
+pub var zmath_pkg: zmath.Package = undefined;
+pub var znoise_pkg: znoise.Package = undefined;
+pub var zopengl_pkg: zopengl.Package = undefined;
+pub var zsdl_pkg: zsdl.Package = undefined;
 var zpool_pkg: zpool.Package = undefined;
 var zmesh_pkg: zmesh.Package = undefined;
 var zglfw_pkg: zglfw.Package = undefined;
-var znoise_pkg: znoise.Package = undefined;
 var zstbi_pkg: zstbi.Package = undefined;
 var zbullet_pkg: zbullet.Package = undefined;
 var zgui_pkg: zgui.Package = undefined;
