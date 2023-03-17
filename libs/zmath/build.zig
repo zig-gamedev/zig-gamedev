@@ -39,13 +39,13 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const zmath_pkg = Package.build(b, .{});
-
     const tests = buildTests(b, optimize, target);
-    tests.addModule("zmath_options", zmath_pkg.zmath_options);
-
     const test_step = b.step("test", "Run zmath tests");
     test_step.dependOn(&tests.step);
+
+    const benchmarks = buildBenchmarks(b, target);
+    const benchmark_step = b.step("benchmark", "Run zmath benchmarks");
+    benchmark_step.dependOn(&benchmarks.run().step);
 }
 
 pub fn buildTests(
@@ -58,6 +58,10 @@ pub fn buildTests(
         .target = target,
         .optimize = optimize,
     });
+
+    const zmath_pkg = Package.build(b, .{});
+    tests.addModule("zmath_options", zmath_pkg.zmath_options);
+
     return tests;
 }
 
@@ -71,6 +75,10 @@ pub fn buildBenchmarks(
         .target = target,
         .optimize = .ReleaseFast,
     });
+
+    const zmath_pkg = Package.build(b, .{});
+    exe.addModule("zmath", zmath_pkg.zmath);
+
     return exe;
 }
 

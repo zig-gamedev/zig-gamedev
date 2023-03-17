@@ -56,6 +56,10 @@ pub fn buildTests(
         .target = target,
         .optimize = optimize,
     });
+
+    const zflecs_pkg = Package.build(b, target, optimize, .{});
+    zflecs_pkg.link(tests);
+
     return tests;
 }
 

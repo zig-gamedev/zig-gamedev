@@ -148,6 +148,10 @@ pub fn buildTests(
         .target = target,
         .optimize = optimize,
     });
+
+    const zglfw_pkg = Package.build(b, target, optimize, .{});
+    zglfw_pkg.link(tests);
+
     return tests;
 }
 

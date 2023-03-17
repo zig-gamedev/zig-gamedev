@@ -214,21 +214,28 @@ pub fn buildTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-    use_double_precision: bool,
+    options: Package.Options,
 ) *std.Build.CompileStep {
     const tests = b.addTest(.{
         .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
         .target = target,
         .optimize = optimize,
     });
+
     tests.addCSourceFile(
         thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c",
         &.{
             "-std=c11",
-            if (use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
+            if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
             if (tests.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         },
     );
+
+    const zphysics_pkg = Package.build(b, target, optimize, .{ .options = options });
+    zphysics_pkg.link(tests);
+
+    tests.addModule("zphysics_options", zphysics_pkg.zphysics_options);
+
     return tests;
 }
 

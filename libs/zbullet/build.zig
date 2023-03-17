@@ -60,6 +60,10 @@ pub fn buildTests(
         .target = target,
         .optimize = optimize,
     });
+
+    const zbullet_pkg = Package.build(b, target, optimize, .{});
+    zbullet_pkg.link(tests);
+
     return tests;
 }
 

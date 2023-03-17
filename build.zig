@@ -348,43 +348,31 @@ fn samplesWindows(b: *std.Build, options: Options) void {
 fn tests(b: *std.Build, options: Options) void {
     const test_step = b.step("test", "Run all tests");
 
-    { // zmath
-        const exe = zmath.buildTests(b, options.optimize, options.target);
-        exe.addModule("zmath_options", zmath_pkg.zmath_options);
-        test_step.dependOn(&exe.step);
-    }
-    { // zmesh
-        const exe = zmesh.buildTests(b, options.optimize, options.target);
-        zmesh_pkg.link(exe);
-        test_step.dependOn(&exe.step);
-    }
-    { // zstbi
-        const exe = zstbi.buildTests(b, options.optimize, options.target);
-        zstbi_pkg.link(exe);
-        test_step.dependOn(&exe.step);
-    }
-    { // znoise
-        const znoise_tests = znoise.buildTests(b, options.optimize, options.target);
-        znoise_pkg.link(znoise_tests);
-        test_step.dependOn(&znoise_tests.step);
-    }
+    test_step.dependOn(&zmath.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zmesh.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zstbi.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&znoise.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zglfw.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zpool.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zjobs.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zaudio.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zflecs.buildTests(b, options.optimize, options.target).step);
+    test_step.dependOn(&zphysics.buildTests(
+        b,
+        options.optimize,
+        options.target,
+        .{ .use_double_precision = false },
+    ).step);
+    test_step.dependOn(&zphysics.buildTests(
+        b,
+        options.optimize,
+        options.target,
+        .{ .use_double_precision = true },
+    ).step);
+
     { // zbullet
         const exe = zbullet.buildTests(b, options.optimize, options.target);
         exe.addModule("zmath", zmath_pkg.zmath);
-        zbullet_pkg.link(exe);
-        test_step.dependOn(&exe.step);
-    }
-    { // zglfw
-        const exe = zglfw.buildTests(b, options.optimize, options.target);
-        zglfw_pkg.link(exe);
-        test_step.dependOn(&exe.step);
-    }
-    { // zpool
-        const exe = zpool.buildTests(b, options.optimize, options.target);
-        test_step.dependOn(&exe.step);
-    }
-    { // zjobs
-        const exe = zjobs.buildTests(b, options.optimize, options.target);
         test_step.dependOn(&exe.step);
     }
     { // zgpu
@@ -395,33 +383,6 @@ fn tests(b: *std.Build, options: Options) void {
             test_step.dependOn(&exe.step);
         }
     }
-    { // zaudio
-        const exe = zaudio.buildTests(b, options.optimize, options.target);
-        zaudio_pkg.link(exe);
-        test_step.dependOn(&exe.step);
-    }
-    { // zflecs
-        const exe = zflecs.buildTests(b, options.optimize, options.target);
-        zflecs_pkg.link(exe);
-        test_step.dependOn(&exe.step);
-    }
-    { // zphysics
-        { // f32
-            const exe = zphysics.buildTests(b, options.optimize, options.target, false);
-            exe.addModule("zphysics_options", zphysics_pkg.zphysics_options);
-            zphysics_pkg.link(exe);
-            test_step.dependOn(&exe.step);
-        }
-        { // f64
-            const zphysics_f64_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
-                .options = .{ .use_double_precision = true },
-            });
-            const exe = zphysics.buildTests(b, options.optimize, options.target, true);
-            exe.addModule("zphysics_options", zphysics_f64_pkg.zphysics_options);
-            zphysics_f64_pkg.link(exe);
-            test_step.dependOn(&exe.step);
-        }
-    }
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
@@ -429,7 +390,6 @@ fn benchmarks(b: *std.Build, options: Options) void {
 
     { // zmath
         const exe = zmath.buildBenchmarks(b, options.target);
-        exe.addModule("zmath", zmath_pkg.zmath);
         benchmark_step.dependOn(&exe.run().step);
     }
 }

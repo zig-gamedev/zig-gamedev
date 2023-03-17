@@ -58,6 +58,10 @@ pub fn buildTests(
         .target = target,
         .optimize = optimize,
     });
+
+    const zstbi_pkg = Package.build(b, target, optimize, .{});
+    zstbi_pkg.link(tests);
+
     return tests;
 }
 
