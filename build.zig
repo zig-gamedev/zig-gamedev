@@ -117,9 +117,6 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     zphysics_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
         .options = .{ .use_double_precision = false },
     });
-    zphysics_f64_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .use_double_precision = true },
-    });
     zaudio_pkg = zaudio.Package.build(b, options.target, options.optimize, .{});
     zflecs_pkg = zflecs.Package.build(b, options.target, options.optimize, .{});
 }
@@ -162,6 +159,19 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 }
 
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
+    const minimal_gl = @import("samples/minimal_gl/build.zig");
+    const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
+    const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
+    const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
+    const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
+    const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
+    const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
+    const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+    const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
+    const layers_wgpu = @import("samples/layers_wgpu/build.zig");
+    const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
+    const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+
     install(b, minimal_gl.build(b, options), "minimal_gl");
     install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
     install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
@@ -177,6 +187,15 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
 }
 
 fn samplesWindowsLinux(b: *std.Build, options: Options) void {
+    const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
+    const textured_quad = @import("samples/textured_quad/build.zig");
+    const triangle = @import("samples/triangle/build.zig");
+    const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
+    const rasterization = @import("samples/rasterization/build.zig");
+    const bindless = @import("samples/bindless/build.zig");
+    const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+    const intro = @import("samples/intro/build.zig");
+
     { // bindless
         const exe = bindless.build(b, options);
         exe.addModule("zmesh", zmesh_pkg.zmesh);
@@ -269,6 +288,12 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
+    const intro = @import("samples/intro/build.zig");
+    const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+    const audio_experiments = @import("samples/audio_experiments/build.zig");
+    const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
+    const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
+
     { // intro 0
         const exe = intro.build(b, options, 0);
         exe.addModule("zwin32", zwin32_pkg.zwin32);
@@ -388,6 +413,9 @@ fn tests(b: *std.Build, options: Options) void {
             test_step.dependOn(&exe.step);
         }
         { // f64
+            const zphysics_f64_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
+                .options = .{ .use_double_precision = true },
+            });
             const exe = zphysics.buildTests(b, options.optimize, options.target, true);
             exe.addModule("zphysics_options", zphysics_f64_pkg.zphysics_options);
             zphysics_f64_pkg.link(exe);
@@ -422,15 +450,13 @@ pub var zphysics_pkg: zphysics.Package = undefined;
 pub var zaudio_pkg: zaudio.Package = undefined;
 pub var zflecs_pkg: zflecs.Package = undefined;
 
-var zphysics_f64_pkg: zphysics.Package = undefined;
-
 var zwin32_pkg: zwin32.Package = undefined;
 var zd3d12_pkg: zd3d12.Package = undefined;
 var zpix_pkg: zpix.Package = undefined;
+var zxaudio2_pkg: zxaudio2.Package = undefined;
 var common_pkg: common.Package = undefined;
 var common_d2d_pkg: common.Package = undefined;
 var zd3d12_d2d_pkg: zd3d12.Package = undefined;
-var zxaudio2_pkg: zxaudio2.Package = undefined;
 
 const zsdl = @import("libs/zsdl/build.zig");
 const zopengl = @import("libs/zopengl/build.zig");
@@ -453,33 +479,6 @@ const ztracy = @import("libs/ztracy/build.zig");
 const zphysics = @import("libs/zphysics/build.zig");
 const zaudio = @import("libs/zaudio/build.zig");
 const zflecs = @import("libs/zflecs/build.zig");
-
-const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
-const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
-const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
-const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
-const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
-const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
-const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
-const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
-const layers_wgpu = @import("samples/layers_wgpu/build.zig");
-const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
-const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
-
-const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
-const triangle = @import("samples/triangle/build.zig");
-const textured_quad = @import("samples/textured_quad/build.zig");
-const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
-const rasterization = @import("samples/rasterization/build.zig");
-const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-const bindless = @import("samples/bindless/build.zig");
-const simple_raytracer = @import("samples/simple_raytracer/build.zig");
-const intro = @import("samples/intro/build.zig");
-const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-const audio_experiments = @import("samples/audio_experiments/build.zig");
-const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
-
-const minimal_gl = @import("samples/minimal_gl/build.zig");
 
 pub const Options = struct {
     optimize: std.builtin.Mode,
