@@ -3,21 +3,53 @@ const assert = std.debug.assert;
 
 pub const Package = struct {
     zsdl: *std.Build.Module,
+    install: *std.Build.Step,
 
     pub fn build(
         b: *std.Build,
+        target: std.zig.CrossTarget,
+        _: std.builtin.Mode,
         _: struct {},
     ) Package {
         const zsdl = b.createModule(.{
             .source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
         });
+
+        const install_step = b.step("zsdl-install", "");
+
+        if (target.isWindows()) {
+            install_step.dependOn(
+                &b.addInstallFile(
+                    .{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/bin/SDL2.dll" },
+                    "bin/SDL2.dll",
+                ).step,
+            );
+        } else if (target.isLinux()) {
+            install_step.dependOn(
+                &b.addInstallFile(
+                    .{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib/libSDL2-2.0.so" },
+                    "bin/libSDL2-2.0.so.0",
+                ).step,
+            );
+        } else if (target.isDarwin()) {
+            const install_dir_step = b.addInstallDirectory(.{
+                .source_dir = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework",
+                .install_dir = .{ .custom = "" },
+                .install_subdir = "bin/Frameworks/SDL2.framework",
+            });
+            install_step.dependOn(&install_dir_step.step);
+        } else unreachable;
+
         return .{
             .zsdl = zsdl,
+            .install = install_step,
         };
     }
 
-    pub fn link(_: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(zsdl_pkg: Package, exe: *std.Build.CompileStep) void {
         exe.linkLibC();
+
+        exe.step.dependOn(zsdl_pkg.install);
 
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
@@ -29,13 +61,6 @@ pub const Package = struct {
                 exe.addLibraryPath(thisDir() ++ "/libs/x86_64-windows-gnu/lib");
                 exe.linkSystemLibraryName("SDL2");
                 exe.linkSystemLibraryName("SDL2main");
-
-                exe.step.dependOn(
-                    &exe.builder.addInstallFile(
-                        .{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/bin/SDL2.dll" },
-                        "bin/SDL2.dll",
-                    ).step,
-                );
             },
             .linux => {
                 assert(target.cpu.arch.isX86());
@@ -44,25 +69,11 @@ pub const Package = struct {
                 exe.addLibraryPath(thisDir() ++ "/libs/x86_64-linux-gnu/lib");
                 exe.linkSystemLibraryName("SDL2-2.0");
                 exe.addRPath("$ORIGIN");
-
-                exe.step.dependOn(
-                    &exe.builder.addInstallFile(
-                        .{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib/libSDL2-2.0.so" },
-                        "bin/libSDL2-2.0.so.0",
-                    ).step,
-                );
             },
             .macos => {
                 exe.addFrameworkPath(thisDir() ++ "/libs/macos/Frameworks");
                 exe.linkFramework("SDL2");
                 exe.addRPath("@executable_path/Frameworks");
-
-                const install_dir_step = exe.builder.addInstallDirectory(.{
-                    .source_dir = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework",
-                    .install_dir = .{ .custom = "" },
-                    .install_subdir = "bin/Frameworks/SDL2.framework",
-                });
-                exe.step.dependOn(&install_dir_step.step);
             },
             else => unreachable,
         }

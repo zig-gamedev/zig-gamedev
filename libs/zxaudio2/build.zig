@@ -35,24 +35,6 @@ pub const Package = struct {
             .zxaudio2_options = zxaudio2_options,
         };
     }
-
-    pub fn link(zxaudio2_pkg: Package, exe: *std.Build.CompileStep) void {
-        if (zxaudio2_pkg.options.enable_debug_layer) {
-            exe.step.dependOn(
-                &exe.builder.addInstallFile(
-                    .{ .path = thisDir() ++ "/../zwin32/bin/x64/xaudio2_9redist_debug.dll" },
-                    "bin/xaudio2_9redist.dll",
-                ).step,
-            );
-        } else {
-            exe.step.dependOn(
-                &exe.builder.addInstallFile(
-                    .{ .path = thisDir() ++ "/../zwin32/bin/x64/xaudio2_9redist.dll" },
-                    "bin/xaudio2_9redist.dll",
-                ).step,
-            );
-        }
-    }
 };
 
 pub fn build(_: *std.Build) void {}

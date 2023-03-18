@@ -41,33 +41,6 @@ pub const Package = struct {
             .zd3d12_options = zd3d12_options,
         };
     }
-
-    pub fn link(_: Package, exe: *std.Build.CompileStep) void {
-        exe.step.dependOn(
-            &exe.builder.addInstallFile(
-                .{ .path = thisDir() ++ "/../zwin32/bin/x64/D3D12Core.dll" },
-                "bin/d3d12/D3D12Core.dll",
-            ).step,
-        );
-        exe.step.dependOn(
-            &exe.builder.addInstallFile(
-                .{ .path = thisDir() ++ "/../zwin32/bin/x64/D3D12Core.pdb" },
-                "bin/d3d12/D3D12Core.pdb",
-            ).step,
-        );
-        exe.step.dependOn(
-            &exe.builder.addInstallFile(
-                .{ .path = thisDir() ++ "/../zwin32/bin/x64/D3D12SDKLayers.dll" },
-                "bin/d3d12/D3D12SDKLayers.dll",
-            ).step,
-        );
-        exe.step.dependOn(
-            &exe.builder.addInstallFile(
-                .{ .path = thisDir() ++ "/../zwin32/bin/x64/D3D12SDKLayers.pdb" },
-                "bin/d3d12/D3D12SDKLayers.pdb",
-            ).step,
-        );
-    }
 };
 
 pub fn build(_: *std.Build) void {}

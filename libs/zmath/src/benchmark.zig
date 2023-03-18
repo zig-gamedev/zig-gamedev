@@ -71,6 +71,7 @@ var prng = std.rand.DefaultPrng.init(0);
 const random = prng.random();
 
 noinline fn mat4MulBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {
+    std.debug.print("\n", .{});
     std.debug.print("{s:>42} - ", .{"matrix mul benchmark (AOS)"});
 
     var data0 = std.ArrayList([16]f32).init(allocator);

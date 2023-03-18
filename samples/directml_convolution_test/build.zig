@@ -11,6 +11,17 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .optimize = options.optimize,
     });
 
+    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
+    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
+    const common_pkg = @import("../../build.zig").common_pkg;
+
+    exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
+    exe.addModule("zd3d12_options", zd3d12_pkg.zd3d12_options);
+    exe.addModule("common", common_pkg.common);
+    exe.addModule("zwin32", zwin32_pkg.zwin32);
+    zwin32_pkg.link(exe, .{ .d3d12 = true, .directml = true });
+    common_pkg.link(exe);
+
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
@@ -23,31 +34,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     });
     install_content_step.step.dependOn(dxc_step);
     exe.step.dependOn(&install_content_step.step);
-
-    exe.step.dependOn(
-        &b.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.dll" },
-            "bin/DirectML.dll",
-        ).step,
-    );
-    exe.step.dependOn(
-        &b.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.pdb" },
-            "bin/DirectML.pdb",
-        ).step,
-    );
-    exe.step.dependOn(
-        &b.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.Debug.dll" },
-            "bin/DirectML.Debug.dll",
-        ).step,
-    );
-    exe.step.dependOn(
-        &b.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/DirectML.Debug.pdb" },
-            "bin/DirectML.Debug.pdb",
-        ).step,
-    );
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

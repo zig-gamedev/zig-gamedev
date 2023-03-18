@@ -10,30 +10,10 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .optimize = options.optimize,
     });
 
-    exe.step.dependOn(
-        &exe.builder.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/D3D12Core.dll" },
-            "bin/d3d12/D3D12Core.dll",
-        ).step,
-    );
-    exe.step.dependOn(
-        &exe.builder.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/D3D12Core.pdb" },
-            "bin/d3d12/D3D12Core.pdb",
-        ).step,
-    );
-    exe.step.dependOn(
-        &exe.builder.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/D3D12SDKLayers.dll" },
-            "bin/d3d12/D3D12SDKLayers.dll",
-        ).step,
-    );
-    exe.step.dependOn(
-        &exe.builder.addInstallFile(
-            .{ .path = thisDir() ++ "/../../libs/zwin32/bin/x64/D3D12SDKLayers.pdb" },
-            "bin/d3d12/D3D12SDKLayers.pdb",
-        ).step,
-    );
+    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
+
+    exe.addModule("zwin32", zwin32_pkg.zwin32);
+    zwin32_pkg.link(exe, .{ .d3d12 = true });
 
     const dxc_step = buildShaders(b);
     exe.step.dependOn(dxc_step);
