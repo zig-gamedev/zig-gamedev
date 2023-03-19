@@ -132,5 +132,4 @@ Thanks to all people who sponsor zig-gamedev project! In particular, these fine 
 * [Garett Bass (garettbass)](https://github.com/garettbass)
 * [Connor Rowland (ckrowland)](https://github.com/ckrowland)
 * Zig Software Foundation (ziglang)
-* shintales (shintales)
 * Joran Dirk Greef (jorangreef)

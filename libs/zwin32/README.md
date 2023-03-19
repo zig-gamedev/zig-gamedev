@@ -28,6 +28,8 @@ pub fn build(b: *std.Build) void {
     const zwin32_pkg = zwin32.Package.build(b, .{});
 
     exe.addModule("zwin32", zwin32_pkg.zwin32);
+
+    zwin32_pkg.link(exe, .{ .d3d12 = true, .xaudio2 = true, .directml = true });
 }
 ```
 

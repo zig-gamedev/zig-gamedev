@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) void {
     exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
     exe.addModule("zwin32", zwin32_pkg.zwin32);
 
-    zd3d12_pkg.link(exe);
+    zwin32_pkg.link(exe, .{ .d3d12 = true });
 }
 ```
 

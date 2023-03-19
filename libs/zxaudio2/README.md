@@ -22,7 +22,7 @@ pub fn build(b: *std.Build) void {
     exe.addModule("zwin32", zwin32_pkg.zwin32);
     exe.addModule("zxaudio2", zxaudio2_pkg.zxaudio2);
 
-    zxaudio2_pkg.link(exe);
+    zwin32_pkg.link(exe, .{ .xaudio2 = true });
 }
 ```
 
