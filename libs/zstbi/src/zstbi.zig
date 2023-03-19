@@ -63,7 +63,7 @@ pub const Image = struct {
         var c: c_int = 0;
         const is_supported = stbi_info(pathname, &w, &h, &c);
         return .{
-            .is_supported = is_supported,
+            .is_supported = if (is_supported == 1) true else false,
             .width = @intCast(u32, w),
             .height = @intCast(u32, h),
             .num_components = @intCast(u32, c),
