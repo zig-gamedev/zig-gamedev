@@ -4,7 +4,7 @@ const assert = std.debug.assert;
 
 const panic = std.debug.panic;
 
-const print = std.debug.print;
+const print = std.log.info;
 
 const RingQueue = @import("ring_queue.zig").RingQueue;
 

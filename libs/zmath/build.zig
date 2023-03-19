@@ -52,8 +52,9 @@ pub fn buildTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.CompileStep {
+) *std.Build.RunStep {
     const tests = b.addTest(.{
+        .name = "zmath-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .target = target,
         .optimize = optimize,
@@ -62,15 +63,15 @@ pub fn buildTests(
     const zmath_pkg = Package.build(b, .{});
     tests.addModule("zmath_options", zmath_pkg.zmath_options);
 
-    return tests;
+    return tests.run();
 }
 
 pub fn buildBenchmarks(
     b: *std.Build,
     target: std.zig.CrossTarget,
-) *std.Build.CompileStep {
+) *std.Build.RunStep {
     const exe = b.addExecutable(.{
-        .name = "benchmark",
+        .name = "zmath-benchmarks",
         .root_source_file = .{ .path = thisDir() ++ "/src/benchmark.zig" },
         .target = target,
         .optimize = .ReleaseFast,
@@ -79,7 +80,7 @@ pub fn buildBenchmarks(
     const zmath_pkg = Package.build(b, .{});
     exe.addModule("zmath", zmath_pkg.zmath);
 
-    return exe;
+    return exe.run();
 }
 
 inline fn thisDir() []const u8 {

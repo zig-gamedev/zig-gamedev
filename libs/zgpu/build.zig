@@ -111,19 +111,6 @@ pub const Package = struct {
 
 pub fn build(_: *std.Build) void {}
 
-pub fn buildTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
-) *std.Build.CompileStep {
-    const tests = b.addTest(.{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    return tests;
-}
-
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

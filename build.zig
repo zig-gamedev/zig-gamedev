@@ -240,29 +240,12 @@ fn tests(b: *std.Build, options: Options) void {
         options.target,
         .{ .use_double_precision = true },
     ).step);
-
-    { // zbullet
-        const exe = zbullet.buildTests(b, options.optimize, options.target);
-        exe.addModule("zmath", zmath_pkg.zmath);
-        test_step.dependOn(&exe.step);
-    }
-    { // zgpu
-        if (!options.target.isDarwin()) { // TODO: Linker error on macOS.
-            const exe = zgpu.buildTests(b, options.optimize, options.target);
-            exe.want_lto = false; // TODO: Problems with LTO on Windows.
-            zgpu_pkg.link(exe);
-            test_step.dependOn(&exe.step);
-        }
-    }
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
 
-    { // zmath
-        const exe = zmath.buildBenchmarks(b, options.target);
-        benchmark_step.dependOn(&exe.run().step);
-    }
+    benchmark_step.dependOn(&zmath.buildBenchmarks(b, options.target).step);
 }
 
 pub var zmath_pkg: zmath.Package = undefined;

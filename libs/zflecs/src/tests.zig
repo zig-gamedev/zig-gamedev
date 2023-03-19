@@ -3,13 +3,15 @@ const ecs = @import("zflecs.zig");
 
 const expect = std.testing.expect;
 
+const print = std.log.info;
+
 const Position = struct { x: f32, y: f32 };
 const Velocity = struct { x: f32, y: f32 };
 const Walking = struct {};
 const Direction = enum { north, south, east, west };
 
 test "zflecs.entities.basics" {
-    std.debug.print("\n", .{});
+    print("\n", .{});
 
     const world = ecs.init();
     defer _ = ecs.fini(world);
@@ -23,7 +25,7 @@ test "zflecs.entities.basics" {
     ecs.add(world, bob, Walking);
 
     const ptr = ecs.get(world, bob, Position).?;
-    std.debug.print("({d}, {d})\n", .{ ptr.x, ptr.y });
+    print("({d}, {d})\n", .{ ptr.x, ptr.y });
 
     _ = ecs.set(world, bob, Position, .{ .x = 20, .y = 30 });
 
@@ -33,7 +35,7 @@ test "zflecs.entities.basics" {
 
     const str = ecs.type_str(world, ecs.get_type(world, alice)).?;
     defer ecs.os.free(str);
-    std.debug.print("[{s}]\n", .{str});
+    print("[{s}]\n", .{str});
 
     ecs.remove(world, alice, Walking);
 
@@ -42,7 +44,7 @@ test "zflecs.entities.basics" {
         while (ecs.term_next(&it)) {
             if (ecs.field(&it, Position, 1)) |positions| {
                 for (positions, it.entities()) |p, e| {
-                    std.debug.print(
+                    print(
                         "Term loop: {s}: ({d}, {d})\n",
                         .{ ecs.get_name(world, e).?, p.x, p.y },
                     );
@@ -70,7 +72,7 @@ test "zflecs.entities.basics" {
         var it = ecs.filter_iter(world, filter);
         while (ecs.filter_next(&it)) {
             for (it.entities()) |e| {
-                std.debug.print("Filter loop: {s}\n", .{ecs.get_name(world, e).?});
+                print("Filter loop: {s}\n", .{ecs.get_name(world, e).?});
             }
         }
     }
@@ -104,7 +106,7 @@ fn registerComponents(world: *ecs.world_t) void {
 }
 
 test "zflecs.basic" {
-    std.debug.print("\n", .{});
+    print("\n", .{});
 
     const world = ecs.init();
     defer _ = ecs.fini(world);
@@ -150,17 +152,17 @@ test "zflecs.basic" {
         {
             const str = ecs.id_str(world, p0).?;
             defer ecs.os.free(str);
-            std.debug.print("{s}\n", .{str});
+            print("{s}\n", .{str});
         }
         {
             const str = ecs.id_str(world, p1).?;
             defer ecs.os.free(str);
-            std.debug.print("{s}\n", .{str});
+            print("{s}\n", .{str});
         }
         {
             const str = ecs.id_str(world, p2).?;
             defer ecs.os.free(str);
-            std.debug.print("{s}\n", .{str});
+            print("{s}\n", .{str});
         }
     }
 
@@ -171,13 +173,13 @@ test "zflecs.basic" {
 
     ecs.TAG(world, Walking);
 
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*const Position)).?, ecs.id(*const Position) });
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(?*const Position)).?, ecs.id(?*const Position) });
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*Position)).?, ecs.id(*Position) });
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Position)).?, ecs.id(Position) });
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Direction)).?, ecs.id(Direction) });
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Walking)).?, ecs.id(Walking) });
-    std.debug.print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(u31)).?, ecs.id(u31) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*const Position)).?, ecs.id(*const Position) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(?*const Position)).?, ecs.id(?*const Position) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*Position)).?, ecs.id(*Position) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Position)).?, ecs.id(Position) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Direction)).?, ecs.id(Direction) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Walking)).?, ecs.id(Walking) });
+    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(u31)).?, ecs.id(u31) });
 
     const p: Position = .{ .x = 1.0, .y = 2.0 };
     _ = ecs.set(world, e0, *const Position, &p);
@@ -209,19 +211,19 @@ test "zflecs.basic" {
     const e0_str = ecs.entity_str(world, e0).?;
     defer ecs.os.free(e0_str);
 
-    std.debug.print("type str: {s}\n", .{e0_type_str});
-    std.debug.print("table str: {s}\n", .{e0_table_str});
-    std.debug.print("entity str: {s}\n", .{e0_str});
+    print("type str: {s}\n", .{e0_type_str});
+    print("table str: {s}\n", .{e0_table_str});
+    print("entity str: {s}\n", .{e0_str});
 
     {
         const str = ecs.type_str(world, ecs.get_type(world, ecs.id(Position))).?;
         defer ecs.os.free(str);
-        std.debug.print("{s}\n", .{str});
+        print("{s}\n", .{str});
     }
     {
         const str = ecs.id_str(world, ecs.id(Position)).?;
         defer ecs.os.free(str);
-        std.debug.print("{s}\n", .{str});
+        print("{s}\n", .{str});
     }
 }
 
@@ -233,7 +235,7 @@ fn move(it: *ecs.iter_t) callconv(.C) void {
     const v = ecs.field(it, Velocity, 2).?;
 
     const type_str = ecs.table_str(it.world, it.table).?;
-    std.debug.print("Move entities with [{s}]\n", .{type_str});
+    print("Move entities with [{s}]\n", .{type_str});
     defer ecs.os.free(type_str);
 
     for (0..it.count()) |i| {
@@ -243,7 +245,7 @@ fn move(it: *ecs.iter_t) callconv(.C) void {
 }
 
 test "zflecs.helloworld" {
-    std.debug.print("\n", .{});
+    print("\n", .{});
 
     const world = ecs.init();
     defer _ = ecs.fini(world);
@@ -272,5 +274,5 @@ test "zflecs.helloworld" {
     _ = ecs.progress(world, 0);
 
     const p = ecs.get(world, bob, Position).?;
-    std.debug.print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
+    print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
 }

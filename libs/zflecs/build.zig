@@ -12,7 +12,6 @@ pub const Package = struct {
     ) Package {
         const zflecs = b.createModule(.{
             .source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
-            .dependencies = &.{},
         });
 
         const zflecs_c_cpp = b.addStaticLibrary(.{
@@ -50,8 +49,9 @@ pub fn buildTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.CompileStep {
+) *std.Build.RunStep {
     const tests = b.addTest(.{
+        .name = "zflecs-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
         .target = target,
         .optimize = optimize,
@@ -60,7 +60,7 @@ pub fn buildTests(
     const zflecs_pkg = Package.build(b, target, optimize, .{});
     zflecs_pkg.link(tests);
 
-    return tests;
+    return tests.run();
 }
 
 inline fn thisDir() []const u8 {

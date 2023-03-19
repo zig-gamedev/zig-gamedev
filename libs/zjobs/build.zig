@@ -24,13 +24,14 @@ pub fn buildTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.CompileStep {
+) *std.Build.RunStep {
     const tests = b.addTest(.{
+        .name = "zjobs-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
         .target = target,
         .optimize = optimize,
     });
-    return tests;
+    return tests.run();
 }
 
 inline fn thisDir() []const u8 {

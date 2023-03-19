@@ -215,8 +215,9 @@ pub fn buildTests(
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
     options: Package.Options,
-) *std.Build.CompileStep {
+) *std.Build.RunStep {
     const tests = b.addTest(.{
+        .name = "zphysics-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
         .target = target,
         .optimize = optimize,
@@ -236,7 +237,7 @@ pub fn buildTests(
 
     tests.addModule("zphysics_options", zphysics_pkg.zphysics_options);
 
-    return tests;
+    return tests.run();
 }
 
 inline fn thisDir() []const u8 {

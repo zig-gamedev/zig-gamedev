@@ -52,8 +52,9 @@ pub fn buildTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.CompileStep {
+) *std.Build.RunStep {
     const tests = b.addTest(.{
+        .name = "zstbi-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
         .target = target,
         .optimize = optimize,
@@ -62,7 +63,7 @@ pub fn buildTests(
     const zstbi_pkg = Package.build(b, target, optimize, .{});
     zstbi_pkg.link(tests);
 
-    return tests;
+    return tests.run();
 }
 
 inline fn thisDir() []const u8 {
