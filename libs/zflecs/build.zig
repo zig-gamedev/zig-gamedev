@@ -43,13 +43,19 @@ pub const Package = struct {
     }
 };
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-pub fn buildTests(
+    const test_step = b.step("test", "Run zflecs tests");
+    test_step.dependOn(runTests(b, optimize, target));
+}
+
+pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.RunStep {
+) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zflecs-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
@@ -60,7 +66,7 @@ pub fn buildTests(
     const zflecs_pkg = Package.build(b, target, optimize, .{});
     zflecs_pkg.link(tests);
 
-    return tests.run();
+    return &tests.run().step;
 }
 
 inline fn thisDir() []const u8 {

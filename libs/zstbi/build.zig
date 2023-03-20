@@ -46,13 +46,19 @@ pub const Package = struct {
     }
 };
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-pub fn buildTests(
+    const test_step = b.step("test", "Run zstbi tests");
+    test_step.dependOn(runTests(b, optimize, target));
+}
+
+pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.RunStep {
+) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zstbi-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
@@ -63,7 +69,7 @@ pub fn buildTests(
     const zstbi_pkg = Package.build(b, target, optimize, .{});
     zstbi_pkg.link(tests);
 
-    return tests.run();
+    return &tests.run().step;
 }
 
 inline fn thisDir() []const u8 {

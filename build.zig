@@ -219,33 +219,22 @@ fn samplesWindows(b: *std.Build, options: Options) void {
 fn tests(b: *std.Build, options: Options) void {
     const test_step = b.step("test", "Run all tests");
 
-    test_step.dependOn(&zmath.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zmesh.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zstbi.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&znoise.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zglfw.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zpool.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zjobs.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zaudio.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zflecs.buildTests(b, options.optimize, options.target).step);
-    test_step.dependOn(&zphysics.buildTests(
-        b,
-        options.optimize,
-        options.target,
-        .{ .use_double_precision = false },
-    ).step);
-    test_step.dependOn(&zphysics.buildTests(
-        b,
-        options.optimize,
-        options.target,
-        .{ .use_double_precision = true },
-    ).step);
+    test_step.dependOn(zmath.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zmesh.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zstbi.runTests(b, options.optimize, options.target));
+    test_step.dependOn(znoise.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zglfw.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zpool.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zjobs.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zaudio.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
 
-    benchmark_step.dependOn(&zmath.buildBenchmarks(b, options.target).step);
+    benchmark_step.dependOn(zmath.runBenchmarks(b, options.target));
 }
 
 pub var zmath_pkg: zmath.Package = undefined;

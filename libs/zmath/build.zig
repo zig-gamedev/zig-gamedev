@@ -16,7 +16,11 @@ pub const Package = struct {
         },
     ) Package {
         const step = b.addOptions();
-        step.addOption(bool, "enable_cross_platform_determinism", args.options.enable_cross_platform_determinism);
+        step.addOption(
+            bool,
+            "enable_cross_platform_determinism",
+            args.options.enable_cross_platform_determinism,
+        );
 
         const zmath_options = step.createModule();
 
@@ -39,20 +43,18 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const tests = buildTests(b, optimize, target);
     const test_step = b.step("test", "Run zmath tests");
-    test_step.dependOn(&tests.step);
+    test_step.dependOn(runTests(b, optimize, target));
 
-    const benchmarks = buildBenchmarks(b, target);
     const benchmark_step = b.step("benchmark", "Run zmath benchmarks");
-    benchmark_step.dependOn(&benchmarks.run().step);
+    benchmark_step.dependOn(runBenchmarks(b, target));
 }
 
-pub fn buildTests(
+pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.RunStep {
+) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zmath-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
@@ -63,13 +65,13 @@ pub fn buildTests(
     const zmath_pkg = Package.build(b, .{});
     tests.addModule("zmath_options", zmath_pkg.zmath_options);
 
-    return tests.run();
+    return &tests.run().step;
 }
 
-pub fn buildBenchmarks(
+pub fn runBenchmarks(
     b: *std.Build,
     target: std.zig.CrossTarget,
-) *std.Build.RunStep {
+) *std.Build.Step {
     const exe = b.addExecutable(.{
         .name = "zmath-benchmarks",
         .root_source_file = .{ .path = thisDir() ++ "/src/benchmark.zig" },
@@ -80,7 +82,7 @@ pub fn buildBenchmarks(
     const zmath_pkg = Package.build(b, .{});
     exe.addModule("zmath", zmath_pkg.zmath);
 
-    return exe.run();
+    return &exe.run().step;
 }
 
 inline fn thisDir() []const u8 {

@@ -2289,6 +2289,9 @@ fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
 const expect = std.testing.expect;
 
 test "zphysics.BodyCreationSettings" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
     const eql = std.mem.eql;
     const asBytes = std.mem.asBytes;
     const approxEql = std.math.approxEqAbs;
@@ -2303,16 +2306,15 @@ test "zphysics.BodyCreationSettings" {
     try expect(approxEql(Real, bcs0.position[0], bcs1.position[0], 0.0001));
     try expect(approxEql(Real, bcs0.position[1], bcs1.position[1], 0.0001));
     try expect(approxEql(Real, bcs0.position[2], bcs1.position[2], 0.0001));
-
     try expect(eql(u8, asBytes(&bcs0.rotation), asBytes(&bcs1.rotation)));
 
-    try expect(approxEql(Real, bcs0.linear_velocity[0], bcs1.linear_velocity[0], 0.0001));
-    try expect(approxEql(Real, bcs0.linear_velocity[1], bcs1.linear_velocity[1], 0.0001));
-    try expect(approxEql(Real, bcs0.linear_velocity[2], bcs1.linear_velocity[2], 0.0001));
+    try expect(approxEql(f32, bcs0.linear_velocity[0], bcs1.linear_velocity[0], 0.0001));
+    try expect(approxEql(f32, bcs0.linear_velocity[1], bcs1.linear_velocity[1], 0.0001));
+    try expect(approxEql(f32, bcs0.linear_velocity[2], bcs1.linear_velocity[2], 0.0001));
 
-    try expect(approxEql(Real, bcs0.angular_velocity[0], bcs1.angular_velocity[0], 0.0001));
-    try expect(approxEql(Real, bcs0.angular_velocity[1], bcs1.angular_velocity[1], 0.0001));
-    try expect(approxEql(Real, bcs0.angular_velocity[2], bcs1.angular_velocity[2], 0.0001));
+    try expect(approxEql(f32, bcs0.angular_velocity[0], bcs1.angular_velocity[0], 0.0001));
+    try expect(approxEql(f32, bcs0.angular_velocity[1], bcs1.angular_velocity[1], 0.0001));
+    try expect(approxEql(f32, bcs0.angular_velocity[2], bcs1.angular_velocity[2], 0.0001));
 
     try expect(bcs0.user_data == bcs1.user_data);
     try expect(bcs0.object_layer == bcs1.object_layer);

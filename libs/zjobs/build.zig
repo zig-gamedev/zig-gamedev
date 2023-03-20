@@ -14,24 +14,23 @@ pub const Package = struct {
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, optimize, target);
 
     const test_step = b.step("test", "Run zjobs tests");
-    test_step.dependOn(&tests.step);
+    test_step.dependOn(runTests(b, optimize, target));
 }
 
-pub fn buildTests(
+pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-) *std.Build.RunStep {
+) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zjobs-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
         .target = target,
         .optimize = optimize,
     });
-    return tests.run();
+    return &tests.run().step;
 }
 
 inline fn thisDir() []const u8 {

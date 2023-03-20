@@ -204,40 +204,59 @@ pub const Package = struct {
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, optimize, target, .{});
 
     const test_step = b.step("test", "Run zphysics tests");
-    test_step.dependOn(&tests.step);
+    test_step.dependOn(runTests(b, optimize, target));
 }
 
-pub fn buildTests(
+pub fn runTests(
     b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const parent_step = b.step("zphysics-tests", "");
+
+    const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{ .use_double_precision = false });
+    const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{ .use_double_precision = true });
+
+    parent_step.dependOn(&test0.step);
+    parent_step.dependOn(&test1.step);
+
+    return parent_step;
+}
+
+fn testStep(
+    b: *std.Build,
+    name: []const u8,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
     options: Package.Options,
 ) *std.Build.RunStep {
-    const tests = b.addTest(.{
-        .name = "zphysics-tests",
+    const test_exe = b.addTest(.{
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
         .target = target,
         .optimize = optimize,
     });
 
-    tests.addCSourceFile(
+    test_exe.addCSourceFile(
         thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c",
         &.{
             "-std=c11",
+            "-DJPH_COMPILER_MINGW",
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
-            if (tests.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+            if (options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+            if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
+            "-fno-sanitize=undefined",
         },
     );
 
     const zphysics_pkg = Package.build(b, target, optimize, .{ .options = options });
-    zphysics_pkg.link(tests);
+    zphysics_pkg.link(test_exe);
 
-    tests.addModule("zphysics_options", zphysics_pkg.zphysics_options);
+    test_exe.addModule("zphysics_options", zphysics_pkg.zphysics_options);
 
-    return tests.run();
+    return test_exe.run();
 }
 
 inline fn thisDir() []const u8 {
