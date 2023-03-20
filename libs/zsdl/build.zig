@@ -34,8 +34,8 @@ pub const Package = struct {
         } else if (target.isDarwin()) {
             const install_dir_step = b.addInstallDirectory(.{
                 .source_dir = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework",
-                .install_dir = .{ .custom = "" },
-                .install_subdir = "bin/Frameworks/SDL2.framework",
+                .install_dir = .bin,
+                .install_subdir = "Frameworks/SDL2.framework",
             });
             install_step.dependOn(&install_dir_step.step);
         } else unreachable;
@@ -46,7 +46,7 @@ pub const Package = struct {
         };
     }
 
-    pub fn link(zsdl_pkg: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(zsdl_pkg: Package, b: *std.Build, exe: *std.Build.CompileStep) void {
         exe.linkLibC();
 
         exe.step.dependOn(zsdl_pkg.install);
@@ -73,7 +73,7 @@ pub const Package = struct {
             .macos => {
                 exe.addFrameworkPath(thisDir() ++ "/libs/macos/Frameworks");
                 exe.linkFramework("SDL2");
-                exe.addRPath("@executable_path/Frameworks");
+                exe.addRPath(b.getInstallPath(.bin, "Frameworks"));
             },
             else => unreachable,
         }

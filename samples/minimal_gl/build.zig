@@ -15,7 +15,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
 
     exe.addModule("zsdl", zsdl_pkg.zsdl);
     exe.addModule("zopengl", zopengl_pkg.zopengl);
-    zsdl_pkg.link(exe);
+    zsdl_pkg.link(b, exe);
 
     return exe;
 }
