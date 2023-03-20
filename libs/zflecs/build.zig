@@ -4,44 +4,44 @@ pub const Package = struct {
     zflecs: *std.Build.Module,
     zflecs_c_cpp: *std.Build.CompileStep,
 
-    pub fn build(
-        b: *std.Build,
-        target: std.zig.CrossTarget,
-        optimize: std.builtin.Mode,
-        _: struct {},
-    ) Package {
-        const zflecs = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
-        });
-
-        const zflecs_c_cpp = b.addStaticLibrary(.{
-            .name = "zflecs",
-            .target = target,
-            .optimize = optimize,
-        });
-        zflecs_c_cpp.linkLibC();
-        zflecs_c_cpp.addIncludePath(thisDir() ++ "/libs/flecs");
-        zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
-            "-fno-sanitize=undefined",
-            "-DFLECS_NO_CPP",
-            if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
-        });
-
-        if (zflecs_c_cpp.target.isWindows()) {
-            zflecs_c_cpp.linkSystemLibraryName("ws2_32");
-        }
-
-        return .{
-            .zflecs = zflecs,
-            .zflecs_c_cpp = zflecs_c_cpp,
-        };
-    }
-
-    pub fn link(zflecs_pkg: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.addIncludePath(thisDir() ++ "/libs/flecs");
-        exe.linkLibrary(zflecs_pkg.zflecs_c_cpp);
+        exe.linkLibrary(pkg.zflecs_c_cpp);
     }
 };
+
+pub fn package(
+    b: *std.Build,
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.Mode,
+    _: struct {},
+) Package {
+    const zflecs = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
+    });
+
+    const zflecs_c_cpp = b.addStaticLibrary(.{
+        .name = "zflecs",
+        .target = target,
+        .optimize = optimize,
+    });
+    zflecs_c_cpp.linkLibC();
+    zflecs_c_cpp.addIncludePath(thisDir() ++ "/libs/flecs");
+    zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
+        "-fno-sanitize=undefined",
+        "-DFLECS_NO_CPP",
+        if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
+    });
+
+    if (zflecs_c_cpp.target.isWindows()) {
+        zflecs_c_cpp.linkSystemLibraryName("ws2_32");
+    }
+
+    return .{
+        .zflecs = zflecs,
+        .zflecs_c_cpp = zflecs_c_cpp,
+    };
+}
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
@@ -63,7 +63,7 @@ pub fn runTests(
         .optimize = optimize,
     });
 
-    const zflecs_pkg = Package.build(b, target, optimize, .{});
+    const zflecs_pkg = package(b, target, optimize, .{});
     zflecs_pkg.link(tests);
 
     return &tests.run().step;

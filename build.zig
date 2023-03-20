@@ -92,38 +92,42 @@ pub fn build(b: *std.Build) void {
 }
 
 fn packagesCrossPlatform(b: *std.Build, options: Options) void {
-    zopengl_pkg = zopengl.Package.build(b, .{});
-    zmath_pkg = zmath.Package.build(b, .{});
-    zpool_pkg = zpool.Package.build(b, .{});
-    zglfw_pkg = zglfw.Package.build(b, options.target, options.optimize, .{});
-    zsdl_pkg = zsdl.Package.build(b, options.target, options.optimize, .{});
-    zmesh_pkg = zmesh.Package.build(b, options.target, options.optimize, .{});
-    znoise_pkg = znoise.Package.build(b, options.target, options.optimize, .{});
-    zstbi_pkg = zstbi.Package.build(b, options.target, options.optimize, .{});
-    zbullet_pkg = zbullet.Package.build(b, options.target, options.optimize, .{});
-    zgui_pkg = zgui.Package.build(b, options.target, options.optimize, .{
+    const target = options.target;
+    const optimize = options.optimize;
+
+    zopengl_pkg = zopengl.package(b, target, optimize, .{});
+    zmath_pkg = zmath.package(b, target, optimize, .{});
+    zpool_pkg = zpool.package(b, target, optimize, .{});
+    zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    zsdl_pkg = zsdl.package(b, target, optimize, .{});
+    zmesh_pkg = zmesh.package(b, target, optimize, .{});
+    znoise_pkg = znoise.package(b, target, optimize, .{});
+    zstbi_pkg = zstbi.package(b, target, optimize, .{});
+    zbullet_pkg = zbullet.package(b, target, optimize, .{});
+    zgui_pkg = zgui.package(b, target, optimize, .{
         .options = .{ .backend = .glfw_wgpu },
     });
-    zgpu_pkg = zgpu.Package.build(b, .{
+    zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
         .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
-    ztracy_pkg = ztracy.Package.build(b, options.target, options.optimize, .{
+    ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{
-            .enable_ztracy = !options.target.isDarwin(), // TODO: ztracy fails to compile on macOS.
-            .enable_fibers = !options.target.isDarwin(),
+            .enable_ztracy = !target.isDarwin(), // TODO: ztracy fails to compile on macOS.
+            .enable_fibers = !target.isDarwin(),
         },
     });
-    zphysics_pkg = zphysics.Package.build(b, options.target, options.optimize, .{
-        .options = .{ .use_double_precision = false },
-    });
-    zaudio_pkg = zaudio.Package.build(b, options.target, options.optimize, .{});
-    zflecs_pkg = zflecs.Package.build(b, options.target, options.optimize, .{});
+    zphysics_pkg = zphysics.package(b, target, optimize, .{});
+    zaudio_pkg = zaudio.package(b, target, optimize, .{});
+    zflecs_pkg = zflecs.package(b, target, optimize, .{});
 }
 
 fn packagesWindowsLinux(b: *std.Build, options: Options) void {
-    zwin32_pkg = zwin32.Package.build(b, .{});
-    zd3d12_pkg = zd3d12.Package.build(b, .{
+    const target = options.target;
+    const optimize = options.optimize;
+
+    zwin32_pkg = zwin32.package(b, target, optimize, .{});
+    zd3d12_pkg = zd3d12.package(b, target, optimize, .{
         .options = .{
             .enable_debug_layer = options.zd3d12_enable_debug_layer,
             .enable_gbv = options.zd3d12_enable_gbv,
@@ -131,17 +135,20 @@ fn packagesWindowsLinux(b: *std.Build, options: Options) void {
         },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
-    zpix_pkg = zpix.Package.build(b, .{
+    zpix_pkg = zpix.package(b, target, optimize, .{
         .options = .{ .enable = options.zpix_enable },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
-    common_pkg = common.Package.build(b, options.target, options.optimize, .{
+    common_pkg = common.package(b, target, optimize, .{
         .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
     });
 }
 
 fn packagesWindows(b: *std.Build, options: Options) void {
-    zd3d12_d2d_pkg = zd3d12.Package.build(b, .{
+    const target = options.target;
+    const optimize = options.optimize;
+
+    zd3d12_d2d_pkg = zd3d12.package(b, target, optimize, .{
         .options = .{
             .enable_debug_layer = options.zd3d12_enable_debug_layer,
             .enable_gbv = options.zd3d12_enable_gbv,
@@ -149,10 +156,10 @@ fn packagesWindows(b: *std.Build, options: Options) void {
         },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
-    common_d2d_pkg = common.Package.build(b, options.target, options.optimize, .{
+    common_d2d_pkg = common.package(b, target, optimize, .{
         .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_d2d_pkg.zd3d12 },
     });
-    zxaudio2_pkg = zxaudio2.Package.build(b, .{
+    zxaudio2_pkg = zxaudio2.package(b, target, optimize, .{
         .options = .{ .enable_debug_layer = options.zd3d12_enable_debug_layer },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });

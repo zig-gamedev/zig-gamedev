@@ -2,14 +2,19 @@ const std = @import("std");
 
 pub const Package = struct {
     zjobs: *std.Build.Module,
-
-    pub fn build(b: *std.Build, _: struct {}) Package {
-        const zjobs = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
-        });
-        return .{ .zjobs = zjobs };
-    }
 };
+
+pub fn package(
+    b: *std.Build,
+    _: std.zig.CrossTarget,
+    _: std.builtin.Mode,
+    _: struct {},
+) Package {
+    const zjobs = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
+    });
+    return .{ .zjobs = zjobs };
+}
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});

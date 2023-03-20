@@ -1,43 +1,45 @@
 const std = @import("std");
 
-pub const Package = struct {
-    pub const Options = struct {
-        enable_cross_platform_determinism: bool = true,
-    };
+pub const Options = struct {
+    enable_cross_platform_determinism: bool = true,
+};
 
+pub const Package = struct {
     options: Options,
     zmath: *std.Build.Module,
     zmath_options: *std.Build.Module,
-
-    pub fn build(
-        b: *std.Build,
-        args: struct {
-            options: Options = .{},
-        },
-    ) Package {
-        const step = b.addOptions();
-        step.addOption(
-            bool,
-            "enable_cross_platform_determinism",
-            args.options.enable_cross_platform_determinism,
-        );
-
-        const zmath_options = step.createModule();
-
-        const zmath = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
-            .dependencies = &.{
-                .{ .name = "zmath_options", .module = zmath_options },
-            },
-        });
-
-        return .{
-            .options = args.options,
-            .zmath = zmath,
-            .zmath_options = zmath_options,
-        };
-    }
 };
+
+pub fn package(
+    b: *std.Build,
+    _: std.zig.CrossTarget,
+    _: std.builtin.Mode,
+    args: struct {
+        options: Options = .{},
+    },
+) Package {
+    const step = b.addOptions();
+    step.addOption(
+        bool,
+        "enable_cross_platform_determinism",
+        args.options.enable_cross_platform_determinism,
+    );
+
+    const zmath_options = step.createModule();
+
+    const zmath = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .dependencies = &.{
+            .{ .name = "zmath_options", .module = zmath_options },
+        },
+    });
+
+    return .{
+        .options = args.options,
+        .zmath = zmath,
+        .zmath_options = zmath_options,
+    };
+}
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
@@ -62,7 +64,7 @@ pub fn runTests(
         .optimize = optimize,
     });
 
-    const zmath_pkg = Package.build(b, .{});
+    const zmath_pkg = package(b, target, optimize, .{});
     tests.addModule("zmath_options", zmath_pkg.zmath_options);
 
     return &tests.run().step;
@@ -79,7 +81,7 @@ pub fn runBenchmarks(
         .optimize = .ReleaseFast,
     });
 
-    const zmath_pkg = Package.build(b, .{});
+    const zmath_pkg = package(b, target, .ReleaseFast, .{});
     exe.addModule("zmath", zmath_pkg.zmath);
 
     return &exe.run().step;

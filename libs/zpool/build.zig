@@ -2,14 +2,19 @@ const std = @import("std");
 
 pub const Package = struct {
     zpool: *std.Build.Module,
-
-    pub fn build(b: *std.Build, _: struct {}) Package {
-        const zpool = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
-        });
-        return .{ .zpool = zpool };
-    }
 };
+
+pub fn package(
+    b: *std.Build,
+    _: std.zig.CrossTarget,
+    _: std.builtin.Mode,
+    _: struct {},
+) Package {
+    const zpool = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+    });
+    return .{ .zpool = zpool };
+}
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});

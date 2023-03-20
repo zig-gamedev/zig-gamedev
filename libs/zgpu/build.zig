@@ -1,64 +1,23 @@
 const std = @import("std");
 
-pub const Package = struct {
-    pub const Options = struct {
-        uniforms_buffer_size: u64 = 4 * 1024 * 1024,
-        dawn_skip_validation: bool = false,
-        buffer_pool_size: u32 = 256,
-        texture_pool_size: u32 = 256,
-        texture_view_pool_size: u32 = 256,
-        sampler_pool_size: u32 = 16,
-        render_pipeline_pool_size: u32 = 128,
-        compute_pipeline_pool_size: u32 = 128,
-        bind_group_pool_size: u32 = 32,
-        bind_group_layout_pool_size: u32 = 32,
-        pipeline_layout_pool_size: u32 = 32,
-    };
+pub const Options = struct {
+    uniforms_buffer_size: u64 = 4 * 1024 * 1024,
+    dawn_skip_validation: bool = false,
+    buffer_pool_size: u32 = 256,
+    texture_pool_size: u32 = 256,
+    texture_view_pool_size: u32 = 256,
+    sampler_pool_size: u32 = 16,
+    render_pipeline_pool_size: u32 = 128,
+    compute_pipeline_pool_size: u32 = 128,
+    bind_group_pool_size: u32 = 32,
+    bind_group_layout_pool_size: u32 = 32,
+    pipeline_layout_pool_size: u32 = 32,
+};
 
+pub const Package = struct {
     options: Options,
     zgpu: *std.Build.Module,
     zgpu_options: *std.Build.Module,
-
-    pub fn build(
-        b: *std.Build,
-        args: struct {
-            options: Options = .{},
-            deps: struct {
-                zglfw: *std.Build.Module,
-                zpool: *std.Build.Module,
-            },
-        },
-    ) Package {
-        const step = b.addOptions();
-        step.addOption(u64, "uniforms_buffer_size", args.options.uniforms_buffer_size);
-        step.addOption(bool, "dawn_skip_validation", args.options.dawn_skip_validation);
-        step.addOption(u32, "buffer_pool_size", args.options.buffer_pool_size);
-        step.addOption(u32, "texture_pool_size", args.options.texture_pool_size);
-        step.addOption(u32, "texture_view_pool_size", args.options.texture_view_pool_size);
-        step.addOption(u32, "sampler_pool_size", args.options.sampler_pool_size);
-        step.addOption(u32, "render_pipeline_pool_size", args.options.render_pipeline_pool_size);
-        step.addOption(u32, "compute_pipeline_pool_size", args.options.compute_pipeline_pool_size);
-        step.addOption(u32, "bind_group_pool_size", args.options.bind_group_pool_size);
-        step.addOption(u32, "bind_group_layout_pool_size", args.options.bind_group_layout_pool_size);
-        step.addOption(u32, "pipeline_layout_pool_size", args.options.pipeline_layout_pool_size);
-
-        const zgpu_options = step.createModule();
-
-        const zgpu = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-            .dependencies = &.{
-                .{ .name = "zgpu_options", .module = zgpu_options },
-                .{ .name = "zglfw", .module = args.deps.zglfw },
-                .{ .name = "zpool", .module = args.deps.zpool },
-            },
-        });
-
-        return .{
-            .options = args.options,
-            .zgpu = zgpu,
-            .zgpu_options = zgpu_options,
-        };
-    }
 
     pub fn link(_: Package, exe: *std.Build.CompileStep) void {
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
@@ -108,6 +67,49 @@ pub const Package = struct {
         exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
     }
 };
+
+pub fn package(
+    b: *std.Build,
+    _: std.zig.CrossTarget,
+    _: std.builtin.Mode,
+    args: struct {
+        options: Options = .{},
+        deps: struct {
+            zglfw: *std.Build.Module,
+            zpool: *std.Build.Module,
+        },
+    },
+) Package {
+    const step = b.addOptions();
+    step.addOption(u64, "uniforms_buffer_size", args.options.uniforms_buffer_size);
+    step.addOption(bool, "dawn_skip_validation", args.options.dawn_skip_validation);
+    step.addOption(u32, "buffer_pool_size", args.options.buffer_pool_size);
+    step.addOption(u32, "texture_pool_size", args.options.texture_pool_size);
+    step.addOption(u32, "texture_view_pool_size", args.options.texture_view_pool_size);
+    step.addOption(u32, "sampler_pool_size", args.options.sampler_pool_size);
+    step.addOption(u32, "render_pipeline_pool_size", args.options.render_pipeline_pool_size);
+    step.addOption(u32, "compute_pipeline_pool_size", args.options.compute_pipeline_pool_size);
+    step.addOption(u32, "bind_group_pool_size", args.options.bind_group_pool_size);
+    step.addOption(u32, "bind_group_layout_pool_size", args.options.bind_group_layout_pool_size);
+    step.addOption(u32, "pipeline_layout_pool_size", args.options.pipeline_layout_pool_size);
+
+    const zgpu_options = step.createModule();
+
+    const zgpu = b.createModule(.{
+        .source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+        .dependencies = &.{
+            .{ .name = "zgpu_options", .module = zgpu_options },
+            .{ .name = "zglfw", .module = args.deps.zglfw },
+            .{ .name = "zpool", .module = args.deps.zpool },
+        },
+    });
+
+    return .{
+        .options = args.options,
+        .zgpu = zgpu,
+        .zgpu_options = zgpu_options,
+    };
+}
 
 pub fn build(_: *std.Build) void {}
 
