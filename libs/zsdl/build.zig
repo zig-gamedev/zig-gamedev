@@ -51,7 +51,8 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
     });
 
-    const install_step = b.step("zsdl-install", "");
+    const install_step = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    install_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zsdl-install", .owner = b });
 
     if (target.isWindows()) {
         install_step.dependOn(

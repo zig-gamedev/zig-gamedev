@@ -216,7 +216,8 @@ pub fn runTests(
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.Build.Step {
-    const parent_step = b.step("zphysics-tests", "");
+    const parent_step = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    parent_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zphysics-tests", .owner = b });
 
     const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{ .use_double_precision = false });
     const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{ .use_double_precision = true });

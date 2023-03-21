@@ -8,7 +8,7 @@ We build game development ecosystem for [Zig programming language](https://zigla
 
 * Cross-platform and composable [libraries](#libraries)
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
-* DirectX 12 [sample applications](#sample-applications-directx-12) and [intro applications](samples/intro)
+* DirectX 12 [sample applications](#sample-applications-directx-12)
 * Mini-games (in planning)
 
 To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
@@ -128,7 +128,6 @@ Options for Windows applications:
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
 * **[Derek Collison (derekcollison)](https://github.com/derekcollison)**
-* **[mzet (mzet-)](https://github.com/mzet-)**
 * [Garett Bass (garettbass)](https://github.com/garettbass)
 * [Connor Rowland (ckrowland)](https://github.com/ckrowland)
 * Zig Software Foundation (ziglang)

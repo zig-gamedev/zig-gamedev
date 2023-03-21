@@ -27,9 +27,14 @@ pub fn package(
     _: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const install_d3d12 = b.step("zwin32-install-d3d12", "");
-    const install_xaudio2 = b.step("zwin32-install-xaudio2", "");
-    const install_directml = b.step("zwin32-install-directml", "");
+    const install_d3d12 = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    install_d3d12.* = std.Build.Step.init(.{ .id = .custom, .name = "zwin32-install-d3d12", .owner = b });
+
+    const install_xaudio2 = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    install_xaudio2.* = std.Build.Step.init(.{ .id = .custom, .name = "zwin32-install-xaudio2", .owner = b });
+
+    const install_directml = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    install_directml.* = std.Build.Step.init(.{ .id = .custom, .name = "zwin32-install-directml", .owner = b });
 
     install_d3d12.dependOn(
         &b.addInstallFile(
