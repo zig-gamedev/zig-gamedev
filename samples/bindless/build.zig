@@ -17,15 +17,11 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
     const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
 
-    exe.addModule("zmesh", zmesh_pkg.zmesh);
-    exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-    exe.addModule("common", common_pkg.common);
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
-    exe.addModule("zstbi", zstbi_pkg.zstbi);
     zwin32_pkg.link(exe, .{ .d3d12 = true });
     zmesh_pkg.link(exe);
     common_pkg.link(exe);
     zstbi_pkg.link(exe);
+    zd3d12_pkg.link(exe);
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);

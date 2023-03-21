@@ -2,6 +2,10 @@ const std = @import("std");
 
 pub const Package = struct {
     zpool: *std.Build.Module,
+
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zpool", pkg.zpool);
+    }
 };
 
 pub fn package(

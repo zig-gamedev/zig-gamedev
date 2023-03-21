@@ -12,6 +12,8 @@ pub const Package = struct {
     ztracy_c_cpp: *std.Build.CompileStep,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("ztracy", pkg.ztracy);
+        exe.addModule("ztracy_options", pkg.ztracy_options);
         if (pkg.options.enable_ztracy) {
             exe.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
             exe.linkLibrary(pkg.ztracy_c_cpp);

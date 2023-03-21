@@ -19,8 +19,11 @@ pub const Package = struct {
     zgpu: *std.Build.Module,
     zgpu_options: *std.Build.Module,
 
-    pub fn link(_: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+
+        exe.addModule("zgpu", pkg.zgpu);
+        exe.addModule("zgpu_options", pkg.zgpu_options);
 
         switch (target.os.tag) {
             .windows => {

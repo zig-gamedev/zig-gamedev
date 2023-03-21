@@ -10,9 +10,10 @@ const zglfw = @import("libs/zglfw/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zglfw_pkg = zglfw.Package.build(b, target, optimize, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zglfw", zglfw_pkg.zglfw);
+    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
 
     zglfw_pkg.link(exe);
 }

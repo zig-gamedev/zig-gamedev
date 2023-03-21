@@ -16,9 +16,12 @@ const zopengl = @import("libs/zopengl/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zopengl_pkg = zopengl.Package.build(b, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zopengl", zopengl_pkg.zopengl);
+    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
+
+    zopengl_pkg.link(exe);
 }
 ```
 

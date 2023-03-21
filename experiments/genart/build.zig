@@ -46,9 +46,8 @@ fn install(
     exe.rdynamic = true;
     exe.addModule("xcommon", xcommon);
     exe.addModule("ximpl", ximpl);
-    exe.addModule("zsdl", zsdl_pkg.zsdl);
-    exe.addModule("zopengl", zopengl_pkg.zopengl);
     zsdl_pkg.link(exe);
+    zopengl_pkg.link(exe);
 
     const install_step = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment");
     install_step.dependOn(&b.addInstallArtifact(exe).step);

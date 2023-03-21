@@ -24,9 +24,10 @@ const zmesh = @import("libs/zmesh/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zmesh_pkg = zmesh.Package.build(b, target, optimize, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zmesh", zmesh_pkg.zmesh);
+    const zmesh_pkg = zmesh.package(b, target, optimize, .{});
 
     zmesh_pkg.link(exe);
 }

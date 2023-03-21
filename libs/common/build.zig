@@ -5,6 +5,7 @@ pub const Package = struct {
     common_c_cpp: *std.Build.CompileStep,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("common", pkg.common);
         exe.linkLibrary(pkg.common_c_cpp);
         exe.addIncludePath(thisDir() ++ "/libs/imgui");
         exe.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");

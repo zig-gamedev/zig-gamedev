@@ -19,9 +19,10 @@ const zstbi = @import("libs/zstbi/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zstbi_pkg = zstbi.Package.build(b, target, optimize, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zstbi", zstbi_pkg.zstbi);
+    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
 
     zstbi_pkg.link(exe);
 }

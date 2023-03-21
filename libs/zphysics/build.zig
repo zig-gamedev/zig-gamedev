@@ -15,6 +15,8 @@ pub const Package = struct {
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.addIncludePath(thisDir() ++ "/libs/JoltC");
         exe.linkLibrary(pkg.zphysics_c_cpp);
+        exe.addModule("zphysics", pkg.zphysics);
+        exe.addModule("zphysics_options", pkg.zphysics_options);
     }
 };
 

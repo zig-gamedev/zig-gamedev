@@ -26,8 +26,11 @@ const zd3d12 = @import("libs/zd3d12/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zwin32_pkg = zwin32.Package.build(b, .{});
-    const zd3d12_pkg = zd3d12.Package.build(b, .{
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+    const zd3d12_pkg = zd3d12.package(b, target, optimize, .{
         .options = .{
             .enable_debug_layer = false,
             .enable_gbv = false,
@@ -35,10 +38,8 @@ pub fn build(b: *std.Build) void {
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
 
-    exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
-
     zwin32_pkg.link(exe, .{ .d3d12 = true });
+    zd3d12_pkg.link(exe);
 }
 ```
 

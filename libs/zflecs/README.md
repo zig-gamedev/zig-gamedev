@@ -12,9 +12,10 @@ const zsdl = @import("libs/zflecs/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zflecs_pkg = zflecs.Package.build(b, target, optimize, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zflecs", zflecs_pkg.zflecs);
+    const zflecs_pkg = zflecs.package(b, target, optimize, .{});
 
     zflecs_pkg.link(exe);
 }

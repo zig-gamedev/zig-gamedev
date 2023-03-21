@@ -6,6 +6,7 @@ pub const Package = struct {
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.linkLibrary(pkg.zaudio_c_cpp);
+        exe.addModule("zaudio", pkg.zaudio);
     }
 };
 

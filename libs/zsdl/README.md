@@ -12,9 +12,12 @@ const zsdl = @import("libs/zsdl/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zsdl_pkg = zsdl.Package.build(b, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zsdl", zsdl_pkg.zsdl);
+    const zsdl_pkg = zsdl.package(b, target, optimize, .{});
+
+    zsdl_pkg.link(exe);
 }
 ```
 

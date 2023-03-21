@@ -5,7 +5,10 @@ pub const Package = struct {
     zglfw_c_cpp: *std.Build.CompileStep,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zglfw", pkg.zglfw);
+
         const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+
         switch (host.os.tag) {
             .windows => {},
             .macos => {

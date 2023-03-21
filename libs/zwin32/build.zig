@@ -14,6 +14,7 @@ pub const Package = struct {
     install_directml: *std.Build.Step,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep, libs: Libs) void {
+        exe.addModule("zwin32", pkg.zwin32);
         if (libs.d3d12) exe.step.dependOn(pkg.install_d3d12);
         if (libs.xaudio2) exe.step.dependOn(pkg.install_xaudio2);
         if (libs.directml) exe.step.dependOn(pkg.install_directml);

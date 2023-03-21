@@ -8,6 +8,11 @@ pub const Package = struct {
     options: Options,
     zmath: *std.Build.Module,
     zmath_options: *std.Build.Module,
+
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zmath", pkg.zmath);
+        exe.addModule("zmath_options", pkg.zmath_options);
+    }
 };
 
 pub fn package(

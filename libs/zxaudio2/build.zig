@@ -8,6 +8,11 @@ pub const Package = struct {
     options: Options,
     zxaudio2: *std.Build.Module,
     zxaudio2_options: *std.Build.Module,
+
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zxaudio2", pkg.zxaudio2);
+        exe.addModule("zxaudio2_options", pkg.zxaudio2_options);
+    }
 };
 
 pub fn package(

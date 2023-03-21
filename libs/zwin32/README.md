@@ -25,9 +25,10 @@ const zwin32 = @import("libs/zwin32/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zwin32_pkg = zwin32.Package.build(b, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
+    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
 
     zwin32_pkg.link(exe, .{ .d3d12 = true, .xaudio2 = true, .directml = true });
 }

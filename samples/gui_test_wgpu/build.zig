@@ -19,15 +19,11 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
     const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
 
-    exe.addModule("zgpu", zgpu_pkg.zgpu);
-    exe.addModule("zgui", zgui_pkg.zgui);
-    exe.addModule("zmath", zmath_pkg.zmath);
-    exe.addModule("zglfw", zglfw_pkg.zglfw);
-    exe.addModule("zstbi", zstbi_pkg.zstbi);
     zgui_pkg.link(exe);
     zgpu_pkg.link(exe);
     zglfw_pkg.link(exe);
     zstbi_pkg.link(exe);
+    zmath_pkg.link(exe);
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);

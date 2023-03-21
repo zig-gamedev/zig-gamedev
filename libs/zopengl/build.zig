@@ -11,6 +11,10 @@ pub const Package = struct {
     options: Options,
     zopengl: *std.Build.Module,
     zopengl_options: *std.Build.Module,
+
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zopengl", pkg.zopengl);
+    }
 };
 
 pub fn package(

@@ -24,11 +24,14 @@ const zmath = @import("libs/zmath/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zmath_pkg = zmath.Package.build(b, .{
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zmath_pkg = zmath.package(b, target, optimize, .{
         .options = { .enable_cross_platform_determinism = true },
     });
 
-    exe.addModule("zmath", zmath_pkg.zmath);
+    zmath_pkg.link(exe);
 }
 ```
 

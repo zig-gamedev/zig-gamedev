@@ -13,9 +13,8 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zsdl_pkg = @import("../../build.zig").zsdl_pkg;
     const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
 
-    exe.addModule("zsdl", zsdl_pkg.zsdl);
-    exe.addModule("zopengl", zopengl_pkg.zopengl);
     zsdl_pkg.link(exe);
+    zopengl_pkg.link(exe);
 
     return exe;
 }

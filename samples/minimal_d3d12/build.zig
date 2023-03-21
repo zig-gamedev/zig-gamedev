@@ -12,7 +12,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
 
     const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
 
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
     zwin32_pkg.link(exe, .{ .d3d12 = true });
 
     const dxc_step = buildShaders(b);

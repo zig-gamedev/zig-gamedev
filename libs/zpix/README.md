@@ -13,14 +13,16 @@ const zwin32 = @import("libs/zwin32/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zwin32_pkg = zwin32.Package.build(b, .{});
-    const zpix_pkg = zpix.Package.build(b, .{
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+    const zpix_pkg = zpix.package(b, target, optimize, .{
         .options = .{ .enable = true },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
     });
 
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
-    exe.addModule("zpix", zpix_pkg.zpix);
+    zpix_pkg.link(exe);
 }
 ```
 

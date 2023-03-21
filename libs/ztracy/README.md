@@ -14,11 +14,12 @@ const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const ztracy_pkg = ztracy.Package.build(b, target, optimize, .{
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{ .enable_ztracy = true },
     });
-
-    exe.addModule("ztracy", ztracy_pkg.ztracy);
 
     ztracy_pkg.link(exe);
 }
@@ -48,11 +49,12 @@ an additional option passed through when compiling the Tracy library, so:
 
 ```zig
     ...
-    const ztracy_pkg = ztracy.Package.build(b, target, optimize, .{
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{ .enable_ztracy = true, .enable_fibers = true },
     });
-
-    exe.addModule("ztracy", ztracy_pkg.ztracy);
 
     ztracy_pkg.link(exe);
 ```

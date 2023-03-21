@@ -8,6 +8,8 @@ pub const Package = struct {
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.linkLibC();
 
+        exe.addModule("zsdl", pkg.zsdl);
+
         exe.step.dependOn(pkg.install);
 
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;

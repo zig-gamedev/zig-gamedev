@@ -11,6 +11,11 @@ pub const Package = struct {
     options: Options,
     zd3d12: *std.Build.Module,
     zd3d12_options: *std.Build.Module,
+
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zd3d12", pkg.zd3d12);
+        exe.addModule("zd3d12_options", pkg.zd3d12_options);
+    }
 };
 
 pub fn package(

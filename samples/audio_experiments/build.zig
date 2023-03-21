@@ -17,13 +17,11 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zmath_pkg = @import("../../build.zig").zmath_pkg;
     const zxaudio2_pkg = @import("../../build.zig").zxaudio2_pkg;
 
-    exe.addModule("zd3d12", zd3d12_pkg.zd3d12);
-    exe.addModule("common", common_pkg.common);
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
-    exe.addModule("zmath", zmath_pkg.zmath);
-    exe.addModule("zxaudio2", zxaudio2_pkg.zxaudio2);
     zwin32_pkg.link(exe, .{ .d3d12 = true, .xaudio2 = true });
     common_pkg.link(exe);
+    zmath_pkg.link(exe);
+    zd3d12_pkg.link(exe);
+    zxaudio2_pkg.link(exe);
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);

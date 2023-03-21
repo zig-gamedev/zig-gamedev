@@ -17,8 +17,9 @@ pub const Package = struct {
     zgui_options: *std.Build.Module,
     zgui_c_cpp: *std.Build.CompileStep,
 
-    pub fn link(zgui_pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.linkLibrary(zgui_pkg.zgui_c_cpp);
+    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.linkLibrary(pkg.zgui_c_cpp);
+        exe.addModule("zgui", pkg.zgui);
     }
 };
 

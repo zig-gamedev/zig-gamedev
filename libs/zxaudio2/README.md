@@ -13,16 +13,17 @@ const zxaudio2 = @import("libs/zxaudio2/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const zwin32_pkg = zwin32.Package.build(b, .{});
-    const zxaudio2_pkg = zxaudio2.Package.build(b, .{
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+    const zxaudio2_pkg = zxaudio2.package(b, target, optimize, .{
         .options = .{ .enable_debug_layer = false },
         .deps = .{ .zwin32 = zwin32_pkg.zwin32},
     });
 
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
-    exe.addModule("zxaudio2", zxaudio2_pkg.zxaudio2);
-
     zwin32_pkg.link(exe, .{ .xaudio2 = true });
+    zxaudio2_pkg.link(exe);
 }
 ```
 

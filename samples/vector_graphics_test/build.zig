@@ -14,11 +14,9 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zd3d12_d2d_pkg = @import("../../build.zig").zd3d12_d2d_pkg;
     const common_d2d_pkg = @import("../../build.zig").common_d2d_pkg;
 
-    exe.addModule("zwin32", zwin32_pkg.zwin32);
-    exe.addModule("zd3d12", zd3d12_d2d_pkg.zd3d12);
-    exe.addModule("common", common_d2d_pkg.common);
     zwin32_pkg.link(exe, .{ .d3d12 = true });
     common_d2d_pkg.link(exe);
+    zd3d12_d2d_pkg.link(exe);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

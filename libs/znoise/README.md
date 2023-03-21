@@ -12,9 +12,10 @@ const znoise = @import("libs/znoise/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
-    const znoise_pkg = znoise.Package.build(b, target, optimize, .{});
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    exe.addModule("znoise", znoise_pkg.znoise);
+    const znoise_pkg = znoise.package(b, target, optimize, .{});
 
     znoise_pkg.link(exe);
 }
