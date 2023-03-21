@@ -449,6 +449,12 @@ pub const DropEvent = extern struct {
     window_id: u32,
 };
 
+pub const ControllerDeviceEvent = extern struct {
+    type: EventType,
+    timestamp: u32,
+    which: i32,
+};
+
 pub const Event = extern union {
     type: EventType,
     common: CommonEvent,
@@ -461,6 +467,7 @@ pub const Event = extern union {
     motion: MouseMotionEvent,
     button: MouseButtonEvent,
     wheel: MouseWheelEvent,
+    controllerdevice: ControllerDeviceEvent,
     quit: QuitEvent,
     drop: DropEvent,
 
@@ -471,6 +478,63 @@ pub const Event = extern union {
     comptime {
         assert(@sizeOf(Event) == size);
     }
+};
+
+pub const JOYSTICK_AXIS_MAX = 32767;
+pub const JOYSTICK_AXIS_MIN = -32768;
+
+pub const GameController = opaque {
+    pub const Axis = enum(c_int) {
+        leftx,
+        lefty,
+        rightx,
+        righty,
+        triggerleft,
+        triggerright,
+    };
+    pub const Button = enum(c_int) {
+        a,
+        b,
+        x,
+        y,
+        back,
+        guide,
+        start,
+        leftstick,
+        rightstick,
+        leftshoulder,
+        rightshoulder,
+        dpad_up,
+        dpad_down,
+        dpad_left,
+        dpad_right,
+        misc1,
+        paddle1,
+        paddle2,
+        paddle3,
+        paddle4,
+        touchpad,
+    };
+
+    pub fn open(joystick_index: i32) ?*GameController {
+        return SDL_GameControllerOpen(joystick_index);
+    }
+    extern fn SDL_GameControllerOpen(joystick_index: i32) ?*GameController;
+
+    pub fn close(controller: *GameController) void {
+        SDL_GameControllerClose(controller);
+    }
+    extern fn SDL_GameControllerClose(joystick: *GameController) void;
+
+    pub fn getAxis(controller: *GameController, axis: Axis) i16 {
+        return SDL_GameControllerGetAxis(controller, @enumToInt(axis));
+    }
+    extern fn SDL_GameControllerGetAxis(*GameController, axis: c_int) i16;
+
+    pub fn getButton(controller: *GameController, button: Button) bool {
+        return (SDL_GameControllerGetButton(controller, @enumToInt(button)) != 0);
+    }
+    extern fn SDL_GameControllerGetButton(controller: *GameController, button: c_int) u8;
 };
 
 pub fn pollEvent(event: ?*Event) bool {
