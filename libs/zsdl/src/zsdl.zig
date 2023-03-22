@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
@@ -568,6 +569,130 @@ pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
     return SDL_SetHint(name, value) != 0;
 }
 extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) i32;
+
+//--------------------------------------------------------------------------------------------------
+//
+// Audio
+//
+//--------------------------------------------------------------------------------------------------
+pub const AUDIO_MASK_BITSIZE = @as(c_int, 0xFF);
+pub const AUDIO_MASK_DATATYPE = @as(c_int, 1) << @as(c_int, 8);
+pub const AUDIO_MASK_ENDIAN = @as(c_int, 1) << @as(c_int, 12);
+pub const AUDIO_MASK_SIGNED = @as(c_int, 1) << @as(c_int, 15);
+pub inline fn AUDIO_BITSIZE(x: c_int) c_int {
+    return x & AUDIO_MASK_BITSIZE;
+}
+pub inline fn AUDIO_ISFLOAT(x: c_int) bool {
+    return (x & AUDIO_MASK_DATATYPE) != 0;
+}
+pub inline fn AUDIO_ISBIGENDIAN(x: c_int) bool {
+    return (x & AUDIO_MASK_ENDIAN) != 0;
+}
+pub inline fn AUDIO_ISSIGNED(x: c_int) bool {
+    return (x & AUDIO_MASK_SIGNED) != 0;
+}
+pub inline fn AUDIO_ISINT(x: c_int) bool {
+    return !AUDIO_ISFLOAT(x);
+}
+pub inline fn AUDIO_ISLITTLEENDIAN(x: c_int) bool {
+    return !AUDIO_ISBIGENDIAN(x);
+}
+pub inline fn AUDIO_ISUNSIGNED(x: c_int) bool {
+    return !AUDIO_ISSIGNED(x);
+}
+pub const AUDIO_U8 = 0x0008;
+pub const AUDIO_S8 = 0x8008;
+pub const AUDIO_U16LSB = 0x0010;
+pub const AUDIO_S16LSB = 0x8010;
+pub const AUDIO_U16MSB = 0x1010;
+pub const AUDIO_S16MSB = 0x9010;
+pub const AUDIO_U16 = AUDIO_U16LSB;
+pub const AUDIO_S16 = AUDIO_S16LSB;
+pub const AUDIO_S32LSB = 0x8020;
+pub const AUDIO_S32MSB = 0x9020;
+pub const AUDIO_S32 = AUDIO_S32LSB;
+pub const AUDIO_F32LSB = 0x8120;
+pub const AUDIO_F32MSB = 0x9120;
+pub const AUDIO_F32 = AUDIO_F32LSB;
+pub const AUDIO_U16SYS = switch (builtin.target.cpu.arch.endian()) {
+    .Little => AUDIO_U16LSB,
+    .Big => AUDIO_U16MSB,
+};
+pub const AUDIO_S16SYS = switch (builtin.target.cpu.arch.endian()) {
+    .Little => AUDIO_S16LSB,
+    .Big => AUDIO_S16MSB,
+};
+pub const AUDIO_S32SYS = switch (builtin.target.cpu.arch.endian()) {
+    .Little => AUDIO_S32LSB,
+    .Big => AUDIO_S32MSB,
+};
+pub const AUDIO_F32SYS = switch (builtin.target.cpu.arch.endian()) {
+    .Little => AUDIO_F32LSB,
+    .Big => AUDIO_F32MSB,
+};
+
+pub const AudioCallback = *const fn (
+    userdata: ?*anyopaque,
+    stream: [*c]u8,
+    len: c_int,
+) callconv(.C) void;
+
+pub const AudioFormat = u16;
+
+pub const AudioSpec = extern struct {
+    freq: c_int,
+    format: AudioFormat,
+    channels: u8,
+    silence: u8 = 0,
+    samples: u16,
+    size: u32 = undefined,
+    callback: ?AudioCallback = null,
+    userdata: ?*anyopaque = null,
+};
+
+pub const AudioDeviceId = u32;
+
+pub fn openAudioDevice(
+    maybe_device: ?[:0]const u8,
+    iscapture: bool,
+    desired: *const AudioSpec,
+    obtained: *AudioSpec,
+    allowed_changes: c_int,
+) AudioDeviceId {
+    return SDL_OpenAudioDevice(
+        if (maybe_device) |device| device.ptr else null,
+        if (iscapture) 1 else 0,
+        desired,
+        obtained,
+        allowed_changes,
+    );
+}
+extern fn SDL_OpenAudioDevice(
+    device: ?[*:0]const u8,
+    iscapture: c_int,
+    desired: *const AudioSpec,
+    obtained: *AudioSpec,
+    allowed_changes: c_int,
+) AudioDeviceId;
+
+pub fn pauseAudioDevice(device: AudioDeviceId, pause: bool) void {
+    SDL_PauseAudioDevice(device, if (pause) 1 else 0);
+}
+extern fn SDL_PauseAudioDevice(AudioDeviceId, pause: c_int) void;
+
+pub fn queueAudio(comptime SampleType: type, device: AudioDeviceId, data: []const SampleType) bool {
+    return SDL_QueueAudio(device, data.ptr, @sizeOf(SampleType) * @intCast(u32, data.len)) == 0;
+}
+extern fn SDL_QueueAudio(AudioDeviceId, data: *const anyopaque, len: u32) c_int;
+
+/// `pub fn getQueuedAudioSize(device: AudioDeviceId) u32`
+pub const getQueuedAudioSize = SDL_GetQueuedAudioSize;
+extern fn SDL_GetQueuedAudioSize(AudioDeviceId) u32;
+
+/// `pub fn clearQueueAudio(device: AudioDeviceId) void`
+pub const clearQueuedAudio = SDL_ClearQueuedAudio;
+extern fn SDL_ClearQueuedAudio(AudioDeviceId) void;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Timer
