@@ -650,7 +650,7 @@ pub const AudioSpec = extern struct {
     userdata: ?*anyopaque = null,
 };
 
-pub const AudioDeviceID = u32;
+pub const AudioDeviceId = u32;
 
 pub fn openAudioDevice(
     maybe_device: ?[:0]const u8,
@@ -658,7 +658,7 @@ pub fn openAudioDevice(
     desired: *const AudioSpec,
     obtained: *AudioSpec,
     allowed_changes: c_int,
-) AudioDeviceID {
+) AudioDeviceId {
     return SDL_OpenAudioDevice(
         if (maybe_device) |device| device.ptr else null,
         if (iscapture) 1 else 0,
@@ -673,25 +673,25 @@ extern fn SDL_OpenAudioDevice(
     desired: *const AudioSpec,
     obtained: *AudioSpec,
     allowed_changes: c_int,
-) AudioDeviceID;
+) AudioDeviceId;
 
-pub fn pauseAudioDevice(device: AudioDeviceID, pause: bool) void {
+pub fn pauseAudioDevice(device: AudioDeviceId, pause: bool) void {
     SDL_PauseAudioDevice(device, if (pause) 1 else 0);
 }
-extern fn SDL_PauseAudioDevice(AudioDeviceID, pause: c_int) void;
+extern fn SDL_PauseAudioDevice(AudioDeviceId, pause: c_int) void;
 
-pub fn queueAudio(comptime SampleType: type, device: AudioDeviceID, data: []const SampleType) bool {
+pub fn queueAudio(comptime SampleType: type, device: AudioDeviceId, data: []const SampleType) bool {
     return SDL_QueueAudio(device, data.ptr, @sizeOf(SampleType) * @intCast(u32, data.len)) == 0;
 }
-extern fn SDL_QueueAudio(AudioDeviceID, data: *const anyopaque, len: u32) c_int;
+extern fn SDL_QueueAudio(AudioDeviceId, data: *const anyopaque, len: u32) c_int;
 
-/// `pub fn getQueuedAudioSize(device: AudioDeviceID) u32`
+/// `pub fn getQueuedAudioSize(device: AudioDeviceId) u32`
 pub const getQueuedAudioSize = SDL_GetQueuedAudioSize;
-extern fn SDL_GetQueuedAudioSize(AudioDeviceID) u32;
+extern fn SDL_GetQueuedAudioSize(AudioDeviceId) u32;
 
-/// `pub fn clearQueueAudio(device: AudioDeviceID) void`
+/// `pub fn clearQueueAudio(device: AudioDeviceId) void`
 pub const clearQueuedAudio = SDL_ClearQueuedAudio;
-extern fn SDL_ClearQueuedAudio(AudioDeviceID) void;
+extern fn SDL_ClearQueuedAudio(AudioDeviceId) void;
 
 //--------------------------------------------------------------------------------------------------
 //
