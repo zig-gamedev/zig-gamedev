@@ -27,8 +27,8 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const zmath_pkg = zmath.package(b, target, optimize, .{
-        .options = { .enable_cross_platform_determinism = true },
+    zmath_pkg = zmath.package(b, target, optimize, .{
+        .options = .{ .enable_cross_platform_determinism = true },
     });
 
     zmath_pkg.link(exe);
