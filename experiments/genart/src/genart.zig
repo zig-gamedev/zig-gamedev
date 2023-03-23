@@ -34,6 +34,18 @@ pub fn main() !void {
     try sdl.gl.makeCurrent(window, gl_context);
     try sdl.gl.setSwapInterval(1);
 
+    if (!sdl.gl.isExtensionSupported("GL_NV_path_rendering") or
+        !sdl.gl.isExtensionSupported("GL_NV_mesh_shader"))
+    {
+        try sdl.showSimpleMessageBox(
+            .{ .information = true },
+            "OpenGL info",
+            "Sorry but this application requires modern NVIDIA GPU to run.",
+            null,
+        );
+        return;
+    }
+
     try gl.loadCompatProfileExt(sdl.gl.getProcAddress);
 
     std.log.info("OpenGL vendor: {s}", .{gl.getString(gl.VENDOR)});

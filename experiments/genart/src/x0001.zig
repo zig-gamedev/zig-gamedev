@@ -55,8 +55,6 @@ pub fn draw() void {
 pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
-    try sdl.showSimpleMessageBox(.{ .information = true }, "aaaaa", "bbbbb", null);
-
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 1.0 });
     gl.pointSize(1.0);
     gl.enable(gl.BLEND);
