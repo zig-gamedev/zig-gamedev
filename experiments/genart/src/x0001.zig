@@ -5,8 +5,8 @@ const gl = @import("zopengl");
 const xcommon = @import("xcommon");
 
 pub const name = "generative art experiment: x0001";
-pub const viewport_width = 1024 * 2;
-pub const viewport_height = 1024 * 2;
+pub const viewport_width = 1024 * 1;
+pub const viewport_height = 1024 * 1;
 
 const Vec2 = [2]f32;
 const bounds: f32 = 3.0;
@@ -33,12 +33,12 @@ pub fn draw() void {
 
                 //v = sinusoidal(v, 2.2);
 
-                if (pass == 0) gl.color4f(0.002, 0.0, 0.0, 0.0);
+                if (pass == 0) gl.color4f(0.001, 0.0, 0.0, 0.0);
                 if (pass == 1) gl.color4f(0.0, 0.001, 0.0, 0.0);
-                if (pass == 2) gl.color4f(0.0, 0.0005, 0.001, 0.0);
+                if (pass == 2) gl.color4f(0.0, 0.0, 0.0005, 0.0);
 
-                const xoff = random.floatNorm(f32) * 0.0125;
-                const yoff = random.floatNorm(f32) * 0.0125;
+                const xoff = random.floatNorm(f32) * 0.005;
+                const yoff = random.floatNorm(f32) * 0.005;
                 gl.vertex2f(v[0] + xoff, v[1] + yoff);
             }
             y += step;
