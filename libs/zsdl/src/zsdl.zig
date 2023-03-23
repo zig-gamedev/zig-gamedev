@@ -569,7 +569,34 @@ pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
     return SDL_SetHint(name, value) != 0;
 }
 extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) i32;
+//--------------------------------------------------------------------------------------------------
+//
+// Message box
+//
+//--------------------------------------------------------------------------------------------------
+pub const MessageBoxFlags = packed struct(u32) {
+    err: bool = false,
+    warning: bool = false,
+    information: bool = false,
+    buttons_left_to_right: bool = false,
+    buttons_right_to_left: bool = false,
+    __unused: u27 = 0,
+};
 
+pub fn showSimpleMessageBox(
+    flags: MessageBoxFlags,
+    title: [:0]const u8,
+    message: [:0]const u8,
+    window: ?*Window,
+) Error!void {
+    if (SDL_ShowSimpleMessageBox(flags, title, message, window) < 0) return makeError();
+}
+extern fn SDL_ShowSimpleMessageBox(
+    flags: MessageBoxFlags,
+    title: ?[*:0]const u8,
+    message: ?[*:0]const u8,
+    window: ?*Window,
+) i32;
 //--------------------------------------------------------------------------------------------------
 //
 // Audio
@@ -692,7 +719,6 @@ extern fn SDL_GetQueuedAudioSize(AudioDeviceId) u32;
 /// `pub fn clearQueueAudio(device: AudioDeviceId) void`
 pub const clearQueuedAudio = SDL_ClearQueuedAudio;
 extern fn SDL_ClearQueuedAudio(AudioDeviceId) void;
-
 //--------------------------------------------------------------------------------------------------
 //
 // Timer
