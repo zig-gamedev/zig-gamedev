@@ -18,17 +18,25 @@ pub fn main() !void {
     try sdl.gl.setAttribute(.context_major_version, 4);
     try sdl.gl.setAttribute(.context_minor_version, 6);
 
-    const window = try sdl.Window.create(
+    const errmsg = "Sorry but this application requires modern NVIDIA GPU to run.";
+
+    const window = sdl.Window.create(
         ximpl.name,
         sdl.Window.pos_undefined,
         sdl.Window.pos_undefined,
         ximpl.viewport_width,
         ximpl.viewport_height,
         .{ .opengl = true, .allow_highdpi = true },
-    );
+    ) catch |err| {
+        sdl.showSimpleMessageBox(.{ .information = true }, "OpenGL info", errmsg, null) catch unreachable;
+        return err;
+    };
     defer window.destroy();
 
-    const gl_context = try sdl.gl.createContext(window);
+    const gl_context = sdl.gl.createContext(window) catch |err| {
+        sdl.showSimpleMessageBox(.{ .information = true }, "OpenGL info", errmsg, null) catch unreachable;
+        return err;
+    };
     defer sdl.gl.deleteContext(gl_context);
 
     try sdl.gl.makeCurrent(window, gl_context);
@@ -37,12 +45,7 @@ pub fn main() !void {
     if (!sdl.gl.isExtensionSupported("GL_NV_path_rendering") or
         !sdl.gl.isExtensionSupported("GL_NV_mesh_shader"))
     {
-        try sdl.showSimpleMessageBox(
-            .{ .information = true },
-            "OpenGL info",
-            "Sorry but this application requires modern NVIDIA GPU to run.",
-            null,
-        );
+        sdl.showSimpleMessageBox(.{ .information = true }, "OpenGL info", errmsg, null) catch unreachable;
         return;
     }
 
