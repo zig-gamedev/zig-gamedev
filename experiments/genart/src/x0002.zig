@@ -11,7 +11,7 @@ pub const viewport_height = 1024 * 1;
 const Vec2 = [2]f32;
 const bounds: f32 = 3.0;
 
-var prng = std.rand.DefaultPrng.init(123);
+var prng = std.rand.DefaultPrng.init(0);
 var random = prng.random();
 var pass: u32 = 0;
 var y: f32 = -bounds;
@@ -54,10 +54,10 @@ pub fn draw() void {
     gl.useProgram(fs_postprocess);
     gl.bindTextureUnit(0, xcommon.display_tex);
     gl.begin(gl.QUADS);
-    gl.vertex2f(-3.0, -3.0);
-    gl.vertex2f(3.0, -3.0);
-    gl.vertex2f(3.0, 3.0);
-    gl.vertex2f(-3.0, 3.0);
+    gl.vertex2f(-bounds, -bounds);
+    gl.vertex2f(bounds, -bounds);
+    gl.vertex2f(bounds, bounds);
+    gl.vertex2f(-bounds, bounds);
     gl.end();
     gl.bindTextureUnit(0, 0);
     gl.useProgram(0);
@@ -67,12 +67,12 @@ pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
-    gl.pointSize(6.0);
+    gl.pointSize(5.0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.blendEquation(gl.FUNC_ADD);
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
-    gl.matrixOrthoEXT(gl.PROJECTION, -3.0, 3.0, -3.0, 3.0, -1.0, 1.0);
+    gl.matrixOrthoEXT(gl.PROJECTION, -bounds, bounds, -bounds, bounds, -1.0, 1.0);
 
     fs_postprocess = gl.createShaderProgramv(gl.FRAGMENT_SHADER, 1, &@as([*:0]const gl.Char, 
         \\  #version 460 compatibility
