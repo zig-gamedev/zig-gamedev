@@ -178,6 +178,10 @@ ZGUI_API void zguiSeparator(void) {
     ImGui::Separator();
 }
 
+ZGUI_API void zguiSeparatorText(const char* label) {
+    ImGui::SeparatorText(label);
+}
+
 ZGUI_API void zguiSameLine(float offset_from_start_x, float spacing) {
     ImGui::SameLine(offset_from_start_x, spacing);
 }
