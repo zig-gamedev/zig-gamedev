@@ -674,6 +674,10 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 4.1
     if (ver >= 41) {
+        bindings.createShaderProgramv = try getProcAddress(
+            @TypeOf(bindings.createShaderProgramv),
+            "glCreateShaderProgramv",
+        );
         // TODO
     }
 
@@ -725,6 +729,7 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
             "glNamedBufferStorage",
         );
         bindings.bindTextureUnit = try getProcAddress(@TypeOf(bindings.bindTextureUnit), "glBindTextureUnit");
+        bindings.textureBarrier = try getProcAddress(@TypeOf(bindings.textureBarrier), "glTextureBarrier");
         // TODO
     }
 

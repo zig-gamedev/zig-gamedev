@@ -68,11 +68,10 @@ pub fn main() !void {
     gl.enable(gl.FRAMEBUFFER_SRGB);
     gl.enable(gl.MULTISAMPLE);
 
-    var tex_srgb: gl.Uint = undefined;
-    gl.createTextures(gl.TEXTURE_2D_MULTISAMPLE, 1, &tex_srgb);
-    defer gl.deleteTextures(1, &tex_srgb);
+    gl.createTextures(gl.TEXTURE_2D_MULTISAMPLE, 1, &xcommon.display_tex);
+    defer gl.deleteTextures(1, &xcommon.display_tex);
     gl.textureStorage2DMultisample(
-        tex_srgb,
+        xcommon.display_tex,
         num_msaa_samples,
         gl.RGBA16F,
         ximpl.viewport_width,
@@ -80,12 +79,10 @@ pub fn main() !void {
         gl.FALSE,
     );
 
-    gl.createFramebuffers(1, &xcommon.window_fbo);
-    defer gl.deleteFramebuffers(1, &xcommon.window_fbo);
-    gl.namedFramebufferTexture(xcommon.window_fbo, gl.COLOR_ATTACHMENT0, tex_srgb, 0);
-    gl.clearNamedFramebufferfv(xcommon.window_fbo, gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, xcommon.window_fbo);
+    gl.createFramebuffers(1, &xcommon.display_fbo);
+    defer gl.deleteFramebuffers(1, &xcommon.display_fbo);
+    gl.namedFramebufferTexture(xcommon.display_fbo, gl.COLOR_ATTACHMENT0, xcommon.display_tex, 0);
+    gl.clearNamedFramebufferfv(xcommon.display_fbo, gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
 
     try ximpl.init();
     defer if (@hasDecl(ximpl, "deinit")) ximpl.deinit();
@@ -104,10 +101,12 @@ pub fn main() !void {
         xcommon.frame_time = stats.time;
         xcommon.frame_delta_time = stats.delta_time;
 
+        gl.bindFramebuffer(gl.FRAMEBUFFER, xcommon.display_fbo);
         ximpl.draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, 0);
 
         gl.blitNamedFramebuffer(
-            xcommon.window_fbo,
+            xcommon.display_fbo,
             0, // default fbo
             0,
             0,
@@ -118,7 +117,7 @@ pub fn main() !void {
             ximpl.viewport_width,
             ximpl.viewport_height,
             gl.COLOR_BUFFER_BIT,
-            gl.NEAREST,
+            gl.LINEAR,
         );
         sdl.gl.swapWindow(window);
 

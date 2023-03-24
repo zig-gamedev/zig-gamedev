@@ -3,6 +3,7 @@ const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) void {
     install(b, options.optimize, options.target, "x0001");
+    install(b, options.optimize, options.target, "x0002");
 }
 
 fn install(

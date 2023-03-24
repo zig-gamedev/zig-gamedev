@@ -747,7 +747,7 @@ pub var getBufferPointerv: *const fn (
 // OpenGL 2.0 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
-pub const Char = i8;
+pub const Char = u8;
 pub const Short = i16;
 pub const Byte = i8;
 pub const Ushort = u16;
@@ -1968,6 +1968,12 @@ pub var vertexAttribP4uiv: *const fn (
 ) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
+// OpenGL 4.1 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub var createShaderProgramv: *const fn (Enum, Sizei, [*c]const [*c]const Char) callconv(.C) Uint = undefined;
+//--------------------------------------------------------------------------------------------------
+//
 // OpenGL 4.2 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
@@ -2049,6 +2055,7 @@ pub var namedBufferStorage: *const fn (
     flags: Bitfield,
 ) callconv(.C) void = undefined;
 pub var bindTextureUnit: *const fn (unit: Uint, texture: Uint) callconv(.C) void = undefined;
+pub var textureBarrier: *const fn () callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 1.0 and 1.1 (Compatibility Profile)
