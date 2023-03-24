@@ -1024,6 +1024,11 @@ extern fn zguiEndDisabled() void;
 /// `pub fn separator() void`
 pub const separator = zguiSeparator;
 extern fn zguiSeparator() void;
+
+pub fn separatorText(label: [:0]const u8) void {
+    zguiSeparatorText(label);
+}
+extern fn zguiSeparatorText(label: [*:0]const u8) void;
 //--------------------------------------------------------------------------------------------------
 const SameLine = struct {
     offset_from_start_x: f32 = 0.0,
