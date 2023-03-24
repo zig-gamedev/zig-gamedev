@@ -29,19 +29,13 @@ pub fn draw() void {
             while (x <= bounds) : (x += step) {
                 var v = Vec2{ x, y };
 
-                v = pdj(v, 2.0);
                 v = hyperbolic(v, 1.0);
                 v = julia(v, 2.5, random.float(f32));
+                v = pdj(v, 2.0);
+                v = sinusoidal(v, 2.5);
 
-                v = sinusoidal(v, 2.2);
-
-                gl.color4f(0.001, 0.001, 0.001, 0.0);
-                //if (pass == 1) gl.color4f(0.0, 0.001, 0.0, 0.0);
-                //if (pass == 2) gl.color4f(0.0, 0.0, 0.0005, 0.0);
-
-                const xoff = random.floatNorm(f32) * 0.005;
-                const yoff = random.floatNorm(f32) * 0.005;
-                gl.vertex2f(v[0] + xoff, v[1] + yoff);
+                gl.color4f(0.002 * x * x, 0.0002, 0.001 * y * y, 0.0);
+                gl.vertex2f(v[0], v[1]);
             }
             y += step;
         }
@@ -73,7 +67,7 @@ pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
-    gl.pointSize(3.0);
+    gl.pointSize(6.0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.blendEquation(gl.FUNC_ADD);
@@ -109,10 +103,6 @@ fn pdj(v: Vec2, scale: f32) Vec2 {
     const pdj_b = 1.9;
     const pdj_c = -0.8;
     const pdj_d = -1.2;
-    //const pdj_a = 1.0111;
-    //const pdj_b = -1.011;
-    //const pdj_c = 2.08;
-    //const pdj_d = 10.2;
     return .{
         scale * (math.sin(pdj_a * v[1]) - math.cos(pdj_b * v[0])),
         scale * (math.sin(pdj_c * v[0]) - math.cos(pdj_d * v[1])),
