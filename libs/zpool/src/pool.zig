@@ -126,7 +126,7 @@ pub fn Pool(
         /// memory allocation backed by `std.MultiArrayList`.
         pub fn init(allocator: Allocator) Self {
             var self = Self{ ._allocator = allocator };
-            updateSlices(self);
+            updateSlices(&self);
             return self;
         }
 
@@ -708,6 +708,12 @@ const DeinitCounter = struct {
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+test "Pool.init()" {
+    const TestPool = Pool(8, 8, void, struct {});
+    var pool = TestPool.init(std.testing.allocator);
+    defer pool.deinit();
+}
 
 test "Pool with no columns" {
     const TestPool = Pool(8, 8, void, struct {});
