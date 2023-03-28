@@ -18,6 +18,7 @@ pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
 
 pub const Extension = enum {
     OES_vertex_array_object,
+    NV_bindless_texture,
 };
 
 pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
@@ -767,7 +768,10 @@ pub fn loadCompatProfileExt(loader: LoaderFn) !void {
     bindings.rotatef = try getProcAddress(@TypeOf(bindings.rotatef), "glRotatef");
     bindings.scalef = try getProcAddress(@TypeOf(bindings.scalef), "glScalef");
     bindings.translatef = try getProcAddress(@TypeOf(bindings.translatef), "glTranslatef");
-    bindings.matrixLoadIdentityEXT = try getProcAddress(@TypeOf(bindings.matrixLoadIdentityEXT), "glMatrixLoadIdentityEXT");
+    bindings.matrixLoadIdentityEXT = try getProcAddress(
+        @TypeOf(bindings.matrixLoadIdentityEXT),
+        "glMatrixLoadIdentityEXT",
+    );
     bindings.matrixOrthoEXT = try getProcAddress(@TypeOf(bindings.matrixOrthoEXT), "glMatrixOrthoEXT");
 }
 
@@ -965,6 +969,20 @@ pub fn loadExtension(loader: LoaderFn, extension: Extension) !void {
             bindings.isVertexArrayOES = try getProcAddress(
                 @TypeOf(bindings.isVertexArrayOES),
                 "glIsVertexArrayOES",
+            );
+        },
+        .NV_bindless_texture => {
+            bindings.getTextureHandleNV = try getProcAddress(
+                @TypeOf(bindings.getTextureHandleNV),
+                "glGetTextureHandleNV",
+            );
+            bindings.makeTextureHandleResidentNV = try getProcAddress(
+                @TypeOf(bindings.makeTextureHandleResidentNV),
+                "glMakeTextureHandleResidentNV",
+            );
+            bindings.programUniformHandleui64NV = try getProcAddress(
+                @TypeOf(bindings.programUniformHandleui64NV),
+                "glProgramUniformHandleui64NV",
             );
         },
     }
@@ -1282,10 +1300,16 @@ comptime {
     @export(bindings.framebufferTexture2D, .{ .name = "glFramebufferTexture2D", .linkage = linkage });
     @export(bindings.framebufferTexture3D, .{ .name = "glFramebufferTexture3D", .linkage = linkage });
     @export(bindings.framebufferRenderbuffer, .{ .name = "glFramebufferRenderbuffer", .linkage = linkage });
-    @export(bindings.getFramebufferAttachmentParameteriv, .{ .name = "glGetFramebufferAttachmentParameteriv", .linkage = linkage });
+    @export(
+        bindings.getFramebufferAttachmentParameteriv,
+        .{ .name = "glGetFramebufferAttachmentParameteriv", .linkage = linkage },
+    );
     @export(bindings.generateMipmap, .{ .name = "glGenerateMipmap", .linkage = linkage });
     @export(bindings.blitFramebuffer, .{ .name = "glBlitFramebuffer", .linkage = linkage });
-    @export(bindings.renderbufferStorageMultisample, .{ .name = "glRenderbufferStorageMultisample", .linkage = linkage });
+    @export(
+        bindings.renderbufferStorageMultisample,
+        .{ .name = "glRenderbufferStorageMultisample", .linkage = linkage },
+    );
     @export(bindings.framebufferTextureLayer, .{ .name = "glFramebufferTextureLayer", .linkage = linkage });
     @export(bindings.mapBufferRange, .{ .name = "glMapBufferRange", .linkage = linkage });
     @export(bindings.flushMappedBufferRange, .{ .name = "glFlushMappedBufferRange", .linkage = linkage });
@@ -1313,7 +1337,10 @@ comptime {
     //----------------------------------------------------------------------------------------------
     @export(bindings.drawElementsBaseVertex, .{ .name = "glDrawElementsBaseVertex", .linkage = linkage });
     @export(bindings.drawRangeElementsBaseVertex, .{ .name = "glDrawRangeElementsBaseVertex", .linkage = linkage });
-    @export(bindings.drawElementsInstancedBaseVertex, .{ .name = "glDrawElementsInstancedBaseVertex", .linkage = linkage });
+    @export(
+        bindings.drawElementsInstancedBaseVertex,
+        .{ .name = "glDrawElementsInstancedBaseVertex", .linkage = linkage },
+    );
     @export(bindings.multiDrawElementsBaseVertex, .{ .name = "glMultiDrawElementsBaseVertex", .linkage = linkage });
     @export(bindings.provokingVertex, .{ .name = "glProvokingVertex", .linkage = linkage });
     @export(bindings.fenceSync, .{ .name = "glFenceSync", .linkage = linkage });

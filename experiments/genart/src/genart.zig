@@ -43,6 +43,7 @@ pub fn main() !void {
     try sdl.gl.setSwapInterval(1);
 
     if (!sdl.gl.isExtensionSupported("GL_NV_path_rendering") or
+        !sdl.gl.isExtensionSupported("GL_NV_bindless_texture") or
         !sdl.gl.isExtensionSupported("GL_NV_mesh_shader"))
     {
         sdl.showSimpleMessageBox(.{ .information = true }, "OpenGL info", errmsg, null) catch unreachable;
@@ -50,6 +51,7 @@ pub fn main() !void {
     }
 
     try gl.loadCompatProfileExt(sdl.gl.getProcAddress);
+    try gl.loadExtension(sdl.gl.getProcAddress, .NV_bindless_texture);
 
     std.log.info("OpenGL vendor: {s}", .{gl.getString(gl.VENDOR)});
     std.log.info("OpenGL renderer: {s}", .{gl.getString(gl.RENDERER)});
@@ -78,6 +80,9 @@ pub fn main() !void {
         ximpl.viewport_height,
         gl.FALSE,
     );
+
+    xcommon.display_texh = gl.getTextureHandleNV(xcommon.display_tex);
+    gl.makeTextureHandleResidentNV(xcommon.display_texh);
 
     gl.createFramebuffers(1, &xcommon.display_fbo);
     defer gl.deleteFramebuffers(1, &xcommon.display_fbo);

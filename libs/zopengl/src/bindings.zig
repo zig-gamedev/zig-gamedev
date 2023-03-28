@@ -2111,6 +2111,18 @@ pub var matrixOrthoEXT: *const fn (
 ) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
+// NV_bindless_texture
+//
+//--------------------------------------------------------------------------------------------------
+pub var getTextureHandleNV: *const fn (texture: Uint) callconv(.C) Uint64 = undefined;
+pub var makeTextureHandleResidentNV: *const fn (handle: Uint64) callconv(.C) void = undefined;
+pub var programUniformHandleui64NV: *const fn (
+    program: Uint,
+    location: Int,
+    value: Uint64,
+) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------
+//
 // OpenGL ES 1.0
 //
 //--------------------------------------------------------------------------------------------------
