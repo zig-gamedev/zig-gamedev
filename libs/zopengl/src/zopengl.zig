@@ -19,6 +19,7 @@ pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
 pub const Extension = enum {
     OES_vertex_array_object,
     NV_bindless_texture,
+    NV_shader_buffer_load,
 };
 
 pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
@@ -983,6 +984,20 @@ pub fn loadExtension(loader: LoaderFn, extension: Extension) !void {
             bindings.programUniformHandleui64NV = try getProcAddress(
                 @TypeOf(bindings.programUniformHandleui64NV),
                 "glProgramUniformHandleui64NV",
+            );
+        },
+        .NV_shader_buffer_load => {
+            bindings.makeNamedBufferResidentNV = try getProcAddress(
+                @TypeOf(bindings.makeNamedBufferResidentNV),
+                "glMakeNamedBufferResidentNV",
+            );
+            bindings.getNamedBufferParameterui64vNV = try getProcAddress(
+                @TypeOf(bindings.getNamedBufferParameterui64vNV),
+                "glGetNamedBufferParameterui64vNV",
+            );
+            bindings.programUniformui64NV = try getProcAddress(
+                @TypeOf(bindings.programUniformui64NV),
+                "glProgramUniformui64vNV",
             );
         },
     }

@@ -44,6 +44,7 @@ pub fn main() !void {
 
     if (!sdl.gl.isExtensionSupported("GL_NV_path_rendering") or
         !sdl.gl.isExtensionSupported("GL_NV_bindless_texture") or
+        !sdl.gl.isExtensionSupported("GL_NV_shader_buffer_load") or
         !sdl.gl.isExtensionSupported("GL_NV_mesh_shader"))
     {
         sdl.showSimpleMessageBox(.{ .information = true }, "OpenGL info", errmsg, null) catch unreachable;
@@ -52,6 +53,7 @@ pub fn main() !void {
 
     try gl.loadCompatProfileExt(sdl.gl.getProcAddress);
     try gl.loadExtension(sdl.gl.getProcAddress, .NV_bindless_texture);
+    try gl.loadExtension(sdl.gl.getProcAddress, .NV_shader_buffer_load);
 
     std.log.info("OpenGL vendor: {s}", .{gl.getString(gl.VENDOR)});
     std.log.info("OpenGL renderer: {s}", .{gl.getString(gl.RENDERER)});

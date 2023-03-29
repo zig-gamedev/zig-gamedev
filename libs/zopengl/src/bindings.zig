@@ -2063,10 +2063,8 @@ pub var textureBarrier: *const fn () callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 pub const MODELVIEW = 0x1700;
 pub const PROJECTION = 0x1701;
-
 pub const COMPILE = 0x1300;
 pub const COMPILE_AND_EXECUTE = 0x1301;
-
 pub const QUAD_STRIP = 0x0008;
 pub const POLYGON = 0x0009;
 
@@ -2121,6 +2119,26 @@ pub var programUniformHandleui64NV: *const fn (
     location: Int,
     value: Uint64,
 ) callconv(.C) void = undefined;
+// TODO: Add the rest
+//--------------------------------------------------------------------------------------------------
+//
+// NV_shader_buffer_load
+//
+//--------------------------------------------------------------------------------------------------
+pub const BUFFER_GPU_ADDRESS_NV = 0x8F1D;
+
+pub var makeNamedBufferResidentNV: *const fn (buffer: Uint, access: Enum) callconv(.C) void = undefined;
+pub var getNamedBufferParameterui64vNV: *const fn (
+    buffer: Uint,
+    pname: Enum,
+    params: [*c]Uint64,
+) callconv(.C) void = undefined;
+pub var programUniformui64NV: *const fn (
+    program: Uint,
+    location: Int,
+    value: Uint64,
+) callconv(.C) void = undefined;
+// TODO: Add the rest
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL ES 1.0
