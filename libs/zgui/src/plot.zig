@@ -498,6 +498,10 @@ extern fn zguiPlot_PlotScatter(
     stride: i32,
 ) void;
 //----------------------------------------------------------------------------------------------
+/// `pub fn showDemoWindow(popen: ?*bool) void`
+pub const showDemoWindow = zguiPlot_ShowDemoWindow;
+extern fn zguiPlot_ShowDemoWindow(popen: ?*bool) void;
+//----------------------------------------------------------------------------------------------
 /// `pub fn endPlot() void`
 pub const endPlot = zguiPlot_EndPlot;
 extern fn zguiPlot_EndPlot() void;
