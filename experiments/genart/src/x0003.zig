@@ -20,7 +20,7 @@ pub fn draw() void {
 
     gl.loadIdentity();
     gl.rotatef(rot, 0.0, 0.0, 1.0);
-    rot += 10.0 * xcommon.frame_delta_time;
+    rot += 0.2;
     if (rot > 360.0) rot = 0.0;
 
     gl.useProgram(fs_draw);
@@ -42,7 +42,6 @@ pub fn draw() void {
     gl.vertex2f(1.0, 3.0);
 
     gl.end();
-
     gl.textureBarrier();
 
     gl.loadIdentity();
@@ -62,6 +61,7 @@ pub fn init() !void {
 
     fs_draw = gl.createShaderProgramv(gl.FRAGMENT_SHADER, 1, &@as([*:0]const gl.Char, 
         \\  #version 460 compatibility
+        \\  #extension NV_bindless_texture : require
         \\
         \\  in gl_PerFragment {
         \\      vec4 gl_Color;
