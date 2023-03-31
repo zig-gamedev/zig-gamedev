@@ -4,7 +4,7 @@ const sdl = @import("zsdl");
 const gl = @import("zopengl");
 const xcommon = @import("xcommon");
 
-pub const name = "generative art experiment: x0003";
+pub const name = "generative art experiment: x0004";
 pub const display_width = 1024 * 1;
 pub const display_height = 1024 * 1;
 
@@ -13,38 +13,34 @@ var fs_postprocess: gl.Uint = 0;
 var rot: f32 = 0;
 
 pub fn draw() void {
-    const bounds: f32 = 6.0;
-    gl.matrixLoadIdentityEXT(gl.PROJECTION);
-    gl.matrixOrthoEXT(gl.PROJECTION, -bounds, bounds, -bounds, bounds, -1.0, 1.0);
-
     gl.loadIdentity();
     gl.rotatef(rot, 0.0, 0.0, 1.0);
+    gl.translatef(@sin(@floatCast(f32, xcommon.frame_time)), 0, 0);
     rot += 0.2;
     if (rot > 360.0) rot = 0.0;
 
     gl.useProgram(fs_draw);
-    gl.begin(gl.TRIANGLES);
 
-    gl.color3f(1.0, 0.0, 0.0);
-    gl.vertex2f(-1.0, -1.0);
-    gl.vertex2f(3.0, -1.0);
-    gl.vertex2f(-1.0, 3.0);
+    gl.pushMatrix();
+    for (0..5) |_| {
+        gl.begin(gl.POINTS);
+        gl.color3f(1.0, 0.0, 0.0);
+        gl.vertex2f(-0.2, -0.2);
 
-    gl.color3f(0.0, 1.0, 0.0);
-    gl.vertex2f(0.0, -1.0);
-    gl.vertex2f(4.0, -1.0);
-    gl.vertex2f(0.0, 3.0);
+        gl.color3f(0.0, 1.0, 0.0);
+        gl.vertex2f(0.2, -0.2);
 
-    gl.color3f(0.0, 0.0, 1.0);
-    gl.vertex2f(1.0, -1.0);
-    gl.vertex2f(5.0, -1.0);
-    gl.vertex2f(1.0, 3.0);
+        gl.color3f(0.0, 0.05, 1.0);
+        gl.vertex2f(-0.2, 0.2);
+        gl.end();
 
-    gl.end();
+        gl.rotatef(30.0, 0.0, 0.0, 1.0);
+    }
+    gl.popMatrix();
+
     gl.textureBarrier();
 
     gl.loadIdentity();
-    gl.matrixLoadIdentityEXT(gl.PROJECTION);
     gl.useProgram(fs_postprocess);
     gl.begin(gl.TRIANGLES);
     gl.vertex2f(-1.0, -1.0);
@@ -57,6 +53,8 @@ pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
+    gl.pointSize(255.0);
+    gl.matrixLoadIdentityEXT(gl.PROJECTION);
 
     fs_draw = gl.createShaderProgramv(gl.FRAGMENT_SHADER, 1, &@as([*:0]const gl.Char, 
         \\  #version 460 compatibility

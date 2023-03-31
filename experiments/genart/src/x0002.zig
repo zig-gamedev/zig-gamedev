@@ -5,8 +5,8 @@ const gl = @import("zopengl");
 const xcommon = @import("xcommon");
 
 pub const name = "generative art experiment: x0002";
-pub const viewport_width = 1024 * 1;
-pub const viewport_height = 1024 * 1;
+pub const display_width = 1024 * 1;
+pub const display_height = 1024 * 1;
 
 const Vec2 = [2]f32;
 const bounds: f32 = 3.0;

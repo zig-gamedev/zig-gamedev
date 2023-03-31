@@ -6,8 +6,6 @@ const xcommon = @import("xcommon");
 
 pub export var NvOptimusEnablement: u32 = 1;
 
-const num_msaa_samples = 8;
-
 pub fn main() !void {
     _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
 
@@ -24,8 +22,8 @@ pub fn main() !void {
         ximpl.name,
         sdl.Window.pos_undefined,
         sdl.Window.pos_undefined,
-        ximpl.viewport_width,
-        ximpl.viewport_height,
+        ximpl.display_width,
+        ximpl.display_height,
         .{ .opengl = true, .allow_highdpi = true },
     ) catch |err| {
         sdl.showSimpleMessageBox(.{ .information = true }, "OpenGL info", errmsg, null) catch unreachable;
@@ -62,10 +60,10 @@ pub fn main() !void {
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
     gl.matrixOrthoEXT(
         gl.PROJECTION,
-        -ximpl.viewport_width * 0.5,
-        ximpl.viewport_width * 0.5,
-        -ximpl.viewport_height * 0.5,
-        ximpl.viewport_height * 0.5,
+        -ximpl.display_width * 0.5,
+        ximpl.display_width * 0.5,
+        -ximpl.display_height * 0.5,
+        ximpl.display_height * 0.5,
         -1.0,
         1.0,
     );
@@ -76,10 +74,10 @@ pub fn main() !void {
     defer gl.deleteTextures(1, &xcommon.display_tex);
     gl.textureStorage2DMultisample(
         xcommon.display_tex,
-        num_msaa_samples,
-        gl.RGBA16F,
-        ximpl.viewport_width,
-        ximpl.viewport_height,
+        if (@hasDecl(ximpl, "display_num_samples")) ximpl.display_num_samples else 8,
+        if (@hasDecl(ximpl, "display_format")) ximpl.display_format else gl.RGBA16F,
+        ximpl.display_width,
+        ximpl.display_height,
         gl.FALSE,
     );
 
@@ -117,12 +115,12 @@ pub fn main() !void {
             0, // default fbo
             0,
             0,
-            ximpl.viewport_width,
-            ximpl.viewport_height,
+            ximpl.display_width,
+            ximpl.display_height,
             0,
             0,
-            ximpl.viewport_width,
-            ximpl.viewport_height,
+            ximpl.display_width,
+            ximpl.display_height,
             gl.COLOR_BUFFER_BIT,
             gl.LINEAR,
         );
