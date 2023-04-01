@@ -19,20 +19,29 @@ pub fn draw() void {
     rot += 0.2;
     if (rot > 360.0) rot = 0.0;
 
+    const do_barrier = @mod(xcommon.frame_time, 6.0) < 3.0;
+
     gl.useProgram(fs_draw);
 
     gl.pushMatrix();
-    for (0..5) |_| {
+    for (0..6) |_| {
         gl.begin(gl.POINTS);
-        gl.color3f(1.0, 0.0, 0.0);
+        gl.color3f(0.2, 0.0, 0.0);
         gl.vertex2f(-0.2, -0.2);
+        gl.end();
+        if (do_barrier) gl.textureBarrier();
 
-        gl.color3f(0.0, 1.0, 0.0);
+        gl.begin(gl.POINTS);
+        gl.color3f(0.0, 0.2, 0.0);
         gl.vertex2f(0.2, -0.2);
+        gl.end();
+        if (do_barrier) gl.textureBarrier();
 
-        gl.color3f(0.0, 0.05, 1.0);
+        gl.begin(gl.POINTS);
+        gl.color3f(0.0, 0.01, 0.2);
         gl.vertex2f(-0.2, 0.2);
         gl.end();
+        if (do_barrier) gl.textureBarrier();
 
         gl.rotatef(30.0, 0.0, 0.0, 1.0);
     }
