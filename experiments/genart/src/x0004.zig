@@ -14,8 +14,6 @@ var rot: f32 = 0;
 
 pub fn draw() void {
     gl.loadIdentity();
-    gl.rotatef(rot, 0.0, 0.0, 1.0);
-    gl.translatef(@sin(@floatCast(f32, xcommon.frame_time)), 0, 0);
     rot += 0.2;
     if (rot > 360.0) rot = 0.0;
 
@@ -24,6 +22,8 @@ pub fn draw() void {
     gl.useProgram(fs_draw);
 
     gl.pushMatrix();
+    gl.rotatef(rot, 0.0, 0.0, 1.0);
+    gl.translatef(@sin(@floatCast(f32, xcommon.frame_time)), 0, 0);
     for (0..6) |_| {
         gl.begin(gl.POINTS);
         gl.color3f(0.2, 0.0, 0.0);
@@ -39,6 +39,32 @@ pub fn draw() void {
 
         gl.begin(gl.POINTS);
         gl.color3f(0.0, 0.01, 0.2);
+        gl.vertex2f(-0.2, 0.2);
+        gl.end();
+        if (do_barrier) gl.textureBarrier();
+
+        gl.rotatef(30.0, 0.0, 0.0, 1.0);
+    }
+    gl.popMatrix();
+
+    gl.pushMatrix();
+    gl.rotatef(-rot, 0.0, 0.0, 1.0);
+    gl.translatef(-@sin(@floatCast(f32, xcommon.frame_time)), 0, 0);
+    for (0..6) |_| {
+        gl.begin(gl.POINTS);
+        gl.color3f(0.0, 0.01, 0.2);
+        gl.vertex2f(-0.2, -0.2);
+        gl.end();
+        if (do_barrier) gl.textureBarrier();
+
+        gl.begin(gl.POINTS);
+        gl.color3f(0.01, 0.2, 0.0);
+        gl.vertex2f(0.2, -0.2);
+        gl.end();
+        if (do_barrier) gl.textureBarrier();
+
+        gl.begin(gl.POINTS);
+        gl.color3f(0.2, 0.0, 0.0);
         gl.vertex2f(-0.2, 0.2);
         gl.end();
         if (do_barrier) gl.textureBarrier();
