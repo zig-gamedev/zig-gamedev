@@ -63,9 +63,17 @@ pub fn package(
         ztracy_c_cpp.linkLibC();
         ztracy_c_cpp.linkLibCpp();
 
-        if (ztracy_c_cpp.target.isWindows()) {
-            ztracy_c_cpp.linkSystemLibraryName("ws2_32");
-            ztracy_c_cpp.linkSystemLibraryName("dbghelp");
+        switch (target.getOs().tag) {
+            .windows => {
+                ztracy_c_cpp.linkSystemLibraryName("ws2_32");
+                ztracy_c_cpp.linkSystemLibraryName("dbghelp");
+            },
+            .macos => {
+                ztracy_c_cpp.addFrameworkPath(
+                    thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks",
+                );
+            },
+            else => {},
         }
 
         break :ztracy_c_cpp ztracy_c_cpp;
