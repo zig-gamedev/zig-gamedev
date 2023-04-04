@@ -13,7 +13,6 @@ var fs_postprocess: gl.Uint = 0;
 var rot: f32 = 0;
 
 pub fn draw() void {
-    gl.loadIdentity();
     rot += 0.3;
     if (rot > 360.0) rot = 0.0;
 
@@ -37,7 +36,6 @@ pub fn draw() void {
 
     gl.textureBarrier();
 
-    gl.loadIdentity();
     gl.useProgram(fs_postprocess);
     gl.begin(gl.TRIANGLES);
     gl.vertex2f(-1.0, -1.0);
