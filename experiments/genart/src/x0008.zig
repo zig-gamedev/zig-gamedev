@@ -21,6 +21,9 @@ pub fn draw() void {
     const t = @floatCast(f32, xcommon.frame_time);
     const r = @sin(t);
 
+    gl.loadIdentity();
+    gl.rotatef(0.5 * rot, 0.0, 0.0, 1.0);
+
     gl.color3f(1.0, 0.1, 0.05);
     gl.pushMatrix();
     gl.rotatef(rot, 0.0, 0.0, 1.0);
@@ -52,6 +55,7 @@ pub fn draw() void {
     gl.textureBarrier();
 
     gl.useProgram(fs_postprocess);
+    gl.loadIdentity();
     gl.begin(gl.TRIANGLES);
     gl.vertex2f(-1.0, -1.0);
     gl.vertex2f(3.0, -1.0);
