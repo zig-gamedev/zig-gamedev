@@ -7,6 +7,7 @@ pub fn build(b: *std.Build, options: Options) void {
     install(b, options.optimize, options.target, "x0003");
     install(b, options.optimize, options.target, "x0004");
     install(b, options.optimize, options.target, "x0005");
+    install(b, options.optimize, options.target, "x0008");
 }
 
 fn install(
