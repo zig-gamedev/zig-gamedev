@@ -34,6 +34,8 @@ pub fn draw() void {
     gl.end();
     gl.popMatrix();
 
+    gl.textureBarrier();
+
     gl.color3f(0.05, 0.1, 1.0);
     gl.pushMatrix();
     gl.rotatef(90.0 * @sin(t), 0.0, 0.0, 1.0);
