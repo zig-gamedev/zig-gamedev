@@ -16,17 +16,30 @@ pub fn draw() void {
     rot += 0.3;
     if (rot > 360.0) rot = 0.0;
 
-    gl.color3f(0.05, 0.1, 1.0);
     gl.useProgram(fs_draw);
 
     const t = @floatCast(f32, xcommon.frame_time);
     const r = @sin(t);
 
+    gl.color3f(1.0, 0.1, 0.05);
+    gl.pushMatrix();
+    gl.rotatef(rot, 0.0, 0.0, 1.0);
+    gl.begin(gl.POINTS);
+    for (0..10) |i| {
+        const fract = @intToFloat(f32, i) / 10.0;
+        const x = r * @cos(math.tau * fract);
+        const y = r * @sin(math.tau * fract);
+        gl.vertex2f(x, y);
+    }
+    gl.end();
+    gl.popMatrix();
+
+    gl.color3f(0.05, 0.1, 1.0);
     gl.pushMatrix();
     gl.rotatef(90.0 * @sin(t), 0.0, 0.0, 1.0);
     gl.begin(gl.POINTS);
-    for (0..20) |i| {
-        const fract = @intToFloat(f32, i) / 20.0;
+    for (0..10) |i| {
+        const fract = @intToFloat(f32, i) / 10.0;
         const x = r * @cos(math.tau * fract);
         const y = r * @sin(math.tau * fract);
         gl.vertex2f(x, y);
@@ -48,7 +61,7 @@ pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
-    gl.pointSize(25.0);
+    gl.pointSize(15.0);
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
 
     fs_draw = gl.createShaderProgramv(gl.FRAGMENT_SHADER, 1, &@as([*:0]const gl.Char, 
