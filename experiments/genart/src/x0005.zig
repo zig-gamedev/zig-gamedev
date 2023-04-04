@@ -17,48 +17,24 @@ pub fn draw() void {
     rot += 0.3;
     if (rot > 360.0) rot = 0.0;
 
+    gl.color3f(1, 1, 1);
     gl.useProgram(fs_draw);
 
     const t = @floatCast(f32, xcommon.frame_time);
     const r = 0.55 + 0.2 * @sin(t);
     const r1 = @sin(t);
 
-    gl.color3f(1, 1, 1);
-    gl.pushMatrix();
-    gl.rotatef(rot, 0.0, 0.0, 1.0);
-    gl.begin(gl.LINES);
-    gl.vertex2f(0.0, -1.0);
-    gl.vertex2f(0.0, 1.0);
-    gl.end();
-    gl.popMatrix();
+    for (0..4) |i| {
+        gl.pushMatrix();
+        gl.rotatef(rot + @intToFloat(f32, i) * 45.0, 0.0, 0.0, 1.0);
+        gl.begin(gl.LINES);
+        gl.vertex2f(0.0, -1.0);
+        gl.vertex2f(0.0, 1.0);
+        gl.end();
+        gl.popMatrix();
+    }
 
     gl.pushMatrix();
-    gl.rotatef(rot + 45.0, 0.0, 0.0, 1.0);
-    gl.begin(gl.LINES);
-    gl.vertex2f(0.0, -1.0);
-    gl.vertex2f(0.0, 1.0);
-    gl.end();
-    gl.popMatrix();
-
-    gl.pushMatrix();
-    gl.rotatef(rot + 2 * 45.0, 0.0, 0.0, 1.0);
-    gl.begin(gl.LINES);
-    gl.vertex2f(0.0, -1.0);
-    gl.vertex2f(0.0, 1.0);
-    gl.end();
-    gl.popMatrix();
-
-    gl.pushMatrix();
-    gl.rotatef(rot + 3 * 45.0, 0.0, 0.0, 1.0);
-    gl.begin(gl.LINES);
-    gl.vertex2f(0.0, -1.0);
-    gl.vertex2f(0.0, 1.0);
-    gl.end();
-    gl.popMatrix();
-
-    gl.color3f(1, 1, 1);
-    gl.pushMatrix();
-    gl.rotatef(-0, 0.0, 0.0, 1.0);
     gl.begin(gl.POINTS);
     for (0..20) |i| {
         const fract = @intToFloat(f32, i) / 20.0;
