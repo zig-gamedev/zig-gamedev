@@ -16,7 +16,7 @@ pub fn draw() void {
     rot += 0.3;
     if (rot > 360.0) rot = 0.0;
 
-    gl.color3f(1, 1, 1);
+    gl.color3f(0.05, 0.1, 1.0);
     gl.useProgram(fs_draw);
 
     const t = @floatCast(f32, xcommon.frame_time);
@@ -48,8 +48,7 @@ pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 0.0 });
-    gl.pointSize(21.0);
-    gl.lineWidth(3.0);
+    gl.pointSize(25.0);
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
 
     fs_draw = gl.createShaderProgramv(gl.FRAGMENT_SHADER, 1, &@as([*:0]const gl.Char, 
