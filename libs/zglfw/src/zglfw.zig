@@ -475,6 +475,11 @@ pub const Window = opaque {
     }
     extern fn glfwWindowShouldClose(window: *Window) i32;
 
+    pub fn setShouldClose(window: *Window, should_close: bool) void {
+        return glfwSetWindowShouldClose(window, if (should_close) 1 else 0);
+    }
+    extern fn glfwSetWindowShouldClose(window: *Window, should_close: i32) void;
+
     /// `pub fn destroy(window: *Window) void`
     pub const destroy = glfwDestroyWindow;
     extern fn glfwDestroyWindow(window: *Window) void;
@@ -539,21 +544,18 @@ pub const Window = opaque {
     pub const setPos = glfwSetWindowPos;
     extern fn glfwSetWindowPos(window: *Window, xpos: i32, ypos: i32) void;
 
-    pub fn setTitle(window: *Window, title: [:0]const u8) callconv(.Inline) void {
+    pub inline fn setTitle(window: *Window, title: [:0]const u8) void {
         glfwSetWindowTitle(window, title);
     }
     extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
 
     /// `pub fn setFramebufferSizeCallback(window: *Window, callback) void`
     pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
-    extern fn glfwSetFramebufferSizeCallback(
+    extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?*const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            width: i32,
-            height: i32,
-        ) callconv(.C) void
-    ) void;
+        width: i32,
+        height: i32,
+    ) callconv(.C) void) void;
 
     /// `pub fn setSizeCallback(window: *Window, callback) void`
     pub const setSizeCallback = glfwSetWindowSizeCallback;
@@ -575,7 +577,7 @@ pub const Window = opaque {
             xpos: i32,
             ypos: i32,
         ) callconv(.C) void,
-     ) void;
+    ) void;
 
     /// `pub const setContentScaleCallback(window: *Window, callback) void`
     pub const setContentScaleCallback = glfwSetWindowContentScaleCallback;
