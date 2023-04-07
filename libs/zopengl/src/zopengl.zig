@@ -779,10 +779,9 @@ pub fn loadCompatProfileExt(loader: LoaderFn) !void {
 pub fn loadEsProfile(loader: LoaderFn, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
-    // Max. supported version is ES 2.0 for now.
-    assert(major >= 1 and major <= 2);
-    assert(minor >= 0 and minor <= 1);
-    assert(ver >= 10 and ver <= 20);
+    assert(major >= 1 and major <= 3);
+    assert(minor >= 0 and minor <= 2);
+    assert(ver >= 10 and ver <= 32);
 
     loaderFunc = loader;
 
@@ -947,6 +946,231 @@ pub fn loadEsProfile(loader: LoaderFn, major: u32, minor: u32) !void {
             @TypeOf(bindings.vertexAttribPointer),
             "glVertexAttribPointer",
         );
+        bindings.isRenderbuffer = try getProcAddress(@TypeOf(bindings.isRenderbuffer), "glIsRenderbuffer");
+        bindings.bindRenderbuffer = try getProcAddress(@TypeOf(bindings.bindRenderbuffer), "glBindRenderbuffer");
+        bindings.deleteRenderbuffers = try getProcAddress(
+            @TypeOf(bindings.deleteRenderbuffers),
+            "glDeleteRenderbuffers",
+        );
+        bindings.genRenderbuffers = try getProcAddress(@TypeOf(bindings.genRenderbuffers), "glGenRenderbuffers");
+        bindings.renderbufferStorage = try getProcAddress(
+            @TypeOf(bindings.renderbufferStorage),
+            "glRenderbufferStorage",
+        );
+        bindings.getRenderbufferParameteriv = try getProcAddress(
+            @TypeOf(bindings.getRenderbufferParameteriv),
+            "glGetRenderbufferParameteriv",
+        );
+        bindings.isFramebuffer = try getProcAddress(@TypeOf(bindings.isFramebuffer), "glIsFramebuffer");
+        bindings.bindFramebuffer = try getProcAddress(@TypeOf(bindings.bindFramebuffer), "glBindFramebuffer");
+        bindings.deleteFramebuffers = try getProcAddress(
+            @TypeOf(bindings.deleteFramebuffers),
+            "glDeleteFramebuffers",
+        );
+        bindings.genFramebuffers = try getProcAddress(@TypeOf(bindings.genFramebuffers), "glGenFramebuffers");
+        bindings.checkFramebufferStatus = try getProcAddress(
+            @TypeOf(bindings.checkFramebufferStatus),
+            "glCheckFramebufferStatus",
+        );
+        bindings.framebufferTexture2D = try getProcAddress(
+            @TypeOf(bindings.framebufferTexture2D),
+            "glFramebufferTexture2D",
+        );
+        bindings.framebufferRenderbuffer = try getProcAddress(
+            @TypeOf(bindings.framebufferRenderbuffer),
+            "glFramebufferRenderbuffer",
+        );
+        bindings.getFramebufferAttachmentParameteriv = try getProcAddress(
+            @TypeOf(bindings.getFramebufferAttachmentParameteriv),
+            "glGetFramebufferAttachmentParameteriv",
+        );
+        bindings.generateMipmap = try getProcAddress(@TypeOf(bindings.generateMipmap), "glGenerateMipmap");
+        bindings.framebufferTexture = try getProcAddress(
+            @TypeOf(bindings.framebufferTexture),
+            "glFramebufferTexture",
+        );
+    }
+
+    // OpenGL ES 3.0
+    if (ver >= 30) {
+        bindings.uniformMatrix2x3fv = try getProcAddress(
+            @TypeOf(bindings.uniformMatrix2x3fv),
+            "glUniformMatrix2x3fv",
+        );
+        bindings.uniformMatrix3x2fv = try getProcAddress(
+            @TypeOf(bindings.uniformMatrix3x2fv),
+            "glUniformMatrix3x2fv",
+        );
+        bindings.uniformMatrix2x4fv = try getProcAddress(
+            @TypeOf(bindings.uniformMatrix2x4fv),
+            "glUniformMatrix2x4fv",
+        );
+        bindings.uniformMatrix4x2fv = try getProcAddress(
+            @TypeOf(bindings.uniformMatrix4x2fv),
+            "glUniformMatrix4x2fv",
+        );
+        bindings.uniformMatrix3x4fv = try getProcAddress(
+            @TypeOf(bindings.uniformMatrix3x4fv),
+            "glUniformMatrix3x4fv",
+        );
+        bindings.uniformMatrix4x3fv = try getProcAddress(
+            @TypeOf(bindings.uniformMatrix4x3fv),
+            "glUniformMatrix4x3fv",
+        );
+        bindings.getBooleani_v = try getProcAddress(@TypeOf(bindings.getBooleani_v), "glGetBooleani_v");
+        bindings.getIntegeri_v = try getProcAddress(@TypeOf(bindings.getIntegeri_v), "glGetIntegeri_v");
+        bindings.beginTransformFeedback = try getProcAddress(
+            @TypeOf(bindings.beginTransformFeedback),
+            "glBeginTransformFeedback",
+        );
+        bindings.endTransformFeedback = try getProcAddress(
+            @TypeOf(bindings.endTransformFeedback),
+            "glEndTransformFeedback",
+        );
+        bindings.bindBufferRange = try getProcAddress(@TypeOf(bindings.bindBufferRange), "glBindBufferRange");
+        bindings.bindBufferBase = try getProcAddress(@TypeOf(bindings.bindBufferBase), "glBindBufferBase");
+        bindings.transformFeedbackVaryings = try getProcAddress(
+            @TypeOf(bindings.transformFeedbackVaryings),
+            "glTransformFeedbackVaryings",
+        );
+        bindings.getTransformFeedbackVarying = try getProcAddress(
+            @TypeOf(bindings.getTransformFeedbackVarying),
+            "glGetTransformFeedbackVarying",
+        );
+        bindings.vertexAttribIPointer = try getProcAddress(
+            @TypeOf(bindings.vertexAttribIPointer),
+            "glVertexAttribIPointer",
+        );
+        bindings.getVertexAttribIiv = try getProcAddress(
+            @TypeOf(bindings.getVertexAttribIiv),
+            "glGetVertexAttribIiv",
+        );
+        bindings.getVertexAttribIuiv = try getProcAddress(
+            @TypeOf(bindings.getVertexAttribIuiv),
+            "glGetVertexAttribIuiv",
+        );
+        bindings.getUniformuiv = try getProcAddress(@TypeOf(bindings.getUniformuiv), "glGetUniformuiv");
+        bindings.getFragDataLocation = try getProcAddress(
+            @TypeOf(bindings.getFragDataLocation),
+            "glGetFragDataLocation",
+        );
+        bindings.uniform1ui = try getProcAddress(@TypeOf(bindings.uniform1ui), "glUniform1ui");
+        bindings.uniform2ui = try getProcAddress(@TypeOf(bindings.uniform2ui), "glUniform2ui");
+        bindings.uniform3ui = try getProcAddress(@TypeOf(bindings.uniform3ui), "glUniform3ui");
+        bindings.uniform4ui = try getProcAddress(@TypeOf(bindings.uniform4ui), "glUniform4ui");
+        bindings.uniform1uiv = try getProcAddress(@TypeOf(bindings.uniform1uiv), "glUniform1uiv");
+        bindings.uniform2uiv = try getProcAddress(@TypeOf(bindings.uniform2uiv), "glUniform2uiv");
+        bindings.uniform3uiv = try getProcAddress(@TypeOf(bindings.uniform3uiv), "glUniform3uiv");
+        bindings.uniform4uiv = try getProcAddress(@TypeOf(bindings.uniform4uiv), "glUniform4uiv");
+        bindings.clearBufferiv = try getProcAddress(@TypeOf(bindings.clearBufferiv), "glClearBufferiv");
+        bindings.clearBufferuiv = try getProcAddress(@TypeOf(bindings.clearBufferuiv), "glClearBufferuiv");
+        bindings.clearBufferfv = try getProcAddress(@TypeOf(bindings.clearBufferfv), "glClearBufferfv");
+        bindings.clearBufferfi = try getProcAddress(@TypeOf(bindings.clearBufferfi), "glClearBufferfi");
+        bindings.getStringi = try getProcAddress(@TypeOf(bindings.getStringi), "glGetStringi");
+        bindings.blitFramebuffer = try getProcAddress(@TypeOf(bindings.blitFramebuffer), "glBlitFramebuffer");
+        bindings.renderbufferStorageMultisample = try getProcAddress(
+            @TypeOf(bindings.renderbufferStorageMultisample),
+            "glRenderbufferStorageMultisample",
+        );
+        bindings.framebufferTextureLayer = try getProcAddress(
+            @TypeOf(bindings.framebufferTextureLayer),
+            "glFramebufferTextureLayer",
+        );
+        bindings.mapBufferRange = try getProcAddress(@TypeOf(bindings.mapBufferRange), "glMapBufferRange");
+        bindings.flushMappedBufferRange = try getProcAddress(
+            @TypeOf(bindings.flushMappedBufferRange),
+            "glFlushMappedBufferRange",
+        );
+        bindings.bindVertexArray = try getProcAddress(@TypeOf(bindings.bindVertexArray), "glBindVertexArray");
+        bindings.deleteVertexArrays = try getProcAddress(
+            @TypeOf(bindings.deleteVertexArrays),
+            "glDeleteVertexArrays",
+        );
+        bindings.genVertexArrays = try getProcAddress(@TypeOf(bindings.genVertexArrays), "glGenVertexArrays");
+        bindings.isVertexArray = try getProcAddress(@TypeOf(bindings.isVertexArray), "glIsVertexArray");
+        bindings.drawArraysInstanced = try getProcAddress(
+            @TypeOf(bindings.drawArraysInstanced),
+            "glDrawArraysInstanced",
+        );
+        bindings.drawElementsInstanced = try getProcAddress(
+            @TypeOf(bindings.drawElementsInstanced),
+            "glDrawElementsInstanced",
+        );
+        bindings.copyBufferSubData = try getProcAddress(@TypeOf(bindings.copyBufferSubData), "glCopyBufferSubData");
+        bindings.getUniformIndices = try getProcAddress(@TypeOf(bindings.getUniformIndices), "glGetUniformIndices");
+        bindings.getActiveUniformsiv = try getProcAddress(
+            @TypeOf(bindings.getActiveUniformsiv),
+            "glGetActiveUniformsiv",
+        );
+        bindings.getUniformBlockIndex = try getProcAddress(
+            @TypeOf(bindings.getUniformBlockIndex),
+            "glGetUniformBlockIndex",
+        );
+        bindings.getActiveUniformBlockiv = try getProcAddress(
+            @TypeOf(bindings.getActiveUniformBlockiv),
+            "glGetActiveUniformBlockiv",
+        );
+        bindings.getActiveUniformBlockName = try getProcAddress(
+            @TypeOf(bindings.getActiveUniformBlockName),
+            "glGetActiveUniformBlockName",
+        );
+        bindings.uniformBlockBinding = try getProcAddress(
+            @TypeOf(bindings.uniformBlockBinding),
+            "glUniformBlockBinding",
+        );
+        bindings.fenceSync = try getProcAddress(@TypeOf(bindings.fenceSync), "glFenceSync");
+        bindings.isSync = try getProcAddress(@TypeOf(bindings.isSync), "glIsSync");
+        bindings.deleteSync = try getProcAddress(@TypeOf(bindings.deleteSync), "glDeleteSync");
+        bindings.clientWaitSync = try getProcAddress(@TypeOf(bindings.clientWaitSync), "glClientWaitSync");
+        bindings.waitSync = try getProcAddress(@TypeOf(bindings.waitSync), "glWaitSync");
+        bindings.getInteger64v = try getProcAddress(@TypeOf(bindings.getInteger64v), "glGetInteger64v");
+        bindings.getSynciv = try getProcAddress(@TypeOf(bindings.getSynciv), "glGetSynciv");
+        bindings.getInteger64i_v = try getProcAddress(@TypeOf(bindings.getInteger64i_v), "glGetInteger64i_v");
+        bindings.getBufferParameteri64v = try getProcAddress(
+            @TypeOf(bindings.getBufferParameteri64v),
+            "glGetBufferParameteri64v",
+        );
+        bindings.getMultisamplefv = try getProcAddress(@TypeOf(bindings.getMultisamplefv), "glGetMultisamplefv");
+        bindings.sampleMaski = try getProcAddress(@TypeOf(bindings.sampleMaski), "glSampleMaski");
+        bindings.genSamplers = try getProcAddress(@TypeOf(bindings.genSamplers), "glGenSamplers");
+        bindings.deleteSamplers = try getProcAddress(@TypeOf(bindings.deleteSamplers), "glDeleteSamplers");
+        bindings.isSampler = try getProcAddress(@TypeOf(bindings.isSampler), "glIsSampler");
+        bindings.bindSampler = try getProcAddress(@TypeOf(bindings.bindSampler), "glBindSampler");
+        bindings.samplerParameteri = try getProcAddress(@TypeOf(bindings.samplerParameteri), "glSamplerParameteri");
+        bindings.samplerParameteriv = try getProcAddress(
+            @TypeOf(bindings.samplerParameteriv),
+            "glSamplerParameteriv",
+        );
+        bindings.samplerParameterf = try getProcAddress(@TypeOf(bindings.samplerParameterf), "glSamplerParameterf");
+        bindings.samplerParameterfv = try getProcAddress(
+            @TypeOf(bindings.samplerParameterfv),
+            "glSamplerParameterfv",
+        );
+        bindings.samplerParameterIiv = try getProcAddress(
+            @TypeOf(bindings.samplerParameterIiv),
+            "glSamplerParameterIiv",
+        );
+        bindings.samplerParameterIuiv = try getProcAddress(
+            @TypeOf(bindings.samplerParameterIuiv),
+            "glSamplerParameterIuiv",
+        );
+        bindings.getSamplerParameteriv = try getProcAddress(
+            @TypeOf(bindings.getSamplerParameteriv),
+            "glGetSamplerParameteriv",
+        );
+        bindings.getSamplerParameterIiv = try getProcAddress(
+            @TypeOf(bindings.getSamplerParameterIiv),
+            "glGetSamplerParameterIiv",
+        );
+        bindings.getSamplerParameterfv = try getProcAddress(
+            @TypeOf(bindings.getSamplerParameterfv),
+            "glGetSamplerParameterfv",
+        );
+        bindings.vertexAttribDivisor = try getProcAddress(
+            @TypeOf(bindings.vertexAttribDivisor),
+            "glVertexAttribDivisor",
+        );
+        // TODO: from opengl 4.0 to 4.3 *subset*
     }
 }
 
