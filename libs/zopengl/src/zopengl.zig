@@ -985,10 +985,6 @@ pub fn loadEsProfile(loader: LoaderFn, major: u32, minor: u32) !void {
             "glGetFramebufferAttachmentParameteriv",
         );
         bindings.generateMipmap = try getProcAddress(@TypeOf(bindings.generateMipmap), "glGenerateMipmap");
-        bindings.framebufferTexture = try getProcAddress(
-            @TypeOf(bindings.framebufferTexture),
-            "glFramebufferTexture",
-        );
     }
 
     // OpenGL ES 3.0
