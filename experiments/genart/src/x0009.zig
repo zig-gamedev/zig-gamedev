@@ -51,6 +51,7 @@ pub fn draw() void {
         if (step1 == 2) step1 = 0;
     }
 
+    gl.pointSize(17.0);
     gl.enable(gl.BLEND);
     gl.useProgram(0);
     gl.loadIdentity();
