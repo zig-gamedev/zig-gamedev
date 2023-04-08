@@ -44,17 +44,13 @@ pub fn draw() void {
 
     gl.enable(gl.BLEND);
     gl.useProgram(0);
-
     gl.loadIdentity();
-
+    gl.color3f(1, 1, 1);
+    gl.begin(gl.POINTS);
     for (particles) |p| {
-        gl.color3f(1, 1, 1);
-        gl.pushMatrix();
-        gl.begin(gl.POINTS);
-        gl.vertex2f(p.x + 0.0 * random.float(f32), p.y + 0.0 * random.float(f32));
-        gl.end();
-        gl.popMatrix();
+        gl.vertex2f(p.x, p.y);
     }
+    gl.end();
 
     gl.textureBarrier();
 
