@@ -74,11 +74,12 @@ pub fn init() !void {
         p.x = -1.25 + 2.0 * random.float(f32);
         p.y = -1.25 + 2.0 * random.float(f32);
         p.num_frames = 20 + random.uintLessThan(u32, 100);
-        const r = random.uintLessThan(u32, 4);
-        if (r == 0) p.color = .{ 1.0, 1.0, 0.01 };
-        if (r == 1) p.color = .{ 0, 0.01, 1 };
-        if (r == 2) p.color = .{ 1, 0.005, 0 };
-        if (r == 3) p.color = .{ 0.01, 1.0, 0 };
+        switch (random.uintAtMost(u2, 3)) {
+            0 => p.color = .{ 1.0, 1.0, 0.01 },
+            1 => p.color = .{ 0, 0.01, 1 },
+            2 => p.color = .{ 1, 0.005, 0 },
+            3 => p.color = .{ 0.01, 1.0, 0 },
+        }
     }
 
     try sdl.gl.setSwapInterval(1);
