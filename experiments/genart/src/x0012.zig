@@ -25,7 +25,6 @@ var particles = [_]Particle{.{}} ** 200;
 var frame: u32 = 0;
 
 pub fn draw() void {
-    //const xy_delta: f32 = if (frame % 300 < 240) 0.01 else 0.0;
     const xy_delta: f32 = if (frame % 180 < 90) 0.01 else 0.02;
     frame += 1;
 
@@ -88,7 +87,6 @@ pub fn init() !void {
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
     gl.pointSize(9.0);
     gl.blendFunc(gl.ONE, gl.ONE);
-    //gl.disable(gl.MULTISAMPLE);
 
     fs_postprocess = gl.createShaderProgramv(gl.FRAGMENT_SHADER, 1, &@as([*:0]const gl.Char, 
         \\  #version 460 compatibility
