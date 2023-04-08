@@ -18,7 +18,7 @@ const Particle = struct {
     frame: u32 = 0,
     num_frames: u32 = 50,
     step: u32 = 0,
-    color: [3]f32 = undefined,
+    color: [3]f32 = .{ 1, 1, 1 },
 };
 
 var particles = [_]Particle{.{}} ** 200;
