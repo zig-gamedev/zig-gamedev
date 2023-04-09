@@ -9,7 +9,7 @@ pub const display_width = 1024 * 1;
 pub const display_height = 1024 * 1;
 
 var fs_postprocess: gl.Uint = 0;
-var prng = std.rand.DefaultPrng.init(123);
+var prng = std.rand.DefaultPrng.init(0);
 var random = prng.random();
 
 const Particle = struct {
@@ -20,6 +20,7 @@ const Particle = struct {
     angle: f32 = 0.0,
     angle_delta: f32 = 0.0,
     color: [3]f32 = .{ 1, 1, 1 },
+    point_size: f32 = 10.0,
 };
 
 var particles = [_]Particle{.{}} ** 256;
@@ -44,7 +45,7 @@ pub fn draw() void {
     gl.useProgram(0);
     gl.loadIdentity();
     for (particles) |p| {
-        gl.pointSize(10.0 + 10.0 * random.float(f32));
+        gl.pointSize(p.point_size);
         gl.pushMatrix();
         gl.rotatef(p.angle, 0, 0, 1);
         gl.begin(gl.POINTS);
@@ -55,6 +56,7 @@ pub fn draw() void {
         );
         gl.end();
         gl.popMatrix();
+        gl.textureBarrier();
     }
 
     gl.textureBarrier();
@@ -76,11 +78,12 @@ pub fn init() !void {
         p.angle_delta = 0.5 + random.float(f32);
         p.num_frames = 20 + random.uintLessThan(u32, 100);
         p.color = switch (random.uintAtMost(u2, 3)) {
-            0 => .{ 1.0, 1.0, 0.01 },
-            1 => .{ 0, 0.01, 1 },
-            2 => .{ 1, 0.005, 0 },
-            3 => .{ 0.01, 1.0, 0 },
+            0 => .{ 1, 0.005, 0 },
+            1 => .{ 1, 1, 0.005 },
+            2 => .{ 0, 1, 0.005 },
+            3 => .{ 0, 0.02, 1 },
         };
+        p.point_size = 10.0 + 10.0 * random.float(f32);
     }
 
     try sdl.gl.setSwapInterval(1);
