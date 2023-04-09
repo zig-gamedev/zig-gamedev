@@ -20,7 +20,6 @@ const Particle = struct {
     angle: f32 = 0.0,
     angle_delta: f32 = 0.0,
     color: [3]f32 = .{ 1, 1, 1 },
-    point_size: f32 = 10.0,
 };
 
 var particles = [_]Particle{.{}} ** 256;
@@ -45,7 +44,7 @@ pub fn draw() void {
     gl.useProgram(0);
     gl.loadIdentity();
     for (particles) |p| {
-        gl.pointSize(p.point_size);
+        gl.pointSize(10.0 + 10.0 * random.float(f32));
         gl.pushMatrix();
         gl.rotatef(p.angle, 0, 0, 1);
         gl.begin(gl.POINTS);
@@ -56,7 +55,6 @@ pub fn draw() void {
         );
         gl.end();
         gl.popMatrix();
-        gl.textureBarrier();
     }
 
     gl.textureBarrier();
@@ -83,7 +81,6 @@ pub fn init() !void {
             2 => .{ 0, 1, 0.005 },
             3 => .{ 0, 0.02, 1 },
         };
-        p.point_size = 10.0 + 10.0 * random.float(f32);
     }
 
     try sdl.gl.setSwapInterval(1);
