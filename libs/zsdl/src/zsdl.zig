@@ -187,9 +187,15 @@ pub const Window = opaque {
     }
     extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) i32;
 
-    /// `pub fn getSize(window: *Window, w: ?*i32, h: ?*i32) void`
-    pub const getSize = SDL_GetWindowSize;
-    extern fn SDL_GetWindowSize(window: *Window, w: ?*i32, h: ?*i32) void;
+    pub fn getPosition(window: *Window, w: ?*i32, h: ?*i32) Error!void {
+        if (SDL_GetWindowPosition(window, w, h) < 0) return makeError();
+    }
+    extern fn SDL_GetWindowPosition(window: *Window, x: ?*i32, y: ?*i32) i32;
+
+    pub fn getSize(window: *Window, w: ?*i32, h: ?*i32) Error!void {
+        if (SDL_GetWindowSize(window, w, h) < 0) return makeError();
+    }
+    extern fn SDL_GetWindowSize(window: *Window, w: ?*i32, h: ?*i32) i32;
 
     pub fn setTitle(window: *Window, title: [:0]const u8) void {
         SDL_SetWindowTitle(window, title);
@@ -735,6 +741,20 @@ extern fn SDL_GetPerformanceFrequency() u64;
 /// `pub fn delay(ms: u32) void`
 pub const delay = SDL_Delay;
 extern fn SDL_Delay(ms: u32) void;
+//--------------------------------------------------------------------------------------------------
+//
+// File Abstraction
+//
+//--------------------------------------------------------------------------------------------------
+pub fn getBasePath() ?[]const u8 {
+    return if (SDL_GetBasePath()) |path| std.mem.span(path) else null;
+}
+extern fn SDL_GetBasePath() [*c]const u8;
+
+pub fn getPrefPath(org: [:0]const u8, app: [:0]const u8) ?[]const u8 {
+    return if (SDL_GetPrefPath(org.ptr, app.ptr)) |path| std.mem.span(path) else null;
+}
+extern fn SDL_GetPrefPath(org: [*c]const u8, app: [*c]const u8) [*c]const u8;
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL
