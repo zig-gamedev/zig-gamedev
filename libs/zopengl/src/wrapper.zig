@@ -6,6 +6,7 @@ const assert = std.debug.assert;
 pub const bindings = @import("bindings.zig");
 
 pub const Framebuffer = extern struct { name: Uint = 0 };
+pub const Renderbuffer = extern struct { name: Uint = 0 };
 pub const Shader = extern struct { name: Uint = 0 };
 pub const Program = extern struct { name: Uint = 0 };
 pub const Texture = extern struct { name: Uint = 0 };
@@ -342,6 +343,99 @@ pub const BlendFactor = enum(Enum) {
     one_minus_constant_alpha = ONE_MINUS_CONSTANT_ALPHA,
 };
 
+pub const FramebufferTarget = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    framebuffer = FRAMEBUFFER,
+    draw_framebuffer = DRAW_FRAMEBUFFER,
+    read_framebuffer = READ_FRAMEBUFFER,
+};
+
+pub const FramebufferAttachment = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    front_left = FRONT_LEFT,
+    front_right = FRONT_RIGHT,
+    back_left = BACK_LEFT,
+    back_right = BACK_RIGHT,
+    left = LEFT,
+    right = RIGHT,
+    front = FRONT,
+    back = BACK,
+    FRONT_AND_BACK = FRONT_AND_BACK,
+    depth = DEPTH,
+    stencil = STENCIL,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    color_attachment0 = COLOR_ATTACHMENT0,
+    color_attachment1 = COLOR_ATTACHMENT1,
+    color_attachment2 = COLOR_ATTACHMENT2,
+    color_attachment3 = COLOR_ATTACHMENT3,
+    color_attachment4 = COLOR_ATTACHMENT4,
+    color_attachment5 = COLOR_ATTACHMENT5,
+    color_attachment6 = COLOR_ATTACHMENT6,
+    color_attachment7 = COLOR_ATTACHMENT7,
+    color_attachment8 = COLOR_ATTACHMENT8,
+    color_attachment9 = COLOR_ATTACHMENT9,
+    color_attachment10 = COLOR_ATTACHMENT10,
+    color_attachment11 = COLOR_ATTACHMENT11,
+    color_attachment12 = COLOR_ATTACHMENT12,
+    color_attachment13 = COLOR_ATTACHMENT13,
+    color_attachment14 = COLOR_ATTACHMENT14,
+    color_attachment15 = COLOR_ATTACHMENT15,
+    color_attachment16 = COLOR_ATTACHMENT16,
+    color_attachment17 = COLOR_ATTACHMENT17,
+    color_attachment18 = COLOR_ATTACHMENT18,
+    color_attachment19 = COLOR_ATTACHMENT19,
+    color_attachment20 = COLOR_ATTACHMENT20,
+    color_attachment21 = COLOR_ATTACHMENT21,
+    color_attachment22 = COLOR_ATTACHMENT22,
+    color_attachment23 = COLOR_ATTACHMENT23,
+    color_attachment24 = COLOR_ATTACHMENT24,
+    color_attachment25 = COLOR_ATTACHMENT25,
+    color_attachment26 = COLOR_ATTACHMENT26,
+    color_attachment27 = COLOR_ATTACHMENT27,
+    color_attachment28 = COLOR_ATTACHMENT28,
+    color_attachment29 = COLOR_ATTACHMENT29,
+    color_attachment30 = COLOR_ATTACHMENT30,
+    color_attachment31 = COLOR_ATTACHMENT31,
+    depth_attachment = DEPTH_ATTACHMENT,
+    stencil_attachment = STENCIL_ATTACHMENT,
+};
+
+pub const FramebufferAttachmentParameter = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    color_encoding = FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING,
+    component_type = FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE,
+    red_size = FRAMEBUFFER_ATTACHMENT_RED_SIZE,
+    green_size = FRAMEBUFFER_ATTACHMENT_GREEN_SIZE,
+    blue_size = FRAMEBUFFER_ATTACHMENT_BLUE_SIZE,
+    alpha_size = FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE,
+    depth_size = FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE,
+    stencil_size = FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE,
+    object_type = FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+    object_name = FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+    texture_level = FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL,
+    texture_cube_map_face = FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE,
+    texture_layer = FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    layered = FRAMEBUFFER_ATTACHMENT_LAYERED,
+};
+
+pub const RenderbufferTarget = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    renderbuffer = RENDERBUFFER,
+};
+
 pub const ShaderType = enum(Enum) {
     //----------------------------------------------------------------------------------------------
     // OpenGL 2.0 (Core Profile)
@@ -452,7 +546,7 @@ pub const TextureTarget = enum(Enum) {
     texture_2d_multisample_array = TEXTURE_2D_MULTISAMPLE_ARRAY,
 };
 
-pub const TextureInternalFormat = enum(Enum) {
+pub const InternalFormat = enum(Enum) {
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
     //----------------------------------------------------------------------------------------------
@@ -487,6 +581,8 @@ pub const TextureInternalFormat = enum(Enum) {
     // OpenGL 1.4 (Core Profile)
     //----------------------------------------------------------------------------------------------
     depth_component16 = DEPTH_COMPONENT16,
+    depth_component24 = DEPTH_COMPONENT24,
+    depth_component32 = DEPTH_COMPONENT32,
     //----------------------------------------------------------------------------------------------
     // OpenGL 2.1 (Core Profile)
     //----------------------------------------------------------------------------------------------
@@ -539,6 +635,9 @@ pub const TextureInternalFormat = enum(Enum) {
     rgba16ui = RGBA16UI,
     rgba32i = RGBA32I,
     rgba32ui = RGBA32UI,
+    depth_component32f = DEPTH_COMPONENT32F,
+    depth24_stencil8 = DEPTH24_STENCIL8,
+    depth32f_stencil8 = DEPTH32F_STENCIL8,
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.1 (Core Profile)
     //----------------------------------------------------------------------------------------------
@@ -935,7 +1034,7 @@ pub fn texParameteri(target: TextureTarget, pname: TextureParameter, param: Int)
 pub fn texImage2D(args: struct {
     target: TextureTarget,
     level: u32,
-    internal_format: TextureInternalFormat,
+    internal_format: InternalFormat,
     width: u32,
     height: u32,
     format: PixelFormat,
@@ -2487,24 +2586,78 @@ pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
 }
 
 // pub var isRenderbuffer: *const fn (renderbuffer: Uint) callconv(.C) Boolean = undefined;
+pub fn isRenderbuffer(renderbuffer: Renderbuffer) bool {
+    return bindings.isRenderbuffer(@bitCast(Uint, renderbuffer)) == TRUE;
+}
+
 // pub var bindRenderbuffer: *const fn (target: Enum, renderbuffer: Uint) callconv(.C) void = undefined;
+pub fn bindRenderbuffer(target: RenderbufferTarget, renderbuffer: Renderbuffer) void {
+    bindings.bindRenderbuffer(@enumToInt(target), @bitCast(Uint, renderbuffer));
+}
+
 // pub var deleteRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]const Uint) callconv(.C) void = undefined;
+pub fn deleteRenderbuffer(ptr: *const Renderbuffer) void {
+    bindings.deleteRenderbuffers(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn deleteRenderbuffers(renderbuffers: []const Renderbuffer) void {
+    bindings.deleteRenderbuffers(renderbuffers.len, @ptrCast([*c]Uint, renderbuffers.ptr));
+}
+
 // pub var genRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]Uint) callconv(.C) void = undefined;
+pub fn genRenderbuffer(ptr: *Renderbuffer) void {
+    bindings.genRenderbuffers(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn genRenderbuffers(renderbuffers: []Renderbuffer) void {
+    bindings.genRenderbuffers(renderbuffers.len, @ptrCast([*c]Uint, renderbuffers.ptr));
+}
+
 // pub var renderbufferStorage: *const fn (
 //     target: Enum,
 //     internalformat: Enum,
 //     width: Sizei,
 //     height: Sizei,
 // ) callconv(.C) void = undefined;
+pub fn renderbufferStorage(
+    target: RenderbufferTarget,
+    internal_format: InternalFormat,
+    width: Sizei,
+    height: Sizei,
+) void {
+    bindings.renderbufferStorage(@enumToInt(target), @enumToInt(internal_format), width, height);
+}
+
 // pub var getRenderbufferParameteriv: *const fn (
 //     target: Enum,
 //     pname: Enum,
 //     params: [*c]Int,
 // ) callconv(.C) void = undefined;
+
 // pub var isFramebuffer: *const fn (framebuffer: Uint) callconv(.C) Boolean = undefined;
+pub fn isFramebuffer(framebuffer: Framebuffer) bool {
+    return bindings.isFramebuffer(@bitCast(Uint, framebuffer)) == TRUE;
+}
+
 // pub var bindFramebuffer: *const fn (target: Enum, framebuffer: Uint) callconv(.C) void = undefined;
+pub fn bindFramebuffer(target: FramebufferTarget, framebuffer: Framebuffer) void {
+    bindings.bindFramebuffer(@enumToInt(target), @bitCast(Uint, framebuffer));
+}
+
 // pub var deleteFramebuffers: *const fn (n: Sizei, framebuffers: [*c]const Uint) callconv(.C) void = undefined;
+pub fn deleteFramebuffer(ptr: *const Framebuffer) void {
+    bindings.deleteFramebuffers(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn deleteFramebuffers(framebuffers: []const Framebuffer) void {
+    bindings.deleteFramebuffers(framebuffers.len, @ptrCast([*c]Uint, framebuffers.ptr));
+}
+
 // pub var genFramebuffers: *const fn (n: Sizei, framebuffers: [*c]Uint) callconv(.C) void = undefined;
+pub fn genFramebuffer(ptr: *Framebuffer) void {
+    bindings.genFramebuffers(1, @ptrCast([*c]Uint, ptr));
+}
+pub fn genFramebuffers(framebuffers: []Framebuffer) void {
+    bindings.genFramebuffers(framebuffers.len, @ptrCast([*c]Uint, framebuffers.ptr));
+}
+
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
 // pub var framebufferTexture1D: *const fn (
 //     target: Enum,
@@ -2513,6 +2666,7 @@ pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
 //     texture: Uint,
 //     level: Int,
 // ) callconv(.C) void = undefined;
+
 // pub var framebufferTexture2D: *const fn (
 //     target: Enum,
 //     attachment: Enum,
@@ -2520,6 +2674,22 @@ pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
 //     texture: Uint,
 //     level: Int,
 // ) callconv(.C) void = undefined;
+pub fn framebufferTexture2D(
+    target: FramebufferTarget,
+    attachment: FramebufferAttachment,
+    textarget: TextureTarget,
+    texture: Texture,
+    level: Int,
+) void {
+    bindings.framebufferTexture2D(
+        @enumToInt(target),
+        @enumToInt(attachment),
+        @enumToInt(textarget),
+        @bitCast(Uint, texture),
+        level,
+    );
+}
+
 // pub var framebufferTexture3D: *const fn (
 //     target: Enum,
 //     attachment: Enum,
@@ -2534,12 +2704,27 @@ pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
 //     renderbuffertarget: Enum,
 //     renderbuffer: Uint,
 // ) callconv(.C) void = undefined;
+
 // pub var getFramebufferAttachmentParameteriv: *const fn (
 //     target: Enum,
 //     attachment: Enum,
 //     pname: Enum,
 //     params: [*c]Int,
 // ) callconv(.C) void = undefined;
+pub fn getFramebufferAttachmentParameteriv(
+    target: FramebufferTarget,
+    attachment: FramebufferAttachment,
+    pname: FramebufferAttachmentParameter,
+) Int {
+    var result: Int = undefined;
+    bindings.getFramebufferAttachmentParameteriv(
+        @enumToInt(target),
+        @enumToInt(attachment),
+        @enumToInt(pname),
+        &result,
+    );
+    return result;
+}
 // pub var generateMipmap: *const fn (target: Enum) callconv(.C) void = undefined;
 // pub var blitFramebuffer: *const fn (
 //     srcX0: Int,
