@@ -2,19 +2,12 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) void {
-    install(b, options.optimize, options.target, "x0001");
-    install(b, options.optimize, options.target, "x0002");
-    install(b, options.optimize, options.target, "x0003");
-    install(b, options.optimize, options.target, "x0004");
-    install(b, options.optimize, options.target, "x0005");
-    install(b, options.optimize, options.target, "x0008");
-    install(b, options.optimize, options.target, "x0009");
-    install(b, options.optimize, options.target, "x0010");
-    install(b, options.optimize, options.target, "x0011");
-    install(b, options.optimize, options.target, "x0012");
-    install(b, options.optimize, options.target, "x0013");
-    install(b, options.optimize, options.target, "x0014");
-    install(b, options.optimize, options.target, "x0015");
+    const latest_experiment = 16;
+    inline for (1..latest_experiment + 1) |i| {
+        if (i == 6 or i == 7) continue;
+        const name = comptime std.fmt.comptimePrint("x{d:0>4}", .{i});
+        install(b, options.optimize, options.target, name);
+    }
 }
 
 fn install(
