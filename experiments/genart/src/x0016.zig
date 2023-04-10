@@ -39,7 +39,7 @@ pub fn draw() void {
             var x: f32 = -bounds;
             while (x <= bounds) : (x += step) {
                 var v = Vec2{ x, y };
-                v = sinusoidal(v, 0.8 + 1.6 * random.float(f32));
+                v = sinusoidal(v, 2.4 + random.float(f32));
                 gl.vertex2fv(&v);
             }
             y += step;
