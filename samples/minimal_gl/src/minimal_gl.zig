@@ -37,7 +37,7 @@ pub fn main() !void {
         var w: i32 = undefined;
         var h: i32 = undefined;
 
-        window.getSize(&w, &h);
+        try window.getSize(&w, &h);
         std.debug.print("Window size is {d}x{d}\n", .{ w, h });
 
         sdl.gl.getDrawableSize(window, &w, &h);
