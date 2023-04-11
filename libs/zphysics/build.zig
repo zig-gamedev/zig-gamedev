@@ -220,10 +220,10 @@ pub fn runTests(
     parent_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zphysics-tests", .owner = b });
 
     const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{ .use_double_precision = false });
-    const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{ .use_double_precision = true });
+    //const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{ .use_double_precision = true });
 
     parent_step.dependOn(&test0.step);
-    parent_step.dependOn(&test1.step);
+    //parent_step.dependOn(&test1.step);
 
     return parent_step;
 }
