@@ -364,7 +364,7 @@ pub const FramebufferAttachment = enum(Enum) {
     right = RIGHT,
     front = FRONT,
     back = BACK,
-    FRONT_AND_BACK = FRONT_AND_BACK,
+    front_and_back = FRONT_AND_BACK,
     depth = DEPTH,
     stencil = STENCIL,
     //----------------------------------------------------------------------------------------------
@@ -404,6 +404,7 @@ pub const FramebufferAttachment = enum(Enum) {
     color_attachment31 = COLOR_ATTACHMENT31,
     depth_attachment = DEPTH_ATTACHMENT,
     stencil_attachment = STENCIL_ATTACHMENT,
+    depth_stencil_attachment = DEPTH_STENCIL_ATTACHMENT,
 };
 
 pub const FramebufferAttachmentParameter = enum(Enum) {
@@ -434,6 +435,27 @@ pub const RenderbufferTarget = enum(Enum) {
     // OpenGL 3.0 (Core Profile)
     //----------------------------------------------------------------------------------------------
     renderbuffer = RENDERBUFFER,
+};
+
+pub const FramebufferStatus = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    complete = FRAMEBUFFER_COMPLETE,
+    incomplete_attachment = FRAMEBUFFER_INCOMPLETE_ATTACHMENT,
+    incomplete_missing_attachment = FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,
+    incomplete_draw_buffer = FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER,
+    incomplete_read_buffer = FRAMEBUFFER_INCOMPLETE_READ_BUFFER,
+    unsupported = FRAMEBUFFER_UNSUPPORTED,
+    incomplete_multisample = FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    incomplete_layer_targets = FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL ES 2
+    //----------------------------------------------------------------------------------------------
+    incomplete_dimensions = FRAMEBUFFER_INCOMPLETE_DIMENSIONS,
 };
 
 pub const ShaderType = enum(Enum) {
@@ -2659,6 +2681,10 @@ pub fn genFramebuffers(framebuffers: []Framebuffer) void {
 }
 
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
+pub fn checkFramebufferStatus(target: FramebufferTarget) FramebufferStatus {
+    return @intToEnum(FramebufferStatus, bindings.checkFramebufferStatus(@enumToInt(target)));
+}
+
 // pub var framebufferTexture1D: *const fn (
 //     target: Enum,
 //     attachment: Enum,
@@ -2698,12 +2724,26 @@ pub fn framebufferTexture2D(
 //     level: Int,
 //     zoffset: Int,
 // ) callconv(.C) void = undefined;
+
 // pub var framebufferRenderbuffer: *const fn (
 //     target: Enum,
 //     attachment: Enum,
 //     renderbuffertarget: Enum,
 //     renderbuffer: Uint,
 // ) callconv(.C) void = undefined;
+pub fn framebufferRenderbuffer(
+    target: FramebufferTarget,
+    attachment: FramebufferAttachment,
+    renderbuffertarget: RenderbufferTarget,
+    renderbuffer: Renderbuffer,
+) void {
+    bindings.framebufferRenderbuffer(
+        @enumToInt(target),
+        @enumToInt(attachment),
+        @enumToInt(renderbuffertarget),
+        @bitCast(Uint, renderbuffer),
+    );
+}
 
 // pub var getFramebufferAttachmentParameteriv: *const fn (
 //     target: Enum,
@@ -3207,6 +3247,13 @@ pub const INT_2_10_10_10_REV = bindings.INT_2_10_10_10_REV;
 //--------------------------------------------------------------------------------------------------
 // pub var clearDepthf: *const fn (depth: Float) callconv(.C) void = undefined;
 // pub var depthRangef: *const fn (n: Clampf, f: Clampf) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL ES 2.0
+//
+//--------------------------------------------------------------------------------------------------
+pub const FRAMEBUFFER_INCOMPLETE_DIMENSIONS = bindings.FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
 
 //--------------------------------------------------------------------------------------------------
 //
