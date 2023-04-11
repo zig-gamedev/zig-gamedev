@@ -613,9 +613,9 @@ pub const RayCastSettings = extern struct {
 // Init/deinit and global state
 //
 //--------------------------------------------------------------------------------------------------
-const SizeAndAlignment = struct {
-    size: u32,
-    alignment: u32,
+const SizeAndAlignment = packed struct(u64) {
+    size: u48,
+    alignment: u16,
 };
 var mem_allocator: ?std.mem.Allocator = null;
 var mem_allocations: ?std.AutoHashMap(usize, SizeAndAlignment) = null;
@@ -2257,7 +2257,7 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
 
     mem_allocations.?.put(
         @ptrToInt(ptr),
-        .{ .size = @intCast(u32, size), .alignment = mem_alignment },
+        .{ .size = @intCast(u48, size), .alignment = mem_alignment },
     ) catch @panic("zphysics: out of memory");
 
     return ptr;
@@ -2276,7 +2276,7 @@ fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque 
 
     mem_allocations.?.put(
         @ptrToInt(ptr),
-        .{ .size = @intCast(u32, size), .alignment = @intCast(u32, alignment) },
+        .{ .size = @intCast(u32, size), .alignment = @intCast(u16, alignment) },
     ) catch @panic("zphysics: out of memory");
 
     return ptr;
