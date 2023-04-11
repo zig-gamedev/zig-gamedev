@@ -613,12 +613,12 @@ pub const RayCastSettings = extern struct {
 // Init/deinit and global state
 //
 //--------------------------------------------------------------------------------------------------
-const MemAlloc = struct {
+const SizeAndAlignment = struct {
     size: u32,
     alignment: u32,
 };
 var mem_allocator: ?std.mem.Allocator = null;
-var mem_allocations: ?std.AutoHashMap(usize, MemAlloc) = null;
+var mem_allocations: ?std.AutoHashMap(usize, SizeAndAlignment) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
@@ -634,7 +634,7 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     std.debug.assert(mem_allocator == null and mem_allocations == null);
 
     mem_allocator = allocator;
-    mem_allocations = std.AutoHashMap(usize, MemAlloc).init(allocator);
+    mem_allocations = std.AutoHashMap(usize, SizeAndAlignment).init(allocator);
     mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
 
     c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
@@ -2287,13 +2287,13 @@ fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const alloc = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const info = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
 
-        const mem = @ptrCast([*]u8, ptr)[0..alloc.size];
+        const mem = @ptrCast([*]u8, ptr)[0..info.size];
 
         mem_allocator.?.rawFree(
             mem,
-            std.math.log2_int(u29, @intCast(u29, alloc.alignment)),
+            std.math.log2_int(u29, @intCast(u29, info.alignment)),
             @returnAddress(),
         );
     }
