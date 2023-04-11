@@ -1146,15 +1146,12 @@ pub fn depthFunc(func: DepthFunc) void {
 
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
 pub fn getError() Error {
-    const err_int = bindings.getError();
-    inline for (@typeInfo(Error).Enum.fields) |f| {
-        const this_tag_value = @field(Error, f.name);
-        if (err_int == @enumToInt(this_tag_value)) {
-            return this_tag_value;
-        }
-    }
-    assert(false);
-    return .no_error;
+    const res = bindings.getError();
+    return std.meta.intToEnum(Error, res) catch onInvalid: {
+        log.warn("getError returned unexpected value {}", .{res});
+        assert(false);
+        break :onInvalid .no_error;
+    };
 }
 
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
