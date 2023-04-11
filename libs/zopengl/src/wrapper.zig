@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 
 const std = @import("std");
+const log = std.log.scoped(.zopengl);
 const assert = std.debug.assert;
 
 pub const bindings = @import("bindings.zig");
@@ -1145,15 +1146,12 @@ pub fn depthFunc(func: DepthFunc) void {
 
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
 pub fn getError() Error {
-    const err_int = bindings.getError();
-    inline for (@typeInfo(Error).Enum.fields) |f| {
-        const this_tag_value = @field(Error, f.name);
-        if (err_int == @enumToInt(this_tag_value)) {
-            return this_tag_value;
-        }
-    }
-    assert(false);
-    return .no_error;
+    const res = bindings.getError();
+    return std.meta.intToEnum(Error, res) catch onInvalid: {
+        log.warn("getError returned unexpected value {}", .{res});
+        assert(false);
+        break :onInvalid .no_error;
+    };
 }
 
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
@@ -2682,7 +2680,12 @@ pub fn genFramebuffers(framebuffers: []Framebuffer) void {
 
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
 pub fn checkFramebufferStatus(target: FramebufferTarget) FramebufferStatus {
-    return @intToEnum(FramebufferStatus, bindings.checkFramebufferStatus(@enumToInt(target)));
+    const res = bindings.checkFramebufferStatus(@enumToInt(target));
+    return std.meta.intToEnum(FramebufferStatus, res) catch onInvalid: {
+        log.warn("checkFramebufferStatus returned unexpected value {}", .{res});
+        std.debug.assert(false);
+        break :onInvalid .complete;
+    };
 }
 
 // pub var framebufferTexture1D: *const fn (
