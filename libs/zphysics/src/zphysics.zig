@@ -613,8 +613,12 @@ pub const RayCastSettings = extern struct {
 // Init/deinit and global state
 //
 //--------------------------------------------------------------------------------------------------
+const MemAlloc = struct {
+    size: u32,
+    alignment: u32,
+};
 var mem_allocator: ?std.mem.Allocator = null;
-var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
+var mem_allocations: ?std.AutoHashMap(usize, MemAlloc) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
@@ -630,7 +634,7 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     std.debug.assert(mem_allocator == null and mem_allocations == null);
 
     mem_allocator = allocator;
-    mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
+    mem_allocations = std.AutoHashMap(usize, MemAlloc).init(allocator);
     mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
 
     c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
@@ -2244,15 +2248,19 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const mem = mem_allocator.?.alignedAlloc(
-        u8,
-        mem_alignment,
+    const ptr = mem_allocator.?.rawAlloc(
         size,
+        std.math.log2_int(u29, @intCast(u29, mem_alignment)),
+        @returnAddress(),
+    );
+    if (ptr == null) @panic("zphysics: out of memory");
+
+    mem_allocations.?.put(
+        @ptrToInt(ptr),
+        .{ .size = @intCast(u32, size), .alignment = mem_alignment },
     ) catch @panic("zphysics: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zphysics: out of memory");
-
-    return mem.ptr;
+    return ptr;
 }
 
 fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
@@ -2266,7 +2274,10 @@ fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque 
     );
     if (ptr == null) @panic("zphysics: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(ptr.?), size) catch @panic("zphysics: out of memory");
+    mem_allocations.?.put(
+        @ptrToInt(ptr),
+        .{ .size = @intCast(u32, size), .alignment = @intCast(u32, alignment) },
+    ) catch @panic("zphysics: out of memory");
 
     return ptr;
 }
@@ -2276,9 +2287,15 @@ fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
-        mem_allocator.?.free(mem);
+        const alloc = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+
+        const mem = @ptrCast([*]u8, ptr)[0..alloc.size];
+
+        mem_allocator.?.rawFree(
+            mem,
+            std.math.log2_int(u29, @intCast(u29, alloc.alignment)),
+            @returnAddress(),
+        );
     }
 }
 //--------------------------------------------------------------------------------------------------
