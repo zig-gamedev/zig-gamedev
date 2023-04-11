@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 
 const std = @import("std");
+const log = std.log.scoped(.zopengl);
 const assert = std.debug.assert;
 
 pub const bindings = @import("bindings.zig");
@@ -2682,7 +2683,12 @@ pub fn genFramebuffers(framebuffers: []Framebuffer) void {
 
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
 pub fn checkFramebufferStatus(target: FramebufferTarget) FramebufferStatus {
-    return @intToEnum(FramebufferStatus, bindings.checkFramebufferStatus(@enumToInt(target)));
+    const res = bindings.checkFramebufferStatus(@enumToInt(target));
+    return std.meta.intToEnum(FramebufferStatus, res) catch onInvalid: {
+        log.warn("checkFramebufferStatus returned unexpected value {}", .{res});
+        std.debug.assert(false);
+        break :onInvalid .complete;
+    };
 }
 
 // pub var framebufferTexture1D: *const fn (
