@@ -51,7 +51,7 @@ pub fn package(
             .optimize = optimize,
         });
 
-        lib.install();
+        b.installArtifact(lib);
         if (target.isWindows()) {
             lib.defineCMacro("IMGUI_API", "__declspec(dllexport)");
             lib.defineCMacro("IMPLOT_API", "__declspec(dllexport)");

@@ -58,7 +58,7 @@ fn install(
     install_step.dependOn(&b.addInstallArtifact(exe).step);
 
     const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' genart experiment");
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
 

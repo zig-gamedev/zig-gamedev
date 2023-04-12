@@ -61,7 +61,7 @@ pub fn runTests(
     const znoise_pkg = package(b, target, optimize, .{});
     znoise_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

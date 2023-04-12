@@ -72,7 +72,7 @@ pub fn runTests(
     const zmath_pkg = package(b, target, optimize, .{});
     tests.addModule("zmath_options", zmath_pkg.zmath_options);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 pub fn runBenchmarks(
@@ -89,7 +89,7 @@ pub fn runBenchmarks(
     const zmath_pkg = package(b, target, .ReleaseFast, .{});
     exe.addModule("zmath", zmath_pkg.zmath);
 
-    return &exe.run().step;
+    return &b.addRunArtifact(exe).step;
 }
 
 inline fn thisDir() []const u8 {

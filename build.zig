@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.2154" };
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.2560" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -314,7 +314,7 @@ fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8
     install_step.dependOn(&b.addInstallArtifact(exe).step);
 
     const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' demo");
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
 

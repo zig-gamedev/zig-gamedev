@@ -39,7 +39,7 @@ pub fn runTests(
         .target = target,
         .optimize = optimize,
     });
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

@@ -102,7 +102,7 @@ pub fn runTests(
     const zmesh_pkg = package(b, target, optimize, .{});
     zmesh_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

@@ -66,7 +66,7 @@ pub fn runTests(
     const zflecs_pkg = package(b, target, optimize, .{});
     zflecs_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

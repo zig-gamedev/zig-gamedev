@@ -162,7 +162,7 @@ pub fn runTests(
     const zglfw_pkg = package(b, target, optimize, .{});
     zglfw_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

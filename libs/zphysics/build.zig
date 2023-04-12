@@ -259,7 +259,7 @@ fn testStep(
 
     test_exe.addModule("zphysics_options", zphysics_pkg.zphysics_options);
 
-    return test_exe.run();
+    return b.addRunArtifact(test_exe);
 }
 
 inline fn thisDir() []const u8 {
