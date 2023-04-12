@@ -588,6 +588,7 @@ pub const InternalFormat = enum(Enum) {
     rgb8 = RGB8,
     rgb10 = RGB10,
     rgb12 = RGB12,
+    rgb16 = RGB16,
     rgba2 = RGBA2,
     rgba4 = RGBA4,
     rgb5_a1 = RGB5_A1,
