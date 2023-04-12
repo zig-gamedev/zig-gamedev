@@ -1311,6 +1311,12 @@ pub fn bindTexture(target: TextureTarget, texture: Texture) void {
 }
 
 // pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
+pub fn deleteTexture(ptr: *const Texture) void {
+    bindings.deleteTextures(1, @ptrCast([*c]const Uint, ptr));
+}
+pub fn deleteTextures(textures: []const Texture) void {
+    bindings.deleteTextures(textures.len, @ptrCast([*c]const Uint, textures.ptr));
+}
 
 // pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
 pub fn genTexture(ptr: *Texture) void {
@@ -1321,6 +1327,9 @@ pub fn genTextures(textures: []Texture) void {
 }
 
 // pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
+pub fn isTexture(texture: Texture) bool {
+    return bindings.isTexture(@bitCast(Uint, texture)) == TRUE;
+}
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -2617,10 +2626,10 @@ pub fn bindRenderbuffer(target: RenderbufferTarget, renderbuffer: Renderbuffer) 
 
 // pub var deleteRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteRenderbuffer(ptr: *const Renderbuffer) void {
-    bindings.deleteRenderbuffers(1, @ptrCast([*c]Uint, ptr));
+    bindings.deleteRenderbuffers(1, @ptrCast([*c]const Uint, ptr));
 }
 pub fn deleteRenderbuffers(renderbuffers: []const Renderbuffer) void {
-    bindings.deleteRenderbuffers(renderbuffers.len, @ptrCast([*c]Uint, renderbuffers.ptr));
+    bindings.deleteRenderbuffers(renderbuffers.len, @ptrCast([*c]const Uint, renderbuffers.ptr));
 }
 
 // pub var genRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]Uint) callconv(.C) void = undefined;
@@ -2640,10 +2649,15 @@ pub fn genRenderbuffers(renderbuffers: []Renderbuffer) void {
 pub fn renderbufferStorage(
     target: RenderbufferTarget,
     internal_format: InternalFormat,
-    width: Sizei,
-    height: Sizei,
+    width: u32,
+    height: u32,
 ) void {
-    bindings.renderbufferStorage(@enumToInt(target), @enumToInt(internal_format), width, height);
+    bindings.renderbufferStorage(
+        @enumToInt(target),
+        @enumToInt(internal_format),
+        @bitCast(Sizei, width),
+        @bitCast(Sizei, height),
+    );
 }
 
 // pub var getRenderbufferParameteriv: *const fn (
@@ -2664,10 +2678,10 @@ pub fn bindFramebuffer(target: FramebufferTarget, framebuffer: Framebuffer) void
 
 // pub var deleteFramebuffers: *const fn (n: Sizei, framebuffers: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteFramebuffer(ptr: *const Framebuffer) void {
-    bindings.deleteFramebuffers(1, @ptrCast([*c]Uint, ptr));
+    bindings.deleteFramebuffers(1, @ptrCast([*c]const Uint, ptr));
 }
 pub fn deleteFramebuffers(framebuffers: []const Framebuffer) void {
-    bindings.deleteFramebuffers(framebuffers.len, @ptrCast([*c]Uint, framebuffers.ptr));
+    bindings.deleteFramebuffers(framebuffers.len, @ptrCast([*c]const Uint, framebuffers.ptr));
 }
 
 // pub var genFramebuffers: *const fn (n: Sizei, framebuffers: [*c]Uint) callconv(.C) void = undefined;
