@@ -2239,7 +2239,7 @@ pub const FRAMEBUFFER_INCOMPLETE_DIMENSIONS = 0x8CD9;
 // OES_vertex_array_object (OpenGL ES Extension #71)
 //
 //--------------------------------------------------------------------------------------------------
-pub const VERTEX_ARRAY_BINDING_OES = 0x85B5;
+pub const VERTEX_ARRAY_BINDING_OES = VERTEX_ARRAY_BINDING;
 
 pub var bindVertexArrayOES: *const fn (array: Uint) callconv(.C) void = undefined;
 pub var deleteVertexArraysOES: *const fn (

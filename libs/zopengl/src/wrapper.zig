@@ -255,6 +255,7 @@ pub const ParameterName = enum(Enum) {
     transform_feedback_buffer_binding = TRANSFORM_FEEDBACK_BUFFER_BINDING,
     transform_feedback_buffer_size = TRANSFORM_FEEDBACK_BUFFER_SIZE,
     transform_feedback_buffer_start = TRANSFORM_FEEDBACK_BUFFER_START,
+    vertex_array_binding = VERTEX_ARRAY_BINDING,
     read_framebuffer_binding = READ_FRAMEBUFFER_BINDING,
     renderbuffer_binding = RENDERBUFFER_BINDING,
     min_program_texel_offset = MIN_PROGRAM_TEXEL_OFFSET,
@@ -3275,36 +3276,7 @@ pub const FRAMEBUFFER_INCOMPLETE_DIMENSIONS = bindings.FRAMEBUFFER_INCOMPLETE_DI
 
 //--------------------------------------------------------------------------------------------------
 //
-// OES_vertex_array_object (OpenGL ES Extension #71)
+// OES_vertex_array_object
 //
 //--------------------------------------------------------------------------------------------------
-pub const VERTEX_ARRAY_BINDING_OES = bindings.VERTEX_ARRAY_BINDING_OES; // TODO: This is a pname accepted by getBoolean, getFloat and getInteger
-
-// pub var bindVertexArrayOES: *const fn (array: Uint) callconv(.C) void = undefined;
-pub fn bindVertexArrayOES(array: VertexArrayObject) void {
-    bindings.bindVertexArrayOES(@bitCast(Uint, array));
-}
-
-// pub var deleteVertexArraysOES: *const fn (
-//     n: Sizei,
-//     arrays: [*c]const Uint,
-// ) callconv(.C) void = undefined;
-pub fn deleteVertexArrayOES(ptr: *const VertexArrayObject) void {
-    bindings.deleteVertexArraysOES(1, @ptrCast([*c]Uint, ptr));
-}
-pub fn deleteVertexArraysOES(arrays: []const VertexArrayObject) void {
-    bindings.deleteVertexArraysOES(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
-}
-
-// pub var genVertexArraysOES: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
-pub fn genVertexArrayOES(ptr: *VertexArrayObject) void {
-    bindings.genVertexArraysOES(1, @ptrCast([*c]Uint, ptr));
-}
-pub fn genVertexArraysOES(arrays: []VertexArrayObject) void {
-    bindings.genVertexArraysOES(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
-}
-
-// pub var isVertexArrayOES: *const fn (array: Uint) callconv(.C) Boolean = undefined;
-pub fn isVertexArrayOES(array: VertexArrayObject) bool {
-    return bindings.isVertexArrayOES(@bitCast(Uint, array)) == TRUE;
-}
+pub const VERTEX_ARRAY_BINDING_OES = bindings.VERTEX_ARRAY_BINDING_OES;
