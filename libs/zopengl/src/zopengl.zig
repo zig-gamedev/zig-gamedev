@@ -17,9 +17,14 @@ pub usingnamespace switch (options.api) {
 pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
 
 pub const Extension = enum {
-    OES_vertex_array_object,
+    KHR_debug,
     NV_bindless_texture,
     NV_shader_buffer_load,
+};
+
+pub const EsExtension = enum {
+    OES_vertex_array_object,
+    KHR_debug,
 };
 
 pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
@@ -692,6 +697,17 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 4.3
     if (ver >= 43) {
+        bindings.debugMessageControl = try getProcAddress(@TypeOf(bindings.debugMessageControl), "glDebugMessageControl");
+        bindings.debugMessageInsert = try getProcAddress(@TypeOf(bindings.debugMessageInsert), "glDebugMessageInsert");
+        bindings.debugMessageCallback = try getProcAddress(@TypeOf(bindings.debugMessageCallback), "glDebugMessageCallback");
+        bindings.getDebugMessageLog = try getProcAddress(@TypeOf(bindings.getDebugMessageLog), "glGetDebugMessageLog");
+        bindings.getPointerv = try getProcAddress(@TypeOf(bindings.getPointerv), "glGetPointerv");
+        bindings.pushDebugGroup = try getProcAddress(@TypeOf(bindings.pushDebugGroup), "glPushDebugGroup");
+        bindings.popDebugGroup = try getProcAddress(@TypeOf(bindings.popDebugGroup), "glPopDebugGroup");
+        bindings.objectLabel = try getProcAddress(@TypeOf(bindings.objectLabel), "glObjectLabel");
+        bindings.getObjectLabel = try getProcAddress(@TypeOf(bindings.getObjectLabel), "glGetObjectLabel");
+        bindings.objectPtrLabel = try getProcAddress(@TypeOf(bindings.objectPtrLabel), "glObjectPtrLabel");
+        bindings.getObjectPtrLabel = try getProcAddress(@TypeOf(bindings.getObjectPtrLabel), "glGetObjectPtrLabel");
         // TODO
     }
 
@@ -1174,22 +1190,50 @@ pub fn loadExtension(loader: LoaderFn, extension: Extension) !void {
     loaderFunc = loader;
 
     switch (extension) {
-        .OES_vertex_array_object => {
-            bindings.bindVertexArrayOES = try getProcAddress(
-                @TypeOf(bindings.bindVertexArrayOES),
-                "glBindVertexArrayOES",
+        .KHR_debug => {
+            bindings.debugMessageControl = try getProcAddress(
+                @TypeOf(bindings.debugMessageControl),
+                "glDebugMessageControl",
             );
-            bindings.deleteVertexArraysOES = try getProcAddress(
-                @TypeOf(bindings.deleteVertexArraysOES),
-                "glDeleteVertexArraysOES",
+            bindings.debugMessageInsert = try getProcAddress(
+                @TypeOf(bindings.debugMessageInsert),
+                "glDebugMessageInsert",
             );
-            bindings.genVertexArraysOES = try getProcAddress(
-                @TypeOf(bindings.genVertexArraysOES),
-                "glGenVertexArraysOES",
+            bindings.debugMessageCallback = try getProcAddress(
+                @TypeOf(bindings.debugMessageCallback),
+                "glDebugMessageCallback",
             );
-            bindings.isVertexArrayOES = try getProcAddress(
-                @TypeOf(bindings.isVertexArrayOES),
-                "glIsVertexArrayOES",
+            bindings.getDebugMessageLog = try getProcAddress(
+                @TypeOf(bindings.getDebugMessageLog),
+                "glGetDebugMessageLog",
+            );
+            bindings.getPointerv = try getProcAddress(
+                @TypeOf(bindings.getPointerv),
+                "glGetPointerv",
+            );
+            bindings.pushDebugGroup = try getProcAddress(
+                @TypeOf(bindings.pushDebugGroup),
+                "glPushDebugGroup",
+            );
+            bindings.popDebugGroup = try getProcAddress(
+                @TypeOf(bindings.popDebugGroup),
+                "glPopDebugGroup",
+            );
+            bindings.objectLabel = try getProcAddress(
+                @TypeOf(bindings.objectLabel),
+                "glObjectLabel",
+            );
+            bindings.getObjectLabel = try getProcAddress(
+                @TypeOf(bindings.getObjectLabel),
+                "glGetObjectLabel",
+            );
+            bindings.objectPtrLabel = try getProcAddress(
+                @TypeOf(bindings.objectPtrLabel),
+                "glObjectPtrLabel",
+            );
+            bindings.getObjectPtrLabel = try getProcAddress(
+                @TypeOf(bindings.getObjectPtrLabel),
+                "glGetObjectPtrLabel",
             );
         },
         .NV_bindless_texture => {
@@ -1222,6 +1266,90 @@ pub fn loadExtension(loader: LoaderFn, extension: Extension) !void {
         },
     }
 }
+
+pub fn loadEsExtension(loader: LoaderFn, extension: EsExtension) !void {
+    loaderFunc = loader;
+
+    switch (extension) {
+        .KHR_debug => {
+            try bind("glDebugMessageControlKHR", .{
+                &bindings.debugMessageControl,
+                &bindings.debugMessageControlKHR,
+            });
+            try bind("glDebugMessageInsertKHR", .{
+                &bindings.debugMessageInsert,
+                &bindings.debugMessageInsertKHR,
+            });
+            try bind("glDebugMessageCallbackKHR", .{
+                &bindings.debugMessageCallback,
+                &bindings.debugMessageCallbackKHR,
+            });
+            try bind("glGetDebugMessageLogKHR", .{
+                &bindings.getDebugMessageLog,
+                &bindings.getDebugMessageLogKHR,
+            });
+            try bind("glGetPointervKHR", .{
+                &bindings.getPointerv,
+                &bindings.getPointervKHR,
+            });
+            try bind("glPushDebugGroupKHR", .{
+                &bindings.pushDebugGroup,
+                &bindings.pushDebugGroupKHR,
+            });
+            try bind("glPopDebugGroupKHR", .{
+                &bindings.popDebugGroup,
+                &bindings.popDebugGroupKHR,
+            });
+            try bind("glObjectLabelKHR", .{
+                &bindings.objectLabel,
+                &bindings.objectLabelKHR,
+            });
+            try bind("glGetObjectLabelKHR", .{
+                &bindings.getObjectLabel,
+                &bindings.getObjectLabelKHR,
+            });
+            try bind("glObjectPtrLabelKHR", .{
+                &bindings.objectPtrLabel,
+                &bindings.objectPtrLabelKHR,
+            });
+            try bind("glGetObjectPtrLabelKHR", .{
+                &bindings.getObjectPtrLabel,
+                &bindings.getObjectPtrLabelKHR,
+            });
+        },
+        .OES_vertex_array_object => {
+            try bind("glBindVertexArrayOES", .{
+                &bindings.bindVertexArray,
+                &bindings.bindVertexArrayOES,
+            });
+            try bind("glDeleteVertexArraysOES", .{
+                &bindings.deleteVertexArrays,
+                &bindings.deleteVertexArraysOES,
+            });
+            try bind("glGenVertexArraysOES", .{
+                &bindings.genVertexArrays,
+                &bindings.genVertexArraysOES,
+            });
+            try bind("glIsVertexArrayOES", .{
+                &bindings.isVertexArray,
+                &bindings.isVertexArrayOES,
+            });
+        },
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+fn bind(gl_proc_name: [:0]const u8, bind_addresses: anytype) !void {
+    const ProcType = @typeInfo(@TypeOf(bind_addresses.@"0")).Pointer.child;
+    const proc = try getProcAddress(ProcType, gl_proc_name);
+    inline for (bind_addresses) |bind_addr| {
+        if (@typeInfo(@TypeOf(bind_addr)).Pointer.child != ProcType) {
+            @compileError("proc bindings should all be the same type");
+        }
+        bind_addr.* = proc;
+    }
+}
+
 //--------------------------------------------------------------------------------------------------
 var loaderFunc: LoaderFn = undefined;
 
