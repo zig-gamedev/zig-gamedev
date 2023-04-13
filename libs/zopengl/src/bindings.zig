@@ -2002,6 +2002,25 @@ pub const DEBUGPROC = *const fn (
     message: [*c]const Char,
     userParam: *const anyopaque,
 ) void;
+pub const DEBUG_SOURCE_API = 0x8246;
+pub const DEBUG_SOURCE_WINDOW_SYSTEM = 0x8247;
+pub const DEBUG_SOURCE_SHADER_COMPILER = 0x8248;
+pub const DEBUG_SOURCE_THIRD_PARTY = 0x8249;
+pub const DEBUG_SOURCE_APPLICATION = 0x824A;
+pub const DEBUG_SOURCE_OTHER = 0x824B;
+pub const DEBUG_TYPE_ERROR = 0x824C;
+pub const DEBUG_TYPE_DEPRECATED_BEHAVIOR = 0x824D;
+pub const DEBUG_TYPE_UNDEFINED_BEHAVIOR = 0x824E;
+pub const DEBUG_TYPE_PORTABILITY = 0x824F;
+pub const DEBUG_TYPE_PERFORMANCE = 0x8250;
+pub const DEBUG_TYPE_MARKER = 0x8268;
+pub const DEBUG_TYPE_PUSH_GROUP = 0x8269;
+pub const DEBUG_TYPE_POP_GROUP = 0x826A;
+pub const DEBUG_TYPE_OTHER = 0x8251;
+pub const DEBUG_SEVERITY_HIGH = 0x9146;
+pub const DEBUG_SEVERITY_MEDIUM = 0x9147;
+pub const DEBUG_SEVERITY_LOW = 0x9148;
+pub const DEBUG_SEVERITY_NOTIFICATION = 0x826B;
 
 pub var debugMessageControl: *const fn (
     source: Enum,
