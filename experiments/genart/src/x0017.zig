@@ -28,12 +28,13 @@ pub fn draw() void {
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
     gl.matrixOrthoEXT(gl.PROJECTION, -bounds, bounds, -bounds, bounds, -1.0, 1.0);
 
-    const xoff = 0.05 * (-1.0 + 2.0 * random.float(f32));
-    const yoff = 0.05 * (-1.0 + 2.0 * random.float(f32));
-
     gl.loadIdentity();
     gl.rotatef(2.5 * (-1.0 + 2.0 * random.float(f32)), 0, 0, 1);
-    gl.translatef(xoff, yoff, 1.0);
+    gl.translatef(
+        0.05 * (-1.0 + 2.0 * random.float(f32)),
+        0.05 * (-1.0 + 2.0 * random.float(f32)),
+        1.0,
+    );
 
     if (y <= bounds and pass == 1) {
         const step: f32 = 0.001;
