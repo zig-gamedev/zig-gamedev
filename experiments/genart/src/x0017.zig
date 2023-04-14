@@ -29,24 +29,30 @@ pub fn draw() void {
     gl.matrixOrthoEXT(gl.PROJECTION, -bounds, bounds, -bounds, bounds, -1.0, 1.0);
 
     gl.loadIdentity();
-    gl.rotatef(2.5 * (-1.0 + 2.0 * random.float(f32)), 0, 0, 1);
-    gl.translatef(
-        0.05 * (-1.0 + 2.0 * random.float(f32)),
-        0.05 * (-1.0 + 2.0 * random.float(f32)),
-        1.0,
-    );
+    //gl.rotatef(2.5 * (-1.0 + 2.0 * random.float(f32)), 0, 0, 1);
+    //gl.translatef(
+    //    0.05 * (-1.0 + 2.0 * random.float(f32)),
+    //    0.05 * (-1.0 + 2.0 * random.float(f32)),
+    //    1.0,
+    //);
 
     if (y <= bounds and pass == 1) {
         const step: f32 = 0.001;
         gl.color3f(step, step, step);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
-        while (row < 4) : (row += 1) {
+        while (row < 2) : (row += 1) {
             var x: f32 = -bounds;
+
+            const xoff = 0.05 * (-1.0 + 2.0 * random.float(f32));
+            const yoff = 0.05 * (-1.0 + 2.0 * random.float(f32));
+
             while (x <= bounds) : (x += step) {
                 var v = Vec2{ x, y };
-                v = pdj(v, 1.6);
-                gl.vertex2f(v[0], v[1]);
+                v = sinusoidal(v, 2.4);
+                v = julia(v, 4.0, random.float(f32));
+                v = sinusoidal(v, 2.4);
+                gl.vertex2f(v[0] + xoff, v[1] + yoff);
             }
             y += step;
         }
@@ -105,13 +111,15 @@ pub fn init() !void {
     gl.programUniformHandleui64NV(fs_postprocess, 0, accum_texh);
 }
 
-fn pdj(v: Vec2, scale: f32) Vec2 {
-    const pdj_a = 0.1;
-    const pdj_b = 1.9;
-    const pdj_c = -0.8;
-    const pdj_d = -1.2;
-    return .{
-        scale * (math.sin(pdj_a * v[1]) - math.cos(pdj_b * v[0])),
-        scale * (math.sin(pdj_c * v[0]) - math.cos(pdj_d * v[1])),
-    };
+fn sinusoidal(v: Vec2, scale: f32) Vec2 {
+    return .{ scale * math.sin(v[0]), scale * math.sin(v[1]) };
+}
+
+fn julia(v: Vec2, scale: f32, rand01: f32) Vec2 {
+    const r = scale * @sqrt(@sqrt(v[0] * v[0] + v[1] * v[1]));
+    const theta = 0.5 * math.atan2(f32, v[0], v[1]) +
+        math.pi * @intToFloat(f32, @floatToInt(i32, 2.0 * rand01));
+    const xx = r * math.cos(theta);
+    const yy = r * math.sin(theta);
+    return .{ xx, yy };
 }
