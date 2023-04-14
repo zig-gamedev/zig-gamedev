@@ -19,8 +19,12 @@ var random = prng.random();
 const bounds: f32 = 3.0;
 var y = -bounds;
 var pass: u32 = 1;
+var angle: f32 = 0.0;
 
 pub fn draw() void {
+    angle += 0.05;
+    if (angle > 360.0) angle = 0.0;
+
     gl.enable(gl.BLEND);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, accum_fbo);
     gl.useProgram(0);
@@ -29,6 +33,7 @@ pub fn draw() void {
     gl.matrixOrthoEXT(gl.PROJECTION, -bounds, bounds, -bounds, bounds, -1.0, 1.0);
 
     gl.loadIdentity();
+    gl.rotatef(angle, 0, 0, 1);
     gl.rotatef(2.5 * (-1.0 + 2.0 * random.float(f32)), 0, 0, 1);
 
     if (y <= bounds and pass == 1) {
@@ -45,7 +50,7 @@ pub fn draw() void {
                 var v = Vec2{ x, y };
                 v = hyperbolic(v, 1.0);
                 v = julia(v, 2.0, random.float(f32));
-                v = sinusoidal(v, 2.4);
+                v = sinusoidal(v, 2.8);
                 gl.vertex2f(v[0] + xoff, v[1] + yoff);
             }
             y += step;
