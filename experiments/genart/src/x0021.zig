@@ -31,7 +31,7 @@ pub fn draw() void {
     gl.loadIdentity();
 
     if (y <= bounds and pass == 1) {
-        const step: f32 = 0.006;
+        const step: f32 = 0.007;
         gl.begin(gl.LINES);
         var row: u32 = 0;
         while (row < 1) : (row += 1) {
