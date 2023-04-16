@@ -54,8 +54,8 @@ pub fn draw() void {
 
     gl.color3f(0.005, 0.005, 0.005);
     gl.begin(gl.POINTS);
-    for (0..100_000) |_| {
-        if (iter >= 5_000_000) break;
+    for (0..10_000) |_| {
+        if (iter >= 1_000_000) break;
 
         gl.vertex2d(xn, yn);
 
