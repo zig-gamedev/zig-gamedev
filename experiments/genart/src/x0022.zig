@@ -48,10 +48,10 @@ pub fn draw() void {
 
     gl.loadIdentity();
 
-    gl.color3f(0.005, 0.005, 0.005);
+    gl.color3f(0.01, 0.01, 0.01);
     gl.begin(gl.POINTS);
     for (0..10_000) |_| {
-        if (iter >= 1_000_000) break;
+        if (iter >= 2_000_000) break;
 
         gl.vertex2d(xn, yn);
 
@@ -82,7 +82,7 @@ pub fn draw() void {
 pub fn init() !void {
     try sdl.gl.setSwapInterval(1);
 
-    gl.pointSize(3.0);
+    gl.pointSize(1.0);
 
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.blendEquation(gl.FUNC_ADD);
