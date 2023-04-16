@@ -255,6 +255,7 @@ pub const ParameterName = enum(Enum) {
     transform_feedback_buffer_binding = TRANSFORM_FEEDBACK_BUFFER_BINDING,
     transform_feedback_buffer_size = TRANSFORM_FEEDBACK_BUFFER_SIZE,
     transform_feedback_buffer_start = TRANSFORM_FEEDBACK_BUFFER_START,
+    vertex_array_binding = VERTEX_ARRAY_BINDING,
     read_framebuffer_binding = READ_FRAMEBUFFER_BINDING,
     renderbuffer_binding = RENDERBUFFER_BINDING,
     min_program_texel_offset = MIN_PROGRAM_TEXEL_OFFSET,
@@ -826,6 +827,47 @@ pub const PrimitiveType = enum(Enum) {
     lines_adjacency = LINES_ADJACENCY,
     triangle_strip_adjacency = TRIANGLE_STRIP_ADJACENCY,
     triangles_adjacency = TRIANGLES_ADJACENCY,
+};
+
+pub const DebugSource = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    api = DEBUG_SOURCE_API,
+    window_system = DEBUG_SOURCE_WINDOW_SYSTEM,
+    shader_compiler = DEBUG_SOURCE_SHADER_COMPILER,
+    third_party = DEBUG_SOURCE_THIRD_PARTY,
+    application = DEBUG_SOURCE_APPLICATION,
+    other = DEBUG_SOURCE_OTHER,
+};
+
+pub const DebugType = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @"error" = DEBUG_TYPE_ERROR,
+    deprecated_behavior = DEBUG_TYPE_DEPRECATED_BEHAVIOR,
+    undefined_behavior = DEBUG_TYPE_UNDEFINED_BEHAVIOR,
+    portability = DEBUG_TYPE_PORTABILITY,
+    performance = DEBUG_TYPE_PERFORMANCE,
+    marker = DEBUG_TYPE_MARKER,
+    push_group = DEBUG_TYPE_PUSH_GROUP,
+    pop_group = DEBUG_TYPE_POP_GROUP,
+    other = DEBUG_TYPE_OTHER,
+    debug_severity_high = DEBUG_SEVERITY_HIGH,
+    debug_severity_medium = DEBUG_SEVERITY_MEDIUM,
+    debug_severity_low = DEBUG_SEVERITY_LOW,
+    debug_severity_notification = DEBUG_SEVERITY_NOTIFICATION,
+};
+
+pub const DebugSeverity = enum(Enum) {
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    high = DEBUG_SEVERITY_HIGH,
+    medium = DEBUG_SEVERITY_MEDIUM,
+    low = DEBUG_SEVERITY_LOW,
+    notification = DEBUG_SEVERITY_NOTIFICATION,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -3260,6 +3302,114 @@ pub const INT_2_10_10_10_REV = bindings.INT_2_10_10_10_REV;
 
 //--------------------------------------------------------------------------------------------------
 //
+// OpenGL 4.3 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const DEBUGPROC = *const fn (
+    source: DebugSource,
+    type: DebugType,
+    id: Uint,
+    severity: DebugSeverity,
+    length: u32,
+    message: [*]const u8,
+    userParam: ?*const anyopaque,
+) void;
+pub const DEBUG_SOURCE_API = bindings.DEBUG_SOURCE_API;
+pub const DEBUG_SOURCE_WINDOW_SYSTEM = bindings.DEBUG_SOURCE_WINDOW_SYSTEM;
+pub const DEBUG_SOURCE_SHADER_COMPILER = bindings.DEBUG_SOURCE_SHADER_COMPILER;
+pub const DEBUG_SOURCE_THIRD_PARTY = bindings.DEBUG_SOURCE_THIRD_PARTY;
+pub const DEBUG_SOURCE_APPLICATION = bindings.DEBUG_SOURCE_APPLICATION;
+pub const DEBUG_SOURCE_OTHER = bindings.DEBUG_SOURCE_OTHER;
+pub const DEBUG_TYPE_ERROR = bindings.DEBUG_TYPE_ERROR;
+pub const DEBUG_TYPE_DEPRECATED_BEHAVIOR = bindings.DEBUG_TYPE_DEPRECATED_BEHAVIOR;
+pub const DEBUG_TYPE_UNDEFINED_BEHAVIOR = bindings.DEBUG_TYPE_UNDEFINED_BEHAVIOR;
+pub const DEBUG_TYPE_PORTABILITY = bindings.DEBUG_TYPE_PORTABILITY;
+pub const DEBUG_TYPE_PERFORMANCE = bindings.DEBUG_TYPE_PERFORMANCE;
+pub const DEBUG_TYPE_MARKER = bindings.DEBUG_TYPE_MARKER;
+pub const DEBUG_TYPE_PUSH_GROUP = bindings.DEBUG_TYPE_PUSH_GROUP;
+pub const DEBUG_TYPE_POP_GROUP = bindings.DEBUG_TYPE_POP_GROUP;
+pub const DEBUG_TYPE_OTHER = bindings.DEBUG_TYPE_OTHER;
+pub const DEBUG_SEVERITY_HIGH = bindings.DEBUG_SEVERITY_HIGH;
+pub const DEBUG_SEVERITY_MEDIUM = bindings.DEBUG_SEVERITY_MEDIUM;
+pub const DEBUG_SEVERITY_LOW = bindings.DEBUG_SEVERITY_LOW;
+pub const DEBUG_SEVERITY_NOTIFICATION = bindings.DEBUG_SEVERITY_NOTIFICATION;
+
+// pub var debugMessageControl: *const fn (
+//     source: Enum,
+//     type: Enum,
+//     severity: Enum,
+//     count: Sizei,
+//     ids: [*c]const Uint,
+//     enabled: Boolean,
+// ) callconv(.C) void = undefined;
+// pub var debugMessageInsert: *const fn (
+//     source: Enum,
+//     type: Enum,
+//     id: Uint,
+//     severity: Enum,
+//     length: Sizei,
+//     buf: [*c]const u8,
+// ) callconv(.C) void = undefined;
+
+// pub var debugMessageCallback: *const fn (
+//     callback: DEBUGPROC,
+//     userParam: ?*const anyopaque,
+// ) callconv(.C) void = undefined;
+pub fn debugMessageCallback(
+    callback: DEBUGPROC,
+    userParam: ?*const anyopaque,
+) void {
+    bindings.debugMessageCallback(@ptrCast(bindings.DEBUGPROC, callback), userParam);
+}
+
+// pub var getDebugMessageLog: *const fn (
+//     count: Uint,
+//     bufSize: Sizei,
+//     sources: [*c]Enum,
+//     types: [*c]Enum,
+//     ids: [*c]Uint,
+//     severities: [*c]Enum,
+//     lengths: [*c]Sizei,
+//     messageLog: [*c]Char,
+// ) callconv(.C) Uint = undefined;
+// pub var getPointerv: *const fn (
+//     pname: Enum,
+//     params: [*c][*c]anyopaque,
+// ) callconv(.C) void = undefined;
+// pub var pushDebugGroup: *const fn (
+//     source: Enum,
+//     id: Uint,
+//     length: Sizei,
+//     message: [*c]const Char,
+// ) callconv(.C) void = undefined;
+// pub var popDebugGroup: *const fn () callconv(.C) void = undefined;
+// pub var objectLabel: *const fn (
+//     identifier: Enum,
+//     name: Uint,
+//     length: Sizei,
+//     label: [*c]const Char,
+// ) callconv(.C) void = undefined;
+// pub var getObjectLabel: *const fn (
+//     identifier: Enum,
+//     name: Uint,
+//     bufSize: Sizei,
+//     length: *Sizei,
+//     label: [*c]Char,
+// ) callconv(.C) void = undefined;
+// pub var objectPtrLabel: *const fn (
+//     ptr: *anyopaque,
+//     length: Sizei,
+//     label: [*c]const Char,
+// ) callconv(.C) void = undefined;
+// pub var getObjectPtrLabel: *const fn (
+//     ptr: *anyopaque,
+//     bufSize: Sizei,
+//     length: *Sizei,
+//     label: [*c]Char,
+// ) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
 // OpenGL ES 1.0
 //
 //--------------------------------------------------------------------------------------------------
@@ -3275,36 +3425,7 @@ pub const FRAMEBUFFER_INCOMPLETE_DIMENSIONS = bindings.FRAMEBUFFER_INCOMPLETE_DI
 
 //--------------------------------------------------------------------------------------------------
 //
-// OES_vertex_array_object (OpenGL ES Extension #71)
+// OES_vertex_array_object
 //
 //--------------------------------------------------------------------------------------------------
-pub const VERTEX_ARRAY_BINDING_OES = bindings.VERTEX_ARRAY_BINDING_OES; // TODO: This is a pname accepted by getBoolean, getFloat and getInteger
-
-// pub var bindVertexArrayOES: *const fn (array: Uint) callconv(.C) void = undefined;
-pub fn bindVertexArrayOES(array: VertexArrayObject) void {
-    bindings.bindVertexArrayOES(@bitCast(Uint, array));
-}
-
-// pub var deleteVertexArraysOES: *const fn (
-//     n: Sizei,
-//     arrays: [*c]const Uint,
-// ) callconv(.C) void = undefined;
-pub fn deleteVertexArrayOES(ptr: *const VertexArrayObject) void {
-    bindings.deleteVertexArraysOES(1, @ptrCast([*c]Uint, ptr));
-}
-pub fn deleteVertexArraysOES(arrays: []const VertexArrayObject) void {
-    bindings.deleteVertexArraysOES(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
-}
-
-// pub var genVertexArraysOES: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
-pub fn genVertexArrayOES(ptr: *VertexArrayObject) void {
-    bindings.genVertexArraysOES(1, @ptrCast([*c]Uint, ptr));
-}
-pub fn genVertexArraysOES(arrays: []VertexArrayObject) void {
-    bindings.genVertexArraysOES(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
-}
-
-// pub var isVertexArrayOES: *const fn (array: Uint) callconv(.C) Boolean = undefined;
-pub fn isVertexArrayOES(array: VertexArrayObject) bool {
-    return bindings.isVertexArrayOES(@bitCast(Uint, array)) == TRUE;
-}
+pub const VERTEX_ARRAY_BINDING_OES = bindings.VERTEX_ARRAY_BINDING_OES;
