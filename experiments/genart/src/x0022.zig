@@ -8,8 +8,6 @@ pub const name = "generative art experiment: x0022";
 pub const display_width = 1024 * 1;
 pub const display_height = 1024 * 1;
 
-const Vec2 = [2]f32;
-
 var fs_postprocess: gl.Uint = 0;
 var accum_tex: gl.Uint = 0;
 var accum_fbo: gl.Uint = 0;
