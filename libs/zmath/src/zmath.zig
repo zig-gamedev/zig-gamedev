@@ -228,8 +228,8 @@
 // quatFromMat(m: Mat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
-// quatFromPitchYawRoll(pitch: f32, yaw: f32, roll: f32) Quat
-// quatFromPitchYawRollV(angles: Vec) Quat
+// quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat
+// quatFromRollPitchYawV(angles: Vec) Quat
 //
 // ------------------------------------------------------------------------------
 // 6. Color functions
@@ -2748,7 +2748,7 @@ pub fn matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat {
     return matFromRollPitchYawV(f32x4(pitch, yaw, roll, 0.0));
 }
 pub fn matFromRollPitchYawV(angles: Vec) Mat {
-    return matFromQuat(quatFromPitchYawRollV(angles));
+    return matFromQuat(quatFromRollPitchYawV(angles));
 }
 
 pub fn matToQuat(m: Mat) Quat {
@@ -2938,7 +2938,7 @@ test "zmath.quatFromMat" {
         try expect(approxEqAbs(q0, q1, 0.0001));
     }
     {
-        const q0 = quatFromPitchYawRoll(0.1 * math.pi, -0.2 * math.pi, 0.3 * math.pi);
+        const q0 = quatFromRollPitchYaw(0.1 * math.pi, -0.2 * math.pi, 0.3 * math.pi);
         const q1 = quatFromMat(matFromRollPitchYaw(0.1 * math.pi, -0.2 * math.pi, 0.3 * math.pi));
         try expect(approxEqAbs(q0, q1, 0.0001));
     }
@@ -3008,7 +3008,7 @@ pub fn rotate(q: Quat, v: Vec) Vec {
     return v + ((uv * w) + cross3(axis, uv)) * splat(F32x4, 2.0);
 }
 test "zmath.quaternion.rotate" {
-    const quat = quatFromPitchYawRoll(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi);
+    const quat = quatFromRollPitchYaw(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi);
     const mat = matFromQuat(quat);
     const forward = f32x4(0.0, 0.0, -1.0, 0.0);
     const up = f32x4(0.0, 1.0, 0.0, 0.0);
@@ -3051,7 +3051,7 @@ test "zmath.quaternion.slerp" {
 
 // Converts q back to euler angles, assuming a YXZ rotation order.
 // See: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler
-pub fn quatToPitchYawRoll(q: Quat) [3]f32 {
+pub fn quatToRollPitchYaw(q: Quat) [3]f32 {
     var angles: [3]f32 = undefined;
 
     const p = swizzle(q, .w, .y, .x, .z);
@@ -3079,18 +3079,18 @@ pub fn quatToPitchYawRoll(q: Quat) [3]f32 {
     return angles;
 }
 
-test "zmath.quaternion.quatToPitchYawRoll" {
+test "zmath.quaternion.quatToRollPitchYaw" {
     {
         const expected = f32x4(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi, 0.0);
-        const quat = quatFromPitchYawRoll(expected[0], expected[1], expected[2]);
-        const result = quatToPitchYawRoll(quat);
+        const quat = quatFromRollPitchYaw(expected[0], expected[1], expected[2]);
+        const result = quatToRollPitchYaw(quat);
         try expect(approxEqAbs(loadArr3(result), expected, 0.0001));
     }
 
     {
         const expected = f32x4(0.3 * math.pi, 0.1 * math.pi, 0.2 * math.pi, 0.0);
-        const quat = quatFromPitchYawRoll(expected[0], expected[1], expected[2]);
-        const result = quatToPitchYawRoll(quat);
+        const quat = quatFromRollPitchYaw(expected[0], expected[1], expected[2]);
+        const result = quatToRollPitchYaw(quat);
         try expect(approxEqAbs(loadArr3(result), expected, 0.0001));
     }
 
@@ -3098,8 +3098,8 @@ test "zmath.quaternion.quatToPitchYawRoll" {
     {
         const angle = f32x4(0.5 * math.pi, 0.2 * math.pi, 0.3 * math.pi, 0.0);
         const expected = f32x4(0.5 * math.pi, -0.1 * math.pi, 0.0, 0.0);
-        const quat = quatFromPitchYawRoll(angle[0], angle[1], angle[2]);
-        const result = quatToPitchYawRoll(quat);
+        const quat = quatFromRollPitchYaw(angle[0], angle[1], angle[2]);
+        const result = quatToRollPitchYaw(quat);
         try expect(approxEqAbs(loadArr3(result), expected, 0.0001));
     }
 
@@ -3107,16 +3107,16 @@ test "zmath.quaternion.quatToPitchYawRoll" {
     {
         const angle = f32x4(-0.5 * math.pi, 0.2 * math.pi, 0.3 * math.pi, 0.0);
         const expected = f32x4(-0.5 * math.pi, 0.5 * math.pi, 0.0, 0.0);
-        const quat = quatFromPitchYawRoll(angle[0], angle[1], angle[2]);
-        const result = quatToPitchYawRoll(quat);
+        const quat = quatFromRollPitchYaw(angle[0], angle[1], angle[2]);
+        const result = quatToRollPitchYaw(quat);
         try expect(approxEqAbs(loadArr3(result), expected, 0.0001));
     }
 }
 
-pub fn quatFromPitchYawRoll(pitch: f32, yaw: f32, roll: f32) Quat {
-    return quatFromPitchYawRollV(f32x4(pitch, yaw, roll, 0.0));
+pub fn quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat {
+    return quatFromRollPitchYawV(f32x4(pitch, yaw, roll, 0.0));
 }
-pub fn quatFromPitchYawRollV(angles: Vec) Quat { // | pitch | yaw | roll | 0 |
+pub fn quatFromRollPitchYawV(angles: Vec) Quat { // | pitch | yaw | roll | 0 |
     const sc = sincos(splat(Vec, 0.5) * angles);
     const p0 = @shuffle(f32, sc[1], sc[0], [4]i32{ ~@as(i32, 0), 0, 0, 0 });
     const p1 = @shuffle(f32, sc[0], sc[1], [4]i32{ ~@as(i32, 0), 0, 0, 0 });
@@ -3128,9 +3128,9 @@ pub fn quatFromPitchYawRollV(angles: Vec) Quat { // | pitch | yaw | roll | 0 |
     const q0 = p0 * y0 * r0;
     return mulAdd(q1, r1, q0);
 }
-test "zmath.quaternion.quatFromPitchYawRollV" {
+test "zmath.quaternion.quatFromRollPitchYawV" {
     {
-        const m0 = quatToMat(quatFromPitchYawRollV(f32x4(0.25 * math.pi, 0.0, 0.0, 0.0)));
+        const m0 = quatToMat(quatFromRollPitchYawV(f32x4(0.25 * math.pi, 0.0, 0.0, 0.0)));
         const m1 = rotationX(0.25 * math.pi);
         try expect(approxEqAbs(m0[0], m1[0], 0.0001));
         try expect(approxEqAbs(m0[1], m1[1], 0.0001));
@@ -3138,7 +3138,7 @@ test "zmath.quaternion.quatFromPitchYawRollV" {
         try expect(approxEqAbs(m0[3], m1[3], 0.0001));
     }
     {
-        const m0 = quatToMat(quatFromPitchYawRoll(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi));
+        const m0 = quatToMat(quatFromRollPitchYaw(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi));
         const m1 = mul(
             rotationZ(0.3 * math.pi),
             mul(rotationX(0.1 * math.pi), rotationY(0.2 * math.pi)),
