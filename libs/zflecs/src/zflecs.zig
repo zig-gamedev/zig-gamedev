@@ -1917,6 +1917,14 @@ pub fn add_pair(world: *world_t, subject: entity_t, first: entity_t, second: ent
     add_id(world, subject, pair(first, second));
 }
 
+pub fn set_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t, comptime T: type, val: T) entity_t {
+    return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @ptrCast(*const anyopaque, &val));
+}
+
+pub fn remove_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {
+    remove_id(world, subject, pair(first, second));
+}
+
 // flecs internally reserves names like u16, u32, f32, etc. so we re-map them to uppercase to avoid collisions
 pub fn typeName(comptime T: type) @TypeOf(@typeName(T)) {
     return switch (T) {
