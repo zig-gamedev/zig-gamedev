@@ -2,7 +2,7 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) void {
-    const latest_experiment = 23;
+    const latest_experiment = 24;
     inline for (1..latest_experiment + 1) |i| {
         if (i == 6 or i == 7) continue;
         const name = comptime std.fmt.comptimePrint("x{d:0>4}", .{i});
