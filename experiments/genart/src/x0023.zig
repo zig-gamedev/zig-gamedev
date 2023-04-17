@@ -54,8 +54,8 @@ pub fn draw() void {
 
     gl.color3f(0.005, 0.005, 0.005);
     gl.begin(gl.POINTS);
-    for (0..10_000) |_| {
-        if (iter >= 5_000_000) break;
+    for (0..100_000) |_| {
+        if (iter >= 10_000_000) break;
 
         gl.vertex2d(xn, yn);
 
@@ -93,8 +93,8 @@ pub fn init() !void {
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.blendEquation(gl.FUNC_ADD);
 
-    gl.createTextures(gl.TEXTURE_2D, 1, &accum_tex);
-    gl.textureStorage2D(accum_tex, 1, gl.RGBA16F, display_width, display_height);
+    gl.createTextures(gl.TEXTURE_2D_MULTISAMPLE, 1, &accum_tex);
+    gl.textureStorage2DMultisample(accum_tex, 8, gl.RGBA16F, display_width, display_height, gl.FALSE);
     gl.clearTexImage(accum_tex, 0, gl.RGBA, gl.FLOAT, null);
 
     gl.createFramebuffers(1, &accum_fbo);
@@ -107,10 +107,10 @@ pub fn init() !void {
         \\  #version 460 compatibility
         \\  #extension NV_bindless_texture : require
         \\
-        \\  layout(location = 0) uniform sampler2D accum_texh;
+        \\  layout(location = 0) uniform sampler2DMS accum_texh;
         \\
         \\  void main() {
-        \\      vec3 color = texelFetch(accum_texh, ivec2(gl_FragCoord.xy), 0).rgb;
+        \\      vec3 color = texelFetch(accum_texh, ivec2(gl_FragCoord.xy), gl_SampleID).rgb;
         \\      color = color / (color + 1.0);
         \\      color = 1.0 - color;
         \\      gl_FragColor = vec4(color, 1.0);
