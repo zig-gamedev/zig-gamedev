@@ -68,8 +68,8 @@ pub const Error = error{
     Unknown,
 };
 
-pub fn maybeError() Error!void {
-    return switch (glfwGetError(null)) {
+fn convertError(e: i32) Error!void {
+    return switch (e) {
         0 => {},
         0x00010001 => Error.NotInitialized,
         0x00010002 => Error.NoCurrentContext,
@@ -84,6 +84,17 @@ pub fn maybeError() Error!void {
         else => Error.Unknown,
     };
 }
+
+pub fn maybeError() Error!void {
+    return convertError(glfwGetError(null));
+}
+pub fn maybeErrorString(str: *?[:0]const u8) Error!void {
+    var c_str: ?[*:0]const u8 = undefined;
+    convertError(glfwGetError(&c_str)) catch |err| {
+        str.* = if (c_str) |s| std.mem.span(s) else null;
+        return err;
+    };
+}
 extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
 
 pub const InputMode = enum(i32) {
@@ -93,6 +104,18 @@ pub const InputMode = enum(i32) {
     lock_key_mods = 0x00033004,
     raw_mouse_motion = 0x00033005,
 };
+
+pub fn rawMouseMotionSupported() bool {
+    return glfwRawMouseMotionSupported() == 1;
+}
+extern fn glfwRawMouseMotionSupported() i32;
+
+pub const makeContextCurrent = glfwMakeContextCurrent;
+extern fn glfwMakeContextCurrent(window: *Window) void;
+
+pub const swapInterval = glfwSwapInterval;
+extern fn glfwSwapInterval(interval: i32) void;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Keyboard/Mouse
@@ -439,6 +462,22 @@ pub const Monitor = opaque {
         return null;
     }
     extern fn glfwGetMonitors(count: *i32) ?[*]*Monitor;
+
+    pub fn getVideoMode(monitor: *Monitor) Error!*VideoMode {
+        if (glfwGetVideoMode(monitor)) |video_mode| return video_mode;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetVideoMode(monitor: *Monitor) ?*VideoMode;
+};
+
+pub const VideoMode = extern struct {
+    width: c_int,
+    height: c_int,
+    red_bits: c_int,
+    green_bits: c_int,
+    blue_bits: c_int,
+    refresh_rate: c_int,
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -648,6 +687,14 @@ pub const Window = opaque {
     }
     extern fn glfwSetInputMode(window: *Window, mode: InputMode, value: i32) void;
 
+    pub fn focus(window: *Window) void {
+        glfwFocusWindow(window);
+    }
+    extern fn glfwFocusWindow(window: *Window) void;
+
+    pub const swapBuffers = glfwSwapBuffers;
+    extern fn glfwSwapBuffers(window: *Window) void;
+
     pub fn create(
         width: i32,
         height: i32,
@@ -665,6 +712,67 @@ pub const Window = opaque {
         monitor: ?*Monitor,
         share: ?*Window,
     ) ?*Window;
+};
+
+pub const WindowHint = enum(i32) {
+    focused = 0x00020001,
+    iconified = 0x00020002,
+    resizable = 0x00020003,
+    visible = 0x00020004,
+    decorated = 0x00020005,
+    auto_iconify = 0x00020006,
+    floating = 0x00020007,
+    maximized = 0x00020008,
+    center_cursor = 0x00020009,
+    transparent_framebuffer = 0x0002000A,
+    hovered = 0x0002000B,
+    focus_on_show = 0x0002000C,
+    red_bits = 0x00021001,
+    green_bits = 0x00021002,
+    blue_bits = 0x00021003,
+    alpha_bits = 0x00021004,
+    depth_bits = 0x00021005,
+    stencil_bits = 0x00021006,
+    // ACCUM_*_BITS/AUX_BUFFERS are deprecated
+    stereo = 0x0002100C,
+    samples = 0x0002100D,
+    srgb_capable = 0x0002100E,
+    refresh_rate = 0x0002100F,
+    doublebuffer = 0x00021010,
+    client_api = 0x00022001,
+    context_version_major = 0x00022002,
+    context_version_minor = 0x00022003,
+    context_revision = 0x00022004,
+    context_robustness = 0x00022005,
+    opengl_forward_compat = 0x00022006,
+    opengl_debug_context = 0x00022007,
+    opengl_profile = 0x00022008,
+    context_release_behaviour = 0x00022009,
+    context_no_error = 0x0002200A,
+    context_creation_api = 0x0002200B,
+    scale_to_monitor = 0x0002200C,
+    cocoa_retina_framebuffer = 0x00023001,
+    cocoa_frame_name = 0x00023002,
+    cocoa_graphics_switching = 0x00023003,
+    x11_class_name = 0x00024001,
+    x11_instance_name = 0x00024002,
+
+    pub fn set(window_hint: WindowHint, value: i32) void {
+        glfwWindowHint(window_hint, value);
+    }
+    extern fn glfwWindowHint(window_hint: WindowHint, value: i32) void;
+};
+
+pub const ClientApi = enum(i32) {
+    no_api = 0,
+    opengl_api = 0x00030001,
+    opengl_es_api = 0x00030002,
+};
+
+pub const OpenGLProfile = enum(i32) {
+    opengl_any_profile = 0,
+    opengl_core_profile = 0x00032001,
+    opengl_compat_profile = 0x00032002,
 };
 //--------------------------------------------------------------------------------------------------
 //
