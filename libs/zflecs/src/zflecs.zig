@@ -1902,7 +1902,7 @@ pub fn SYSTEM(
     entity_desc.add[1] = phase;
 
     system_desc.entity = entity_init(world, &entity_desc);
-    _ = system_init(world, &system_desc);
+    _ = system_init(world, system_desc);
 }
 
 pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
