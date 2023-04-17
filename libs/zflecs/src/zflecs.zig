@@ -507,7 +507,7 @@ pub const iter_t = extern struct {
     interrupted_by: entity_t,
     priv: iter_private_t,
     next: iter_next_action_t,
-    callback: iter_action_t,
+    callback: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
 
@@ -2086,7 +2086,16 @@ pub const os = struct {
     }
 };
 //--------------------------------------------------------------------------------------------------
+test {
+    //std.testing.refAllDecls(@This());
+}
 comptime {
     _ = @import("tests.zig");
+    _ = run_action_t;
+    _ = iter_init_action_t;
+    _ = iter_fini_action_t;
+    _ = iter_action_t;
+    _ = iter_next_action_t;
+    _ = iter_t;
 }
 //--------------------------------------------------------------------------------------------------
