@@ -1892,9 +1892,8 @@ pub fn TAG(world: *world_t, comptime T: type) void {
 pub fn SYSTEM(
     world: *world_t,
     name: [*:0]const u8,
-    callback: iter_action_t,
     phase: entity_t,
-    query_desc: query_desc_t,
+    system_desc: *system_desc_t,
 ) void {
     var entity_desc = entity_desc_t{};
     entity_desc.id = new_id(world);
@@ -1902,10 +1901,7 @@ pub fn SYSTEM(
     entity_desc.add[0] = if (phase != 0) pair(EcsDependsOn, phase) else 0;
     entity_desc.add[1] = phase;
 
-    var system_desc = system_desc_t{};
     system_desc.entity = entity_init(world, &entity_desc);
-    system_desc.query = query_desc;
-    system_desc.callback = callback;
     _ = system_init(world, &system_desc);
 }
 
