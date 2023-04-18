@@ -90,6 +90,10 @@
 
 #include <stddef.h>
 
+#ifndef CGLTF_API
+#define CGLTF_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -801,18 +805,18 @@ typedef struct cgltf_data
 	cgltf_file_options file;
 } cgltf_data;
 
-cgltf_result cgltf_parse(
+CGLTF_API cgltf_result cgltf_parse(
 		const cgltf_options* options,
 		const void* data,
 		cgltf_size size,
 		cgltf_data** out_data);
 
-cgltf_result cgltf_parse_file(
+CGLTF_API cgltf_result cgltf_parse_file(
 		const cgltf_options* options,
 		const char* path,
 		cgltf_data** out_data);
 
-cgltf_result cgltf_load_buffers(
+CGLTF_API cgltf_result cgltf_load_buffers(
 		const cgltf_options* options,
 		cgltf_data* data,
 		const char* gltf_path);
@@ -824,7 +828,7 @@ cgltf_size cgltf_decode_uri(char* uri);
 
 cgltf_result cgltf_validate(cgltf_data* data);
 
-void cgltf_free(cgltf_data* data);
+CGLTF_API void cgltf_free(cgltf_data* data);
 
 void cgltf_node_transform_local(const cgltf_node* node, cgltf_float* out_matrix);
 void cgltf_node_transform_world(const cgltf_node* node, cgltf_float* out_matrix);

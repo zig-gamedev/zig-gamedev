@@ -3025,6 +3025,16 @@ extern fn zguiColorConvertRGBtoHSV(r: f32, g: f32, b: f32, out_h: *f32, out_s: *
 extern fn zguiColorConvertHSVtoRGB(h: f32, s: f32, v: f32, out_r: *f32, out_g: *f32, out_b: *f32) void;
 //--------------------------------------------------------------------------------------------------
 //
+// Inputs Utilities: Keyboard
+//
+//--------------------------------------------------------------------------------------------------
+pub fn isKeyDown(key: Key) bool {
+    return zguiIsKeyDown(key);
+}
+
+extern fn zguiIsKeyDown(key: Key) bool;
+//--------------------------------------------------------------------------------------------------
+//
 // Helpers
 //
 //--------------------------------------------------------------------------------------------------
@@ -3053,7 +3063,14 @@ pub fn typeToDataTypeEnum(comptime T: type) DataType {
         u64 => .U64,
         f32 => .F32,
         f64 => .F64,
-        else => @compileError("Only fundamental scalar types allowed"),
+        usize => switch (@sizeOf(usize)) {
+            1 => .U8,
+            2 => .U16,
+            4 => .U32,
+            8 => .U64,
+            else => @compileError("Unsupported usize length"),
+        },
+        else => @compileError("Only fundamental scalar types allowed: " ++ @typeName(T)),
     };
 }
 //--------------------------------------------------------------------------------------------------

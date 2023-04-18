@@ -2,6 +2,7 @@ const std = @import("std");
 
 pub const Options = struct {
     shape_use_32bit_indices: bool = true,
+    shared: bool = false,
 };
 
 pub const Package = struct {
@@ -27,6 +28,7 @@ pub fn package(
 ) Package {
     const step = b.addOptions();
     step.addOption(bool, "shape_use_32bit_indices", args.options.shape_use_32bit_indices);
+    step.addOption(bool, "shared", args.options.shared);
 
     const zmesh_options = step.createModule();
 
@@ -37,7 +39,21 @@ pub fn package(
         },
     });
 
-    const zmesh_c_cpp = b.addStaticLibrary(.{
+    const zmesh_c_cpp = if (args.options.shared) blk: {
+        const lib = b.addSharedLibrary(.{
+            .name = "zmesh",
+            .target = target,
+            .optimize = optimize,
+        });
+
+        if (target.isWindows()) {
+            lib.defineCMacro("CGLTF_API", "__declspec(dllexport)");
+            lib.defineCMacro("MESHOPTIMIZER_API", "__declspec(dllexport)");
+            lib.defineCMacro("ZMESH_API", "__declspec(dllexport)");
+        }
+
+        break :blk lib;
+    } else b.addStaticLibrary(.{
         .name = "zmesh",
         .target = target,
         .optimize = optimize,
@@ -102,7 +118,7 @@ pub fn runTests(
     const zmesh_pkg = package(b, target, optimize, .{});
     zmesh_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

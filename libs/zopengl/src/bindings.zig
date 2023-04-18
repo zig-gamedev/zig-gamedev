@@ -1987,6 +1987,107 @@ pub var bindImageTexture: *const fn (
     format: Enum,
 ) callconv(.C) void = undefined;
 pub var memoryBarrier: *const fn (barriers: Bitfield) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 4.3 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const DEBUGPROC = *const fn (
+    source: Enum,
+    type: Enum,
+    id: Uint,
+    severity: Enum,
+    length: Sizei,
+    message: [*c]const Char,
+    userParam: *const anyopaque,
+) void;
+pub const DEBUG_SOURCE_API = 0x8246;
+pub const DEBUG_SOURCE_WINDOW_SYSTEM = 0x8247;
+pub const DEBUG_SOURCE_SHADER_COMPILER = 0x8248;
+pub const DEBUG_SOURCE_THIRD_PARTY = 0x8249;
+pub const DEBUG_SOURCE_APPLICATION = 0x824A;
+pub const DEBUG_SOURCE_OTHER = 0x824B;
+pub const DEBUG_TYPE_ERROR = 0x824C;
+pub const DEBUG_TYPE_DEPRECATED_BEHAVIOR = 0x824D;
+pub const DEBUG_TYPE_UNDEFINED_BEHAVIOR = 0x824E;
+pub const DEBUG_TYPE_PORTABILITY = 0x824F;
+pub const DEBUG_TYPE_PERFORMANCE = 0x8250;
+pub const DEBUG_TYPE_MARKER = 0x8268;
+pub const DEBUG_TYPE_PUSH_GROUP = 0x8269;
+pub const DEBUG_TYPE_POP_GROUP = 0x826A;
+pub const DEBUG_TYPE_OTHER = 0x8251;
+pub const DEBUG_SEVERITY_HIGH = 0x9146;
+pub const DEBUG_SEVERITY_MEDIUM = 0x9147;
+pub const DEBUG_SEVERITY_LOW = 0x9148;
+pub const DEBUG_SEVERITY_NOTIFICATION = 0x826B;
+
+pub var debugMessageControl: *const fn (
+    source: Enum,
+    type: Enum,
+    severity: Enum,
+    count: Sizei,
+    ids: [*c]const Uint,
+    enabled: Boolean,
+) callconv(.C) void = undefined;
+pub var debugMessageInsert: *const fn (
+    source: Enum,
+    type: Enum,
+    id: Uint,
+    severity: Enum,
+    length: Sizei,
+    buf: [*c]const u8,
+) callconv(.C) void = undefined;
+pub var debugMessageCallback: *const fn (
+    callback: DEBUGPROC,
+    userParam: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var getDebugMessageLog: *const fn (
+    count: Uint,
+    bufSize: Sizei,
+    sources: [*c]Enum,
+    types: [*c]Enum,
+    ids: [*c]Uint,
+    severities: [*c]Enum,
+    lengths: [*c]Sizei,
+    messageLog: [*c]Char,
+) callconv(.C) Uint = undefined;
+pub var getPointerv: *const fn (
+    pname: Enum,
+    params: *anyopaque,
+) callconv(.C) void = undefined;
+pub var pushDebugGroup: *const fn (
+    source: Enum,
+    id: Uint,
+    length: Sizei,
+    message: [*c]const Char,
+) callconv(.C) void = undefined;
+pub var popDebugGroup: *const fn () callconv(.C) void = undefined;
+pub var objectLabel: *const fn (
+    identifier: Enum,
+    name: Uint,
+    length: Sizei,
+    label: [*c]const Char,
+) callconv(.C) void = undefined;
+pub var getObjectLabel: *const fn (
+    identifier: Enum,
+    name: Uint,
+    bufSize: Sizei,
+    length: *Sizei,
+    label: [*c]Char,
+) callconv(.C) void = undefined;
+pub var objectPtrLabel: *const fn (
+    ptr: *anyopaque,
+    length: Sizei,
+    label: [*c]const Char,
+) callconv(.C) void = undefined;
+pub var getObjectPtrLabel: *const fn (
+    ptr: *anyopaque,
+    bufSize: Sizei,
+    length: *Sizei,
+    label: [*c]Char,
+) callconv(.C) void = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 4.4 (Core Profile)
@@ -2148,10 +2249,16 @@ pub var clearDepthf: *const fn (depth: Float) callconv(.C) void = undefined;
 pub var depthRangef: *const fn (n: Clampf, f: Clampf) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
+// OpenGL ES 2.0
+//
+//--------------------------------------------------------------------------------------------------
+pub const FRAMEBUFFER_INCOMPLETE_DIMENSIONS = 0x8CD9;
+//--------------------------------------------------------------------------------------------------
+//
 // OES_vertex_array_object (OpenGL ES Extension #71)
 //
 //--------------------------------------------------------------------------------------------------
-pub const VERTEX_ARRAY_BINDING_OES = 0x85B5;
+pub const VERTEX_ARRAY_BINDING_OES = VERTEX_ARRAY_BINDING;
 
 pub var bindVertexArrayOES: *const fn (array: Uint) callconv(.C) void = undefined;
 pub var deleteVertexArraysOES: *const fn (
@@ -2161,3 +2268,72 @@ pub var deleteVertexArraysOES: *const fn (
 pub var genVertexArraysOES: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
 pub var isVertexArrayOES: *const fn (array: Uint) callconv(.C) Boolean = undefined;
 //--------------------------------------------------------------------------------------------------
+//
+// KHR_debug (OpenGL ES Extension #118)
+//
+//--------------------------------------------------------------------------------------------------
+pub var debugMessageControlKHR: *const fn (
+    source: Enum,
+    type: Enum,
+    severity: Enum,
+    count: Sizei,
+    ids: [*c]const Uint,
+    enabled: Boolean,
+) callconv(.C) void = undefined;
+pub var debugMessageInsertKHR: *const fn (
+    source: Enum,
+    type: Enum,
+    id: Uint,
+    severity: Enum,
+    length: Sizei,
+    buf: [*c]const u8,
+) callconv(.C) void = undefined;
+pub var debugMessageCallbackKHR: *const fn (
+    callback: DEBUGPROC,
+    userParam: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var getDebugMessageLogKHR: *const fn (
+    count: Uint,
+    bufSize: Sizei,
+    sources: [*c]Enum,
+    types: [*c]Enum,
+    ids: [*c]Uint,
+    severities: [*c]Enum,
+    lengths: [*c]Sizei,
+    messageLog: [*c]Char,
+) callconv(.C) Uint = undefined;
+pub var getPointervKHR: *const fn (
+    pname: Enum,
+    params: *anyopaque,
+) callconv(.C) void = undefined;
+pub var pushDebugGroupKHR: *const fn (
+    source: Enum,
+    id: Uint,
+    length: Sizei,
+    message: [*c]const Char,
+) callconv(.C) void = undefined;
+pub var popDebugGroupKHR: *const fn () callconv(.C) void = undefined;
+pub var objectLabelKHR: *const fn (
+    identifier: Enum,
+    name: Uint,
+    length: Sizei,
+    label: [*c]const Char,
+) callconv(.C) void = undefined;
+pub var getObjectLabelKHR: *const fn (
+    identifier: Enum,
+    name: Uint,
+    bufSize: Sizei,
+    length: *Sizei,
+    label: [*c]Char,
+) callconv(.C) void = undefined;
+pub var objectPtrLabelKHR: *const fn (
+    ptr: *anyopaque,
+    length: Sizei,
+    label: [*c]const Char,
+) callconv(.C) void = undefined;
+pub var getObjectPtrLabelKHR: *const fn (
+    ptr: *anyopaque,
+    bufSize: Sizei,
+    length: *Sizei,
+    label: [*c]Char,
+) callconv(.C) void = undefined;

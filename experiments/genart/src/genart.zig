@@ -147,7 +147,18 @@ fn updateFrameStats(window: *sdl.Window, name: [:0]const u8) struct { time: f64,
         state.frame_count = 0;
     }
 
-    const now_ns = state.timer.read();
+    const now_ns = now_ns: {
+        const now_ns = state.timer.read();
+        const this_frame_ns = now_ns - state.previous_time_ns;
+        const wanted_per_frame_ns = @floatToInt(u64, 1.0 / 60.0 * std.time.ns_per_s);
+
+        if (this_frame_ns < wanted_per_frame_ns) {
+            std.time.sleep(wanted_per_frame_ns - this_frame_ns);
+            break :now_ns state.timer.read();
+        }
+        break :now_ns now_ns;
+    };
+
     const time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
     const delta_time = @intToFloat(f32, now_ns - state.previous_time_ns) / std.time.ns_per_s;
     state.previous_time_ns = now_ns;

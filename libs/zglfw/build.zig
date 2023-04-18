@@ -23,21 +23,49 @@ pub const Package = struct {
                 }
             },
         }
+
+        if (pkg.zglfw_c_cpp.linkage) |linkage| {
+            if (exe.target.isWindows() and linkage == .dynamic) {
+                exe.defineCMacro("GLFW_DLL", null);
+            }
+        }
+
         exe.linkLibrary(pkg.zglfw_c_cpp);
     }
+};
+
+pub const Options = struct {
+    shared: bool = false,
 };
 
 pub fn package(
     b: *std.Build,
     target: std.zig.CrossTarget,
     optimize: std.builtin.Mode,
-    _: struct {},
+    args: struct {
+        options: Options = .{},
+    },
 ) Package {
+    const step = b.addOptions();
+    step.addOption(bool, "shared", args.options.shared);
+
     const zglfw = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
 
-    const zglfw_c_cpp = b.addStaticLibrary(.{
+    const zglfw_c_cpp = if (args.options.shared) blk: {
+        const lib = b.addSharedLibrary(.{
+            .name = "zglfw",
+            .target = target,
+            .optimize = optimize,
+        });
+
+        if (target.isWindows()) {
+            lib.defineCMacro("_GLFW_BUILD_DLL", null);
+        }
+
+        break :blk lib;
+    } else b.addStaticLibrary(.{
         .name = "zglfw",
         .target = target,
         .optimize = optimize,
@@ -162,7 +190,7 @@ pub fn runTests(
     const zglfw_pkg = package(b, target, optimize, .{});
     zglfw_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

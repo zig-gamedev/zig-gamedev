@@ -2,12 +2,12 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) void {
-    install(b, options.optimize, options.target, "x0001");
-    install(b, options.optimize, options.target, "x0002");
-    install(b, options.optimize, options.target, "x0003");
-    install(b, options.optimize, options.target, "x0004");
-    install(b, options.optimize, options.target, "x0005");
-    install(b, options.optimize, options.target, "x0008");
+    const latest_experiment = 24;
+    inline for (1..latest_experiment + 1) |i| {
+        if (i == 6 or i == 7) continue;
+        const name = comptime std.fmt.comptimePrint("x{d:0>4}", .{i});
+        install(b, options.optimize, options.target, name);
+    }
 }
 
 fn install(
@@ -58,7 +58,7 @@ fn install(
     install_step.dependOn(&b.addInstallArtifact(exe).step);
 
     const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' genart experiment");
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
 

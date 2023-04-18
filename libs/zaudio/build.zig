@@ -87,7 +87,7 @@ pub fn runTests(
     const zaudio_pkg = package(b, target, optimize, .{});
     zaudio_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

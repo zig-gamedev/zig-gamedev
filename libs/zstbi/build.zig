@@ -70,7 +70,7 @@ pub fn runTests(
     const zstbi_pkg = package(b, target, optimize, .{});
     zstbi_pkg.link(tests);
 
-    return &tests.run().step;
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {
