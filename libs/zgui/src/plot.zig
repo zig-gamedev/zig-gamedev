@@ -497,6 +497,50 @@ extern fn zguiPlot_PlotScatter(
     offset: i32,
     stride: i32,
 ) void;
+
+pub const ShadedFlags = packed struct(u32) {
+    _padding: u32 = 0,
+};
+fn PlotShadedGen(comptime T: type) type {
+    return struct {
+        xv: []const T,
+        yv: []const T,
+        yref: f64 = 0.0,
+        flags: ShadedFlags = .{},
+        offset: i32 = 0,
+        stride: i32 = @sizeOf(T),
+    };
+}
+pub fn plotShaded(label_id: [:0]const u8, comptime T: type, args: PlotShadedGen(T)) void {
+    assert(args.xv.len == args.yv.len);
+    zguiPlot_PlotShaded(
+        label_id,
+        gui.typeToDataTypeEnum(T),
+        args.xv.ptr,
+        args.yv.ptr,
+        @intCast(i32, args.xv.len),
+        args.yref,
+        args.flags,
+        args.offset,
+        args.stride,
+    );
+}
+extern fn zguiPlot_PlotShaded(
+    label_id: [*:0]const u8,
+    data_type: gui.DataType,
+    xv: *const anyopaque,
+    yv: *const anyopaque,
+    count: i32,
+    yref: f64,
+    flags: ShadedFlags,
+    offset: i32,
+    stride: i32,
+) void;
+
+//----------------------------------------------------------------------------------------------
+/// `pub fn showDemoWindow(popen: ?*bool) void`
+pub const showDemoWindow = zguiPlot_ShowDemoWindow;
+extern fn zguiPlot_ShowDemoWindow(popen: ?*bool) void;
 //----------------------------------------------------------------------------------------------
 /// `pub fn endPlot() void`
 pub const endPlot = zguiPlot_EndPlot;
