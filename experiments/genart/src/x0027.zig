@@ -52,8 +52,7 @@ pub fn draw() void {
 
     gl.matrixOrthoEXT(gl.PROJECTION, 0.0, 2.0, 0.0, 2.0, -1.0, 1.0);
 
-    const c = 0.002;
-    gl.color3f(c, c, c);
+    gl.color3f(0.002, 0.002, 0.002);
     gl.begin(gl.POINTS);
     for (0..50_000) |_| {
         if (iter >= max_iter) break;
@@ -65,8 +64,8 @@ pub fn draw() void {
         const yn1 = a4 * @cos((f4 + r1) * xn) + a5 * @sin((f5 + r1) * yn) + a6 * @cos(f6 * tn);
         const tn1 = @intToFloat(f64, iter) * v;
 
-        const velx = @fabs((xn1 - xn));
-        const vely = @fabs((yn1 - yn));
+        const velx = @fabs(xn1 - xn);
+        const vely = @fabs(yn1 - yn);
         gl.vertex2d(velx, vely);
 
         xn = xn1;
