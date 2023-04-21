@@ -65,8 +65,8 @@ pub fn draw() void {
         const yn1 = a4 * @cos((f4 + r1) * xn) + a5 * @sin((f5 + r1) * yn) + a6 * @cos(f6 * tn);
         const tn1 = @intToFloat(f64, iter) * v;
 
-        const velx = @sqrt((xn1 - xn) * (xn1 - xn));
-        const vely = @sqrt((yn1 - yn) * (yn1 - yn));
+        const velx = @fabs((xn1 - xn));
+        const vely = @fabs((yn1 - yn));
         gl.vertex2d(velx, vely);
 
         xn = xn1;
