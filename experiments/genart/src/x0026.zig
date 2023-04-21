@@ -60,8 +60,8 @@ pub fn draw() void {
 
         gl.vertex2d(xn, yn);
 
-        const r0 = random.float(f64) * 0.001;
-        const r1 = random.float(f64) * 0.001;
+        const r0 = random.float(f64) * 0.000;
+        const r1 = random.float(f64) * 0.000;
 
         const xn1 = a1 * @sin((f1 + r0) * xn) + a2 * @cos((f2 + r0) * yn) + a3 * @sin(f3 * tn);
         const yn1 = a4 * @cos((f4 + r1) * xn) + a5 * @sin((f5 + r1) * yn) + a6 * @cos(f6 * tn);
