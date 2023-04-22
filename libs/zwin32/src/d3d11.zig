@@ -150,6 +150,8 @@ pub const INPUT_CLASSIFICATION = enum(UINT) {
     INPUT_PER_INSTANCE_DATA = 1,
 };
 
+pub const APPEND_ALIGNED_ELEMENT: UINT = 0xffffffff;
+
 pub const INPUT_ELEMENT_DESC = extern struct {
     SemanticName: LPCSTR,
     SemanticIndex: UINT,
