@@ -1059,7 +1059,7 @@ pub const IDevice = extern struct {
             }
             pub inline fn CreateInputLayout(
                 self: *T,
-                pInputElementDescs: *const INPUT_ELEMENT_DESC,
+                pInputElementDescs: ?[*]const INPUT_ELEMENT_DESC,
                 NumElements: UINT,
                 pShaderBytecodeWithInputSignature: *anyopaque,
                 BytecodeLength: SIZE_T,
@@ -1170,7 +1170,7 @@ pub const IDevice = extern struct {
         CreateDepthStencilView: *anyopaque,
         CreateInputLayout: *const fn (
             *T,
-            *const INPUT_ELEMENT_DESC,
+            ?[*]const INPUT_ELEMENT_DESC,
             UINT,
             *anyopaque,
             SIZE_T,
