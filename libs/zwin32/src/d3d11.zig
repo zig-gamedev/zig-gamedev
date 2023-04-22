@@ -75,6 +75,15 @@ pub const RTV_DIMENSION = enum(UINT) {
     TEXTURE3D = 8,
 };
 
+pub const BOX = extern struct {
+    left: UINT,
+    top: UINT,
+    front: UINT,
+    right: UINT,
+    bottom: UINT,
+    back: UINT,
+};
+
 pub const BUFFER_RTV = extern struct {
     u0: extern union {
         FirstElement: UINT,
@@ -788,6 +797,26 @@ pub const IDeviceContext = extern struct {
             pub inline fn Flush(self: *T) void {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v)).Flush(@as(*IDeviceContext, @ptrCast(self)));
             }
+            pub inline fn UpdateSubresource(
+                self: *T,
+                pDstResource: *IResource,
+                DstSubresource: UINT,
+                pDstBox: ?*BOX,
+                pSrcData: *anyopaque,
+                SrcRowPitch: UINT,
+                SrcDepthPitch: UINT,
+            ) void {
+                @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
+                    .UpdateSubresource(
+                    @ptrCast(self),
+                    pDstResource,
+                    DstSubresource,
+                    pDstBox,
+                    pSrcData,
+                    SrcRowPitch,
+                    SrcDepthPitch,
+                );
+            }
         };
     }
 
@@ -894,7 +923,7 @@ pub const IDeviceContext = extern struct {
         RSSetScissorRects: *const fn (*T, UINT, ?[*]const RECT) callconv(WINAPI) void,
         CopySubresourceRegion: *anyopaque,
         CopyResource: *anyopaque,
-        UpdateSubresource: *anyopaque,
+        UpdateSubresource: *const fn (*T, *IResource, UINT, ?*BOX, *anyopaque, UINT, UINT) callconv(WINAPI) void,
         CopyStructureCount: *anyopaque,
         ClearRenderTargetView: *const fn (*T, *IRenderTargetView, *const [4]FLOAT) callconv(WINAPI) void,
         ClearUnorderedAccessViewUint: *anyopaque,
