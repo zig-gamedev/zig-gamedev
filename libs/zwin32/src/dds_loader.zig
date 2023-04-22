@@ -354,7 +354,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
             var d: u32 = depth;
 
             var mip_map_index: u32 = 0;
-            while (mip_map_index < header.dwMipMapCount) : (mip_map_index += 1) {
+            while (mip_map_index < mip_count) : (mip_map_index += 1) {
                 const surface_info = getSurfaceInfo(w, h, format);
                 if (surface_info.num_bytes > std.math.maxInt(u32)) {
                     return DdsError.InvalidDDSData;
@@ -364,7 +364,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
                     return DdsError.InvalidDDSData;
                 }
 
-                if (header.dwMipMapCount <= 1 or max_size == 0 or (w <= max_size and h <= max_size and d <= max_size)) {
+                if (mip_count <= 1 or max_size == 0 or (w <= max_size and h <= max_size and d <= max_size)) {
                     if (total_width == 0) {
                         total_width = w;
                         total_height = h;
@@ -413,7 +413,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
         .height = header.dwHeight,
         .depth = depth,
         .array_size = array_size,
-        .mip_map_count = header.dwMipMapCount,
+        .mip_map_count = mip_count,
         .resource_dimension = resource_dimension,
         .format = format,
         .cubemap = cubemap,
