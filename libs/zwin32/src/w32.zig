@@ -291,7 +291,14 @@ pub const WM_SYSKEYDOWN = 0x0104;
 pub const WM_SYSKEYUP = 0x0105;
 pub const WM_SETFOCUS = 0x0007;
 pub const WM_KILLFOCUS = 0x0008;
+pub const WM_CREATE = 0x0001;
 pub const WM_DESTROY = 0x0002;
+pub const WM_MOVE = 0x0003;
+pub const WM_SIZE = 0x0005;
+pub const WM_ACTIVATE = 0x0006;
+pub const WM_ENABLE = 0x000A;
+pub const WM_PAINT = 0x000F;
+pub const WM_CLOSE = 0x0010;
 pub const WM_QUIT = 0x0012;
 
 pub const SECURITY_ATTRIBUTES = extern struct {
