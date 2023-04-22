@@ -749,7 +749,7 @@ pub const IDeviceContext = extern struct {
             pub inline fn OMSetRenderTargets(
                 self: *T,
                 NumViews: UINT,
-                ppRenderTargetViews: ?[*]const IRenderTargetView,
+                ppRenderTargetViews: ?[*]const *IRenderTargetView,
                 pDepthStencilView: ?*IDepthStencilView,
             ) void {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v)).OMSetRenderTargets(
@@ -903,7 +903,7 @@ pub const IDeviceContext = extern struct {
         OMSetRenderTargets: *const fn (
             *T,
             UINT,
-            ?[*]const IRenderTargetView,
+            ?[*]const *IRenderTargetView,
             ?*IDepthStencilView,
         ) callconv(WINAPI) void,
         OMSetRenderTargetsAndUnorderedAccessViews: *anyopaque,
