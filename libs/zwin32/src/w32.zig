@@ -175,6 +175,10 @@ pub extern "user32" fn ScreenToClient(hWnd: ?HWND, lpPoint: *POINT) callconv(WIN
 
 pub extern "user32" fn RegisterClassExA(*const WNDCLASSEXA) callconv(WINAPI) ATOM;
 
+pub extern "user32" fn GetWindowLongPtrA(hWnd: ?HWND, nIndex: INT) callconv(WINAPI) ?*anyopaque;
+
+pub extern "user32" fn SetWindowLongPtrA(hWnd: ?HWND, nIndex: INT, dwNewLong: ?*anyopaque) callconv(WINAPI) LONG_PTR;
+
 pub extern "user32" fn AdjustWindowRectEx(
     lpRect: *RECT,
     dwStyle: DWORD,
