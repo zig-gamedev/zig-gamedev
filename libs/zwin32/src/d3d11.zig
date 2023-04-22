@@ -138,7 +138,7 @@ pub const RENDER_TARGET_VIEW_DESC = extern struct {
 
 pub const INPUT_CLASSIFICATION = enum(UINT) {
     INPUT_PER_VERTEX_DATA = 0,
-    INPUT_PER_INSTNACE_DATA = 1,
+    INPUT_PER_INSTANCE_DATA = 1,
 };
 
 pub const INPUT_ELEMENT_DESC = extern struct {
