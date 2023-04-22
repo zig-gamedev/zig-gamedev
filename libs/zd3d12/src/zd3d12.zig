@@ -1545,7 +1545,9 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         relpath: []const u8,
         arena: std.mem.Allocator,
-        cubemap: bool,
+        args: struct {
+            is_cubemap: bool = false,
+        },
     ) !ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
@@ -1564,10 +1566,10 @@ pub const GraphicsContext = struct {
 
         const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, gctx.device, 0, &subresources);
         assert(dds_info.resource_dimension == .TEXTURE2D);
-        assert(dds_info.cubemap == cubemap);
+        assert(dds_info.cubemap == args.is_cubemap);
 
         var texture_desc = blk: {
-            if (cubemap) {
+            if (args.is_cubemap) {
                 break :blk d3d12.RESOURCE_DESC.initTexCube(
                     dds_info.format,
                     dds_info.width,

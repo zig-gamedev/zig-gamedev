@@ -558,7 +558,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var mesh_textures: [4]Texture = undefined;
 
     {
-        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds", arena_allocator, false);
+        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds", arena_allocator, .{});
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_AmbientOcclusion.dds"));
 
         mesh_textures[texture_ao] = blk: {
@@ -582,7 +582,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     }
 
     {
-        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.dds", arena_allocator, false);
+        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.dds", arena_allocator, .{});
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_BaseColor.dds"));
 
         mesh_textures[texture_base_color] = blk: {
@@ -606,7 +606,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     }
 
     {
-        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.dds", arena_allocator, false);
+        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.dds", arena_allocator, .{});
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_MetallicRoughness.dds"));
 
         mesh_textures[texture_metallic_roughness] = blk: {
@@ -630,7 +630,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     }
 
     {
-        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.dds", arena_allocator, false);
+        const resource = try gctx.createAndUploadTex2dFromDdsFile(content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.dds", arena_allocator, .{});
         _ = gctx.lookupResource(resource).?.SetName(L("SciFiHelmet/SciFiHelmet_Normal.dds"));
 
         mesh_textures[texture_normal] = blk: {
