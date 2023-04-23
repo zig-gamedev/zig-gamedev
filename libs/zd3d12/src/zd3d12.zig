@@ -1545,6 +1545,9 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         relpath: []const u8,
         arena: std.mem.Allocator,
+        args: struct {
+            is_cubemap: bool = false,
+        },
     ) !ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
@@ -1563,22 +1566,34 @@ pub const GraphicsContext = struct {
 
         const dds_info = try dds_loader.loadTextureFromFile(abspath, arena, gctx.device, 0, &subresources);
         assert(dds_info.resource_dimension == .TEXTURE2D);
-        assert(dds_info.cubemap == false);
-        assert(dds_info.array_size == 1);
+        assert(dds_info.cubemap == args.is_cubemap);
+
+        var texture_desc = blk: {
+            if (args.is_cubemap) {
+                break :blk d3d12.RESOURCE_DESC.initTexCube(
+                    dds_info.format,
+                    dds_info.width,
+                    dds_info.height,
+                    dds_info.mip_map_count,
+                );
+            } else {
+                break :blk d3d12.RESOURCE_DESC.initTex2d(
+                    dds_info.format,
+                    dds_info.width,
+                    dds_info.height,
+                    dds_info.mip_map_count,
+                );
+            }
+        };
 
         const texture = try gctx.createCommittedResource(
             .DEFAULT,
             .{},
-            &d3d12.RESOURCE_DESC.initTex2d(
-                dds_info.format,
-                dds_info.width,
-                dds_info.height,
-                dds_info.mip_map_count,
-            ),
+            &texture_desc,
             .{ .COPY_DEST = true },
             null,
         );
-        const texture_desc = gctx.lookupResource(texture).?.GetDesc();
+        texture_desc = gctx.lookupResource(texture).?.GetDesc();
 
         for (0..subresources.items.len) |index| {
             const subresource_index = @intCast(u32, index);
