@@ -8,7 +8,7 @@ pub const name = "generative art experiment: x0028";
 pub const display_width = 1024 * res_mul;
 pub const display_height = 1024 * res_mul;
 
-const res_mul = 2; // 1 (1024x1024) or 2 (2048x2048)
+const res_mul = 1; // 1 (1024x1024) or 2 (2048x2048)
 
 var prng = std.rand.DefaultPrng.init(0);
 var random = prng.random();
@@ -92,16 +92,6 @@ pub fn draw() void {
     }
     gl.end();
     gl.disable(gl.SCISSOR_TEST);
-
-    if (frame < 10) {
-        const f = 0.1;
-        gl.color3f(0.1, 0.1, 0.1);
-        gl.begin(gl.LINE_LOOP);
-        gl.vertex2d(-0.5 + random.float(f64) * f, -0.5 + random.float(f64) * f);
-        gl.vertex2d(0.5 + random.float(f64) * f, -0.5 + random.float(f64) * f);
-        gl.vertex2d(0.0 + random.float(f64) * f, 0.5 + random.float(f64) * f);
-        gl.end();
-    }
 
     gl.disable(gl.BLEND);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, xcommon.display_fbo);
