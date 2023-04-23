@@ -17,12 +17,12 @@ var fs_postprocess: gl.Uint = 0;
 var accum_tex: gl.Uint = 0;
 var accum_fbo: gl.Uint = 0;
 
-const a1 = 2.1; // 2.0
-const a2 = 1.4; // 1.5
-const a3 = 1.1; // 1.0
+const a1 = 2.1;
+const a2 = 1.4;
+const a3 = 1.1;
 
 const f1 = 0.4;
-const f2 = 1.1; // 1.3
+const f2 = 1.1;
 const f3 = 1.0;
 
 const a4 = 1.1;
