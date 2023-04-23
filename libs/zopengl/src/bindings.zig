@@ -1987,7 +1987,6 @@ pub var bindImageTexture: *const fn (
     format: Enum,
 ) callconv(.C) void = undefined;
 pub var memoryBarrier: *const fn (barriers: Bitfield) callconv(.C) void = undefined;
-
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 4.3 (Core Profile)
@@ -2087,7 +2086,6 @@ pub var getObjectPtrLabel: *const fn (
     length: *Sizei,
     label: [*c]Char,
 ) callconv(.C) void = undefined;
-
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 4.4 (Core Profile)
@@ -2337,3 +2335,4 @@ pub var getObjectPtrLabelKHR: *const fn (
     length: *Sizei,
     label: [*c]Char,
 ) callconv(.C) void = undefined;
+//--------------------------------------------------------------------------------------------------

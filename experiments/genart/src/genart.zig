@@ -7,6 +7,11 @@ const xcommon = @import("xcommon");
 pub export var NvOptimusEnablement: u32 = 1;
 
 pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    xcommon.allocator = gpa.allocator();
+
     _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
 
     try sdl.init(.{ .audio = true, .video = true });
@@ -98,7 +103,13 @@ pub fn main() !void {
             if (event.type == .quit) {
                 break :main_loop;
             } else if (event.type == .keydown) {
-                if (event.key.keysym.sym == .escape) break :main_loop;
+                switch (event.key.keysym.sym) {
+                    .escape => break :main_loop,
+                    .f12 => {
+                        xcommon.saveScreenshot(xcommon.allocator, "screenshot.png");
+                    },
+                    else => {},
+                }
             }
         }
 

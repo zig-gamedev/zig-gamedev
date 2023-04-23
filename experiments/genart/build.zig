@@ -2,7 +2,7 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) void {
-    const latest_experiment = 27;
+    const latest_experiment = 28;
     inline for (1..latest_experiment + 1) |i| {
         if (i == 6 or i == 7) continue;
         const name = comptime std.fmt.comptimePrint("x{d:0>4}", .{i});
@@ -20,6 +20,7 @@ fn install(
     const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
     const zmath_pkg = @import("../../build.zig").zmath_pkg;
     const znoise_pkg = @import("../../build.zig").znoise_pkg;
+    const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
 
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
@@ -30,6 +31,7 @@ fn install(
         .dependencies = &.{
             .{ .name = "zsdl", .module = zsdl_pkg.zsdl },
             .{ .name = "zopengl", .module = zopengl_pkg.zopengl },
+            .{ .name = "zstbi", .module = zstbi_pkg.zstbi },
         },
     });
     const ximpl = b.createModule(.{
@@ -53,6 +55,7 @@ fn install(
     exe.addModule("ximpl", ximpl);
     zsdl_pkg.link(exe);
     zopengl_pkg.link(exe);
+    zstbi_pkg.link(exe);
 
     const install_step = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment");
     install_step.dependOn(&b.addInstallArtifact(exe).step);
