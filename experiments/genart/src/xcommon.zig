@@ -35,4 +35,6 @@ pub fn saveScreenshot(alloc: std.mem.Allocator, filename: [:0]const u8) void {
         .is_hdr = false,
     };
     image.writeToFile(filename, .png) catch {};
+
+    std.debug.print("{s} saved\n", .{filename});
 }

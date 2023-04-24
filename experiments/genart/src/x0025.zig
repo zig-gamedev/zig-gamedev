@@ -21,7 +21,7 @@ const a1 = 2.1;
 const a2 = 1.4;
 const a3 = 1.1;
 
-const f1 = 0.4;
+var f1: f64 = 0.4;
 const f2 = 1.1;
 const f3 = 1.0;
 
@@ -41,11 +41,40 @@ var tn: f64 = 0.0;
 
 const max_iter = 25_000_000 * res_mul * res_mul;
 var iter: u64 = 0;
+var frame: u32 = 0;
 
 pub fn draw() void {
-    gl.enable(gl.BLEND);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, accum_fbo);
     gl.useProgram(0);
+
+    if (false and iter >= max_iter) {
+        iter = 0;
+        frame = 0;
+        f1 += 0.001;
+        xn = 0;
+        yn = 0;
+        tn = 0;
+
+        gl.color3f(0.0, 0.0, 0.0);
+        gl.rectf(-1.0, -1.0, 1.0, 1.0);
+
+        const static = struct {
+            var num: u32 = 0;
+        };
+        var buffer = [_]u8{0} ** 128;
+        const filename = std.fmt.bufPrintZ(
+            buffer[0..],
+            "x0025_f{d:0>4}.png",
+            .{static.num},
+        ) catch unreachable;
+        static.num += 1;
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, 0);
+        xcommon.saveScreenshot(xcommon.allocator, filename);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, accum_fbo);
+    }
+
+    gl.enable(gl.BLEND);
 
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
     gl.loadIdentity();
@@ -93,6 +122,8 @@ pub fn draw() void {
     gl.vertex2f(3.0, -1.0);
     gl.vertex2f(-1.0, 3.0);
     gl.end();
+
+    frame += 1;
 }
 
 pub fn init() !void {
