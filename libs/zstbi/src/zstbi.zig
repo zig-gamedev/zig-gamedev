@@ -23,6 +23,10 @@ pub fn init(allocator: std.mem.Allocator) void {
 pub fn deinit() void {
     assert(mem_allocator != null);
     assert(mem_allocations.?.count() == 0);
+
+    setFlipVerticallyOnLoad(false);
+    setFlipVerticallyOnWrite(false);
+
     mem_allocations.?.deinit();
     mem_allocations = null;
     mem_allocator = null;
@@ -280,7 +284,7 @@ pub const Image = struct {
     }
 
     pub fn writeToFile(
-        image: *const Image,
+        image: Image,
         filename: [:0]const u8,
         image_format: ImageWriteFormat,
     ) ImageWriteError!void {
@@ -307,7 +311,7 @@ pub const Image = struct {
     }
 
     pub fn writeToFn(
-        image: *const Image,
+        image: Image,
         write_fn: *const fn (ctx: ?*anyopaque, data: ?*anyopaque, size: c_int) callconv(.C) void,
         context: ?*anyopaque,
         image_format: ImageWriteFormat,
@@ -367,6 +371,10 @@ pub fn is16bit(filename: [:0]const u8) bool {
 
 pub fn setFlipVerticallyOnLoad(should_flip: bool) void {
     stbi_set_flip_vertically_on_load(if (should_flip) 1 else 0);
+}
+
+pub fn setFlipVerticallyOnWrite(should_flip: bool) void {
+    stbi_flip_vertically_on_write(if (should_flip) 1 else 0);
 }
 
 var mem_allocator: ?std.mem.Allocator = null;
@@ -499,6 +507,7 @@ extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
 extern fn stbi_is_hdr_from_memory(buffer: [*]const u8, len: c_int) c_int;
 
 extern fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: c_int) void;
+extern fn stbi_flip_vertically_on_write(flag: c_int) void; // flag is non-zero to flip data vertically
 
 extern fn stbir_resize_uint8(
     input_pixels: [*]const u8,

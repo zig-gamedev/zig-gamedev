@@ -2316,6 +2316,41 @@ ZGUI_API void zguiPlot_PlotScatterValues(
         assert(false);
 }
 
+ZGUI_API void zguiPlot_PlotShaded(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* xv,
+    const void* yv,
+    int count,
+    double yref,
+    ImPlotShadedFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotShaded(label_id, (const ImS8*)xv, (const ImS8*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotShaded(label_id, (const ImU8*)xv, (const ImU8*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotShaded(label_id, (const ImS16*)xv, (const ImS16*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotShaded(label_id, (const ImU16*)xv, (const ImU16*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotShaded(label_id, (const ImS32*)xv, (const ImS32*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotShaded(label_id, (const ImU32*)xv, (const ImU32*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotShaded(label_id, (const float*)xv, (const float*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotShaded(label_id, (const double*)xv, (const double*)yv, count, yref, flags, offset, stride);
+    else
+        assert(false);
+}
+
+ZGUI_API void zguiPlot_ShowDemoWindow(bool* p_open) {
+    ImPlot::ShowDemoWindow(p_open);
+}
+
 ZGUI_API void zguiPlot_EndPlot(void) {
     ImPlot::EndPlot();
 }

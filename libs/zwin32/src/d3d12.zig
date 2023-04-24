@@ -235,6 +235,23 @@ pub const RESOURCE_DESC = extern struct {
         };
         return v;
     }
+
+    pub fn initTexCube(format: dxgi.FORMAT, width: UINT64, height: UINT, mip_levels: u32) RESOURCE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .Dimension = .TEXTURE2D,
+            .Alignment = 0,
+            .Width = width,
+            .Height = height,
+            .DepthOrArraySize = 6,
+            .MipLevels = @intCast(u16, mip_levels),
+            .Format = format,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .Layout = .UNKNOWN,
+            .Flags = .{},
+        };
+        return v;
+    }
 };
 
 pub const FENCE_FLAGS = packed struct(UINT) {

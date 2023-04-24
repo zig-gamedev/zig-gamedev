@@ -697,10 +697,22 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 4.3
     if (ver >= 43) {
-        bindings.debugMessageControl = try getProcAddress(@TypeOf(bindings.debugMessageControl), "glDebugMessageControl");
-        bindings.debugMessageInsert = try getProcAddress(@TypeOf(bindings.debugMessageInsert), "glDebugMessageInsert");
-        bindings.debugMessageCallback = try getProcAddress(@TypeOf(bindings.debugMessageCallback), "glDebugMessageCallback");
-        bindings.getDebugMessageLog = try getProcAddress(@TypeOf(bindings.getDebugMessageLog), "glGetDebugMessageLog");
+        bindings.debugMessageControl = try getProcAddress(
+            @TypeOf(bindings.debugMessageControl),
+            "glDebugMessageControl",
+        );
+        bindings.debugMessageInsert = try getProcAddress(
+            @TypeOf(bindings.debugMessageInsert),
+            "glDebugMessageInsert",
+        );
+        bindings.debugMessageCallback = try getProcAddress(
+            @TypeOf(bindings.debugMessageCallback),
+            "glDebugMessageCallback",
+        );
+        bindings.getDebugMessageLog = try getProcAddress(
+            @TypeOf(bindings.getDebugMessageLog),
+            "glGetDebugMessageLog",
+        );
         bindings.getPointerv = try getProcAddress(@TypeOf(bindings.getPointerv), "glGetPointerv");
         bindings.pushDebugGroup = try getProcAddress(@TypeOf(bindings.pushDebugGroup), "glPushDebugGroup");
         bindings.popDebugGroup = try getProcAddress(@TypeOf(bindings.popDebugGroup), "glPopDebugGroup");
@@ -1337,7 +1349,6 @@ pub fn loadEsExtension(loader: LoaderFn, extension: EsExtension) !void {
         },
     }
 }
-
 //--------------------------------------------------------------------------------------------------
 fn bind(gl_proc_name: [:0]const u8, bind_addresses: anytype) !void {
     const ProcType = @typeInfo(@TypeOf(bind_addresses.@"0")).Pointer.child;
