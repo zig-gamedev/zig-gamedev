@@ -18,8 +18,8 @@ fn make_error() error{FlecsError} {
     return error.FlecsError;
 }
 
-pub const ECS_ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
-pub const ECS_COMPONENT_MASK: u64 = ~ECS_ID_FLAGS_MASK;
+pub const ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
+pub const COMPONENT_MASK: u64 = ~ID_FLAGS_MASK;
 
 pub extern const EcsWildcard: entity_t;
 pub extern const EcsAny: entity_t;
@@ -961,7 +961,7 @@ pub const make_pair = ecs_make_pair;
 extern fn ecs_make_pair(first: entity_t, second: entity_t) id_t;
 
 pub fn pair_first(pair_id: entity_t) entity_t {
-    return @intCast(entity_t, @truncate(u32, (pair_id & ECS_COMPONENT_MASK) >> 32));
+    return @intCast(entity_t, @truncate(u32, (pair_id & COMPONENT_MASK) >> 32));
 }
 
 pub fn pair_second(pair_id: entity_t) entity_t {
@@ -1976,7 +1976,14 @@ pub fn add_pair(world: *world_t, subject: entity_t, first: entity_t, second: ent
     add_id(world, subject, pair(first, second));
 }
 
-pub fn set_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t, comptime T: type, val: T) entity_t {
+pub fn set_pair(
+    world: *world_t,
+    subject: entity_t,
+    first: entity_t,
+    second: entity_t,
+    comptime T: type,
+    val: T,
+) entity_t {
     return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @ptrCast(*const anyopaque, &val));
 }
 
