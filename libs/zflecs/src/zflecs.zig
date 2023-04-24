@@ -18,6 +18,29 @@ fn make_error() error{FlecsError} {
     return error.FlecsError;
 }
 
+pub const ECS_ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
+pub const ECS_COMPONENT_MASK: u64 = ~ECS_ID_FLAGS_MASK;
+
+pub extern const EcsWildcard: entity_t;
+pub extern const EcsAny: entity_t;
+pub extern const EcsTransitive: entity_t;
+pub extern const EcsReflexive: entity_t;
+pub extern const EcsFinal: entity_t;
+pub extern const EcsDontInherit: entity_t;
+pub extern const EcsSymmetric: entity_t;
+pub extern const EcsExclusive: entity_t;
+pub extern const EcsAcyclic: entity_t;
+pub extern const EcsTraversable: entity_t;
+pub extern const EcsWith: entity_t;
+pub extern const EcsOneOf: entity_t;
+pub extern const EcsTag: entity_t;
+pub extern const EcsUnion: entity_t;
+pub extern const EcsAlias: entity_t;
+pub extern const EcsChildOf: entity_t;
+pub extern const EcsSlotOf: entity_t;
+pub extern const EcsPrefab: entity_t;
+pub extern const EcsDisabled: entity_t;
+
 pub extern const EcsOnStart: entity_t;
 pub extern const EcsPreFrame: entity_t;
 pub extern const EcsOnLoad: entity_t;
@@ -30,6 +53,21 @@ pub extern const EcsPreStore: entity_t;
 pub extern const EcsOnStore: entity_t;
 pub extern const EcsPostFrame: entity_t;
 pub extern const EcsPhase: entity_t;
+
+pub extern const EcsOnAdd: entity_t;
+pub extern const EcsOnRemove: entity_t;
+pub extern const EcsOnSet: entity_t;
+pub extern const EcsUnSet: entity_t;
+pub extern const EcsMonitor: entity_t;
+pub extern const EcsOnDelete: entity_t;
+pub extern const EcsOnTableCreate: entity_t;
+pub extern const EcsOnTableDelete: entity_t;
+pub extern const EcsOnTableEmpty: entity_t;
+pub extern const EcsOnTableFill: entity_t;
+
+pub extern const EcsOnDeleteTarget: entity_t;
+pub extern const EcsRemove: entity_t;
+pub extern const EcsDelete: entity_t;
 
 pub extern const EcsIsA: entity_t;
 pub extern const EcsDependsOn: entity_t;
@@ -921,6 +959,14 @@ extern fn ecs_delete_empty_tables(
 /// `pub fn make_pair(first: entity_t, second: entity_t) id_t`
 pub const make_pair = ecs_make_pair;
 extern fn ecs_make_pair(first: entity_t, second: entity_t) id_t;
+
+pub fn pair_first(pair_id: entity_t) entity_t {
+    return @intCast(entity_t, @truncate(u32, (pair_id & ECS_COMPONENT_MASK) >> 32));
+}
+
+pub fn pair_second(pair_id: entity_t) entity_t {
+    return @intCast(entity_t, @truncate(u32, pair_id));
+}
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for creating and deleting entities.
@@ -1550,7 +1596,7 @@ pub const event_desc_t = extern struct {
     offset: i32 = 0,
     count: i32 = 0,
     entity: entity_t = 0,
-    param: ?*const anyopaque = 0,
+    param: ?*const anyopaque = null,
     observable: ?*poly_t = null,
     flags: flags32_t = 0,
 };
@@ -1559,9 +1605,9 @@ pub const event_desc_t = extern struct {
 pub const emit = ecs_emit;
 extern fn ecs_emit(world: *world_t, desc: *event_desc_t) void;
 
-/// `pub fn observer_init(world: *world_t, desc: *const event_desc_t) entity_t`
+/// `pub fn observer_init(world: *world_t, desc: *const observer_desc_t) entity_t`
 pub const observer_init = ecs_observer_init;
-extern fn ecs_observer_init(world: *world_t, desc: *const event_desc_t) entity_t;
+extern fn ecs_observer_init(world: *world_t, desc: *const observer_desc_t) entity_t;
 
 /// `pub fn observer_default_run_action(it: *iter_t) bool`
 pub const observer_default_run_action = ecs_observer_default_run_action;
@@ -1892,9 +1938,8 @@ pub fn TAG(world: *world_t, comptime T: type) void {
 pub fn SYSTEM(
     world: *world_t,
     name: [*:0]const u8,
-    callback: iter_action_t,
     phase: entity_t,
-    query_desc: query_desc_t,
+    system_desc: *system_desc_t,
 ) void {
     var entity_desc = entity_desc_t{};
     entity_desc.id = new_id(world);
@@ -1902,19 +1947,41 @@ pub fn SYSTEM(
     entity_desc.add[0] = if (phase != 0) pair(EcsDependsOn, phase) else 0;
     entity_desc.add[1] = phase;
 
-    var system_desc = system_desc_t{};
     system_desc.entity = entity_init(world, &entity_desc);
-    system_desc.query = query_desc;
-    system_desc.callback = callback;
-    _ = system_init(world, &system_desc);
+    _ = system_init(world, system_desc);
+}
+
+pub fn OBSERVER(
+    world: *world_t,
+    name: [*:0]const u8,
+    observer_desc: *observer_desc_t,
+) void {
+    var entity_desc = entity_desc_t{};
+    entity_desc.id = new_id(world);
+    entity_desc.name = name;
+
+    observer_desc.entity = entity_init(world, &entity_desc);
+    _ = observer_init(world, observer_desc);
 }
 
 pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
     return entity_init(world, &.{ .name = name });
 }
 
+pub fn new_prefab(world: *world_t, name: [*:0]const u8) entity_t {
+    return entity_init(world, &.{ .name = name, .add = [_]id_t{EcsPrefab} ++ [_]id_t{0} ** (ID_CACHE_SIZE - 1) });
+}
+
 pub fn add_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {
     add_id(world, subject, pair(first, second));
+}
+
+pub fn set_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t, comptime T: type, val: T) entity_t {
+    return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @ptrCast(*const anyopaque, &val));
+}
+
+pub fn remove_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {
+    remove_id(world, subject, pair(first, second));
 }
 
 // flecs internally reserves names like u16, u32, f32, etc. so we re-map them to uppercase to avoid collisions
@@ -1949,12 +2016,23 @@ pub fn get(world: *const world_t, entity: entity_t, comptime T: type) ?*const T 
     return null;
 }
 
+pub fn get_mut(world: *world_t, entity: entity_t, comptime T: type) ?*T {
+    if (get_mut_id(world, entity, id(T))) |ptr| {
+        return cast_mut(T, ptr);
+    }
+    return null;
+}
+
 pub fn add(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_add_id(world, entity, id(T));
 }
 
 pub fn remove(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_remove_id(world, entity, id(T));
+}
+
+pub fn override(world: *world_t, entity: entity_t, comptime T: type) void {
+    ecs_override_id(world, entity, id(T));
 }
 
 pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
@@ -1971,11 +2049,11 @@ pub inline fn id(comptime T: type) id_t {
 
 pub const pair = make_pair;
 
-fn cast(comptime T: type, val: ?*const anyopaque) *const T {
+pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
     return @ptrCast(*const T, @alignCast(@alignOf(T), val));
 }
 
-fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
+pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @ptrCast(*T, @alignCast(@alignOf(T), val));
 }
 //--------------------------------------------------------------------------------------------------
