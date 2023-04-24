@@ -4,6 +4,7 @@ const ecs = @import("zflecs.zig");
 const expect = std.testing.expect;
 
 const print = std.log.info;
+//const print = std.debug.print;
 
 const Position = struct { x: f32, y: f32 };
 const Velocity = struct { x: f32, y: f32 };
@@ -148,7 +149,7 @@ test "zflecs.basic" {
     {
         const p0 = ecs.pair(ecs.id(u31), e0);
         const p1 = ecs.pair(e0, e0);
-        const p2 = ecs.pair(ecs.EcsOnUpdate, ecs.id(Direction));
+        const p2 = ecs.pair(ecs.OnUpdate, ecs.id(Direction));
         {
             const str = ecs.id_str(world, p0).?;
             defer ecs.os.free(str);
@@ -261,7 +262,7 @@ test "zflecs.helloworld" {
         system_desc.callback = move;
         system_desc.query.filter.terms[0] = .{ .id = ecs.id(Position) };
         system_desc.query.filter.terms[1] = .{ .id = ecs.id(Velocity) };
-        ecs.SYSTEM(world, "move system", ecs.EcsOnUpdate, &system_desc);
+        ecs.SYSTEM(world, "move system", ecs.OnUpdate, &system_desc);
     }
 
     const bob = ecs.new_entity(world, "Bob");
