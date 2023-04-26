@@ -66,11 +66,13 @@ pub fn main() !void {
     defer zaudio.deinit();
 
     const engine = try zaudio.Engine.create(null);
+    defer engine.destroy();
 
     const music = try engine.createSoundFromFile(
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
     );
+    defer music.destroy();
     try music.start();
     ...
 }
