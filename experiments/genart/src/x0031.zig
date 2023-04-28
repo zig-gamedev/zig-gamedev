@@ -380,6 +380,7 @@ pub fn init() !void {
         \\
         \\  void main() {
         \\      vec3 color = texelFetch(accum_texh, ivec2(gl_FragCoord.xy), 0).rgb;
+        \\      color = clamp(color, 0.0, 1.0);
         \\      color = 1.0 - color;
         \\      gl_FragColor = vec4(color, 1.0);
         \\  }
