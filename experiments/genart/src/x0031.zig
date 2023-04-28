@@ -8,7 +8,7 @@ pub const name = "generative art experiment: x0031";
 pub const display_width = 1024 * res_mul;
 pub const display_height = 1024 * res_mul;
 
-const res_mul = 1; // 1 (1024x1024) or 2 (2048x2048)
+const res_mul = 2; // 1 (1024x1024) or 2 (2048x2048)
 
 const step: f64 = if (res_mul == 2) 0.001 else 0.002;
 
@@ -82,8 +82,8 @@ pub fn draw() void {
                 v = hyperbolic(v, 1.0);
                 v = julia(v, 2.0, random.float(f64));
                 v = sinusoidal(v, 2.8);
-                v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
+                v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
                 v = sinusoidal(v, 2.8);
@@ -148,7 +148,6 @@ pub fn draw() void {
                 v = sinusoidal(v, 2.8);
                 v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
-                //v = sinusoidal(v, 2.8);
 
                 gl.vertex2d(v[0] + xoff, v[1] + yoff);
             }
@@ -270,8 +269,8 @@ pub fn draw() void {
                 v = sinusoidal(v, 2.8);
                 v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
-                v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
+                v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
 
                 gl.vertex2d(v[0] + xoff, v[1] + yoff);
@@ -296,9 +295,9 @@ pub fn draw() void {
                 const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
+                v = sinusoidal(v, 2.8);
                 v = julia(v, 2.1, random.float(f64));
                 v = hyperbolic(v, 1.0);
-                v = sinusoidal(v, 2.8);
                 v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
                 v = julia(.{ v[0], v[1] }, 2.0, random.float(f64));
