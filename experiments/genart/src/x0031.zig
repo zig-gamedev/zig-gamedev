@@ -11,6 +11,9 @@ pub const display_height = 1024 * res_mul;
 const res_mul = 1; // 1 (1024x1024) or 2 (2048x2048)
 
 const step: f64 = if (res_mul == 2) 0.001 else 0.002;
+const scale: f32 = 0.3;
+const rand_factor = step * 0.05 * res_mul;
+const luminance = 0.0005;
 
 const Vec2 = [2]f64;
 
@@ -26,7 +29,7 @@ var pass: u32 = 0;
 
 pub fn draw() void {
     gl.enable(gl.BLEND);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, accum_fbo);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, accum_fbo);
     gl.useProgram(0);
 
     gl.matrixLoadIdentityEXT(gl.PROJECTION);
@@ -35,55 +38,46 @@ pub fn draw() void {
     gl.loadIdentity();
 
     if (y <= bounds and pass == 0) {
-        gl.pushMatrix();
-        gl.translatef(-2.0, -2.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.pointSize(3.0);
+        const s = 0.0025 * res_mul * res_mul;
+        gl.color3f(s * (1.0 - 0.44), s * (1.0 - 0.26), s * (1.0 - 0.08));
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
-            while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+            while (x <= bounds) : (x += 0.001) {
+                const xoff = 0.00025 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = 0.00025 * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
-
-                v = julia(v, 2.0, random.float(f64));
-                v = hyperbolic(v, 1.0);
-                v = sinusoidal(v, 2.8);
-                v = hyperbolic(.{ v[0], v[1] }, 1.0);
-                v = sinusoidal(v, 2.8);
-                v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
-                v = sinusoidal(v, 2.8);
-                v = sinusoidal(v, 2.8);
 
                 gl.vertex2d(v[0] + xoff, v[1] + yoff);
             }
-            y += step;
+            y += 0.001;
         }
         gl.end();
-        gl.popMatrix();
+        gl.pointSize(1.0);
+        gl.color3f(luminance, luminance, luminance);
     }
 
     if (y <= bounds and pass == 1) {
         gl.pushMatrix();
-        gl.translatef(0.0, -2.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.translatef(-2.0, -2.0, 0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
-                v = hyperbolic(v, 1.0);
                 v = julia(v, 2.0, random.float(f64));
-                v = sinusoidal(v, 2.8);
+                v = hyperbolic(v, 1.0);
                 v = sinusoidal(v, 2.8);
                 v = hyperbolic(.{ v[0], v[1] }, 1.0);
+                v = sinusoidal(v, 2.8);
                 v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
                 v = sinusoidal(v, 2.8);
@@ -98,23 +92,23 @@ pub fn draw() void {
 
     if (y <= bounds and pass == 2) {
         gl.pushMatrix();
-        gl.translatef(2.0, -2.0, 0.0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.translatef(0.0, -2.0, 0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
+                v = hyperbolic(v, 1.0);
                 v = julia(v, 2.0, random.float(f64));
                 v = sinusoidal(v, 2.8);
-                v = hyperbolic(v, 1.0);
-                v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
+                v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
                 v = sinusoidal(v, 2.8);
@@ -129,24 +123,25 @@ pub fn draw() void {
 
     if (y <= bounds and pass == 3) {
         gl.pushMatrix();
-        gl.translatef(-2.0, 0.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.translatef(2.0, -2.0, 0.0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
                 v = julia(v, 2.0, random.float(f64));
-                v = hyperbolic(v, 1.0);
                 v = sinusoidal(v, 2.8);
+                v = hyperbolic(v, 1.0);
                 v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
                 v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
+                v = sinusoidal(v, 2.8);
                 v = sinusoidal(v, 2.8);
 
                 gl.vertex2d(v[0] + xoff, v[1] + yoff);
@@ -159,16 +154,16 @@ pub fn draw() void {
 
     if (y <= bounds and pass == 4) {
         gl.pushMatrix();
-        gl.translatef(0.0, 0.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.translatef(-2.0, 0.0, 0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
                 v = julia(v, 2.0, random.float(f64));
@@ -176,8 +171,7 @@ pub fn draw() void {
                 v = sinusoidal(v, 2.8);
                 v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
-                v = julia(.{ v[1], v[0] }, 2.1, random.float(f64));
-                v = sinusoidal(v, 2.8);
+                v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
 
                 gl.vertex2d(v[0] + xoff, v[1] + yoff);
@@ -190,24 +184,24 @@ pub fn draw() void {
 
     if (y <= bounds and pass == 5) {
         gl.pushMatrix();
-        gl.translatef(2.0, 0.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.translatef(0.0, 0.0, 0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
                 v = julia(v, 2.0, random.float(f64));
                 v = hyperbolic(v, 1.0);
                 v = sinusoidal(v, 2.8);
-                v = hyperbolic(.{ v[1], v[0] }, 1.0);
+                v = hyperbolic(.{ v[0], v[1] }, 1.0);
                 v = sinusoidal(v, 2.8);
-                v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
+                v = julia(.{ v[1], v[0] }, 2.1, random.float(f64));
                 v = sinusoidal(v, 2.8);
                 v = sinusoidal(v, 2.8);
 
@@ -221,16 +215,47 @@ pub fn draw() void {
 
     if (y <= bounds and pass == 6) {
         gl.pushMatrix();
-        gl.translatef(-2.0, 2.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.translatef(2.0, 0.0, 0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                var v = Vec2{ x, y };
+
+                v = julia(v, 2.0, random.float(f64));
+                v = hyperbolic(v, 1.0);
+                v = sinusoidal(v, 2.8);
+                v = hyperbolic(.{ v[1], v[0] }, 1.0);
+                v = sinusoidal(v, 2.8);
+                v = julia(.{ v[0], v[1] }, 2.1, random.float(f64));
+                v = sinusoidal(v, 2.8);
+                v = sinusoidal(v, 2.8);
+
+                gl.vertex2d(v[0] + xoff, v[1] + yoff);
+            }
+            y += step;
+        }
+        gl.end();
+        gl.popMatrix();
+    }
+
+    if (y <= bounds and pass == 7) {
+        gl.pushMatrix();
+        gl.translatef(-2.0, 2.0, 0);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
+        gl.begin(gl.POINTS);
+        var row: u32 = 0;
+        while (row < 16) : (row += 1) {
+            var x: f64 = -bounds;
+            while (x <= bounds) : (x += step) {
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
                 v = julia(v, 2.0, random.float(f64));
@@ -250,18 +275,18 @@ pub fn draw() void {
         gl.popMatrix();
     }
 
-    if (y <= bounds and pass == 7) {
+    if (y <= bounds and pass == 8) {
         gl.pushMatrix();
         gl.translatef(0.0, 2.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
                 v = julia(v, 2.2, random.float(f64));
@@ -281,18 +306,18 @@ pub fn draw() void {
         gl.popMatrix();
     }
 
-    if (y <= bounds and pass == 8) {
+    if (y <= bounds and pass == 9) {
         gl.pushMatrix();
         gl.translatef(2.0, 2.0, 0);
-        gl.scalef(0.25, 0.25, 1);
-        gl.color3f(0.001, 0.001, 0.001);
+        gl.scalef(scale, scale, 1);
+        gl.color3f(luminance, luminance, luminance);
         gl.begin(gl.POINTS);
         var row: u32 = 0;
         while (row < 16) : (row += 1) {
             var x: f64 = -bounds;
             while (x <= bounds) : (x += step) {
-                const xoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
-                const yoff = 0.001 * (-1.0 + 2.0 * random.floatNorm(f64));
+                const xoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
+                const yoff = rand_factor * (-1.0 + 2.0 * random.floatNorm(f64));
                 var v = Vec2{ x, y };
 
                 v = sinusoidal(v, 2.8);
@@ -355,21 +380,19 @@ pub fn init() !void {
         \\
         \\  void main() {
         \\      vec3 color = texelFetch(accum_texh, ivec2(gl_FragCoord.xy), 0).rgb;
-        \\      color = color / (color + 1.0);
         \\      color = 1.0 - color;
-        \\      //color = pow(color, vec3(2.2));
         \\      gl_FragColor = vec4(color, 1.0);
         \\  }
     ));
     gl.programUniformHandleui64NV(fs_postprocess, 0, accum_texh);
 }
 
-fn sinusoidal(v: Vec2, scale: f64) Vec2 {
-    return .{ scale * math.sin(v[0]), scale * math.sin(v[1]) };
+fn sinusoidal(v: Vec2, s: f64) Vec2 {
+    return .{ s * math.sin(v[0]), s * math.sin(v[1]) };
 }
 
-fn julia(v: Vec2, scale: f64, rand01: f64) Vec2 {
-    const r = scale * @sqrt(@sqrt(v[0] * v[0] + v[1] * v[1]));
+fn julia(v: Vec2, s: f64, rand01: f64) Vec2 {
+    const r = s * @sqrt(@sqrt(v[0] * v[0] + v[1] * v[1]));
     const theta = 0.5 * math.atan2(f64, v[0], v[1]) +
         math.pi * @intToFloat(f64, @floatToInt(i32, 2.0 * rand01));
     const xx = r * math.cos(theta);
@@ -377,10 +400,10 @@ fn julia(v: Vec2, scale: f64, rand01: f64) Vec2 {
     return .{ xx, yy };
 }
 
-fn hyperbolic(v: Vec2, scale: f64) Vec2 {
+fn hyperbolic(v: Vec2, s: f64) Vec2 {
     const r = @sqrt(v[0] * v[0] + v[1] * v[1]) + 0.0001;
     const theta = math.atan2(f64, v[0], v[1]);
-    const xx = scale * math.sin(theta) / r;
-    const yy = scale * math.cos(theta) * r;
+    const xx = s * math.sin(theta) / r;
+    const yy = s * math.cos(theta) * r;
     return .{ xx, yy };
 }
