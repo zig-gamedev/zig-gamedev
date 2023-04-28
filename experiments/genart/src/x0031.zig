@@ -8,7 +8,7 @@ pub const name = "generative art experiment: x0031";
 pub const display_width = 1024 * res_mul;
 pub const display_height = 1024 * res_mul;
 
-const res_mul = 2; // 1 (1024x1024) or 2 (2048x2048)
+const res_mul = 1; // 1 (1024x1024) or 2 (2048x2048)
 
 const step: f64 = if (res_mul == 2) 0.001 else 0.002;
 
