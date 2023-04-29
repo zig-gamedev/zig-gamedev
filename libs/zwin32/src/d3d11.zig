@@ -1061,7 +1061,7 @@ pub const IDevice = extern struct {
                 self: *T,
                 pInputElementDescs: ?[*]const INPUT_ELEMENT_DESC,
                 NumElements: UINT,
-                pShaderBytecodeWithInputSignature: *anyopaque,
+                pShaderBytecodeWithInputSignature: *const anyopaque,
                 BytecodeLength: SIZE_T,
                 ppInputLayout: *?*IInputLayout,
             ) HRESULT {
@@ -1076,7 +1076,7 @@ pub const IDevice = extern struct {
             }
             pub inline fn CreateVertexShader(
                 self: *T,
-                pShaderBytecode: *anyopaque,
+                pShaderBytecode: *const anyopaque,
                 BytecodeLength: SIZE_T,
                 pClassLinkage: ?*IClassLinkage,
                 ppVertexShader: ?*?*IVertexShader,
@@ -1091,7 +1091,7 @@ pub const IDevice = extern struct {
             }
             pub inline fn CreatePixelShader(
                 self: *T,
-                pShaderBytecode: *anyopaque,
+                pShaderBytecode: *const anyopaque,
                 BytecodeLength: SIZE_T,
                 pClassLinkage: ?*IClassLinkage,
                 ppPixelShader: ?*?*IPixelShader,
@@ -1172,13 +1172,13 @@ pub const IDevice = extern struct {
             *T,
             ?[*]const INPUT_ELEMENT_DESC,
             UINT,
-            *anyopaque,
+            *const anyopaque,
             SIZE_T,
             *?*IInputLayout,
         ) callconv(WINAPI) HRESULT,
         CreateVertexShader: *const fn (
             *T,
-            ?*anyopaque,
+            ?*const anyopaque,
             SIZE_T,
             ?*IClassLinkage,
             ?*?*IVertexShader,
@@ -1187,7 +1187,7 @@ pub const IDevice = extern struct {
         CreateGeometryShaderWithStreamOutput: *anyopaque,
         CreatePixelShader: *const fn (
             *T,
-            ?*anyopaque,
+            ?*const anyopaque,
             SIZE_T,
             ?*IClassLinkage,
             ?*?*IPixelShader,
