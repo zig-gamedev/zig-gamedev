@@ -744,6 +744,19 @@ pub const IDeviceContext = extern struct {
                     pOffsets,
                 );
             }
+            pub inline fn IASetIndexBuffer(
+                self: *T,
+                pIndexBuffer: ?*IBuffer,
+                Format: dxgi.FORMAT,
+                Offset: UINT,
+            ) void {
+                @as(*const IDeviceContext.VTable, @ptrCast(self.__v)).IASetIndexBuffer(
+                    @ptrCast(self),
+                    pIndexBuffer,
+                    Format,
+                    Offset,
+                );
+            }
             pub inline fn IASetPrimitiveTopology(self: *T, Topology: PRIMITIVE_TOPOLOGY) void {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
                     .IASetPrimitiveTopology(@as(*IDeviceContext, @ptrCast(self)), Topology);
@@ -896,7 +909,12 @@ pub const IDeviceContext = extern struct {
             ?[*]const UINT,
             ?[*]const UINT,
         ) callconv(WINAPI) void,
-        IASetIndexBuffer: *anyopaque,
+        IASetIndexBuffer: *const fn (
+            *T,
+            ?*IBuffer,
+            dxgi.FORMAT,
+            UINT,
+        ) callconv(WINAPI) void,
         DrawIndexedInstanced: *anyopaque,
         DrawInstanced: *anyopaque,
         GSSetConstantBuffers: *anyopaque,
