@@ -176,9 +176,10 @@ pub const USAGE = enum(UINT) {
 };
 
 pub const CPU_ACCCESS_FLAG = packed struct(UINT) {
+    __unused0: u16 = 0,
     WRITE: bool = false,
     READ: bool = false,
-    __unused: u30 = 0,
+    __unused: u14 = 0,
 };
 
 pub const RESOURCE_MISC_FLAG = packed struct(UINT) {
