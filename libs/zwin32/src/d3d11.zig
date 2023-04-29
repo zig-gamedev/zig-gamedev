@@ -675,6 +675,20 @@ pub const IDeviceContext = extern struct {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
                     .Draw(@as(*IDeviceContext, @ptrCast(self)), VertexCount, StartVertexLocation);
             }
+            pub inline fn DrawIndexed(
+                self: *T,
+                IndexCount: UINT,
+                StartIndexLocation: UINT,
+                BaseVertexLocation: INT,
+            ) void {
+                @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
+                    .DrawIndexed(
+                    @ptrCast(self),
+                    IndexCount,
+                    StartIndexLocation,
+                    BaseVertexLocation,
+                );
+            }
             pub inline fn Map(
                 self: *T,
                 pResource: *IResource,
@@ -856,7 +870,7 @@ pub const IDeviceContext = extern struct {
             ?[*]const *IClassInstance,
             UINT,
         ) callconv(WINAPI) void,
-        DrawIndexed: *anyopaque,
+        DrawIndexed: *const fn (*T, UINT, UINT, INT) callconv(WINAPI) void,
         Draw: *const fn (*T, UINT, UINT) callconv(WINAPI) void,
         Map: *const fn (
             *T,
