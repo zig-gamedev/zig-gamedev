@@ -55,7 +55,7 @@ extern var zmeshCallocPtr: ?*const fn (num: usize, size: usize) callconv(.C) ?*a
 fn zmeshCalloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
     const ptr = zmeshMalloc(num * size);
     if (ptr != null) {
-        @memset(@ptrCast([*]u8, ptr), 0, num * size);
+        @memset(@ptrCast([*]u8, ptr)[0 .. num * size], 0);
         return ptr;
     }
     return null;
