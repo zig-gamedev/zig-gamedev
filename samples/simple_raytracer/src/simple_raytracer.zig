@@ -241,37 +241,35 @@ fn appendMeshPrimitive(
             const data_addr = @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
                 accessor.*.offset + accessor.*.buffer_view.*.offset;
 
+            const len = accessor.*.count * accessor.*.stride;
+
             if (attrib.*.type == c.cgltf_attribute_type_position) {
                 assert(accessor.*.type == c.cgltf_type_vec3);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, &positions.items[positions.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
+                    @ptrCast([*]u8, positions.items.ptr + positions.items.len - num_vertices)[0..len],
+                    data_addr[0..len],
                 );
             } else if (attrib.*.type == c.cgltf_attribute_type_normal and normals != null) {
                 assert(accessor.*.type == c.cgltf_type_vec3);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, &normals.?.items[normals.?.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
+                    @ptrCast([*]u8, normals.?.items.ptr + normals.?.items.len - num_vertices)[0..len],
+                    data_addr[0..len],
                 );
             } else if (attrib.*.type == c.cgltf_attribute_type_texcoord and texcoords0 != null) {
                 assert(accessor.*.type == c.cgltf_type_vec2);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, &texcoords0.?.items[texcoords0.?.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
+                    @ptrCast([*]u8, texcoords0.?.items.ptr + texcoords0.?.items.len - num_vertices)[0..len],
+                    data_addr[0..len],
                 );
             } else if (attrib.*.type == c.cgltf_attribute_type_tangent and tangents != null) {
                 assert(accessor.*.type == c.cgltf_type_vec4);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, &tangents.?.items[tangents.?.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
+                    @ptrCast([*]u8, tangents.?.items.ptr + tangents.?.items.len - num_vertices)[0..len],
+                    data_addr[0..len],
                 );
             }
         }
@@ -1263,23 +1261,20 @@ fn draw(demo: *DemoState) void {
             // | raygen (32 B) | 0 (32 B) | miss (32 B) | 0 (32 B) | hitgroup (32 B) | 0 (32 B) |
             // ----------------------------------------------------------------------------------
             @memcpy(
-                upload.cpu_slice.ptr,
-                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("generateShadowRay"))),
-                32,
+                upload.cpu_slice[0..32],
+                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("generateShadowRay")))[0..32],
             );
-            @memset(upload.cpu_slice.ptr + 32, 0, 32);
+            @memset(upload.cpu_slice[32..][0..32], 0);
             @memcpy(
-                upload.cpu_slice.ptr + 64,
-                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("shadowMiss"))),
-                32,
+                upload.cpu_slice[64..][0..32],
+                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("shadowMiss")))[0..32],
             );
-            @memset(upload.cpu_slice.ptr + 64 + 32, 0, 32);
+            @memset(upload.cpu_slice[96..][0..32], 0);
             @memcpy(
-                upload.cpu_slice.ptr + 2 * 64,
-                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("g_shadow_hit_group"))),
-                32,
+                upload.cpu_slice[128..][0..32],
+                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("g_shadow_hit_group")))[0..32],
             );
-            @memset(upload.cpu_slice.ptr + 2 * 64 + 32, 0, 32);
+            @memset(upload.cpu_slice[160..][0..32], 0);
 
             gctx.cmdlist.CopyBufferRegion(
                 gctx.lookupResource(demo.trace_shadow_rays_table).?,

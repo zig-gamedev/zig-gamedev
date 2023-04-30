@@ -271,7 +271,7 @@ const impl = struct {
 
         dest[num_name_qwords - 1] = 0;
         dest[num_name_qwords + 0] = 0;
-        @memcpy(@ptrCast([*]u8, dest), name.ptr, name.len);
+        @memcpy(@ptrCast([*]u8, dest), name);
 
         context.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*anyopaque, &buffer), (3 + num_name_qwords) * 8);
     }
@@ -302,7 +302,7 @@ const impl = struct {
 
         dest[num_name_qwords - 1] = 0;
         dest[num_name_qwords + 0] = 0;
-        @memcpy(@ptrCast([*]u8, dest), name.ptr, name.len);
+        @memcpy(@ptrCast([*]u8, dest), name);
 
         context.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*anyopaque, &buffer), (3 + num_name_qwords) * 8);
     }
