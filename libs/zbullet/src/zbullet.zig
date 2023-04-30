@@ -26,34 +26,47 @@ extern fn cbtAlignedAllocSetCustomAligned(
     free: ?FreeFn,
 ) void;
 
-var allocator: ?std.mem.Allocator = null;
-var allocations: ?std.AutoHashMap(usize, usize) = null;
-var mutex: Mutex = .{};
+const SizeAndAlignment = packed struct(u64) {
+    size: u48,
+    alignment: u16,
+};
+var mem_allocator: ?std.mem.Allocator = null;
+var mem_allocations: ?std.AutoHashMap(usize, SizeAndAlignment) = null;
+var mem_mutex: std.Thread.Mutex = .{};
 
 export fn zbulletAlloc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
-    mutex.lock();
-    defer mutex.unlock();
+    mem_mutex.lock();
+    defer mem_mutex.unlock();
 
-    const ptr = allocator.?.rawAlloc(
+    const ptr = mem_allocator.?.rawAlloc(
         size,
         std.math.log2_int(u29, @intCast(u29, alignment)),
         @returnAddress(),
     );
     if (ptr == null) @panic("zbullet: out of memory");
 
-    allocations.?.put(@ptrToInt(ptr.?), size) catch @panic("zbullet: out of memory");
+    mem_allocations.?.put(
+        @ptrToInt(ptr),
+        .{ .size = @intCast(u32, size), .alignment = @intCast(u16, alignment) },
+    ) catch @panic("zbullet: out of memory");
 
     return ptr;
 }
 
-export fn zbulletFree(ptr: ?*anyopaque) callconv(.C) void {
-    if (ptr != null) {
-        mutex.lock();
-        defer mutex.unlock();
+export fn zbulletFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
+    if (maybe_ptr) |ptr| {
+        mem_mutex.lock();
+        defer mem_mutex.unlock();
 
-        const size = allocations.?.fetchRemove(@ptrToInt(ptr.?)).?.value;
-        const mem = @ptrCast([*]u8, ptr.?)[0..size];
-        allocator.?.free(mem);
+        const info = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+
+        const mem = @ptrCast([*]u8, ptr)[0..info.size];
+
+        mem_allocator.?.rawFree(
+            mem,
+            std.math.log2_int(u29, @intCast(u29, info.alignment)),
+            @returnAddress(),
+        );
     }
 }
 
@@ -61,10 +74,10 @@ extern fn cbtTaskSchedInit() void;
 extern fn cbtTaskSchedDeinit() void;
 
 pub fn init(alloc: std.mem.Allocator) void {
-    std.debug.assert(allocator == null and allocations == null);
-    allocator = alloc;
-    allocations = std.AutoHashMap(usize, usize).init(allocator.?);
-    allocations.?.ensureTotalCapacity(256) catch @panic("zbullet: out of memory");
+    std.debug.assert(mem_allocator == null and mem_allocations == null);
+    mem_allocator = alloc;
+    mem_allocations = std.AutoHashMap(usize, SizeAndAlignment).init(mem_allocator.?);
+    mem_allocations.?.ensureTotalCapacity(256) catch @panic("zbullet: out of memory");
     cbtAlignedAllocSetCustomAligned(zbulletAlloc, zbulletFree);
     cbtTaskSchedInit();
     _ = ConstraintImpl.getFixedBody(); // This will allocate 'fixed body' singleton on the heap.
@@ -74,9 +87,9 @@ pub fn deinit() void {
     ConstraintImpl.destroyFixedBody();
     cbtTaskSchedDeinit();
     cbtAlignedAllocSetCustomAligned(null, null);
-    allocations.?.deinit();
-    allocations = null;
-    allocator = null;
+    mem_allocations.?.deinit();
+    mem_allocations = null;
+    mem_allocator = null;
 }
 
 pub const CollisionFilter = packed struct {
@@ -124,7 +137,7 @@ pub fn initWorld() World {
 
 const WorldImpl = opaque {
     fn init() World {
-        std.debug.assert(allocator != null and allocations != null);
+        std.debug.assert(mem_allocator != null and mem_allocations != null);
         return cbtWorldCreate();
     }
     extern fn cbtWorldCreate() World;
