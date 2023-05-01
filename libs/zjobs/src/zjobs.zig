@@ -152,7 +152,7 @@ pub fn JobQueue(
             );
             assert(acquired);
 
-            std.mem.set(u8, &self.data, 0);
+            @memset(&self.data, 0);
             std.mem.copy(u8, &self.data, std.mem.asBytes(job));
 
             const exec: *const fn (*Job) void = &@field(Job, "exec");
