@@ -301,12 +301,12 @@ pub const BLEND_OP = enum(UINT) {
     MAX = 5,
 };
 
-pub const COLOR_WRITE_ENABLE = packed struct(UINT) {
+pub const COLOR_WRITE_ENABLE = packed struct(u8) {
     RED: bool = false,
     GREEN: bool = false,
     BLUE: bool = false,
     ALPHA: bool = false,
-    __unused: u28 = 0,
+    __unused: u4 = 0,
 
     pub const ALL = COLOR_WRITE_ENABLE{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
 };
@@ -319,7 +319,7 @@ pub const RENDER_TARGET_BLEND_DESC = extern struct {
     SrcBlendAlpha: BLEND,
     DestBlendAlpha: BLEND,
     BlendOpAlpha: BLEND_OP,
-    RenderTargetWriteMask: UINT8,
+    RenderTargetWriteMask: COLOR_WRITE_ENABLE,
 };
 
 pub const BLEND_DESC = extern struct {
