@@ -306,14 +306,14 @@ fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8
     if (exe.optimize == .ReleaseFast)
         exe.strip = true;
 
-    comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
-    comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
-    comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
+    //comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
+    //comptime _ = std.mem.replace(u8, name, "", "", desc_name[0..]);
+    //comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
 
-    const install_step = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' demo");
+    const install_step = b.step(name, "Build '" ++ name ++ "' demo");
     install_step.dependOn(&b.addInstallArtifact(exe).step);
 
-    const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' demo");
+    const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
