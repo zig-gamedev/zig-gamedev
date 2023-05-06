@@ -191,7 +191,7 @@ pub fn Pool(
         /// * `Error.HandleIsOutOfBounds`
         /// * `Error.HandleIsReleased`
         /// Unlike `std.debug.assert()`, this check is evaluated in all builds.
-        pub fn requireLiveHandle(self: Self, handle: Handle) Error!void {
+        pub fn requireLiveHandle(self: Self, handle: Handle) !void {
             try self.requireLiveAddressableHandle(handle.addressable());
         }
 
@@ -566,13 +566,13 @@ pub fn Pool(
         fn requireLiveAddressableHandle(
             self: Self,
             handle: AddressableHandle,
-        ) Error!void {
+        ) !void {
             if (isFreeCycle(handle.cycle))
-                return Error.HandleIsUnacquired;
+                return error.HandleIsUnacquired;
             if (handle.index >= self._curr_cycle.len)
-                return Error.HandleIsOutOfBounds;
+                return error.HandleIsOutOfBounds;
             if (handle.cycle != self._curr_cycle[handle.index])
-                return Error.HandleIsReleased;
+                return error.HandleIsReleased;
         }
 
         fn acquireAddressableHandle(self: *Self) !AddressableHandle {
