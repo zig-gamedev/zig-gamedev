@@ -48,19 +48,23 @@ pub fn package(
         .optimize = optimize,
     });
 
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
+
     zphysics_c_cpp.addIncludePath(thisDir() ++ "/libs");
     zphysics_c_cpp.addIncludePath(thisDir() ++ "/libs/JoltC");
     zphysics_c_cpp.linkLibC();
-    zphysics_c_cpp.linkLibCpp();
+    if (abi != .msvc)
+        zphysics_c_cpp.linkLibCpp();
 
     const flags = &.{
         "-std=c++17",
-        "-DJPH_COMPILER_MINGW",
+        if (abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
         if (args.options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
         if (args.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
         if (args.options.enable_asserts or zphysics_c_cpp.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         "-fno-sanitize=undefined",
     };
+
     zphysics_c_cpp.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp", flags);
     zphysics_c_cpp.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltPhysicsC_Extensions.cpp", flags);
 
@@ -161,10 +165,10 @@ pub fn package(
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/DeterminismLog.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/IslandBuilder.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/LargeIslandSplitter.cpp", flags);
-    zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/PhysicsLock.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/PhysicsScene.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/PhysicsSystem.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/PhysicsUpdateContext.cpp", flags);
+    zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/PhysicsLock.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/Ragdoll/Ragdoll.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/StateRecorderImpl.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/Vehicle/TrackedVehicleController.cpp", flags);
@@ -242,11 +246,13 @@ fn testStep(
         .optimize = optimize,
     });
 
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
+
     test_exe.addCSourceFile(
         thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c",
         &.{
             "-std=c11",
-            "-DJPH_COMPILER_MINGW",
+            if (abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
             if (options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
             if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",

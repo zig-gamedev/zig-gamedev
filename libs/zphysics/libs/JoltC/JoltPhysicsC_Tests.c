@@ -33,15 +33,25 @@ BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
     return NUM_BP_LAYERS;
 }
 
+#ifdef _MSC_VER
+static const JPC_BroadPhaseLayer *
+BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPC_BroadPhaseLayer *out_layer, JPC_ObjectLayer in_layer)
+#else
 static JPC_BroadPhaseLayer
 BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPC_ObjectLayer in_layer)
+#endif
 {
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "BPLayerInterface_GetBroadPhaseLayer()\n");
 #endif
     assert(in_layer < NUM_BP_LAYERS);
     const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
+#ifdef _MSC_VER
+    *out_layer = self->object_to_broad_phase[in_layer];
+    return out_layer;
+#else
     return self->object_to_broad_phase[in_layer];
+#endif
 }
 
 static BPLayerInterfaceImpl

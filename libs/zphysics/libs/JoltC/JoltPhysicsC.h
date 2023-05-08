@@ -243,7 +243,7 @@ typedef struct JPC_MotionProperties
 #endif
 
 #if JPC_ENABLE_ASSERTS == 1
-    JPC_MotionType    cached_motion_type;
+    JPC_MotionType     cached_motion_type;
 #endif
 } JPC_MotionProperties;
 
@@ -428,24 +428,34 @@ typedef struct JPC_RayCastSettings
 // Interfaces (virtual tables)
 //
 //--------------------------------------------------------------------------------------------------
+#if defined(_MSC_VER)
+#define _JPC_VTABLE_HEADER const void* __vtable_header[1]
+#else
+#define _JPC_VTABLE_HEADER const void* __vtable_header[2]
+#endif
+
 typedef struct JPC_BroadPhaseLayerInterfaceVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     uint32_t
     (*GetNumBroadPhaseLayers)(const void *in_self);
 
+#ifdef _MSC_VER
+    // Required, *cannot* be NULL.
+    const JPC_BroadPhaseLayer *
+    (*GetBroadPhaseLayer)(const void *in_self, JPC_BroadPhaseLayer *out_layer, JPC_ObjectLayer in_layer);
+#else
     // Required, *cannot* be NULL.
     JPC_BroadPhaseLayer
     (*GetBroadPhaseLayer)(const void *in_self, JPC_ObjectLayer in_layer);
+#endif
 } JPC_BroadPhaseLayerInterfaceVTable;
 
 typedef struct JPC_ObjectVsBroadPhaseLayerFilterVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     bool
@@ -454,8 +464,7 @@ typedef struct JPC_ObjectVsBroadPhaseLayerFilterVTable
 
 typedef struct JPC_BroadPhaseLayerFilterVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     bool
@@ -464,8 +473,7 @@ typedef struct JPC_BroadPhaseLayerFilterVTable
 
 typedef struct JPC_ObjectLayerPairFilterVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     bool
@@ -474,8 +482,7 @@ typedef struct JPC_ObjectLayerPairFilterVTable
 
 typedef struct JPC_ObjectLayerFilterVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     bool
@@ -484,8 +491,7 @@ typedef struct JPC_ObjectLayerFilterVTable
 
 typedef struct JPC_BodyActivationListenerVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     void
@@ -498,8 +504,7 @@ typedef struct JPC_BodyActivationListenerVTable
 
 typedef struct JPC_BodyFilterVTable
 {
-    const void *__unused0; // Unused, *must* be NULL.
-    const void *__unused1; // Unused, *must* be NULL.
+    _JPC_VTABLE_HEADER;
 
     // Required, *cannot* be NULL.
     bool

@@ -2,6 +2,9 @@
 #include "JoltPhysicsC.h"
 #include <assert.h>
 
+#ifdef _MSC_VER
+#define _ALLOW_KEYWORD_MACROS
+#endif
 // We do this because we add some low-level functions which need access to private fields.
 // Also, we static assert offsets of some private fields (see bottom of this file).
 #define private public
@@ -27,6 +30,10 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
+
+#if defined(_MSC_VER) && defined(_DEBUG)
+#include <Jolt/Physics/PhysicsLock.cpp>
+#endif
 
 JPH_SUPPRESS_WARNINGS
 //--------------------------------------------------------------------------------------------------
@@ -253,7 +260,7 @@ static_assert(offsetof(JPH::MotionProperties, mForce) == offsetof(JPC_MotionProp
 static_assert(offsetof(JPH::MotionProperties, mTorque) == offsetof(JPC_MotionProperties, torque));
 static_assert(offsetof(JPH::MotionProperties, mMotionQuality) == offsetof(JPC_MotionProperties, motion_quality));
 static_assert(offsetof(JPH::MotionProperties, mGravityFactor) == offsetof(JPC_MotionProperties, gravity_factor));
-#ifdef JPH_ENABLE_ASSERTS
+#if JPC_ENABLE_ASSERTS == 1
 static_assert(
     offsetof(JPH::MotionProperties, mCachedMotionType) == offsetof(JPC_MotionProperties, cached_motion_type));
 #endif

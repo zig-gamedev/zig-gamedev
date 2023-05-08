@@ -64,6 +64,15 @@ pub inline fn tryGetBodyMut(all_bodies: []const *Body, body_id: BodyId) ?*Body {
     return if (isValidBodyPointer(body) and body.id == body_id) body else null;
 }
 
+pub const VTableHeader = switch (@import("builtin").abi) {
+    .msvc => extern struct {
+        __header: ?*const anyopaque = null,
+    },
+    else => extern struct {
+        __header: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    },
+};
+
 pub const BroadPhaseLayerInterface = extern struct {
     __v: *const VTable,
 
@@ -83,13 +92,19 @@ pub const BroadPhaseLayerInterface = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         getNumBroadPhaseLayers: *const fn (self: *const BroadPhaseLayerInterface) callconv(.C) u32,
-        getBroadPhaseLayer: *const fn (
-            self: *const BroadPhaseLayerInterface,
-            layer: ObjectLayer,
-        ) callconv(.C) BroadPhaseLayer,
+        getBroadPhaseLayer: if (@import("builtin").abi == .msvc)
+            *const fn (
+                self: *const BroadPhaseLayerInterface,
+                out_layer: *BroadPhaseLayer,
+                layer: ObjectLayer,
+            ) callconv(.C) *const BroadPhaseLayer
+        else
+            *const fn (
+                self: *const BroadPhaseLayerInterface,
+                layer: ObjectLayer,
+            ) callconv(.C) BroadPhaseLayer,
     };
 
     comptime {
@@ -116,8 +131,7 @@ pub const ObjectVsBroadPhaseLayerFilter = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         shouldCollide: *const fn (
             self: *const ObjectVsBroadPhaseLayerFilter,
             layer1: ObjectLayer,
@@ -149,8 +163,7 @@ pub const BroadPhaseLayerFilter = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         shouldCollide: *const fn (
             self: *const BroadPhaseLayerFilter,
             layer: BroadPhaseLayer,
@@ -180,8 +193,7 @@ pub const ObjectLayerPairFilter = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         shouldCollide: *const fn (self: *const ObjectLayerPairFilter, ObjectLayer, ObjectLayer) callconv(.C) bool,
     };
 
@@ -208,8 +220,7 @@ pub const ObjectLayerFilter = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         shouldCollide: *const fn (self: *const ObjectLayerFilter, ObjectLayer) callconv(.C) bool,
     };
 
@@ -246,8 +257,7 @@ pub const BodyActivationListener = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         onBodyActivated: *const fn (
             self: *BodyActivationListener,
             body_id: *const BodyId,
@@ -384,8 +394,7 @@ pub const BodyFilter = extern struct {
     }
 
     pub const VTable = extern struct {
-        __unused0: ?*const anyopaque = null,
-        __unused1: ?*const anyopaque = null,
+        __header: VTableHeader = .{},
         shouldCollide: *const fn (self: *const BodyFilter, body_id: *const BodyId) callconv(.C) bool,
         shouldCollideLocked: *const fn (self: *const BodyFilter, body: *const Body) callconv(.C) bool,
     };
@@ -2305,6 +2314,24 @@ fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
 //--------------------------------------------------------------------------------------------------
 const expect = std.testing.expect;
 
+extern fn JoltCTest_Basic1() u32;
+test "jolt_c.basic1" {
+    const ret = JoltCTest_Basic1();
+    try expect(ret != 0);
+}
+
+extern fn JoltCTest_Basic2() u32;
+test "jolt_c.basic2" {
+    const ret = JoltCTest_Basic2();
+    try expect(ret != 0);
+}
+
+extern fn JoltCTest_HelloWorld() u32;
+test "jolt_c.helloworld" {
+    const ret = JoltCTest_HelloWorld();
+    try expect(ret != 0);
+}
+
 test "zphysics.BodyCreationSettings" {
     try init(std.testing.allocator, .{});
     defer deinit();
@@ -3017,24 +3044,6 @@ test {
     std.testing.refAllDecls(@This());
 }
 
-extern fn JoltCTest_Basic1() u32;
-test "jolt_c.basic1" {
-    const ret = JoltCTest_Basic1();
-    try expect(ret != 0);
-}
-
-extern fn JoltCTest_Basic2() u32;
-test "jolt_c.basic2" {
-    const ret = JoltCTest_Basic2();
-    try expect(ret != 0);
-}
-
-extern fn JoltCTest_HelloWorld() u32;
-test "jolt_c.helloworld" {
-    const ret = JoltCTest_HelloWorld();
-    try expect(ret != 0);
-}
-
 const test_cb1 = struct {
     const object_layers = struct {
         const non_moving: ObjectLayer = 0;
@@ -3056,7 +3065,10 @@ const test_cb1 = struct {
 
         const vtable = BroadPhaseLayerInterface.VTable{
             .getNumBroadPhaseLayers = _getNumBroadPhaseLayers,
-            .getBroadPhaseLayer = _getBroadPhaseLayer,
+            .getBroadPhaseLayer = if (@import("builtin").abi == .msvc)
+                _getBroadPhaseLayerMsvc
+            else
+                _getBroadPhaseLayer,
         };
 
         fn init() MyBroadphaseLayerInterface {
@@ -3077,6 +3089,16 @@ const test_cb1 = struct {
         ) callconv(.C) BroadPhaseLayer {
             const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
             return self.object_to_broad_phase[@intCast(usize, layer)];
+        }
+
+        fn _getBroadPhaseLayerMsvc(
+            iself: *const BroadPhaseLayerInterface,
+            out_layer: *BroadPhaseLayer,
+            layer: ObjectLayer,
+        ) callconv(.C) *const BroadPhaseLayer {
+            const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
+            out_layer.* = self.object_to_broad_phase[@intCast(usize, layer)];
+            return out_layer;
         }
     };
 
