@@ -182,6 +182,7 @@ pub fn package(
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/Vehicle/VehicleTransmission.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/Vehicle/Wheel.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/Vehicle/WheeledVehicleController.cpp", flags);
+    zphysics_c_cpp.addCSourceFile(src_dir ++ "/Physics/Vehicle/MotorcycleController.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/RegisterTypes.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Renderer/DebugRenderer.cpp", flags);
     zphysics_c_cpp.addCSourceFile(src_dir ++ "/Renderer/DebugRendererPlayback.cpp", flags);

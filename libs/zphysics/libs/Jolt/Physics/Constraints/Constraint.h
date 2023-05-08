@@ -11,6 +11,7 @@
 
 JPH_NAMESPACE_BEGIN
 
+class BodyID;
 class IslandBuilder;
 class LargeIslandSplitter;
 class BodyManager;
@@ -85,6 +86,9 @@ public:
 	/// Size of constraint when drawing it through the debug renderer
 	float						mDrawConstraintSize = 1.0f;
 
+	/// User data value (can be used by application)
+	uint64						mUserData = 0;
+
 protected:
 	/// This function should not be called directly, it is used by sRestoreFromBinaryState.
 	virtual void				RestoreBinaryState(StreamIn &inStream);
@@ -103,7 +107,8 @@ public:
 #endif // JPH_DEBUG_RENDERER
 		mNumVelocityStepsOverride(inSettings.mNumVelocityStepsOverride),
 		mNumPositionStepsOverride(inSettings.mNumPositionStepsOverride),
-		mEnabled(inSettings.mEnabled)
+		mEnabled(inSettings.mEnabled),
+		mUserData(inSettings.mUserData)
 	{
 	}
 
@@ -132,6 +137,16 @@ public:
 
 	/// Test if a constraint is enabled.
 	bool						GetEnabled() const							{ return mEnabled; }
+
+	/// Access to the user data, can be used for anything by the application
+	uint64						GetUserData() const							{ return mUserData; }
+	void						SetUserData(uint64 inUserData)				{ mUserData = inUserData; }
+
+	/// Notify the constraint that the shape of a body has changed and that its center of mass has moved by inDeltaCOM.
+	/// Bodies don't know which constraints are connected to them so the user is responsible for notifying the relevant constraints when a body changes.
+	/// @param inBodyID ID of the body that has changed
+	/// @param inDeltaCOM The delta of the center of mass of the body (shape->GetCenterOfMass() - shape_before_change->GetCenterOfMass())
+	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) = 0;
 
 	///@name Solver interface
 	///@{
@@ -194,6 +209,9 @@ private:
 
 	/// If this constraint is currently enabled
 	bool						mEnabled = true;
+
+	/// User data value (can be used by application)
+	uint64						mUserData;
 };
 
 JPH_NAMESPACE_END

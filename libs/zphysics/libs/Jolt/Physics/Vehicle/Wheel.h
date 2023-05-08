@@ -27,7 +27,10 @@ public:
 	virtual void			RestoreBinaryState(StreamIn &inStream);
 
 	Vec3					mPosition { 0, 0, 0 };						///< Attachment point of wheel suspension in local space of the body
-	Vec3					mDirection { 0, -1, 0 };					///< Direction of the suspension in local space of the body
+	Vec3					mSuspensionDirection { 0, -1, 0 };			///< Direction of the suspension in local space of the body, should point down
+	Vec3					mSteeringAxis { 0, 1, 0 };					///< Direction of the steering axis in local space of the body, should point up (e.g. for a bike would be -mSuspensionDirection)
+	Vec3					mWheelUp { 0, 1, 0 };						///< Up direction when the wheel is in the neutral steering position (usually VehicleConstraintSettings::mUp but can be used to give the wheel camber or for a bike would be -mSuspensionDirection)
+	Vec3					mWheelForward { 0, 0, 1 };					///< Forward direction when the wheel is in the neutral steering position (usually VehicleConstraintSettings::mForward but can be used to give the wheel toe, does not need to be perpendicular to mWheelUp)
 	float					mSuspensionMinLength = 0.3f;				///< How long the suspension is in max raised position relative to the attachment point (m)
 	float					mSuspensionMaxLength = 0.5f;				///< How long the suspension is in max droop position relative to the attachment point (m)
 	float					mSuspensionPreloadLength = 0.0f;			///< The natural length (m) of the suspension spring is defined as mSuspensionMaxLength + mSuspensionPreloadLength. Can be used to preload the suspension as the spring is compressed by mSuspensionPreloadLength when the suspension is in max droop position. Note that this means when the vehicle touches the ground there is a discontinuity so it will also make the vehicle more bouncy as we're updating with discrete time steps.
@@ -69,7 +72,7 @@ public:
 	void					SetSteerAngle(float inAngle)				{ mSteerAngle = inAngle; }
 
 	/// Returns true if the wheel is touching an object
-	bool					HasContact() const							{ return mContactBody != nullptr; }
+	inline bool				HasContact() const							{ return !mContactBodyID.IsInvalid(); }
 
 	/// Returns the body ID of the body that this wheel is touching
 	BodyID					GetContactBodyID() const					{ return mContactBodyID; }
@@ -78,19 +81,19 @@ public:
 	SubShapeID				GetContactSubShapeID() const				{ return mContactSubShapeID; }
 
 	/// Returns the current contact position in world space (note by the time you call this the vehicle has moved)
-	RVec3					GetContactPosition() const					{ JPH_ASSERT(mContactBody != nullptr); return mContactPosition; }
+	RVec3					GetContactPosition() const					{ JPH_ASSERT(HasContact()); return mContactPosition; }
 
 	/// Velocity of the contact point (m / s, not relative to the wheel but in world space)
-	Vec3					GetContactPointVelocity() const				{ JPH_ASSERT(mContactBody != nullptr); return mContactPointVelocity; }
+	Vec3					GetContactPointVelocity() const				{ JPH_ASSERT(HasContact()); return mContactPointVelocity; }
 
 	/// Returns the current contact mormal in world space (note by the time you call this the vehicle has moved)
-	Vec3					GetContactNormal() const					{ JPH_ASSERT(mContactBody != nullptr); return mContactNormal; }
+	Vec3					GetContactNormal() const					{ JPH_ASSERT(HasContact()); return mContactNormal; }
 
 	/// Returns longitudinal direction (direction along the wheel relative to floor) in world space (note by the time you call this the vehicle has moved)
-	Vec3					GetContactLongitudinal() const				{ JPH_ASSERT(mContactBody != nullptr); return mContactLongitudinal; }
+	Vec3					GetContactLongitudinal() const				{ JPH_ASSERT(HasContact()); return mContactLongitudinal; }
 
 	/// Returns lateral direction (sideways direction) in world space (note by the time you call this the vehicle has moved)
-	Vec3					GetContactLateral() const					{ JPH_ASSERT(mContactBody != nullptr); return mContactLateral; }
+	Vec3					GetContactLateral() const					{ JPH_ASSERT(HasContact()); return mContactLateral; }
 
 	/// Get the length of the suspension for a wheel (m) relative to the suspension attachment point (hard point)
 	float					GetSuspensionLength() const					{ return mSuspensionLength; }
@@ -126,14 +129,14 @@ protected:
 	Vec3					mContactNormal;								///< Normal of the contact point between wheel and ground
 	Vec3					mContactLongitudinal;						///< Vector perpendicular to normal in the forward direction
 	Vec3					mContactLateral;							///< Vector perpendicular to normal and longitudinal direction in the right direction
-	Vec3					mWSDirection;								///< Suspension spring direction in world space
+	Real					mAxlePlaneConstant;							///< Constant for the contact plane of the axle, defined as ContactNormal . (WorldSpaceSuspensionPoint + SuspensionLength * WorldSpaceSuspensionDirection)
 	float					mAntiRollBarImpulse = 0.0f;					///< Amount of impulse applied to the suspension from the anti-rollbars
 
 	float					mSteerAngle = 0.0f;							///< Rotation around the suspension direction, positive is to the left
 	float					mAngularVelocity = 0.0f;					///< Rotation speed of wheel, positive when the wheels cause the vehicle to move forwards (rad/s)
 	float					mAngle = 0.0f;								///< Current rotation of the wheel (rad, [0, 2 pi])
 
-	AxisConstraintPart		mSuspensionPart;							///< Controls movement up/down
+	AxisConstraintPart		mSuspensionPart;							///< Controls movement up/down along the contact normal
 	AxisConstraintPart		mSuspensionMaxUpPart;						///< Adds a hard limit when reaching the minimal suspension length
 	AxisConstraintPart		mLongitudinalPart;							///< Controls movement forward/backward
 	AxisConstraintPart		mLateralPart;								///< Controls movement sideways (slip)
