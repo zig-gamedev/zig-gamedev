@@ -1427,6 +1427,18 @@ JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
     storeRVec3(out_position, toJph(in_iface)->GetCenterOfMassPosition(toJph(in_body_id)));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
+{
+    toJph(in_iface)->ActivateBody(toJph(in_body_id));
+}
+
+JPC_API void
+JPC_BodyInterface_DeactivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
+{
+    toJph(in_iface)->DeactivateBody(toJph(in_body_id));
+}
+
 JPC_API bool
 JPC_BodyInterface_IsActive(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {

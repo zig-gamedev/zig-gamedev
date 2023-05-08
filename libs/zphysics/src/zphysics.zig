@@ -956,6 +956,14 @@ pub const BodyInterface = opaque {
         return c.JPC_BodyInterface_IsAdded(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
 
+    pub fn activate(body_iface: *BodyInterface, body_id: BodyId) void {
+        return c.JPC_BodyInterface_ActivateBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+    }
+
+    pub fn deactivate(body_iface: *BodyInterface, body_id: BodyId) void {
+        return c.JPC_BodyInterface_DeactivateBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+    }
+
     pub fn isActive(body_iface: *const BodyInterface, body_id: BodyId) bool {
         return c.JPC_BodyInterface_IsActive(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
     }
