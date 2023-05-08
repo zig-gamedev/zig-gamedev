@@ -1,4 +1,4 @@
-# zphysics v0.0.5 - Zig API and C API for Jolt Physics
+# zphysics v0.0.6 - Zig API and C API for Jolt Physics
 
 [Jolt Physics](https://github.com/jrouwe/JoltPhysics) is a fast and modern physics library written in C++.
 

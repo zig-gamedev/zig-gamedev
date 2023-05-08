@@ -21,7 +21,7 @@ zig build physically_based_rendering_wgpu-run
 ## Libraries
 Library | Latest version | Description
 ------- | --------- | ---------------
-**[zphysics](libs/zphysics)** | 0.0.5 | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)
+**[zphysics](libs/zphysics)** | 0.0.6 | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)
 **[zflecs](libs/zflecs)** | 0.0.1 | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS
 **[zopengl](libs/zopengl)** | 0.1.0 | OpenGL loader (supports 3.3 Core Profile and ES 2.0 Profile) 
 **[zsdl](libs/zsdl)** | 0.0.1 | Bindings for SDL2 (wip)
