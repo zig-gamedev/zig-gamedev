@@ -1,7 +1,8 @@
 const std = @import("std");
 
-pub const PoolError = error{
-    PoolIsFull,
+pub const PoolError = error{PoolIsFull} || HandleError;
+
+pub const HandleError = error{
     HandleIsUnacquired,
     HandleIsOutOfBounds,
     HandleIsReleased,
@@ -186,12 +187,9 @@ pub fn Pool(
             return self.isLiveAddressableHandle(handle.addressable());
         }
 
-        /// Checks whether `handle` is live, otherwise returns one of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
+        /// Checks whether `handle` is live.
         /// Unlike `std.debug.assert()`, this check is evaluated in all builds.
-        pub fn requireLiveHandle(self: Self, handle: Handle) Error!void {
+        pub fn requireLiveHandle(self: Self, handle: Handle) HandleError!void {
             try self.requireLiveAddressableHandle(handle.addressable());
         }
 
@@ -287,12 +285,8 @@ pub fn Pool(
             return ahandle.handle();
         }
 
-        /// Removes (and invalidates) `handle` if live, otherwise returns one
-        /// of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
-        pub fn remove(self: *Self, handle: Handle) !void {
+        /// Removes (and invalidates) `handle` if live.
+        pub fn remove(self: *Self, handle: Handle) HandleError!void {
             try self.releaseAddressableHandle(handle.addressable());
         }
 
@@ -317,51 +311,36 @@ pub fn Pool(
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        /// Gets a column pointer if `handle` is live, otherwise returns one of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
-        pub fn getColumnPtr(self: Self, handle: Handle, comptime column: Column) !*ColumnType(column) {
+        /// Gets a column pointer if `handle` is live.
+        pub fn getColumnPtr(self: Self, handle: Handle, comptime column: Column) HandleError!*ColumnType(column) {
             const ahandle = handle.addressable();
             try self.requireLiveAddressableHandle(ahandle);
             return self.getColumnPtrUnchecked(ahandle, column);
         }
 
-        /// Gets a column value if `handle` is live, otherwise returns one of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
-        pub fn getColumn(self: Self, handle: Handle, comptime column: Column) !ColumnType(column) {
+        /// Gets a column value if `handle` is live.
+        pub fn getColumn(self: Self, handle: Handle, comptime column: Column) HandleError!ColumnType(column) {
             const ahandle = handle.addressable();
             try self.requireLiveAddressableHandle(ahandle);
             return self.getColumnUnchecked(ahandle, column);
         }
 
-        /// Gets column values if `handle` is live, otherwise returns one of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
-        pub fn getColumns(self: Self, handle: Handle) !Columns {
+        /// Gets column values if `handle` is live.
+        pub fn getColumns(self: Self, handle: Handle) HandleError!Columns {
             const ahandle = handle.addressable();
             try self.requireLiveAddressableHandle(ahandle);
             return self.getColumnsUnchecked(ahandle);
         }
 
-        /// Sets a column value if `handle` is live, otherwise returns one of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
-        pub fn setColumn(self: Self, handle: Handle, comptime column: Column, value: ColumnType(column)) !void {
+        /// Sets a column value if `handle` is live.
+        pub fn setColumn(self: Self, handle: Handle, comptime column: Column, value: ColumnType(column)) HandleError!void {
             const ahandle = handle.addressable();
             try self.requireLiveAddressableHandle(ahandle);
             self.setColumnUnchecked(ahandle, column, value);
         }
 
-        /// Sets column values if `handle` is live, otherwise returns one of:
-        /// * `Error.HandleIsUnacquired`
-        /// * `Error.HandleIsOutOfBounds`
-        /// * `Error.HandleIsReleased`
-        pub fn setColumns(self: Self, handle: Handle, values: Columns) !void {
+        /// Sets column values if `handle` is live.
+        pub fn setColumns(self: Self, handle: Handle, values: Columns) HandleError!void {
             const ahandle = handle.addressable();
             try self.requireLiveAddressableHandle(ahandle);
             self.setColumnsUnchecked(ahandle, values);
@@ -566,7 +545,7 @@ pub fn Pool(
         fn requireLiveAddressableHandle(
             self: Self,
             handle: AddressableHandle,
-        ) Error!void {
+        ) HandleError!void {
             if (isFreeCycle(handle.cycle))
                 return Error.HandleIsUnacquired;
             if (handle.index >= self._curr_cycle.len)
