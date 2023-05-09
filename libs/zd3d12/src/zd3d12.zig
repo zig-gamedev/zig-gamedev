@@ -609,6 +609,20 @@ pub const GraphicsContext = struct {
             _ = cmdalloc.Release();
         _ = gctx.wic_factory.Release();
         gctx.* = undefined;
+
+        if (enable_debug_layer) {
+            const debug = blk: {
+                var debug: *dxgi.IDebug1 = undefined;
+                hrPanicOnFail(dxgi.GetDebugInterface1(
+                    0,
+                    &dxgi.IID_IDebug1,
+                    @ptrCast(*?*anyopaque, &debug),
+                ));
+                break :blk debug;
+            };
+            _ = debug.ReportLiveObjects(dxgi.DEBUG_ALL, .{ .SUMMARY = true, .DETAIL = true, .IGNORE_INTERNAL = true });
+            _ = debug.Release();
+        }
     }
 
     pub fn beginFrame(gctx: *GraphicsContext) void {
