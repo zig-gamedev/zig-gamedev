@@ -694,62 +694,6 @@ pub const ISurface = extern struct {
     };
 };
 
-pub const DEBUG_RLO_FLAGS = packed struct(UINT) {
-    SUMMARY: bool = false,
-    DETAIL: bool = false,
-    IGNORE_INTERNAL: bool = false,
-    ALL: bool = false,
-    __unused: u28 = 0,
-};
-
-pub const DEBUG_ALL = GUID{
-    .Data1 = 0xe48ae283,
-    .Data2 = 0xda80,
-    .Data3 = 0x490b,
-    .Data4 = .{ 0x87, 0xe6, 0x43, 0xe9, 0xa9, 0xcf, 0xda, 0x8 },
-};
-
-pub const IID_IDebug = GUID.parse("{119E7452-DE9E-40fe-8806-88F90C12B441}");
-pub const IDebug = extern struct {
-    __v: *const VTable,
-
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IObject.Methods(T);
-
-            pub inline fn ReportLiveObjects(self: *T, guid: GUID, flags: DEBUG_RLO_FLAGS) HRESULT {
-                return @ptrCast(*const IDebug.VTable, self.__v)
-                    .ReportLiveObjects(@ptrCast(*IDebug, self), guid, flags);
-            }
-        };
-    }
-
-    pub const VTable = extern struct {
-        const T = IDebug;
-        base: IObject.VTable,
-        ReportLiveObjects: *const fn (*T, GUID, DEBUG_RLO_FLAGS) callconv(WINAPI) HRESULT,
-    };
-};
-
-pub const IID_IDebug1 = GUID.parse("{c5a05f0c-16f2-4adf-9f4d-a8c4d58ac550}");
-pub const IDebug1 = extern struct {
-    __v: *const VTable,
-
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IDebug.Methods(T);
-        };
-    }
-
-    pub const VTable = extern struct {
-        base: IDebug.VTable,
-    };
-};
-
 pub const IAdapter = extern struct {
     __v: *const VTable,
 

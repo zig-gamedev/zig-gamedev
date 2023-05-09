@@ -51,6 +51,7 @@ pub const GraphicsContext = struct {
     const max_num_buffered_resource_barriers = 16;
 
     device: *d3d12.IDevice9,
+    debug_device: *d3d12.IDebugDevice,
     adapter: *dxgi.IAdapter3,
     cmdqueue: *d3d12.ICommandQueue,
     cmdlist: *d3d12.IGraphicsCommandList6,
@@ -188,6 +189,16 @@ pub const GraphicsContext = struct {
             }
             break :blk device;
         };
+
+        var debug_device: *d3d12.IDebugDevice = undefined;
+        if (enable_debug_layer) {
+            hrPanicOnFail(device.QueryInterface(
+                &d3d12.IID_IDebugDevice,
+                @ptrCast(*?*anyopaque, &debug_device),
+            ));
+
+            _ = debug_device.SetFeatureMask(.{ .CONSERVATIVE_RESOURCE_STATE_TRACKING = true });
+        }
 
         // Check for Shader Model 6.6 support.
         {
@@ -539,6 +550,7 @@ pub const GraphicsContext = struct {
 
         return GraphicsContext{
             .device = device,
+            .debug_device = debug_device,
             .adapter = suitable_adapter.?,
             .cmdqueue = cmdqueue,
             .cmdlist = cmdlist,
@@ -600,6 +612,11 @@ pub const GraphicsContext = struct {
             heap.deinit();
         for (&gctx.upload_memory_heaps) |*heap|
             heap.deinit();
+
+        if (enable_debug_layer) {
+            hrPanicOnFail(gctx.debug_device.ReportLiveDeviceObjects(.{ .SUMMARY = true, .DETAIL = true, .IGNORE_INTERNAL = true }));
+        }
+
         _ = gctx.device.Release();
         _ = gctx.cmdqueue.Release();
         _ = gctx.swapchain.Release();
@@ -609,20 +626,6 @@ pub const GraphicsContext = struct {
             _ = cmdalloc.Release();
         _ = gctx.wic_factory.Release();
         gctx.* = undefined;
-
-        if (enable_debug_layer) {
-            const debug = blk: {
-                var debug: *dxgi.IDebug1 = undefined;
-                hrPanicOnFail(dxgi.GetDebugInterface1(
-                    0,
-                    &dxgi.IID_IDebug1,
-                    @ptrCast(*?*anyopaque, &debug),
-                ));
-                break :blk debug;
-            };
-            _ = debug.ReportLiveObjects(dxgi.DEBUG_ALL, .{ .SUMMARY = true, .DETAIL = true, .IGNORE_INTERNAL = true });
-            _ = debug.Release();
-        }
     }
 
     pub fn beginFrame(gctx: *GraphicsContext) void {

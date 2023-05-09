@@ -6280,6 +6280,56 @@ pub const CreateDevice = D3D12CreateDevice;
 pub const GetDebugInterface = D3D12GetDebugInterface;
 pub const SerializeVersionedRootSignature = D3D12SerializeVersionedRootSignature;
 
+pub const DEBUG_FEATURE = packed struct(UINT) {
+    ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS: bool = false,
+    CONSERVATIVE_RESOURCE_STATE_TRACKING: bool = false,
+    DISABLE_VIRTUALIZED_BUNDLES_VALIDATION: bool = false,
+    EMULATE_WINDOWS7: bool = false,
+    __unused: u28 = 0,
+};
+
+pub const RLDO_FLAGS = packed struct(UINT) {
+    SUMMARY: bool = false,
+    DETAIL: bool = false,
+    IGNORE_INTERNAL: bool = false,
+    ALL: bool = false,
+    __unused: u28 = 0,
+};
+
+pub const IID_IDebugDevice = GUID.parse("{3febd6dd-4973-4787-8194-e45f9e28923e}");
+pub const IDebugDevice = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub usingnamespace IUnknown.Methods(T);
+
+            pub inline fn SetFeatureMask(self: *T, mask: DEBUG_FEATURE) HRESULT {
+                return @ptrCast(*const IDebugDevice.VTable, self.__v)
+                    .SetFeatureMask(@ptrCast(*IDebugDevice, self), mask);
+            }
+            pub inline fn GetFeatureMask(self: *T) DEBUG_FEATURE {
+                return @ptrCast(*const IDebugDevice.VTable, self.__v)
+                    .GetFeatureMask(@ptrCast(*IDebugDevice, self));
+            }
+            pub inline fn ReportLiveDeviceObjects(self: *T, flags: RLDO_FLAGS) HRESULT {
+                return @ptrCast(*const IDebugDevice.VTable, self.__v)
+                    .ReportLiveDeviceObjects(@ptrCast(*IDebugDevice, self), flags);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        const T = IDebugDevice;
+        base: IUnknown.VTable,
+        SetFeatureMask: *const fn (*T, DEBUG_FEATURE) callconv(WINAPI) HRESULT,
+        GetFeatureMask: *const fn (*T) callconv(WINAPI) DEBUG_FEATURE,
+        ReportLiveDeviceObjects: *const fn (*T, RLDO_FLAGS) callconv(WINAPI) HRESULT,
+    };
+};
+
 pub const IID_ICommandQueue = GUID{
     .Data1 = 0x0ec870a6,
     .Data2 = 0x5d7e,
