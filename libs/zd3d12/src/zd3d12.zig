@@ -613,10 +613,6 @@ pub const GraphicsContext = struct {
         for (&gctx.upload_memory_heaps) |*heap|
             heap.deinit();
 
-        if (enable_debug_layer) {
-            hrPanicOnFail(gctx.debug_device.ReportLiveDeviceObjects(.{ .SUMMARY = true, .DETAIL = true, .IGNORE_INTERNAL = true }));
-        }
-
         _ = gctx.device.Release();
         _ = gctx.cmdqueue.Release();
         _ = gctx.swapchain.Release();
@@ -625,6 +621,11 @@ pub const GraphicsContext = struct {
         for (gctx.cmdallocs) |cmdalloc|
             _ = cmdalloc.Release();
         _ = gctx.wic_factory.Release();
+
+        if (enable_debug_layer) {
+            hrPanicOnFail(gctx.debug_device.ReportLiveDeviceObjects(.{ .DETAIL = true, .IGNORE_INTERNAL = true }));
+        }
+
         gctx.* = undefined;
     }
 
