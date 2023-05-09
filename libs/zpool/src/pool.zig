@@ -547,11 +547,11 @@ pub fn Pool(
             handle: AddressableHandle,
         ) HandleError!void {
             if (isFreeCycle(handle.cycle))
-                return error.HandleIsUnacquired;
+                return Error.HandleIsUnacquired;
             if (handle.index >= self._curr_cycle.len)
-                return error.HandleIsOutOfBounds;
+                return Error.HandleIsOutOfBounds;
             if (handle.cycle != self._curr_cycle[handle.index])
-                return error.HandleIsReleased;
+                return Error.HandleIsReleased;
         }
 
         fn acquireAddressableHandle(self: *Self) !AddressableHandle {
