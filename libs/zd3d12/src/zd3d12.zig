@@ -51,7 +51,7 @@ pub const GraphicsContext = struct {
     const max_num_buffered_resource_barriers = 16;
 
     device: *d3d12.IDevice9,
-    debug_device: *d3d12.IDebugDevice,
+    debug_device: ?*d3d12.IDebugDevice,
     adapter: *dxgi.IAdapter3,
     cmdqueue: *d3d12.ICommandQueue,
     cmdlist: *d3d12.IGraphicsCommandList6,
@@ -550,7 +550,7 @@ pub const GraphicsContext = struct {
 
         return GraphicsContext{
             .device = device,
-            .debug_device = debug_device,
+            .debug_device = if (enable_debug_layer) debug_device else null,
             .adapter = suitable_adapter.?,
             .cmdqueue = cmdqueue,
             .cmdlist = cmdlist,
@@ -622,8 +622,8 @@ pub const GraphicsContext = struct {
             _ = cmdalloc.Release();
         _ = gctx.wic_factory.Release();
 
-        if (enable_debug_layer) {
-            hrPanicOnFail(gctx.debug_device.ReportLiveDeviceObjects(.{ .DETAIL = true, .IGNORE_INTERNAL = true }));
+        if (gctx.debug_device) |debug_device| {
+            hrPanicOnFail(debug_device.ReportLiveDeviceObjects(.{ .DETAIL = true, .IGNORE_INTERNAL = true }));
         }
 
         gctx.* = undefined;
