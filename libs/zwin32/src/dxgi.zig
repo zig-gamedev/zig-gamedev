@@ -1424,6 +1424,8 @@ pub const IID_ISurface = GUID{
 
 pub const CREATE_FACTORY_DEBUG = 0x1;
 pub extern "dxgi" fn CreateDXGIFactory2(UINT, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT;
+extern "dxgi" fn DXGIGetDebugInterface1(UINT, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT;
+pub const GetDebugInterface1 = DXGIGetDebugInterface1;
 
 pub const SCALING = enum(UINT) {
     STRETCH = 0,
