@@ -190,14 +190,14 @@ pub const GraphicsContext = struct {
             break :blk device;
         };
 
-        var debug_device: *d3d12.IDebugDevice = undefined;
+        var debug_device: ?*d3d12.IDebugDevice = null;
         if (enable_debug_layer) {
             hrPanicOnFail(device.QueryInterface(
                 &d3d12.IID_IDebugDevice,
                 @ptrCast(*?*anyopaque, &debug_device),
             ));
 
-            _ = debug_device.SetFeatureMask(.{ .CONSERVATIVE_RESOURCE_STATE_TRACKING = true });
+            _ = debug_device.?.SetFeatureMask(.{ .CONSERVATIVE_RESOURCE_STATE_TRACKING = true });
         }
 
         // Check for Shader Model 6.6 support.
@@ -550,7 +550,7 @@ pub const GraphicsContext = struct {
 
         return GraphicsContext{
             .device = device,
-            .debug_device = if (enable_debug_layer) debug_device else null,
+            .debug_device = debug_device,
             .adapter = suitable_adapter.?,
             .cmdqueue = cmdqueue,
             .cmdlist = cmdlist,
