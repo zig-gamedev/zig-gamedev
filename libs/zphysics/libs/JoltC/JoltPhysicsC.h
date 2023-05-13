@@ -1166,9 +1166,17 @@ JPC_BodyInterface_GetPointVelocity(const JPC_BodyInterface *in_iface,
                                    const JPC_Real in_point[3],
                                    float out_velocity[3]);
 JPC_API void
+JPC_BodyInterface_GetPosition(const JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              JPC_Real out_position[3]);
+JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
                                           JPC_Real out_position[3]);
+JPC_API void
+JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              JPC_Real out_rotation[4]);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 

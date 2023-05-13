@@ -1063,6 +1063,16 @@ pub const BodyInterface = opaque {
         return velocity;
     }
 
+    pub fn getPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
+        var position: [3]Real = undefined;
+        c.JPC_BodyInterface_GetPosition(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &position,
+        );
+        return position;
+    }
+
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
         var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
@@ -1071,6 +1081,16 @@ pub const BodyInterface = opaque {
             &position,
         );
         return position;
+    }
+
+    pub fn getRotation(body_iface: *const BodyInterface, body_id: BodyId) [4]Real {
+        var rotation: [4]Real = undefined;
+        c.JPC_BodyInterface_GetRotation(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &rotation,
+        );
+        return rotation;
     }
 
     pub fn setPositionRotationAndVelocity(
