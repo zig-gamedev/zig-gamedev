@@ -352,26 +352,27 @@ const Dx12State = struct {
 
         var swap_chain: *dxgi.ISwapChain3 = undefined;
         {
+            var desc = dxgi.SWAP_CHAIN_DESC{
+                .BufferDesc = .{
+                    .Width = @intCast(u32, rect.right),
+                    .Height = @intCast(u32, rect.bottom),
+                    .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
+                    .Format = .R8G8B8A8_UNORM,
+                    .ScanlineOrdering = .UNSPECIFIED,
+                    .Scaling = .UNSPECIFIED,
+                },
+                .SampleDesc = .{ .Count = 1, .Quality = 0 },
+                .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
+                .BufferCount = num_frames,
+                .OutputWindow = window,
+                .Windowed = w32.TRUE,
+                .SwapEffect = .FLIP_DISCARD,
+                .Flags = .{},
+            };
             var temp_swap_chain: *dxgi.ISwapChain = undefined;
             hrPanicOnFail(dxgi_factory.CreateSwapChain(
                 @ptrCast(*w32.IUnknown, command_queue),
-                &dxgi.SWAP_CHAIN_DESC{
-                    .BufferDesc = .{
-                        .Width = @intCast(u32, rect.right),
-                        .Height = @intCast(u32, rect.bottom),
-                        .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
-                        .Format = .R8G8B8A8_UNORM,
-                        .ScanlineOrdering = .UNSPECIFIED,
-                        .Scaling = .UNSPECIFIED,
-                    },
-                    .SampleDesc = .{ .Count = 1, .Quality = 0 },
-                    .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
-                    .BufferCount = num_frames,
-                    .OutputWindow = window,
-                    .Windowed = w32.TRUE,
-                    .SwapEffect = .FLIP_DISCARD,
-                    .Flags = .{},
-                },
+                &desc,
                 @ptrCast(*?*dxgi.ISwapChain, &temp_swap_chain),
             ));
             defer _ = temp_swap_chain.Release();
