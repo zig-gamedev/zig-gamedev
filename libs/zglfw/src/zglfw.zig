@@ -936,11 +936,25 @@ test "zglfw.basic" {
     window.setScrollCallback(scrollCallback);
     window.setKeyCallback(null);
 
+    var timer = try std.time.Timer.start();
     window.setSize(300, 200);
-    try std.testing.expectEqualSlices(i32, &.{ 300, 200 }, &window.getSize());
+    while (timer.read() < std.time.ns_per_s) {
+        waitEventsTimeout(0.0001);
+        const size = window.getSize();
+        if (size[0] == 300 and size[1] == 200) break;
+    } else {
+        try std.testing.expectEqualSlices(i32, &.{ 300, 200 }, &window.getSize());
+    }
 
+    timer.reset();
     window.setPos(100, 100);
-    try std.testing.expectEqualSlices(i32, &.{ 100, 100 }, &window.getPos());
+    while (timer.read() < std.time.ns_per_s) {
+        waitEventsTimeout(0.0001);
+        const pos = window.getPos();
+        if (pos[0] == 100 and pos[1] == 100) break;
+    } else {
+        try std.testing.expectEqualSlices(i32, &.{ 100, 100 }, &window.getPos());
+    }
 
     window.setTitle("new title");
 
