@@ -31,6 +31,14 @@ extern fn glfwTerminate() void;
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
 
+/// `pub fn waitEvents() void`
+pub const waitEvents = glfwWaitEvents;
+extern fn glfwWaitEvents() void;
+
+/// `pub fn waitEventsTimeout(timeout: f64) void`
+pub const waitEventsTimeout = glfwWaitEventsTimeout;
+extern fn glfwWaitEventsTimeout(timeout: f64) void;
+
 pub fn isVulkanSupported() bool {
     return if (glfwVulkanSupported() == 0) false else true;
 }
