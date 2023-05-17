@@ -41,7 +41,8 @@ test "zflecs.entities.basics" {
     ecs.remove(world, alice, Walking);
 
     {
-        var it = ecs.term_iter(world, &.{ .id = ecs.id(Position) });
+        var term = ecs.term_t{ .id = ecs.id(Position) };
+        var it = ecs.term_iter(world, &term);
         while (ecs.term_next(&it)) {
             if (ecs.field(&it, Position, 1)) |positions| {
                 for (positions, it.entities()) |p, e| {
