@@ -431,7 +431,8 @@ JoltCTest_Basic2(void)
     if (JPC_BodyInterface_IsAdded(body_interface, floor_id) != true) return 0;
 
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
-    JPC_PhysicsSystem_Update(physics_system, 1.0f / 60.0f, 1, 1, temp_allocator, job_system);
+    JPC_PhysicsUpdateError update_err = JPC_PhysicsSystem_Update(physics_system, 1.0f / 60.0f, 1, 1, temp_allocator, job_system);
+    if (update_err != JPC_PHYSICS_UPDATE_ERROR_NONE) return 0;
 
     JPC_BodyInterface_RemoveBody(body_interface, floor_id);
     if (JPC_BodyInterface_IsAdded(body_interface, floor_id) != false) return 0;
@@ -582,13 +583,17 @@ JoltCTest_HelloWorld(void)
         const int collision_steps = 1;
         const int integration_sub_steps = 1;
 
-        JPC_PhysicsSystem_Update(
+        JPC_PhysicsUpdateError update_err = JPC_PhysicsSystem_Update(
             physics_system,
             delta_time,
             collision_steps,
             integration_sub_steps,
             temp_allocator,
             job_system);
+
+        if (update_err != JPC_PHYSICS_UPDATE_ERROR_NONE) {
+            break;
+        }
 
 #ifdef PRINT_OUTPUT
         fprintf(stderr, "Step %d\n\tPosition = (%f, %f, %f), Velocity(%f, %f, %f)\n",

@@ -794,8 +794,8 @@ pub const PhysicsSystem = opaque {
             collision_steps: i32 = 1,
             integration_sub_steps: i32 = 1,
         },
-    ) void {
-        c.JPC_PhysicsSystem_Update(
+    ) !void {
+        const res = c.JPC_PhysicsSystem_Update(
             @ptrCast(*c.JPC_PhysicsSystem, physics_system),
             delta_time,
             args.collision_steps,
@@ -803,6 +803,15 @@ pub const PhysicsSystem = opaque {
             @ptrCast(*c.JPC_TempAllocator, temp_allocator),
             @ptrCast(*c.JPC_JobSystem, job_system),
         );
+
+        switch (res) {
+            c.JPC_PHYSICS_UPDATE_ERROR_NONE => {},
+            c.JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL => return error.JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL,
+            c.JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL => return error.JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL,
+            c.JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL => return error.JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL,
+            else => return error.JPC_PHYSICS_UPDATE_UNKNOWN_ERROR,
+        }
+        return;
     }
 
     pub fn getBodyIds(physics_system: *const PhysicsSystem, body_ids: *std.ArrayList(BodyId)) !void {

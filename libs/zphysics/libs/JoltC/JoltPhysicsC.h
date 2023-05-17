@@ -59,6 +59,15 @@ enum
     JPC_MAX_PHYSICS_BARRIERS = 8
 };
 
+typedef uint8_t JPC_PhysicsUpdateError;
+enum
+{
+    JPC_PHYSICS_UPDATE_ERROR_NONE               = 0,
+    JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL      = 1 << 0,
+    JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL     = 1 << 1,
+    JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL = 1 << 2,
+};
+
 typedef uint8_t JPC_ShapeType;
 enum
 {
@@ -751,7 +760,7 @@ JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system);
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system);
 
-JPC_API void
+JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          float in_delta_time,
                          int in_collision_steps,
