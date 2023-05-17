@@ -407,46 +407,6 @@ pub const Texture = opaque {
     extern fn SDL_DestroyTexture(texture: ?*Texture) void;
 };
 
-//--------------------------------------------------------------------------------------------------
-//
-// Renderer
-//
-//--------------------------------------------------------------------------------------------------
-pub const RendererFlags = packed struct(u32) {
-    software: bool = false,
-    accelerated: bool = false,
-    present_vsync: bool = false,
-    target_texture: bool = false,
-    __unused1: bool = false,
-    __unused2: bool = false,
-    __unused3: bool = false,
-    __unused4: bool = false,
-    __unused5: bool = false,
-    __unused6: bool = false,
-    __unused7: bool = false,
-    __unused8: bool = false,
-    __unused9: bool = false,
-    __unused10: bool = false,
-    __unused11: bool = false,
-    __unused12: bool = false,
-    __unused13: bool = false,
-    __unused14: bool = false,
-    __unused15: bool = false,
-    __unused16: bool = false,
-    __unused17: bool = false,
-    __unused18: bool = false,
-    __unused19: bool = false,
-    __unused20: bool = false,
-    __unused21: bool = false,
-    __unused22: bool = false,
-    __unused23: bool = false,
-    __unused24: bool = false,
-    __unused25: bool = false,
-    __unused26: bool = false,
-    __unused27: bool = false,
-    __unused28: bool = false,
-};
-
 pub const Color = extern struct {
     pub const black = rgb(0x00, 0x00, 0x00);
     pub const white = rgb(0xFF, 0xFF, 0xFF);
@@ -592,14 +552,54 @@ pub const RendererInfo = extern struct {
     max_texture_height: i32,
 };
 
+//--------------------------------------------------------------------------------------------------
+//
+// Renderer
+//
+//--------------------------------------------------------------------------------------------------
 pub const Renderer = opaque {
-    pub fn create(window: *Window, index: ?i32, flags: RendererFlags) !Renderer {
+    pub const Flags = packed struct(u32) {
+        software: bool = false,
+        accelerated: bool = false,
+        present_vsync: bool = false,
+        target_texture: bool = false,
+        __unused1: bool = false,
+        __unused2: bool = false,
+        __unused3: bool = false,
+        __unused4: bool = false,
+        __unused5: bool = false,
+        __unused6: bool = false,
+        __unused7: bool = false,
+        __unused8: bool = false,
+        __unused9: bool = false,
+        __unused10: bool = false,
+        __unused11: bool = false,
+        __unused12: bool = false,
+        __unused13: bool = false,
+        __unused14: bool = false,
+        __unused15: bool = false,
+        __unused16: bool = false,
+        __unused17: bool = false,
+        __unused18: bool = false,
+        __unused19: bool = false,
+        __unused20: bool = false,
+        __unused21: bool = false,
+        __unused22: bool = false,
+        __unused23: bool = false,
+        __unused24: bool = false,
+        __unused25: bool = false,
+        __unused26: bool = false,
+        __unused27: bool = false,
+        __unused28: bool = false,
+    };
+
+    pub fn create(window: *Window, index: ?i32, flags: Flags) !*Renderer {
         return SDL_CreateRenderer(window, index orelse -1, flags) orelse makeError();
     }
     extern fn SDL_CreateRenderer(
         window: *Window,
         index: i32,
-        flags: RendererFlags,
+        flags: Flags,
     ) ?*Renderer;
 
     pub fn destroy(r: *Renderer) void {
@@ -615,7 +615,7 @@ pub const Renderer = opaque {
     pub fn present(r: *Renderer) void {
         SDL_RenderPresent(r);
     }
-    extern fn SDL_RenderPresent(r: *Renderer) i32;
+    extern fn SDL_RenderPresent(r: *Renderer) void;
 
     pub fn copy(
         r: *Renderer,
