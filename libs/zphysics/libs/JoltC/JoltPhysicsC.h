@@ -1185,7 +1185,7 @@ JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
 JPC_API void
 JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
-                              JPC_Real out_rotation[4]);
+                              float out_rotation[4]);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 
