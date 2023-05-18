@@ -8,7 +8,7 @@ Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zsdl = @import("libs/zflecs/build.zig");
+const zflecs = @import("libs/zflecs/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
