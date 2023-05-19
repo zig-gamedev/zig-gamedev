@@ -432,7 +432,7 @@ JoltCTest_Basic2(void)
 
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
     JPC_PhysicsUpdateError update_err = JPC_PhysicsSystem_Update(physics_system, 1.0f / 60.0f, 1, 1, temp_allocator, job_system);
-    if (update_err != JPC_PHYSICS_UPDATE_ERROR_NONE) return 0;
+    if (update_err != JPC_PHYSICS_UPDATE_NO_ERROR) return 0;
 
     JPC_BodyInterface_RemoveBody(body_interface, floor_id);
     if (JPC_BodyInterface_IsAdded(body_interface, floor_id) != false) return 0;
@@ -591,8 +591,8 @@ JoltCTest_HelloWorld(void)
             temp_allocator,
             job_system);
 
-        if (update_err != JPC_PHYSICS_UPDATE_ERROR_NONE) {
-            break;
+        if (update_err != JPC_PHYSICS_UPDATE_NO_ERROR) {
+            return 0;
         }
 
 #ifdef PRINT_OUTPUT
