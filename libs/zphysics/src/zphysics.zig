@@ -1091,8 +1091,8 @@ pub const BodyInterface = opaque {
         return position;
     }
 
-    pub fn getRotation(body_iface: *const BodyInterface, body_id: BodyId) [4]Real {
-        var rotation: [4]Real = undefined;
+    pub fn getRotation(body_iface: *const BodyInterface, body_id: BodyId) [4]f32 {
+        var rotation: [4]f32 = undefined;
         c.JPC_BodyInterface_GetRotation(
             @ptrCast(*const c.JPC_BodyInterface, body_iface),
             body_id,
