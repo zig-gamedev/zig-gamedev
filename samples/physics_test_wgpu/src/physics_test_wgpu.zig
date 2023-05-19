@@ -430,7 +430,7 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 
 fn update(demo: *DemoState) void {
     zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
-    demo.physics_system.update(1.0 / 60.0, .{});
+    demo.physics_system.update(1.0 / 60.0, .{}) catch unreachable;
 
     const window = demo.gctx.window;
 

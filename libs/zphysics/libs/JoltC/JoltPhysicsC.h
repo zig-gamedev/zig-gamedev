@@ -59,6 +59,15 @@ enum
     JPC_MAX_PHYSICS_BARRIERS = 8
 };
 
+typedef uint8_t JPC_PhysicsUpdateError;
+enum
+{
+    JPC_PHYSICS_UPDATE_SUCCESS               = 0,
+    JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL      = 1 << 0,
+    JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL     = 1 << 1,
+    JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL = 1 << 2,
+};
+
 typedef uint8_t JPC_ShapeType;
 enum
 {
@@ -751,7 +760,7 @@ JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system);
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system);
 
-JPC_API void
+JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          float in_delta_time,
                          int in_collision_steps,
@@ -1166,9 +1175,17 @@ JPC_BodyInterface_GetPointVelocity(const JPC_BodyInterface *in_iface,
                                    const JPC_Real in_point[3],
                                    float out_velocity[3]);
 JPC_API void
+JPC_BodyInterface_GetPosition(const JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              JPC_Real out_position[3]);
+JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
                                           JPC_Real out_position[3]);
+JPC_API void
+JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              float out_rotation[4]);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 

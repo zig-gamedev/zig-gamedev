@@ -11,6 +11,7 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/EPhysicsUpdateError.h>
 #include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
 #include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
@@ -639,7 +640,7 @@ JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system)
     toJph(in_physics_system)->OptimizeBroadPhase();
 }
 //--------------------------------------------------------------------------------------------------
-JPC_API void
+JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          float in_delta_time,
                          int in_collision_steps,
@@ -648,12 +649,13 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          JPC_JobSystem *in_job_system)
 {
     assert(in_temp_allocator != nullptr && in_job_system != nullptr);
-    toJph(in_physics_system)->Update(
+    JPC_PhysicsUpdateError error = (JPC_PhysicsUpdateError)toJph(in_physics_system)->Update(
         in_delta_time,
         in_collision_steps,
         in_integration_sub_steps,
         reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator),
         reinterpret_cast<JPH::JobSystem *>(in_job_system));
+    return error;
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API const JPC_BodyLockInterface *
@@ -1420,11 +1422,27 @@ JPC_BodyInterface_GetPointVelocity(const JPC_BodyInterface *in_iface,
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
+JPC_BodyInterface_GetPosition(const JPC_BodyInterface *in_iface,
+                                          JPC_BodyID in_body_id,
+                                          JPC_Real out_position[3])
+{
+    storeRVec3(out_position, toJph(in_iface)->GetPosition(toJph(in_body_id)));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
                                           JPC_Real out_position[3])
 {
     storeRVec3(out_position, toJph(in_iface)->GetCenterOfMassPosition(toJph(in_body_id)));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
+                                          JPC_BodyID in_body_id,
+                                          JPC_Real out_rotation[4])
+{
+    storeVec4(out_rotation, toJph(in_iface)->GetRotation(toJph(in_body_id)).GetXYZW());
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
