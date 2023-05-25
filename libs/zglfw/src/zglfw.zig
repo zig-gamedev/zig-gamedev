@@ -596,6 +596,15 @@ pub const Window = opaque {
     }
     extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
 
+    pub const getClipboardString = glfwGetClipboardString;
+    extern fn glfwGetClipboardString(window: *Window) ?[*:0]const u8;
+
+    pub const setClipboardString = glfwSetClipboardString;
+    extern fn glfwSetClipboardString(
+        window: *Window,
+        string: [*:0]const u8,
+    ) void;
+
     /// `pub fn setFramebufferSizeCallback(window: *Window, callback) void`
     pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
     extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?*const fn (
@@ -647,6 +656,17 @@ pub const Window = opaque {
             scancode: i32,
             action: Action,
             mods: Mods,
+        ) callconv(.C) void,
+    ) void;
+
+    /// `pub fn setDropCallback(window: *Window, callback) void`
+    pub const setDropCallback = glfwSetDropCallback;
+    extern fn glfwSetDropCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            path_count: i32,
+            paths: [*][*:0]const u8,
         ) callconv(.C) void,
     ) void;
 
