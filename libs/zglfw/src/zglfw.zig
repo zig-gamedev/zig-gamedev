@@ -596,10 +596,14 @@ pub const Window = opaque {
     }
     extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
 
-    pub const getClipboardString = glfwGetClipboardString;
+    pub fn getClipboardString(window: *Window) ?[:0]const u8 {
+        return std.mem.span(glfwGetClipboardString(window));
+    }
     extern fn glfwGetClipboardString(window: *Window) ?[*:0]const u8;
 
-    pub const setClipboardString = glfwSetClipboardString;
+    pub inline fn setClipboardString(window: *Window, string: [:0]const u8) void {
+        return glfwSetClipboardString(window, string);
+    }
     extern fn glfwSetClipboardString(
         window: *Window,
         string: [*:0]const u8,
