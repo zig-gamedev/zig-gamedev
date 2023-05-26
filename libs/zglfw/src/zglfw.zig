@@ -960,6 +960,9 @@ test "zglfw.basic" {
     window.setScrollCallback(scrollCallback);
     window.setKeyCallback(null);
 
+    window.setClipboardString("keep going");
+    try expect(std.mem.eql(u8, window.getClipboardString().?, "keep going"));
+
     var timer = try std.time.Timer.start();
     window.setSize(300, 200);
     while (timer.read() < std.time.ns_per_s) {
