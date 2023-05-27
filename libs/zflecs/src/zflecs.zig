@@ -811,12 +811,20 @@ pub const world_info_t = extern struct {
     },
     name_prefix: [*:0]const u8,
 };
+
+fn flecs_abort() callconv(.C) noreturn {
+    std.debug.dumpCurrentStackTrace(@returnAddress());
+    std.os.exit(1);
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // Creation & Deletion
 //
 //--------------------------------------------------------------------------------------------------
 pub fn init() *world_t {
+    os.ecs_os_api.abort_ = flecs_abort;
+
     assert(num_worlds == 0);
     num_worlds += 1;
     component_ids_hm.ensureTotalCapacity(32) catch @panic("OOM");
