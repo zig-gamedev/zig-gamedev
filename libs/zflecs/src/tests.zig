@@ -277,3 +277,23 @@ test "zflecs.helloworld" {
     const p = ecs.get(world, bob, Position).?;
     print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
 }
+
+test "zflecs.alignment" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const AlignmentsToTest = [_]usize{ 16, 32 };
+    inline for (AlignmentsToTest) |alignment| {
+        const Component = struct {
+            dummy: u32 align(alignment) = 0,
+        };
+
+        ecs.COMPONENT(world, Component);
+        var entity = ecs.new_entity(world, "");
+
+        var component = Component{};
+        _ = ecs.set(world, entity, Component, component);
+
+        _ = ecs.get(world, entity, Component);
+    }
+}
