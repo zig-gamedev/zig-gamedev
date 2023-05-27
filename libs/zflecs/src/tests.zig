@@ -175,13 +175,22 @@ test "zflecs.basic" {
 
     ecs.TAG(world, Walking);
 
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*const Position)).?, ecs.id(*const Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(?*const Position)).?, ecs.id(?*const Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*Position)).?, ecs.id(*Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Position)).?, ecs.id(Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Direction)).?, ecs.id(Direction) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Walking)).?, ecs.id(Walking) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(u31)).?, ecs.id(u31) });
+    const PrintIdHelper = struct {
+        fn printId(in_world: *ecs.world_t, comptime T: type) void {
+            var id_str = ecs.id_str(in_world, ecs.id(T)).?;
+            defer ecs.os.free(id_str);
+
+            print("{s} id: {d}\n", .{ id_str, ecs.id(T) });
+        }
+    };
+
+    PrintIdHelper.printId(world, *const Position);
+    PrintIdHelper.printId(world, ?*const Position);
+    PrintIdHelper.printId(world, *Position);
+    PrintIdHelper.printId(world, Position);
+    PrintIdHelper.printId(world, *Direction);
+    PrintIdHelper.printId(world, *Walking);
+    PrintIdHelper.printId(world, *u31);
 
     const p: Position = .{ .x = 1.0, .y = 2.0 };
     _ = ecs.set(world, e0, *const Position, &p);
