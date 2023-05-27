@@ -278,22 +278,24 @@ test "zflecs.helloworld" {
     print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
 }
 
-test "zflecs.alignment" {
+test "zflecs.try_different_alignments" {
     const world = ecs.init();
     defer _ = ecs.fini(world);
 
-    const AlignmentsToTest = [_]usize{ 16, 32 };
-    inline for (AlignmentsToTest) |alignment| {
-        const Component = struct {
-            dummy: u32 align(alignment) = 0,
+    const AlignmentsToTest = [_]usize{ 8, 16, 32, 64, 128 };
+    inline for (AlignmentsToTest) |component_alignment| {
+        const AlignedComponent = struct {
+            fn Component(comptime alignment: usize) type {
+                return struct { dummy: u32 align(alignment) = 0 };
+            }
         };
+
+        const Component = AlignedComponent.Component(component_alignment);
 
         ecs.COMPONENT(world, Component);
         var entity = ecs.new_entity(world, "");
 
-        var component = Component{};
-        _ = ecs.set(world, entity, Component, component);
-
+        _ = ecs.set(world, entity, Component, .{});
         _ = ecs.get(world, entity, Component);
     }
 }
