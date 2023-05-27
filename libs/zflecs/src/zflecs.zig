@@ -813,8 +813,8 @@ pub const world_info_t = extern struct {
 };
 
 fn flecs_abort() callconv(.C) noreturn {
-    @breakpoint();
     std.debug.dumpCurrentStackTrace(@returnAddress());
+    @breakpoint();
     std.os.exit(1);
 }
 
