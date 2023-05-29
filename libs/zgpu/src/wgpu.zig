@@ -869,7 +869,7 @@ pub const TextureDescriptor = extern struct {
     view_formats: ?[*]const TextureFormat = null,
 };
 
-pub const Limits = extern struct {
+pub const Limits = if (!emscripten) extern struct {
     max_texture_dimension_1d: u32,
     max_texture_dimension_2d: u32,
     max_texture_dimension_3d: u32,
@@ -892,6 +892,37 @@ pub const Limits = extern struct {
     max_vertex_attributes: u32,
     max_vertex_buffer_array_stride: u32,
     max_inter_stage_shader_components: u32,
+    max_inter_stage_shader_variables: u32,
+    max_color_attachments: u32,
+    max_compute_workgroup_storage_size: u32,
+    max_compute_invocations_per_workgroup: u32,
+    max_compute_workgroup_size_x: u32,
+    max_compute_workgroup_size_y: u32,
+    max_compute_workgroup_size_z: u32,
+    max_compute_workgroups_per_dimension: u32,
+} else extern struct {
+    max_texture_dimension_1d: u32,
+    max_texture_dimension_2d: u32,
+    max_texture_dimension_3d: u32,
+    max_texture_array_layers: u32,
+    max_bind_groups: u32,
+    max_dynamic_uniform_buffers_per_pipeline_layout: u32,
+    max_dynamic_storage_buffers_per_pipeline_layout: u32,
+    max_sampled_textures_per_shader_stage: u32,
+    max_samplers_per_shader_stage: u32,
+    max_storage_buffers_per_shader_stage: u32,
+    max_storage_textures_per_shader_stage: u32,
+    max_uniform_buffers_per_shader_stage: u32,
+    max_uniform_buffer_binding_size: u64, // u64!
+    max_storage_buffer_binding_size: u64, // u64!
+    min_uniform_buffer_offset_alignment: u32,
+    min_storage_buffer_offset_alignment: u32,
+    max_vertex_buffers: u32,
+    max_vertex_attributes: u32,
+    max_vertex_buffer_array_stride: u32,
+    max_inter_stage_shader_components: u32,
+    max_inter_stage_shader_variables: u32,
+    max_color_attachments: u32,
     max_compute_workgroup_storage_size: u32,
     max_compute_invocations_per_workgroup: u32,
     max_compute_workgroup_size_x: u32,
@@ -975,21 +1006,33 @@ pub const Color = extern struct {
     a: f64,
 };
 
-pub const RenderPassColorAttachment = extern struct {
-    view: TextureView,
-    resolve_target: ?TextureView = null,
-    load_op: LoadOp,
-    store_op: StoreOp,
-    clear_color: Color = .{
-        .r = std.math.nan_f64,
-        .g = std.math.nan_f64,
-        .b = std.math.nan_f64,
-        .a = std.math.nan_f64,
-    },
-    clear_value: Color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 0.0 },
-};
+pub const RenderPassColorAttachment = if (emscripten)
+    // emscripten has already discarded clear_col breaking struct compatibility, however current dawn version throws warning if clear_color slot is used
+    // https://github.com/emscripten-core/emscripten/blob/main/system/include/webgpu/webgpu.h#L1025
+    extern struct {
+        view: TextureView,
+        resolve_target: ?TextureView = null,
+        load_op: LoadOp,
+        store_op: StoreOp,
+        // clear_color: Color,
+        clear_value: Color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 0.0 },
+    }
+else
+    extern struct {
+        view: TextureView,
+        resolve_target: ?TextureView = null,
+        load_op: LoadOp,
+        store_op: StoreOp,
+        clear_color: Color = .{
+            .r = std.math.nan_f64,
+            .g = std.math.nan_f64,
+            .b = std.math.nan_f64,
+            .a = std.math.nan_f64,
+        },
+        clear_value: Color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 0.0 },
+    };
 
-pub const RenderPassDepthStencilAttachment = extern struct {
+pub const RenderPassDepthStencilAttachment = if (!emscripten) extern struct {
     view: TextureView,
     depth_load_op: LoadOp = .undef,
     depth_store_op: StoreOp = .undef,
@@ -999,6 +1042,18 @@ pub const RenderPassDepthStencilAttachment = extern struct {
     stencil_load_op: LoadOp = .undef,
     stencil_store_op: StoreOp = .undef,
     clear_stencil: u32 = 0,
+    stencil_clear_value: u32 = 0,
+    stencil_read_only: bool = false,
+} else extern struct {
+    view: TextureView,
+    depth_load_op: LoadOp = .undef,
+    depth_store_op: StoreOp = .undef,
+    //clear_depth: f32 = std.math.nan_f32,
+    depth_clear_value: f32 = 0.0,
+    depth_read_only: bool = false,
+    stencil_load_op: LoadOp = .undef,
+    stencil_store_op: StoreOp = .undef,
+    //clear_stencil: u32 = 0,
     stencil_clear_value: u32 = 0,
     stencil_read_only: bool = false,
 };
@@ -1271,6 +1326,7 @@ pub const Buffer = *opaque {
         if (len == 0) return null;
         const ptr = wgpuBufferGetMappedRange(buffer, offset, @sizeOf(T) * len);
         if (ptr == null) return null;
+        comptime std.debug.assert(@alignOf(T) <= 8);
         return @ptrCast([*]T, @alignCast(@alignOf(T), ptr))[0..len];
     }
     extern fn wgpuBufferGetMappedRange(buffer: Buffer, offset: usize, size: usize) ?*anyopaque;
@@ -1371,10 +1427,10 @@ pub const CommandEncoder = *opaque {
     pub inline fn copyBufferToBuffer(
         command_encoder: CommandEncoder,
         source: Buffer,
-        source_offset: usize,
+        source_offset: u64,
         destination: Buffer,
-        destination_offset: usize,
-        size: usize,
+        destination_offset: u64,
+        size: u64,
     ) void {
         wgpuCommandEncoderCopyBufferToBuffer(
             command_encoder,
@@ -1388,10 +1444,10 @@ pub const CommandEncoder = *opaque {
     extern fn wgpuCommandEncoderCopyBufferToBuffer(
         command_encoder: CommandEncoder,
         source: Buffer,
-        source_offset: usize,
+        source_offset: u64,
         destination: Buffer,
-        destination_offset: usize,
-        size: usize,
+        destination_offset: u64,
+        size: u64,
     ) void;
 
     pub inline fn copyBufferToTexture(
@@ -1902,7 +1958,8 @@ pub const Device = *opaque {
     ) void;
 
     pub inline fn tick(device: Device) void {
-        wgpuDeviceTick(device);
+        if (emscripten) emscripten_sleep(1) // requires -sASYNCIFY
+        else wgpuDeviceTick(device);
     }
     extern fn wgpuDeviceTick(device: Device) void;
 
@@ -1939,7 +1996,7 @@ pub const ExternalTexture = *opaque {
     extern fn wgpuExternalTextureRelease(external_texture: ExternalTexture) void;
 };
 
-pub const Instance = *opaque {
+pub const Instance = *allowzero opaque {
     pub inline fn createSurface(instance: Instance, descriptor: SurfaceDescriptor) Surface {
         return wgpuInstanceCreateSurface(instance, &descriptor);
     }
@@ -2090,7 +2147,7 @@ pub const Queue = *opaque {
         buffer: Buffer,
         buffer_offset: u64,
         data: *const anyopaque,
-        size: u64,
+        size: usize,
     ) void;
 
     pub inline fn writeTexture(
@@ -2768,3 +2825,6 @@ pub const TextureView = *opaque {
     }
     extern fn wgpuTextureViewRelease(texture_view: TextureView) void;
 };
+
+const emscripten = @import("zgpu_options").emscripten;
+extern fn emscripten_sleep(ms: u32) void;

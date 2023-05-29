@@ -65,6 +65,12 @@ pub fn package(
         .optimize = optimize,
     });
 
+    if (target.getCpuArch() == .wasm32 and target.getOsTag() == .freestanding) {
+        zgui_c_cpp.defineCMacro("IMGUI_DISABLE_FILE_FUNCTIONS", null);
+        zgui_c_cpp.stack_protector = false;
+        zgui_c_cpp.disable_stack_probing = true;
+    }
+
     zgui_c_cpp.addIncludePath(thisDir() ++ "/libs");
     zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
 

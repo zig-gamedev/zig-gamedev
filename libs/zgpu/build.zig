@@ -12,6 +12,8 @@ pub const Options = struct {
     bind_group_pool_size: u32 = 32,
     bind_group_layout_pool_size: u32 = 32,
     pipeline_layout_pool_size: u32 = 32,
+
+    emscripten : bool = false,
 };
 
 pub const Package = struct {
@@ -24,6 +26,8 @@ pub const Package = struct {
 
         exe.addModule("zgpu", pkg.zgpu);
         exe.addModule("zgpu_options", pkg.zgpu_options);
+
+        if (pkg.options.emscripten) return;
 
         switch (target.os.tag) {
             .windows => {
@@ -95,6 +99,7 @@ pub fn package(
     step.addOption(u32, "bind_group_pool_size", args.options.bind_group_pool_size);
     step.addOption(u32, "bind_group_layout_pool_size", args.options.bind_group_layout_pool_size);
     step.addOption(u32, "pipeline_layout_pool_size", args.options.pipeline_layout_pool_size);
+    step.addOption(bool, "emscripten", args.options.emscripten);
 
     const zgpu_options = step.createModule();
 

@@ -10,6 +10,7 @@ pub const Package = struct {
         const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
         switch (host.os.tag) {
+            .freestanding => return,
             .windows => {},
             .macos => {
                 exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
@@ -52,6 +53,11 @@ pub fn package(
     const zglfw = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
+
+    if (target.getOs().tag == .freestanding) return .{
+        .zglfw = zglfw,
+        .zglfw_c_cpp = undefined,
+    };
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
         const lib = b.addSharedLibrary(.{

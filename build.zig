@@ -22,8 +22,9 @@ pub fn build(b: *std.Build) void {
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
         .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
+        .emscripten = b.option(bool, "emscripten", "Build for linking with emscripten toolchain") orelse false,
     };
-    ensureTarget(options.target) catch return;
+    ensureTarget(options) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
@@ -95,22 +96,24 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     const target = options.target;
     const optimize = options.optimize;
 
-    zopengl_pkg = zopengl.package(b, target, optimize, .{});
     zmath_pkg = zmath.package(b, target, optimize, .{});
     zpool_pkg = zpool.package(b, target, optimize, .{});
     zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    zgui_pkg = zgui.package(b, target, optimize, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
+    zgpu_pkg = zgpu.package(b, target, optimize, .{
+        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024, .emscripten = options.emscripten },
+        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
+    });
+    if (options.emscripten) return;
+
+    zopengl_pkg = zopengl.package(b, target, optimize, .{});
     zsdl_pkg = zsdl.package(b, target, optimize, .{});
     zmesh_pkg = zmesh.package(b, target, optimize, .{});
     znoise_pkg = znoise.package(b, target, optimize, .{});
     zstbi_pkg = zstbi.package(b, target, optimize, .{});
     zbullet_pkg = zbullet.package(b, target, optimize, .{});
-    zgui_pkg = zgui.package(b, target, optimize, .{
-        .options = .{ .backend = .glfw_wgpu },
-    });
-    zgpu_pkg = zgpu.package(b, target, optimize, .{
-        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
-        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
-    });
     ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{
             .enable_ztracy = !target.isDarwin(), // TODO: ztracy fails to compile on macOS.
@@ -168,6 +171,7 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const minimal_gl = @import("samples/minimal_gl/build.zig");
     const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
+    const triangle_wgpu_emscripten = @import("samples/triangle_wgpu_emscripten/build.zig");
     const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
     const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
     const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
@@ -178,6 +182,10 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const layers_wgpu = @import("samples/layers_wgpu/build.zig");
     const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
     const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+
+    install_options = options;
+    install(b, triangle_wgpu_emscripten.build(b, options), "triangle_wgpu_emscripten");
+    if (options.emscripten) return;
 
     install(b, minimal_gl.build(b, options), "minimal_gl");
     install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
@@ -298,9 +306,13 @@ pub const Options = struct {
     zd3d12_enable_gbv: bool,
 
     zpix_enable: bool,
+
+    emscripten: bool,
 };
 
+var install_options : ?Options = null;
 fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
+    const emscripten = install_options != null and install_options.?.emscripten;
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
     if (exe.optimize == .ReleaseFast)
@@ -311,12 +323,17 @@ fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8
     //comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
 
     const install_step = b.step(name, "Build '" ++ name ++ "' demo");
-    install_step.dependOn(&b.addInstallArtifact(exe).step);
+    if (!emscripten) {
+        install_step.dependOn(&b.addInstallArtifact(exe).step);
 
-    const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(install_step);
-    run_step.dependOn(&run_cmd.step);
+        const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
+        const run_cmd = b.addRunArtifact(exe);
+        run_cmd.step.dependOn(install_step);
+        run_step.dependOn(&run_cmd.step);
+    } else {
+        const link_step = linkEmscripten(b, install_options.?, exe) catch unreachable;
+        install_step.dependOn(&link_step.step);
+    }
 
     b.getInstallStep().dependOn(install_step);
 }
@@ -344,7 +361,8 @@ fn ensureZigVersion() !void {
     }
 }
 
-fn ensureTarget(cross: std.zig.CrossTarget) !void {
+fn ensureTarget(options: Options) !void {
+    const cross = options.target;
     const target = (std.zig.system.NativeTargetInfo.detect(cross) catch unreachable).target;
 
     const supported = switch (target.os.tag) {
@@ -359,6 +377,7 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
             if (target.os.version_range.semver.min.order(min_available) == .lt) break :blk false;
             break :blk true;
         },
+        .freestanding => target.cpu.arch == .wasm32 and options.emscripten,
         else => false,
     };
     if (!supported) {
@@ -481,4 +500,76 @@ fn ensureGitLfsContent(comptime file_path: []const u8) !void {
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
+
+pub fn linkEmscripten(b: *std.Build, options : Options, exe: *std.Build.CompileStep) !*std.Build.Step.Run {
+    var ems_closure: ?[]const u8 = null;
+    const emsdk_path = b.env_map.get("EMSDK") orelse @panic("Failed to get emscripten SDK path, have you installed & sourced the SDK?");
+    const emscripten_include = b.pathJoin(&.{ emsdk_path, "upstream", "emscripten", "cache", "sysroot", "include" });
+    exe.addSystemIncludePath(emscripten_include);
+    exe.stack_protector = false;
+    exe.disable_stack_probing = true;
+
+    const emlink = b.addSystemCommand(&.{"emcc"});
+    //emlink.setEnvironmentVariable("EMPROFILE", "1");
+    emlink.addArtifactArg(exe);
+    for (exe.link_objects.items) |link_dependency| {
+        switch (link_dependency) {
+            .other_step => |o| emlink.addArtifactArg(o),
+            // .c_source_file => |f| emlink.addFileSourceArg(f.source), // f.args?
+            // .c_source_files => |fs| for (fs.files) |f| emlink.addArg(f), // fs.flags?
+            else => {},
+        }
+    }
+    const out_path = b.pathJoin(&.{ b.pathFromRoot("."), "zig-out", "www", exe.name });
+    std.fs.cwd().makePath(out_path) catch unreachable;
+    const out_file = try std.mem.concat(b.allocator, u8, &.{ "-o", out_path, std.fs.path.sep_str ++ "index.html" });
+    emlink.addArgs(&.{"-sEXPORTED_FUNCTIONS=['_malloc','_emmalloc_realloc','_main']"});
+    //emling.addArgs(&.{"-sLLD_REPORT_UNDEFINED", "-sERROR_ON_UNDEFINED_SYMBOLS=0"});
+    emlink.addArg(out_file);
+    emlink.addArg("-sFILESYSTEM=0");
+    emlink.addArg("-sUSE_GLFW=3");
+    emlink.addArg("-sUSE_WEBGPU=1");
+    emlink.addArg("-sASYNCIFY");
+    //emlink.addArg("-sASYNCIFY_IGNORE_INDIRECT=1");
+    //emlink.addArg("-sASYNCIFY_ADVISE=1");
+    //emlink.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
+    emlink.addArgs(&.{ "-sINITIAL_MEMORY=64MB", "-sMALLOC=emmalloc", "-sABORTING_MALLOC=0", "-sEXIT_RUNTIME=0" });
+    emlink.addArg("-sALLOW_MEMORY_GROWTH");
+    emlink.addArgs(&.{ "-fno-rtti", "-fno-exceptions" });
+    emlink.addArg("-sWASM_BIGINT");
+
+    // there are a lot of flags that can be tried used either for debugging or optimization, these are basic defaults
+    // see: https://emscripten.org/docs/tools_reference/emcc.html#emccdoc
+    switch (options.optimize) {
+        .Debug => {
+            ems_closure = "0";
+            emlink.addArgs(&.{"-g"});
+            //emlink.addArgs(&.{"-Og"});
+            const source_map_base = "./"; // depending on how webserver is configured this might need to be changed
+            emlink.addArgs(&.{ "-gsource-map", "--source-map-base", source_map_base });
+        },
+        .ReleaseSmall => {
+            emlink.addArgs(&.{"-Os"});
+            exe.strip = true;
+            //emlink.addArg("-Oz");
+        },
+        .ReleaseFast => {
+            emlink.addArg("-O2"); // keeps function names, useful for release-debug style build
+            //emlink.addArgs(&.{"-flto"});
+        },
+        .ReleaseSafe => {
+            emlink.addArg("-O2");
+        },
+    }
+
+    if (ems_closure) |c| {
+        emlink.addArgs(&.{ "--closure", c });
+    }
+
+    // custom html shell
+    //emlink.addArgs(&.{ "--shell-file", "src/shell_simple.html" });
+
+    emlink.step.dependOn(&exe.step);
+    return emlink;
 }
