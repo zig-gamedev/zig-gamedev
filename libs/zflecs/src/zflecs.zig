@@ -2270,7 +2270,19 @@ pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @ptrCast(*T, @alignCast(@alignOf(T), val));
 }
 //--------------------------------------------------------------------------------------------------
-fn PerTypeGlobalVar(comptime _: type) type {
+fn PerTypeGlobalVar(comptime in_type: type) type {
+    if (@alignOf(in_type) > EcsAllocator.Alignment) {
+        var message = std.fmt.comptimePrint(
+            "Type [{s}] requires an alignment of [{}] but the EcsAllocator only provides an alignment of [{}].",
+            .{
+                @typeName(in_type),
+                @alignOf(in_type),
+                EcsAllocator.Alignment,
+            },
+        );
+        @compileError(message);
+    }
+
     return struct {
         var id: id_t = 0;
     };
