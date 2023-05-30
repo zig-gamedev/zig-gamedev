@@ -817,8 +817,7 @@ const EcsAllocator = struct {
         size: usize,
     };
 
-    const Alignment = 128;
-    const AllocationHeaderSize = Alignment;
+    const Alignment = 16;
 
     var gpa: ?std.heap.GeneralPurposeAllocator(.{}) = null;
     var allocator: ?std.mem.Allocator = null;
@@ -828,7 +827,7 @@ const EcsAllocator = struct {
             return null;
         }
 
-        var allocation_size = AllocationHeaderSize + @intCast(usize, size);
+        var allocation_size = Alignment + @intCast(usize, size);
 
         var data = allocator.?.alignedAlloc(u8, Alignment, allocation_size) catch {
             return null;
@@ -841,14 +840,14 @@ const EcsAllocator = struct {
 
         allocation_header.size = allocation_size;
 
-        return data.ptr + AllocationHeaderSize;
+        return data.ptr + Alignment;
     }
 
     fn free(ptr: ?*anyopaque) callconv(.C) void {
         if (ptr == null) {
             return;
         }
-        var ptr_unwrapped = @ptrCast([*]u8, ptr.?) - AllocationHeaderSize;
+        var ptr_unwrapped = @ptrCast([*]u8, ptr.?) - Alignment;
         var allocation_header = @ptrCast(
             *AllocationHeader,
             @alignCast(Alignment, ptr_unwrapped),
@@ -867,7 +866,7 @@ const EcsAllocator = struct {
             return alloc(size);
         }
 
-        var ptr_unwrapped = @ptrCast([*]u8, old.?) - AllocationHeaderSize;
+        var ptr_unwrapped = @ptrCast([*]u8, old.?) - Alignment;
 
         var allocation_header = @ptrCast(
             *AllocationHeader,
@@ -878,7 +877,7 @@ const EcsAllocator = struct {
         const old_slice = @ptrCast([*]u8, ptr_unwrapped)[0..old_allocation_size];
         const old_slice_aligned = @alignCast(Alignment, old_slice);
 
-        const new_allocation_size = AllocationHeaderSize + @intCast(usize, size);
+        const new_allocation_size = Alignment + @intCast(usize, size);
         var new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
             return null;
         };
@@ -886,7 +885,7 @@ const EcsAllocator = struct {
         var new_allocation_header = @ptrCast(*AllocationHeader, @alignCast(Alignment, new_data.ptr));
         new_allocation_header.size = new_allocation_size;
 
-        return new_data.ptr + AllocationHeaderSize;
+        return new_data.ptr + Alignment;
     }
 
     fn calloc(size: i32) callconv(.C) ?*anyopaque {

@@ -291,7 +291,7 @@ test "zflecs.try_different_alignments" {
     const world = ecs.init();
     defer _ = ecs.fini(world);
 
-    const AlignmentsToTest = [_]usize{ 8, 16, 32, 64, 128 };
+    const AlignmentsToTest = [_]usize{ 1, 2, 4, 8, 16 };
     inline for (AlignmentsToTest) |component_alignment| {
         const AlignedComponent = struct {
             fn Component(comptime alignment: usize) type {
