@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const builtin = @import("builtin");
 
 pub const ftime_t = f32;
 pub const size_t = i32;
@@ -824,7 +825,9 @@ fn flecs_abort() callconv(.C) noreturn {
 //
 //--------------------------------------------------------------------------------------------------
 pub fn init() *world_t {
-    os.ecs_os_api.abort_ = flecs_abort;
+    if (builtin.os.tag == .windows) {
+        os.ecs_os_api.abort_ = flecs_abort;
+    }
 
     assert(num_worlds == 0);
     num_worlds += 1;
