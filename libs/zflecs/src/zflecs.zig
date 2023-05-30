@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const builtin = @import("builtin");
 
 pub const ftime_t = f32;
 pub const size_t = i32;
@@ -811,12 +812,23 @@ pub const world_info_t = extern struct {
     },
     name_prefix: [*:0]const u8,
 };
+
+fn flecs_abort() callconv(.C) noreturn {
+    std.debug.dumpCurrentStackTrace(@returnAddress());
+    @breakpoint();
+    std.os.exit(1);
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // Creation & Deletion
 //
 //--------------------------------------------------------------------------------------------------
 pub fn init() *world_t {
+    if (builtin.os.tag == .windows) {
+        os.ecs_os_api.abort_ = flecs_abort;
+    }
+
     assert(num_worlds == 0);
     num_worlds += 1;
     component_ids_hm.ensureTotalCapacity(32) catch @panic("OOM");
