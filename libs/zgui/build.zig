@@ -67,6 +67,7 @@ pub fn package(
 
     if (target.getCpuArch() == .wasm32 and target.getOsTag() == .freestanding) {
         zgui_c_cpp.defineCMacro("IMGUI_DISABLE_FILE_FUNCTIONS", null);
+        zgui_c_cpp.defineCMacro("IMGUI_WGSL", null); // custom macro to use WGSL instead of spir-v shader, can be discarded once imgui is updated
         zgui_c_cpp.stack_protector = false;
         zgui_c_cpp.disable_stack_probing = true;
     }

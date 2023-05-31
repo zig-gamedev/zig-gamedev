@@ -1958,8 +1958,7 @@ pub const Device = *opaque {
     ) void;
 
     pub inline fn tick(device: Device) void {
-        if (emscripten) emscripten_sleep(1) // requires -sASYNCIFY
-        else wgpuDeviceTick(device);
+        wgpuDeviceTick(device);
     }
     extern fn wgpuDeviceTick(device: Device) void;
 
@@ -2827,4 +2826,3 @@ pub const TextureView = *opaque {
 };
 
 const emscripten = @import("zgpu_options").emscripten;
-extern fn emscripten_sleep(ms: u32) void;

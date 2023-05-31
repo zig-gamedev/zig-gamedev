@@ -6,7 +6,7 @@ const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 const zm = @import("zmath");
 
-const build_options =  @import("build_options");
+const build_options = @import("build_options");
 const content_dir = build_options.content_dir;
 const emscripten = build_options.emscripten;
 const window_title = "zig-gamedev: triangle (wgpu)";
@@ -15,7 +15,6 @@ pub const std_options = struct {
     // pub const log_level = .info;
     pub const logFn = if (emscripten) emscriptenLog else std.log.defaultLog;
 };
-
 
 // zig fmt: off
 const wgsl_vs =
@@ -178,6 +177,10 @@ fn draw(demo: *DemoState) void {
     const fb_height = gctx.swapchain_descriptor.height;
     const t = @floatCast(f32, gctx.stats.time);
 
+    if (!gctx.canRender()) {
+        std.log.err("Can't render out of buffers!", .{});
+    }
+
     const cam_world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0),
         zm.f32x4(0.0, 0.0, 0.0, 1.0),
@@ -282,6 +285,7 @@ fn draw(demo: *DemoState) void {
     gctx.submit(&.{commands});
 
     if (gctx.present() == .swap_chain_resized) {
+        std.log.info("resize framebuffer", .{});
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texture_view);
         gctx.destroyResource(demo.depth_texture);
@@ -313,43 +317,68 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .texture = texture, .view = view };
 }
 
+pub const GPA = if (emscripten) EmmalocAllocator else std.heap.GeneralPurposeAllocator(.{});
+pub const MainState = struct {
+    is_init: bool = false, // main fully initialized
+    window: *zglfw.Window = undefined,
+    gpa: GPA = undefined,
+    demo: DemoState = undefined,
+};
+pub var main_state: MainState = .{};
+
+// still main should cleans up with errdefer, but if all goes well this cleans up successfully init state
+pub fn mainDeinit() void {
+    if (!main_state.is_init) return;
+    const allocator = main_state.gpa.allocator();
+    zgui.backend.deinit();
+    zgui.deinit();
+    deinit(allocator, &main_state.demo);
+    main_state.window.destroy();
+    zglfw.terminate();
+    _ = main_state.gpa.deinit();
+}
+
 pub fn main() !void {
+    defer if (!emscripten) mainDeinit();
+
     zglfw.init() catch {
         std.log.err("Failed to initialize GLFW library.", .{});
         return;
     };
-    defer zglfw.terminate();
+    errdefer zglfw.terminate();
 
     // Change current working directory to where the executable is located.
-    if (!emscripten)
-    {
+    if (!emscripten) {
         var buffer: [1024]u8 = undefined;
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
         std.os.chdir(path) catch {};
     }
 
     if (emscripten) {
-        // by default emscripten initialises on window creation WebGL context 
-        // this flag skips context creation. otherwise we later can't create webgpu surface 
+        // by default emscripten initializes on window creation WebGL context
+        // this flag skips context creation. otherwise we later can't create webgpu surface
         zglfw.WindowHint.set(.client_api, @enumToInt(zglfw.ClientApi.no_api));
-    } 
+    }
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch |err| {
         std.log.err("Failed to create demo window. {}", .{err});
         return;
     };
-    defer window.destroy();
+    errdefer window.destroy();
+    main_state.window = window;
     window.setSizeLimits(400, 400, -1, -1);
 
-    var gpa = if (emscripten) EmmalocAllocator{} else std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = if (!emscripten) gpa.deinit();
+    main_state.gpa = GPA{};
+    const gpa = &main_state.gpa;
+    errdefer _ = if (!emscripten) gpa.deinit();
 
     const allocator = gpa.allocator();
 
-    var demo = init(allocator, window) catch |err| {
+    main_state.demo = init(allocator, window) catch |err| {
         std.log.err("Failed to initialize the demo. {}", .{err});
         return;
     };
-    defer deinit(allocator, &demo);
+    errdefer deinit(allocator, &main_state.demo);
+    const demo = &main_state.demo;
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
@@ -357,11 +386,11 @@ pub fn main() !void {
     };
 
     zgui.init(allocator);
-    defer zgui.deinit();
+    errdefer zgui.deinit();
 
     if (emscripten) {
         zgui.io.setIniFilename(null);
-        // todo: font - embed and load from wasm memory? 
+        // todo: font - embed and load from wasm memory?
     }
     //_ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
 
@@ -370,17 +399,37 @@ pub fn main() !void {
         demo.gctx.device,
         @enumToInt(zgpu.GraphicsContext.swapchain_format),
     );
-    defer zgui.backend.deinit();
+    errdefer zgui.backend.deinit();
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 
-    while (!window.shouldClose() and window.getKey(.escape) != .press) {
-        zglfw.pollEvents();
-        update(&demo);
-        draw(&demo);
+    main_state.is_init = true;
+    if (!emscripten) {
+        while (!window.shouldClose() and window.getKey(.escape) != .press) {
+            tick();
+        }
+    } else {
+        const id = emscripten_request_animation_frame_loop(&tickCB, null);
+        _ = id;
     }
 }
 
+pub fn tick() void {
+    if (!main_state.demo.gctx.canRender()) {
+        std.log.err("can't render!", .{});
+        return;
+    }
+    zglfw.pollEvents();
+    update(&main_state.demo);
+    draw(&main_state.demo);
+}
+
+export fn tickCB(time: f64, user_data: ?*anyopaque) EmBool {
+    _ = user_data;
+    _ = time;
+    tick();
+    return .true; // return false to stop the loop
+}
 
 ///
 ///     Emscripten stuff
@@ -395,8 +444,8 @@ pub fn emscriptenLog(
     const prefix2 = if (scope == .default) ": " else "(" ++ @tagName(scope) ++ "): ";
     const prefix = level_txt ++ prefix2;
 
-    var buf : [1024*8]u8 = undefined;
-    var slice = std.fmt.bufPrint(buf[0..buf.len-1], prefix ++ format, args) catch {
+    var buf: [1024 * 8]u8 = undefined;
+    var slice = std.fmt.bufPrint(buf[0 .. buf.len - 1], prefix ++ format, args) catch {
         emscripten_console_error("emscriptenLog: formatting message failed - log message skipped!");
         return;
     };
@@ -408,17 +457,19 @@ pub fn emscriptenLog(
     }
 }
 
-pub const EmBool = enum(u32){
+pub const EmBool = enum(u32) {
     true = 1,
     false = 0,
 };
-pub const AnimationFrameCallback = *const fn (time: f64, user_data: ?*anyopaque) EmBool;
+// https://emscripten.org/docs/api_reference/html5.h.html#c.emscripten_request_animation_frame_loop
+pub const AnimationFrameCallback = *const fn (time: f64, user_data: ?*anyopaque) callconv(.C) EmBool;
 extern fn emscripten_request_animation_frame(cb: AnimationFrameCallback, user_data: ?*anyopaque) c_long;
 extern fn emscripten_cancel_animation_frame(requestAnimationFrameId: c_long) void;
 extern fn emscripten_request_animation_frame_loop(cb: AnimationFrameCallback, user_data: ?*anyopaque) void;
-extern fn emscripten_console_log(utf8_string : [*:0] const u8) void;
-extern fn emscripten_console_warn(utf8_string : [*:0] const u8) void;
-extern fn emscripten_console_error(utf8_string : [*:0] const u8) void;
+extern fn emscripten_console_log(utf8_string: [*:0]const u8) void;
+extern fn emscripten_console_warn(utf8_string: [*:0]const u8) void;
+extern fn emscripten_console_error(utf8_string: [*:0]const u8) void;
+extern fn emscripten_sleep(ms: u32) void;
 
 /// EmmalocAllocator allocator
 /// use with linker flag -sMALLOC=emmalloc
@@ -483,17 +534,17 @@ pub const EmmalocAllocator = struct {
 
 usingnamespace if (@import("builtin").cpu.arch == .wasm32) struct {
     // GLFW - emscripten uses older version that doesn't have these functions - implement dummies
-    // use glfwSetCallback instead
+    /// use glfwSetCallback instead
     pub export fn glfwGetError() i32 {
         return 0; // no error
     }
 
-    pub export fn glfwGetGamepadState(_ : i32, _ : ?*anyopaque) i32 {
+    pub export fn glfwGetGamepadState(_: i32, _: ?*anyopaque) i32 {
         return 0; // false - failure
     }
 
     pub export fn wgpuDeviceTick() void {
-        std.log.warn("wgpuDeviceTick() is not supported on web - use requestAnimationFrame() with callback!", .{});
+        std.log.warn("use of device.tick() should be avoided! It can break if used with callbacks such as requestAnimationFrame etc.", .{});
+        emscripten_sleep(1); // requires -sASYNCIFY
     }
-} else struct{};
-
+} else struct {};

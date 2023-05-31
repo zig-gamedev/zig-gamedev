@@ -13,6 +13,7 @@ const zglfw = @import("zglfw");
 const wgsl = @import("common_wgsl.zig");
 const zgpu_options = @import("zgpu_options");
 pub const wgpu = @import("wgpu.zig");
+pub const slog = std.log.scoped(.zgpu); // scoped log that can be comptime processed in main logger
 
 comptime {
     _ = @import("binding_tests.zig");
@@ -72,7 +73,7 @@ pub const GraphicsContext = struct {
 
         checkGraphicsApiSupport() catch |err| switch (err) {
             error.VulkanNotSupported => {
-                std.log.err("\n" ++
+                slog.err("\n" ++
                     \\---------------------------------------------------------------------------
                     \\
                     \\This program requires:
@@ -126,12 +127,14 @@ pub const GraphicsContext = struct {
 
             if (emscripten) {
                 // wait for response. requires emscripten `-sASYNC` flag
-                // otherwise whole api would need to be changed in a way that allows whole program to return from main and wait to js to call back 
+                // otherwise whole api would need to be changed in a way that allows whole program to return from main and wait to js to call back
+                slog.debug("wait for instance.requestAdapter...", .{});
                 while (response.status == .unknown) emscripten_sleep(5);
+                slog.debug("{}", .{response.status});
             }
 
             if (response.status != .success) {
-                std.log.err("Failed to request GPU adapter (status: {s}).", .{@tagName(response.status)});
+                slog.err("Failed to request GPU adapter (status: {s}).", .{@tagName(response.status)});
                 return error.NoGraphicsAdapter;
             }
             break :adapter response.adapter;
@@ -141,11 +144,11 @@ pub const GraphicsContext = struct {
         var properties: wgpu.AdapterProperties = undefined;
         properties.next_in_chain = null;
         adapter.getProperties(&properties);
-        std.log.info("[zgpu] High-performance device has been selected:", .{});
-        std.log.info("[zgpu]   Name: {s}", .{properties.name});
-        std.log.info("[zgpu]   Driver: {s}", .{properties.driver_description});
-        std.log.info("[zgpu]   Adapter type: {s}", .{@tagName(properties.adapter_type)});
-        std.log.info("[zgpu]   Backend type: {s}", .{@tagName(properties.backend_type)});
+        slog.info("High-performance device has been selected:", .{});
+        slog.info("  Name: {s}", .{properties.name});
+        slog.info("  Driver: {s}", .{properties.driver_description});
+        slog.info("  Adapter type: {s}", .{@tagName(properties.adapter_type)});
+        slog.info("  Backend type: {s}", .{@tagName(properties.backend_type)});
 
         const device = device: {
             const Response = struct {
@@ -188,12 +191,14 @@ pub const GraphicsContext = struct {
 
             if (emscripten) {
                 // wait for response. requires emscripten `-sASYNC` flag
-                // otherwise whole api would need to be changed in a way that allows whole program to return from main and wait to js to call back 
+                // otherwise whole api would need to be changed in a way that allows whole program to return from main and wait to js to call back
+                slog.debug("wait for adapter.requestDevice...", .{});
                 while (response.status == .unknown) emscripten_sleep(5);
+                slog.debug("{}", .{response.status});
             }
 
             if (response.status != .success) {
-                std.log.err("Failed to request GPU device (status: {s}).", .{@tagName(response.status)});
+                slog.err("Failed to request GPU device (status: {s}).", .{@tagName(response.status)});
                 return error.NoGraphicsDevice;
             }
             break :device response.device;
@@ -295,13 +300,14 @@ pub const GraphicsContext = struct {
         const offset = gctx.uniforms.offset;
         const aligned_size = (size + (uniforms_alloc_alignment - 1)) & ~(uniforms_alloc_alignment - 1);
         if ((offset + aligned_size) >= uniforms_buffer_size) {
-            std.log.err("[zgpu] Uniforms buffer size is too small. " ++
+            slog.err("Uniforms buffer size is too small. " ++
                 "Consider increasing 'zgpu.BuildOptions.uniforms_buffer_size' constant.", .{});
             return .{ .slice = @as([*]T, undefined)[0..0], .offset = 0 };
         }
 
         const current = gctx.uniforms.stage.current;
-        const slice = (gctx.uniforms.stage.buffers[current].slice.?.ptr + offset)[0..size];
+        const buf_ptr = (gctx.uniforms.stage.buffers[current].slice.?.ptr + offset);
+        const slice = (buf_ptr)[0..size];
 
         gctx.uniforms.offset += aligned_size;
         return .{
@@ -330,15 +336,10 @@ pub const GraphicsContext = struct {
         const usb = @ptrCast(*UniformsStagingBuffer, @alignCast(@sizeOf(usize), userdata));
         assert(usb.slice == null);
         if (status == .success) {
-            if (emscripten) {
-                // mapAsync min alignment is 8 but we need 16 for `uniformsAllocate`
-                usb.slice = std.mem.alignInSlice(usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size).?, 16);
-            } else {
-                usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size).?;
-                assert(@ptrToInt(usb.slice.?.ptr) % 16 == 0);
-            }
+            usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size).?;
+            if (emscripten) assert(@ptrToInt(usb.slice.?.ptr) % 16 == 0); // see: https://github.com/emscripten-core/emscripten/pull/19477/commits/f4bb4f578131578cd13abbbf78d7f4273788d76f
         } else {
-            std.log.err("[zgpu] Failed to map buffer (status: {s}).", .{@tagName(status)});
+            slog.err("Failed to map buffer (status: {s}).", .{@tagName(status)});
         }
     }
 
@@ -367,8 +368,16 @@ pub const GraphicsContext = struct {
         }
 
         if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
+            if (emscripten) {
+                // we can't block in requestAnimationFrame
+                slog.warn("uniformsNextStagingBuffer: Out of buffers! canRender() must be checked next frame, otherwise we will crash!", .{});
+                return; // use canRender() to check each frame if buffer is available
+            }
             // Wait until one of the buffers is mapped and ready to use.
             while (true) {
+                if (emscripten) {
+                    slog.err("uniformsNextStagingBuffer is out of buffers!", .{});
+                }
                 gctx.device.tick();
 
                 i = 0;
@@ -383,6 +392,7 @@ pub const GraphicsContext = struct {
 
         assert(gctx.uniforms.stage.num < uniforms_staging_pipeline_len);
         const current = gctx.uniforms.stage.num;
+        if (emscripten) slog.debug("Adding staging uniform buffer: {}", .{current});
         gctx.uniforms.stage.current = current;
         gctx.uniforms.stage.num += 1;
 
@@ -444,7 +454,7 @@ pub const GraphicsContext = struct {
         const gpu_frame_number = @ptrCast(*usize, @alignCast(@sizeOf(usize), userdata));
         gpu_frame_number.* += 1;
         if (status != .success) {
-            std.log.err("[zgpu] Failed to complete GPU work (status: {s}).", .{@tagName(status)});
+            slog.err("Failed to complete GPU work (status: {s}).", .{@tagName(status)});
         }
     }
 
@@ -465,8 +475,8 @@ pub const GraphicsContext = struct {
 
                 gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
 
-                std.log.info(
-                    "[zgpu] Window has been resized to: {d}x{d}.",
+                slog.info(
+                    "Window has been resized to: {d}x{d}.",
                     .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
                 );
                 return .swap_chain_resized;
@@ -474,6 +484,23 @@ pub const GraphicsContext = struct {
         }
 
         return .normal_execution;
+    }
+
+    pub fn canRender(gctx: *GraphicsContext) bool {
+        if (emscripten) {
+            if (gctx.uniforms.stage.buffers[gctx.uniforms.stage.current].slice == null) {
+                var i: u32 = 0;
+                while (i < gctx.uniforms.stage.num) : (i += 1) {
+                    if (gctx.uniforms.stage.buffers[i].slice != null) {
+                        gctx.uniforms.stage.current = i;
+                        return true;
+                    }
+                }
+                slog.err("Out of uniform buffers, frame must be skipped!", .{});
+                return false;
+            }
+        }
+        return true;
     }
 
     //
@@ -581,8 +608,8 @@ pub const GraphicsContext = struct {
                     .{ .gpuobj = pipeline, .pipeline_layout_handle = op.pipeline_layout },
                 );
             } else {
-                std.log.err(
-                    "[zgpu] Failed to async create render pipeline (status: {s}, message: {?s}).",
+                slog.err(
+                    "Failed to async create render pipeline (status: {s}, message: {?s}).",
                     .{ @tagName(status), message },
                 );
             }
@@ -642,8 +669,8 @@ pub const GraphicsContext = struct {
                     .{ .gpuobj = pipeline, .pipeline_layout_handle = op.pipeline_layout },
                 );
             } else {
-                std.log.err(
-                    "[zgpu] Failed to async create compute pipeline (status: {s}, message: {?s}).",
+                slog.err(
+                    "Failed to async create compute pipeline (status: {s}, message: {?s}).",
                     .{ @tagName(status), message },
                 );
             }
@@ -1064,7 +1091,7 @@ extern fn dnGetProcs() DawnProcsTable;
 // Defined in Dawn codebase
 extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
 
-extern fn emscripten_sleep(ms : u32) void;
+extern fn emscripten_sleep(ms: u32) void;
 
 pub usingnamespace if (emscripten) struct {
     pub export fn dniCreate() DawnNativeInstance {
@@ -1566,7 +1593,7 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
         display: *anyopaque,
         window: u32,
     },
-    canvas_html : struct {
+    canvas_html: struct {
         label: ?[*:0]const u8 = null,
         selector: [*:0]const u8,
     }
@@ -1610,8 +1637,8 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.S
     } else if (emscripten) SurfaceDescriptor{
         .canvas_html = .{
             .label = "basic surface",
-            .selector = "#canvas", // TODO: can this be somehow be exposed through api?
-        }
+            .selector = "#canvas", // TODO: can this be somehow exposed through api?
+        },
     } else unreachable;
 
     return switch (descriptor) {
@@ -1656,7 +1683,7 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.S
                 .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
                 .label = if (src.label) |l| l else null,
             });
-        }
+        },
     };
 }
 
@@ -1712,12 +1739,12 @@ fn logUnhandledError(
 ) callconv(.C) void {
     _ = userdata;
     switch (err_type) {
-        .no_error => std.log.info("[zgpu] No error: {?s}", .{message}),
-        .validation => std.log.err("[zgpu] Validation: {?s}", .{message}),
-        .out_of_memory => std.log.err("[zgpu] Out of memory: {?s}", .{message}),
-        .device_lost => std.log.err("[zgpu] Device lost: {?s}", .{message}),
-        .internal => std.log.err("[zgpu] Internal error: {?s}", .{message}),
-        .unknown => std.log.err("[zgpu] Unknown error: {?s}", .{message}),
+        .no_error => slog.info("No error: {?s}", .{message}),
+        .validation => slog.err("Validation: {?s}", .{message}),
+        .out_of_memory => slog.err("Out of memory: {?s}", .{message}),
+        .device_lost => slog.err("Device lost: {?s}", .{message}),
+        .internal => slog.err("Internal error: {?s}", .{message}),
+        .unknown => slog.err("Unknown error: {?s}", .{message}),
     }
 
     // Exit the process for easier debugging.
