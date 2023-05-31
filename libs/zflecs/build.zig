@@ -30,6 +30,7 @@ pub fn package(
     zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
         "-fno-sanitize=undefined",
         "-DFLECS_NO_CPP",
+        "-DFLECS_USE_OS_ALLOC",
         if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
     });
 
