@@ -38,7 +38,7 @@ pub fn package(
     const zgui_options = step.createModule();
 
     const zgui = b.createModule(.{
-        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
         .dependencies = &.{
             .{ .name = "zgui_options", .module = zgui_options },
         },
