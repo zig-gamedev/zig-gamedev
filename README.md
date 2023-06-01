@@ -17,7 +17,6 @@ git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
-
 ## Quick start (D3D12)
 
 To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, for example:
