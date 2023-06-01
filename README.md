@@ -26,7 +26,7 @@ To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, 
 git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
 ```
 
-Currently we have minimal low-level API which allows you to build the lib once `package()` and link it with many executables `link()`.
+Currently we have minimal low-level API which allows you to build the lib once (`package()`) and link it with many executables (`link()`).
 
 Include neccessary libraries in `build.zig` like:
 
@@ -42,7 +42,7 @@ zwin32_pkg.link(exe, .{ .d3d12 = true });
 ```
 
 <details>
-<summary>Example `build.zig`:</summary>
+<summary>Example build script:</summary>
 
 ```zig
 const std = @import("std");
