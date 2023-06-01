@@ -18,6 +18,86 @@ cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 
+## Quick start
+
+To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, for example:
+
+```sh
+git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
+```
+
+Currently we have minimal low-level API which allows you to build the lib once `package()` and link it with many executables `link()`
+
+Include neccessary libraries in `build.zig` like:
+
+```zig
+const zwin32 = @import("src/deps/zig-gamedev/libs/zwin32/build.zig");
+```
+
+Package it:
+
+```zig
+const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+```
+
+And link:
+
+```zig
+zwin32_pkg.link(exe, .{ .d3d12 = true });
+```
+
+Finished example of build.zig:
+
+```zig
+const std = @import("std");
+const zwin32 = @import("libs/zig-gamedev/libs/zwin32/build.zig");
+const common = @import("libs/zig-gamedev/libs/common/build.zig");
+const zd3d12 = @import("libs/zig-gamedev/libs/zd3d12/build.zig");
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+
+    const optimize = b.standardOptimizeOption(.{});
+
+    const exe = b.addExecutable(.{
+        .name = "example",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    b.installArtifact(exe);
+
+    const run_cmd = b.addRunArtifact(exe);
+
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+
+    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+    const zd3d12_pkg = zd3d12.package(b, target, optimize, .{
+        .options = .{
+            .enable_debug_layer = false,
+            .enable_gbv = false,
+            .enable_d2d = true,
+        },
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    });
+    const common_d2d_pkg = common.package(b, target, optimize, .{
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
+    });
+
+    zwin32_pkg.link(exe, .{ .d3d12 = true });
+    zd3d12_pkg.link(exe);
+    common_d2d_pkg.link(exe);
+
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
+}
+```
+
 ## Libraries
 Library | Latest version | Description
 ------- | --------- | ---------------
