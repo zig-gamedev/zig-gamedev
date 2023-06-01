@@ -18,7 +18,7 @@ cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 
-## Quick start
+## Quick start (D3D12)
 
 To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, for example:
 
@@ -26,27 +26,23 @@ To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, 
 git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
 ```
 
-Currently we have minimal low-level API which allows you to build the lib once `package()` and link it with many executables `link()`
+Currently we have minimal low-level API which allows you to build the lib once `package()` and link it with many executables `link()`.
 
 Include neccessary libraries in `build.zig` like:
 
 ```zig
+// Fetch the library
 const zwin32 = @import("src/deps/zig-gamedev/libs/zwin32/build.zig");
-```
 
-Package it:
-
-```zig
+// Build it
 const zwin32_pkg = zwin32.package(b, target, optimize, .{});
-```
 
-And link:
-
-```zig
+// Link with your app
 zwin32_pkg.link(exe, .{ .d3d12 = true });
 ```
 
-Finished example of build.zig:
+<details>
+<summary>Example `build.zig`:</summary>
 
 ```zig
 const std = @import("std");
@@ -97,6 +93,7 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 }
 ```
+</details>
 
 ## Libraries
 Library | Latest version | Description
