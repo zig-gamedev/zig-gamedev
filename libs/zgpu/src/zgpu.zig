@@ -370,14 +370,11 @@ pub const GraphicsContext = struct {
         if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
             if (emscripten) {
                 // we can't block in requestAnimationFrame
-                slog.warn("uniformsNextStagingBuffer: Out of buffers! canRender() must be checked next frame, otherwise we will crash!", .{});
+                slog.debug("uniformsNextStagingBuffer: Out of buffers! canRender() must be checked next frame, otherwise we will crash!", .{});
                 return; // use canRender() to check each frame if buffer is available
             }
             // Wait until one of the buffers is mapped and ready to use.
             while (true) {
-                if (emscripten) {
-                    slog.err("uniformsNextStagingBuffer is out of buffers!", .{});
-                }
                 gctx.device.tick();
 
                 i = 0;
@@ -1080,8 +1077,8 @@ pub const GraphicsContext = struct {
 };
 
 // Defined in dawn.cpp
-const DawnNativeInstance = if (emscripten) *allowzero opaque {} else ?*opaque {};
-const DawnProcsTable = if (emscripten) *allowzero opaque {} else ?*opaque {};
+const DawnNativeInstance = ?*opaque {};
+const DawnProcsTable = ?*opaque {};
 extern fn dniCreate() DawnNativeInstance;
 extern fn dniDestroy(dni: DawnNativeInstance) void;
 extern fn dniGetWgpuInstance(dni: DawnNativeInstance) wgpu.Instance;

@@ -330,7 +330,7 @@ static void SafeRelease(FrameResources& res)
     SafeRelease(res.VertexBufferHost);
 }
 
-#ifdef IMGUI_WGSL
+#ifdef __EMSCRIPTEN__
 static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(const char* source_data) {
     WGPUShaderModuleWGSLDescriptor wgsl_desc = {};
     wgsl_desc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
@@ -648,7 +648,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects(void)
     graphics_pipeline_desc.layout = nullptr; // Use automatic layout generation
 
     // Create the vertex shader
-    #ifdef IMGUI_WGSL
+    #ifdef __EMSCRIPTEN__
     WGPUProgrammableStageDescriptor vertex_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_vert_wgsl);
     #else
     WGPUProgrammableStageDescriptor vertex_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__glsl_shader_vert_spv, sizeof(__glsl_shader_vert_spv) / sizeof(uint32_t));
@@ -674,7 +674,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects(void)
     graphics_pipeline_desc.vertex.buffers = buffer_layouts;
 
     // Create the pixel shader
-    #ifdef IMGUI_WGSL
+    #ifdef __EMSCRIPTEN__
     WGPUProgrammableStageDescriptor pixel_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_frag_wgsl);
     #else
     WGPUProgrammableStageDescriptor pixel_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__glsl_shader_frag_spv, sizeof(__glsl_shader_frag_spv) / sizeof(uint32_t));

@@ -9,6 +9,7 @@ pub const Backend = enum {
 pub const Options = struct {
     backend: Backend,
     shared: bool = false,
+    emscripten: bool = false,
 };
 
 pub const Package = struct {
@@ -47,7 +48,7 @@ pub fn package(
     const zgui_c_cpp = if (args.options.shared) blk: {
         const lib = b.addSharedLibrary(.{
             .name = "zgui",
-            .target = target,
+            .target = if (args.options.emscripten) std.zig.CrossTarget.parse(.{ .arch_os_abi = "wasm32-emscripten" }) catch unreachable else target,
             .optimize = optimize,
         });
 
@@ -65,9 +66,13 @@ pub fn package(
         .optimize = optimize,
     });
 
-    if (target.getCpuArch() == .wasm32 and target.getOsTag() == .freestanding) {
+    if (args.options.emscripten) {
         zgui_c_cpp.defineCMacro("IMGUI_DISABLE_FILE_FUNCTIONS", null);
-        zgui_c_cpp.defineCMacro("IMGUI_WGSL", null); // custom macro to use WGSL instead of spir-v shader, can be discarded once imgui is updated
+        zgui_c_cpp.defineCMacro("__EMSCRIPTEN__", null);
+        // TODO: read from enviroment or `emcc --version`
+        zgui_c_cpp.defineCMacro("__EMSCRIPTEN_major__", "3");
+        zgui_c_cpp.defineCMacro("__EMSCRIPTEN_minor__", "1");
+
         zgui_c_cpp.stack_protector = false;
         zgui_c_cpp.disable_stack_probing = true;
     }
@@ -75,8 +80,10 @@ pub fn package(
     zgui_c_cpp.addIncludePath(thisDir() ++ "/libs");
     zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
 
-    zgui_c_cpp.linkLibC();
-    zgui_c_cpp.linkLibCpp();
+    if (!args.options.emscripten) {
+        zgui_c_cpp.linkLibC();
+        zgui_c_cpp.linkLibCpp();
+    }
 
     const cflags = &.{"-fno-sanitize=undefined"};
 
@@ -94,8 +101,14 @@ pub fn package(
 
     switch (args.options.backend) {
         .glfw_wgpu => {
-            zgui_c_cpp.addIncludePath(thisDir() ++ "/../zglfw/libs/glfw/include");
-            zgui_c_cpp.addIncludePath(thisDir() ++ "/../zgpu/libs/dawn/include");
+            if (args.options.emscripten) {
+                const emsdk_path = b.env_map.get("EMSDK") orelse @panic("Failed to get emscripten SDK path, have you installed & sourced the SDK?");
+                const emscripten_include = b.pathJoin(&.{ emsdk_path, "upstream", "emscripten", "cache", "sysroot", "include" });
+                zgui_c_cpp.addSystemIncludePath(emscripten_include);
+            } else {
+                zgui_c_cpp.addIncludePath(thisDir() ++ "/../zglfw/libs/glfw/include");
+                zgui_c_cpp.addIncludePath(thisDir() ++ "/../zgpu/libs/dawn/include");
+            }
             zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
             zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", cflags);
         },

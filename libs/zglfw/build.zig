@@ -3,14 +3,16 @@ const std = @import("std");
 pub const Package = struct {
     zglfw: *std.Build.Module,
     zglfw_c_cpp: *std.Build.CompileStep,
+    options: Options,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.addModule("zglfw", pkg.zglfw);
 
         const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
+        if (pkg.options.emscripten) return;
+
         switch (host.os.tag) {
-            .freestanding => return,
             .windows => {},
             .macos => {
                 exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
@@ -37,6 +39,7 @@ pub const Package = struct {
 
 pub const Options = struct {
     shared: bool = false,
+    emscripten: bool = false,
 };
 
 pub fn package(
@@ -54,9 +57,10 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
 
-    if (target.getOs().tag == .freestanding) return .{
+    if (args.options.emscripten) return .{
         .zglfw = zglfw,
         .zglfw_c_cpp = undefined,
+        .options = args.options,
     };
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
@@ -170,6 +174,7 @@ pub fn package(
     return .{
         .zglfw = zglfw,
         .zglfw_c_cpp = zglfw_c_cpp,
+        .options = args.options,
     };
 }
 

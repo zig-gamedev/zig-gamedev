@@ -98,9 +98,9 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
 
     zmath_pkg = zmath.package(b, target, optimize, .{});
     zpool_pkg = zpool.package(b, target, optimize, .{});
-    zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    zglfw_pkg = zglfw.package(b, target, optimize, .{ .options = .{ .emscripten = options.emscripten } });
     zgui_pkg = zgui.package(b, target, optimize, .{
-        .options = .{ .backend = .glfw_wgpu },
+        .options = .{ .backend = .glfw_wgpu, .emscripten = options.emscripten },
     });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024, .emscripten = options.emscripten },
@@ -307,10 +307,10 @@ pub const Options = struct {
 
     zpix_enable: bool,
 
-    emscripten: bool,
+    emscripten: bool = false,
 };
 
-var install_options : ?Options = null;
+var install_options: ?Options = null;
 fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
     const emscripten = install_options != null and install_options.?.emscripten;
     // TODO: Problems with LTO on Windows.
@@ -502,16 +502,16 @@ inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn linkEmscripten(b: *std.Build, options : Options, exe: *std.Build.CompileStep) !*std.Build.Step.Run {
+pub fn linkEmscripten(b: *std.Build, options: Options, exe: *std.Build.CompileStep) !*std.Build.Step.Run {
     var ems_closure: ?[]const u8 = null;
     const emsdk_path = b.env_map.get("EMSDK") orelse @panic("Failed to get emscripten SDK path, have you installed & sourced the SDK?");
     const emscripten_include = b.pathJoin(&.{ emsdk_path, "upstream", "emscripten", "cache", "sysroot", "include" });
     exe.addSystemIncludePath(emscripten_include);
     exe.stack_protector = false;
     exe.disable_stack_probing = true;
+    exe.linkLibC();
 
     const emlink = b.addSystemCommand(&.{"emcc"});
-    //emlink.setEnvironmentVariable("EMPROFILE", "1");
     emlink.addArtifactArg(exe);
     for (exe.link_objects.items) |link_dependency| {
         switch (link_dependency) {
