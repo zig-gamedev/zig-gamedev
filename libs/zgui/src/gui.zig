@@ -4,7 +4,7 @@
 // named parameters and Zig style text formatting.
 //
 //--------------------------------------------------------------------------------------------------
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 6 };
+pub const version = @import("std").SemanticVersion{ .major = 1, .minor = 89, .patch = 6 };
 
 pub const plot = @import("plot.zig");
 pub const backend = switch (@import("zgui_options").backend) {
@@ -189,7 +189,13 @@ pub const io = struct {
         config: ?FontConfig,
         ranges: ?[*]const Wchar,
     ) Font {
-        return zguiIoAddFontFromMemoryWithConfig(fontdata.ptr, @intCast(i32, fontdata.len), size_pixels, if (config) |c| &c else null, ranges);
+        return zguiIoAddFontFromMemoryWithConfig(
+            fontdata.ptr,
+            @intCast(i32, fontdata.len),
+            size_pixels,
+            if (config) |c| &c else null,
+            ranges,
+        );
     }
     extern fn zguiIoAddFontFromMemoryWithConfig(
         font_data: *const anyopaque,
