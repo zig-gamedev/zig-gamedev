@@ -33,7 +33,7 @@ pub const HandleError = error{
 ///
 /// const GPA = std.heap.GeneralPurposeAllocator;
 /// var gpa = GPA(.{}){};
-/// var pool = try TestPool.initMaxCapacity(gpa.allocator());
+/// var pool = try TexturePool.initMaxCapacity(gpa.allocator());
 /// defer pool.deinit();
 ///
 /// // creating a texture and adding it to the pool returns a handle
@@ -44,6 +44,11 @@ pub const HandleError = error{
 /// // elsewhere, use the handle to get `obj` or `desc` as needed
 /// const obj = pool.getColumn(handle, .obj);
 /// const desc = pool.getColumn(handle, .desc);
+///
+/// // ...
+///
+/// // once the texture is no longer needed, release it.
+/// _ = pool.removeIfLive(handle);
 /// ```
 pub fn Pool(
     comptime index_bits: u8,
