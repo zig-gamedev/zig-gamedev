@@ -251,12 +251,12 @@ pub fn Pool(
         /// defined.
         pub fn clear(self: *Self) void {
             var ahandle = AddressableHandle{ .index = 0 };
-            for (self._curr_cycle) |cycle| {
+            for (self._curr_cycle, 0..) |cycle, i| {
                 if (isLiveCycle(cycle)) {
+                    ahandle.index = @intCast(AddressableIndex, i);
                     ahandle.cycle = cycle;
                     self.releaseAddressableHandleUnchecked(ahandle);
                 }
-                ahandle.index += 1;
             }
         }
 
