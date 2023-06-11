@@ -204,9 +204,11 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
 fn samplesEmscripten(b: *std.Build, options: Options) void {
     const triangle_wgpu_emscripten = @import("samples/triangle_wgpu_emscripten/build.zig");
     const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+    const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
 
     installEmscripten(b, triangle_wgpu_emscripten.buildEmscripten(b, options), "triangle_wgpu_emscripten");
     installEmscripten(b, gui_test_wgpu.buildEmscripten(b, options), "gui_test_wgpu");
+    installEmscripten(b, instanced_pills_wgpu.buildEmscripten(b, options), "instanced_pills_wgpu");
 }
 
 fn samplesWindowsLinux(b: *std.Build, options: Options) void {

@@ -7,6 +7,12 @@ const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 const zm = @import("zmath");
 const vertex_generator = @import("vertex_generator.zig");
+const zems = @import("zems");
+
+pub const std_options = struct {
+    // pub const log_level = .info;
+    pub const logFn = if (zems.is_emscripten) zems.emscriptenLog else std.log.defaultLog;
+};
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: instanced pills (wgpu)";
@@ -755,13 +761,19 @@ pub fn main() !void {
     };
     defer zglfw.terminate();
 
-    // Change current working directory to where the executable is located.
+    if (!zems.is_emscripten)
     {
+        // Change current working directory to where the executable is located.
         var buffer: [1024]u8 = undefined;
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
         std.os.chdir(path) catch {};
     }
 
+    if (zems.is_emscripten) {
+        // by default emscripten initializes on window creation WebGL context
+        // this flag skips context creation. otherwise we later can't create webgpu surface
+        zglfw.WindowHint.set(.client_api, @enumToInt(zglfw.ClientApi.no_api));
+    }
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch {
         std.log.err("Failed to create demo window.", .{});
         return;
@@ -769,8 +781,8 @@ pub fn main() !void {
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    var gpa = if (zems.is_emscripten) zems.EmmalocAllocator{} else std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = if (!zems.is_emscripten) gpa.deinit();
 
     const allocator = gpa.allocator();
 
@@ -781,8 +793,13 @@ pub fn main() !void {
     defer demo.deinit(allocator);
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
+        if (!demo.gctx.canRender()) {
+            std.log.info("canRender: frame skipped!", .{});
+            continue;
+        }
         zglfw.pollEvents();
         try demo.update(allocator);
         demo.draw();
+        if (zems.is_emscripten) zems.sleep(1);
     }
 }
