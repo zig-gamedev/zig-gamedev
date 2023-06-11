@@ -1012,3 +1012,20 @@ test "zglfw.basic" {
     try maybeError();
 }
 //--------------------------------------------------------------------------------------------------
+
+usingnamespace if (@import("builtin").target.os.tag == .emscripten or @import("builtin").target.os.tag == .freestanding) struct {
+    // GLFW - emscripten uses older version that doesn't have these functions - implement dummies
+    var glfwGetGamepadStateWarnPrinted: bool = false;
+    pub export fn glfwGetGamepadState(_: i32, _: ?*anyopaque) i32 {
+        if (!glfwGetGamepadStateWarnPrinted) {
+            std.log.err("glfwGetGamepadState(): not implemented! Use emscripten specific functions: https://emscripten.org/docs/api_reference/html5.h.html?highlight=gamepadstate#c.emscripten_get_gamepad_status", .{});
+            glfwGetGamepadStateWarnPrinted = true;
+        }
+        return 0; // false - failure
+    }
+
+    /// use glfwSetCallback instead
+    pub export fn glfwGetError() i32 {
+        return 0; // no error
+    }
+} else struct {};

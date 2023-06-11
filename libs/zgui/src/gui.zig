@@ -3055,12 +3055,12 @@ extern fn zguiIsKeyDown(key: Key) bool;
 var temp_buffer: ?std.ArrayList(u8) = null;
 
 pub fn format(comptime fmt: []const u8, args: anytype) []const u8 {
-    const len = std.fmt.count(fmt, args);
+    const len = @intCast(usize, std.fmt.count(fmt, args));
     if (len > temp_buffer.?.items.len) temp_buffer.?.resize(len + 64) catch unreachable;
     return std.fmt.bufPrint(temp_buffer.?.items, fmt, args) catch unreachable;
 }
 pub fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
-    const len = std.fmt.count(fmt ++ "\x00", args);
+    const len = @intCast(usize, std.fmt.count(fmt ++ "\x00", args));
     if (len > temp_buffer.?.items.len) temp_buffer.?.resize(len + 64) catch unreachable;
     return std.fmt.bufPrintZ(temp_buffer.?.items, fmt, args) catch unreachable;
 }

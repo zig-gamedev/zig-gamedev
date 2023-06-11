@@ -10,7 +10,7 @@ pub const Package = struct {
 
         const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
-        if (pkg.options.emscripten) return;
+        if (host.os.tag == .emscripten or host.os.tag == .freestanding) return; // emscripten
 
         switch (host.os.tag) {
             .windows => {},
@@ -39,7 +39,6 @@ pub const Package = struct {
 
 pub const Options = struct {
     shared: bool = false,
-    emscripten: bool = false,
 };
 
 pub fn package(
@@ -57,7 +56,10 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
 
-    if (args.options.emscripten) return .{
+    // currently at link stage freestanding target is assumed to be emscripten
+    // if non emscripten .freestanding target is being implemented then this needs to be changed
+    std.debug.assert(target.getOsTag() != .freestanding or target.getCpuArch() == .wasm32); 
+    if (target.getOsTag() == .emscripten) return .{
         .zglfw = zglfw,
         .zglfw_c_cpp = undefined,
         .options = args.options,

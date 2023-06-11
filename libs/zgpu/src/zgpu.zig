@@ -370,7 +370,7 @@ pub const GraphicsContext = struct {
         if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
             if (emscripten) {
                 // we can't block in requestAnimationFrame
-                slog.debug("uniformsNextStagingBuffer: Out of buffers! canRender() must be checked next frame, otherwise we will crash!", .{});
+                slog.warn("uniformsNextStagingBuffer: Out of buffers! canRender() must be checked next frame, otherwise we will crash!", .{});
                 return; // use canRender() to check each frame if buffer is available
             }
             // Wait until one of the buffers is mapped and ready to use.
@@ -493,7 +493,6 @@ pub const GraphicsContext = struct {
                         return true;
                     }
                 }
-                slog.err("Out of uniform buffers, frame must be skipped!", .{});
                 return false;
             }
         }
@@ -1791,3 +1790,14 @@ fn formatToShaderFormat(format: wgpu.TextureFormat) []const u8 {
 }
 
 const emscripten = @import("zgpu_options").emscripten;
+usingnamespace if (emscripten) struct {
+    // Missing symbols
+    var wgpuDeviceTickWarnPrinted : bool = false;
+    pub export fn wgpuDeviceTick() void {
+        if (!wgpuDeviceTickWarnPrinted) {
+            std.log.warn("wgpuDeviceTick(): this fn should be avoided! RequestAnimationFrame() is advised for smooth rendering in browser.", .{});
+            wgpuDeviceTickWarnPrinted = true;
+        }
+        emscripten_sleep(1);
+    }
+} else struct {};

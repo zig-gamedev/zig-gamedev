@@ -5,15 +5,16 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 const zm = @import("zmath");
+const zems = @import("zems");
 
 const build_options = @import("build_options");
 const content_dir = build_options.content_dir;
-const emscripten = build_options.emscripten;
+const emscripten = zems.is_emscripten;
 const window_title = "zig-gamedev: triangle (wgpu)";
 
 pub const std_options = struct {
     // pub const log_level = .info;
-    pub const logFn = if (emscripten) emscriptenLog else std.log.defaultLog;
+    pub const logFn = if (emscripten) zems.emscriptenLog else std.log.defaultLog;
 };
 
 // zig fmt: off
@@ -285,7 +286,7 @@ fn draw(demo: *DemoState) void {
     gctx.submit(&.{commands});
 
     if (gctx.present() == .swap_chain_resized) {
-        std.log.info("resize framebuffer", .{});
+        std.log.debug("resize framebuffer", .{});
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texture_view);
         gctx.destroyResource(demo.depth_texture);
@@ -317,7 +318,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .texture = texture, .view = view };
 }
 
-pub const GPA = if (emscripten) EmmalocAllocator else std.heap.GeneralPurposeAllocator(.{});
+pub const GPA = if (emscripten) zems.EmmalocAllocator else std.heap.GeneralPurposeAllocator(.{});
 pub const MainState = struct {
     is_init: bool = false, // main fully initialized
     window: *zglfw.Window = undefined,
@@ -404,12 +405,12 @@ pub fn main() !void {
     zgui.getStyle().scaleAllSizes(scale_factor);
 
     main_state.is_init = true;
-    if (!emscripten) {
+    if (comptime !emscripten) {
         while (!window.shouldClose() and window.getKey(.escape) != .press) {
             tick();
         }
     } else {
-        const id = emscripten_request_animation_frame_loop(&tickCB, null);
+        const id = zems.requestAnimationFrameLoop(&tickCB, null);
         _ = id;
     }
 }
@@ -424,127 +425,10 @@ pub fn tick() void {
     draw(&main_state.demo);
 }
 
-export fn tickCB(time: f64, user_data: ?*anyopaque) EmBool {
+export fn tickCB(time: f64, user_data: ?*anyopaque) zems.EmBool {
     _ = user_data;
     _ = time;
     tick();
     return .true; // return false to stop the loop
 }
 
-///
-///     Emscripten stuff
-///
-pub fn emscriptenLog(
-    comptime level: std.log.Level,
-    comptime scope: @TypeOf(.EnumLiteral),
-    comptime format: []const u8,
-    args: anytype,
-) void {
-    const level_txt = comptime level.asText();
-    const prefix2 = if (scope == .default) ": " else "(" ++ @tagName(scope) ++ "): ";
-    const prefix = level_txt ++ prefix2;
-
-    var buf: [1024 * 8]u8 = undefined;
-    var slice = std.fmt.bufPrint(buf[0 .. buf.len - 1], prefix ++ format, args) catch {
-        emscripten_console_error("emscriptenLog: formatting message failed - log message skipped!");
-        return;
-    };
-    buf[slice.len] = 0;
-    switch (level) {
-        .err => emscripten_console_error(@ptrCast([*:0]u8, slice.ptr)),
-        .warn => emscripten_console_warn(@ptrCast([*:0]u8, slice.ptr)),
-        else => emscripten_console_log(@ptrCast([*:0]u8, slice.ptr)),
-    }
-}
-
-pub const EmBool = enum(u32) {
-    true = 1,
-    false = 0,
-};
-// https://emscripten.org/docs/api_reference/html5.h.html#c.emscripten_request_animation_frame_loop
-pub const AnimationFrameCallback = *const fn (time: f64, user_data: ?*anyopaque) callconv(.C) EmBool;
-extern fn emscripten_request_animation_frame(cb: AnimationFrameCallback, user_data: ?*anyopaque) c_long;
-extern fn emscripten_cancel_animation_frame(requestAnimationFrameId: c_long) void;
-extern fn emscripten_request_animation_frame_loop(cb: AnimationFrameCallback, user_data: ?*anyopaque) void;
-extern fn emscripten_console_log(utf8_string: [*:0]const u8) void;
-extern fn emscripten_console_warn(utf8_string: [*:0]const u8) void;
-extern fn emscripten_console_error(utf8_string: [*:0]const u8) void;
-extern fn emscripten_sleep(ms: u32) void;
-
-/// EmmalocAllocator allocator
-/// use with linker flag -sMALLOC=emmalloc
-/// for details see docs: https://github.com/emscripten-core/emscripten/blob/main/system/lib/emmalloc.c
-extern fn emmalloc_memalign(alignment: usize, size: usize) ?[*]u8;
-extern fn emmalloc_realloc_try(ptr: ?[*]u8, size: usize) ?[*]u8;
-extern fn emmalloc_free(ptr: ?[*]u8) void;
-pub const EmmalocAllocator = struct {
-    const Self = @This();
-    dummy: u32 = undefined,
-
-    pub fn allocator(self: *Self) std.mem.Allocator {
-        return .{
-            .ptr = self,
-            .vtable = &.{
-                .alloc = &alloc,
-                .resize = &resize,
-                .free = &free,
-            },
-        };
-    }
-
-    fn alloc(
-        ctx: *anyopaque,
-        len: usize,
-        ptr_align_log2: u8,
-        return_address: usize,
-    ) ?[*]u8 {
-        _ = ctx;
-        _ = return_address;
-        const ptr_align: u32 = @intCast(u32, 1) << @intCast(u5, ptr_align_log2);
-        if (!std.math.isPowerOfTwo(ptr_align)) unreachable;
-        const ptr = emmalloc_memalign(ptr_align, len) orelse return null;
-        return @ptrCast([*]u8, ptr);
-    }
-
-    fn resize(
-        ctx: *anyopaque,
-        buf: []u8,
-        buf_align_log2: u8,
-        new_len: usize,
-        return_address: usize,
-    ) bool {
-        _ = ctx;
-        _ = return_address;
-        _ = buf_align_log2;
-        return emmalloc_realloc_try(buf.ptr, new_len) != null;
-    }
-
-    fn free(
-        ctx: *anyopaque,
-        buf: []u8,
-        buf_align_log2: u8,
-        return_address: usize,
-    ) void {
-        _ = ctx;
-        _ = buf_align_log2;
-        _ = return_address;
-        return emmalloc_free(buf.ptr);
-    }
-};
-
-usingnamespace if (@import("builtin").cpu.arch == .wasm32) struct {
-    // GLFW - emscripten uses older version that doesn't have these functions - implement dummies
-    /// use glfwSetCallback instead
-    pub export fn glfwGetError() i32 {
-        return 0; // no error
-    }
-
-    pub export fn glfwGetGamepadState(_: i32, _: ?*anyopaque) i32 {
-        return 0; // false - failure
-    }
-
-    pub export fn wgpuDeviceTick() void {
-        std.log.warn("use of device.tick() should be avoided! It can break if used with callbacks such as requestAnimationFrame etc.", .{});
-        emscripten_sleep(1); // requires -sASYNCIFY
-    }
-} else struct {};

@@ -11,8 +11,16 @@ fn assertStructBindings(zig_type: anytype, c_type: anytype) void {
         @compileLog("emscripten zgpu type has different size from webgpu.h type:", zig_type, c_type, @sizeOf(zig_type), @sizeOf(c_type));
         unreachable;
     }
-    // more checks? iterate struct fields?
-    // emscripten in .Debug mode asserts at runtime if required field is missing etc. but something always slips through
+    // slow to build tests that try to verify each struct field size and alignment to match between webgpu.h (either shipped with dawn or emscripten) and wgpu.zig
+    //     @setEvalBranchQuota(2000);
+    //     const zig_fields = @typeInfo(zig_type).Struct.fields;
+    //     const c_fields = @typeInfo(c_type).Struct.fields;
+    //     std.debug.assert(zig_fields.len == c_fields.len);
+    //     var i = 0; 
+    //     while (i<zig_fields.len) : (i+=1) {
+    //         std.debug.assert(zig_fields[i].alignment == c_fields[i].alignment);
+    //         std.debug.assert(@sizeOf(zig_fields[i].@"type") == @sizeOf(c_fields[i].@"type"));
+    //     }
 }
 
 comptime {

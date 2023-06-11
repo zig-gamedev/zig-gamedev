@@ -14,7 +14,7 @@ zig build triangle_wgpu_emscripten-run
 
 #### Compile
 ```bash
-zig build triangle_wgpu_emscripten -Demscripten -Dtarget=wasm32-freestanding
+zig build triangle_wgpu_emscripten -Dtarget=wasm32-emscripten
 ```
 See output under `zig-out\www\triangle_wgpu_emscripten`. It should contain:
 * index.html

@@ -2170,7 +2170,7 @@ pub const Queue = *opaque {
         queue: Queue,
         destination: *const ImageCopyTexture,
         data: *const anyopaque,
-        data_size: u64,
+        data_size: usize,
         data_layout: *const TextureDataLayout,
         write_size: *const Extent3D,
     ) void;
