@@ -624,15 +624,15 @@ pub const Renderer = opaque {
     pub fn copyF(
         r: *Renderer,
         tex: *Texture,
-        src: ?*const RectF,
-        dst: ?*const Rect,
+        src: ?*const Rect,
+        dst: ?*const RectF,
     ) !void {
         if (SDL_RenderCopyF(r, tex, src, dst) < 0) return makeError();
     }
     extern fn SDL_RenderCopyF(
         r: *Renderer,
         t: *Texture,
-        srcrect: ?*const RectF,
+        srcrect: ?*const Rect,
         dstrect: ?*const RectF,
     ) i32;
 
