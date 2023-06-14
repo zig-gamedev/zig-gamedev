@@ -210,8 +210,8 @@ pub const Window = opaque {
 pub const Rectangle = extern struct {
     x: i32,
     y: i32,
-    width: i32,
-    height: i32,
+    w: i32,
+    h: i32,
 
     pub fn hasIntersection(a: *const Rectangle, b: *const Rectangle) bool {
         return SDL_HasIntersection(a, b) == 1;
@@ -232,8 +232,8 @@ pub const Rectangle = extern struct {
 pub const RectangleF = extern struct {
     x: f32,
     y: f32,
-    width: f32,
-    height: f32,
+    w: f32,
+    h: f32,
 
     pub fn hasIntersection(a: *const Rectangle, b: *const Rectangle) bool {
         return SDL_HasIntersectionF(a, b);
@@ -753,20 +753,20 @@ pub const Renderer = opaque {
         num_indices: i32,
     ) i32;
 
-    pub fn setColor(r: *Renderer, color: Color) !void {
+    pub fn setDrawColor(r: *Renderer, color: Color) !void {
         if (SDL_SetRenderDrawColor(r, color.r, color.g, color.b, color.a) < 0) return makeError();
     }
 
-    pub fn setColorRGB(r: *Renderer, _r: u8, g: u8, b: u8) !void {
+    pub fn setDrawColorRGB(r: *Renderer, _r: u8, g: u8, b: u8) !void {
         if (SDL_SetRenderDrawColor(r, _r, g, b, 255) < 0) return makeError();
     }
 
-    pub fn setColorRGBA(r: *Renderer, _r: u8, g: u8, b: u8, a: u8) !void {
+    pub fn setDrawColorRGBA(r: *Renderer, _r: u8, g: u8, b: u8, a: u8) !void {
         if (SDL_SetRenderDrawColor(r, _r, g, b, a) < 0) return makeError();
     }
     extern fn SDL_SetRenderDrawColor(r: *Renderer, _r: u8, g: u8, b: u8, a: u8) i32;
 
-    pub fn getColor(r: *Renderer) !Color {
+    pub fn getDrawColor(r: *Renderer) !Color {
         var color: Color = undefined;
         if (SDL_GetRenderDrawColor(r, &color.r, &color.g, &color.b, &color.a) < 0) return makeError();
         return color;
