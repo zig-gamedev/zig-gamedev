@@ -272,7 +272,8 @@ pub const Size = extern struct {
 //
 //--------------------------------------------------------------------------------------------------
 const PixelType = enum(u32) {
-    index1 = 1,
+    none = 0,
+    index1,
     index4,
     index8,
     packed8,
@@ -285,11 +286,13 @@ const PixelType = enum(u32) {
     arrayf32,
 };
 const BitmapOrder = enum(u32) {
-    @"4321" = 1,
+    none = 0,
+    @"4321",
     @"1234",
 };
 const PackedOrder = enum(u32) {
-    xrgb = 1,
+    none = 0,
+    xrgb,
     rgbx,
     argb,
     rgba,
@@ -299,7 +302,8 @@ const PackedOrder = enum(u32) {
     bgra,
 };
 const ArrayOrder = enum(u32) {
-    rgb = 1,
+    none = 0,
+    rgb,
     rgba,
     argb,
     bgr,
@@ -307,7 +311,8 @@ const ArrayOrder = enum(u32) {
     abgr,
 };
 const PackedLayout = enum(u32) {
-    @"332" = 1,
+    none = 0,
+    @"332",
     @"4444",
     @"1555",
     @"5551",
@@ -333,6 +338,7 @@ fn definePixelFormat(
         .arrayu8, .arrayu16, .arrayu32, .arrayf16, .arrayf32 => {
             assert(@TypeOf(order) == ArrayOrder);
         },
+        .none => unreachable,
     }
     return ((1 << 28) | ((@enumToInt(_type)) << 24) | ((@enumToInt(order)) << 20) |
         ((layout) << 16) | ((bits) << 8) | ((bytes) << 0));
@@ -342,16 +348,12 @@ pub const PixelFormat = enum(u32) {
     index1msb = definePixelFormat(.index1, BitmapOrder.@"1234", 0, 1, 0),
     index4lsb = definePixelFormat(.index4, BitmapOrder.@"4321", 0, 4, 0),
     index4msb = definePixelFormat(.index4, BitmapOrder.@"1234", 0, 4, 0),
-    index8 = definePixelFormat(.index8, 0, 0, 8, 1),
+    index8 = definePixelFormat(.index8, BitmapOrder.none, 0, 8, 1),
     rgb332 = definePixelFormat(.packed8, PackedOrder.xrgb, @enumToInt(PackedLayout.@"332"), 8, 1),
     xrgb4444 = definePixelFormat(.packed16, PackedOrder.xrgb, @enumToInt(PackedLayout.@"4444"), 12, 2),
-    rgb444 = PixelFormat.xrgb4444,
     xbgr4444 = definePixelFormat(.packed16, PackedOrder.xbgr, @enumToInt(PackedLayout.@"4444"), 12, 2),
-    bgr444 = PixelFormat.xbgr4444,
     xrgb1555 = definePixelFormat(.packed16, PackedOrder.xrgb, @enumToInt(PackedLayout.@"1555"), 15, 2),
-    rgb555 = PixelFormat.xrgb1555,
     xbgr1555 = definePixelFormat(.packed16, PackedOrder.xbgr, @enumToInt(PackedLayout.@"1555"), 15, 2),
-    bgr555 = PixelFormat.xbgr1555,
     argb4444 = definePixelFormat(.packed16, PackedOrder.argb, @enumToInt(PackedLayout.@"4444"), 16, 2),
     rgba4444 = definePixelFormat(.packed16, PackedOrder.rgba, @enumToInt(PackedLayout.@"4444"), 16, 2),
     abgr4444 = definePixelFormat(.packed16, PackedOrder.abgr, @enumToInt(PackedLayout.@"4444"), 16, 2),
@@ -365,22 +367,14 @@ pub const PixelFormat = enum(u32) {
     rgb24 = definePixelFormat(.arrayu8, ArrayOrder.rgb, 0, 24, 3),
     bgr24 = definePixelFormat(.arrayu8, ArrayOrder.bgr, 0, 24, 3),
     xrgb8888 = definePixelFormat(.packed32, PackedOrder.xrgb, @enumToInt(PackedLayout.@"8888"), 24, 4),
-    rgb888 = PixelFormat.xrgb8888,
     rgbx8888 = definePixelFormat(.packed32, PackedOrder.rgbx, @enumToInt(PackedLayout.@"8888"), 24, 4),
     xbgr8888 = definePixelFormat(.packed32, PackedOrder.xbgr, @enumToInt(PackedLayout.@"8888"), 24, 4),
-    bgr888 = PixelFormat.xbgr8888,
     bgrx8888 = definePixelFormat(.packed32, PackedOrder.bgrx, @enumToInt(PackedLayout.@"8888"), 24, 4),
     argb8888 = definePixelFormat(.packed32, PackedOrder.argb, @enumToInt(PackedLayout.@"8888"), 32, 4),
     rgba8888 = definePixelFormat(.packed32, PackedOrder.rgba, @enumToInt(PackedLayout.@"8888"), 32, 4),
     abgr8888 = definePixelFormat(.packed32, PackedOrder.abgr, @enumToInt(PackedLayout.@"8888"), 32, 4),
     bgra8888 = definePixelFormat(.packed32, PackedOrder.bgra, @enumToInt(PackedLayout.@"8888"), 32, 4),
     argb2101010 = definePixelFormat(.packed32, PackedOrder.argb, @enumToInt(PackedLayout.@"2101010"), 32, 4),
-
-    // Aliases for RGBA byte arrays of color data, for the current platform
-    rgba32 = if (builtin.cpu.arch.endian() == .Big) PixelFormat.rgba8888 else PixelFormat.abgr8888,
-    argb32 = if (builtin.cpu.arch.endian() == .Big) PixelFormat.argb8888 else PixelFormat.bgra8888,
-    bgra32 = if (builtin.cpu.arch.endian() == .Big) PixelFormat.bgra8888 else PixelFormat.argb8888,
-    abgr32 = if (builtin.cpu.arch.endian() == .Big) PixelFormat.abgr8888 else PixelFormat.rgba8888,
 };
 
 pub const Access = enum(i32) {
