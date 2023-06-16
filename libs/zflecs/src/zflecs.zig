@@ -322,8 +322,8 @@ pub const term_t = extern struct {
     first: term_id_t = .{},
     second: term_id_t = .{},
 
-    inout: inout_kind_t = @intToEnum(inout_kind_t, 0),
-    oper: oper_kind_t = @intToEnum(oper_kind_t, 0),
+    inout: inout_kind_t = .InOutDefault,
+    oper: oper_kind_t = .And,
 
     id_flags: id_t = 0,
     name: ?[*:0]u8 = null,
