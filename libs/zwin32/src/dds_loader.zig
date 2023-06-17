@@ -742,11 +742,11 @@ fn getSurfaceInfo(
     if (format_data.bc) {
         var num_blocks_wide: u64 = 0;
         if (width > 0) {
-            num_blocks_wide = std.math.max(1, @divTrunc(@intCast(u64, width) + 3, 4));
+            num_blocks_wide = @max(1, @divTrunc(@intCast(u64, width) + 3, 4));
         }
         var num_blocks_high: u64 = 0;
         if (height > 0) {
-            num_blocks_high = std.math.max(1, @divTrunc(@intCast(u64, height) + 3, 4));
+            num_blocks_high = @max(1, @divTrunc(@intCast(u64, height) + 3, 4));
         }
         row_bytes = num_blocks_wide * format_data.bpe;
         num_rows = num_blocks_high;

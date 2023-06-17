@@ -61,7 +61,7 @@ pub fn Handle(
             "8, 16, 32, 64, 128, or 256 bits"),
     };
 
-    const field_bits = std.math.max(index_bits, cycle_bits);
+    const field_bits = @max(index_bits, cycle_bits);
 
     const utils = @import("utils.zig");
     const UInt = utils.UInt;
