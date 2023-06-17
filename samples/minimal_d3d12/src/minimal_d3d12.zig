@@ -150,8 +150,8 @@ pub fn main() !void {
             }
 
             if (rect.right != window_rect.right or rect.bottom != window_rect.bottom) {
-                rect.right = std.math.max(1, rect.right);
-                rect.bottom = std.math.max(1, rect.bottom);
+                rect.right = @max(1, rect.right);
+                rect.bottom = @max(1, rect.bottom);
                 std.log.info(
                     "Window resized to {d}x{d}",
                     .{ window_rect.right, window_rect.bottom },

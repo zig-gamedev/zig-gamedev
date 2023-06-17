@@ -300,7 +300,7 @@ pub fn JobQueue(
             // spawn up to (num_cpus - 1) threads
             var n: usize = 0;
             const num_cpus = Thread.getCpuCount() catch 2;
-            const num_threads_goal = std.math.min(num_cpus - 1, max_threads);
+            const num_threads_goal = @min(num_cpus - 1, max_threads);
             while (n < num_threads_goal) {
                 if (Thread.spawn(.{}, threadMain, .{ self, n })) |thread| {
                     nameThread(thread, "JobQueue[{}]", .{n});
