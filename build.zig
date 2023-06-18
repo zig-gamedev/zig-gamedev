@@ -1,13 +1,13 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.3652" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.3681" };
 
 pub fn build(b: *std.Build) void {
     //
     // Options and system checks
     //
-    //ensureZigVersion() catch return;
+    ensureZigVersion() catch return;
     const options = Options{
         .optimize = b.standardOptimizeOption(.{}),
         .target = b.standardTargetOptions(.{}),
@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
         ) orelse false,
         .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
     };
-    //ensureTarget(options.target) catch return;
+    ensureTarget(options.target) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
@@ -355,7 +355,7 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
 
             // If min. target macOS version is lesser than the min version we have available, then
             // our Dawn binary is incompatible with the target.
-            const min_available = std.SemanticVersion{ .major = 12, .minor = 0, .patch = 0 };
+            const min_available = std.builtin.Version{ .major = 12, .minor = 0, .patch = 0 };
             if (target.os.version_range.semver.min.order(min_available) == .lt) break :blk false;
             break :blk true;
         },
