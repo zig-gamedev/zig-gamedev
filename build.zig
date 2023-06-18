@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     //
     // Options and system checks
     //
-    ensureZigVersion() catch return;
+    //ensureZigVersion() catch return;
     const options = Options{
         .optimize = b.standardOptimizeOption(.{}),
         .target = b.standardTargetOptions(.{}),
@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
         ) orelse false,
         .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
     };
-    ensureTarget(options.target) catch return;
+    //ensureTarget(options.target) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
