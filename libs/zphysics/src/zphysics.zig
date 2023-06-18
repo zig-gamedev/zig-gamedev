@@ -579,6 +579,14 @@ pub const RRayCast = extern struct {
     origin: [4]Real align(rvec_align), // 4th element is ignored
     direction: [4]f32 align(16), // 4th element is ignored
 
+    pub fn getPointOnRay(self:RRayCast, fraction: Real) [3]Real {
+        return .{
+            self.origin[0] + self.direction[0] * fraction,
+            self.origin[1] + self.direction[1] * fraction,
+            self.origin[2] + self.direction[2] * fraction,
+        };
+    }
+
     comptime {
         assert(@sizeOf(RRayCast) == @sizeOf(c.JPC_RRayCast));
         assert(@offsetOf(RRayCast, "origin") == @offsetOf(c.JPC_RRayCast, "origin"));
@@ -1082,6 +1090,15 @@ pub const BodyInterface = opaque {
         return position;
     }
 
+    pub fn setPosition(body_iface: * BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type:Activation) void {
+        c.JPC_BodyInterface_SetPosition(
+            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            body_id,
+            &in_position,
+             @enumToInt(in_activation_type)
+        );
+    }
+
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
         var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
@@ -1178,6 +1195,15 @@ pub const BodyInterface = opaque {
             @ptrCast(*c.JPC_BodyInterface, body_iface),
             body_id,
             &impulse,
+        );
+    }
+
+    pub fn setMotionType(body_iface: *BodyInterface, body_id: BodyId, in_motion_type: MotionType, in_activation_type: Activation) void {
+        return c.JPC_BodyInterface_SetMotionType(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            @enumToInt(in_motion_type),
+            @enumToInt(in_activation_type),
         );
     }
 };
