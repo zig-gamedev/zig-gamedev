@@ -270,7 +270,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             .binding = 0,
             .buffer_handle = gctx.uniforms.buffer,
             .offset = 0,
-            .size = math.max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
+            .size = @max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
         },
     });
 
@@ -444,8 +444,8 @@ fn update(demo: *DemoState) void {
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -664,7 +664,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);

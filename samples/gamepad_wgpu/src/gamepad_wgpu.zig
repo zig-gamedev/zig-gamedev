@@ -24,7 +24,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zgui.init(allocator);
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
     _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(20.0 * scale_factor));
 

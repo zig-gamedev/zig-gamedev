@@ -973,7 +973,7 @@ pub const GraphicsContext = struct {
             var current_src_mip_level: u32 = 0;
 
             while (true) {
-                const dispatch_num_mips = math.min(MipgenResources.max_levels_per_dispatch, total_num_mips);
+                const dispatch_num_mips = @min(MipgenResources.max_levels_per_dispatch, total_num_mips);
                 {
                     const pass = encoder.beginComputePass(null);
                     defer {
@@ -991,8 +991,8 @@ pub const GraphicsContext = struct {
                     pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
 
                     pass.dispatchWorkgroups(
-                        math.max(texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level), 1),
-                        math.max(texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level), 1),
+                        @max(texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level), 1),
+                        @max(texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level), 1),
                         1,
                     );
                 }
