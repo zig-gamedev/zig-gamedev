@@ -125,7 +125,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             image.bytes_per_component,
             image.is_hdr,
         ),
-        .mip_level_count = math.log2_int(u32, math.max(image.width, image.height)) + 1,
+        .mip_level_count = math.log2_int(u32, @max(image.width, image.height)) + 1,
     });
     const texture_view = gctx.createTextureView(texture, .{});
 
@@ -364,7 +364,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
