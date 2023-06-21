@@ -166,7 +166,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DimensionCount = 4,
             .Sizes = &[_]u32{ 1, 1, 3, 3 },
             .Strides = null,
-            .TotalTensorSizeInBytes = std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+            .TotalTensorSizeInBytes = std.mem.alignForward(
+                w32.UINT64,
+                filter_tensor.len * filter_tensor.len * @sizeOf(f16),
+                32,
+            ),
             .GuaranteedBaseOffsetAlignment = 256,
         },
     };
@@ -226,7 +230,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const conv_info = conv_cop.GetBindingProperties();
     const init_info = init_op.GetBindingProperties();
 
-    const temp_resource_size: u64 = math.max(init_info.TemporaryResourceSize, conv_info.TemporaryResourceSize);
+    const temp_resource_size: u64 = @max(init_info.TemporaryResourceSize, conv_info.TemporaryResourceSize);
     const persistent_resource_size: u64 = conv_info.PersistentResourceSize;
 
     const temp_buffer = if (temp_resource_size > 0) gctx.createCommittedResource(
@@ -285,7 +289,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
-                std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+                std.mem.alignForward(w32.UINT64, filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
             );
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;

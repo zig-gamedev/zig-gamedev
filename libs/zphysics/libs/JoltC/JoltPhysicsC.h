@@ -62,7 +62,7 @@ enum
 typedef uint8_t JPC_PhysicsUpdateError;
 enum
 {
-    JPC_PHYSICS_UPDATE_ERROR_NONE               = 0,
+    JPC_PHYSICS_UPDATE_NO_ERROR                 = 0,
     JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL      = 1 << 0,
     JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL     = 1 << 1,
     JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL = 1 << 2,
@@ -1190,7 +1190,7 @@ JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
 JPC_API void
 JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
-                              JPC_Real out_rotation[4]);
+                              float out_rotation[4]);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 

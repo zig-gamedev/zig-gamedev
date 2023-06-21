@@ -8,7 +8,7 @@ Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zsdl = @import("libs/zflecs/build.zig");
+const zflecs = @import("libs/zflecs/build.zig");
 
 pub fn build(b: *std.Build) void {
     ...
@@ -54,14 +54,13 @@ pub fn main() !void {
     ecs.TAG(world, Eats);
     ecs.TAG(world, Apples);
 
-    ecs.SYSTEM(world, "move system", move, ecs.EcsOnUpdate, .{
-        .filter = .{
-            .terms = [_]ecs.term_t{
-                .{ .id = ecs.id(Position) },
-                .{ .id = ecs.id(Velocity) },
-            } ++ ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 2),
-        },
-    });
+    {
+        var system_desc = ecs.system_desc_t{};
+        system_desc.callback = move;
+        system_desc.query.filter.terms[0] = .{ .id = ecs.id(Position) };
+        system_desc.query.filter.terms[1] = .{ .id = ecs.id(Velocity) };
+        ecs.SYSTEM(world, "move system", ecs.OnUpdate, &system_desc);
+    }
 
     const bob = ecs.new_entity(world, "Bob");
     _ = ecs.set(world, bob, Position, .{ .x = 0, .y = 0 });

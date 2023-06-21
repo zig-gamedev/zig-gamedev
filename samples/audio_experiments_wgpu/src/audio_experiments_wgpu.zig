@@ -134,7 +134,7 @@ const AudioState = struct {
         const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), output));
 
         var i: u32 = 0;
-        while (i < math.min(num_frames, usable_samples_per_set)) : (i += 1) {
+        while (i < @min(num_frames, usable_samples_per_set)) : (i += 1) {
             audio.samples.items[base_index + i] = frames[i * num_channels];
         }
     }
@@ -765,8 +765,8 @@ fn update(demo: *DemoState) !void {
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -988,7 +988,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);

@@ -175,13 +175,22 @@ test "zflecs.basic" {
 
     ecs.TAG(world, Walking);
 
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*const Position)).?, ecs.id(*const Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(?*const Position)).?, ecs.id(?*const Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(*Position)).?, ecs.id(*Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Position)).?, ecs.id(Position) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Direction)).?, ecs.id(Direction) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(Walking)).?, ecs.id(Walking) });
-    print("{s} id: {d}\n", .{ ecs.id_str(world, ecs.id(u31)).?, ecs.id(u31) });
+    const PrintIdHelper = struct {
+        fn printId(in_world: *ecs.world_t, comptime T: type) void {
+            var id_str = ecs.id_str(in_world, ecs.id(T)).?;
+            defer ecs.os.free(id_str);
+
+            print("{s} id: {d}\n", .{ id_str, ecs.id(T) });
+        }
+    };
+
+    PrintIdHelper.printId(world, *const Position);
+    PrintIdHelper.printId(world, ?*const Position);
+    PrintIdHelper.printId(world, *Position);
+    PrintIdHelper.printId(world, Position);
+    PrintIdHelper.printId(world, *Direction);
+    PrintIdHelper.printId(world, *Walking);
+    PrintIdHelper.printId(world, *u31);
 
     const p: Position = .{ .x = 1.0, .y = 2.0 };
     _ = ecs.set(world, e0, *const Position, &p);
@@ -276,4 +285,26 @@ test "zflecs.helloworld" {
 
     const p = ecs.get(world, bob, Position).?;
     print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
+}
+
+test "zflecs.try_different_alignments" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const AlignmentsToTest = [_]usize{ 1, 2, 4, 8, 16 };
+    inline for (AlignmentsToTest) |component_alignment| {
+        const AlignedComponent = struct {
+            fn Component(comptime alignment: usize) type {
+                return struct { dummy: u32 align(alignment) = 0 };
+            }
+        };
+
+        const Component = AlignedComponent.Component(component_alignment);
+
+        ecs.COMPONENT(world, Component);
+        var entity = ecs.new_entity(world, "");
+
+        _ = ecs.set(world, entity, Component, .{});
+        _ = ecs.get(world, entity, Component);
+    }
 }

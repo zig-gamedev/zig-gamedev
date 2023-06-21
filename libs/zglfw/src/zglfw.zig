@@ -31,6 +31,14 @@ extern fn glfwTerminate() void;
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
 
+/// `pub fn waitEvents() void`
+pub const waitEvents = glfwWaitEvents;
+extern fn glfwWaitEvents() void;
+
+/// `pub fn waitEventsTimeout(timeout: f64) void`
+pub const waitEventsTimeout = glfwWaitEventsTimeout;
+extern fn glfwWaitEventsTimeout(timeout: f64) void;
+
 pub fn isVulkanSupported() bool {
     return if (glfwVulkanSupported() == 0) false else true;
 }
@@ -588,6 +596,19 @@ pub const Window = opaque {
     }
     extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
 
+    pub fn getClipboardString(window: *Window) ?[:0]const u8 {
+        return std.mem.span(glfwGetClipboardString(window));
+    }
+    extern fn glfwGetClipboardString(window: *Window) ?[*:0]const u8;
+
+    pub inline fn setClipboardString(window: *Window, string: [:0]const u8) void {
+        return glfwSetClipboardString(window, string);
+    }
+    extern fn glfwSetClipboardString(
+        window: *Window,
+        string: [*:0]const u8,
+    ) void;
+
     /// `pub fn setFramebufferSizeCallback(window: *Window, callback) void`
     pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
     extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?*const fn (
@@ -639,6 +660,17 @@ pub const Window = opaque {
             scancode: i32,
             action: Action,
             mods: Mods,
+        ) callconv(.C) void,
+    ) void;
+
+    /// `pub fn setDropCallback(window: *Window, callback) void`
+    pub const setDropCallback = glfwSetDropCallback;
+    extern fn glfwSetDropCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            path_count: i32,
+            paths: [*][*:0]const u8,
         ) callconv(.C) void,
     ) void;
 
@@ -928,11 +960,28 @@ test "zglfw.basic" {
     window.setScrollCallback(scrollCallback);
     window.setKeyCallback(null);
 
-    window.setSize(300, 200);
-    try std.testing.expectEqualSlices(i32, &.{ 300, 200 }, &window.getSize());
+    window.setClipboardString("keep going");
+    try expect(std.mem.eql(u8, window.getClipboardString().?, "keep going"));
 
+    var timer = try std.time.Timer.start();
+    window.setSize(300, 200);
+    while (timer.read() < std.time.ns_per_s) {
+        waitEventsTimeout(0.0001);
+        const size = window.getSize();
+        if (size[0] == 300 and size[1] == 200) break;
+    } else {
+        try std.testing.expectEqualSlices(i32, &.{ 300, 200 }, &window.getSize());
+    }
+
+    timer.reset();
     window.setPos(100, 100);
-    try std.testing.expectEqualSlices(i32, &.{ 100, 100 }, &window.getPos());
+    while (timer.read() < std.time.ns_per_s) {
+        waitEventsTimeout(0.0001);
+        const pos = window.getPos();
+        if (pos[0] == 100 and pos[1] == 100) break;
+    } else {
+        try std.testing.expectEqualSlices(i32, &.{ 100, 100 }, &window.getPos());
+    }
 
     window.setTitle("new title");
 

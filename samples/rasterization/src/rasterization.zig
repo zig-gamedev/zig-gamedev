@@ -521,8 +521,8 @@ fn update(demo: *DemoState) void {
             if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
                 demo.camera.pitch += 0.0025 * delta_y;
                 demo.camera.yaw += 0.0025 * delta_x;
-                demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-                demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+                demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+                demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
                 demo.camera.yaw = zm.modAngle(demo.camera.yaw);
             }
         }

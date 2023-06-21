@@ -17,6 +17,82 @@ git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
+## Quick start (D3D12)
+
+To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, for example:
+
+```sh
+git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
+```
+
+Currently we have minimal low-level API which allows you to build the lib once (`package()`) and link it with many executables (`link()`).
+
+Include neccessary libraries in `build.zig` like:
+
+```zig
+// Fetch the library
+const zwin32 = @import("src/deps/zig-gamedev/libs/zwin32/build.zig");
+
+// Build it
+const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+
+// Link with your app
+zwin32_pkg.link(exe, .{ .d3d12 = true });
+```
+
+<details>
+<summary>Example build script:</summary>
+
+```zig
+const std = @import("std");
+const zwin32 = @import("libs/zig-gamedev/libs/zwin32/build.zig");
+const common = @import("libs/zig-gamedev/libs/common/build.zig");
+const zd3d12 = @import("libs/zig-gamedev/libs/zd3d12/build.zig");
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+
+    const optimize = b.standardOptimizeOption(.{});
+
+    const exe = b.addExecutable(.{
+        .name = "example",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    b.installArtifact(exe);
+
+    const run_cmd = b.addRunArtifact(exe);
+
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+
+    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
+    const zd3d12_pkg = zd3d12.package(b, target, optimize, .{
+        .options = .{
+            .enable_debug_layer = false,
+            .enable_gbv = false,
+            .enable_d2d = true,
+        },
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    });
+    const common_d2d_pkg = common.package(b, target, optimize, .{
+        .deps = .{ .zwin32 = zwin32_pkg.zwin32, .zd3d12 = zd3d12_pkg.zd3d12 },
+    });
+
+    zwin32_pkg.link(exe, .{ .d3d12 = true });
+    zd3d12_pkg.link(exe);
+    common_d2d_pkg.link(exe);
+
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
+}
+```
+</details>
 
 ## Libraries
 Library | Latest version | Description
@@ -26,7 +102,7 @@ Library | Latest version | Description
 **[zopengl](libs/zopengl)** | 0.1.0 | OpenGL loader (supports 3.3 Core Profile and ES 2.0 Profile) 
 **[zsdl](libs/zsdl)** | 0.0.1 | Bindings for SDL2 (wip)
 **[zgpu](libs/zgpu)** | 0.9.0 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
-**[zgui](libs/zgui)** | 0.9.6 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
+**[zgui](libs/zgui)** | 1.89.6 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
 **[zaudio](libs/zaudio)** | 0.9.3 | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
 **[zmath](libs/zmath)** | 0.9.6 | SIMD math library for game developers
 **[zstbi](libs/zstbi)** | 0.9.3 | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries

@@ -813,13 +813,12 @@ pub const PhysicsSystem = opaque {
         );
 
         switch (res) {
-            c.JPC_PHYSICS_UPDATE_ERROR_NONE => {},
-            c.JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL => return error.JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL,
-            c.JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL => return error.JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL,
-            c.JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL => return error.JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL,
-            else => return error.JPC_PHYSICS_UPDATE_UNKNOWN_ERROR,
+            c.JPC_PHYSICS_UPDATE_NO_ERROR => {},
+            c.JPC_PHYSICS_UPDATE_MANIFOLD_CACHE_FULL => return error.ManifoldCacheFull,
+            c.JPC_PHYSICS_UPDATE_BODY_PAIR_CACHE_FULL => return error.BodyPairCacheFull,
+            c.JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL => return error.ContactConstraintsFull,
+            else => return error.Unknown,
         }
-        return;
     }
 
     pub fn getBodyIds(physics_system: *const PhysicsSystem, body_ids: *std.ArrayList(BodyId)) !void {
@@ -1109,8 +1108,8 @@ pub const BodyInterface = opaque {
         return position;
     }
 
-    pub fn getRotation(body_iface: *const BodyInterface, body_id: BodyId) [4]Real {
-        var rotation: [4]Real = undefined;
+    pub fn getRotation(body_iface: *const BodyInterface, body_id: BodyId) [4]f32 {
+        var rotation: [4]f32 = undefined;
         c.JPC_BodyInterface_GetRotation(
             @ptrCast(*const c.JPC_BodyInterface, body_iface),
             body_id,
@@ -2502,8 +2501,8 @@ test "zphysics.basic" {
     _ = physics_system.getNarrowPhaseQueryNoLock();
 
     physics_system.optimizeBroadPhase();
-    physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
-    physics_system.update(1.0 / 60.0, .{});
+    try physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
+    try physics_system.update(1.0 / 60.0, .{});
 
     var box_shape_settings: ?*BoxShapeSettings = null;
     box_shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });

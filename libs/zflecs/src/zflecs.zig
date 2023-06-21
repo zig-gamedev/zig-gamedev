@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const builtin = @import("builtin");
 
 pub const ftime_t = f32;
 pub const size_t = i32;
@@ -321,8 +322,8 @@ pub const term_t = extern struct {
     first: term_id_t = .{},
     second: term_id_t = .{},
 
-    inout: inout_kind_t = @intToEnum(inout_kind_t, 0),
-    oper: oper_kind_t = @intToEnum(oper_kind_t, 0),
+    inout: inout_kind_t = .InOutDefault,
+    oper: oper_kind_t = .And,
 
     id_flags: id_t = 0,
     name: ?[*:0]u8 = null,
@@ -811,13 +812,121 @@ pub const world_info_t = extern struct {
     },
     name_prefix: [*:0]const u8,
 };
+
+const EcsAllocator = struct {
+    const AllocationHeader = struct {
+        size: usize,
+    };
+
+    const Alignment = 16;
+
+    var gpa: ?std.heap.GeneralPurposeAllocator(.{}) = null;
+    var allocator: ?std.mem.Allocator = null;
+
+    fn alloc(size: i32) callconv(.C) ?*anyopaque {
+        if (size < 0) {
+            return null;
+        }
+
+        var allocation_size = Alignment + @intCast(usize, size);
+
+        var data = allocator.?.alignedAlloc(u8, Alignment, allocation_size) catch {
+            return null;
+        };
+
+        var allocation_header = @ptrCast(
+            *AllocationHeader,
+            @alignCast(@alignOf(AllocationHeader), data.ptr),
+        );
+
+        allocation_header.size = allocation_size;
+
+        return data.ptr + Alignment;
+    }
+
+    fn free(ptr: ?*anyopaque) callconv(.C) void {
+        if (ptr == null) {
+            return;
+        }
+        var ptr_unwrapped = @ptrCast([*]u8, ptr.?) - Alignment;
+        var allocation_header = @ptrCast(
+            *AllocationHeader,
+            @alignCast(Alignment, ptr_unwrapped),
+        );
+
+        allocator.?.free(
+            @alignCast(
+                Alignment,
+                ptr_unwrapped[0..allocation_header.size],
+            ),
+        );
+    }
+
+    fn realloc(old: ?*anyopaque, size: i32) callconv(.C) ?*anyopaque {
+        if (old == null) {
+            return alloc(size);
+        }
+
+        var ptr_unwrapped = @ptrCast([*]u8, old.?) - Alignment;
+
+        var allocation_header = @ptrCast(
+            *AllocationHeader,
+            @alignCast(@alignOf(AllocationHeader), ptr_unwrapped),
+        );
+
+        const old_allocation_size = allocation_header.size;
+        const old_slice = @ptrCast([*]u8, ptr_unwrapped)[0..old_allocation_size];
+        const old_slice_aligned = @alignCast(Alignment, old_slice);
+
+        const new_allocation_size = Alignment + @intCast(usize, size);
+        var new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
+            return null;
+        };
+
+        var new_allocation_header = @ptrCast(*AllocationHeader, @alignCast(Alignment, new_data.ptr));
+        new_allocation_header.size = new_allocation_size;
+
+        return new_data.ptr + Alignment;
+    }
+
+    fn calloc(size: i32) callconv(.C) ?*anyopaque {
+        var data_maybe = alloc(size);
+        if (data_maybe) |data| {
+            @memset(@ptrCast([*]u8, data)[0..@intCast(usize, size)], 0);
+        }
+
+        return data_maybe;
+    }
+};
+
+fn flecs_abort() callconv(.C) noreturn {
+    std.debug.dumpCurrentStackTrace(@returnAddress());
+    @breakpoint();
+    std.os.exit(1);
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // Creation & Deletion
 //
 //--------------------------------------------------------------------------------------------------
 pub fn init() *world_t {
+    if (builtin.os.tag == .windows) {
+        os.ecs_os_api.abort_ = flecs_abort;
+    }
+
     assert(num_worlds == 0);
+
+    if (num_worlds == 0) {
+        EcsAllocator.gpa = .{};
+        EcsAllocator.allocator = EcsAllocator.gpa.?.allocator();
+
+        os.ecs_os_api.malloc_ = &EcsAllocator.alloc;
+        os.ecs_os_api.free_ = &EcsAllocator.free;
+        os.ecs_os_api.realloc_ = &EcsAllocator.realloc;
+        os.ecs_os_api.calloc_ = &EcsAllocator.calloc;
+    }
+
     num_worlds += 1;
     component_ids_hm.ensureTotalCapacity(32) catch @panic("OOM");
     const world = ecs_init();
@@ -884,7 +993,15 @@ pub fn fini(world: *world_t) i32 {
     }
     component_ids_hm.clearRetainingCapacity();
 
-    return ecs_fini(world);
+    var fini_result = ecs_fini(world);
+
+    if (num_worlds == 0) {
+        _ = EcsAllocator.gpa.?.deinit();
+        EcsAllocator.gpa = null;
+        EcsAllocator.allocator = null;
+    }
+
+    return fini_result;
 }
 extern fn ecs_fini(world: *world_t) i32;
 
@@ -2164,7 +2281,19 @@ pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @ptrCast(*T, @alignCast(@alignOf(T), val));
 }
 //--------------------------------------------------------------------------------------------------
-fn PerTypeGlobalVar(comptime _: type) type {
+fn PerTypeGlobalVar(comptime in_type: type) type {
+    if (@alignOf(in_type) > EcsAllocator.Alignment) {
+        var message = std.fmt.comptimePrint(
+            "Type [{s}] requires an alignment of [{}] but the EcsAllocator only provides an alignment of [{}].",
+            .{
+                @typeName(in_type),
+                @alignOf(in_type),
+                EcsAllocator.Alignment,
+            },
+        );
+        @compileError(message);
+    }
+
     return struct {
         var id: id_t = 0;
     };

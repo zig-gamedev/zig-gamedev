@@ -1790,11 +1790,11 @@ pub const MipmapGenerator = struct {
                 gctx.cmdlist.SetComputeRoot32BitConstant(0, current_src_mip_level, 0);
                 gctx.cmdlist.SetComputeRoot32BitConstant(0, dispatch_num_mips, 1);
                 gctx.cmdlist.SetComputeRootDescriptorTable(1, table_base);
-                const num_groups_x = std.math.max(
+                const num_groups_x = @max(
                     @intCast(u32, texture_desc.Width) >> @intCast(u5, 3 + current_src_mip_level),
                     1,
                 );
-                const num_groups_y = std.math.max(
+                const num_groups_y = @max(
                     texture_desc.Height >> @intCast(u5, 3 + current_src_mip_level),
                     1,
                 );

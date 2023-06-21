@@ -300,7 +300,7 @@ pub fn JobQueue(
             // spawn up to (num_cpus - 1) threads
             var n: usize = 0;
             const num_cpus = Thread.getCpuCount() catch 2;
-            const num_threads_goal = std.math.min(num_cpus - 1, max_threads);
+            const num_threads_goal = @min(num_cpus - 1, max_threads);
             while (n < num_threads_goal) {
                 if (Thread.spawn(.{}, threadMain, .{ self, n })) |thread| {
                     nameThread(thread, "JobQueue[{}]", .{n});
@@ -1041,8 +1041,15 @@ test "JobQueue throughput" {
     const main_thread = std.Thread.getCurrentId();
     print("main_thread: {}\n", .{main_thread});
 
-    const job_count = 64;
     const job_workload_size = cache_line_size * 1024 * 1024;
+    const job_count = blk: {
+        const total_memory = std.process.totalSystemMemory() catch break :blk min_jobs;
+        const upper_bound = @floatToInt(usize, @intToFloat(f64, total_memory) * 0.667);
+        var count: usize = min_jobs * 4;
+        while (job_workload_size * count > upper_bound and count > min_jobs) : (count -= min_jobs) {}
+        break :blk count;
+    };
+
     const JobWorkload = struct {
         const Unit = u64;
         const unit_size = @sizeOf(Unit);
@@ -1096,7 +1103,11 @@ test "JobQueue throughput" {
         }
     };
 
-    var job_stats: [job_count]JobStat = [_]JobStat{.{ .main = main_thread }} ** job_count;
+    var job_stats = try allocator.alloc(JobStat, job_count);
+    defer allocator.free(job_stats);
+    for (job_stats) |*job_stat| {
+        job_stat.* = .{ .main = main_thread };
+    }
 
     const FillJob = struct {
         stat: *JobStat,
@@ -1118,7 +1129,7 @@ test "JobQueue throughput" {
     defer jobs.deinit();
 
     // schedule job_count jobs to fill some arrays
-    for (&job_stats, 0..) |*job_stat, i| {
+    for (job_stats, 0..) |*job_stat, i| {
         _ = try jobs.schedule(.none, FillJob{
             .stat = job_stat,
             .workload = &job_workloads[i % job_count],

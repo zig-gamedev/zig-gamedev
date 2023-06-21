@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.2892" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.3681" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -355,8 +355,9 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
 
             // If min. target macOS version is lesser than the min version we have available, then
             // our Dawn binary is incompatible with the target.
-            const min_available = std.builtin.Version{ .major = 12, .minor = 0 };
-            if (target.os.version_range.semver.min.order(min_available) == .lt) break :blk false;
+            if (target.os.version_range.semver.min.order(
+                .{ .major = 12, .minor = 0, .patch = 0 },
+            ) == .lt) break :blk false;
             break :blk true;
         },
         else => false,

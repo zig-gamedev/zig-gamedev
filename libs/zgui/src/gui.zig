@@ -1,4 +1,18 @@
 //--------------------------------------------------------------------------------------------------
+//
+// Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
+// named parameters and Zig style text formatting.
+//
+//--------------------------------------------------------------------------------------------------
+pub const version = @import("std").SemanticVersion{ .major = 1, .minor = 89, .patch = 6 };
+
+pub const plot = @import("plot.zig");
+pub const backend = switch (@import("zgui_options").backend) {
+    .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
+    .win32_dx12 => .{}, // TODO:
+    .no_backend => .{},
+};
+//--------------------------------------------------------------------------------------------------
 const std = @import("std");
 const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
@@ -175,7 +189,13 @@ pub const io = struct {
         config: ?FontConfig,
         ranges: ?[*]const Wchar,
     ) Font {
-        return zguiIoAddFontFromMemoryWithConfig(fontdata.ptr, @intCast(i32, fontdata.len), size_pixels, if (config) |c| &c else null, ranges);
+        return zguiIoAddFontFromMemoryWithConfig(
+            fontdata.ptr,
+            @intCast(i32, fontdata.len),
+            size_pixels,
+            if (config) |c| &c else null,
+            ranges,
+        );
     }
     extern fn zguiIoAddFontFromMemoryWithConfig(
         font_data: *const anyopaque,
