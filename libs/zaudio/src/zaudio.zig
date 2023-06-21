@@ -751,7 +751,7 @@ pub const Node = opaque {
             }
 
             pub fn getNodeGraph(node: *const T) *const NodeGraph {
-                return ma_node_get_node_graph(@intToPtr(*Node, @ptrToInt(node.asNode())));
+                return ma_node_get_node_graph(@ptrFromInt(*Node, @intFromPtr(node.asNode())));
             }
             pub fn getNodeGraphMut(node: *T) *NodeGraph {
                 return ma_node_get_node_graph(node.asNodeMut());
@@ -852,7 +852,7 @@ pub const DataSourceNode = opaque {
     extern fn zaudioDataSourceNodeDestroy(handle: *DataSourceNode) void;
 
     pub fn setLooping(handle: *DataSourceNode, is_looping: bool) void {
-        try maybeError(ma_data_source_node_set_looping(handle, @boolToInt(is_looping)));
+        try maybeError(ma_data_source_node_set_looping(handle, @intFromBool(is_looping)));
     }
     extern fn ma_data_source_node_set_looping(handle: *DataSourceNode, is_looping: Bool32) Result;
 
@@ -1424,7 +1424,7 @@ pub const NodeGraph = opaque {
             ) Result;
 
             pub fn getEndpoint(handle: *const T) *const Node {
-                return ma_node_graph_get_endpoint(@intToPtr(*NodeGraph, @ptrToInt(handle.asNodeGraph())));
+                return ma_node_graph_get_endpoint(@ptrFromInt(*NodeGraph, @intFromPtr(handle.asNodeGraph())));
             }
             pub fn getEndpointMut(handle: *T) *Node {
                 return ma_node_graph_get_endpoint(handle.asNodeGraphMut());
@@ -1482,7 +1482,7 @@ pub const Device = opaque {
     extern fn zaudioDeviceGetUserData(device: *const Device) ?*anyopaque;
 
     pub fn getContext(device: *const Device) *const Context {
-        return ma_device_get_context(@intToPtr(*Device, @ptrToInt(device)));
+        return ma_device_get_context(@ptrFromInt(*Device, @intFromPtr(device)));
     }
     pub fn getContextMut(device: *Device) *Context {
         return ma_device_get_context(device);
@@ -1490,7 +1490,7 @@ pub const Device = opaque {
     extern fn ma_device_get_context(device: *Device) *Context;
 
     pub fn getLog(device: *const Device) ?*const Log {
-        return ma_device_get_log(@intToPtr(*Device, @ptrToInt(device)));
+        return ma_device_get_log(@ptrFromInt(*Device, @intFromPtr(device)));
     }
     pub fn getLogMut(device: *Device) ?*Log {
         return ma_device_get_log(device);
@@ -1748,7 +1748,7 @@ pub const Engine = opaque {
     }
 
     pub fn getResourceManager(engine: *const Engine) *const ResourceManager {
-        return ma_engine_get_resource_manager(@intToPtr(*Engine, @ptrToInt(engine)));
+        return ma_engine_get_resource_manager(@ptrFromInt(*Engine, @intFromPtr(engine)));
     }
     pub fn getResourceManagerMut(engine: *Engine) *ResourceManager {
         return ma_engine_get_resource_manager(engine);
@@ -1756,7 +1756,7 @@ pub const Engine = opaque {
     extern fn ma_engine_get_resource_manager(engine: *Engine) *ResourceManager;
 
     pub fn getDevice(engine: *const Engine) ?*const Device {
-        return ma_engine_get_device(@intToPtr(*Engine, @ptrToInt(engine)));
+        return ma_engine_get_device(@ptrFromInt(*Engine, @intFromPtr(engine)));
     }
     pub fn getDeviceMut(engine: *Engine) ?*Device {
         return ma_engine_get_device(engine);
@@ -1764,7 +1764,7 @@ pub const Engine = opaque {
     extern fn ma_engine_get_device(engine: *Engine) ?*Device;
 
     pub fn getLog(engine: *const Engine) ?*const Log {
-        return ma_engine_get_log(@intToPtr(*Engine, @ptrToInt(engine)));
+        return ma_engine_get_log(@ptrFromInt(*Engine, @intFromPtr(engine)));
     }
     pub fn getLogMut(engine: *Engine) ?*Log {
         return ma_engine_get_log(engine);
@@ -2013,7 +2013,7 @@ pub const Sound = opaque {
     extern fn ma_sound_get_pitch(sound: *const Sound) f32;
 
     pub fn setSpatializationEnabled(sound: *Sound, enabled: bool) void {
-        ma_sound_set_spatialization_enabled(sound, @boolToInt(enabled));
+        ma_sound_set_spatialization_enabled(sound, @intFromBool(enabled));
     }
     extern fn ma_sound_set_spatialization_enabled(sound: *Sound, enabled: Bool32) void;
 
@@ -2351,7 +2351,7 @@ pub const SoundGroup = opaque {
     extern fn ma_sound_group_get_pitch(sound: *const SoundGroup) f32;
 
     pub fn setSpatializationEnabled(sound: *SoundGroup, enabled: bool) void {
-        ma_sound_group_set_spatialization_enabled(sound, @boolToInt(enabled));
+        ma_sound_group_set_spatialization_enabled(sound, @intFromBool(enabled));
     }
     extern fn ma_sound_group_set_spatialization_enabled(sound: *SoundGroup, enabled: Bool32) void;
 
@@ -2574,7 +2574,7 @@ fn zaudioMalloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
         size,
     ) catch @panic("zaudio: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zaudio: out of memory");
+    mem_allocations.?.put(@intFromPtr(mem.ptr), size) catch @panic("zaudio: out of memory");
 
     return mem.ptr;
 }
@@ -2585,7 +2585,7 @@ fn zaudioRealloc(ptr: ?*anyopaque, size: usize, _: ?*anyopaque) callconv(.C) ?*a
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const old_size = if (ptr != null) mem_allocations.?.get(@ptrToInt(ptr.?)).? else 0;
+    const old_size = if (ptr != null) mem_allocations.?.get(@intFromPtr(ptr.?)).? else 0;
     const old_mem = if (old_size > 0)
         @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..old_size]
     else
@@ -2594,11 +2594,11 @@ fn zaudioRealloc(ptr: ?*anyopaque, size: usize, _: ?*anyopaque) callconv(.C) ?*a
     const new_mem = mem_allocator.?.realloc(old_mem, size) catch @panic("zaudio: out of memory");
 
     if (ptr != null) {
-        const removed = mem_allocations.?.remove(@ptrToInt(ptr.?));
+        const removed = mem_allocations.?.remove(@intFromPtr(ptr.?));
         std.debug.assert(removed);
     }
 
-    mem_allocations.?.put(@ptrToInt(new_mem.ptr), size) catch @panic("zaudio: out of memory");
+    mem_allocations.?.put(@intFromPtr(new_mem.ptr), size) catch @panic("zaudio: out of memory");
 
     return new_mem.ptr;
 }
@@ -2610,7 +2610,7 @@ fn zaudioFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const size = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
         const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
         mem_allocator.?.free(mem);
     }

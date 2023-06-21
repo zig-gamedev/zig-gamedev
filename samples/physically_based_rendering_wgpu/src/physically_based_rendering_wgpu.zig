@@ -613,7 +613,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height),
         0.01,
         200.0,
     );
@@ -1014,7 +1014,7 @@ fn drawToCubeTexture(
         const mem = gctx.uniformsAllocate(Uniforms, 1);
         mem.slice[0] = .{
             .object_to_clip = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip)),
-            .roughness = @intToFloat(f32, dest_mip_level + 1) / @intToFloat(f32, filtered_env_tex_mip_levels),
+            .roughness = @floatFromInt(f32, dest_mip_level + 1) / @floatFromInt(f32, filtered_env_tex_mip_levels),
         };
         pass.setBindGroup(0, gctx.lookupResource(bg).?, &.{mem.offset});
 
@@ -1131,7 +1131,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

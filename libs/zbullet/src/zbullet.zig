@@ -46,7 +46,7 @@ export fn zbulletAlloc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
     if (ptr == null) @panic("zbullet: out of memory");
 
     mem_allocations.?.put(
-        @ptrToInt(ptr),
+        @intFromPtr(ptr),
         .{ .size = @intCast(u32, size), .alignment = @intCast(u16, alignment) },
     ) catch @panic("zbullet: out of memory");
 
@@ -58,7 +58,7 @@ export fn zbulletFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const info = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const info = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
 
         const mem = @ptrCast([*]u8, ptr)[0..info.size];
 
@@ -1030,9 +1030,9 @@ pub const DebugDrawer = struct {
             @alignCast(@alignOf(DebugDrawer), context.?),
         );
 
-        const r = @floatToInt(u32, color[0] * 255.0);
-        const g = @floatToInt(u32, color[1] * 255.0) << 8;
-        const b = @floatToInt(u32, color[2] * 255.0) << 16;
+        const r = @intFromFloat(u32, color[0] * 255.0);
+        const g = @intFromFloat(u32, color[1] * 255.0) << 8;
+        const b = @intFromFloat(u32, color[2] * 255.0) << 16;
         const rgb = r | g | b;
 
         debug.lines.append(
@@ -1055,14 +1055,14 @@ pub const DebugDrawer = struct {
             @alignCast(@alignOf(DebugDrawer), context.?),
         );
 
-        const r0 = @floatToInt(u32, color0[0] * 255.0);
-        const g0 = @floatToInt(u32, color0[1] * 255.0) << 8;
-        const b0 = @floatToInt(u32, color0[2] * 255.0) << 16;
+        const r0 = @intFromFloat(u32, color0[0] * 255.0);
+        const g0 = @intFromFloat(u32, color0[1] * 255.0) << 8;
+        const b0 = @intFromFloat(u32, color0[2] * 255.0) << 16;
         const rgb0 = r0 | g0 | b0;
 
-        const r1 = @floatToInt(u32, color1[0] * 255.0);
-        const g1 = @floatToInt(u32, color1[1] * 255.0) << 8;
-        const b1 = @floatToInt(u32, color1[2] * 255.0) << 16;
+        const r1 = @intFromFloat(u32, color1[0] * 255.0);
+        const g1 = @intFromFloat(u32, color1[1] * 255.0) << 8;
+        const b1 = @intFromFloat(u32, color1[2] * 255.0) << 16;
         const rgb1 = r1 | g1 | b1;
 
         debug.lines.append(

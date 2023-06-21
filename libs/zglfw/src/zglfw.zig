@@ -11,7 +11,7 @@ pub const Hint = enum(i32) {
     cocoa_menubar = 0x00051002,
 
     pub fn set(hint: Hint, value: bool) void {
-        glfwInitHint(hint, @boolToInt(value));
+        glfwInitHint(hint, @intFromBool(value));
     }
     extern fn glfwInitHint(hint: Hint, value: i32) void;
 };
@@ -356,7 +356,7 @@ pub const Joystick = struct {
     extern fn glfwGetJoystickButtons(jid: i32, count: *i32) [*]const u8;
 
     fn isGamepad(self: Joystick) bool {
-        return glfwJoystickIsGamepad(@intCast(i32, self.jid)) == @boolToInt(true);
+        return glfwJoystickIsGamepad(@intCast(i32, self.jid)) == @intFromBool(true);
     }
 
     pub fn asGamepad(self: Joystick) ?Gamepad {
@@ -365,7 +365,7 @@ pub const Joystick = struct {
     extern fn glfwJoystickIsGamepad(jid: i32) i32;
 
     pub fn isPresent(jid: Id) bool {
-        return glfwJoystickPresent(@intCast(i32, jid)) == @boolToInt(true);
+        return glfwJoystickPresent(@intCast(i32, jid)) == @intFromBool(true);
     }
     extern fn glfwJoystickPresent(jid: i32) i32;
 
@@ -440,7 +440,7 @@ pub const Gamepad = struct {
     extern fn glfwGetGamepadState(jid: i32, state: *Gamepad.State) i32;
 
     pub fn updateMappings(mappings: [:0]const u8) bool {
-        return glfwUpdateGamepadMappings(mappings) == @boolToInt(true);
+        return glfwUpdateGamepadMappings(mappings) == @intFromBool(true);
     }
     extern fn glfwUpdateGamepadMappings(mappings: [*:0]const u8) i32;
 };
@@ -513,7 +513,7 @@ pub const Window = opaque {
     extern fn glfwGetWindowAttrib(window: *Window, attrib: Attribute) i32;
 
     pub fn setAttribute(window: *Window, attrib: Attribute, value: bool) void {
-        glfwSetWindowAttrib(window, attrib, @boolToInt(value));
+        glfwSetWindowAttrib(window, attrib, @intFromBool(value));
     }
     extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
 
@@ -711,8 +711,8 @@ pub const Window = opaque {
     pub fn setInputMode(window: *Window, mode: InputMode, value: anytype) void {
         const T = @TypeOf(value);
         const i32_value = switch (@typeInfo(T)) {
-            .Enum, .EnumLiteral => @enumToInt(@as(Cursor.Mode, value)),
-            .Bool => @boolToInt(value),
+            .Enum, .EnumLiteral => @intFromEnum(@as(Cursor.Mode, value)),
+            .Bool => @intFromBool(value),
             else => unreachable,
         };
         glfwSetInputMode(window, mode, i32_value);

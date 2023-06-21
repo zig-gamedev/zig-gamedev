@@ -49,7 +49,7 @@ pub fn deinit() void {
             while (it.next()) |kv| {
                 const address = kv.key_ptr.*;
                 const size = kv.value_ptr.*;
-                mem_allocator.?.free(@intToPtr([*]align(mem_alignment) u8, address)[0..size]);
+                mem_allocator.?.free(@ptrFromInt([*]align(mem_alignment) u8, address)[0..size]);
                 std.log.info(
                     "[zgui] Possible memory leak or static memory usage detected: (address: 0x{x}, size: {d})",
                     .{ address, size },
@@ -94,7 +94,7 @@ fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
         size,
     ) catch @panic("zgui: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zgui: out of memory");
+    mem_allocations.?.put(@intFromPtr(mem.ptr), size) catch @panic("zgui: out of memory");
 
     return mem.ptr;
 }
@@ -105,7 +105,7 @@ fn zguiMemFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
         defer mem_mutex.unlock();
 
         if (mem_allocations != null) {
-            const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+            const size = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
             const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
             mem_allocator.?.free(mem);
         }
@@ -842,10 +842,10 @@ pub const Style = extern struct {
     extern fn zguiStyle_ScaleAllSizes(style: *Style, scale_factor: f32) void;
 
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
-        return style.colors[@enumToInt(idx)];
+        return style.colors[@intFromEnum(idx)];
     }
     pub fn setColor(style: *Style, idx: StyleCol, color: [4]f32) void {
-        style.colors[@enumToInt(idx)] = color;
+        style.colors[@intFromEnum(idx)] = color;
     }
 };
 /// `pub fn getStyle() *Style`

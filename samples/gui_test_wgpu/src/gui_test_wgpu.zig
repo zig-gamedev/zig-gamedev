@@ -77,7 +77,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zgui.backend.initWithConfig(
         window,
         gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
         .{ .texture_filter_mode = .linear, .pipeline_multisample_count = 1 },
     );
 

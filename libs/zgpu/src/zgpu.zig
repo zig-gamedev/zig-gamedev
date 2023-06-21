@@ -1491,7 +1491,7 @@ const FrameStats = struct {
 
         if ((stats.time - stats.fps_refresh_time) >= 1.0) {
             const t = stats.time - stats.fps_refresh_time;
-            const fps = @intToFloat(f64, stats.fps_counter) / t;
+            const fps = @floatFromInt(f64, stats.fps_counter) / t;
             const ms = (1.0 / fps) * 1000.0;
 
             stats.fps = fps;

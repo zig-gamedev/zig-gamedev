@@ -58,7 +58,7 @@ pub const State = struct {
         _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
 
         // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+        zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
 
         // Create a color/depth texture and its 'view'.
         const color = createColorTexture(gctx);
@@ -271,8 +271,8 @@ pub const State = struct {
 };
 
 fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
-    const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
-    const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
+    const width = @floatFromInt(f32, gctx.swapchain_descriptor.width);
+    const height = @floatFromInt(f32, gctx.swapchain_descriptor.height);
     const delta = math.sign(
         @bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height),
     );

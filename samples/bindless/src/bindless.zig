@@ -177,8 +177,8 @@ fn loadMesh(
         while (lod_index < generate_lods) : (lod_index += 1) {
             mesh.num_lods += 1;
 
-            const threshold: f32 = 1.0 - @intToFloat(f32, lod_index) / @intToFloat(f32, max_num_lods);
-            const target_index_count: usize = @floatToInt(usize, @intToFloat(f32, indices.items.len) * threshold);
+            const threshold: f32 = 1.0 - @floatFromInt(f32, lod_index) / @floatFromInt(f32, max_num_lods);
+            const target_index_count: usize = @intFromFloat(usize, @floatFromInt(f32, indices.items.len) * threshold);
             const target_error: f32 = 1e-2;
 
             var lod_indices = std.ArrayList(u32).init(arena);
@@ -240,8 +240,8 @@ fn drawToCubeTexture(
     gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
-        .Width = @intToFloat(f32, texture_width),
-        .Height = @intToFloat(f32, texture_height),
+        .Width = @floatFromInt(f32, texture_width),
+        .Height = @floatFromInt(f32, texture_height),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});
@@ -833,8 +833,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     {
         var mip_level: u32 = 0;
         while (mip_level < prefiltered_env_texture_num_mip_levels) : (mip_level += 1) {
-            const roughness = @intToFloat(f32, mip_level) /
-                @intToFloat(f32, prefiltered_env_texture_num_mip_levels - 1);
+            const roughness = @floatFromInt(f32, mip_level) /
+                @floatFromInt(f32, prefiltered_env_texture_num_mip_levels - 1);
             gctx.cmdlist.SetGraphicsRoot32BitConstant(1, @bitCast(u32, roughness), 0);
             drawToCubeTexture(&gctx, prefiltered_env_texture.resource, mip_level);
         }
@@ -921,7 +921,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @floatFromInt(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -944,8 +944,8 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @floatFromInt(f32, pos.x) - @floatFromInt(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @floatFromInt(f32, pos.y) - @floatFromInt(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
@@ -993,7 +993,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @floatFromInt(f32, gctx.viewport_width) / @floatFromInt(f32, gctx.viewport_height),
         0.1,
         100.0,
     );

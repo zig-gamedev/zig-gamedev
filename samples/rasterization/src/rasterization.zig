@@ -468,7 +468,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @floatFromInt(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -513,8 +513,8 @@ fn update(demo: *DemoState) void {
         {
             var pos: w32.POINT = undefined;
             _ = w32.GetCursorPos(&pos);
-            const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-            const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+            const delta_x = @floatFromInt(f32, pos.x) - @floatFromInt(f32, demo.mouse.cursor_prev_x);
+            const delta_y = @floatFromInt(f32, pos.y) - @floatFromInt(f32, demo.mouse.cursor_prev_y);
             demo.mouse.cursor_prev_x = pos.x;
             demo.mouse.cursor_prev_y = pos.y;
 
@@ -567,7 +567,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @floatFromInt(f32, gctx.viewport_width) / @floatFromInt(f32, gctx.viewport_height),
         0.01,
         200.0,
     );

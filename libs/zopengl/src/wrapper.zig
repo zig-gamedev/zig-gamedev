@@ -1071,7 +1071,7 @@ pub const REPEAT = bindings.REPEAT;
 
 // pub var texParameteri: *const fn (target: Enum, pname: Enum, param: Int) callconv(.C) void = undefined;
 pub fn texParameteri(target: TextureTarget, pname: TextureParameter, param: Int) void {
-    bindings.texParameteri(@enumToInt(target), @enumToInt(pname), param);
+    bindings.texParameteri(@intFromEnum(target), @intFromEnum(pname), param);
 }
 
 // pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
@@ -1110,14 +1110,14 @@ pub fn texImage2D(args: struct {
     assert(args.width > 0);
     assert(args.height > 0);
     bindings.texImage2D(
-        @enumToInt(args.target),
+        @intFromEnum(args.target),
         @bitCast(Int, args.level),
-        @enumToInt(args.internal_format),
+        @intFromEnum(args.internal_format),
         @bitCast(Sizei, args.width),
         @bitCast(Sizei, args.height),
         0,
-        @enumToInt(args.format),
-        @enumToInt(args.pixel_type),
+        @intFromEnum(args.format),
+        @intFromEnum(args.pixel_type),
         args.data,
     );
 }
@@ -1147,12 +1147,12 @@ pub fn clearColor(r: f32, g: f32, b: f32, a: f32) void {
 
 // pub var disable: *const fn (cap: Enum) callconv(.C) void = undefined;
 pub fn disable(capability: Capability) void {
-    bindings.disable(@enumToInt(capability));
+    bindings.disable(@intFromEnum(capability));
 }
 
 // pub var enable: *const fn (cap: Enum) callconv(.C) void = undefined;
 pub fn enable(capability: Capability) void {
-    bindings.enable(@enumToInt(capability));
+    bindings.enable(@intFromEnum(capability));
 }
 
 // pub var finish: *const fn () callconv(.C) void = undefined;
@@ -1160,7 +1160,7 @@ pub fn enable(capability: Capability) void {
 
 // pub var blendFunc: *const fn (sfactor: Enum, dfactor: Enum) callconv(.C) void = undefined;
 pub fn blendFunc(sfactor: BlendFactor, dfactor: BlendFactor) void {
-    bindings.blendFunc(@enumToInt(sfactor), @enumToInt(dfactor));
+    bindings.blendFunc(@intFromEnum(sfactor), @intFromEnum(dfactor));
 }
 
 // pub var logicOp: *const fn (opcode: Enum) callconv(.C) void = undefined;
@@ -1169,7 +1169,7 @@ pub fn blendFunc(sfactor: BlendFactor, dfactor: BlendFactor) void {
 
 // pub var depthFunc: *const fn (func: Enum) callconv(.C) void = undefined;
 pub fn depthFunc(func: DepthFunc) void {
-    bindings.depthFunc(@enumToInt(func));
+    bindings.depthFunc(@intFromEnum(func));
 }
 
 // pub var pixelStoref: *const fn (pname: Enum, param: Float) callconv(.C) void = undefined;
@@ -1190,7 +1190,7 @@ pub fn depthFunc(func: DepthFunc) void {
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
 pub fn getError() Error {
     const res = bindings.getError();
-    return std.meta.intToEnum(Error, res) catch onInvalid: {
+    return std.meta.enumFromInt(Error, res) catch onInvalid: {
         log.warn("getError returned unexpected value {}", .{res});
         assert(false);
         break :onInvalid .no_error;
@@ -1201,12 +1201,12 @@ pub fn getError() Error {
 
 // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
 pub fn getIntegerv(pname: ParameterName, ptr: [*]Int) void {
-    bindings.getIntegerv(@enumToInt(pname), ptr);
+    bindings.getIntegerv(@intFromEnum(pname), ptr);
 }
 
 // pub var getString: *const fn (name: Enum) callconv(.C) [*c]const Ubyte = undefined;
 pub fn getString(name: StringName) [*:0]const u8 {
-    return bindings.getString(@enumToInt(name));
+    return bindings.getString(@intFromEnum(name));
 }
 
 // pub var getTexImage: *const fn (
@@ -1280,7 +1280,7 @@ pub const VERTEX_ARRAY = bindings.VERTEX_ARRAY;
 
 // pub var drawArrays: *const fn (mode: Enum, first: Int, count: Sizei) callconv(.C) void = undefined;
 pub fn drawArrays(prim_type: PrimitiveType, first: u32, count: u32) void {
-    bindings.drawArrays(@enumToInt(prim_type), @bitCast(Int, first), @bitCast(Sizei, count));
+    bindings.drawArrays(@intFromEnum(prim_type), @bitCast(Int, first), @bitCast(Sizei, count));
 }
 
 // pub var drawElements: *const fn (
@@ -1350,7 +1350,7 @@ pub fn drawArrays(prim_type: PrimitiveType, first: u32, count: u32) void {
 
 // pub var bindTexture: *const fn (target: Enum, texture: Uint) callconv(.C) void = undefined;
 pub fn bindTexture(target: TextureTarget, texture: Texture) void {
-    bindings.bindTexture(@enumToInt(target), @bitCast(Uint, texture));
+    bindings.bindTexture(@intFromEnum(target), @bitCast(Uint, texture));
 }
 
 // pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
@@ -1697,7 +1697,7 @@ pub const SRC1_ALPHA = bindings.SRC1_ALPHA;
 
 // pub var bindBuffer: *const fn (target: Enum, buffer: Uint) callconv(.C) void = undefined;
 pub fn bindBuffer(target: BufferTarget, buffer: Buffer) void {
-    bindings.bindBuffer(@enumToInt(target), @bitCast(Uint, buffer));
+    bindings.bindBuffer(@intFromEnum(target), @bitCast(Uint, buffer));
 }
 
 // pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
@@ -1726,10 +1726,10 @@ pub fn bufferData(
 ) void {
     assert(size > 0);
     bindings.bufferData(
-        @enumToInt(target),
+        @intFromEnum(target),
         @bitCast(Sizeiptr, size),
         bytes,
-        @enumToInt(usage),
+        @intFromEnum(usage),
     );
 }
 
@@ -1742,7 +1742,7 @@ pub fn bufferData(
 pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) void {
     assert(bytes.len > 0);
     bindings.bufferSubData(
-        @enumToInt(target),
+        @intFromEnum(target),
         @bitCast(Intptr, offset),
         @bitCast(Sizeiptr, bytes.len),
         bytes.ptr,
@@ -1891,7 +1891,7 @@ pub fn createProgram() Program {
 
 // pub var createShader: *const fn (type: Enum) callconv(.C) Uint = undefined;
 pub fn createShader(@"type": ShaderType) Shader {
-    return @bitCast(Shader, bindings.createShader(@enumToInt(@"type")));
+    return @bitCast(Shader, bindings.createShader(@intFromEnum(@"type")));
 }
 
 // pub var deleteProgram: *const fn (program: Uint) callconv(.C) void = undefined;
@@ -1949,7 +1949,7 @@ pub fn getAttribLocation(program: Program, name: [:0]const u8) ?VertexAttribLoca
 pub fn getProgramiv(program: Program, parameter: ProgramParameter) Int {
     assert(@bitCast(Uint, program) > 0);
     var value: Int = undefined;
-    bindings.getProgramiv(@bitCast(Uint, program), @enumToInt(parameter), &value);
+    bindings.getProgramiv(@bitCast(Uint, program), @intFromEnum(parameter), &value);
     return value;
 }
 
@@ -1977,7 +1977,7 @@ pub fn getProgramInfoLog(program: Program, buffer: []u8) ?[]const u8 {
 pub fn getShaderiv(shader: Shader, parameter: ShaderParameter) Int {
     assert(@bitCast(Uint, shader) > 0);
     var value: Int = undefined;
-    bindings.getShaderiv(@bitCast(Uint, shader), @enumToInt(parameter), &value);
+    bindings.getShaderiv(@bitCast(Uint, shader), @intFromEnum(parameter), &value);
     return value;
 }
 
@@ -2239,10 +2239,10 @@ pub fn vertexAttribPointer(
     bindings.vertexAttribPointer(
         @bitCast(Uint, location),
         @bitCast(Int, size),
-        @enumToInt(attrib_type),
+        @intFromEnum(attrib_type),
         normalised,
         @bitCast(Sizei, stride),
-        @intToPtr(*allowzero const anyopaque, offset),
+        @ptrFromInt(*allowzero const anyopaque, offset),
     );
 }
 //--------------------------------------------------------------------------------------------------
@@ -2654,7 +2654,7 @@ pub const VERTEX_ARRAY_BINDING = bindings.VERTEX_ARRAY_BINDING;
 
 // pub var getStringi: *const fn (name: Enum, index: Uint) callconv(.C) [*c]const Ubyte = undefined;
 pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
-    return bindings.getStringi(@enumToInt(name), index);
+    return bindings.getStringi(@intFromEnum(name), index);
 }
 
 // pub var isRenderbuffer: *const fn (renderbuffer: Uint) callconv(.C) Boolean = undefined;
@@ -2664,7 +2664,7 @@ pub fn isRenderbuffer(renderbuffer: Renderbuffer) bool {
 
 // pub var bindRenderbuffer: *const fn (target: Enum, renderbuffer: Uint) callconv(.C) void = undefined;
 pub fn bindRenderbuffer(target: RenderbufferTarget, renderbuffer: Renderbuffer) void {
-    bindings.bindRenderbuffer(@enumToInt(target), @bitCast(Uint, renderbuffer));
+    bindings.bindRenderbuffer(@intFromEnum(target), @bitCast(Uint, renderbuffer));
 }
 
 // pub var deleteRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]const Uint) callconv(.C) void = undefined;
@@ -2696,8 +2696,8 @@ pub fn renderbufferStorage(
     height: u32,
 ) void {
     bindings.renderbufferStorage(
-        @enumToInt(target),
-        @enumToInt(internal_format),
+        @intFromEnum(target),
+        @intFromEnum(internal_format),
         @bitCast(Sizei, width),
         @bitCast(Sizei, height),
     );
@@ -2716,7 +2716,7 @@ pub fn isFramebuffer(framebuffer: Framebuffer) bool {
 
 // pub var bindFramebuffer: *const fn (target: Enum, framebuffer: Uint) callconv(.C) void = undefined;
 pub fn bindFramebuffer(target: FramebufferTarget, framebuffer: Framebuffer) void {
-    bindings.bindFramebuffer(@enumToInt(target), @bitCast(Uint, framebuffer));
+    bindings.bindFramebuffer(@intFromEnum(target), @bitCast(Uint, framebuffer));
 }
 
 // pub var deleteFramebuffers: *const fn (n: Sizei, framebuffers: [*c]const Uint) callconv(.C) void = undefined;
@@ -2737,8 +2737,8 @@ pub fn genFramebuffers(framebuffers: []Framebuffer) void {
 
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
 pub fn checkFramebufferStatus(target: FramebufferTarget) FramebufferStatus {
-    const res = bindings.checkFramebufferStatus(@enumToInt(target));
-    return std.meta.intToEnum(FramebufferStatus, res) catch onInvalid: {
+    const res = bindings.checkFramebufferStatus(@intFromEnum(target));
+    return std.meta.enumFromInt(FramebufferStatus, res) catch onInvalid: {
         log.warn("checkFramebufferStatus returned unexpected value {}", .{res});
         std.debug.assert(false);
         break :onInvalid .complete;
@@ -2768,9 +2768,9 @@ pub fn framebufferTexture2D(
     level: Int,
 ) void {
     bindings.framebufferTexture2D(
-        @enumToInt(target),
-        @enumToInt(attachment),
-        @enumToInt(textarget),
+        @intFromEnum(target),
+        @intFromEnum(attachment),
+        @intFromEnum(textarget),
         @bitCast(Uint, texture),
         level,
     );
@@ -2798,9 +2798,9 @@ pub fn framebufferRenderbuffer(
     renderbuffer: Renderbuffer,
 ) void {
     bindings.framebufferRenderbuffer(
-        @enumToInt(target),
-        @enumToInt(attachment),
-        @enumToInt(renderbuffertarget),
+        @intFromEnum(target),
+        @intFromEnum(attachment),
+        @intFromEnum(renderbuffertarget),
         @bitCast(Uint, renderbuffer),
     );
 }
@@ -2818,9 +2818,9 @@ pub fn getFramebufferAttachmentParameteriv(
 ) Int {
     var result: Int = undefined;
     bindings.getFramebufferAttachmentParameteriv(
-        @enumToInt(target),
-        @enumToInt(attachment),
-        @enumToInt(pname),
+        @intFromEnum(target),
+        @intFromEnum(attachment),
+        @intFromEnum(pname),
         &result,
     );
     return result;

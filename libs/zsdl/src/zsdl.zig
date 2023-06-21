@@ -339,7 +339,7 @@ fn definePixelFormat(
         },
         .none => unreachable,
     }
-    return ((1 << 28) | ((@enumToInt(_type)) << 24) | ((@enumToInt(order)) << 20) |
+    return ((1 << 28) | ((@intFromEnum(_type)) << 24) | ((@intFromEnum(order)) << 20) |
         ((layout) << 16) | ((bits) << 8) | ((bytes) << 0));
 }
 pub const PixelFormat = enum(u32) {
@@ -348,32 +348,32 @@ pub const PixelFormat = enum(u32) {
     index4lsb = definePixelFormat(.index4, BitmapOrder.@"4321", 0, 4, 0),
     index4msb = definePixelFormat(.index4, BitmapOrder.@"1234", 0, 4, 0),
     index8 = definePixelFormat(.index8, BitmapOrder.none, 0, 8, 1),
-    rgb332 = definePixelFormat(.packed8, PackedOrder.xrgb, @enumToInt(PackedLayout.@"332"), 8, 1),
-    xrgb4444 = definePixelFormat(.packed16, PackedOrder.xrgb, @enumToInt(PackedLayout.@"4444"), 12, 2),
-    xbgr4444 = definePixelFormat(.packed16, PackedOrder.xbgr, @enumToInt(PackedLayout.@"4444"), 12, 2),
-    xrgb1555 = definePixelFormat(.packed16, PackedOrder.xrgb, @enumToInt(PackedLayout.@"1555"), 15, 2),
-    xbgr1555 = definePixelFormat(.packed16, PackedOrder.xbgr, @enumToInt(PackedLayout.@"1555"), 15, 2),
-    argb4444 = definePixelFormat(.packed16, PackedOrder.argb, @enumToInt(PackedLayout.@"4444"), 16, 2),
-    rgba4444 = definePixelFormat(.packed16, PackedOrder.rgba, @enumToInt(PackedLayout.@"4444"), 16, 2),
-    abgr4444 = definePixelFormat(.packed16, PackedOrder.abgr, @enumToInt(PackedLayout.@"4444"), 16, 2),
-    bgra4444 = definePixelFormat(.packed16, PackedOrder.bgra, @enumToInt(PackedLayout.@"4444"), 16, 2),
-    argb1555 = definePixelFormat(.packed16, PackedOrder.argb, @enumToInt(PackedLayout.@"1555"), 16, 2),
-    rgba5551 = definePixelFormat(.packed16, PackedOrder.rgba, @enumToInt(PackedLayout.@"5551"), 16, 2),
-    abgr1555 = definePixelFormat(.packed16, PackedOrder.abgr, @enumToInt(PackedLayout.@"1555"), 16, 2),
-    bgra5551 = definePixelFormat(.packed16, PackedOrder.bgra, @enumToInt(PackedLayout.@"5551"), 16, 2),
-    rgb565 = definePixelFormat(.packed16, PackedOrder.xrgb, @enumToInt(PackedLayout.@"565"), 16, 2),
-    bgr565 = definePixelFormat(.packed16, PackedOrder.xbgr, @enumToInt(PackedLayout.@"565"), 16, 2),
+    rgb332 = definePixelFormat(.packed8, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"332"), 8, 1),
+    xrgb4444 = definePixelFormat(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"4444"), 12, 2),
+    xbgr4444 = definePixelFormat(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"4444"), 12, 2),
+    xrgb1555 = definePixelFormat(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"1555"), 15, 2),
+    xbgr1555 = definePixelFormat(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"1555"), 15, 2),
+    argb4444 = definePixelFormat(.packed16, PackedOrder.argb, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    rgba4444 = definePixelFormat(.packed16, PackedOrder.rgba, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    abgr4444 = definePixelFormat(.packed16, PackedOrder.abgr, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    bgra4444 = definePixelFormat(.packed16, PackedOrder.bgra, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    argb1555 = definePixelFormat(.packed16, PackedOrder.argb, @intFromEnum(PackedLayout.@"1555"), 16, 2),
+    rgba5551 = definePixelFormat(.packed16, PackedOrder.rgba, @intFromEnum(PackedLayout.@"5551"), 16, 2),
+    abgr1555 = definePixelFormat(.packed16, PackedOrder.abgr, @intFromEnum(PackedLayout.@"1555"), 16, 2),
+    bgra5551 = definePixelFormat(.packed16, PackedOrder.bgra, @intFromEnum(PackedLayout.@"5551"), 16, 2),
+    rgb565 = definePixelFormat(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"565"), 16, 2),
+    bgr565 = definePixelFormat(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"565"), 16, 2),
     rgb24 = definePixelFormat(.arrayu8, ArrayOrder.rgb, 0, 24, 3),
     bgr24 = definePixelFormat(.arrayu8, ArrayOrder.bgr, 0, 24, 3),
-    xrgb8888 = definePixelFormat(.packed32, PackedOrder.xrgb, @enumToInt(PackedLayout.@"8888"), 24, 4),
-    rgbx8888 = definePixelFormat(.packed32, PackedOrder.rgbx, @enumToInt(PackedLayout.@"8888"), 24, 4),
-    xbgr8888 = definePixelFormat(.packed32, PackedOrder.xbgr, @enumToInt(PackedLayout.@"8888"), 24, 4),
-    bgrx8888 = definePixelFormat(.packed32, PackedOrder.bgrx, @enumToInt(PackedLayout.@"8888"), 24, 4),
-    argb8888 = definePixelFormat(.packed32, PackedOrder.argb, @enumToInt(PackedLayout.@"8888"), 32, 4),
-    rgba8888 = definePixelFormat(.packed32, PackedOrder.rgba, @enumToInt(PackedLayout.@"8888"), 32, 4),
-    abgr8888 = definePixelFormat(.packed32, PackedOrder.abgr, @enumToInt(PackedLayout.@"8888"), 32, 4),
-    bgra8888 = definePixelFormat(.packed32, PackedOrder.bgra, @enumToInt(PackedLayout.@"8888"), 32, 4),
-    argb2101010 = definePixelFormat(.packed32, PackedOrder.argb, @enumToInt(PackedLayout.@"2101010"), 32, 4),
+    xrgb8888 = definePixelFormat(.packed32, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    rgbx8888 = definePixelFormat(.packed32, PackedOrder.rgbx, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    xbgr8888 = definePixelFormat(.packed32, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    bgrx8888 = definePixelFormat(.packed32, PackedOrder.bgrx, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    argb8888 = definePixelFormat(.packed32, PackedOrder.argb, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    rgba8888 = definePixelFormat(.packed32, PackedOrder.rgba, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    abgr8888 = definePixelFormat(.packed32, PackedOrder.abgr, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    bgra8888 = definePixelFormat(.packed32, PackedOrder.bgra, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    argb2101010 = definePixelFormat(.packed32, PackedOrder.argb, @intFromEnum(PackedLayout.@"2101010"), 32, 4),
 };
 
 pub const Access = enum(i32) {
@@ -666,7 +666,7 @@ pub const Renderer = opaque {
         center: ?*const PointF,
         flip: RendererFlip,
     ) !void {
-        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, @enumToInt(flip)) < 0) return makeError();
+        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, @intFromEnum(flip)) < 0) return makeError();
     }
     extern fn SDL_RenderCopyExF(
         r: *Renderer,
@@ -796,7 +796,7 @@ pub const Renderer = opaque {
         width: i32,
         height: i32,
     ) !*Texture {
-        return SDL_CreateTexture(renderer, @enumToInt(format), @enumToInt(access), width, height) orelse makeError();
+        return SDL_CreateTexture(renderer, @intFromEnum(format), @intFromEnum(access), width, height) orelse makeError();
     }
     extern fn SDL_CreateTexture(renderer: *Renderer, format: u32, access: i32, w: i32, h: i32) ?*Texture;
 
@@ -870,7 +870,7 @@ pub const Renderer = opaque {
         if (SDL_RenderReadPixels(
             r,
             rect,
-            if (format) |f| @enumToInt(f) else 0,
+            if (format) |f| @intFromEnum(f) else 0,
             pixels,
             @intCast(i32, pitch),
         ) < 0) return makeError();
@@ -1216,12 +1216,12 @@ pub const GameController = opaque {
     extern fn SDL_GameControllerClose(joystick: *GameController) void;
 
     pub fn getAxis(controller: *GameController, axis: Axis) i16 {
-        return SDL_GameControllerGetAxis(controller, @enumToInt(axis));
+        return SDL_GameControllerGetAxis(controller, @intFromEnum(axis));
     }
     extern fn SDL_GameControllerGetAxis(*GameController, axis: c_int) i16;
 
     pub fn getButton(controller: *GameController, button: Button) bool {
-        return (SDL_GameControllerGetButton(controller, @enumToInt(button)) != 0);
+        return (SDL_GameControllerGetButton(controller, @intFromEnum(button)) != 0);
     }
     extern fn SDL_GameControllerGetButton(controller: *GameController, button: c_int) u8;
 };

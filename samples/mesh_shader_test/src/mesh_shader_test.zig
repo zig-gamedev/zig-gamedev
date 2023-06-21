@@ -580,7 +580,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @floatFromInt(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -608,11 +608,11 @@ fn update(demo: *DemoState) void {
     c.igSpacing();
 
     c.igText("Draw mode:", "");
-    var draw_mode: i32 = @enumToInt(demo.draw_mode);
+    var draw_mode: i32 = @intFromEnum(demo.draw_mode);
     _ = c.igRadioButton_IntPtr("Mesh Shader emulating VS (no culling)", &draw_mode, 0);
     _ = c.igRadioButton_IntPtr("VS with manual vertex fetching (no HW index buffer)", &draw_mode, 1);
     _ = c.igRadioButton_IntPtr("VS with fixed function vertex fetching", &draw_mode, 2);
-    demo.draw_mode = @intToEnum(DrawMode, draw_mode);
+    demo.draw_mode = @enumFromInt(DrawMode, draw_mode);
 
     _ = c.igSliderInt("Num. objects", &demo.num_objects_to_draw, 1, 1000, null, c.ImGuiSliderFlags_None);
 
@@ -625,8 +625,8 @@ fn update(demo: *DemoState) void {
     c.igTextColored(
         .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
         "%.3f M",
-        @intToFloat(f64, demo.num_objects_to_draw) *
-            @intToFloat(f64, demo.meshes.items[mesh_engine].num_indices / 3) / 1_000_000.0,
+        @floatFromInt(f64, demo.num_objects_to_draw) *
+            @floatFromInt(f64, demo.meshes.items[mesh_engine].num_indices / 3) / 1_000_000.0,
     );
 
     c.igText("Vertices: ");
@@ -634,8 +634,8 @@ fn update(demo: *DemoState) void {
     c.igTextColored(
         .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
         "%.3f M",
-        @intToFloat(f64, demo.num_objects_to_draw) *
-            @intToFloat(f64, demo.meshes.items[mesh_engine].num_vertices) / 1_000_000.0,
+        @floatFromInt(f64, demo.num_objects_to_draw) *
+            @floatFromInt(f64, demo.meshes.items[mesh_engine].num_vertices) / 1_000_000.0,
     );
 
     if (demo.draw_mode == .mesh_shader) {
@@ -644,8 +644,8 @@ fn update(demo: *DemoState) void {
         c.igTextColored(
             .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
             "%.3f K",
-            @intToFloat(f64, demo.num_objects_to_draw) *
-                @intToFloat(f64, demo.meshes.items[mesh_engine].num_meshlets) / 1_000.0,
+            @floatFromInt(f64, demo.num_objects_to_draw) *
+                @floatFromInt(f64, demo.meshes.items[mesh_engine].num_meshlets) / 1_000.0,
         );
 
         c.igSpacing();
@@ -660,8 +660,8 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @floatFromInt(f32, pos.x) - @floatFromInt(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @floatFromInt(f32, pos.y) - @floatFromInt(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
@@ -709,7 +709,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @floatFromInt(f32, gctx.viewport_width) / @floatFromInt(f32, gctx.viewport_height),
         0.01,
         200.0,
     );
@@ -780,7 +780,7 @@ fn draw(demo: *DemoState) void {
     while (entity_index < demo.num_objects_to_draw) : (entity_index += 1) {
         // Upload per-draw constant data.
         {
-            const position = Vec3.init(0.0, 0.0, @intToFloat(f32, entity_index) * 2.5);
+            const position = Vec3.init(0.0, 0.0, @floatFromInt(f32, entity_index) * 2.5);
             const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
             mem.cpu_slice[0] = .{
                 .object_to_clip = Mat4.initTranslation(position).mul(cam_world_to_clip).transpose(),

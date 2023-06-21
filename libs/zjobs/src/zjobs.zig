@@ -1044,7 +1044,7 @@ test "JobQueue throughput" {
     const job_workload_size = cache_line_size * 1024 * 1024;
     const job_count = blk: {
         const total_memory = std.process.totalSystemMemory() catch break :blk min_jobs;
-        const upper_bound = @floatToInt(usize, @intToFloat(f64, total_memory) * 0.667);
+        const upper_bound = @intFromFloat(usize, @floatFromInt(f64, total_memory) * 0.667);
         var count: usize = min_jobs * 4;
         while (job_workload_size * count > upper_bound and count > min_jobs) : (count -= min_jobs) {}
         break :blk count;
@@ -1117,7 +1117,7 @@ test "JobQueue throughput" {
             self.stat.start();
             defer self.stat.stop();
 
-            assert(@ptrToInt(self.workload) % 64 == 0);
+            assert(@intFromPtr(self.workload) % 64 == 0);
             const thread: u64 = self.stat.thread;
             for (&self.workload.units, 0..) |*unit, index| {
                 unit.* = thread +% index;
@@ -1157,7 +1157,7 @@ test "JobQueue throughput" {
         job_ms += job_stat.ms();
     }
 
-    const throughput = @intToFloat(f64, job_ms) / @intToFloat(f64, main_ms);
+    const throughput = @floatFromInt(f64, job_ms) / @floatFromInt(f64, main_ms);
     print("completed {} jobs ({}ms) in {}ms ({d:.1}x)\n", .{ job_count, job_ms, main_ms, throughput });
 }
 

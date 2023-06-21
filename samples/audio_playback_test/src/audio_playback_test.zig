@@ -69,8 +69,8 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
         const frame = audio.current_frame_index;
-        ptr[i * 2 + 0] = @intToFloat(f32, audio.samples.items[frame * 2 + 0]) / @intToFloat(f32, 0x7fff);
-        ptr[i * 2 + 1] = @intToFloat(f32, audio.samples.items[frame * 2 + 1]) / @intToFloat(f32, 0x7fff);
+        ptr[i * 2 + 0] = @floatFromInt(f32, audio.samples.items[frame * 2 + 0]) / @floatFromInt(f32, 0x7fff);
+        ptr[i * 2 + 1] = @floatFromInt(f32, audio.samples.items[frame * 2 + 1]) / @floatFromInt(f32, 0x7fff);
 
         audio.current_frame_index += 1;
         if (audio.current_frame_index * 2 >= audio.samples.items.len) {
@@ -385,14 +385,14 @@ fn draw(demo: *DemoState) void {
                 if ((frame + i) * 2 >= demo.audio.samples.items.len) {
                     break :blk 0.0;
                 } else {
-                    const l = @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2 + 0]) /
-                        @intToFloat(f32, 0x7fff);
-                    const r = @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2 + 1]) /
-                        @intToFloat(f32, 0x7fff);
+                    const l = @floatFromInt(f32, demo.audio.samples.items[(frame + i) * 2 + 0]) /
+                        @floatFromInt(f32, 0x7fff);
+                    const r = @floatFromInt(f32, demo.audio.samples.items[(frame + i) * 2 + 1]) /
+                        @floatFromInt(f32, 0x7fff);
                     break :blk (l + r) * 0.5;
                 }
             };
-            const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
+            const x = -1.0 + 2.0 * @floatFromInt(f32, i) / @floatFromInt(f32, num_vis_samples - 1);
             upload.cpu_slice[i] = Vec2.init(0.95 * x, y);
         }
         gctx.cmdlist.CopyBufferRegion(
