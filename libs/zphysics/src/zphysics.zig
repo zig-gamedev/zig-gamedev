@@ -579,7 +579,7 @@ pub const RRayCast = extern struct {
     origin: [4]Real align(rvec_align), // 4th element is ignored
     direction: [4]f32 align(16), // 4th element is ignored
 
-    pub fn getPointOnRay(self:RRayCast, fraction: Real) [3]Real {
+    pub fn getPointOnRay(self: RRayCast, fraction: Real) [3]Real {
         return .{
             self.origin[0] + self.direction[0] * fraction,
             self.origin[1] + self.direction[1] * fraction,
@@ -1089,13 +1089,8 @@ pub const BodyInterface = opaque {
         return position;
     }
 
-    pub fn setPosition(body_iface: * BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type:Activation) void {
-        c.JPC_BodyInterface_SetPosition(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
-            body_id,
-            &in_position,
-             @enumToInt(in_activation_type)
-        );
+    pub fn setPosition(body_iface: *BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type: Activation) void {
+        c.JPC_BodyInterface_SetPosition(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id, &in_position, @enumToInt(in_activation_type));
     }
 
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
@@ -1116,6 +1111,10 @@ pub const BodyInterface = opaque {
             &rotation,
         );
         return rotation;
+    }
+
+    pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]Real, in_activation_type: Activation) void {
+        c.JPC_BodyInterface_SetRotation(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id, &in_rotation, @enumToInt(in_activation_type));
     }
 
     pub fn setPositionRotationAndVelocity(
