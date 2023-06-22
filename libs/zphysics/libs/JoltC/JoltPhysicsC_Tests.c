@@ -164,6 +164,130 @@ MyContactListener_Init(void)
     return impl;
 }
 //--------------------------------------------------------------------------------------------------
+// MyDebugRenderer
+//--------------------------------------------------------------------------------------------------
+#if JPC_DEBUG_RENDERER == 1
+
+typedef struct MyRenderPrimitive
+{
+    // Actual render data goes here
+    int foobar;
+} MyRenderPrimitive;
+
+typedef struct MyDebugRenderer
+{
+    const JPC_DebugRendererVTable *vtable; // VTable has to be the first field in the struct.
+    struct MyRenderPrimitive prims[32];
+    int prim_head;
+} MyDebugRenderer;
+
+static void
+MyDebugRenderer_DrawLine(void *in_self, JPC_Real in_from[3], JPC_Real in_to[3], JPC_Color in_color)
+{
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "\tDebugRenderer: DrawLine called.\n");
+#endif
+}
+
+static void
+MyDebugRenderer_DrawTriangle(void *in_self, JPC_Real in_v1[3], JPC_Real in_v2[3], JPC_Real in_v3[3], JPC_Color in_color)
+{
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "\tDebugRenderer: DrawTriangle called.\n");
+#endif
+}
+
+static JPC_DebugRenderer_TriangleBatch *
+MyDebugRenderer_CreateTriangleBatch(void *in_self,
+                                    const JPC_DebugRenderer_Triangle *in_triangles,
+                                    uint32_t in_triangle_count)
+{
+    struct MyDebugRenderer *self = (struct MyDebugRenderer*) in_self;
+    struct MyRenderPrimitive *prim = &self->prims[self->prim_head++];
+    JPC_DebugRenderer_TriangleBatch *batch = JPC_DebugRenderer_TriangleBatch_Create(
+        (JPC_DebugRenderer_Primitive *)prim
+        );
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "\tDebugRenderer: CreateTriangleBatch called. Created primitive %x\n", prim);
+#endif
+    return batch;
+}
+
+static JPC_DebugRenderer_TriangleBatch *
+MyDebugRenderer_CreateTriangleBatchIndexed(void *in_self,
+                                           const JPC_DebugRenderer_Vertex *in_vertices,
+                                           uint32_t in_vertex_count,
+                                           const uint32_t *in_indices,
+                                           uint32_t in_index_count)
+{
+    struct MyDebugRenderer *self = (struct MyDebugRenderer*) in_self;
+    struct MyRenderPrimitive *prim = &self->prims[self->prim_head++];
+    JPC_DebugRenderer_TriangleBatch *batch = JPC_DebugRenderer_TriangleBatch_Create(
+        (JPC_DebugRenderer_Primitive *)prim
+        );
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "\tDebugRenderer: CreateTriangleBatchIndexed called. Created primitive %x\n", prim);
+#endif
+    return batch;
+}
+
+static void
+MyDebugRenderer_DrawGeometry(void *in_self,
+                             const float inModelMatrix[16],
+                             const JPC_AABox *inWorldSpaceBounds,
+                             float inLODScaleSq,
+                             JPC_Color inColor,
+                             const JPC_DebugRenderer_Geometry *in_geometry,
+                             JPC_CullMode in_cull_mode,
+                             JPC_CastShadow in_cast_shadow,
+                             JPC_DrawMode in_draw_mode)
+{
+    if (in_geometry->num_LODs == 0) return;
+    JPC_DebugRenderer_TriangleBatch *batch = in_geometry->LODs[0].batch;
+    const JPC_DebugRenderer_Primitive *prim = JPC_DebugRenderer_TriangleBatch_GetPrimitive(batch);
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "\tDebugRenderer: DrawGeometry called for %x\n", prim);
+#endif
+}
+
+static void
+MyDebugRenderer_DrawText3D(void *in_self,
+                           JPC_Real in_position[3],
+                           const char *in_string,
+                           JPC_Color in_color,
+                           float in_height)
+{
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "\tDebugRenderer: DrawText3D called.\n");
+#endif
+}
+
+static MyDebugRenderer
+MyDebugRenderer_Init(void)
+{
+    static const JPC_DebugRendererVTable vtable =
+        {
+              .DrawLine = MyDebugRenderer_DrawLine,
+              .DrawTriangle = MyDebugRenderer_DrawTriangle,
+              .CreateTriangleBatch = MyDebugRenderer_CreateTriangleBatch,
+              .CreateTriangleBatchIndexed = MyDebugRenderer_CreateTriangleBatchIndexed,
+              .DrawGeometry = MyDebugRenderer_DrawGeometry,
+              .DrawText3D = MyDebugRenderer_DrawText3D,
+        };
+    MyDebugRenderer impl =
+        {
+              .vtable = &vtable,
+              .prim_head = 0
+        };
+    return impl;
+}
+
+/// This function can be passed to JPC_PhysicsSystem.DrawBodies as the filter, deciding which bodies draw.
+static bool BodyShouldDraw(const JPC_Body *) {
+    return true;
+}
+#endif //JPC_DEBUG_RENDERER
+//--------------------------------------------------------------------------------------------------
 // MyActivationListener
 //--------------------------------------------------------------------------------------------------
 typedef struct MyActivationListener
@@ -498,6 +622,14 @@ JoltCTest_HelloWorld(void)
 
     JPC_BodyInterface *body_interface = JPC_PhysicsSystem_GetBodyInterface(physics_system);
 
+#if JPC_DEBUG_RENDERER == 1
+    MyDebugRenderer debug_renderer = MyDebugRenderer_Init();
+    enum JPC_DebugRendererResult result = JPC_CreateDebugRendererSingleton(&debug_renderer);
+    assert(result == JPC_DEBUGRENDERER_SUCCESS);
+    JPC_BodyManager_DrawSettings *body_draw_settings = JPC_BodyManager_DrawSettings_Create();
+    JPC_BodyDrawFilter *body_draw_filter = JPC_BodyDrawFilter_Create(&BodyShouldDraw);
+#endif //JPC_DEBUG_RENDERER
+
     //
     // Static floor
     //
@@ -678,7 +810,26 @@ JoltCTest_HelloWorld(void)
             }
             JPC_BodyLockInterface_UnlockRead(lock_iface, &lock);
         }
+
+#if JPC_DEBUG_RENDERER == 1
+        // Test Debug Renderer - should get calls to DrawGeometry each frame, once for floor, once for ball.
+        JPC_PhysicsSystem_DrawBodies(physics_system, body_draw_settings, body_draw_filter);
+#endif // JPC_DEBUG_RENDERER
+
     }
+
+#if JPC_DEBUG_RENDERER == 1
+    // Test other drawing functions besides DrawBodies at least once at the end
+    JPC_PhysicsSystem_DrawConstraints(physics_system);
+    JPC_PhysicsSystem_DrawConstraintLimits(physics_system);
+    JPC_PhysicsSystem_DrawConstraintReferenceFrame(physics_system);
+#endif // JPC_DEBUG_RENDERER
+
+#if JPC_DEBUG_RENDERER == 1
+    JPC_BodyDrawFilter_Destroy(body_draw_filter);
+    JPC_BodyManager_DrawSettings_Destroy(body_draw_settings);
+    JPC_DestroyDebugRendererSingleton();
+#endif // JPC_DEBUG_RENDERER
 
     JPC_BodyInterface_RemoveBody(body_interface, sphere_id);
     JPC_BodyInterface_DestroyBody(body_interface, sphere_id);

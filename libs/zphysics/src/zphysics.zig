@@ -7,6 +7,7 @@ const c = @cImport({
     if (options.use_double_precision) @cDefine("JPH_DOUBLE_PRECISION", "");
     if (options.enable_asserts) @cDefine("JPH_ENABLE_ASSERTS", "");
     if (options.enable_cross_platform_determinism) @cDefine("JPH_CROSS_PLATFORM_DETERMINISTIC", "");
+    if (options.enable_debug_renderer) @cDefine("JPH_DEBUG_RENDERER", "");
     @cInclude("JoltPhysicsC.h");
 });
 
@@ -38,6 +39,15 @@ pub const body_id_sequence_bits: BodyId = c.JPC_BODY_ID_SEQUENCE_BITS;
 pub const body_id_sequence_shift: BodyId = c.JPC_BODY_ID_SEQUENCE_SHIFT;
 
 pub const sub_shape_id_empty: SubShapeId = c.JPC_SUB_SHAPE_ID_EMPTY;
+
+pub const debug_renderer_enabled = options.enable_debug_renderer;
+comptime {
+    assert(if (debug_renderer_enabled) c.JPC_DEBUG_RENDERER == 1 else c.JPC_DEBUG_RENDERER == 0);
+}
+const debug_renderer_disabled_message: []const u8 =
+    \\is called, but debug rendering is not enabled for this build. To enable it, use the option {.enable_debug_renderer
+    \\ = true} when building zphysics. Otherwise, test if debug_renderer_enabled is true before calling.
+    ;
 
 const TempAllocator = opaque {};
 const JobSystem = opaque {};
@@ -625,6 +635,270 @@ pub const RayCastSettings = extern struct {
             @offsetOf(c.JPC_RayCastSettings, "treat_convex_as_solid"));
     }
 };
+
+pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
+
+    pub fn createSingleton(debug_renderer_impl: *anyopaque) !void {
+        switch (@enumFromInt(DebugRendererResult, c.JPC_CreateDebugRendererSingleton(debug_renderer_impl))) {
+            .success => { return; },
+            .duplicate_singleton => { return error.DebugRendererDuplicateSingleton; },
+            .missing_singleton => { return error.DebugRendererMissingSingleton; },
+            .incomplete_impl => { return error.DebugRendererIncompleteImplementation; },
+        }
+    }
+
+    pub fn destroySingleton() void {
+        _ = c.JPC_DestroyDebugRendererSingleton(); // For Zig API, don't care if one actually existed, discard error.
+    }
+
+    pub fn createTriangleBatch(primitive_in: *anyopaque) *anyopaque {
+        return @ptrCast(*TriangleBatch, c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in));
+    }
+
+    pub fn createBodyDrawFilter(
+        filter_func: *const fn (*const Body) align(@alignOf(c.JPC_BodyDrawFilterFunc)) callconv(.C) bool
+    ) *BodyDrawFilter {
+        return @ptrCast(
+            *BodyDrawFilter,
+            c.JPC_BodyDrawFilter_Create(@ptrCast(c.JPC_BodyDrawFilterFunc, filter_func))
+        );
+    }
+
+    pub fn destroyBodyDrawFilter(filter: *BodyDrawFilter) void {
+        c.JPC_BodyDrawFilter_Destroy(@ptrCast(*c.JPC_BodyDrawFilter, filter));
+    }
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn drawLine(self: *T, from: *const [3]Real, to: *const [3]Real, color: *const Color) void {
+                return @ptrCast(*const DebugRenderer.VTable(T), self.__v)
+                    .drawLine(
+                    @ptrCast(*const T, self),
+                    from,
+                    to,
+                    color,
+                );
+            }
+            pub inline fn drawTriangle(
+                self: *T,
+                v1: *const [3]Real,
+                v2: *const [3]Real,
+                v3: *const [3]Real,
+                color: *const Color,
+            ) void {
+                return @ptrCast(*const DebugRenderer.VTable(T), self.__v)
+                    .drawTriangle(
+                    @ptrCast(*const T, self),
+                    v1,
+                    v2,
+                    v3,
+                    color,
+                );
+            }
+            pub inline fn createTriangleBatch(
+                self: *T,
+                triangles: []Triangle,
+                triangle_count: u32,
+            ) T.Batch {
+                return @ptrCast(*const DebugRenderer.VTable(T), self.__v)
+                    .createTriangleBatch(
+                    @ptrCast(*const T, self),
+                    triangles,
+                    triangle_count,
+                );
+            }
+            pub inline fn createTriangleBatchIndexed(
+                self: *T,
+                vertices: []Vertex,
+                vertex_count: u32,
+                indices: []u32,
+                index_count: u32,
+            ) T.Batch {
+                return @ptrCast(*const DebugRenderer.VTable(T), self.__v)
+                    .createTriangleBatchIndexed(
+                    @ptrCast(*const T, self),
+                    vertices,
+                    vertex_count,
+                    indices,
+                    index_count,
+                );
+            }
+            pub inline fn drawGeometry(
+                self: *T,
+                model_matrix: *const [16]Real,
+                world_space_bound: *const AABox,
+                lod_scale_sq: f32,
+                color: Color,
+                geometry: *anyopaque,
+                cull_mode: CullMode,
+                cast_shadow: CastShadow,
+                draw_mode: DrawMode,
+            ) void {
+                return @ptrCast(*const DebugRenderer.VTable(T), self.__v)
+                    .drawGeometry(
+                    @ptrCast(*const T, self),
+                    model_matrix,
+                    world_space_bound,
+                    lod_scale_sq,
+                    color,
+                    geometry,
+                    cull_mode,
+                    cast_shadow,
+                    draw_mode,
+                );
+            }
+            pub inline fn drawText3D(
+                self: *T,
+                positions: *const [3]Real,
+                string: [*:0]const u8,
+                color: Color,
+                height: f32,
+            ) void {
+                return @ptrCast(*const DebugRenderer.VTable(T), self.__v)
+                    .drawText3D(
+                    @ptrCast(*const T, self),
+                    positions,
+                    string,
+                    color,
+                    height,
+                );
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            drawLine: ?*const fn (
+                self: *T,
+                from: *const [3]Real,
+                to: *const [3]Real,
+                color: *const Color,
+            ) callconv(.C) void = null,
+            drawTriangle: ?*const fn (
+                self: *T,
+                v1: *const [3]Real,
+                v2: *const [3]Real,
+                v3: *const [3]Real,
+                color: *const Color,
+            ) callconv(.C) void = null,
+            createTriangleBatch: ?*const fn (
+                self: *T,
+                triangles: [*]Triangle,
+                triangle_count: u32,
+            ) callconv(.C) *anyopaque = null,
+            createTriangleBatchIndexed: ?*const fn (
+                self: *T,
+                vertices: [*]Vertex,
+                vertex_count: u32,
+                indices: [*]u32,
+                index_count: u32,
+            ) callconv(.C) *anyopaque = null,
+            drawGeometry: ?*const fn (
+                self: *T,
+                model_matrix: *const [16]Real,
+                world_space_bound: *const AABox,
+                lod_scale_sq: f32,
+                color: Color,
+                geometry: *anyopaque,
+                cull_mode: CullMode,
+                cast_shadow: CastShadow,
+                draw_mode: DrawMode,
+            ) callconv(.C) void = null,
+            drawText3D: ?*const fn (
+                self: *T,
+                positions: *const [3]Real,
+                string: [*:0]const u8,
+                color: Color,
+                height: f32,
+            ) callconv(.C) void = null,
+        };
+    }
+
+    pub const Color = extern union {
+        uint: u32,
+        comp: extern struct {
+            r: u8,
+            g: u8,
+            b: u8,
+            a: u8,
+        }
+    };
+
+    pub const Triangle = extern struct {
+        v: [3]Vertex,
+    };
+
+    pub const Vertex = extern struct {
+        position: [3]f32,
+        normal: [3]f32,
+        uv: [2]f32,
+        color: Color,
+    };
+
+    pub const AABox = extern struct {
+        min: [3]f32,
+        max: [3]f32,
+    };
+
+    pub const BodyDrawSettings = extern struct {
+        get_support_func: bool = false,     // Draw the GetSupport() function, used for convex collision detection
+        get_support_dir: bool = false,      // If above true, also draw direction mapped to a specific support point
+        get_supporting_face: bool = false,  // Draw the faces that were found colliding during collision detection
+        shape: bool = true,                 // Draw the shapes of all bodies
+        shape_wireframe: bool = false,      // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
+        shape_color: ShapeColor = .motion_type_color, // Coloring scheme to use for shapes
+        bounding_box: bool = false,         // Draw a bounding box per body
+        center_of_mass_transform: bool = false, // Draw the center of mass for each body
+        world_transform: bool = false,      // Draw the world transform (which can be different than CoM) for each body
+        velocity: bool = false,             // Draw the velocity vector for each body
+        mass_and_inertia: bool = false,     // Draw the mass and inertia (as the box equivalent) for each body
+        sleep_stats: bool = false,          // Draw stats regarding the sleeping algorithm of each body
+    };
+
+    pub const BodyDrawFilter = opaque {};
+
+    pub const TriangleBatch = opaque {};
+
+    pub const DebugRendererResult = enum(c.JPC_DebugRendererResult) {
+        success = c.JPC_DEBUGRENDERER_SUCCESS,
+        duplicate_singleton = c.JPC_DEBUGRENDERER_DUPLICATE_SINGLETON,
+        missing_singleton = c.JPC_DEBUGRENDERER_MISSING_SINGLETON,
+        incomplete_impl = c.JPC_DEBUGRENDERER_INCOMPLETE_IMPL,
+    };
+
+    pub const ShapeColor = enum(c.JPC_ShapeColor) {
+        instance_color = c.JPC_INSTANCE_COLOR,       // Random color per instance
+        shape_type_color = c.JPC_SHAPE_TYPE_COLOR,   // Convex = green, scaled = yellow, compound = orange, mesh = red
+        motion_type_color = c.JPC_MOTION_TYPE_COLOR, // Static = grey, keyframed = green, dynamic = random
+        sleep_color = c.JPC_SLEEP_COLOR,             // Static = grey, keyframed = green, dynamic = yellow, asleep= red
+        island_color = c.JPC_ISLAND_COLOR,           // Static = grey, active = random per island, sleeping = light grey
+        material_clor = c.JPC_MATERIAL_COLOR,        // Color as defined by the PhysicsMaterial of the shape
+    };
+
+    pub const CullMode = enum(c.JPC_CullMode) {
+        cull_back_face = c.JPC_CULL_BACK_FACE,
+        cull_front_face = c.JPC_CULL_FRONT_FACE,
+        culling_off = c.JPC_CULLING_OFF,
+    };
+
+    pub const CastShadow = enum(c.JPC_CastShadow) {
+        cast_shadow_on = c.JPC_CAST_SHADOW_ON,
+        cast_shadow_off = c.JPC_CAST_SHADOW_OFF,
+    };
+
+    pub const DrawMode = enum(c.JPC_DrawMode) {
+        draw_mode_solid = c.JPC_DRAW_MODE_SOLID,
+        draw_mode_wireframe = c.JPC_DRAW_MODE_WIREFRAME,
+    };
+
+    comptime {
+        if (debug_renderer_enabled) {
+            assert(@sizeOf(VTable(@This())) == @sizeOf(c.JPC_DebugRendererVTable));
+            assert(@offsetOf(VTable(@This()), "drawTriangle") == @offsetOf(c.JPC_DebugRendererVTable, "DrawTriangle"));
+            assert(@offsetOf(VTable(@This()), "drawText3D") == @offsetOf(c.JPC_DebugRendererVTable, "DrawText3D"));
+        }
+    }
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Init/deinit and global state
@@ -819,6 +1093,38 @@ pub const PhysicsSystem = opaque {
             c.JPC_PHYSICS_UPDATE_CONTACT_CONSTRAINTS_FULL => return error.ContactConstraintsFull,
             else => return error.Unknown,
         }
+    }
+
+    pub fn drawBodies(
+        physics_system: *PhysicsSystem,
+        in_draw_settings: *const DebugRenderer.BodyDrawSettings,
+        in_draw_filter: ?*const DebugRenderer.BodyDrawFilter,
+    ) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawBodies(
+                @ptrCast(*c.JPC_PhysicsSystem, physics_system),
+                @ptrCast(*const c.JPC_BodyManager_DrawSettings, in_draw_settings),
+                @ptrCast(?*const c.JPC_BodyDrawFilter, in_draw_filter),
+            );
+        } else { @compileError("PhysicsSystem.drawBodies" ++ debug_renderer_disabled_message); }
+    }
+
+    pub fn drawConstraints(physics_system: *PhysicsSystem) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawConstraints(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+        } else { @compileError("PhysicsSystem.drawConstraints" ++ debug_renderer_disabled_message); }
+    }
+
+    pub fn drawConstraintLimits(physics_system: *PhysicsSystem) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawConstraintLimits(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+        } else { @compileError("PhysicsSystem.drawConstraintLimits" ++ debug_renderer_disabled_message); }
+    }
+
+    pub fn drawConstraintReferenceFrame(physics_system: *PhysicsSystem) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawConstraintReferenceFrame(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+        } else { @compileError("PhysicsSystem.drawConstraintReferenceFrame" ++ debug_renderer_disabled_message); }
     }
 
     pub fn getBodyIds(physics_system: *const PhysicsSystem, body_ids: *std.ArrayList(BodyId)) !void {
@@ -3101,6 +3407,57 @@ test "zphysics.body.motion" {
     try expect(motion.gravity_factor == 0.5);
 }
 
+test "zphysics.debugrenderer" {
+    if (!debug_renderer_enabled) return;
+
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    var my_debug_renderer = test_cb1.MyDebugRenderer{};
+    try DebugRenderer.createSingleton(&my_debug_renderer);
+    defer DebugRenderer.destroySingleton();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
+        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
+        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
+    defer shape_settings.release();
+
+    const shape = try shape_settings.createShape();
+    defer shape.release();
+
+    const body_settings = BodyCreationSettings{
+        .position = .{ 0.0, 10.0, 0.0, 1.0 },
+        .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+        .shape = shape,
+        .motion_type = .dynamic,
+        .object_layer = test_cb1.object_layers.moving,
+    };
+
+    const body_interface = physics_system.getBodyInterfaceMut();
+    const body_id = try body_interface.createAndAddBody(body_settings, .activate);
+    defer body_interface.removeAndDestroyBody(body_id);
+
+    physics_system.optimizeBroadPhase();
+
+    try physics_system.update(0.1, .{});
+
+    const draw_settings: DebugRenderer.BodyDrawSettings = .{};
+    const draw_filter = DebugRenderer.createBodyDrawFilter(test_cb1.MyDebugRenderer.shouldBodyDraw);
+    defer DebugRenderer.destroyBodyDrawFilter(draw_filter);
+
+    physics_system.drawBodies(&draw_settings, draw_filter);
+}
+
 test {
     std.testing.refAllDecls(@This());
 }
@@ -3198,6 +3555,120 @@ const test_cb1 = struct {
                 object_layers.moving => true,
                 else => unreachable,
             };
+        }
+    };
+
+    const MyDebugRenderer = if (!debug_renderer_enabled) void else extern struct {
+
+        const MyRenderPrimitive = extern struct {
+            // Actual render data goes here
+            foobar: i32 = 0,
+        };
+
+        usingnamespace DebugRenderer.Methods(@This());
+        __v: *const DebugRenderer.VTable(@This()) = &vtable,
+
+        primitives: [32]MyRenderPrimitive = [_]MyRenderPrimitive{ .{} } ** 32,
+        prim_head: i32 = -1,
+
+        const vtable = DebugRenderer.VTable(@This()){
+            .drawLine = drawLine,
+            .drawTriangle = drawTriangle,
+            .createTriangleBatch = createTriangleBatch,
+            .createTriangleBatchIndexed = createTriangleBatchIndexed,
+            .drawGeometry = drawGeometry,
+            .drawText3D = drawText3D,
+        };
+
+        pub fn shouldBodyDraw(
+            _: *const Body
+        ) align(@alignOf(c.JPC_BodyDrawFilterFunc)) callconv(.C) bool {
+            return true;
+        }
+
+        fn drawLine (
+            self: *MyDebugRenderer,
+            from: *const [3]Real,
+            to: *const [3]Real,
+            color: *const DebugRenderer.Color,
+        ) callconv(.C) void {
+            _ = self;
+            _ = from;
+            _ = to;
+            _ = color;
+        }
+        fn drawTriangle (
+            self: *MyDebugRenderer,
+            v1: *const [3]Real,
+            v2: *const [3]Real,
+            v3: *const [3]Real,
+            color: *const DebugRenderer.Color,
+        ) callconv(.C) void {
+            _ = self;
+            _ = v1;
+            _ = v2;
+            _ = v3;
+            _ = color;
+        }
+        fn createTriangleBatch (
+            self: *MyDebugRenderer,
+            triangles: [*]DebugRenderer.Triangle,
+            triangle_count: u32,
+        ) callconv(.C) *anyopaque {
+            _ = triangles;
+            _ = triangle_count;
+            self.prim_head += 1;
+            const prim = &self.primitives[@intCast(usize, self.prim_head)];
+            return DebugRenderer.createTriangleBatch(prim);
+        }
+        fn createTriangleBatchIndexed (
+            self: *MyDebugRenderer,
+            vertices: [*]DebugRenderer.Vertex,
+            vertex_count: u32,
+            indices: [*]u32,
+            index_count: u32,
+        ) callconv(.C) *anyopaque {
+            _ = vertices;
+            _ = vertex_count;
+            _ = indices;
+            _ = index_count;
+            self.prim_head += 1;
+            const prim = &self.primitives[@intCast(usize, self.prim_head)];
+            return DebugRenderer.createTriangleBatch(prim);
+        }
+        fn drawGeometry (
+            self: *MyDebugRenderer,
+            model_matrix: *const [16]Real,
+            world_space_bound: *const DebugRenderer.AABox,
+            lod_scale_sq: f32,
+            color: DebugRenderer.Color,
+            geometry: *anyopaque,
+            cull_mode: DebugRenderer.CullMode,
+            cast_shadow: DebugRenderer.CastShadow,
+            draw_mode: DebugRenderer.DrawMode,
+        ) callconv(.C) void {
+            _ = self;
+            _ = model_matrix;
+            _ = world_space_bound;
+            _ = lod_scale_sq;
+            _ = color;
+            _ = geometry;
+            _ = cull_mode;
+            _ = cast_shadow;
+            _ = draw_mode;
+        }
+        fn drawText3D (
+            self: *MyDebugRenderer,
+            positions: *const [3]Real,
+            string: [*:0]const u8,
+            color: DebugRenderer.Color,
+            height: f32,
+        ) callconv(.C) void {
+            _ = self;
+            _ = positions;
+            _ = string;
+            _ = color;
+            _ = height;
         }
     };
 };
