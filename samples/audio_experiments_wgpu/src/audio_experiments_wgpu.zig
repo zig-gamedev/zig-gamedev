@@ -828,7 +828,7 @@ fn draw(demo: *DemoState) void {
         .mapped_at_creation = true,
     });
     const vertex_buffer = gctx.lookupResource(vertex_buffer_handle).?;
-    defer vertex_buffer.destroy();
+    defer gctx.destroyResource(vertex_buffer_handle);
     {
         const mem = vertex_buffer.getMappedRange(
             Vertex,
