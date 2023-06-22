@@ -185,7 +185,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
     // Check alpha mode
     var alpha_mode = DDS_ALPHA_MODE.unknown;
     if (has_dx10_extension) {
-        alpha_mode = @intToEnum(DDS_ALPHA_MODE, dx10.miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK);
+        alpha_mode = @enumFromInt(DDS_ALPHA_MODE, dx10.miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK);
     } else {
         if (makeFourCC('D', 'X', 'T', '2') == header.ddspf.dwFourCC or makeFourCC('D', 'X', 'T', '4') == header.ddspf.dwFourCC) {
             alpha_mode = .premultiplied;
@@ -222,21 +222,21 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
 
         format = try getDXGIFormatFromDX10(dx10, width, height);
 
-        if (dx10.resourceDimension == @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE1D)) {
+        if (dx10.resourceDimension == @intFromEnum(d3d12.RESOURCE_DIMENSION.TEXTURE1D)) {
             // D3DX writes 1D textures with a fixed Height of 1
             if ((header.dwFlags & DDS_HEIGHT) == DDS_HEIGHT and height != 1) {
                 return DdsError.InvalidDDSData;
             }
             height = 1;
             depth = 1;
-        } else if (dx10.resourceDimension == @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) {
+        } else if (dx10.resourceDimension == @intFromEnum(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) {
             if ((dx10.miscFlag & 0x4) == 0x4) { // RESOURCE_MISC_TEXTURECUBE
                 array_size *= 6;
                 cubemap = true;
             }
 
             depth = 1;
-        } else if (dx10.resourceDimension == @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE3D)) {
+        } else if (dx10.resourceDimension == @intFromEnum(d3d12.RESOURCE_DIMENSION.TEXTURE3D)) {
             if ((header.dwFlags & DDS_HEADER_FLAGS_VOLUME) != DDS_HEADER_FLAGS_VOLUME) {
                 return DdsError.InvalidDDSData;
             }
@@ -245,7 +245,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
                 std.log.debug("[DDS Loader] Volume textures are not texture arrays.", .{});
                 return DdsError.InvalidDDSData;
             }
-        } else if (dx10.resourceDimension == @enumToInt(d3d12.RESOURCE_DIMENSION.BUFFER)) {
+        } else if (dx10.resourceDimension == @intFromEnum(d3d12.RESOURCE_DIMENSION.BUFFER)) {
             std.log.debug("[DDS Loader] Resource dimension buffer type not supported for textures.", .{});
             return DdsError.InvalidDDSData;
         } else {
@@ -253,7 +253,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
             return DdsError.InvalidDDSData;
         }
 
-        resource_dimension = @intToEnum(d3d12.RESOURCE_DIMENSION, dx10.resourceDimension);
+        resource_dimension = @enumFromInt(d3d12.RESOURCE_DIMENSION, dx10.resourceDimension);
     } else {
         format = getDXGIFormat(header.ddspf);
 
@@ -424,7 +424,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
 fn getDXGIFormatFromDX10(header: DDS_HEADER_DXT10, width: u32, height: u32) !dxgi.FORMAT {
     return switch (header.dxgiFormat) {
         .NV12, .P010, .P016, .@"420_OPAQUE" => blk: {
-            if ((header.resourceDimension != @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) or (width % 2 != 0) or (height % 2 != 0)) {
+            if ((header.resourceDimension != @intFromEnum(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) or (width % 2 != 0) or (height % 2 != 0)) {
                 std.log.debug("[DDS Loader] Video texture does not meet width/height requirements.", .{});
                 break :blk DdsError.NotSupported;
             } else {
@@ -456,7 +456,7 @@ fn getDXGIFormatFromDX10(header: DDS_HEADER_DXT10, width: u32, height: u32) !dxg
         },
 
         .V208 => blk: {
-            if ((header.resourceDimension != @enumToInt(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) or (height % 2 != 0)) {
+            if ((header.resourceDimension != @intFromEnum(d3d12.RESOURCE_DIMENSION.TEXTURE2D)) or (height % 2 != 0)) {
                 std.log.debug("[DDS Loader] Video texture does not meet height requirements.", .{});
                 break :blk DdsError.NotSupported;
             } else {

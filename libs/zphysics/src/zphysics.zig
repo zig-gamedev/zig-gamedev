@@ -46,7 +46,7 @@ const JobSystem = opaque {};
 /// When a body is freed the memory that the pointer occupies is reused to store a freelist.
 /// NOTE: This function is *not* protected by a lock, use with care!
 pub inline fn isValidBodyPointer(body: *const Body) bool {
-    return (@ptrToInt(body) & c._JPC_IS_FREED_BODY_BIT) == 0;
+    return (@intFromPtr(body) & c._JPC_IS_FREED_BODY_BIT) == 0;
 }
 
 /// Access a body, will return a `null` if the `body_id` is no longer valid.
@@ -579,6 +579,14 @@ pub const RRayCast = extern struct {
     origin: [4]Real align(rvec_align), // 4th element is ignored
     direction: [4]f32 align(16), // 4th element is ignored
 
+    pub fn getPointOnRay(self: RRayCast, fraction: Real) [3]Real {
+        return .{
+            self.origin[0] + self.direction[0] * fraction,
+            self.origin[1] + self.direction[1] * fraction,
+            self.origin[2] + self.direction[2] * fraction,
+        };
+    }
+
     comptime {
         assert(@sizeOf(RRayCast) == @sizeOf(c.JPC_RRayCast));
         assert(@offsetOf(RRayCast, "origin") == @offsetOf(c.JPC_RRayCast, "origin"));
@@ -721,13 +729,13 @@ pub const PhysicsSystem = opaque {
     pub fn getBodyInterface(physics_system: *const PhysicsSystem) *const BodyInterface {
         return @ptrCast(
             *const BodyInterface,
-            c.JPC_PhysicsSystem_GetBodyInterface(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
+            c.JPC_PhysicsSystem_GetBodyInterface(@ptrFromInt(*c.JPC_PhysicsSystem, @intFromPtr(physics_system))),
         );
     }
     pub fn getBodyInterfaceNoLock(physics_system: *const PhysicsSystem) *const BodyInterface {
         return @ptrCast(
             *const BodyInterface,
-            c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
+            c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@ptrFromInt(*c.JPC_PhysicsSystem, @intFromPtr(physics_system))),
         );
     }
     pub fn getBodyInterfaceMut(physics_system: *PhysicsSystem) *BodyInterface {
@@ -840,7 +848,7 @@ pub const PhysicsSystem = opaque {
     /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
     pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
         const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(
-            @intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)),
+            @ptrFromInt(*c.JPC_PhysicsSystem, @intFromPtr(physics_system)),
         );
         return @ptrCast([*]const *const Body, ptr)[0..physics_system.getNumBodies()];
     }
@@ -937,7 +945,7 @@ pub const BodyInterface = opaque {
     }
 
     pub fn addBody(body_iface: *BodyInterface, body_id: BodyId, mode: Activation) void {
-        c.JPC_BodyInterface_AddBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id, @enumToInt(mode));
+        c.JPC_BodyInterface_AddBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id, @intFromEnum(mode));
     }
 
     pub fn removeBody(body_iface: *BodyInterface, body_id: BodyId) void {
@@ -948,7 +956,7 @@ pub const BodyInterface = opaque {
         const body_id = c.JPC_BodyInterface_CreateAndAddBody(
             @ptrCast(*c.JPC_BodyInterface, body_iface),
             @ptrCast(*const c.JPC_BodyCreationSettings, &settings),
-            @enumToInt(mode),
+            @intFromEnum(mode),
         );
         if (body_id == body_id_invalid)
             return error.FailedToCreateBody;
@@ -1081,6 +1089,10 @@ pub const BodyInterface = opaque {
         return position;
     }
 
+    pub fn setPosition(body_iface: *BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type: Activation) void {
+        c.JPC_BodyInterface_SetPosition(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id, &in_position, @intFromEnum(in_activation_type));
+    }
+
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
         var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
@@ -1099,6 +1111,10 @@ pub const BodyInterface = opaque {
             &rotation,
         );
         return rotation;
+    }
+
+    pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]Real, in_activation_type: Activation) void {
+        c.JPC_BodyInterface_SetRotation(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id, &in_rotation, @intFromEnum(in_activation_type));
     }
 
     pub fn setPositionRotationAndVelocity(
@@ -1177,6 +1193,15 @@ pub const BodyInterface = opaque {
             @ptrCast(*c.JPC_BodyInterface, body_iface),
             body_id,
             &impulse,
+        );
+    }
+
+    pub fn setMotionType(body_iface: *BodyInterface, body_id: BodyId, in_motion_type: MotionType, in_activation_type: Activation) void {
+        return c.JPC_BodyInterface_SetMotionType(
+            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            body_id,
+            @intFromEnum(in_motion_type),
+            @intFromEnum(in_activation_type),
         );
     }
 };
@@ -1261,10 +1286,10 @@ pub const Body = extern struct {
     }
 
     pub fn getMotionType(body: *const Body) MotionType {
-        return @intToEnum(MotionType, c.JPC_Body_GetMotionType(@ptrCast(*const c.JPC_Body, body)));
+        return @enumFromInt(MotionType, c.JPC_Body_GetMotionType(@ptrCast(*const c.JPC_Body, body)));
     }
     pub fn setMotionType(body: *Body, motion_type: MotionType) void {
-        return c.JPC_Body_SetMotionType(@ptrCast(*c.JPC_Body, body), @enumToInt(motion_type));
+        return c.JPC_Body_SetMotionType(@ptrCast(*c.JPC_Body, body), @intFromEnum(motion_type));
     }
 
     pub fn getBroadPhaseLayer(body: *const Body) BroadPhaseLayer {
@@ -1277,7 +1302,7 @@ pub const Body = extern struct {
     pub fn getCollisionGroup(body: *const Body) *const CollisionGroup {
         return @ptrCast(
             *const CollisionGroup,
-            c.JPC_Body_GetCollisionGroup(@intToPtr(*c.JPC_Body, @ptrToInt(body))),
+            c.JPC_Body_GetCollisionGroup(@ptrFromInt(*c.JPC_Body, @intFromPtr(body))),
         );
     }
     pub fn getCollisionGroupMut(body: *Body) *CollisionGroup {
@@ -1490,7 +1515,7 @@ pub const Body = extern struct {
     pub fn getMotionProperties(body: *const Body) *const MotionProperties {
         return @ptrCast(
             *const MotionProperties,
-            c.JPC_Body_GetMotionProperties(@intToPtr(*c.JPC_Body, @ptrToInt(body))),
+            c.JPC_Body_GetMotionProperties(@ptrFromInt(*c.JPC_Body, @intFromPtr(body))),
         );
     }
     pub fn getMotionPropertiesMut(body: *Body) *MotionProperties {
@@ -1558,7 +1583,7 @@ pub const MotionProperties = extern struct {
     reserved: [52 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
 
     pub fn getMotionQuality(motion: *const MotionProperties) MotionQuality {
-        return @intToEnum(MotionQuality, c.JPC_MotionProperties_GetMotionQuality(
+        return @enumFromInt(MotionQuality, c.JPC_MotionProperties_GetMotionQuality(
             @ptrCast(*const c.JPC_MotionProperties, motion),
         ));
     }
@@ -2263,13 +2288,13 @@ pub const Shape = opaque {
             }
 
             pub fn getType(shape: *const T) Type {
-                return @intToEnum(
+                return @enumFromInt(
                     Type,
                     c.JPC_Shape_GetType(@ptrCast(*const c.JPC_Shape, shape)),
                 );
             }
             pub fn getSubType(shape: *const T) SubType {
-                return @intToEnum(
+                return @enumFromInt(
                     SubType,
                     c.JPC_Shape_GetSubType(@ptrCast(*const c.JPC_Shape, shape)),
                 );
@@ -2301,7 +2326,7 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     if (ptr == null) @panic("zphysics: out of memory");
 
     mem_allocations.?.put(
-        @ptrToInt(ptr),
+        @intFromPtr(ptr),
         .{ .size = @intCast(u48, size), .alignment = mem_alignment },
     ) catch @panic("zphysics: out of memory");
 
@@ -2320,7 +2345,7 @@ fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque 
     if (ptr == null) @panic("zphysics: out of memory");
 
     mem_allocations.?.put(
-        @ptrToInt(ptr),
+        @intFromPtr(ptr),
         .{ .size = @intCast(u32, size), .alignment = @intCast(u16, alignment) },
     ) catch @panic("zphysics: out of memory");
 
@@ -2332,7 +2357,7 @@ fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const info = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const info = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
 
         const mem = @ptrCast([*]u8, ptr)[0..info.size];
 

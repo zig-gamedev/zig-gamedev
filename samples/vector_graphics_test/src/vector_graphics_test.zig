@@ -523,7 +523,7 @@ fn drawShapes(demo: DemoState) void {
     demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 });
     var i: u32 = 0;
     while (i < 5) : (i += 1) {
-        gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(0.0, @intToFloat(f32, i) * 50.0));
+        gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(0.0, @floatFromInt(f32, i) * 50.0));
         gctx.d2d.?.context.DrawGeometry(
             @ptrCast(*d2d1.IGeometry, demo.path),
             @ptrCast(*d2d1.IBrush, demo.brush),
@@ -665,8 +665,8 @@ fn draw(demo: *DemoState) void {
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
-                .right = @intToFloat(f32, gctx.viewport_width),
-                .bottom = @intToFloat(f32, gctx.viewport_height),
+                .right = @floatFromInt(f32, gctx.viewport_width),
+                .bottom = @floatFromInt(f32, gctx.viewport_height),
             },
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
@@ -683,8 +683,8 @@ fn draw(demo: *DemoState) void {
             &d2d1.RECT_F{
                 .left = 1030.0,
                 .top = 220.0,
-                .right = @intToFloat(f32, gctx.viewport_width),
-                .bottom = @intToFloat(f32, gctx.viewport_height),
+                .right = @floatFromInt(f32, gctx.viewport_width),
+                .bottom = @floatFromInt(f32, gctx.viewport_height),
             },
             @ptrCast(*d2d1.IBrush, demo.brush),
         );

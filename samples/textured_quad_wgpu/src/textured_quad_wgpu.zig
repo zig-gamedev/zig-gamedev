@@ -295,8 +295,8 @@ fn draw(demo: *DemoState) void {
 
             const mem = gctx.uniformsAllocate(Uniforms, 1);
             mem.slice[0] = .{
-                .aspect_ratio = @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
-                .mip_level = @intToFloat(f32, demo.mip_level),
+                .aspect_ratio = @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height),
+                .mip_level = @floatFromInt(f32, demo.mip_level),
             };
             pass.setBindGroup(0, bind_group, &.{mem.offset});
             pass.drawIndexed(6, 1, 0, 0, 0);
@@ -375,7 +375,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

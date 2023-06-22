@@ -41,7 +41,7 @@ fn createWindow(width: u32, height: u32) w32.HWND {
         .cbWndExtra = 0,
         .hInstance = @ptrCast(w32.HINSTANCE, w32.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @intToPtr(w32.LPCSTR, 32512)),
+        .hCursor = w32.LoadCursorA(null, @ptrFromInt(w32.LPCSTR, 32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = window_name,
@@ -191,8 +191,8 @@ pub fn main() !void {
         dx12.command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = @intToFloat(f32, window_rect.right),
-            .Height = @intToFloat(f32, window_rect.bottom),
+            .Width = @floatFromInt(f32, window_rect.right),
+            .Height = @floatFromInt(f32, window_rect.bottom),
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
@@ -337,7 +337,7 @@ const Dx12State = struct {
         var command_queue: *d3d12.ICommandQueue = undefined;
         hrPanicOnFail(device.CreateCommandQueue(&.{
             .Type = .DIRECT,
-            .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
+            .Priority = @intFromEnum(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
             .Flags = .{},
             .NodeMask = 0,
         }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &command_queue)));

@@ -1179,6 +1179,11 @@ JPC_BodyInterface_GetPosition(const JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
                               JPC_Real out_position[3]);
 JPC_API void
+JPC_BodyInterface_SetPosition(JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              const JPC_Real in_position[3],
+                              JPC_Activation in_activation);
+JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
                                           JPC_Real out_position[3]);
@@ -1186,6 +1191,11 @@ JPC_API void
 JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
                               float out_rotation[4]);
+JPC_API void
+JPC_BodyInterface_SetRotation(JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              const JPC_Real in_rotation[4],
+                              JPC_Activation in_activation);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 
@@ -1228,6 +1238,9 @@ JPC_BodyInterface_AddImpulseAtPosition(JPC_BodyInterface *in_iface,
                                        const JPC_Real in_position[3]);
 JPC_API void
 JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3]);
+
+JPC_API void
+JPC_BodyInterface_SetMotionType(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_MotionType motion_type, JPC_Activation activation);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_Body

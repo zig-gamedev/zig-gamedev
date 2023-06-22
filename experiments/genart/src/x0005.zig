@@ -26,7 +26,7 @@ pub fn draw() void {
 
     for (0..4) |i| {
         gl.pushMatrix();
-        gl.rotatef(rot + @intToFloat(f32, i) * 45.0, 0.0, 0.0, 1.0);
+        gl.rotatef(rot + @floatFromInt(f32, i) * 45.0, 0.0, 0.0, 1.0);
         gl.begin(gl.LINES);
         gl.vertex2f(0.0, -1.0);
         gl.vertex2f(0.0, 1.0);
@@ -37,7 +37,7 @@ pub fn draw() void {
     gl.pushMatrix();
     gl.begin(gl.POINTS);
     for (0..20) |i| {
-        const fract = @intToFloat(f32, i) / 20.0;
+        const fract = @floatFromInt(f32, i) / 20.0;
         const x = r1 * @cos(math.tau * fract);
         const y = r1 * @sin(math.tau * fract);
         gl.vertex2f(x, y);
@@ -49,7 +49,7 @@ pub fn draw() void {
     gl.rotatef(rot, 0.0, 0.0, 1.0);
     gl.begin(gl.POINTS);
     for (0..30) |i| {
-        const fract = @intToFloat(f32, i) / 30.0;
+        const fract = @floatFromInt(f32, i) / 30.0;
         const x = 1.25 * r * @cos(math.tau * fract);
         const y = 1.25 * r * @sin(math.tau * fract);
         gl.vertex2f(x, y);
@@ -61,7 +61,7 @@ pub fn draw() void {
     gl.rotatef(-rot, 0.0, 0.0, 1.0);
     gl.begin(gl.POINTS);
     for (0..40) |i| {
-        const fract = @intToFloat(f32, i) / 40.0;
+        const fract = @floatFromInt(f32, i) / 40.0;
         const x = 1.5 * r * @cos(math.tau * fract);
         const y = 1.5 * r * @sin(math.tau * fract);
         gl.vertex2f(x, y);

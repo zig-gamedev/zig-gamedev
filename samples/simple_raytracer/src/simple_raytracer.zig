@@ -471,7 +471,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         );
         break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == w32.S_OK;
     };
-    const dxr_draw_mode = @boolToInt(dxr_is_supported);
+    const dxr_draw_mode = @intFromBool(dxr_is_supported);
 
     const static_mesh_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -1048,7 +1048,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @floatFromInt(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -1082,8 +1082,8 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @floatFromInt(f32, pos.x) - @floatFromInt(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @floatFromInt(f32, pos.y) - @floatFromInt(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
@@ -1133,7 +1133,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @floatFromInt(f32, gctx.viewport_width) / @floatFromInt(f32, gctx.viewport_height),
         0.1,
         50.0,
     );

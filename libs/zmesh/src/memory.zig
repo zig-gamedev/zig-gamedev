@@ -45,7 +45,7 @@ pub fn zmeshMalloc(size: usize) callconv(.C) ?*anyopaque {
         size,
     ) catch @panic("zmesh: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zmesh: out of memory");
+    mem_allocations.?.put(@intFromPtr(mem.ptr), size) catch @panic("zmesh: out of memory");
 
     return mem.ptr;
 }
@@ -72,7 +72,7 @@ fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const old_size = if (ptr != null) mem_allocations.?.get(@ptrToInt(ptr.?)).? else 0;
+    const old_size = if (ptr != null) mem_allocations.?.get(@intFromPtr(ptr.?)).? else 0;
 
     var old_mem = if (old_size > 0)
         @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..old_size]
@@ -82,11 +82,11 @@ fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     const mem = mem_allocator.?.realloc(old_mem, size) catch @panic("zmesh: out of memory");
 
     if (ptr != null) {
-        const removed = mem_allocations.?.remove(@ptrToInt(ptr.?));
+        const removed = mem_allocations.?.remove(@intFromPtr(ptr.?));
         std.debug.assert(removed);
     }
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zmesh: out of memory");
+    mem_allocations.?.put(@intFromPtr(mem.ptr), size) catch @panic("zmesh: out of memory");
 
     return mem.ptr;
 }
@@ -98,7 +98,7 @@ fn zmeshFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const size = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
         const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
         mem_allocator.?.free(mem);
     }

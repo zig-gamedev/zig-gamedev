@@ -29,7 +29,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(20.0 * scale_factor));
 
     // This needs to be called *after* adding your custom fonts.
-    zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+    zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
 
     // You can directly manipulate zgui.Style *before* `newFrame()` call.
     // Once frame is started (after `newFrame()` call) you have to use
@@ -164,7 +164,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                         zgui.beginGroup();
                         const gamepad_state = gamepad.getState();
                         for (std.enums.values(zglfw.Gamepad.Axis)) |axis| {
-                            const value = gamepad_state.axes[@enumToInt(axis)];
+                            const value = gamepad_state.axes[@intFromEnum(axis)];
                             zgui.progressBar(.{
                                 .fraction = (value + 1.0) / 2.0,
                                 .w = 400.0,
@@ -178,7 +178,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                         zgui.sameLine(.{});
                         zgui.beginGroup();
                         for (std.enums.values(zglfw.Gamepad.Button)) |button| {
-                            const action = gamepad_state.buttons[@enumToInt(button)];
+                            const action = gamepad_state.buttons[@intFromEnum(button)];
                             zgui.progressBar(.{
                                 .fraction = if (action == .press) 1.0 else 0.0,
                                 .w = 400.0,

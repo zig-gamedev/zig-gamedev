@@ -415,7 +415,7 @@ test "zmesh.clone" {
     var clone0 = cube.clone();
     defer clone0.deinit();
 
-    try expect(@ptrToInt(clone0.handle) != @ptrToInt(cube.handle));
+    try expect(@intFromPtr(clone0.handle) != @intFromPtr(cube.handle));
 }
 
 test "zmesh.merge" {

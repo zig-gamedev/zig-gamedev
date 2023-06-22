@@ -644,8 +644,8 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
-        .Width = @intToFloat(f32, gctx.viewport_width / 2),
-        .Height = @intToFloat(f32, gctx.viewport_width / 2),
+        .Width = @floatFromInt(f32, gctx.viewport_width / 2),
+        .Height = @floatFromInt(f32, gctx.viewport_width / 2),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});
@@ -674,10 +674,10 @@ fn draw(demo: *DemoState) void {
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-        .TopLeftX = @intToFloat(f32, gctx.viewport_width / 2),
+        .TopLeftX = @floatFromInt(f32, gctx.viewport_width / 2),
         .TopLeftY = 0.0,
-        .Width = @intToFloat(f32, gctx.viewport_width / 2),
-        .Height = @intToFloat(f32, gctx.viewport_width / 2),
+        .Width = @floatFromInt(f32, gctx.viewport_width / 2),
+        .Height = @floatFromInt(f32, gctx.viewport_width / 2),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});

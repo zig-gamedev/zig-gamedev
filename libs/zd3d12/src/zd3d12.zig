@@ -204,7 +204,7 @@ pub const GraphicsContext = struct {
         {
             var data: d3d12.FEATURE_DATA_SHADER_MODEL = .{ .HighestShaderModel = .@"6_7" };
             const hr = device.CheckFeatureSupport(.SHADER_MODEL, &data, @sizeOf(d3d12.FEATURE_DATA_SHADER_MODEL));
-            if (hr != w32.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.@"6_6")) {
+            if (hr != w32.S_OK or @intFromEnum(data.HighestShaderModel) < @intFromEnum(d3d12.SHADER_MODEL.@"6_6")) {
                 _ = w32.MessageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Shader Model 6.6. " ++
@@ -221,7 +221,7 @@ pub const GraphicsContext = struct {
             var data: d3d12.FEATURE_DATA_D3D12_OPTIONS = std.mem.zeroes(d3d12.FEATURE_DATA_D3D12_OPTIONS);
             const hr = device.CheckFeatureSupport(.OPTIONS, &data, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS));
             if (hr != w32.S_OK or
-                @enumToInt(data.ResourceBindingTier) < @enumToInt(d3d12.RESOURCE_BINDING_TIER.TIER_3))
+                @intFromEnum(data.ResourceBindingTier) < @intFromEnum(d3d12.RESOURCE_BINDING_TIER.TIER_3))
             {
                 _ = w32.MessageBoxA(
                     window,
@@ -238,7 +238,7 @@ pub const GraphicsContext = struct {
             var cmdqueue: *d3d12.ICommandQueue = undefined;
             hrPanicOnFail(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
-                .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
+                .Priority = @intFromEnum(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
                 .Flags = .{},
                 .NodeMask = 0,
             }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &cmdqueue)));
@@ -643,8 +643,8 @@ pub const GraphicsContext = struct {
         gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = @intToFloat(f32, gctx.viewport_width),
-            .Height = @intToFloat(f32, gctx.viewport_height),
+            .Width = @floatFromInt(f32, gctx.viewport_width),
+            .Height = @floatFromInt(f32, gctx.viewport_height),
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
@@ -1889,10 +1889,10 @@ const ResourcePool = struct {
     }
 
     fn deinit(pool: *ResourcePool, allocator: std.mem.Allocator) void {
-        for (pool.resources) |resource| {
-            if (resource.raw != null)
-                _ = resource.raw.?.Release();
-        }
+        // for (pool.resources) |resource| {
+        //     if (resource.raw != null)
+        //         _ = resource.raw.?.Release();
+        // }
         allocator.free(pool.resources);
         allocator.free(pool.generations);
         pool.* = undefined;

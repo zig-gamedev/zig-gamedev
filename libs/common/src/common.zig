@@ -43,13 +43,13 @@ pub const FrameStats = struct {
 
     pub fn update(self: *FrameStats, window: w32.HWND, window_name: []const u8) void {
         const now_ns = self.timer.read();
-        self.time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
-        self.delta_time = @intToFloat(f32, now_ns - self.previous_time_ns) / std.time.ns_per_s;
+        self.time = @floatFromInt(f64, now_ns) / std.time.ns_per_s;
+        self.delta_time = @floatFromInt(f32, now_ns - self.previous_time_ns) / std.time.ns_per_s;
         self.previous_time_ns = now_ns;
 
         if ((now_ns - self.fps_refresh_time_ns) >= std.time.ns_per_s) {
-            const t = @intToFloat(f64, now_ns - self.fps_refresh_time_ns) / std.time.ns_per_s;
-            const fps = @intToFloat(f64, self.frame_counter) / t;
+            const t = @floatFromInt(f64, now_ns - self.fps_refresh_time_ns) / std.time.ns_per_s;
+            const fps = @floatFromInt(f64, self.frame_counter) / t;
             const ms = (1.0 / fps) * 1000.0;
 
             self.fps = @floatCast(f32, fps);
@@ -114,7 +114,7 @@ fn processWindowMessage(
             c.ImGuiIO_AddMouseWheelEvent(
                 ui,
                 0.0,
-                @intToFloat(f32, w32.GET_WHEEL_DELTA_WPARAM(wparam)) / @intToFloat(f32, w32.WHEEL_DELTA),
+                @floatFromInt(f32, w32.GET_WHEEL_DELTA_WPARAM(wparam)) / @floatFromInt(f32, w32.WHEEL_DELTA),
             );
         },
         w32.WM_MOUSEMOVE => {
@@ -131,8 +131,8 @@ fn processWindowMessage(
             }
             c.ImGuiIO_AddMousePosEvent(
                 ui,
-                @intToFloat(f32, w32.GET_X_LPARAM(lparam)),
-                @intToFloat(f32, w32.GET_Y_LPARAM(lparam)),
+                @floatFromInt(f32, w32.GET_X_LPARAM(lparam)),
+                @floatFromInt(f32, w32.GET_Y_LPARAM(lparam)),
             );
         },
         w32.WM_MOUSELEAVE => {
@@ -237,7 +237,7 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
         .cbWndExtra = 0,
         .hInstance = @ptrCast(w32.HINSTANCE, w32.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @intToPtr(w32.LPCSTR, 32512)),
+        .hCursor = w32.LoadCursorA(null, @ptrFromInt(w32.LPCSTR, 32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = name,
@@ -420,8 +420,8 @@ pub fn newImGuiFrame(delta_time: f32) void {
 
     var rect: w32.RECT = undefined;
     _ = w32.GetClientRect(ui_backend.*.window.?, &rect);
-    const viewport_width = @intToFloat(f32, rect.right - rect.left);
-    const viewport_height = @intToFloat(f32, rect.bottom - rect.top);
+    const viewport_width = @floatFromInt(f32, rect.right - rect.left);
+    const viewport_height = @floatFromInt(f32, rect.bottom - rect.top);
 
     ui.*.DisplaySize = c.ImVec2{ .x = viewport_width, .y = viewport_height };
     ui.*.DeltaTime = delta_time;

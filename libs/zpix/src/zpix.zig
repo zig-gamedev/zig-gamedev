@@ -114,7 +114,7 @@ const D3D12_EVENT_METADATA = WINPIX_EVENT_PIX3BLOB_VERSION;
 
 fn encodeEventInfo(timestamp: u64, event_type: EventType) u64 {
     const mask0 = (timestamp & EventsTimestampWriteMask) << @intCast(u6, EventsTimestampBitShift);
-    const mask1 = (@enumToInt(event_type) & EventsTypeWriteMask) << @intCast(u6, EventsTypeBitShift);
+    const mask1 = (@intFromEnum(event_type) & EventsTypeWriteMask) << @intCast(u6, EventsTypeBitShift);
     return mask0 | mask1;
 }
 
@@ -135,9 +135,9 @@ fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shor
         @intCast(u6, EventsStringAlignmentBitShift);
     const mask1 = (copy_chunk_size & EventsStringCopyChunkSizeWriteMask) <<
         @intCast(u6, EventsStringCopyChunkSizeBitShift);
-    const mask2 = (@boolToInt(is_ansi) & EventsStringIsANSIWriteMask) <<
+    const mask2 = (@intFromBool(is_ansi) & EventsStringIsANSIWriteMask) <<
         @intCast(u6, EventsStringIsANSIBitShift);
-    const mask3 = (@boolToInt(is_shortcut) & EventsStringIsShortcutWriteMask) <<
+    const mask3 = (@intFromBool(is_shortcut) & EventsStringIsShortcutWriteMask) <<
         @intCast(u6, EventsStringIsShortcutBitShift);
     return mask0 | mask1 | mask2 | mask3;
 }

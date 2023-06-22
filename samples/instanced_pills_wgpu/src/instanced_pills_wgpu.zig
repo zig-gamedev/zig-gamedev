@@ -138,7 +138,7 @@ const DemoState = struct {
         assert(zgui.io.getFont(0) == font_normal);
 
         // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+        zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
 
         const style = zgui.getStyle();
 
@@ -458,8 +458,8 @@ const DemoState = struct {
                 const scale = gctx.window.getContentScale();
                 const screen_to_clip = zm.mul(
                     zm.scaling(
-                        2 * scale[0] / @intToFloat(f32, gctx.swapchain_descriptor.width),
-                        -2 * scale[1] / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                        2 * scale[0] / @floatFromInt(f32, gctx.swapchain_descriptor.width),
+                        -2 * scale[1] / @floatFromInt(f32, gctx.swapchain_descriptor.height),
                         1,
                     ),
                     zm.translation(-1, 1, 0.0),
@@ -715,8 +715,8 @@ fn ensureFourByteMultiple(size: usize) usize {
 }
 
 fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
-    const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
-    const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
+    const width = @floatFromInt(f32, gctx.swapchain_descriptor.width);
+    const height = @floatFromInt(f32, gctx.swapchain_descriptor.height);
     const delta = math.sign(
         @bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height),
     );

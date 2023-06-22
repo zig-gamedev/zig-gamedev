@@ -92,10 +92,10 @@ pub const Style = extern struct {
     extern fn zguiPlotStyle_Init() Style;
 
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
-        return style.colors[@enumToInt(idx)];
+        return style.colors[@intFromEnum(idx)];
     }
     pub fn setColor(style: *Style, idx: StyleCol, color: [4]f32) void {
-        style.colors[@enumToInt(idx)] = color;
+        style.colors[@intFromEnum(idx)] = color;
     }
 };
 /// `pub fn getStyle() *Style`
@@ -281,9 +281,9 @@ pub fn setupAxis(axis: Axis, args: SetupAxis) void {
 extern fn zguiPlot_SetupAxis(axis: Axis, label: ?[*:0]const u8, flags: AxisFlags) void;
 //----------------------------------------------------------------------------------------------
 pub const Condition = enum(u32) {
-    none = @enumToInt(gui.Condition.none),
-    always = @enumToInt(gui.Condition.always),
-    once = @enumToInt(gui.Condition.once),
+    none = @intFromEnum(gui.Condition.none),
+    always = @intFromEnum(gui.Condition.always),
+    once = @intFromEnum(gui.Condition.once),
 };
 const SetupAxisLimits = struct {
     min: f64,

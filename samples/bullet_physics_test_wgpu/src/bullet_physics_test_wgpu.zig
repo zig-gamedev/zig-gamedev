@@ -460,7 +460,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         camera_fovy,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height),
         0.01,
         200.0,
     );
@@ -728,14 +728,14 @@ fn setupScene1(
 
     var j: u32 = 0;
     while (j < num_stacks) : (j += 1) {
-        const theta = @intToFloat(f32, j) * math.tau / @intToFloat(f32, num_stacks);
+        const theta = @floatFromInt(f32, j) * math.tau / @floatFromInt(f32, num_stacks);
         const x = radius * @cos(theta);
         const z = radius * @sin(theta);
         var i: u32 = 0;
         while (i < num_cubes_per_stack) : (i += 1) {
             const box_body = zbt.initBody(
                 2.5,
-                &zm.matToArr43(zm.translation(x, 2.2 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
+                &zm.matToArr43(zm.translation(x, 2.2 + @floatFromInt(f32, i) * 2.0 + 0.05, z)),
                 common_shapes.items[mesh_index_cube],
             );
             createEntity(
@@ -830,7 +830,7 @@ fn setupScene3(
     while (j < heights.len) : (j += 1) {
         var i: u32 = 0;
         while (i < heights[j]) : (i += 1) {
-            const y = 4.0 + @intToFloat(f32, i) * 7.0;
+            const y = 4.0 + @floatFromInt(f32, i) * 7.0;
 
             const left_body = zbt.initBody(
                 mass,
@@ -864,7 +864,7 @@ fn setupScene3(
     const radius: f32 = 25.0;
     var i: u32 = 0;
     while (i < num_boxes) : (i += 1) {
-        const theta = @intToFloat(f32, i) * math.tau / @intToFloat(f32, num_boxes);
+        const theta = @floatFromInt(f32, i) * math.tau / @floatFromInt(f32, num_boxes);
         const x = radius * @cos(theta);
         const z = radius * @sin(theta);
 
@@ -1207,8 +1207,8 @@ fn objectPicking(demo: *DemoState, want_capture_mouse: bool) void {
         const far_plane = zm.f32x4s(10_000.0);
         const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
         const winsize = window.getSize();
-        const width = @intToFloat(f32, winsize[0]);
-        const height = @intToFloat(f32, winsize[1]);
+        const width = @floatFromInt(f32, winsize[0]);
+        const height = @floatFromInt(f32, winsize[1]);
         const aspect = zm.f32x4s(width / height);
 
         const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
@@ -1366,7 +1366,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 
