@@ -256,10 +256,10 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
                 // TODO(mziulek): Call the callback.
             } else {
                 const rect = [1]d3d12.RECT{.{
-                    .left = @floatToInt(i32, cmd.*.ClipRect.x - display_x),
-                    .top = @floatToInt(i32, cmd.*.ClipRect.y - display_y),
-                    .right = @floatToInt(i32, cmd.*.ClipRect.z - display_x),
-                    .bottom = @floatToInt(i32, cmd.*.ClipRect.w - display_y),
+                    .left = @intFromFloat(i32, cmd.*.ClipRect.x - display_x),
+                    .top = @intFromFloat(i32, cmd.*.ClipRect.y - display_y),
+                    .right = @intFromFloat(i32, cmd.*.ClipRect.z - display_x),
+                    .bottom = @intFromFloat(i32, cmd.*.ClipRect.w - display_y),
                 }};
                 if (rect[0].right > rect[0].left and rect[0].bottom > rect[0].top) {
                     gctx.cmdlist.RSSetScissorRects(1, &rect);
