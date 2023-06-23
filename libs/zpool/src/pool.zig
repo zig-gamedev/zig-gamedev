@@ -33,7 +33,7 @@ pub const HandleError = error{
 ///
 /// const GPA = std.heap.GeneralPurposeAllocator;
 /// var gpa = GPA(.{}){};
-/// var pool = try TestPool.initMaxCapacity(gpa.allocator());
+/// var pool = try TexturePool.initMaxCapacity(gpa.allocator());
 /// defer pool.deinit();
 ///
 /// // creating a texture and adding it to the pool returns a handle
@@ -44,6 +44,11 @@ pub const HandleError = error{
 /// // elsewhere, use the handle to get `obj` or `desc` as needed
 /// const obj = pool.getColumn(handle, .obj);
 /// const desc = pool.getColumn(handle, .desc);
+///
+/// // ...
+///
+/// // once the texture is no longer needed, release it.
+/// _ = pool.removeIfLive(handle);
 /// ```
 pub fn Pool(
     comptime index_bits: u8,
@@ -204,11 +209,17 @@ pub fn Pool(
         pub const LiveIndexIterator = struct {
             curr_cycle: []const AddressableCycle = &.{},
             next_index: AddressableIndex = 0,
+            ended: bool = false,
 
             pub fn next(self: *LiveIndexIterator) ?AddressableIndex {
-                while (self.next_index < self.curr_cycle.len) {
+                while (!self.ended and self.next_index < self.curr_cycle.len) {
                     const curr_index = self.next_index;
-                    self.next_index += 1;
+                    if (curr_index < max_index) {
+                        self.next_index += 1;
+                    }
+                    else {
+                        self.ended = true;
+                    }
                     if (isLiveCycle(self.curr_cycle[curr_index]))
                         return curr_index;
                 }
@@ -245,12 +256,12 @@ pub fn Pool(
         /// defined.
         pub fn clear(self: *Self) void {
             var ahandle = AddressableHandle{ .index = 0 };
-            for (self._curr_cycle) |cycle| {
+            for (self._curr_cycle, 0..) |cycle, i| {
                 if (isLiveCycle(cycle)) {
+                    ahandle.index = @intCast(AddressableIndex, i);
                     ahandle.cycle = cycle;
                     self.releaseAddressableHandleUnchecked(ahandle);
                 }
-                ahandle.index += 1;
             }
         }
 
@@ -857,6 +868,33 @@ test "Pool.liveIndices()" {
     try expectEqual(handle1.addressable().index, live_indices.next().?);
     try expectEqual(handle2.addressable().index, live_indices.next().?);
     try expect(null == live_indices.next());
+}
+
+test "Pool.liveIndices() when full" {
+    // Test that iterator's internal index doesn't overflow when pool is full.
+    // (8,8 is the smallest size we can easily test because AddressableIndex is
+    // at least a u8)
+    const TestPool = Pool(8, 8, void, struct {});
+
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
+    defer pool.deinit();
+
+    try expectEqual(@as(usize, 0), pool.liveHandleCount());
+
+    var i: usize = 0;
+    while (i < 256) {
+        _ = try pool.add(.{});
+        i += 1;
+    }
+    try expectEqual(@as(usize, 256), pool.liveHandleCount());
+
+    // Make sure it does correctly iterate all the way.
+    var j: usize = 0;
+    var live_indices = pool.liveIndices();
+    while (live_indices.next()) |_| {
+        j += 1;
+    }
+    try expectEqual(@as(usize, 256), j);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
