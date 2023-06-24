@@ -655,9 +655,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         return @ptrCast(*TriangleBatch, c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in));
     }
 
-    pub fn createBodyDrawFilter(
-        filter_func: *const fn (*const Body) align(@alignOf(c.JPC_BodyDrawFilterFunc)) callconv(.C) bool
-    ) *BodyDrawFilter {
+    pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
         return @ptrCast(
             *BodyDrawFilter,
             c.JPC_BodyDrawFilter_Create(@ptrCast(c.JPC_BodyDrawFilterFunc, filter_func))
@@ -855,6 +853,8 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         sleep_stats: bool = false,          // Draw stats regarding the sleeping algorithm of each body
     };
 
+    pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);
+    pub const BodyDrawFilterFunc = *const fn (*const Body) align(BodyDrawFilterFuncAlignment) callconv(.C) bool;
     pub const BodyDrawFilter = opaque {};
 
     pub const TriangleBatch = opaque {};
@@ -3582,7 +3582,7 @@ const test_cb1 = struct {
 
         pub fn shouldBodyDraw(
             _: *const Body
-        ) align(@alignOf(c.JPC_BodyDrawFilterFunc)) callconv(.C) bool {
+        ) align(DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
             return true;
         }
 
