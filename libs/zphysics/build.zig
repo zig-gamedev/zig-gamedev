@@ -4,6 +4,7 @@ pub const Options = struct {
     use_double_precision: bool = false,
     enable_asserts: bool = false,
     enable_cross_platform_determinism: bool = true,
+    enable_debug_renderer: bool = false,
 };
 
 pub const Package = struct {
@@ -32,6 +33,7 @@ pub fn package(
     step.addOption(bool, "use_double_precision", args.options.use_double_precision);
     step.addOption(bool, "enable_asserts", args.options.enable_asserts);
     step.addOption(bool, "enable_cross_platform_determinism", args.options.enable_cross_platform_determinism);
+    step.addOption(bool, "enable_debug_renderer", args.options.enable_debug_renderer);
 
     const zphysics_options = step.createModule();
 
@@ -60,6 +62,7 @@ pub fn package(
         "-std=c++17",
         if (abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
         if (args.options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
+        if (args.options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
         if (args.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
         if (args.options.enable_asserts or zphysics_c_cpp.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         "-fno-sanitize=undefined",
@@ -224,11 +227,17 @@ pub fn runTests(
     const parent_step = b.allocator.create(std.Build.Step) catch @panic("OOM");
     parent_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zphysics-tests", .owner = b });
 
-    const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{ .use_double_precision = false });
-    //const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{ .use_double_precision = true });
-
+    const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{
+        .use_double_precision = false,
+        .enable_debug_renderer = true,
+    });
     parent_step.dependOn(&test0.step);
-    //parent_step.dependOn(&test1.step);
+
+    // const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{
+    //     .use_double_precision = true,
+    //     .enable_debug_renderer = true,
+    // });
+    // parent_step.dependOn(&test1.step);
 
     return parent_step;
 }
@@ -257,6 +266,7 @@ fn testStep(
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
             if (options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
             if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
+            if (options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
             "-fno-sanitize=undefined",
         },
     );
