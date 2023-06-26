@@ -156,9 +156,9 @@ pub fn JobQueue(
             std.mem.copy(u8, &self.data, std.mem.asBytes(job));
 
             const exec: *const fn (*Job) void = &@field(Job, "exec");
-            const id = jobId(@truncate(u16, index), new_cycle);
+            const id = jobId(@as(u16, @truncate(index)), new_cycle);
 
-            self.exec = @ptrCast(Main, exec);
+            self.exec = @as(Main, @ptrCast(exec));
             self.name = @typeName(Job);
             self.id = id;
             self.prereq = if (prereq != id) prereq else JobId.none;

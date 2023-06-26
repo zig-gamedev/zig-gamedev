@@ -835,8 +835,8 @@ const EcsAllocator = struct {
         };
 
         var allocation_header = @as(
-            *AllocationHeader,
-            @ptrCast(@alignCast(@alignOf(AllocationHeader), data.ptr)),
+            *align(Alignment) AllocationHeader,
+            @ptrCast(@alignCast(data.ptr)),
         );
 
         allocation_header.size = allocation_size;
@@ -850,15 +850,12 @@ const EcsAllocator = struct {
         }
         var ptr_unwrapped = @as([*]u8, @ptrCast(ptr.?)) - Alignment;
         var allocation_header = @as(
-            *AllocationHeader,
-            @ptrCast(@alignCast(Alignment, ptr_unwrapped)),
+            *align(Alignment) AllocationHeader,
+            @ptrCast(@alignCast(ptr_unwrapped)),
         );
 
         allocator.?.free(
-            @alignCast(
-                Alignment,
-                ptr_unwrapped[0..allocation_header.size],
-            ),
+            @as([]align(Alignment) u8, @alignCast(ptr_unwrapped[0..allocation_header.size])),
         );
     }
 
@@ -870,20 +867,20 @@ const EcsAllocator = struct {
         var ptr_unwrapped = @as([*]u8, @ptrCast(old.?)) - Alignment;
 
         var allocation_header = @as(
-            *AllocationHeader,
-            @ptrCast(@alignCast(@alignOf(AllocationHeader), ptr_unwrapped)),
+            *align(Alignment) AllocationHeader,
+            @ptrCast(@alignCast(ptr_unwrapped)),
         );
 
         const old_allocation_size = allocation_header.size;
         const old_slice = @as([*]u8, @ptrCast(ptr_unwrapped))[0..old_allocation_size];
-        const old_slice_aligned = @alignCast(Alignment, old_slice);
+        const old_slice_aligned = @as([]align(Alignment) u8, @alignCast(old_slice));
 
         const new_allocation_size = Alignment + @as(usize, @intCast(size));
         var new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
             return null;
         };
 
-        var new_allocation_header = @as(*AllocationHeader, @ptrCast(@alignCast(Alignment, new_data.ptr)));
+        var new_allocation_header = @as(*align(Alignment) AllocationHeader, @ptrCast(@alignCast(new_data.ptr)));
         new_allocation_header.size = new_allocation_size;
 
         return new_data.ptr + Alignment;
@@ -2261,7 +2258,7 @@ pub fn override(world: *world_t, entity: entity_t, comptime T: type) void {
 
 pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
     if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
-        const ptr = @as([*]T, @ptrCast(@alignCast(@alignOf(T), anyptr)));
+        const ptr = @as([*]T, @ptrCast(@alignCast(anyptr)));
         return ptr[0..it.count()];
     }
     return null;
@@ -2274,11 +2271,11 @@ pub inline fn id(comptime T: type) id_t {
 pub const pair = make_pair;
 
 pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
-    return @as(*const T, @ptrCast(@alignCast(@alignOf(T), val)));
+    return @as(*const T, @ptrCast(@alignCast(val)));
 }
 
 pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
-    return @as(*T, @ptrCast(@alignCast(@alignOf(T), val)));
+    return @as(*T, @ptrCast(@alignCast(val)));
 }
 //--------------------------------------------------------------------------------------------------
 fn PerTypeGlobalVar(comptime in_type: type) type {
