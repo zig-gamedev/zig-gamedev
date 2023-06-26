@@ -120,7 +120,7 @@ const AudioState = struct {
         _: ?*const anyopaque,
         num_frames: u32,
     ) callconv(.C) void {
-        const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), device.getUserData()));
+        const audio = @as(*AudioState, @ptrCast(@alignCast(device.getUserData())));
 
         audio.engine.readPcmFrames(output.?, num_frames, null) catch {};
 
@@ -131,7 +131,7 @@ const AudioState = struct {
 
         const num_channels = 2;
         const base_index = samples_per_set * audio.current_set;
-        const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), output));
+        const frames = @as([*]f32, @ptrCast(@alignCast(output)));
 
         var i: u32 = 0;
         while (i < @min(num_frames, usable_samples_per_set)) : (i += 1) {
@@ -546,7 +546,7 @@ fn update(demo: *DemoState) !void {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.waveform_config.waveform_type = @enumFromInt(zaudio.Waveform.Type, index);
+                        demo.waveform_config.waveform_type = @as(zaudio.Waveform.Type, @enumFromInt(index));
                         try demo.waveform_data_source.setType(demo.waveform_config.waveform_type);
                     }
                 }
@@ -595,7 +595,7 @@ fn update(demo: *DemoState) !void {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.noise_config.noise_type = @enumFromInt(zaudio.Noise.Type, index);
+                        demo.noise_config.noise_type = @as(zaudio.Noise.Type, @enumFromInt(index));
                         try demo.noise_data_source.setType(demo.noise_config.noise_type);
                     }
                 }
@@ -633,7 +633,7 @@ fn update(demo: *DemoState) !void {
                 if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                     selected_item != index)
                 {
-                    demo.audio_filter.current_type = @enumFromInt(AudioFilterType, index);
+                    demo.audio_filter.current_type = @as(AudioFilterType, @enumFromInt(index));
                     try updateAudioGraph(demo.*);
                 }
             }
@@ -758,8 +758,8 @@ fn update(demo: *DemoState) !void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.right) == .press) {
@@ -816,7 +816,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -839,11 +839,11 @@ fn draw(demo: *DemoState) void {
         demo.audio.mutex.lock();
         defer demo.audio.mutex.unlock();
 
-        const rcp_num_sets = 1.0 / @floatFromInt(f32, AudioState.num_sets - 1);
+        const rcp_num_sets = 1.0 / @as(f32, @floatFromInt(AudioState.num_sets - 1));
         var set: u32 = 0;
         while (set < AudioState.num_sets) : (set += 1) {
             const z = (demo.audio.current_set + set) % AudioState.num_sets;
-            const f = if (set == 0) 1.0 else rcp_num_sets * @floatFromInt(f32, set - 1);
+            const f = if (set == 0) 1.0 else rcp_num_sets * @as(f32, @floatFromInt(set - 1));
 
             var x: u32 = 0;
             while (x < AudioState.usable_samples_per_set) : (x += 1) {
@@ -857,9 +857,9 @@ fn draw(demo: *DemoState) void {
 
                 mem[x + set * AudioState.usable_samples_per_set] = Vertex{
                     .position = [_]f32{
-                        0.1 * @floatFromInt(f32, x),
+                        0.1 * @as(f32, @floatFromInt(x)),
                         f * f * f * 10.0 * sample,
-                        0.5 * @floatFromInt(f32, z),
+                        0.5 * @as(f32, @floatFromInt(z)),
                     },
                     .color = color,
                 };

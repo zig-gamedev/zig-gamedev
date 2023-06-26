@@ -39,8 +39,8 @@ pub fn appendMeshPrimitive(
     const mesh = &data.meshes.?[mesh_index];
     const prim = &mesh.primitives[prim_index];
 
-    const num_vertices: u32 = @intCast(u32, prim.attributes[0].data.count);
-    const num_indices: u32 = @intCast(u32, prim.indices.?.count);
+    const num_vertices: u32 = @as(u32, @intCast(prim.attributes[0].data.count));
+    const num_indices: u32 = @as(u32, @intCast(prim.indices.?.count));
 
     // Indices.
     {
@@ -53,26 +53,26 @@ pub fn appendMeshPrimitive(
         assert(accessor.stride * accessor.count == buffer_view.size);
         assert(buffer_view.buffer.data != null);
 
-        const data_addr = @alignCast(4, @ptrCast([*]const u8, buffer_view.buffer.data) +
-            accessor.offset + buffer_view.offset);
+        const data_addr = @as([*]const u8, @ptrCast(buffer_view.buffer.data)) +
+            accessor.offset + buffer_view.offset;
 
         if (accessor.stride == 1) {
             assert(accessor.component_type == .r_8u);
-            const src = @ptrCast([*]const u8, data_addr);
+            const src = @as([*]const u8, @ptrCast(data_addr));
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
                 indices.appendAssumeCapacity(src[i]);
             }
         } else if (accessor.stride == 2) {
             assert(accessor.component_type == .r_16u);
-            const src = @ptrCast([*]const u16, data_addr);
+            const src = @as([*]const u16, @ptrCast(@alignCast(data_addr)));
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
                 indices.appendAssumeCapacity(src[i]);
             }
         } else if (accessor.stride == 4) {
             assert(accessor.component_type == .r_32u);
-            const src = @ptrCast([*]const u32, data_addr);
+            const src = @as([*]const u32, @ptrCast(@alignCast(data_addr)));
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
                 indices.appendAssumeCapacity(src[i]);
@@ -95,29 +95,29 @@ pub fn appendMeshPrimitive(
             assert(accessor.stride == buffer_view.stride or buffer_view.stride == 0);
             assert(accessor.stride * accessor.count == buffer_view.size);
 
-            const data_addr = @ptrCast([*]const u8, buffer_view.buffer.data) +
+            const data_addr = @as([*]const u8, @ptrCast(buffer_view.buffer.data)) +
                 accessor.offset + buffer_view.offset;
 
             if (attrib.type == .position) {
                 assert(accessor.type == .vec3);
-                const slice = @ptrCast([*]const [3]f32, @alignCast(4, data_addr))[0..num_vertices];
+                const slice = @as([*]const [3]f32, @ptrCast(@alignCast(data_addr)))[0..num_vertices];
                 try positions.appendSlice(slice);
             } else if (attrib.type == .normal) {
                 if (normals) |n| {
                     assert(accessor.type == .vec3);
-                    const slice = @ptrCast([*]const [3]f32, @alignCast(4, data_addr))[0..num_vertices];
+                    const slice = @as([*]const [3]f32, @ptrCast(@alignCast(data_addr)))[0..num_vertices];
                     try n.appendSlice(slice);
                 }
             } else if (attrib.type == .texcoord) {
                 if (texcoords0) |tc| {
                     assert(accessor.type == .vec2);
-                    const slice = @ptrCast([*]const [2]f32, @alignCast(4, data_addr))[0..num_vertices];
+                    const slice = @as([*]const [2]f32, @ptrCast(@alignCast(data_addr)))[0..num_vertices];
                     try tc.appendSlice(slice);
                 }
             } else if (attrib.type == .tangent) {
                 if (tangents) |tan| {
                     assert(accessor.type == .vec4);
-                    const slice = @ptrCast([*]const [4]f32, @alignCast(4, data_addr))[0..num_vertices];
+                    const slice = @as([*]const [4]f32, @ptrCast(@alignCast(data_addr)))[0..num_vertices];
                     try tan.appendSlice(slice);
                 }
             }

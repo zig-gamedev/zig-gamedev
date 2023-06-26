@@ -145,9 +145,9 @@ pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
     }
 
     var createAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
-    createAudioVolumeMeter = @ptrCast(
+    createAudioVolumeMeter = @as(
         @TypeOf(createAudioVolumeMeter),
-        w32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?,
+        @ptrCast(w32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?),
     );
 
     return createAudioVolumeMeter(apo);
@@ -160,9 +160,9 @@ pub fn createReverb(apo: *?*IUnknown, _: UINT32) HRESULT {
     }
 
     var createAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
-    createAudioReverb = @ptrCast(
+    createAudioReverb = @as(
         @TypeOf(createAudioReverb),
-        w32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?,
+        @ptrCast(w32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?),
     );
 
     return createAudioReverb(apo);

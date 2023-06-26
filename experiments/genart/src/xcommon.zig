@@ -15,7 +15,7 @@ pub fn saveScreenshot(alloc: std.mem.Allocator, filename: [:0]const u8) void {
     var viewport: [4]gl.Int = undefined;
     gl.getIntegerv(gl.VIEWPORT, &viewport);
 
-    const mem = alloc.alloc(u8, @intCast(usize, viewport[2] * viewport[3] * 3)) catch @panic("OOM");
+    const mem = alloc.alloc(u8, @as(usize, @intCast(viewport[2] * viewport[3] * 3))) catch @panic("OOM");
     defer alloc.free(mem);
 
     gl.readPixels(viewport[0], viewport[1], viewport[2], viewport[3], gl.RGB, gl.UNSIGNED_BYTE, mem.ptr);
@@ -27,11 +27,11 @@ pub fn saveScreenshot(alloc: std.mem.Allocator, filename: [:0]const u8) void {
 
     const image = zstbi.Image{
         .data = mem,
-        .width = @intCast(u32, viewport[2]),
-        .height = @intCast(u32, viewport[3]),
+        .width = @as(u32, @intCast(viewport[2])),
+        .height = @as(u32, @intCast(viewport[3])),
         .num_components = 3,
         .bytes_per_component = 1,
-        .bytes_per_row = @intCast(u32, viewport[2]) * 3,
+        .bytes_per_row = @as(u32, @intCast(viewport[2])) * 3,
         .is_hdr = false,
     };
     image.writeToFile(filename, .png) catch {};

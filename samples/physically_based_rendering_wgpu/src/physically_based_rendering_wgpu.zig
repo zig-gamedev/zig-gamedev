@@ -125,10 +125,10 @@ fn loadAllMeshes(
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
 
         try out_meshes.append(.{
-            .index_offset = @intCast(u32, pre_indices_len),
-            .vertex_offset = @intCast(i32, pre_positions_len),
-            .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
-            .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+            .index_offset = @as(u32, @intCast(pre_indices_len)),
+            .vertex_offset = @as(i32, @intCast(pre_positions_len)),
+            .num_indices = @as(u32, @intCast(indices.items.len - pre_indices_len)),
+            .num_vertices = @as(u32, @intCast(positions.items.len - pre_positions_len)),
         });
     }
     {
@@ -140,10 +140,10 @@ fn loadAllMeshes(
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
 
         try out_meshes.append(.{
-            .index_offset = @intCast(u32, pre_indices_len),
-            .vertex_offset = @intCast(i32, pre_positions_len),
-            .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
-            .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+            .index_offset = @as(u32, @intCast(pre_indices_len)),
+            .vertex_offset = @as(i32, @intCast(pre_positions_len)),
+            .num_indices = @as(u32, @intCast(indices.items.len - pre_indices_len)),
+            .num_vertices = @as(u32, @intCast(positions.items.len - pre_positions_len)),
         });
     }
 
@@ -211,8 +211,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     var indices = std.ArrayList(u32).init(arena);
     try loadAllMeshes(arena, &meshes, &vertices, &indices);
 
-    const total_num_vertices = @intCast(u32, vertices.items.len);
-    const total_num_indices = @intCast(u32, indices.items.len);
+    const total_num_vertices = @as(u32, @intCast(vertices.items.len));
+    const total_num_indices = @as(u32, @intCast(indices.items.len));
 
     // Create a vertex buffer.
     const vertex_buf = gctx.createBuffer(.{
@@ -556,8 +556,8 @@ fn update(demo: *DemoState) void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.left) == .press) {
@@ -613,7 +613,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -809,7 +809,7 @@ fn precomputeImageLighting(
         };
         zstbi.setFlipVerticallyOnLoad(true);
         var image = zstbi.Image.loadFromFile(
-            hdri_paths[@intCast(usize, demo.current_hdri_index)],
+            hdri_paths[@as(usize, @intCast(demo.current_hdri_index))],
             4,
         ) catch unreachable;
         defer {
@@ -946,8 +946,8 @@ fn drawToCubeTexture(
     const pipeline = gctx.lookupResource(pipe) orelse return;
 
     assert(dest_mip_level < dest_tex_info.mip_level_count);
-    const dest_tex_width = dest_tex_info.size.width >> @intCast(u5, dest_mip_level);
-    const dest_tex_height = dest_tex_info.size.height >> @intCast(u5, dest_mip_level);
+    const dest_tex_width = dest_tex_info.size.width >> @as(u5, @intCast(dest_mip_level));
+    const dest_tex_height = dest_tex_info.size.height >> @as(u5, @intCast(dest_mip_level));
     assert(dest_tex_width == dest_tex_height);
 
     const sam = gctx.createSampler(.{
@@ -1014,7 +1014,7 @@ fn drawToCubeTexture(
         const mem = gctx.uniformsAllocate(Uniforms, 1);
         mem.slice[0] = .{
             .object_to_clip = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip)),
-            .roughness = @floatFromInt(f32, dest_mip_level + 1) / @floatFromInt(f32, filtered_env_tex_mip_levels),
+            .roughness = @as(f32, @floatFromInt(dest_mip_level + 1)) / @as(f32, @floatFromInt(filtered_env_tex_mip_levels)),
         };
         pass.setBindGroup(0, gctx.lookupResource(bg).?, &.{mem.offset});
 

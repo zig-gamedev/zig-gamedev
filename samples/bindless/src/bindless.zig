@@ -159,14 +159,14 @@ fn loadMesh(
     try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     var mesh = Mesh{
-        .vertex_offset = @intCast(u32, pre_positions_len),
+        .vertex_offset = @as(u32, @intCast(pre_positions_len)),
         .num_lods = 1,
         .lods = undefined,
     };
 
     mesh.lods[0] = .{
-        .index_offset = @intCast(u32, pre_indices_len),
-        .num_indices = @intCast(u32, indices.items.len),
+        .index_offset = @as(u32, @intCast(pre_indices_len)),
+        .num_indices = @as(u32, @intCast(indices.items.len)),
     };
 
     if (generate_lods > 0) {
@@ -177,8 +177,8 @@ fn loadMesh(
         while (lod_index < generate_lods) : (lod_index += 1) {
             mesh.num_lods += 1;
 
-            const threshold: f32 = 1.0 - @floatFromInt(f32, lod_index) / @floatFromInt(f32, max_num_lods);
-            const target_index_count: usize = @intFromFloat(usize, @floatFromInt(f32, indices.items.len) * threshold);
+            const threshold: f32 = 1.0 - @as(f32, @floatFromInt(lod_index)) / @as(f32, @floatFromInt(max_num_lods));
+            const target_index_count: usize = @as(usize, @intFromFloat(@as(f32, @floatFromInt(indices.items.len)) * threshold));
             const target_error: f32 = 1e-2;
 
             var lod_indices = std.ArrayList(u32).init(arena);
@@ -199,7 +199,7 @@ fn loadMesh(
 
             mesh.lods[lod_index] = .{
                 .index_offset = mesh.lods[lod_index - 1].index_offset + mesh.lods[lod_index - 1].num_indices,
-                .num_indices = @intCast(u32, lod_indices_count),
+                .num_indices = @as(u32, @intCast(lod_indices_count)),
             };
 
             all_lods_indices.appendSlice(lod_indices.items) catch unreachable;
@@ -233,23 +233,23 @@ fn drawToCubeTexture(
 ) void {
     const desc = gctx.getResourceDesc(dest_texture);
     assert(dest_mip_level < desc.MipLevels);
-    const texture_width = @intCast(u32, desc.Width) >> @intCast(u5, dest_mip_level);
-    const texture_height = desc.Height >> @intCast(u5, dest_mip_level);
+    const texture_width = @as(u32, @intCast(desc.Width)) >> @as(u5, @intCast(dest_mip_level));
+    const texture_height = desc.Height >> @as(u5, @intCast(dest_mip_level));
     assert(texture_width == texture_height);
 
     gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
-        .Width = @floatFromInt(f32, texture_width),
-        .Height = @floatFromInt(f32, texture_height),
+        .Width = @as(f32, @floatFromInt(texture_width)),
+        .Height = @as(f32, @floatFromInt(texture_height)),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});
     gctx.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
         .left = 0,
         .top = 0,
-        .right = @intCast(c_long, texture_width),
-        .bottom = @intCast(c_long, texture_height),
+        .right = @as(c_long, @intCast(texture_width)),
+        .bottom = @as(c_long, @intCast(texture_height)),
     }});
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
 
@@ -471,7 +471,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err);
-        const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(Vertex, @as(u32, @intCast(all_vertices.items.len)));
         for (all_vertices.items, 0..) |vertex, i| {
             upload.cpu_slice[i] = vertex;
         }
@@ -494,7 +494,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{ .COPY_DEST = true },
             null,
         ) catch |err| hrPanic(err);
-        const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(u32, @as(u32, @intCast(all_indices.items.len)));
         for (all_indices.items, 0..) |index, i| {
             upload.cpu_slice[i] = index;
         }
@@ -796,12 +796,12 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = @intCast(u32, gctx.getResourceSize(vertex_buffer)),
+        .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(vertex_buffer))),
         .StrideInBytes = @sizeOf(Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.lookupResource(index_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = @intCast(u32, gctx.getResourceSize(index_buffer)),
+        .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(index_buffer))),
         .Format = .R32_UINT,
     });
 
@@ -833,9 +833,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     {
         var mip_level: u32 = 0;
         while (mip_level < prefiltered_env_texture_num_mip_levels) : (mip_level += 1) {
-            const roughness = @floatFromInt(f32, mip_level) /
-                @floatFromInt(f32, prefiltered_env_texture_num_mip_levels - 1);
-            gctx.cmdlist.SetGraphicsRoot32BitConstant(1, @bitCast(u32, roughness), 0);
+            const roughness = @as(f32, @floatFromInt(mip_level)) /
+                @as(f32, @floatFromInt(prefiltered_env_texture_num_mip_levels - 1));
+            gctx.cmdlist.SetGraphicsRoot32BitConstant(1, @as(u32, @bitCast(roughness)), 0);
             drawToCubeTexture(&gctx, prefiltered_env_texture.resource, mip_level);
         }
     }
@@ -921,7 +921,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @floatFromInt(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @as(f32, @floatFromInt(demo.gctx.viewport_width)) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -944,8 +944,8 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @floatFromInt(f32, pos.x) - @floatFromInt(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @floatFromInt(f32, pos.y) - @floatFromInt(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
+        const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
@@ -993,7 +993,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @floatFromInt(f32, gctx.viewport_width) / @floatFromInt(f32, gctx.viewport_height),
+        @as(f32, @floatFromInt(gctx.viewport_width)) / @as(f32, @floatFromInt(gctx.viewport_height)),
         0.1,
         100.0,
     );
@@ -1021,12 +1021,12 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.vertex_buffer)),
+        .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.vertex_buffer))),
         .StrideInBytes = @sizeOf(Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.index_buffer)),
+        .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.index_buffer))),
         .Format = .R32_UINT,
     });
 
@@ -1045,7 +1045,7 @@ fn draw(demo: *DemoState) void {
 
     // Draw SciFiHelmet.
     {
-        const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.25 * demo.frame_stats.time));
+        const object_to_world = vm.Mat4.initRotationY(@as(f32, @floatCast(0.25 * demo.frame_stats.time)));
 
         const mem = gctx.allocateUploadMemory(Draw_Const, 1);
         mem.cpu_slice[0] = .{
@@ -1066,10 +1066,10 @@ fn draw(demo: *DemoState) void {
         });
 
         gctx.cmdlist.DrawIndexedInstanced(
-            demo.meshes.items[mesh_helmet].lods[@intCast(usize, demo.current_lod)].num_indices,
+            demo.meshes.items[mesh_helmet].lods[@as(usize, @intCast(demo.current_lod))].num_indices,
             1,
-            demo.meshes.items[mesh_helmet].lods[@intCast(usize, demo.current_lod)].index_offset,
-            @intCast(i32, demo.meshes.items[mesh_helmet].vertex_offset),
+            demo.meshes.items[mesh_helmet].lods[@as(usize, @intCast(demo.current_lod))].index_offset,
+            @as(i32, @intCast(demo.meshes.items[mesh_helmet].vertex_offset)),
             0,
         );
     }
@@ -1089,7 +1089,7 @@ fn draw(demo: *DemoState) void {
             demo.meshes.items[mesh_cube].lods[0].num_indices,
             1,
             demo.meshes.items[mesh_cube].lods[0].index_offset,
-            @intCast(i32, demo.meshes.items[mesh_cube].vertex_offset),
+            @as(i32, @intCast(demo.meshes.items[mesh_cube].vertex_offset)),
             0,
         );
     }

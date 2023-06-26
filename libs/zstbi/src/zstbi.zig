@@ -68,9 +68,9 @@ pub const Image = struct {
         const is_supported = stbi_info(pathname, &w, &h, &c);
         return .{
             .is_supported = if (is_supported == 1) true else false,
-            .width = @intCast(u32, w),
-            .height = @intCast(u32, h),
-            .num_components = @intCast(u32, c),
+            .width = @as(u32, @intCast(w)),
+            .height = @as(u32, @intCast(h)),
+            .num_components = @as(u32, @intCast(c)),
         };
     }
 
@@ -93,53 +93,53 @@ pub const Image = struct {
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_components),
+                @as(c_int, @intCast(forced_num_components)),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
-            width = @intCast(u32, x);
-            height = @intCast(u32, y);
+            num_components = if (forced_num_components == 0) @as(u32, @intCast(ch)) else forced_num_components;
+            width = @as(u32, @intCast(x));
+            height = @as(u32, @intCast(y));
             bytes_per_component = 2;
             bytes_per_row = width * num_components * bytes_per_component;
             is_hdr = true;
 
             // Convert each component from f32 to f16.
-            var ptr_f16 = @ptrCast([*]f16, ptr.?);
+            var ptr_f16 = @as([*]f16, @ptrCast(ptr.?));
             const num = width * height * num_components;
             var i: u32 = 0;
             while (i < num) : (i += 1) {
-                ptr_f16[i] = @floatCast(f16, ptr.?[i]);
+                ptr_f16[i] = @as(f16, @floatCast(ptr.?[i]));
             }
-            break :data @ptrCast([*]u8, ptr_f16)[0 .. height * bytes_per_row];
+            break :data @as([*]u8, @ptrCast(ptr_f16))[0 .. height * bytes_per_row];
         } else data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
             const is_16bit = is16bit(pathname);
-            const ptr = if (is_16bit) @ptrCast(?[*]u8, stbi_load_16(
+            const ptr = if (is_16bit) @as(?[*]u8, @ptrCast(stbi_load_16(
                 pathname,
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_components),
-            )) else stbi_load(
+                @as(c_int, @intCast(forced_num_components)),
+            ))) else stbi_load(
                 pathname,
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_components),
+                @as(c_int, @intCast(forced_num_components)),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
-            width = @intCast(u32, x);
-            height = @intCast(u32, y);
+            num_components = if (forced_num_components == 0) @as(u32, @intCast(ch)) else forced_num_components;
+            width = @as(u32, @intCast(x));
+            height = @as(u32, @intCast(y));
             bytes_per_component = if (is_16bit) 2 else 1;
             bytes_per_row = width * num_components * bytes_per_component;
             is_hdr = false;
 
-            break :data @ptrCast([*]u8, ptr)[0 .. height * bytes_per_row];
+            break :data @as([*]u8, @ptrCast(ptr))[0 .. height * bytes_per_row];
         };
 
         return Image{
@@ -169,50 +169,50 @@ pub const Image = struct {
             var ch: c_int = undefined;
             const ptr = stbi_loadf_from_memory(
                 data.ptr,
-                @intCast(c_int, data.len),
+                @as(c_int, @intCast(data.len)),
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_components),
+                @as(c_int, @intCast(forced_num_components)),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
-            width = @intCast(u32, x);
-            height = @intCast(u32, y);
+            num_components = if (forced_num_components == 0) @as(u32, @intCast(ch)) else forced_num_components;
+            width = @as(u32, @intCast(x));
+            height = @as(u32, @intCast(y));
             bytes_per_component = 2;
             bytes_per_row = width * num_components * bytes_per_component;
             is_hdr = true;
 
             // Convert each component from f32 to f16.
-            var ptr_f16 = @ptrCast([*]f16, ptr.?);
+            var ptr_f16 = @as([*]f16, @ptrCast(ptr.?));
             const num = width * height * num_components;
             var i: u32 = 0;
             while (i < num) : (i += 1) {
-                ptr_f16[i] = @floatCast(f16, ptr.?[i]);
+                ptr_f16[i] = @as(f16, @floatCast(ptr.?[i]));
             }
-            break :data @ptrCast([*]u8, ptr_f16)[0 .. height * bytes_per_row];
+            break :data @as([*]u8, @ptrCast(ptr_f16))[0 .. height * bytes_per_row];
         } else data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
             const ptr = stbi_load_from_memory(
                 data.ptr,
-                @intCast(c_int, data.len),
+                @as(c_int, @intCast(data.len)),
                 &x,
                 &y,
                 &ch,
-                @intCast(c_int, forced_num_components),
+                @as(c_int, @intCast(forced_num_components)),
             );
             if (ptr == null) return error.ImageInitFailed;
 
-            num_components = if (forced_num_components == 0) @intCast(u32, ch) else forced_num_components;
-            width = @intCast(u32, x);
-            height = @intCast(u32, y);
+            num_components = if (forced_num_components == 0) @as(u32, @intCast(ch)) else forced_num_components;
+            width = @as(u32, @intCast(x));
+            height = @as(u32, @intCast(y));
             bytes_per_component = 1;
             bytes_per_row = width * num_components * bytes_per_component;
 
-            break :data @ptrCast([*]u8, ptr)[0 .. height * bytes_per_row];
+            break :data @as([*]u8, @ptrCast(ptr))[0 .. height * bytes_per_row];
         };
 
         return Image{
@@ -240,7 +240,7 @@ pub const Image = struct {
 
         const size = height * bytes_per_row;
 
-        const data = @ptrCast([*]u8, zstbiMalloc(size));
+        const data = @as([*]u8, @ptrCast(zstbiMalloc(size)));
         @memset(data[0..size], 0);
 
         return Image{
@@ -260,17 +260,17 @@ pub const Image = struct {
         // TODO: Add support for HDR images
         const new_bytes_per_row = new_width * image.num_components * image.bytes_per_component;
         const new_size = new_height * new_bytes_per_row;
-        const new_data = @ptrCast([*]u8, zstbiMalloc(new_size));
+        const new_data = @as([*]u8, @ptrCast(zstbiMalloc(new_size)));
         stbir_resize_uint8(
             image.data.ptr,
-            @intCast(c_int, image.width),
-            @intCast(c_int, image.height),
+            @as(c_int, @intCast(image.width)),
+            @as(c_int, @intCast(image.height)),
             0,
             new_data,
-            @intCast(c_int, new_width),
-            @intCast(c_int, new_height),
+            @as(c_int, @intCast(new_width)),
+            @as(c_int, @intCast(new_height)),
             0,
-            @intCast(c_int, image.num_components),
+            @as(c_int, @intCast(image.num_components)),
         );
         return .{
             .data = new_data[0..new_size],
@@ -290,9 +290,9 @@ pub const Image = struct {
     ) ImageWriteError!void {
         assert(mem_allocator != null);
 
-        const w = @intCast(c_int, image.width);
-        const h = @intCast(c_int, image.height);
-        const comp = @intCast(c_int, image.num_components);
+        const w = @as(c_int, @intCast(image.width));
+        const h = @as(c_int, @intCast(image.height));
+        const comp = @as(c_int, @intCast(image.num_components));
         const result = switch (image_format) {
             .png => stbi_write_png(filename.ptr, w, h, comp, image.data.ptr, 0),
             .jpg => |settings| stbi_write_jpg(
@@ -301,7 +301,7 @@ pub const Image = struct {
                 h,
                 comp,
                 image.data.ptr,
-                @intCast(c_int, settings.quality),
+                @as(c_int, @intCast(settings.quality)),
             ),
         };
         // if the result is 0 then it means an error occured (per stb image write docs)
@@ -318,9 +318,9 @@ pub const Image = struct {
     ) ImageWriteError!void {
         assert(mem_allocator != null);
 
-        const w = @intCast(c_int, image.width);
-        const h = @intCast(c_int, image.height);
-        const comp = @intCast(c_int, image.num_components);
+        const w = @as(c_int, @intCast(image.width));
+        const h = @as(c_int, @intCast(image.height));
+        const comp = @as(c_int, @intCast(image.num_components));
         const result = switch (image_format) {
             .png => stbi_write_png_to_func(write_fn, context, w, h, comp, image.data.ptr, 0),
             .jpg => |settings| stbi_write_jpg_to_func(
@@ -330,7 +330,7 @@ pub const Image = struct {
                 h,
                 comp,
                 image.data.ptr,
-                @intCast(c_int, settings.quality),
+                @as(c_int, @intCast(settings.quality)),
             ),
         };
         // if the result is 0 then it means an error occured (per stb image write docs)
@@ -362,7 +362,7 @@ pub fn isHdr(filename: [:0]const u8) bool {
 }
 
 pub fn isHdrFromMem(buffer: []const u8) bool {
-    return stbi_is_hdr_from_memory(buffer.ptr, @intCast(c_int, buffer.len)) != 0;
+    return stbi_is_hdr_from_memory(buffer.ptr, @as(c_int, @intCast(buffer.len))) != 0;
 }
 
 pub fn is16bit(filename: [:0]const u8) bool {
@@ -409,7 +409,7 @@ fn zstbiRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
 
     const old_size = if (ptr != null) mem_allocations.?.get(@intFromPtr(ptr.?)).? else 0;
     const old_mem = if (old_size > 0)
-        @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..old_size]
+        @as([*]align(mem_alignment) u8, @ptrCast(@alignCast(ptr)))[0..old_size]
     else
         @as([*]align(mem_alignment) u8, undefined)[0..0];
 
@@ -434,7 +434,7 @@ fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         defer mem_mutex.unlock();
 
         const size = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
-        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
+        const mem = @as([*]align(mem_alignment) u8, @ptrCast(@alignCast(ptr)))[0..size];
         mem_allocator.?.free(mem);
     }
 }

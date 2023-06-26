@@ -55,7 +55,7 @@ extern var zmeshCallocPtr: ?*const fn (num: usize, size: usize) callconv(.C) ?*a
 fn zmeshCalloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
     const ptr = zmeshMalloc(num * size);
     if (ptr != null) {
-        @memset(@ptrCast([*]u8, ptr)[0 .. num * size], 0);
+        @memset(@as([*]u8, @ptrCast(ptr))[0 .. num * size], 0);
         return ptr;
     }
     return null;
@@ -75,7 +75,7 @@ fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     const old_size = if (ptr != null) mem_allocations.?.get(@intFromPtr(ptr.?)).? else 0;
 
     var old_mem = if (old_size > 0)
-        @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..old_size]
+        @as([*]align(mem_alignment) u8, @ptrCast(@alignCast(ptr)))[0..old_size]
     else
         @as([*]align(mem_alignment) u8, undefined)[0..0];
 
@@ -99,7 +99,7 @@ fn zmeshFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         defer mem_mutex.unlock();
 
         const size = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
-        const mem = @ptrCast([*]align(mem_alignment) u8, @alignCast(mem_alignment, ptr))[0..size];
+        const mem = @as([*]align(mem_alignment) u8, @ptrCast(@alignCast(ptr)))[0..size];
         mem_allocator.?.free(mem);
     }
 }

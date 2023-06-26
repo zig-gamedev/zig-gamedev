@@ -47,7 +47,7 @@ const DDS_PAL8: u32 = 0x00000020; // DDPF_PALETTEINDEXED8
 const DDS_BUMPDUDV: u32 = 0x00080000; // DDPF_BUMPDUDV
 
 inline fn makeFourCC(ch0: u8, ch1: u8, ch2: u8, ch3: u8) u32 {
-    return (@intCast(u32, ch0)) | (@intCast(u32, ch1) << 8) | (@intCast(u32, ch2) << 16) | (@intCast(u32, ch3) << 24);
+    return (@as(u32, @intCast(ch0))) | (@as(u32, @intCast(ch1)) << 8) | (@as(u32, @intCast(ch2)) << 16) | (@as(u32, @intCast(ch3)) << 24);
 }
 
 inline fn isBitMask(pixelFormat: DDS_PIXELFORMAT, r: u32, g: u32, b: u32, a: u32) bool {
@@ -162,11 +162,11 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
 
     // Extract DDS_HEADER
     const header = try reader.readStruct(DDS_HEADER);
-    if (header.dwSize != @intCast(u32, @sizeOf(DDS_HEADER))) {
+    if (header.dwSize != @as(u32, @intCast(@sizeOf(DDS_HEADER)))) {
         return DdsError.InvalidDDSData;
     }
 
-    if (header.ddspf.dwSize != @intCast(u32, @sizeOf(DDS_PIXELFORMAT))) {
+    if (header.ddspf.dwSize != @as(u32, @intCast(@sizeOf(DDS_PIXELFORMAT)))) {
         return DdsError.InvalidDDSData;
     }
 
@@ -185,7 +185,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
     // Check alpha mode
     var alpha_mode = DDS_ALPHA_MODE.unknown;
     if (has_dx10_extension) {
-        alpha_mode = @enumFromInt(DDS_ALPHA_MODE, dx10.miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK);
+        alpha_mode = @as(DDS_ALPHA_MODE, @enumFromInt(dx10.miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK));
     } else {
         if (makeFourCC('D', 'X', 'T', '2') == header.ddspf.dwFourCC or makeFourCC('D', 'X', 'T', '4') == header.ddspf.dwFourCC) {
             alpha_mode = .premultiplied;
@@ -253,7 +253,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
             return DdsError.InvalidDDSData;
         }
 
-        resource_dimension = @enumFromInt(d3d12.RESOURCE_DIMENSION, dx10.resourceDimension);
+        resource_dimension = @as(d3d12.RESOURCE_DIMENSION, @enumFromInt(dx10.resourceDimension));
     } else {
         format = getDXGIFormat(header.ddspf);
 
@@ -372,9 +372,9 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
                     }
 
                     var resource = d3d12.SUBRESOURCE_DATA{
-                        .pData = @ptrCast([*]u8, data[data_offset..]),
-                        .RowPitch = @intCast(c_uint, surface_info.row_bytes),
-                        .SlicePitch = @intCast(c_uint, surface_info.num_bytes),
+                        .pData = @as([*]u8, @ptrCast(data[data_offset..])),
+                        .RowPitch = @as(c_uint, @intCast(surface_info.row_bytes)),
+                        .SlicePitch = @as(c_uint, @intCast(surface_info.num_bytes)),
                     };
 
                     adjustPlaneResource(format, h, plane_index, &resource);
@@ -384,7 +384,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
                     skip_mip += 1;
                 }
 
-                data_offset += @intCast(u32, surface_info.num_bytes) * d;
+                data_offset += @as(u32, @intCast(surface_info.num_bytes)) * d;
                 if (data_offset > data.len) {
                     return DdsError.EndOfFile;
                 }
@@ -742,33 +742,33 @@ fn getSurfaceInfo(
     if (format_data.bc) {
         var num_blocks_wide: u64 = 0;
         if (width > 0) {
-            num_blocks_wide = @max(1, @divTrunc(@intCast(u64, width) + 3, 4));
+            num_blocks_wide = @max(1, @divTrunc(@as(u64, @intCast(width)) + 3, 4));
         }
         var num_blocks_high: u64 = 0;
         if (height > 0) {
-            num_blocks_high = @max(1, @divTrunc(@intCast(u64, height) + 3, 4));
+            num_blocks_high = @max(1, @divTrunc(@as(u64, @intCast(height)) + 3, 4));
         }
         row_bytes = num_blocks_wide * format_data.bpe;
         num_rows = num_blocks_high;
         num_bytes = row_bytes * num_blocks_high;
     } else if (format_data.@"packed") {
-        row_bytes = ((@intCast(u64, width) + 1) >> 1) * format_data.bpe;
-        num_rows = @intCast(u64, height);
+        row_bytes = ((@as(u64, @intCast(width)) + 1) >> 1) * format_data.bpe;
+        num_rows = @as(u64, @intCast(height));
         num_bytes = row_bytes * height;
     } else if (format == .NV11) {
-        row_bytes = ((@intCast(u64, width) + 3) >> 2) * 4;
-        num_rows = @intCast(u64, height) * 2; // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
+        row_bytes = ((@as(u64, @intCast(width)) + 3) >> 2) * 4;
+        num_rows = @as(u64, @intCast(height)) * 2; // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
         num_bytes = row_bytes * num_rows;
     } else if (format_data.planar) {
-        row_bytes = ((@intCast(u64, width) + 1) >> 1) * format_data.bpe;
-        num_bytes = (row_bytes * @intCast(u64, height)) + ((row_bytes * @intCast(u64, height) + 1) >> 1);
-        num_rows = height + ((@intCast(u64, height) + 1) >> 1);
+        row_bytes = ((@as(u64, @intCast(width)) + 1) >> 1) * format_data.bpe;
+        num_bytes = (row_bytes * @as(u64, @intCast(height))) + ((row_bytes * @as(u64, @intCast(height)) + 1) >> 1);
+        num_rows = height + ((@as(u64, @intCast(height)) + 1) >> 1);
     } else {
         const bpp = format.pixelSizeInBits();
         assert(bpp > 0);
 
-        row_bytes = @divFloor(@intCast(u64, width) * bpp + 7, 8); // round up to nearest byte
-        num_rows = @intCast(u64, height);
+        row_bytes = @divFloor(@as(u64, @intCast(width)) * bpp + 7, 8); // round up to nearest byte
+        num_rows = @as(u64, @intCast(height));
         num_bytes = row_bytes * height;
     }
 

@@ -135,8 +135,8 @@ pub fn Handle(
             /// Returns the corresponding `Handle`
             pub fn handle(self: AddressableHandle) HandleType {
                 var u = HandleUnion{ .bits = .{
-                    .cycle = @intCast(CycleType, self.cycle),
-                    .index = @intCast(IndexType, self.index),
+                    .cycle = @as(CycleType, @intCast(self.cycle)),
+                    .index = @as(IndexType, @intCast(self.index)),
                 } };
                 return .{ .id = u.id };
             }

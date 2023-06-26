@@ -389,7 +389,7 @@ pub const Texture = opaque {
     extern fn SDL_DestroyTexture(texture: ?*Texture) void;
 
     pub fn query(texture: *Texture, format: ?*PixelFormat, access: ?*Access, w: ?*i32, h: ?*i32) !void {
-        if (SDL_QueryTexture(texture, @ptrCast(?*u32, format), @ptrCast(?*c_int, access), w, h) != 0) {
+        if (SDL_QueryTexture(texture, @as(?*u32, @ptrCast(format)), @as(?*c_int, @ptrCast(access)), w, h) != 0) {
             return makeError();
         }
     }
@@ -733,9 +733,9 @@ pub const Renderer = opaque {
             r,
             tex,
             vertices.ptr,
-            @intCast(i32, vertices.len),
-            if (indices) |idx| @ptrCast([*]const i32, idx.ptr) else null,
-            if (indices) |idx| @intCast(i32, idx.len) else 0,
+            @as(i32, @intCast(vertices.len)),
+            if (indices) |idx| @as([*]const i32, @ptrCast(idx.ptr)) else null,
+            if (indices) |idx| @as(i32, @intCast(idx.len)) else 0,
         ) < 0)
             return makeError();
     }
@@ -872,7 +872,7 @@ pub const Renderer = opaque {
             rect,
             if (format) |f| @intFromEnum(f) else 0,
             pixels,
-            @intCast(i32, pitch),
+            @as(i32, @intCast(pitch)),
         ) < 0) return makeError();
     }
     extern fn SDL_RenderReadPixels(
@@ -1235,7 +1235,7 @@ extern fn SDL_PollEvent(event: ?*Event) i32;
 pub fn getKeyboardState() []const u8 {
     var numkeys: i32 = 0;
     const ptr = SDL_GetKeyboardState(&numkeys).?;
-    return ptr[0..@intCast(usize, numkeys)];
+    return ptr[0..@as(usize, @intCast(numkeys))];
 }
 extern fn SDL_GetKeyboardState(numkeys: ?*i32) ?[*]const u8;
 
@@ -1396,7 +1396,7 @@ pub fn pauseAudioDevice(device: AudioDeviceId, pause: bool) void {
 extern fn SDL_PauseAudioDevice(AudioDeviceId, pause: c_int) void;
 
 pub fn queueAudio(comptime SampleType: type, device: AudioDeviceId, data: []const SampleType) bool {
-    return SDL_QueueAudio(device, data.ptr, @sizeOf(SampleType) * @intCast(u32, data.len)) == 0;
+    return SDL_QueueAudio(device, data.ptr, @sizeOf(SampleType) * @as(u32, @intCast(data.len))) == 0;
 }
 extern fn SDL_QueueAudio(AudioDeviceId, data: *const anyopaque, len: u32) c_int;
 

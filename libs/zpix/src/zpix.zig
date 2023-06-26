@@ -113,8 +113,8 @@ const WINPIX_EVENT_PIX3BLOB_VERSION: u32 = 2;
 const D3D12_EVENT_METADATA = WINPIX_EVENT_PIX3BLOB_VERSION;
 
 fn encodeEventInfo(timestamp: u64, event_type: EventType) u64 {
-    const mask0 = (timestamp & EventsTimestampWriteMask) << @intCast(u6, EventsTimestampBitShift);
-    const mask1 = (@intFromEnum(event_type) & EventsTypeWriteMask) << @intCast(u6, EventsTypeBitShift);
+    const mask0 = (timestamp & EventsTimestampWriteMask) << @as(u6, @intCast(EventsTimestampBitShift));
+    const mask1 = (@intFromEnum(event_type) & EventsTypeWriteMask) << @as(u6, @intCast(EventsTypeBitShift));
     return mask0 | mask1;
 }
 
@@ -132,13 +132,13 @@ const EventsStringIsShortcutBitShift: u64 = 53;
 
 fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shortcut: bool) u64 {
     const mask0 = (alignment & EventsStringAlignmentWriteMask) <<
-        @intCast(u6, EventsStringAlignmentBitShift);
+        @as(u6, @intCast(EventsStringAlignmentBitShift));
     const mask1 = (copy_chunk_size & EventsStringCopyChunkSizeWriteMask) <<
-        @intCast(u6, EventsStringCopyChunkSizeBitShift);
+        @as(u6, @intCast(EventsStringCopyChunkSizeBitShift));
     const mask2 = (@intFromBool(is_ansi) & EventsStringIsANSIWriteMask) <<
-        @intCast(u6, EventsStringIsANSIBitShift);
+        @as(u6, @intCast(EventsStringIsANSIBitShift));
     const mask3 = (@intFromBool(is_shortcut) & EventsStringIsShortcutWriteMask) <<
-        @intCast(u6, EventsStringIsShortcutBitShift);
+        @as(u6, @intCast(EventsStringIsShortcutBitShift));
     return mask0 | mask1 | mask2 | mask3;
 }
 
@@ -202,9 +202,9 @@ const impl = struct {
 
     fn beginCapture(flags: CAPTURE_FLAGS, params: ?*const CaptureParameters) HRESULT {
         if (flags.GPU) {
-            const beginProgrammaticGpuCapture = @ptrCast(
+            const beginProgrammaticGpuCapture = @as(
                 ?*const fn (?*const CaptureParameters) callconv(WINAPI) HRESULT,
-                getFunctionPtr("BeginProgrammaticGpuCapture"),
+                @ptrCast(getFunctionPtr("BeginProgrammaticGpuCapture")),
             );
             if (beginProgrammaticGpuCapture == null) {
                 return w32.E_FAIL;
@@ -216,9 +216,9 @@ const impl = struct {
     }
 
     fn endCapture() HRESULT {
-        const endProgrammaticGpuCapture = @ptrCast(
+        const endProgrammaticGpuCapture = @as(
             ?*const fn () callconv(WINAPI) HRESULT,
-            getFunctionPtr("EndProgrammaticGpuCapture"),
+            @ptrCast(getFunctionPtr("EndProgrammaticGpuCapture")),
         );
         if (endProgrammaticGpuCapture == null) {
             return w32.E_FAIL;
@@ -227,9 +227,9 @@ const impl = struct {
     }
 
     fn setTargetWindow(hwnd: HWND) HRESULT {
-        const setGlobalTargetWindow = @ptrCast(
+        const setGlobalTargetWindow = @as(
             ?*const fn (HWND) callconv(WINAPI) void,
-            getFunctionPtr("SetGlobalTargetWindow"),
+            @ptrCast(getFunctionPtr("SetGlobalTargetWindow")),
         );
         if (setGlobalTargetWindow == null) {
             return w32.E_FAIL;
@@ -239,9 +239,9 @@ const impl = struct {
     }
 
     fn gpuCaptureNextFrames(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
-        const captureNextFrame = @ptrCast(
+        const captureNextFrame = @as(
             ?*const fn (LPCWSTR, UINT32) callconv(WINAPI) HRESULT,
-            getFunctionPtr("CaptureNextFrame"),
+            @ptrCast(getFunctionPtr("CaptureNextFrame")),
         );
         if (captureNextFrame == null) {
             return w32.E_FAIL;
@@ -255,7 +255,7 @@ const impl = struct {
             assert(@hasDecl(T, "SetMarker"));
         }
         assert(name.len > 0);
-        const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
+        const num_name_qwords: u32 = (@as(u32, @intCast(name.len + 1)) + 7) / 8;
         assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
 
         var buffer: [EventsGraphicsRecordSpaceQwords]u64 = undefined;
@@ -271,9 +271,9 @@ const impl = struct {
 
         dest[num_name_qwords - 1] = 0;
         dest[num_name_qwords + 0] = 0;
-        @memcpy(@ptrCast([*]u8, dest), name);
+        @memcpy(@as([*]u8, @ptrCast(dest)), name);
 
-        context.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*anyopaque, &buffer), (3 + num_name_qwords) * 8);
+        context.SetMarker(D3D12_EVENT_METADATA, @as(*anyopaque, @ptrCast(&buffer)), (3 + num_name_qwords) * 8);
     }
 
     fn setMarker(target: anytype, name: []const u8) void {
@@ -286,7 +286,7 @@ const impl = struct {
             assert(@hasDecl(T, "BeginEvent"));
         }
         assert(name.len > 0);
-        const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
+        const num_name_qwords: u32 = (@as(u32, @intCast(name.len + 1)) + 7) / 8;
         assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
 
         var buffer: [EventsGraphicsRecordSpaceQwords]u64 = undefined;
@@ -302,9 +302,9 @@ const impl = struct {
 
         dest[num_name_qwords - 1] = 0;
         dest[num_name_qwords + 0] = 0;
-        @memcpy(@ptrCast([*]u8, dest), name);
+        @memcpy(@as([*]u8, @ptrCast(dest)), name);
 
-        context.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*anyopaque, &buffer), (3 + num_name_qwords) * 8);
+        context.BeginEvent(D3D12_EVENT_METADATA, @as(*anyopaque, @ptrCast(&buffer)), (3 + num_name_qwords) * 8);
     }
 
     fn beginEvent(target: anytype, name: []const u8) void {

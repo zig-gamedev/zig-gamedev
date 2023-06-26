@@ -13,7 +13,7 @@ pub fn main() !void {
     try sdl.gl.setAttribute(.context_profile_mask, @intFromEnum(sdl.gl.Profile.core));
     try sdl.gl.setAttribute(.context_major_version, gl_major);
     try sdl.gl.setAttribute(.context_minor_version, gl_minor);
-    try sdl.gl.setAttribute(.context_flags, @bitCast(i32, sdl.gl.ContextFlags{ .forward_compatible = true }));
+    try sdl.gl.setAttribute(.context_flags, @as(i32, @bitCast(sdl.gl.ContextFlags{ .forward_compatible = true })));
 
     const window = try sdl.Window.create(
         "zig-gamedev: minimal gl",

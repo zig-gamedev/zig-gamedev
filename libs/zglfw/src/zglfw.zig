@@ -47,7 +47,7 @@ extern fn glfwVulkanSupported() i32;
 pub fn getRequiredInstanceExtensions() Error![][*:0]const u8 {
     var count: u32 = 0;
     if (glfwGetRequiredInstanceExtensions(&count)) |extensions| {
-        return @ptrCast([*][*:0]const u8, extensions)[0..count];
+        return @as([*][*:0]const u8, @ptrCast(extensions))[0..count];
     }
     try maybeError();
     return error.APIUnavailable;
@@ -331,32 +331,32 @@ pub const Joystick = struct {
     };
 
     pub fn getGuid(self: Joystick) [:0]const u8 {
-        return std.mem.span(glfwGetJoystickGUID(@intCast(i32, self.jid)));
+        return std.mem.span(glfwGetJoystickGUID(@as(i32, @intCast(self.jid))));
     }
     extern fn glfwGetJoystickGUID(jid: i32) [*:0]const u8;
 
     pub fn getAxes(self: Joystick) []const f32 {
         var count: i32 = undefined;
-        const state = glfwGetJoystickAxes(@intCast(i32, self.jid), &count);
+        const state = glfwGetJoystickAxes(@as(i32, @intCast(self.jid)), &count);
         if (count == 0) {
             return @as([*]const f32, undefined)[0..0];
         }
-        return state[0..@intCast(usize, count)];
+        return state[0..@as(usize, @intCast(count))];
     }
     extern fn glfwGetJoystickAxes(jid: i32, count: *i32) [*]const f32;
 
     pub fn getButtons(self: Joystick) []const ButtonAction {
         var count: i32 = undefined;
-        const state = glfwGetJoystickButtons(@intCast(i32, self.jid), &count);
+        const state = glfwGetJoystickButtons(@as(i32, @intCast(self.jid)), &count);
         if (count == 0) {
             return @as([*]const ButtonAction, undefined)[0..0];
         }
-        return @ptrCast([]const ButtonAction, state[0..@intCast(usize, count)]);
+        return @as([]const ButtonAction, @ptrCast(state[0..@as(usize, @intCast(count))]));
     }
     extern fn glfwGetJoystickButtons(jid: i32, count: *i32) [*]const u8;
 
     fn isGamepad(self: Joystick) bool {
-        return glfwJoystickIsGamepad(@intCast(i32, self.jid)) == @intFromBool(true);
+        return glfwJoystickIsGamepad(@as(i32, @intCast(self.jid))) == @intFromBool(true);
     }
 
     pub fn asGamepad(self: Joystick) ?Gamepad {
@@ -365,7 +365,7 @@ pub const Joystick = struct {
     extern fn glfwJoystickIsGamepad(jid: i32) i32;
 
     pub fn isPresent(jid: Id) bool {
-        return glfwJoystickPresent(@intCast(i32, jid)) == @intFromBool(true);
+        return glfwJoystickPresent(@as(i32, @intCast(jid))) == @intFromBool(true);
     }
     extern fn glfwJoystickPresent(jid: i32) i32;
 
@@ -426,13 +426,13 @@ pub const Gamepad = struct {
     };
 
     pub fn getName(self: Gamepad) [:0]const u8 {
-        return std.mem.span(glfwGetGamepadName(@intCast(i32, self.jid)));
+        return std.mem.span(glfwGetGamepadName(@as(i32, @intCast(self.jid))));
     }
     extern fn glfwGetGamepadName(jid: i32) [*:0]const u8;
 
     pub fn getState(self: Gamepad) State {
         var state: State = undefined;
-        _ = glfwGetGamepadState(@intCast(i32, self.jid), &state);
+        _ = glfwGetGamepadState(@as(i32, @intCast(self.jid)), &state);
         // return value of glfwGetGamepadState is ignored as
         // it is expected this is guarded by glfwJoystickIsGamepad
         return state;
@@ -465,7 +465,7 @@ pub const Monitor = opaque {
     pub fn getAll() ?[]*Monitor {
         var count: i32 = 0;
         if (glfwGetMonitors(&count)) |monitors| {
-            return monitors[0..@intCast(usize, count)];
+            return monitors[0..@as(usize, @intCast(count))];
         }
         return null;
     }

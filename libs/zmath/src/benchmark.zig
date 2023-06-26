@@ -138,7 +138,7 @@ noinline fn mat4MulBenchmark(allocator: std.mem.Allocator, comptime count: compt
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("scalar version: {d:.4}s, ", .{elapsed_s});
     }
@@ -158,7 +158,7 @@ noinline fn mat4MulBenchmark(allocator: std.mem.Allocator, comptime count: compt
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("zmath version: {d:.4}s\n", .{elapsed_s});
     }
@@ -208,7 +208,7 @@ noinline fn cross3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime coun
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("scalar version: {d:.4}s, ", .{elapsed_s});
     }
@@ -228,7 +228,7 @@ noinline fn cross3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime coun
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("zmath version: {d:.4}s\n", .{elapsed_s});
     }
@@ -279,7 +279,7 @@ noinline fn cross3Dot3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime 
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("scalar version: {d:.4}s, ", .{elapsed_s});
     }
@@ -299,7 +299,7 @@ noinline fn cross3Dot3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime 
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("zmath version: {d:.4}s\n", .{elapsed_s});
     }
@@ -350,7 +350,7 @@ noinline fn quatBenchmark(allocator: std.mem.Allocator, comptime count: comptime
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("scalar version: {d:.4}s, ", .{elapsed_s});
     }
@@ -370,7 +370,7 @@ noinline fn quatBenchmark(allocator: std.mem.Allocator, comptime count: comptime
             }
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("zmath version: {d:.4}s\n", .{elapsed_s});
     }
@@ -393,14 +393,14 @@ noinline fn waveBenchmark(allocator: std.mem.Allocator, comptime count: comptime
         while (iter < count) : (iter += 1) {
             var z_index: i32 = 0;
             while (z_index < grid_size) : (z_index += 1) {
-                const z = scale * @floatFromInt(f32, z_index - grid_size / 2);
+                const z = scale * @as(f32, @floatFromInt(z_index - grid_size / 2));
 
                 var x_index: i32 = 0;
                 while (x_index < grid_size) : (x_index += 4) {
-                    const x0 = scale * @floatFromInt(f32, x_index + 0 - grid_size / 2);
-                    const x1 = scale * @floatFromInt(f32, x_index + 1 - grid_size / 2);
-                    const x2 = scale * @floatFromInt(f32, x_index + 2 - grid_size / 2);
-                    const x3 = scale * @floatFromInt(f32, x_index + 3 - grid_size / 2);
+                    const x0 = scale * @as(f32, @floatFromInt(x_index + 0 - grid_size / 2));
+                    const x1 = scale * @as(f32, @floatFromInt(x_index + 1 - grid_size / 2));
+                    const x2 = scale * @as(f32, @floatFromInt(x_index + 2 - grid_size / 2));
+                    const x3 = scale * @as(f32, @floatFromInt(x_index + 3 - grid_size / 2));
 
                     const d0 = zm.sqrt(x0 * x0 + z * z);
                     const d1 = zm.sqrt(x1 * x1 + z * z);
@@ -421,7 +421,7 @@ noinline fn waveBenchmark(allocator: std.mem.Allocator, comptime count: comptime
             t += 0.001;
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("scalar version: {d:.4}s, ", .{elapsed_s});
     }
@@ -444,12 +444,12 @@ noinline fn waveBenchmark(allocator: std.mem.Allocator, comptime count: comptime
         while (iter < count) : (iter += 1) {
             var z_index: i32 = 0;
             while (z_index < grid_size) : (z_index += 1) {
-                const z = scale * @floatFromInt(f32, z_index - grid_size / 2);
+                const z = scale * @as(f32, @floatFromInt(z_index - grid_size / 2));
                 const vz = zm.splat(T, z);
 
                 var x_index: i32 = 0;
                 while (x_index < grid_size) : (x_index += zm.veclen(T)) {
-                    const x = scale * @floatFromInt(f32, x_index - grid_size / 2);
+                    const x = scale * @as(f32, @floatFromInt(x_index - grid_size / 2));
                     const vx = zm.splat(T, x) + voffset * zm.splat(T, scale);
 
                     const d = zm.sqrt(vx * vx + vz * vz);
@@ -462,7 +462,7 @@ noinline fn waveBenchmark(allocator: std.mem.Allocator, comptime count: comptime
             vt += zm.splat(T, 0.001);
         }
         const end = timer.read();
-        const elapsed_s = @floatFromInt(f64, end - start) / time.ns_per_s;
+        const elapsed_s = @as(f64, @floatFromInt(end - start)) / time.ns_per_s;
 
         std.debug.print("zmath version: {d:.4}s\n", .{elapsed_s});
     }

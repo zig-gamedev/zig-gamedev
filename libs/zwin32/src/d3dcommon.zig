@@ -95,10 +95,10 @@ pub const IBlob = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetBufferPointer(self: *T) *anyopaque {
-                return @ptrCast(*const IBlob.VTable, self.__v).GetBufferPointer(@ptrCast(*IBlob, self));
+                return @as(*const IBlob.VTable, @ptrCast(self.__v)).GetBufferPointer(@as(*IBlob, @ptrCast(self)));
             }
             pub inline fn GetBufferSize(self: *T) SIZE_T {
-                return @ptrCast(*const IBlob.VTable, self.__v).GetBufferSize(@ptrCast(*IBlob, self));
+                return @as(*const IBlob.VTable, @ptrCast(self.__v)).GetBufferSize(@as(*IBlob, @ptrCast(self)));
             }
         };
     }

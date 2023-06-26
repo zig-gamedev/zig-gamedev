@@ -1111,10 +1111,10 @@ pub fn texImage2D(args: struct {
     assert(args.height > 0);
     bindings.texImage2D(
         @intFromEnum(args.target),
-        @bitCast(Int, args.level),
+        @as(Int, @bitCast(args.level)),
         @intFromEnum(args.internal_format),
-        @bitCast(Sizei, args.width),
-        @bitCast(Sizei, args.height),
+        @as(Sizei, @bitCast(args.width)),
+        @as(Sizei, @bitCast(args.height)),
         0,
         @intFromEnum(args.format),
         @intFromEnum(args.pixel_type),
@@ -1235,7 +1235,7 @@ pub fn getString(name: StringName) [*:0]const u8 {
 
 // pub var viewport: *const fn (x: Int, y: Int, width: Sizei, height: Sizei) callconv(.C) void = undefined;
 pub fn viewport(x: Int, y: Int, width: u32, height: u32) void {
-    bindings.viewport(x, y, @bitCast(Sizei, width), @bitCast(Sizei, height));
+    bindings.viewport(x, y, @as(Sizei, @bitCast(width)), @as(Sizei, @bitCast(height)));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1280,7 +1280,7 @@ pub const VERTEX_ARRAY = bindings.VERTEX_ARRAY;
 
 // pub var drawArrays: *const fn (mode: Enum, first: Int, count: Sizei) callconv(.C) void = undefined;
 pub fn drawArrays(prim_type: PrimitiveType, first: u32, count: u32) void {
-    bindings.drawArrays(@intFromEnum(prim_type), @bitCast(Int, first), @bitCast(Sizei, count));
+    bindings.drawArrays(@intFromEnum(prim_type), @as(Int, @bitCast(first)), @as(Sizei, @bitCast(count)));
 }
 
 // pub var drawElements: *const fn (
@@ -1350,28 +1350,28 @@ pub fn drawArrays(prim_type: PrimitiveType, first: u32, count: u32) void {
 
 // pub var bindTexture: *const fn (target: Enum, texture: Uint) callconv(.C) void = undefined;
 pub fn bindTexture(target: TextureTarget, texture: Texture) void {
-    bindings.bindTexture(@intFromEnum(target), @bitCast(Uint, texture));
+    bindings.bindTexture(@intFromEnum(target), @as(Uint, @bitCast(texture)));
 }
 
 // pub var deleteTextures: *const fn (n: Sizei, textures: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteTexture(ptr: *const Texture) void {
-    bindings.deleteTextures(1, @ptrCast([*c]const Uint, ptr));
+    bindings.deleteTextures(1, @as([*c]const Uint, @ptrCast(ptr)));
 }
 pub fn deleteTextures(textures: []const Texture) void {
-    bindings.deleteTextures(textures.len, @ptrCast([*c]const Uint, textures.ptr));
+    bindings.deleteTextures(textures.len, @as([*c]const Uint, @ptrCast(textures.ptr)));
 }
 
 // pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
 pub fn genTexture(ptr: *Texture) void {
-    bindings.genTextures(1, @ptrCast([*c]Uint, ptr));
+    bindings.genTextures(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genTextures(textures: []Texture) void {
-    bindings.genTextures(textures.len, @ptrCast([*c]Uint, textures.ptr));
+    bindings.genTextures(textures.len, @as([*c]Uint, @ptrCast(textures.ptr)));
 }
 
 // pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
 pub fn isTexture(texture: Texture) bool {
-    return bindings.isTexture(@bitCast(Uint, texture)) == TRUE;
+    return bindings.isTexture(@as(Uint, @bitCast(texture))) == TRUE;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1697,17 +1697,17 @@ pub const SRC1_ALPHA = bindings.SRC1_ALPHA;
 
 // pub var bindBuffer: *const fn (target: Enum, buffer: Uint) callconv(.C) void = undefined;
 pub fn bindBuffer(target: BufferTarget, buffer: Buffer) void {
-    bindings.bindBuffer(@intFromEnum(target), @bitCast(Uint, buffer));
+    bindings.bindBuffer(@intFromEnum(target), @as(Uint, @bitCast(buffer)));
 }
 
 // pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
 
 // pub var genBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
 pub fn genBuffer(ptr: *Buffer) void {
-    bindings.genBuffers(1, @ptrCast([*c]Uint, ptr));
+    bindings.genBuffers(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genBuffers(buffers: []Buffer) void {
-    bindings.genBuffers(buffers.len, @ptrCast([*c]Uint, buffers.ptr));
+    bindings.genBuffers(buffers.len, @as([*c]Uint, @ptrCast(buffers.ptr)));
 }
 
 // pub var isBuffer: *const fn (buffer: Uint) callconv(.C) Boolean = undefined;
@@ -1727,7 +1727,7 @@ pub fn bufferData(
     assert(size > 0);
     bindings.bufferData(
         @intFromEnum(target),
-        @bitCast(Sizeiptr, size),
+        @as(Sizeiptr, @bitCast(size)),
         bytes,
         @intFromEnum(usage),
     );
@@ -1743,8 +1743,8 @@ pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) voi
     assert(bytes.len > 0);
     bindings.bufferSubData(
         @intFromEnum(target),
-        @bitCast(Intptr, offset),
-        @bitCast(Sizeiptr, bytes.len),
+        @as(Intptr, @bitCast(offset)),
+        @as(Sizeiptr, @bitCast(bytes.len)),
         bytes.ptr,
     );
 }
@@ -1867,9 +1867,9 @@ pub const STENCIL_BACK_WRITEMASK = bindings.STENCIL_BACK_WRITEMASK;
 
 // pub var attachShader: *const fn (program: Uint, shader: Uint) callconv(.C) void = undefined;
 pub fn attachShader(program: Program, shader: Shader) void {
-    assert(@bitCast(Uint, program) > 0);
-    assert(@bitCast(Uint, shader) > 0);
-    bindings.attachShader(@bitCast(Uint, program), @bitCast(Uint, shader));
+    assert(@as(Uint, @bitCast(program)) > 0);
+    assert(@as(Uint, @bitCast(shader)) > 0);
+    bindings.attachShader(@as(Uint, @bitCast(program)), @as(Uint, @bitCast(shader)));
 }
 
 // pub var bindAttribLocation: *const fn (
@@ -1880,26 +1880,26 @@ pub fn attachShader(program: Program, shader: Shader) void {
 
 // pub var compileShader: *const fn (shader: Uint) callconv(.C) void = undefined;
 pub fn compileShader(shader: Shader) void {
-    assert(@bitCast(Uint, shader) > 0);
-    bindings.compileShader(@bitCast(Uint, shader));
+    assert(@as(Uint, @bitCast(shader)) > 0);
+    bindings.compileShader(@as(Uint, @bitCast(shader)));
 }
 
 // pub var createProgram: *const fn () callconv(.C) Uint = undefined;
 pub fn createProgram() Program {
-    return @bitCast(Program, bindings.createProgram());
+    return @as(Program, @bitCast(bindings.createProgram()));
 }
 
 // pub var createShader: *const fn (type: Enum) callconv(.C) Uint = undefined;
 pub fn createShader(@"type": ShaderType) Shader {
-    return @bitCast(Shader, bindings.createShader(@intFromEnum(@"type")));
+    return @as(Shader, @bitCast(bindings.createShader(@intFromEnum(@"type"))));
 }
 
 // pub var deleteProgram: *const fn (program: Uint) callconv(.C) void = undefined;
 
 // pub var deleteShader: *const fn (shader: Uint) callconv(.C) void = undefined;
 pub fn deleteShader(shader: Shader) void {
-    assert(@bitCast(Uint, shader) > 0);
-    bindings.deleteShader(@bitCast(Uint, shader));
+    assert(@as(Uint, @bitCast(shader)) > 0);
+    bindings.deleteShader(@as(Uint, @bitCast(shader)));
 }
 
 // pub var detachShader: *const fn (program: Uint, shader: Uint) callconv(.C) void = undefined;
@@ -1907,7 +1907,7 @@ pub fn deleteShader(shader: Shader) void {
 
 // pub var enableVertexAttribArray: *const fn (index: Uint) callconv(.C) void = undefined;
 pub fn enableVertexAttribArray(location: VertexAttribLocation) void {
-    bindings.enableVertexAttribArray(@bitCast(Uint, location));
+    bindings.enableVertexAttribArray(@as(Uint, @bitCast(location)));
 }
 
 // pub var getActiveAttrib: *const fn (
@@ -1937,19 +1937,19 @@ pub fn enableVertexAttribArray(location: VertexAttribLocation) void {
 
 // pub var getAttribLocation: *const fn (program: Uint, name: [*c]const Char) callconv(.C) Int = undefined;
 pub fn getAttribLocation(program: Program, name: [:0]const u8) ?VertexAttribLocation {
-    assert(@bitCast(Uint, program) > 0);
+    assert(@as(Uint, @bitCast(program)) > 0);
     const location = bindings.getAttribLocation(
-        @bitCast(Uint, program),
-        @ptrCast([*c]const Char, name.ptr),
+        @as(Uint, @bitCast(program)),
+        @as([*c]const Char, @ptrCast(name.ptr)),
     );
-    return if (location >= 0) @bitCast(VertexAttribLocation, location) else null;
+    return if (location >= 0) @as(VertexAttribLocation, @bitCast(location)) else null;
 }
 
 // pub var getProgramiv: *const fn (program: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 pub fn getProgramiv(program: Program, parameter: ProgramParameter) Int {
-    assert(@bitCast(Uint, program) > 0);
+    assert(@as(Uint, @bitCast(program)) > 0);
     var value: Int = undefined;
-    bindings.getProgramiv(@bitCast(Uint, program), @intFromEnum(parameter), &value);
+    bindings.getProgramiv(@as(Uint, @bitCast(program)), @intFromEnum(parameter), &value);
     return value;
 }
 
@@ -1960,24 +1960,24 @@ pub fn getProgramiv(program: Program, parameter: ProgramParameter) Int {
 //     infoLog: [*c]Char,
 // ) callconv(.C) void = undefined;
 pub fn getProgramInfoLog(program: Program, buffer: []u8) ?[]const u8 {
-    assert(@bitCast(Uint, program) > 0);
+    assert(@as(Uint, @bitCast(program)) > 0);
     assert(buffer.len > 0);
     assert(buffer.len <= std.math.maxInt(u32));
     var log_len: Sizei = 0;
     bindings.getProgramInfoLog(
-        @bitCast(Uint, program),
-        @bitCast(Sizei, @intCast(u32, buffer.len)),
+        @as(Uint, @bitCast(program)),
+        @as(Sizei, @bitCast(@as(u32, @intCast(buffer.len)))),
         &log_len,
-        @ptrCast([*c]Char, buffer.ptr),
+        @as([*c]Char, @ptrCast(buffer.ptr)),
     );
-    return if (log_len > 0) buffer[0..@intCast(usize, log_len)] else null;
+    return if (log_len > 0) buffer[0..@as(usize, @intCast(log_len))] else null;
 }
 
 // pub var getShaderiv: *const fn (shader: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 pub fn getShaderiv(shader: Shader, parameter: ShaderParameter) Int {
-    assert(@bitCast(Uint, shader) > 0);
+    assert(@as(Uint, @bitCast(shader)) > 0);
     var value: Int = undefined;
-    bindings.getShaderiv(@bitCast(Uint, shader), @intFromEnum(parameter), &value);
+    bindings.getShaderiv(@as(Uint, @bitCast(shader)), @intFromEnum(parameter), &value);
     return value;
 }
 
@@ -1988,17 +1988,17 @@ pub fn getShaderiv(shader: Shader, parameter: ShaderParameter) Int {
 //     infoLog: [*c]Char,
 // ) callconv(.C) void = undefined;
 pub fn getShaderInfoLog(shader: Shader, buffer: []u8) ?[]const u8 {
-    assert(@bitCast(Uint, shader) > 0);
+    assert(@as(Uint, @bitCast(shader)) > 0);
     assert(buffer.len > 0);
     assert(buffer.len <= std.math.maxInt(u32));
     var log_len: Sizei = 0;
     bindings.getShaderInfoLog(
-        @bitCast(Uint, shader),
-        @bitCast(Sizei, @intCast(u32, buffer.len)),
+        @as(Uint, @bitCast(shader)),
+        @as(Sizei, @bitCast(@as(u32, @intCast(buffer.len)))),
         &log_len,
-        @ptrCast([*c]Char, buffer.ptr),
+        @as([*c]Char, @ptrCast(buffer.ptr)),
     );
-    return if (log_len > 0) buffer[0..@intCast(usize, log_len)] else null;
+    return if (log_len > 0) buffer[0..@as(usize, @intCast(log_len))] else null;
 }
 
 // pub var getShaderSource: *const fn (
@@ -2010,12 +2010,12 @@ pub fn getShaderInfoLog(shader: Shader, buffer: []u8) ?[]const u8 {
 
 // pub var getUniformLocation: *const fn (program: Uint, name: [*c]const Char) callconv(.C) Int = undefined;
 pub fn getUniformLocation(program: Program, name: [:0]const u8) ?UniformLocation {
-    assert(@bitCast(Uint, program) > 0);
+    assert(@as(Uint, @bitCast(program)) > 0);
     const location = bindings.getUniformLocation(
-        @bitCast(Uint, program),
-        @ptrCast([*c]const Char, name.ptr),
+        @as(Uint, @bitCast(program)),
+        @as([*c]const Char, @ptrCast(name.ptr)),
     );
-    return if (location >= 0) @bitCast(UniformLocation, location) else null;
+    return if (location >= 0) @as(UniformLocation, @bitCast(location)) else null;
 }
 
 // pub var getUniformfv: *const fn (program: Uint, location: Int, params: [*c]Float) callconv(.C) void = undefined;
@@ -2033,8 +2033,8 @@ pub fn getUniformLocation(program: Program, name: [:0]const u8) ?UniformLocation
 
 // pub var linkProgram: *const fn (program: Uint) callconv(.C) void = undefined;
 pub fn linkProgram(program: Program) void {
-    assert(@bitCast(Uint, program) > 0);
-    bindings.linkProgram(@bitCast(Uint, program));
+    assert(@as(Uint, @bitCast(program)) > 0);
+    bindings.linkProgram(@as(Uint, @bitCast(program)));
 }
 
 // pub var shaderSource: *const fn (
@@ -2044,36 +2044,36 @@ pub fn linkProgram(program: Program) void {
 //     length: [*c]const Int,
 // ) callconv(.C) void = undefined;
 pub fn shaderSource(shader: Shader, src_ptrs: []const [*:0]const u8, src_lengths: []const u32) void {
-    assert(@bitCast(Uint, shader) > 0);
+    assert(@as(Uint, @bitCast(shader)) > 0);
     assert(src_ptrs.len > 0);
     assert(src_ptrs.len <= std.math.maxInt(u32));
     assert(src_ptrs.len == src_lengths.len);
     bindings.shaderSource(
-        @bitCast(Uint, shader),
-        @bitCast(Sizei, @intCast(u32, src_ptrs.len)),
-        @ptrCast([*c]const [*c]const Char, src_ptrs),
-        @ptrCast([*c]const Int, src_lengths.ptr),
+        @as(Uint, @bitCast(shader)),
+        @as(Sizei, @bitCast(@as(u32, @intCast(src_ptrs.len)))),
+        @as([*c]const [*c]const Char, @ptrCast(src_ptrs)),
+        @as([*c]const Int, @ptrCast(src_lengths.ptr)),
     );
 }
 
 // pub var useProgram: *const fn (program: Uint) callconv(.C) void = undefined;
 pub fn useProgram(program: Program) void {
-    bindings.useProgram(@bitCast(Uint, program));
+    bindings.useProgram(@as(Uint, @bitCast(program)));
 }
 
 // pub var uniform1f: *const fn (location: Int, v0: Float) callconv(.C) void = undefined;
 pub fn uniform1f(location: UniformLocation, v0: f32) void {
-    bindings.uniform1f(@bitCast(Int, location), v0);
+    bindings.uniform1f(@as(Int, @bitCast(location)), v0);
 }
 
 // pub var uniform2f: *const fn (location: Int, v0: Float, v1: Float) callconv(.C) void = undefined;
 pub fn uniform2f(location: UniformLocation, v0: f32, v1: f32) void {
-    bindings.uniform2f(@bitCast(Int, location), v0, v1);
+    bindings.uniform2f(@as(Int, @bitCast(location)), v0, v1);
 }
 
 // pub var uniform3f: *const fn (location: Int, v0: Float, v1: Float, v2: Float) callconv(.C) void = undefined;
 pub fn uniform3f(location: UniformLocation, v0: f32, v1: f32, v2: f32) void {
-    bindings.uniform3f(@bitCast(Int, location), v0, v1, v2);
+    bindings.uniform3f(@as(Int, @bitCast(location)), v0, v1, v2);
 }
 
 // pub var uniform4f: *const fn (
@@ -2084,12 +2084,12 @@ pub fn uniform3f(location: UniformLocation, v0: f32, v1: f32, v2: f32) void {
 //     v3: Float,
 // ) callconv(.C) void = undefined;
 pub fn uniform4f(location: UniformLocation, v0: f32, v1: f32, v2: f32, v3: f32) void {
-    bindings.uniform4f(@bitCast(Int, location), v0, v1, v2, v3);
+    bindings.uniform4f(@as(Int, @bitCast(location)), v0, v1, v2, v3);
 }
 
 // pub var uniform1i: *const fn (location: Int, v0: Int) callconv(.C) void = undefined;
 pub fn uniform1i(location: UniformLocation, value: Int) void {
-    bindings.uniform1i(@bitCast(Int, location), value);
+    bindings.uniform1i(@as(Int, @bitCast(location)), value);
 }
 
 // pub var uniform2i: *const fn (location: Int, v0: Int, v1: Int) callconv(.C) void = undefined;
@@ -2151,8 +2151,8 @@ pub fn uniformMatrix4fv(
     value: [*]const f32,
 ) void {
     bindings.uniformMatrix4fv(
-        @bitCast(Int, location),
-        @bitCast(Sizei, count),
+        @as(Int, @bitCast(location)),
+        @as(Sizei, @bitCast(count)),
         transpose,
         value,
     );
@@ -2237,12 +2237,12 @@ pub fn vertexAttribPointer(
     offset: usize,
 ) void {
     bindings.vertexAttribPointer(
-        @bitCast(Uint, location),
-        @bitCast(Int, size),
+        @as(Uint, @bitCast(location)),
+        @as(Int, @bitCast(size)),
         @intFromEnum(attrib_type),
         normalised,
-        @bitCast(Sizei, stride),
-        @ptrFromInt(*allowzero const anyopaque, offset),
+        @as(Sizei, @bitCast(stride)),
+        @as(*allowzero const anyopaque, @ptrFromInt(offset)),
     );
 }
 //--------------------------------------------------------------------------------------------------
@@ -2659,28 +2659,28 @@ pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
 
 // pub var isRenderbuffer: *const fn (renderbuffer: Uint) callconv(.C) Boolean = undefined;
 pub fn isRenderbuffer(renderbuffer: Renderbuffer) bool {
-    return bindings.isRenderbuffer(@bitCast(Uint, renderbuffer)) == TRUE;
+    return bindings.isRenderbuffer(@as(Uint, @bitCast(renderbuffer))) == TRUE;
 }
 
 // pub var bindRenderbuffer: *const fn (target: Enum, renderbuffer: Uint) callconv(.C) void = undefined;
 pub fn bindRenderbuffer(target: RenderbufferTarget, renderbuffer: Renderbuffer) void {
-    bindings.bindRenderbuffer(@intFromEnum(target), @bitCast(Uint, renderbuffer));
+    bindings.bindRenderbuffer(@intFromEnum(target), @as(Uint, @bitCast(renderbuffer)));
 }
 
 // pub var deleteRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteRenderbuffer(ptr: *const Renderbuffer) void {
-    bindings.deleteRenderbuffers(1, @ptrCast([*c]const Uint, ptr));
+    bindings.deleteRenderbuffers(1, @as([*c]const Uint, @ptrCast(ptr)));
 }
 pub fn deleteRenderbuffers(renderbuffers: []const Renderbuffer) void {
-    bindings.deleteRenderbuffers(renderbuffers.len, @ptrCast([*c]const Uint, renderbuffers.ptr));
+    bindings.deleteRenderbuffers(renderbuffers.len, @as([*c]const Uint, @ptrCast(renderbuffers.ptr)));
 }
 
 // pub var genRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]Uint) callconv(.C) void = undefined;
 pub fn genRenderbuffer(ptr: *Renderbuffer) void {
-    bindings.genRenderbuffers(1, @ptrCast([*c]Uint, ptr));
+    bindings.genRenderbuffers(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genRenderbuffers(renderbuffers: []Renderbuffer) void {
-    bindings.genRenderbuffers(renderbuffers.len, @ptrCast([*c]Uint, renderbuffers.ptr));
+    bindings.genRenderbuffers(renderbuffers.len, @as([*c]Uint, @ptrCast(renderbuffers.ptr)));
 }
 
 // pub var renderbufferStorage: *const fn (
@@ -2698,8 +2698,8 @@ pub fn renderbufferStorage(
     bindings.renderbufferStorage(
         @intFromEnum(target),
         @intFromEnum(internal_format),
-        @bitCast(Sizei, width),
-        @bitCast(Sizei, height),
+        @as(Sizei, @bitCast(width)),
+        @as(Sizei, @bitCast(height)),
     );
 }
 
@@ -2711,28 +2711,28 @@ pub fn renderbufferStorage(
 
 // pub var isFramebuffer: *const fn (framebuffer: Uint) callconv(.C) Boolean = undefined;
 pub fn isFramebuffer(framebuffer: Framebuffer) bool {
-    return bindings.isFramebuffer(@bitCast(Uint, framebuffer)) == TRUE;
+    return bindings.isFramebuffer(@as(Uint, @bitCast(framebuffer))) == TRUE;
 }
 
 // pub var bindFramebuffer: *const fn (target: Enum, framebuffer: Uint) callconv(.C) void = undefined;
 pub fn bindFramebuffer(target: FramebufferTarget, framebuffer: Framebuffer) void {
-    bindings.bindFramebuffer(@intFromEnum(target), @bitCast(Uint, framebuffer));
+    bindings.bindFramebuffer(@intFromEnum(target), @as(Uint, @bitCast(framebuffer)));
 }
 
 // pub var deleteFramebuffers: *const fn (n: Sizei, framebuffers: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteFramebuffer(ptr: *const Framebuffer) void {
-    bindings.deleteFramebuffers(1, @ptrCast([*c]const Uint, ptr));
+    bindings.deleteFramebuffers(1, @as([*c]const Uint, @ptrCast(ptr)));
 }
 pub fn deleteFramebuffers(framebuffers: []const Framebuffer) void {
-    bindings.deleteFramebuffers(framebuffers.len, @ptrCast([*c]const Uint, framebuffers.ptr));
+    bindings.deleteFramebuffers(framebuffers.len, @as([*c]const Uint, @ptrCast(framebuffers.ptr)));
 }
 
 // pub var genFramebuffers: *const fn (n: Sizei, framebuffers: [*c]Uint) callconv(.C) void = undefined;
 pub fn genFramebuffer(ptr: *Framebuffer) void {
-    bindings.genFramebuffers(1, @ptrCast([*c]Uint, ptr));
+    bindings.genFramebuffers(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genFramebuffers(framebuffers: []Framebuffer) void {
-    bindings.genFramebuffers(framebuffers.len, @ptrCast([*c]Uint, framebuffers.ptr));
+    bindings.genFramebuffers(framebuffers.len, @as([*c]Uint, @ptrCast(framebuffers.ptr)));
 }
 
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
@@ -2771,7 +2771,7 @@ pub fn framebufferTexture2D(
         @intFromEnum(target),
         @intFromEnum(attachment),
         @intFromEnum(textarget),
-        @bitCast(Uint, texture),
+        @as(Uint, @bitCast(texture)),
         level,
     );
 }
@@ -2801,7 +2801,7 @@ pub fn framebufferRenderbuffer(
         @intFromEnum(target),
         @intFromEnum(attachment),
         @intFromEnum(renderbuffertarget),
-        @bitCast(Uint, renderbuffer),
+        @as(Uint, @bitCast(renderbuffer)),
     );
 }
 
@@ -2866,28 +2866,28 @@ pub fn getFramebufferAttachmentParameteriv(
 
 // pub var bindVertexArray: *const fn (array: Uint) callconv(.C) void = undefined;
 pub fn bindVertexArray(array: VertexArrayObject) void {
-    bindings.bindVertexArray(@bitCast(Uint, array));
+    bindings.bindVertexArray(@as(Uint, @bitCast(array)));
 }
 
 // pub var deleteVertexArrays: *const fn (n: Sizei, arrays: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteVertexArray(ptr: *const VertexArrayObject) void {
-    bindings.deleteVertexArrays(1, @ptrCast([*c]Uint, ptr));
+    bindings.deleteVertexArrays(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn deleteVertexArrays(arrays: []const VertexArrayObject) void {
-    bindings.deleteVertexArrays(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
+    bindings.deleteVertexArrays(arrays.len, @as([*c]Uint, @ptrCast(arrays.ptr)));
 }
 
 // pub var genVertexArrays: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
 pub fn genVertexArray(ptr: *VertexArrayObject) void {
-    bindings.genVertexArrays(1, @ptrCast([*c]Uint, ptr));
+    bindings.genVertexArrays(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genVertexArrays(arrays: []VertexArrayObject) void {
-    bindings.genVertexArrays(arrays.len, @ptrCast([*c]Uint, arrays.ptr));
+    bindings.genVertexArrays(arrays.len, @as([*c]Uint, @ptrCast(arrays.ptr)));
 }
 
 // pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
 pub fn isVertexArray(array: VertexArrayObject) bool {
-    return bindings.isVertexArray(@bitCast(Uint, array)) == TRUE;
+    return bindings.isVertexArray(@as(Uint, @bitCast(array))) == TRUE;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -3359,7 +3359,7 @@ pub fn debugMessageCallback(
     callback: DEBUGPROC,
     userParam: ?*const anyopaque,
 ) void {
-    bindings.debugMessageCallback(@ptrCast(bindings.DEBUGPROC, callback), userParam);
+    bindings.debugMessageCallback(@as(bindings.DEBUGPROC, @ptrCast(callback)), userParam);
 }
 
 // pub var getDebugMessageLog: *const fn (

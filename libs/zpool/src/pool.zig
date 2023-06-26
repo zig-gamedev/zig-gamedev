@@ -216,8 +216,7 @@ pub fn Pool(
                     const curr_index = self.next_index;
                     if (curr_index < max_index) {
                         self.next_index += 1;
-                    }
-                    else {
+                    } else {
                         self.ended = true;
                     }
                     if (isLiveCycle(self.curr_cycle[curr_index]))
@@ -258,7 +257,7 @@ pub fn Pool(
             var ahandle = AddressableHandle{ .index = 0 };
             for (self._curr_cycle, 0..) |cycle, i| {
                 if (isLiveCycle(cycle)) {
-                    ahandle.index = @intCast(AddressableIndex, i);
+                    ahandle.index = @as(AddressableIndex, @intCast(i));
                     ahandle.cycle = cycle;
                     self.releaseAddressableHandleUnchecked(ahandle);
                 }
@@ -533,7 +532,7 @@ pub fn Pool(
             inline for (column_fields, 0..) |column_field, i| {
                 const F = column_field.type;
                 const p = slice.ptrs[private_fields.len + i];
-                const f = @ptrCast([*]F, @alignCast(@alignOf(F), p));
+                const f = @as([*]F, @ptrCast(@alignCast(p)));
                 @field(self.columns, column_field.name) = f[0..slice.len];
             }
         }
@@ -660,7 +659,7 @@ pub fn Pool(
                 const new_index = self._storage.addOneAssumeCapacity();
                 updateSlices(self);
                 self._curr_cycle[new_index] = 1;
-                handle.index = @intCast(AddressableIndex, new_index);
+                handle.index = @as(AddressableIndex, @intCast(new_index));
                 handle.cycle = 1;
                 return true;
             }
@@ -671,7 +670,7 @@ pub fn Pool(
             const new_index = try self._storage.addOne(self._allocator);
             updateSlices(self);
             self._curr_cycle[new_index] = 1;
-            handle.index = @intCast(AddressableIndex, new_index);
+            handle.index = @as(AddressableIndex, @intCast(new_index));
             handle.cycle = 1;
         }
     };

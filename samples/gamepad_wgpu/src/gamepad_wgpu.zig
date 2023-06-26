@@ -123,7 +123,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                 try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1}),
                 .{},
             )) {
-                if (zglfw.Joystick.get(@intCast(zglfw.Joystick.Id, jid))) |joystick| {
+                if (zglfw.Joystick.get(@as(zglfw.Joystick.Id, @intCast(jid)))) |joystick| {
                     zgui.text("Present: yes", .{});
                     zgui.newLine();
                     zgui.beginGroup();

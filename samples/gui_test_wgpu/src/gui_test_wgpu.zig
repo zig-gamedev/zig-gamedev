@@ -253,7 +253,7 @@ fn update(demo: *DemoState) !void {
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
             if (zgui.beginCombo("Combo 0", .{ .preview_value = items[static.selection_index] })) {
                 for (items, 0..) |item, index| {
-                    const i = @intCast(u32, index);
+                    const i = @as(u32, @intCast(index));
                     if (zgui.selectable(item, .{ .selected = static.selection_index == i }))
                         static.selection_index = i;
                 }
@@ -431,7 +431,7 @@ fn update(demo: *DemoState) !void {
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
             if (zgui.beginListBox("List Box 0", .{})) {
                 for (items, 0..) |item, index| {
-                    const i = @intCast(u32, index);
+                    const i = @as(u32, @intCast(index));
                     if (zgui.selectable(item, .{ .selected = static.selection_index == i }))
                         static.selection_index = i;
                 }
@@ -547,7 +547,7 @@ fn update(demo: *DemoState) !void {
         .p = .{ 200, 700 },
         .r = 30,
         .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 0 }),
-        .thickness = 15 + 15 * @floatCast(f32, @sin(demo.gctx.stats.time)),
+        .thickness = 15 + 15 * @as(f32, @floatCast(@sin(demo.gctx.stats.time))),
     });
 }
 

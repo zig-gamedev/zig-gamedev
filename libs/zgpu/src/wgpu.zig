@@ -1261,7 +1261,7 @@ pub const Buffer = *opaque {
         if (len == 0) return null;
         const ptr = wgpuBufferGetConstMappedRange(buffer, offset, @sizeOf(T) * len);
         if (ptr == null) return null;
-        return @ptrCast([*]const T, @alignCast(@alignOf(T), ptr))[0..len];
+        return @as([*]const T, @ptrCast(@alignCast(ptr)))[0..len];
     }
     extern fn wgpuBufferGetConstMappedRange(buffer: Buffer, offset: usize, size: usize) ?*const anyopaque;
 
@@ -1271,7 +1271,7 @@ pub const Buffer = *opaque {
         if (len == 0) return null;
         const ptr = wgpuBufferGetMappedRange(buffer, offset, @sizeOf(T) * len);
         if (ptr == null) return null;
-        return @ptrCast([*]T, @alignCast(@alignOf(T), ptr))[0..len];
+        return @as([*]T, @ptrCast(@alignCast(ptr)))[0..len];
     }
     extern fn wgpuBufferGetMappedRange(buffer: Buffer, offset: usize, size: usize) ?*anyopaque;
 
@@ -1509,8 +1509,8 @@ pub const CommandEncoder = *opaque {
             command_encoder,
             buffer,
             buffer_offset,
-            @ptrCast([*]const u8, data.ptr),
-            @intCast(u64, data.len) * @sizeOf(T),
+            @as([*]const u8, @ptrCast(data.ptr)),
+            @as(u64, @intCast(data.len)) * @sizeOf(T),
         );
     }
     extern fn wgpuCommandEncoderWriteBuffer(
@@ -1611,7 +1611,7 @@ pub const ComputePassEncoder = *opaque {
             compute_pass_encoder,
             group_index,
             bind_group,
-            if (dynamic_offsets) |dynoff| @intCast(u32, dynoff.len) else 0,
+            if (dynamic_offsets) |dynoff| @as(u32, @intCast(dynoff.len)) else 0,
             if (dynamic_offsets) |dynoff| dynoff.ptr else null,
         );
     }
@@ -2066,7 +2066,7 @@ pub const Queue = *opaque {
     extern fn wgpuQueueSetLabel(queue: Queue, label: ?[*:0]const u8) void;
 
     pub inline fn submit(queue: Queue, commands: []const CommandBuffer) void {
-        wgpuQueueSubmit(queue, @intCast(u32, commands.len), commands.ptr);
+        wgpuQueueSubmit(queue, @as(u32, @intCast(commands.len)), commands.ptr);
     }
     extern fn wgpuQueueSubmit(queue: Queue, command_count: u32, commands: [*]const CommandBuffer) void;
 
@@ -2081,8 +2081,8 @@ pub const Queue = *opaque {
             queue,
             buffer,
             buffer_offset,
-            @ptrCast(*const anyopaque, data.ptr),
-            @intCast(u64, data.len) * @sizeOf(T),
+            @as(*const anyopaque, @ptrCast(data.ptr)),
+            @as(u64, @intCast(data.len)) * @sizeOf(T),
         );
     }
     extern fn wgpuQueueWriteBuffer(
@@ -2104,8 +2104,8 @@ pub const Queue = *opaque {
         wgpuQueueWriteTexture(
             queue,
             &destination,
-            @ptrCast(*const anyopaque, data.ptr),
-            @intCast(usize, data.len) * @sizeOf(T),
+            @as(*const anyopaque, @ptrCast(data.ptr)),
+            @as(usize, @intCast(data.len)) * @sizeOf(T),
             &data_layout,
             &write_size,
         );
@@ -2263,7 +2263,7 @@ pub const RenderBundleEncoder = *opaque {
             render_bundle_encoder,
             group_index,
             group,
-            if (dynamic_offsets) |dynoff| @intCast(u32, dynoff.len) else 0,
+            if (dynamic_offsets) |dynoff| @as(u32, @intCast(dynoff.len)) else 0,
             if (dynamic_offsets) |dynoff| dynoff.ptr else null,
         );
     }
@@ -2468,7 +2468,7 @@ pub const RenderPassEncoder = *opaque {
             render_pass_encoder,
             group_index,
             group,
-            if (dynamic_offsets) |dynoff| @intCast(u32, dynoff.len) else 0,
+            if (dynamic_offsets) |dynoff| @as(u32, @intCast(dynoff.len)) else 0,
             if (dynamic_offsets) |dynoff| dynoff.ptr else null,
         );
     }

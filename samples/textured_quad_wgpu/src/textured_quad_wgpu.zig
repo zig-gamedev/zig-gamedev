@@ -248,7 +248,7 @@ fn update(demo: *DemoState) void {
         _ = zgui.sliderInt("Mipmap Level", .{
             .v = &demo.mip_level,
             .min = 0,
-            .max = @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
+            .max = @as(i32, @intCast(demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1)),
         });
     }
     zgui.end();
@@ -295,8 +295,8 @@ fn draw(demo: *DemoState) void {
 
             const mem = gctx.uniformsAllocate(Uniforms, 1);
             mem.slice[0] = .{
-                .aspect_ratio = @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height),
-                .mip_level = @floatFromInt(f32, demo.mip_level),
+                .aspect_ratio = @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
+                .mip_level = @as(f32, @floatFromInt(demo.mip_level)),
             };
             pass.setBindGroup(0, bind_group, &.{mem.offset});
             pass.drawIndexed(6, 1, 0, 0, 0);
