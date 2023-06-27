@@ -8,9 +8,11 @@ const common =
 \\
 \\  struct FrameUniforms {
 \\      world_to_clip: mat4x4<f32>,
+\\      floor_material: vec4<f32>,
 \\      box_rotation: mat3x3<f32>,
 \\      box_center: vec3<f32>,
 \\      box_radius: vec3<f32>,
+\\      box_inv_radius: vec3<f32>,
 \\      camera_position: vec3<f32>,
 \\  }
 \\  @group(0) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
@@ -102,19 +104,26 @@ pub const mesh = struct {
     \\  struct Box {
     \\      center: vec3<f32>,
     \\      radius: vec3<f32>,
+    \\      inv_radius: vec3<f32>,
     \\      rotation: mat3x3<f32>,
     \\  };
     \\  struct Ray {
     \\      origin: vec3<f32>,
     \\      direction: vec3<f32>,
     \\  };
+    \\  // Alexander Majercik, Cyril Crassin, Peter Shirley, and Morgan McGuire, A Ray-Box Intersection Algorithm and
+    \\  // Efficient Dynamic Voxel Rendering, Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66-81, 2018
+    \\  // This wgsl implementation of the algorithm is customized to fit the assumptions of this use case.
     \\  fn intersect_box(box: Box, ray: Ray, distance: ptr<function, f32>, normal: ptr<function, vec3<f32>>) -> bool {
     \\      let r = Ray(
     \\          (ray.origin - box.center) * box.rotation,
     \\          ray.direction * box.rotation,
     \\      );
+    \\      var winding: f32 = 1.0;
+    \\      let winding_vec = abs(r.origin) * box.inv_radius;
+    \\      if (max(max(winding_vec.x, winding_vec.y), winding_vec.z) < 1.0) { winding = -1.0; }
     \\      var sgn: vec3<f32> = -sign(r.direction);
-    \\      var plane_dist: vec3<f32> = box.radius * sgn - r.origin;
+    \\      var plane_dist: vec3<f32> = box.radius * winding * sgn - r.origin;
     \\      plane_dist = plane_dist / r.direction;
     \\
     \\      let test = vec3<bool>(
@@ -141,17 +150,22 @@ pub const mesh = struct {
     \\      @location(1) normal: vec3<f32>,
     \\  ) -> @location(0) vec4<f32> {
     \\      let v = normalize(frame_uniforms.camera_position - position);
-    \\
-    \\      let r_x = rand2(floor(2 * position.xz));
-    \\      let r_z = rand2(floor(2 * position.zx));
-    \\      let r_vec = vec3(r_x, 0, r_z);
-    \\      let r_strength = 0.04;
-    \\      let n = normalize(normal + r_vec * r_strength);
-    \\
-    \\      let base_color = draw_uniforms.basecolor_roughness.xyz;
+    \\      var base_color = draw_uniforms.basecolor_roughness.xyz;
     \\      var roughness = draw_uniforms.basecolor_roughness.a;
+    \\
+    \\      var n: vec3<f32>;
+    \\      if (base_color.x < 0.0) {
+    \\          let r_x = rand2(floor(2 * position.xz));
+    \\          let r_z = rand2(floor(2 * position.zx));
+    \\          let r_vec = vec3(r_x, 0, r_z);
+    \\          let r_strength = 0.04;
+    \\          n = normalize(normal + r_vec * r_strength);
+    \\          roughness += min(0, -dot(r_vec, r_vec) * 0.6 + 0.64);
+    \\      } else { n = normalize(normal); }
+    \\
     \\      var metallic: f32;
-    \\      if (roughness < 0.0) { metallic = 0.95; } else { metallic = 0.0; }
+    \\      if (roughness < 0.0) { metallic = 0.95; } else { metallic = 0.05; }
+    \\      base_color = abs(base_color);
     \\      roughness = abs(roughness);
     \\
     \\      let alpha = roughness * roughness;
@@ -177,26 +191,34 @@ pub const mesh = struct {
     \\          vec3(0.70, 1.00, 0.70),
     \\      );
     \\
+    \\      let monolith = Box(
+    \\          frame_uniforms.box_center,
+    \\          frame_uniforms.box_radius,
+    \\          frame_uniforms.box_inv_radius,
+    \\          frame_uniforms.box_rotation,
+    \\      );
+    \\
     \\      var lo = vec3(0.0);
     \\      for (var light_index: i32 = 0; light_index < 9; light_index = light_index + 1) {
     \\          let lvec = light_positions[light_index] - position;
-    \\
     \\          let l = normalize(lvec);
     \\          let h = normalize(l + v);
     \\
-    \\          let box = Box(
-    \\              frame_uniforms.box_center,
-    \\              frame_uniforms.box_radius,
-    \\              frame_uniforms.box_rotation,
-    \\          );
     \\          let pl_ray = Ray(position, l);
     \\          var pl_hit_dist: f32;
     \\          var pl_hit_norm: vec3<f32>;
-    \\          let pl_did_hit: bool = intersect_box(box, pl_ray, &pl_hit_dist, &pl_hit_norm);
+    \\          let pl_did_hit: bool = intersect_box(monolith, pl_ray, &pl_hit_dist, &pl_hit_norm);
     \\          if (!pl_did_hit || pl_hit_dist > length(lvec)) {
     \\              let distance_sq = dot(lvec, lvec);
     \\              let attenuation = 1.0 / distance_sq;
-    \\              let radiance = 100 * light_colors[light_index] * attenuation;
+    \\              var radiance = 100 * light_colors[light_index] * attenuation;
+    \\
+    \\              if (position.y > 0.0001) { // reflection of floor lighting on monolith surface
+    \\                  let mirror_cam = vec3<f32>(position.x, -position.y, position.z);
+    \\                  let mirror_vec = light_positions[light_index] - mirror_cam;
+    \\                  let t = -mirror_cam.y / (light_positions[light_index].y - mirror_cam.y);
+    \\                  let mirror_pos = mirror_cam + t * mirror_vec;
+    \\              }
     \\
     \\              let f = fresnelSchlick(saturate(dot(h, v)), f0);
     \\
@@ -220,7 +242,7 @@ pub const mesh = struct {
     \\          let cl_ray = Ray(frame_uniforms.camera_position, cfn);
     \\          var cl_hit_dist: f32;
     \\          var cl_hit_norm: vec3<f32>;
-    \\          let cl_did_hit: bool = intersect_box(box, cl_ray, &cl_hit_dist, &cl_hit_norm);
+    \\          let cl_did_hit: bool = intersect_box(monolith, cl_ray, &cl_hit_dist, &cl_hit_norm);
     \\          if (cl_did_hit && cl_hit_dist < length(cl)) { continue; }
     \\          let negs = (dot(normalize(cl), cfn) - 1.0) * dot(cl, cl);
     \\          let peak = 0.2;

@@ -178,6 +178,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const layers_wgpu = @import("samples/layers_wgpu/build.zig");
     const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
     const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+    const monolith = @import("samples/monolith/build.zig");
 
     install(b, minimal_gl.build(b, options), "minimal_gl");
     install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
@@ -190,6 +191,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     install(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
     install(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
+    install(b, monolith.build(b, options), "monolith");
     install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
 }
 

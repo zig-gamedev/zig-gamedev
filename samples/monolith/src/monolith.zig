@@ -7,16 +7,18 @@ const zgui = @import("zgui");
 const zm = @import("zmath");
 const zphy = @import("zphysics");
 const zmesh = @import("zmesh");
-const wgsl = @import("physics_debug_rendering_wgsl.zig");
+const wgsl = @import("monolith_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: physics test (wgpu)";
 
 const FrameUniforms = extern struct {
     world_to_clip: zm.Mat   align(16),
+    floor_material: [4]f32  align(16),
     box_rotation: [3][4]f32 align(16),  // GPU will expect each element to be 16-aligned too, so extra f32 here to pad.
     box_center: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
     box_radius: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    box_inv_radius: [4]f32  align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
     camera_position: [3]f32 align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
 };
 
@@ -170,9 +172,9 @@ const DemoState = struct {
     physics_debug_renderer: MyDebugRenderer,
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 8.0, -32.0 },
+        position: [3]f32 = .{ 0.0, 32.0, -32.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.1 * math.pi,
+        pitch: f32 = 0.16 * math.pi,
         yaw: f32 = 0.0,
     } = .{},
     mouse: struct {
@@ -706,23 +708,24 @@ fn draw(demo: *DemoState) void {
             );
             pass.setPipeline(mesh_render_pipe);
 
-            const box_scale = zm.scaling(10, 30, 5);
-            const box_rotate = zm.mul(zm.rotationZ(0.4), zm.rotationY(0.5));
-            // const box_center = zm.f32x4(-25, 10, 50, 1);
-            const box_center = zm.f32x4(0, 10, 0, 1);
+            const box_scale = zm.scaling(10, 50, 5);
+            const box_rotate = zm.mul(zm.rotationZ(0.24), zm.rotationY(0.3));
+            const box_center = zm.f32x4(-15, 0, 30, 1);
+            const box_radius = zm.mul(box_scale, zm.f32x4(0.4999, 0.4999, 0.4999, 0)); // .4999 is anti-artifact bias
             const box_translate = zm.transpose(zm.translationV(box_center));
             const box_transform = zm.mul(box_translate, zm.mul(box_rotate, box_scale));
-            const box_radius = zm.mul(box_scale, zm.f32x4(0.499, 0.499, 0.499, 0)); // .499 is anti-artifacting
             const box_rotate_t = zm.transpose(box_rotate);
-            const box_rotation: [3][4]f32 = .{ box_rotate_t[0], box_rotate_t[1], box_rotate_t[2] };
+            const floor_material = zm.f32x4(-0.9, -0.9, -0.9, 0.8);
 
             { // Update frame uniforms
                 const mem = gctx.uniformsAllocate(FrameUniforms, 1);
                 mem.slice[0] = .{
                     .world_to_clip = zm.transpose(cam_world_to_clip),
+                    .floor_material = floor_material,
+                    .box_rotation = .{ box_rotate_t[0], box_rotate_t[1], box_rotate_t[2] },
                     .box_center = box_center,
                     .box_radius = box_radius,
-                    .box_rotation = box_rotation,
+                    .box_inv_radius = .{ 1.0 / box_radius[0], 1.0 / box_radius[1], 1.0 / box_radius[2], 0 },
                     .camera_position = demo.camera.position,
                 };
                 pass.setBindGroup(0, uniform_bg, &.{mem.offset});
@@ -732,7 +735,8 @@ fn draw(demo: *DemoState) void {
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
                     .object_to_world = zm.identity(),
-                    .basecolor_roughness = .{ 0.9, 0.9, 0.9, -0.3 },
+                    .basecolor_roughness = floor_material,
+                    // .basecolor_roughness = .{ 0.9, 0.9, 0.9, -0.3 },
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
                 pass.drawIndexed(
@@ -764,7 +768,11 @@ fn draw(demo: *DemoState) void {
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
                     .object_to_world = box_transform,
-                    .basecolor_roughness = .{ 0.9, 0.9, 0.9, -0.3 },
+                    // .basecolor_roughness = .{ 0.03, 0.02, 0.04, -0.16 },
+                    // .basecolor_roughness = .{ 0.3, 0.3, 0.3, -0.02 },
+                    // .basecolor_roughness = .{ 0.92, 0.9, 0.94, -0.24 },
+                    .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.05 },
+                    // .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.3 },
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
                 pass.drawIndexed(
