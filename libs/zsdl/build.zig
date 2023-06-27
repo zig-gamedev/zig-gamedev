@@ -4,6 +4,7 @@ const assert = std.debug.assert;
 pub const Package = struct {
     zsdl: *std.Build.Module,
     install: *std.Build.Step,
+    ttf: bool,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.linkLibC();
@@ -22,6 +23,10 @@ pub const Package = struct {
                 exe.addLibraryPath(thisDir() ++ "/libs/x86_64-windows-gnu/lib");
                 exe.linkSystemLibraryName("SDL2");
                 exe.linkSystemLibraryName("SDL2main");
+
+                if (pkg.ttf) {
+                    exe.linkSystemLibraryName("SDL2_ttf");
+                }
             },
             .linux => {
                 assert(target.cpu.arch.isX86());
@@ -30,11 +35,19 @@ pub const Package = struct {
                 exe.addLibraryPath(thisDir() ++ "/libs/x86_64-linux-gnu/lib");
                 exe.linkSystemLibraryName("SDL2-2.0");
                 exe.addRPath("$ORIGIN");
+
+                if (pkg.ttf) {
+                    exe.linkSystemLibraryName("SDL2_ttf-2.0");
+                }
             },
             .macos => {
                 exe.addFrameworkPath(thisDir() ++ "/libs/macos/Frameworks");
                 exe.linkFramework("SDL2");
                 exe.addRPath("@executable_path/Frameworks");
+
+                if (pkg.ttf) {
+                    exe.linkFramework("SDL2_ttf");
+                }
             },
             else => unreachable,
         }
@@ -45,7 +58,9 @@ pub fn package(
     b: *std.Build,
     target: std.zig.CrossTarget,
     _: std.builtin.Mode,
-    _: struct {},
+    args: struct {
+        ttf: bool = false,
+    },
 ) Package {
     const zsdl = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
@@ -61,6 +76,14 @@ pub fn package(
                 "bin/SDL2.dll",
             ).step,
         );
+        if (args.ttf) {
+            install_step.dependOn(
+                &b.addInstallFile(
+                    .{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/bin/SDL2_ttf.dll" },
+                    "bin/SDL2_ttf.dll",
+                ).step,
+            );
+        }
     } else if (target.isLinux()) {
         install_step.dependOn(
             &b.addInstallFile(
@@ -68,18 +91,37 @@ pub fn package(
                 "bin/libSDL2-2.0.so.0",
             ).step,
         );
+        if (args.ttf) {
+            install_step.dependOn(
+                &b.addInstallFile(
+                    .{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib/libSDL2_ttf-2.0.so" },
+                    "bin/libSDL2_ttf-2.0.so.0",
+                ).step,
+            );
+        }
     } else if (target.isDarwin()) {
-        const install_dir_step = b.addInstallDirectory(.{
-            .source_dir = .{ .path = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework" },
-            .install_dir = .{ .custom = "" },
-            .install_subdir = "bin/Frameworks/SDL2.framework",
-        });
-        install_step.dependOn(&install_dir_step.step);
+        install_step.dependOn(
+            &b.addInstallDirectory(.{
+                .source_dir = .{ .path = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework" },
+                .install_dir = .{ .custom = "" },
+                .install_subdir = "bin/Frameworks/SDL2.framework",
+            }).step,
+        );
+        if (args.ttf) {
+            install_step.dependOn(
+                &b.addInstallDirectory(.{
+                    .source_dir = .{ .path = thisDir() ++ "/libs/macos/Frameworks/SDL2_ttf.framework" },
+                    .install_dir = .{ .custom = "" },
+                    .install_subdir = "bin/Frameworks/SDL2_ttf.framework",
+                }).step,
+            );
+        }
     } else unreachable;
 
     return .{
         .zsdl = zsdl,
         .install = install_step,
+        .ttf = args.ttf,
     };
 }
 
