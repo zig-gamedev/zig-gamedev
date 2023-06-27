@@ -70,7 +70,7 @@ pub fn package(
         );
     } else if (target.isDarwin()) {
         const install_dir_step = b.addInstallDirectory(.{
-            .source_dir = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework",
+            .source_dir = .{ .path = thisDir() ++ "/libs/macos/Frameworks/SDL2.framework" },
             .install_dir = .{ .custom = "" },
             .install_subdir = "bin/Frameworks/SDL2.framework",
         });

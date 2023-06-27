@@ -29,7 +29,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const install_content_step = b.addInstallDirectory(.{
-        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ content_dir,
     });
