@@ -709,13 +709,15 @@ fn draw(demo: *DemoState) void {
             pass.setPipeline(mesh_render_pipe);
 
             const box_scale = zm.scaling(10, 50, 5);
-            const box_rotate = zm.mul(zm.rotationZ(0.24), zm.rotationY(0.3));
-            const box_center = zm.f32x4(-15, 0, 30, 1);
+            // const box_rotate = zm.mul(zm.rotationZ(0.24), zm.rotationY(0.3));
+            const box_rotate = zm.identity();
+            // const box_center = zm.f32x4(-15, 0, 30, 1);
+            const box_center = zm.f32x4(0, 0, 30, 1);
             const box_radius = zm.mul(box_scale, zm.f32x4(0.4999, 0.4999, 0.4999, 0)); // .4999 is anti-artifact bias
             const box_translate = zm.transpose(zm.translationV(box_center));
             const box_transform = zm.mul(box_translate, zm.mul(box_rotate, box_scale));
             const box_rotate_t = zm.transpose(box_rotate);
-            const floor_material = zm.f32x4(-0.9, -0.9, -0.9, 0.8);
+            const floor_material = zm.f32x4(-0.7, -0.7, -0.7, 0.8);
 
             { // Update frame uniforms
                 const mem = gctx.uniformsAllocate(FrameUniforms, 1);
@@ -771,8 +773,10 @@ fn draw(demo: *DemoState) void {
                     // .basecolor_roughness = .{ 0.03, 0.02, 0.04, -0.16 },
                     // .basecolor_roughness = .{ 0.3, 0.3, 0.3, -0.02 },
                     // .basecolor_roughness = .{ 0.92, 0.9, 0.94, -0.24 },
-                    .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.05 },
+                    // .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.05 },
                     // .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.3 },
+                    // .basecolor_roughness = .{ 0.030, 0.034, 0.038, -0.05 },
+                    .basecolor_roughness = .{ 0.24, 0.24, 0.24, -0.08},
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
                 pass.drawIndexed(

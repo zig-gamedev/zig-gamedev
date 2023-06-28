@@ -164,7 +164,7 @@ pub const mesh = struct {
     \\      } else { n = normalize(normal); }
     \\
     \\      var metallic: f32;
-    \\      if (roughness < 0.0) { metallic = 0.95; } else { metallic = 0.05; }
+    \\      if (roughness < 0.0) { metallic = 0.98; } else { metallic = 0.; }
     \\      base_color = abs(base_color);
     \\      roughness = abs(roughness);
     \\
@@ -212,39 +212,101 @@ pub const mesh = struct {
     \\              let distance_sq = dot(lvec, lvec);
     \\              let attenuation = 1.0 / distance_sq;
     \\              var radiance = 100 * light_colors[light_index] * attenuation;
+    \\              //var radiance = vec3<f32>(0, 0, 0);
     \\
     \\              if (position.y > 0.0001) { // reflection of floor lighting on monolith surface
+    \\                  //let surf_to_mirror =
     \\                  let mirror_cam = vec3<f32>(position.x, -position.y, position.z);
-    \\                  let mirror_vec = light_positions[light_index] - mirror_cam;
+    \\                  let mirror_cam_to_light = light_positions[light_index] - mirror_cam;
     \\                  let t = -mirror_cam.y / (light_positions[light_index].y - mirror_cam.y);
-    \\                  let mirror_pos = mirror_cam + t * mirror_vec;
+    \\                  let mirror_pos = mirror_cam + t * mirror_cam_to_light;
+    \\                  let mirror_normal = vec3<f32>(0, 1, 0);
+    \\
+    \\                  let mirror_to_light = light_positions[light_index] - mirror_pos;
+    \\                  //let ml = normalize(mirror_cam_to_light);
+    \\                  let ml = normalize(mirror_to_light);
+    \\                  let mv = normalize(position - mirror_pos);
+    \\                  let mh = normalize(ml + mv);
+    \\                  var mn: vec3<f32>;
+    \\                  var mirror_base_color = frame_uniforms.floor_material.xyz;
+    \\                  var mirror_roughness = frame_uniforms.floor_material.a;
+    \\
+    \\                  if (mirror_base_color.x < 0.0) {
+    \\                      let r_x = rand2(floor(2 * mirror_pos.xz));
+    \\                      let r_z = rand2(floor(2 * mirror_pos.zx));
+    \\                      let r_vec = vec3(r_x, 0, r_z);
+    \\                      let r_strength = 0.04;
+    \\                      mn = normalize(mirror_normal + r_vec * r_strength);
+    \\                      mirror_roughness += min(0, -dot(r_vec, r_vec) * 0.6 + 0.64);
+    \\                  } else { mn = normalize(mirror_normal); }
+    \\                  var mirror_metallic: f32;
+    \\                  if (mirror_roughness < 0.0) { mirror_metallic = 1.; } else { mirror_metallic = 0.; }
+    \\                  mirror_base_color = abs(mirror_base_color);
+    \\                  mirror_roughness = abs(mirror_roughness);
+    \\                  let mirror_alpha = mirror_roughness * mirror_roughness;
+    \\                  var mk = mirror_alpha + 1.0;
+    \\                  mk = (mk * mk) / 8.0;
+    \\                  var mf0 = vec3(0.04);
+    \\                  mf0 = mix(mf0, mirror_base_color, mirror_metallic);
+    \\
+    \\                  let mf = fresnelSchlick(saturate(dot(mh, mv)), mf0);
+    \\                  let mndf = distributionGgx(mn, mh, mirror_alpha);
+    \\                  let mg = geometrySmith(mn, mv, ml, mk);
+    \\                  let mirror_numerator = mndf * mg * mf;
+    \\                  let mirror_n_dot_l = saturate(dot(mn, ml));
+    \\                  let mirror_denominator = 4.0 * saturate(dot(mn, mv)) * mirror_n_dot_l;
+    \\                  let mirror_specular = mirror_numerator / max(mirror_denominator, 0.001);
+    \\                  let mks = mf;
+    \\                  let mkd = (vec3(1.0) - mks) * (1.0 - mirror_metallic);
+    \\
+    \\                  let mirror_distance_sq = dot(mirror_cam_to_light, mirror_cam_to_light);
+    \\                  //let mirror_distance_sq = dot(mirror_to_light, mirror_to_light);
+    \\                  let mirror_attenuation = 1.0 / mirror_distance_sq;
+    \\                  var mirror_radiance = 100 * light_colors[light_index] * mirror_attenuation;
+    \\                  //radiance += (mkd * mirror_base_color / pi + mirror_specular) * mirror_radiance * mirror_n_dot_l;
+    \\                  //radiance = (mkd * mirror_base_color / pi + mirror_specular) * mirror_radiance * mirror_n_dot_l;
+    \\                  //lo += (mkd * mirror_base_color / pi + mirror_specular) * mirror_radiance * mirror_n_dot_l;
+    \\                  let rad2 = (mkd * mirror_base_color / pi + mirror_specular) * mirror_radiance * mirror_n_dot_l;
+    \\
+    \\                  let l2 = -mv;
+    \\                  let h2 = normalize(l2 + v);
+    \\                  //let alpha2 = 0.12;
+    \\                  //let k2 = alpha2 + 1;
+    \\                  //let f02 = mix(f0, base_color + 0.7 * (vec3<f32>(1, 1, 1) - base_color), metallic);
+    \\                  let f = fresnelSchlick(saturate(dot(h2, v)), f0);
+    \\                  let ndf = distributionGgx(n, h2, alpha);
+    \\                  //let ndf = distributionGgx(n, h2, 0.2);
+    \\                  let g = geometrySmith(n, v, l2, k);
+    \\                  let numerator = ndf * g * f;
+    \\                  let n_dot_l = saturate(dot(n, l2));
+    \\                  let denominator = 4.0 * saturate(dot(n, v)) * n_dot_l;
+    \\                  let specular = numerator / max(denominator, 0.001);
+    \\                  let ks = f;
+    \\                  let kd = (vec3(1.0) - ks) * (1.0 - metallic);
+    \\                  lo += (kd * base_color / pi + specular) * rad2 * n_dot_l;
     \\              }
-    \\
-    \\              let f = fresnelSchlick(saturate(dot(h, v)), f0);
-    \\
-    \\              let ndf = distributionGgx(n, h, alpha);
-    \\              let g = geometrySmith(n, v, l, k);
-    \\
-    \\              let numerator = ndf * g * f;
-    \\              let denominator = 4.0 * saturate(dot(n, v)) * saturate(dot(n, l));
-    \\              let specular = numerator / max(denominator, 0.001);
-    \\
-    \\              let ks = f;
-    \\              let kd = (vec3(1.0) - ks) * (1.0 - metallic);
-    \\
-    \\              let n_dot_l = saturate(dot(n, l));
-    \\              lo = lo + (kd * base_color / pi + specular) * radiance * n_dot_l;
+    \\              //} else {
+    \\                  let f = fresnelSchlick(saturate(dot(h, v)), f0);
+    \\                  let ndf = distributionGgx(n, h, alpha);
+    \\                  let g = geometrySmith(n, v, l, k);
+    \\                  let numerator = ndf * g * f;
+    \\                  let n_dot_l = saturate(dot(n, l));
+    \\                  let denominator = 4.0 * saturate(dot(n, v)) * n_dot_l;
+    \\                  let specular = numerator / max(denominator, 0.001);
+    \\                  let ks = f;
+    \\                  let kd = (vec3(1.0) - ks) * (1.0 - metallic);
+    \\                  lo += (kd * base_color / pi + specular) * radiance * n_dot_l;
+    \\              //}
     \\          }
     \\
     \\          // Make light source itself appear as soft orb
     \\          let cl = light_positions[light_index] - frame_uniforms.camera_position;
-    \\          let cfn = normalize(position - frame_uniforms.camera_position);
-    \\          let cl_ray = Ray(frame_uniforms.camera_position, cfn);
+    \\          let cl_ray = Ray(frame_uniforms.camera_position, -v);
     \\          var cl_hit_dist: f32;
     \\          var cl_hit_norm: vec3<f32>;
     \\          let cl_did_hit: bool = intersect_box(monolith, cl_ray, &cl_hit_dist, &cl_hit_norm);
     \\          if (cl_did_hit && cl_hit_dist < length(cl)) { continue; }
-    \\          let negs = (dot(normalize(cl), cfn) - 1.0) * dot(cl, cl);
+    \\          let negs = (dot(normalize(cl), -v) - 1.0) * dot(cl, cl);
     \\          let peak = 0.2;
     \\          lo += 50 * light_colors[light_index] * max(pow((negs + peak) / peak, 5), 0);
     \\      }
