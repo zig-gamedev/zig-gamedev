@@ -208,19 +208,19 @@ fn loadMeshAndGenerateMeshlets(
     try meshlets.resize(num_meshlets);
 
     try all_meshes.append(.{
-        .index_offset = @intCast(u32, all_indices.items.len),
-        .vertex_offset = @intCast(u32, all_vertices.items.len),
-        .meshlet_offset = @intCast(u32, all_meshlets.items.len),
-        .num_indices = @intCast(u32, opt_indices.items.len),
-        .num_vertices = @intCast(u32, opt_vertices.items.len),
-        .num_meshlets = @intCast(u32, meshlets.items.len),
+        .index_offset = @as(u32, @intCast(all_indices.items.len)),
+        .vertex_offset = @as(u32, @intCast(all_vertices.items.len)),
+        .meshlet_offset = @as(u32, @intCast(all_meshlets.items.len)),
+        .num_indices = @as(u32, @intCast(opt_indices.items.len)),
+        .num_vertices = @as(u32, @intCast(opt_vertices.items.len)),
+        .num_meshlets = @as(u32, @intCast(meshlets.items.len)),
     });
 
     for (meshlets.items) |src_meshlet| {
         const meshlet = Meshlet{
-            .data_offset = @intCast(u32, all_meshlets_data.items.len),
-            .num_vertices = @intCast(u16, src_meshlet.vertex_count),
-            .num_triangles = @intCast(u16, src_meshlet.triangle_count),
+            .data_offset = @as(u32, @intCast(all_meshlets_data.items.len)),
+            .num_vertices = @as(u16, @intCast(src_meshlet.vertex_count)),
+            .num_triangles = @as(u16, @intCast(src_meshlet.triangle_count)),
         };
         try all_meshlets.append(meshlet);
 
@@ -231,10 +231,10 @@ fn loadMeshAndGenerateMeshlets(
 
         i = 0;
         while (i < src_meshlet.triangle_count) : (i += 1) {
-            const index0 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 0]);
-            const index1 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 1]);
-            const index2 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 2]);
-            const prim = @intCast(u32, index0) | (@intCast(u32, index1) << 10) | (@intCast(u32, index2) << 20);
+            const index0 = @as(u10, @intCast(meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 0]));
+            const index1 = @as(u10, @intCast(meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 1]));
+            const index2 = @as(u10, @intCast(meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 2]));
+            const prim = @as(u32, @intCast(index0)) | (@as(u32, @intCast(index1)) << 10) | (@as(u32, @intCast(index2)) << 20);
             try all_meshlets_data.append(prim);
         }
     }
@@ -374,7 +374,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             gctx.lookupResource(vertex_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
                 0,
-                @intCast(u32, all_vertices.items.len),
+                @as(u32, @intCast(all_vertices.items.len)),
                 @sizeOf(Vertex),
             ),
             srv,
@@ -394,7 +394,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         const srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         gctx.device.CreateShaderResourceView(
             gctx.lookupResource(index_buffer).?,
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @as(u32, @intCast(all_indices.items.len))),
             srv,
         );
         break :blk srv;
@@ -414,7 +414,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             gctx.lookupResource(meshlet_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
                 0,
-                @intCast(u32, all_meshlets.items.len),
+                @as(u32, @intCast(all_meshlets.items.len)),
                 @sizeOf(Meshlet),
             ),
             srv,
@@ -437,7 +437,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(
                 .R32_UINT,
                 0,
-                @intCast(u32, all_meshlets_data.items.len),
+                @as(u32, @intCast(all_meshlets_data.items.len)),
             ),
             srv,
         );
@@ -471,7 +471,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Upload vertex buffer.
     {
-        const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(Vertex, @as(u32, @intCast(all_vertices.items.len)));
         for (all_vertices.items, 0..) |vertex, i| upload.cpu_slice[i] = vertex;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(vertex_buffer).?,
@@ -486,7 +486,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Upload index buffer.
     {
-        const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(u32, @as(u32, @intCast(all_indices.items.len)));
         for (all_indices.items, 0..) |index, i| upload.cpu_slice[i] = index;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(index_buffer).?,
@@ -501,7 +501,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Upload meshlet buffer.
     {
-        const upload = gctx.allocateUploadBufferRegion(Meshlet, @intCast(u32, all_meshlets.items.len));
+        const upload = gctx.allocateUploadBufferRegion(Meshlet, @as(u32, @intCast(all_meshlets.items.len)));
         for (all_meshlets.items, 0..) |meshlet, i| upload.cpu_slice[i] = meshlet;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(meshlet_buffer).?,
@@ -516,7 +516,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Upload meshlet data buffer.
     {
-        const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_meshlets_data.items.len));
+        const upload = gctx.allocateUploadBufferRegion(u32, @as(u32, @intCast(all_meshlets_data.items.len)));
         for (all_meshlets_data.items, 0..) |meshlet_data, i| upload.cpu_slice[i] = meshlet_data;
         gctx.cmdlist.CopyBufferRegion(
             gctx.lookupResource(meshlet_data_buffer).?,
@@ -580,7 +580,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @as(f32, @floatFromInt(demo.gctx.viewport_width)) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -608,11 +608,11 @@ fn update(demo: *DemoState) void {
     c.igSpacing();
 
     c.igText("Draw mode:", "");
-    var draw_mode: i32 = @enumToInt(demo.draw_mode);
+    var draw_mode: i32 = @intFromEnum(demo.draw_mode);
     _ = c.igRadioButton_IntPtr("Mesh Shader emulating VS (no culling)", &draw_mode, 0);
     _ = c.igRadioButton_IntPtr("VS with manual vertex fetching (no HW index buffer)", &draw_mode, 1);
     _ = c.igRadioButton_IntPtr("VS with fixed function vertex fetching", &draw_mode, 2);
-    demo.draw_mode = @intToEnum(DrawMode, draw_mode);
+    demo.draw_mode = @as(DrawMode, @enumFromInt(draw_mode));
 
     _ = c.igSliderInt("Num. objects", &demo.num_objects_to_draw, 1, 1000, null, c.ImGuiSliderFlags_None);
 
@@ -625,8 +625,8 @@ fn update(demo: *DemoState) void {
     c.igTextColored(
         .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
         "%.3f M",
-        @intToFloat(f64, demo.num_objects_to_draw) *
-            @intToFloat(f64, demo.meshes.items[mesh_engine].num_indices / 3) / 1_000_000.0,
+        @as(f64, @floatFromInt(demo.num_objects_to_draw)) *
+            @as(f64, @floatFromInt(demo.meshes.items[mesh_engine].num_indices / 3)) / 1_000_000.0,
     );
 
     c.igText("Vertices: ");
@@ -634,8 +634,8 @@ fn update(demo: *DemoState) void {
     c.igTextColored(
         .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
         "%.3f M",
-        @intToFloat(f64, demo.num_objects_to_draw) *
-            @intToFloat(f64, demo.meshes.items[mesh_engine].num_vertices) / 1_000_000.0,
+        @as(f64, @floatFromInt(demo.num_objects_to_draw)) *
+            @as(f64, @floatFromInt(demo.meshes.items[mesh_engine].num_vertices)) / 1_000_000.0,
     );
 
     if (demo.draw_mode == .mesh_shader) {
@@ -644,8 +644,8 @@ fn update(demo: *DemoState) void {
         c.igTextColored(
             .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
             "%.3f K",
-            @intToFloat(f64, demo.num_objects_to_draw) *
-                @intToFloat(f64, demo.meshes.items[mesh_engine].num_meshlets) / 1_000.0,
+            @as(f64, @floatFromInt(demo.num_objects_to_draw)) *
+                @as(f64, @floatFromInt(demo.meshes.items[mesh_engine].num_meshlets)) / 1_000.0,
         );
 
         c.igSpacing();
@@ -660,16 +660,16 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
+        const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
         if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = vm.modAngle(demo.camera.yaw);
         }
     }
@@ -709,7 +709,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @as(f32, @floatFromInt(gctx.viewport_width)) / @as(f32, @floatFromInt(gctx.viewport_height)),
         0.01,
         200.0,
     );
@@ -765,12 +765,12 @@ fn draw(demo: *DemoState) void {
 
             gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
                 .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-                .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.vertex_buffer)),
+                .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.vertex_buffer))),
                 .StrideInBytes = @sizeOf(Vertex),
             }});
             gctx.cmdlist.IASetIndexBuffer(&.{
                 .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
-                .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.index_buffer)),
+                .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.index_buffer))),
                 .Format = .R32_UINT,
             });
         },
@@ -780,7 +780,7 @@ fn draw(demo: *DemoState) void {
     while (entity_index < demo.num_objects_to_draw) : (entity_index += 1) {
         // Upload per-draw constant data.
         {
-            const position = Vec3.init(0.0, 0.0, @intToFloat(f32, entity_index) * 2.5);
+            const position = Vec3.init(0.0, 0.0, @as(f32, @floatFromInt(entity_index)) * 2.5);
             const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
             mem.cpu_slice[0] = .{
                 .object_to_clip = Mat4.initTranslation(position).mul(cam_world_to_clip).transpose(),
@@ -812,7 +812,7 @@ fn draw(demo: *DemoState) void {
                     mesh.num_indices,
                     1,
                     mesh.index_offset,
-                    @intCast(i32, mesh.vertex_offset),
+                    @as(i32, @intCast(mesh.vertex_offset)),
                     0,
                 );
             },

@@ -168,7 +168,7 @@ fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, gctx.stats.time);
+    const t = @as(f32, @floatCast(gctx.stats.time));
 
     const cam_world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0),
@@ -177,7 +177,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -339,7 +339,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
@@ -350,7 +350,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

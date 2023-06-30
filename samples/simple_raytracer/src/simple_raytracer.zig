@@ -152,7 +152,7 @@ fn parseAndLoadGltfFile(path: []const u8) *c.cgltf_data {
         const result = c.cgltf_parse_file(
             &options,
             full_path.ptr,
-            @ptrCast([*c][*c]c.cgltf_data, &data),
+            @as([*c][*c]c.cgltf_data, @ptrCast(&data)),
         );
         assert(result == c.cgltf_result_success);
     }
@@ -176,8 +176,8 @@ fn appendMeshPrimitive(
 ) void {
     assert(mesh_index < data.meshes_count);
     assert(prim_index < data.meshes[mesh_index].primitives_count);
-    const num_vertices: u32 = @intCast(u32, data.meshes[mesh_index].primitives[prim_index].attributes[0].data.*.count);
-    const num_indices: u32 = @intCast(u32, data.meshes[mesh_index].primitives[prim_index].indices.*.count);
+    const num_vertices: u32 = @as(u32, @intCast(data.meshes[mesh_index].primitives[prim_index].attributes[0].data.*.count));
+    const num_indices: u32 = @as(u32, @intCast(data.meshes[mesh_index].primitives[prim_index].indices.*.count));
 
     // Indices.
     {
@@ -190,26 +190,26 @@ fn appendMeshPrimitive(
         assert((accessor.*.stride * accessor.*.count) == accessor.*.buffer_view.*.size);
         assert(accessor.*.buffer_view.*.buffer.*.data != null);
 
-        const data_addr = @alignCast(4, @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
-            accessor.*.offset + accessor.*.buffer_view.*.offset);
+        const data_addr = @as([*]const u8, @ptrCast(accessor.*.buffer_view.*.buffer.*.data)) +
+            accessor.*.offset + accessor.*.buffer_view.*.offset;
 
         if (accessor.*.stride == 1) {
             assert(accessor.*.component_type == c.cgltf_component_type_r_8u);
-            const src = @ptrCast([*]const u8, data_addr);
+            const src = @as([*]const u8, @ptrCast(data_addr));
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
                 indices.appendAssumeCapacity(src[i]);
             }
         } else if (accessor.*.stride == 2) {
             assert(accessor.*.component_type == c.cgltf_component_type_r_16u);
-            const src = @ptrCast([*]const u16, data_addr);
+            const src = @as([*]const u16, @ptrCast(@alignCast(data_addr)));
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
                 indices.appendAssumeCapacity(src[i]);
             }
         } else if (accessor.*.stride == 4) {
             assert(accessor.*.component_type == c.cgltf_component_type_r_32u);
-            const src = @ptrCast([*]const u32, data_addr);
+            const src = @as([*]const u32, @ptrCast(@alignCast(data_addr)));
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
                 indices.appendAssumeCapacity(src[i]);
@@ -226,7 +226,7 @@ fn appendMeshPrimitive(
         if (texcoords0 != null) texcoords0.?.resize(texcoords0.?.items.len + num_vertices) catch unreachable;
         if (tangents != null) tangents.?.resize(tangents.?.items.len + num_vertices) catch unreachable;
 
-        const num_attribs: u32 = @intCast(u32, data.meshes[mesh_index].primitives[prim_index].attributes_count);
+        const num_attribs: u32 = @as(u32, @intCast(data.meshes[mesh_index].primitives[prim_index].attributes_count));
 
         var attrib_index: u32 = 0;
         while (attrib_index < num_attribs) : (attrib_index += 1) {
@@ -238,7 +238,7 @@ fn appendMeshPrimitive(
             assert((accessor.*.stride * accessor.*.count) == accessor.*.buffer_view.*.size);
             assert(accessor.*.buffer_view.*.buffer.*.data != null);
 
-            const data_addr = @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
+            const data_addr = @as([*]const u8, @ptrCast(accessor.*.buffer_view.*.buffer.*.data)) +
                 accessor.*.offset + accessor.*.buffer_view.*.offset;
 
             const len = accessor.*.count * accessor.*.stride;
@@ -247,28 +247,28 @@ fn appendMeshPrimitive(
                 assert(accessor.*.type == c.cgltf_type_vec3);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, positions.items.ptr + positions.items.len - num_vertices)[0..len],
+                    @as([*]u8, @ptrCast(positions.items.ptr + positions.items.len - num_vertices))[0..len],
                     data_addr[0..len],
                 );
             } else if (attrib.*.type == c.cgltf_attribute_type_normal and normals != null) {
                 assert(accessor.*.type == c.cgltf_type_vec3);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, normals.?.items.ptr + normals.?.items.len - num_vertices)[0..len],
+                    @as([*]u8, @ptrCast(normals.?.items.ptr + normals.?.items.len - num_vertices))[0..len],
                     data_addr[0..len],
                 );
             } else if (attrib.*.type == c.cgltf_attribute_type_texcoord and texcoords0 != null) {
                 assert(accessor.*.type == c.cgltf_type_vec2);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, texcoords0.?.items.ptr + texcoords0.?.items.len - num_vertices)[0..len],
+                    @as([*]u8, @ptrCast(texcoords0.?.items.ptr + texcoords0.?.items.len - num_vertices))[0..len],
                     data_addr[0..len],
                 );
             } else if (attrib.*.type == c.cgltf_attribute_type_tangent and tangents != null) {
                 assert(accessor.*.type == c.cgltf_type_vec4);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
                 @memcpy(
-                    @ptrCast([*]u8, tangents.?.items.ptr + tangents.?.items.len - num_vertices)[0..len],
+                    @as([*]u8, @ptrCast(tangents.?.items.ptr + tangents.?.items.len - num_vertices))[0..len],
                     data_addr[0..len],
                 );
             }
@@ -294,11 +294,11 @@ fn loadScene(
     const data = parseAndLoadGltfFile(content_dir ++ "Sponza/Sponza.gltf");
     defer c.cgltf_free(data);
 
-    const num_meshes = @intCast(u32, data.meshes_count);
+    const num_meshes = @as(u32, @intCast(data.meshes_count));
     var mesh_index: u32 = 0;
 
     while (mesh_index < num_meshes) : (mesh_index += 1) {
-        const num_prims = @intCast(u32, data.meshes[mesh_index].primitives_count);
+        const num_prims = @as(u32, @intCast(data.meshes[mesh_index].primitives_count));
         var prim_index: u32 = 0;
 
         while (prim_index < num_prims) : (prim_index += 1) {
@@ -316,7 +316,7 @@ fn loadScene(
                 &tangents,
             );
 
-            const num_materials = @intCast(u32, data.materials_count);
+            const num_materials = @as(u32, @intCast(data.materials_count));
             var material_index: u32 = 0;
             var assigned_material_index: u32 = 0xffff_ffff;
 
@@ -330,10 +330,10 @@ fn loadScene(
             assert(assigned_material_index != 0xffff_ffff);
 
             all_meshes.append(.{
-                .index_offset = @intCast(u32, pre_indices_len),
-                .vertex_offset = @intCast(u32, pre_positions_len),
-                .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
-                .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+                .index_offset = @as(u32, @intCast(pre_indices_len)),
+                .vertex_offset = @as(u32, @intCast(pre_positions_len)),
+                .num_indices = @as(u32, @intCast(indices.items.len - pre_indices_len)),
+                .num_vertices = @as(u32, @intCast(positions.items.len - pre_positions_len)),
                 .material_index = assigned_material_index,
             }) catch unreachable;
         }
@@ -354,7 +354,7 @@ fn loadScene(
         });
     }
 
-    const num_materials = @intCast(u32, data.materials_count);
+    const num_materials = @as(u32, @intCast(data.materials_count));
     var material_index: u32 = 0;
     all_materials.ensureTotalCapacity(num_materials) catch unreachable;
 
@@ -364,7 +364,7 @@ fn loadScene(
 
         const mr = &gltf_material.pbr_metallic_roughness;
 
-        const num_images = @intCast(u32, data.images_count);
+        const num_images = @as(u32, @intCast(data.images_count));
         const invalid_image_index = num_images;
 
         var base_color_tex_index: u32 = invalid_image_index;
@@ -404,13 +404,13 @@ fn loadScene(
             .base_color = Vec3.init(mr.base_color_factor[0], mr.base_color_factor[1], mr.base_color_factor[2]),
             .roughness = mr.roughness_factor,
             .metallic = mr.metallic_factor,
-            .base_color_tex_index = @intCast(u16, base_color_tex_index),
-            .metallic_roughness_tex_index = @intCast(u16, metallic_roughness_tex_index),
-            .normal_tex_index = @intCast(u16, normal_tex_index),
+            .base_color_tex_index = @as(u16, @intCast(base_color_tex_index)),
+            .metallic_roughness_tex_index = @as(u16, @intCast(metallic_roughness_tex_index)),
+            .normal_tex_index = @as(u16, @intCast(normal_tex_index)),
         });
     }
 
-    const num_images = @intCast(u32, data.images_count);
+    const num_images = @as(u32, @intCast(data.images_count));
     var image_index: u32 = 0;
     all_textures.ensureTotalCapacity(num_images + 1) catch unreachable;
 
@@ -471,7 +471,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         );
         break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == w32.S_OK;
     };
-    const dxr_draw_mode = @boolToInt(dxr_is_supported);
+    const dxr_draw_mode = @intFromBool(dxr_is_supported);
 
     const static_mesh_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -552,20 +552,20 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         const state_object_desc = d3d12.STATE_OBJECT_DESC{
             .Type = .RAYTRACING_PIPELINE,
             .NumSubobjects = 1,
-            .pSubobjects = @ptrCast([*]const d3d12.STATE_SUBOBJECT, &subobject),
+            .pSubobjects = @as([*]const d3d12.STATE_SUBOBJECT, @ptrCast(&subobject)),
         };
 
         hrPanicOnFail(gctx.device.CreateStateObject(
             &state_object_desc,
             &d3d12.IID_IStateObject,
-            @ptrCast(*?*anyopaque, &trace_shadow_rays_stateobj),
+            @as(*?*anyopaque, @ptrCast(&trace_shadow_rays_stateobj)),
         ));
         hrPanicOnFail(gctx.device.CreateRootSignature(
             0,
             cso_code.ptr,
             cso_code.len,
             &d3d12.IID_IRootSignature,
-            @ptrCast(*?*anyopaque, &trace_shadow_rays_rs),
+            @as(*?*anyopaque, @ptrCast(&trace_shadow_rays_rs)),
         ));
     }
 
@@ -713,7 +713,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         gctx.lookupResource(vertex_buffer.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
             0,
-            @intCast(u32, all_vertices.items.len),
+            @as(u32, @intCast(all_vertices.items.len)),
             @sizeOf(Vertex),
         ),
         vertex_buffer.view,
@@ -731,13 +731,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     };
     gctx.device.CreateShaderResourceView(
         gctx.lookupResource(index_buffer.resource).?,
-        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @as(u32, @intCast(all_indices.items.len))),
         index_buffer.view,
     );
 
     // Upload vertex buffer.
     {
-        const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(Vertex, @as(u32, @intCast(all_vertices.items.len)));
         for (all_vertices.items, 0..) |vertex, i| {
             upload.cpu_slice[i] = vertex;
         }
@@ -754,7 +754,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Upload index buffer.
     {
-        const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(u32, @as(u32, @intCast(all_indices.items.len)));
         for (all_indices.items, 0..) |index, i| {
             upload.cpu_slice[i] = index;
         }
@@ -806,7 +806,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         const blas_inputs = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
             .Type = .BOTTOM_LEVEL,
             .Flags = .{ .PREFER_FAST_TRACE = true },
-            .NumDescs = @intCast(u32, geometry_descs.items.len),
+            .NumDescs = @as(u32, @intCast(geometry_descs.items.len)),
             .DescsLayout = .ARRAY,
             .u = .{
                 .pGeometryDescs = geometry_descs.items.ptr,
@@ -1048,7 +1048,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @as(f32, @floatFromInt(demo.gctx.viewport_width)) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -1082,16 +1082,16 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
+        const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
         if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = vm.modAngle(demo.camera.yaw);
         }
     }
@@ -1119,7 +1119,7 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    demo.light_position.c[0] = @floatCast(f32, 0.5 * @sin(0.25 * demo.frame_stats.time));
+    demo.light_position.c[0] = @as(f32, @floatCast(0.5 * @sin(0.25 * demo.frame_stats.time)));
 }
 
 fn draw(demo: *DemoState) void {
@@ -1133,7 +1133,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @as(f32, @floatFromInt(gctx.viewport_width)) / @as(f32, @floatFromInt(gctx.viewport_height)),
         0.1,
         50.0,
     );
@@ -1253,7 +1253,7 @@ fn draw(demo: *DemoState) void {
             var properties: *d3d12.IStateObjectProperties = undefined;
             hrPanicOnFail(demo.trace_shadow_rays_stateobj.?.QueryInterface(
                 &d3d12.IID_IStateObjectProperties,
-                @ptrCast(*?*anyopaque, &properties),
+                @as(*?*anyopaque, @ptrCast(&properties)),
             ));
             defer _ = properties.Release();
 
@@ -1262,17 +1262,17 @@ fn draw(demo: *DemoState) void {
             // ----------------------------------------------------------------------------------
             @memcpy(
                 upload.cpu_slice[0..32],
-                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("generateShadowRay")))[0..32],
+                @as([*]const u8, @ptrCast(properties.GetShaderIdentifier(L("generateShadowRay"))))[0..32],
             );
             @memset(upload.cpu_slice[32..][0..32], 0);
             @memcpy(
                 upload.cpu_slice[64..][0..32],
-                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("shadowMiss")))[0..32],
+                @as([*]const u8, @ptrCast(properties.GetShaderIdentifier(L("shadowMiss"))))[0..32],
             );
             @memset(upload.cpu_slice[96..][0..32], 0);
             @memcpy(
                 upload.cpu_slice[128..][0..32],
-                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("g_shadow_hit_group")))[0..32],
+                @as([*]const u8, @ptrCast(properties.GetShaderIdentifier(L("g_shadow_hit_group"))))[0..32],
             );
             @memset(upload.cpu_slice[160..][0..32], 0);
 

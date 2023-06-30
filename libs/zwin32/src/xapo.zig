@@ -72,8 +72,8 @@ pub const IXAPO = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn GetRegistrationProperties(self: *T, props: **REGISTRATION_PROPERTIES) HRESULT {
-                return @ptrCast(*const IXAPO.VTable, self.__v)
-                    .GetRegistrationProperties(@ptrCast(*IXAPO, self), props);
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v))
+                    .GetRegistrationProperties(@as(*IXAPO, @ptrCast(self)), props);
             }
             pub inline fn IsInputFormatSupported(
                 self: *T,
@@ -81,8 +81,8 @@ pub const IXAPO = extern struct {
                 requested_input_format: *const WAVEFORMATEX,
                 supported_input_format: ?**WAVEFORMATEX,
             ) HRESULT {
-                return @ptrCast(*const IXAPO.VTable, self.__v).IsInputFormatSupported(
-                    @ptrCast(*IXAPO, self),
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v)).IsInputFormatSupported(
+                    @as(*IXAPO, @ptrCast(self)),
                     output_format,
                     requested_input_format,
                     supported_input_format,
@@ -94,19 +94,19 @@ pub const IXAPO = extern struct {
                 requested_output_format: *const WAVEFORMATEX,
                 supported_output_format: ?**WAVEFORMATEX,
             ) HRESULT {
-                return @ptrCast(*const IXAPO.VTable, self.__v).IsOutputFormatSupported(
-                    @ptrCast(*IXAPO, self),
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v)).IsOutputFormatSupported(
+                    @as(*IXAPO, @ptrCast(self)),
                     input_format,
                     requested_output_format,
                     supported_output_format,
                 );
             }
             pub inline fn Initialize(self: *T, data: ?*const anyopaque, data_size: UINT32) HRESULT {
-                return @ptrCast(*const IXAPO.VTable, self.__v)
-                    .Initialize(@ptrCast(*IXAPO, self), data, data_size);
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v))
+                    .Initialize(@as(*IXAPO, @ptrCast(self)), data, data_size);
             }
             pub inline fn Reset(self: *T) void {
-                @ptrCast(*const IXAPO.VTable, self.__v).Reset(@ptrCast(*IXAPO, self));
+                @as(*const IXAPO.VTable, @ptrCast(self.__v)).Reset(@as(*IXAPO, @ptrCast(self)));
             }
             pub inline fn LockForProcess(
                 self: *T,
@@ -115,8 +115,8 @@ pub const IXAPO = extern struct {
                 num_output_params: UINT32,
                 output_params: ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
             ) HRESULT {
-                return @ptrCast(*const IXAPO.VTable, self.__v).LockForProcess(
-                    @ptrCast(*IXAPO, self),
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v)).LockForProcess(
+                    @as(*IXAPO, @ptrCast(self)),
                     num_input_params,
                     input_params,
                     num_output_params,
@@ -124,7 +124,7 @@ pub const IXAPO = extern struct {
                 );
             }
             pub inline fn UnlockForProcess(self: *T) void {
-                @ptrCast(*const IXAPO.VTable, self.__v).UnlockForProcess(@ptrCast(*IXAPO, self));
+                @as(*const IXAPO.VTable, @ptrCast(self.__v)).UnlockForProcess(@as(*IXAPO, @ptrCast(self)));
             }
             pub inline fn Process(
                 self: *T,
@@ -134,8 +134,8 @@ pub const IXAPO = extern struct {
                 output_params: ?[*]PROCESS_BUFFER_PARAMETERS,
                 is_enabled: BOOL,
             ) void {
-                return @ptrCast(*const IXAPO.VTable, self.__v).Process(
-                    @ptrCast(*IXAPO, self),
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v)).Process(
+                    @as(*IXAPO, @ptrCast(self)),
                     num_input_params,
                     input_params,
                     num_output_params,
@@ -144,12 +144,12 @@ pub const IXAPO = extern struct {
                 );
             }
             pub inline fn CalcInputFrames(self: *T, num_output_frames: UINT32) UINT32 {
-                return @ptrCast(*const IXAPO.VTable, self.__v)
-                    .CalcInputFrames(@ptrCast(*IXAPO, self), num_output_frames);
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v))
+                    .CalcInputFrames(@as(*IXAPO, @ptrCast(self)), num_output_frames);
             }
             pub inline fn CalcOutputFrames(self: *T, num_input_frames: UINT32) UINT32 {
-                return @ptrCast(*const IXAPO.VTable, self.__v)
-                    .CalcOutputFrames(@ptrCast(*IXAPO, self), num_input_frames);
+                return @as(*const IXAPO.VTable, @ptrCast(self.__v))
+                    .CalcOutputFrames(@as(*IXAPO, @ptrCast(self)), num_input_frames);
             }
         };
     }
@@ -203,12 +203,12 @@ pub const IXAPOParameters = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn SetParameters(self: *T, params: *const anyopaque, size: UINT32) void {
-                @ptrCast(*const IXAPOParameters.VTable, self.__v)
-                    .SetParameters(@ptrCast(*IXAPOParameters, self), params, size);
+                @as(*const IXAPOParameters.VTable, @ptrCast(self.__v))
+                    .SetParameters(@as(*IXAPOParameters, @ptrCast(self)), params, size);
             }
             pub inline fn GetParameters(self: *T, params: *anyopaque, size: UINT32) void {
-                @ptrCast(*const IXAPOParameters.VTable, self.__v)
-                    .GetParameters(@ptrCast(*IXAPOParameters, self), params, size);
+                @as(*const IXAPOParameters.VTable, @ptrCast(self.__v))
+                    .GetParameters(@as(*IXAPOParameters, @ptrCast(self)), params, size);
             }
         };
     }
@@ -220,7 +220,7 @@ pub const IXAPOParameters = extern struct {
     };
 };
 
-pub const E_FORMAT_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x88970001));
+pub const E_FORMAT_UNSUPPORTED = @as(HRESULT, @bitCast(@as(c_ulong, 0x88970001)));
 
 pub const Error = error{
     E_FORMAT_UNSUPPORTED,

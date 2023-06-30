@@ -53,12 +53,12 @@ pub const State = struct {
         zgui.init(allocator);
         const scale_factor = scale_factor: {
             const scale = window.getContentScale();
-            break :scale_factor math.max(scale[0], scale[1]);
+            break :scale_factor @max(scale[0], scale[1]);
         };
         _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
 
         // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+        zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
 
         // Create a color/depth texture and its 'view'.
         const color = createColorTexture(gctx);
@@ -106,11 +106,11 @@ pub const State = struct {
             } else null,
             .pipeline = layer.pipeline,
 
-            .vertex_count = @intCast(u32, layer.vertices.items.len),
+            .vertex_count = @as(u32, @intCast(layer.vertices.items.len)),
             .vertex_buffer = layer.vertex_buffer,
             .index_buffer = layer.index_buffer,
 
-            .instance_count = @intCast(u32, layer.instances.items.len),
+            .instance_count = @as(u32, @intCast(layer.instances.items.len)),
             .instance_buffer = layer.instance_buffer,
         });
     }
@@ -271,10 +271,10 @@ pub const State = struct {
 };
 
 fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
-    const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
-    const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
+    const width = @as(f32, @floatFromInt(gctx.swapchain_descriptor.width));
+    const height = @as(f32, @floatFromInt(gctx.swapchain_descriptor.height));
     const delta = math.sign(
-        @bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height),
+        @as(i32, @bitCast(gctx.swapchain_descriptor.width)) - @as(i32, @bitCast(gctx.swapchain_descriptor.height)),
     );
     return switch (delta) {
         -1 => .{ .width = 2.0, .height = 2 * width / height },

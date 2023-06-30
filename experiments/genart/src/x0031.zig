@@ -395,7 +395,7 @@ fn sinusoidal(v: Vec2, s: f64) Vec2 {
 fn julia(v: Vec2, s: f64, rand01: f64) Vec2 {
     const r = s * @sqrt(@sqrt(v[0] * v[0] + v[1] * v[1]));
     const theta = 0.5 * math.atan2(f64, v[0], v[1]) +
-        math.pi * @intToFloat(f64, @floatToInt(i32, 2.0 * rand01));
+        math.pi * @as(f64, @floatFromInt(@as(i32, @intFromFloat(2.0 * rand01))));
     const xx = r * math.cos(theta);
     const yy = r * math.sin(theta);
     return .{ xx, yy };

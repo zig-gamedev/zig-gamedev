@@ -34,6 +34,12 @@ typedef float JPC_Real;
 #define JPC_RVEC_ALIGN alignas(16)
 #endif
 
+#if defined(JPH_DEBUG_RENDERER)
+    #define JPC_DEBUG_RENDERER 1
+#else
+    #define JPC_DEBUG_RENDERER 0
+#endif
+
 #define JPC_PI 3.14159265358979323846f
 
 #define JPC_COLLISION_GROUP_INVALID_GROUP 0xffffffff
@@ -162,6 +168,43 @@ enum
     JPC_BACK_FACE_IGNORE  = 0,
     JPC_BACK_FACE_COLLIDE = 1
 };
+
+#if JPC_DEBUG_RENDERER == 1
+typedef enum JPC_DebugRendererResult {
+    JPC_DEBUGRENDERER_SUCCESS,
+    JPC_DEBUGRENDERER_DUPLICATE_SINGLETON,
+    JPC_DEBUGRENDERER_MISSING_SINGLETON,
+    JPC_DEBUGRENDERER_INCOMPLETE_IMPL
+} JPC_DebugRendererResult;
+
+typedef enum JPC_CullMode {
+    JPC_CULL_BACK_FACE    = 0,
+    JPC_CULL_FRONT_FACE   = 1,
+    JPC_CULLING_OFF       = 2,
+    _JPC_CULLING_FORCEU32 = 0x7fffffff
+} JPC_CullMode;
+
+typedef enum JPC_CastShadow {
+    JPC_CAST_SHADOW_ON        = 0,
+    JPC_CAST_SHADOW_OFF       = 1,
+    _JPC_CAST_SHADOW_FORCEU32 = 0x7fffffff
+} JPC_CastShadow;
+
+typedef enum JPC_DrawMode {
+    JPC_DRAW_MODE_SOLID     = 0,
+    JPC_DRAW_MODE_WIREFRAME = 1,
+    _JPC_DRAW_MODE_FORCEU32 = 0x7fffffff
+} JPC_DrawMode;
+
+typedef enum JPC_ShapeColor {
+    JPC_INSTANCE_COLOR,     // Random color per instance
+    JPC_SHAPE_TYPE_COLOR,   // Convex = green, scaled = yellow, compound = orange, mesh = red
+    JPC_MOTION_TYPE_COLOR,  // Static = grey, keyframed = green, dynamic = random color per instance
+    JPC_SLEEP_COLOR,        // Static = grey, keyframed = green, dynamic = yellow, sleeping = red
+    JPC_ISLAND_COLOR,       // Static = grey, active = random color per island, sleeping = light grey
+    JPC_MATERIAL_COLOR,     // Color as defined by the PhysicsMaterial of the shape
+} JPC_ShapeColor;
+#endif //JPC_DEBUG_RENDERER
 //--------------------------------------------------------------------------------------------------
 //
 // Types
@@ -211,6 +254,12 @@ typedef struct JPC_SharedMutex   JPC_SharedMutex;
 typedef struct JPC_Shape           JPC_Shape;
 typedef struct JPC_PhysicsMaterial JPC_PhysicsMaterial;
 typedef struct JPC_GroupFilter     JPC_GroupFilter;
+
+#if JPC_DEBUG_RENDERER == 1
+typedef struct JPC_BodyDrawFilter              JPC_BodyDrawFilter;
+typedef struct JPC_DebugRenderer_TriangleBatch JPC_DebugRenderer_TriangleBatch;
+typedef struct JPC_DebugRenderer_Primitive     JPC_DebugRenderer_Primitive;
+#endif //JPC_DEBUG_RENDERER
 //--------------------------------------------------------------------------------------------------
 //
 // Structures
@@ -432,6 +481,78 @@ typedef struct JPC_RayCastSettings
     JPC_BackFaceMode back_face_mode;
     bool             treat_convex_as_solid;
 } JPC_RayCastSettings;
+
+#if JPC_DEBUG_RENDERER == 1
+// NOTE: Needs to be kept in sync with JPH::AABox
+typedef struct JPC_AABox
+{
+    float min[3];
+    float max[3];
+} JPC_AABox;
+
+// NOTE: Needs to be kept in sync with JPH::Color
+typedef union JPC_Color
+{
+    uint32_t u32;
+    struct
+    {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+        uint8_t a;
+    };
+} JPC_Color;
+
+// NOTE: Needs to be kept in sync with JPH::DebugRenderer::Vertex
+typedef struct JPC_DebugRenderer_Vertex
+{
+    float position[3];
+    float normal[3];
+    float uv[2];
+    JPC_Color color;
+} JPC_DebugRenderer_Vertex;
+
+// NOTE: Needs to be kept in sync with JPH::DebugRenderer::Triangle
+typedef struct JPC_DebugRenderer_Triangle
+{
+    JPC_DebugRenderer_Vertex v[3];
+} JPC_DebugRenderer_Triangle;
+
+// NOTE: Needs to be kept in sync with JPH::DebugRenderer::LOD
+typedef struct JPC_DebugRenderer_LOD
+{
+    JPC_DebugRenderer_TriangleBatch *batch;
+    float distance;
+} JPC_DebugRenderer_LOD;
+
+// NOTE: NOT kept in sync - some translation required due to JPH::DebugRenderer::Geometry using std::vector.
+typedef struct JPC_DebugRenderer_Geometry
+{
+    JPC_DebugRenderer_LOD *LODs;
+    uint64_t num_LODs;
+    JPC_AABox *bounds;
+} JPC_DebugRenderer_Geometry;
+
+// NOTE: Needs to be kept in sync with JPH::BodyManager::DrawSettings
+// For each boolean field, if it's true, that thing will be drawn.
+typedef struct JPC_BodyManager_DrawSettings
+{
+    bool get_support_func;         // = false | Draw the GetSupport() function, used for convex collision detection
+    bool get_support_dir;          // = false | If above true, also draw direction mapped to a specific support point
+    bool get_supporting_face;      // = false | Draw the faces that were found colliding during collision detection
+    bool shape;                    // = true  | Draw the shapes of all bodies
+    bool shape_wireframe;          // = false | If 'shape' true, the shapes will be drawn in wireframe instead of solid.
+    JPC_ShapeColor shape_color;    // = JPC_MOTION_TYPE_COLOR | Coloring scheme to use for shapes
+    bool bounding_box;             // = false | Draw a bounding box per body
+    bool center_of_mass_transform; // = false | Draw the center of mass for each body
+    bool world_transform;          // = false | Draw the world transform (which can be different than CoM) for each body
+    bool velocity;                 // = false | Draw the velocity vector for each body
+    bool mass_and_inertia;         // = false | Draw the mass and inertia (as the box equivalent) for each body
+    bool sleep_stats;              // = false | Draw stats regarding the sleeping algorithm of each body
+} JPC_BodyManager_DrawSettings;
+
+typedef bool (*JPC_BodyDrawFilterFunc)(const JPC_Body *);
+#endif //JPC_DEBUG_RENDERER
 //--------------------------------------------------------------------------------------------------
 //
 // Interfaces (virtual tables)
@@ -554,6 +675,51 @@ typedef struct JPC_ContactListenerVTable
     void
     (*OnContactRemoved)(void *in_self, const JPC_SubShapeIDPair *in_sub_shape_pair);
 } JPC_ContactListenerVTable;
+
+#if JPC_DEBUG_RENDERER == 1
+/// Although used similarly to the VTables above, this struct is not pointer-compatible with JPH::DebugRenderer
+/// Instead, it's wrapped by the DebugRendererImpl inheritor class (as seen in JoltPhysicsC.cpp), because
+/// of the design of JPH::DebugRenderer not playing as nicely with C as the other structures in Jolt.
+/// Since debug rendering should never be used in production code, a wrapper seems ok in this case.
+typedef struct JPC_DebugRendererVTable
+{
+    // Required, *cannot* be NULL.
+    void
+    (*DrawLine)(void *in_self, JPC_Real in_from[3], JPC_Real in_to[3], JPC_Color in_color);
+
+    // Required, *cannot* be NULL.
+    void
+    (*DrawTriangle)(void *in_self, JPC_Real in_v1[3], JPC_Real in_v2[3], JPC_Real in_v3[3], JPC_Color in_color);
+
+    // Required, *cannot* be NULL.
+    JPC_DebugRenderer_TriangleBatch *
+    (*CreateTriangleBatch)(void *in_self, const JPC_DebugRenderer_Triangle *in_triangles, uint32_t in_triangle_count);
+
+    // Required, *cannot* be NULL.
+    JPC_DebugRenderer_TriangleBatch *
+    (*CreateTriangleBatchIndexed)(void *in_self,
+                                  const JPC_DebugRenderer_Vertex *in_vertices,
+                                  uint32_t in_vertex_count,
+                                  const uint32_t *in_indices,
+                                  uint32_t in_index_count);
+
+    // Required, *cannot* be NULL.
+    void
+    (*DrawGeometry)(void *in_self,
+                    const float inModelMatrix[16],
+                    const JPC_AABox *inWorldSpaceBounds,
+                    float inLODScaleSq,
+                    JPC_Color in_color,
+                    const JPC_DebugRenderer_Geometry *in_geometry,
+                    JPC_CullMode in_cull_mode,
+                    JPC_CastShadow in_cast_shadow,
+                    JPC_DrawMode in_draw_mode);
+
+    // Required, *cannot* be NULL.
+    void
+    (*DrawText3D)(void *in_self, JPC_Real in_position[3], const char *in_string, JPC_Color in_color, float in_height);
+} JPC_DebugRendererVTable;
+#endif //JPC_DEBUG_RENDERER
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions
@@ -586,6 +752,50 @@ JPC_BodyCreationSettings_Set(JPC_BodyCreationSettings *out_settings,
                              const float in_rotation[4],
                              JPC_MotionType in_motion_type,
                              JPC_ObjectLayer in_layer);
+
+#if JPC_DEBUG_RENDERER == 1
+/// Provide an instantiated VTable to get wrapped by the singleton implementation of JPH::DebugRenderer. This should be
+/// called only once, at program initialization, as when instantiating a DebugRenderer implementation in Jolt proper.
+/// You may pass a pointer to any struct, as long as its first member is a pointer to your JPC_DebugRendererVTable.
+JPC_API enum JPC_DebugRendererResult
+JPC_CreateDebugRendererSingleton(void *in_debug_renderer);
+/// Iff there is a debug renderer currently instantiated, destroy it. This may allow another call to CreateDebugRenderer
+/// to be made without breaking things, but this isn't sufficiently tested to be a guarantee. This is used, for example,
+/// in the unit tests when more than one test needs to instantiate a debug renderer. Shouldn't be necessary for a game.
+JPC_API enum JPC_DebugRendererResult
+JPC_DestroyDebugRendererSingleton();
+#endif //JPC_DEBUG_RENDERER
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_DebugRenderer_TriangleBatch
+//
+//--------------------------------------------------------------------------------------------------
+#if JPC_DEBUG_RENDERER == 1
+/// Within the user's DebugRendererVTable callbacks to create triangle batches, the user creates whatever
+/// structure their rendering engine requires to represent the triangle batch Jolt requests. The user passes a
+/// pointer to that structure into this function to be stored as one of Jolt's reference-counted objects internally.
+///
+/// \return An opaque JPC_DebugRenderer_TriangleBatch* for the user to keep as a handle to their primitive
+JPC_API JPC_DebugRenderer_TriangleBatch *
+JPC_DebugRenderer_TriangleBatch_Create(const void *in_c_primitive);
+
+/// When Jolt calls the user's DrawGeometry, it passes the user a JPC_DebugRenderer_Geometry *. This structure
+/// contains, among other things, at least one JPC_DebugRenderer_TriangleBatch * (inside LOD levels). The user
+/// may retrieve the pointer to the corresponding primitive they made by passing the batch pointer to this function.
+///
+/// \return An opaque JPC_DebugRenderer_Primitive * wherein the user is keeping rendering data for that batch
+JPC_API const JPC_DebugRenderer_Primitive *
+JPC_DebugRenderer_TriangleBatch_GetPrimitive(const JPC_DebugRenderer_TriangleBatch * in_batch);
+
+JPC_API void
+JPC_DebugRenderer_TriangleBatch_AddRef(JPC_DebugRenderer_TriangleBatch *in_batch);
+
+JPC_API void
+JPC_DebugRenderer_TriangleBatch_Release(JPC_DebugRenderer_TriangleBatch *in_batch);
+
+JPC_API uint32_t
+JPC_DebugRenderer_TriangleBatch_GetRefCount(const JPC_DebugRenderer_TriangleBatch *in_batch);
+#endif //JPC_DEBUG_RENDERER
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_MotionProperties
@@ -812,6 +1022,22 @@ JPC_PhysicsSystem_GetActiveBodyIDs(const JPC_PhysicsSystem *in_physics_system,
 /// Get direct access to all bodies. Not protected by a lock. Use with great care!
 JPC_API JPC_Body **
 JPC_PhysicsSystem_GetBodiesUnsafe(JPC_PhysicsSystem *in_physics_system);
+
+#if JPC_DEBUG_RENDERER == 1
+JPC_API void
+JPC_PhysicsSystem_DrawBodies(JPC_PhysicsSystem *in_physics_system,
+                             const JPC_BodyManager_DrawSettings *in_draw_settings,
+                             const JPC_BodyDrawFilter *in_draw_filter); // Can be NULL (no filter)
+
+JPC_API void
+JPC_PhysicsSystem_DrawConstraints(JPC_PhysicsSystem *in_physics_system);
+
+JPC_API void
+JPC_PhysicsSystem_DrawConstraintLimits(JPC_PhysicsSystem *in_physics_system);
+
+JPC_API void
+JPC_PhysicsSystem_DrawConstraintReferenceFrame(JPC_PhysicsSystem *in_physics_system);
+#endif //JPC_DEBUG_RENDERER
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BodyLockInterface
@@ -1088,6 +1314,30 @@ JPC_API void
 JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_BodyManager_DrawSettings
+//
+//--------------------------------------------------------------------------------------------------
+#if JPC_DEBUG_RENDERER == 1
+JPC_API JPC_BodyManager_DrawSettings *
+JPC_BodyManager_DrawSettings_Create();
+
+JPC_API void
+JPC_BodyManager_DrawSettings_Destroy(JPC_BodyManager_DrawSettings *);
+#endif // JPC_DEBUG_RENDERER
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_BodyDrawFilter
+//
+//--------------------------------------------------------------------------------------------------
+#if JPC_DEBUG_RENDERER == 1
+JPC_API JPC_BodyDrawFilter *
+JPC_BodyDrawFilter_Create(const JPC_BodyDrawFilterFunc);
+
+JPC_API void
+JPC_BodyDrawFilter_Destroy(JPC_BodyDrawFilter *);
+#endif // JPC_DEBUG_RENDERER
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -1179,6 +1429,11 @@ JPC_BodyInterface_GetPosition(const JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
                               JPC_Real out_position[3]);
 JPC_API void
+JPC_BodyInterface_SetPosition(JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              const JPC_Real in_position[3],
+                              JPC_Activation in_activation);
+JPC_API void
 JPC_BodyInterface_GetCenterOfMassPosition(const JPC_BodyInterface *in_iface,
                                           JPC_BodyID in_body_id,
                                           JPC_Real out_position[3]);
@@ -1186,6 +1441,11 @@ JPC_API void
 JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
                               float out_rotation[4]);
+JPC_API void
+JPC_BodyInterface_SetRotation(JPC_BodyInterface *in_iface,
+                              JPC_BodyID in_body_id,
+                              const JPC_Real in_rotation[4],
+                              JPC_Activation in_activation);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 
@@ -1228,6 +1488,9 @@ JPC_BodyInterface_AddImpulseAtPosition(JPC_BodyInterface *in_iface,
                                        const JPC_Real in_position[3]);
 JPC_API void
 JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3]);
+
+JPC_API void
+JPC_BodyInterface_SetMotionType(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_MotionType motion_type, JPC_Activation activation);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_Body

@@ -530,10 +530,10 @@ const tracy_full = struct {
         c.___tracy_emit_plot(name, val);
     }
     pub inline fn PlotU(name: [*:0]const u8, val: u64) void {
-        c.___tracy_emit_plot(name, @intToFloat(f64, val));
+        c.___tracy_emit_plot(name, @as(f64, @floatFromInt(val)));
     }
     pub inline fn PlotI(name: [*:0]const u8, val: i64) void {
-        c.___tracy_emit_plot(name, @intToFloat(f64, val));
+        c.___tracy_emit_plot(name, @as(f64, @floatFromInt(val)));
     }
     pub inline fn AppInfo(text: []const u8) void {
         c.___tracy_emit_message_appinfo(text.ptr, text.len);

@@ -141,8 +141,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     var normals = std.ArrayList([3]f32).init(arena);
     try initMeshes(arena, &common_shapes, &meshes, &indices, &positions, &normals);
 
-    const total_num_vertices = @intCast(u32, positions.items.len);
-    const total_num_indices = @intCast(u32, indices.items.len);
+    const total_num_vertices = @as(u32, @intCast(positions.items.len));
+    const total_num_indices = @as(u32, @intCast(indices.items.len));
 
     // Create a vertex buffer.
     const vertex_buf = gctx.createBuffer(.{
@@ -336,7 +336,7 @@ fn update(demo: *DemoState) void {
             if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
                 // Call scene-setup function.
-                scenes[@intCast(usize, demo.current_scene_index)].setup(
+                scenes[@as(usize, @intCast(demo.current_scene_index))].setup(
                     demo.physics.world,
                     demo.physics.common_shapes,
                     &demo.physics.scene_shapes,
@@ -347,7 +347,7 @@ fn update(demo: *DemoState) void {
         }
         // Gravity.
         {
-            const is_enabled = scenes[@intCast(usize, demo.current_scene_index)].has_gravity_ui;
+            const is_enabled = scenes[@as(usize, @intCast(demo.current_scene_index))].has_gravity_ui;
             if (!is_enabled) {
                 zgui.beginDisabled(.{});
             }
@@ -384,15 +384,15 @@ fn update(demo: *DemoState) void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -460,7 +460,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         camera_fovy,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -500,7 +500,7 @@ fn draw(demo: *DemoState) void {
             var body_index: i32 = 0;
             while (body_index < num_bodies) : (body_index += 1) {
                 const body = demo.physics.world.getBody(body_index);
-                const entity = &demo.entities.items[@intCast(usize, body.getUserIndex(0))];
+                const entity = &demo.entities.items[@as(usize, @intCast(body.getUserIndex(0)))];
 
                 // Get transform matrix from the physics simulator.
                 const transform = object_to_world: {
@@ -521,7 +521,7 @@ fn draw(demo: *DemoState) void {
                     demo.meshes.items[entity.mesh_index].num_indices,
                     1,
                     demo.meshes.items[entity.mesh_index].index_offset,
-                    @intCast(i32, demo.meshes.items[entity.mesh_index].vertex_offset),
+                    @as(i32, @intCast(demo.meshes.items[entity.mesh_index].vertex_offset)),
                     0,
                 );
             }
@@ -530,7 +530,7 @@ fn draw(demo: *DemoState) void {
         // Physics debug pass.
         pass: {
             demo.physics.world.debugDrawAll();
-            const num_vertices = @intCast(u32, demo.physics.debug.lines.items.len);
+            const num_vertices = @as(u32, @intCast(demo.physics.debug.lines.items.len));
             if (num_vertices == 0) break :pass;
 
             var vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
@@ -680,7 +680,7 @@ fn setupScene0(
     }
     {
         const box = zbt.initBoxShape(&.{ 0.5, 1.0, 2.0 });
-        box.setUserIndex(0, @intCast(i32, mesh_index_cube));
+        box.setUserIndex(0, @as(i32, @intCast(mesh_index_cube)));
         scene_shapes.append(box.asShape()) catch unreachable;
 
         const box_body = zbt.initBody(15.0, &zm.matToArr43(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
@@ -688,7 +688,7 @@ fn setupScene0(
     }
     {
         const sphere = zbt.initSphereShape(1.5);
-        sphere.setUserIndex(0, @intCast(i32, mesh_index_sphere));
+        sphere.setUserIndex(0, @as(i32, @intCast(mesh_index_sphere)));
         scene_shapes.append(sphere.asShape()) catch unreachable;
 
         const sphere_body = zbt.initBody(
@@ -728,14 +728,14 @@ fn setupScene1(
 
     var j: u32 = 0;
     while (j < num_stacks) : (j += 1) {
-        const theta = @intToFloat(f32, j) * math.tau / @intToFloat(f32, num_stacks);
+        const theta = @as(f32, @floatFromInt(j)) * math.tau / @as(f32, @floatFromInt(num_stacks));
         const x = radius * @cos(theta);
         const z = radius * @sin(theta);
         var i: u32 = 0;
         while (i < num_cubes_per_stack) : (i += 1) {
             const box_body = zbt.initBody(
                 2.5,
-                &zm.matToArr43(zm.translation(x, 2.2 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
+                &zm.matToArr43(zm.translation(x, 2.2 + @as(f32, @floatFromInt(i)) * 2.0 + 0.05, z)),
                 common_shapes.items[mesh_index_cube],
             );
             createEntity(
@@ -817,7 +817,7 @@ fn setupScene3(
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
     const box = zbt.initBoxShape(&.{ 0.5, 3.0, 1.5 });
-    box.setUserIndex(0, @intCast(i32, mesh_index_cube));
+    box.setUserIndex(0, @as(i32, @intCast(mesh_index_cube)));
     scene_shapes.append(box.asShape()) catch unreachable;
 
     const mass: f32 = 10.0;
@@ -830,7 +830,7 @@ fn setupScene3(
     while (j < heights.len) : (j += 1) {
         var i: u32 = 0;
         while (i < heights[j]) : (i += 1) {
-            const y = 4.0 + @intToFloat(f32, i) * 7.0;
+            const y = 4.0 + @as(f32, @floatFromInt(i)) * 7.0;
 
             const left_body = zbt.initBody(
                 mass,
@@ -864,7 +864,7 @@ fn setupScene3(
     const radius: f32 = 25.0;
     var i: u32 = 0;
     while (i < num_boxes) : (i += 1) {
-        const theta = @intToFloat(f32, i) * math.tau / @intToFloat(f32, num_boxes);
+        const theta = @as(f32, @floatFromInt(i)) * math.tau / @as(f32, @floatFromInt(num_boxes));
         const x = radius * @cos(theta);
         const z = radius * @sin(theta);
 
@@ -911,7 +911,7 @@ fn createEntity(
     entities: *std.ArrayList(Entity),
 ) void {
     const shape = body.getShape();
-    const mesh_index = @intCast(u32, shape.getUserIndex(0));
+    const mesh_index = @as(u32, @intCast(shape.getUserIndex(0)));
     const mesh_size = switch (shape.getType()) {
         .box => mesh_size: {
             var half_extents: [3]f32 = undefined;
@@ -935,7 +935,7 @@ fn createEntity(
         body.setCcdSweptSphereRadius(ccd_swept_sphere_radius);
         body.setCcdMotionThreshold(ccd_motion_threshold);
     }
-    const entity_index = @intCast(i32, entities.items.len);
+    const entity_index = @as(i32, @intCast(entities.items.len));
     entities.append(.{
         .body = body,
         .basecolor_roughness = basecolor_roughness,
@@ -955,12 +955,12 @@ fn appendMesh(
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
 ) !u32 {
-    const mesh_index = @intCast(u32, all_meshes.items.len);
+    const mesh_index = @as(u32, @intCast(all_meshes.items.len));
     try all_meshes.append(.{
-        .index_offset = @intCast(u32, all_indices.items.len),
-        .vertex_offset = @intCast(u32, all_positions.items.len),
-        .num_indices = @intCast(u32, mesh.indices.len),
-        .num_vertices = @intCast(u32, mesh.positions.len),
+        .index_offset = @as(u32, @intCast(all_indices.items.len)),
+        .vertex_offset = @as(u32, @intCast(all_positions.items.len)),
+        .num_indices = @as(u32, @intCast(mesh.indices.len)),
+        .num_vertices = @as(u32, @intCast(mesh.positions.len)),
     });
     try all_indices.appendSlice(mesh.indices);
     try all_positions.appendSlice(mesh.positions);
@@ -992,7 +992,7 @@ fn initMeshes(
         assert(mesh_index == mesh_index_cube);
 
         shapes.items[mesh_index] = zbt.initBoxShape(&.{ 1.0, 1.0, 1.0 }).asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index)));
     }
 
     // Parametric sphere mesh.
@@ -1006,7 +1006,7 @@ fn initMeshes(
         assert(mesh_index == mesh_index_sphere);
 
         shapes.items[mesh_index] = zbt.initSphereShape(1.0).asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index)));
     }
 
     // Cylinder mesh.
@@ -1037,7 +1037,7 @@ fn initMeshes(
         assert(mesh_index == mesh_index_cylinder);
 
         shapes.items[mesh_index] = zbt.initCylinderShape(&.{ 1.0, 1.0, 1.0 }, .y).asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index)));
     }
 
     // Capsule mesh.
@@ -1066,7 +1066,7 @@ fn initMeshes(
         assert(mesh_index == mesh_index_capsule);
 
         shapes.items[mesh_index] = zbt.initCapsuleShape(1.0, 1.0, .y).asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index)));
     }
 
     // Compound0 mesh.
@@ -1103,7 +1103,7 @@ fn initMeshes(
         compound.addChild(&zm.matToArr43(zm.translation(0.0, 2.0, 0.0)), shapes.items[mesh_index_cube]);
         compound.addChild(&zm.matToArr43(zm.translation(0.0, -2.0, 0.0)), shapes.items[mesh_index_cube]);
         shapes.items[mesh_index] = compound.asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound0));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index_compound0)));
     }
 
     // Compound1 mesh.
@@ -1143,14 +1143,14 @@ fn initMeshes(
         compound.addChild(&zm.matToArr43(zm.translation(0.0, 4.0, 0.0)), shapes.items[mesh_index_sphere]);
         compound.addChild(&zm.matToArr43(zm.translation(0.0, 2.5, 0.0)), cylinder_shape);
         shapes.items[mesh_index] = compound.asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound1));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index_compound1)));
     }
 
     // World mesh.
     {
-        const mesh_index = @intCast(u32, all_meshes.items.len);
-        const index_offset = @intCast(u32, all_indices.items.len);
-        const vertex_offset = @intCast(u32, all_positions.items.len);
+        const mesh_index = @as(u32, @intCast(all_meshes.items.len));
+        const index_offset = @as(u32, @intCast(all_indices.items.len));
+        const vertex_offset = @as(u32, @intCast(all_positions.items.len));
 
         var indices = std.ArrayList(u32).init(arena);
         defer indices.deinit();
@@ -1168,28 +1168,28 @@ fn initMeshes(
         for (indices.items, 0..) |ind, i| {
             try all_positions.append(positions.items[ind]);
             try all_normals.append(normals.items[ind]);
-            try all_indices.append(@intCast(u32, i));
+            try all_indices.append(@as(u32, @intCast(i)));
         }
 
         try all_meshes.append(.{
             .index_offset = index_offset,
             .vertex_offset = vertex_offset,
-            .num_indices = @intCast(u32, all_indices.items.len) - index_offset,
-            .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
+            .num_indices = @as(u32, @intCast(all_indices.items.len)) - index_offset,
+            .num_vertices = @as(u32, @intCast(all_positions.items.len)) - vertex_offset,
         });
 
         const trimesh = zbt.initTriangleMeshShape();
         trimesh.addIndexVertexArray(
-            @intCast(u32, indices.items.len / 3),
+            @as(u32, @intCast(indices.items.len / 3)),
             indices.items.ptr,
             @sizeOf([3]u32),
-            @intCast(u32, positions.items.len),
+            @as(u32, @intCast(positions.items.len)),
             positions.items.ptr,
             @sizeOf([3]f32),
         );
         trimesh.finish();
         shapes.items[mesh_index] = trimesh.asShape();
-        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index].setUserIndex(0, @as(i32, @intCast(mesh_index)));
     }
 }
 
@@ -1201,14 +1201,14 @@ fn objectPicking(demo: *DemoState, want_capture_mouse: bool) void {
     const ray_from = zm.loadArr3(demo.camera.position);
     const ray_to = ray_to: {
         const cursor_pos = window.getCursorPos();
-        const mousex = @floatCast(f32, cursor_pos[0]);
-        const mousey = @floatCast(f32, cursor_pos[1]);
+        const mousex = @as(f32, @floatCast(cursor_pos[0]));
+        const mousey = @as(f32, @floatCast(cursor_pos[1]));
 
         const far_plane = zm.f32x4s(10_000.0);
         const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
         const winsize = window.getSize();
-        const width = @intToFloat(f32, winsize[0]);
-        const height = @intToFloat(f32, winsize[1]);
+        const width = @as(f32, @floatFromInt(winsize[0]));
+        const height = @as(f32, @floatFromInt(winsize[1]));
         const aspect = zm.f32x4s(width / height);
 
         const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
@@ -1355,7 +1355,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
@@ -1366,7 +1366,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

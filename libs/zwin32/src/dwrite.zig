@@ -94,12 +94,12 @@ pub const ITextFormat = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn SetTextAlignment(self: *T, alignment: TEXT_ALIGNMENT) HRESULT {
-                return @ptrCast(*const ITextFormat.VTable, self.__v)
-                    .SetTextAlignment(@ptrCast(*ITextFormat, self), alignment);
+                return @as(*const ITextFormat.VTable, @ptrCast(self.__v))
+                    .SetTextAlignment(@as(*ITextFormat, @ptrCast(self)), alignment);
             }
             pub inline fn SetParagraphAlignment(self: *T, alignment: PARAGRAPH_ALIGNMENT) HRESULT {
-                return @ptrCast(*const ITextFormat.VTable, self.__v)
-                    .SetParagraphAlignment(@ptrCast(*ITextFormat, self), alignment);
+                return @as(*const ITextFormat.VTable, @ptrCast(self.__v))
+                    .SetParagraphAlignment(@as(*ITextFormat, @ptrCast(self)), alignment);
             }
         };
     }
@@ -154,8 +154,8 @@ pub const IFactory = extern struct {
                 locale_name: LPCWSTR,
                 text_format: *?*ITextFormat,
             ) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.__v).CreateTextFormat(
-                    @ptrCast(*IFactory, self),
+                return @as(*const IFactory.VTable, @ptrCast(self.__v)).CreateTextFormat(
+                    @as(*IFactory, @ptrCast(self)),
                     font_family_name,
                     font_collection,
                     font_weight,
@@ -218,7 +218,7 @@ pub extern "dwrite" fn DWriteCreateFactory(
     factory: *?*anyopaque,
 ) callconv(WINAPI) HRESULT;
 
-pub const E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
+pub const E_FILEFORMAT = @as(HRESULT, @bitCast(@as(c_ulong, 0x88985000)));
 
 pub const Error = error{
     E_FILEFORMAT,

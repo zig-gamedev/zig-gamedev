@@ -93,7 +93,7 @@ pub fn draw() void {
 
         const xn1 = (a1 + r0) * @sin(f1 * xn) + a2 * @cos(f2 * yn) + a3 * @sin(f3 * tn);
         const yn1 = a4 * @cos(f4 * xn) + (a5 + r1) * @sin(f5 * yn) + a6 * @cos(f6 * tn);
-        const tn1 = @intToFloat(f64, iter) * v;
+        const tn1 = @as(f64, @floatFromInt(iter)) * v;
 
         const vel = (xn1 - xn) * (xn1 - xn) + (yn1 - yn) * (yn1 - yn);
         if (vel < 0.5) {

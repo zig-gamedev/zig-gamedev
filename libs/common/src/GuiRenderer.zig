@@ -41,9 +41,9 @@ pub fn init(
         var hh: i32 = undefined;
         c.ImFontAtlas_GetTexDataAsRGBA32(io.*.Fonts, &pp, &ww, &hh, null);
         break :blk .{
-            .pixels = pp[0..@intCast(usize, ww * hh * 4)],
-            .width = @intCast(u32, ww),
-            .height = @intCast(u32, hh),
+            .pixels = pp[0..@as(usize, @intCast(ww * hh * 4))],
+            .width = @as(u32, @intCast(ww)),
+            .height = @as(u32, @intCast(hh)),
         };
     };
 
@@ -123,8 +123,8 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
     if (draw_data == null or draw_data.?.*.TotalVtxCount == 0) {
         return;
     }
-    const num_vertices = @intCast(u32, draw_data.?.*.TotalVtxCount);
-    const num_indices = @intCast(u32, draw_data.?.*.TotalIdxCount);
+    const num_vertices = @as(u32, @intCast(draw_data.?.*.TotalVtxCount));
+    const num_indices = @as(u32, @intCast(draw_data.?.*.TotalIdxCount));
 
     var vb = gui.vb[gctx.frame_index];
     var ib = gui.ib[gctx.frame_index];
@@ -145,7 +145,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
             hrPanicOnFail(gctx.lookupResource(vb).?.Map(
                 0,
                 &.{ .Begin = 0, .End = 0 },
-                @ptrCast(*?*anyopaque, &ptr),
+                @as(*?*anyopaque, @ptrCast(&ptr)),
             ));
             break :blk ptr.?[0..new_size];
         };
@@ -166,7 +166,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
             hrPanicOnFail(gctx.lookupResource(ib).?.Map(
                 0,
                 &.{ .Begin = 0, .End = 0 },
-                @ptrCast(*?*anyopaque, &ptr),
+                @as(*?*anyopaque, @ptrCast(&ptr)),
             ));
             break :blk ptr.?[0..new_size];
         };
@@ -178,11 +178,11 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
         var vb_idx: u32 = 0;
         var ib_idx: u32 = 0;
         var cmdlist_idx: u32 = 0;
-        const num_cmdlists = @intCast(u32, draw_data.?.*.CmdListsCount);
+        const num_cmdlists = @as(u32, @intCast(draw_data.?.*.CmdListsCount));
         while (cmdlist_idx < num_cmdlists) : (cmdlist_idx += 1) {
             const list = draw_data.?.*.CmdLists[cmdlist_idx];
-            const list_vb_size = @intCast(u32, list.*.VtxBuffer.Size);
-            const list_ib_size = @intCast(u32, list.*.IdxBuffer.Size);
+            const list_vb_size = @as(u32, @intCast(list.*.VtxBuffer.Size));
+            const list_ib_size = @as(u32, @intCast(list.*.IdxBuffer.Size));
             std.mem.copy(
                 c.ImDrawVert,
                 vb_slice[vb_idx .. vb_idx + list_vb_size],
@@ -243,7 +243,7 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
     var global_idx_offset: u32 = 0;
 
     var cmdlist_idx: u32 = 0;
-    const num_cmdlists = @intCast(u32, draw_data.?.*.CmdListsCount);
+    const num_cmdlists = @as(u32, @intCast(draw_data.?.*.CmdListsCount));
     while (cmdlist_idx < num_cmdlists) : (cmdlist_idx += 1) {
         const cmdlist = draw_data.?.*.CmdLists[cmdlist_idx];
 
@@ -256,10 +256,10 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
                 // TODO(mziulek): Call the callback.
             } else {
                 const rect = [1]d3d12.RECT{.{
-                    .left = @floatToInt(i32, cmd.*.ClipRect.x - display_x),
-                    .top = @floatToInt(i32, cmd.*.ClipRect.y - display_y),
-                    .right = @floatToInt(i32, cmd.*.ClipRect.z - display_x),
-                    .bottom = @floatToInt(i32, cmd.*.ClipRect.w - display_y),
+                    .left = @as(i32, @intFromFloat(cmd.*.ClipRect.x - display_x)),
+                    .top = @as(i32, @intFromFloat(cmd.*.ClipRect.y - display_y)),
+                    .right = @as(i32, @intFromFloat(cmd.*.ClipRect.z - display_x)),
+                    .bottom = @as(i32, @intFromFloat(cmd.*.ClipRect.w - display_y)),
                 }};
                 if (rect[0].right > rect[0].left and rect[0].bottom > rect[0].top) {
                     gctx.cmdlist.RSSetScissorRects(1, &rect);
@@ -267,13 +267,13 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
                         cmd.*.ElemCount,
                         1,
                         cmd.*.IdxOffset + global_idx_offset,
-                        @intCast(i32, cmd.*.VtxOffset) + global_vtx_offset,
+                        @as(i32, @intCast(cmd.*.VtxOffset)) + global_vtx_offset,
                         0,
                     );
                 }
             }
         }
-        global_idx_offset += @intCast(u32, cmdlist.*.IdxBuffer.Size);
+        global_idx_offset += @as(u32, @intCast(cmdlist.*.IdxBuffer.Size));
         global_vtx_offset += cmdlist.*.VtxBuffer.Size;
     }
 }

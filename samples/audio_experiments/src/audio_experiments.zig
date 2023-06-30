@@ -105,7 +105,7 @@ const DemoState = struct {
 };
 
 fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
-    const audio_data = @ptrCast(*AudioData, @alignCast(@sizeOf(usize), context));
+    const audio_data = @as(*AudioData, @ptrCast(@alignCast(context)));
 
     audio_data.mutex.lock();
     defer audio_data.mutex.unlock();
@@ -286,7 +286,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @as(f32, @floatFromInt(demo.gctx.viewport_width)) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -358,16 +358,16 @@ fn update(demo: *DemoState) void {
     {
         var pos: w32.POINT = undefined;
         _ = w32.GetCursorPos(&pos);
-        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
+        const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
         if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -413,7 +413,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @as(f32, @floatFromInt(gctx.viewport_width)) / @as(f32, @floatFromInt(gctx.viewport_height)),
         0.01,
         200.0,
     );
@@ -468,7 +468,7 @@ fn draw(demo: *DemoState) void {
             const mem = gctx.allocateUploadMemory(Pso_Vertex, num_vertices);
 
             const z = (demo.audio_data.cursor_position + row) % 100;
-            const f = if (row == 0) 1.0 else 0.010101 * @intToFloat(f32, row - 1);
+            const f = if (row == 0) 1.0 else 0.010101 * @as(f32, @floatFromInt(row - 1));
 
             var x: u32 = 0;
             while (x < num_vertices) : (x += 1) {
@@ -483,9 +483,9 @@ fn draw(demo: *DemoState) void {
 
                 mem.cpu_slice[x] = Pso_Vertex{
                     .position = [_]f32{
-                        0.1 * @intToFloat(f32, x),
+                        0.1 * @as(f32, @floatFromInt(x)),
                         f * f * f * 10.0 * sample,
-                        0.5 * @intToFloat(f32, z),
+                        0.5 * @as(f32, @floatFromInt(z)),
                     },
                     .color = color,
                 };

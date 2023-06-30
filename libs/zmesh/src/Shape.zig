@@ -31,54 +31,54 @@ pub fn init(
     maybe_texcoords: ?std.ArrayList([2]f32),
 ) Shape {
     const handle = par_shapes_create_empty();
-    const parmesh = @ptrCast(
+    const parmesh = @as(
         *ParShape,
-        @alignCast(@alignOf(ParShape), handle),
+        @ptrCast(@alignCast(handle)),
     );
 
-    parmesh.triangles = @ptrCast(
+    parmesh.triangles = @as(
         [*]IndexType,
-        @alignCast(@alignOf(IndexType), zmeshMalloc(indices.items.len * @sizeOf(IndexType))),
+        @ptrCast(@alignCast(zmeshMalloc(indices.items.len * @sizeOf(IndexType)))),
     );
-    parmesh.ntriangles = @intCast(c_int, @divExact(indices.items.len, 3));
+    parmesh.ntriangles = @as(c_int, @intCast(@divExact(indices.items.len, 3)));
     std.mem.copy(IndexType, parmesh.triangles[0..indices.items.len], indices.items);
 
-    parmesh.points = @ptrCast(
+    parmesh.points = @as(
         [*]f32,
-        @alignCast(@alignOf(f32), zmeshMalloc(positions.items.len * @sizeOf(f32) * 3)),
+        @ptrCast(@alignCast(zmeshMalloc(positions.items.len * @sizeOf(f32) * 3))),
     );
-    parmesh.npoints = @intCast(c_int, positions.items.len);
+    parmesh.npoints = @as(c_int, @intCast(positions.items.len));
     std.mem.copy(
         f32,
         parmesh.points[0 .. positions.items.len * 3],
-        @ptrCast([*]f32, positions.items.ptr)[0 .. positions.items.len * 3],
+        @as([*]f32, @ptrCast(positions.items.ptr))[0 .. positions.items.len * 3],
     );
 
     if (maybe_normals) |normals| {
         assert(normals.items.len == positions.items.len);
 
-        parmesh.normals = @ptrCast(
+        parmesh.normals = @as(
             [*]f32,
-            @alignCast(@alignOf(f32), zmeshMalloc(normals.items.len * @sizeOf(f32) * 3)),
+            @ptrCast(@alignCast(zmeshMalloc(normals.items.len * @sizeOf(f32) * 3))),
         );
         std.mem.copy(
             f32,
             parmesh.normals.?[0 .. normals.items.len * 3],
-            @ptrCast([*]f32, normals.items.ptr)[0 .. normals.items.len * 3],
+            @as([*]f32, @ptrCast(normals.items.ptr))[0 .. normals.items.len * 3],
         );
     }
 
     if (maybe_texcoords) |texcoords| {
         assert(texcoords.items.len == positions.items.len);
 
-        parmesh.tcoords = @ptrCast(
+        parmesh.tcoords = @as(
             [*]f32,
-            @alignCast(@alignOf(f32), zmeshMalloc(texcoords.items.len * @sizeOf(f32) * 2)),
+            @ptrCast(@alignCast(zmeshMalloc(texcoords.items.len * @sizeOf(f32) * 2))),
         );
         std.mem.copy(
             f32,
             parmesh.tcoords.?[0 .. texcoords.items.len * 2],
-            @ptrCast([*]f32, texcoords.items.ptr)[0 .. texcoords.items.len * 2],
+            @as([*]f32, @ptrCast(texcoords.items.ptr))[0 .. texcoords.items.len * 2],
         );
     }
 
@@ -150,31 +150,31 @@ pub fn computeNormals(mesh: *Shape) void {
 }
 
 fn initShape(handle: ShapeHandle) Shape {
-    const parmesh = @ptrCast(
+    const parmesh = @as(
         *ParShape,
-        @alignCast(@alignOf(ParShape), handle),
+        @ptrCast(@alignCast(handle)),
     );
     return .{
         .handle = handle,
-        .positions = @ptrCast(
+        .positions = @as(
             [*][3]f32,
-            parmesh.points,
-        )[0..@intCast(usize, parmesh.npoints)],
-        .indices = parmesh.triangles[0..@intCast(usize, parmesh.ntriangles * 3)],
+            @ptrCast(parmesh.points),
+        )[0..@as(usize, @intCast(parmesh.npoints))],
+        .indices = parmesh.triangles[0..@as(usize, @intCast(parmesh.ntriangles * 3))],
         .normals = if (parmesh.normals == null)
             null
         else
-            @ptrCast(
+            @as(
                 [*][3]f32,
-                parmesh.normals.?,
-            )[0..@intCast(usize, parmesh.npoints)],
+                @ptrCast(parmesh.normals.?),
+            )[0..@as(usize, @intCast(parmesh.npoints))],
         .texcoords = if (parmesh.tcoords == null)
             null
         else
-            @ptrCast(
+            @as(
                 [*][2]f32,
-                parmesh.tcoords.?,
-            )[0..@intCast(usize, parmesh.npoints)],
+                @ptrCast(parmesh.tcoords.?),
+            )[0..@as(usize, @intCast(parmesh.npoints))],
     };
 }
 
@@ -415,7 +415,7 @@ test "zmesh.clone" {
     var clone0 = cube.clone();
     defer clone0.deinit();
 
-    try expect(@ptrToInt(clone0.handle) != @ptrToInt(cube.handle));
+    try expect(@intFromPtr(clone0.handle) != @intFromPtr(cube.handle));
 }
 
 test "zmesh.merge" {

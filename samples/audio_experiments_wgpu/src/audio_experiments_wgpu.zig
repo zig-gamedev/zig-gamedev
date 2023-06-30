@@ -120,7 +120,7 @@ const AudioState = struct {
         _: ?*const anyopaque,
         num_frames: u32,
     ) callconv(.C) void {
-        const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), device.getUserData()));
+        const audio = @as(*AudioState, @ptrCast(@alignCast(device.getUserData())));
 
         audio.engine.readPcmFrames(output.?, num_frames, null) catch {};
 
@@ -131,10 +131,10 @@ const AudioState = struct {
 
         const num_channels = 2;
         const base_index = samples_per_set * audio.current_set;
-        const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), output));
+        const frames = @as([*]f32, @ptrCast(@alignCast(output)));
 
         var i: u32 = 0;
-        while (i < math.min(num_frames, usable_samples_per_set)) : (i += 1) {
+        while (i < @min(num_frames, usable_samples_per_set)) : (i += 1) {
             audio.samples.items[base_index + i] = frames[i * num_channels];
         }
     }
@@ -539,14 +539,14 @@ fn update(demo: *DemoState) !void {
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
 
-            const selected_item = @enumToInt(demo.waveform_config.waveform_type);
+            const selected_item = @intFromEnum(demo.waveform_config.waveform_type);
             const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
                 for (names, 0..) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.waveform_config.waveform_type = @intToEnum(zaudio.Waveform.Type, index);
+                        demo.waveform_config.waveform_type = @as(zaudio.Waveform.Type, @enumFromInt(index));
                         try demo.waveform_data_source.setType(demo.waveform_config.waveform_type);
                     }
                 }
@@ -588,14 +588,14 @@ fn update(demo: *DemoState) !void {
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
 
-            const selected_item = @enumToInt(demo.noise_config.noise_type);
+            const selected_item = @intFromEnum(demo.noise_config.noise_type);
             const names = [_][:0]const u8{ "White", "Pink" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
                 for (names, 0..) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.noise_config.noise_type = @intToEnum(zaudio.Noise.Type, index);
+                        demo.noise_config.noise_type = @as(zaudio.Noise.Type, @enumFromInt(index));
                         try demo.noise_data_source.setType(demo.noise_config.noise_type);
                     }
                 }
@@ -627,13 +627,13 @@ fn update(demo: *DemoState) !void {
         if (!demo.audio_filter.is_enabled) zgui.beginDisabled(.{});
         defer if (!demo.audio_filter.is_enabled) zgui.endDisabled();
 
-        const selected_item = @enumToInt(demo.audio_filter.current_type);
+        const selected_item = @intFromEnum(demo.audio_filter.current_type);
         if (zgui.beginCombo("Type", .{ .preview_value = AudioFilterType.names[selected_item] })) {
             for (AudioFilterType.names, 0..) |name, index| {
                 if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                     selected_item != index)
                 {
-                    demo.audio_filter.current_type = @intToEnum(AudioFilterType, index);
+                    demo.audio_filter.current_type = @as(AudioFilterType, @enumFromInt(index));
                     try updateAudioGraph(demo.*);
                 }
             }
@@ -758,15 +758,15 @@ fn update(demo: *DemoState) !void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -816,7 +816,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -828,7 +828,7 @@ fn draw(demo: *DemoState) void {
         .mapped_at_creation = true,
     });
     const vertex_buffer = gctx.lookupResource(vertex_buffer_handle).?;
-    defer vertex_buffer.destroy();
+    defer gctx.destroyResource(vertex_buffer_handle);
     {
         const mem = vertex_buffer.getMappedRange(
             Vertex,
@@ -839,11 +839,11 @@ fn draw(demo: *DemoState) void {
         demo.audio.mutex.lock();
         defer demo.audio.mutex.unlock();
 
-        const rcp_num_sets = 1.0 / @intToFloat(f32, AudioState.num_sets - 1);
+        const rcp_num_sets = 1.0 / @as(f32, @floatFromInt(AudioState.num_sets - 1));
         var set: u32 = 0;
         while (set < AudioState.num_sets) : (set += 1) {
             const z = (demo.audio.current_set + set) % AudioState.num_sets;
-            const f = if (set == 0) 1.0 else rcp_num_sets * @intToFloat(f32, set - 1);
+            const f = if (set == 0) 1.0 else rcp_num_sets * @as(f32, @floatFromInt(set - 1));
 
             var x: u32 = 0;
             while (x < AudioState.usable_samples_per_set) : (x += 1) {
@@ -857,9 +857,9 @@ fn draw(demo: *DemoState) void {
 
                 mem[x + set * AudioState.usable_samples_per_set] = Vertex{
                     .position = [_]f32{
-                        0.1 * @intToFloat(f32, x),
+                        0.1 * @as(f32, @floatFromInt(x)),
                         f * f * f * 10.0 * sample,
-                        0.5 * @intToFloat(f32, z),
+                        0.5 * @as(f32, @floatFromInt(z)),
                     },
                     .color = color,
                 };
@@ -988,7 +988,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
@@ -999,7 +999,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

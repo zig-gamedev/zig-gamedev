@@ -126,10 +126,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const path = blk: {
         var path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@as(*?*d2d1.IPathGeometry, @ptrCast(&path))));
 
         var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
+        hrPanicOnFail(path.Open(@as(*?*d2d1.IGeometrySink, @ptrCast(&sink))));
         defer {
             hrPanicOnFail(sink.Close());
             _ = sink.Release();
@@ -155,7 +155,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var ink_style: *d2d1.IInkStyle = undefined;
         hrPanicOnFail(gctx.d2d.?.context.CreateInkStyle(
             &.{ .nibShape = .ROUND, .nibTransform = d2d1.MATRIX_3X2_F.initIdentity() },
-            @ptrCast(*?*d2d1.IInkStyle, &ink_style),
+            @as(*?*d2d1.IInkStyle, @ptrCast(&ink_style)),
         ));
         break :blk ink_style;
     };
@@ -164,7 +164,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var ink: *d2d1.IInk = undefined;
         hrPanicOnFail(gctx.d2d.?.context.CreateInk(
             &.{ .x = 0.0, .y = 0.0, .radius = 0.0 },
-            @ptrCast(*?*d2d1.IInk, &ink),
+            @as(*?*d2d1.IInk, @ptrCast(&ink)),
         ));
 
         var p0 = d2d1.POINT_2F{ .x = 0.0, .y = 0.0 };
@@ -208,26 +208,26 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const bezier_lines_path = blk: {
         var bezier_lines_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &bezier_lines_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@as(*?*d2d1.IPathGeometry, @ptrCast(&bezier_lines_path))));
 
         var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(bezier_lines_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
+        hrPanicOnFail(bezier_lines_path.Open(@as(*?*d2d1.IGeometrySink, @ptrCast(&sink))));
         defer {
             hrPanicOnFail(sink.Close());
             _ = sink.Release();
         }
         sink.BeginFigure(.{ .x = 0.0, .y = 0.0 }, .FILLED);
-        sink.AddLines(ink_points.items.ptr + 1, @intCast(u32, ink_points.items.len - 1));
+        sink.AddLines(ink_points.items.ptr + 1, @as(u32, @intCast(ink_points.items.len - 1)));
         sink.EndFigure(.OPEN);
         break :blk bezier_lines_path;
     };
 
     const left_mountain_geo = blk: {
         var left_mountain_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &left_mountain_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@as(*?*d2d1.IPathGeometry, @ptrCast(&left_mountain_path))));
 
         var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(left_mountain_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
+        hrPanicOnFail(left_mountain_path.Open(@as(*?*d2d1.IGeometrySink, @ptrCast(&sink))));
         defer {
             hrPanicOnFail(sink.Close());
             _ = sink.Release();
@@ -244,15 +244,15 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         };
         sink.AddLines(&points, points.len);
         sink.EndFigure(.CLOSED);
-        break :blk @ptrCast(*d2d1.IGeometry, left_mountain_path);
+        break :blk @as(*d2d1.IGeometry, @ptrCast(left_mountain_path));
     };
 
     const right_mountain_geo = blk: {
         var right_mountain_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &right_mountain_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@as(*?*d2d1.IPathGeometry, @ptrCast(&right_mountain_path))));
 
         var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(right_mountain_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
+        hrPanicOnFail(right_mountain_path.Open(@as(*?*d2d1.IGeometrySink, @ptrCast(&sink))));
         defer {
             hrPanicOnFail(sink.Close());
             _ = sink.Release();
@@ -271,15 +271,15 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         };
         sink.AddLines(&points, points.len);
         sink.EndFigure(.CLOSED);
-        break :blk @ptrCast(*d2d1.IGeometry, right_mountain_path);
+        break :blk @as(*d2d1.IGeometry, @ptrCast(right_mountain_path));
     };
 
     const sun_geo = blk: {
         var sun_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &sun_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@as(*?*d2d1.IPathGeometry, @ptrCast(&sun_path))));
 
         var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(sun_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
+        hrPanicOnFail(sun_path.Open(@as(*?*d2d1.IGeometrySink, @ptrCast(&sink))));
         defer {
             hrPanicOnFail(sink.Close());
             _ = sink.Release();
@@ -361,15 +361,15 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         });
         sink.EndFigure(.OPEN);
 
-        break :blk @ptrCast(*d2d1.IGeometry, sun_path);
+        break :blk @as(*d2d1.IGeometry, @ptrCast(sun_path));
     };
 
     const river_geo = blk: {
         var river_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &river_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@as(*?*d2d1.IPathGeometry, @ptrCast(&river_path))));
 
         var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(river_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
+        hrPanicOnFail(river_path.Open(@as(*?*d2d1.IGeometrySink, @ptrCast(&sink))));
         defer {
             hrPanicOnFail(sink.Close());
             _ = sink.Release();
@@ -398,7 +398,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .point3 = .{ .x = 296.0, .y = 392.0 },
         });
         sink.EndFigure(.CLOSED);
-        break :blk @ptrCast(*d2d1.IGeometry, river_path);
+        break :blk @as(*d2d1.IGeometry, @ptrCast(river_path));
     };
 
     const radial_gradient_brush = blk: {
@@ -412,7 +412,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             2,
             ._2_2,
             .CLAMP,
-            @ptrCast(*?*d2d1.IGradientStopCollection, &stop_collection),
+            @as(*?*d2d1.IGradientStopCollection, @ptrCast(&stop_collection)),
         ));
         defer _ = stop_collection.Release();
 
@@ -426,7 +426,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             },
             null,
             stop_collection,
-            @ptrCast(*?*d2d1.IRadialGradientBrush, &radial_gradient_brush),
+            @as(*?*d2d1.IRadialGradientBrush, @ptrCast(&radial_gradient_brush)),
         ));
         break :blk radial_gradient_brush;
     };
@@ -458,34 +458,34 @@ fn drawShapes(demo: DemoState) void {
     gctx.d2d.?.context.DrawLine(
         .{ .x = 20.0, .y = 200.0 },
         .{ .x = 120.0, .y = 300.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         33.0,
         demo.stroke_style,
     );
     gctx.d2d.?.context.DrawLine(
         .{ .x = 160.0, .y = 300.0 },
         .{ .x = 260.0, .y = 200.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         33.0,
         demo.stroke_style,
     );
     gctx.d2d.?.context.DrawLine(
         .{ .x = 300.0, .y = 200.0 },
         .{ .x = 400.0, .y = 300.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         33.0,
         demo.stroke_style,
     );
 
     gctx.d2d.?.context.DrawRectangle(
         &.{ .left = 500.0, .top = 100.0, .right = 600.0, .bottom = 200.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         5.0,
         null,
     );
     gctx.d2d.?.context.FillRectangle(
         &.{ .left = 610.0, .top = 100.0, .right = 710.0, .bottom = 200.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
     );
     gctx.d2d.?.context.FillRoundedRectangle(
         &.{
@@ -493,29 +493,29 @@ fn drawShapes(demo: DemoState) void {
             .radiusX = 20.0,
             .radiusY = 20.0,
         },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
     );
 
     gctx.d2d.?.context.DrawEllipse(
         &.{ .point = .{ .x = 990.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         5.0,
         null,
     );
     gctx.d2d.?.context.FillEllipse(
         &.{ .point = .{ .x = 1100.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
     );
     gctx.d2d.?.context.DrawGeometry(
-        @ptrCast(*d2d1.IGeometry, demo.ellipse),
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IGeometry, @ptrCast(demo.ellipse)),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         7.0,
         null,
     );
     gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(110.0, 0.0));
     gctx.d2d.?.context.FillGeometry(
-        @ptrCast(*d2d1.IGeometry, demo.ellipse),
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IGeometry, @ptrCast(demo.ellipse)),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         null,
     );
     gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
@@ -523,22 +523,22 @@ fn drawShapes(demo: DemoState) void {
     demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 });
     var i: u32 = 0;
     while (i < 5) : (i += 1) {
-        gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(0.0, @intToFloat(f32, i) * 50.0));
+        gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(0.0, @as(f32, @floatFromInt(i)) * 50.0));
         gctx.d2d.?.context.DrawGeometry(
-            @ptrCast(*d2d1.IGeometry, demo.path),
-            @ptrCast(*d2d1.IBrush, demo.brush),
+            @as(*d2d1.IGeometry, @ptrCast(demo.path)),
+            @as(*d2d1.IBrush, @ptrCast(demo.brush)),
             15.0,
             null,
         );
     }
 
     gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(500.0, 800.0));
-    gctx.d2d.?.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
+    gctx.d2d.?.context.DrawInk(demo.ink, @as(*d2d1.IBrush, @ptrCast(demo.brush)), demo.ink_style);
 
     demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
     gctx.d2d.?.context.DrawGeometry(
-        @ptrCast(*d2d1.IGeometry, demo.bezier_lines_path),
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IGeometry, @ptrCast(demo.bezier_lines_path)),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         3.0,
         null,
     );
@@ -547,12 +547,12 @@ fn drawShapes(demo: DemoState) void {
     for (demo.ink_points.items) |cp| {
         gctx.d2d.?.context.FillEllipse(
             &.{ .point = cp, .radiusX = 9.0, .radiusY = 9.0 },
-            @ptrCast(*d2d1.IBrush, demo.brush),
+            @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         );
     }
 
     gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(750.0, 900.0));
-    gctx.d2d.?.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
+    gctx.d2d.?.context.DrawInk(demo.ink, @as(*d2d1.IBrush, @ptrCast(demo.brush)), demo.ink_style);
 
     gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(1080.0, 640.0));
 
@@ -560,7 +560,7 @@ fn drawShapes(demo: DemoState) void {
     demo.brush.SetColor(&d2d1.colorf.White);
     gctx.d2d.?.context.FillRectangle(
         &.{ .left = 100.0, .top = 100.0, .right = 620.0, .bottom = 420.0 },
-        @ptrCast(*d2d1.IBrush, demo.brush),
+        @as(*d2d1.IBrush, @ptrCast(demo.brush)),
     );
 
     // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame (see graphics.endDraw2d()).
@@ -570,31 +570,31 @@ fn drawShapes(demo: DemoState) void {
     // NOTE(mziulek): Using 'demo.radial_gradient_brush' causes GPU-Based Validation errors (D3D11on12 bug?).
     // As a workaround we use 'demo.brush' (solid color brush).
     demo.brush.SetColor(&d2d1.colorf.DarkOrange);
-    gctx.d2d.?.context.FillGeometry(demo.sun_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.sun_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    gctx.d2d.?.context.DrawGeometry(demo.sun_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.sun_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), 5.0, null);
 
     // Draw left mountain geometry.
     demo.brush.SetColor(&d2d1.colorf.OliveDrab);
-    gctx.d2d.?.context.FillGeometry(demo.left_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.left_mountain_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    gctx.d2d.?.context.DrawGeometry(demo.left_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.left_mountain_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), 5.0, null);
 
     // Draw river geometry.
     demo.brush.SetColor(&d2d1.colorf.LightSkyBlue);
-    gctx.d2d.?.context.FillGeometry(demo.river_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.river_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    gctx.d2d.?.context.DrawGeometry(demo.river_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.river_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), 5.0, null);
 
     // Draw right mountain geometry.
     demo.brush.SetColor(&d2d1.colorf.YellowGreen);
-    gctx.d2d.?.context.FillGeometry(demo.right_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.right_mountain_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    gctx.d2d.?.context.DrawGeometry(demo.right_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.right_mountain_geo, @as(*d2d1.IBrush, @ptrCast(demo.brush)), 5.0, null);
 
     gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
 }
@@ -665,10 +665,10 @@ fn draw(demo: *DemoState) void {
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
-                .right = @intToFloat(f32, gctx.viewport_width),
-                .bottom = @intToFloat(f32, gctx.viewport_height),
+                .right = @as(f32, @floatFromInt(gctx.viewport_width)),
+                .bottom = @as(f32, @floatFromInt(gctx.viewport_height)),
             },
-            @ptrCast(*d2d1.IBrush, demo.brush),
+            @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         );
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.6, .g = 0.0, .b = 1.0, .a = 1.0 });
@@ -683,10 +683,10 @@ fn draw(demo: *DemoState) void {
             &d2d1.RECT_F{
                 .left = 1030.0,
                 .top = 220.0,
-                .right = @intToFloat(f32, gctx.viewport_width),
-                .bottom = @intToFloat(f32, gctx.viewport_height),
+                .right = @as(f32, @floatFromInt(gctx.viewport_width)),
+                .bottom = @as(f32, @floatFromInt(gctx.viewport_height)),
             },
-            @ptrCast(*d2d1.IBrush, demo.brush),
+            @as(*d2d1.IBrush, @ptrCast(demo.brush)),
         );
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });

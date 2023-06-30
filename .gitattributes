@@ -27,3 +27,5 @@ libs/zwin32/bin/x64/libdxcompiler.so.3.7 filter=lfs diff=lfs merge=lfs -text
 libs/zsdl/libs/macos/Frameworks/SDL2.framework/SDL2 filter=lfs diff=lfs merge=lfs -text
 libs/zsdl/libs/macos/Frameworks/SDL2.framework/Versions/A/SDL2 filter=lfs diff=lfs merge=lfs -text
 .dds filter=lfs diff=lfs merge=lfs -text
+libs/zsdl/libs/macos/Frameworks/SDL2_ttf.framework/SDL2_ttf filter=lfs diff=lfs merge=lfs -text
+libs/zsdl/libs/macos/Frameworks/SDL2_ttf.framework/Versions/A/SDL2_ttf filter=lfs diff=lfs merge=lfs -text

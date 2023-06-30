@@ -352,8 +352,8 @@ pub const IObject = extern struct {
                 data_size: *UINT,
                 data: ?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .GetPrivateData(@ptrCast(*IObject, self), guid, data_size, data);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .GetPrivateData(@as(*IObject, @ptrCast(self)), guid, data_size, data);
             }
             pub inline fn SetPrivateData(
                 self: *T,
@@ -361,20 +361,20 @@ pub const IObject = extern struct {
                 data_size: UINT,
                 data: ?*const anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .SetPrivateData(@ptrCast(*IObject, self), guid, data_size, data);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .SetPrivateData(@as(*IObject, @ptrCast(self)), guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(
                 self: *T,
                 guid: *const GUID,
                 data: ?*const IUnknown,
             ) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .SetPrivateDataInterface(@ptrCast(*IObject, self), guid, data);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .SetPrivateDataInterface(@as(*IObject, @ptrCast(self)), guid, data);
             }
             pub inline fn SetName(self: *T, name: LPCWSTR) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .SetName(@ptrCast(*IObject, self), name);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .SetName(@as(*IObject, @ptrCast(self)), name);
             }
         };
     }
@@ -399,8 +399,8 @@ pub const IDeviceChild = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IDeviceChild.VTable, self.__v)
-                    .GetDevice(@ptrCast(*IDeviceChild, self), guid, device);
+                return @as(*const IDeviceChild.VTable, @ptrCast(self.__v))
+                    .GetDevice(@as(*IDeviceChild, @ptrCast(self)), guid, device);
             }
         };
     }
@@ -463,8 +463,8 @@ pub const IDispatchable = extern struct {
 
             pub inline fn GetBindingProperties(self: *T) BINDING_PROPERTIES {
                 var properties: BINDING_PROPERTIES = undefined;
-                _ = @ptrCast(*const IDispatchable.VTable, self.__v)
-                    .GetBindingProperties(@ptrCast(*IDispatchable, self), &properties);
+                _ = @as(*const IDispatchable.VTable, @ptrCast(self.__v))
+                    .GetBindingProperties(@as(*IDispatchable, @ptrCast(self)), &properties);
                 return properties;
             }
         };
@@ -507,8 +507,8 @@ pub const IOperatorInitializer = extern struct {
             pub usingnamespace IDispatchable.Methods(T);
 
             pub inline fn Reset(self: *T, num_operators: UINT, operators: [*]const *ICompiledOperator) HRESULT {
-                return @ptrCast(*const IOperatorInitializer.VTable, self.__v)
-                    .Reset(@ptrCast(*IOperatorInitializer, self), num_operators, operators);
+                return @as(*const IOperatorInitializer.VTable, @ptrCast(self.__v))
+                    .Reset(@as(*IOperatorInitializer, @ptrCast(self)), num_operators, operators);
             }
         };
     }
@@ -552,24 +552,24 @@ pub const IBindingTable = extern struct {
             pub usingnamespace IDeviceChild.Methods(T);
 
             pub inline fn BindInputs(self: *T, num: UINT, bindings: ?[*]const BINDING_DESC) void {
-                @ptrCast(*const IBindingTable.VTable, self.__v)
-                    .BindInputs(@ptrCast(*IBindingTable, self), num, bindings);
+                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
+                    .BindInputs(@as(*IBindingTable, @ptrCast(self)), num, bindings);
             }
             pub inline fn BindOutputs(self: *T, num: UINT, bindings: ?[*]const BINDING_DESC) void {
-                @ptrCast(*const IBindingTable.VTable, self.__v)
-                    .BindOutputs(@ptrCast(*IBindingTable, self), num, bindings);
+                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
+                    .BindOutputs(@as(*IBindingTable, @ptrCast(self)), num, bindings);
             }
             pub inline fn BindTemporaryResource(self: *T, binding: ?*const BINDING_DESC) void {
-                @ptrCast(*const IBindingTable.VTable, self.__v)
-                    .BindTemporaryResource(@ptrCast(*IBindingTable, self), binding);
+                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
+                    .BindTemporaryResource(@as(*IBindingTable, @ptrCast(self)), binding);
             }
             pub inline fn BindPersistentResource(self: *T, binding: ?*const BINDING_DESC) void {
-                @ptrCast(*const IBindingTable.VTable, self.__v)
-                    .BindPersistentResource(@ptrCast(*IBindingTable, self), binding);
+                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
+                    .BindPersistentResource(@as(*IBindingTable, @ptrCast(self)), binding);
             }
             pub inline fn Reset(self: *T, desc: ?*const BINDING_TABLE_DESC) HRESULT {
-                return @ptrCast(*const IBindingTable.VTable, self.__v)
-                    .Reset(@ptrCast(*IBindingTable, self), desc);
+                return @as(*const IBindingTable.VTable, @ptrCast(self.__v))
+                    .Reset(@as(*IBindingTable, @ptrCast(self)), desc);
             }
         };
     }
@@ -600,8 +600,8 @@ pub const ICommandRecorder = extern struct {
                 dispatchable: *IDispatchable,
                 bindings: *IBindingTable,
             ) void {
-                @ptrCast(*const ICommandRecorder.VTable, self.__v)
-                    .RecordDispatch(@ptrCast(*ICommandRecorder, self), cmdlist, dispatchable, bindings);
+                @as(*const ICommandRecorder.VTable, @ptrCast(self.__v))
+                    .RecordDispatch(@as(*ICommandRecorder, @ptrCast(self)), cmdlist, dispatchable, bindings);
             }
         };
     }
@@ -628,8 +628,8 @@ pub const IDebugDevice = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
-                @ptrCast(*const IDebugDevice.VTable, self.v)
-                    .SetMuteDebugOutput(@ptrCast(*IDebugDevice, self), mute);
+                @as(*const IDebugDevice.VTable, @ptrCast(self.v))
+                    .SetMuteDebugOutput(@as(*IDebugDevice, @ptrCast(self)), mute);
             }
         };
     }
@@ -658,8 +658,8 @@ pub const IDevice = extern struct {
                 feature_support_data_size: UINT,
                 feature_support_data: *anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v).CheckFeatureSupport(
-                    @ptrCast(*IDevice, self),
+                return @as(*const IDevice.VTable, @ptrCast(self.__v)).CheckFeatureSupport(
+                    @as(*IDevice, @ptrCast(self)),
                     feature,
                     feature_query_data_size,
                     feature_query_data,
@@ -673,8 +673,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 ppv: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .CreateOperator(@ptrCast(*IDevice, self), desc, guid, ppv);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .CreateOperator(@as(*IDevice, @ptrCast(self)), desc, guid, ppv);
             }
             pub inline fn CompileOperator(
                 self: *T,
@@ -683,8 +683,8 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 ppv: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .CompileOperator(@ptrCast(*IDevice, self), op, flags, guid, ppv);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .CompileOperator(@as(*IDevice, @ptrCast(self)), op, flags, guid, ppv);
             }
             pub inline fn CreateOperatorInitializer(
                 self: *T,
@@ -693,12 +693,12 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 ppv: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .CreateOperatorInitializer(@ptrCast(*IDevice, self), num_ops, ops, guid, ppv);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .CreateOperatorInitializer(@as(*IDevice, @ptrCast(self)), num_ops, ops, guid, ppv);
             }
             pub inline fn CreateCommandRecorder(self: *T, guid: *const GUID, ppv: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .CreateCommandRecorder(@ptrCast(*IDevice, self), guid, ppv);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .CreateCommandRecorder(@as(*IDevice, @ptrCast(self)), guid, ppv);
             }
             pub inline fn CreateBindingTable(
                 self: *T,
@@ -706,24 +706,24 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 ppv: *?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .CreateBindingTable(@ptrCast(*IDevice, self), desc, guid, ppv);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .CreateBindingTable(@as(*IDevice, @ptrCast(self)), desc, guid, ppv);
             }
             pub inline fn Evict(self: *T, num: UINT, objs: [*]const *IPageable) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .Evict(@ptrCast(*IDevice, self), num, objs);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .Evict(@as(*IDevice, @ptrCast(self)), num, objs);
             }
             pub inline fn MakeResident(self: *T, num: UINT, objs: [*]const *IPageable) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .MakeResident(@ptrCast(*IDevice, self), num, objs);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .MakeResident(@as(*IDevice, @ptrCast(self)), num, objs);
             }
             pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .GetDeviceRemovedReason(@ptrCast(*IDevice, self));
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .GetDeviceRemovedReason(@as(*IDevice, @ptrCast(self)));
             }
             pub inline fn GetParentDevice(self: *T, guid: *const GUID, ppv: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .GetParentDevice(@ptrCast(*IDevice, self), guid, ppv);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .GetParentDevice(@as(*IDevice, @ptrCast(self)), guid, ppv);
             }
         };
     }
@@ -855,8 +855,8 @@ pub const IDevice1 = extern struct {
                 guid: *const GUID,
                 ppv: ?*?*anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IDevice1.VTable, self.__v)
-                    .CompileGraph(@ptrCast(*IDevice1, self), desc, flags, guid, ppv);
+                return @as(*const IDevice1.VTable, @ptrCast(self.__v))
+                    .CompileGraph(@as(*IDevice1, @ptrCast(self)), desc, flags, guid, ppv);
             }
         };
     }
@@ -953,9 +953,9 @@ pub fn createDevice(
         ?*?*anyopaque,
     ) callconv(WINAPI) HRESULT = undefined;
 
-    dmlCreateDevice1 = @ptrCast(
+    dmlCreateDevice1 = @as(
         @TypeOf(dmlCreateDevice1),
-        w32.GetProcAddress(directml_dll.?, "DMLCreateDevice1").?,
+        @ptrCast(w32.GetProcAddress(directml_dll.?, "DMLCreateDevice1").?),
     );
 
     return dmlCreateDevice1(d3d12_device, flags, min_feature_level, guid, ppv);

@@ -154,7 +154,7 @@ fn pdj(v: Vec2, scale: f32) Vec2 {
 fn julia(v: Vec2, scale: f32, rand01: f32) Vec2 {
     const r = scale * @sqrt(@sqrt(v[0] * v[0] + v[1] * v[1]));
     const theta = 0.5 * math.atan2(f32, v[0], v[1]) +
-        math.pi * @intToFloat(f32, @floatToInt(i32, 2.0 * rand01));
+        math.pi * @as(f32, @floatFromInt(@as(i32, @intFromFloat(2.0 * rand01))));
     const xx = r * math.cos(theta);
     const yy = r * math.sin(theta);
     return .{ xx, yy };

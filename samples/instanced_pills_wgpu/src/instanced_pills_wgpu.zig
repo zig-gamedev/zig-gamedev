@@ -135,7 +135,7 @@ const DemoState = struct {
         zgui.init(allocator);
         const scale_factor = scale_factor: {
             const scale = window.getContentScale();
-            break :scale_factor math.max(scale[0], scale[1]);
+            break :scale_factor @max(scale[0], scale[1]);
         };
         const font_normal = zgui.io.addFontFromFile(
             content_dir ++ "Roboto-Medium.ttf",
@@ -144,7 +144,7 @@ const DemoState = struct {
         assert(zgui.io.getFont(0) == font_normal);
 
         // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
+        zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
 
         const style = zgui.getStyle();
 
@@ -323,10 +323,10 @@ const DemoState = struct {
         const gctx = demo.gctx;
 
         const vertex_count = 2 * (segments + 1);
-        var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
+        var vertex_data = try allocator.alloc(Vertex, @as(usize, @intCast(vertex_count)));
         defer allocator.free(vertex_data);
 
-        var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
+        var index_data = try allocator.alloc(u16, @as(usize, @intCast(vertex_count)));
         defer allocator.free(index_data);
 
         vertex_generator.pill(segments, vertex_data, index_data);
@@ -407,7 +407,7 @@ const DemoState = struct {
                 .{ .v = &single_pill.segments, .min = 2, .max = 20 },
             );
             if (tab_activated or init_buffers or needs_vertex_update) {
-                const segments = @intCast(u16, single_pill.segments);
+                const segments = @as(u16, @intCast(single_pill.segments));
                 try demo.recreateVertexBuffers(segments, allocator);
                 demo.recreateInstanceBuffer(1);
             }
@@ -464,8 +464,8 @@ const DemoState = struct {
                 const scale = gctx.window.getContentScale();
                 const screen_to_clip = zm.mul(
                     zm.scaling(
-                        2 * scale[0] / @intToFloat(f32, gctx.swapchain_descriptor.width),
-                        -2 * scale[1] / @intToFloat(f32, gctx.swapchain_descriptor.height),
+                        2 * scale[0] / @as(f32, @floatFromInt(gctx.swapchain_descriptor.width)),
+                        -2 * scale[1] / @as(f32, @floatFromInt(gctx.swapchain_descriptor.height)),
                         1,
                     ),
                     zm.translation(-1, 1, 0.0),
@@ -474,8 +474,8 @@ const DemoState = struct {
 
                 const cursor_position = demo.gctx.window.getCursorPos();
                 const screen_position = zm.f32x4(
-                    @floatCast(f32, cursor_position[0]),
-                    @floatCast(f32, cursor_position[1]),
+                    @as(f32, @floatCast(cursor_position[0])),
+                    @as(f32, @floatCast(cursor_position[1])),
                     0.0,
                     1.0,
                 );
@@ -574,7 +574,7 @@ const DemoState = struct {
                 .{ .v = &multiple_pills.segments, .min = 2, .max = 20 },
             );
             if (tab_activated or needs_vertex_update) {
-                const segments = @intCast(u16, multiple_pills.segments);
+                const segments = @as(u16, @intCast(multiple_pills.segments));
                 try demo.recreateVertexBuffers(segments, allocator);
             }
             const InstanceValues = [_]usize{ 1000, 10000, 100000, 1000000 };
@@ -583,10 +583,10 @@ const DemoState = struct {
                 .v = &multiple_pills.instance_index,
                 .min = 0,
                 .max = InstanceValues.len - 1,
-                .cfmt = InstanceStrings[@intCast(usize, multiple_pills.instance_index)],
+                .cfmt = InstanceStrings[@as(usize, @intCast(multiple_pills.instance_index))],
             });
             if (tab_activated or need_instance_update) {
-                const instances = InstanceValues[@intCast(usize, multiple_pills.instance_index)];
+                const instances = InstanceValues[@as(usize, @intCast(multiple_pills.instance_index))];
                 demo.pills.clearRetainingCapacity();
                 var i: usize = 0;
                 while (i < instances) : (i += 1) {
@@ -674,7 +674,7 @@ const DemoState = struct {
                     mem.slice[0] = zm.transpose(object_to_clip);
 
                     pass.setBindGroup(0, bind_group, &.{mem.offset});
-                    pass.drawIndexed(demo.vertex_count, @intCast(u32, demo.pills.items.len), 0, 0, 0);
+                    pass.drawIndexed(demo.vertex_count, @as(u32, @intCast(demo.pills.items.len)), 0, 0, 0);
                 }
             }
             {
@@ -721,10 +721,10 @@ fn ensureFourByteMultiple(size: usize) usize {
 }
 
 fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
-    const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
-    const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
+    const width = @as(f32, @floatFromInt(gctx.swapchain_descriptor.width));
+    const height = @as(f32, @floatFromInt(gctx.swapchain_descriptor.height));
     const delta = math.sign(
-        @bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height),
+        @as(i32, @bitCast(gctx.swapchain_descriptor.width)) - @as(i32, @bitCast(gctx.swapchain_descriptor.height)),
     );
     return switch (delta) {
         -1 => .{ .width = 2.0, .height = 2 * width / height },
@@ -772,7 +772,7 @@ pub fn main() !void {
     if (zems.is_emscripten) {
         // by default emscripten initializes on window creation WebGL context
         // this flag skips context creation. otherwise we later can't create webgpu surface
-        zglfw.WindowHint.set(.client_api, @enumToInt(zglfw.ClientApi.no_api));
+        zglfw.WindowHint.set(.client_api, @intFromEnum(zglfw.ClientApi.no_api));
     }
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch {
         std.log.err("Failed to create demo window.", .{});

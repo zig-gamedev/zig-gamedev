@@ -7,6 +7,7 @@ const c = @cImport({
     if (options.use_double_precision) @cDefine("JPH_DOUBLE_PRECISION", "");
     if (options.enable_asserts) @cDefine("JPH_ENABLE_ASSERTS", "");
     if (options.enable_cross_platform_determinism) @cDefine("JPH_CROSS_PLATFORM_DETERMINISTIC", "");
+    if (options.enable_debug_renderer) @cDefine("JPH_DEBUG_RENDERER", "");
     @cInclude("JoltPhysicsC.h");
 });
 
@@ -39,6 +40,15 @@ pub const body_id_sequence_shift: BodyId = c.JPC_BODY_ID_SEQUENCE_SHIFT;
 
 pub const sub_shape_id_empty: SubShapeId = c.JPC_SUB_SHAPE_ID_EMPTY;
 
+pub const debug_renderer_enabled = options.enable_debug_renderer;
+comptime {
+    assert(if (debug_renderer_enabled) c.JPC_DEBUG_RENDERER == 1 else c.JPC_DEBUG_RENDERER == 0);
+}
+const debug_renderer_disabled_message: []const u8 =
+    \\is called, but debug rendering is not enabled for this build. To enable it, use the option {.enable_debug_renderer
+    \\ = true} when building zphysics. Otherwise, test if debug_renderer_enabled is true before calling.
+;
+
 const TempAllocator = opaque {};
 const JobSystem = opaque {};
 
@@ -46,7 +56,7 @@ const JobSystem = opaque {};
 /// When a body is freed the memory that the pointer occupies is reused to store a freelist.
 /// NOTE: This function is *not* protected by a lock, use with care!
 pub inline fn isValidBodyPointer(body: *const Body) bool {
-    return (@ptrToInt(body) & c._JPC_IS_FREED_BODY_BIT) == 0;
+    return (@intFromPtr(body) & c._JPC_IS_FREED_BODY_BIT) == 0;
 }
 
 /// Access a body, will return a `null` if the `body_id` is no longer valid.
@@ -81,12 +91,12 @@ pub const BroadPhaseLayerInterface = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn getNumBroadPhaseLayers(self: *const T) u32 {
-                return @ptrCast(*const BroadPhaseLayerInterface.VTable, self.__v)
-                    .getNumBroadPhaseLayers(@ptrCast(*const BroadPhaseLayerInterface, self));
+                return @as(*const BroadPhaseLayerInterface.VTable, @ptrCast(self.__v))
+                    .getNumBroadPhaseLayers(@as(*const BroadPhaseLayerInterface, @ptrCast(self)));
             }
             pub inline fn getBroadPhaseLayer(self: *const T, layer: ObjectLayer) u32 {
-                return @ptrCast(*const BroadPhaseLayerInterface.VTable, self.__v)
-                    .getBroadPhaseLayer(@ptrCast(*const BroadPhaseLayerInterface, self), layer);
+                return @as(*const BroadPhaseLayerInterface.VTable, @ptrCast(self.__v))
+                    .getBroadPhaseLayer(@as(*const BroadPhaseLayerInterface, @ptrCast(self)), layer);
             }
         };
     }
@@ -124,8 +134,8 @@ pub const ObjectVsBroadPhaseLayerFilter = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn shouldCollide(self: *const T, layer1: ObjectLayer, layer2: BroadPhaseLayer) bool {
-                return @ptrCast(*const ObjectVsBroadPhaseLayerFilter.VTable, self.__v)
-                    .shouldCollide(@ptrCast(*const ObjectVsBroadPhaseLayerFilter, self), layer1, layer2);
+                return @as(*const ObjectVsBroadPhaseLayerFilter.VTable, @ptrCast(self.__v))
+                    .shouldCollide(@as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(self)), layer1, layer2);
             }
         };
     }
@@ -156,8 +166,8 @@ pub const BroadPhaseLayerFilter = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn shouldCollide(self: *const T, layer: BroadPhaseLayer) bool {
-                return @ptrCast(*const BroadPhaseLayerFilter.VTable, self.__v)
-                    .shouldCollide(@ptrCast(*const BroadPhaseLayerFilter, self), layer);
+                return @as(*const BroadPhaseLayerFilter.VTable, @ptrCast(self.__v))
+                    .shouldCollide(@as(*const BroadPhaseLayerFilter, @ptrCast(self)), layer);
             }
         };
     }
@@ -186,8 +196,8 @@ pub const ObjectLayerPairFilter = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn shouldCollide(self: *const T, layer1: ObjectLayer, layer2: ObjectLayer) bool {
-                return @ptrCast(*const ObjectLayerPairFilter.VTable, self.__v)
-                    .shouldCollide(@ptrCast(*const ObjectLayerPairFilter, self), layer1, layer2);
+                return @as(*const ObjectLayerPairFilter.VTable, @ptrCast(self.__v))
+                    .shouldCollide(@as(*const ObjectLayerPairFilter, @ptrCast(self)), layer1, layer2);
             }
         };
     }
@@ -213,8 +223,8 @@ pub const ObjectLayerFilter = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn shouldCollide(self: *const T, layer: ObjectLayer) bool {
-                return @ptrCast(*const ObjectLayerFilter.VTable, self.__v)
-                    .shouldCollide(@ptrCast(*const ObjectLayerFilter, self), layer);
+                return @as(*const ObjectLayerFilter.VTable, @ptrCast(self.__v))
+                    .shouldCollide(@as(*const ObjectLayerFilter, @ptrCast(self)), layer);
             }
         };
     }
@@ -242,16 +252,16 @@ pub const BodyActivationListener = extern struct {
                 body_id: *const BodyId,
                 user_data: u64,
             ) void {
-                @ptrCast(*const BodyActivationListener.VTable, self.__v)
-                    .onBodyActivated(@ptrCast(*const BodyActivationListener, self), body_id, user_data);
+                @as(*const BodyActivationListener.VTable, @ptrCast(self.__v))
+                    .onBodyActivated(@as(*const BodyActivationListener, @ptrCast(self)), body_id, user_data);
             }
             pub inline fn onBodyDeactivated(
                 self: *T,
                 body_id: *const BodyId,
                 user_data: u64,
             ) void {
-                @ptrCast(*const BodyActivationListener.VTable, self.__v)
-                    .onBodyDeactivated(@ptrCast(*const BodyActivationListener, self), body_id, user_data);
+                @as(*const BodyActivationListener.VTable, @ptrCast(self.__v))
+                    .onBodyDeactivated(@as(*const BodyActivationListener, @ptrCast(self)), body_id, user_data);
             }
         };
     }
@@ -293,9 +303,9 @@ pub const ContactListener = extern struct {
                 base_offset: *const [3]Real,
                 collision_result: *const CollideShapeResult,
             ) ValidateResult {
-                return @ptrCast(*const ContactListener.VTable, self.__v)
+                return @as(*const ContactListener.VTable, @ptrCast(self.__v))
                     .onContactValidate(
-                    @ptrCast(*const ContactListener, self),
+                    @as(*const ContactListener, @ptrCast(self)),
                     body1,
                     body2,
                     base_offset,
@@ -309,8 +319,8 @@ pub const ContactListener = extern struct {
                 manifold: *const ContactManifold,
                 settings: *ContactSettings,
             ) void {
-                @ptrCast(*const ContactListener.VTable, self.__v)
-                    .onContactAdded(@ptrCast(*const ContactListener, self), body1, body2, manifold, settings);
+                @as(*const ContactListener.VTable, @ptrCast(self.__v))
+                    .onContactAdded(@as(*const ContactListener, @ptrCast(self)), body1, body2, manifold, settings);
             }
             pub inline fn onContactPersisted(
                 self: *T,
@@ -319,15 +329,15 @@ pub const ContactListener = extern struct {
                 manifold: *const ContactManifold,
                 settings: *ContactSettings,
             ) void {
-                @ptrCast(*const ContactListener.VTable, self.__v)
-                    .onContactPersisted(@ptrCast(*const ContactListener, self), body1, body2, manifold, settings);
+                @as(*const ContactListener.VTable, @ptrCast(self.__v))
+                    .onContactPersisted(@as(*const ContactListener, @ptrCast(self)), body1, body2, manifold, settings);
             }
             pub inline fn onContactRemoved(
                 self: *T,
                 sub_shape_pair: *const SubShapeIdPair,
             ) void {
-                @ptrCast(*const ContactListener.VTable, self.__v)
-                    .onContactRemoved(@ptrCast(*const ContactListener, self), sub_shape_pair);
+                @as(*const ContactListener.VTable, @ptrCast(self.__v))
+                    .onContactRemoved(@as(*const ContactListener, @ptrCast(self)), sub_shape_pair);
             }
         };
     }
@@ -383,12 +393,12 @@ pub const BodyFilter = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn shouldCollide(self: *const T, body_id: *const BodyId) bool {
-                return @ptrCast(*const BodyFilter.VTable, self.__v)
-                    .shouldCollide(@ptrCast(*const BodyFilter, self), body_id);
+                return @as(*const BodyFilter.VTable, @ptrCast(self.__v))
+                    .shouldCollide(@as(*const BodyFilter, @ptrCast(self)), body_id);
             }
             pub inline fn shouldCollideLocked(self: *const T, body: *const Body) bool {
-                return @ptrCast(*const BodyFilter.VTable, self.__v)
-                    .shouldCollideLocked(@ptrCast(*const BodyFilter, self), body);
+                return @as(*const BodyFilter.VTable, @ptrCast(self.__v))
+                    .shouldCollideLocked(@as(*const BodyFilter, @ptrCast(self)), body);
             }
         };
     }
@@ -579,6 +589,14 @@ pub const RRayCast = extern struct {
     origin: [4]Real align(rvec_align), // 4th element is ignored
     direction: [4]f32 align(16), // 4th element is ignored
 
+    pub fn getPointOnRay(self: RRayCast, fraction: Real) [3]Real {
+        return .{
+            self.origin[0] + self.direction[0] * fraction,
+            self.origin[1] + self.direction[1] * fraction,
+            self.origin[2] + self.direction[2] * fraction,
+        };
+    }
+
     comptime {
         assert(@sizeOf(RRayCast) == @sizeOf(c.JPC_RRayCast));
         assert(@offsetOf(RRayCast, "origin") == @offsetOf(c.JPC_RRayCast, "origin"));
@@ -617,6 +635,271 @@ pub const RayCastSettings = extern struct {
             @offsetOf(c.JPC_RayCastSettings, "treat_convex_as_solid"));
     }
 };
+
+pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
+    pub fn createSingleton(debug_renderer_impl: *anyopaque) !void {
+        switch (@as(DebugRendererResult, @enumFromInt(c.JPC_CreateDebugRendererSingleton(debug_renderer_impl)))) {
+            .success => {
+                return;
+            },
+            .duplicate_singleton => {
+                return error.DebugRendererDuplicateSingleton;
+            },
+            .missing_singleton => {
+                return error.DebugRendererMissingSingleton;
+            },
+            .incomplete_impl => {
+                return error.DebugRendererIncompleteImplementation;
+            },
+        }
+    }
+
+    pub fn destroySingleton() void {
+        _ = c.JPC_DestroyDebugRendererSingleton(); // For Zig API, don't care if one actually existed, discard error.
+    }
+
+    pub fn createTriangleBatch(primitive_in: *anyopaque) *anyopaque {
+        return @as(*TriangleBatch, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in)));
+    }
+
+    pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
+        return @as(*BodyDrawFilter, @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func)))));
+    }
+
+    pub fn destroyBodyDrawFilter(filter: *BodyDrawFilter) void {
+        c.JPC_BodyDrawFilter_Destroy(@as(*c.JPC_BodyDrawFilter, @ptrCast(filter)));
+    }
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn drawLine(self: *T, from: *const [3]Real, to: *const [3]Real, color: *const Color) void {
+                return @as(*const DebugRenderer.VTable(T), @ptrCast(self.__v))
+                    .drawLine(
+                    @as(*const T, @ptrCast(self)),
+                    from,
+                    to,
+                    color,
+                );
+            }
+            pub inline fn drawTriangle(
+                self: *T,
+                v1: *const [3]Real,
+                v2: *const [3]Real,
+                v3: *const [3]Real,
+                color: *const Color,
+            ) void {
+                return @as(*const DebugRenderer.VTable(T), @ptrCast(self.__v))
+                    .drawTriangle(
+                    @as(*const T, @ptrCast(self)),
+                    v1,
+                    v2,
+                    v3,
+                    color,
+                );
+            }
+            pub inline fn createTriangleBatch(
+                self: *T,
+                triangles: []Triangle,
+                triangle_count: u32,
+            ) T.Batch {
+                return @as(*const DebugRenderer.VTable(T), @ptrCast(self.__v))
+                    .createTriangleBatch(
+                    @as(*const T, @ptrCast(self)),
+                    triangles,
+                    triangle_count,
+                );
+            }
+            pub inline fn createTriangleBatchIndexed(
+                self: *T,
+                vertices: []Vertex,
+                vertex_count: u32,
+                indices: []u32,
+                index_count: u32,
+            ) T.Batch {
+                return @as(*const DebugRenderer.VTable(T), @ptrCast(self.__v))
+                    .createTriangleBatchIndexed(
+                    @as(*const T, @ptrCast(self)),
+                    vertices,
+                    vertex_count,
+                    indices,
+                    index_count,
+                );
+            }
+            pub inline fn drawGeometry(
+                self: *T,
+                model_matrix: *const [16]Real,
+                world_space_bound: *const AABox,
+                lod_scale_sq: f32,
+                color: Color,
+                geometry: *anyopaque,
+                cull_mode: CullMode,
+                cast_shadow: CastShadow,
+                draw_mode: DrawMode,
+            ) void {
+                return @as(*const DebugRenderer.VTable(T), @ptrCast(self.__v))
+                    .drawGeometry(
+                    @as(*const T, @ptrCast(self)),
+                    model_matrix,
+                    world_space_bound,
+                    lod_scale_sq,
+                    color,
+                    geometry,
+                    cull_mode,
+                    cast_shadow,
+                    draw_mode,
+                );
+            }
+            pub inline fn drawText3D(
+                self: *T,
+                positions: *const [3]Real,
+                string: [*:0]const u8,
+                color: Color,
+                height: f32,
+            ) void {
+                return @as(*const DebugRenderer.VTable(T), @ptrCast(self.__v))
+                    .drawText3D(
+                    @as(*const T, @ptrCast(self)),
+                    positions,
+                    string,
+                    color,
+                    height,
+                );
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            drawLine: ?*const fn (
+                self: *T,
+                from: *const [3]Real,
+                to: *const [3]Real,
+                color: *const Color,
+            ) callconv(.C) void = null,
+            drawTriangle: ?*const fn (
+                self: *T,
+                v1: *const [3]Real,
+                v2: *const [3]Real,
+                v3: *const [3]Real,
+                color: *const Color,
+            ) callconv(.C) void = null,
+            createTriangleBatch: ?*const fn (
+                self: *T,
+                triangles: [*]Triangle,
+                triangle_count: u32,
+            ) callconv(.C) *anyopaque = null,
+            createTriangleBatchIndexed: ?*const fn (
+                self: *T,
+                vertices: [*]Vertex,
+                vertex_count: u32,
+                indices: [*]u32,
+                index_count: u32,
+            ) callconv(.C) *anyopaque = null,
+            drawGeometry: ?*const fn (
+                self: *T,
+                model_matrix: *const [16]Real,
+                world_space_bound: *const AABox,
+                lod_scale_sq: f32,
+                color: Color,
+                geometry: *anyopaque,
+                cull_mode: CullMode,
+                cast_shadow: CastShadow,
+                draw_mode: DrawMode,
+            ) callconv(.C) void = null,
+            drawText3D: ?*const fn (
+                self: *T,
+                positions: *const [3]Real,
+                string: [*:0]const u8,
+                color: Color,
+                height: f32,
+            ) callconv(.C) void = null,
+        };
+    }
+
+    pub const Color = extern union { uint: u32, comp: extern struct {
+        r: u8,
+        g: u8,
+        b: u8,
+        a: u8,
+    } };
+
+    pub const Triangle = extern struct {
+        v: [3]Vertex,
+    };
+
+    pub const Vertex = extern struct {
+        position: [3]f32,
+        normal: [3]f32,
+        uv: [2]f32,
+        color: Color,
+    };
+
+    pub const AABox = extern struct {
+        min: [3]f32,
+        max: [3]f32,
+    };
+
+    pub const BodyDrawSettings = extern struct {
+        get_support_func: bool = false, // Draw the GetSupport() function, used for convex collision detection
+        get_support_dir: bool = false, // If above true, also draw direction mapped to a specific support point
+        get_supporting_face: bool = false, // Draw the faces that were found colliding during collision detection
+        shape: bool = true, // Draw the shapes of all bodies
+        shape_wireframe: bool = false, // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
+        shape_color: ShapeColor = .motion_type_color, // Coloring scheme to use for shapes
+        bounding_box: bool = false, // Draw a bounding box per body
+        center_of_mass_transform: bool = false, // Draw the center of mass for each body
+        world_transform: bool = false, // Draw the world transform (which can be different than CoM) for each body
+        velocity: bool = false, // Draw the velocity vector for each body
+        mass_and_inertia: bool = false, // Draw the mass and inertia (as the box equivalent) for each body
+        sleep_stats: bool = false, // Draw stats regarding the sleeping algorithm of each body
+    };
+
+    pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);
+    pub const BodyDrawFilterFunc = *const fn (*const Body) align(BodyDrawFilterFuncAlignment) callconv(.C) bool;
+    pub const BodyDrawFilter = opaque {};
+
+    pub const TriangleBatch = opaque {};
+
+    pub const DebugRendererResult = enum(c.JPC_DebugRendererResult) {
+        success = c.JPC_DEBUGRENDERER_SUCCESS,
+        duplicate_singleton = c.JPC_DEBUGRENDERER_DUPLICATE_SINGLETON,
+        missing_singleton = c.JPC_DEBUGRENDERER_MISSING_SINGLETON,
+        incomplete_impl = c.JPC_DEBUGRENDERER_INCOMPLETE_IMPL,
+    };
+
+    pub const ShapeColor = enum(c.JPC_ShapeColor) {
+        instance_color = c.JPC_INSTANCE_COLOR, // Random color per instance
+        shape_type_color = c.JPC_SHAPE_TYPE_COLOR, // Convex = green, scaled = yellow, compound = orange, mesh = red
+        motion_type_color = c.JPC_MOTION_TYPE_COLOR, // Static = grey, keyframed = green, dynamic = random
+        sleep_color = c.JPC_SLEEP_COLOR, // Static = grey, keyframed = green, dynamic = yellow, asleep= red
+        island_color = c.JPC_ISLAND_COLOR, // Static = grey, active = random per island, sleeping = light grey
+        material_clor = c.JPC_MATERIAL_COLOR, // Color as defined by the PhysicsMaterial of the shape
+    };
+
+    pub const CullMode = enum(c.JPC_CullMode) {
+        cull_back_face = c.JPC_CULL_BACK_FACE,
+        cull_front_face = c.JPC_CULL_FRONT_FACE,
+        culling_off = c.JPC_CULLING_OFF,
+    };
+
+    pub const CastShadow = enum(c.JPC_CastShadow) {
+        cast_shadow_on = c.JPC_CAST_SHADOW_ON,
+        cast_shadow_off = c.JPC_CAST_SHADOW_OFF,
+    };
+
+    pub const DrawMode = enum(c.JPC_DrawMode) {
+        draw_mode_solid = c.JPC_DRAW_MODE_SOLID,
+        draw_mode_wireframe = c.JPC_DRAW_MODE_WIREFRAME,
+    };
+
+    comptime {
+        if (debug_renderer_enabled) {
+            assert(@sizeOf(VTable(@This())) == @sizeOf(c.JPC_DebugRendererVTable));
+            assert(@offsetOf(VTable(@This()), "drawTriangle") == @offsetOf(c.JPC_DebugRendererVTable, "DrawTriangle"));
+            assert(@offsetOf(VTable(@This()), "drawText3D") == @offsetOf(c.JPC_DebugRendererVTable, "DrawText3D"));
+        }
+    }
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Init/deinit and global state
@@ -652,14 +935,14 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     c.JPC_RegisterTypes();
 
     assert(temp_allocator == null and job_system == null);
-    temp_allocator = @ptrCast(*TempAllocator, c.JPC_TempAllocator_Create(args.temp_allocator_size));
-    job_system = @ptrCast(*JobSystem, c.JPC_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads));
+    temp_allocator = @as(*TempAllocator, @ptrCast(c.JPC_TempAllocator_Create(args.temp_allocator_size)));
+    job_system = @as(*JobSystem, @ptrCast(c.JPC_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads)));
 }
 
 pub fn deinit() void {
-    c.JPC_JobSystem_Destroy(@ptrCast(*c.JPC_JobSystem, job_system));
+    c.JPC_JobSystem_Destroy(@as(*c.JPC_JobSystem, @ptrCast(job_system)));
     job_system = null;
-    c.JPC_TempAllocator_Destroy(@ptrCast(*c.JPC_TempAllocator, temp_allocator));
+    c.JPC_TempAllocator_Destroy(@as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)));
     temp_allocator = null;
     c.JPC_DestroyFactory();
 
@@ -684,7 +967,7 @@ pub const PhysicsSystem = opaque {
             max_contact_constraints: u32 = 1024,
         },
     ) !*PhysicsSystem {
-        return @ptrCast(*PhysicsSystem, c.JPC_PhysicsSystem_Create(
+        return @as(*PhysicsSystem, @ptrCast(c.JPC_PhysicsSystem_Create(
             args.max_bodies,
             args.num_body_mutexes,
             args.max_body_pairs,
@@ -692,99 +975,99 @@ pub const PhysicsSystem = opaque {
             broad_phase_layer_interface,
             object_vs_broad_phase_layer_filter,
             object_layer_pair_filter,
-        ));
+        )));
     }
 
     pub fn destroy(physics_system: *PhysicsSystem) void {
-        c.JPC_PhysicsSystem_Destroy(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+        c.JPC_PhysicsSystem_Destroy(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
 
     pub fn getNumBodies(physics_system: *const PhysicsSystem) u32 {
-        return c.JPC_PhysicsSystem_GetNumBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetNumBodies(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
     pub fn getNumActiveBodies(physics_system: *const PhysicsSystem) u32 {
-        return c.JPC_PhysicsSystem_GetNumActiveBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetNumActiveBodies(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
     pub fn getMaxBodies(physics_system: *const PhysicsSystem) u32 {
-        return c.JPC_PhysicsSystem_GetMaxBodies(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetMaxBodies(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
 
     pub fn getGravity(physics_system: *const PhysicsSystem) [3]f32 {
         var gravity: [3]f32 = undefined;
-        c.JPC_PhysicsSystem_GetGravity(@ptrCast(*const c.JPC_PhysicsSystem, physics_system), &gravity);
+        c.JPC_PhysicsSystem_GetGravity(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)), &gravity);
         return gravity;
     }
     pub fn setGravity(physics_system: *PhysicsSystem, gravity: [3]f32) void {
-        c.JPC_PhysicsSystem_SetGravity(@ptrCast(*c.JPC_PhysicsSystem, physics_system), &gravity);
+        c.JPC_PhysicsSystem_SetGravity(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), &gravity);
     }
 
     pub fn getBodyInterface(physics_system: *const PhysicsSystem) *const BodyInterface {
-        return @ptrCast(
+        return @as(
             *const BodyInterface,
-            c.JPC_PhysicsSystem_GetBodyInterface(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
+            @ptrCast(c.JPC_PhysicsSystem_GetBodyInterface(@as(*c.JPC_PhysicsSystem, @ptrFromInt(@intFromPtr(physics_system))))),
         );
     }
     pub fn getBodyInterfaceNoLock(physics_system: *const PhysicsSystem) *const BodyInterface {
-        return @ptrCast(
+        return @as(
             *const BodyInterface,
-            c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system))),
+            @ptrCast(c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@as(*c.JPC_PhysicsSystem, @ptrFromInt(@intFromPtr(physics_system))))),
         );
     }
     pub fn getBodyInterfaceMut(physics_system: *PhysicsSystem) *BodyInterface {
-        return @ptrCast(
+        return @as(
             *BodyInterface,
-            c.JPC_PhysicsSystem_GetBodyInterface(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
+            @ptrCast(c.JPC_PhysicsSystem_GetBodyInterface(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)))),
         );
     }
     pub fn getBodyInterfaceMutNoLock(physics_system: *PhysicsSystem) *BodyInterface {
-        return @ptrCast(
+        return @as(
             *BodyInterface,
-            c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@ptrCast(*c.JPC_PhysicsSystem, physics_system)),
+            @ptrCast(c.JPC_PhysicsSystem_GetBodyInterfaceNoLock(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)))),
         );
     }
 
     pub fn getNarrowPhaseQuery(physics_system: *const PhysicsSystem) *const NarrowPhaseQuery {
-        return @ptrCast(
+        return @as(
             *const NarrowPhaseQuery,
-            c.JPC_PhysicsSystem_GetNarrowPhaseQuery(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
+            @ptrCast(c.JPC_PhysicsSystem_GetNarrowPhaseQuery(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)))),
         );
     }
     pub fn getNarrowPhaseQueryNoLock(physics_system: *const PhysicsSystem) *const NarrowPhaseQuery {
-        return @ptrCast(
+        return @as(
             *const NarrowPhaseQuery,
-            c.JPC_PhysicsSystem_GetNarrowPhaseQueryNoLock(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
+            @ptrCast(c.JPC_PhysicsSystem_GetNarrowPhaseQueryNoLock(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)))),
         );
     }
 
     pub fn getBodyLockInterface(physics_system: *const PhysicsSystem) *const BodyLockInterface {
-        return @ptrCast(
+        return @as(
             *const BodyLockInterface,
-            c.JPC_PhysicsSystem_GetBodyLockInterface(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
+            @ptrCast(c.JPC_PhysicsSystem_GetBodyLockInterface(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)))),
         );
     }
     pub fn getBodyLockInterfaceNoLock(physics_system: *const PhysicsSystem) *const BodyLockInterface {
-        return @ptrCast(
+        return @as(
             *const BodyLockInterface,
-            c.JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(@ptrCast(*const c.JPC_PhysicsSystem, physics_system)),
+            @ptrCast(c.JPC_PhysicsSystem_GetBodyLockInterfaceNoLock(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)))),
         );
     }
 
     pub fn setBodyActivationListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
-        c.JPC_PhysicsSystem_SetBodyActivationListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system), listener);
+        c.JPC_PhysicsSystem_SetBodyActivationListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
     }
     pub fn getBodyActivationListener(physics_system: *const PhysicsSystem) ?*anyopaque {
-        return c.JPC_PhysicsSystem_GetBodyActivationListener(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetBodyActivationListener(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
 
     pub fn setContactListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
-        c.JPC_PhysicsSystem_SetContactListener(@ptrCast(*c.JPC_PhysicsSystem, physics_system), listener);
+        c.JPC_PhysicsSystem_SetContactListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
     }
     pub fn getContactListener(physics_system: *const PhysicsSystem) ?*anyopaque {
-        return c.JPC_PhysicsSystem_GetContactListener(@ptrCast(*const c.JPC_PhysicsSystem, physics_system));
+        return c.JPC_PhysicsSystem_GetContactListener(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
 
     pub fn optimizeBroadPhase(physics_system: *PhysicsSystem) void {
-        c.JPC_PhysicsSystem_OptimizeBroadPhase(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
+        c.JPC_PhysicsSystem_OptimizeBroadPhase(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
 
     pub fn update(
@@ -796,12 +1079,12 @@ pub const PhysicsSystem = opaque {
         },
     ) !void {
         const res = c.JPC_PhysicsSystem_Update(
-            @ptrCast(*c.JPC_PhysicsSystem, physics_system),
+            @as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)),
             delta_time,
             args.collision_steps,
             args.integration_sub_steps,
-            @ptrCast(*c.JPC_TempAllocator, temp_allocator),
-            @ptrCast(*c.JPC_JobSystem, job_system),
+            @as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)),
+            @as(*c.JPC_JobSystem, @ptrCast(job_system)),
         );
 
         switch (res) {
@@ -813,12 +1096,52 @@ pub const PhysicsSystem = opaque {
         }
     }
 
+    pub fn drawBodies(
+        physics_system: *PhysicsSystem,
+        in_draw_settings: *const DebugRenderer.BodyDrawSettings,
+        in_draw_filter: ?*const DebugRenderer.BodyDrawFilter,
+    ) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawBodies(
+                @as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)),
+                @as(*const c.JPC_BodyManager_DrawSettings, @ptrCast(in_draw_settings)),
+                @as(?*const c.JPC_BodyDrawFilter, @ptrCast(in_draw_filter)),
+            );
+        } else {
+            @compileError("PhysicsSystem.drawBodies" ++ debug_renderer_disabled_message);
+        }
+    }
+
+    pub fn drawConstraints(physics_system: *PhysicsSystem) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawConstraints(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+        } else {
+            @compileError("PhysicsSystem.drawConstraints" ++ debug_renderer_disabled_message);
+        }
+    }
+
+    pub fn drawConstraintLimits(physics_system: *PhysicsSystem) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawConstraintLimits(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+        } else {
+            @compileError("PhysicsSystem.drawConstraintLimits" ++ debug_renderer_disabled_message);
+        }
+    }
+
+    pub fn drawConstraintReferenceFrame(physics_system: *PhysicsSystem) void {
+        if (debug_renderer_enabled) {
+            c.JPC_PhysicsSystem_DrawConstraintReferenceFrame(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+        } else {
+            @compileError("PhysicsSystem.drawConstraintReferenceFrame" ++ debug_renderer_disabled_message);
+        }
+    }
+
     pub fn getBodyIds(physics_system: *const PhysicsSystem, body_ids: *std.ArrayList(BodyId)) !void {
         try body_ids.ensureTotalCapacityPrecise(physics_system.getMaxBodies());
         var num_body_ids: u32 = 0;
         c.JPC_PhysicsSystem_GetBodyIDs(
-            @ptrCast(*const c.JPC_PhysicsSystem, physics_system),
-            @intCast(u32, body_ids.capacity),
+            @as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)),
+            @as(u32, @intCast(body_ids.capacity)),
             &num_body_ids,
             body_ids.items.ptr,
         );
@@ -829,8 +1152,8 @@ pub const PhysicsSystem = opaque {
         try body_ids.ensureTotalCapacityPrecise(physics_system.getMaxBodies());
         var num_body_ids: u32 = 0;
         c.JPC_PhysicsSystem_GetActiveBodyIDs(
-            @ptrCast(*const c.JPC_PhysicsSystem, physics_system),
-            @intCast(u32, body_ids.capacity),
+            @as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)),
+            @as(u32, @intCast(body_ids.capacity)),
             &num_body_ids,
             body_ids.items.ptr,
         );
@@ -840,14 +1163,14 @@ pub const PhysicsSystem = opaque {
     /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
     pub fn getBodiesUnsafe(physics_system: *const PhysicsSystem) []const *const Body {
         const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(
-            @intToPtr(*c.JPC_PhysicsSystem, @ptrToInt(physics_system)),
+            @as(*c.JPC_PhysicsSystem, @ptrFromInt(@intFromPtr(physics_system))),
         );
-        return @ptrCast([*]const *const Body, ptr)[0..physics_system.getNumBodies()];
+        return @as([*]const *const Body, @ptrCast(ptr))[0..physics_system.getNumBodies()];
     }
     /// NOTE: Advanced. This function is *not* protected by a lock, use with care!
     pub fn getBodiesMutUnsafe(physics_system: *PhysicsSystem) []const *Body {
-        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@ptrCast(*c.JPC_PhysicsSystem, physics_system));
-        return @ptrCast([*]const *Body, ptr)[0..physics_system.getNumBodies()];
+        const ptr = c.JPC_PhysicsSystem_GetBodiesUnsafe(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+        return @as([*]const *Body, @ptrCast(ptr))[0..physics_system.getNumBodies()];
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -866,16 +1189,16 @@ pub const BodyLockRead = extern struct {
         body_id: BodyId,
     ) void {
         c.JPC_BodyLockInterface_LockRead(
-            @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
+            @as(*const c.JPC_BodyLockInterface, @ptrCast(lock_interface)),
             body_id,
-            @ptrCast(*c.JPC_BodyLockRead, read_lock),
+            @as(*c.JPC_BodyLockRead, @ptrCast(read_lock)),
         );
     }
 
     pub fn unlock(read_lock: *BodyLockRead) void {
         c.JPC_BodyLockInterface_UnlockRead(
-            @ptrCast(*const c.JPC_BodyLockInterface, read_lock.lock_interface),
-            @ptrCast(*c.JPC_BodyLockRead, read_lock),
+            @as(*const c.JPC_BodyLockInterface, @ptrCast(read_lock.lock_interface)),
+            @as(*c.JPC_BodyLockRead, @ptrCast(read_lock)),
         );
     }
 
@@ -897,16 +1220,16 @@ pub const BodyLockWrite = extern struct {
         body_id: BodyId,
     ) void {
         c.JPC_BodyLockInterface_LockWrite(
-            @ptrCast(*const c.JPC_BodyLockInterface, lock_interface),
+            @as(*const c.JPC_BodyLockInterface, @ptrCast(lock_interface)),
             body_id,
-            @ptrCast(*c.JPC_BodyLockWrite, write_lock),
+            @as(*c.JPC_BodyLockWrite, @ptrCast(write_lock)),
         );
     }
 
     pub fn unlock(write_lock: *BodyLockWrite) void {
         c.JPC_BodyLockInterface_UnlockWrite(
-            @ptrCast(*const c.JPC_BodyLockInterface, write_lock.lock_interface),
-            @ptrCast(*c.JPC_BodyLockWrite, write_lock),
+            @as(*const c.JPC_BodyLockInterface, @ptrCast(write_lock.lock_interface)),
+            @as(*c.JPC_BodyLockWrite, @ptrCast(write_lock)),
         );
     }
 
@@ -924,31 +1247,31 @@ pub const BodyLockWrite = extern struct {
 pub const BodyInterface = opaque {
     pub fn createBody(body_iface: *BodyInterface, settings: BodyCreationSettings) !*Body {
         const body = c.JPC_BodyInterface_CreateBody(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
-            @ptrCast(*const c.JPC_BodyCreationSettings, &settings),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            @as(*const c.JPC_BodyCreationSettings, @ptrCast(&settings)),
         );
         if (body == null)
             return error.FailedToCreateBody;
-        return @ptrCast(*Body, body);
+        return @as(*Body, @ptrCast(body));
     }
 
     pub fn destroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
-        c.JPC_BodyInterface_DestroyBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+        c.JPC_BodyInterface_DestroyBody(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }
 
     pub fn addBody(body_iface: *BodyInterface, body_id: BodyId, mode: Activation) void {
-        c.JPC_BodyInterface_AddBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id, @enumToInt(mode));
+        c.JPC_BodyInterface_AddBody(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, @intFromEnum(mode));
     }
 
     pub fn removeBody(body_iface: *BodyInterface, body_id: BodyId) void {
-        c.JPC_BodyInterface_RemoveBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+        c.JPC_BodyInterface_RemoveBody(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }
 
     pub fn createAndAddBody(body_iface: *BodyInterface, settings: BodyCreationSettings, mode: Activation) !BodyId {
         const body_id = c.JPC_BodyInterface_CreateAndAddBody(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
-            @ptrCast(*const c.JPC_BodyCreationSettings, &settings),
-            @enumToInt(mode),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            @as(*const c.JPC_BodyCreationSettings, @ptrCast(&settings)),
+            @intFromEnum(mode),
         );
         if (body_id == body_id_invalid)
             return error.FailedToCreateBody;
@@ -961,19 +1284,19 @@ pub const BodyInterface = opaque {
     }
 
     pub fn isAdded(body_iface: *const BodyInterface, body_id: BodyId) bool {
-        return c.JPC_BodyInterface_IsAdded(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
+        return c.JPC_BodyInterface_IsAdded(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }
 
     pub fn activate(body_iface: *BodyInterface, body_id: BodyId) void {
-        return c.JPC_BodyInterface_ActivateBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+        return c.JPC_BodyInterface_ActivateBody(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }
 
     pub fn deactivate(body_iface: *BodyInterface, body_id: BodyId) void {
-        return c.JPC_BodyInterface_DeactivateBody(@ptrCast(*c.JPC_BodyInterface, body_iface), body_id);
+        return c.JPC_BodyInterface_DeactivateBody(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }
 
     pub fn isActive(body_iface: *const BodyInterface, body_id: BodyId) bool {
-        return c.JPC_BodyInterface_IsActive(@ptrCast(*const c.JPC_BodyInterface, body_iface), body_id);
+        return c.JPC_BodyInterface_IsActive(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }
 
     pub fn setLinearAndAngularVelocity(
@@ -983,7 +1306,7 @@ pub const BodyInterface = opaque {
         angular_velocity: [3]f32,
     ) void {
         return c.JPC_BodyInterface_SetLinearAndAngularVelocity(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &linear_velocity,
             &angular_velocity,
@@ -996,7 +1319,7 @@ pub const BodyInterface = opaque {
         var linear: [3]f32 = undefined;
         var angular: [3]f32 = undefined;
         c.JPC_BodyInterface_GetLinearAndAngularVelocity(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &linear,
             &angular,
@@ -1006,7 +1329,7 @@ pub const BodyInterface = opaque {
 
     pub fn setLinearVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
         return c.JPC_BodyInterface_SetLinearVelocity(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &velocity,
         );
@@ -1014,7 +1337,7 @@ pub const BodyInterface = opaque {
     pub fn getLinearVelocity(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
         var velocity: [3]f32 = undefined;
         c.JPC_BodyInterface_GetLinearVelocity(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &velocity,
         );
@@ -1023,7 +1346,7 @@ pub const BodyInterface = opaque {
 
     pub fn addLinearVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
         return c.JPC_BodyInterface_AddLinearVelocity(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &velocity,
         );
@@ -1036,7 +1359,7 @@ pub const BodyInterface = opaque {
         angular_velocity: [3]f32,
     ) void {
         return c.JPC_BodyInterface_AddLinearAndAngularVelocity(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &linear_velocity,
             &angular_velocity,
@@ -1045,7 +1368,7 @@ pub const BodyInterface = opaque {
 
     pub fn setAngularVelocity(body_iface: *BodyInterface, body_id: BodyId, velocity: [3]f32) void {
         return c.JPC_BodyInterface_SetAngularVelocity(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &velocity,
         );
@@ -1053,7 +1376,7 @@ pub const BodyInterface = opaque {
     pub fn getAngularVelocity(body_iface: *const BodyInterface, body_id: BodyId) [3]f32 {
         var velocity: [3]f32 = undefined;
         c.JPC_BodyInterface_GetAngularVelocity(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &velocity,
         );
@@ -1063,7 +1386,7 @@ pub const BodyInterface = opaque {
     pub fn getPointVelocity(body_iface: *const BodyInterface, body_id: BodyId, point: [3]Real) [3]f32 {
         var velocity: [3]f32 = undefined;
         c.JPC_BodyInterface_GetPointVelocity(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &point,
             &velocity,
@@ -1074,17 +1397,21 @@ pub const BodyInterface = opaque {
     pub fn getPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
         var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetPosition(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &position,
         );
         return position;
     }
 
+    pub fn setPosition(body_iface: *BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type: Activation) void {
+        c.JPC_BodyInterface_SetPosition(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_position, @intFromEnum(in_activation_type));
+    }
+
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
         var position: [3]Real = undefined;
         c.JPC_BodyInterface_GetCenterOfMassPosition(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &position,
         );
@@ -1094,11 +1421,15 @@ pub const BodyInterface = opaque {
     pub fn getRotation(body_iface: *const BodyInterface, body_id: BodyId) [4]f32 {
         var rotation: [4]f32 = undefined;
         c.JPC_BodyInterface_GetRotation(
-            @ptrCast(*const c.JPC_BodyInterface, body_iface),
+            @as(*const c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &rotation,
         );
         return rotation;
+    }
+
+    pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]Real, in_activation_type: Activation) void {
+        c.JPC_BodyInterface_SetRotation(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_rotation, @intFromEnum(in_activation_type));
     }
 
     pub fn setPositionRotationAndVelocity(
@@ -1110,7 +1441,7 @@ pub const BodyInterface = opaque {
         angular_velocity: [3]f32,
     ) void {
         return c.JPC_BodyInterface_SetPositionRotationAndVelocity(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &position,
             &rotation,
@@ -1121,14 +1452,14 @@ pub const BodyInterface = opaque {
 
     pub fn addForce(body_iface: *BodyInterface, body_id: BodyId, force: [3]f32) void {
         return c.JPC_BodyInterface_AddForce(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &force,
         );
     }
     pub fn addForceAtPosition(body_iface: *BodyInterface, body_id: BodyId, force: [3]f32, position: [3]Real) void {
         return c.JPC_BodyInterface_AddForceAtPosition(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &force,
             &position,
@@ -1137,14 +1468,14 @@ pub const BodyInterface = opaque {
 
     pub fn addTorque(body_iface: *BodyInterface, body_id: BodyId, torque: [3]f32) void {
         return c.JPC_BodyInterface_AddTorque(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &torque,
         );
     }
     pub fn addForceAndTorque(body_iface: *BodyInterface, body_id: BodyId, force: [3]f32, torque: [3]f32) void {
         return c.JPC_BodyInterface_AddForceAndTorque(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &force,
             &torque,
@@ -1153,7 +1484,7 @@ pub const BodyInterface = opaque {
 
     pub fn addImpulse(body_iface: *BodyInterface, body_id: BodyId, impulse: [3]f32) void {
         return c.JPC_BodyInterface_AddImpulse(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &impulse,
         );
@@ -1165,7 +1496,7 @@ pub const BodyInterface = opaque {
         position: [3]Real,
     ) void {
         return c.JPC_BodyInterface_AddImpulseAtPosition(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &impulse,
             &position,
@@ -1174,9 +1505,18 @@ pub const BodyInterface = opaque {
 
     pub fn addAngularImpulse(body_iface: *BodyInterface, body_id: BodyId, impulse: [3]f32) void {
         return c.JPC_BodyInterface_AddAngularImpulse(
-            @ptrCast(*c.JPC_BodyInterface, body_iface),
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
             body_id,
             &impulse,
+        );
+    }
+
+    pub fn setMotionType(body_iface: *BodyInterface, body_id: BodyId, in_motion_type: MotionType, in_activation_type: Activation) void {
+        return c.JPC_BodyInterface_SetMotionType(
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            body_id,
+            @intFromEnum(in_motion_type),
+            @intFromEnum(in_activation_type),
         );
     }
 };
@@ -1197,9 +1537,9 @@ pub const NarrowPhaseQuery = opaque {
     ) struct { has_hit: bool, hit: RayCastResult } {
         var hit: RayCastResult = .{};
         const has_hit = c.JPC_NarrowPhaseQuery_CastRay(
-            @ptrCast(*const c.JPC_NarrowPhaseQuery, query),
-            @ptrCast(*const c.JPC_RRayCast, &ray),
-            @ptrCast(*c.JPC_RayCastResult, &hit),
+            @as(*const c.JPC_NarrowPhaseQuery, @ptrCast(query)),
+            @as(*const c.JPC_RRayCast, @ptrCast(&ray)),
+            @as(*c.JPC_RayCastResult, @ptrCast(&hit)),
             args.broad_phase_layer_filter,
             args.object_layer_filter,
             args.body_filter,
@@ -1234,149 +1574,149 @@ pub const Body = extern struct {
     flags: u8,
 
     pub fn getId(body: *const Body) BodyId {
-        return c.JPC_Body_GetID(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetID(@as(*const c.JPC_Body, @ptrCast(body)));
     }
 
     pub fn isActive(body: *const Body) bool {
-        return c.JPC_Body_IsActive(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsActive(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn isStatic(body: *const Body) bool {
-        return c.JPC_Body_IsStatic(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsStatic(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn isKinematic(body: *const Body) bool {
-        return c.JPC_Body_IsKinematic(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsKinematic(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn isDynamic(body: *const Body) bool {
-        return c.JPC_Body_IsDynamic(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsDynamic(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn canBeKinematicOrDynamic(body: *const Body) bool {
-        return c.JPC_Body_CanBeKinematicOrDynamic(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_CanBeKinematicOrDynamic(@as(*const c.JPC_Body, @ptrCast(body)));
     }
 
     pub fn isSensor(body: *const Body) bool {
-        return c.JPC_Body_IsSensor(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsSensor(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn setIsSensor(body: *Body, is_sensor: bool) void {
-        c.JPC_Body_SetIsSensor(@ptrCast(*c.JPC_Body, body), is_sensor);
+        c.JPC_Body_SetIsSensor(@as(*c.JPC_Body, @ptrCast(body)), is_sensor);
     }
 
     pub fn getMotionType(body: *const Body) MotionType {
-        return @intToEnum(MotionType, c.JPC_Body_GetMotionType(@ptrCast(*const c.JPC_Body, body)));
+        return @as(MotionType, @enumFromInt(c.JPC_Body_GetMotionType(@as(*const c.JPC_Body, @ptrCast(body)))));
     }
     pub fn setMotionType(body: *Body, motion_type: MotionType) void {
-        return c.JPC_Body_SetMotionType(@ptrCast(*c.JPC_Body, body), @enumToInt(motion_type));
+        return c.JPC_Body_SetMotionType(@as(*c.JPC_Body, @ptrCast(body)), @intFromEnum(motion_type));
     }
 
     pub fn getBroadPhaseLayer(body: *const Body) BroadPhaseLayer {
-        return c.JPC_Body_GetBroadPhaseLayer(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetBroadPhaseLayer(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn getObjectLayer(body: *const Body) ObjectLayer {
-        return c.JPC_Body_GetObjectLayer(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetObjectLayer(@as(*const c.JPC_Body, @ptrCast(body)));
     }
 
     pub fn getCollisionGroup(body: *const Body) *const CollisionGroup {
-        return @ptrCast(
+        return @as(
             *const CollisionGroup,
-            c.JPC_Body_GetCollisionGroup(@intToPtr(*c.JPC_Body, @ptrToInt(body))),
+            @ptrCast(c.JPC_Body_GetCollisionGroup(@as(*c.JPC_Body, @ptrFromInt(@intFromPtr(body))))),
         );
     }
     pub fn getCollisionGroupMut(body: *Body) *CollisionGroup {
-        return @ptrCast(
+        return @as(
             *CollisionGroup,
-            c.JPC_Body_GetCollisionGroup(@ptrCast(*c.JPC_Body, body)),
+            @ptrCast(c.JPC_Body_GetCollisionGroup(@as(*c.JPC_Body, @ptrCast(body)))),
         );
     }
     pub fn setCollisionGroup(body: *Body, group: CollisionGroup) void {
         c.JPC_Body_SetCollisionGroup(
-            @ptrCast(*c.JPC_Body, body),
-            @ptrCast(*const c.JPC_CollisionGroup, &group),
+            @as(*c.JPC_Body, @ptrCast(body)),
+            @as(*const c.JPC_CollisionGroup, @ptrCast(&group)),
         );
     }
 
     pub fn getAllowSleeping(body: *const Body) bool {
-        return c.JPC_Body_GetAllowSleeping(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetAllowSleeping(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn setAllowSleeping(body: *Body, allow: bool) void {
-        c.JPC_Body_SetAllowSleeping(@ptrCast(*c.JPC_Body, body), allow);
+        c.JPC_Body_SetAllowSleeping(@as(*c.JPC_Body, @ptrCast(body)), allow);
     }
 
     pub fn getFriction(body: *const Body) f32 {
-        return c.JPC_Body_GetFriction(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetFriction(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn setFriction(body: *Body, friction: f32) void {
-        c.JPC_Body_SetFriction(@ptrCast(*c.JPC_Body, body), friction);
+        c.JPC_Body_SetFriction(@as(*c.JPC_Body, @ptrCast(body)), friction);
     }
 
     pub fn getRestitution(body: *const Body) f32 {
-        return c.JPC_Body_GetRestitution(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetRestitution(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn setRestitution(body: *Body, restitution: f32) void {
-        c.JPC_Body_SetRestitution(@ptrCast(*c.JPC_Body, body), restitution);
+        c.JPC_Body_SetRestitution(@as(*c.JPC_Body, @ptrCast(body)), restitution);
     }
 
     pub fn getLinearVelocity(body: *const Body) [3]f32 {
         var velocity: [3]f32 = undefined;
-        c.JPC_Body_GetLinearVelocity(@ptrCast(*const c.JPC_Body, body), &velocity);
+        c.JPC_Body_GetLinearVelocity(@as(*const c.JPC_Body, @ptrCast(body)), &velocity);
         return velocity;
     }
     pub fn setLinearVelocity(body: *Body, velocity: [3]f32) void {
-        c.JPC_Body_SetLinearVelocity(@ptrCast(*c.JPC_Body, body), &velocity);
+        c.JPC_Body_SetLinearVelocity(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
     }
     pub fn setLinearVelocityClamped(body: *Body, velocity: [3]f32) void {
-        c.JPC_Body_SetLinearVelocityClamped(@ptrCast(*c.JPC_Body, body), &velocity);
+        c.JPC_Body_SetLinearVelocityClamped(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
     }
 
     pub fn getAngularVelocity(body: *const Body) [3]f32 {
         var velocity: [3]f32 = undefined;
-        c.JPC_Body_GetAngularVelocity(@ptrCast(*const c.JPC_Body, body), &velocity);
+        c.JPC_Body_GetAngularVelocity(@as(*const c.JPC_Body, @ptrCast(body)), &velocity);
         return velocity;
     }
     pub fn setAngularVelocity(body: *Body, velocity: [3]f32) void {
-        c.JPC_Body_SetAnglularVelocity(@ptrCast(*c.JPC_Body, body), &velocity);
+        c.JPC_Body_SetAnglularVelocity(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
     }
     pub fn setAngularVelocityClamped(body: *Body, velocity: [3]f32) void {
-        c.JPC_Body_SetAnglularVelocityClamped(@ptrCast(*c.JPC_Body, body), &velocity);
+        c.JPC_Body_SetAnglularVelocityClamped(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
     }
 
     /// `point` is relative to the center of mass (com)
     pub fn getPointVelocityCom(body: *const Body, point: [3]f32) [3]f32 {
         var velocity: [3]f32 = undefined;
-        c.JPC_Body_GetPointVelocityCOM(@ptrCast(*const c.JPC_Body, body), &point, &velocity);
+        c.JPC_Body_GetPointVelocityCOM(@as(*const c.JPC_Body, @ptrCast(body)), &point, &velocity);
         return velocity;
     }
     /// `point` is in the world space
     pub fn getPointVelocity(body: *const Body, point: [3]Real) [3]f32 {
         var velocity: [3]f32 = undefined;
-        c.JPC_Body_GetPointVelocity(@ptrCast(*const c.JPC_Body, body), &point, &velocity);
+        c.JPC_Body_GetPointVelocity(@as(*const c.JPC_Body, @ptrCast(body)), &point, &velocity);
         return velocity;
     }
 
     pub fn addForce(body: *Body, force: [3]f32) void {
-        c.JPC_Body_AddForce(@ptrCast(*c.JPC_Body, body), &force);
+        c.JPC_Body_AddForce(@as(*c.JPC_Body, @ptrCast(body)), &force);
     }
     pub fn addForceAtPosition(body: *Body, force: [3]f32, position: [3]Real) void {
-        c.JPC_Body_AddForceAtPosition(@ptrCast(*c.JPC_Body, body), &force, &position);
+        c.JPC_Body_AddForceAtPosition(@as(*c.JPC_Body, @ptrCast(body)), &force, &position);
     }
 
     pub fn addTorque(body: *Body, torque: [3]f32) void {
-        c.JPC_Body_AddTorque(@ptrCast(*c.JPC_Body, body), &torque);
+        c.JPC_Body_AddTorque(@as(*c.JPC_Body, @ptrCast(body)), &torque);
     }
 
     pub fn getInverseInertia(body: *const Body) [16]f32 {
         var inverse_inertia: [16]f32 = undefined;
-        c.JPC_Body_GetInverseInertia(@ptrCast(*const c.JPC_Body, body), &inverse_inertia);
+        c.JPC_Body_GetInverseInertia(@as(*const c.JPC_Body, @ptrCast(body)), &inverse_inertia);
         return inverse_inertia;
     }
 
     pub fn addImpulse(body: *Body, impulse: [3]f32) void {
-        c.JPC_Body_AddImpulse(@ptrCast(*c.JPC_Body, body), &impulse);
+        c.JPC_Body_AddImpulse(@as(*c.JPC_Body, @ptrCast(body)), &impulse);
     }
     pub fn addImpulseAtPosition(body: *Body, impulse: [3]f32, position: [3]Real) void {
-        c.JPC_Body_AddImpulseAtPosition(@ptrCast(*c.JPC_Body, body), &impulse, &position);
+        c.JPC_Body_AddImpulseAtPosition(@as(*c.JPC_Body, @ptrCast(body)), &impulse, &position);
     }
 
     pub fn addAngularImpulse(body: *Body, impulse: [3]f32) void {
-        c.JPC_Body_AddAngularImpulse(@ptrCast(*c.JPC_Body, body), &impulse);
+        c.JPC_Body_AddAngularImpulse(@as(*c.JPC_Body, @ptrCast(body)), &impulse);
     }
 
     pub fn moveKinematic(
@@ -1386,7 +1726,7 @@ pub const Body = extern struct {
         delta_time: f32,
     ) void {
         c.JPC_Body_MoveKinematic(
-            @ptrCast(*c.JPC_Body, body),
+            @as(*c.JPC_Body, @ptrCast(body)),
             &target_position,
             &target_rotation,
             delta_time,
@@ -1405,7 +1745,7 @@ pub const Body = extern struct {
         delta_time: f32,
     ) void {
         c.JPC_Body_ApplyBuoyancyImpulse(
-            @ptrCast(*c.JPC_Body, body),
+            @as(*c.JPC_Body, @ptrCast(body)),
             &surface_position,
             &surface_normal,
             buoyancy,
@@ -1418,26 +1758,26 @@ pub const Body = extern struct {
     }
 
     pub fn isInBroadPhase(body: *const Body) bool {
-        return c.JPC_Body_IsInBroadPhase(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsInBroadPhase(@as(*const c.JPC_Body, @ptrCast(body)));
     }
 
     pub fn isCollisionCacheInvalid(body: *const Body) bool {
-        return c.JPC_Body_IsCollisionCacheInvalid(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_IsCollisionCacheInvalid(@as(*const c.JPC_Body, @ptrCast(body)));
     }
 
     pub fn getShape(body: *const Body) *const Shape {
-        return @ptrCast(*const Shape, c.JPC_Body_GetShape(@ptrCast(*const c.JPC_Body, body)));
+        return @as(*const Shape, @ptrCast(c.JPC_Body_GetShape(@as(*const c.JPC_Body, @ptrCast(body)))));
     }
 
     pub fn getPosition(body: *const Body) [3]Real {
         var position: [3]Real = undefined;
-        c.JPC_Body_GetPosition(@ptrCast(*const c.JPC_Body, body), &position);
+        c.JPC_Body_GetPosition(@as(*const c.JPC_Body, @ptrCast(body)), &position);
         return position;
     }
 
     pub fn getRotation(body: *const Body) [4]f32 {
         var rotation: [4]f32 = undefined;
-        c.JPC_Body_GetRotation(@ptrCast(*const c.JPC_Body, body), &rotation);
+        c.JPC_Body_GetRotation(@as(*const c.JPC_Body, @ptrCast(body)), &rotation);
         return rotation;
     }
 
@@ -1447,13 +1787,13 @@ pub const Body = extern struct {
     } {
         var rotation: [9]f32 = undefined;
         var position: [3]Real = undefined;
-        c.JPC_Body_GetWorldTransform(@ptrCast(*const c.JPC_Body, body), &rotation, &position);
+        c.JPC_Body_GetWorldTransform(@as(*const c.JPC_Body, @ptrCast(body)), &rotation, &position);
         return .{ .rotation = rotation, .position = position };
     }
 
     pub fn getCenterOfMassPosition(body: *const Body) [3]Real {
         var position: [3]Real = undefined;
-        c.JPC_Body_GetCenterOfMassPosition(@ptrCast(*const c.JPC_Body, body), &position);
+        c.JPC_Body_GetCenterOfMassPosition(@as(*const c.JPC_Body, @ptrCast(body)), &position);
         return position;
     }
 
@@ -1463,7 +1803,7 @@ pub const Body = extern struct {
     } {
         var rotation: [9]f32 = undefined;
         var position: [3]Real = undefined;
-        c.JPC_Body_GetCenterOfMassTransform(@ptrCast(*const c.JPC_Body, body), &rotation, &position);
+        c.JPC_Body_GetCenterOfMassTransform(@as(*const c.JPC_Body, @ptrCast(body)), &rotation, &position);
         return .{ .rotation = rotation, .position = position };
     }
 
@@ -1473,7 +1813,7 @@ pub const Body = extern struct {
     } {
         var rotation: [9]f32 = undefined;
         var position: [3]Real = undefined;
-        c.JPC_Body_GetInverseCenterOfMassTransform(@ptrCast(*const c.JPC_Body, body), &rotation, &position);
+        c.JPC_Body_GetInverseCenterOfMassTransform(@as(*const c.JPC_Body, @ptrCast(body)), &rotation, &position);
         return .{ .rotation = rotation, .position = position };
     }
 
@@ -1483,28 +1823,28 @@ pub const Body = extern struct {
     } {
         var min: [3]f32 = undefined;
         var max: [3]f32 = undefined;
-        c.JPC_Body_GetWorldSpaceBounds(@ptrCast(*const c.JPC_Body, body), &min, &max);
+        c.JPC_Body_GetWorldSpaceBounds(@as(*const c.JPC_Body, @ptrCast(body)), &min, &max);
         return .{ .min = min, .max = max };
     }
 
     pub fn getMotionProperties(body: *const Body) *const MotionProperties {
-        return @ptrCast(
+        return @as(
             *const MotionProperties,
-            c.JPC_Body_GetMotionProperties(@intToPtr(*c.JPC_Body, @ptrToInt(body))),
+            @ptrCast(c.JPC_Body_GetMotionProperties(@as(*c.JPC_Body, @ptrFromInt(@intFromPtr(body))))),
         );
     }
     pub fn getMotionPropertiesMut(body: *Body) *MotionProperties {
-        return @ptrCast(
+        return @as(
             *MotionProperties,
-            c.JPC_Body_GetMotionProperties(@ptrCast(*c.JPC_Body, body)),
+            @ptrCast(c.JPC_Body_GetMotionProperties(@as(*c.JPC_Body, @ptrCast(body)))),
         );
     }
 
     pub fn getUserData(body: *const Body) u64 {
-        return c.JPC_Body_GetUserData(@ptrCast(*const c.JPC_Body, body));
+        return c.JPC_Body_GetUserData(@as(*const c.JPC_Body, @ptrCast(body)));
     }
     pub fn setUserData(body: *Body, user_data: u64) void {
-        return c.JPC_Body_SetUserData(@ptrCast(*c.JPC_Body, body), user_data);
+        return c.JPC_Body_SetUserData(@as(*c.JPC_Body, @ptrCast(body)), user_data);
     }
 
     pub fn getWorldSpaceSurfaceNormal(
@@ -1514,7 +1854,7 @@ pub const Body = extern struct {
     ) [3]f32 {
         var normal: [3]f32 = undefined;
         c.JPC_Body_GetWorldSpaceSurfaceNormal(
-            @ptrCast(*const c.JPC_Body, body),
+            @as(*const c.JPC_Body, @ptrCast(body)),
             sub_shape_id,
             &position,
             &normal,
@@ -1558,40 +1898,40 @@ pub const MotionProperties = extern struct {
     reserved: [52 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
 
     pub fn getMotionQuality(motion: *const MotionProperties) MotionQuality {
-        return @intToEnum(MotionQuality, c.JPC_MotionProperties_GetMotionQuality(
-            @ptrCast(*const c.JPC_MotionProperties, motion),
-        ));
+        return @as(MotionQuality, @enumFromInt(c.JPC_MotionProperties_GetMotionQuality(
+            @as(*const c.JPC_MotionProperties, @ptrCast(motion)),
+        )));
     }
 
     pub fn getLinearVelocity(motion: *const MotionProperties) [3]f32 {
         var velocity: [3]f32 = undefined;
-        c.JPC_MotionProperties_GetLinearVelocity(@ptrCast(*const c.JPC_MotionProperties, motion), &velocity);
+        c.JPC_MotionProperties_GetLinearVelocity(@as(*const c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
         return velocity;
     }
     pub fn setLinearVelocity(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetLinearVelocity(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+        c.JPC_MotionProperties_SetLinearVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
     pub fn setLinearVelocityClamped(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetLinearVelocityClamped(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+        c.JPC_MotionProperties_SetLinearVelocityClamped(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
 
     pub fn getAngularVelocity(motion: *const MotionProperties) [3]f32 {
         var velocity: [3]f32 = undefined;
-        c.JPC_MotionProperties_GetAngularVelocity(@ptrCast(*const c.JPC_MotionProperties, motion), &velocity);
+        c.JPC_MotionProperties_GetAngularVelocity(@as(*const c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
         return velocity;
     }
     pub fn setAngularVelocity(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetAnglularVelocity(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+        c.JPC_MotionProperties_SetAnglularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
     pub fn setAngularVelocityClamped(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetAnglularVelocityClamped(@ptrCast(*c.JPC_MotionProperties, motion), &velocity);
+        c.JPC_MotionProperties_SetAnglularVelocityClamped(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
 
     /// `point` is relative to the center of mass (com)
     pub fn getPointVelocityCom(motion: *const MotionProperties, point: [3]f32) [3]f32 {
         var velocity: [3]f32 = undefined;
         c.JPC_MotionProperties_GetPointVelocityCOM(
-            @ptrCast(*const c.JPC_MotionProperties, motion),
+            @as(*const c.JPC_MotionProperties, @ptrCast(motion)),
             &point,
             &velocity,
         );
@@ -1599,17 +1939,17 @@ pub const MotionProperties = extern struct {
     }
 
     pub fn getMaxLinearVelocity(motion: *const MotionProperties) f32 {
-        return c.JPC_MotionProperties_GetMaxLinearVelocity(@ptrCast(*const c.JPC_MotionProperties, motion));
+        return c.JPC_MotionProperties_GetMaxLinearVelocity(@as(*const c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn setMaxLinearVelocity(motion: *MotionProperties, velocity: f32) void {
-        c.JPC_MotionProperties_SetMaxLinearVelocity(@ptrCast(*c.JPC_MotionProperties, motion), velocity);
+        c.JPC_MotionProperties_SetMaxLinearVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), velocity);
     }
 
     pub fn getMaxAngularVelocity(motion: *const MotionProperties) f32 {
-        return c.JPC_MotionProperties_GetMaxAngularVelocity(@ptrCast(*const c.JPC_MotionProperties, motion));
+        return c.JPC_MotionProperties_GetMaxAngularVelocity(@as(*const c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn setMaxAngularVelocity(motion: *MotionProperties, velocity: f32) void {
-        c.JPC_MotionProperties_SetMaxAngularVelocity(@ptrCast(*c.JPC_MotionProperties, motion), velocity);
+        c.JPC_MotionProperties_SetMaxAngularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), velocity);
     }
 
     pub fn moveKinematic(
@@ -1619,7 +1959,7 @@ pub const MotionProperties = extern struct {
         delta_time: f32,
     ) void {
         c.JPC_MotionProperties_MoveKinematic(
-            @ptrCast(*c.JPC_MotionProperties, motion),
+            @as(*c.JPC_MotionProperties, @ptrCast(motion)),
             &delta_position,
             &delta_rotation,
             delta_time,
@@ -1627,51 +1967,51 @@ pub const MotionProperties = extern struct {
     }
 
     pub fn clampLinearVelocity(motion: *MotionProperties) void {
-        c.JPC_MotionProperties_ClampLinearVelocity(@ptrCast(*c.JPC_MotionProperties, motion));
+        c.JPC_MotionProperties_ClampLinearVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn clampAngularVelocity(motion: *MotionProperties) void {
-        c.JPC_MotionProperties_ClampAngularVelocity(@ptrCast(*c.JPC_MotionProperties, motion));
+        c.JPC_MotionProperties_ClampAngularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)));
     }
 
     pub fn getLinearDamping(motion: *const MotionProperties) f32 {
-        return c.JPC_MotionProperties_GetLinearDamping(@ptrCast(*const c.JPC_MotionProperties, motion));
+        return c.JPC_MotionProperties_GetLinearDamping(@as(*const c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn setLinearDamping(motion: *MotionProperties, damping: f32) void {
-        c.JPC_MotionProperties_SetLinearDamping(@ptrCast(*c.JPC_MotionProperties, motion), damping);
+        c.JPC_MotionProperties_SetLinearDamping(@as(*c.JPC_MotionProperties, @ptrCast(motion)), damping);
     }
 
     pub fn getAngularDamping(motion: *const MotionProperties) f32 {
-        return c.JPC_MotionProperties_GetAngularDamping(@ptrCast(*const c.JPC_MotionProperties, motion));
+        return c.JPC_MotionProperties_GetAngularDamping(@as(*const c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn setAngularDamping(motion: *MotionProperties, damping: f32) void {
-        c.JPC_MotionProperties_SetAngularDamping(@ptrCast(*c.JPC_MotionProperties, motion), damping);
+        c.JPC_MotionProperties_SetAngularDamping(@as(*c.JPC_MotionProperties, @ptrCast(motion)), damping);
     }
 
     pub fn getGravityFactor(motion: *const MotionProperties) f32 {
-        return c.JPC_MotionProperties_GetGravityFactor(@ptrCast(*const c.JPC_MotionProperties, motion));
+        return c.JPC_MotionProperties_GetGravityFactor(@as(*const c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn setGravityFactor(motion: *MotionProperties, factor: f32) void {
-        c.JPC_MotionProperties_SetGravityFactor(@ptrCast(*c.JPC_MotionProperties, motion), factor);
+        c.JPC_MotionProperties_SetGravityFactor(@as(*c.JPC_MotionProperties, @ptrCast(motion)), factor);
     }
 
     pub fn setMassProperties(motion: *MotionProperties, mass_properties: MassProperties) void {
         c.JPC_MotionProperties_SetMassProperties(
-            @ptrCast(*c.JPC_MotionProperties, motion),
-            @ptrCast(*const c.JPC_MassProperties, &mass_properties),
+            @as(*c.JPC_MotionProperties, @ptrCast(motion)),
+            @as(*const c.JPC_MassProperties, @ptrCast(&mass_properties)),
         );
     }
 
     pub fn getInverseMass(motion: *const MotionProperties) f32 {
-        return c.JPC_MotionProperties_GetInverseMass(@ptrCast(*const c.JPC_MotionProperties, motion));
+        return c.JPC_MotionProperties_GetInverseMass(@as(*const c.JPC_MotionProperties, @ptrCast(motion)));
     }
     pub fn setInverseMass(motion: *MotionProperties, inverse_mass: f32) void {
-        c.JPC_MotionProperties_SetInverseMass(@ptrCast(*c.JPC_MotionProperties, motion), inverse_mass);
+        c.JPC_MotionProperties_SetInverseMass(@as(*c.JPC_MotionProperties, @ptrCast(motion)), inverse_mass);
     }
 
     pub fn getInverseInertiaDiagonal(motion: *const MotionProperties) [3]f32 {
         var diagonal: [3]f32 = undefined;
         c.JPC_MotionProperties_GetInverseInertiaDiagonal(
-            @ptrCast(*const c.JPC_MotionProperties, motion),
+            @as(*const c.JPC_MotionProperties, @ptrCast(motion)),
             &diagonal,
         );
         return diagonal;
@@ -1679,18 +2019,18 @@ pub const MotionProperties = extern struct {
 
     pub fn getInertiaRotation(motion: *const MotionProperties) [4]f32 {
         var rotation: [4]f32 = undefined;
-        c.JPC_MotionProperties_GetInertiaRotation(@ptrCast(*const c.JPC_MotionProperties, motion), &rotation);
+        c.JPC_MotionProperties_GetInertiaRotation(@as(*const c.JPC_MotionProperties, @ptrCast(motion)), &rotation);
         return rotation;
     }
 
     pub fn setInverseInertia(motion: *MotionProperties, diagonal: [3]f32, rotation: [4]f32) void {
-        c.JPC_MotionProperties_SetInverseInertia(@ptrCast(*c.JPC_MotionProperties, motion), &diagonal, &rotation);
+        c.JPC_MotionProperties_SetInverseInertia(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &diagonal, &rotation);
     }
 
     pub fn getLocalSpaceInverseInertia(motion: *const MotionProperties) [16]f32 {
         var inertia: [16]f32 = undefined;
         c.JPC_MotionProperties_GetLocalSpaceInverseInertia(
-            @ptrCast(*const c.JPC_MotionProperties, motion),
+            @as(*const c.JPC_MotionProperties, @ptrCast(motion)),
             &inertia,
         );
         return inertia;
@@ -1699,7 +2039,7 @@ pub const MotionProperties = extern struct {
     pub fn getInverseInertiaForRotation(motion: *const MotionProperties, rotation_matrix: [16]f32) [16]f32 {
         var inertia: [16]f32 = undefined;
         c.JPC_MotionProperties_GetInverseInertiaForRotation(
-            @ptrCast(*const c.JPC_MotionProperties, motion),
+            @as(*const c.JPC_MotionProperties, @ptrCast(motion)),
             &rotation_matrix,
             &inertia,
         );
@@ -1713,7 +2053,7 @@ pub const MotionProperties = extern struct {
     ) [3]f32 {
         var out: [3]f32 = undefined;
         c.JPC_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(
-            @ptrCast(*const c.JPC_MotionProperties, motion),
+            @as(*const c.JPC_MotionProperties, @ptrCast(motion)),
             &rotation,
             &vector,
             &out,
@@ -1739,34 +2079,34 @@ pub const ShapeSettings = opaque {
     fn Methods(comptime T: type) type {
         return struct {
             pub fn asShapeSettings(shape_settings: *const T) *const ShapeSettings {
-                return @ptrCast(*const ShapeSettings, shape_settings);
+                return @as(*const ShapeSettings, @ptrCast(shape_settings));
             }
             pub fn asShapeSettingsMut(shape_settings: *T) *ShapeSettings {
-                return @ptrCast(*ShapeSettings, shape_settings);
+                return @as(*ShapeSettings, @ptrCast(shape_settings));
             }
 
             pub fn addRef(shape_settings: *T) void {
-                c.JPC_ShapeSettings_AddRef(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
+                c.JPC_ShapeSettings_AddRef(@as(*c.JPC_ShapeSettings, @ptrCast(shape_settings)));
             }
             pub fn release(shape_settings: *T) void {
-                c.JPC_ShapeSettings_Release(@ptrCast(*c.JPC_ShapeSettings, shape_settings));
+                c.JPC_ShapeSettings_Release(@as(*c.JPC_ShapeSettings, @ptrCast(shape_settings)));
             }
             pub fn getRefCount(shape_settings: *const T) u32 {
-                return c.JPC_ShapeSettings_GetRefCount(@ptrCast(*const c.JPC_ShapeSettings, shape_settings));
+                return c.JPC_ShapeSettings_GetRefCount(@as(*const c.JPC_ShapeSettings, @ptrCast(shape_settings)));
             }
 
             pub fn createShape(shape_settings: *const T) !*Shape {
-                const shape = c.JPC_ShapeSettings_CreateShape(@ptrCast(*const c.JPC_ShapeSettings, shape_settings));
+                const shape = c.JPC_ShapeSettings_CreateShape(@as(*const c.JPC_ShapeSettings, @ptrCast(shape_settings)));
                 if (shape == null)
                     return error.FailedToCreateShape;
-                return @ptrCast(*Shape, shape);
+                return @as(*Shape, @ptrCast(shape));
             }
 
             pub fn getUserData(shape_settings: *const T) u64 {
-                return c.JPC_ShapeSettings_GetUserData(@ptrCast(*const c.JPC_ShapeSettings, shape_settings));
+                return c.JPC_ShapeSettings_GetUserData(@as(*const c.JPC_ShapeSettings, @ptrCast(shape_settings)));
             }
             pub fn setUserData(shape_settings: *T, user_data: u64) void {
-                return c.JPC_ShapeSettings_SetUserData(@ptrCast(*c.JPC_ShapeSettings, shape_settings), user_data);
+                return c.JPC_ShapeSettings_SetUserData(@as(*c.JPC_ShapeSettings, @ptrCast(shape_settings)), user_data);
             }
         };
     }
@@ -1784,29 +2124,29 @@ pub const ConvexShapeSettings = opaque {
             pub usingnamespace ShapeSettings.Methods(T);
 
             pub fn asConvexShapeSettings(convex_shape_settings: *T) *ConvexShapeSettings {
-                return @ptrCast(*ConvexShapeSettings, convex_shape_settings);
+                return @as(*ConvexShapeSettings, @ptrCast(convex_shape_settings));
             }
 
             pub fn getMaterial(convex_shape_settings: *const T) ?*const Material {
-                return @ptrCast(?*const Material, c.JPC_ConvexShapeSettings_GetMaterial(
-                    @ptrCast(*const c.JPC_ConvexShapeSettings, convex_shape_settings),
-                ));
+                return @as(?*const Material, @ptrCast(c.JPC_ConvexShapeSettings_GetMaterial(
+                    @as(*const c.JPC_ConvexShapeSettings, @ptrCast(convex_shape_settings)),
+                )));
             }
             pub fn setMaterial(convex_shape_settings: *T, material: ?*Material) void {
                 c.JPC_ConvexShapeSettings_SetMaterial(
-                    @ptrCast(*c.JPC_ConvexShapeSettings, convex_shape_settings),
-                    @ptrCast(?*c.JPC_PhysicsMaterial, material),
+                    @as(*c.JPC_ConvexShapeSettings, @ptrCast(convex_shape_settings)),
+                    @as(?*c.JPC_PhysicsMaterial, @ptrCast(material)),
                 );
             }
 
             pub fn getDensity(convex_shape_settings: *const T) f32 {
                 return c.JPC_ConvexShapeSettings_GetDensity(
-                    @ptrCast(*const c.JPC_ConvexShapeSettings, convex_shape_settings),
+                    @as(*const c.JPC_ConvexShapeSettings, @ptrCast(convex_shape_settings)),
                 );
             }
             pub fn setDensity(shape_settings: *T, density: f32) void {
                 c.JPC_ConvexShapeSettings_SetDensity(
-                    @ptrCast(*c.JPC_ConvexShapeSettings, shape_settings),
+                    @as(*c.JPC_ConvexShapeSettings, @ptrCast(shape_settings)),
                     density,
                 );
             }
@@ -1825,27 +2165,27 @@ pub const BoxShapeSettings = opaque {
         const box_shape_settings = c.JPC_BoxShapeSettings_Create(&half_extent);
         if (box_shape_settings == null)
             return error.FailedToCreateBoxShapeSettings;
-        return @ptrCast(*BoxShapeSettings, box_shape_settings);
+        return @as(*BoxShapeSettings, @ptrCast(box_shape_settings));
     }
 
     pub fn getHalfExtent(box_shape_settings: *const BoxShapeSettings) [3]f32 {
         var half_extent: [3]f32 = undefined;
         c.JPC_BoxShapeSettings_GetHalfExtent(
-            @ptrCast(*const c.JPC_BoxShapeSettings, box_shape_settings),
+            @as(*const c.JPC_BoxShapeSettings, @ptrCast(box_shape_settings)),
             &half_extent,
         );
         return half_extent;
     }
     pub fn setHalfExtent(box_shape_settings: *BoxShapeSettings, half_extent: [3]f32) void {
-        c.JPC_BoxShapeSettings_SetHalfExtent(@ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings), &half_extent);
+        c.JPC_BoxShapeSettings_SetHalfExtent(@as(*c.JPC_BoxShapeSettings, @ptrCast(box_shape_settings)), &half_extent);
     }
 
     pub fn getConvexRadius(box_shape_settings: *const BoxShapeSettings) f32 {
-        return c.JPC_BoxShapeSettings_GetConvexRadius(@ptrCast(*const c.JPC_BoxShapeSettings, box_shape_settings));
+        return c.JPC_BoxShapeSettings_GetConvexRadius(@as(*const c.JPC_BoxShapeSettings, @ptrCast(box_shape_settings)));
     }
     pub fn setConvexRadius(box_shape_settings: *BoxShapeSettings, convex_radius: f32) void {
         c.JPC_BoxShapeSettings_SetConvexRadius(
-            @ptrCast(*c.JPC_BoxShapeSettings, box_shape_settings),
+            @as(*c.JPC_BoxShapeSettings, @ptrCast(box_shape_settings)),
             convex_radius,
         );
     }
@@ -1862,17 +2202,17 @@ pub const SphereShapeSettings = opaque {
         const sphere_shape_settings = c.JPC_SphereShapeSettings_Create(radius);
         if (sphere_shape_settings == null)
             return error.FailedToCreateSphereShapeSettings;
-        return @ptrCast(*SphereShapeSettings, sphere_shape_settings);
+        return @as(*SphereShapeSettings, @ptrCast(sphere_shape_settings));
     }
 
     pub fn getRadius(sphere_shape_settings: *const SphereShapeSettings) f32 {
         return c.JPC_SphereShapeSettings_GetRadius(
-            @ptrCast(*const c.JPC_SphereShapeSettings, sphere_shape_settings),
+            @as(*const c.JPC_SphereShapeSettings, @ptrCast(sphere_shape_settings)),
         );
     }
     pub fn setRadius(sphere_shape_settings: *SphereShapeSettings, radius: f32) void {
         c.JPC_SphereShapeSettings_SetRadius(
-            @ptrCast(*c.JPC_SphereShapeSettings, sphere_shape_settings),
+            @as(*c.JPC_SphereShapeSettings, @ptrCast(sphere_shape_settings)),
             radius,
         );
     }
@@ -1889,17 +2229,17 @@ pub const TriangleShapeSettings = opaque {
         const triangle_shape_settings = c.JPC_TriangleShapeSettings_Create(&v1, &v2, &v3);
         if (triangle_shape_settings == null)
             return error.FailedToCreateTriangleShapeSettings;
-        return @ptrCast(*TriangleShapeSettings, triangle_shape_settings);
+        return @as(*TriangleShapeSettings, @ptrCast(triangle_shape_settings));
     }
 
     pub fn getConvexRadius(triangle_shape_settings: *const TriangleShapeSettings) f32 {
         return c.JPC_TriangleShapeSettings_GetConvexRadius(
-            @ptrCast(*const c.JPC_TriangleShapeSettings, triangle_shape_settings),
+            @as(*const c.JPC_TriangleShapeSettings, @ptrCast(triangle_shape_settings)),
         );
     }
     pub fn setConvexRadius(triangle_shape_settings: *TriangleShapeSettings, convex_radius: f32) void {
         c.JPC_TriangleShapeSettings_SetConvexRadius(
-            @ptrCast(*c.JPC_TriangleShapeSettings, triangle_shape_settings),
+            @as(*c.JPC_TriangleShapeSettings, @ptrCast(triangle_shape_settings)),
             convex_radius,
         );
     }
@@ -1916,29 +2256,29 @@ pub const CapsuleShapeSettings = opaque {
         const capsule_shape_settings = c.JPC_CapsuleShapeSettings_Create(half_height, radius);
         if (capsule_shape_settings == null)
             return error.FailedToCreateCapsuleShapeSettings;
-        return @ptrCast(*CapsuleShapeSettings, capsule_shape_settings);
+        return @as(*CapsuleShapeSettings, @ptrCast(capsule_shape_settings));
     }
 
     pub fn getHalfHeight(capsule_shape_settings: *const CapsuleShapeSettings) f32 {
         return c.JPC_CapsuleShapeSettings_GetHalfHeight(
-            @ptrCast(*const c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+            @as(*const c.JPC_CapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
         );
     }
     pub fn setHalfHeight(capsule_shape_settings: *CapsuleShapeSettings, half_height: f32) void {
         c.JPC_CapsuleShapeSettings_SetHalfHeight(
-            @ptrCast(*c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+            @as(*c.JPC_CapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
             half_height,
         );
     }
 
     pub fn getRadius(capsule_shape_settings: *const CapsuleShapeSettings) f32 {
         return c.JPC_CapsuleShapeSettings_GetRadius(
-            @ptrCast(*const c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+            @as(*const c.JPC_CapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
         );
     }
     pub fn setRadius(capsule_shape_settings: *CapsuleShapeSettings, radius: f32) void {
         c.JPC_CapsuleShapeSettings_SetRadius(
-            @ptrCast(*c.JPC_CapsuleShapeSettings, capsule_shape_settings),
+            @as(*c.JPC_CapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
             radius,
         );
     }
@@ -1959,41 +2299,41 @@ pub const TaperedCapsuleShapeSettings = opaque {
         );
         if (capsule_shape_settings == null)
             return error.FailedToCreateTaperedCapsuleShapeSettings;
-        return @ptrCast(*TaperedCapsuleShapeSettings, capsule_shape_settings);
+        return @as(*TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings));
     }
 
     pub fn getHalfHeight(capsule_shape_settings: *const TaperedCapsuleShapeSettings) f32 {
         return c.JPC_TaperedCapsuleShapeSettings_GetHalfHeight(
-            @ptrCast(*const c.JPC_TaperedCapsuleShapeSettings, capsule_shape_settings),
+            @as(*const c.JPC_TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
         );
     }
     pub fn setHalfHeight(capsule_shape_settings: *TaperedCapsuleShapeSettings, half_height: f32) void {
         c.JPC_CapsuleShapeSettings_SetHalfHeight(
-            @ptrCast(*c.JPC_TaperedCapsuleShapeSettings, capsule_shape_settings),
+            @as(*c.JPC_TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
             half_height,
         );
     }
 
     pub fn getTopRadius(capsule_shape_settings: *const TaperedCapsuleShapeSettings) f32 {
         return c.JPC_TaperedCapsuleShapeSettings_GetTopRadius(
-            @ptrCast(*const c.JPC_TaperedCapsuleShapeSettings, capsule_shape_settings),
+            @as(*const c.JPC_TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
         );
     }
     pub fn setTopRadius(capsule_shape_settings: *TaperedCapsuleShapeSettings, radius: f32) void {
         c.JPC_TaperedCapsuleShapeSettings_SetTopRadius(
-            @ptrCast(*c.JPC_TaperedCapsuleShapeSettings, capsule_shape_settings),
+            @as(*c.JPC_TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
             radius,
         );
     }
 
     pub fn getBottomRadius(capsule_shape_settings: *const TaperedCapsuleShapeSettings) f32 {
         return c.JPC_TaperedCapsuleShapeSettings_GetBottomRadius(
-            @ptrCast(*const c.JPC_TaperedCapsuleShapeSettings, capsule_shape_settings),
+            @as(*const c.JPC_TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
         );
     }
     pub fn setBottomRadius(capsule_shape_settings: *TaperedCapsuleShapeSettings, radius: f32) void {
         c.JPC_TaperedCapsuleShapeSettings_SetBottomRadius(
-            @ptrCast(*c.JPC_TaperedCapsuleShapeSettings, capsule_shape_settings),
+            @as(*c.JPC_TaperedCapsuleShapeSettings, @ptrCast(capsule_shape_settings)),
             radius,
         );
     }
@@ -2010,41 +2350,41 @@ pub const CylinderShapeSettings = opaque {
         const cylinder_shape_settings = c.JPC_CylinderShapeSettings_Create(half_height, radius);
         if (cylinder_shape_settings == null)
             return error.FailedToCreateCylinderShapeSettings;
-        return @ptrCast(*CylinderShapeSettings, cylinder_shape_settings);
+        return @as(*CylinderShapeSettings, @ptrCast(cylinder_shape_settings));
     }
 
     pub fn getConvexRadius(cylinder_shape_settings: *const CylinderShapeSettings) f32 {
         return c.JPC_CylinderShapeSettings_GetConvexRadius(
-            @ptrCast(*const c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            @as(*const c.JPC_CylinderShapeSettings, @ptrCast(cylinder_shape_settings)),
         );
     }
     pub fn setConvexRadius(cylinder_shape_settings: *CylinderShapeSettings, convex_radius: f32) void {
         c.JPC_CylinderShapeSettings_SetConvexRadius(
-            @ptrCast(*c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            @as(*c.JPC_CylinderShapeSettings, @ptrCast(cylinder_shape_settings)),
             convex_radius,
         );
     }
 
     pub fn getHalfHeight(cylinder_shape_settings: *const CylinderShapeSettings) f32 {
         return c.JPC_CylinderShapeSettings_GetHalfHeight(
-            @ptrCast(*const c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            @as(*const c.JPC_CylinderShapeSettings, @ptrCast(cylinder_shape_settings)),
         );
     }
     pub fn setHalfHeight(cylinder_shape_settings: *CylinderShapeSettings, half_height: f32) void {
         c.JPC_CylinderShapeSettings_SetHalfHeight(
-            @ptrCast(*c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            @as(*c.JPC_CylinderShapeSettings, @ptrCast(cylinder_shape_settings)),
             half_height,
         );
     }
 
     pub fn getRadius(cylinder_shape_settings: *const CylinderShapeSettings) f32 {
         return c.JPC_CylinderShapeSettings_GetRadius(
-            @ptrCast(*const c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            @as(*const c.JPC_CylinderShapeSettings, @ptrCast(cylinder_shape_settings)),
         );
     }
     pub fn setRadius(cylinder_shape_settings: *CylinderShapeSettings, radius: f32) void {
         c.JPC_CylinderShapeSettings_SetRadius(
-            @ptrCast(*c.JPC_CylinderShapeSettings, cylinder_shape_settings),
+            @as(*c.JPC_CylinderShapeSettings, @ptrCast(cylinder_shape_settings)),
             radius,
         );
     }
@@ -2061,17 +2401,17 @@ pub const ConvexHullShapeSettings = opaque {
         const settings = c.JPC_ConvexHullShapeSettings_Create(vertices, num_vertices, vertex_size);
         if (settings == null)
             return error.FailedToCreateConvexHullShapeSettings;
-        return @ptrCast(*ConvexHullShapeSettings, settings);
+        return @as(*ConvexHullShapeSettings, @ptrCast(settings));
     }
 
     pub fn getMaxConvexRadius(settings: *const ConvexHullShapeSettings) f32 {
         return c.JPC_ConvexHullShapeSettings_GetMaxConvexRadius(
-            @ptrCast(*const c.JPC_ConvexHullShapeSettings, settings),
+            @as(*const c.JPC_ConvexHullShapeSettings, @ptrCast(settings)),
         );
     }
     pub fn setMaxConvexRadius(settings: *ConvexHullShapeSettings, radius: f32) void {
         c.JPC_ConvexHullShapeSettings_SetMaxConvexRadius(
-            @ptrCast(*c.JPC_ConvexHullShapeSettings, settings),
+            @as(*c.JPC_ConvexHullShapeSettings, @ptrCast(settings)),
             radius,
         );
     }
@@ -2091,29 +2431,29 @@ pub const HeightFieldShapeSettings = opaque {
         const settings = c.JPC_HeightFieldShapeSettings_Create(samples, height_field_size);
         if (settings == null)
             return error.FailedToCreateHeightFieldShapeSettings;
-        return @ptrCast(*HeightFieldShapeSettings, settings);
+        return @as(*HeightFieldShapeSettings, @ptrCast(settings));
     }
 
     pub fn getBlockSize(settings: *const HeightFieldShapeSettings) u32 {
         return c.JPC_HeightFieldShapeSettings_GetBlockSize(
-            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+            @as(*const c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
         );
     }
     pub fn setBlockSize(settings: *HeightFieldShapeSettings, block_size: u32) void {
         c.JPC_HeightFieldShapeSettings_SetBlockSize(
-            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            @as(*c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
             block_size,
         );
     }
 
     pub fn getBitsPerSample(settings: *const HeightFieldShapeSettings) u32 {
         return c.JPC_HeightFieldShapeSettings_GetBitsPerSample(
-            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+            @as(*const c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
         );
     }
     pub fn setBitsPerSample(settings: *HeightFieldShapeSettings, num_bits: u32) void {
         c.JPC_HeightFieldShapeSettings_SetBitsPerSample(
-            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            @as(*c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
             num_bits,
         );
     }
@@ -2121,14 +2461,14 @@ pub const HeightFieldShapeSettings = opaque {
     pub fn getOffset(settings: *const HeightFieldShapeSettings) [3]f32 {
         var offset: [3]f32 = undefined;
         c.JPC_HeightFieldShapeSettings_GetOffset(
-            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+            @as(*const c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
             &offset,
         );
         return offset;
     }
     pub fn setOffset(settings: *HeightFieldShapeSettings, offset: [3]f32) void {
         c.JPC_HeightFieldShapeSettings_SetOffset(
-            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            @as(*c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
             &offset,
         );
     }
@@ -2136,14 +2476,14 @@ pub const HeightFieldShapeSettings = opaque {
     pub fn getScale(settings: *const HeightFieldShapeSettings) [3]f32 {
         var scale: [3]f32 = undefined;
         c.JPC_HeightFieldShapeSettings_GetScale(
-            @ptrCast(*const c.JPC_HeightFieldShapeSettings, settings),
+            @as(*const c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
             &scale,
         );
         return scale;
     }
     pub fn setScale(settings: *HeightFieldShapeSettings, scale: [3]f32) void {
         c.JPC_HeightFieldShapeSettings_SetScale(
-            @ptrCast(*c.JPC_HeightFieldShapeSettings, settings),
+            @as(*c.JPC_HeightFieldShapeSettings, @ptrCast(settings)),
             &scale,
         );
     }
@@ -2167,27 +2507,27 @@ pub const MeshShapeSettings = opaque {
             num_vertices,
             vertex_size,
             indices.ptr,
-            @intCast(u32, indices.len),
+            @as(u32, @intCast(indices.len)),
         );
         if (settings == null)
             return error.FailedToCreateMeshShapeSettings;
-        return @ptrCast(*MeshShapeSettings, settings);
+        return @as(*MeshShapeSettings, @ptrCast(settings));
     }
 
     pub fn getMaxTrianglesPerLeaf(settings: *const MeshShapeSettings) u32 {
         return c.JPC_MeshShapeSettings_GetMaxTrianglesPerLeaf(
-            @ptrCast(*const c.JPC_MeshShapeSettings, settings),
+            @as(*const c.JPC_MeshShapeSettings, @ptrCast(settings)),
         );
     }
     pub fn setMaxTrianglesPerLeaf(settings: *MeshShapeSettings, max_triangles: u32) void {
         c.JPC_MeshShapeSettings_SetMaxTrianglesPerLeaf(
-            @ptrCast(*c.JPC_MeshShapeSettings, settings),
+            @as(*c.JPC_MeshShapeSettings, @ptrCast(settings)),
             max_triangles,
         );
     }
 
     pub fn sanitize(settings: *MeshShapeSettings) void {
-        c.JPC_MeshShapeSettings_Sanitize(@ptrCast(*c.JPC_MeshShapeSettings, settings));
+        c.JPC_MeshShapeSettings_Sanitize(@as(*c.JPC_MeshShapeSettings, @ptrCast(settings)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -2246,40 +2586,40 @@ pub const Shape = opaque {
     fn Methods(comptime T: type) type {
         return struct {
             pub fn asShape(shape: *const T) *const Shape {
-                return @ptrCast(*const Shape, shape);
+                return @as(*const Shape, @ptrCast(shape));
             }
             pub fn asShapeMut(shape: *T) *Shape {
-                return @ptrCast(*Shape, shape);
+                return @as(*Shape, @ptrCast(shape));
             }
 
             pub fn addRef(shape: *T) void {
-                c.JPC_Shape_AddRef(@ptrCast(*c.JPC_Shape, shape));
+                c.JPC_Shape_AddRef(@as(*c.JPC_Shape, @ptrCast(shape)));
             }
             pub fn release(shape: *T) void {
-                c.JPC_Shape_Release(@ptrCast(*c.JPC_Shape, shape));
+                c.JPC_Shape_Release(@as(*c.JPC_Shape, @ptrCast(shape)));
             }
             pub fn getRefCount(shape: *const T) u32 {
-                return c.JPC_Shape_GetRefCount(@ptrCast(*const c.JPC_Shape, shape));
+                return c.JPC_Shape_GetRefCount(@as(*const c.JPC_Shape, @ptrCast(shape)));
             }
 
             pub fn getType(shape: *const T) Type {
-                return @intToEnum(
+                return @as(
                     Type,
-                    c.JPC_Shape_GetType(@ptrCast(*const c.JPC_Shape, shape)),
+                    @enumFromInt(c.JPC_Shape_GetType(@as(*const c.JPC_Shape, @ptrCast(shape)))),
                 );
             }
             pub fn getSubType(shape: *const T) SubType {
-                return @intToEnum(
+                return @as(
                     SubType,
-                    c.JPC_Shape_GetSubType(@ptrCast(*const c.JPC_Shape, shape)),
+                    @enumFromInt(c.JPC_Shape_GetSubType(@as(*const c.JPC_Shape, @ptrCast(shape)))),
                 );
             }
 
             pub fn getUserData(shape: *const T) u64 {
-                return c.JPC_Shape_GetUserData(@ptrCast(*const c.JPC_Shape, shape));
+                return c.JPC_Shape_GetUserData(@as(*const c.JPC_Shape, @ptrCast(shape)));
             }
             pub fn setUserData(shape: *T, user_data: u64) void {
-                return c.JPC_Shape_SetUserData(@ptrCast(*c.JPC_Shape, shape), user_data);
+                return c.JPC_Shape_SetUserData(@as(*c.JPC_Shape, @ptrCast(shape)), user_data);
             }
         };
     }
@@ -2295,14 +2635,14 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
 
     const ptr = mem_allocator.?.rawAlloc(
         size,
-        std.math.log2_int(u29, @intCast(u29, mem_alignment)),
+        std.math.log2_int(u29, @as(u29, @intCast(mem_alignment))),
         @returnAddress(),
     );
     if (ptr == null) @panic("zphysics: out of memory");
 
     mem_allocations.?.put(
-        @ptrToInt(ptr),
-        .{ .size = @intCast(u48, size), .alignment = mem_alignment },
+        @intFromPtr(ptr),
+        .{ .size = @as(u48, @intCast(size)), .alignment = mem_alignment },
     ) catch @panic("zphysics: out of memory");
 
     return ptr;
@@ -2314,14 +2654,14 @@ fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque 
 
     const ptr = mem_allocator.?.rawAlloc(
         size,
-        std.math.log2_int(u29, @intCast(u29, alignment)),
+        std.math.log2_int(u29, @as(u29, @intCast(alignment))),
         @returnAddress(),
     );
     if (ptr == null) @panic("zphysics: out of memory");
 
     mem_allocations.?.put(
-        @ptrToInt(ptr),
-        .{ .size = @intCast(u32, size), .alignment = @intCast(u16, alignment) },
+        @intFromPtr(ptr),
+        .{ .size = @as(u32, @intCast(size)), .alignment = @as(u16, @intCast(alignment)) },
     ) catch @panic("zphysics: out of memory");
 
     return ptr;
@@ -2332,13 +2672,13 @@ fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const info = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const info = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
 
-        const mem = @ptrCast([*]u8, ptr)[0..info.size];
+        const mem = @as([*]u8, @ptrCast(ptr))[0..info.size];
 
         mem_allocator.?.rawFree(
             mem,
-            std.math.log2_int(u29, @intCast(u29, info.alignment)),
+            std.math.log2_int(u29, @as(u29, @intCast(info.alignment))),
             @returnAddress(),
         );
     }
@@ -2378,7 +2718,7 @@ test "zphysics.BodyCreationSettings" {
     const bcs1 = blk: {
         var settings: c.JPC_BodyCreationSettings = undefined;
         c.JPC_BodyCreationSettings_SetDefault(&settings);
-        break :blk @ptrCast(*const BodyCreationSettings, &settings).*;
+        break :blk @as(*const BodyCreationSettings, @ptrCast(&settings)).*;
     };
 
     try expect(approxEql(Real, bcs0.position[0], bcs1.position[0], 0.0001));
@@ -2435,9 +2775,9 @@ test "zphysics.basic" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -2541,9 +2881,9 @@ test "zphysics.shape.sphere" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2582,9 +2922,9 @@ test "zphysics.shape.capsule" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2621,9 +2961,9 @@ test "zphysics.shape.taperedcapsule" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2661,9 +3001,9 @@ test "zphysics.shape.cylinder" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2703,9 +3043,9 @@ test "zphysics.shape.convexhull" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2738,9 +3078,9 @@ test "zphysics.shape.heightfield" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2785,9 +3125,9 @@ test "zphysics.shape.meshshape" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -2823,9 +3163,9 @@ test "zphysics.body.basic" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -2886,7 +3226,7 @@ test "zphysics.body.basic" {
             .sub_shape_id = undefined,
         };
         const has_hit = c.JPC_NarrowPhaseQuery_CastRay(
-            @ptrCast(*const c.JPC_NarrowPhaseQuery, query),
+            @as(*const c.JPC_NarrowPhaseQuery, @ptrCast(query)),
             &ray,
             &hit,
             null, // broad_phase_layer_filter
@@ -2997,9 +3337,9 @@ test "zphysics.body.motion" {
     const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
 
     const physics_system = try PhysicsSystem.create(
-        @ptrCast(*const BroadPhaseLayerInterface, &my_broad_phase_layer_interface),
-        @ptrCast(*const ObjectVsBroadPhaseLayerFilter, &my_broad_phase_should_collide),
-        @ptrCast(*const ObjectLayerPairFilter, &my_object_should_collide),
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
         .{},
     );
     defer physics_system.destroy();
@@ -3076,6 +3416,57 @@ test "zphysics.body.motion" {
     try expect(motion.gravity_factor == 0.5);
 }
 
+test "zphysics.debugrenderer" {
+    if (!debug_renderer_enabled) return;
+
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    var my_debug_renderer = test_cb1.MyDebugRenderer{};
+    try DebugRenderer.createSingleton(&my_debug_renderer);
+    defer DebugRenderer.destroySingleton();
+
+    const my_broad_phase_layer_interface = test_cb1.MyBroadphaseLayerInterface.init();
+    const my_broad_phase_should_collide = test_cb1.MyObjectVsBroadPhaseLayerFilter{};
+    const my_object_should_collide = test_cb1.MyObjectLayerPairFilter{};
+
+    const physics_system = try PhysicsSystem.create(
+        @as(*const BroadPhaseLayerInterface, @ptrCast(&my_broad_phase_layer_interface)),
+        @as(*const ObjectVsBroadPhaseLayerFilter, @ptrCast(&my_broad_phase_should_collide)),
+        @as(*const ObjectLayerPairFilter, @ptrCast(&my_object_should_collide)),
+        .{},
+    );
+    defer physics_system.destroy();
+
+    const shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
+    defer shape_settings.release();
+
+    const shape = try shape_settings.createShape();
+    defer shape.release();
+
+    const body_settings = BodyCreationSettings{
+        .position = .{ 0.0, 10.0, 0.0, 1.0 },
+        .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+        .shape = shape,
+        .motion_type = .dynamic,
+        .object_layer = test_cb1.object_layers.moving,
+    };
+
+    const body_interface = physics_system.getBodyInterfaceMut();
+    const body_id = try body_interface.createAndAddBody(body_settings, .activate);
+    defer body_interface.removeAndDestroyBody(body_id);
+
+    physics_system.optimizeBroadPhase();
+
+    try physics_system.update(0.1, .{});
+
+    const draw_settings: DebugRenderer.BodyDrawSettings = .{};
+    const draw_filter = DebugRenderer.createBodyDrawFilter(test_cb1.MyDebugRenderer.shouldBodyDraw);
+    defer DebugRenderer.destroyBodyDrawFilter(draw_filter);
+
+    physics_system.drawBodies(&draw_settings, draw_filter);
+}
+
 test {
     std.testing.refAllDecls(@This());
 }
@@ -3115,16 +3506,16 @@ const test_cb1 = struct {
         }
 
         fn _getNumBroadPhaseLayers(iself: *const BroadPhaseLayerInterface) callconv(.C) u32 {
-            const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
-            return @intCast(u32, self.object_to_broad_phase.len);
+            const self = @as(*const MyBroadphaseLayerInterface, @ptrCast(iself));
+            return @as(u32, @intCast(self.object_to_broad_phase.len));
         }
 
         fn _getBroadPhaseLayer(
             iself: *const BroadPhaseLayerInterface,
             layer: ObjectLayer,
         ) callconv(.C) BroadPhaseLayer {
-            const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
-            return self.object_to_broad_phase[@intCast(usize, layer)];
+            const self = @as(*const MyBroadphaseLayerInterface, @ptrCast(iself));
+            return self.object_to_broad_phase[@as(usize, @intCast(layer))];
         }
 
         fn _getBroadPhaseLayerMsvc(
@@ -3132,8 +3523,8 @@ const test_cb1 = struct {
             out_layer: *BroadPhaseLayer,
             layer: ObjectLayer,
         ) callconv(.C) *const BroadPhaseLayer {
-            const self = @ptrCast(*const MyBroadphaseLayerInterface, iself);
-            out_layer.* = self.object_to_broad_phase[@intCast(usize, layer)];
+            const self = @as(*const MyBroadphaseLayerInterface, @ptrCast(iself));
+            out_layer.* = self.object_to_broad_phase[@as(usize, @intCast(layer))];
             return out_layer;
         }
     };
@@ -3173,6 +3564,117 @@ const test_cb1 = struct {
                 object_layers.moving => true,
                 else => unreachable,
             };
+        }
+    };
+
+    const MyDebugRenderer = if (!debug_renderer_enabled) void else extern struct {
+        const MyRenderPrimitive = extern struct {
+            // Actual render data goes here
+            foobar: i32 = 0,
+        };
+
+        usingnamespace DebugRenderer.Methods(@This());
+        __v: *const DebugRenderer.VTable(@This()) = &vtable,
+
+        primitives: [32]MyRenderPrimitive = [_]MyRenderPrimitive{.{}} ** 32,
+        prim_head: i32 = -1,
+
+        const vtable = DebugRenderer.VTable(@This()){
+            .drawLine = drawLine,
+            .drawTriangle = drawTriangle,
+            .createTriangleBatch = createTriangleBatch,
+            .createTriangleBatchIndexed = createTriangleBatchIndexed,
+            .drawGeometry = drawGeometry,
+            .drawText3D = drawText3D,
+        };
+
+        pub fn shouldBodyDraw(_: *const Body) align(DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
+            return true;
+        }
+
+        fn drawLine(
+            self: *MyDebugRenderer,
+            from: *const [3]Real,
+            to: *const [3]Real,
+            color: *const DebugRenderer.Color,
+        ) callconv(.C) void {
+            _ = self;
+            _ = from;
+            _ = to;
+            _ = color;
+        }
+        fn drawTriangle(
+            self: *MyDebugRenderer,
+            v1: *const [3]Real,
+            v2: *const [3]Real,
+            v3: *const [3]Real,
+            color: *const DebugRenderer.Color,
+        ) callconv(.C) void {
+            _ = self;
+            _ = v1;
+            _ = v2;
+            _ = v3;
+            _ = color;
+        }
+        fn createTriangleBatch(
+            self: *MyDebugRenderer,
+            triangles: [*]DebugRenderer.Triangle,
+            triangle_count: u32,
+        ) callconv(.C) *anyopaque {
+            _ = triangles;
+            _ = triangle_count;
+            self.prim_head += 1;
+            const prim = &self.primitives[@as(usize, @intCast(self.prim_head))];
+            return DebugRenderer.createTriangleBatch(prim);
+        }
+        fn createTriangleBatchIndexed(
+            self: *MyDebugRenderer,
+            vertices: [*]DebugRenderer.Vertex,
+            vertex_count: u32,
+            indices: [*]u32,
+            index_count: u32,
+        ) callconv(.C) *anyopaque {
+            _ = vertices;
+            _ = vertex_count;
+            _ = indices;
+            _ = index_count;
+            self.prim_head += 1;
+            const prim = &self.primitives[@as(usize, @intCast(self.prim_head))];
+            return DebugRenderer.createTriangleBatch(prim);
+        }
+        fn drawGeometry(
+            self: *MyDebugRenderer,
+            model_matrix: *const [16]Real,
+            world_space_bound: *const DebugRenderer.AABox,
+            lod_scale_sq: f32,
+            color: DebugRenderer.Color,
+            geometry: *anyopaque,
+            cull_mode: DebugRenderer.CullMode,
+            cast_shadow: DebugRenderer.CastShadow,
+            draw_mode: DebugRenderer.DrawMode,
+        ) callconv(.C) void {
+            _ = self;
+            _ = model_matrix;
+            _ = world_space_bound;
+            _ = lod_scale_sq;
+            _ = color;
+            _ = geometry;
+            _ = cull_mode;
+            _ = cast_shadow;
+            _ = draw_mode;
+        }
+        fn drawText3D(
+            self: *MyDebugRenderer,
+            positions: *const [3]Real,
+            string: [*:0]const u8,
+            color: DebugRenderer.Color,
+            height: f32,
+        ) callconv(.C) void {
+            _ = self;
+            _ = positions;
+            _ = string;
+            _ = color;
+            _ = height;
         }
     };
 };

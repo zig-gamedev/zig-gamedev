@@ -43,17 +43,17 @@ pub const FrameStats = struct {
 
     pub fn update(self: *FrameStats, window: w32.HWND, window_name: []const u8) void {
         const now_ns = self.timer.read();
-        self.time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
-        self.delta_time = @intToFloat(f32, now_ns - self.previous_time_ns) / std.time.ns_per_s;
+        self.time = @as(f64, @floatFromInt(now_ns)) / std.time.ns_per_s;
+        self.delta_time = @as(f32, @floatFromInt(now_ns - self.previous_time_ns)) / std.time.ns_per_s;
         self.previous_time_ns = now_ns;
 
         if ((now_ns - self.fps_refresh_time_ns) >= std.time.ns_per_s) {
-            const t = @intToFloat(f64, now_ns - self.fps_refresh_time_ns) / std.time.ns_per_s;
-            const fps = @intToFloat(f64, self.frame_counter) / t;
+            const t = @as(f64, @floatFromInt(now_ns - self.fps_refresh_time_ns)) / std.time.ns_per_s;
+            const fps = @as(f64, @floatFromInt(self.frame_counter)) / t;
             const ms = (1.0 / fps) * 1000.0;
 
-            self.fps = @floatCast(f32, fps);
-            self.average_cpu_time = @floatCast(f32, ms);
+            self.fps = @as(f32, @floatCast(fps));
+            self.average_cpu_time = @as(f32, @floatCast(ms));
             self.fps_refresh_time_ns = now_ns;
             self.frame_counter = 0;
 
@@ -63,7 +63,7 @@ pub const FrameStats = struct {
                 "FPS: {d:.1}  CPU time: {d:.3} ms | {s}",
                 .{ self.fps, self.average_cpu_time, window_name },
             ) catch unreachable;
-            _ = w32.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
+            _ = w32.SetWindowTextA(window, @as([*:0]const u8, @ptrCast(text.ptr)));
         }
         self.frame_counter += 1;
     }
@@ -77,7 +77,7 @@ fn processWindowMessage(
 ) callconv(w32.WINAPI) w32.LRESULT {
     assert(c.igGetCurrentContext() != null);
     var ui = c.igGetIO().?;
-    var ui_backend = @ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData));
+    var ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
     switch (message) {
         w32.WM_LBUTTONDOWN,
         w32.WM_RBUTTONDOWN,
@@ -93,8 +93,8 @@ fn processWindowMessage(
             if (ui_backend.*.mouse_buttons_down == 0 and w32.GetCapture() == null) {
                 _ = w32.SetCapture(window);
             }
-            ui_backend.*.mouse_buttons_down |= @as(u32, 1) << @intCast(u5, button);
-            c.ImGuiIO_AddMouseButtonEvent(ui, @intCast(i32, button), true);
+            ui_backend.*.mouse_buttons_down |= @as(u32, 1) << @as(u5, @intCast(button));
+            c.ImGuiIO_AddMouseButtonEvent(ui, @as(i32, @intCast(button)), true);
         },
         w32.WM_LBUTTONUP,
         w32.WM_RBUTTONUP,
@@ -104,17 +104,17 @@ fn processWindowMessage(
             if (message == w32.WM_LBUTTONUP) button = 0;
             if (message == w32.WM_RBUTTONUP) button = 1;
             if (message == w32.WM_MBUTTONUP) button = 2;
-            ui_backend.*.mouse_buttons_down &= ~(@as(u32, 1) << @intCast(u5, button));
+            ui_backend.*.mouse_buttons_down &= ~(@as(u32, 1) << @as(u5, @intCast(button)));
             if (ui_backend.*.mouse_buttons_down == 0 and w32.GetCapture() == window) {
                 _ = w32.ReleaseCapture();
             }
-            c.ImGuiIO_AddMouseButtonEvent(ui, @intCast(i32, button), false);
+            c.ImGuiIO_AddMouseButtonEvent(ui, @as(i32, @intCast(button)), false);
         },
         w32.WM_MOUSEWHEEL => {
             c.ImGuiIO_AddMouseWheelEvent(
                 ui,
                 0.0,
-                @intToFloat(f32, w32.GET_WHEEL_DELTA_WPARAM(wparam)) / @intToFloat(f32, w32.WHEEL_DELTA),
+                @as(f32, @floatFromInt(w32.GET_WHEEL_DELTA_WPARAM(wparam))) / @as(f32, @floatFromInt(w32.WHEEL_DELTA)),
             );
         },
         w32.WM_MOUSEMOVE => {
@@ -131,8 +131,8 @@ fn processWindowMessage(
             }
             c.ImGuiIO_AddMousePosEvent(
                 ui,
-                @intToFloat(f32, w32.GET_X_LPARAM(lparam)),
-                @intToFloat(f32, w32.GET_Y_LPARAM(lparam)),
+                @as(f32, @floatFromInt(w32.GET_X_LPARAM(lparam))),
+                @as(f32, @floatFromInt(w32.GET_Y_LPARAM(lparam))),
             );
         },
         w32.WM_MOUSELEAVE => {
@@ -157,7 +157,7 @@ fn processWindowMessage(
                 c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModAlt, isVkKeyDown(w32.VK_MENU));
                 c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModSuper, isVkKeyDown(w32.VK_APPS));
 
-                var vk = @intCast(i32, wparam);
+                var vk = @as(i32, @intCast(wparam));
                 if (wparam == w32.VK_RETURN and (((lparam >> 16) & 0xffff) & w32.KF_EXTENDED) != 0) {
                     vk = w32.IM_VK_KEYPAD_ENTER;
                 }
@@ -191,7 +191,7 @@ fn processWindowMessage(
         },
         w32.WM_CHAR => {
             if (wparam > 0 and wparam < 0x10000) {
-                c.ImGuiIO_AddInputCharacterUTF16(ui, @intCast(u16, wparam & 0xffff));
+                c.ImGuiIO_AddInputCharacterUTF16(ui, @as(u16, @intCast(wparam & 0xffff)));
             }
         },
         w32.WM_DESTROY => {
@@ -235,9 +235,9 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(w32.HINSTANCE, w32.GetModuleHandleA(null)),
+        .hInstance = @as(w32.HINSTANCE, @ptrCast(w32.GetModuleHandleA(null))),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @intToPtr(w32.LPCSTR, 32512)),
+        .hCursor = w32.LoadCursorA(null, @as(w32.LPCSTR, @ptrFromInt(32512))),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = name,
@@ -250,7 +250,7 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
         w32.WS_CAPTION +
         w32.WS_MINIMIZEBOX;
 
-    var rect = w32.RECT{ .left = 0, .top = 0, .right = @intCast(i32, width), .bottom = @intCast(i32, height) };
+    var rect = w32.RECT{ .left = 0, .top = 0, .right = @as(i32, @intCast(width)), .bottom = @as(i32, @intCast(height)) };
     // HACK(mziulek): For exact FullHD window size it is better to stick to requested total window size
     // (looks better on 1920x1080 displays).
     if (width != 1920 and height != 1080) {
@@ -281,7 +281,7 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
 pub fn deinitWindow(allocator: std.mem.Allocator) void {
     var ui = c.igGetIO().?;
     assert(ui.*.BackendPlatformUserData != null);
-    allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(@sizeOf(usize), ui.*.BackendPlatformUserData)));
+    allocator.destroy(@as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData))));
     c.igDestroyContext(null);
 }
 
@@ -298,7 +298,7 @@ pub fn handleWindowEvents() bool {
 }
 
 fn isVkKeyDown(vk: c_int) bool {
-    return (@bitCast(u16, w32.GetKeyState(vk)) & 0x8000) != 0;
+    return (@as(u16, @bitCast(w32.GetKeyState(vk))) & 0x8000) != 0;
 }
 
 fn vkKeyToImGuiKey(wparam: w32.WPARAM) c.ImGuiKey {
@@ -415,13 +415,13 @@ pub fn newImGuiFrame(delta_time: f32) void {
     assert(c.igGetCurrentContext() != null);
 
     var ui = c.igGetIO().?;
-    var ui_backend = @ptrCast(*GuiBackendState, @alignCast(@sizeOf(usize), ui.*.BackendPlatformUserData));
+    var ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
     assert(ui_backend.*.window != null);
 
     var rect: w32.RECT = undefined;
     _ = w32.GetClientRect(ui_backend.*.window.?, &rect);
-    const viewport_width = @intToFloat(f32, rect.right - rect.left);
-    const viewport_height = @intToFloat(f32, rect.bottom - rect.top);
+    const viewport_width = @as(f32, @floatFromInt(rect.right - rect.left));
+    const viewport_height = @as(f32, @floatFromInt(rect.bottom - rect.top));
 
     ui.*.DisplaySize = c.ImVec2{ .x = viewport_width, .y = viewport_height };
     ui.*.DeltaTime = delta_time;
@@ -455,7 +455,7 @@ pub fn drawText(
     utf16[len] = 0;
     devctx.DrawText(
         &utf16,
-        @intCast(u32, len),
+        @as(u32, @intCast(len)),
         format,
         layout_rect,
         brush,

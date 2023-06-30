@@ -40,14 +40,14 @@ export fn zbulletAlloc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
 
     const ptr = mem_allocator.?.rawAlloc(
         size,
-        std.math.log2_int(u29, @intCast(u29, alignment)),
+        std.math.log2_int(u29, @as(u29, @intCast(alignment))),
         @returnAddress(),
     );
     if (ptr == null) @panic("zbullet: out of memory");
 
     mem_allocations.?.put(
-        @ptrToInt(ptr),
-        .{ .size = @intCast(u32, size), .alignment = @intCast(u16, alignment) },
+        @intFromPtr(ptr),
+        .{ .size = @as(u32, @intCast(size)), .alignment = @as(u16, @intCast(alignment)) },
     ) catch @panic("zbullet: out of memory");
 
     return ptr;
@@ -58,13 +58,13 @@ export fn zbulletFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
-        const info = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const info = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
 
-        const mem = @ptrCast([*]u8, ptr)[0..info.size];
+        const mem = @as([*]u8, @ptrCast(ptr))[0..info.size];
 
         mem_allocator.?.rawFree(
             mem,
-            std.math.log2_int(u29, @intCast(u29, info.alignment)),
+            std.math.log2_int(u29, @as(u29, @intCast(info.alignment))),
             @returnAddress(),
         );
     }
@@ -103,7 +103,7 @@ pub const CollisionFilter = packed struct {
     _pad0: u10 = 0,
     _pad1: u16 = 0,
 
-    pub const all = @bitCast(CollisionFilter, ~@as(u32, 0));
+    pub const all = @as(CollisionFilter, @bitCast(~@as(u32, 0)));
 
     comptime {
         std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
@@ -205,12 +205,12 @@ const WorldImpl = opaque {
     extern fn cbtWorldDebugSetDrawer(world: World, debug: *const DebugDraw) void;
 
     pub fn debugSetMode(world: World, mode: DebugMode) void {
-        cbtWorldDebugSetMode(world, @bitCast(c_int, mode));
+        cbtWorldDebugSetMode(world, @as(c_int, @bitCast(mode)));
     }
     extern fn cbtWorldDebugSetMode(world: World, mode: c_int) void;
 
     pub fn debugGetMode(world: World) DebugMode {
-        return @bitCast(DebugMode, cbtWorldDebugGetMode(world));
+        return @as(DebugMode, @bitCast(cbtWorldDebugGetMode(world)));
     }
     extern fn cbtWorldDebugGetMode(world: World) c_int;
 
@@ -255,9 +255,9 @@ const WorldImpl = opaque {
             world,
             ray_from_world,
             ray_to_world,
-            @bitCast(c_int, group),
-            @bitCast(c_int, mask),
-            @bitCast(c_int, flags),
+            @as(c_int, @bitCast(group)),
+            @as(c_int, @bitCast(mask)),
+            @as(c_int, @bitCast(flags)),
             raycast_result,
         );
     }
@@ -372,12 +372,12 @@ const ShapeImpl = opaque {
     } {
         std.debug.assert(shape.getType() == stype);
         return switch (stype) {
-            .box => @ptrCast(BoxShape, shape),
-            .sphere => @ptrCast(SphereShape, shape),
-            .cylinder => @ptrCast(CylinderShape, shape),
-            .capsule => @ptrCast(CapsuleShape, shape),
-            .compound => @ptrCast(CompoundShape, shape),
-            .trimesh => @ptrCast(TriangleMeshShape, shape),
+            .box => @as(BoxShape, @ptrCast(shape)),
+            .sphere => @as(SphereShape, @ptrCast(shape)),
+            .cylinder => @as(CylinderShape, @ptrCast(shape)),
+            .capsule => @as(CapsuleShape, @ptrCast(shape)),
+            .compound => @as(CompoundShape, @ptrCast(shape)),
+            .trimesh => @as(TriangleMeshShape, @ptrCast(shape)),
         };
     }
 };
@@ -385,7 +385,7 @@ const ShapeImpl = opaque {
 fn ShapeFunctions(comptime T: type) type {
     return struct {
         pub fn asShape(shape: T) Shape {
-            return @ptrCast(Shape, shape);
+            return @as(Shape, @ptrCast(shape));
         }
 
         pub fn dealloc(shape: T) void {
@@ -455,7 +455,7 @@ const BoxShapeImpl = opaque {
     pub usingnamespace ShapeFunctions(BoxShape);
 
     fn alloc() BoxShape {
-        return @ptrCast(BoxShape, ShapeImpl.alloc(.box));
+        return @as(BoxShape, @ptrCast(ShapeImpl.alloc(.box)));
     }
 
     pub const create = cbtShapeBoxCreate;
@@ -478,7 +478,7 @@ const SphereShapeImpl = opaque {
     pub usingnamespace ShapeFunctions(SphereShape);
 
     fn alloc() SphereShape {
-        return @ptrCast(SphereShape, ShapeImpl.alloc(.sphere));
+        return @as(SphereShape, @ptrCast(ShapeImpl.alloc(.sphere)));
     }
 
     pub const create = cbtShapeSphereCreate;
@@ -501,7 +501,7 @@ const CapsuleShapeImpl = opaque {
     pub usingnamespace ShapeFunctions(CapsuleShape);
 
     fn alloc() CapsuleShape {
-        return @ptrCast(CapsuleShape, ShapeImpl.alloc(.capsule));
+        return @as(CapsuleShape, @ptrCast(ShapeImpl.alloc(.capsule)));
     }
 
     pub const create = cbtShapeCapsuleCreate;
@@ -535,7 +535,7 @@ const CylinderShapeImpl = opaque {
     pub usingnamespace ShapeFunctions(CylinderShape);
 
     fn alloc() CylinderShape {
-        return @ptrCast(CylinderShape, ShapeImpl.alloc(.cylinder));
+        return @as(CylinderShape, @ptrCast(ShapeImpl.alloc(.cylinder)));
     }
 
     pub const create = cbtShapeCylinderCreate;
@@ -576,7 +576,7 @@ const CompoundShapeImpl = opaque {
     pub usingnamespace ShapeFunctions(CompoundShape);
 
     fn alloc() CompoundShape {
-        return @ptrCast(CompoundShape, ShapeImpl.alloc(.compound));
+        return @as(CompoundShape, @ptrCast(ShapeImpl.alloc(.compound)));
     }
 
     pub const create = cbtShapeCompoundCreate;
@@ -627,7 +627,7 @@ const TriangleMeshShapeImpl = opaque {
     }
 
     fn alloc() TriangleMeshShape {
-        return @ptrCast(TriangleMeshShape, ShapeImpl.alloc(.trimesh));
+        return @as(TriangleMeshShape, @ptrCast(ShapeImpl.alloc(.trimesh)));
     }
 
     pub const addIndexVertexArray = cbtShapeTriMeshAddIndexVertexArray;
@@ -774,7 +774,7 @@ const BodyImpl = opaque {
     extern fn cbtBodySetCcdMotionThreshold(body: Body, threshold: f32) void;
 
     pub fn setCollisionFlags(body: Body, flags: CollisionFlags) void {
-        cbtBodySetCollisionFlags(body, @bitCast(c_int, flags));
+        cbtBodySetCollisionFlags(body, @as(c_int, @bitCast(flags)));
     }
     extern fn cbtBodySetCollisionFlags(body: Body, flags: c_int) void;
 
@@ -867,7 +867,7 @@ const ConstraintImpl = opaque {
 fn ConstraintFunctions(comptime T: type) type {
     return struct {
         pub fn asConstraint(con: T) Constraint {
-            return @ptrCast(Constraint, con);
+            return @as(Constraint, @ptrCast(con));
         }
         pub fn dealloc(con: T) void {
             con.asConstraint().dealloc();
@@ -907,7 +907,7 @@ const Point2PointConstraintImpl = opaque {
     pub usingnamespace ConstraintFunctions(Point2PointConstraint);
 
     fn alloc() Point2PointConstraint {
-        return @ptrCast(Point2PointConstraint, ConstraintImpl.alloc(.point2point));
+        return @as(Point2PointConstraint, @ptrCast(ConstraintImpl.alloc(.point2point)));
     }
 
     pub const create1 = cbtConPoint2PointCreate1;
@@ -955,8 +955,8 @@ pub const DebugMode = packed struct {
     _pad0: u14 = 0,
     _pad1: u16 = 0,
 
-    pub const disabled = @bitCast(DebugMode, ~@as(u32, 0));
-    pub const user_only = @bitCast(DebugMode, @as(u32, 0));
+    pub const disabled = @as(DebugMode, @bitCast(~@as(u32, 0)));
+    pub const user_only = @as(DebugMode, @bitCast(@as(u32, 0)));
 
     comptime {
         std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
@@ -1025,14 +1025,14 @@ pub const DebugDrawer = struct {
         p1: *const [3]f32,
         color: *const [3]f32,
     ) callconv(.C) void {
-        const debug = @ptrCast(
+        const debug = @as(
             *DebugDrawer,
-            @alignCast(@alignOf(DebugDrawer), context.?),
+            @ptrCast(@alignCast(context.?)),
         );
 
-        const r = @floatToInt(u32, color[0] * 255.0);
-        const g = @floatToInt(u32, color[1] * 255.0) << 8;
-        const b = @floatToInt(u32, color[2] * 255.0) << 16;
+        const r = @as(u32, @intFromFloat(color[0] * 255.0));
+        const g = @as(u32, @intFromFloat(color[1] * 255.0)) << 8;
+        const b = @as(u32, @intFromFloat(color[2] * 255.0)) << 16;
         const rgb = r | g | b;
 
         debug.lines.append(
@@ -1050,19 +1050,19 @@ pub const DebugDrawer = struct {
         color0: *const [3]f32,
         color1: *const [3]f32,
     ) callconv(.C) void {
-        const debug = @ptrCast(
+        const debug = @as(
             *DebugDrawer,
-            @alignCast(@alignOf(DebugDrawer), context.?),
+            @ptrCast(@alignCast(context.?)),
         );
 
-        const r0 = @floatToInt(u32, color0[0] * 255.0);
-        const g0 = @floatToInt(u32, color0[1] * 255.0) << 8;
-        const b0 = @floatToInt(u32, color0[2] * 255.0) << 16;
+        const r0 = @as(u32, @intFromFloat(color0[0] * 255.0));
+        const g0 = @as(u32, @intFromFloat(color0[1] * 255.0)) << 8;
+        const b0 = @as(u32, @intFromFloat(color0[2] * 255.0)) << 16;
         const rgb0 = r0 | g0 | b0;
 
-        const r1 = @floatToInt(u32, color1[0] * 255.0);
-        const g1 = @floatToInt(u32, color1[1] * 255.0) << 8;
-        const b1 = @floatToInt(u32, color1[2] * 255.0) << 16;
+        const r1 = @as(u32, @intFromFloat(color1[0] * 255.0));
+        const g1 = @as(u32, @intFromFloat(color1[1] * 255.0)) << 8;
+        const b1 = @as(u32, @intFromFloat(color1[2] * 255.0)) << 16;
         const rgb1 = r1 | g1 | b1;
 
         debug.lines.append(
@@ -1126,7 +1126,7 @@ test "zbullet.shape.box" {
         try expect(box.getUserPointer() == null);
 
         box.setUserPointer(&half_extents);
-        try expect(box.getUserPointer() == @ptrCast(*anyopaque, &half_extents));
+        try expect(box.getUserPointer() == @as(*anyopaque, @ptrCast(&half_extents)));
 
         const shape = box.asShape();
         try expect(shape.getType() == .box);

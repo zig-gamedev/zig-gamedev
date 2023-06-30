@@ -229,8 +229,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             &mesh_tangents,
         );
     }
-    const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
-    const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
+    const mesh_num_indices = @as(u32, @intCast(mesh_indices.items.len));
+    const mesh_num_vertices = @as(u32, @intCast(mesh_positions.items.len));
 
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
@@ -468,7 +468,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @as(f32, @floatFromInt(demo.gctx.viewport_width)) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -513,16 +513,16 @@ fn update(demo: *DemoState) void {
         {
             var pos: w32.POINT = undefined;
             _ = w32.GetCursorPos(&pos);
-            const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
-            const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+            const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
+            const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
             demo.mouse.cursor_prev_x = pos.x;
             demo.mouse.cursor_prev_y = pos.y;
 
             if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
                 demo.camera.pitch += 0.0025 * delta_y;
                 demo.camera.yaw += 0.0025 * delta_x;
-                demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-                demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+                demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+                demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
                 demo.camera.yaw = zm.modAngle(demo.camera.yaw);
             }
         }
@@ -567,7 +567,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        @as(f32, @floatFromInt(gctx.viewport_width)) / @as(f32, @floatFromInt(gctx.viewport_height)),
         0.01,
         200.0,
     );
@@ -731,7 +731,7 @@ fn draw(demo: *DemoState) void {
         }
 
         // Increase number of drawn pixels to achieve animation effect.
-        demo.num_pixel_groups += @intCast(u32, demo.raster_speed);
+        demo.num_pixel_groups += @as(u32, @intCast(demo.raster_speed));
         if (demo.num_pixel_groups > gctx.viewport_width * gctx.viewport_height / compute_group_size) {
             demo.num_pixel_groups = gctx.viewport_width * gctx.viewport_height / compute_group_size;
         }

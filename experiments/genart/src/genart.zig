@@ -17,7 +17,7 @@ pub fn main() !void {
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
 
-    try sdl.gl.setAttribute(.context_profile_mask, @enumToInt(sdl.gl.Profile.compatibility));
+    try sdl.gl.setAttribute(.context_profile_mask, @intFromEnum(sdl.gl.Profile.compatibility));
     try sdl.gl.setAttribute(.context_major_version, 4);
     try sdl.gl.setAttribute(.context_minor_version, 6);
 
@@ -161,7 +161,7 @@ fn updateFrameStats(window: *sdl.Window, name: [:0]const u8) struct { time: f64,
     const now_ns = now_ns: {
         const now_ns = state.timer.read();
         const this_frame_ns = now_ns - state.previous_time_ns;
-        const wanted_per_frame_ns = @floatToInt(u64, 1.0 / 60.0 * std.time.ns_per_s);
+        const wanted_per_frame_ns = @as(u64, @intFromFloat(1.0 / 60.0 * std.time.ns_per_s));
 
         if (this_frame_ns < wanted_per_frame_ns) {
             std.time.sleep(wanted_per_frame_ns - this_frame_ns);
@@ -170,13 +170,13 @@ fn updateFrameStats(window: *sdl.Window, name: [:0]const u8) struct { time: f64,
         break :now_ns now_ns;
     };
 
-    const time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
-    const delta_time = @intToFloat(f32, now_ns - state.previous_time_ns) / std.time.ns_per_s;
+    const time = @as(f64, @floatFromInt(now_ns)) / std.time.ns_per_s;
+    const delta_time = @as(f32, @floatFromInt(now_ns - state.previous_time_ns)) / std.time.ns_per_s;
     state.previous_time_ns = now_ns;
 
     if ((now_ns - state.header_refresh_time_ns) >= std.time.ns_per_s) {
-        const t = @intToFloat(f64, now_ns - state.header_refresh_time_ns) / std.time.ns_per_s;
-        const fps = @intToFloat(f64, state.frame_count) / t;
+        const t = @as(f64, @floatFromInt(now_ns - state.header_refresh_time_ns)) / std.time.ns_per_s;
+        const fps = @as(f64, @floatFromInt(state.frame_count)) / t;
         const ms = (1.0 / fps) * 1000.0;
 
         var buffer = [_]u8{0} ** 128;

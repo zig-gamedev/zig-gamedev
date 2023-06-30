@@ -92,10 +92,10 @@ pub const Style = extern struct {
     extern fn zguiPlotStyle_Init() Style;
 
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
-        return style.colors[@enumToInt(idx)];
+        return style.colors[@intFromEnum(idx)];
     }
     pub fn setColor(style: *Style, idx: StyleCol, color: [4]f32) void {
-        style.colors[@enumToInt(idx)] = color;
+        style.colors[@intFromEnum(idx)] = color;
     }
 };
 /// `pub fn getStyle() *Style`
@@ -281,9 +281,9 @@ pub fn setupAxis(axis: Axis, args: SetupAxis) void {
 extern fn zguiPlot_SetupAxis(axis: Axis, label: ?[*:0]const u8, flags: AxisFlags) void;
 //----------------------------------------------------------------------------------------------
 pub const Condition = enum(u32) {
-    none = @enumToInt(gui.Condition.none),
-    always = @enumToInt(gui.Condition.always),
-    once = @enumToInt(gui.Condition.once),
+    none = @intFromEnum(gui.Condition.none),
+    always = @intFromEnum(gui.Condition.always),
+    once = @intFromEnum(gui.Condition.once),
 };
 const SetupAxisLimits = struct {
     min: f64,
@@ -363,7 +363,7 @@ pub fn plotLineValues(label_id: [:0]const u8, comptime T: type, args: PlotLineVa
         label_id,
         gui.typeToDataTypeEnum(T),
         args.v.ptr,
-        @intCast(i32, args.v.len),
+        @as(i32, @intCast(args.v.len)),
         args.xscale,
         args.xstart,
         args.flags,
@@ -399,7 +399,7 @@ pub fn plotLine(label_id: [:0]const u8, comptime T: type, args: PlotLineGen(T)) 
         gui.typeToDataTypeEnum(T),
         args.xv.ptr,
         args.yv.ptr,
-        @intCast(i32, args.xv.len),
+        @as(i32, @intCast(args.xv.len)),
         args.flags,
         args.offset,
         args.stride,
@@ -445,7 +445,7 @@ pub fn plotScatterValues(label_id: [:0]const u8, comptime T: type, args: PlotSca
         label_id,
         gui.typeToDataTypeEnum(T),
         args.v.ptr,
-        @intCast(i32, args.v.len),
+        @as(i32, @intCast(args.v.len)),
         args.xscale,
         args.xstart,
         args.flags,
@@ -481,7 +481,7 @@ pub fn plotScatter(label_id: [:0]const u8, comptime T: type, args: PlotScatterGe
         gui.typeToDataTypeEnum(T),
         args.xv.ptr,
         args.yv.ptr,
-        @intCast(i32, args.xv.len),
+        @as(i32, @intCast(args.xv.len)),
         args.flags,
         args.offset,
         args.stride,
@@ -518,7 +518,7 @@ pub fn plotShaded(label_id: [:0]const u8, comptime T: type, args: PlotShadedGen(
         gui.typeToDataTypeEnum(T),
         args.xv.ptr,
         args.yv.ptr,
-        @intCast(i32, args.xv.len),
+        @as(i32, @intCast(args.xv.len)),
         args.yref,
         args.flags,
         args.offset,

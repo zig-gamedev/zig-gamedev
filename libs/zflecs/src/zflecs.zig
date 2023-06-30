@@ -322,8 +322,8 @@ pub const term_t = extern struct {
     first: term_id_t = .{},
     second: term_id_t = .{},
 
-    inout: inout_kind_t = @intToEnum(inout_kind_t, 0),
-    oper: oper_kind_t = @intToEnum(oper_kind_t, 0),
+    inout: inout_kind_t = .InOutDefault,
+    oper: oper_kind_t = .And,
 
     id_flags: id_t = 0,
     name: ?[*:0]u8 = null,
@@ -602,10 +602,10 @@ pub const iter_t = extern struct {
     chain_it: ?*iter_t,
 
     pub fn entities(iter: iter_t) []entity_t {
-        return iter.entities_[0..@intCast(usize, iter.count_)];
+        return iter.entities_[0..@as(usize, @intCast(iter.count_))];
     }
     pub fn count(iter: iter_t) usize {
-        return @intCast(usize, iter.count_);
+        return @as(usize, @intCast(iter.count_));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -828,15 +828,15 @@ const EcsAllocator = struct {
             return null;
         }
 
-        var allocation_size = Alignment + @intCast(usize, size);
+        var allocation_size = Alignment + @as(usize, @intCast(size));
 
         var data = allocator.?.alignedAlloc(u8, Alignment, allocation_size) catch {
             return null;
         };
 
-        var allocation_header = @ptrCast(
-            *AllocationHeader,
-            @alignCast(@alignOf(AllocationHeader), data.ptr),
+        var allocation_header = @as(
+            *align(Alignment) AllocationHeader,
+            @ptrCast(@alignCast(data.ptr)),
         );
 
         allocation_header.size = allocation_size;
@@ -848,17 +848,14 @@ const EcsAllocator = struct {
         if (ptr == null) {
             return;
         }
-        var ptr_unwrapped = @ptrCast([*]u8, ptr.?) - Alignment;
-        var allocation_header = @ptrCast(
-            *AllocationHeader,
-            @alignCast(Alignment, ptr_unwrapped),
+        var ptr_unwrapped = @as([*]u8, @ptrCast(ptr.?)) - Alignment;
+        var allocation_header = @as(
+            *align(Alignment) AllocationHeader,
+            @ptrCast(@alignCast(ptr_unwrapped)),
         );
 
         allocator.?.free(
-            @alignCast(
-                Alignment,
-                ptr_unwrapped[0..allocation_header.size],
-            ),
+            @as([]align(Alignment) u8, @alignCast(ptr_unwrapped[0..allocation_header.size])),
         );
     }
 
@@ -867,23 +864,23 @@ const EcsAllocator = struct {
             return alloc(size);
         }
 
-        var ptr_unwrapped = @ptrCast([*]u8, old.?) - Alignment;
+        var ptr_unwrapped = @as([*]u8, @ptrCast(old.?)) - Alignment;
 
-        var allocation_header = @ptrCast(
-            *AllocationHeader,
-            @alignCast(@alignOf(AllocationHeader), ptr_unwrapped),
+        var allocation_header = @as(
+            *align(Alignment) AllocationHeader,
+            @ptrCast(@alignCast(ptr_unwrapped)),
         );
 
         const old_allocation_size = allocation_header.size;
-        const old_slice = @ptrCast([*]u8, ptr_unwrapped)[0..old_allocation_size];
-        const old_slice_aligned = @alignCast(Alignment, old_slice);
+        const old_slice = @as([*]u8, @ptrCast(ptr_unwrapped))[0..old_allocation_size];
+        const old_slice_aligned = @as([]align(Alignment) u8, @alignCast(old_slice));
 
-        const new_allocation_size = Alignment + @intCast(usize, size);
+        const new_allocation_size = Alignment + @as(usize, @intCast(size));
         var new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
             return null;
         };
 
-        var new_allocation_header = @ptrCast(*AllocationHeader, @alignCast(Alignment, new_data.ptr));
+        var new_allocation_header = @as(*align(Alignment) AllocationHeader, @ptrCast(@alignCast(new_data.ptr)));
         new_allocation_header.size = new_allocation_size;
 
         return new_data.ptr + Alignment;
@@ -892,7 +889,7 @@ const EcsAllocator = struct {
     fn calloc(size: i32) callconv(.C) ?*anyopaque {
         var data_maybe = alloc(size);
         if (data_maybe) |data| {
-            @memset(@ptrCast([*]u8, data)[0..@intCast(usize, size)], 0);
+            @memset(@as([*]u8, @ptrCast(data))[0..@as(usize, @intCast(size))], 0);
         }
 
         return data_maybe;
@@ -1178,11 +1175,11 @@ pub const make_pair = ecs_make_pair;
 extern fn ecs_make_pair(first: entity_t, second: entity_t) id_t;
 
 pub fn pair_first(pair_id: entity_t) entity_t {
-    return @intCast(entity_t, @truncate(u32, (pair_id & COMPONENT_MASK) >> 32));
+    return @as(entity_t, @intCast(@as(u32, @truncate((pair_id & COMPONENT_MASK) >> 32))));
 }
 
 pub fn pair_second(pair_id: entity_t) entity_t {
-    return @intCast(entity_t, @truncate(u32, pair_id));
+    return @as(entity_t, @intCast(@as(u32, @truncate(pair_id))));
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -2201,7 +2198,7 @@ pub fn set_pair(
     comptime T: type,
     val: T,
 ) entity_t {
-    return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @ptrCast(*const anyopaque, &val));
+    return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @as(*const anyopaque, @ptrCast(&val)));
 }
 
 pub fn remove_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {
@@ -2230,7 +2227,7 @@ pub fn typeName(comptime T: type) @TypeOf(@typeName(T)) {
 //
 //--------------------------------------------------------------------------------------------------
 pub fn set(world: *world_t, entity: entity_t, comptime T: type, val: T) entity_t {
-    return ecs_set_id(world, entity, id(T), @sizeOf(T), @ptrCast(*const anyopaque, &val));
+    return ecs_set_id(world, entity, id(T), @sizeOf(T), @as(*const anyopaque, @ptrCast(&val)));
 }
 
 pub fn get(world: *const world_t, entity: entity_t, comptime T: type) ?*const T {
@@ -2261,7 +2258,7 @@ pub fn override(world: *world_t, entity: entity_t, comptime T: type) void {
 
 pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
     if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
-        const ptr = @ptrCast([*]T, @alignCast(@alignOf(T), anyptr));
+        const ptr = @as([*]T, @ptrCast(@alignCast(anyptr)));
         return ptr[0..it.count()];
     }
     return null;
@@ -2274,11 +2271,11 @@ pub inline fn id(comptime T: type) id_t {
 pub const pair = make_pair;
 
 pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
-    return @ptrCast(*const T, @alignCast(@alignOf(T), val));
+    return @as(*const T, @ptrCast(@alignCast(val)));
 }
 
 pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
-    return @ptrCast(*T, @alignCast(@alignOf(T), val));
+    return @as(*T, @ptrCast(@alignCast(val)));
 }
 //--------------------------------------------------------------------------------------------------
 fn PerTypeGlobalVar(comptime in_type: type) type {

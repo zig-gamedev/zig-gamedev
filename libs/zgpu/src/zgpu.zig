@@ -112,7 +112,7 @@ pub const GraphicsContext = struct {
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
                     _ = message;
-                    const response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
+                    const response = @as(*Response, @ptrCast(@alignCast(userdata)));
                     response.status = status;
                     response.adapter = adapter;
                 }
@@ -122,7 +122,7 @@ pub const GraphicsContext = struct {
             instance.requestAdapter(
                 .{ .power_preference = .high_performance },
                 callback,
-                @ptrCast(*anyopaque, &response),
+                @as(*anyopaque, @ptrCast(&response)),
             );
 
             if (emscripten) {
@@ -164,7 +164,7 @@ pub const GraphicsContext = struct {
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
                     _ = message;
-                    const response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
+                    const response = @as(*Response, @ptrCast(@alignCast(userdata)));
                     response.status = status;
                     response.device = device;
                 }
@@ -181,12 +181,12 @@ pub const GraphicsContext = struct {
             adapter.requestDevice(
                 wgpu.DeviceDescriptor{
                     .next_in_chain = if (zgpu_options.dawn_skip_validation)
-                        @ptrCast(*const wgpu.ChainedStruct, &dawn_toggles)
+                        @as(*const wgpu.ChainedStruct, @ptrCast(&dawn_toggles))
                     else
                         null,
                 },
                 callback,
-                @ptrCast(*anyopaque, &response),
+                @as(*anyopaque, @ptrCast(&response)),
             );
 
             if (emscripten) {
@@ -216,8 +216,8 @@ pub const GraphicsContext = struct {
             .label = "zig-gamedev-gctx-swapchain",
             .usage = .{ .render_attachment = true },
             .format = swapchain_format,
-            .width = @intCast(u32, framebuffer_size[0]),
-            .height = @intCast(u32, framebuffer_size[1]),
+            .width = @as(u32, @intCast(framebuffer_size[0])),
+            .height = @as(u32, @intCast(framebuffer_size[1])),
             .present_mode = .fifo,
             .implementation = 0,
         };
@@ -311,7 +311,7 @@ pub const GraphicsContext = struct {
 
         gctx.uniforms.offset += aligned_size;
         return .{
-            .slice = std.mem.bytesAsSlice(T, @alignCast(@alignOf(T), slice)),
+            .slice = std.mem.bytesAsSlice(T, @as([]align(@alignOf(T)) u8, @alignCast(slice))),
             .offset = offset,
         };
     }
@@ -333,11 +333,11 @@ pub const GraphicsContext = struct {
     }
 
     fn uniformsMappedCallback(status: wgpu.BufferMapAsyncStatus, userdata: ?*anyopaque) callconv(.C) void {
-        const usb = @ptrCast(*UniformsStagingBuffer, @alignCast(@sizeOf(usize), userdata));
+        const usb = @as(*UniformsStagingBuffer, @ptrCast(@alignCast(userdata)));
         assert(usb.slice == null);
         if (status == .success) {
             usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size).?;
-            if (emscripten) assert(@ptrToInt(usb.slice.?.ptr) % 16 == 0); // see: https://github.com/emscripten-core/emscripten/pull/19477/commits/f4bb4f578131578cd13abbbf78d7f4273788d76f
+            if (emscripten) assert(@intFromPtr(usb.slice.?.ptr) % 16 == 0); // see: https://github.com/emscripten-core/emscripten/pull/19477/commits/f4bb4f578131578cd13abbbf78d7f4273788d76f
         } else {
             slog.err("Failed to map buffer (status: {s}).", .{@tagName(status)});
         }
@@ -353,7 +353,7 @@ pub const GraphicsContext = struct {
                 0,
                 uniforms_buffer_size,
                 uniformsMappedCallback,
-                @ptrCast(*anyopaque, &gctx.uniforms.stage.buffers[current]),
+                @as(*anyopaque, @ptrCast(&gctx.uniforms.stage.buffers[current])),
             );
         }
 
@@ -440,7 +440,7 @@ pub const GraphicsContext = struct {
         command_buffers.append(stage_commands) catch unreachable;
         command_buffers.appendSlice(commands) catch unreachable;
 
-        gctx.queue.onSubmittedWorkDone(0, gpuWorkDone, @ptrCast(*anyopaque, &gctx.stats.gpu_frame_number));
+        gctx.queue.onSubmittedWorkDone(0, gpuWorkDone, @as(*anyopaque, @ptrCast(&gctx.stats.gpu_frame_number)));
         gctx.queue.submit(command_buffers.slice());
 
         gctx.stats.tick();
@@ -448,7 +448,7 @@ pub const GraphicsContext = struct {
     }
 
     fn gpuWorkDone(status: wgpu.QueueWorkDoneStatus, userdata: ?*anyopaque) callconv(.C) void {
-        const gpu_frame_number = @ptrCast(*usize, @alignCast(@sizeOf(usize), userdata));
+        const gpu_frame_number = @as(*u64, @ptrCast(@alignCast(userdata)));
         gpu_frame_number.* += 1;
         if (status != .success) {
             slog.err("Failed to complete GPU work (status: {s}).", .{@tagName(status)});
@@ -466,8 +466,8 @@ pub const GraphicsContext = struct {
             gctx.swapchain_descriptor.height != fb_size[1])
         {
             if (fb_size[0] != 0 and fb_size[1] != 0) {
-                gctx.swapchain_descriptor.width = @intCast(u32, fb_size[0]);
-                gctx.swapchain_descriptor.height = @intCast(u32, fb_size[1]);
+                gctx.swapchain_descriptor.width = @as(u32, @intCast(fb_size[0]));
+                gctx.swapchain_descriptor.height = @as(u32, @intCast(fb_size[1]));
                 gctx.swapchain.release();
 
                 gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
@@ -597,7 +597,7 @@ pub const GraphicsContext = struct {
             message: ?[*:0]const u8,
             userdata: ?*anyopaque,
         ) callconv(.C) void {
-            const op = @ptrCast(*AsyncCreateOpRender, @alignCast(@sizeOf(usize), userdata));
+            const op = @as(*AsyncCreateOpRender, @ptrCast(@alignCast(userdata)));
             if (status == .success) {
                 op.result.* = op.gctx.render_pipeline_pool.addResource(
                     op.gctx.*,
@@ -630,7 +630,7 @@ pub const GraphicsContext = struct {
             .pipeline_layout = pipeline_layout,
             .allocator = allocator,
         };
-        gctx.device.createRenderPipelineAsync(desc, AsyncCreateOpRender.create, @ptrCast(*anyopaque, op));
+        gctx.device.createRenderPipelineAsync(desc, AsyncCreateOpRender.create, @as(*anyopaque, @ptrCast(op)));
     }
 
     pub fn createComputePipeline(
@@ -658,7 +658,7 @@ pub const GraphicsContext = struct {
             message: ?[*:0]const u8,
             userdata: ?*anyopaque,
         ) callconv(.C) void {
-            const op = @ptrCast(*AsyncCreateOpCompute, @alignCast(@sizeOf(usize), userdata));
+            const op = @as(*AsyncCreateOpCompute, @ptrCast(@alignCast(userdata)));
             if (status == .success) {
                 op.result.* = op.gctx.compute_pipeline_pool.addResource(
                     op.gctx.*,
@@ -691,7 +691,7 @@ pub const GraphicsContext = struct {
             .pipeline_layout = pipeline_layout,
             .allocator = allocator,
         };
-        gctx.device.createComputePipelineAsync(desc, AsyncCreateOpCompute.create, @ptrCast(*anyopaque, op));
+        gctx.device.createComputePipelineAsync(desc, AsyncCreateOpCompute.create, @as(*anyopaque, @ptrCast(op)));
     }
 
     pub fn createBindGroup(
@@ -701,7 +701,7 @@ pub const GraphicsContext = struct {
     ) BindGroupHandle {
         assert(entries.len > 0 and entries.len <= max_num_bindings_per_group);
 
-        var bind_group_info = BindGroupInfo{ .num_entries = @intCast(u32, entries.len) };
+        var bind_group_info = BindGroupInfo{ .num_entries = @as(u32, @intCast(entries.len)) };
         var gpu_bind_group_entries: [max_num_bindings_per_group]wgpu.BindGroupEntry = undefined;
 
         for (entries, 0..) |entry, i| {
@@ -738,7 +738,7 @@ pub const GraphicsContext = struct {
         }
         bind_group_info.gpuobj = gctx.device.createBindGroup(.{
             .layout = gctx.lookupResource(layout).?,
-            .entry_count = @intCast(u32, entries.len),
+            .entry_count = @as(u32, @intCast(entries.len)),
             .entries = &gpu_bind_group_entries,
         });
         return gctx.bind_group_pool.addResource(gctx.*, bind_group_info);
@@ -752,10 +752,10 @@ pub const GraphicsContext = struct {
 
         var bind_group_layout_info = BindGroupLayoutInfo{
             .gpuobj = gctx.device.createBindGroupLayout(.{
-                .entry_count = @intCast(u32, entries.len),
+                .entry_count = @as(u32, @intCast(entries.len)),
                 .entries = entries.ptr,
             }),
-            .num_entries = @intCast(u32, entries.len),
+            .num_entries = @as(u32, @intCast(entries.len)),
         };
         for (entries, 0..) |entry, i| {
             bind_group_layout_info.entries[i] = entry;
@@ -783,7 +783,7 @@ pub const GraphicsContext = struct {
     ) PipelineLayoutHandle {
         assert(bind_group_layouts.len > 0);
 
-        var info: PipelineLayoutInfo = .{ .num_bind_group_layouts = @intCast(u32, bind_group_layouts.len) };
+        var info: PipelineLayoutInfo = .{ .num_bind_group_layouts = @as(u32, @intCast(bind_group_layouts.len)) };
         var gpu_bind_group_layouts: [max_num_bind_groups_per_pipeline]wgpu.BindGroupLayout = undefined;
 
         for (bind_group_layouts, 0..) |bgl, i| {
@@ -982,7 +982,7 @@ pub const GraphicsContext = struct {
 
             for (&mipgen.scratch_texture_views, 0..) |*view, i| {
                 view.* = gctx.createTextureView(mipgen.scratch_texture, .{
-                    .base_mip_level = @intCast(u32, i),
+                    .base_mip_level = @as(u32, @intCast(i)),
                     .mip_level_count = 1,
                     .base_array_layer = 0,
                     .array_layer_count = 1,
@@ -1018,7 +1018,7 @@ pub const GraphicsContext = struct {
             var current_src_mip_level: u32 = 0;
 
             while (true) {
-                const dispatch_num_mips = math.min(MipgenResources.max_levels_per_dispatch, total_num_mips);
+                const dispatch_num_mips = @min(MipgenResources.max_levels_per_dispatch, total_num_mips);
                 {
                     const pass = encoder.beginComputePass(null);
                     defer {
@@ -1030,14 +1030,14 @@ pub const GraphicsContext = struct {
 
                     const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
                     mem.slice[0] = .{
-                        .src_mip_level = @intCast(i32, current_src_mip_level),
+                        .src_mip_level = @as(i32, @intCast(current_src_mip_level)),
                         .num_mip_levels = dispatch_num_mips,
                     };
                     pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
 
                     pass.dispatchWorkgroups(
-                        math.max(texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level), 1),
-                        math.max(texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level), 1),
+                        @max(texture_info.size.width >> @as(u5, @intCast(3 + current_src_mip_level)), 1),
+                        @max(texture_info.size.height >> @as(u5, @intCast(3 + current_src_mip_level)), 1),
                         1,
                     );
                 }
@@ -1058,8 +1058,8 @@ pub const GraphicsContext = struct {
                             .origin = dst_origin,
                         },
                         .{
-                            .width = texture_info.size.width >> @intCast(u5, mip_index + current_src_mip_level + 1),
-                            .height = texture_info.size.height >> @intCast(u5, mip_index + current_src_mip_level + 1),
+                            .width = texture_info.size.width >> @as(u5, @intCast(mip_index + current_src_mip_level + 1)),
+                            .height = texture_info.size.height >> @as(u5, @intCast(mip_index + current_src_mip_level + 1)),
                         },
                     );
                 }
@@ -1091,15 +1091,15 @@ extern fn emscripten_sleep(ms: u32) void;
 
 pub usingnamespace if (emscripten) struct {
     pub export fn dniCreate() DawnNativeInstance {
-        return @intToPtr(DawnNativeInstance, 1); // just any dummy value
+        return @ptrFromInt(1); // just any dummy value
     }
     pub export fn dniDestroy(_: DawnNativeInstance) void {}
     pub export fn dniGetWgpuInstance(_: DawnNativeInstance) wgpu.Instance {
-        return @intToPtr(wgpu.Instance, 0); //  js `_wgpuInstanceRequestAdapter` asserts that instance is 0
+        return @ptrFromInt(0); //  js `_wgpuInstanceRequestAdapter` asserts that instance is 0
     }
     pub export fn dniDiscoverDefaultAdapters(_: DawnNativeInstance) void {}
     pub export fn dnGetProcs() DawnProcsTable {
-        return @intToPtr(DawnProcsTable, 0);
+        return @ptrFromInt(0);
     }
     pub export fn dawnProcSetProcs(_: DawnProcsTable) void {}
 
@@ -1207,7 +1207,7 @@ pub fn createRenderPipelineSimple(
 
     const vertex_buffers = if (vertex_stride) |vs| [_]wgpu.VertexBufferLayout{.{
         .array_stride = vs,
-        .attribute_count = @intCast(u32, vertex_attribs.?.len),
+        .attribute_count = @as(u32, @intCast(vertex_attribs.?.len)),
         .attributes = vertex_attribs.?.ptr,
     }} else null;
 
@@ -1288,7 +1288,7 @@ pub fn createWgslShaderModule(
         .source = source,
     };
     const desc = wgpu.ShaderModuleDescriptor{
-        .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &wgsl_desc),
+        .next_in_chain = @as(*const wgpu.ChainedStruct, @ptrCast(&wgsl_desc)),
         .label = if (label) |l| l else null,
     };
     return device.createShaderModule(desc);
@@ -1549,12 +1549,12 @@ const FrameStats = struct {
 
     fn tick(stats: *FrameStats) void {
         stats.time = zglfw.getTime();
-        stats.delta_time = @floatCast(f32, stats.time - stats.previous_time);
+        stats.delta_time = @as(f32, @floatCast(stats.time - stats.previous_time));
         stats.previous_time = stats.time;
 
         if ((stats.time - stats.fps_refresh_time) >= 1.0) {
             const t = stats.time - stats.fps_refresh_time;
-            const fps = @intToFloat(f64, stats.fps_counter) / t;
+            const fps = @as(f64, @floatFromInt(stats.fps_counter)) / t;
             const ms = (1.0 / fps) * 1000.0;
 
             stats.fps = fps;
@@ -1644,7 +1644,7 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.S
             desc.chain.struct_type = .surface_descriptor_from_metal_layer;
             desc.layer = src.layer;
             break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
+                .next_in_chain = @as(*const wgpu.ChainedStruct, @ptrCast(&desc)),
                 .label = if (src.label) |l| l else null,
             });
         },
@@ -1655,7 +1655,7 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.S
             desc.hinstance = src.hinstance;
             desc.hwnd = src.hwnd;
             break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
+                .next_in_chain = @as(*const wgpu.ChainedStruct, @ptrCast(&desc)),
                 .label = if (src.label) |l| l else null,
             });
         },
@@ -1666,7 +1666,7 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.S
             desc.display = src.display;
             desc.window = src.window;
             break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
+                .next_in_chain = @as(*const wgpu.ChainedStruct, @ptrCast(&desc)),
                 .label = if (src.label) |l| l else null,
             });
         },
@@ -1676,7 +1676,7 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.S
                 .selector = src.selector,
             };
             break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
+                .next_in_chain =  @as(*const wgpu.ChainedStruct, @ptrCast(&desc)),
                 .label = if (src.label) |l| l else null,
             });
         },
@@ -1722,7 +1722,7 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
         else => @compileError("[zgpu] Unsupported number of args"),
     };
 
-    const func = @ptrCast(FnType, &objc.objc_msgSend);
+    const func = @as(FnType, @ptrCast(&objc.objc_msgSend));
     const sel = objc.sel_getUid(sel_name.ptr);
 
     return @call(.never_inline, func, .{ obj, sel } ++ args);

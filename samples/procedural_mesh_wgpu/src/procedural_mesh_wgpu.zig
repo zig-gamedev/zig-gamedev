@@ -77,10 +77,10 @@ fn appendMesh(
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
     meshes.append(.{
-        .index_offset = @intCast(u32, meshes_indices.items.len),
-        .vertex_offset = @intCast(i32, meshes_positions.items.len),
-        .num_indices = @intCast(u32, mesh.indices.len),
-        .num_vertices = @intCast(u32, mesh.positions.len),
+        .index_offset = @as(u32, @intCast(meshes_indices.items.len)),
+        .vertex_offset = @as(i32, @intCast(meshes_positions.items.len)),
+        .num_indices = @as(u32, @intCast(mesh.indices.len)),
+        .num_vertices = @as(u32, @intCast(mesh.positions.len)),
     }) catch unreachable;
 
     meshes_indices.appendSlice(mesh.indices) catch unreachable;
@@ -115,7 +115,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 0, 1, 0 },
             .basecolor_roughness = .{ 0.0, 0.7, 0.0, 0.6 },
         }) catch unreachable;
@@ -131,7 +131,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 3, 1, 0 },
             .basecolor_roughness = .{ 0.7, 0.0, 0.0, 0.2 },
         }) catch unreachable;
@@ -146,7 +146,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ -3, 1, 0 },
             .basecolor_roughness = .{ 0.7, 0.6, 0.0, 0.4 },
         }) catch unreachable;
@@ -161,7 +161,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 0, 1, 3 },
             .basecolor_roughness = .{ 0.0, 0.1, 1.0, 0.2 },
         }) catch unreachable;
@@ -189,7 +189,7 @@ fn initScene(
         cylinder.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ -3, 0, 3 },
             .basecolor_roughness = .{ 1.0, 0.0, 0.0, 0.3 },
         }) catch unreachable;
@@ -202,7 +202,7 @@ fn initScene(
         defer mesh.deinit();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 3, 1.5, 3 },
             .basecolor_roughness = .{ 1.0, 0.5, 0.0, 0.2 },
         }) catch unreachable;
@@ -217,7 +217,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 3, 1, 6 },
             .basecolor_roughness = .{ 0.0, 1.0, 0.0, 0.2 },
         }) catch unreachable;
@@ -232,7 +232,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 0, 0.5, 6 },
             .basecolor_roughness = .{ 1.0, 0.0, 1.0, 0.2 },
         }) catch unreachable;
@@ -247,7 +247,7 @@ fn initScene(
         mesh.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ -3, 1, 6 },
             .basecolor_roughness = .{ 0.2, 0.0, 1.0, 0.2 },
         }) catch unreachable;
@@ -262,7 +262,7 @@ fn initScene(
         rock.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ -6, 0, 3 },
             .basecolor_roughness = .{ 1.0, 1.0, 1.0, 1.0 },
         }) catch unreachable;
@@ -293,7 +293,7 @@ fn initScene(
         ground.computeNormals();
 
         drawables.append(.{
-            .mesh_index = @intCast(u32, meshes.items.len),
+            .mesh_index = @as(u32, @intCast(meshes.items.len)),
             .position = .{ 0, 0, 0 },
             .basecolor_roughness = .{ 0.1, 0.1, 0.1, 1.0 },
         }) catch unreachable;
@@ -373,7 +373,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         .binding = 0,
         .buffer_handle = gctx.uniforms.buffer,
         .offset = 0,
-        .size = math.max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
+        .size = @max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
     }});
 
     var drawables = std.ArrayList(Drawable).init(allocator);
@@ -383,8 +383,8 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
     var meshes_normals = std.ArrayList([3]f32).init(arena);
     initScene(allocator, &drawables, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
-    const total_num_vertices = @intCast(u32, meshes_positions.items.len);
-    const total_num_indices = @intCast(u32, meshes_indices.items.len);
+    const total_num_vertices = @as(u32, @intCast(meshes_positions.items.len));
+    const total_num_indices = @as(u32, @intCast(meshes_indices.items.len));
 
     // Create a vertex buffer.
     const vertex_buffer = gctx.createBuffer(.{
@@ -457,15 +457,15 @@ fn update(demo: *DemoState) void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -511,7 +511,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -687,7 +687,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
@@ -698,7 +698,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

@@ -14,7 +14,7 @@ pub fn generateVertices(segments: u16, verticies: *std.ArrayList(Vertex)) !void 
     {
         var i: usize = 0;
         while (i <= segments) : (i += 1) {
-            const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, segments));
+            const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(segments)));
             try verticies.append(.{
                 .position = .{ @cos(angle), @sin(angle) },
                 .side = -1.0,

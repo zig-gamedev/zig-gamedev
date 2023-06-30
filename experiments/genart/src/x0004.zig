@@ -23,7 +23,7 @@ pub fn draw() void {
 
     gl.pushMatrix();
     gl.rotatef(rot, 0.0, 0.0, 1.0);
-    gl.translatef(@sin(@floatCast(f32, xcommon.frame_time)), 0, 0);
+    gl.translatef(@sin(@as(f32, @floatCast(xcommon.frame_time))), 0, 0);
     for (0..6) |_| {
         gl.begin(gl.POINTS);
         gl.color3f(0.2, 0.0, 0.0);
@@ -49,7 +49,7 @@ pub fn draw() void {
 
     gl.pushMatrix();
     gl.rotatef(-rot, 0.0, 0.0, 1.0);
-    gl.translatef(-@sin(@floatCast(f32, xcommon.frame_time)), 0, 0);
+    gl.translatef(-@sin(@as(f32, @floatCast(xcommon.frame_time))), 0, 0);
     for (0..6) |_| {
         gl.begin(gl.POINTS);
         gl.color3f(0.0, 0.01, 0.2);

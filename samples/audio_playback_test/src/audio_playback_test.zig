@@ -64,13 +64,13 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     const num_frames = audio.buffer_size_in_frames - buffer_padding_in_frames;
 
     var ptr: [*]f32 = undefined;
-    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?[*]w32.BYTE, &ptr)));
+    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @as(*?[*]w32.BYTE, @ptrCast(&ptr))));
 
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
         const frame = audio.current_frame_index;
-        ptr[i * 2 + 0] = @intToFloat(f32, audio.samples.items[frame * 2 + 0]) / @intToFloat(f32, 0x7fff);
-        ptr[i * 2 + 1] = @intToFloat(f32, audio.samples.items[frame * 2 + 1]) / @intToFloat(f32, 0x7fff);
+        ptr[i * 2 + 0] = @as(f32, @floatFromInt(audio.samples.items[frame * 2 + 0])) / @as(f32, @floatFromInt(0x7fff));
+        ptr[i * 2 + 1] = @as(f32, @floatFromInt(audio.samples.items[frame * 2 + 1])) / @as(f32, @floatFromInt(0x7fff));
 
         audio.current_frame_index += 1;
         if (audio.current_frame_index * 2 >= audio.samples.items.len) {
@@ -81,7 +81,7 @@ fn fillAudioBuffer(audio: *AudioContex) void {
 }
 
 fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
-    const audio = @ptrCast(*AudioContex, @alignCast(@sizeOf(usize), ctx));
+    const audio = @as(*AudioContex, @ptrCast(@alignCast(ctx)));
 
     fillAudioBuffer(audio);
     while (true) {
@@ -111,7 +111,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             null,
             w32.CLSCTX_INPROC_SERVER,
             &wasapi.IID_IMMDeviceEnumerator,
-            @ptrCast(*?*anyopaque, &audio_device_enumerator),
+            @as(*?*anyopaque, @ptrCast(&audio_device_enumerator)),
         ));
         break :blk audio_device_enumerator;
     };
@@ -122,7 +122,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         hrPanicOnFail(audio_device_enumerator.GetDefaultAudioEndpoint(
             .eRender,
             .eConsole,
-            @ptrCast(*?*wasapi.IMMDevice, &audio_device),
+            @as(*?*wasapi.IMMDevice, @ptrCast(&audio_device)),
         ));
         break :blk audio_device;
     };
@@ -134,7 +134,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             &wasapi.IID_IAudioClient3,
             w32.CLSCTX_INPROC_SERVER,
             null,
-            @ptrCast(*?*anyopaque, &audio_client),
+            @as(*?*anyopaque, @ptrCast(&audio_client)),
         ));
         break :blk audio_client;
     };
@@ -168,7 +168,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var audio_render_client: *wasapi.IAudioRenderClient = undefined;
         hrPanicOnFail(audio_client.GetService(
             &wasapi.IID_IAudioRenderClient,
-            @ptrCast(*?*anyopaque, &audio_render_client),
+            @as(*?*anyopaque, @ptrCast(&audio_render_client)),
         ));
         break :blk audio_render_client;
     };
@@ -244,7 +244,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
             var data_ptr: [*]i16 = undefined;
             var data_len: u32 = 0;
-            hrPanicOnFail(buffer.Lock(@ptrCast(*[*]u8, &data_ptr), null, &data_len));
+            hrPanicOnFail(buffer.Lock(@as(*[*]u8, @ptrCast(&data_ptr)), null, &data_len));
             const data = data_ptr[0..@divExact(data_len, 2)];
 
             for (data) |s| {
@@ -385,14 +385,14 @@ fn draw(demo: *DemoState) void {
                 if ((frame + i) * 2 >= demo.audio.samples.items.len) {
                     break :blk 0.0;
                 } else {
-                    const l = @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2 + 0]) /
-                        @intToFloat(f32, 0x7fff);
-                    const r = @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2 + 1]) /
-                        @intToFloat(f32, 0x7fff);
+                    const l = @as(f32, @floatFromInt(demo.audio.samples.items[(frame + i) * 2 + 0])) /
+                        @as(f32, @floatFromInt(0x7fff));
+                    const r = @as(f32, @floatFromInt(demo.audio.samples.items[(frame + i) * 2 + 1])) /
+                        @as(f32, @floatFromInt(0x7fff));
                     break :blk (l + r) * 0.5;
                 }
             };
-            const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
+            const x = -1.0 + 2.0 * @as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(num_vis_samples - 1));
             upload.cpu_slice[i] = Vec2.init(0.95 * x, y);
         }
         gctx.cmdlist.CopyBufferRegion(
@@ -460,7 +460,7 @@ pub fn main() !void {
         null,
         0,
         audioThread,
-        @ptrCast(*anyopaque, &demo.audio),
+        @as(*anyopaque, @ptrCast(&demo.audio)),
         0,
         null,
     ).?;

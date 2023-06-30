@@ -125,11 +125,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
-        @ptrCast(*d3d12.IDevice, gctx.device),
+        @as(*d3d12.IDevice, @ptrCast(gctx.device)),
         .{ .DEBUG = enable_dx_debug },
         .@"4_1",
         &dml.IID_IDevice1,
-        @ptrCast(*?*anyopaque, &dml_device),
+        @as(*?*anyopaque, @ptrCast(&dml_device)),
     ));
 
     const input_tensor_desc = dml.TENSOR_DESC{
@@ -166,7 +166,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .DimensionCount = 4,
             .Sizes = &[_]u32{ 1, 1, 3, 3 },
             .Strides = null,
-            .TotalTensorSizeInBytes = std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+            .TotalTensorSizeInBytes = std.mem.alignForward(
+                w32.UINT64,
+                filter_tensor.len * filter_tensor.len * @sizeOf(f16),
+                32,
+            ),
             .GuaranteedBaseOffsetAlignment = 256,
         },
     };
@@ -193,7 +197,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         };
 
         var op: *dml.IOperator = undefined;
-        hrPanicOnFail(dml_device.CreateOperator(&desc, &dml.IID_IOperator, @ptrCast(*?*anyopaque, &op)));
+        hrPanicOnFail(dml_device.CreateOperator(&desc, &dml.IID_IOperator, @as(*?*anyopaque, @ptrCast(&op))));
         break :blk op;
     };
     defer _ = conv_op.Release();
@@ -204,7 +208,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             conv_op,
             .{},
             &dml.IID_ICompiledOperator,
-            @ptrCast(*?*anyopaque, &cop),
+            @as(*?*anyopaque, @ptrCast(&cop)),
         ));
         break :blk cop;
     };
@@ -217,7 +221,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             operators.len,
             &operators,
             &dml.IID_IOperatorInitializer,
-            @ptrCast(*?*anyopaque, &iop),
+            @as(*?*anyopaque, @ptrCast(&iop)),
         ));
         break :blk iop;
     };
@@ -226,7 +230,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const conv_info = conv_cop.GetBindingProperties();
     const init_info = init_op.GetBindingProperties();
 
-    const temp_resource_size: u64 = math.max(init_info.TemporaryResourceSize, conv_info.TemporaryResourceSize);
+    const temp_resource_size: u64 = @max(init_info.TemporaryResourceSize, conv_info.TemporaryResourceSize);
     const persistent_resource_size: u64 = conv_info.PersistentResourceSize;
 
     const temp_buffer = if (temp_resource_size > 0) gctx.createCommittedResource(
@@ -285,7 +289,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
-                std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+                std.mem.alignForward(w32.UINT64, filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
             );
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;
@@ -317,7 +321,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var dml_cmd_recorder: *dml.ICommandRecorder = undefined;
         hrPanicOnFail(dml_device.CreateCommandRecorder(
             &dml.IID_ICommandRecorder,
-            @ptrCast(*?*anyopaque, &dml_cmd_recorder),
+            @as(*?*anyopaque, @ptrCast(&dml_cmd_recorder)),
         ));
         break :blk dml_cmd_recorder;
     };
@@ -364,14 +368,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const conv_op_state = blk: {
         const base_descriptor = gctx.allocateGpuDescriptors(conv_info.RequiredDescriptorCount);
         const desc = dml.BINDING_TABLE_DESC{
-            .Dispatchable = @ptrCast(*dml.IDispatchable, conv_cop),
+            .Dispatchable = @as(*dml.IDispatchable, @ptrCast(conv_cop)),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
             .SizeInDescriptors = conv_info.RequiredDescriptorCount,
         };
 
         var table: *dml.IBindingTable = undefined;
-        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*anyopaque, &table)));
+        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @as(*?*anyopaque, @ptrCast(&table))));
 
         break :blk .{
             .cop = conv_cop,
@@ -383,14 +387,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const init_dtbl = blk: {
         const base_descriptor = gctx.allocateGpuDescriptors(init_info.RequiredDescriptorCount + 1);
         const desc = dml.BINDING_TABLE_DESC{
-            .Dispatchable = @ptrCast(*dml.IDispatchable, init_op),
+            .Dispatchable = @as(*dml.IDispatchable, @ptrCast(init_op)),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
             .SizeInDescriptors = init_info.RequiredDescriptorCount,
         };
 
         var table: *dml.IBindingTable = undefined;
-        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*anyopaque, &table)));
+        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @as(*?*anyopaque, @ptrCast(&table))));
         break :blk table;
     };
     defer _ = init_dtbl.Release();
@@ -425,8 +429,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     }
 
     dml_cmd_recorder.RecordDispatch(
-        @ptrCast(*d3d12.ICommandList, gctx.cmdlist),
-        @ptrCast(*dml.IDispatchable, init_op),
+        @as(*d3d12.ICommandList, @ptrCast(gctx.cmdlist)),
+        @as(*dml.IDispatchable, @ptrCast(init_op)),
         init_dtbl,
     );
 
@@ -482,7 +486,7 @@ fn dispatchConvOperator(demo: *DemoState) void {
         const base_descriptor = gctx.allocateGpuDescriptors(num_descriptors);
 
         hrPanicOnFail(demo.conv_op_state.dtbl.Reset(&dml.BINDING_TABLE_DESC{
-            .Dispatchable = @ptrCast(*dml.IDispatchable, demo.conv_op_state.cop),
+            .Dispatchable = @as(*dml.IDispatchable, @ptrCast(demo.conv_op_state.cop)),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
             .SizeInDescriptors = num_descriptors,
@@ -548,8 +552,8 @@ fn dispatchConvOperator(demo: *DemoState) void {
     }});
 
     demo.dml_cmd_recorder.RecordDispatch(
-        @ptrCast(*d3d12.ICommandList, gctx.cmdlist),
-        @ptrCast(*dml.IDispatchable, demo.conv_op_state.cop),
+        @as(*d3d12.ICommandList, @ptrCast(gctx.cmdlist)),
+        @as(*dml.IDispatchable, @ptrCast(demo.conv_op_state.cop)),
         demo.conv_op_state.dtbl,
     );
 }
@@ -640,8 +644,8 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
-        .Width = @intToFloat(f32, gctx.viewport_width / 2),
-        .Height = @intToFloat(f32, gctx.viewport_width / 2),
+        .Width = @as(f32, @floatFromInt(gctx.viewport_width / 2)),
+        .Height = @as(f32, @floatFromInt(gctx.viewport_width / 2)),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});
@@ -670,10 +674,10 @@ fn draw(demo: *DemoState) void {
     gctx.flushResourceBarriers();
 
     gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-        .TopLeftX = @intToFloat(f32, gctx.viewport_width / 2),
+        .TopLeftX = @as(f32, @floatFromInt(gctx.viewport_width / 2)),
         .TopLeftY = 0.0,
-        .Width = @intToFloat(f32, gctx.viewport_width / 2),
-        .Height = @intToFloat(f32, gctx.viewport_width / 2),
+        .Width = @as(f32, @floatFromInt(gctx.viewport_width / 2)),
+        .Height = @as(f32, @floatFromInt(gctx.viewport_width / 2)),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});

@@ -71,7 +71,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zgui.plot.init();
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
     const font_size = 16.0 * scale_factor;
     const font_large = zgui.io.addFontFromMemory(embedded_font_data, math.floor(font_size * 1.1));
@@ -83,7 +83,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zgui.backend.initWithConfig(
         window,
         gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
         .{ .texture_filter_mode = .linear, .pipeline_multisample_count = 1 },
     );
 
@@ -259,7 +259,7 @@ fn update(demo: *DemoState) !void {
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
             if (zgui.beginCombo("Combo 0", .{ .preview_value = items[static.selection_index] })) {
                 for (items, 0..) |item, index| {
-                    const i = @intCast(u32, index);
+                    const i = @as(u32, @intCast(index));
                     if (zgui.selectable(item, .{ .selected = static.selection_index == i }))
                         static.selection_index = i;
                 }
@@ -437,7 +437,7 @@ fn update(demo: *DemoState) !void {
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
             if (zgui.beginListBox("List Box 0", .{})) {
                 for (items, 0..) |item, index| {
-                    const i = @intCast(u32, index);
+                    const i = @as(u32, @intCast(index));
                     if (zgui.selectable(item, .{ .selected = static.selection_index == i }))
                         static.selection_index = i;
                 }
@@ -553,7 +553,7 @@ fn update(demo: *DemoState) !void {
         .p = .{ 200, 700 },
         .r = 30,
         .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 0 }),
-        .thickness = 15 + 15 * @floatCast(f32, @sin(demo.gctx.stats.time)),
+        .thickness = 15 + 15 * @as(f32, @floatCast(@sin(demo.gctx.stats.time))),
     });
 }
 
@@ -598,7 +598,7 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    if (zems.is_emscripten) zglfw.WindowHint.set(.client_api, @enumToInt(zglfw.ClientApi.no_api));
+    if (zems.is_emscripten) zglfw.WindowHint.set(.client_api, zglfw.ClientApi.no_api);
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch |err| {
         std.log.err("Failed to create demo window: {}", .{err});
         return;
@@ -636,7 +636,7 @@ pub fn tick(demo: *DemoState) !void {
 usingnamespace if (zems.is_emscripten) struct {
     pub export fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) zems.EmBool {
         _ = time;
-        const demo = @ptrCast(*DemoState, @alignCast(@alignOf(DemoState), user_data.?));
+        const demo = @as(*DemoState, @alignCast(user_data.?));
         if (demo.gctx.canRender()) tick(demo) catch |err| {
             std.log.err("animation frame canceled! tick failed with: {}", .{err});
             return .false;

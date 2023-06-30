@@ -74,7 +74,7 @@ const BroadPhaseLayerInterface = extern struct {
         iself: *const zphy.BroadPhaseLayerInterface,
         layer: zphy.ObjectLayer,
     ) callconv(.C) zphy.BroadPhaseLayer {
-        const self = @ptrCast(*const BroadPhaseLayerInterface, iself);
+        const self = @as(*const BroadPhaseLayerInterface, @ptrCast(iself));
         return self.object_to_broad_phase[layer];
     }
 };
@@ -178,10 +178,10 @@ fn appendMesh(
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
     meshes.append(.{
-        .index_offset = @intCast(u32, meshes_indices.items.len),
-        .vertex_offset = @intCast(i32, meshes_positions.items.len),
-        .num_indices = @intCast(u32, mesh.indices.len),
-        .num_vertices = @intCast(u32, mesh.positions.len),
+        .index_offset = @as(u32, @intCast(meshes_indices.items.len)),
+        .vertex_offset = @as(i32, @intCast(meshes_positions.items.len)),
+        .num_indices = @as(u32, @intCast(mesh.indices.len)),
+        .num_vertices = @as(u32, @intCast(mesh.positions.len)),
     }) catch unreachable;
 
     meshes_indices.appendSlice(mesh.indices) catch unreachable;
@@ -251,8 +251,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     var meshes_normals = std.ArrayList([3]f32).init(arena);
     generateMeshes(allocator, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
-    const total_num_vertices = @intCast(u32, meshes_positions.items.len);
-    const total_num_indices = @intCast(u32, meshes_indices.items.len);
+    const total_num_vertices = @as(u32, @intCast(meshes_positions.items.len));
+    const total_num_indices = @as(u32, @intCast(meshes_indices.items.len));
 
     //
     // Graphics
@@ -270,7 +270,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             .binding = 0,
             .buffer_handle = gctx.uniforms.buffer,
             .offset = 0,
-            .size = math.max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
+            .size = @max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
         },
     });
 
@@ -319,9 +319,9 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     contact_listener.* = .{};
 
     const physics_system = try zphy.PhysicsSystem.create(
-        @ptrCast(*const zphy.BroadPhaseLayerInterface, broad_phase_layer_interface),
-        @ptrCast(*const zphy.ObjectVsBroadPhaseLayerFilter, object_vs_broad_phase_layer_filter),
-        @ptrCast(*const zphy.ObjectLayerPairFilter, object_layer_pair_filter),
+        @as(*const zphy.BroadPhaseLayerInterface, @ptrCast(broad_phase_layer_interface)),
+        @as(*const zphy.ObjectVsBroadPhaseLayerFilter, @ptrCast(object_vs_broad_phase_layer_filter)),
+        @as(*const zphy.ObjectLayerPairFilter, @ptrCast(object_layer_pair_filter)),
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -355,7 +355,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
 
         var i: u32 = 0;
         while (i < 16) : (i += 1) {
-            const fi = @intToFloat(f32, i);
+            const fi = @as(f32, @floatFromInt(i));
             _ = try body_interface.createAndAddBody(.{
                 .position = .{ 0.0, 8.0 + fi * 1.2, 8.0, 1.0 },
                 .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
@@ -437,15 +437,15 @@ fn update(demo: *DemoState) void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
-            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
-            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = @max(demo.camera.pitch, -0.48 * math.pi);
             demo.camera.yaw = zm.modAngle(demo.camera.yaw);
         }
     }
@@ -492,7 +492,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -570,10 +570,10 @@ fn draw(demo: *DemoState) void {
                         zm.loadArr4(body.position)
                     else
                         zm.loadArr4(.{
-                            @floatCast(f32, body.position[0]),
-                            @floatCast(f32, body.position[1]),
-                            @floatCast(f32, body.position[2]),
-                            @floatCast(f32, body.position[3]),
+                            @as(f32, @floatCast(body.position[0])),
+                            @as(f32, @floatCast(body.position[1])),
+                            @as(f32, @floatCast(body.position[2])),
+                            @as(f32, @floatCast(body.position[3])),
                         });
                     const rotation = zm.loadArr4(body.rotation);
                     var xform = zm.matFromQuat(rotation);
@@ -664,7 +664,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
@@ -675,7 +675,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
 

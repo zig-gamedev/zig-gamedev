@@ -18,7 +18,7 @@ pub fn pill(segments: u16, vertex_data: []Vertex, index_data: []u16) void {
     {
         var i: usize = 0;
         while (i <= segments) : (i += 1) {
-            const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, segments));
+            const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(segments)));
             vertex_data[i] = .{
                 .position = .{ @cos(angle), @sin(angle) },
                 .side = -1.0,
@@ -43,7 +43,7 @@ pub fn pill(segments: u16, vertex_data: []Vertex, index_data: []u16) void {
             index_data[i + 1] = down;
             up += 1;
             if (down == 0) {
-                down = @intCast(u16, index_data.len);
+                down = @as(u16, @intCast(index_data.len));
             }
             down -= 1;
         }

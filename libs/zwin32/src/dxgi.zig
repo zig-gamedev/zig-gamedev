@@ -276,8 +276,7 @@ pub const FORMAT = enum(UINT) {
             .BC7_UNORM_SRGB,
             => 8,
 
-            .R1_UNORM,
-            => 1,
+            .R1_UNORM => 1,
 
             .BC1_TYPELESS,
             .BC1_UNORM,
@@ -546,19 +545,19 @@ pub const IObject = extern struct {
                 data_size: UINT,
                 data: *const anyopaque,
             ) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .SetPrivateData(@ptrCast(*IObject, self), guid, data_size, data);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .SetPrivateData(@as(*IObject, @ptrCast(self)), guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .SetPrivateDataInterface(@ptrCast(*IObject, self), guid, data);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .SetPrivateDataInterface(@as(*IObject, @ptrCast(self)), guid, data);
             }
             pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: *anyopaque) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v)
-                    .GetPrivateData(@ptrCast(*IObject, self), guid, data_size, data);
+                return @as(*const IObject.VTable, @ptrCast(self.__v))
+                    .GetPrivateData(@as(*IObject, @ptrCast(self)), guid, data_size, data);
             }
             pub inline fn GetParent(self: *T, guid: *const GUID, parent: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IObject.VTable, self.__v).GetParent(@ptrCast(*IObject, self), guid, parent);
+                return @as(*const IObject.VTable, @ptrCast(self.__v)).GetParent(@as(*IObject, @ptrCast(self)), guid, parent);
             }
         };
     }
@@ -583,8 +582,8 @@ pub const IDeviceSubObject = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn GetDevice(self: *T, guid: *const GUID, parent: *?*anyopaque) HRESULT {
-                return @ptrCast(*const IDeviceSubObject.VTable, self.__v)
-                    .GetDevice(@ptrCast(*IDeviceSubObject, self), guid, parent);
+                return @as(*const IDeviceSubObject.VTable, @ptrCast(self.__v))
+                    .GetDevice(@as(*IDeviceSubObject, @ptrCast(self)), guid, parent);
             }
         };
     }
@@ -605,19 +604,19 @@ pub const IResource = extern struct {
             pub usingnamespace IDeviceSubObject.Methods(T);
 
             pub inline fn GetSharedHandle(self: *T, handle: *HANDLE) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.__v)
-                    .GetSharedHandle(@ptrCast(*IResource, self), handle);
+                return @as(*const IResource.VTable, @ptrCast(self.__v))
+                    .GetSharedHandle(@as(*IResource, @ptrCast(self)), handle);
             }
             pub inline fn GetUsage(self: *T, usage: *USAGE) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.__v).GetUsage(@ptrCast(*IResource, self), usage);
+                return @as(*const IResource.VTable, @ptrCast(self.__v)).GetUsage(@as(*IResource, @ptrCast(self)), usage);
             }
             pub inline fn SetEvictionPriority(self: *T, priority: UINT) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.__v)
-                    .SetEvictionPriority(@ptrCast(*IResource, self), priority);
+                return @as(*const IResource.VTable, @ptrCast(self.__v))
+                    .SetEvictionPriority(@as(*IResource, @ptrCast(self)), priority);
             }
             pub inline fn GetEvictionPriority(self: *T, priority: *UINT) HRESULT {
-                return @ptrCast(*const IResource.VTable, self.__v)
-                    .GetEvictionPriority(@ptrCast(*IResource, self), priority);
+                return @as(*const IResource.VTable, @ptrCast(self.__v))
+                    .GetEvictionPriority(@as(*IResource, @ptrCast(self)), priority);
             }
         };
     }
@@ -642,11 +641,11 @@ pub const IKeyedMutex = extern struct {
             pub usingnamespace IDeviceSubObject.Methods(T);
 
             pub inline fn AcquireSync(self: *T, key: UINT64, milliseconds: DWORD) HRESULT {
-                return @ptrCast(*const IKeyedMutex.VTable, self.__v)
-                    .AcquireSync(@ptrCast(*IKeyedMutex, self), key, milliseconds);
+                return @as(*const IKeyedMutex.VTable, @ptrCast(self.__v))
+                    .AcquireSync(@as(*IKeyedMutex, @ptrCast(self)), key, milliseconds);
             }
             pub inline fn ReleaseSync(self: *T, key: UINT64) HRESULT {
-                return @ptrCast(*const IKeyedMutex.VTable, self.__v).ReleaseSync(@ptrCast(*IKeyedMutex, self), key);
+                return @as(*const IKeyedMutex.VTable, @ptrCast(self.__v)).ReleaseSync(@as(*IKeyedMutex, @ptrCast(self)), key);
             }
         };
     }
@@ -675,13 +674,13 @@ pub const ISurface = extern struct {
             pub usingnamespace IDeviceSubObject.Methods(T);
 
             pub inline fn GetDesc(self: *T, desc: *SURFACE_DESC) HRESULT {
-                return @ptrCast(*const ISurface.VTable, self.__v).GetDesc(@ptrCast(*ISurface, self), desc);
+                return @as(*const ISurface.VTable, @ptrCast(self.__v)).GetDesc(@as(*ISurface, @ptrCast(self)), desc);
             }
             pub inline fn Map(self: *T, locked_rect: *MAPPED_RECT, flags: MAP_FLAG) HRESULT {
-                return @ptrCast(*const ISurface.VTable, self.__v).Map(@ptrCast(*ISurface, self), locked_rect, flags);
+                return @as(*const ISurface.VTable, @ptrCast(self.__v)).Map(@as(*ISurface, @ptrCast(self)), locked_rect, flags);
             }
             pub inline fn Unmap(self: *T) HRESULT {
-                return @ptrCast(*const ISurface.VTable, self.__v).Unmap(@ptrCast(*ISurface, self));
+                return @as(*const ISurface.VTable, @ptrCast(self.__v)).Unmap(@as(*ISurface, @ptrCast(self)));
             }
         };
     }
@@ -704,15 +703,15 @@ pub const IAdapter = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn EnumOutputs(self: *T, index: UINT, output: *?*IOutput) HRESULT {
-                return @ptrCast(*const IAdapter.VTable, self.__v)
-                    .EnumOutputs(@ptrCast(*IAdapter, self), index, output);
+                return @as(*const IAdapter.VTable, @ptrCast(self.__v))
+                    .EnumOutputs(@as(*IAdapter, @ptrCast(self)), index, output);
             }
             pub inline fn GetDesc(self: *T, desc: *ADAPTER_DESC) HRESULT {
-                return @ptrCast(*const IAdapter.VTable, self.__v).GetDesc(@ptrCast(*IAdapter, self), desc);
+                return @as(*const IAdapter.VTable, @ptrCast(self.__v)).GetDesc(@as(*IAdapter, @ptrCast(self)), desc);
             }
             pub inline fn CheckInterfaceSupport(self: *T, guid: *const GUID, umd_ver: *LARGE_INTEGER) HRESULT {
-                return @ptrCast(*const IAdapter.VTable, self.__v)
-                    .CheckInterfaceSupport(@ptrCast(*IAdapter, self), guid, umd_ver);
+                return @as(*const IAdapter.VTable, @ptrCast(self.__v))
+                    .CheckInterfaceSupport(@as(*IAdapter, @ptrCast(self)), guid, umd_ver);
             }
         };
     }
@@ -743,7 +742,7 @@ pub const IOutput = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn GetDesc(self: *T, desc: *OUTPUT_DESC) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v).GetDesc(@ptrCast(*IOutput, self), desc);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v)).GetDesc(@as(*IOutput, @ptrCast(self)), desc);
             }
             pub inline fn GetDisplayModeList(
                 self: *T,
@@ -752,8 +751,8 @@ pub const IOutput = extern struct {
                 num_nodes: *UINT,
                 desc: ?*MODE_DESC,
             ) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v)
-                    .GetDisplayModeList(@ptrCast(*IOutput, self), enum_format, flags, num_nodes, desc);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v))
+                    .GetDisplayModeList(@as(*IOutput, @ptrCast(self)), enum_format, flags, num_nodes, desc);
             }
             pub inline fn FindClosestMatchingMode(
                 self: *T,
@@ -761,43 +760,43 @@ pub const IOutput = extern struct {
                 closest_match: *MODE_DESC,
                 concerned_device: ?*IUnknown,
             ) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v).FindClosestMatchingMode(
-                    @ptrCast(*IOutput, self),
+                return @as(*const IOutput.VTable, @ptrCast(self.__v)).FindClosestMatchingMode(
+                    @as(*IOutput, @ptrCast(self)),
                     mode_to_match,
                     closest_match,
                     concerned_device,
                 );
             }
             pub inline fn WaitForVBlank(self: *T) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v).WaitForVBlank(@ptrCast(*IOutput, self));
+                return @as(*const IOutput.VTable, @ptrCast(self.__v)).WaitForVBlank(@as(*IOutput, @ptrCast(self)));
             }
             pub inline fn TakeOwnership(self: *T, device: *IUnknown, exclusive: BOOL) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v)
-                    .TakeOwnership(@ptrCast(*IOutput, self), device, exclusive);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v))
+                    .TakeOwnership(@as(*IOutput, @ptrCast(self)), device, exclusive);
             }
             pub inline fn ReleaseOwnership(self: *T) void {
-                @ptrCast(*const IOutput.VTable, self.__v).ReleaseOwnership(@ptrCast(*IOutput, self));
+                @as(*const IOutput.VTable, @ptrCast(self.__v)).ReleaseOwnership(@as(*IOutput, @ptrCast(self)));
             }
             pub inline fn GetGammaControlCapabilities(self: *T, gamma_caps: *GAMMA_CONTROL_CAPABILITIES) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v)
-                    .GetGammaControlCapabilities(@ptrCast(*IOutput, self), gamma_caps);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v))
+                    .GetGammaControlCapabilities(@as(*IOutput, @ptrCast(self)), gamma_caps);
             }
             pub inline fn SetGammaControl(self: *T, array: *const GAMMA_CONTROL) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v).SetGammaControl(@ptrCast(*IOutput, self), array);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v)).SetGammaControl(@as(*IOutput, @ptrCast(self)), array);
             }
             pub inline fn GetGammaControl(self: *T, array: *GAMMA_CONTROL) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v).GetGammaControl(@ptrCast(*IOutput, self), array);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v)).GetGammaControl(@as(*IOutput, @ptrCast(self)), array);
             }
             pub inline fn SetDisplaySurface(self: *T, scanout_surface: *ISurface) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v)
-                    .SetDisplaySurface(@ptrCast(*IOutput, self), scanout_surface);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v))
+                    .SetDisplaySurface(@as(*IOutput, @ptrCast(self)), scanout_surface);
             }
             pub inline fn GetDisplaySurfaceData(self: *T, destination: *ISurface) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v)
-                    .GetDisplaySurfaceData(@ptrCast(*IOutput, self), destination);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v))
+                    .GetDisplaySurfaceData(@as(*IOutput, @ptrCast(self)), destination);
             }
             pub inline fn GetFrameStatistics(self: *T, stats: *FRAME_STATISTICS) HRESULT {
-                return @ptrCast(*const IOutput.VTable, self.__v).GetFrameStatistics(@ptrCast(*IOutput, self), stats);
+                return @as(*const IOutput.VTable, @ptrCast(self.__v)).GetFrameStatistics(@as(*IOutput, @ptrCast(self)), stats);
             }
         };
     }
@@ -851,23 +850,23 @@ pub const ISwapChain = extern struct {
             pub usingnamespace IDeviceSubObject.Methods(T);
 
             pub inline fn Present(self: *T, sync_interval: UINT, flags: PRESENT_FLAG) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .Present(@ptrCast(*ISwapChain, self), sync_interval, flags);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .Present(@as(*ISwapChain, @ptrCast(self)), sync_interval, flags);
             }
             pub inline fn GetBuffer(self: *T, index: u32, guid: *const GUID, surface: *?*anyopaque) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .GetBuffer(@ptrCast(*ISwapChain, self), index, guid, surface);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .GetBuffer(@as(*ISwapChain, @ptrCast(self)), index, guid, surface);
             }
             pub inline fn SetFullscreenState(self: *T, target: ?*IOutput) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .SetFullscreenState(@ptrCast(*ISwapChain, self), target);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .SetFullscreenState(@as(*ISwapChain, @ptrCast(self)), target);
             }
             pub inline fn GetFullscreenState(self: *T, fullscreen: ?*BOOL, target: ?*?*IOutput) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .GetFullscreenState(@ptrCast(*ISwapChain, self), fullscreen, target);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .GetFullscreenState(@as(*ISwapChain, @ptrCast(self)), fullscreen, target);
             }
             pub inline fn GetDesc(self: *T, desc: *SWAP_CHAIN_DESC) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v).GetDesc(@ptrCast(*ISwapChain, self), desc);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v)).GetDesc(@as(*ISwapChain, @ptrCast(self)), desc);
             }
             pub inline fn ResizeBuffers(
                 self: *T,
@@ -877,24 +876,24 @@ pub const ISwapChain = extern struct {
                 format: FORMAT,
                 flags: SWAP_CHAIN_FLAG,
             ) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .ResizeBuffers(@ptrCast(*ISwapChain, self), count, width, height, format, flags);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .ResizeBuffers(@as(*ISwapChain, @ptrCast(self)), count, width, height, format, flags);
             }
             pub inline fn ResizeTarget(self: *T, params: *const MODE_DESC) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .ResizeTarget(@ptrCast(*ISwapChain, self), params);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .ResizeTarget(@as(*ISwapChain, @ptrCast(self)), params);
             }
             pub inline fn GetContainingOutput(self: *T, output: *?*IOutput) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .GetContainingOutput(@ptrCast(*ISwapChain, self), output);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .GetContainingOutput(@as(*ISwapChain, @ptrCast(self)), output);
             }
             pub inline fn GetFrameStatistics(self: *T, stats: *FRAME_STATISTICS) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .GetFrameStatistics(@ptrCast(*ISwapChain, self), stats);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .GetFrameStatistics(@as(*ISwapChain, @ptrCast(self)), stats);
             }
             pub inline fn GetLastPresentCount(self: *T, count: *UINT) HRESULT {
-                return @ptrCast(*const ISwapChain.VTable, self.__v)
-                    .GetLastPresentCount(@ptrCast(*ISwapChain, self), count);
+                return @as(*const ISwapChain.VTable, @ptrCast(self.__v))
+                    .GetLastPresentCount(@as(*ISwapChain, @ptrCast(self)), count);
             }
         };
     }
@@ -932,16 +931,16 @@ pub const IFactory = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn EnumAdapters(self: *T, index: UINT, adapter: *?*IAdapter) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.__v)
-                    .EnumAdapters(@ptrCast(*IFactory, self), index, adapter);
+                return @as(*const IFactory.VTable, @ptrCast(self.__v))
+                    .EnumAdapters(@as(*IFactory, @ptrCast(self)), index, adapter);
             }
             pub inline fn MakeWindowAssociation(self: *T, window: HWND, flags: MWA_FLAGS) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.__v)
-                    .MakeWindowAssociation(@ptrCast(*IFactory, self), window, flags);
+                return @as(*const IFactory.VTable, @ptrCast(self.__v))
+                    .MakeWindowAssociation(@as(*IFactory, @ptrCast(self)), window, flags);
             }
             pub inline fn GetWindowAssociation(self: *T, window: *HWND) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.__v)
-                    .GetWindowAssociation(@ptrCast(*IFactory, self), window);
+                return @as(*const IFactory.VTable, @ptrCast(self.__v))
+                    .GetWindowAssociation(@as(*IFactory, @ptrCast(self)), window);
             }
             pub inline fn CreateSwapChain(
                 self: *T,
@@ -949,12 +948,12 @@ pub const IFactory = extern struct {
                 desc: *SWAP_CHAIN_DESC,
                 swapchain: *?*ISwapChain,
             ) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.__v)
-                    .CreateSwapChain(@ptrCast(*IFactory, self), device, desc, swapchain);
+                return @as(*const IFactory.VTable, @ptrCast(self.__v))
+                    .CreateSwapChain(@as(*IFactory, @ptrCast(self)), device, desc, swapchain);
             }
             pub inline fn CreateSoftwareAdapter(self: *T, adapter: *?*IAdapter) HRESULT {
-                return @ptrCast(*const IFactory.VTable, self.__v)
-                    .CreateSoftwareAdapter(@ptrCast(*IFactory, self), adapter);
+                return @as(*const IFactory.VTable, @ptrCast(self.__v))
+                    .CreateSoftwareAdapter(@as(*IFactory, @ptrCast(self)), adapter);
             }
         };
     }
@@ -980,7 +979,7 @@ pub const IDevice = extern struct {
             pub usingnamespace IObject.Methods(T);
 
             pub inline fn GetAdapter(self: *T, adapter: *?*IAdapter) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v).GetAdapter(@ptrCast(*IDevice, self), adapter);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v)).GetAdapter(@as(*IDevice, @ptrCast(self)), adapter);
             }
             pub inline fn CreateSurface(
                 self: *T,
@@ -990,8 +989,8 @@ pub const IDevice = extern struct {
                 shared_resource: ?*const SHARED_RESOURCE,
                 surface: *?*ISurface,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v).CreateSurface(
-                    @ptrCast(*IDevice, self),
+                return @as(*const IDevice.VTable, @ptrCast(self.__v)).CreateSurface(
+                    @as(*IDevice, @ptrCast(self)),
                     desc,
                     num_surfaces,
                     usage,
@@ -1005,16 +1004,16 @@ pub const IDevice = extern struct {
                 status: [*]RESIDENCY,
                 num_resources: UINT,
             ) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .QueryResourceResidency(@ptrCast(*IDevice, self), resources, status, num_resources);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .QueryResourceResidency(@as(*IDevice, @ptrCast(self)), resources, status, num_resources);
             }
             pub inline fn SetGPUThreadPriority(self: *T, priority: INT) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .SetGPUThreadPriority(@ptrCast(*IDevice, self), priority);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .SetGPUThreadPriority(@as(*IDevice, @ptrCast(self)), priority);
             }
             pub inline fn GetGPUThreadPriority(self: *T, priority: *INT) HRESULT {
-                return @ptrCast(*const IDevice.VTable, self.__v)
-                    .GetGPUThreadPriority(@ptrCast(*IDevice, self), priority);
+                return @as(*const IDevice.VTable, @ptrCast(self.__v))
+                    .GetGPUThreadPriority(@as(*IDevice, @ptrCast(self)), priority);
             }
         };
     }
@@ -1102,12 +1101,12 @@ pub const IFactory1 = extern struct {
             pub usingnamespace IFactory.Methods(T);
 
             pub inline fn EnumAdapters1(self: *T, index: UINT, adapter: *?*IAdapter1) HRESULT {
-                return @ptrCast(*const IFactory1.VTable, self.__v)
-                    .EnumAdapters1(@ptrCast(*IFactory1, self), index, adapter);
+                return @as(*const IFactory1.VTable, @ptrCast(self.__v))
+                    .EnumAdapters1(@as(*IFactory1, @ptrCast(self)), index, adapter);
             }
             pub inline fn IsCurrent(self: *T) BOOL {
-                return @ptrCast(*const IFactory1.VTable, self.__v)
-                    .IsCurrent(@ptrCast(*IFactory1, self));
+                return @as(*const IFactory1.VTable, @ptrCast(self.__v))
+                    .IsCurrent(@as(*IFactory1, @ptrCast(self)));
             }
         };
     }
@@ -1201,8 +1200,8 @@ pub const IFactory5 = extern struct {
                 support_data: *anyopaque,
                 support_data_size: UINT,
             ) HRESULT {
-                return @ptrCast(*const IFactory5.VTable, self.__v).CheckFeatureSupport(
-                    @ptrCast(*IFactory5, self),
+                return @as(*const IFactory5.VTable, @ptrCast(self.__v)).CheckFeatureSupport(
+                    @as(*IFactory5, @ptrCast(self)),
                     feature,
                     support_data,
                     support_data_size,
@@ -1240,8 +1239,8 @@ pub const IFactory6 = extern struct {
                 riid: *const GUID,
                 adapter: *?*IAdapter3,
             ) HRESULT {
-                return @ptrCast(*const IFactory6.VTable, self.__v).EnumAdapterByGpuPreference(
-                    @ptrCast(*IFactory6, self),
+                return @as(*const IFactory6.VTable, @ptrCast(self.__v)).EnumAdapterByGpuPreference(
+                    @as(*IFactory6, @ptrCast(self)),
                     adapter_index,
                     gpu_preference,
                     riid,
@@ -1274,8 +1273,8 @@ pub const IAdapter1 = extern struct {
             pub usingnamespace IAdapter.Methods(T);
 
             pub inline fn GetDesc1(self: *T, desc: *ADAPTER_DESC1) HRESULT {
-                return @ptrCast(*const IAdapter1.VTable, self.__v)
-                    .GetDesc1(@ptrCast(*IAdapter1, self), desc);
+                return @as(*const IAdapter1.VTable, @ptrCast(self.__v))
+                    .GetDesc1(@as(*IAdapter1, @ptrCast(self)), desc);
             }
         };
     }
@@ -1297,8 +1296,8 @@ pub const IAdapter2 = extern struct {
             pub usingnamespace IAdapter1.Methods(T);
 
             pub inline fn GetDesc2(self: *T, desc: *ADAPTER_DESC2) HRESULT {
-                return @ptrCast(*const IAdapter2.VTable, self.__v)
-                    .GetDesc2(@ptrCast(*IAdapter2, self), desc);
+                return @as(*const IAdapter2.VTable, @ptrCast(self.__v))
+                    .GetDesc2(@as(*IAdapter2, @ptrCast(self)), desc);
             }
         };
     }
@@ -1332,33 +1331,33 @@ pub const IAdapter3 = extern struct {
             pub usingnamespace IAdapter2.Methods(T);
 
             pub inline fn RegisterHardwareContentProtectionTeardownStatusEvent(self: *T, event: HANDLE, cookie: *DWORD) HRESULT {
-                return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .RegisterHardwareContentProtectionTeardownStatusEvent(@ptrCast(*IAdapter3, self), event, cookie);
+                return @as(*const IAdapter3.VTable, @ptrCast(self.__v))
+                    .RegisterHardwareContentProtectionTeardownStatusEvent(@as(*IAdapter3, @ptrCast(self)), event, cookie);
             }
 
             pub inline fn UnregisterHardwareContentProtectionTeardownStatus(self: *T, cookie: DWORD) void {
-                return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .UnregisterHardwareContentProtectionTeardownStatus(@ptrCast(*IAdapter3, self), cookie);
+                return @as(*const IAdapter3.VTable, @ptrCast(self.__v))
+                    .UnregisterHardwareContentProtectionTeardownStatus(@as(*IAdapter3, @ptrCast(self)), cookie);
             }
 
             pub inline fn QueryVideoMemoryInfo(self: *T, node_index: UINT, memory_segment_group: MEMORY_SEGMENT_GROUP, video_memory_info: *QUERY_VIDEO_MEMORY_INFO) HRESULT {
-                return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .QueryVideoMemoryInfo(@ptrCast(*IAdapter3, self), node_index, memory_segment_group, video_memory_info);
+                return @as(*const IAdapter3.VTable, @ptrCast(self.__v))
+                    .QueryVideoMemoryInfo(@as(*IAdapter3, @ptrCast(self)), node_index, memory_segment_group, video_memory_info);
             }
 
             pub inline fn SetVideoMemoryReservation(self: *T, node_index: UINT, memory_segment_group: MEMORY_SEGMENT_GROUP, reservation: UINT64) HRESULT {
-                return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .SetVideoMemoryReservation(@ptrCast(*IAdapter3, self), node_index, memory_segment_group, reservation);
+                return @as(*const IAdapter3.VTable, @ptrCast(self.__v))
+                    .SetVideoMemoryReservation(@as(*IAdapter3, @ptrCast(self)), node_index, memory_segment_group, reservation);
             }
 
             pub inline fn RegisterVideoMemoryBudgetChangeNotificationEvent(self: *T, event: HANDLE, cookie: *DWORD) HRESULT {
-                return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .RegisterVideoMemoryBudgetChangeNotificationEvent(@ptrCast(*IAdapter3, self), event, cookie);
+                return @as(*const IAdapter3.VTable, @ptrCast(self.__v))
+                    .RegisterVideoMemoryBudgetChangeNotificationEvent(@as(*IAdapter3, @ptrCast(self)), event, cookie);
             }
 
             pub inline fn UnregisterVideoMemoryBudgetChangeNotification(self: *T, cookie: DWORD) void {
-                return @ptrCast(*const IAdapter3.VTable, self.__v)
-                    .UnregisterVideoMemoryBudgetChangeNotification(@ptrCast(*IAdapter3, self), cookie);
+                return @as(*const IAdapter3.VTable, @ptrCast(self.__v))
+                    .UnregisterVideoMemoryBudgetChangeNotification(@as(*IAdapter3, @ptrCast(self)), cookie);
             }
         };
     }
@@ -1384,12 +1383,12 @@ pub const IDevice1 = extern struct {
             pub usingnamespace IDevice.Methods(T);
 
             pub inline fn SetMaximumFrameLatency(self: *T, max_latency: UINT) HRESULT {
-                return @ptrCast(*const IDevice1.VTable, self.__v)
-                    .SetMaximumFrameLatency(@ptrCast(*IDevice1, self), max_latency);
+                return @as(*const IDevice1.VTable, @ptrCast(self.__v))
+                    .SetMaximumFrameLatency(@as(*IDevice1, @ptrCast(self)), max_latency);
             }
             pub inline fn GetMaximumFrameLatency(self: *T, max_latency: *UINT) HRESULT {
-                return @ptrCast(*const IDevice1.VTable, self.__v)
-                    .GetMaximumFrameLatency(@ptrCast(*IDevice1, self), max_latency);
+                return @as(*const IDevice1.VTable, @ptrCast(self.__v))
+                    .GetMaximumFrameLatency(@as(*IDevice1, @ptrCast(self)), max_latency);
             }
         };
     }
@@ -1478,18 +1477,18 @@ pub const ISwapChain1 = extern struct {
             pub usingnamespace ISwapChain.Methods(T);
 
             pub inline fn GetDesc1(self: *T, desc: *SWAP_CHAIN_DESC1) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v).GetDesc1(@ptrCast(*ISwapChain1, self), desc);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v)).GetDesc1(@as(*ISwapChain1, @ptrCast(self)), desc);
             }
             pub inline fn GetFullscreenDesc(self: *T, desc: *SWAP_CHAIN_FULLSCREEN_DESC) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .GetFullscreenDesc(@ptrCast(*ISwapChain1, self), desc);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .GetFullscreenDesc(@as(*ISwapChain1, @ptrCast(self)), desc);
             }
             pub inline fn GetHwnd(self: *T, hwnd: *HWND) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v).GetHwnd(@ptrCast(*ISwapChain1, self), hwnd);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v)).GetHwnd(@as(*ISwapChain1, @ptrCast(self)), hwnd);
             }
             pub inline fn GetCoreWindow(self: *T, guid: *const GUID, unknown: *?*anyopaque) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .GetCoreWindow(@ptrCast(*ISwapChain1, self), guid, unknown);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .GetCoreWindow(@as(*ISwapChain1, @ptrCast(self)), guid, unknown);
             }
             pub inline fn Present1(
                 self: *T,
@@ -1497,32 +1496,32 @@ pub const ISwapChain1 = extern struct {
                 flags: PRESENT_FLAG,
                 params: *const PRESENT_PARAMETERS,
             ) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .Present1(@ptrCast(*ISwapChain1, self), sync_interval, flags, params);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .Present1(@as(*ISwapChain1, @ptrCast(self)), sync_interval, flags, params);
             }
             pub inline fn IsTemporaryMonoSupported(self: *T) BOOL {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .IsTemporaryMonoSupported(@ptrCast(*ISwapChain1, self));
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .IsTemporaryMonoSupported(@as(*ISwapChain1, @ptrCast(self)));
             }
             pub inline fn GetRestrictToOutput(self: *T, output: *?*IOutput) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .GetRestrictToOutput(@ptrCast(*ISwapChain1, self), output);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .GetRestrictToOutput(@as(*ISwapChain1, @ptrCast(self)), output);
             }
             pub inline fn SetBackgroundColor(self: *T, color: *const RGBA) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .SetBackgroundColor(@ptrCast(*ISwapChain1, self), color);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .SetBackgroundColor(@as(*ISwapChain1, @ptrCast(self)), color);
             }
             pub inline fn GetBackgroundColor(self: *T, color: *RGBA) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .GetBackgroundColor(@ptrCast(*ISwapChain1, self), color);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .GetBackgroundColor(@as(*ISwapChain1, @ptrCast(self)), color);
             }
             pub inline fn SetRotation(self: *T, rotation: MODE_ROTATION) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .SetRotation(@ptrCast(*ISwapChain1, self), rotation);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .SetRotation(@as(*ISwapChain1, @ptrCast(self)), rotation);
             }
             pub inline fn GetRotation(self: *T, rotation: *MODE_ROTATION) HRESULT {
-                return @ptrCast(*const ISwapChain1.VTable, self.__v)
-                    .GetRotation(@ptrCast(*ISwapChain1, self), rotation);
+                return @as(*const ISwapChain1.VTable, @ptrCast(self.__v))
+                    .GetRotation(@as(*ISwapChain1, @ptrCast(self)), rotation);
             }
         };
     }
@@ -1570,32 +1569,32 @@ pub const ISwapChain2 = extern struct {
             pub usingnamespace ISwapChain1.Methods(T);
 
             pub inline fn SetSourceSize(self: *T, width: UINT, height: UINT) HRESULT {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .SetSourceSize(@ptrCast(*ISwapChain2, self), width, height);
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .SetSourceSize(@as(*ISwapChain2, @ptrCast(self)), width, height);
             }
             pub inline fn GetSourceSize(self: *T, width: *UINT, height: *UINT) HRESULT {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .GetSourceSize(@ptrCast(*ISwapChain2, self), width, height);
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .GetSourceSize(@as(*ISwapChain2, @ptrCast(self)), width, height);
             }
             pub inline fn SetMaximumFrameLatency(self: *T, max_latency: UINT) HRESULT {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .SetMaximumFrameLatency(@ptrCast(*ISwapChain2, self), max_latency);
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .SetMaximumFrameLatency(@as(*ISwapChain2, @ptrCast(self)), max_latency);
             }
             pub inline fn GetMaximumFrameLatency(self: *T, max_latency: *UINT) HRESULT {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .GetMaximumFrameLatency(@ptrCast(*ISwapChain2, self), max_latency);
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .GetMaximumFrameLatency(@as(*ISwapChain2, @ptrCast(self)), max_latency);
             }
             pub inline fn GetFrameLatencyWaitableObject(self: *T) HANDLE {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .GetFrameLatencyWaitableObject(@ptrCast(*ISwapChain2, self));
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .GetFrameLatencyWaitableObject(@as(*ISwapChain2, @ptrCast(self)));
             }
             pub inline fn SetMatrixTransform(self: *T, matrix: *const MATRIX_3X2_F) HRESULT {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .SetMatrixTransform(@ptrCast(*ISwapChain2, self), matrix);
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .SetMatrixTransform(@as(*ISwapChain2, @ptrCast(self)), matrix);
             }
             pub inline fn GetMatrixTransform(self: *T, matrix: *MATRIX_3X2_F) HRESULT {
-                return @ptrCast(*const ISwapChain2.VTable, self.__v)
-                    .GetMatrixTransform(@ptrCast(*ISwapChain2, self), matrix);
+                return @as(*const ISwapChain2.VTable, @ptrCast(self.__v))
+                    .GetMatrixTransform(@as(*ISwapChain2, @ptrCast(self)), matrix);
             }
         };
     }
@@ -1630,16 +1629,16 @@ pub const ISwapChain3 = extern struct {
             pub usingnamespace ISwapChain2.Methods(T);
 
             pub inline fn GetCurrentBackBufferIndex(self: *T) UINT {
-                return @ptrCast(*const ISwapChain3.VTable, self.__v)
-                    .GetCurrentBackBufferIndex(@ptrCast(*ISwapChain3, self));
+                return @as(*const ISwapChain3.VTable, @ptrCast(self.__v))
+                    .GetCurrentBackBufferIndex(@as(*ISwapChain3, @ptrCast(self)));
             }
             pub inline fn CheckColorSpaceSupport(self: *T, space: COLOR_SPACE_TYPE, support: *UINT) HRESULT {
-                return @ptrCast(*const ISwapChain3.VTable, self.__v)
-                    .CheckColorSpaceSupport(@ptrCast(*const ISwapChain3.VTable, self.__v), space, support);
+                return @as(*const ISwapChain3.VTable, @ptrCast(self.__v))
+                    .CheckColorSpaceSupport(@as(*const ISwapChain3.VTable, @ptrCast(self.__v)), space, support);
             }
             pub inline fn SetColorSpace1(self: *T, space: COLOR_SPACE_TYPE) HRESULT {
-                return @ptrCast(*const ISwapChain3.VTable, self.__v)
-                    .SetColorSpace1(@ptrCast(*const ISwapChain3.VTable, self.__v), space);
+                return @as(*const ISwapChain3.VTable, @ptrCast(self.__v))
+                    .SetColorSpace1(@as(*const ISwapChain3.VTable, @ptrCast(self.__v)), space);
             }
             pub inline fn ResizeBuffers1(
                 self: *T,
@@ -1651,8 +1650,8 @@ pub const ISwapChain3 = extern struct {
                 creation_node_mask: [*]const UINT,
                 present_queue: [*]const *IUnknown,
             ) HRESULT {
-                return @ptrCast(*const ISwapChain3.VTable, self.__v).ResizeBuffers1(
-                    @ptrCast(*const ISwapChain3.VTable, self.__v),
+                return @as(*const ISwapChain3.VTable, @ptrCast(self.__v)).ResizeBuffers1(
+                    @as(*const ISwapChain3.VTable, @ptrCast(self.__v)),
                     buffer_count,
                     width,
                     height,
@@ -1692,35 +1691,35 @@ pub const IID_ISwapChain3 = GUID{
 };
 
 // Status return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-status
-pub const STATUS_OCCLUDED = @bitCast(HRESULT, @as(c_ulong, 0x087A0001));
-pub const STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));
-pub const STATUS_MODE_CHANGE_IN_PROGRESS = @bitCast(HRESULT, @as(c_ulong, 0x087A0008));
+pub const STATUS_OCCLUDED = @as(HRESULT, @bitCast(@as(c_ulong, 0x087A0001)));
+pub const STATUS_MODE_CHANGED = @as(HRESULT, @bitCast(@as(c_ulong, 0x087A0007)));
+pub const STATUS_MODE_CHANGE_IN_PROGRESS = @as(HRESULT, @bitCast(@as(c_ulong, 0x087A0008)));
 
 // Return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-error
-pub const ERROR_ACCESS_DENIED = @bitCast(HRESULT, @as(c_ulong, 0x887A002B));
-pub const ERROR_ACCESS_LOST = @bitCast(HRESULT, @as(c_ulong, 0x887A0026));
-pub const ERROR_ALREADY_EXISTS = @bitCast(HRESULT, @as(c_ulong, 0x887A0036));
-pub const ERROR_CANNOT_PROTECT_CONTENT = @bitCast(HRESULT, @as(c_ulong, 0x887A002A));
-pub const ERROR_DEVICE_HUNG = @bitCast(HRESULT, @as(c_ulong, 0x887A0006));
-pub const ERROR_DEVICE_REMOVED = @bitCast(HRESULT, @as(c_ulong, 0x887A0005));
-pub const ERROR_DEVICE_RESET = @bitCast(HRESULT, @as(c_ulong, 0x887A0007));
-pub const ERROR_DRIVER_INTERNAL_ERROR = @bitCast(HRESULT, @as(c_ulong, 0x887A0020));
-pub const ERROR_FRAME_STATISTICS_DISJOINT = @bitCast(HRESULT, @as(c_ulong, 0x887A000B));
-pub const ERROR_GRAPHICS_VIDPN_SOURCE_IN_USE = @bitCast(HRESULT, @as(c_ulong, 0x887A000C));
-pub const ERROR_INVALID_CALL = @bitCast(HRESULT, @as(c_ulong, 0x887A0001));
-pub const ERROR_MORE_DATA = @bitCast(HRESULT, @as(c_ulong, 0x887A0003));
-pub const ERROR_NAME_ALREADY_EXISTS = @bitCast(HRESULT, @as(c_ulong, 0x887A002C));
-pub const ERROR_NONEXCLUSIVE = @bitCast(HRESULT, @as(c_ulong, 0x887A0021));
-pub const ERROR_NOT_CURRENTLY_AVAILABLE = @bitCast(HRESULT, @as(c_ulong, 0x887A0022));
-pub const ERROR_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887A0002));
-pub const ERROR_REMOTE_CLIENT_DISCONNECTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0023));
-pub const ERROR_REMOTE_OUTOFMEMORY = @bitCast(HRESULT, @as(c_ulong, 0x887A0024));
-pub const ERROR_RESTRICT_TO_OUTPUT_STALE = @bitCast(HRESULT, @as(c_ulong, 0x887A0029));
-pub const ERROR_SDK_COMPONENT_MISSING = @bitCast(HRESULT, @as(c_ulong, 0x887A002D));
-pub const ERROR_SESSION_DISCONNECTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0028));
-pub const ERROR_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0004));
-pub const ERROR_WAIT_TIMEOUT = @bitCast(HRESULT, @as(c_ulong, 0x887A0027));
-pub const ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
+pub const ERROR_ACCESS_DENIED = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A002B)));
+pub const ERROR_ACCESS_LOST = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0026)));
+pub const ERROR_ALREADY_EXISTS = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0036)));
+pub const ERROR_CANNOT_PROTECT_CONTENT = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A002A)));
+pub const ERROR_DEVICE_HUNG = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0006)));
+pub const ERROR_DEVICE_REMOVED = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0005)));
+pub const ERROR_DEVICE_RESET = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0007)));
+pub const ERROR_DRIVER_INTERNAL_ERROR = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0020)));
+pub const ERROR_FRAME_STATISTICS_DISJOINT = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A000B)));
+pub const ERROR_GRAPHICS_VIDPN_SOURCE_IN_USE = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A000C)));
+pub const ERROR_INVALID_CALL = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0001)));
+pub const ERROR_MORE_DATA = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0003)));
+pub const ERROR_NAME_ALREADY_EXISTS = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A002C)));
+pub const ERROR_NONEXCLUSIVE = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0021)));
+pub const ERROR_NOT_CURRENTLY_AVAILABLE = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0022)));
+pub const ERROR_NOT_FOUND = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0002)));
+pub const ERROR_REMOTE_CLIENT_DISCONNECTED = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0023)));
+pub const ERROR_REMOTE_OUTOFMEMORY = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0024)));
+pub const ERROR_RESTRICT_TO_OUTPUT_STALE = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0029)));
+pub const ERROR_SDK_COMPONENT_MISSING = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A002D)));
+pub const ERROR_SESSION_DISCONNECTED = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0028)));
+pub const ERROR_UNSUPPORTED = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0004)));
+pub const ERROR_WAIT_TIMEOUT = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A0027)));
+pub const ERROR_WAS_STILL_DRAWING = @as(HRESULT, @bitCast(@as(c_ulong, 0x887A000A)));
 
 // Error set corresponding to the above error return codes
 pub const Error = error{

@@ -18,13 +18,11 @@ pub const EmBool = enum(c_int) {
 pub const AnimationFrameCallback = *const fn (time: f64, user_data: ?*anyopaque) callconv(.C) EmBool;
 
 pub inline fn requestAnimationFrame(cb: AnimationFrameCallback, user_data: ?*anyopaque) c_long {
-    const cb_ptr = @ptrCast(*const fn (time: f64, user_data: ?*anyopaque) callconv(.C) c_int, cb); // return enum doesn't pass typesafety
-    return c.emscripten_request_animation_frame(cb_ptr, user_data);
+    return c.emscripten_request_animation_frame(cb, user_data);
 }
 
 pub inline fn requestAnimationFrameLoop(cb: AnimationFrameCallback, user_data: ?*anyopaque) void {
-    const cb_ptr = @ptrCast(*const fn (time: f64, user_data: ?*anyopaque) callconv(.C) c_int, cb); // return enum doesn't pass typesafety
-    return c.emscripten_request_animation_frame_loop(cb_ptr, user_data);
+    return c.emscripten_request_animation_frame_loop(cb, user_data);
 }
 
 pub inline fn cancelAnimationFrame(request_animation_frame_id: c_long) void {
@@ -61,10 +59,10 @@ pub const EmmalocAllocator = struct {
     ) ?[*]u8 {
         _ = ctx;
         _ = return_address;
-        const ptr_align: u32 = @intCast(u32, 1) << @intCast(u5, ptr_align_log2);
+        const ptr_align: u32 = @as(u32, 1) << @as(u5, @intCast(ptr_align_log2));
         if (!std.math.isPowerOfTwo(ptr_align)) unreachable;
         const ptr = c.emmalloc_memalign(ptr_align, len) orelse return null;
-        return @ptrCast([*]u8, ptr);
+        return @ptrCast(ptr);
     }
 
     fn resize(
@@ -111,9 +109,9 @@ pub fn emscriptenLog(
     };
     buf[slice.len] = 0;
     switch (level) {
-        .err => c.emscripten_console_error(@ptrCast([*:0]u8, slice.ptr)),
-        .warn => c.emscripten_console_warn(@ptrCast([*:0]u8, slice.ptr)),
-        else => c.emscripten_console_log(@ptrCast([*:0]u8, slice.ptr)),
+        .err => c.emscripten_console_error(@ptrCast(slice.ptr)),
+        .warn => c.emscripten_console_warn(@ptrCast(slice.ptr)),
+        else => c.emscripten_console_log(@ptrCast(slice.ptr)),
     }
 }
 

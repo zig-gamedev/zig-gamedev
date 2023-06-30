@@ -18,7 +18,7 @@ pub fn draw() void {
 
     gl.useProgram(fs_draw);
 
-    const t = @floatCast(f32, xcommon.frame_time);
+    const t = @as(f32, @floatCast(xcommon.frame_time));
     const r = @sin(t);
 
     gl.loadIdentity();
@@ -29,7 +29,7 @@ pub fn draw() void {
     gl.rotatef(rot, 0.0, 0.0, 1.0);
     gl.begin(gl.POINTS);
     for (0..10) |i| {
-        const fract = @intToFloat(f32, i) / 10.0;
+        const fract = @as(f32, @floatFromInt(i)) / 10.0;
         const x = r * @cos(math.tau * fract);
         const y = r * @sin(math.tau * fract);
         gl.vertex2f(x, y);
@@ -44,7 +44,7 @@ pub fn draw() void {
     gl.rotatef(90.0 * @sin(t), 0.0, 0.0, 1.0);
     gl.begin(gl.POINTS);
     for (0..10) |i| {
-        const fract = @intToFloat(f32, i) / 10.0;
+        const fract = @as(f32, @floatFromInt(i)) / 10.0;
         const x = r * @cos(math.tau * fract);
         const y = r * @sin(math.tau * fract);
         gl.vertex2f(x, y);

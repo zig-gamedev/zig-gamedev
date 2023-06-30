@@ -176,7 +176,7 @@ fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, gctx.stats.time);
+    const t : f32 = @floatCast(gctx.stats.time);
 
     if (!gctx.canRender()) {
         std.log.err("Can't render out of buffers!", .{});
@@ -189,7 +189,7 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height)),
         0.01,
         200.0,
     );
@@ -358,7 +358,7 @@ pub fn main() !void {
     if (emscripten) {
         // by default emscripten initializes on window creation WebGL context
         // this flag skips context creation. otherwise we later can't create webgpu surface
-        zglfw.WindowHint.set(.client_api, @enumToInt(zglfw.ClientApi.no_api));
+        zglfw.WindowHint.set(.client_api, zglfw.ClientApi.no_api);
     }
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch |err| {
         std.log.err("Failed to create demo window. {}", .{err});
@@ -383,7 +383,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale[0], scale[1]);
+        break :scale_factor @max(scale[0], scale[1]);
     };
 
     zgui.init(allocator);
@@ -398,7 +398,7 @@ pub fn main() !void {
     zgui.backend.init(
         window,
         demo.gctx.device,
-        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     errdefer zgui.backend.deinit();
 

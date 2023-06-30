@@ -194,12 +194,12 @@ pub const IXAudio2 = extern struct {
             pub usingnamespace IUnknown.Methods(T);
 
             pub inline fn RegisterForCallbacks(self: *T, cb: *IEngineCallback) HRESULT {
-                return @ptrCast(*const IXAudio2.VTable, self.__v)
-                    .RegisterForCallbacks(@ptrCast(*IXAudio2, self), cb);
+                return @as(*const IXAudio2.VTable, @ptrCast(self.__v))
+                    .RegisterForCallbacks(@as(*IXAudio2, @ptrCast(self)), cb);
             }
             pub inline fn UnregisterForCallbacks(self: *T, cb: *IEngineCallback) void {
-                @ptrCast(*const IXAudio2.VTable, self.__v)
-                    .UnregisterForCallbacks(@ptrCast(*IXAudio2, self), cb);
+                @as(*const IXAudio2.VTable, @ptrCast(self.__v))
+                    .UnregisterForCallbacks(@as(*IXAudio2, @ptrCast(self)), cb);
             }
             pub inline fn CreateSourceVoice(
                 self: *T,
@@ -211,8 +211,8 @@ pub const IXAudio2 = extern struct {
                 send_list: ?*const VOICE_SENDS,
                 effect_chain: ?*const EFFECT_CHAIN,
             ) HRESULT {
-                return @ptrCast(*const IXAudio2.VTable, self.__v).CreateSourceVoice(
-                    @ptrCast(*IXAudio2, self),
+                return @as(*const IXAudio2.VTable, @ptrCast(self.__v)).CreateSourceVoice(
+                    @as(*IXAudio2, @ptrCast(self)),
                     source_voice,
                     source_format,
                     flags,
@@ -232,8 +232,8 @@ pub const IXAudio2 = extern struct {
                 send_list: ?*const VOICE_SENDS,
                 effect_chain: ?*const EFFECT_CHAIN,
             ) HRESULT {
-                return @ptrCast(*const IXAudio2.VTable, self.__v).CreateSubmixVoice(
-                    @ptrCast(*IXAudio2, self),
+                return @as(*const IXAudio2.VTable, @ptrCast(self.__v)).CreateSubmixVoice(
+                    @as(*IXAudio2, @ptrCast(self)),
                     submix_voice,
                     input_channels,
                     input_sample_rate,
@@ -253,8 +253,8 @@ pub const IXAudio2 = extern struct {
                 effect_chain: ?*const EFFECT_CHAIN,
                 stream_category: AUDIO_STREAM_CATEGORY,
             ) HRESULT {
-                return @ptrCast(*const IXAudio2.VTable, self.__v).CreateMasteringVoice(
-                    @ptrCast(*IXAudio2, self),
+                return @as(*const IXAudio2.VTable, @ptrCast(self.__v)).CreateMasteringVoice(
+                    @as(*IXAudio2, @ptrCast(self)),
                     mastering_voice,
                     input_channels,
                     input_sample_rate,
@@ -265,27 +265,27 @@ pub const IXAudio2 = extern struct {
                 );
             }
             pub inline fn StartEngine(self: *T) HRESULT {
-                return @ptrCast(*const IXAudio2.VTable, self.__v)
-                    .StartEngine(@ptrCast(*IXAudio2, self));
+                return @as(*const IXAudio2.VTable, @ptrCast(self.__v))
+                    .StartEngine(@as(*IXAudio2, @ptrCast(self)));
             }
             pub inline fn StopEngine(self: *T) void {
-                @ptrCast(*const IXAudio2.VTable, self.__v).StopEngine(@ptrCast(*IXAudio2, self));
+                @as(*const IXAudio2.VTable, @ptrCast(self.__v)).StopEngine(@as(*IXAudio2, @ptrCast(self)));
             }
             pub inline fn CommitChanges(self: *T, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const IXAudio2.VTable, self.__v)
-                    .CommitChanges(@ptrCast(*IXAudio2, self), operation_set);
+                return @as(*const IXAudio2.VTable, @ptrCast(self.__v))
+                    .CommitChanges(@as(*IXAudio2, @ptrCast(self)), operation_set);
             }
             pub inline fn GetPerformanceData(self: *T, data: *PERFORMANCE_DATA) void {
-                @ptrCast(*const IXAudio2.VTable, self.__v)
-                    .GetPerformanceData(@ptrCast(*IXAudio2, self), data);
+                @as(*const IXAudio2.VTable, @ptrCast(self.__v))
+                    .GetPerformanceData(@as(*IXAudio2, @ptrCast(self)), data);
             }
             pub inline fn SetDebugConfiguration(
                 self: *T,
                 config: ?*const DEBUG_CONFIGURATION,
                 reserved: ?*anyopaque,
             ) void {
-                @ptrCast(*const IXAudio2.VTable, self.__v)
-                    .SetDebugConfiguration(@ptrCast(*IXAudio2, self), config, reserved);
+                @as(*const IXAudio2.VTable, @ptrCast(self.__v))
+                    .SetDebugConfiguration(@as(*IXAudio2, @ptrCast(self)), config, reserved);
             }
         };
     }
@@ -345,28 +345,28 @@ pub const IVoice = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetVoiceDetails(self: *T, details: *VOICE_DETAILS) void {
-                @ptrCast(*const IVoice.VTable, self.__v)
-                    .GetVoiceDetails(@ptrCast(*IVoice, self), details);
+                @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .GetVoiceDetails(@as(*IVoice, @ptrCast(self)), details);
             }
             pub inline fn SetOutputVoices(self: *T, send_list: ?*const VOICE_SENDS) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .SetOutputVoices(@ptrCast(*IVoice, self), send_list);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .SetOutputVoices(@as(*IVoice, @ptrCast(self)), send_list);
             }
             pub inline fn SetEffectChain(self: *T, effect_chain: ?*const EFFECT_CHAIN) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .SetEffectChain(@ptrCast(*IVoice, self), effect_chain);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .SetEffectChain(@as(*IVoice, @ptrCast(self)), effect_chain);
             }
             pub inline fn EnableEffect(self: *T, effect_index: UINT32, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .EnableEffect(@ptrCast(*IVoice, self), effect_index, operation_set);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .EnableEffect(@as(*IVoice, @ptrCast(self)), effect_index, operation_set);
             }
             pub inline fn DisableEffect(self: *T, effect_index: UINT32, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .DisableEffect(@ptrCast(*IVoice, self), effect_index, operation_set);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .DisableEffect(@as(*IVoice, @ptrCast(self)), effect_index, operation_set);
             }
             pub inline fn GetEffectState(self: *T, effect_index: UINT32, enabled: *BOOL) void {
-                @ptrCast(*const IVoice.VTable, self.__v)
-                    .GetEffectState(@ptrCast(*IVoice, self), effect_index, enabled);
+                @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .GetEffectState(@as(*IVoice, @ptrCast(self)), effect_index, enabled);
             }
             pub inline fn SetEffectParameters(
                 self: *T,
@@ -375,8 +375,8 @@ pub const IVoice = extern struct {
                 params_size: UINT32,
                 operation_set: UINT32,
             ) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v).SetEffectParameters(
-                    @ptrCast(*IVoice, self),
+                return @as(*const IVoice.VTable, @ptrCast(self.__v)).SetEffectParameters(
+                    @as(*IVoice, @ptrCast(self)),
                     effect_index,
                     params,
                     params_size,
@@ -389,20 +389,20 @@ pub const IVoice = extern struct {
                 params: *anyopaque,
                 params_size: UINT32,
             ) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .GetEffectParameters(@ptrCast(*IVoice, self), effect_index, params, params_size);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .GetEffectParameters(@as(*IVoice, @ptrCast(self)), effect_index, params, params_size);
             }
             pub inline fn SetFilterParameters(
                 self: *T,
                 params: *const FILTER_PARAMETERS,
                 operation_set: UINT32,
             ) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .SetFilterParameters(@ptrCast(*IVoice, self), params, operation_set);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .SetFilterParameters(@as(*IVoice, @ptrCast(self)), params, operation_set);
             }
             pub inline fn GetFilterParameters(self: *T, params: *FILTER_PARAMETERS) void {
-                @ptrCast(*const IVoice.VTable, self.__v)
-                    .GetFilterParameters(@ptrCast(*IVoice, self), params);
+                @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .GetFilterParameters(@as(*IVoice, @ptrCast(self)), params);
             }
             pub inline fn SetOutputFilterParameters(
                 self: *T,
@@ -410,22 +410,22 @@ pub const IVoice = extern struct {
                 params: *const FILTER_PARAMETERS,
                 operation_set: UINT32,
             ) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .SetOutputFilterParameters(@ptrCast(*IVoice, self), dst_voice, params, operation_set);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .SetOutputFilterParameters(@as(*IVoice, @ptrCast(self)), dst_voice, params, operation_set);
             }
             pub inline fn GetOutputFilterParameters(
                 self: *T,
                 dst_voice: ?*IVoice,
                 params: *FILTER_PARAMETERS,
             ) void {
-                @ptrCast(*const IVoice.VTable, self.__v)
-                    .GetOutputFilterParameters(@ptrCast(*IVoice, self), dst_voice, params);
+                @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .GetOutputFilterParameters(@as(*IVoice, @ptrCast(self)), dst_voice, params);
             }
             pub inline fn SetVolume(self: *T, volume: f32) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v).SetVolume(@ptrCast(*IVoice, self), volume);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v)).SetVolume(@as(*IVoice, @ptrCast(self)), volume);
             }
             pub inline fn GetVolume(self: *T, volume: *f32) void {
-                @ptrCast(*const IVoice.VTable, self.__v).GetVolume(@ptrCast(*IVoice, self), volume);
+                @as(*const IVoice.VTable, @ptrCast(self.__v)).GetVolume(@as(*IVoice, @ptrCast(self)), volume);
             }
             pub inline fn SetChannelVolumes(
                 self: *T,
@@ -433,15 +433,15 @@ pub const IVoice = extern struct {
                 volumes: [*]const f32,
                 operation_set: UINT32,
             ) HRESULT {
-                return @ptrCast(*const IVoice.VTable, self.__v)
-                    .SetChannelVolumes(@ptrCast(*IVoice, self), num_channels, volumes, operation_set);
+                return @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .SetChannelVolumes(@as(*IVoice, @ptrCast(self)), num_channels, volumes, operation_set);
             }
             pub inline fn GetChannelVolumes(self: *T, num_channels: UINT32, volumes: [*]f32) void {
-                @ptrCast(*const IVoice.VTable, self.__v)
-                    .GetChannelVolumes(@ptrCast(*IVoice, self), num_channels, volumes);
+                @as(*const IVoice.VTable, @ptrCast(self.__v))
+                    .GetChannelVolumes(@as(*IVoice, @ptrCast(self)), num_channels, volumes);
             }
             pub inline fn DestroyVoice(self: *T) void {
-                @ptrCast(*const IVoice.VTable, self.__v).DestroyVoice(@ptrCast(*IVoice, self));
+                @as(*const IVoice.VTable, @ptrCast(self.__v)).DestroyVoice(@as(*IVoice, @ptrCast(self)));
             }
         };
     }
@@ -495,48 +495,48 @@ pub const ISourceVoice = extern struct {
             pub usingnamespace IVoice.Methods(T);
 
             pub inline fn Start(self: *T, flags: FLAGS, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .Start(@ptrCast(*ISourceVoice, self), flags, operation_set);
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .Start(@as(*ISourceVoice, @ptrCast(self)), flags, operation_set);
             }
             pub inline fn Stop(self: *T, flags: FLAGS, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .Stop(@ptrCast(*ISourceVoice, self), flags, operation_set);
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .Stop(@as(*ISourceVoice, @ptrCast(self)), flags, operation_set);
             }
             pub inline fn SubmitSourceBuffer(
                 self: *T,
                 buffer: *const BUFFER,
                 wmabuffer: ?*const BUFFER_WMA,
             ) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .SubmitSourceBuffer(@ptrCast(*ISourceVoice, self), buffer, wmabuffer);
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .SubmitSourceBuffer(@as(*ISourceVoice, @ptrCast(self)), buffer, wmabuffer);
             }
             pub inline fn FlushSourceBuffers(self: *T) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .FlushSourceBuffers(@ptrCast(*ISourceVoice, self));
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .FlushSourceBuffers(@as(*ISourceVoice, @ptrCast(self)));
             }
             pub inline fn Discontinuity(self: *T) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .Discontinuity(@ptrCast(*ISourceVoice, self));
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .Discontinuity(@as(*ISourceVoice, @ptrCast(self)));
             }
             pub inline fn ExitLoop(self: *T, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .ExitLoop(@ptrCast(*ISourceVoice, self), operation_set);
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .ExitLoop(@as(*ISourceVoice, @ptrCast(self)), operation_set);
             }
             pub inline fn GetState(self: *T, state: *VOICE_STATE, flags: FLAGS) void {
-                @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .GetState(@ptrCast(*ISourceVoice, self), state, flags);
+                @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .GetState(@as(*ISourceVoice, @ptrCast(self)), state, flags);
             }
             pub inline fn SetFrequencyRatio(self: *T, ratio: f32, operation_set: UINT32) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .SetFrequencyRatio(@ptrCast(*ISourceVoice, self), ratio, operation_set);
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .SetFrequencyRatio(@as(*ISourceVoice, @ptrCast(self)), ratio, operation_set);
             }
             pub inline fn GetFrequencyRatio(self: *T, ratio: *f32) void {
-                @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .GetFrequencyRatio(@ptrCast(*ISourceVoice, self), ratio);
+                @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .GetFrequencyRatio(@as(*ISourceVoice, @ptrCast(self)), ratio);
             }
             pub inline fn SetSourceSampleRate(self: *T, sample_rate: UINT32) HRESULT {
-                return @ptrCast(*const ISourceVoice.VTable, self.__v)
-                    .SetSourceSampleRate(@ptrCast(*ISourceVoice, self), sample_rate);
+                return @as(*const ISourceVoice.VTable, @ptrCast(self.__v))
+                    .SetSourceSampleRate(@as(*ISourceVoice, @ptrCast(self)), sample_rate);
             }
         };
     }
@@ -587,8 +587,8 @@ pub const IMasteringVoice = extern struct {
             pub usingnamespace IVoice.Methods(T);
 
             pub inline fn GetChannelMask(self: *T, channel_mask: *DWORD) HRESULT {
-                return @ptrCast(*const IMasteringVoice.VTable, self.__v)
-                    .GetChannelMask(@ptrCast(*IMasteringVoice, self), channel_mask);
+                return @as(*const IMasteringVoice.VTable, @ptrCast(self.__v))
+                    .GetChannelMask(@as(*IMasteringVoice, @ptrCast(self)), channel_mask);
             }
         };
     }
@@ -607,16 +607,16 @@ pub const IEngineCallback = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn OnProcessingPassStart(self: *T) void {
-                @ptrCast(*const IEngineCallback.VTable, self.__v)
-                    .OnProcessingPassStart(@ptrCast(*IEngineCallback, self));
+                @as(*const IEngineCallback.VTable, @ptrCast(self.__v))
+                    .OnProcessingPassStart(@as(*IEngineCallback, @ptrCast(self)));
             }
             pub inline fn OnProcessingPassEnd(self: *T) void {
-                @ptrCast(*const IEngineCallback.VTable, self.__v)
-                    .OnProcessingPassEnd(@ptrCast(*IEngineCallback, self));
+                @as(*const IEngineCallback.VTable, @ptrCast(self.__v))
+                    .OnProcessingPassEnd(@as(*IEngineCallback, @ptrCast(self)));
             }
             pub inline fn OnCriticalError(self: *T, err: HRESULT) void {
-                @ptrCast(*const IEngineCallback.VTable, self.__v)
-                    .OnCriticalError(@ptrCast(*IEngineCallback, self), err);
+                @as(*const IEngineCallback.VTable, @ptrCast(self.__v))
+                    .OnCriticalError(@as(*IEngineCallback, @ptrCast(self)), err);
             }
         };
     }
@@ -643,32 +643,32 @@ pub const IVoiceCallback = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn OnVoiceProcessingPassStart(self: *T, bytes_required: UINT32) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnVoiceProcessingPassStart(@ptrCast(*IVoiceCallback, self), bytes_required);
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnVoiceProcessingPassStart(@as(*IVoiceCallback, @ptrCast(self)), bytes_required);
             }
             pub inline fn OnVoiceProcessingPassEnd(self: *T) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnVoiceProcessingPassEnd(@ptrCast(*IVoiceCallback, self));
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnVoiceProcessingPassEnd(@as(*IVoiceCallback, @ptrCast(self)));
             }
             pub inline fn OnStreamEnd(self: *T) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnStreamEnd(@ptrCast(*IVoiceCallback, self));
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnStreamEnd(@as(*IVoiceCallback, @ptrCast(self)));
             }
             pub inline fn OnBufferStart(self: *T, context: ?*anyopaque) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnBufferStart(@ptrCast(*IVoiceCallback, self), context);
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnBufferStart(@as(*IVoiceCallback, @ptrCast(self)), context);
             }
             pub inline fn OnBufferEnd(self: *T, context: ?*anyopaque) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnBufferEnd(@ptrCast(*IVoiceCallback, self), context);
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnBufferEnd(@as(*IVoiceCallback, @ptrCast(self)), context);
             }
             pub inline fn OnLoopEnd(self: *T, context: ?*anyopaque) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnLoopEnd(@ptrCast(*IVoiceCallback, self), context);
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnLoopEnd(@as(*IVoiceCallback, @ptrCast(self)), context);
             }
             pub inline fn OnVoiceError(self: *T, context: ?*anyopaque, err: HRESULT) void {
-                @ptrCast(*const IVoiceCallback.VTable, self.__v)
-                    .OnVoiceError(@ptrCast(*IVoiceCallback, self), context, err);
+                @as(*const IVoiceCallback.VTable, @ptrCast(self.__v))
+                    .OnVoiceError(@as(*IVoiceCallback, @ptrCast(self)), context, err);
             }
         };
     }
@@ -712,9 +712,9 @@ pub fn create(
     }
 
     var xaudio2Create: *const fn (*?*IXAudio2, FLAGS, UINT32) callconv(WINAPI) HRESULT = undefined;
-    xaudio2Create = @ptrCast(
+    xaudio2Create = @as(
         @TypeOf(xaudio2Create),
-        w32.GetProcAddress(xaudio2_dll.?, "XAudio2Create").?,
+        @ptrCast(w32.GetProcAddress(xaudio2_dll.?, "XAudio2Create").?),
     );
 
     return xaudio2Create(ppv, flags, processor);

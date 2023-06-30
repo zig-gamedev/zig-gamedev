@@ -77,18 +77,18 @@ pub const FALSE = 0;
 pub const MAX_PATH = 260;
 
 pub const S_OK = 0;
-pub const S_FALSE = @bitCast(HRESULT, @as(c_ulong, 0x00000001));
-pub const E_NOTIMPL = @bitCast(c_long, @as(c_ulong, 0x80004001));
-pub const E_NOINTERFACE = @bitCast(c_long, @as(c_ulong, 0x80004002));
-pub const E_POINTER = @bitCast(c_long, @as(c_ulong, 0x80004003));
-pub const E_ABORT = @bitCast(c_long, @as(c_ulong, 0x80004004));
-pub const E_FAIL = @bitCast(c_long, @as(c_ulong, 0x80004005));
-pub const E_UNEXPECTED = @bitCast(c_long, @as(c_ulong, 0x8000FFFF));
-pub const E_ACCESSDENIED = @bitCast(c_long, @as(c_ulong, 0x80070005));
-pub const E_HANDLE = @bitCast(c_long, @as(c_ulong, 0x80070006));
-pub const E_OUTOFMEMORY = @bitCast(c_long, @as(c_ulong, 0x8007000E));
-pub const E_INVALIDARG = @bitCast(c_long, @as(c_ulong, 0x80070057));
-pub const E_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x80070002));
+pub const S_FALSE = @as(HRESULT, @bitCast(@as(c_ulong, 0x00000001)));
+pub const E_NOTIMPL = @as(c_long, @bitCast(@as(c_ulong, 0x80004001)));
+pub const E_NOINTERFACE = @as(c_long, @bitCast(@as(c_ulong, 0x80004002)));
+pub const E_POINTER = @as(c_long, @bitCast(@as(c_ulong, 0x80004003)));
+pub const E_ABORT = @as(c_long, @bitCast(@as(c_ulong, 0x80004004)));
+pub const E_FAIL = @as(c_long, @bitCast(@as(c_ulong, 0x80004005)));
+pub const E_UNEXPECTED = @as(c_long, @bitCast(@as(c_ulong, 0x8000FFFF)));
+pub const E_ACCESSDENIED = @as(c_long, @bitCast(@as(c_ulong, 0x80070005)));
+pub const E_HANDLE = @as(c_long, @bitCast(@as(c_ulong, 0x80070006)));
+pub const E_OUTOFMEMORY = @as(c_long, @bitCast(@as(c_ulong, 0x8007000E)));
+pub const E_INVALIDARG = @as(c_long, @bitCast(@as(c_ulong, 0x80070057)));
+pub const E_FILE_NOT_FOUND = @as(HRESULT, @bitCast(@as(c_ulong, 0x80070002)));
 
 pub const Error = error{
     UNEXPECTED,
@@ -123,7 +123,7 @@ pub const GENERIC_WRITE = 0x40000000;
 pub const GENERIC_EXECUTE = 0x20000000;
 pub const GENERIC_ALL = 0x10000000;
 
-pub const CW_USEDEFAULT = @bitCast(i32, @as(u32, 0x80000000));
+pub const CW_USEDEFAULT = @as(i32, @bitCast(@as(u32, 0x80000000)));
 
 pub const RECT = extern struct {
     left: LONG,
@@ -421,23 +421,23 @@ comptime {
 pub const WHEEL_DELTA = 120;
 
 pub inline fn GET_WHEEL_DELTA_WPARAM(wparam: WPARAM) i16 {
-    return @bitCast(i16, @intCast(u16, (wparam >> 16) & 0xffff));
+    return @as(i16, @bitCast(@as(u16, @intCast((wparam >> 16) & 0xffff))));
 }
 
 pub inline fn GET_X_LPARAM(lparam: LPARAM) i32 {
-    return @intCast(i32, @bitCast(i16, @intCast(u16, lparam & 0xffff)));
+    return @as(i32, @intCast(@as(i16, @bitCast(@as(u16, @intCast(lparam & 0xffff))))));
 }
 
 pub inline fn GET_Y_LPARAM(lparam: LPARAM) i32 {
-    return @intCast(i32, @bitCast(i16, @intCast(u16, (lparam >> 16) & 0xffff)));
+    return @as(i32, @intCast(@as(i16, @bitCast(@as(u16, @intCast((lparam >> 16) & 0xffff))))));
 }
 
 pub inline fn LOWORD(dword: DWORD) WORD {
-    return @bitCast(WORD, @intCast(u16, dword & 0xffff));
+    return @as(WORD, @bitCast(@as(u16, @intCast(dword & 0xffff))));
 }
 
 pub inline fn HIWORD(dword: DWORD) WORD {
-    return @bitCast(WORD, @intCast(u16, (dword >> 16) & 0xffff));
+    return @as(WORD, @bitCast(@as(u16, @intCast((dword >> 16) & 0xffff))));
 }
 
 pub const IID_IUnknown = GUID.parse("{00000000-0000-0000-C000-000000000046}");
@@ -449,14 +449,14 @@ pub const IUnknown = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
-                return @ptrCast(*const IUnknown.VTable, self.__v)
-                    .QueryInterface(@ptrCast(*IUnknown, self), guid, outobj);
+                return @as(*const IUnknown.VTable, @ptrCast(self.__v))
+                    .QueryInterface(@as(*IUnknown, @ptrCast(self)), guid, outobj);
             }
             pub inline fn AddRef(self: *T) ULONG {
-                return @ptrCast(*const IUnknown.VTable, self.__v).AddRef(@ptrCast(*IUnknown, self));
+                return @as(*const IUnknown.VTable, @ptrCast(self.__v)).AddRef(@as(*IUnknown, @ptrCast(self)));
             }
             pub inline fn Release(self: *T) ULONG {
-                return @ptrCast(*const IUnknown.VTable, self.__v).Release(@ptrCast(*IUnknown, self));
+                return @as(*const IUnknown.VTable, @ptrCast(self.__v)).Release(@as(*IUnknown, @ptrCast(self)));
             }
         };
     }

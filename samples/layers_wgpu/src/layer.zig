@@ -152,12 +152,12 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
 
             const vertex_buffers = [_]wgpu.VertexBufferLayout{ .{
                 .array_stride = @sizeOf(Vertex),
-                .attribute_count = @intCast(u32, vertex_attributes.len),
+                .attribute_count = @as(u32, @intCast(vertex_attributes.len)),
                 .attributes = vertex_attributes.ptr,
             }, .{
                 .array_stride = @sizeOf(Instance),
                 .step_mode = .instance,
-                .attribute_count = @intCast(u32, instance_attributes.len),
+                .attribute_count = @as(u32, @intCast(instance_attributes.len)),
                 .attributes = instance_attributes.ptr,
             } };
 
