@@ -12,14 +12,24 @@ const wgsl = @import("monolith_wgsl.zig");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: physics test (wgpu)";
 
+const floor_material = zm.f32x4(-0.7, -0.7, -0.7, 0.8);
+const monolith_scale = zm.scaling(10, 50, 5);
+const monolith_rotate = zm.mul(zm.rotationZ(0.24), zm.rotationY(0.3));
+const monolith_center = zm.f32x4(-15, 0, 30, 1);
+const monolith_radius = zm.mul(monolith_scale, zm.f32x4(0.4999, 0.4999, 0.4999, 0)); // .4999 is anti-artifact bias
+const monolith_translate = zm.transpose(zm.translationV(monolith_center));
+const monolith_transform = zm.mul(monolith_translate, zm.mul(monolith_rotate, monolith_scale));
+const monolith_rotate_t = zm.transpose(monolith_rotate);
+
 const FrameUniforms = extern struct {
-    world_to_clip: zm.Mat   align(16),
-    floor_material: [4]f32  align(16),
-    box_rotation: [3][4]f32 align(16),  // GPU will expect each element to be 16-aligned too, so extra f32 here to pad.
-    box_center: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    box_radius: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    box_inv_radius: [4]f32  align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    camera_position: [3]f32 align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    world_to_clip: zm.Mat        align(16),
+    floor_material: [4]f32       align(16),
+    monolith_rotation: [3][4]f32 align(16),  // GPU will expect each element to be 16-aligned too, so extra f32 padding.
+    monolith_center: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    monolith_radius: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    monolith_inv_radius: [4]f32  align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    camera_position: [3]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    lights: [9][4]f32            align(16) = .{ .{0, 0, 0, 0} } ** 9, // padding again - only using vec3s.
 };
 
 const DrawUniforms = extern struct {
@@ -100,7 +110,7 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
     ) callconv(.C) bool {
         return switch (layer1) {
             object_layers.non_moving => layer2 == broad_phase_layers.moving,
-            object_layers.moving => true,
+            object_layers.moving => layer2 == broad_phase_layers.non_moving,
             else => unreachable,
         };
     }
@@ -119,7 +129,7 @@ const ObjectLayerPairFilter = extern struct {
     ) callconv(.C) bool {
         return switch (object1) {
             object_layers.non_moving => object2 == object_layers.moving,
-            object_layers.moving => true,
+            object_layers.moving => object2 == object_layers.non_moving,
             else => unreachable,
         };
     }
@@ -147,6 +157,162 @@ const ContactListener = extern struct {
     }
 };
 
+const DebugRenderer = extern struct {
+
+    const RenderPrimitive = extern struct {
+        // Actual render data goes here
+        foobar: i32 = 0,
+    };
+
+    usingnamespace zphy.DebugRenderer.Methods(@This());
+    __v: *const zphy.DebugRenderer.VTable(@This()) = &vtable,
+
+    demo: *DemoState,
+    body_draw_settings: zphy.DebugRenderer.BodyDrawSettings = .{
+        .shape_wireframe = true,
+        .velocity = true,
+    },
+    body_draw_filter: *zphy.DebugRenderer.BodyDrawFilter,
+
+    primitives: [32]RenderPrimitive = [_]RenderPrimitive{ .{} } ** 32,
+    prim_head: i32 = -1,
+
+    // vertex_buf: zgpu.BufferHandle,
+    // index_buf: zgpu.BufferHandle,
+    // meshes: std.ArrayList(Mesh),
+
+    // vert_count: usize = 0,
+    // indx_count: usize = 0,
+    // line_count: usize = 0,
+
+    const vtable = zphy.DebugRenderer.VTable(@This()){
+        .drawLine = drawLine,
+        .drawTriangle = drawTriangle,
+        .createTriangleBatch = createTriangleBatch,
+        .createTriangleBatchIndexed = createTriangleBatchIndexed,
+        .drawGeometry = drawGeometry,
+        .drawText3D = drawText3D,
+    };
+
+    pub fn draw(self: *DebugRenderer, pass: wgpu.RenderPassEncoder) void {
+        // self.line_count = 0;
+        const line_render_pipe = self.demo.gctx.lookupResource(self.demo.line_render_pipe) orelse return;
+        pass.setPipeline(line_render_pipe);
+        self.demo.physics_system.drawBodies(
+            &self.demo.physics_debug_renderer.body_draw_settings,
+            self.demo.physics_debug_renderer.body_draw_filter,
+        );
+        // std.debug.print("lines: {}\nverts: {}\nindices: {}\n\n", .{self.line_count, self.vert_count, self.indx_count});
+    }
+
+    pub fn getBufferSpaceUpperLimits() struct {usize, usize} {
+        // Quantities of each thing that debug renderer will actually use (only found by testing - do better than this)
+        // lines: 60
+        // verts: 6952
+        // indices: 19236
+        return .{7072, 19236}; // 2 per line = 120, add to 6952 to get 7072. Lines don't use indices.
+    }
+
+    pub fn shouldBodyDraw(
+        _: *const zphy.Body
+    ) align(zphy.DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
+        return true;
+    }
+
+    fn drawLine (
+        self: *DebugRenderer,
+        from: *const [3]zphy.Real,
+        to: *const [3]zphy.Real,
+        color: *const zphy.DebugRenderer.Color,
+    ) callconv(.C) void {
+        _ = from;
+        _ = to;
+        _ = color;
+        _ = self;
+        // self.line_count += 1;
+    }
+    fn drawTriangle (
+        self: *DebugRenderer,
+        v1: *const [3]zphy.Real,
+        v2: *const [3]zphy.Real,
+        v3: *const [3]zphy.Real,
+        color: *const zphy.DebugRenderer.Color,
+    ) callconv(.C) void {
+        _ = self;
+        _ = v1;
+        _ = v2;
+        _ = v3;
+        _ = color;
+        // std.debug.print("triangle\n", .{});
+    }
+    fn createTriangleBatch (
+        self: *DebugRenderer,
+        triangles: [*]zphy.DebugRenderer.Triangle,
+        triangle_count: u32,
+    ) callconv(.C) *anyopaque {
+        _ = triangles;
+        _ = triangle_count;
+        self.prim_head += 1;
+        const prim = &self.primitives[@intCast(usize, self.prim_head)];
+        // std.debug.print("batch\n", .{});
+        return zphy.DebugRenderer.createTriangleBatch(prim);
+    }
+    fn createTriangleBatchIndexed (
+        self: *DebugRenderer,
+        vertices: [*]zphy.DebugRenderer.Vertex,
+        vertex_count: u32,
+        indices: [*]u32,
+        index_count: u32,
+    ) callconv(.C) *anyopaque {
+        _ = vertices;
+        _ = indices;
+        _ = vertex_count;
+        _ = index_count;
+        self.prim_head += 1;
+        const prim = &self.primitives[@intCast(usize, self.prim_head)];
+        // std.debug.print("batch indexed\n", .{});
+        // self.vert_count += vertex_count;
+        // self.indx_count += index_count;
+        return zphy.DebugRenderer.createTriangleBatch(prim);
+    }
+    fn drawGeometry (
+        self: *DebugRenderer,
+        model_matrix: *const [16]zphy.Real,
+        world_space_bound: *const zphy.DebugRenderer.AABox,
+        lod_scale_sq: f32,
+        color: zphy.DebugRenderer.Color,
+        geometry: *anyopaque,
+        cull_mode: zphy.DebugRenderer.CullMode,
+        cast_shadow: zphy.DebugRenderer.CastShadow,
+        draw_mode: zphy.DebugRenderer.DrawMode,
+    ) callconv(.C) void {
+        _ = self;
+        _ = model_matrix;
+        _ = world_space_bound;
+        _ = lod_scale_sq;
+        _ = color;
+        _ = cull_mode;
+        _ = cast_shadow;
+        _ = geometry;
+        _ = draw_mode;
+        // std.debug.print("geom: {} | {}\n", .{geometry, draw_mode});
+    }
+    fn drawText3D (
+        self: *DebugRenderer,
+        positions: *const [3]zphy.Real,
+        string: [*:0]const u8,
+        color: zphy.DebugRenderer.Color,
+        height: f32,
+    ) callconv(.C) void {
+        _ = self;
+        _ = positions;
+        _ = string;
+        _ = color;
+        _ = height;
+        // std.debug.print("text\n", .{});
+    }
+};
+
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
@@ -169,7 +335,7 @@ const DemoState = struct {
     physics_system: *zphy.PhysicsSystem,
 
     physics_objects: [9]zphy.BodyId = .{0} ** 9,
-    physics_debug_renderer: MyDebugRenderer,
+    physics_debug_renderer: DebugRenderer,
 
     camera: struct {
         position: [3]f32 = .{ 0.0, 32.0, -32.0 },
@@ -182,132 +348,12 @@ const DemoState = struct {
     } = .{},
 };
 
-const MyDebugRenderer = extern struct {
-
-    const MyRenderPrimitive = extern struct {
-        // Actual render data goes here
-        foobar: i32 = 0,
-    };
-
-    usingnamespace zphy.DebugRenderer.Methods(@This());
-    __v: *const zphy.DebugRenderer.VTable(@This()) = &vtable,
-
-    demo: *DemoState,
-    body_draw_settings: zphy.DebugRenderer.BodyDrawSettings = .{
-        .shape_wireframe = true,
-    },
-    body_draw_filter: *zphy.DebugRenderer.BodyDrawFilter,
-
-    primitives: [32]MyRenderPrimitive = [_]MyRenderPrimitive{ .{} } ** 32,
-    prim_head: i32 = -1,
-
-    const vtable = zphy.DebugRenderer.VTable(@This()){
-        .drawLine = drawLine,
-        .drawTriangle = drawTriangle,
-        .createTriangleBatch = createTriangleBatch,
-        .createTriangleBatchIndexed = createTriangleBatchIndexed,
-        .drawGeometry = drawGeometry,
-        .drawText3D = drawText3D,
-    };
-
-    pub fn shouldBodyDraw(
-        _: *const zphy.Body
-    ) align(zphy.DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
-        return true;
-    }
-
-    fn drawLine (
-        self: *MyDebugRenderer,
-        from: *const [3]zphy.Real,
-        to: *const [3]zphy.Real,
-        color: *const zphy.DebugRenderer.Color,
-    ) callconv(.C) void {
-        _ = self;
-        _ = from;
-        _ = to;
-        _ = color;
-    }
-    fn drawTriangle (
-        self: *MyDebugRenderer,
-        v1: *const [3]zphy.Real,
-        v2: *const [3]zphy.Real,
-        v3: *const [3]zphy.Real,
-        color: *const zphy.DebugRenderer.Color,
-    ) callconv(.C) void {
-        _ = self;
-        _ = v1;
-        _ = v2;
-        _ = v3;
-        _ = color;
-    }
-    fn createTriangleBatch (
-        self: *MyDebugRenderer,
-        triangles: [*]zphy.DebugRenderer.Triangle,
-        triangle_count: u32,
-    ) callconv(.C) *anyopaque {
-        _ = triangles;
-        _ = triangle_count;
-        self.prim_head += 1;
-        const prim = &self.primitives[@intCast(usize, self.prim_head)];
-        return zphy.DebugRenderer.createTriangleBatch(prim);
-    }
-    fn createTriangleBatchIndexed (
-        self: *MyDebugRenderer,
-        vertices: [*]zphy.DebugRenderer.Vertex,
-        vertex_count: u32,
-        indices: [*]u32,
-        index_count: u32,
-    ) callconv(.C) *anyopaque {
-        _ = vertices;
-        _ = vertex_count;
-        _ = indices;
-        _ = index_count;
-        self.prim_head += 1;
-        const prim = &self.primitives[@intCast(usize, self.prim_head)];
-        return zphy.DebugRenderer.createTriangleBatch(prim);
-    }
-    fn drawGeometry (
-        self: *MyDebugRenderer,
-        model_matrix: *const [16]zphy.Real,
-        world_space_bound: *const zphy.DebugRenderer.AABox,
-        lod_scale_sq: f32,
-        color: zphy.DebugRenderer.Color,
-        geometry: *anyopaque,
-        cull_mode: zphy.DebugRenderer.CullMode,
-        cast_shadow: zphy.DebugRenderer.CastShadow,
-        draw_mode: zphy.DebugRenderer.DrawMode,
-    ) callconv(.C) void {
-        _ = self;
-        _ = model_matrix;
-        _ = world_space_bound;
-        _ = lod_scale_sq;
-        _ = color;
-        _ = geometry;
-        _ = cull_mode;
-        _ = cast_shadow;
-        _ = draw_mode;
-    }
-    fn drawText3D (
-        self: *MyDebugRenderer,
-        positions: *const [3]zphy.Real,
-        string: [*:0]const u8,
-        color: zphy.DebugRenderer.Color,
-        height: f32,
-    ) callconv(.C) void {
-        _ = self;
-        _ = positions;
-        _ = string;
-        _ = color;
-        _ = height;
-    }
-};
-
 fn appendMesh(
     mesh: zmesh.Shape,
     meshes: *std.ArrayList(Mesh),
     meshes_indices: *std.ArrayList(Mesh.IndexType),
     meshes_positions: *std.ArrayList([3]f32),
-    meshes_normals: *std.ArrayList([3]f32),
+    meshes_normals_or_colors: *std.ArrayList([3]f32),
 ) void {
     meshes.append(.{
         .index_offset = @intCast(u32, meshes_indices.items.len),
@@ -318,7 +364,7 @@ fn appendMesh(
 
     meshes_indices.appendSlice(mesh.indices) catch unreachable;
     meshes_positions.appendSlice(mesh.positions) catch unreachable;
-    meshes_normals.appendSlice(mesh.normals.?) catch unreachable;
+    meshes_normals_or_colors.appendSlice(mesh.normals.?) catch unreachable;
 }
 
 const mesh_floor = 0;
@@ -406,10 +452,15 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         },
     });
 
+    // Vertex, Index requirements of the debug renderer (for this specific scene - not reusable)
+    const debug_renderer_reqs = DebugRenderer.getBufferSpaceUpperLimits();
+    const dr_vert_reqs = debug_renderer_reqs[0];
+    const dr_indx_reqs = debug_renderer_reqs[0];
+
     // Vertex buffer
     const vertex_buf = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
-        .size = total_num_vertices * @sizeOf(Vertex),
+        .size = (total_num_vertices + dr_vert_reqs) * @sizeOf(Vertex),
     });
     {
         var vertex_data = std.ArrayList(Vertex).init(arena);
@@ -426,7 +477,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     // Index buffer
     const index_buf = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
-        .size = total_num_indices * @sizeOf(Mesh.IndexType),
+        .size = (total_num_indices + dr_indx_reqs) * @sizeOf(Mesh.IndexType),
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buf).?, 0, Mesh.IndexType, meshes_indices.items);
 
@@ -481,7 +532,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .physics_system = physics_system,
         .physics_debug_renderer = .{
             .demo = demo,
-            .body_draw_filter = zphy.DebugRenderer.createBodyDrawFilter(MyDebugRenderer.shouldBodyDraw),
+            .body_draw_filter = zphy.DebugRenderer.createBodyDrawFilter(DebugRenderer.shouldBodyDraw),
         },
     };
 
@@ -505,23 +556,35 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             .object_layer = object_layers.non_moving,
         }, .activate);
 
-        const box_shape_settings = try zphy.BoxShapeSettings.create(.{ 0.5, 0.5, 0.5 });
-        defer box_shape_settings.release();
+        // const monolith_shape_settings = try zphy.BoxShapeSettings.create(.{0.5, 0.5, 0.5});
+        // defer monolith_shape_settings.release();
+        //
+        // const monolith_shape = try monolith_shape_settings.createShape();
+        // defer monolith_shape.release();
+        //
+        // _ = try body_interface.createAndAddBody(.{
+        //     .position
+        // });
 
-        const box_shape = try box_shape_settings.createShape();
-        defer box_shape.release();
+        const sphere_shape_settings = try zphy.SphereShapeSettings.create(1.5);
+        defer sphere_shape_settings.release();
+
+        const sphere_shape = try sphere_shape_settings.createShape();
+        defer sphere_shape.release();
 
         var i: u32 = 0;
         while (i < 9) : (i += 1) {
             const fi = @floatFromInt(f32, i);
             const angle: f32 = std.math.degreesToRadians(f32, fi * 40.0);
             demo.physics_objects[i] = try body_interface.createAndAddBody(.{
-                .position = .{ 6.0 * std.math.cos(angle), 4.0, 6.0 * std.math.sin(angle), 1.0 },
+                .position = .{ 12.0 * std.math.cos(angle), 30.0 + std.math.sin(angle), 12.0 * std.math.sin(angle), 1 },
                 .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
-                .shape = box_shape,
+                .shape = sphere_shape,
                 .motion_type = .dynamic,
                 .object_layer = object_layers.moving,
                 .angular_velocity = .{ 0.0, 0.0, 0.0, 0 },
+                .restitution = 1.0,
+                .linear_damping = 0.0,
             }, .activate);
         }
 
@@ -598,12 +661,13 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 
 fn update(demo: *DemoState) void {
     zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
-    demo.physics_system.update(1.0 / 60.0, .{}) catch unreachable;
+
+    const physics_step = @min(demo.gctx.stats.delta_time, 1.0 / 20.0);
+    demo.physics_system.update(physics_step, .{}) catch unreachable;
 
     const window = demo.gctx.window;
 
-    // Handle camera rotation with mouse.
-    {
+    { // Handle camera rotation with mouse.
         const cursor_pos = window.getCursorPos();
         const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
         const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
@@ -618,8 +682,7 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    // Handle camera movement with 'WASD' keys.
-    {
+    { // Handle camera movement with 'WASD' keys.
         const delta_time = zm.f32x4s(demo.gctx.stats.delta_time);
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
 
@@ -687,7 +750,6 @@ fn draw(demo: *DemoState) void {
 
         pass: {
             const mesh_render_pipe = gctx.lookupResource(demo.mesh_render_pipe) orelse break :pass;
-            const line_render_pipe = gctx.lookupResource(demo.line_render_pipe) orelse break :pass;
 
             const pass = zgpu.beginRenderPassSimple(
                 encoder,
@@ -708,28 +770,36 @@ fn draw(demo: *DemoState) void {
             );
             pass.setPipeline(mesh_render_pipe);
 
-            const box_scale = zm.scaling(10, 50, 5);
-            // const box_rotate = zm.mul(zm.rotationZ(0.24), zm.rotationY(0.3));
-            const box_rotate = zm.identity();
-            // const box_center = zm.f32x4(-15, 0, 30, 1);
-            const box_center = zm.f32x4(0, 0, 30, 1);
-            const box_radius = zm.mul(box_scale, zm.f32x4(0.4999, 0.4999, 0.4999, 0)); // .4999 is anti-artifact bias
-            const box_translate = zm.transpose(zm.translationV(box_center));
-            const box_transform = zm.mul(box_translate, zm.mul(box_rotate, box_scale));
-            const box_rotate_t = zm.transpose(box_rotate);
-            const floor_material = zm.f32x4(-0.7, -0.7, -0.7, 0.8);
-
             { // Update frame uniforms
                 const mem = gctx.uniformsAllocate(FrameUniforms, 1);
                 mem.slice[0] = .{
                     .world_to_clip = zm.transpose(cam_world_to_clip),
                     .floor_material = floor_material,
-                    .box_rotation = .{ box_rotate_t[0], box_rotate_t[1], box_rotate_t[2] },
-                    .box_center = box_center,
-                    .box_radius = box_radius,
-                    .box_inv_radius = .{ 1.0 / box_radius[0], 1.0 / box_radius[1], 1.0 / box_radius[2], 0 },
+                    .monolith_rotation = .{ monolith_rotate_t[0], monolith_rotate_t[1], monolith_rotate_t[2] },
+                    .monolith_center = monolith_center,
+                    .monolith_radius = monolith_radius,
+                    .monolith_inv_radius = .{
+                        1.0 / monolith_radius[0],
+                        1.0 / monolith_radius[1],
+                        1.0 / monolith_radius[2], 0
+                    },
                     .camera_position = demo.camera.position,
                 };
+                const bodies = demo.physics_system.getBodiesUnsafe();
+                var body_count: usize = 0;
+                for (bodies) |body| {
+                    if (!zphy.isValidBodyPointer(body) or body.motion_properties == null) continue;
+                    mem.slice[0].lights[body_count] = if (zphy.Real == f32)
+                        zm.loadArr4(body.position)
+                    else
+                        zm.loadArr4(.{
+                            @floatCast(f32, body.position[0]),
+                            @floatCast(f32, body.position[1]),
+                            @floatCast(f32, body.position[2]),
+                            @floatCast(f32, body.position[3]),
+                        });
+                    body_count += 1;
+                }
                 pass.setBindGroup(0, uniform_bg, &.{mem.offset});
             }
 
@@ -738,7 +808,6 @@ fn draw(demo: *DemoState) void {
                 mem.slice[0] = .{
                     .object_to_world = zm.identity(),
                     .basecolor_roughness = floor_material,
-                    // .basecolor_roughness = .{ 0.9, 0.9, 0.9, -0.3 },
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
                 pass.drawIndexed(
@@ -769,14 +838,8 @@ fn draw(demo: *DemoState) void {
             { // Draw monolith
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
-                    .object_to_world = box_transform,
-                    // .basecolor_roughness = .{ 0.03, 0.02, 0.04, -0.16 },
-                    // .basecolor_roughness = .{ 0.3, 0.3, 0.3, -0.02 },
-                    // .basecolor_roughness = .{ 0.92, 0.9, 0.94, -0.24 },
-                    // .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.05 },
-                    // .basecolor_roughness = .{ 0.010, 0.010, 0.014, -0.3 },
-                    // .basecolor_roughness = .{ 0.030, 0.034, 0.038, -0.05 },
-                    .basecolor_roughness = .{ 0.24, 0.24, 0.24, -0.08},
+                    .object_to_world = monolith_transform,
+                    .basecolor_roughness = .{ 0.24, 0.24, 0.24, -0.04},
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
                 pass.drawIndexed(
@@ -788,12 +851,7 @@ fn draw(demo: *DemoState) void {
                 );
             }
 
-            pass.setPipeline(line_render_pipe);
-
-            demo.physics_system.drawBodies(
-                &demo.physics_debug_renderer.body_draw_settings,
-                demo.physics_debug_renderer.body_draw_filter,
-            );
+            demo.physics_debug_renderer.draw(pass);
         }
 
         {
@@ -836,8 +894,7 @@ pub fn main() !void {
     };
     defer zglfw.terminate();
 
-    // Change current working directory to where the executable is located.
-    {
+    { // Change current working directory to where the executable is located.
         var buffer: [1024]u8 = undefined;
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
         std.os.chdir(path) catch {};
