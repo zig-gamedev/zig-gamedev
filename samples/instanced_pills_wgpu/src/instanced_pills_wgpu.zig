@@ -800,6 +800,6 @@ pub fn main() !void {
         zglfw.pollEvents();
         try demo.update(allocator);
         demo.draw();
-        if (zems.is_emscripten) zems.sleep(1);
+        if (zems.is_emscripten) zems.emscripten_sleep(1);
     }
 }

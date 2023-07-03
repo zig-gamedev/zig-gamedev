@@ -1,37 +1,17 @@
 pub const is_emscripten = true;
 
 const std = @import("std");
+/// For emscripten specific api see docs:
+/// https://emscripten.org/docs/api_reference/index.html
 pub const c = @cImport({
     @cInclude("emscripten/emscripten.h");
     @cInclude("emscripten/console.h");
     @cInclude("emscripten/html5.h");
     @cInclude("emscripten/emmalloc.h");
 });
+pub usingnamespace c;
 
-// Most common bindings, for others see emscripten headers included within `c`
-// https://emscripten.org/docs/api_reference/index.html
-pub const EmBool = enum(c_int) {
-    true = 1,
-    false = 0,
-};
 
-pub const AnimationFrameCallback = *const fn (time: f64, user_data: ?*anyopaque) callconv(.C) EmBool;
-
-pub inline fn requestAnimationFrame(cb: AnimationFrameCallback, user_data: ?*anyopaque) c_long {
-    return c.emscripten_request_animation_frame(cb, user_data);
-}
-
-pub inline fn requestAnimationFrameLoop(cb: AnimationFrameCallback, user_data: ?*anyopaque) void {
-    return c.emscripten_request_animation_frame_loop(cb, user_data);
-}
-
-pub inline fn cancelAnimationFrame(request_animation_frame_id: c_long) void {
-    c.emscripten_cancel_animation_frame(request_animation_frame_id);
-}
-
-pub inline fn sleep(ms: u32) void {
-    c.emscripten_sleep(ms);
-}
 
 /// EmmalocAllocator allocator
 /// use with linker flag -sMALLOC=emmalloc

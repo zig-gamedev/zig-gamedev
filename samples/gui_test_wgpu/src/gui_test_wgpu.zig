@@ -598,7 +598,7 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    if (zems.is_emscripten) zglfw.WindowHint.set(.client_api, zglfw.ClientApi.no_api);
+    if (zems.is_emscripten) zglfw.WindowHint.set(.client_api, @intFromEnum(zglfw.ClientApi.no_api));
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch |err| {
         std.log.err("Failed to create demo window: {}", .{err});
         return;
@@ -619,9 +619,9 @@ pub fn main() !void {
 
     if (zems.is_emscripten) {
         // requestAnimationFrame usage is needed to avoid flickering, otherwise could work in loop as well
-        zems.requestAnimationFrameLoop(&tickEmcripten, demo);
+        zems.emscripten_request_animation_frame_loop(&tickEmcripten, demo);
         // TODO: ideally we would store all state in globals and return, but for now I don't want to refactor it, so lets spin forever
-        while (true) zems.sleep(1000);
+        while (true) zems.emscripten_sleep(1000);
     } else while (!window.shouldClose() and window.getKey(.escape) != .press) {
         try tick(demo);
     }
@@ -634,16 +634,16 @@ pub fn tick(demo: *DemoState) !void {
 }
 
 usingnamespace if (zems.is_emscripten) struct {
-    pub export fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) zems.EmBool {
+    pub export fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) c_int {
         _ = time;
-        const demo = @as(*DemoState, @alignCast(user_data.?));
+        const demo : *DemoState = @ptrCast(@alignCast(user_data.?));
         if (demo.gctx.canRender()) tick(demo) catch |err| {
             std.log.err("animation frame canceled! tick failed with: {}", .{err});
-            return .false;
+            return 0; // FALSE - stop animation frame callback loop 
         } else {
             std.log.warn("canRender(): Frame skipped!", .{});
         }
-        return .true;
+        return 1; // TRUE - continue animation frame callback loop
     }
 } else struct {};
-extern fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) zems.EmBool;
+extern fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) c_int;

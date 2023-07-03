@@ -358,7 +358,7 @@ pub fn main() !void {
     if (emscripten) {
         // by default emscripten initializes on window creation WebGL context
         // this flag skips context creation. otherwise we later can't create webgpu surface
-        zglfw.WindowHint.set(.client_api, zglfw.ClientApi.no_api);
+        zglfw.WindowHint.set(.client_api, @intFromEnum(zglfw.ClientApi.no_api));
     }
     const window = zglfw.Window.create(1600, 1000, window_title, null) catch |err| {
         std.log.err("Failed to create demo window. {}", .{err});
@@ -410,7 +410,7 @@ pub fn main() !void {
             tick();
         }
     } else {
-        const id = zems.requestAnimationFrameLoop(&tickCB, null);
+        const id = zems.emscripten_request_animation_frame_loop(&tickCB, null);
         _ = id;
     }
 }
@@ -425,10 +425,10 @@ pub fn tick() void {
     draw(&main_state.demo);
 }
 
-export fn tickCB(time: f64, user_data: ?*anyopaque) zems.EmBool {
+export fn tickCB(time: f64, user_data: ?*anyopaque) c_int {
     _ = user_data;
     _ = time;
     tick();
-    return .true; // return false to stop the loop
+    return 1; // return 0 to stop emscripten_request_animation_frame_loop
 }
 
