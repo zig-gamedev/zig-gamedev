@@ -704,6 +704,16 @@ pub const Window = opaque {
         ) callconv(.C) void,
     ) void;
 
+    /// `pub fn setCursorEnterCallback(window: *Window, callback) void`
+    pub const setCursorEnterCallback = glfwSetCursorEnterCallback;
+    extern fn glfwSetCursorEnterCallback(
+        window: *Window,
+        callback: ?*const fn (
+            window: *Window,
+            entered: i32,
+        ) callconv(.C) void,
+    ) void;
+
     /// `pub fn setCursor(window: *Window, cursor: ?*Cursor) void`
     pub const setCursor = glfwSetCursor;
     extern fn glfwSetCursor(window: *Window, cursor: ?*Cursor) void;
