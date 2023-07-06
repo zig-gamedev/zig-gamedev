@@ -3359,9 +3359,11 @@ pub const DrawCmd = extern struct {
     vtx_offset: u32,
     idx_offset: u32,
     elem_count: u32,
-    user_callback: ?*anyopaque,
+    user_callback: ?DrawCallback,
     user_callback_data: ?*anyopaque,
 };
+
+pub const DrawCallback = *const fn (*const anyopaque, *const DrawCmd) callconv(.C) void;
 
 pub const getWindowDrawList = zguiGetWindowDrawList;
 pub const getBackgroundDrawList = zguiGetBackgroundDrawList;
@@ -4151,5 +4153,15 @@ pub const DrawList = *opaque {
         draw_list: DrawList,
         idx: DrawIdx,
     ) void;
+
     //----------------------------------------------------------------------------------------------
+
+    pub fn addCallback(draw_list: DrawList, callback: DrawCallback, callback_data: ?*anyopaque) void {
+        zguiDrawList_AddCallback(draw_list, callback, callback_data);
+    }
+    extern fn zguiDrawList_AddCallback(draw_list: DrawList, callback: DrawCallback, callback_data: ?*anyopaque) void;
+    pub fn addResetRenderStateCallback(draw_list: DrawList) void {
+        zguiDrawList_AddResetRenderStateCallback(draw_list);
+    }
+    extern fn zguiDrawList_AddResetRenderStateCallback(draw_list: DrawList) void;
 };

@@ -2089,6 +2089,14 @@ ZGUI_API void zguiDrawList_PrimWriteVtx(
 ZGUI_API void zguiDrawList_PrimWriteIdx( ImDrawList* draw_list, ImDrawIdx idx) {
     draw_list->PrimWriteIdx(idx);
 }
+
+ZGUI_API void zguiDrawList_AddCallback(ImDrawList* draw_list, ImDrawCallback callback, void* callback_data) {
+    draw_list->AddCallback(callback, callback_data);
+}
+
+ZGUI_API void zguiDrawList_AddResetRenderStateCallback(ImDrawList* draw_list) {
+    draw_list->AddCallback(ImDrawCallback_ResetRenderState, NULL);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // Viewport
