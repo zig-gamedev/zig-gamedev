@@ -517,6 +517,16 @@ pub const Window = opaque {
     }
     extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
 
+    pub fn getUserPointer(window: *Window, comptime T: type) ?*T {
+        return @ptrCast(@alignCast(glfwGetWindowUserPointer(window)));
+    }
+    extern fn glfwGetWindowUserPointer(window: *Window) ?*anyopaque;
+
+    pub fn setUserPointer(window: *Window, pointer: ?*anyopaque) void {
+        glfwSetWindowUserPointer(window, pointer);
+    }
+    extern fn glfwSetWindowUserPointer(window: *Window, pointer: ?*anyopaque) void;
+
     pub fn shouldClose(window: *Window) bool {
         return if (glfwWindowShouldClose(window) == 0) false else true;
     }
