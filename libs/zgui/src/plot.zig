@@ -547,7 +547,7 @@ pub const DragToolFlags = packed struct(u32) {
 const DragPointArgs = struct {
     x: *f64,
     y: *f64,
-    col: *const [4]f32,
+    col: [4]f32,
     size: f32 = 4,
     flags: DragToolFlags = .{},
 };
