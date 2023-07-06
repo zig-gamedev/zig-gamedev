@@ -2354,5 +2354,22 @@ ZGUI_API void zguiPlot_ShowDemoWindow(bool* p_open) {
 ZGUI_API void zguiPlot_EndPlot(void) {
     ImPlot::EndPlot();
 }
+ZGUI_API bool zguiPlot_DragPoint(
+        int id,
+        double* x,
+        double* y,
+        float col[4],
+        float size,
+        ImPlotDragToolFlags flags
+) {
+    return ImPlot::DragPoint(
+        id,
+        x,
+        y,
+        (*(const ImVec4*)&(col[0])),
+        size,
+        flags
+    );
+}
 //--------------------------------------------------------------------------------------------------
 } /* extern "C" */
