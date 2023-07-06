@@ -536,7 +536,7 @@ extern fn zguiPlot_PlotShaded(
     offset: i32,
     stride: i32,
 ) void;
-
+//----------------------------------------------------------------------------------------------
 pub const DragToolFlags = packed struct(u32) {
     no_cursors: bool = false,
     no_fit: bool = false,
@@ -556,13 +556,12 @@ pub fn dragPoint(id: i32, args: DragPoint) bool {
         id,
         args.x,
         args.y,
-        args.col,
+        &args.col,
         args.size,
         args.flags,
     );
 }
 extern fn zguiPlot_DragPoint(id: i32, x: *f64, y: *f64, *const [4]f32, size: f32, flags: DragToolFlags) bool;
-
 //----------------------------------------------------------------------------------------------
 /// `pub fn showDemoWindow(popen: ?*bool) void`
 pub const showDemoWindow = zguiPlot_ShowDemoWindow;
