@@ -4157,8 +4157,11 @@ pub const DrawList = *opaque {
     //----------------------------------------------------------------------------------------------
 
     pub fn addCallback(draw_list: DrawList, callback: DrawCallback, callback_data: ?*anyopaque) void {
-        draw_list.zguiDrawList_AddCallback(callback, callback_data);
+        zguiDrawList_AddCallback(draw_list, callback, callback_data);
     }
     extern fn zguiDrawList_AddCallback(draw_list: DrawList, callback: DrawCallback, callback_data: ?*anyopaque) void;
+    pub fn addResetRenderStateCallback(draw_list: DrawList) void {
+        zguiDrawList_AddResetRenderStateCallback(draw_list);
+    }
     extern fn zguiDrawList_AddResetRenderStateCallback(draw_list: DrawList) void;
 };
