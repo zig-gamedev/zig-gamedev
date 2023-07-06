@@ -609,110 +609,97 @@ pub const Window = opaque {
         string: [*:0]const u8,
     ) void;
 
-    /// `pub fn setFramebufferSizeCallback(window: *Window, callback) void`
+    /// `pub fn setFramebufferSizeCallback(window: *Window, callback: ?FramebufferSizeFn) ?FramebufferSizeFn`
     pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
-    extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?*const fn (
+    extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?FramebufferSizeFn) ?FramebufferSizeFn;
+    pub const FramebufferSizeFn = *const fn (
         window: *Window,
         width: i32,
         height: i32,
-    ) callconv(.C) void) void;
+    ) callconv(.C) void;
 
-    /// `pub fn setSizeCallback(window: *Window, callback) void`
+    /// `pub fn setSizeCallback(window: *Window, callback: ?WindowSizeFn) ?WindowSizeFn`
     pub const setSizeCallback = glfwSetWindowSizeCallback;
-    extern fn glfwSetWindowSizeCallback(
+    extern fn glfwSetWindowSizeCallback(window: *Window, callback: ?WindowSizeFn) ?WindowSizeFn;
+    pub const WindowSizeFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            width: i32,
-            height: i32,
-        ) callconv(.C) void,
-    ) void;
+        width: i32,
+        height: i32,
+    ) callconv(.C) void;
 
-    /// `pub fn setPosCallback(window: *Window, callback) void`
+    /// `pub fn setPosCallback(window: *Window, callback: ?WindowPosFn) ?WindowPosFn`
     pub const setPosCallback = glfwSetWindowPosCallback;
-    extern fn glfwSetWindowPosCallback(
+    extern fn glfwSetWindowPosCallback(window: *Window, callback: ?WindowPosFn) ?WindowPosFn;
+    pub const WindowPosFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            xpos: i32,
-            ypos: i32,
-        ) callconv(.C) void,
-    ) void;
+        xpos: i32,
+        ypos: i32,
+    ) callconv(.C) void;
 
-    /// `pub const setContentScaleCallback(window: *Window, callback) void`
+    /// `pub const setContentScaleCallback(window: *Window, callback: ?WindowContentScaleFn) ?WindowContentScaleFn`
     pub const setContentScaleCallback = glfwSetWindowContentScaleCallback;
-    extern fn glfwSetWindowContentScaleCallback(
+    extern fn glfwSetWindowContentScaleCallback(window: *Window, callback: ?WindowContentScaleFn) ?WindowContentScaleFn;
+    pub const WindowContentScaleFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            xscale: f32,
-            yscale: f32,
-        ) callconv(.C) void,
-    ) void;
+        xscale: f32,
+        yscale: f32,
+    ) callconv(.C) void;
 
-    /// `pub fn setKeyCallback(window: *Window, callback) void`
+    /// `pub fn setKeyCallback(window: *Window, callback: ?KeyFn) ?KeyFn`
     pub const setKeyCallback = glfwSetKeyCallback;
-    extern fn glfwSetKeyCallback(
+    extern fn glfwSetKeyCallback(window: *Window, callback: ?KeyFn) ?KeyFn;
+    pub const KeyFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            key: Key,
-            scancode: i32,
-            action: Action,
-            mods: Mods,
-        ) callconv(.C) void,
-    ) void;
+        key: Key,
+        scancode: i32,
+        action: Action,
+        mods: Mods,
+    ) callconv(.C) void;
 
-    /// `pub fn setDropCallback(window: *Window, callback) void`
+    /// `pub fn setDropCallback(window: *Window, callback: ?DropFn) ?DropFn`
     pub const setDropCallback = glfwSetDropCallback;
-    extern fn glfwSetDropCallback(
+    extern fn glfwSetDropCallback(window: *Window, callback: ?DropFn) ?DropFn;
+    pub const DropFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            path_count: i32,
-            paths: [*][*:0]const u8,
-        ) callconv(.C) void,
-    ) void;
+        path_count: i32,
+        paths: [*][*:0]const u8,
+    ) callconv(.C) void;
 
-    /// `pub fn setMouseButtonCallback(window: *Window, callback) void`
+    /// `pub fn setMouseButtonCallback(window: *Window, callback: ?MouseButtonFn) ?MouseButtonFn`
     pub const setMouseButtonCallback = glfwSetMouseButtonCallback;
-    extern fn glfwSetMouseButtonCallback(
+    extern fn glfwSetMouseButtonCallback(window: *Window, callback: ?MouseButtonFn) ?MouseButtonFn;
+    pub const MouseButtonFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            button: MouseButton,
-            action: Action,
-            mods: Mods,
-        ) callconv(.C) void,
-    ) void;
+        button: MouseButton,
+        action: Action,
+        mods: Mods,
+    ) callconv(.C) void;
 
-    /// `pub fn setCursorPosCallback(window: *Window, callback) void`
+    /// `pub fn setCursorPosCallback(window: *Window, callback: ?CursorPosFn) ?CursorPosFn`
     pub const setCursorPosCallback = glfwSetCursorPosCallback;
-    extern fn glfwSetCursorPosCallback(
+    extern fn glfwSetCursorPosCallback(window: *Window, callback: ?CursorPosFn) ?CursorPosFn;
+    pub const CursorPosFn = *const fn (
         window: *Window,
-        callback: ?*const fn (window: *Window, xpos: f64, ypos: f64) callconv(.C) void,
-    ) void;
+        xpos: f64,
+        ypos: f64,
+    ) callconv(.C) void;
 
-    /// `pub fn setScrollCallback(window: *Window, callback) void`
+    /// `pub fn setScrollCallback(window: *Window, callback: ?ScrollFn) ?ScrollFn`
     pub const setScrollCallback = glfwSetScrollCallback;
-    extern fn glfwSetScrollCallback(
+    extern fn glfwSetScrollCallback(window: *Window, callback: ?ScrollFn) ?ScrollFn;
+    pub const ScrollFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            xoffset: f64,
-            yoffset: f64,
-        ) callconv(.C) void,
-    ) void;
+        xoffset: f64,
+        yoffset: f64,
+    ) callconv(.C) void;
 
-    /// `pub fn setCursorEnterCallback(window: *Window, callback) void`
+    /// `pub fn setCursorEnterCallback(window: *Window, callback: ?CursorEnterFn) ?CursorEnterFn`
     pub const setCursorEnterCallback = glfwSetCursorEnterCallback;
-    extern fn glfwSetCursorEnterCallback(
+    extern fn glfwSetCursorEnterCallback(window: *Window, callback: ?CursorEnterFn) ?CursorEnterFn;
+    pub const CursorEnterFn = *const fn (
         window: *Window,
-        callback: ?*const fn (
-            window: *Window,
-            entered: i32,
-        ) callconv(.C) void,
-    ) void;
+        entered: i32,
+    ) callconv(.C) void;
 
     /// `pub fn setCursor(window: *Window, cursor: ?*Cursor) void`
     pub const setCursor = glfwSetCursor;
@@ -960,15 +947,15 @@ test "zglfw.basic" {
     window.setAttribute(.resizable, false);
     try expect(window.getAttribute(.resizable) == false);
 
-    window.setContentScaleCallback(contentScaleCallback);
-    window.setFramebufferSizeCallback(framebufferSizeCallback);
-    window.setSizeCallback(sizeCallback);
-    window.setPosCallback(posCallback);
-    window.setCursorPosCallback(cursorPosCallback);
-    window.setMouseButtonCallback(mouseButtonCallback);
-    window.setKeyCallback(keyCallback);
-    window.setScrollCallback(scrollCallback);
-    window.setKeyCallback(null);
+    _ = window.setContentScaleCallback(contentScaleCallback);
+    _ = window.setFramebufferSizeCallback(framebufferSizeCallback);
+    _ = window.setSizeCallback(sizeCallback);
+    _ = window.setPosCallback(posCallback);
+    _ = window.setCursorPosCallback(cursorPosCallback);
+    _ = window.setMouseButtonCallback(mouseButtonCallback);
+    _ = window.setKeyCallback(keyCallback);
+    _ = window.setScrollCallback(scrollCallback);
+    _ = window.setKeyCallback(null);
 
     window.setClipboardString("keep going");
     try expect(std.mem.eql(u8, window.getClipboardString().?, "keep going"));
