@@ -544,14 +544,14 @@ pub const DragToolFlags = packed struct(u32) {
     delayed: bool = false,
     _padding: u28 = 0,
 };
-const DragPointArgs = struct {
+const DragPoint = struct {
     x: *f64,
     y: *f64,
     col: [4]f32,
     size: f32 = 4,
     flags: DragToolFlags = .{},
 };
-pub fn dragPoint(id: i32, args: DragPointArgs) bool {
+pub fn dragPoint(id: i32, args: DragPoint) bool {
     return zguiPlot_DragPoint(
         id,
         args.x,
