@@ -785,7 +785,7 @@ JPC_DebugRenderer_TriangleBatch_Create(const void *in_c_primitive);
 ///
 /// \return An opaque JPC_DebugRenderer_Primitive * wherein the user is keeping rendering data for that batch
 JPC_API const JPC_DebugRenderer_Primitive *
-JPC_DebugRenderer_TriangleBatch_GetPrimitive(const JPC_DebugRenderer_TriangleBatch * in_batch);
+JPC_DebugRenderer_TriangleBatch_GetPrimitive(const JPC_DebugRenderer_TriangleBatch *in_batch);
 
 JPC_API void
 JPC_DebugRenderer_TriangleBatch_AddRef(JPC_DebugRenderer_TriangleBatch *in_batch);

@@ -658,8 +658,14 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         _ = c.JPC_DestroyDebugRendererSingleton(); // For Zig API, don't care if one actually existed, discard error.
     }
 
-    pub fn createTriangleBatch(primitive_in: *anyopaque) *anyopaque {
-        return @as(*TriangleBatch, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in)));
+    pub fn createTriangleBatch(primitive_in: *const anyopaque) *TriangleBatch {
+        return @ptrCast(*TriangleBatch, c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in));
+    }
+
+    pub fn getPrimitiveFromBatch(batch_in: *const TriangleBatch) *const Primitive {
+        return @ptrCast(*const Primitive, c.JPC_DebugRenderer_TriangleBatch_GetPrimitive(
+            @ptrCast(*const c.JPC_DebugRenderer_TriangleBatch, batch_in)
+        ));
     }
 
     pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
@@ -731,7 +737,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
-                geometry: *anyopaque,
+                geometry: *const Geometry,
                 cull_mode: CullMode,
                 cast_shadow: CastShadow,
                 draw_mode: DrawMode,
@@ -801,7 +807,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
-                geometry: *anyopaque,
+                geometry: *const Geometry,
                 cull_mode: CullMode,
                 cast_shadow: CastShadow,
                 draw_mode: DrawMode,
@@ -839,6 +845,17 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         max: [3]f32,
     };
 
+    pub const LOD = extern struct {
+        batch: *TriangleBatch,
+        distance: f32,
+    };
+
+    pub const Geometry = extern struct {
+        LODs: [*]LOD,
+        num_LODs: u64,
+        bounds: *AABox,
+    };
+
     pub const BodyDrawSettings = extern struct {
         get_support_func: bool = false, // Draw the GetSupport() function, used for convex collision detection
         get_support_dir: bool = false, // If above true, also draw direction mapped to a specific support point
@@ -859,6 +876,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     pub const BodyDrawFilter = opaque {};
 
     pub const TriangleBatch = opaque {};
+    pub const Primitive = opaque {};
 
     pub const DebugRendererResult = enum(c.JPC_DebugRendererResult) {
         success = c.JPC_DEBUGRENDERER_SUCCESS,
@@ -868,12 +886,12 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     };
 
     pub const ShapeColor = enum(c.JPC_ShapeColor) {
-        instance_color = c.JPC_INSTANCE_COLOR, // Random color per instance
-        shape_type_color = c.JPC_SHAPE_TYPE_COLOR, // Convex = green, scaled = yellow, compound = orange, mesh = red
+        instance_color = c.JPC_INSTANCE_COLOR,       // Random color per instance
+        shape_type_color = c.JPC_SHAPE_TYPE_COLOR,   // Convex = green, scaled = yellow, compound = orange, mesh = red
         motion_type_color = c.JPC_MOTION_TYPE_COLOR, // Static = grey, keyframed = green, dynamic = random
-        sleep_color = c.JPC_SLEEP_COLOR, // Static = grey, keyframed = green, dynamic = yellow, asleep= red
-        island_color = c.JPC_ISLAND_COLOR, // Static = grey, active = random per island, sleeping = light grey
-        material_clor = c.JPC_MATERIAL_COLOR, // Color as defined by the PhysicsMaterial of the shape
+        sleep_color = c.JPC_SLEEP_COLOR,             // Static = grey, keyframed = green, dynamic = yellow, asleep= red
+        island_color = c.JPC_ISLAND_COLOR,           // Static = grey, active = random per island, sleeping = light grey
+        material_color = c.JPC_MATERIAL_COLOR,       // Color as defined by the PhysicsMaterial of the shape
     };
 
     pub const CullMode = enum(c.JPC_CullMode) {
@@ -3648,7 +3666,7 @@ const test_cb1 = struct {
             world_space_bound: *const DebugRenderer.AABox,
             lod_scale_sq: f32,
             color: DebugRenderer.Color,
-            geometry: *anyopaque,
+            geometry: *const DebugRenderer.Geometry,
             cull_mode: DebugRenderer.CullMode,
             cast_shadow: DebugRenderer.CastShadow,
             draw_mode: DebugRenderer.DrawMode,
