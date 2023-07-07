@@ -114,11 +114,9 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
     ) callconv(.C) bool {
         return switch (layer1) {
             object_layers.non_moving => layer2 == broad_phase_layers.moving or layer2 == broad_phase_layers.player,
-            // object_layers.non_moving => true,
             object_layers.moving => layer2 == broad_phase_layers.non_moving or layer2 == broad_phase_layers.sensors,
             object_layers.sensors => layer2 == broad_phase_layers.moving,
             object_layers.player => layer2 == broad_phase_layers.non_moving,
-            // object_layers.player => true,
             else => unreachable,
         };
     }
@@ -137,11 +135,9 @@ const ObjectLayerPairFilter = extern struct {
     ) callconv(.C) bool {
         return switch (object1) {
             object_layers.non_moving => object2 == object_layers.moving or object2 == object_layers.player,
-            // object_layers.non_moving => true,
             object_layers.moving => object2 == object_layers.non_moving or object2 == object_layers.sensors,
             object_layers.sensors => object2 == object_layers.moving,
             object_layers.player => object2 == object_layers.non_moving,
-            // object_layers.player => true,
             else => unreachable,
         };
     }
@@ -149,9 +145,15 @@ const ObjectLayerPairFilter = extern struct {
 
 const ContactListener = extern struct {
     usingnamespace zphy.ContactListener.Methods(@This());
-    __v: *const zphy.ContactListener.VTable = &vtable,
 
-    bodies_touching_sensor: [9]zphy.BodyId = .{ std.math.maxInt(zphy.BodyId) } ** 9,
+    pub const SensorContacts = extern struct {
+        dynamic: zphy.BodyId = std.math.maxInt(zphy.BodyId),
+        kinematic: zphy.BodyId = std.math.maxInt(zphy.BodyId),
+        static: zphy.BodyId = std.math.maxInt(zphy.BodyId),
+    };
+
+    __v: *const zphy.ContactListener.VTable = &vtable,
+    bodies_touching_sensors: [9]SensorContacts = .{ .{} } ** 9,
 
     const vtable = zphy.ContactListener.VTable{
         .onContactValidate = _onContactValidate,
@@ -176,16 +178,48 @@ const ContactListener = extern struct {
         _: *zphy.ContactSettings,
     ) callconv(.C) void {
         const self = @ptrCast(*ContactListener, self_base);
-        if (body1.isSensor()) self.appendSensorContact(body2);
-        if (body2.isSensor()) self.appendSensorContact(body1);
+        if (body1.isSensor()) self.appendSensorContact(body2, body1);
+        if (body2.isSensor()) self.appendSensorContact(body1, body2);
     }
 
-    fn appendSensorContact(self: *ContactListener, body: *const zphy.Body) void {
-        for (0..self.bodies_touching_sensor.len) |i| {
-            if (self.bodies_touching_sensor[i] == std.math.maxInt(zphy.BodyId)) {
-                self.bodies_touching_sensor[i] = body.getId();
-                break;
+    fn appendSensorContact(self: *ContactListener, dynamic_body: *const zphy.Body, sensor: *const zphy.Body) void {
+        const index = index: {
+            var cached_index_plus_one = dynamic_body.getUserData();
+            if (cached_index_plus_one > 0) break :index cached_index_plus_one - 1;
+            for (self.bodies_touching_sensors, 0..) |sensor_contacts, i| {
+                if (sensor_contacts.dynamic == dynamic_body.getId()) break :index i;
+                if (sensor_contacts.dynamic == std.math.maxInt(zphy.BodyId)) {
+                    self.bodies_touching_sensors[i].dynamic = dynamic_body.getId();
+                    break :index i;
+                }
             }
+            unreachable; // bodies_touching_sensors array may need to be larger
+        };
+        switch (sensor.motion_type) {
+            .kinematic => self.bodies_touching_sensors[index].kinematic = sensor.getId(),
+            .static => self.bodies_touching_sensors[index].static = sensor.getId(),
+            else => unreachable,
+        }
+    }
+
+    pub fn getSensorContacts(self: *ContactListener, dynamic_body: *zphy.Body) SensorContacts {
+        const cached_index_plus_one = dynamic_body.getUserData();
+        if (cached_index_plus_one > 0) return self.bodies_touching_sensors[cached_index_plus_one - 1];
+        for (self.bodies_touching_sensors, 0..) |sensor_contacts, i| {
+            if (sensor_contacts.dynamic == dynamic_body.getId()) {
+                dynamic_body.setUserData(i + 1);
+                return sensor_contacts;
+            }
+            if (sensor_contacts.dynamic == std.math.maxInt(zphy.BodyId)) break;
+        }
+        return SensorContacts{};
+    }
+
+    pub fn clearSensorContacts(self: *ContactListener) void {
+        for (0..self.bodies_touching_sensors.len) |i| {
+            if (self.bodies_touching_sensors[i].dynamic == std.math.maxInt(zphy.BodyId)) break;
+            self.bodies_touching_sensors[i].kinematic = std.math.maxInt(zphy.BodyId);
+            self.bodies_touching_sensors[i].static = std.math.maxInt(zphy.BodyId);
         }
     }
 
@@ -193,6 +227,10 @@ const ContactListener = extern struct {
 };
 
 const DebugRenderer = struct {
+    // array sizes may not be large enough for other scenes - they are the next 2^n past needed for this sample scene.
+    const max_prims = std.math.pow(usize, 2, 5);
+    const max_verts = std.math.pow(usize, 2, 14);
+    const max_indcs = std.math.pow(usize, 2, 15);
     const DebugVertex = struct {
         position: [3]f32 = .{0, 0, 0},
         normal: [3]f32 = .{0, 1, 0},
@@ -210,10 +248,9 @@ const DebugRenderer = struct {
     usingnamespace zphy.DebugRenderer.Methods(@This());
     __v: *const zphy.DebugRenderer.VTable(@This()) = &vtable,
 
-    // array sizes may not be large enough for other scenes - they are hardcoded for this sample scene.
-    primitives: [32]Primitive = .{.{}} ** 32,
-    vertices: [7072]DebugVertex = .{.{}} ** 7072,
-    indices: [19236]u16 = .{ std.math.maxInt(u16) } ** 19236,
+    primitives: [max_prims]Primitive = .{.{}} ** max_prims,
+    vertices: [max_verts]DebugVertex = .{.{}} ** max_verts,
+    indices: [max_indcs]u16 = .{ std.math.maxInt(u16) } ** max_indcs,
     heads: struct {
         prim: usize = 0,
         vert: usize = 0,
@@ -255,6 +292,13 @@ const DebugRenderer = struct {
         alloc: std.mem.Allocator,
         unif: zgpu.BindGroupLayoutHandle,
     ) !void {
+        // Tell Jolt to draw the bodies to make sure it actually loads all the primitives before the vertex buffers
+        // are uploaded. Otherwise it will wait until the first time you call drawBodies. This won't actually draw here.
+        self.demo.physics_system.drawBodies(
+            &self.demo.physics_debug_renderer.body_draw_settings,
+            self.demo.physics_debug_renderer.body_draw_filter,
+        );
+
         const gctx = self.demo.gctx;
 
         self.vertex_buf = gctx.createBuffer(.{
@@ -396,9 +440,10 @@ const DebugRenderer = struct {
 
             zgui.separator();
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
-            zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Sample Features:");
+            zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Options:");
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
             _ = zgui.checkbox("Physics Debug Renderer - Draw Bodies", .{ .v = &self.demo.physics_debug_enabled });
+            _ = zgui.checkbox("Camera - Detach From Physics", .{ .v = &self.demo.camera.out_of_body });
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
         }
         zgui.end();
@@ -407,7 +452,7 @@ const DebugRenderer = struct {
     pub fn shouldBodyDraw(
         body: *const zphy.Body
     ) align(zphy.DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
-        if (body.motion_type == .static) return false;
+        if (body.object_layer == object_layers.non_moving) return false;
         return true;
     }
 
@@ -519,11 +564,15 @@ const DemoState = struct {
     physics_debug_enabled: bool = false,
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 32.0, -32.0 },
+        position: [3]f32 = .{ 0.0, 12.0, -64.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.16 * math.pi,
-        yaw: f32 = 0.0,
+        pitch: f32 = 0.04 * math.pi,
+        yaw: f32 = -0.10 * math.pi,
+        rotation: zm.Mat = zm.identity(),
         rigid_body: zphy.BodyId = std.math.maxInt(zphy.BodyId),
+        collector_body: zphy.BodyId = std.math.maxInt(zphy.BodyId),
+        collector_attractor: [3]f32 = .{ 0, 0, 0 },
+        out_of_body: bool = false,
     } = .{},
     mouse: struct {
         cursor_pos: [2]f64 = .{ 0, 0 },
@@ -806,7 +855,19 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             .friction = 0.0,
         }, .activate);
 
-        const stir_bar_shape_settings = try zphy.BoxShapeSettings.create(.{ 50.0, 7.0, 4.0 });
+        const flask_shape_settings = try zphy.TaperedCapsuleShapeSettings.create(4.0, 1.0, 5.0);
+        defer flask_shape_settings.release();
+        const flask_shape = try flask_shape_settings.createShape();
+        defer flask_shape.release();
+        demo.camera.collector_body = try body_interface.createAndAddBody(.{
+            .position = zm.loadArr3(demo.camera.position),
+            .shape = flask_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.sensors,
+            .is_sensor = true,
+        }, .activate);
+
+        const stir_bar_shape_settings = try zphy.BoxShapeSettings.create(.{ 60.0, 7.0, 4.0 });
         defer stir_bar_shape_settings.release();
         const stir_bar_shape = try stir_bar_shape_settings.createShape();
         defer stir_bar_shape.release();
@@ -943,41 +1004,43 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    const body_interface = demo.physics_system.getBodyInterfaceMut();
-
-    { // Apply the effects of bodies touching the stir bar sensor
-        for (&demo.contact_listener.bodies_touching_sensor) |*body_id| {
-            if (body_id.* == std.math.maxInt(zphy.BodyId)) break;
-            const upward = zm.f32x4(0.0, 1.0, 0.0, 0.0);
-            const tangent = zm.cross3(upward, zm.loadArr3(body_interface.getPosition(body_id.*))) * zm.f32x4s(0.05);
-            const force = zm.normalize3(upward + tangent) * zm.f32x4s(300000);
-            body_interface.addForce(body_id.*, .{ force[0], force[1], force[2] });
-            body_id.* = std.math.maxInt(zphy.BodyId);
-        }
-    }
-
-    { // Apply a constant pull toward a point near the origin for all floating objects' bodies
+    { // Apply contextual forces to the floating lights
         const bodies = demo.physics_system.getBodiesMutUnsafe();
         for (bodies) |body| {
             if (!zphy.isValidBodyPointer(body) or body.object_layer != object_layers.moving) continue;
-            const to_center = zm.f32x4(0, 3, 0, 1) - zm.loadArr3(body.getPosition());
-            const force = zm.normalize3(to_center) * zm.f32x4s(100000);
-            body.addForce(.{ force[0], force[1], force[2] });
+            const sensor_contacts = demo.contact_listener.getSensorContacts(body);
+            if (sensor_contacts.kinematic != std.math.maxInt(zphy.BodyId)) { // stirring force around gathering point
+                const upward = zm.f32x4(0.0, 1.0, 0.0, 0.0);
+                const tangent = zm.cross3(upward, zm.loadArr3(body.getPosition())) * zm.f32x4s(0.05);
+                const force = zm.normalize3(upward + tangent) * zm.f32x4s(300000);
+                body.addForce(.{ force[0], force[1], force[2] });
+            } else if (sensor_contacts.static != std.math.maxInt(zphy.BodyId)) { // collection force
+                const to_center = zm.loadArr3(demo.camera.collector_attractor) - zm.loadArr3(body.getPosition());
+                const force = zm.normalize3(to_center) * zm.f32x4s(60000);
+                body.addForce(.{ force[0], force[1], force[2] });
+                const velocity = zm.loadArr3(body.getLinearVelocity());
+                const speed = zm.length3(velocity);
+                if ((speed > zm.f32x4s(6.0))[0]) {
+                    var braking = velocity + velocity * speed * zm.f32x4s(-0.001);
+                    body.setLinearVelocity(.{ braking[0], braking[1], braking[2] });
+                }
+            } else { // pulling force toward gathering point
+                const to_center = zm.f32x4(0, 5, 0, 1) - zm.loadArr3(body.getPosition());
+                const force = zm.normalize3(to_center) * zm.f32x4s(100000);
+                body.addForce(.{ force[0], force[1], force[2] });
+            }
         }
+        demo.contact_listener.clearSensorContacts();
     }
 
     { // Handle camera movement with 'WASD' keys.
-        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+        demo.camera.rotation = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         const up = zm.f32x4(0.0, 1.0, 0.0, 0.0);
-        const forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
+        const forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), demo.camera.rotation));
         const right = zm.normalize3(zm.cross3(up, forward));
         zm.storeArr3(&demo.camera.forward, forward);
 
-        var speed = zm.f32x4s(25.0);
-        if (window.getKey(.left_shift) == .press) {
-            speed *= zm.f32x4s(5.0);
-        }
-
+        var speed = if (window.getKey(.left_shift) == .press) zm.f32x4s(150.0) else zm.f32x4s(25.0);
         var velocity = zm.f32x4s(0);
         if (window.getKey(.w) == .press) {
             velocity += forward;
@@ -995,8 +1058,16 @@ fn update(demo: *DemoState) void {
             velocity -= up;
         }
 
-        if (zm.any(zm.length3(velocity) > zm.f32x4s(0), 3)) velocity = zm.normalize3(velocity) * speed;
-        body_interface.setLinearVelocity(demo.camera.rigid_body, .{ velocity[0], velocity[1], velocity[2] });
+        if ((zm.length3(velocity) > zm.f32x4s(0))[0]) velocity = zm.normalize3(velocity) * speed;
+        if (demo.camera.out_of_body) {
+            var cam_pos = zm.loadArr3(demo.camera.position);
+            const delta_time = zm.f32x4s(demo.gctx.stats.delta_time);
+            cam_pos += velocity * delta_time;
+            zm.storeArr3(&demo.camera.position, cam_pos);
+        } else {
+            const body_interface = demo.physics_system.getBodyInterfaceMut();
+            body_interface.setLinearVelocity(demo.camera.rigid_body, .{ velocity[0], velocity[1], velocity[2] });
+        }
     }
 
     zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
@@ -1005,8 +1076,19 @@ fn update(demo: *DemoState) void {
     const physics_step = @min(demo.gctx.stats.delta_time, 1.0 / 10.0);
     demo.physics_system.update(physics_step, .{}) catch unreachable;
 
-    const body_const_interface = demo.physics_system.getBodyInterface();
-    demo.camera.position = body_const_interface.getPosition(demo.camera.rigid_body);
+    if ( ! demo.camera.out_of_body) {
+        const body_const_interface = demo.physics_system.getBodyInterface();
+        demo.camera.position = body_const_interface.getPosition(demo.camera.rigid_body);
+
+        const center = zm.loadArr3(demo.camera.position) + zm.loadArr3(demo.camera.forward) * zm.f32x4s(4.0);
+        zm.storeArr3(&demo.camera.collector_attractor, center + zm.loadArr3(demo.camera.forward) * zm.f32x4s(4.0));
+        const body_interface = demo.physics_system.getBodyInterfaceMut();
+        body_interface.setPosition(demo.camera.collector_body, .{ center[0], center[1], center[2] }, .activate);
+        body_interface.setRotation(demo.camera.collector_body, zm.qmul(
+            zm.quatFromNormAxisAngle(.{ 1, 0, 0, 0 }, -0.5 * math.pi),
+            zm.quatFromMat(demo.camera.rotation),
+        ), .activate);
+    }
 }
 
 fn draw(demo: *DemoState) void {
