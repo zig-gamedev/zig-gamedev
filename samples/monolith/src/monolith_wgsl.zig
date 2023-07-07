@@ -8,6 +8,8 @@ const common =
 \\
 \\  struct FrameUniforms {
 \\      world_to_clip: mat4x4<f32>,
+\\      world_to_view: mat4x4<f32>,
+\\      view_to_clip: mat4x4<f32>,
 \\      floor_material: vec4<f32>,
 \\      monolith_rotation: mat3x3<f32>,
 \\      monolith_center: vec3<f32>,
@@ -18,36 +20,152 @@ const common =
 \\  }
 \\  @group(0) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
 \\
+\\  let pi = 3.1415926535897932384626433832795;
+\\  let two_pi = 2.0 * pi;
+\\
 \\  fn radians(degrees: f32) -> f32 {
-\\      return degrees * 3.1415926535897932384626433832795 / 180.0;
+\\      return degrees * pi / 180.0;
 \\  }
 \\
 \\  fn rand2(n: vec2<f32>) -> f32 {
 \\      return fract(sin(dot(n, vec2<f32>(12.9898, 4.1414))) * 43758.5453);
 \\  }
+\\
+\\  fn saturate(x: f32) -> f32 { return clamp(x, 0.0, 1.0); }
+\\
+\\  // Trowbridge-Reitz GGX normal distribution function.
+\\  fn distributionGgx(n: vec3<f32>, h: vec3<f32>, alpha: f32) -> f32 {
+\\      let alpha_sq = alpha * alpha;
+\\      let n_dot_h = saturate(dot(n, h));
+\\      let k = n_dot_h * n_dot_h * (alpha_sq - 1.0) + 1.0;
+\\      return alpha_sq / (pi * k * k);
+\\  }
+\\
+\\  fn geometrySchlickGgx(x: f32, k: f32) -> f32 {
+\\      return x / (x * (1.0 - k) + k);
+\\  }
+\\
+\\  fn geometrySmith(n: vec3<f32>, v: vec3<f32>, l: vec3<f32>, k: f32) -> f32 {
+\\      let n_dot_v = saturate(dot(n, v));
+\\      let n_dot_l = saturate(dot(n, l));
+\\      return geometrySchlickGgx(n_dot_v, k) * geometrySchlickGgx(n_dot_l, k);
+\\  }
+\\
+\\  fn fresnelSchlick(h_dot_v: f32, f0: vec3<f32>) -> vec3<f32> {
+\\      return f0 + (vec3(1.0, 1.0, 1.0) - f0) * pow(1.0 - h_dot_v, 5.0);
+\\  }
+\\
+\\  struct Box {
+\\      center: vec3<f32>,
+\\      radius: vec3<f32>,
+\\      inv_radius: vec3<f32>,
+\\      rotation: mat3x3<f32>,
+\\  };
+\\  struct Ray {
+\\      origin: vec3<f32>,
+\\      direction: vec3<f32>,
+\\  };
+\\  // Alexander Majercik, Cyril Crassin, Peter Shirley, and Morgan McGuire, A Ray-Box Intersection Algorithm and
+\\  // Efficient Dynamic Voxel Rendering, Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66-81, 2018
+\\  // This wgsl implementation of the algorithm is customized to fit the assumptions of this use case.
+\\  fn intersect_box(box: Box, ray: Ray, distance: ptr<function, f32>, normal: ptr<function, vec3<f32>>) -> bool {
+\\      let r = Ray(
+\\          (ray.origin - box.center) * box.rotation,
+\\          ray.direction * box.rotation,
+\\      );
+\\      var winding: f32 = 1.0;
+\\      let winding_vec = abs(r.origin) * box.inv_radius;
+\\      if (max(max(winding_vec.x, winding_vec.y), winding_vec.z) < 1.0) { winding = -1.0; }
+\\      var sgn: vec3<f32> = -sign(r.direction);
+\\      var plane_dist: vec3<f32> = box.radius * winding * sgn - r.origin;
+\\      plane_dist = plane_dist / r.direction;
+\\
+\\      let test = vec3<bool>(
+\\          (plane_dist.x >= 0.0) && (all(abs(r.origin.yz + r.direction.yz * plane_dist.x) < box.radius.yz)),
+\\          (plane_dist.y >= 0.0) && (all(abs(r.origin.zx + r.direction.zx * plane_dist.y) < box.radius.zx)),
+\\          (plane_dist.z >= 0.0) && (all(abs(r.origin.xy + r.direction.xy * plane_dist.z) < box.radius.xy)),
+\\      );
+\\
+\\      if (test.x) { sgn = vec3<f32>(sgn.x, 0.0, 0.0); }
+\\      else if (test.y) { sgn = vec3<f32>(0.0, sgn.y, 0.0); }
+\\      else if (test.z) { sgn = vec3<f32>(0.0, 0.0, sgn.z); }
+\\      else { sgn = vec3<f32>(0.0, 0.0, 0.0); }
+\\
+\\      if (sgn.x != 0.0) { *distance = plane_dist.x; }
+\\      else if (sgn.y != 0.0) { *distance = plane_dist.y; }
+\\      else { *distance = plane_dist.z; }
+\\
+\\      *normal = box.rotation * sgn;
+\\      return (sgn.x != 0.0) || (sgn.y != 0.0) || (sgn.z != 0.0);
+\\  }
 ;
-pub const line = struct {
+pub const debug = struct {
     pub const vs = common ++
     \\  struct VertexOut {
     \\      @builtin(position) position_clip: vec4<f32>,
-    \\      @location(1) color: vec3<f32>,
+    \\      @location(0) position: vec3<f32>,
+    \\      @location(1) normal: vec3<f32>,
     \\  }
     \\  @stage(vertex) fn main(
     \\      @location(0) position: vec3<f32>,
-    \\      @location(1) color: vec3<f32>,
-    \\      @builtin(vertex_index) vertex_index: u32,
+    \\      @location(1) normal: vec3<f32>,
     \\  ) -> VertexOut {
     \\      var output: VertexOut;
     \\      output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
-    \\      output.color = color;
+    \\      //output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_view;
+    \\      //output.position_clip *= frame_uniforms.view_to_clip;
+    \\      output.position = (vec4(position, 1.0) * draw_uniforms.object_to_world).xyz;
+    \\      output.normal = (vec4(normal, 0.0) * draw_uniforms.object_to_world).xyz;
     \\      return output;
     \\  }
     ;
     pub const fs = common ++
     \\  @stage(fragment) fn main(
-    \\      @location(1) color: vec3<f32>,
+    \\      @location(0) position: vec3<f32>,
+    \\      @location(1) normal: vec3<f32>,
     \\  ) -> @location(0) vec4<f32> {
-    \\      return vec4(color, 1.0);
+    \\      let v = normalize(frame_uniforms.camera_position - position);
+    \\      let n = normalize(normal);
+    \\      let facing_cam = saturate(dot(n, v));
+    \\
+    \\      let curviness = length(fwidth(normal));
+    \\      let bubble_mode = step(0.001, curviness);
+    \\      let bubble_factor = 1.4 - bubble_mode * facing_cam * 1.4;
+    \\      let roughness_mult = 1.0 - 0.75 * bubble_mode;
+    \\      let nonphysical_specular_mult = 1.0 + 127.0 * bubble_mode;
+    \\
+    \\      let base_color = draw_uniforms.basecolor_roughness.xyz;
+    \\      var roughness = draw_uniforms.basecolor_roughness.a * roughness_mult;
+    \\      var metallic: f32;
+    \\      if (roughness < 0.0) { metallic = 1.0; } else { metallic = 0.0; }
+    \\      roughness = abs(roughness);
+    \\
+    \\      let alpha = roughness * roughness;
+    \\      var k = alpha + 1.0;
+    \\      k = (k * k) / 8.0;
+    \\      var f0 = vec3(0.04);
+    \\      f0 = mix(f0, base_color, metallic);
+    \\
+    \\      let radiance = vec3(4.0);
+    \\      let l = normalize(vec3(0.3, 1.0, 0.3));
+    \\      let h = normalize(l + v);
+    \\      let f = fresnelSchlick(saturate(dot(h, v)), f0);
+    \\      let ndf = distributionGgx(n, h, alpha);
+    \\      let g = geometrySmith(n, v, l, k);
+    \\      let numerator = ndf * g * f * nonphysical_specular_mult;
+    \\      let denominator = 4.0 * facing_cam * saturate(dot(n, l));
+    \\      let specular = numerator / max(denominator, 0.001);
+    \\      let ks = f;
+    \\      let kd = (vec3(1.0) - ks) * (1.0 - metallic);
+    \\      let n_dot_l = saturate(dot(n, l));
+    \\      let lighting_result = (kd * base_color / pi + specular) * radiance * n_dot_l;
+    \\
+    \\      let ambient = vec3(0.03) * base_color;
+    \\      var color = ambient + lighting_result;
+    \\      color = color / (color + 1.0);
+    \\      color = pow(color, vec3(1.0 / 2.2));
+    \\
+    \\      return vec4(color, 0.4 * bubble_factor);
     \\  }
     ;
 };
@@ -61,91 +179,17 @@ pub const mesh = struct {
     \\  @stage(vertex) fn main(
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
-    \\      @builtin(vertex_index) vertex_index: u32,
     \\  ) -> VertexOut {
     \\      var output: VertexOut;
     \\      output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
+    \\      //output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_view;
+    \\      //output.position_clip *= frame_uniforms.view_to_clip;
     \\      output.position = (vec4(position, 1.0) * draw_uniforms.object_to_world).xyz;
-    \\      output.normal = normal * mat3x3(
-    \\          draw_uniforms.object_to_world[0].xyz,
-    \\          draw_uniforms.object_to_world[1].xyz,
-    \\          draw_uniforms.object_to_world[2].xyz,
-    \\      );
+    \\      output.normal = (vec4(normal, 0.0) * draw_uniforms.object_to_world).xyz;
     \\      return output;
     \\  }
     ;
     pub const fs = common ++
-    \\  let pi = 3.14159265359;
-    \\  let two_pi = 6.28318530718;
-    \\
-    \\  fn saturate(x: f32) -> f32 { return clamp(x, 0.0, 1.0); }
-    \\
-    \\  // Trowbridge-Reitz GGX normal distribution function.
-    \\  fn distributionGgx(n: vec3<f32>, h: vec3<f32>, alpha: f32) -> f32 {
-    \\      let alpha_sq = alpha * alpha;
-    \\      let n_dot_h = saturate(dot(n, h));
-    \\      let k = n_dot_h * n_dot_h * (alpha_sq - 1.0) + 1.0;
-    \\      return alpha_sq / (pi * k * k);
-    \\  }
-    \\
-    \\  fn geometrySchlickGgx(x: f32, k: f32) -> f32 {
-    \\      return x / (x * (1.0 - k) + k);
-    \\  }
-    \\
-    \\  fn geometrySmith(n: vec3<f32>, v: vec3<f32>, l: vec3<f32>, k: f32) -> f32 {
-    \\      let n_dot_v = saturate(dot(n, v));
-    \\      let n_dot_l = saturate(dot(n, l));
-    \\      return geometrySchlickGgx(n_dot_v, k) * geometrySchlickGgx(n_dot_l, k);
-    \\  }
-    \\
-    \\  fn fresnelSchlick(h_dot_v: f32, f0: vec3<f32>) -> vec3<f32> {
-    \\      return f0 + (vec3(1.0, 1.0, 1.0) - f0) * pow(1.0 - h_dot_v, 5.0);
-    \\  }
-    \\
-    \\  struct Box {
-    \\      center: vec3<f32>,
-    \\      radius: vec3<f32>,
-    \\      inv_radius: vec3<f32>,
-    \\      rotation: mat3x3<f32>,
-    \\  };
-    \\  struct Ray {
-    \\      origin: vec3<f32>,
-    \\      direction: vec3<f32>,
-    \\  };
-    \\  // Alexander Majercik, Cyril Crassin, Peter Shirley, and Morgan McGuire, A Ray-Box Intersection Algorithm and
-    \\  // Efficient Dynamic Voxel Rendering, Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66-81, 2018
-    \\  // This wgsl implementation of the algorithm is customized to fit the assumptions of this use case.
-    \\  fn intersect_box(box: Box, ray: Ray, distance: ptr<function, f32>, normal: ptr<function, vec3<f32>>) -> bool {
-    \\      let r = Ray(
-    \\          (ray.origin - box.center) * box.rotation,
-    \\          ray.direction * box.rotation,
-    \\      );
-    \\      var winding: f32 = 1.0;
-    \\      let winding_vec = abs(r.origin) * box.inv_radius;
-    \\      if (max(max(winding_vec.x, winding_vec.y), winding_vec.z) < 1.0) { winding = -1.0; }
-    \\      var sgn: vec3<f32> = -sign(r.direction);
-    \\      var plane_dist: vec3<f32> = box.radius * winding * sgn - r.origin;
-    \\      plane_dist = plane_dist / r.direction;
-    \\
-    \\      let test = vec3<bool>(
-    \\          (plane_dist.x >= 0.0) && (all(abs(r.origin.yz + r.direction.yz * plane_dist.x) < box.radius.yz)),
-    \\          (plane_dist.y >= 0.0) && (all(abs(r.origin.zx + r.direction.zx * plane_dist.y) < box.radius.zx)),
-    \\          (plane_dist.z >= 0.0) && (all(abs(r.origin.xy + r.direction.xy * plane_dist.z) < box.radius.xy)),
-    \\      );
-    \\
-    \\      if (test.x) { sgn = vec3<f32>(sgn.x, 0.0, 0.0); }
-    \\      else if (test.y) { sgn = vec3<f32>(0.0, sgn.y, 0.0); }
-    \\      else if (test.z) { sgn = vec3<f32>(0.0, 0.0, sgn.z); }
-    \\      else { sgn = vec3<f32>(0.0, 0.0, 0.0); }
-    \\
-    \\      if (sgn.x != 0.0) { *distance = plane_dist.x; }
-    \\      else if (sgn.y != 0.0) { *distance = plane_dist.y; }
-    \\      else { *distance = plane_dist.z; }
-    \\
-    \\      *normal = box.rotation * sgn;
-    \\      return (sgn.x != 0.0) || (sgn.y != 0.0) || (sgn.z != 0.0);
-    \\  }
-    \\
     \\  @stage(fragment) fn main(
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
@@ -175,11 +219,6 @@ pub const mesh = struct {
     \\      var f0 = vec3(0.04);
     \\      f0 = mix(f0, base_color, metallic);
     \\
-    \\      //var light_positions: array<vec3<f32>, 9>;
-    \\      //for (var i = 0u; i < 9u; i = i + 1u) {
-    \\      //    let angle: f32 = radians(f32(i) * 40.0);
-    \\      //    light_positions[i] = vec3<f32>(6.0 * cos(angle), 4.0, 6.0 * sin(angle));
-    \\      //}
     \\      let light_colors = array<vec3<f32>, 9>(
     \\          vec3(1.00, 0.80, 0.26),
     \\          vec3(1.00, 0.75, 0.20),
@@ -201,7 +240,6 @@ pub const mesh = struct {
     \\
     \\      var lo = vec3(0.0);
     \\      for (var light_index: i32 = 0; light_index < 9; light_index = light_index + 1) {
-    \\          //let lvec = light_positions[light_index] - position;
     \\          let lvec = frame_uniforms.lights[light_index] - position;
     \\          let l = normalize(lvec);
     \\          let h = normalize(l + v);
@@ -234,7 +272,6 @@ pub const mesh = struct {
     \\              let floor_pos = vec3<f32>(floor_x, 0.0, floor_z);
     \\              var floor_normal = vec3<f32>(0, 1, 0);
     \\
-    \\              //let floor_to_light = light_positions[light_index] - floor_pos;
     \\              let floor_to_light = frame_uniforms.lights[light_index] - floor_pos;
     \\              let fl = normalize(floor_to_light);
     \\              let fl_ray = Ray(floor_pos, fl);
@@ -282,7 +319,6 @@ pub const mesh = struct {
     \\          }
     \\
     \\          // Make light source itself appear as soft orb
-    \\          //let cl = light_positions[light_index] - frame_uniforms.camera_position;
     \\          let cl = frame_uniforms.lights[light_index] - frame_uniforms.camera_position;
     \\          let cl_ray = Ray(frame_uniforms.camera_position, -v);
     \\          var cl_hit_dist: f32;
