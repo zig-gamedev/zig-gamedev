@@ -10,7 +10,7 @@ const zmesh = @import("zmesh");
 const wgsl = @import("monolith_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
-const window_title = "zig-gamedev: physics test (wgpu)";
+const window_title = "zig-gamedev: monolith sample (wgpu)";
 
 const floor_material = zm.f32x4(-0.7, -0.7, -0.7, 0.8);
 const monolith_scale = zm.scaling(10, 50, 5);
@@ -24,8 +24,6 @@ const monolith_rotate_t = zm.transpose(monolith_rotate);
 
 const FrameUniforms = extern struct {
     world_to_clip: zm.Mat        align(16),
-    world_to_view: zm.Mat        align(16),
-    view_to_clip: zm.Mat         align(16),
     floor_material: [4]f32       align(16),
     monolith_rotation: [3][4]f32 align(16),  // GPU will expect each element to be 16-aligned too, so extra f32 padding.
     monolith_center: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
@@ -57,13 +55,17 @@ const Mesh = struct {
 const object_layers = struct {
     const non_moving: zphy.ObjectLayer = 0;
     const moving: zphy.ObjectLayer = 1;
-    const len: u32 = 2;
+    const sensors: zphy.ObjectLayer = 2;
+    const player: zphy.ObjectLayer = 3;
+    const len: u32 = 4;
 };
 
 const broad_phase_layers = struct {
     const non_moving: zphy.BroadPhaseLayer = 0;
     const moving: zphy.BroadPhaseLayer = 1;
-    const len: u32 = 2;
+    const sensors: zphy.ObjectLayer = 2;
+    const player: zphy.ObjectLayer = 3;
+    const len: u32 = 4;
 };
 
 const BroadPhaseLayerInterface = extern struct {
@@ -81,6 +83,8 @@ const BroadPhaseLayerInterface = extern struct {
         var layer_interface: BroadPhaseLayerInterface = .{};
         layer_interface.object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
         layer_interface.object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
+        layer_interface.object_to_broad_phase[object_layers.sensors] = broad_phase_layers.sensors;
+        layer_interface.object_to_broad_phase[object_layers.player] = broad_phase_layers.player;
         return layer_interface;
     }
 
@@ -109,8 +113,12 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
         layer2: zphy.BroadPhaseLayer,
     ) callconv(.C) bool {
         return switch (layer1) {
-            object_layers.non_moving => layer2 == broad_phase_layers.moving,
-            object_layers.moving => layer2 == broad_phase_layers.non_moving,
+            object_layers.non_moving => layer2 == broad_phase_layers.moving or layer2 == broad_phase_layers.player,
+            // object_layers.non_moving => true,
+            object_layers.moving => layer2 == broad_phase_layers.non_moving or layer2 == broad_phase_layers.sensors,
+            object_layers.sensors => layer2 == broad_phase_layers.moving,
+            object_layers.player => layer2 == broad_phase_layers.non_moving,
+            // object_layers.player => true,
             else => unreachable,
         };
     }
@@ -128,8 +136,12 @@ const ObjectLayerPairFilter = extern struct {
         object2: zphy.ObjectLayer,
     ) callconv(.C) bool {
         return switch (object1) {
-            object_layers.non_moving => object2 == object_layers.moving,
-            object_layers.moving => object2 == object_layers.non_moving,
+            object_layers.non_moving => object2 == object_layers.moving or object2 == object_layers.player,
+            // object_layers.non_moving => true,
+            object_layers.moving => object2 == object_layers.non_moving or object2 == object_layers.sensors,
+            object_layers.sensors => object2 == object_layers.moving,
+            object_layers.player => object2 == object_layers.non_moving,
+            // object_layers.player => true,
             else => unreachable,
         };
     }
@@ -139,22 +151,45 @@ const ContactListener = extern struct {
     usingnamespace zphy.ContactListener.Methods(@This());
     __v: *const zphy.ContactListener.VTable = &vtable,
 
-    const vtable = zphy.ContactListener.VTable{ .onContactValidate = _onContactValidate };
+    bodies_touching_sensor: [9]zphy.BodyId = .{ std.math.maxInt(zphy.BodyId) } ** 9,
+
+    const vtable = zphy.ContactListener.VTable{
+        .onContactValidate = _onContactValidate,
+        .onContactPersisted = _onContactPersisted,
+    };
 
     fn _onContactValidate(
-        self: *zphy.ContactListener,
-        body1: *const zphy.Body,
-        body2: *const zphy.Body,
-        base_offset: *const [3]zphy.Real,
-        collision_result: *const zphy.CollideShapeResult,
+        _: *zphy.ContactListener,
+        _: *const zphy.Body,
+        _: *const zphy.Body,
+        _: *const [3]zphy.Real,
+        _: *const zphy.CollideShapeResult,
     ) callconv(.C) zphy.ValidateResult {
-        _ = self;
-        _ = body1;
-        _ = body2;
-        _ = base_offset;
-        _ = collision_result;
         return .accept_all_contacts;
     }
+
+    fn _onContactPersisted(
+        self_base: *zphy.ContactListener,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
+        _: *const zphy.ContactManifold,
+        _: *zphy.ContactSettings,
+    ) callconv(.C) void {
+        const self = @ptrCast(*ContactListener, self_base);
+        if (body1.isSensor()) self.appendSensorContact(body2);
+        if (body2.isSensor()) self.appendSensorContact(body1);
+    }
+
+    fn appendSensorContact(self: *ContactListener, body: *const zphy.Body) void {
+        for (0..self.bodies_touching_sensor.len) |i| {
+            if (self.bodies_touching_sensor[i] == std.math.maxInt(zphy.BodyId)) {
+                self.bodies_touching_sensor[i] = body.getId();
+                break;
+            }
+        }
+    }
+
+    pub const touching_sensor_value: u64 = 1;
 };
 
 const DebugRenderer = struct {
@@ -189,7 +224,6 @@ const DebugRenderer = struct {
     vertex_buf: zgpu.BufferHandle = .{},
     index_buf: zgpu.BufferHandle = .{},
     debug_render_pipe: zgpu.RenderPipelineHandle = .{},
-    // body_draw_settings: zphy.DebugRenderer.BodyDrawSettings = .{ .velocity = true },
     body_draw_settings: zphy.DebugRenderer.BodyDrawSettings = .{ .shape_color = .instance_color },
     body_draw_filter: *zphy.DebugRenderer.BodyDrawFilter,
     body_draw_list: std.ArrayList(DrawInstance),
@@ -354,7 +388,10 @@ const DebugRenderer = struct {
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
             zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Controls: ");
             zgui.sameLine(.{});
-            zgui.textWrapped("WASD, left ALT moves down, SPACE moves up, hold shift for speed", .{});
+            zgui.textWrapped(
+                "WASD. Left ALT moves down. SPACE moves up. Hold shift for speed. Right click to capture mouse " ++
+                "cursor and enable mouse look. Left click to disable mouse look and free mouse cursor.", .{}
+            );
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
 
             zgui.separator();
@@ -375,32 +412,24 @@ const DebugRenderer = struct {
     }
 
     fn drawLine (
-        self: *DebugRenderer,
-        from: *const [3]zphy.Real,
-        to: *const [3]zphy.Real,
-        color: *const zphy.DebugRenderer.Color,
-    ) callconv(.C) void {
-        _ = from;
-        _ = to;
-        _ = color;
-        _ = self;
-    }
+        _: *DebugRenderer,
+        _: *const [3]zphy.Real,
+        _: *const [3]zphy.Real,
+        _: *const zphy.DebugRenderer.Color,
+    ) callconv(.C) void { }
+
     fn drawTriangle (
-        self: *DebugRenderer,
-        v1: *const [3]zphy.Real,
-        v2: *const [3]zphy.Real,
-        v3: *const [3]zphy.Real,
-        color: *const zphy.DebugRenderer.Color,
-    ) callconv(.C) void {
-        _ = self;
-        _ = v1;
-        _ = v2;
-        _ = v3;
-        _ = color;
-    }
+        _: *DebugRenderer,
+        _: *const [3]zphy.Real,
+        _: *const [3]zphy.Real,
+        _: *const [3]zphy.Real,
+        _: *const zphy.DebugRenderer.Color,
+    ) callconv(.C) void { }
+
     fn createTriangleBatch (_: *DebugRenderer, _: [*]zphy.DebugRenderer.Triangle, _: u32) callconv(.C) *anyopaque {
         unreachable; // Jolt's debug renderer seems to only use the indexed one below, so not implementing this.
     }
+
     fn createTriangleBatchIndexed (
         self: *DebugRenderer,
         vertices: [*]zphy.DebugRenderer.Vertex,
@@ -428,22 +457,18 @@ const DebugRenderer = struct {
         }
         return zphy.DebugRenderer.createTriangleBatch(prim_ptr);
     }
+
     fn drawGeometry (
         self: *DebugRenderer,
         model_matrix: *const [16]zphy.Real,
-        world_space_bound: *const zphy.DebugRenderer.AABox,
-        lod_scale_sq: f32,
+        _: *const zphy.DebugRenderer.AABox,
+        _: f32,
         color: zphy.DebugRenderer.Color,
         geometry: *const zphy.DebugRenderer.Geometry,
-        cull_mode: zphy.DebugRenderer.CullMode,
-        cast_shadow: zphy.DebugRenderer.CastShadow,
-        draw_mode: zphy.DebugRenderer.DrawMode,
+        _: zphy.DebugRenderer.CullMode,
+        _: zphy.DebugRenderer.CastShadow,
+        _: zphy.DebugRenderer.DrawMode,
     ) callconv(.C) void {
-        _ = world_space_bound;
-        _ = lod_scale_sq;
-        _ = cull_mode;
-        _ = cast_shadow;
-        _ = draw_mode;
         const batch = geometry.LODs[0].batch;
         const prim = @ptrCast(
             *const Primitive,
@@ -459,19 +484,14 @@ const DebugRenderer = struct {
             },
         }) catch unreachable;
     }
+    
     fn drawText3D (
-        self: *DebugRenderer,
-        positions: *const [3]zphy.Real,
-        string: [*:0]const u8,
-        color: zphy.DebugRenderer.Color,
-        height: f32,
-    ) callconv(.C) void {
-        _ = self;
-        _ = positions;
-        _ = string;
-        _ = color;
-        _ = height;
-    }
+        _: *DebugRenderer,
+        _: *const [3]zphy.Real,
+        _: [*:0]const u8,
+        _: zphy.DebugRenderer.Color,
+        _: f32,
+    ) callconv(.C) void { }
 };
 
 const DemoState = struct {
@@ -503,9 +523,11 @@ const DemoState = struct {
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
         pitch: f32 = 0.16 * math.pi,
         yaw: f32 = 0.0,
+        rigid_body: zphy.BodyId = std.math.maxInt(zphy.BodyId),
     } = .{},
     mouse: struct {
         cursor_pos: [2]f64 = .{ 0, 0 },
+        captured: bool = false,
     } = .{},
 };
 
@@ -668,6 +690,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             .max_contact_constraints = 1024,
         },
     );
+    physics_system.setContactListener(contact_listener);
+    physics_system.setGravity(.{ 0, 0, 0 });
 
     //
     // Demo
@@ -709,13 +733,46 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             .object_layer = object_layers.non_moving,
         }, .activate);
 
-        const floor_shape_settings = try zphy.BoxShapeSettings.create(.{ 500.0, 5.0, 500.0 });
+        const floor_shape_settings = try zphy.BoxShapeSettings.create(.{ 800.0, 10.0, 800.0 });
         defer floor_shape_settings.release();
         const floor_shape = try floor_shape_settings.createShape();
         defer floor_shape.release();
         _ = try body_interface.createAndAddBody(.{
-            .position = .{ 0.0, -5.0, 0.0, 1.0 },
-            .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+            .position = .{ 0.0, -10.0, 0.0, 1.0 },
+            .shape = floor_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.non_moving,
+        }, .activate);
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ 0.0, 1610.0, 0.0, 1.0 },
+            .shape = floor_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.non_moving,
+        }, .activate);
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ 0.0, 800.0, -790.0, 1.0 },
+            .rotation = zm.quatFromNormAxisAngle(.{ 1, 0, 0, 0 }, 0.5 * math.pi),
+            .shape = floor_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.non_moving,
+        }, .activate);
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ 0.0, 800.0, 790.0, 1.0 },
+            .rotation = zm.quatFromNormAxisAngle(.{ 1, 0, 0, 0 }, 0.5 * math.pi),
+            .shape = floor_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.non_moving,
+        }, .activate);
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ -790.0, 800.0, 0.0, 1.0 },
+            .rotation = zm.quatFromNormAxisAngle(.{ 0, 0, 1, 0 }, 0.5 * math.pi),
+            .shape = floor_shape,
+            .motion_type = .static,
+            .object_layer = object_layers.non_moving,
+        }, .activate);
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ 790.0, 800.0, 0.0, 1.0 },
+            .rotation = zm.quatFromNormAxisAngle(.{ 0, 0, 1, 0 }, 0.5 * math.pi),
             .shape = floor_shape,
             .motion_type = .static,
             .object_layer = object_layers.non_moving,
@@ -730,16 +787,38 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             const fi = @floatFromInt(f32, i);
             const angle: f32 = std.math.degreesToRadians(f32, fi * 40.0);
             demo.physics_objects[i] = try body_interface.createAndAddBody(.{
-                .position = .{ 12.0 * std.math.cos(angle), 30.0 + std.math.sin(angle), 12.0 * std.math.sin(angle), 1 },
-                .rotation = .{ 0.0, 0.0, 0.0, 1.0 },
+                .position = .{ 24.0 * std.math.cos(angle), 8.0 + std.math.sin(angle), 16.0 * std.math.sin(angle), 1 },
                 .shape = sphere_shape,
                 .motion_type = .dynamic,
                 .object_layer = object_layers.moving,
-                .angular_velocity = .{ 0.0, 0.0, 0.0, 0 },
-                .restitution = 1.0,
-                .linear_damping = 0.0,
+                .allow_sleeping = false,
+                .restitution = 0.8,
             }, .activate);
         }
+        demo.camera.rigid_body = try body_interface.createAndAddBody(.{
+            .position = zm.loadArr3(demo.camera.position),
+            .shape = sphere_shape,
+            .motion_type = .dynamic,
+            .motion_quality = .linear_cast,
+            .object_layer = object_layers.player,
+            .allow_sleeping = false,
+            .restitution = 0.0,
+            .friction = 0.0,
+        }, .activate);
+
+        const stir_bar_shape_settings = try zphy.BoxShapeSettings.create(.{ 50.0, 7.0, 4.0 });
+        defer stir_bar_shape_settings.release();
+        const stir_bar_shape = try stir_bar_shape_settings.createShape();
+        defer stir_bar_shape.release();
+        _ = try body_interface.createAndAddBody(.{
+            .position = .{ 0, 8.0, 0, 1 },
+            .shape = stir_bar_shape,
+            .motion_type = .kinematic,
+            .object_layer = object_layers.sensors,
+            .angular_velocity = zm.quatFromNormAxisAngle(.{ 0, 1, 0, 0 }, -0.7),
+            .angular_damping = 0.0,
+            .is_sensor = true,
+        }, .activate);
 
         physics_system.optimizeBroadPhase();
     }
@@ -833,12 +912,6 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
-    demo.physics_debug_renderer.drawGui();
-
-    const physics_step = @min(demo.gctx.stats.delta_time, 1.0 / 20.0);
-    demo.physics_system.update(physics_step, .{}) catch unreachable;
-
     const window = demo.gctx.window;
 
     { // Handle camera rotation with mouse.
@@ -847,7 +920,21 @@ fn update(demo: *DemoState) void {
         const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
         demo.mouse.cursor_pos = cursor_pos;
 
+        if (window.getMouseButton(.left) == .press) {
+            if (demo.mouse.captured) {
+                window.setInputMode(.cursor, zglfw.Cursor.Mode.normal);
+                window.setInputMode(.raw_mouse_motion, false);
+            }
+            demo.mouse.captured = false;
+        }
         if (window.getMouseButton(.right) == .press) {
+            if ( ! demo.mouse.captured) {
+                window.setInputMode(.cursor, zglfw.Cursor.Mode.disabled);
+                window.setInputMode(.raw_mouse_motion, true);
+            }
+            demo.mouse.captured = true;
+        }
+        if (demo.mouse.captured) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -856,39 +943,70 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    { // Handle camera movement with 'WASD' keys.
-        const delta_time = zm.f32x4s(demo.gctx.stats.delta_time);
-        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+    const body_interface = demo.physics_system.getBodyInterfaceMut();
 
+    { // Apply the effects of bodies touching the stir bar sensor
+        for (&demo.contact_listener.bodies_touching_sensor) |*body_id| {
+            if (body_id.* == std.math.maxInt(zphy.BodyId)) break;
+            const upward = zm.f32x4(0.0, 1.0, 0.0, 0.0);
+            const tangent = zm.cross3(upward, zm.loadArr3(body_interface.getPosition(body_id.*))) * zm.f32x4s(0.05);
+            const force = zm.normalize3(upward + tangent) * zm.f32x4s(300000);
+            body_interface.addForce(body_id.*, .{ force[0], force[1], force[2] });
+            body_id.* = std.math.maxInt(zphy.BodyId);
+        }
+    }
+
+    { // Apply a constant pull toward a point near the origin for all floating objects' bodies
+        const bodies = demo.physics_system.getBodiesMutUnsafe();
+        for (bodies) |body| {
+            if (!zphy.isValidBodyPointer(body) or body.object_layer != object_layers.moving) continue;
+            const to_center = zm.f32x4(0, 3, 0, 1) - zm.loadArr3(body.getPosition());
+            const force = zm.normalize3(to_center) * zm.f32x4s(100000);
+            body.addForce(.{ force[0], force[1], force[2] });
+        }
+    }
+
+    { // Handle camera movement with 'WASD' keys.
+        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         const up = zm.f32x4(0.0, 1.0, 0.0, 0.0);
         const forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
         const right = zm.normalize3(zm.cross3(up, forward));
-
         zm.storeArr3(&demo.camera.forward, forward);
-        var cam_pos = zm.loadArr3(demo.camera.position);
 
         var speed = zm.f32x4s(25.0);
         if (window.getKey(.left_shift) == .press) {
             speed *= zm.f32x4s(5.0);
         }
+
+        var velocity = zm.f32x4s(0);
         if (window.getKey(.w) == .press) {
-            cam_pos += speed * delta_time * forward;
+            velocity += forward;
         } else if (window.getKey(.s) == .press) {
-            cam_pos -= speed * delta_time * forward;
+            velocity -= forward;
         }
         if (window.getKey(.d) == .press) {
-            cam_pos += speed * delta_time * right;
+            velocity += right;
         } else if (window.getKey(.a) == .press) {
-            cam_pos -= speed * delta_time * right;
+            velocity -= right;
         }
         if (window.getKey(.space) == .press) {
-            cam_pos += speed * delta_time * up;
+            velocity += up;
         } else if (window.getKey(.left_alt) == .press) {
-            cam_pos -= speed * delta_time * up;
+            velocity -= up;
         }
 
-        zm.storeArr3(&demo.camera.position, cam_pos);
+        if (zm.any(zm.length3(velocity) > zm.f32x4s(0), 3)) velocity = zm.normalize3(velocity) * speed;
+        body_interface.setLinearVelocity(demo.camera.rigid_body, .{ velocity[0], velocity[1], velocity[2] });
     }
+
+    zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+    demo.physics_debug_renderer.drawGui();
+
+    const physics_step = @min(demo.gctx.stats.delta_time, 1.0 / 10.0);
+    demo.physics_system.update(physics_step, .{}) catch unreachable;
+
+    const body_const_interface = demo.physics_system.getBodyInterface();
+    demo.camera.position = body_const_interface.getPosition(demo.camera.rigid_body);
 }
 
 fn draw(demo: *DemoState) void {
@@ -936,8 +1054,6 @@ fn draw(demo: *DemoState) void {
             const mem = gctx.uniformsAllocate(FrameUniforms, 1);
             mem.slice[0] = .{
                 .world_to_clip = zm.mul(cam_view_to_clip, cam_world_to_view),
-                .world_to_view = cam_world_to_view,
-                .view_to_clip = cam_view_to_clip,
                 .floor_material = floor_material,
                 .monolith_rotation = .{ monolith_rotate_t[0], monolith_rotate_t[1], monolith_rotate_t[2] },
                 .monolith_center = monolith_center,
@@ -952,7 +1068,7 @@ fn draw(demo: *DemoState) void {
             const bodies = demo.physics_system.getBodiesUnsafe();
             var body_count: usize = 0;
             for (bodies) |body| {
-                if (!zphy.isValidBodyPointer(body) or body.motion_properties == null) continue;
+                if (!zphy.isValidBodyPointer(body) or body.object_layer != object_layers.moving) continue;
                 mem.slice[0].lights[body_count] = if (zphy.Real == f32)
                     zm.loadArr4(body.position)
                 else
@@ -990,7 +1106,6 @@ fn draw(demo: *DemoState) void {
             pass.setPipeline(mesh_render_pipe);
             pass.setBindGroup(0, uniform_bg, &.{frame_unif_mem.offset});
 
-            // if ( ! demo.physics_debug_enabled) { // Draw monolith
             { // Draw monolith
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
@@ -1007,7 +1122,6 @@ fn draw(demo: *DemoState) void {
                 );
             }
 
-            // if ( ! demo.physics_debug_enabled) { // Draw floor
             { // Draw floor
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
@@ -1042,13 +1156,6 @@ fn draw(demo: *DemoState) void {
 
             if (demo.physics_debug_enabled) demo.physics_debug_renderer.draw(pass);
         }
-
-        // {
-        //     const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, depth_texv, 0.0);
-        //     defer zgpu.endReleasePass(pass);
-        //     pass.setBindGroup(0, uniform_bg, &.{frame_unif_mem.offset});
-        //     demo.physics_debug_renderer.draw(pass);
-        // }
 
         {
             const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);

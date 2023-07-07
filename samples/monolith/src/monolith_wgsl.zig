@@ -8,8 +8,6 @@ const common =
 \\
 \\  struct FrameUniforms {
 \\      world_to_clip: mat4x4<f32>,
-\\      world_to_view: mat4x4<f32>,
-\\      view_to_clip: mat4x4<f32>,
 \\      floor_material: vec4<f32>,
 \\      monolith_rotation: mat3x3<f32>,
 \\      monolith_center: vec3<f32>,
@@ -112,8 +110,6 @@ pub const debug = struct {
     \\  ) -> VertexOut {
     \\      var output: VertexOut;
     \\      output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
-    \\      //output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_view;
-    \\      //output.position_clip *= frame_uniforms.view_to_clip;
     \\      output.position = (vec4(position, 1.0) * draw_uniforms.object_to_world).xyz;
     \\      output.normal = (vec4(normal, 0.0) * draw_uniforms.object_to_world).xyz;
     \\      return output;
@@ -130,7 +126,7 @@ pub const debug = struct {
     \\
     \\      let curviness = length(fwidth(normal));
     \\      let bubble_mode = step(0.001, curviness);
-    \\      let bubble_factor = 1.4 - bubble_mode * facing_cam * 1.4;
+    \\      let bubble_factor = 2.0 - bubble_mode * facing_cam * 2.0;
     \\      let roughness_mult = 1.0 - 0.75 * bubble_mode;
     \\      let nonphysical_specular_mult = 1.0 + 127.0 * bubble_mode;
     \\
@@ -182,8 +178,6 @@ pub const mesh = struct {
     \\  ) -> VertexOut {
     \\      var output: VertexOut;
     \\      output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
-    \\      //output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_view;
-    \\      //output.position_clip *= frame_uniforms.view_to_clip;
     \\      output.position = (vec4(position, 1.0) * draw_uniforms.object_to_world).xyz;
     \\      output.normal = (vec4(normal, 0.0) * draw_uniforms.object_to_world).xyz;
     \\      return output;
@@ -326,7 +320,7 @@ pub const mesh = struct {
     \\          let cl_did_hit: bool = intersect_box(monolith, cl_ray, &cl_hit_dist, &cl_hit_norm);
     \\          if (cl_did_hit && cl_hit_dist < length(cl)) { continue; }
     \\          let negs = (dot(normalize(cl), -v) - 1.0) * dot(cl, cl);
-    \\          let peak = 0.2;
+    \\          let peak = 0.175;
     \\          lo += 50 * light_colors[light_index] * max(pow((negs + peak) / peak, 5), 0);
     \\      }
     \\
