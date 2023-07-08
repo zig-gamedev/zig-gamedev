@@ -659,17 +659,20 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     }
 
     pub fn createTriangleBatch(primitive_in: *const anyopaque) *TriangleBatch {
-        return @ptrCast(*TriangleBatch, c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in));
+        return @as(*TriangleBatch, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in)));
     }
 
     pub fn getPrimitiveFromBatch(batch_in: *const TriangleBatch) *const Primitive {
-        return @ptrCast(*const Primitive, c.JPC_DebugRenderer_TriangleBatch_GetPrimitive(
-            @ptrCast(*const c.JPC_DebugRenderer_TriangleBatch, batch_in)
-        ));
+        return @as(*const Primitive, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_GetPrimitive(
+            @as(*const c.JPC_DebugRenderer_TriangleBatch, @ptrCast(batch_in))
+        )));
     }
 
     pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
-        return @as(*BodyDrawFilter, @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func)))));
+        return @as(
+            *BodyDrawFilter,
+            @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func))))
+        );
     }
 
     pub fn destroyBodyDrawFilter(filter: *BodyDrawFilter) void {
@@ -857,18 +860,18 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     };
 
     pub const BodyDrawSettings = extern struct {
-        get_support_func: bool = false, // Draw the GetSupport() function, used for convex collision detection
-        get_support_dir: bool = false, // If above true, also draw direction mapped to a specific support point
-        get_supporting_face: bool = false, // Draw the faces that were found colliding during collision detection
-        shape: bool = true, // Draw the shapes of all bodies
-        shape_wireframe: bool = false, // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
+        get_support_func: bool = false,      // Draw the GetSupport() function, used for convex collision detection
+        get_support_dir: bool = false,       // If above true, also draw direction mapped to a specific support point
+        get_supporting_face: bool = false,   // Draw the faces that were found colliding during collision detection
+        shape: bool = true,                  // Draw the shapes of all bodies
+        shape_wireframe: bool = false,       // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
         shape_color: ShapeColor = .motion_type_color, // Coloring scheme to use for shapes
-        bounding_box: bool = false, // Draw a bounding box per body
+        bounding_box: bool = false,          // Draw a bounding box per body
         center_of_mass_transform: bool = false, // Draw the center of mass for each body
-        world_transform: bool = false, // Draw the world transform (which can be different than CoM) for each body
-        velocity: bool = false, // Draw the velocity vector for each body
-        mass_and_inertia: bool = false, // Draw the mass and inertia (as the box equivalent) for each body
-        sleep_stats: bool = false, // Draw stats regarding the sleeping algorithm of each body
+        world_transform: bool = false,       // Draw the world transform (which can be different than CoM) for each body
+        velocity: bool = false,              // Draw the velocity vector for each body
+        mass_and_inertia: bool = false,      // Draw the mass and inertia (as the box equivalent) for each body
+        sleep_stats: bool = false,           // Draw stats regarding the sleeping algorithm of each body
     };
 
     pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);

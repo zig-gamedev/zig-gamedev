@@ -23,18 +23,18 @@ const monolith_transform = zm.mul(monolith_translate, zm.mul(monolith_rotate, mo
 const monolith_rotate_t = zm.transpose(monolith_rotate);
 
 const FrameUniforms = extern struct {
-    world_to_clip: zm.Mat        align(16),
-    floor_material: [4]f32       align(16),
-    monolith_rotation: [3][4]f32 align(16),  // GPU will expect each element to be 16-aligned too, so extra f32 padding.
-    monolith_center: [4]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    monolith_ray_radius: [4]f32  align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    monolith_inv_radius: [4]f32  align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    camera_position: [3]f32      align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
-    lights: [9][4]f32            align(16) = .{ .{0, 0, 0, 0} } ** 9, // padding again - only using vec3s.
+    world_to_clip: zm.Mat align(16),
+    floor_material: [4]f32 align(16),
+    monolith_rotation: [3][4]f32 align(16), // GPU will expect each element to be 16-aligned too, so extra f32 padding.
+    monolith_center: [4]f32 align(16),      // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    monolith_ray_radius: [4]f32 align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    monolith_inv_radius: [4]f32 align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    camera_position: [3]f32 align(16),      // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    lights: [9][4]f32 align(16) = .{.{ 0, 0, 0, 0 }} ** 9, // padding again - only using vec3s.
 };
 
 const DrawUniforms = extern struct {
-    object_to_world: zm.Mat     align(16),
+    object_to_world: zm.Mat align(16),
     basecolor_roughness: [4]f32 align(16),
 };
 
@@ -96,7 +96,7 @@ const BroadPhaseLayerInterface = extern struct {
         iself: *const zphy.BroadPhaseLayerInterface,
         layer: zphy.ObjectLayer,
     ) callconv(.C) zphy.BroadPhaseLayer {
-        const self = @ptrCast(*const BroadPhaseLayerInterface, iself);
+        const self = @as(*const BroadPhaseLayerInterface, @ptrCast(iself));
         return self.object_to_broad_phase[layer];
     }
 };
@@ -153,7 +153,7 @@ const ContactListener = extern struct {
     };
 
     __v: *const zphy.ContactListener.VTable = &vtable,
-    bodies_touching_sensors: [9]SensorContacts = .{ .{} } ** 9,
+    bodies_touching_sensors: [9]SensorContacts = .{.{}} ** 9,
 
     const vtable = zphy.ContactListener.VTable{
         .onContactValidate = _onContactValidate,
@@ -177,7 +177,7 @@ const ContactListener = extern struct {
         _: *const zphy.ContactManifold,
         _: *zphy.ContactSettings,
     ) callconv(.C) void {
-        const self = @ptrCast(*ContactListener, self_base);
+        const self = @as(*ContactListener, @ptrCast(self_base));
         if (body1.isSensor()) self.appendSensorContact(body2, body1);
         if (body2.isSensor()) self.appendSensorContact(body1, body2);
     }
@@ -232,8 +232,8 @@ const DebugRenderer = struct {
     const max_verts = std.math.pow(usize, 2, 14);
     const max_indcs = std.math.pow(usize, 2, 15);
     const DebugVertex = struct {
-        position: [3]f32 = .{0, 0, 0},
-        normal: [3]f32 = .{0, 1, 0},
+        position: [3]f32 = .{ 0, 0, 0 },
+        normal: [3]f32 = .{ 0, 1, 0 },
     };
     const Primitive = struct {
         index_start: usize = std.math.maxInt(usize),
@@ -243,14 +243,14 @@ const DebugRenderer = struct {
     const DrawInstance = struct {
         prim: *const Primitive,
         mat: [16]zphy.Real,
-        color: [3]f32 = .{0, 1, 1},
+        color: [3]f32 = .{ 0, 1, 1 },
     };
     usingnamespace zphy.DebugRenderer.Methods(@This());
     __v: *const zphy.DebugRenderer.VTable(@This()) = &vtable,
 
     primitives: [max_prims]Primitive = .{.{}} ** max_prims,
     vertices: [max_verts]DebugVertex = .{.{}} ** max_verts,
-    indices: [max_indcs]u16 = .{ std.math.maxInt(u16) } ** max_indcs,
+    indices: [max_indcs]u16 = .{std.math.maxInt(u16)} ** max_indcs,
     heads: struct {
         prim: usize = 0,
         vert: usize = 0,
@@ -275,7 +275,7 @@ const DebugRenderer = struct {
     };
 
     pub fn init(alloc: std.mem.Allocator, demo: *DemoState) DebugRenderer {
-        return DebugRenderer {
+        return DebugRenderer{
             .demo = demo,
             .body_draw_filter = zphy.DebugRenderer.createBodyDrawFilter(DebugRenderer.shouldBodyDraw),
             .body_draw_list = std.ArrayList(DrawInstance).init(alloc),
@@ -329,7 +329,7 @@ const DebugRenderer = struct {
                     .operation = .add,
                     .src_factor = .src_alpha,
                     .dst_factor = .one_minus_src_alpha,
-                }, .alpha = wgpu.BlendComponent{ }},
+                }, .alpha = wgpu.BlendComponent{} },
             }};
 
             const vertex_attributes = [_]wgpu.VertexAttribute{
@@ -395,10 +395,10 @@ const DebugRenderer = struct {
             };
             pass.setBindGroup(1, uniform_bg, &.{mem.offset});
             pass.drawIndexed(
-                @intCast(u32, instance.prim.index_count),
+                @as(u32, @intCast(instance.prim.index_count)),
                 1,
-                @intCast(u32, instance.prim.index_start),
-                @intCast(i32, instance.prim.vert_offset),
+                @as(u32, @intCast(instance.prim.index_start)),
+                @as(i32, @intCast(instance.prim.vert_offset)),
                 0
             );
         }
@@ -418,7 +418,7 @@ const DebugRenderer = struct {
             .no_saved_settings = true,
             .no_nav_inputs = true,
             .no_nav_focus = true,
-        }})) {
+        } })) {
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
             zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Average: ");
             zgui.sameLine(.{});
@@ -434,8 +434,7 @@ const DebugRenderer = struct {
             zgui.sameLine(.{});
             zgui.textWrapped(
                 "WASD. Left ALT moves down. SPACE moves up. Hold shift for speed. Right click to capture mouse " ++
-                "cursor and enable mouse look. Left click to disable mouse look and free mouse cursor.", .{}
-            );
+                "cursor and enable mouse look. Left click to disable mouse look and free mouse cursor.", .{});
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
 
             zgui.separator();
@@ -456,26 +455,26 @@ const DebugRenderer = struct {
         return true;
     }
 
-    fn drawLine (
+    fn drawLine(
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: *const zphy.DebugRenderer.Color,
-    ) callconv(.C) void { }
+    ) callconv(.C) void {}
 
-    fn drawTriangle (
+    fn drawTriangle(
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: *const zphy.DebugRenderer.Color,
-    ) callconv(.C) void { }
+    ) callconv(.C) void {}
 
-    fn createTriangleBatch (_: *DebugRenderer, _: [*]zphy.DebugRenderer.Triangle, _: u32) callconv(.C) *anyopaque {
+    fn createTriangleBatch(_: *DebugRenderer, _: [*]zphy.DebugRenderer.Triangle, _: u32) callconv(.C) *anyopaque {
         unreachable; // Jolt's debug renderer seems to only use the indexed one below, so not implementing this.
     }
 
-    fn createTriangleBatchIndexed (
+    fn createTriangleBatchIndexed(
         self: *DebugRenderer,
         vertices: [*]zphy.DebugRenderer.Vertex,
         vertex_count: u32,
@@ -490,7 +489,7 @@ const DebugRenderer = struct {
         const prim_ptr = &self.primitives[self.heads.prim];
         self.heads.prim += 1;
         for (0..index_count) |i| {
-            self.indices[self.heads.indx] = @intCast(u16, indices[i]);
+            self.indices[self.heads.indx] = @as(u16, @intCast(indices[i]));
             self.heads.indx += 1;
         }
         for (0..vertex_count) |i| {
@@ -503,7 +502,7 @@ const DebugRenderer = struct {
         return zphy.DebugRenderer.createTriangleBatch(prim_ptr);
     }
 
-    fn drawGeometry (
+    fn drawGeometry(
         self: *DebugRenderer,
         model_matrix: *const [16]zphy.Real,
         _: *const zphy.DebugRenderer.AABox,
@@ -515,28 +514,27 @@ const DebugRenderer = struct {
         _: zphy.DebugRenderer.DrawMode,
     ) callconv(.C) void {
         const batch = geometry.LODs[0].batch;
-        const prim = @ptrCast(
-            *const Primitive,
-            @alignCast(@alignOf(*Primitive), zphy.DebugRenderer.getPrimitiveFromBatch(batch))
+        const prim = @as(*const Primitive,
+            @alignCast(@ptrCast(zphy.DebugRenderer.getPrimitiveFromBatch(batch)))
         );
         self.body_draw_list.append(.{
             .prim = prim,
             .mat = model_matrix.*,
             .color = .{
-                @floatFromInt(f32, color.comp.r) / 255.0,
-                @floatFromInt(f32, color.comp.g) / 255.0,
-                @floatFromInt(f32, color.comp.b) / 255.0,
+                @as(f32, @floatFromInt(color.comp.r)) / 255.0,
+                @as(f32, @floatFromInt(color.comp.g)) / 255.0,
+                @as(f32, @floatFromInt(color.comp.b)) / 255.0,
             },
         }) catch unreachable;
     }
-    
-    fn drawText3D (
+
+    fn drawText3D(
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: [*:0]const u8,
         _: zphy.DebugRenderer.Color,
         _: f32,
-    ) callconv(.C) void { }
+    ) callconv(.C) void {}
 };
 
 const DemoState = struct {
@@ -588,10 +586,10 @@ fn appendMesh(
     meshes_normals_or_colors: *std.ArrayList([3]f32),
 ) void {
     meshes.append(.{
-        .index_offset = @intCast(u32, meshes_indices.items.len),
-        .vertex_offset = @intCast(i32, meshes_positions.items.len),
-        .num_indices = @intCast(u32, mesh.indices.len),
-        .num_vertices = @intCast(u32, mesh.positions.len),
+        .index_offset = @as(u32, @intCast(meshes_indices.items.len)),
+        .vertex_offset = @as(i32, @intCast(meshes_positions.items.len)),
+        .num_indices = @as(u32, @intCast(mesh.indices.len)),
+        .num_vertices = @as(u32, @intCast(mesh.positions.len)),
     }) catch unreachable;
 
     meshes_indices.appendSlice(mesh.indices) catch unreachable;
@@ -661,8 +659,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     var meshes_normals = std.ArrayList([3]f32).init(arena);
     generateMeshes(allocator, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
-    const total_num_vertices = @intCast(u32, meshes_positions.items.len);
-    const total_num_indices = @intCast(u32, meshes_indices.items.len);
+    const total_num_vertices = @as(u32, @intCast(meshes_positions.items.len));
+    const total_num_indices = @as(u32, @intCast(meshes_indices.items.len));
 
     //
     // Graphics
@@ -729,9 +727,9 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     contact_listener.* = .{};
 
     const physics_system = try zphy.PhysicsSystem.create(
-        @ptrCast(*const zphy.BroadPhaseLayerInterface, broad_phase_layer_interface),
-        @ptrCast(*const zphy.ObjectVsBroadPhaseLayerFilter, object_vs_broad_phase_layer_filter),
-        @ptrCast(*const zphy.ObjectLayerPairFilter, object_layer_pair_filter),
+        @as(*const zphy.BroadPhaseLayerInterface, @ptrCast(broad_phase_layer_interface)),
+        @as(*const zphy.ObjectVsBroadPhaseLayerFilter, @ptrCast(object_vs_broad_phase_layer_filter)),
+        @as(*const zphy.ObjectLayerPairFilter, @ptrCast(object_layer_pair_filter)),
         .{
             .max_bodies = 1024,
             .num_body_mutexes = 0,
@@ -833,7 +831,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         defer sphere_shape.release();
         var i: u32 = 0;
         while (i < 9) : (i += 1) {
-            const fi = @floatFromInt(f32, i);
+            const fi = @as(f32, @floatFromInt(i));
             const angle: f32 = std.math.degreesToRadians(f32, fi * 40.0);
             demo.physics_objects[i] = try body_interface.createAndAddBody(.{
                 .position = .{ 24.0 * std.math.cos(angle), 8.0 + std.math.sin(angle), 16.0 * std.math.sin(angle), 1 },
@@ -907,7 +905,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
                 .operation = .add,
                 .src_factor = .src_alpha,
                 .dst_factor = .zero,
-            }},
+            } },
         }};
 
         const vertex_attributes = [_]wgpu.VertexAttribute{
@@ -977,8 +975,8 @@ fn update(demo: *DemoState) void {
 
     { // Handle camera rotation with mouse.
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
-        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
+        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
         demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.left) == .press) {
@@ -989,7 +987,7 @@ fn update(demo: *DemoState) void {
             demo.mouse.captured = false;
         }
         if (window.getMouseButton(.right) == .press) {
-            if ( ! demo.mouse.captured) {
+            if (!demo.mouse.captured) {
                 window.setInputMode(.cursor, zglfw.Cursor.Mode.disabled);
                 window.setInputMode(.raw_mouse_motion, true);
             }
@@ -1076,7 +1074,7 @@ fn update(demo: *DemoState) void {
     const physics_step = @min(demo.gctx.stats.delta_time, 1.0 / 10.0);
     demo.physics_system.update(physics_step, .{}) catch unreachable;
 
-    if ( ! demo.camera.out_of_body) {
+    if (!demo.camera.out_of_body) {
         const body_const_interface = demo.physics_system.getBodyInterface();
         demo.camera.position = body_const_interface.getPosition(demo.camera.rigid_body);
 
@@ -1111,7 +1109,7 @@ fn draw(demo: *DemoState) void {
     const near = 1.0;
     const fov_y = 0.33 * math.pi;
     const f = 1.0 / std.math.tan(fov_y / 2.0);
-    const a: f32 = @floatFromInt(f32, fb_width) / @floatFromInt(f32, fb_height);
+    const a: f32 = @as(f32, @floatFromInt(fb_width)) / @as(f32, @floatFromInt(fb_height));
     const cam_view_to_clip = zm.Mat{
         zm.f32x4(f / a, 0.0, 0.0, 0.0),
         zm.f32x4(0.0, f, 0.0, 0.0),
@@ -1141,9 +1139,7 @@ fn draw(demo: *DemoState) void {
                 .monolith_center = monolith_center,
                 .monolith_ray_radius = monolith_ray_radius,
                 .monolith_inv_radius = .{
-                    1.0 / monolith_ray_radius[0],
-                    1.0 / monolith_ray_radius[1],
-                    1.0 / monolith_ray_radius[2], 0
+                    1.0 / monolith_ray_radius[0], 1.0 / monolith_ray_radius[1], 1.0 / monolith_ray_radius[2], 0
                 },
                 .camera_position = demo.camera.position,
             };
@@ -1155,10 +1151,10 @@ fn draw(demo: *DemoState) void {
                     zm.loadArr4(body.position)
                 else
                     zm.loadArr4(.{
-                        @floatCast(f32, body.position[0]),
-                        @floatCast(f32, body.position[1]),
-                        @floatCast(f32, body.position[2]),
-                        @floatCast(f32, body.position[3]),
+                        @as(f32, @floatCast(body.position[0])),
+                        @as(f32, @floatCast(body.position[1])),
+                        @as(f32, @floatCast(body.position[2])),
+                        @as(f32, @floatCast(body.position[3])),
                     });
                 body_count += 1;
             }
@@ -1192,7 +1188,7 @@ fn draw(demo: *DemoState) void {
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
                     .object_to_world = monolith_transform,
-                    .basecolor_roughness = .{ 0.24, 0.24, 0.24, -0.04},
+                    .basecolor_roughness = .{ 0.24, 0.24, 0.24, -0.04 },
                 };
                 pass.setBindGroup(1, uniform_bg, &.{mem.offset});
                 pass.drawIndexed(
