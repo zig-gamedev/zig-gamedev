@@ -2371,5 +2371,16 @@ ZGUI_API bool zguiPlot_DragPoint(
         flags
     );
 }
+
+ZGUI_API void zguiPlot_PlotText(
+        const char* text, 
+        double x, double y,
+        const float pix_offset[2],
+        ImPlotTextFlags flags=0
+) {
+    const ImVec2 p(pix_offset[0], pix_offset[1]);
+    ImPlot::PlotText(text, x, y, p, flags);
+}
+
 //--------------------------------------------------------------------------------------------------
 } /* extern "C" */
