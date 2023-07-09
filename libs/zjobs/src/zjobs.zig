@@ -68,6 +68,13 @@ pub const JobId = enum(u32) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+pub const QueueConfig = struct {
+    max_jobs: u16 = 256,
+    max_job_size: u16 = 64,
+    max_threads: u8 = 4,
+    idle_sleep_ns: u32 = 50,
+};
+
 /// Returns a struct that executes jobs on a pool of threads, which may be
 /// configured as follows:
 /// * `max_jobs` - the maximum number of jobs that can be waiting in the queue.
@@ -84,16 +91,7 @@ pub const JobId = enum(u32) {
 /// * `JobQueue` is not designed to support single threaded environments, and
 ///   has not been tested for correctness in case background threads cannot be
 ///   spawned.
-pub fn JobQueue(
-    comptime config: struct {
-        // zig fmt: off
-        max_jobs      : u16 = 256,
-        max_job_size  : u16 =  64,
-        max_threads   : u8  =   8,
-        idle_sleep_ns : u32 =  10,
-        // zig fmt: on
-    },
-) type {
+pub fn JobQueue(comptime config: QueueConfig) type {
     compileAssert(
         config.max_jobs >= min_jobs,
         "config.max_jobs ({}) must be at least min_jobs ({})",
