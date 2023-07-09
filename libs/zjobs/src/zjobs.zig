@@ -215,8 +215,9 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
         const Self = @This();
         const Instant = std.time.Instant;
-        const Mutex = std.Thread.Mutex;
         const Thread = std.Thread;
+        const Mutex= Thread.Mutex;
+        const ResetEvent = Thread.ResetEvent;
 
         const Slots = [max_jobs]Slot;
         const Threads = [max_threads]Thread;
@@ -226,21 +227,20 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        // zig fmt: off
         // slots first because they are cache-aligned
-        _slots       : Slots     = [_]Slot{.{}} ** max_jobs,
-        _threads     : Threads   = [_]Thread{undefined} ** max_threads,
-        _mutex       : Mutex     = .{},
-        _live_queue  : LiveQueue = .{},
-        _free_queue  : FreeQueue = .{},
-        _num_threads : u64       = 0,
-        _main_thread : Atomic(u64)  = .{ .value = 0 },
-        _lock_thread : Atomic(u64)  = .{ .value = 0 },
-        _initialized : Atomic(bool) = .{ .value = false },
-        _started     : Atomic(bool) = .{ .value = false },
-        _running     : Atomic(bool) = .{ .value = false },
-        _stopping    : Atomic(bool) = .{ .value = false },
-        // zig fmt: on
+        _slots          : Slots        = [_]Slot{.{}} ** max_jobs,
+        _threads        : Threads      = [_]Thread{undefined} ** max_threads,
+        _mutex          : Mutex        = .{},
+        _live_queue     : LiveQueue    = .{},
+        _free_queue     : FreeQueue    = .{},
+        _idle_event     : ResetEvent   = .{},
+        _num_threads    : u64          = 0,
+        _main_thread    : Atomic(u64)  = .{ .value = 0 },
+        _lock_thread    : Atomic(u64)  = .{ .value = 0 },
+        _initialized    : Atomic(bool) = .{ .value = false },
+        _started        : Atomic(bool) = .{ .value = false },
+        _running        : Atomic(bool) = .{ .value = false },
+        _stopping       : Atomic(bool) = .{ .value = false },
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -325,6 +325,8 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             // prevent scheduling more jobs
             const was_stopping = self._stopping.swap(true, .Monotonic);
             assert(was_stopping == false);
+
+            self._idle_event.set();
         }
 
         /// Waits for all threads to finish, then executes any remaining jobs
@@ -531,7 +533,13 @@ pub fn JobQueue(comptime config: QueueConfig) type {
                 self.executeJob(old_id, .locked, .enqueue_free_index);
             }
 
+            const was_empty = self._live_queue.isEmpty();
+
             self._live_queue.enqueueAssumeNotFull(new_id);
+
+            if (was_empty) {
+                self._idle_event.set();
+            }
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -544,8 +552,11 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             assert(self.isUnlockedThread());
 
             while (self.isRunning()) {
+                if (self._live_queue.isEmpty() and self.isStopping() == false) {
+                    self._idle_event.wait();
+                }
+
                 self.executeJobs(.unlocked, .dequeue_jobid_if_running);
-                threadIdle();
             }
 
             // print("thread[{}] DONE\n", .{n});
