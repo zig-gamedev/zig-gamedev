@@ -658,12 +658,21 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         _ = c.JPC_DestroyDebugRendererSingleton(); // For Zig API, don't care if one actually existed, discard error.
     }
 
-    pub fn createTriangleBatch(primitive_in: *anyopaque) *anyopaque {
+    pub fn createTriangleBatch(primitive_in: *const anyopaque) *TriangleBatch {
         return @as(*TriangleBatch, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in)));
     }
 
+    pub fn getPrimitiveFromBatch(batch_in: *const TriangleBatch) *const Primitive {
+        return @as(*const Primitive, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_GetPrimitive(
+            @as(*const c.JPC_DebugRenderer_TriangleBatch, @ptrCast(batch_in))
+        )));
+    }
+
     pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
-        return @as(*BodyDrawFilter, @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func)))));
+        return @as(
+            *BodyDrawFilter,
+            @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func))))
+        );
     }
 
     pub fn destroyBodyDrawFilter(filter: *BodyDrawFilter) void {
@@ -731,7 +740,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
-                geometry: *anyopaque,
+                geometry: *const Geometry,
                 cull_mode: CullMode,
                 cast_shadow: CastShadow,
                 draw_mode: DrawMode,
@@ -801,7 +810,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
-                geometry: *anyopaque,
+                geometry: *const Geometry,
                 cull_mode: CullMode,
                 cast_shadow: CastShadow,
                 draw_mode: DrawMode,
@@ -839,19 +848,30 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         max: [3]f32,
     };
 
+    pub const LOD = extern struct {
+        batch: *TriangleBatch,
+        distance: f32,
+    };
+
+    pub const Geometry = extern struct {
+        LODs: [*]LOD,
+        num_LODs: u64,
+        bounds: *AABox,
+    };
+
     pub const BodyDrawSettings = extern struct {
-        get_support_func: bool = false, // Draw the GetSupport() function, used for convex collision detection
-        get_support_dir: bool = false, // If above true, also draw direction mapped to a specific support point
-        get_supporting_face: bool = false, // Draw the faces that were found colliding during collision detection
-        shape: bool = true, // Draw the shapes of all bodies
-        shape_wireframe: bool = false, // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
+        get_support_func: bool = false,      // Draw the GetSupport() function, used for convex collision detection
+        get_support_dir: bool = false,       // If above true, also draw direction mapped to a specific support point
+        get_supporting_face: bool = false,   // Draw the faces that were found colliding during collision detection
+        shape: bool = true,                  // Draw the shapes of all bodies
+        shape_wireframe: bool = false,       // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
         shape_color: ShapeColor = .motion_type_color, // Coloring scheme to use for shapes
-        bounding_box: bool = false, // Draw a bounding box per body
+        bounding_box: bool = false,          // Draw a bounding box per body
         center_of_mass_transform: bool = false, // Draw the center of mass for each body
-        world_transform: bool = false, // Draw the world transform (which can be different than CoM) for each body
-        velocity: bool = false, // Draw the velocity vector for each body
-        mass_and_inertia: bool = false, // Draw the mass and inertia (as the box equivalent) for each body
-        sleep_stats: bool = false, // Draw stats regarding the sleeping algorithm of each body
+        world_transform: bool = false,       // Draw the world transform (which can be different than CoM) for each body
+        velocity: bool = false,              // Draw the velocity vector for each body
+        mass_and_inertia: bool = false,      // Draw the mass and inertia (as the box equivalent) for each body
+        sleep_stats: bool = false,           // Draw stats regarding the sleeping algorithm of each body
     };
 
     pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);
@@ -859,6 +879,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     pub const BodyDrawFilter = opaque {};
 
     pub const TriangleBatch = opaque {};
+    pub const Primitive = opaque {};
 
     pub const DebugRendererResult = enum(c.JPC_DebugRendererResult) {
         success = c.JPC_DEBUGRENDERER_SUCCESS,
@@ -868,12 +889,12 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     };
 
     pub const ShapeColor = enum(c.JPC_ShapeColor) {
-        instance_color = c.JPC_INSTANCE_COLOR, // Random color per instance
-        shape_type_color = c.JPC_SHAPE_TYPE_COLOR, // Convex = green, scaled = yellow, compound = orange, mesh = red
+        instance_color = c.JPC_INSTANCE_COLOR,       // Random color per instance
+        shape_type_color = c.JPC_SHAPE_TYPE_COLOR,   // Convex = green, scaled = yellow, compound = orange, mesh = red
         motion_type_color = c.JPC_MOTION_TYPE_COLOR, // Static = grey, keyframed = green, dynamic = random
-        sleep_color = c.JPC_SLEEP_COLOR, // Static = grey, keyframed = green, dynamic = yellow, asleep= red
-        island_color = c.JPC_ISLAND_COLOR, // Static = grey, active = random per island, sleeping = light grey
-        material_clor = c.JPC_MATERIAL_COLOR, // Color as defined by the PhysicsMaterial of the shape
+        sleep_color = c.JPC_SLEEP_COLOR,             // Static = grey, keyframed = green, dynamic = yellow, asleep= red
+        island_color = c.JPC_ISLAND_COLOR,           // Static = grey, active = random per island, sleeping = light grey
+        material_color = c.JPC_MATERIAL_COLOR,       // Color as defined by the PhysicsMaterial of the shape
     };
 
     pub const CullMode = enum(c.JPC_CullMode) {
@@ -1405,7 +1426,7 @@ pub const BodyInterface = opaque {
     }
 
     pub fn setPosition(body_iface: *BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type: Activation) void {
-        c.JPC_BodyInterface_SetPosition(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_position, @intFromEnum(in_activation_type));
+        c.JPC_BodyInterface_SetPosition(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_position, @intFromEnum(in_activation_type));
     }
 
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
@@ -1429,7 +1450,7 @@ pub const BodyInterface = opaque {
     }
 
     pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]Real, in_activation_type: Activation) void {
-        c.JPC_BodyInterface_SetRotation(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_rotation, @intFromEnum(in_activation_type));
+        c.JPC_BodyInterface_SetRotation(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_rotation, @intFromEnum(in_activation_type));
     }
 
     pub fn setPositionRotationAndVelocity(
@@ -3648,7 +3669,7 @@ const test_cb1 = struct {
             world_space_bound: *const DebugRenderer.AABox,
             lod_scale_sq: f32,
             color: DebugRenderer.Color,
-            geometry: *anyopaque,
+            geometry: *const DebugRenderer.Geometry,
             cull_mode: DebugRenderer.CullMode,
             cast_shadow: DebugRenderer.CastShadow,
             draw_mode: DebugRenderer.DrawMode,
