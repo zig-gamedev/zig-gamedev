@@ -256,6 +256,9 @@ fn testStep(
         .optimize = optimize,
     });
 
+    // TODO: Problems with LTO on Windows.
+    test_exe.want_lto = false;
+
     const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
 
     test_exe.addCSourceFile(
