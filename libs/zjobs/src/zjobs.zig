@@ -121,12 +121,14 @@ pub fn JobQueue(comptime config: QueueConfig) type {
         const Main = *const fn (*Data) void;
 
         // zig fmt: off
-        data     : Data align(cache_line_size) = undefined,
-        exec     : Main align(cache_line_size) = undefined,
-        name     : []const u8                  = undefined,
-        id       : JobId                       = JobId.none,
-        prereq   : JobId                       = JobId.none,
-        cycle    : Atomic(u16)                 = .{ .value = 0 },
+        data           : Data align(cache_line_size) = undefined,
+        exec           : Main align(cache_line_size) = undefined,
+        name           : []const u8                  = undefined,
+        id             : JobId                       = JobId.none,
+        prereq         : JobId                       = JobId.none,
+        cycle          : Atomic(u16)                 = .{ .value = 0 },
+        idle_mutex     : std.Thread.Mutex            = .{},
+        idle_condition : std.Thread.Condition        = .{},
         // zig fmg: on
 
         fn storeJob(
@@ -142,13 +144,18 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             const new_cycle: u16 = old_cycle +% 1;
             assert(isLiveCycle(new_cycle));
 
-            const acquired : bool = null == self.cycle.compareAndSwap(
-                old_cycle,
-                new_cycle,
-                .Monotonic,
-                .Monotonic,
-            );
-            assert(acquired);
+            {
+                self.idle_mutex.lock();
+                defer self.idle_mutex.unlock();
+
+                const acquired: bool = null == self.cycle.compareAndSwap(
+                    old_cycle,
+                    new_cycle,
+                    .Monotonic,
+                    .Monotonic,
+                );
+                assert(acquired);
+            }
 
             @memset(&self.data, 0);
             std.mem.copy(u8, &self.data, std.mem.asBytes(job));
@@ -175,13 +182,19 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
             self.exec(&self.data);
 
-            const released : bool = null == self.cycle.compareAndSwap(
-                old_cycle,
-                new_cycle,
-                .Monotonic,
-                .Monotonic,
-            );
-            assert(released);
+            {
+                self.idle_mutex.lock();
+                defer self.idle_mutex.unlock();
+                const released: bool = null == self.cycle.compareAndSwap(
+                    old_cycle,
+                    new_cycle,
+                    .Monotonic,
+                    .Monotonic,
+                );
+                assert(released);
+
+                self.idle_condition.broadcast();
+            }
         }
 
         fn jobId(index: u16, cycle: u16) JobId {
@@ -216,7 +229,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
         const Self = @This();
         const Instant = std.time.Instant;
         const Thread = std.Thread;
-        const Mutex= Thread.Mutex;
+        const Mutex = Thread.Mutex;
         const ResetEvent = Thread.ResetEvent;
 
         const Slots = [max_jobs]Slot;
@@ -227,6 +240,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        // zig fmt: off
         // slots first because they are cache-aligned
         _slots          : Slots        = [_]Slot{.{}} ** max_jobs,
         _threads        : Threads      = [_]Thread{undefined} ** max_threads,
@@ -241,6 +255,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
         _started        : Atomic(bool) = .{ .value = false },
         _running        : Atomic(bool) = .{ .value = false },
         _stopping       : Atomic(bool) = .{ .value = false },
+        // zig fmt: on
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -500,9 +515,21 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
         /// Waits until the specified `prereq` is completed.
         pub fn wait(self: *Self, prereq: JobId) void {
-            while (self.isPending(prereq)) {
-                // print("waiting for prereq {}...\n", .{prereq});
-                threadIdle();
+            if (prereq == JobId.none) return;
+
+            const _id = prereq.fields();
+            assert(isLiveCycle(_id.cycle));
+
+            const slot: *Slot = &self._slots[_id.index];
+
+            {
+                slot.idle_mutex.lock();
+                defer slot.idle_mutex.unlock();
+                const slot_cycle = slot.cycle.load(.Monotonic);
+
+                if (slot_cycle == _id.cycle) {
+                    slot.idle_condition.wait(&slot.idle_mutex);
+                }
             }
         }
 
@@ -560,12 +587,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             }
 
             // print("thread[{}] DONE\n", .{n});
-        }
-
-        fn threadIdle() void {
-            if (idle_sleep_ns > 0) {
-                std.time.sleep(idle_sleep_ns);
-            }
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
