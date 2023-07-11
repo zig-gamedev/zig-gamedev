@@ -2553,6 +2553,46 @@ pub const MeshShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// DecoratedShapeSettings (-> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const DecoratedShapeSettings = opaque {
+    pub usingnamespace ShapeSettings.Methods(@This());
+
+    pub fn createRotatedTranslated(
+        inner_shape: *const ShapeSettings,
+        rotation: [4]Real,
+        translation: [3]Real,
+    ) !*DecoratedShapeSettings {
+        const settings = c.JPC_RotatedTranslatedShapeSettings_Create(
+            @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
+            &rotation,
+            &translation,
+        );
+        if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
+        return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn createScaled(inner_shape: *const ShapeSettings, scale: [3]Real) !*DecoratedShapeSettings {
+        const settings = c.JPC_ScaledShapeSettings_Create(
+            @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
+            &scale,
+        );
+        if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
+        return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn createOffsetCenterOfMass(inner_shape: *const ShapeSettings, offset: [3]Real) !*DecoratedShapeSettings {
+        const settings = c.JPC_OffsetCenterOfMassShapeSettings_Create(
+            @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
+            &offset,
+        );
+        if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
+        return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
