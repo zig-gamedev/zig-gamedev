@@ -383,6 +383,11 @@ pub const Access = enum(i32) {
 };
 
 pub const Texture = opaque {
+    pub const PixelData = struct {
+        pixels: [*]u8,
+        pitch: u32,
+    };
+
     pub fn destroy(tex: *Texture) void {
         SDL_DestroyTexture(tex);
     }
@@ -394,6 +399,25 @@ pub const Texture = opaque {
         }
     }
     extern fn SDL_QueryTexture(texture: *Texture, format: ?*u32, access: ?*c_int, w: ?*c_int, h: ?*c_int) c_int;
+
+    pub fn lock(texture: *Texture, rect: ?*Rect) !PixelData {
+        var pixels: *anyopaque = undefined;
+        var pitch: i32 = undefined;
+        if (SDL_LockTexture(texture, rect, &pixels, &pitch) != 0) {
+            return makeError();
+        }
+
+        return PixelData{
+            .pixels = @ptrCast(pixels),
+            .pitch = @bitCast(pitch),
+        };
+    }
+    extern fn SDL_LockTexture(texture: *Texture, rect: ?*Rect, pixels: **anyopaque, pitch: *c_int) c_int;
+
+    pub fn unlock(texture: *Texture) void {
+        SDL_UnlockTexture(texture);
+    }
+    extern fn SDL_UnlockTexture(texture: *Texture) void;
 };
 
 pub const Color = extern struct {
