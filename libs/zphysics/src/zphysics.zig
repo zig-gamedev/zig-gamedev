@@ -240,6 +240,31 @@ pub const ObjectLayerFilter = extern struct {
     }
 };
 
+pub const PhysicsStepListener = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn onStep(self: *const T, delta_time: f32, physics_system: *PhysicsSystem) void {
+                return @as(*const PhysicsStepListener.VTable, @ptrCast(self.__v))
+                    .onStep(@as(*PhysicsStepListener, @ptrCast(self)), delta_time, physics_system);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        onStep: *const fn (self: *PhysicsStepListener, f32, *PhysicsSystem) callconv(.C) void,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_PhysicsStepListenerVTable));
+        assert(@offsetOf(VTable, "onStep") == @offsetOf(c.JPC_PhysicsStepListenerVTable, "OnStep"));
+    }
+};
+
 pub const BodyActivationListener = extern struct {
     __v: *const VTable,
 
@@ -1089,6 +1114,13 @@ pub const PhysicsSystem = opaque {
 
     pub fn optimizeBroadPhase(physics_system: *PhysicsSystem) void {
         c.JPC_PhysicsSystem_OptimizeBroadPhase(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+    }
+
+    pub fn addStepListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_AddStepListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
+    }
+    pub fn removeStepListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_RemoveStepListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
     }
 
     pub fn update(
@@ -2875,9 +2907,14 @@ test "zphysics.basic" {
     _ = physics_system.getNarrowPhaseQuery();
     _ = physics_system.getNarrowPhaseQueryNoLock();
 
+    var my_step_listener = test_cb1.MyPhysicsStepListener{};
+    physics_system.addStepListener(@ptrCast(@alignCast(&my_step_listener)));
+
     physics_system.optimizeBroadPhase();
     try physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
     try physics_system.update(1.0 / 60.0, .{});
+
+    physics_system.removeStepListener(@ptrCast(@alignCast(&my_step_listener)));
 
     var box_shape_settings: ?*BoxShapeSettings = null;
     box_shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
@@ -3625,6 +3662,21 @@ const test_cb1 = struct {
                 object_layers.moving => true,
                 else => unreachable,
             };
+        }
+    };
+
+    const MyPhysicsStepListener = extern struct {
+        usingnamespace PhysicsStepListener.Methods(@This());
+        __v: *const PhysicsStepListener.VTable = &vtable,
+        steps_heard: u32 = 0,
+
+        const vtable = PhysicsStepListener.VTable{ .onStep = _onStep };
+
+        fn _onStep(psl: *PhysicsStepListener, delta_time: f32, physics_system: *PhysicsSystem) callconv(.C) void {
+            _ = delta_time;
+            _ = physics_system;
+            const self = @as(*MyPhysicsStepListener, @ptrCast(psl));
+            self.steps_heard += 1;
         }
     };
 

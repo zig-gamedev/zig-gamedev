@@ -646,6 +646,15 @@ typedef struct JPC_BodyFilterVTable
     (*ShouldCollideLocked)(const void *in_self, const JPC_Body *in_body);
 } JPC_BodyFilterVTable;
 
+typedef struct JPC_PhysicsStepListenerVTable
+{
+    _JPC_VTABLE_HEADER;
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnStep)(float in_delta_time, JPC_PhysicsSystem *in_physics_system);
+} JPC_PhysicsStepListener;
+
 typedef struct JPC_ContactListenerVTable
 {
     // Optional, can be NULL.
@@ -970,6 +979,12 @@ JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system);
 
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system);
+
+JPC_API void
+JPC_PhysicsSystem_AddStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener);
+
+JPC_API void
+JPC_PhysicsSystem_RemoveStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener);
 
 JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
