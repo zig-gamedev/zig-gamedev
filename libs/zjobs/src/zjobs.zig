@@ -123,7 +123,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
         // zig fmt: off
         data           : Data align(cache_line_size) = undefined,
         exec           : Main align(cache_line_size) = undefined,
-        name           : []const u8                  = undefined,
         id             : JobId                       = JobId.none,
         prereq         : JobId                       = JobId.none,
         cycle          : Atomic(u16)                 = .{ .value = 0 },
@@ -164,7 +163,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             const id = jobId(@as(u16, @truncate(index)), new_cycle);
 
             self.exec = @as(Main, @ptrCast(exec));
-            self.name = @typeName(Job);
             self.id = id;
             self.prereq = if (prereq != id) prereq else JobId.none;
             return id;
