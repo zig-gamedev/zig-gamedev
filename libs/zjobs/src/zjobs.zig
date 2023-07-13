@@ -268,9 +268,8 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             var self = Self{};
 
             // initialize free queue
-            var i: usize = 0;
-            while (i < FreeQueue.capacity) : (i += 1) {
-                self._free_queue.enqueueAssumeNotFull(i);
+            for (0..FreeQueue.capacity) |free_index| {
+                self._free_queue.enqueueAssumeNotFull(free_index);
             }
 
             self._initialized.store(true, .Monotonic);
@@ -309,21 +308,19 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             assert(was_stopping == false);
 
             // spawn up to (num_cpus - 1) threads
-            var n: usize = 0;
             const num_cpus = Thread.getCpuCount() catch 2;
-            const num_threads_goal = @min(num_cpus - 1, max_threads);
-            while (n < num_threads_goal) {
-                if (Thread.spawn(.{}, threadMain, .{ self, n })) |thread| {
-                    nameThread(thread, "JobQueue[{}]", .{n});
-                    self._threads[n] = thread;
-                    n += 1;
+            self._num_threads = @min(num_cpus - 1, max_threads);
+            for (self._threads[0..self._num_threads], 0..) |*thread, thread_index| {
+                if (Thread.spawn(.{}, threadMain, .{ self, thread_index })) |spawned_thread| {
+                    thread.* = spawned_thread;
+                    nameThread(thread.*, "JobQueue[{}]", .{thread_index});
                 } else |err| {
-                    print("thread[{}]: {}\n", .{ n, err });
+                    print("thread[{}]: {}\n", .{ thread_index, err });
+                    self._num_threads = thread_index;
                     break;
                 }
             }
-            // print("spawned {}/{} threads\n", .{ n, num_threads_goal });
-            self._num_threads = n;
+            // print("spawned {}/{} threads\n", .{ n, self._num_threads });
         }
 
         /// Signals threads to stop running, and prevents scheduling more jobs.
@@ -355,12 +352,9 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
             if (!self.isStarted()) return;
 
-            const n = self._num_threads;
             // print("joining {} threads...\n", .{n});
-
-            var i: u64 = 0;
-            while (i < n) : (i += 1) {
-                self._threads[i].join();
+            for (self._threads[0..self._num_threads]) |thread| {
+                thread.join();
             }
 
             // print("joined {} threads\n", .{n});
@@ -492,19 +486,16 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             if (prereqs.len == 1) return prereqs[0];
 
             var id = JobId.none;
-            var i: usize = 0;
-            const in: []const JobId = prereqs;
-            while (i < in.len) {
+            var in: []const JobId = prereqs;
+            while (in.len > 0) {
                 var job = CombinePrereqsJob{ .jobs = self };
 
                 // copy prereqs to job
-                var o: usize = 0;
                 const out: []JobId = &job.prereqs;
-                while (i < in.len and o < out.len) {
-                    out[o] = in[i];
-                    i += 1;
-                    o += 1;
-                }
+
+                const copy_len = @min(in.len, out.len);
+                std.mem.copyForwards(JobId, out, in[0..copy_len]);
+                in = in[copy_len..];
 
                 id = try self.schedule(id, job);
             }
