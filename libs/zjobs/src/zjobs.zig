@@ -311,7 +311,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             const num_cpus = Thread.getCpuCount() catch 2;
             self._num_threads = @min(num_cpus - 1, max_threads);
             for (self._threads[0..self._num_threads], 0..) |*thread, thread_index| {
-                if (Thread.spawn(.{}, threadMain, .{ self, thread_index })) |spawned_thread| {
+                if (Thread.spawn(.{}, threadMain, .{self})) |spawned_thread| {
                     thread.* = spawned_thread;
                     nameThread(thread.*, "JobQueue[{}]", .{thread_index});
                 } else |err| {
@@ -320,7 +320,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
                     break;
                 }
             }
-            // print("spawned {}/{} threads\n", .{ n, self._num_threads });
         }
 
         /// Signals threads to stop running, and prevents scheduling more jobs.
@@ -352,12 +351,9 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
             if (!self.isStarted()) return;
 
-            // print("joining {} threads...\n", .{n});
             for (self._threads[0..self._num_threads]) |thread| {
                 thread.join();
             }
-
-            // print("joined {} threads\n", .{n});
 
             // drain job queue
             assert(self.isUnlockedThread());
@@ -560,10 +556,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        fn threadMain(self: *Self, n: usize) void {
-            // print("thread[{}]: {}\n", .{ n, Thread.getCurrentId() });
-            ignore(n);
-
+        fn threadMain(self: *Self) void {
             assert(self.notMainThread());
             assert(self.isUnlockedThread());
 
@@ -574,8 +567,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
                 self.executeJobs(.unlocked, .dequeue_jobid_if_running);
             }
-
-            // print("thread[{}] DONE\n", .{n});
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -674,8 +665,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             comptime scope: LockScope,
             comptime result: ExecuteJobResult,
         ) ExecuteJobReturnType(result) {
-            // print("executeJob({}, {}, {})\n", .{id, scope, result});
-
             const _id = id.fields();
             assert(isLiveCycle(_id.cycle));
 
@@ -793,10 +782,8 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             assert(this_thread != lock_thread);
             assert(site.len > 0);
 
-            // print("~{} '{s}' scope...\n", .{this_thread, site});
             self._mutex.lock();
             self._lock_thread.store(this_thread, .Release);
-            // print("~{} '{s}' locked\n", .{this_thread, site});
         }
 
         inline fn unlock(self: *Self, comptime site: []const u8) void {
@@ -806,7 +793,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             assert(site.len > 0);
 
             self._mutex.unlock();
-            // print("~{} '{s}' unlocked\n", .{this_thread, site});
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -859,11 +845,6 @@ pub fn JobQueue(comptime config: QueueConfig) type {
 
                 for (struct_info.decls) |decl| {
                     if (std.mem.eql(u8, decl.name, "exec")) {
-                        // compileAssert(
-                        //     decl.is_pub,
-                        //     "{s}.exec must be public",
-                        //     .{ @typeName(Job) },
-                        // );
                         break;
                     }
                 } else {
