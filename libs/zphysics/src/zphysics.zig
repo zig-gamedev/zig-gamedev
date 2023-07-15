@@ -1308,6 +1308,17 @@ pub const BodyInterface = opaque {
         return @as(*Body, @ptrCast(body));
     }
 
+    pub fn createBodyWithId(body_iface: *BodyInterface, body_id: BodyId, settings: BodyCreationSettings) !*Body {
+        const body = c.JPC_BodyInterface_CreateBodyWithID(
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            body_id,
+            @as(*const c.JPC_BodyCreationSettings, @ptrCast(&settings)),
+        );
+        if (body == null)
+            return error.FailedToCreateBody;
+        return @as(*Body, @ptrCast(body));
+    }
+
     pub fn destroyBody(body_iface: *BodyInterface, body_id: BodyId) void {
         c.JPC_BodyInterface_DestroyBody(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
     }

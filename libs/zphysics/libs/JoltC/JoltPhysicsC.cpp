@@ -1715,6 +1715,14 @@ JPC_BodyInterface_CreateBody(JPC_BodyInterface *in_iface, const JPC_BodyCreation
     return toJpc(toJph(in_iface)->CreateBody(*toJph(in_settings)));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API JPC_Body *
+JPC_BodyInterface_CreateBodyWithID(JPC_BodyInterface *in_iface,
+                                   JPC_BodyID in_body_id,
+                                   const JPC_BodyCreationSettings *in_settings)
+{
+    return toJpc(toJph(in_iface)->CreateBodyWithID(toJph(in_body_id), *toJph(in_settings)));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_DestroyBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
