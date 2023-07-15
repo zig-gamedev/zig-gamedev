@@ -332,10 +332,10 @@ pub inline fn veclen(comptime T: type) comptime_int {
 }
 
 pub inline fn splat(comptime T: type, value: f32) T {
-    return @splat(veclen(T), value);
+    return @as(T, @splat(value));
 }
 pub inline fn splatInt(comptime T: type, value: u32) T {
-    return @splat(veclen(T), @as(f32, @bitCast(value)));
+    return @as(T, @splat(@as(f32, @bitCast(value))));
 }
 
 pub fn load(mem: []const f32, comptime T: type, comptime len: u32) T {
@@ -1789,7 +1789,7 @@ pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx, vy) {
     const Tu = @Vector(veclen(T), u32);
 
     const vx_is_positive =
-        (@as(Tu, @bitCast(vx)) & @splat(veclen(T), @as(u32, 0x8000_0000))) == @splat(veclen(T), @as(u32, 0));
+        (@as(Tu, @bitCast(vx)) & @as(Tu, @splat(@as(u32, 0x8000_0000)))) == @as(Tu, @splat(@as(u32, 0)));
 
     const vy_sign = andInt(vy, splatNegativeZero(T));
     const c0_25pi = orInt(vy_sign, splat(T, 0.25 * math.pi));
@@ -1803,7 +1803,7 @@ pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx, vy) {
     const r4 = select(vx_is_positive, c0_25pi, c0_75pi);
     const r5 = select(isInf(vx), r4, c0_50pi);
     const result = select(isInf(vy), r5, r3);
-    const result_valid = @as(Tu, @bitCast(result)) == @splat(veclen(T), @as(u32, 0xffff_ffff));
+    const result_valid = @as(Tu, @bitCast(result)) == @as(Tu, @splat(@as(u32, 0xffff_ffff)));
 
     const v = vy / vx;
     const r0 = atan(v);
@@ -4443,13 +4443,13 @@ const f32x4_mask3: F32x4 = F32x4{
 };
 
 inline fn splatNegativeZero(comptime T: type) T {
-    return @splat(veclen(T), @as(f32, @bitCast(@as(u32, 0x8000_0000))));
+    return @as(T, @splat(@as(f32, @bitCast(@as(u32, 0x8000_0000)))));
 }
 inline fn splatNoFraction(comptime T: type) T {
-    return @splat(veclen(T), @as(f32, 8_388_608.0));
+    return @as(T, @splat(@as(f32, 8_388_608.0)));
 }
 inline fn splatAbsMask(comptime T: type) T {
-    return @splat(veclen(T), @as(f32, @bitCast(@as(u32, 0x7fff_ffff))));
+    return @as(T, @splat(@as(f32, @bitCast(@as(u32, 0x7fff_ffff)))));
 }
 
 fn floatToIntAndBack(v: anytype) @TypeOf(v) {
