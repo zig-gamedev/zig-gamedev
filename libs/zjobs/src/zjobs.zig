@@ -71,7 +71,7 @@ pub const JobId = enum(u32) {
 pub const QueueConfig = struct {
     max_jobs: u16 = 256,
     max_job_size: u16 = 64,
-    max_threads: u8 = 4,
+    max_threads: u8 = 32,
     idle_sleep_ns: u32 = 50,
 };
 
