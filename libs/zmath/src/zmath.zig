@@ -1789,13 +1789,13 @@ pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx, vy) {
     const Tu = @Vector(veclen(T), u32);
 
     const vx_is_positive =
-        (@as(Tu, @bitCast(vx)) & @as(veclen(T), @splat(0x8000_0000))) == @as(veclen(T), @splat(0));
+        (@as(Tu, @bitCast(vx)) & @as(Tu, @splat(0x8000_0000))) == @as(Tu, @splat(0));
 
     const vy_sign = andInt(vy, splatNegativeZero(T));
-    const c0_25pi = orInt(vy_sign, splat(T, 0.25 * math.pi));
-    const c0_50pi = orInt(vy_sign, splat(T, 0.50 * math.pi));
-    const c0_75pi = orInt(vy_sign, splat(T, 0.75 * math.pi));
-    const c1_00pi = orInt(vy_sign, splat(T, 1.00 * math.pi));
+    const c0_25pi = orInt(vy_sign, @as(T, @splat(0.25 * math.pi)));
+    const c0_50pi = orInt(vy_sign, @as(T, @splat(0.50 * math.pi)));
+    const c0_75pi = orInt(vy_sign, @as(T, @splat(0.75 * math.pi)));
+    const c1_00pi = orInt(vy_sign, @as(T, @splat(1.00 * math.pi)));
 
     var r1 = select(vx_is_positive, vy_sign, c1_00pi);
     var r2 = select(vx == splat(T, 0.0), c0_50pi, splatInt(T, 0xffff_ffff));
@@ -1803,7 +1803,7 @@ pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx, vy) {
     const r4 = select(vx_is_positive, c0_25pi, c0_75pi);
     const r5 = select(isInf(vx), r4, c0_50pi);
     const result = select(isInf(vy), r5, r3);
-    const result_valid = @as(Tu, @bitCast(result)) == @as(veclen(T), @splat(0xffff_ffff));
+    const result_valid = @as(Tu, @bitCast(result)) == @as(Tu, @splat(0xffff_ffff));
 
     const v = vy / vx;
     const r0 = atan(v);
