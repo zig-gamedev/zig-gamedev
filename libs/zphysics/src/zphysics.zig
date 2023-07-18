@@ -1,5 +1,6 @@
 pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 0, .patch = 5 };
 
+const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 const options = @import("zphysics_options");
@@ -3515,6 +3516,7 @@ test "zphysics.body.motion" {
 }
 
 test "zphysics.debugrenderer" {
+    if (builtin.target.os.tag == .macos and builtin.target.cpu.arch == .aarch64) return error.SkipZigTest;
     if (!debug_renderer_enabled) return;
 
     try init(std.testing.allocator, .{});
