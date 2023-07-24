@@ -314,6 +314,45 @@ pub const BodyActivationListener = extern struct {
     }
 };
 
+pub const CharacterContactListener = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn onStep(self: *const T, delta_time: f32, physics_system: *PhysicsSystem) void {
+                return @as(*const PhysicsStepListener.VTable, @ptrCast(self.__v))
+                    .onStep(@as(*PhysicsStepListener, @ptrCast(self)), delta_time, physics_system);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        OnAdjustBodyVelocity: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            body: *const Body,
+
+        ) callconv(.C) void,
+        OnContactValidate: *const fn (
+            self: *CharacterContactListener,
+        ) callconv(.C) void,
+        OnContactAdded: *const fn (
+            self: *CharacterContactListener,
+        ) callconv(.C) void,
+        OnContactSolve: *const fn (
+            self: *CharacterContactListener,
+        ) callconv(.C) void,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_PhysicsStepListenerVTable));
+        assert(@offsetOf(VTable, "onStep") == @offsetOf(c.JPC_PhysicsStepListenerVTable, "OnStep"));
+    }
+};
+
 pub const ContactListener = extern struct {
     __v: *const VTable,
 
@@ -607,6 +646,37 @@ pub const BodyCreationSettings = extern struct {
         assert(@offsetOf(BodyCreationSettings, "user_data") == @offsetOf(c.JPC_BodyCreationSettings, "user_data"));
         assert(@offsetOf(BodyCreationSettings, "motion_quality") ==
             @offsetOf(c.JPC_BodyCreationSettings, "motion_quality"));
+    }
+};
+
+pub const CharacterVirtualSettings = extern struct {
+    up: [4]f32 align(16) = .{ 0, 1, 0, 0 }, // 4th element is ignored
+    supporting_volume:  [4]f32 align(16) = .{ 0, 1, 0, -1.0e10 }, // JPH::Plane - 4th element is used
+    max_slope_angle: f32 = std.math.degreesToRadians(f32, 50.0),
+    shape: ?*Shape = null,
+
+    mass: f32 = 70.0,
+    max_strength: f32 = 100.0,
+    shape_offset: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
+    back_face_mode: BackFaceMode = .collide_with_back_faces,
+    predictive_contact_distance: f32 = 0.1,
+    max_collision_iterations: u32 = 5,
+    max_constraint_iterations: u32 = 15,
+    min_time_remaining: f32 = 1.0e-4,
+    collision_tolerance: f32 = 1.0e-3,
+    character_padding: f32 = 0.02,
+    max_num_hits: u32 = 256,
+    hit_reduction_cos_max_angle: f32 = 0.999,
+    penetration_recovery_speed: f32 = 1.0,
+
+    comptime {
+        assert(@sizeOf(CharacterVirtualSettings) == @sizeOf(c.JPC_CharacterVirtualSettings));
+        assert(@offsetOf(CharacterVirtualSettings, "up") == @offsetOf(c.JPC_CharacterVirtualSettings, "up"));
+        assert(@offsetOf(CharacterVirtualSettings, "mass") == @offsetOf(c.JPC_CharacterVirtualSettings, "mass"));
+        assert(@offsetOf(CharacterVirtualSettings, "max_num_hits") ==
+            @offsetOf(c.JPC_CharacterVirtualSettings, "max_num_hits"));
+        assert(@offsetOf(CharacterVirtualSettings, "penetration_recovery_speed") ==
+            @offsetOf(c.JPC_CharacterVirtualSettings, "penetration_recovery_speed"));
     }
 };
 
@@ -1932,6 +2002,30 @@ pub const Body = extern struct {
         assert(@offsetOf(Body, "motion_properties") == @offsetOf(c.JPC_Body, "motion_properties"));
         assert(@offsetOf(Body, "object_layer") == @offsetOf(c.JPC_Body, "object_layer"));
         assert(@offsetOf(Body, "rotation") == @offsetOf(c.JPC_Body, "rotation"));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// CharacterVirtual
+//
+//--------------------------------------------------------------------------------------------------
+pub const CharacterVirtual = opaque {
+    pub fn create(
+        in_settings: *const CharacterVirtualSettings,
+        in_position: [3]Real,
+        in_rotation: [4]f32,
+        in_physics_system: *PhysicsSystem,
+    ) !*CharacterVirtual {
+        return @as(*CharacterVirtual, @ptrCast(c.JPC_CharacterVirtual_Create(
+            @as(*const c.JPC_CharacterVirtualSettings, @ptrCast(in_settings)),
+            &in_position,
+            &in_rotation,
+            @as(*c.JPC_PhysicsSystem, @ptrCast(in_physics_system)),
+        )));
+    }
+
+    pub fn destroy(character: *CharacterVirtual) void {
+        c.JPC_CharacterVirtual_Destroy(@as(*c.JPC_CharacterVirtual, @ptrCast(character)));
     }
 };
 //--------------------------------------------------------------------------------------------------

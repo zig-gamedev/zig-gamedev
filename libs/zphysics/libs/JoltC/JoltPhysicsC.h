@@ -252,9 +252,10 @@ typedef struct JPC_DecoratedShapeSettings      JPC_DecoratedShapeSettings;
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
 
-typedef struct JPC_Shape           JPC_Shape;
-typedef struct JPC_PhysicsMaterial JPC_PhysicsMaterial;
-typedef struct JPC_GroupFilter     JPC_GroupFilter;
+typedef struct JPC_Shape            JPC_Shape;
+typedef struct JPC_PhysicsMaterial  JPC_PhysicsMaterial;
+typedef struct JPC_GroupFilter      JPC_GroupFilter;
+typedef struct JPC_CharacterVirtual JPC_CharacterVirtual;
 
 #if JPC_DEBUG_RENDERER == 1
 typedef struct JPC_BodyDrawFilter              JPC_BodyDrawFilter;
@@ -367,6 +368,29 @@ typedef struct JPC_Body
     JPC_MotionType          motion_type;
     uint8_t                 flags;
 } JPC_Body;
+
+// NOTE: Needs to be kept in sync with JPH::CharacterVirtualSettings
+typedef struct JPC_CharacterVirtualSettings
+{
+    alignas(16) float   up[4]; // 4th element is ignored
+    alignas(16) float   supporting_volume[4];
+    float               max_slope_angle;
+    const JPC_Shape *   shape;
+
+    float               mass;
+    float               max_strength;
+    alignas(16) float   shape_offset[4];
+    JPC_BackFaceMode    back_face_mode;
+    float               predictive_contact_distance;
+    uint32_t            max_collision_iterations;
+    uint32_t            max_constraint_iterations;
+    float               min_time_remaining;
+    float               collision_tolerance;
+    float               character_padding;
+    uint32_t            max_num_hits;
+    float               hit_reduction_cos_max_angle;
+    float               penetration_recovery_speed;
+} JPC_CharacterVirtualSettings;
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
 typedef struct JPC_SubShapeIDCreator
@@ -1714,6 +1738,19 @@ JPC_BodyID_GetSequenceNumber(JPC_BodyID in_body_id);
 
 JPC_API bool
 JPC_BodyID_IsInvalid(JPC_BodyID in_body_id);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_CharacterVirtual
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterVirtual *
+JPC_CharacterVirtual_Create(const JPC_CharacterVirtualSettings *in_settings,
+                            const JPC_Real in_position[3],
+                            const float in_rotation[4],
+                            JPC_PhysicsSystem *in_physics_system);
+
+JPC_API void
+JPC_CharacterVirtual_Destroy(JPC_CharacterVirtual *in_character);
 //--------------------------------------------------------------------------------------------------
 #ifdef __cplusplus
 }

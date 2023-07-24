@@ -32,6 +32,7 @@
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Body/BodyManager.h>
 #include <Jolt/Physics/Body/BodyFilter.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #if JPC_DEBUG_RENDERER == 1
 #include <string_view>
@@ -276,6 +277,13 @@ FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
 FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
 FN(toJpc)(JPH::EMotionQuality in) { return static_cast<JPC_MotionQuality>(in); }
+
+FN(toJph)(const JPC_CharacterVirtual *in) { assert(in); return reinterpret_cast<const JPH::CharacterVirtual *>(in); }
+FN(toJph)(JPC_CharacterVirtual *in) { assert(in); return reinterpret_cast<JPH::CharacterVirtual *>(in); }
+FN(toJpc)(JPH::CharacterVirtual *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtual *>(in); }
+
+FN(toJph)(const JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPH::CharacterVirtualSettings *>(in); }
+FN(toJph)(JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPH::CharacterVirtualSettings *>(in); }
 
 #if JPC_DEBUG_RENDERER == 1
 FN(toJpc)(const JPH::BodyManager::DrawSettings *in) { assert(in); return reinterpret_cast<const JPC_BodyManager_DrawSettings *>(in); }
@@ -2562,4 +2570,22 @@ JPC_BodyID_IsInvalid(JPC_BodyID in_body_id)
 {
     return JPH::BodyID(in_body_id).IsInvalid();
 }
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_CharacterVirtual
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterVirtual *
+JPC_CharacterVirtual_Create(const JPC_CharacterVirtualSettings *in_settings,
+                            const JPC_Real in_position[3],
+                            const float in_rotation[4],
+                            JPC_PhysicsSystem *in_physics_system)
+{
+    auto character = new JPH::CharacterVirtual(
+        toJph(in_settings), loadVec3(in_position), JPH::Quat(loadVec4(in_rotation)), toJph(in_physics_system));
+    return toJpc(character);
+}
+
+JPC_API void
+JPC_CharacterVirtual_Destroy(JPC_CharacterVirtual *in_character) { delete toJph(in_character); }
 //--------------------------------------------------------------------------------------------------
