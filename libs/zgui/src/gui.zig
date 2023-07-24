@@ -1461,7 +1461,9 @@ pub fn combo(label: [:0]const u8, args: Combo) bool {
 /// comptime mechanics to infer the items for the list at compile time
 pub fn comboFromEnum(
     label: [:0]const u8,
-    /// must be a pointer to an enum value (var my_enum: *FoodEnum = .Banana)
+    /// must be a pointer to an enum value (var my_enum: *FoodKinds = .Banana)
+    /// that is backed by some kind of integer that can safely cast into an
+    /// i32 (the underlying imgui restriction)
     current_item: anytype
 ) bool 
 {
