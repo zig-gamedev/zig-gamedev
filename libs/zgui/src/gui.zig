@@ -1457,8 +1457,11 @@ pub fn combo(label: [:0]const u8, args: Combo) bool {
         args.popup_max_height_in_items,
     );
 }
+/// creates a combo box directly from a pointer to an enum value using zig's
+/// comptime mechanics to infer the items for the list at compile time
 pub fn comboFromEnum(
     label: [:0]const u8,
+    /// must be a pointer to an enum value (var my_enum: *FoodEnum = .Banana)
     current_item: anytype
 ) bool 
 {
