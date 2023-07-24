@@ -260,6 +260,12 @@ ZGUI_API void zguiSetMouseCursor(int cursor) {
     ImGui::SetMouseCursor(cursor);
 }
 
+ZGUI_API void zguiGetMousePos(float pos[2]) {
+    const ImVec2 p = ImGui::GetMousePos();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
 ZGUI_API void zguiAlignTextToFramePadding(void) {
     ImGui::AlignTextToFramePadding();
 }

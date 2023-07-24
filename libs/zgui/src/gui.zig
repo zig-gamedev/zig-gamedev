@@ -1159,6 +1159,13 @@ pub const setMouseCursor = zguiSetMouseCursor;
 extern fn zguiGetMouseCursor() Cursor;
 extern fn zguiSetMouseCursor(cursor: Cursor) void;
 //--------------------------------------------------------------------------------------------------
+pub fn getMousePos() [2]f32 {
+    var pos: [2]f32 = undefined;
+    zguiGetMousePos(&pos);
+    return pos;
+}
+extern fn zguiGetMousePos(pos: *[2]f32) void;
+//--------------------------------------------------------------------------------------------------
 /// `pub fn alignTextToFramePadding() void`
 pub const alignTextToFramePadding = zguiAlignTextToFramePadding;
 /// `pub fn getTextLineHeight() f32`
