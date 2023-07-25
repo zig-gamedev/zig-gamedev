@@ -1464,7 +1464,7 @@ pub fn comboFromEnum(
     /// must be a pointer to an enum value (var my_enum: *FoodKinds = .Banana)
     /// that is backed by some kind of integer that can safely cast into an
     /// i32 (the underlying imgui restriction)
-    current_item: anytype
+    current_item: anytype,
 ) bool 
 {
     const item_names = comptime lbl: {
@@ -1487,7 +1487,7 @@ pub fn comboFromEnum(
         }
     };
 
-    var item = @intCast(i32, @intFromEnum(current_item.*));
+    var item = @intCast(@intFromEnum(current_item.*));
 
     const result = combo(
         label,
