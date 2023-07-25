@@ -224,6 +224,10 @@ pub const io = struct {
     pub const getFontsTexId = zguiIoGetFontsTexId;
     extern fn zguiIoGetFontsTexId() TextureIdent;
 
+    /// `pub fn zguiIoSetConfigWindowsMoveFromTitleBarOnly(bool) void`
+    pub const setConfigWindowsMoveFromTitleBarOnly = zguiIoSetConfigWindowsMoveFromTitleBarOnly;
+    extern fn zguiIoSetConfigWindowsMoveFromTitleBarOnly(enabled: bool) void;
+
     /// `pub fn zguiIoGetWantCaptureMouse() bool`
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
     extern fn zguiIoGetWantCaptureMouse() bool;
