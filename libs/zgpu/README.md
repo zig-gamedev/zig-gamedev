@@ -43,14 +43,35 @@ pub fn build(b: *std.Build) void {
 ------------
 #### NOTE
 
-`zgpu/libs/dawn` folder contains large binary files - Dawn/WebGPU static libs compiled for several platforms/architectures.
-To avoid storing those files in your repo it is recommended to create a submodule pointing to the [dawn-bin](https://github.com/michal-z/dawn-bin) repo.
+Use below `build.zig.zon` file to fetch Dawn (WebGPU) binaries:
 
-To create the submodule run below commands in the root of your project:
 ```
-rm -rf libs/zgpu/libs
-git submodule add -b main https://github.com/michal-z/dawn-bin libs/zgpu/libs/dawn
-git submodule update --init --remote
+.{
+    .name = "your_project_name",
+    .version = "0.1.0",
+    .dependencies = .{
+        .dawn_x86_64_windows_gnu = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/20f68507f7f7021b459a7d7e2896f070fdc669fd.tar.gz",
+            .hash = "1220ee8a40f4123387e36407825d472f8f591d32d7724a329b807da79887a8a82a31",
+        },
+        .dawn_x86_64_linux_gnu = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/db5d231d315863e3a9809b29be5cf5cd47a1fc7b.tar.gz",
+            .hash = "1220b252c115576ebf6bb166cd763a2123869a4c7554fc75e1e3a82100015e87cc39",
+        },
+        .dawn_aarch64_linux_gnu = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-aarch64-linux-gnu/archive/449eb8660429c2d0a47cf26b2dc4d26ef713466c.tar.gz",
+            .hash = "1220b5cee6adc4fe34529a16cd9e0e709085d1a3a881ae7b488b5b72d92ac9bfd757",
+        },
+        .dawn_aarch64_macos = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-aarch64-macos/archive/1c201416fd3ff8323883d3f9f262b64e3e73b533.tar.gz",
+            .hash = "1220864484b8385b1248d603307fede2599176c46ec37eb5efe4774c0ac2fdf86118",
+        },
+        .dawn_x86_64_macos = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/a8b7bad5af5e9984c9917c4ce3a009989f80eb31.tar.gz",
+            .hash = "1220aa3e7c85d50f01e887ae4d22148cfcb41c7ef380704a6643ec2453972204445a",
+        },
+     }
+}
 ```
 --------------
 ## Sample applications

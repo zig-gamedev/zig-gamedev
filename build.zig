@@ -360,9 +360,9 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
             \\
             \\x86_64-windows-gnu
             \\x86_64-linux-gnu
-            \\x86_64-macos.12-none
+            \\x86_64-macos.12.0.0-none
             \\aarch64-linux-gnu
-            \\aarch64-macos.12-none
+            \\aarch64-macos.12.0.0-none
             \\
             \\---------------------------------------------------------------------------
             \\
