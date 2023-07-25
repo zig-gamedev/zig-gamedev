@@ -111,6 +111,8 @@ pub fn makeError() error{SdlError} {
 //--------------------------------------------------------------------------------------------------
 pub const DisplayId = u32;
 
+pub const WindowId = u32;
+
 pub const DisplayMode = extern struct {
     format: u32,
     w: i32,
@@ -1194,7 +1196,7 @@ pub const CommonEvent = extern struct {
 pub const DisplayEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    display: u32,
+    display: DisplayId,
     event: DisplayEventId,
     padding1: u8,
     padding2: u8,
@@ -1205,7 +1207,7 @@ pub const DisplayEvent = extern struct {
 pub const WindowEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
+    window_id: WindowId,
     event: WindowEventId,
     padding1: u8,
     padding2: u8,
@@ -1217,7 +1219,7 @@ pub const WindowEvent = extern struct {
 pub const KeyboardEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
+    window_id: WindowId,
     state: ReleasedOrPressed,
     repeat: u8,
     padding2: u8,
@@ -1228,7 +1230,7 @@ pub const KeyboardEvent = extern struct {
 pub const TextEditingEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
+    window_id: WindowId,
     text: [text_size]u8,
     start: i32,
     length: i32,
@@ -1239,7 +1241,7 @@ pub const TextEditingEvent = extern struct {
 pub const TextEditingExtEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
+    window_id: WindowId,
     text: [*:0]u8,
     start: i32,
     length: i32,
@@ -1248,7 +1250,7 @@ pub const TextEditingExtEvent = extern struct {
 pub const TextInputEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
+    window_id: WindowId,
     text: [text_size]u8,
 
     const text_size = 32;
@@ -1257,8 +1259,8 @@ pub const TextInputEvent = extern struct {
 pub const MouseMotionEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
-    which: u32,
+    window_id: WindowId,
+    which: MouseId,
     state: u32,
     x: i32,
     y: i32,
@@ -1269,8 +1271,8 @@ pub const MouseMotionEvent = extern struct {
 pub const MouseButtonEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
-    which: u32,
+    window_id: WindowId,
+    which: MouseId,
     button: u8,
     state: ReleasedOrPressed,
     clicks: u8,
@@ -1282,8 +1284,8 @@ pub const MouseButtonEvent = extern struct {
 pub const MouseWheelEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    window_id: u32,
-    which: u32,
+    window_id: WindowId,
+    which: MouseId,
     x: i32,
     y: i32,
     direction: MouseWheelDirection,
@@ -1300,13 +1302,13 @@ pub const DropEvent = extern struct {
     type: EventType,
     timestamp: u32,
     file: ?[*:0]u8,
-    window_id: u32,
+    window_id: WindowId,
 };
 
 pub const ControllerDeviceEvent = extern struct {
     type: EventType,
     timestamp: u32,
-    which: i32,
+    which: JoystickId,
 };
 
 pub const Event = extern union {
@@ -1368,6 +1370,8 @@ extern fn SDL_GetKeyboardState(numkeys: ?*i32) ?[*]const u8;
 // Mouse Support
 //
 //--------------------------------------------------------------------------------------------------
+pub const MouseId = u32;
+
 /// `pub fn getMouseFocus() ?*Window`
 pub const getMouseFocus = SDL_GetMouseFocus;
 extern fn SDL_GetMouseFocus() ?*Window;
@@ -1381,6 +1385,8 @@ extern fn SDL_GetMouseState(x: ?*i32, y: ?*i32) u32;
 // Joystick Support
 //
 //--------------------------------------------------------------------------------------------------
+pub const JoystickId = i32;
+
 pub const JOYSTICK_AXIS_MAX = 32767;
 pub const JOYSTICK_AXIS_MIN = -32768;
 
