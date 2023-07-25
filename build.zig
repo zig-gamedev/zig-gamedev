@@ -32,6 +32,16 @@ pub fn build(b: *std.Build) void {
     // Fetch the latest Dawn/WebGPU binaries.
     const skip_dawn_update = b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
     if (!skip_dawn_update) {
+        var stderr_mode: u32 = undefined;
+        var stdout_mode: u32 = undefined;
+
+        if (builtin.target.os.tag == .windows) {
+            // `git submodule` fails to restore the console mode, so we need to do it manually
+            // This is a Git for Windows bug: https://github.com/git-for-windows/git/issues/1121#issuecomment-323047927
+            _ = std.os.windows.kernel32.GetConsoleMode(std.io.getStdErr().handle, &stderr_mode);
+            _ = std.os.windows.kernel32.GetConsoleMode(std.io.getStdOut().handle, &stdout_mode);
+        }
+
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
         child.cwd = thisDir();
         child.stderr = std.io.getStdErr();
@@ -40,6 +50,11 @@ pub fn build(b: *std.Build) void {
             std.log.err("Failed to fetch git submodule. Please try to re-clone.", .{});
             return;
         };
+
+        if (builtin.target.os.tag == .windows) {
+            _ = SetConsoleMode(std.io.getStdErr().handle, stderr_mode);
+            _ = SetConsoleMode(std.io.getStdOut().handle, stdout_mode);
+        }
     }
     ensureGitLfsContent("/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib") catch return;
 
@@ -485,3 +500,8 @@ fn ensureGitLfsContent(comptime file_path: []const u8) !void {
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
+
+extern "kernel32" fn SetConsoleMode(
+    in_hConsoleHandle: std.os.windows.HANDLE,
+    in_Mode: std.os.windows.DWORD,
+) callconv(std.os.windows.WINAPI) std.os.windows.BOOL;
