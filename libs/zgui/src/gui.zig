@@ -224,6 +224,10 @@ pub const io = struct {
     pub const getFontsTexId = zguiIoGetFontsTexId;
     extern fn zguiIoGetFontsTexId() TextureIdent;
 
+    /// `pub fn zguiIoSetConfigWindowsMoveFromTitleBarOnly(bool) void`
+    pub const setConfigWindowsMoveFromTitleBarOnly = zguiIoSetConfigWindowsMoveFromTitleBarOnly;
+    extern fn zguiIoSetConfigWindowsMoveFromTitleBarOnly(enabled: bool) void;
+
     /// `pub fn zguiIoGetWantCaptureMouse() bool`
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
     extern fn zguiIoGetWantCaptureMouse() bool;
@@ -3019,6 +3023,11 @@ pub const MouseButton = enum(u32) {
     right = 1,
     middle = 2,
 };
+
+/// `pub fn isMouseDown(mouse_button: MouseButton) bool`
+pub const isMouseDown = zguiIsMouseDown;
+/// `pub fn isMouseClicked(mouse_button: MouseButton) bool`
+pub const isMouseClicked = zguiIsMouseClicked;
 /// `pub fn isMouseDoubleClicked(mouse_button: MouseButton) bool`
 pub const isMouseDoubleClicked = zguiIsMouseDoubleClicked;
 /// `pub fn isItemClicked(mouse_button: MouseButton) bool`
@@ -3041,6 +3050,8 @@ pub const isAnyItemHovered = zguiIsAnyItemHovered;
 pub const isAnyItemActive = zguiIsAnyItemActive;
 /// `pub fn isAnyItemFocused() bool`
 pub const isAnyItemFocused = zguiIsAnyItemFocused;
+extern fn zguiIsMouseDown(mouse_button: MouseButton) bool;
+extern fn zguiIsMouseClicked(mouse_button: MouseButton) bool;
 extern fn zguiIsMouseDoubleClicked(mouse_button: MouseButton) bool;
 extern fn zguiIsItemHovered(flags: HoveredFlags) bool;
 extern fn zguiIsItemActive() bool;

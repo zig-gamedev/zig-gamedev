@@ -1238,6 +1238,10 @@ ZGUI_API ImTextureID zguiIoGetFontsTexId(void) {
     return ImGui::GetIO().Fonts->TexID;
 }
 
+ZGUI_API void zguiIoSetConfigWindowsMoveFromTitleBarOnly(bool enabled) {
+    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = enabled;
+}
+
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) {
     return ImGui::GetIO().WantCaptureMouse;
 }
@@ -1319,6 +1323,14 @@ ZGUI_API bool zguiIsItemFocused(void) {
 
 ZGUI_API bool zguiIsItemClicked(ImGuiMouseButton mouse_button) {
     return ImGui::IsItemClicked(mouse_button);
+}
+
+ZGUI_API bool zguiIsMouseDown(ImGuiMouseButton button) {
+    return ImGui::IsMouseDown(button);
+}
+
+ZGUI_API bool zguiIsMouseClicked(ImGuiMouseButton button) {
+    return ImGui::IsMouseClicked(button);
 }
 
 ZGUI_API bool zguiIsMouseDoubleClicked(ImGuiMouseButton button) {
