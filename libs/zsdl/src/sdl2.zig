@@ -1183,11 +1183,6 @@ pub const ReleasedOrPressed = enum(u8) {
     pressed,
 };
 
-pub const MouseWheelDirection = enum(u32) {
-    normal,
-    flipped,
-};
-
 pub const CommonEvent = extern struct {
     type: EventType,
     timestamp: u32,
@@ -1371,6 +1366,11 @@ extern fn SDL_GetKeyboardState(numkeys: ?*i32) ?[*]const u8;
 //
 //--------------------------------------------------------------------------------------------------
 pub const MouseId = u32;
+
+pub const MouseWheelDirection = enum(u32) {
+    normal,
+    flipped,
+};
 
 /// `pub fn getMouseFocus() ?*Window`
 pub const getMouseFocus = SDL_GetMouseFocus;
