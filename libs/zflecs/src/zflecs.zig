@@ -12,7 +12,7 @@ pub const flags64_t = u64;
 pub const vector_t = opaque {};
 pub const mixins_t = opaque {};
 
-const filter_t_magic = 0x65637366;
+pub const filter_t_magic = 0x65637366;
 
 pub const error_t = error{FlecsError};
 fn make_error() error{FlecsError} {
