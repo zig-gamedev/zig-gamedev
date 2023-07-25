@@ -1143,6 +1143,8 @@ pub const EventType = enum(u32) {
     userevent = 0x8000,
 
     lastevent = 0xffff,
+
+    _,
 };
 
 pub const DisplayEventId = enum(u8) {
