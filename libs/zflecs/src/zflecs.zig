@@ -1235,7 +1235,7 @@ pub const remove_id = ecs_remove_id;
 extern fn ecs_remove_id(world: *world_t, entity: entity_t, id: id_t) void;
 
 /// `pub fn override_id(world: *world_t, entity: entity_t, id: id_t) void`
-pub const override_id = ecs_remove_id;
+pub const override_id = ecs_override_id;
 extern fn ecs_override_id(world: *world_t, entity: entity_t, id: id_t) void;
 
 /// `pub fn clear(world: *world_t, entity: entity_t) void`
