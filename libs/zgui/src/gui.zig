@@ -1487,7 +1487,7 @@ pub fn comboFromEnum(
         }
     };
 
-    var item = @intCast(@intFromEnum(current_item.*));
+    var item:i32 = @intCast(@intFromEnum(current_item.*));
 
     const result = combo(
         label,
@@ -1497,7 +1497,7 @@ pub fn comboFromEnum(
         }
     );
 
-    current_item.* = @enumFromInt(@TypeOf(current_item.*), item);
+    current_item.* = @enumFromInt(item);
 
     return result;
 }
