@@ -43,7 +43,10 @@ pub fn build(b: *std.Build) void {
 ------------
 #### NOTE
 
-Use below `build.zig.zon` file to fetch Dawn (WebGPU) binaries:
+`zgpu` depends on WebGPU implementation. We use open-source implementation called `Dawn` and
+we provide pre-compiled binaries for most popular platforms.
+
+`zgpu` requires you to add below `build.zig.zon` file to your project:
 
 ```
 .{
