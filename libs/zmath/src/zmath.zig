@@ -200,6 +200,7 @@
 // matFromQuat(quat: Quat) Mat
 // matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat
 // matFromRollPitchYawV(angles: Vec) Mat
+// matFromArr(arr: [16]f32) Mat
 //
 // loadMat(mem: []const f32) Mat
 // loadMat43(mem: []const f32) Mat
