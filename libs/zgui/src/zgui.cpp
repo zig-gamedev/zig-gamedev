@@ -1084,6 +1084,10 @@ ZGUI_API bool zguiTreeNode(const char* label) {
     return ImGui::TreeNode(label);
 }
 
+ZGUI_API bool zguiTreeNodeFlags(const char* label, ImGuiTreeNodeFlags flags) {
+    return ImGui::TreeNodeEx(label, flags);
+}
+
 ZGUI_API bool zguiTreeNodeStrId(const char* str_id, const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
