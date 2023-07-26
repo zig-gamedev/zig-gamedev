@@ -448,11 +448,11 @@ pub fn JobQueue(comptime config: QueueConfig) type {
         /// The provided `job` must satisfy the following requirements:
         /// * The total size of the job must not exceed `config.max_job_size`
         /// * The job must be an instance of a struct
-        /// * The job must declare a function named `exec` with one of the
+        /// * The job must declare a public function named `exec` with one of the
         ///   following supported signatures:
         /// ```
-        ///   fn exec(*@This())
-        ///   fn exec(*const @This())
+        ///   pub fn exec(*@This())
+        ///   pub fn exec(*const @This())
         /// ```
         pub fn schedule(self: *Self, prereq: JobId, job: anytype) Error!JobId {
             const Job = @TypeOf(job);
@@ -590,7 +590,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
             jobs: *Self,
             prereqs: [max_prereqs]JobId = [_]JobId{JobId.none} ** max_prereqs,
 
-            fn exec(job: *@This()) void {
+            pub fn exec(job: *@This()) void {
                 for (job.prereqs) |prereq| {
                     job.jobs.wait(prereq);
                 }
@@ -849,7 +849,7 @@ pub fn JobQueue(comptime config: QueueConfig) type {
                     }
                 } else {
                     compileError(
-                        "{s}.exec(*{s}) not found",
+                        "{s}.exec(*{s}) is either not declared or not public",
                         .{ @typeName(Job), @typeName(Job) },
                     );
                 }
@@ -998,7 +998,7 @@ test "JobQueue example" {
     const world_job_id: JobId = try jobs.schedule(
         hello_job_id, // waits for `hello_job_id` to be completed
         struct {
-            fn exec(_: *@This()) void {
+            pub fn exec(_: *@This()) void {
                 print("world!\n", .{});
             }
         }{}, // trailing `{}` initializes an instance of this anonymous struct
@@ -1016,7 +1016,7 @@ test "JobQueue example" {
         world_job_id, // waits for `world_job_id` to be completed
         struct {
             jobs: *Jobs, // stores a pointer to `jobs`
-            fn exec(self: *@This()) void {
+            pub fn exec(self: *@This()) void {
                 self.jobs.stop();
             }
         }{ // trailing `{}` initializes an instance of this anonymous struct
@@ -1113,7 +1113,7 @@ test "JobQueue throughput" {
         stat: *JobStat,
         workload: *JobWorkload,
 
-        fn exec(self: *@This()) void {
+        pub fn exec(self: *@This()) void {
             self.stat.start();
             defer self.stat.stop();
 
@@ -1139,7 +1139,7 @@ test "JobQueue throughput" {
     // schedule a job to stop the job queue
     _ = try jobs.schedule(.none, struct {
         jobs: *Jobs,
-        fn exec(self: *@This()) void {
+        pub fn exec(self: *@This()) void {
             self.jobs.stop();
         }
     }{ .jobs = &jobs });
@@ -1171,7 +1171,7 @@ test "combine jobs respect prereq" {
     const PrereqJob = struct {
         counter: *Counter,
 
-        fn exec(self: *@This()) void {
+        pub fn exec(self: *@This()) void {
             _ = self.counter.fetchAdd(1, .Monotonic);
         }
     };
@@ -1179,7 +1179,7 @@ test "combine jobs respect prereq" {
     const FinalJob = struct {
         counter: *Counter,
 
-        fn exec(self: *@This()) void {
+        pub fn exec(self: *@This()) void {
             const count = self.counter.load(.Monotonic);
             self.counter.store(count * 100, .Monotonic);
         }
