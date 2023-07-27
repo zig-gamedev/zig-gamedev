@@ -58,8 +58,8 @@ we provide pre-compiled binaries for most popular platforms.
             .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
         },
         .dawn_x86_64_linux_gnu = .{
-            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/ea7f4c3c0142f796f69c696cae57c120b8661c62.tar.gz",
-            .hash = "122000e98fb8a591194cd104e211ee298d3b8265d7501742d107f860edfab53620f3",
+            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/7d70db023bf254546024629cbec5ee6113e12a42.tar.gz",
+            .hash = "12204a3519efd49ea2d7cf63b544492a3a771d37eda320f86380813376801e4cfa73",
         },
         .dawn_aarch64_linux_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-aarch64-linux-gnu/archive/c1f55e740a62f6942ff046e709ecd509a005dbeb.tar.gz",
