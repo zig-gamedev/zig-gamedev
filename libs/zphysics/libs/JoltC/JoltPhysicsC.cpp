@@ -277,13 +277,17 @@ FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
 FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
 FN(toJpc)(JPH::EMotionQuality in) { return static_cast<JPC_MotionQuality>(in); }
+FN(toJpc)(JPH::CharacterBase::EGroundState in) { return static_cast<JPC_CharacterGroundState>(in); }
 
 FN(toJph)(const JPC_CharacterVirtual *in) { assert(in); return reinterpret_cast<const JPH::CharacterVirtual *>(in); }
 FN(toJph)(JPC_CharacterVirtual *in) { assert(in); return reinterpret_cast<JPH::CharacterVirtual *>(in); }
+FN(toJpc)(const JPH::CharacterVirtual *in) { assert(in); return reinterpret_cast<const JPC_CharacterVirtual *>(in); }
 FN(toJpc)(JPH::CharacterVirtual *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtual *>(in); }
 
 FN(toJph)(const JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPH::CharacterVirtualSettings *>(in); }
 FN(toJph)(JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPH::CharacterVirtualSettings *>(in); }
+FN(toJpc)(const JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPC_CharacterVirtualSettings *>(in); }
+FN(toJpc)(JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtualSettings *>(in); }
 
 #if JPC_DEBUG_RENDERER == 1
 FN(toJpc)(const JPH::BodyManager::DrawSettings *in) { assert(in); return reinterpret_cast<const JPC_BodyManager_DrawSettings *>(in); }
@@ -2572,6 +2576,24 @@ JPC_BodyID_IsInvalid(JPC_BodyID in_body_id)
 }
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_CharacterVirtualSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterVirtualSettings *
+JPC_CharacterVirtualSettings_Create()
+{
+    auto settings = new JPH::CharacterVirtualSettings();
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtualSettings_Release(JPC_CharacterVirtualSettings *in_settings)
+{
+    toJph(in_settings)->Release();
+}
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_CharacterVirtual
 //
 //--------------------------------------------------------------------------------------------------
@@ -2585,7 +2607,80 @@ JPC_CharacterVirtual_Create(const JPC_CharacterVirtualSettings *in_settings,
         toJph(in_settings), loadVec3(in_position), JPH::Quat(loadVec4(in_rotation)), toJph(in_physics_system));
     return toJpc(character);
 }
-
-JPC_API void
-JPC_CharacterVirtual_Destroy(JPC_CharacterVirtual *in_character) { delete toJph(in_character); }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_Destroy(JPC_CharacterVirtual *in_character)
+{
+    delete toJph(in_character);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
+                            float in_delta_time,
+                            const float in_gravity[3],
+                            const void *in_broad_phase_layer_filter,
+                            const void *in_object_layer_filter,
+                            const void *in_body_filter,
+                            JPC_TempAllocator *in_temp_allocator)
+{
+    const JPH::BroadPhaseLayerFilter broad_phase_layer_filter{};
+    const JPH::ObjectLayerFilter object_layer_filter{};
+    const JPH::BodyFilter body_filter{};
+
+    // TODO: Remove this once testing complete
+    JPH::RMat44 com = toJph(in_character)->GetCenterOfMassTransform();
+    toJph(in_character)->GetShape()->Draw(JPH::DebugRenderer::sInstance, com, JPH::Vec3::sReplicate(1.0f), JPH::Color::sGreen, false, true);
+
+    toJph(in_character)->Update(
+        in_delta_time,
+        loadVec3(in_gravity),
+        in_broad_phase_layer_filter ?
+        *static_cast<const JPH::BroadPhaseLayerFilter *>(in_broad_phase_layer_filter) : broad_phase_layer_filter,
+        in_object_layer_filter ?
+        *static_cast<const JPH::ObjectLayerFilter *>(in_object_layer_filter) : object_layer_filter,
+        in_body_filter ? *static_cast<const JPH::BodyFilter *>(in_body_filter) : body_filter,
+        { }, // TODO: Shape Filter
+        *reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterGroundState
+JPC_CharacterVirtual_GetGroundState(JPC_CharacterVirtual *in_character)
+{
+    return toJpc(toJph(in_character)->GetGroundState());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_UpdateGroundVelocity(JPC_CharacterVirtual *in_character)
+{
+    toJph(in_character)->UpdateGroundVelocity();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetGroundVelocity(const JPC_CharacterVirtual *in_character, float out_ground_velocity[3])
+{
+    storeVec3(out_ground_velocity, toJph(in_character)->GetGroundVelocity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetPosition(const JPC_CharacterVirtual *in_character, JPC_Real out_position[3])
+{
+    storeRVec3(out_position, toJph(in_character)->GetPosition());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetRotation(const JPC_CharacterVirtual *in_character, float out_rotation[4])
+{
+    storeVec4(out_rotation, toJph(in_character)->GetRotation().GetXYZW());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetLinearVelocity(const JPC_CharacterVirtual *in_character, float out_linear_velocity[3])
+{
+    storeVec3(out_linear_velocity, toJph(in_character)->GetLinearVelocity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_SetLinearVelocity(JPC_CharacterVirtual *in_character, const float in_linear_velocity[3])
+{
+    toJph(in_character)->SetLinearVelocity(loadVec3(in_linear_velocity));
+}

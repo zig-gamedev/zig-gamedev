@@ -612,6 +612,13 @@ pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
     mass_inertia_provided = c.JPC_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED,
 };
 
+pub const CharacterGroundState = enum(c.JPC_CharacterGroundState) {
+    on_ground = c.JPC_CHARACTER_GROUND_STATE_ON_GROUND,
+    on_steep_ground = c.JPC_CHARACTER_GROUND_STATE_ON_STEEP_GROUND,
+    not_supported = c.JPC_CHARACTER_GROUND_STATE_NOT_SUPPORTED,
+    in_air = c.JPC_CHARACTER_GROUND_STATE_IN_AIR,
+};
+
 pub const BodyCreationSettings = extern struct {
     position: [4]Real align(rvec_align) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     rotation: [4]f32 align(16) = .{ 0, 0, 0, 1 },
@@ -649,29 +656,48 @@ pub const BodyCreationSettings = extern struct {
     }
 };
 
-pub const CharacterVirtualSettings = extern struct {
-    up: [4]f32 align(16) = .{ 0, 1, 0, 0 }, // 4th element is ignored
-    supporting_volume:  [4]f32 align(16) = .{ 0, 1, 0, -1.0e10 }, // JPH::Plane - 4th element is used
-    max_slope_angle: f32 = std.math.degreesToRadians(f32, 50.0),
-    shape: ?*Shape = null,
+pub const CharacterBaseSettings = extern struct {
+    __header: VTableHeader = .{},
+    up: [4]f32 align(16), // 4th element is ignored
+    supporting_volume:  [4]f32 align(16), // JPH::Plane - 4th element is used
+    max_slope_angle: f32,
+    shape: *Shape, // must provide valid shape (such as the typical capsule)
 
-    mass: f32 = 70.0,
-    max_strength: f32 = 100.0,
-    shape_offset: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
-    back_face_mode: BackFaceMode = .collide_with_back_faces,
-    predictive_contact_distance: f32 = 0.1,
-    max_collision_iterations: u32 = 5,
-    max_constraint_iterations: u32 = 15,
-    min_time_remaining: f32 = 1.0e-4,
-    collision_tolerance: f32 = 1.0e-3,
-    character_padding: f32 = 0.02,
-    max_num_hits: u32 = 256,
-    hit_reduction_cos_max_angle: f32 = 0.999,
-    penetration_recovery_speed: f32 = 1.0,
+    comptime {
+        assert(@sizeOf(CharacterBaseSettings) == @sizeOf(c.JPC_CharacterBaseSettings));
+        assert(@offsetOf(CharacterBaseSettings, "up") == @offsetOf(c.JPC_CharacterBaseSettings, "up"));
+        assert(@offsetOf(CharacterBaseSettings, "shape") == @offsetOf(c.JPC_CharacterBaseSettings, "shape"));
+    }
+};
+
+pub const CharacterVirtualSettings = extern struct {
+    pub fn create() !*CharacterVirtualSettings {
+        const settings = c.JPC_CharacterVirtualSettings_Create();
+        if (settings == null) return error.FailedToCreateCharacterVirtualSettings;
+        return @as(*CharacterVirtualSettings, @ptrCast(settings));
+    }
+    pub fn release(settings: *CharacterVirtualSettings) void {
+        c.JPC_CharacterVirtualSettings_Release(@as(*c.JPC_CharacterVirtualSettings, @ptrCast(settings)));
+    }
+
+    base: CharacterBaseSettings,
+    mass: f32,
+    max_strength: f32,
+    shape_offset: [4]f32 align(16), // 4th element is ignored
+    back_face_mode: BackFaceMode,
+    predictive_contact_distance: f32,
+    max_collision_iterations: u32,
+    max_constraint_iterations: u32,
+    min_time_remaining: f32,
+    collision_tolerance: f32,
+    character_padding: f32,
+    max_num_hits: u32,
+    hit_reduction_cos_max_angle: f32,
+    penetration_recovery_speed: f32,
 
     comptime {
         assert(@sizeOf(CharacterVirtualSettings) == @sizeOf(c.JPC_CharacterVirtualSettings));
-        assert(@offsetOf(CharacterVirtualSettings, "up") == @offsetOf(c.JPC_CharacterVirtualSettings, "up"));
+        assert(@offsetOf(CharacterVirtualSettings, "base") == @offsetOf(c.JPC_CharacterVirtualSettings, "base"));
         assert(@offsetOf(CharacterVirtualSettings, "mass") == @offsetOf(c.JPC_CharacterVirtualSettings, "mass"));
         assert(@offsetOf(CharacterVirtualSettings, "max_num_hits") ==
             @offsetOf(c.JPC_CharacterVirtualSettings, "max_num_hits"));
@@ -2026,6 +2052,61 @@ pub const CharacterVirtual = opaque {
 
     pub fn destroy(character: *CharacterVirtual) void {
         c.JPC_CharacterVirtual_Destroy(@as(*c.JPC_CharacterVirtual, @ptrCast(character)));
+    }
+
+    pub fn update(
+        character: *CharacterVirtual,
+        delta_time: f32,
+        gravity: [3]f32,
+        args: struct {
+            broad_phase_layer_filter: ?*const BroadPhaseLayerFilter = null,
+            object_layer_filter: ?*const ObjectLayerFilter = null,
+            body_filter: ?*const BodyFilter = null,
+            // TODO: Shape Filter
+        },
+    ) void {
+        c.JPC_CharacterVirtual_Update(
+            @as(*c.JPC_CharacterVirtual, @ptrCast(character)),
+            delta_time,
+            &gravity,
+            args.broad_phase_layer_filter,
+            args.object_layer_filter,
+            args.body_filter,
+            @as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)),
+        );
+    }
+
+    pub fn updateGroundVelocity(character: *CharacterVirtual) void {
+        c.JPC_CharacterVirtual_UpdateGroundVelocity(@as(*c.JPC_CharacterVirtual, @ptrCast(character)));
+    }
+    pub fn getGroundVelocity(character: *const CharacterVirtual) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_CharacterVirtual_GetGroundVelocity(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &velocity);
+        return velocity;
+    }
+    pub fn getGroundState(character: *CharacterVirtual) CharacterGroundState {
+        return @enumFromInt(c.JPC_CharacterVirtual_GetGroundState(@as(*c.JPC_CharacterVirtual, @ptrCast(character))));
+    }
+
+    pub fn getPosition(character: *const CharacterVirtual) [3]Real {
+        var position: [3]Real = undefined;
+        c.JPC_CharacterVirtual_GetPosition(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &position);
+        return position;
+    }
+
+    pub fn getRotation(character: *const CharacterVirtual) [4]f32 {
+        var rotation: [4]f32 = undefined;
+        c.JPC_CharacterVirtual_GetRotation(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &rotation);
+        return rotation;
+    }
+
+    pub fn getLinearVelocity(character: *const CharacterVirtual) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_CharacterVirtual_GetLinearVelocity(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &velocity);
+        return velocity;
+    }
+    pub fn setLinearVelocity(character: *CharacterVirtual, velocity: [3]f32) void {
+        c.JPC_CharacterVirtual_SetLinearVelocity(@as(*c.JPC_CharacterVirtual, @ptrCast(character)), &velocity);
     }
 };
 //--------------------------------------------------------------------------------------------------

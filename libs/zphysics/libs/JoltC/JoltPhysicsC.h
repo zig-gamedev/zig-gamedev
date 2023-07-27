@@ -146,6 +146,15 @@ enum
     JPC_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED = 2
 };
 
+typedef enum JPC_CharacterGroundState
+{
+    JPC_CHARACTER_GROUND_STATE_ON_GROUND       = 0,
+    JPC_CHARACTER_GROUND_STATE_ON_STEEP_GROUND = 1,
+    JPC_CHARACTER_GROUND_STATE_NOT_SUPPORTED   = 2,
+    JPC_CHARACTER_GROUND_STATE_IN_AIR          = 3,
+    _JPC_CHARACTER_GROUND_FORCEU32             = 0x7fffffff
+} JPC_CharacterGroundState;
+
 typedef enum JPC_Activation
 {
     JPC_ACTIVATION_ACTIVATE      = 0,
@@ -369,14 +378,24 @@ typedef struct JPC_Body
     uint8_t                 flags;
 } JPC_Body;
 
-// NOTE: Needs to be kept in sync with JPH::CharacterVirtualSettings
-typedef struct JPC_CharacterVirtualSettings
+// NOTE: Needs to be kept in sync
+typedef struct JPC_CharacterBaseSettings
 {
+#   if defined(_MSC_VER)
+        const void* __vtable_header[1];
+#   else
+        const void* __vtable_header[2];
+#   endif
     alignas(16) float   up[4]; // 4th element is ignored
     alignas(16) float   supporting_volume[4];
     float               max_slope_angle;
     const JPC_Shape *   shape;
+} JPC_CharacterBaseSettings;
 
+// NOTE: Needs to be kept in sync
+typedef struct JPC_CharacterVirtualSettings
+{
+    JPC_CharacterBaseSettings base;
     float               mass;
     float               max_strength;
     alignas(16) float   shape_offset[4];
@@ -1740,6 +1759,16 @@ JPC_API bool
 JPC_BodyID_IsInvalid(JPC_BodyID in_body_id);
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_CharacterVirtualSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterVirtualSettings *
+JPC_CharacterVirtualSettings_Create();
+
+JPC_API void
+JPC_CharacterVirtualSettings_Release(JPC_CharacterVirtualSettings *in_settings);
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_CharacterVirtual
 //
 //--------------------------------------------------------------------------------------------------
@@ -1751,6 +1780,36 @@ JPC_CharacterVirtual_Create(const JPC_CharacterVirtualSettings *in_settings,
 
 JPC_API void
 JPC_CharacterVirtual_Destroy(JPC_CharacterVirtual *in_character);
+
+JPC_API void
+JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
+                            float in_delta_time,
+                            const float in_gravity[3],
+                            const void *in_broad_phase_layer_filter,
+                            const void *in_object_layer_filter,
+                            const void *in_body_filter,
+                            JPC_TempAllocator *in_temp_allocator);
+
+JPC_API void
+JPC_CharacterVirtual_UpdateGroundVelocity(JPC_CharacterVirtual *in_character);
+
+JPC_API void
+JPC_CharacterVirtual_GetGroundVelocity(const JPC_CharacterVirtual *in_character, float out_ground_velocity[3]);
+
+JPC_API JPC_CharacterGroundState
+JPC_CharacterVirtual_GetGroundState(JPC_CharacterVirtual *in_character);
+
+JPC_API void
+JPC_CharacterVirtual_GetPosition(const JPC_CharacterVirtual *in_character, JPC_Real out_position[3]);
+
+JPC_API void
+JPC_CharacterVirtual_GetRotation(const JPC_CharacterVirtual *in_character, float out_rotation[4]);
+
+JPC_API void
+JPC_CharacterVirtual_GetLinearVelocity(const JPC_CharacterVirtual *in_character, float out_linear_velocity[3]);
+
+JPC_API void
+JPC_CharacterVirtual_SetLinearVelocity(JPC_CharacterVirtual *in_character, const float in_linear_velocity[3]);
 //--------------------------------------------------------------------------------------------------
 #ifdef __cplusplus
 }
