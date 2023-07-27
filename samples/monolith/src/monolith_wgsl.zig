@@ -18,8 +18,8 @@ const common =
 \\  }
 \\  @group(0) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
 \\
-\\  let pi = 3.1415926535897932384626433832795;
-\\  let two_pi = 2.0 * pi;
+\\  const pi = 3.1415926535897932384626433832795;
+\\  const two_pi = 2.0 * pi;
 \\
 \\  fn radians(degrees: f32) -> f32 {
 \\      return degrees * pi / 180.0;
@@ -104,7 +104,7 @@ pub const debug = struct {
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
     \\  }
-    \\  @stage(vertex) fn main(
+    \\  @vertex fn main(
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
     \\  ) -> VertexOut {
@@ -116,7 +116,7 @@ pub const debug = struct {
     \\  }
     ;
     pub const fs = common ++
-    \\  @stage(fragment) fn main(
+    \\  @fragment fn main(
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
     \\  ) -> @location(0) vec4<f32> {
@@ -172,7 +172,7 @@ pub const mesh = struct {
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
     \\  }
-    \\  @stage(vertex) fn main(
+    \\  @vertex fn main(
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
     \\  ) -> VertexOut {
@@ -184,7 +184,7 @@ pub const mesh = struct {
     \\  }
     ;
     pub const fs = common ++
-    \\  @stage(fragment) fn main(
+    \\  @fragment fn main(
     \\      @location(0) position: vec3<f32>,
     \\      @location(1) normal: vec3<f32>,
     \\  ) -> @location(0) vec4<f32> {

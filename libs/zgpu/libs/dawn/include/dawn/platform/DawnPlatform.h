@@ -93,6 +93,22 @@ class DAWN_PLATFORM_EXPORT Platform {
                                    const uint64_t* argValues,
                                    unsigned char flags);
 
+    // Invoked to add a UMA histogram count-based sample
+    virtual void HistogramCustomCounts(const char* name,
+                                       int sample,
+                                       int min,
+                                       int max,
+                                       int bucketCount);
+
+    // Invoked to add a UMA histogram enumeration sample
+    virtual void HistogramEnumeration(const char* name, int sample, int boundaryValue);
+
+    // Invoked to add a UMA histogram sparse sample
+    virtual void HistogramSparse(const char* name, int sample);
+
+    // Invoked to add a UMA histogram boolean sample
+    virtual void HistogramBoolean(const char* name, bool sample);
+
     // The returned CachingInterface is expected to outlive the device which uses it to persistently
     // cache objects.
     virtual CachingInterface* GetCachingInterface();

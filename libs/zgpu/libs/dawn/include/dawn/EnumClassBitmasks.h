@@ -53,7 +53,7 @@ struct BoolConvertible {
     using Integral = typename std::underlying_type<T>::type;
 
     // NOLINTNEXTLINE(runtime/explicit)
-    constexpr BoolConvertible(Integral value) : value(value) {}
+    explicit constexpr BoolConvertible(Integral value) : value(value) {}
     constexpr operator bool() const { return value != 0; }
     constexpr operator T() const { return static_cast<T>(value); }
 
@@ -74,8 +74,8 @@ template <
 constexpr BoolConvertible<typename LowerBitmask<T1>::type> operator|(T1 left, T2 right) {
     using T = typename LowerBitmask<T1>::type;
     using Integral = typename std::underlying_type<T>::type;
-    return static_cast<Integral>(LowerBitmask<T1>::Lower(left)) |
-           static_cast<Integral>(LowerBitmask<T2>::Lower(right));
+    return BoolConvertible<T>(static_cast<Integral>(LowerBitmask<T1>::Lower(left)) |
+                              static_cast<Integral>(LowerBitmask<T2>::Lower(right)));
 }
 
 template <
@@ -85,8 +85,8 @@ template <
 constexpr BoolConvertible<typename LowerBitmask<T1>::type> operator&(T1 left, T2 right) {
     using T = typename LowerBitmask<T1>::type;
     using Integral = typename std::underlying_type<T>::type;
-    return static_cast<Integral>(LowerBitmask<T1>::Lower(left)) &
-           static_cast<Integral>(LowerBitmask<T2>::Lower(right));
+    return BoolConvertible<T>(static_cast<Integral>(LowerBitmask<T1>::Lower(left)) &
+                              static_cast<Integral>(LowerBitmask<T2>::Lower(right)));
 }
 
 template <
@@ -96,15 +96,15 @@ template <
 constexpr BoolConvertible<typename LowerBitmask<T1>::type> operator^(T1 left, T2 right) {
     using T = typename LowerBitmask<T1>::type;
     using Integral = typename std::underlying_type<T>::type;
-    return static_cast<Integral>(LowerBitmask<T1>::Lower(left)) ^
-           static_cast<Integral>(LowerBitmask<T2>::Lower(right));
+    return BoolConvertible<T>(static_cast<Integral>(LowerBitmask<T1>::Lower(left)) ^
+                              static_cast<Integral>(LowerBitmask<T2>::Lower(right)));
 }
 
 template <typename T1>
 constexpr BoolConvertible<typename LowerBitmask<T1>::type> operator~(T1 t) {
     using T = typename LowerBitmask<T1>::type;
     using Integral = typename std::underlying_type<T>::type;
-    return ~static_cast<Integral>(LowerBitmask<T1>::Lower(t));
+    return BoolConvertible<T>(~static_cast<Integral>(LowerBitmask<T1>::Lower(t)));
 }
 
 template <

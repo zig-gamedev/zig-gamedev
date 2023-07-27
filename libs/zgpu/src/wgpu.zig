@@ -20,6 +20,7 @@ pub const AlphaMode = enum(u32) {
 };
 
 pub const BackendType = enum(u32) {
+    undef,
     nul,
     webgpu,
     d3d11,
@@ -63,11 +64,20 @@ pub const BufferBindingType = enum(u32) {
 
 pub const BufferMapAsyncStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
+    validation_error = 0x00000001,
     unknown = 0x00000002,
     device_lost = 0x00000003,
     destroyed_before_callback = 0x00000004,
     unmapped_before_callback = 0x00000005,
+    mappingAlreadyPending = 0x00000006,
+    offset_out_of_range = 0x00000007,
+    size_out_of_range = 0x00000008,
+};
+
+pub const BufferMapState = enum(u32) {
+    unmapped = 0x00000000,
+    pending = 0x00000001,
+    mapped = 0x00000002,
 };
 
 pub const CompareFunction = enum(u32) {
@@ -102,10 +112,18 @@ pub const ComputePassTimestampLocation = enum(u32) {
 
 pub const CreatePipelineAsyncStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
-    device_lost = 0x00000002,
-    device_destroyed = 0x00000003,
-    unknown = 0x00000004,
+    validation_error = 0x00000001,
+    internal_error = 0x00000002,
+    device_lost = 0x00000003,
+    device_destroyed = 0x00000004,
+    unknown = 0x00000005,
+};
+
+pub const ExternalTextureRotation = enum(u32) {
+    rotate_0_degrees = 0x00000000,
+    rotate_90_degrees = 0x00000001,
+    rotate_180_degrees = 0x00000002,
+    rotate_270_degrees = 0x00000003,
 };
 
 pub const CullMode = enum(u32) {
@@ -146,6 +164,8 @@ pub const FeatureName = enum(u32) {
     indirect_first_instance = 0x00000008,
     shader_f16 = 0x00000009,
     rg11_b10_ufloat_renderable = 0x0000000A,
+    bgra8_unorm_storage = 0x0000000B,
+    float32_filterable = 0x0000000C,
     depth_clamping = 0x000003E8,
     dawn_shader_float16 = 0x000003E9,
     dawn_internal_usages = 0x000003EA,
@@ -153,9 +173,18 @@ pub const FeatureName = enum(u32) {
     dawn_native = 0x000003EC,
     chromium_experimental_dp4a = 0x000003ED,
     timestamp_query_inside_passes = 0x000003EE,
+    implicit_device_synchronization = 0x000003EF,
+    surface_capabilities = 0x000003F0,
+    transient_attachments = 0x000003F1,
+    msaa_render_to_single_sampled = 0x000003F2,
 };
 
 pub const FilterMode = enum(u32) {
+    nearest = 0x00000000,
+    linear = 0x00000001,
+};
+
+pub const MipmapFilterMode = enum(u32) {
     nearest = 0x00000000,
     linear = 0x00000001,
 };
@@ -290,12 +319,17 @@ pub const StructType = enum(u32) {
     external_texture_binding_layout = 0x0000000D,
     surface_descriptor_from_windows_swap_chain_panel = 0x0000000E,
     dawn_texture_internal_usage_descriptor = 0x000003E8,
-    primitive_depth_clamping_state = 0x000003E9,
-    dawn_toggles_device_descriptor = 0x000003EA,
     dawn_encoder_internal_usage_descriptor = 0x000003EB,
     dawn_instance_descriptor = 0x000003EC,
     dawn_cache_device_descriptor = 0x000003ED,
     dawn_adapter_properties_power_preference = 0x000003EE,
+    dawn_buffer_descriptor_error_info_from_wire_client = 0x000003EF,
+    dawn_toggles_descriptor = 0x000003F0,
+    dawn_shader_module_spirv_options_descriptor = 0x000003F1,
+    request_adapter_options_luid = 0x000003F2,
+    request_adapter_options_get_gl_proc = 0x000003F3,
+    dawn_multisample_state_render_to_single_sampled = 0x000003F4,
+    dawn_render_pass_color_attachment_render_to_single_sampled = 0x000003F5,
 };
 
 pub const SamplerBindingType = enum(u32) {
@@ -333,13 +367,6 @@ pub const TextureAspect = enum(u32) {
     depth_only = 0x00000002,
     plane0_only = 0x00000003,
     plane1_only = 0x00000004,
-};
-
-pub const TextureComponentType = enum(u32) {
-    float = 0x00000000,
-    sint = 0x00000001,
-    uint = 0x00000002,
-    depth_comparison = 0x00000003,
 };
 
 pub const TextureDimension = enum(u32) {
@@ -549,7 +576,7 @@ pub const TextureUsage = packed struct(u32) {
     texture_binding: bool = false,
     storage_binding: bool = false,
     render_attachment: bool = false,
-    present: bool = false,
+    transient_attachment: bool = false,
     _padding: u26 = 0,
 };
 
@@ -573,6 +600,7 @@ pub const AdapterProperties = extern struct {
     driver_description: [*:0]const u8,
     adapter_type: AdapterType,
     backend_type: BackendType,
+    compatibility_mode: bool,
 };
 
 pub const BindGroupEntry = extern struct {
@@ -589,7 +617,7 @@ pub const BindGroupDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
     layout: BindGroupLayout,
-    entry_count: u32,
+    entry_count: usize,
     entries: ?[*]const BindGroupEntry,
 };
 
@@ -632,7 +660,7 @@ pub const BindGroupLayoutEntry = extern struct {
 pub const BindGroupLayoutDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    entry_count: u32,
+    entry_count: usize,
     entries: ?[*]const BindGroupLayoutEntry,
 };
 
@@ -659,7 +687,7 @@ pub const ProgrammableStageDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     module: ShaderModule,
     entry_point: [*:0]const u8,
-    constant_count: u32 = 0,
+    constant_count: usize = 0,
     constants: ?[*]const ConstantEntry = null,
 };
 
@@ -682,12 +710,14 @@ pub const ExternalTextureDescriptor = extern struct {
     src_transfer_function_parameters: [*]const f32,
     dst_transfer_function_parameters: [*]const f32,
     gamut_conversion_matrix: [*]const f32,
+    flip_y: bool,
+    rotation: ExternalTextureRotation,
 };
 
 pub const PipelineLayoutDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    bind_group_layout_count: u32,
+    bind_group_layout_count: usize,
     bind_group_layouts: ?[*]const BindGroupLayout,
 };
 
@@ -697,13 +727,13 @@ pub const QuerySetDescriptor = extern struct {
     query_type: QueryType,
     count: u32,
     pipeline_statistics: ?[*]const PipelineStatisticName,
-    pipeline_statistics_count: u32,
+    pipeline_statistics_count: usize,
 };
 
 pub const RenderBundleEncoderDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    color_formats_count: u32,
+    color_formats_count: usize,
     color_formats: ?[*]const TextureFormat,
     depth_stencil_format: TextureFormat,
     sample_count: u32,
@@ -720,7 +750,7 @@ pub const VertexAttribute = extern struct {
 pub const VertexBufferLayout = extern struct {
     array_stride: u64,
     step_mode: VertexStepMode = .vertex,
-    attribute_count: u32,
+    attribute_count: usize,
     attributes: [*]const VertexAttribute,
 };
 
@@ -728,9 +758,9 @@ pub const VertexState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     module: ShaderModule,
     entry_point: [*:0]const u8,
-    constant_count: u32 = 0,
+    constant_count: usize = 0,
     constants: ?[*]const ConstantEntry = null,
-    buffer_count: u32 = 0,
+    buffer_count: usize = 0,
     buffers: ?[*]const VertexBufferLayout = null,
 };
 
@@ -756,9 +786,9 @@ pub const FragmentState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     module: ShaderModule,
     entry_point: [*:0]const u8,
-    constant_count: u32 = 0,
+    constant_count: usize = 0,
     constants: ?[*]const ConstantEntry = null,
-    target_count: u32 = 0,
+    target_count: usize = 0,
     targets: ?[*]const ColorTargetState = null,
 };
 
@@ -817,7 +847,7 @@ pub const SamplerDescriptor = extern struct {
     address_mode_w: AddressMode = .clamp_to_edge,
     mag_filter: FilterMode = .nearest,
     min_filter: FilterMode = .nearest,
-    mipmap_filter: FilterMode = .nearest,
+    mipmap_filter: MipmapFilterMode = .nearest,
     lod_min_clamp: f32 = 0.0,
     lod_max_clamp: f32 = 32.0,
     compare: CompareFunction = .undef,
@@ -831,7 +861,7 @@ pub const ShaderModuleDescriptor = extern struct {
 
 pub const ShaderModuleWgslDescriptor = extern struct {
     chain: ChainedStruct,
-    source: [*:0]const u8,
+    code: [*:0]const u8,
 };
 
 pub const SwapChainDescriptor = extern struct {
@@ -842,7 +872,6 @@ pub const SwapChainDescriptor = extern struct {
     width: u32,
     height: u32,
     present_mode: PresentMode,
-    implementation: u64,
 };
 
 pub const Extent2D = extern struct {
@@ -865,7 +894,7 @@ pub const TextureDescriptor = extern struct {
     format: TextureFormat,
     mip_level_count: u32 = 1,
     sample_count: u32 = 1,
-    view_format_count: u32 = 0,
+    view_format_count: usize = 0,
     view_formats: ?[*]const TextureFormat = null,
 };
 
@@ -875,6 +904,7 @@ pub const Limits = extern struct {
     max_texture_dimension_3d: u32,
     max_texture_array_layers: u32,
     max_bind_groups: u32,
+    max_bind_groups_plus_vertex_buffers: u32,
     max_bindings_per_bind_group: u32,
     max_dynamic_uniform_buffers_per_pipeline_layout: u32,
     max_dynamic_storage_buffers_per_pipeline_layout: u32,
@@ -892,6 +922,9 @@ pub const Limits = extern struct {
     max_vertex_attributes: u32,
     max_vertex_buffer_array_stride: u32,
     max_inter_stage_shader_components: u32,
+    max_inter_stage_shader_variables: u32,
+    max_color_attachments: u32,
+    max_color_attachment_bytes_per_sample: u32,
     max_compute_workgroup_storage_size: u32,
     max_compute_invocations_per_workgroup: u32,
     max_compute_workgroup_size_x: u32,
@@ -915,12 +948,15 @@ pub const QueueDescription = extern struct {
     label: ?[*:0]const u8 = null,
 };
 
+// Can be chained in InstanceDescriptor
+// Can be chained in RequestAdapterOptions
+// Can be chained in DeviceDescriptor
 pub const DawnTogglesDeviceDescriptor = extern struct {
     chain: ChainedStruct,
-    force_enabled_toggles_count: u32 = 0,
-    force_enabled_toggles: ?[*]const [*:0]const u8 = null,
-    force_disabled_toggles_count: u32 = 0,
-    force_disabled_toggles: ?[*]const [*:0]const u8 = null,
+    enabled_toggles_count: usize = 0,
+    enabled_toggles: ?[*]const [*:0]const u8 = null,
+    disabled_toggles_count: usize = 0,
+    disabled_toggles: ?[*]const [*:0]const u8 = null,
 };
 
 pub const DawnAdapterPropertiesPowerPreference = extern struct {
@@ -931,10 +967,12 @@ pub const DawnAdapterPropertiesPowerPreference = extern struct {
 pub const DeviceDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    required_features_count: u32 = 0,
+    required_features_count: usize = 0,
     required_features: ?[*]const FeatureName = null,
     required_limits: ?[*]const RequiredLimits = null,
     default_queue: QueueDescription = .{},
+    device_lost_callback: ?DeviceLostCallback = null,
+    device_lost_user_data: ?*anyopaque = null,
 };
 
 pub const SurfaceDescriptor = extern struct {
@@ -946,7 +984,9 @@ pub const RequestAdapterOptions = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     compatible_surface: ?Surface = null,
     power_preference: PowerPreference,
+    backend_type: BackendType = .undef,
     force_fallback_adapter: bool = false,
+    compatibility_mode: bool = false,
 };
 
 pub const ComputePassTimestampWrite = extern struct {
@@ -964,7 +1004,7 @@ pub const RenderPassTimestampWrite = extern struct {
 pub const ComputePassDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    timestamp_write_count: u32,
+    timestamp_write_count: usize,
     timestamp_writes: ?[*]const ComputePassTimestampWrite,
 };
 
@@ -976,16 +1016,11 @@ pub const Color = extern struct {
 };
 
 pub const RenderPassColorAttachment = extern struct {
-    view: TextureView,
+    next_in_chain: ?*const ChainedStruct = null,
+    view: ?TextureView,
     resolve_target: ?TextureView = null,
     load_op: LoadOp,
     store_op: StoreOp,
-    clear_color: Color = .{
-        .r = std.math.nan_f64,
-        .g = std.math.nan_f64,
-        .b = std.math.nan_f64,
-        .a = std.math.nan_f64,
-    },
     clear_value: Color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 0.0 },
 };
 
@@ -993,12 +1028,10 @@ pub const RenderPassDepthStencilAttachment = extern struct {
     view: TextureView,
     depth_load_op: LoadOp = .undef,
     depth_store_op: StoreOp = .undef,
-    clear_depth: f32 = std.math.nan_f32,
     depth_clear_value: f32 = 0.0,
     depth_read_only: bool = false,
     stencil_load_op: LoadOp = .undef,
     stencil_store_op: StoreOp = .undef,
-    clear_stencil: u32 = 0,
     stencil_clear_value: u32 = 0,
     stencil_read_only: bool = false,
 };
@@ -1006,11 +1039,11 @@ pub const RenderPassDepthStencilAttachment = extern struct {
 pub const RenderPassDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    color_attachment_count: u32,
+    color_attachment_count: usize,
     color_attachments: ?[*]const RenderPassColorAttachment,
     depth_stencil_attachment: ?*const RenderPassDepthStencilAttachment = null,
     occlusion_query_set: ?QuerySet = null,
-    timestamp_write_count: u32 = 0,
+    timestamp_write_count: usize = 0,
     timestamp_writes: ?[*]const RenderPassTimestampWrite = null,
 };
 
@@ -1050,6 +1083,7 @@ pub const ImageCopyExternalTexture = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     external_texture: ExternalTexture,
     origin: Origin3D,
+    natural_size: Extent2D,
 };
 
 pub const CommandBufferDescriptor = extern struct {
@@ -1089,11 +1123,14 @@ pub const CompilationMessage = extern struct {
     line_pos: u64,
     offset: u64,
     length: u64,
+    utf16_line_pos: u64,
+    utf16_offset: u64,
+    utf16_length: u64,
 };
 
 pub const CompilationInfo = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    message_count: u32,
+    message_count: usize,
     messages: ?[*]const CompilationMessage,
 };
 

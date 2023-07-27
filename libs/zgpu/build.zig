@@ -77,6 +77,7 @@ pub const Package = struct {
         exe.addIncludePath(thisDir() ++ "/src");
 
         exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
+        exe.addCSourceFile(thisDir() ++ "/src/dawn_proc.c", &.{""});
     }
 };
 

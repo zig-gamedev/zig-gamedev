@@ -21,20 +21,21 @@
 // TODO(tint:88): When implementing support for an install target, all of these
 //                headers will need to be moved to include/tint/.
 
-#include "src/tint/demangler.h"
+#include "src/tint/ast/transform/first_index_offset.h"
+#include "src/tint/ast/transform/renamer.h"
+#include "src/tint/ast/transform/single_entry_point.h"
+#include "src/tint/ast/transform/substitute_override.h"
+#include "src/tint/ast/transform/vertex_pulling.h"
 #include "src/tint/diagnostic/printer.h"
 #include "src/tint/inspector/inspector.h"
 #include "src/tint/reader/reader.h"
-#include "src/tint/sem/type_manager.h"
-#include "src/tint/transform/binding_remapper.h"
-#include "src/tint/transform/first_index_offset.h"
 #include "src/tint/transform/manager.h"
-#include "src/tint/transform/multiplanar_external_texture.h"
-#include "src/tint/transform/renamer.h"
-#include "src/tint/transform/robustness.h"
-#include "src/tint/transform/single_entry_point.h"
-#include "src/tint/transform/substitute_override.h"
-#include "src/tint/transform/vertex_pulling.h"
+#include "src/tint/type/manager.h"
+#include "src/tint/utils/unicode.h"
+#include "src/tint/writer/array_length_from_uniform_options.h"
+#include "src/tint/writer/binding_point.h"
+#include "src/tint/writer/binding_remapper_options.h"
+#include "src/tint/writer/external_texture_options.h"
 #include "src/tint/writer/flatten_bindings.h"
 #include "src/tint/writer/writer.h"
 
@@ -47,7 +48,6 @@
 #endif  // TINT_BUILD_WGSL_READER
 
 #if TINT_BUILD_SPV_WRITER
-#include "spirv-tools/libspirv.hpp"
 #include "src/tint/writer/spirv/generator.h"
 #endif  // TINT_BUILD_SPV_WRITER
 

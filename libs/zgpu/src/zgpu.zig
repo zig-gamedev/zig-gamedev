@@ -159,9 +159,9 @@ pub const GraphicsContext = struct {
 
             const toggles = [_][*:0]const u8{"skip_validation"};
             const dawn_toggles = wgpu.DawnTogglesDeviceDescriptor{
-                .chain = .{ .next = null, .struct_type = .dawn_toggles_device_descriptor },
-                .force_enabled_toggles_count = toggles.len,
-                .force_enabled_toggles = &toggles,
+                .chain = .{ .next = null, .struct_type = .dawn_toggles_descriptor },
+                .enabled_toggles_count = toggles.len,
+                .enabled_toggles = &toggles,
             };
 
             var response = Response{};
@@ -198,7 +198,6 @@ pub const GraphicsContext = struct {
             .width = @as(u32, @intCast(framebuffer_size[0])),
             .height = @as(u32, @intCast(framebuffer_size[1])),
             .present_mode = .fifo,
-            .implementation = 0,
         };
         const swapchain = device.createSwapChain(surface, swapchain_descriptor);
         errdefer swapchain.release();
@@ -1222,7 +1221,7 @@ pub fn createWgslShaderModule(
 ) wgpu.ShaderModule {
     const wgsl_desc = wgpu.ShaderModuleWgslDescriptor{
         .chain = .{ .next = null, .struct_type = .shader_module_wgsl_descriptor },
-        .source = source,
+        .code = source,
     };
     const desc = wgpu.ShaderModuleDescriptor{
         .next_in_chain = @as(*const wgpu.ChainedStruct, @ptrCast(&wgsl_desc)),
@@ -1288,7 +1287,7 @@ pub const SamplerInfo = struct {
     address_mode_w: wgpu.AddressMode = .repeat,
     mag_filter: wgpu.FilterMode = .nearest,
     min_filter: wgpu.FilterMode = .nearest,
-    mipmap_filter: wgpu.FilterMode = .nearest,
+    mipmap_filter: wgpu.MipmapFilterMode = .nearest,
     lod_min_clamp: f32 = 0.0,
     lod_max_clamp: f32 = 0.0,
     compare: wgpu.CompareFunction = .undef,
