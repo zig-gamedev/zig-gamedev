@@ -200,6 +200,7 @@
 // matFromQuat(quat: Quat) Mat
 // matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat
 // matFromRollPitchYawV(angles: Vec) Mat
+// matFromArr(arr: [16]f32) Mat
 //
 // loadMat(mem: []const f32) Mat
 // loadMat43(mem: []const f32) Mat
@@ -2089,6 +2090,15 @@ pub fn identity() Mat {
         };
     };
     return static.identity;
+}
+
+pub fn matFromArr(arr: [16]f32) Mat {
+    return Mat{
+        f32x4(arr[0], arr[1], arr[2], arr[3]),
+        f32x4(arr[4], arr[5], arr[6], arr[7]),
+        f32x4(arr[8], arr[9], arr[10], arr[11]),
+        f32x4(arr[12], arr[13], arr[14], arr[15]),
+    };
 }
 
 fn mulRetType(comptime Ta: type, comptime Tb: type) type {
