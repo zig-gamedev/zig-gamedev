@@ -2099,6 +2099,9 @@ pub const CharacterVirtual = opaque {
         c.JPC_CharacterVirtual_GetRotation(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &rotation);
         return rotation;
     }
+    pub fn setRotation(character: *CharacterVirtual, rotation: [4]f32) void {
+        c.JPC_CharacterVirtual_SetRotation(@as(*c.JPC_CharacterVirtual, @ptrCast(character)), &rotation);
+    }
 
     pub fn getLinearVelocity(character: *const CharacterVirtual) [3]f32 {
         var velocity: [3]f32 = undefined;

@@ -2626,11 +2626,6 @@ JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
     const JPH::BroadPhaseLayerFilter broad_phase_layer_filter{};
     const JPH::ObjectLayerFilter object_layer_filter{};
     const JPH::BodyFilter body_filter{};
-
-    // TODO: Remove this once testing complete
-    JPH::RMat44 com = toJph(in_character)->GetCenterOfMassTransform();
-    toJph(in_character)->GetShape()->Draw(JPH::DebugRenderer::sInstance, com, JPH::Vec3::sReplicate(1.0f), JPH::Color::sGreen, false, true);
-
     toJph(in_character)->Update(
         in_delta_time,
         loadVec3(in_gravity),
@@ -2671,6 +2666,12 @@ JPC_API void
 JPC_CharacterVirtual_GetRotation(const JPC_CharacterVirtual *in_character, float out_rotation[4])
 {
     storeVec4(out_rotation, toJph(in_character)->GetRotation().GetXYZW());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_SetRotation(JPC_CharacterVirtual *in_character, const float in_rotation[4])
+{
+    toJph(in_character)->SetRotation(JPH::Quat(loadVec4(in_rotation)));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
