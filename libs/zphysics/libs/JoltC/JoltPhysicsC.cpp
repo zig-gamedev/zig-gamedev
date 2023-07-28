@@ -2305,7 +2305,7 @@ JPC_Body_GetWorldSpaceBounds(const JPC_Body *in_body, float out_min[3], float ou
 {
     const JPH::AABox& aabb = toJph(in_body)->GetWorldSpaceBounds();
     storeVec3(out_min, aabb.mMin);
-    storeVec3(out_min, aabb.mMax);
+    storeVec3(out_max, aabb.mMax);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_MotionProperties *
