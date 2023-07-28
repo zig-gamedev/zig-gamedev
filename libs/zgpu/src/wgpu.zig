@@ -2110,7 +2110,7 @@ pub const Queue = *opaque {
     pub inline fn writeBuffer(
         queue: Queue,
         buffer: Buffer,
-        buffer_offset: u64,
+        buffer_offset: usize,
         comptime T: type,
         data: []const T,
     ) void {
@@ -2119,7 +2119,7 @@ pub const Queue = *opaque {
             buffer,
             buffer_offset,
             @as(*const anyopaque, @ptrCast(data.ptr)),
-            @as(u64, @intCast(data.len)) * @sizeOf(T),
+            data.len * @sizeOf(T),
         );
     }
     extern fn wgpuQueueWriteBuffer(
@@ -2127,7 +2127,7 @@ pub const Queue = *opaque {
         buffer: Buffer,
         buffer_offset: u64,
         data: *const anyopaque,
-        size: u64,
+        size: usize,
     ) void;
 
     pub inline fn writeTexture(
@@ -2151,7 +2151,7 @@ pub const Queue = *opaque {
         queue: Queue,
         destination: *const ImageCopyTexture,
         data: *const anyopaque,
-        data_size: u64,
+        data_size: usize,
         data_layout: *const TextureDataLayout,
         write_size: *const Extent3D,
     ) void;
@@ -2805,3 +2805,11 @@ pub const TextureView = *opaque {
     }
     extern fn wgpuTextureViewRelease(texture_view: TextureView) void;
 };
+
+pub const InstanceDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+};
+pub inline fn createInstance(desc : InstanceDescriptor) Instance {
+    return wgpuCreateInstance(&desc);
+}
+extern fn wgpuCreateInstance(desc : *const InstanceDescriptor) Instance;

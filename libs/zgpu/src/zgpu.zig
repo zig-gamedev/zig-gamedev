@@ -89,14 +89,14 @@ pub const GraphicsContext = struct {
             },
         };
 
-        dawnProcSetProcs(dnGetProcs());
+        if (!emscripten) dawnProcSetProcs(dnGetProcs());
 
-        const native_instance = dniCreate();
-        errdefer dniDestroy(native_instance);
+        const native_instance = if (!emscripten) dniCreate();
+        errdefer if (!emscripten) dniDestroy(native_instance);
 
-        dniDiscoverDefaultAdapters(native_instance);
+        if (!emscripten) dniDiscoverDefaultAdapters(native_instance);
 
-        const instance = dniGetWgpuInstance(native_instance);
+        const instance = if (emscripten) wgpu.createInstance(.{}) else dniGetWgpuInstance(native_instance);
 
         const adapter = adapter: {
             const Response = struct {
@@ -225,7 +225,7 @@ pub const GraphicsContext = struct {
 
         const gctx = try allocator.create(GraphicsContext);
         gctx.* = .{
-            .native_instance = native_instance,
+            .native_instance = if (emscripten) null else native_instance,
             .instance = instance,
             .device = device,
             .queue = device.getQueue(),
@@ -281,7 +281,7 @@ pub const GraphicsContext = struct {
         gctx.swapchain.release();
         gctx.queue.release();
         gctx.device.release();
-        dniDestroy(gctx.native_instance);
+        if (!emscripten) dniDestroy(gctx.native_instance);
         allocator.destroy(gctx);
     }
 
@@ -1087,22 +1087,6 @@ extern fn dnGetProcs() DawnProcsTable;
 extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
 
 extern fn emscripten_sleep(ms: u32) void;
-
-pub usingnamespace if (emscripten) struct {
-    pub export fn dniCreate() DawnNativeInstance {
-        return @ptrFromInt(1); // just any dummy value
-    }
-    pub export fn dniDestroy(_: DawnNativeInstance) void {}
-    pub export fn dniGetWgpuInstance(_: DawnNativeInstance) wgpu.Instance {
-        return @ptrFromInt(0); //  js `_wgpuInstanceRequestAdapter` asserts that instance is 0
-    }
-    pub export fn dniDiscoverDefaultAdapters(_: DawnNativeInstance) void {}
-    pub export fn dnGetProcs() DawnProcsTable {
-        return @ptrFromInt(0);
-    }
-    pub export fn dawnProcSetProcs(_: DawnProcsTable) void {}
-
-} else struct {};
 
 /// Helper to create a buffer BindGroupLayoutEntry.
 pub fn bufferEntry(

@@ -334,7 +334,7 @@ static void SafeRelease(FrameResources& res)
 static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(const char* source_data) {
     WGPUShaderModuleWGSLDescriptor wgsl_desc = {};
     wgsl_desc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    wgsl_desc.source = source_data;
+    wgsl_desc.code = source_data;
 
     WGPUShaderModuleDescriptor desc = {};
     desc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(&wgsl_desc);
