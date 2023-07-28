@@ -14,9 +14,11 @@ zig build triangle_wgpu_emscripten-run
 
 #### Compile
 ```bash
-zig build triangle_wgpu_emscripten -Dtarget=wasm32-emscripten
+zig build triangle_wgpu_emscripten -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast
+# or all esmcripten supported samples 
+zig build -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast
 ```
-See output under `zig-out\www\triangle_wgpu_emscripten`. It should contain:
+See output under `zig-out\web\triangle_wgpu_emscripten`. It should contain:
 * index.html
 * index.js
 * index.wasm
@@ -38,12 +40,12 @@ Didn't work on:
 
 * Instead of compiling as executable, compile to static library and link it with emscripten to get final wasm and accompanying `html` and `js`. See root `build.zig` and `linkEmscripten()`.
 * Add `zglfw.ClientApi.no_api` when creating window, otherwise emscripten will create webgl context that won't work with webgpu.
-* Override default logger to emscripten console commands. Zig std does not have implementaion for freestanding target. Emscripten can provide posix dummy file system, stdin/stdout so it might work otherwise. But even then it might not be recomended due to generated file-size etc.
+* Override default logger to emscripten console commands. Zig std does not have implementation for freestanding target. Emscripten can provide posix dummy file system, stdin/stdout so it might work otherwise. But even then it might not be recommended due to generated file-size etc.
 * Don't use GeneralPurposeAllocator - all allocations will fail. Currently easiest is to compile with emscripten emmaloc and use its interface to get memory from system.  
 Otherwise it should be possible to export custom malloc/free interface to emscripten but not has been investigated.  
 * WGSL changes/deprecated features: use `@vertex` instead of `@stage(vertex)` etc. Natively dawn doesn't seem to enforce these, but browser won't compile deprecated shader stuff.
-* Using main loop is not recomended. Refactor your code to instead use `requestAnimationFrame` with callback.
-* On each animation frame you MUST check for `gctx.canRender()` for robustness. And skip frame if it returns `false`. It is because `submit` in zgpu can run out of uniform buffers. On native platforms it spins waiting for buffer to free up. This is not possible on web because requestAnimationFrame should not block but return for other system callbacks to be fired. On my system mapAsync in browser runs much slower and can consume all 8(default) buffers. Usually by time next frame starts buffers are ready, but it requires calling canRender(). I have not cought situation where frame needs to be skipped with 8 buffers, but behaviour can be easly tested by reducing buffer count to 4.
+* Using main loop is not recommended. Refactor your code to instead use `requestAnimationFrame` with callback.
+* On each animation frame you MUST check for `gctx.canRender()` for robustness. And skip frame if it returns `false`. It is because `submit` in zgpu can run out of uniform buffers. On native platforms it spins waiting for buffer to free up. This is not possible on web because requestAnimationFrame should not block but return for other system callbacks to be fired. On my system mapAsync in browser runs much slower and can consume all 8(default) buffers in debug. Usually by time next frame starts buffers are ready, but it requires calling canRender(). I have not caught situation where frame needs to be skipped with 8 buffers, but behavior can be easily tested by reducing buffer count to 4.
 * When using custom html shell you might need to resize frame buffer from js side. Glfw glue wont fire events on dom size changes just framebuffer resize. Required js sample code to keep native framebuffer size:
 
     ```js
