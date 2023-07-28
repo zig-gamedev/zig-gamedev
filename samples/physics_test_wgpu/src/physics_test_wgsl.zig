@@ -19,7 +19,7 @@ pub const vs = common ++
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) barycentrics: vec3<f32>,
 \\  }
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @builtin(vertex_index) vertex_index: u32,
@@ -38,7 +38,7 @@ pub const vs = common ++
 \\  }
 ;
 pub const fs = common ++
-\\  let pi = 3.1415926;
+\\  const pi = 3.1415926;
 \\
 \\  fn saturate(x: f32) -> f32 { return clamp(x, 0.0, 1.0); }
 \\
@@ -64,7 +64,7 @@ pub const fs = common ++
 \\      return f0 + (vec3(1.0, 1.0, 1.0) - f0) * pow(1.0 - h_dot_v, 5.0);
 \\  }
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) barycentrics: vec3<f32>,

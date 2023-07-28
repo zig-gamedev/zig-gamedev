@@ -2,7 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 pub const zems = @import("libs/zems/build.zig");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.3859" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.3986" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -29,20 +29,6 @@ pub fn build(b: *std.Build) void {
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
     ensureGitLfsContent("/samples/triangle_wgpu/triangle_wgpu_content/Roboto-Medium.ttf") catch return;
-
-    // Fetch the latest Dawn/WebGPU binaries.
-    const skip_dawn_update = b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
-    if (!skip_dawn_update) {
-        var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
-        child.cwd = thisDir();
-        child.stderr = std.io.getStdErr();
-        child.stdout = std.io.getStdOut();
-        _ = child.spawnAndWait() catch {
-            std.log.err("Failed to fetch git submodule. Please try to re-clone.", .{});
-            return;
-        };
-    }
-    ensureGitLfsContent("/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib") catch return;
 
     //
     // Packages
@@ -184,6 +170,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const layers_wgpu = @import("samples/layers_wgpu/build.zig");
     const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
     const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+    const monolith = @import("samples/monolith/build.zig");
     const triangle_wgpu_emscripten = @import("samples/triangle_wgpu_emscripten/build.zig");
 
     install(b, minimal_gl.build(b, options), "minimal_gl");
@@ -197,6 +184,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     install(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
     install(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
+    install(b, monolith.build(b, options), "monolith");
     install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
     install(b, triangle_wgpu_emscripten.build(b, options), "triangle_wgpu_emscripten");
 }
@@ -399,9 +387,9 @@ fn ensureTarget(options: Options) !void {
             \\
             \\x86_64-windows-gnu
             \\x86_64-linux-gnu
-            \\x86_64-macos.12-none
+            \\x86_64-macos.12.0.0-none
             \\aarch64-linux-gnu
-            \\aarch64-macos.12-none
+            \\aarch64-macos.12.0.0-none
             \\
             \\---------------------------------------------------------------------------
             \\

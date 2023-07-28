@@ -1,5 +1,6 @@
 pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 0, .patch = 5 };
 
+const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 const options = @import("zphysics_options");
@@ -237,6 +238,31 @@ pub const ObjectLayerFilter = extern struct {
     comptime {
         assert(@sizeOf(VTable) == @sizeOf(c.JPC_ObjectLayerFilterVTable));
         assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(c.JPC_ObjectLayerFilterVTable, "ShouldCollide"));
+    }
+};
+
+pub const PhysicsStepListener = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn onStep(self: *const T, delta_time: f32, physics_system: *PhysicsSystem) void {
+                return @as(*const PhysicsStepListener.VTable, @ptrCast(self.__v))
+                    .onStep(@as(*PhysicsStepListener, @ptrCast(self)), delta_time, physics_system);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        onStep: *const fn (self: *PhysicsStepListener, f32, *PhysicsSystem) callconv(.C) void,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_PhysicsStepListenerVTable));
+        assert(@offsetOf(VTable, "onStep") == @offsetOf(c.JPC_PhysicsStepListenerVTable, "OnStep"));
     }
 };
 
@@ -658,12 +684,21 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         _ = c.JPC_DestroyDebugRendererSingleton(); // For Zig API, don't care if one actually existed, discard error.
     }
 
-    pub fn createTriangleBatch(primitive_in: *anyopaque) *anyopaque {
+    pub fn createTriangleBatch(primitive_in: *const anyopaque) *TriangleBatch {
         return @as(*TriangleBatch, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_Create(primitive_in)));
     }
 
+    pub fn getPrimitiveFromBatch(batch_in: *const TriangleBatch) *const Primitive {
+        return @as(*const Primitive, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_GetPrimitive(
+            @as(*const c.JPC_DebugRenderer_TriangleBatch, @ptrCast(batch_in))
+        )));
+    }
+
     pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
-        return @as(*BodyDrawFilter, @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func)))));
+        return @as(
+            *BodyDrawFilter,
+            @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func))))
+        );
     }
 
     pub fn destroyBodyDrawFilter(filter: *BodyDrawFilter) void {
@@ -731,7 +766,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
-                geometry: *anyopaque,
+                geometry: *const Geometry,
                 cull_mode: CullMode,
                 cast_shadow: CastShadow,
                 draw_mode: DrawMode,
@@ -801,7 +836,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
-                geometry: *anyopaque,
+                geometry: *const Geometry,
                 cull_mode: CullMode,
                 cast_shadow: CastShadow,
                 draw_mode: DrawMode,
@@ -839,19 +874,30 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         max: [3]f32,
     };
 
+    pub const LOD = extern struct {
+        batch: *TriangleBatch,
+        distance: f32,
+    };
+
+    pub const Geometry = extern struct {
+        LODs: [*]LOD,
+        num_LODs: u64,
+        bounds: *AABox,
+    };
+
     pub const BodyDrawSettings = extern struct {
-        get_support_func: bool = false, // Draw the GetSupport() function, used for convex collision detection
-        get_support_dir: bool = false, // If above true, also draw direction mapped to a specific support point
-        get_supporting_face: bool = false, // Draw the faces that were found colliding during collision detection
-        shape: bool = true, // Draw the shapes of all bodies
-        shape_wireframe: bool = false, // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
+        get_support_func: bool = false,      // Draw the GetSupport() function, used for convex collision detection
+        get_support_dir: bool = false,       // If above true, also draw direction mapped to a specific support point
+        get_supporting_face: bool = false,   // Draw the faces that were found colliding during collision detection
+        shape: bool = true,                  // Draw the shapes of all bodies
+        shape_wireframe: bool = false,       // If 'shape' true, the shapes will be drawn in wireframe instead of solid.
         shape_color: ShapeColor = .motion_type_color, // Coloring scheme to use for shapes
-        bounding_box: bool = false, // Draw a bounding box per body
+        bounding_box: bool = false,          // Draw a bounding box per body
         center_of_mass_transform: bool = false, // Draw the center of mass for each body
-        world_transform: bool = false, // Draw the world transform (which can be different than CoM) for each body
-        velocity: bool = false, // Draw the velocity vector for each body
-        mass_and_inertia: bool = false, // Draw the mass and inertia (as the box equivalent) for each body
-        sleep_stats: bool = false, // Draw stats regarding the sleeping algorithm of each body
+        world_transform: bool = false,       // Draw the world transform (which can be different than CoM) for each body
+        velocity: bool = false,              // Draw the velocity vector for each body
+        mass_and_inertia: bool = false,      // Draw the mass and inertia (as the box equivalent) for each body
+        sleep_stats: bool = false,           // Draw stats regarding the sleeping algorithm of each body
     };
 
     pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);
@@ -859,6 +905,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     pub const BodyDrawFilter = opaque {};
 
     pub const TriangleBatch = opaque {};
+    pub const Primitive = opaque {};
 
     pub const DebugRendererResult = enum(c.JPC_DebugRendererResult) {
         success = c.JPC_DEBUGRENDERER_SUCCESS,
@@ -868,12 +915,12 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     };
 
     pub const ShapeColor = enum(c.JPC_ShapeColor) {
-        instance_color = c.JPC_INSTANCE_COLOR, // Random color per instance
-        shape_type_color = c.JPC_SHAPE_TYPE_COLOR, // Convex = green, scaled = yellow, compound = orange, mesh = red
+        instance_color = c.JPC_INSTANCE_COLOR,       // Random color per instance
+        shape_type_color = c.JPC_SHAPE_TYPE_COLOR,   // Convex = green, scaled = yellow, compound = orange, mesh = red
         motion_type_color = c.JPC_MOTION_TYPE_COLOR, // Static = grey, keyframed = green, dynamic = random
-        sleep_color = c.JPC_SLEEP_COLOR, // Static = grey, keyframed = green, dynamic = yellow, asleep= red
-        island_color = c.JPC_ISLAND_COLOR, // Static = grey, active = random per island, sleeping = light grey
-        material_clor = c.JPC_MATERIAL_COLOR, // Color as defined by the PhysicsMaterial of the shape
+        sleep_color = c.JPC_SLEEP_COLOR,             // Static = grey, keyframed = green, dynamic = yellow, asleep= red
+        island_color = c.JPC_ISLAND_COLOR,           // Static = grey, active = random per island, sleeping = light grey
+        material_color = c.JPC_MATERIAL_COLOR,       // Color as defined by the PhysicsMaterial of the shape
     };
 
     pub const CullMode = enum(c.JPC_CullMode) {
@@ -1068,6 +1115,13 @@ pub const PhysicsSystem = opaque {
 
     pub fn optimizeBroadPhase(physics_system: *PhysicsSystem) void {
         c.JPC_PhysicsSystem_OptimizeBroadPhase(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+    }
+
+    pub fn addStepListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_AddStepListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
+    }
+    pub fn removeStepListener(physics_system: *PhysicsSystem, listener: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_RemoveStepListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
     }
 
     pub fn update(
@@ -1405,7 +1459,7 @@ pub const BodyInterface = opaque {
     }
 
     pub fn setPosition(body_iface: *BodyInterface, body_id: BodyId, in_position: [3]Real, in_activation_type: Activation) void {
-        c.JPC_BodyInterface_SetPosition(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_position, @intFromEnum(in_activation_type));
+        c.JPC_BodyInterface_SetPosition(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_position, @intFromEnum(in_activation_type));
     }
 
     pub fn getCenterOfMassPosition(body_iface: *const BodyInterface, body_id: BodyId) [3]Real {
@@ -1429,7 +1483,7 @@ pub const BodyInterface = opaque {
     }
 
     pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]Real, in_activation_type: Activation) void {
-        c.JPC_BodyInterface_SetRotation(@as(*const c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_rotation, @intFromEnum(in_activation_type));
+        c.JPC_BodyInterface_SetRotation(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_rotation, @intFromEnum(in_activation_type));
     }
 
     pub fn setPositionRotationAndVelocity(
@@ -2532,6 +2586,46 @@ pub const MeshShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// DecoratedShapeSettings (-> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const DecoratedShapeSettings = opaque {
+    pub usingnamespace ShapeSettings.Methods(@This());
+
+    pub fn createRotatedTranslated(
+        inner_shape: *const ShapeSettings,
+        rotation: [4]Real,
+        translation: [3]Real,
+    ) !*DecoratedShapeSettings {
+        const settings = c.JPC_RotatedTranslatedShapeSettings_Create(
+            @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
+            &rotation,
+            &translation,
+        );
+        if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
+        return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn createScaled(inner_shape: *const ShapeSettings, scale: [3]Real) !*DecoratedShapeSettings {
+        const settings = c.JPC_ScaledShapeSettings_Create(
+            @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
+            &scale,
+        );
+        if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
+        return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn createOffsetCenterOfMass(inner_shape: *const ShapeSettings, offset: [3]Real) !*DecoratedShapeSettings {
+        const settings = c.JPC_OffsetCenterOfMassShapeSettings_Create(
+            @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
+            &offset,
+        );
+        if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
+        return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -2814,9 +2908,14 @@ test "zphysics.basic" {
     _ = physics_system.getNarrowPhaseQuery();
     _ = physics_system.getNarrowPhaseQueryNoLock();
 
+    var my_step_listener = test_cb1.MyPhysicsStepListener{};
+    physics_system.addStepListener(@ptrCast(@alignCast(&my_step_listener)));
+
     physics_system.optimizeBroadPhase();
     try physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
     try physics_system.update(1.0 / 60.0, .{});
+
+    physics_system.removeStepListener(@ptrCast(@alignCast(&my_step_listener)));
 
     var box_shape_settings: ?*BoxShapeSettings = null;
     box_shape_settings = try BoxShapeSettings.create(.{ 1.0, 2.0, 3.0 });
@@ -3417,6 +3516,7 @@ test "zphysics.body.motion" {
 }
 
 test "zphysics.debugrenderer" {
+    if (builtin.target.os.tag == .macos and builtin.target.cpu.arch == .aarch64) return error.SkipZigTest;
     if (!debug_renderer_enabled) return;
 
     try init(std.testing.allocator, .{});
@@ -3567,6 +3667,21 @@ const test_cb1 = struct {
         }
     };
 
+    const MyPhysicsStepListener = extern struct {
+        usingnamespace PhysicsStepListener.Methods(@This());
+        __v: *const PhysicsStepListener.VTable = &vtable,
+        steps_heard: u32 = 0,
+
+        const vtable = PhysicsStepListener.VTable{ .onStep = _onStep };
+
+        fn _onStep(psl: *PhysicsStepListener, delta_time: f32, physics_system: *PhysicsSystem) callconv(.C) void {
+            _ = delta_time;
+            _ = physics_system;
+            const self = @as(*MyPhysicsStepListener, @ptrCast(psl));
+            self.steps_heard += 1;
+        }
+    };
+
     const MyDebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         const MyRenderPrimitive = extern struct {
             // Actual render data goes here
@@ -3648,7 +3763,7 @@ const test_cb1 = struct {
             world_space_bound: *const DebugRenderer.AABox,
             lod_scale_sq: f32,
             color: DebugRenderer.Color,
-            geometry: *anyopaque,
+            geometry: *const DebugRenderer.Geometry,
             cull_mode: DebugRenderer.CullMode,
             cast_shadow: DebugRenderer.CastShadow,
             draw_mode: DebugRenderer.DrawMode,

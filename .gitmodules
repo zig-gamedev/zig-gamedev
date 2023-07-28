@@ -1,4 +1,0 @@
-[submodule "libs/zgpu/libs/dawn"]
-	path = libs/zgpu/libs/dawn
-	url = https://github.com/michal-z/dawn-bin
-	branch = main

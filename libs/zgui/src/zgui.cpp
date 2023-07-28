@@ -260,6 +260,12 @@ ZGUI_API void zguiSetMouseCursor(int cursor) {
     ImGui::SetMouseCursor(cursor);
 }
 
+ZGUI_API void zguiGetMousePos(float pos[2]) {
+    const ImVec2 p = ImGui::GetMousePos();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
 ZGUI_API void zguiAlignTextToFramePadding(void) {
     ImGui::AlignTextToFramePadding();
 }
@@ -1078,6 +1084,10 @@ ZGUI_API bool zguiTreeNode(const char* label) {
     return ImGui::TreeNode(label);
 }
 
+ZGUI_API bool zguiTreeNodeFlags(const char* label, ImGuiTreeNodeFlags flags) {
+    return ImGui::TreeNodeEx(label, flags);
+}
+
 ZGUI_API bool zguiTreeNodeStrId(const char* str_id, const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -1232,6 +1242,10 @@ ZGUI_API ImTextureID zguiIoGetFontsTexId(void) {
     return ImGui::GetIO().Fonts->TexID;
 }
 
+ZGUI_API void zguiIoSetConfigWindowsMoveFromTitleBarOnly(bool enabled) {
+    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = enabled;
+}
+
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) {
     return ImGui::GetIO().WantCaptureMouse;
 }
@@ -1313,6 +1327,14 @@ ZGUI_API bool zguiIsItemFocused(void) {
 
 ZGUI_API bool zguiIsItemClicked(ImGuiMouseButton mouse_button) {
     return ImGui::IsItemClicked(mouse_button);
+}
+
+ZGUI_API bool zguiIsMouseDown(ImGuiMouseButton button) {
+    return ImGui::IsMouseDown(button);
+}
+
+ZGUI_API bool zguiIsMouseClicked(ImGuiMouseButton button) {
+    return ImGui::IsMouseClicked(button);
 }
 
 ZGUI_API bool zguiIsMouseDoubleClicked(ImGuiMouseButton button) {
@@ -2089,6 +2111,14 @@ ZGUI_API void zguiDrawList_PrimWriteVtx(
 ZGUI_API void zguiDrawList_PrimWriteIdx( ImDrawList* draw_list, ImDrawIdx idx) {
     draw_list->PrimWriteIdx(idx);
 }
+
+ZGUI_API void zguiDrawList_AddCallback(ImDrawList* draw_list, ImDrawCallback callback, void* callback_data) {
+    draw_list->AddCallback(callback, callback_data);
+}
+
+ZGUI_API void zguiDrawList_AddResetRenderStateCallback(ImDrawList* draw_list) {
+    draw_list->AddCallback(ImDrawCallback_ResetRenderState, NULL);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // Viewport
@@ -2354,5 +2384,33 @@ ZGUI_API void zguiPlot_ShowDemoWindow(bool* p_open) {
 ZGUI_API void zguiPlot_EndPlot(void) {
     ImPlot::EndPlot();
 }
+ZGUI_API bool zguiPlot_DragPoint(
+        int id,
+        double* x,
+        double* y,
+        float col[4],
+        float size,
+        ImPlotDragToolFlags flags
+) {
+    return ImPlot::DragPoint(
+        id,
+        x,
+        y,
+        (*(const ImVec4*)&(col[0])),
+        size,
+        flags
+    );
+}
+
+ZGUI_API void zguiPlot_PlotText(
+        const char* text, 
+        double x, double y,
+        const float pix_offset[2],
+        ImPlotTextFlags flags=0
+) {
+    const ImVec2 p(pix_offset[0], pix_offset[1]);
+    ImPlot::PlotText(text, x, y, p, flags);
+}
+
 //--------------------------------------------------------------------------------------------------
 } /* extern "C" */

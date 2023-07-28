@@ -247,6 +247,7 @@ typedef struct JPC_CylinderShapeSettings       JPC_CylinderShapeSettings;
 typedef struct JPC_ConvexHullShapeSettings     JPC_ConvexHullShapeSettings;
 typedef struct JPC_HeightFieldShapeSettings    JPC_HeightFieldShapeSettings;
 typedef struct JPC_MeshShapeSettings           JPC_MeshShapeSettings;
+typedef struct JPC_DecoratedShapeSettings      JPC_DecoratedShapeSettings;
 
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
@@ -645,6 +646,15 @@ typedef struct JPC_BodyFilterVTable
     (*ShouldCollideLocked)(const void *in_self, const JPC_Body *in_body);
 } JPC_BodyFilterVTable;
 
+typedef struct JPC_PhysicsStepListenerVTable
+{
+    _JPC_VTABLE_HEADER;
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnStep)(float in_delta_time, JPC_PhysicsSystem *in_physics_system);
+} JPC_PhysicsStepListener;
+
 typedef struct JPC_ContactListenerVTable
 {
     // Optional, can be NULL.
@@ -785,7 +795,7 @@ JPC_DebugRenderer_TriangleBatch_Create(const void *in_c_primitive);
 ///
 /// \return An opaque JPC_DebugRenderer_Primitive * wherein the user is keeping rendering data for that batch
 JPC_API const JPC_DebugRenderer_Primitive *
-JPC_DebugRenderer_TriangleBatch_GetPrimitive(const JPC_DebugRenderer_TriangleBatch * in_batch);
+JPC_DebugRenderer_TriangleBatch_GetPrimitive(const JPC_DebugRenderer_TriangleBatch *in_batch);
 
 JPC_API void
 JPC_DebugRenderer_TriangleBatch_AddRef(JPC_DebugRenderer_TriangleBatch *in_batch);
@@ -969,6 +979,12 @@ JPC_PhysicsSystem_GetBodyInterfaceNoLock(JPC_PhysicsSystem *in_physics_system);
 
 JPC_API void
 JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system);
+
+JPC_API void
+JPC_PhysicsSystem_AddStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener);
+
+JPC_API void
+JPC_PhysicsSystem_RemoveStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener);
 
 JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
@@ -1312,6 +1328,23 @@ JPC_MeshShapeSettings_SetMaxTrianglesPerLeaf(JPC_MeshShapeSettings *in_settings,
 
 JPC_API void
 JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_DecoratedShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_DecoratedShapeSettings *
+JPC_RotatedTranslatedShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
+                                          const JPC_Real in_rotated[4],
+                                          const JPC_Real in_translated[3]);
+
+JPC_API JPC_DecoratedShapeSettings *
+JPC_ScaledShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
+                               const JPC_Real in_scale[3]);
+
+JPC_API JPC_DecoratedShapeSettings *
+JPC_OffsetCenterOfMassShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
+                                           const JPC_Real in_center_of_mass[3]);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BodyManager_DrawSettings

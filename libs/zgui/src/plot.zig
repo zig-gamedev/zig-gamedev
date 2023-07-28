@@ -536,6 +536,54 @@ extern fn zguiPlot_PlotShaded(
     offset: i32,
     stride: i32,
 ) void;
+//----------------------------------------------------------------------------------------------
+pub const DragToolFlags = packed struct(u32) {
+    no_cursors: bool = false,
+    no_fit: bool = false,
+    no_no_inputs: bool = false,
+    delayed: bool = false,
+    _padding: u28 = 0,
+};
+const DragPoint = struct {
+    x: *f64,
+    y: *f64,
+    col: [4]f32,
+    size: f32 = 4,
+    flags: DragToolFlags = .{},
+};
+pub fn dragPoint(id: i32, args: DragPoint) bool {
+    return zguiPlot_DragPoint(
+        id,
+        args.x,
+        args.y,
+        &args.col,
+        args.size,
+        args.flags,
+    );
+}
+extern fn zguiPlot_DragPoint(id: i32, x: *f64, y: *f64, *const [4]f32, size: f32, flags: DragToolFlags) bool;
+//----------------------------------------------------------------------------------------------
+// PlotText
+const PlotTextFlags = packed struct(u32) {
+    vertical: bool = false,
+    _padding: u31 = 0,
+};
+const PlotText = struct {
+    x: f64,
+    y: f64,
+    pix_offset: [2]f32 = .{ 0, 0 },
+    flags: PlotTextFlags = .{},
+};
+pub fn plotText(text: [*:0]const u8, args:PlotText) void {
+    zguiPlot_PlotText(text, args.x, args.y, &args.pix_offset, args.flags);
+}
+extern fn zguiPlot_PlotText(
+    text:[*:0]const u8,
+    x:f64, y:f64,
+    pix_offset: *const [2]f32,
+    flags: PlotTextFlags,
+) void;
+
 
 //----------------------------------------------------------------------------------------------
 /// `pub fn showDemoWindow(popen: ?*bool) void`

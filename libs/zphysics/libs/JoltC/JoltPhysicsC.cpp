@@ -23,6 +23,9 @@
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/HeightFieldShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/Collision/Shape/OffsetCenterOfMassShape.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
@@ -181,6 +184,23 @@ FN(toJph)(const JPC_ConvexShapeSettings *in) {
 FN(toJph)(JPC_ConvexShapeSettings *in) {
     ENSURE_TYPE(in, JPH::ConvexShapeSettings);
     return reinterpret_cast<JPH::ConvexShapeSettings *>(in);
+}
+
+FN(toJpc)(JPH::RotatedTranslatedShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_DecoratedShapeSettings *>(in);
+}
+FN(toJpc)(JPH::ScaledShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_DecoratedShapeSettings *>(in);
+}
+FN(toJpc)(JPH::OffsetCenterOfMassShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_DecoratedShapeSettings *>(in);
+}
+FN(toJph)(JPC_DecoratedShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::DecoratedShapeSettings);
+    return reinterpret_cast<JPH::DecoratedShapeSettings *>(in);
 }
 
 FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
@@ -939,6 +959,20 @@ JPC_PhysicsSystem_OptimizeBroadPhase(JPC_PhysicsSystem *in_physics_system)
     toJph(in_physics_system)->OptimizeBroadPhase();
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_AddStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
+{
+    assert(in_listener != nullptr);
+    toJph(in_physics_system)->AddStepListener(static_cast<JPH::PhysicsStepListener *>(in_listener));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_RemoveStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener)
+{
+    assert(in_listener != nullptr);
+    toJph(in_physics_system)->RemoveStepListener(static_cast<JPH::PhysicsStepListener *>(in_listener));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          float in_delta_time,
@@ -1548,6 +1582,41 @@ JPC_API void
 JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings)
 {
     toJph(in_settings)->Sanitize();
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_DecoratedShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_DecoratedShapeSettings *
+JPC_RotatedTranslatedShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
+                                          const JPC_Real in_rotated[4],
+                                          const JPC_Real in_translated[3])
+{
+    auto settings = new JPH::RotatedTranslatedShapeSettings(loadRVec3(in_translated),
+                                                            JPH::Quat(loadVec4(in_rotated)),
+                                                            toJph(in_inner_shape_settings));
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_DecoratedShapeSettings *
+JPC_ScaledShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
+                               const JPC_Real in_scale[3])
+{
+    auto settings = new JPH::ScaledShapeSettings(toJph(in_inner_shape_settings), loadRVec3(in_scale));
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_DecoratedShapeSettings *
+JPC_OffsetCenterOfMassShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
+                                           const JPC_Real in_center_of_mass[3])
+{
+    auto settings = new JPH::OffsetCenterOfMassShapeSettings(loadRVec3(in_center_of_mass),
+                                                             toJph(in_inner_shape_settings));
+    settings->AddRef();
+    return toJpc(settings);
 }
 //--------------------------------------------------------------------------------------------------
 //
