@@ -1470,7 +1470,7 @@ ZGUI_API void zguiEndTooltip(void) {
 }
 
 ZGUI_API bool zguiBeginPopup(const char* str_id, ImGuiWindowFlags flags){
-    return ImGui::BeginPopup(str_id, ImGuiWindowFlags flags);
+    return ImGui::BeginPopup(str_id, flags);
 }
 
 ZGUI_API bool zguiBeginPopupContextWindow(void) {
