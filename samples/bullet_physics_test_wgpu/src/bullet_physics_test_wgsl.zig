@@ -19,7 +19,7 @@ pub const mesh_vs = mesh_common ++
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) barycentrics: vec3<f32>,
 \\  }
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @builtin(vertex_index) vertex_index: u32,
@@ -38,7 +38,7 @@ pub const mesh_vs = mesh_common ++
 \\  }
 ;
 pub const mesh_fs = mesh_common ++
-\\  let pi = 3.1415926;
+\\  const pi = 3.1415926;
 \\
 \\  fn saturate(x: f32) -> f32 { return clamp(x, 0.0, 1.0); }
 \\
@@ -64,7 +64,7 @@ pub const mesh_fs = mesh_common ++
 \\      return f0 + (vec3(1.0, 1.0, 1.0) - f0) * pow(1.0 - h_dot_v, 5.0);
 \\  }
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) barycentrics: vec3<f32>,
@@ -153,7 +153,7 @@ pub const physics_debug_vs =
 \\      @location(0) color: vec3<f32>,
 \\  }
 \\
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @builtin(vertex_index) vertex_index: u32,
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) color: u32,
@@ -169,7 +169,7 @@ pub const physics_debug_vs =
 \\  }
 ;
 pub const physics_debug_fs =
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) color: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      return vec4(color, 1.0);

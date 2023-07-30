@@ -17,28 +17,32 @@
 
 typedef void* EGLImage;
 
-#include "dawn/dawn_wsi.h"
 #include "dawn/native/DawnNative.h"
+#include "dawn/webgpu_cpp_chained_struct.h"
 
 namespace dawn::native::opengl {
 
-struct DAWN_NATIVE_EXPORT AdapterDiscoveryOptions : public AdapterDiscoveryOptionsBase {
-    explicit AdapterDiscoveryOptions(WGPUBackendType type);
+// Can be chained in WGPURequestAdapterOptions
+struct DAWN_NATIVE_EXPORT RequestAdapterOptionsGetGLProc : wgpu::ChainedStruct {
+    RequestAdapterOptionsGetGLProc();
 
     void* (*getProc)(const char*);
 };
 
-// TODO(crbug.com/dawn/810): This struct can be removed once Chrome is no longer using it.
-struct DAWN_NATIVE_EXPORT AdapterDiscoveryOptionsES : public AdapterDiscoveryOptions {
-    AdapterDiscoveryOptionsES();
+struct DAWN_NATIVE_EXPORT PhysicalDeviceDiscoveryOptions
+    : public PhysicalDeviceDiscoveryOptionsBase {
+    explicit PhysicalDeviceDiscoveryOptions(WGPUBackendType type);
+
+    void* (*getProc)(const char*);
 };
 
-using PresentCallback = void (*)(void*);
-DAWN_NATIVE_EXPORT DawnSwapChainImplementation CreateNativeSwapChainImpl(WGPUDevice device,
-                                                                         PresentCallback present,
-                                                                         void* presentUserdata);
-DAWN_NATIVE_EXPORT WGPUTextureFormat
-GetNativeSwapChainPreferredFormat(const DawnSwapChainImplementation* swapChain);
+// TODO(dawn:1774): Deprecated.
+using AdapterDiscoveryOptions = PhysicalDeviceDiscoveryOptions;
+
+// TODO(crbug.com/dawn/810): This struct can be removed once Chrome is no longer using it.
+struct DAWN_NATIVE_EXPORT AdapterDiscoveryOptionsES : public PhysicalDeviceDiscoveryOptions {
+    AdapterDiscoveryOptionsES();
+};
 
 struct DAWN_NATIVE_EXPORT ExternalImageDescriptorEGLImage : ExternalImageDescriptor {
   public:

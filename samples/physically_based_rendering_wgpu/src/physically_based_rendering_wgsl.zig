@@ -1,7 +1,7 @@
 // zig fmt: off
 const global =
-\\  let gamma: f32 = 2.2;
-\\  let pi: f32 = 3.1415926;
+\\  const gamma: f32 = 2.2;
+\\  const pi: f32 = 3.1415926;
 \\
 \\  fn saturate(x: f32) -> f32 {
 \\      return clamp(x, 0.0, 1.0);
@@ -65,7 +65,7 @@ pub const precompute_env_tex_vs =
 \\      @location(0) position: vec3<f32>,
 \\  }
 \\
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
 \\      var output: VertexOut;
@@ -85,7 +85,7 @@ pub const precompute_env_tex_fs =
 \\      return uv;
 \\  }
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      let uv = sampleSphericalMap(normalize(position));
@@ -104,7 +104,7 @@ pub const precompute_irradiance_tex_vs =
 \\      @location(0) position: vec3<f32>,
 \\  }
 \\
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
 \\      var output: VertexOut;
@@ -117,7 +117,7 @@ pub const precompute_irradiance_tex_fs = global ++
 \\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
 \\  @group(0) @binding(2) var env_sam: sampler;
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      let n = normalize(position);
@@ -174,7 +174,7 @@ pub const precompute_filtered_env_tex_vs = precompute_filtered_env_tex_common ++
 \\      @location(0) position: vec3<f32>,
 \\  }
 \\
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
 \\      var output: VertexOut;
@@ -187,7 +187,7 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
 \\  @group(0) @binding(2) var env_sam: sampler;
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      let roughness = uniforms.roughness;
@@ -199,17 +199,15 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\      var total_weight = 0.0;
 \\      let num_samples = 4096u;
 \\
-\\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx = sample_idx + 1u) {
+\\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx += 1u) {
 \\          let xi = hammersley(sample_idx, num_samples);
 \\          let h = importanceSampleGgx(xi, roughness, n);
 \\          let lvec = 2.0 * dot(v, h) * h - v;
 \\          let l = normalize(2.0 * dot(v, h) * h - v);
 \\          let n_dot_l = saturate(dot(n, l));
-\\          if (n_dot_l > 0.0) {
-\\              var color = textureSample(env_tex, env_sam, lvec).xyz * n_dot_l;
-\\              prefiltered_color = prefiltered_color + color;
-\\              total_weight = total_weight + n_dot_l;
-\\          }
+\\          var color = textureSample(env_tex, env_sam, lvec).xyz * n_dot_l;
+\\          prefiltered_color += color;
+\\          total_weight += n_dot_l;
 \\      }
 \\      return vec4(prefiltered_color / max(total_weight, 0.001), 1.0);
 \\  }
@@ -249,7 +247,7 @@ pub const precompute_brdf_integration_tex_cs = global ++
 \\      return vec2(a, b) / vec2(f32(num_samples));
 \\  }
 \\
-\\  @stage(compute) @workgroup_size(8, 8, 1)
+\\  @compute @workgroup_size(8, 8, 1)
 \\  fn main(
 \\      @builtin(global_invocation_id) global_id: vec3<u32>,
 \\  ) {
@@ -279,7 +277,7 @@ pub const mesh_vs = mesh_common ++
 \\      @location(3) tangent: vec4<f32>,
 \\  }
 \\
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) texcoord: vec2<f32>,
@@ -310,7 +308,7 @@ pub const mesh_fs = global ++ mesh_common ++
 \\      return f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - cos_theta, 5.0);
 \\  }
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) texcoord: vec2<f32>,
@@ -397,7 +395,7 @@ pub const sample_env_tex_vs =
 \\      @location(0) position: vec3<f32>,
 \\  }
 \\
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
 \\      var output: VertexOut;
@@ -410,7 +408,7 @@ pub const sample_env_tex_fs = global ++
 \\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
 \\  @group(0) @binding(2) var env_sam: sampler;
 \\
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      var color = textureSample(env_tex, env_sam, position).xyz;

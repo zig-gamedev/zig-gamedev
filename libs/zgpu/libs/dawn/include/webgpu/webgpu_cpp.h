@@ -1,4 +1,4 @@
-// Copyright 2018 The Dawn Authors
+// Copyright 2022 The Dawn Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDE_DAWN_NATIVE_NULLBACKEND_H_
-#define INCLUDE_DAWN_NATIVE_NULLBACKEND_H_
+#ifndef INCLUDE_WEBGPU_WEBGPU_CPP_H_
+#define INCLUDE_WEBGPU_WEBGPU_CPP_H_
 
-#include "dawn/native/DawnNative.h"
+#include "dawn/webgpu_cpp.h"
 
-namespace dawn::native::null {
-
-// Nothing for now \o/
-
-}  // namespace dawn::native::null
-
-#endif  // INCLUDE_DAWN_NATIVE_NULLBACKEND_H_
+#endif  // INCLUDE_WEBGPU_WEBGPU_CPP_H_

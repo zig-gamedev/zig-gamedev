@@ -1,4 +1,4 @@
-// Copyright 2018 The Dawn Authors
+// Copyright 2023 The Dawn Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,31 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDE_DAWN_NATIVE_D3D12BACKEND_H_
-#define INCLUDE_DAWN_NATIVE_D3D12BACKEND_H_
+#ifndef INCLUDE_DAWN_NATIVE_D3D11BACKEND_H_
+#define INCLUDE_DAWN_NATIVE_D3D11BACKEND_H_
 
-#include <DXGI1_4.h>
-#include <d3d12.h>
+#include <d3d11_1.h>
 #include <windows.h>
 #include <wrl/client.h>
 
+#include <memory>
+
 #include "dawn/native/D3DBackend.h"
 
-struct ID3D12Device;
-struct ID3D12Resource;
-
-namespace dawn::native::d3d12 {
-
-class Device;
-
-enum MemorySegment {
-    Local,
-    NonLocal,
-};
-
-DAWN_NATIVE_EXPORT uint64_t SetExternalMemoryReservation(WGPUDevice device,
-                                                         uint64_t requestedReservationSize,
-                                                         MemorySegment memorySegment);
+namespace dawn::native::d3d11 {
 
 struct DAWN_NATIVE_EXPORT PhysicalDeviceDiscoveryOptions
     : public d3d::PhysicalDeviceDiscoveryOptions {
@@ -47,6 +34,8 @@ struct DAWN_NATIVE_EXPORT PhysicalDeviceDiscoveryOptions
 // TODO(dawn:1774): Deprecated.
 using AdapterDiscoveryOptions = PhysicalDeviceDiscoveryOptions;
 
-}  // namespace dawn::native::d3d12
+DAWN_NATIVE_EXPORT Microsoft::WRL::ComPtr<ID3D11Device> GetD3D11Device(WGPUDevice device);
 
-#endif  // INCLUDE_DAWN_NATIVE_D3D12BACKEND_H_
+}  // namespace dawn::native::d3d11
+
+#endif  // INCLUDE_DAWN_NATIVE_D3D11BACKEND_H_

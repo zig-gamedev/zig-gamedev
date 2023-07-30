@@ -2907,8 +2907,8 @@ pub const BeginTable = struct {
     outer_size: [2]f32 = .{ 0, 0 },
     inner_width: f32 = 0,
 };
-pub fn beginTable(name: [:0]const u8, args: BeginTable) void {
-    zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
+pub fn beginTable(name: [:0]const u8, args: BeginTable) bool {
+    return zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
 }
 extern fn zguiBeginTable(
     str_id: [*:0]const u8,
@@ -2916,7 +2916,7 @@ extern fn zguiBeginTable(
     flags: TableFlags,
     outer_size: *const [2]f32,
     inner_width: f32,
-) void;
+) bool;
 
 pub fn endTable() void {
     zguiEndTable();

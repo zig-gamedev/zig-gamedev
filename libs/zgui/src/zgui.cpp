@@ -1501,14 +1501,14 @@ ZGUI_API void zguiCloseCurrentPopup(void) {
 // Tables
 //
 //--------------------------------------------------------------------------------------------------
-ZGUI_API void zguiBeginTable(
+ZGUI_API bool zguiBeginTable(
     const char* str_id,
     int column,
     ImGuiTableFlags flags,
     const float outer_size[2],
     float inner_width
 ) {
-    ImGui::BeginTable(str_id, column, flags, { outer_size[0], outer_size[1] }, inner_width);
+    return ImGui::BeginTable(str_id, column, flags, { outer_size[0], outer_size[1] }, inner_width);
 }
 
 ZGUI_API void zguiEndTable(void) {

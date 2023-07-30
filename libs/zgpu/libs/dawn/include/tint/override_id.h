@@ -18,11 +18,16 @@
 #include <stdint.h>
 #include <functional>
 
+#include "src/tint/reflection.h"
+
 namespace tint {
 
 /// OverrideId is a numerical identifier for an override variable, unique per program.
 struct OverrideId {
     uint16_t value = 0;
+
+    /// Reflect the fields of this struct so that it can be used by tint::ForeachField()
+    TINT_REFLECT(value);
 };
 
 /// Equality operator for OverrideId
