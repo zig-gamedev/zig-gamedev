@@ -1469,8 +1469,7 @@ pub fn comboFromEnum(
     /// that is backed by some kind of integer that can safely cast into an
     /// i32 (the underlying imgui restriction)
     current_item: anytype,
-) bool 
-{
+) bool {
     const item_names = comptime lbl: {
         const item_type = @typeInfo(@TypeOf(current_item.*));
         switch (item_type) {
@@ -1483,23 +1482,17 @@ pub fn comboFromEnum(
                 break :lbl str;
             },
             else => {
-                @compileError(
-                    "Error: current_item must be a pointer-to-an-enum, not a "
-                    ++ @TypeOf(current_item)
-                );
-            }
+                @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(current_item));
+            },
         }
     };
 
-    var item:i32 = @intCast(@intFromEnum(current_item.*));
+    var item: i32 = @intCast(@intFromEnum(current_item.*));
 
-    const result = combo(
-        label,
-        .{
-            .items_separated_by_zeros = item_names,
-            .current_item = &item,
-        }
-    );
+    const result = combo(label, .{
+        .items_separated_by_zeros = item_names,
+        .current_item = &item,
+    });
 
     current_item.* = @enumFromInt(item);
 
@@ -3236,10 +3229,15 @@ pub fn beginPopupModal(name: [:0]const u8, args: Begin) bool {
 pub fn openPopup(str_id: [:0]const u8, flags: PopupFlags) void {
     zguiOpenPopup(str_id, flags);
 }
+/// `pub fn beginPopup([:0]const u8) bool`
+pub fn beginPopup(name: [:0]const u8) bool {
+    return zguiBeginPopup(name);
+}
 /// `pub fn endPopup() void`
 pub const endPopup = zguiEndPopup;
 /// `pub fn closeCurrentPopup() void`
 pub const closeCurrentPopup = zguiCloseCurrentPopup;
+extern fn zguiBeginPopup(name: [*:0]const u8) bool;
 extern fn zguiBeginPopupContextWindow() bool;
 extern fn zguiBeginPopupContextItem() bool;
 extern fn zguiBeginPopupModal(name: [*:0]const u8, popen: ?*bool, flags: WindowFlags) bool;
