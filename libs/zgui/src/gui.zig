@@ -3229,18 +3229,16 @@ pub fn beginPopupModal(name: [:0]const u8, args: Begin) bool {
 pub fn openPopup(str_id: [:0]const u8, flags: PopupFlags) void {
     zguiOpenPopup(str_id, flags);
 }
-/// `pub fn beginPopup([:0]const u8) bool`
-pub fn beginPopup(name: [:0]const u8) bool {
-    return zguiBeginPopup(name);
-}
+/// `pub fn beginPopup(str_id: [:0]const u8, flags: WindowFlags) bool`
+pub const beginPopup = zguiBeginPopup;
 /// `pub fn endPopup() void`
 pub const endPopup = zguiEndPopup;
 /// `pub fn closeCurrentPopup() void`
 pub const closeCurrentPopup = zguiCloseCurrentPopup;
-extern fn zguiBeginPopup(name: [*:0]const u8) bool;
 extern fn zguiBeginPopupContextWindow() bool;
 extern fn zguiBeginPopupContextItem() bool;
 extern fn zguiBeginPopupModal(name: [*:0]const u8, popen: ?*bool, flags: WindowFlags) bool;
+extern fn zguiBeginPopup(str_id: [*:0]const u8, flags: WindowFlags) bool;
 extern fn zguiEndPopup() void;
 extern fn zguiOpenPopup(str_id: [*:0]const u8, flags: PopupFlags) void;
 extern fn zguiCloseCurrentPopup() void;
