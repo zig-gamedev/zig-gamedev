@@ -9,6 +9,10 @@ pub const Backend = enum {
 pub const Options = struct {
     backend: Backend,
     shared: bool = false,
+    /// use bundled imgui source
+    with_imgui: bool = true,
+    /// use bundled implot source
+    with_implot: bool = true,
 };
 
 pub const Package = struct {
@@ -75,15 +79,19 @@ pub fn package(
 
     zgui_c_cpp.addCSourceFile(thisDir() ++ "/src/zgui.cpp", cflags);
 
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", cflags);
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", cflags);
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", cflags);
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", cflags);
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", cflags);
+    if (args.options.with_imgui) {
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", cflags);
+    }
 
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", cflags);
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", cflags);
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", cflags);
+    if (args.options.with_implot) {
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", cflags);
+        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", cflags);
+    }
 
     switch (args.options.backend) {
         .glfw_wgpu => {
