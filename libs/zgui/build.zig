@@ -69,9 +69,6 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zgui_c_cpp.addIncludePath(thisDir() ++ "/libs");
-    zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
-
     zgui_c_cpp.linkLibC();
     zgui_c_cpp.linkLibCpp();
 
@@ -80,6 +77,7 @@ pub fn package(
     zgui_c_cpp.addCSourceFile(thisDir() ++ "/src/zgui.cpp", cflags);
 
     if (args.options.with_imgui) {
+        zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
         zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", cflags);
         zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", cflags);
         zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", cflags);
@@ -88,9 +86,13 @@ pub fn package(
     }
 
     if (args.options.with_implot) {
+        zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
+        zgui_c_cpp.defineCMacro("ZGUI_IMPLOT", "1");
         zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", cflags);
         zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", cflags);
         zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", cflags);
+    } else {
+        zgui_c_cpp.defineCMacro("ZGUI_IMPLOT", "0");
     }
 
     switch (args.options.backend) {
