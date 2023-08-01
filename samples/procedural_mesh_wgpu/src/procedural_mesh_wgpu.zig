@@ -303,7 +303,7 @@ fn initScene(
 }
 
 fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window, .fifo);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();

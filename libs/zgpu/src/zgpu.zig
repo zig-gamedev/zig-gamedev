@@ -14,6 +14,10 @@ const wgsl = @import("common_wgsl.zig");
 const zgpu_options = @import("zgpu_options");
 pub const wgpu = @import("wgpu.zig");
 
+pub const GraphicsContextOptions = struct {
+    present_mode: wgpu.PresentMode = .fifo,
+};
+
 pub const GraphicsContext = struct {
     pub const swapchain_format = wgpu.TextureFormat.bgra8_unorm;
 
@@ -51,7 +55,7 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    pub fn create(allocator: std.mem.Allocator, window: *zglfw.Window, present_mode: wgpu.PresentMode) !*GraphicsContext {
+    pub fn create(allocator: std.mem.Allocator, window: *zglfw.Window, options: GraphicsContextOptions) !*GraphicsContext {
         const checkGraphicsApiSupport = (struct {
             fn impl() error{VulkanNotSupported}!void {
                 // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
@@ -197,7 +201,7 @@ pub const GraphicsContext = struct {
             .format = swapchain_format,
             .width = @intCast(framebuffer_size[0]),
             .height = @intCast(framebuffer_size[1]),
-            .present_mode = present_mode,
+            .present_mode = options.present_mode,
         };
         const swapchain = device.createSwapChain(surface, swapchain_descriptor);
         errdefer swapchain.release();

@@ -14,7 +14,7 @@ const DemoState = struct {
 };
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window, .fifo);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
 
     const success = zglfw.Gamepad.updateMappings(@embedFile("gamecontrollerdb.txt"));
     if (!success) {
