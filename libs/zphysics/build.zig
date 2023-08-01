@@ -262,9 +262,9 @@ fn testStep(
 
     const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
 
-    test_exe.addCSourceFile(
-        thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c",
-        &.{
+    test_exe.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c" },
+        .flags = &.{
             "-std=c11",
             if (abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
@@ -273,7 +273,7 @@ fn testStep(
             if (options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
             "-fno-sanitize=undefined",
         },
-    );
+    });
 
     const zphysics_pkg = package(b, target, optimize, .{ .options = options });
     zphysics_pkg.link(test_exe);

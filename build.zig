@@ -62,12 +62,12 @@ pub fn build(b: *std.Build) void {
     //
     // Tests
     //
-    //tests(b, options);
+    tests(b, options);
 
     //
     // Benchmarks
     //
-    //benchmarks(b, options);
+    benchmarks(b, options);
 
     //
     // Experiments
