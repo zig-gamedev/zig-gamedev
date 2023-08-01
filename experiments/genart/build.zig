@@ -58,7 +58,7 @@ fn install(
     zstbi_pkg.link(exe);
 
     const install_step = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment");
-    install_step.dependOn(&b.addInstallArtifact(exe).step);
+    install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 
     const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' genart experiment");
     const run_cmd = b.addRunArtifact(exe);

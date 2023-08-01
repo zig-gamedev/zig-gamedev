@@ -24,8 +24,8 @@ pub const Package = struct {
             .windows => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addIncludePath(thisDir() ++ "/libs/x86_64-windows-gnu/include");
-                exe.addLibraryPath(thisDir() ++ "/libs/x86_64-windows-gnu/lib");
+                exe.addIncludePath(.{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/include" });
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/lib" });
                 exe.linkSystemLibraryName("SDL2");
                 exe.linkSystemLibraryName("SDL2main");
 
@@ -36,19 +36,19 @@ pub const Package = struct {
             .linux => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addIncludePath(thisDir() ++ "/libs/x86_64-linux-gnu/include");
-                exe.addLibraryPath(thisDir() ++ "/libs/x86_64-linux-gnu/lib");
+                exe.addIncludePath(.{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/include" });
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib" });
                 exe.linkSystemLibraryName("SDL2-2.0");
-                exe.addRPath("$ORIGIN");
+                exe.addRPath(.{ .path = "$ORIGIN" });
 
                 if (pkg.options.enable_ttf) {
                     exe.linkSystemLibraryName("SDL2_ttf-2.0");
                 }
             },
             .macos => {
-                exe.addFrameworkPath(thisDir() ++ "/libs/macos/Frameworks");
+                exe.addFrameworkPath(.{ .path = thisDir() ++ "/libs/macos/Frameworks" });
                 exe.linkFramework("SDL2");
-                exe.addRPath("@executable_path/Frameworks");
+                exe.addRPath(.{ .path = "@executable_path/Frameworks" });
 
                 if (pkg.options.enable_ttf) {
                     exe.linkFramework("SDL2_ttf");
