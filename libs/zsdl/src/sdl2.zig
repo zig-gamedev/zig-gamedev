@@ -60,9 +60,9 @@ extern fn SDL_Quit() void;
 pub const hint_windows_dpi_awareness = "SDL_WINDOWS_DPI_AWARENESS";
 
 pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
-    return SDL_SetHint(name, value) != 0;
+    return SDL_SetHint(name, value) == True;
 }
-extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) i32;
+extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) Bool;
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -114,7 +114,7 @@ pub const DisplayId = u32;
 pub const WindowId = u32;
 
 pub const DisplayMode = extern struct {
-    format: u32,
+    format: PixelFormatEnum,
     w: i32,
     h: i32,
     refresh_rate: i32,
@@ -204,20 +204,25 @@ pub const Window = opaque {
     extern fn SDL_SetWindowTitle(window: *Window, title: ?[*:0]const u8) void;
 };
 
-/// `pub fn getNumVideoDrivers() i32`
-pub const getNumVideoDrivers = SDL_GetNumVideoDrivers;
-extern fn SDL_GetNumVideoDrivers() i32;
+pub fn getNumVideoDrivers() Error!u16 {
+    const res = SDL_GetNumVideoDrivers();
+    if (res < 1) return makeError();
+    return @intCast(res);
+}
+extern fn SDL_GetNumVideoDrivers() c_int;
 
-pub fn getVideoDriver(index: i32) ?[:0]const u8 {
-    if (SDL_GetVideoDriver(index)) |ptr| {
+pub fn getVideoDriver(index: u16) ?[:0]const u8 {
+    if (SDL_GetVideoDriver(@intCast(index))) |ptr| {
         return std.mem.sliceTo(ptr, 0);
     }
     return null;
 }
-extern fn SDL_GetVideoDriver(index: i32) ?[*:0]const u8;
+extern fn SDL_GetVideoDriver(index: c_int) ?[*:0]const u8;
 
 pub const gl = struct {
     pub const Context = *anyopaque;
+
+    pub const FunctionPointer = ?*const anyopaque;
 
     pub const Attr = enum(i32) {
         red_size,
@@ -299,15 +304,15 @@ pub const gl = struct {
     pub const swapWindow = SDL_GL_SwapWindow;
     extern fn SDL_GL_SwapWindow(window: *Window) void;
 
-    pub fn getProcAddress(proc: [:0]const u8) ?*anyopaque {
+    pub fn getProcAddress(proc: [:0]const u8) FunctionPointer {
         return SDL_GL_GetProcAddress(proc);
     }
-    extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) ?*anyopaque;
+    extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) FunctionPointer;
 
     pub fn isExtensionSupported(extension: [:0]const u8) bool {
-        return SDL_GL_ExtensionSupported(extension) != 0;
+        return SDL_GL_ExtensionSupported(extension) == True;
     }
-    extern fn SDL_GL_ExtensionSupported(extension: ?[*:0]const u8) i32;
+    extern fn SDL_GL_ExtensionSupported(extension: ?[*:0]const u8) Bool;
 
     pub fn createContext(window: *Window) Error!Context {
         return SDL_GL_CreateContext(window) orelse return makeError();
@@ -345,12 +350,30 @@ pub const Texture = opaque {
     }
     extern fn SDL_DestroyTexture(texture: ?*Texture) void;
 
-    pub fn query(texture: *Texture, format: ?*PixelFormat, access: ?*TextureAccess, w: ?*i32, h: ?*i32) !void {
-        if (SDL_QueryTexture(texture, @as(?*u32, @ptrCast(format)), @as(?*c_int, @ptrCast(access)), w, h) != 0) {
+    pub fn query(
+        texture: *Texture,
+        format: ?*PixelFormatEnum,
+        access: ?*TextureAccess,
+        w: ?*i32,
+        h: ?*i32,
+    ) !void {
+        if (SDL_QueryTexture(
+            texture,
+            @as(?*u32, @ptrCast(format)),
+            @as(?*c_int, @ptrCast(access)),
+            w,
+            h,
+        ) != 0) {
             return makeError();
         }
     }
-    extern fn SDL_QueryTexture(texture: *Texture, format: ?*u32, access: ?*c_int, w: ?*c_int, h: ?*c_int) c_int;
+    extern fn SDL_QueryTexture(
+        texture: *Texture,
+        format: ?*u32,
+        access: ?*c_int,
+        w: ?*c_int,
+        h: ?*c_int,
+    ) c_int;
 
     pub fn lock(texture: *Texture, rect: ?*Rect) !struct {
         pixels: [*]u8,
@@ -366,7 +389,12 @@ pub const Texture = opaque {
             .pitch = @bitCast(pitch),
         };
     }
-    extern fn SDL_LockTexture(texture: *Texture, rect: ?*Rect, pixels: **anyopaque, pitch: *c_int) c_int;
+    extern fn SDL_LockTexture(
+        texture: *Texture,
+        rect: ?*Rect,
+        pixels: **anyopaque,
+        pitch: *c_int,
+    ) c_int;
 
     pub fn unlock(texture: *Texture) void {
         SDL_UnlockTexture(texture);
@@ -417,48 +445,15 @@ pub const Renderer = opaque {
         accelerated: bool = false,
         present_vsync: bool = false,
         target_texture: bool = false,
-        __unused1: bool = false,
-        __unused2: bool = false,
-        __unused3: bool = false,
-        __unused4: bool = false,
-        __unused5: bool = false,
-        __unused6: bool = false,
-        __unused7: bool = false,
-        __unused8: bool = false,
-        __unused9: bool = false,
-        __unused10: bool = false,
-        __unused11: bool = false,
-        __unused12: bool = false,
-        __unused13: bool = false,
-        __unused14: bool = false,
-        __unused15: bool = false,
-        __unused16: bool = false,
-        __unused17: bool = false,
-        __unused18: bool = false,
-        __unused19: bool = false,
-        __unused20: bool = false,
-        __unused21: bool = false,
-        __unused22: bool = false,
-        __unused23: bool = false,
-        __unused24: bool = false,
-        __unused25: bool = false,
-        __unused26: bool = false,
-        __unused27: bool = false,
-        __unused28: bool = false,
+        __unused5: u28 = 0,
     };
 
-    pub fn create(window: *Window, index: ?i32, flags: Flags) !*Renderer {
+    pub fn create(window: *Window, index: ?i32, flags: Flags) Error!*Renderer {
         return SDL_CreateRenderer(window, index orelse -1, flags) orelse makeError();
     }
-    extern fn SDL_CreateRenderer(
-        window: *Window,
-        index: i32,
-        flags: Flags,
-    ) ?*Renderer;
+    extern fn SDL_CreateRenderer(window: *Window, index: i32, flags: Flags) ?*Renderer;
 
-    pub fn destroy(r: *Renderer) void {
-        SDL_DestroyRenderer(r);
-    }
+    pub const destroy = SDL_DestroyRenderer;
     extern fn SDL_DestroyRenderer(r: *Renderer) void;
 
     pub fn clear(r: *Renderer) !void {
@@ -466,9 +461,7 @@ pub const Renderer = opaque {
     }
     extern fn SDL_RenderClear(r: *Renderer) i32;
 
-    pub fn present(r: *Renderer) void {
-        SDL_RenderPresent(r);
-    }
+    pub const present = SDL_RenderPresent;
     extern fn SDL_RenderPresent(r: *Renderer) void;
 
     pub fn copy(
@@ -476,7 +469,7 @@ pub const Renderer = opaque {
         tex: *Texture,
         src: ?*const Rect,
         dst: ?*const Rect,
-    ) !void {
+    ) Error!void {
         if (SDL_RenderCopy(r, tex, src, dst) < 0) return makeError();
     }
     extern fn SDL_RenderCopy(
@@ -484,22 +477,22 @@ pub const Renderer = opaque {
         t: *Texture,
         srcrect: ?*const Rect,
         dstrect: ?*const Rect,
-    ) i32;
+    ) c_int;
 
     pub fn copyF(
         r: *Renderer,
         tex: *Texture,
         src: ?*const Rect,
-        dst: ?*const RectF,
-    ) !void {
+        dst: ?*const FRect,
+    ) Error!void {
         if (SDL_RenderCopyF(r, tex, src, dst) < 0) return makeError();
     }
     extern fn SDL_RenderCopyF(
         r: *Renderer,
         t: *Texture,
         srcrect: ?*const Rect,
-        dstrect: ?*const RectF,
-    ) i32;
+        dstrect: ?*const FRect,
+    ) c_int;
 
     pub fn copyEx(
         r: *Renderer,
@@ -509,7 +502,7 @@ pub const Renderer = opaque {
         angle: f64,
         center: ?*const Point,
         flip: RendererFlip,
-    ) !void {
+    ) Error!void {
         if (SDL_RenderCopyEx(r, tex, src, dst, angle, center, flip) < 0) return makeError();
     }
     extern fn SDL_RenderCopyEx(
@@ -520,80 +513,82 @@ pub const Renderer = opaque {
         angle: f64,
         center: *const Point,
         flip: RendererFlip,
-    ) i32;
+    ) c_int;
 
     pub fn copyExF(
         r: *Renderer,
         tex: *Texture,
         src: ?*const Rect,
-        dst: ?*const RectF,
+        dst: ?*const FRect,
         angle: f64,
         center: ?*const PointF,
         flip: RendererFlip,
-    ) !void {
-        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, @intFromEnum(flip)) < 0) return makeError();
+    ) Error!void {
+        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, @intFromEnum(flip)) < 0) {
+            return makeError();
+        }
     }
     extern fn SDL_RenderCopyExF(
         r: *Renderer,
         t: *Texture,
         srcrect: ?*const Rect,
-        dstrect: ?*const RectF,
+        dstrect: ?*const FRect,
         angle: f64,
         center: *const PointF,
         flip: RendererFlip,
-    ) i32;
+    ) c_int;
 
-    pub fn setScale(r: *Renderer, x: f32, y: f32) !void {
+    pub fn setScale(r: *Renderer, x: f32, y: f32) Error!void {
         if (SDL_RenderSetScale(r, x, y) > 0) return makeError();
     }
-    extern fn SDL_RenderSetScale(renderer: *Renderer, scaleX: f32, scaleY: f32) i32;
+    extern fn SDL_RenderSetScale(renderer: *Renderer, scaleX: f32, scaleY: f32) c_int;
 
-    pub fn drawLine(r: *Renderer, x0: i32, y0: i32, x1: i32, y1: i32) !void {
+    pub fn drawLine(r: *Renderer, x0: i32, y0: i32, x1: i32, y1: i32) Error!void {
         if (SDL_RenderDrawLine(r, x0, y0, x1, y1) < 0) return makeError();
     }
-    extern fn SDL_RenderDrawLine(renderer: *Renderer, x1: i32, y1: i32, x2: i32, y2: i32) i32;
+    extern fn SDL_RenderDrawLine(renderer: *Renderer, x1: i32, y1: i32, x2: i32, y2: i32) c_int;
 
-    pub fn drawLineF(r: *Renderer, x0: f32, y0: f32, x1: f32, y1: f32) !void {
+    pub fn drawLineF(r: *Renderer, x0: f32, y0: f32, x1: f32, y1: f32) Error!void {
         if (SDL_RenderDrawLineF(r, x0, y0, x1, y1) < 0) return makeError();
     }
-    extern fn SDL_RenderDrawLineF(renderer: *Renderer, x1: f32, y1: f32, x2: f32, y2: f32) i32;
+    extern fn SDL_RenderDrawLineF(renderer: *Renderer, x1: f32, y1: f32, x2: f32, y2: f32) c_int;
 
-    pub fn drawPoint(r: *Renderer, x: i32, y: i32) !void {
+    pub fn drawPoint(r: *Renderer, x: i32, y: i32) Error!void {
         if (SDL_RenderDrawPoint(r, x, y) < 0) return makeError();
     }
     extern fn SDL_RenderDrawPoint(renderer: *Renderer, x: c_int, y: c_int) c_int;
 
-    pub fn drawPointF(r: *Renderer, x: f32, y: f32) !void {
+    pub fn drawPointF(r: *Renderer, x: f32, y: f32) Error!void {
         if (SDL_RenderDrawPointF(r, x, y) < 0) return makeError();
     }
-    extern fn SDL_RenderDrawPointF(renderer: *Renderer, x: f32, y: f32) i32;
+    extern fn SDL_RenderDrawPointF(renderer: *Renderer, x: f32, y: f32) c_int;
 
-    pub fn fillRect(r: *Renderer, rect: Rect) !void {
+    pub fn fillRect(r: *Renderer, rect: Rect) Error!void {
         if (SDL_RenderFillRect(r, &rect) < 0) return makeError();
     }
-    extern fn SDL_RenderFillRect(renderer: ?*Renderer, rect: *const Rect) i32;
+    extern fn SDL_RenderFillRect(renderer: ?*Renderer, rect: *const Rect) c_int;
 
-    pub fn fillRectF(r: *Renderer, rect: RectF) !void {
+    pub fn fillFRect(r: *Renderer, rect: FRect) Error!void {
         if (SDL_RenderFillRectF(r, &rect) < 0) return makeError();
     }
-    extern fn SDL_RenderFillRectF(renderer: *Renderer, rect: *const RectF) i32;
+    extern fn SDL_RenderFillRectF(renderer: *Renderer, rect: *const FRect) c_int;
 
-    pub fn drawRect(r: *Renderer, rect: Rect) !void {
+    pub fn drawRect(r: *Renderer, rect: Rect) Error!void {
         if (SDL_RenderDrawRect(r, &rect) < 0) return makeError();
     }
-    extern fn SDL_RenderDrawRect(renderer: *Renderer, rect: *const Rect) i32;
+    extern fn SDL_RenderDrawRect(renderer: *Renderer, rect: *const Rect) c_int;
 
-    pub fn drawRectF(r: *Renderer, rect: RectF) !void {
+    pub fn drawFRect(r: *Renderer, rect: FRect) Error!void {
         if (SDL_RenderDrawRectF(r, &rect) < 0) return makeError();
     }
-    extern fn SDL_RenderDrawRectF(renderer: *Renderer, rect: *const RectF) c_int;
+    extern fn SDL_RenderDrawRectF(renderer: *Renderer, rect: *const FRect) c_int;
 
     pub fn drawGeometry(
         r: *Renderer,
         tex: ?*const Texture,
         vertices: []const Vertex,
         indices: ?[]const u32,
-    ) !void {
+    ) Error!void {
         if (SDL_RenderGeometry(
             r,
             tex,
@@ -611,101 +606,117 @@ pub const Renderer = opaque {
         num_vertices: i32,
         indices: [*c]const i32,
         num_indices: i32,
-    ) i32;
+    ) c_int;
 
-    pub fn setDrawColor(r: *Renderer, color: Color) !void {
-        if (SDL_SetRenderDrawColor(r, color.r, color.g, color.b, color.a) < 0) return makeError();
+    pub fn setDrawColor(renderer: *Renderer, color: Color) Error!void {
+        if (SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a) < 0) {
+            return makeError();
+        }
     }
-
-    pub fn setDrawColorRGB(r: *Renderer, _r: u8, g: u8, b: u8) !void {
-        if (SDL_SetRenderDrawColor(r, _r, g, b, 255) < 0) return makeError();
+    pub fn setDrawColorRGB(renderer: *Renderer, r: u8, g: u8, b: u8) Error!void {
+        if (SDL_SetRenderDrawColor(renderer, r, g, b, 255) < 0) return makeError();
     }
-
-    pub fn setDrawColorRGBA(r: *Renderer, _r: u8, g: u8, b: u8, a: u8) !void {
-        if (SDL_SetRenderDrawColor(r, _r, g, b, a) < 0) return makeError();
+    pub fn setDrawColorRGBA(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) Error!void {
+        if (SDL_SetRenderDrawColor(renderer, r, g, b, a) < 0) return makeError();
     }
-    extern fn SDL_SetRenderDrawColor(r: *Renderer, _r: u8, g: u8, b: u8, a: u8) i32;
+    extern fn SDL_SetRenderDrawColor(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) c_int;
 
-    pub fn getDrawColor(r: *Renderer) !Color {
+    pub fn getDrawColor(renderer: *Renderer) Error!Color {
         var color: Color = undefined;
-        if (SDL_GetRenderDrawColor(r, &color.r, &color.g, &color.b, &color.a) < 0) return makeError();
+        if (SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a) < 0) {
+            return makeError();
+        }
         return color;
     }
-    extern fn SDL_GetRenderDrawColor(renderer: *Renderer, r: *u8, g: *u8, b: *u8, a: *u8) i32;
+    extern fn SDL_GetRenderDrawColor(renderer: *Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
 
-    pub fn getDrawBlendMode(r: *Renderer) !BlendMode {
+    pub fn getDrawBlendMode(r: *Renderer) Error!BlendMode {
         var blend_mode: BlendMode = undefined;
         if (SDL_GetRenderDrawBlendMode(r, &blend_mode) < 0) return makeError();
         return blend_mode;
     }
-    extern fn SDL_GetRenderDrawBlendMode(renderer: *Renderer, blendMode: *BlendMode) i32;
+    extern fn SDL_GetRenderDrawBlendMode(renderer: *Renderer, blendMode: *BlendMode) c_int;
 
-    pub fn setDrawBlendMode(r: *Renderer, blend_mode: BlendMode) !void {
+    pub fn setDrawBlendMode(r: *Renderer, blend_mode: BlendMode) Error!void {
         if (SDL_SetRenderDrawBlendMode(r, blend_mode) < 0) return makeError();
     }
-    extern fn SDL_SetRenderDrawBlendMode(renderer: *Renderer, blendMode: BlendMode) i32;
+    extern fn SDL_SetRenderDrawBlendMode(renderer: *Renderer, blendMode: BlendMode) c_int;
 
-    pub const OutputSize = struct { width_pixels: i32, height_pixels: i32 };
-    pub fn getOutputSize(r: *Renderer) !OutputSize {
-        var width_pixels: i32 = undefined;
-        var height_pixels: i32 = undefined;
-        if (SDL_GetRendererOutputSize(r, &width_pixels, &height_pixels) < 0) return makeError();
-        return OutputSize{ .width_pixels = width_pixels, .height_pixels = height_pixels };
+    pub fn getOutputSize(renderer: *Renderer) Error!struct { w: i32, h: i32 } {
+        var w: i32 = undefined;
+        var h: i32 = undefined;
+        if (SDL_GetRendererOutputSize(renderer, &w, &h) < 0) return makeError();
+        return .{ .w = w, .h = h };
     }
-    extern fn SDL_GetRendererOutputSize(renderer: *Renderer, w: *i32, h: *i32) i32;
+    extern fn SDL_GetRendererOutputSize(renderer: *Renderer, w: *i32, h: *i32) c_int;
 
     pub fn createTexture(
         renderer: *Renderer,
-        format: PixelFormat,
+        format: PixelFormatEnum,
         access: TextureAccess,
         width: i32,
         height: i32,
-    ) !*Texture {
-        return SDL_CreateTexture(renderer, @intFromEnum(format), @intFromEnum(access), width, height) orelse makeError();
+    ) Error!*Texture {
+        return SDL_CreateTexture(
+            renderer,
+            @intFromEnum(format),
+            @intFromEnum(access),
+            width,
+            height,
+        ) orelse makeError();
     }
-    extern fn SDL_CreateTexture(renderer: *Renderer, format: u32, access: i32, w: i32, h: i32) ?*Texture;
+    extern fn SDL_CreateTexture(
+        renderer: *Renderer,
+        format: u32,
+        access: i32,
+        w: i32,
+        h: i32,
+    ) ?*Texture;
 
-    pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) !*Texture {
+    pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*Texture {
         return SDL_CreateTextureFromSurface(renderer, surface) orelse makeError();
     }
     extern fn SDL_CreateTextureFromSurface(renderer: *Renderer, surface: *Surface) ?*Texture;
 
-    pub fn getInfo(r: *Renderer) !RendererInfo {
+    pub fn getInfo(r: *Renderer) Error!RendererInfo {
         var result: RendererInfo = undefined;
         if (SDL_GetRendererInfo(r, &result) < 0) return makeError();
         return result;
     }
-    extern fn SDL_GetRendererInfo(renderer: *Renderer, info: *RendererInfo) i32;
+    extern fn SDL_GetRendererInfo(renderer: *Renderer, info: *RendererInfo) c_int;
 
-    pub fn setClipRect(r: *Renderer, clip_rectangle: ?*const Rect) !void {
-        if (SDL_RenderSetClipRect(r, clip_rectangle) < 0) return makeError();
+    pub fn isClipEnabled() bool {
+        return SDL_RenderIsClipEnabled() == True;
     }
-    extern fn SDL_RenderSetClipRect(renderer: *Renderer, rect: *const Rect) c_int;
+    pub extern fn SDL_RenderIsClipEnabled(renderer: *Renderer) Bool;
 
-    pub fn getClipRect(r: *Renderer) !?*const Rect {
-        if (SDL_RenderIsClipEnabled(r) == 1) return null;
-        var clip_rectangle: Rect = undefined;
-        SDL_RenderGetClipRect(r, &clip_rectangle);
-        return clip_rectangle;
+    pub fn setClipRect(r: *Renderer, clip_rect: ?*const Rect) Error!void {
+        if (SDL_RenderSetClipRect(r, clip_rect) < 0) return makeError();
     }
-    extern fn SDL_RenderIsClipEnabled(renderer: *Renderer) i32;
-    extern fn SDL_RenderGetClipRect(renderer: *Renderer, rect: *Rect) void;
+    extern fn SDL_RenderSetClipRect(renderer: *Renderer, rect: ?*const Rect) c_int;
 
-    pub fn getLogicalSize(r: *Renderer) !struct { width: i32, height: i32 } {
-        var width_pixels: i32 = undefined;
-        var height_pixels: i32 = undefined;
-        if (SDL_RenderGetLogicalSize(r, &width_pixels, &height_pixels) < 0) return makeError();
+    pub fn getClipRect(r: *Renderer) ?*const Rect {
+        var clip_rect: Rect = undefined;
+        SDL_RenderGetClipRect(r, &clip_rect);
+        return clip_rect;
+    }
+    extern fn SDL_RenderGetClipRect(renderer: *Renderer, rect: ?*Rect) void;
+
+    pub fn getLogicalSize(r: *Renderer) struct { width: i32, height: i32 } {
+        var width: i32 = undefined;
+        var height: i32 = undefined;
+        SDL_RenderGetLogicalSize(r, &width, &height);
         return .{
-            .width = width_pixels,
-            .height = height_pixels,
+            .width = width,
+            .height = height,
         };
     }
     extern fn SDL_RenderGetLogicalSize(renderer: *Renderer, w: *i32, h: *i32) void;
 
-    pub fn setLogicalSize(r: *Renderer, width_pixels: i32, height_pixels: i32) !void {
-        if (SDL_RenderSetLogicalSize(r, width_pixels, height_pixels) < 0) return makeError();
+    pub fn setLogicalSize(r: *Renderer, width: i32, height: i32) Error!void {
+        if (SDL_RenderSetLogicalSize(r, width, height) < 0) return makeError();
     }
-    extern fn SDL_RenderSetLogicalSize(renderer: *Renderer, w: i32, h: i32) i32;
+    extern fn SDL_RenderSetLogicalSize(renderer: *Renderer, w: i32, h: i32) c_int;
 
     pub fn getViewport(r: *Renderer) Rect {
         var result: Rect = undefined;
@@ -714,23 +725,25 @@ pub const Renderer = opaque {
     }
     extern fn SDL_RenderGetViewport(renderer: *Renderer, rect: *Rect) void;
 
-    pub fn setViewport(r: *Renderer, rect: Rect) !void {
-        if (SDL_RenderSetViewport(r, &rect) < 0) return makeError();
+    pub fn setViewport(r: *Renderer, maybe_rect: ?Rect) Error!void {
+        if (SDL_RenderSetViewport(r, if (maybe_rect) |rect| &rect else null) != 0) {
+            return makeError();
+        }
     }
-    extern fn SDL_RenderSetViewport(renderer: *Renderer, rect: *const Rect) i32;
+    extern fn SDL_RenderSetViewport(renderer: *Renderer, rect: ?*const Rect) c_int;
 
-    pub fn setTarget(r: *Renderer, tex: ?*const Texture) !void {
+    pub fn setTarget(r: *Renderer, tex: ?*const Texture) Error!void {
         if (SDL_SetRenderTarget(r, tex) < 0) return makeError();
     }
-    extern fn SDL_SetRenderTarget(renderer: *Renderer, texture: ?*const Texture) i32;
+    extern fn SDL_SetRenderTarget(renderer: *Renderer, texture: ?*const Texture) c_int;
 
     pub fn readPixels(
         r: *Renderer,
         rect: ?*const Rect,
-        format: ?PixelFormat,
+        format: ?PixelFormatEnum,
         pixels: [*]u8,
         pitch: u32,
-    ) !void {
+    ) Error!void {
         if (SDL_RenderReadPixels(
             r,
             rect,
@@ -745,7 +758,7 @@ pub const Renderer = opaque {
         format: u32,
         pixels: ?*anyopaque,
         pitch: i32,
-    ) i32;
+    ) c_int;
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -753,7 +766,7 @@ pub const Renderer = opaque {
 // Pixel Formats and Conversion Routines
 //
 //--------------------------------------------------------------------------------------------------
-const PixelType = enum(u32) {
+pub const PixelType = enum(c_int) {
     none = 0,
     index1,
     index4,
@@ -767,12 +780,12 @@ const PixelType = enum(u32) {
     arrayf16,
     arrayf32,
 };
-const BitmapOrder = enum(u32) {
+pub const BitmapOrder = enum(c_int) {
     none = 0,
     @"4321",
     @"1234",
 };
-const PackedOrder = enum(u32) {
+pub const PackedOrder = enum(c_int) {
     none = 0,
     xrgb,
     rgbx,
@@ -783,7 +796,7 @@ const PackedOrder = enum(u32) {
     abgr,
     bgra,
 };
-const ArrayOrder = enum(u32) {
+pub const ArrayOrder = enum(c_int) {
     none = 0,
     rgb,
     rgba,
@@ -792,7 +805,7 @@ const ArrayOrder = enum(u32) {
     bgra,
     abgr,
 };
-const PackedLayout = enum(u32) {
+pub const PackedLayout = enum(c_int) {
     none = 0,
     @"332",
     @"4444",
@@ -803,13 +816,13 @@ const PackedLayout = enum(u32) {
     @"2101010",
     @"1010102",
 };
-fn definePixelFormat(
+fn definePixelFormatEnum(
     _type: PixelType,
     order: anytype,
     layout: u32,
     bits: u32,
     bytes: u32,
-) u32 {
+) c_int {
     switch (_type) {
         .index1, .index4, .index8 => {
             assert(@TypeOf(order) == BitmapOrder);
@@ -825,38 +838,38 @@ fn definePixelFormat(
     return ((1 << 28) | ((@intFromEnum(_type)) << 24) | ((@intFromEnum(order)) << 20) |
         ((layout) << 16) | ((bits) << 8) | ((bytes) << 0));
 }
-pub const PixelFormat = enum(u32) {
-    index1lsb = definePixelFormat(.index1, BitmapOrder.@"4321", 0, 1, 0),
-    index1msb = definePixelFormat(.index1, BitmapOrder.@"1234", 0, 1, 0),
-    index4lsb = definePixelFormat(.index4, BitmapOrder.@"4321", 0, 4, 0),
-    index4msb = definePixelFormat(.index4, BitmapOrder.@"1234", 0, 4, 0),
-    index8 = definePixelFormat(.index8, BitmapOrder.none, 0, 8, 1),
-    rgb332 = definePixelFormat(.packed8, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"332"), 8, 1),
-    xrgb4444 = definePixelFormat(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"4444"), 12, 2),
-    xbgr4444 = definePixelFormat(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"4444"), 12, 2),
-    xrgb1555 = definePixelFormat(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"1555"), 15, 2),
-    xbgr1555 = definePixelFormat(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"1555"), 15, 2),
-    argb4444 = definePixelFormat(.packed16, PackedOrder.argb, @intFromEnum(PackedLayout.@"4444"), 16, 2),
-    rgba4444 = definePixelFormat(.packed16, PackedOrder.rgba, @intFromEnum(PackedLayout.@"4444"), 16, 2),
-    abgr4444 = definePixelFormat(.packed16, PackedOrder.abgr, @intFromEnum(PackedLayout.@"4444"), 16, 2),
-    bgra4444 = definePixelFormat(.packed16, PackedOrder.bgra, @intFromEnum(PackedLayout.@"4444"), 16, 2),
-    argb1555 = definePixelFormat(.packed16, PackedOrder.argb, @intFromEnum(PackedLayout.@"1555"), 16, 2),
-    rgba5551 = definePixelFormat(.packed16, PackedOrder.rgba, @intFromEnum(PackedLayout.@"5551"), 16, 2),
-    abgr1555 = definePixelFormat(.packed16, PackedOrder.abgr, @intFromEnum(PackedLayout.@"1555"), 16, 2),
-    bgra5551 = definePixelFormat(.packed16, PackedOrder.bgra, @intFromEnum(PackedLayout.@"5551"), 16, 2),
-    rgb565 = definePixelFormat(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"565"), 16, 2),
-    bgr565 = definePixelFormat(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"565"), 16, 2),
-    rgb24 = definePixelFormat(.arrayu8, ArrayOrder.rgb, 0, 24, 3),
-    bgr24 = definePixelFormat(.arrayu8, ArrayOrder.bgr, 0, 24, 3),
-    xrgb8888 = definePixelFormat(.packed32, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"8888"), 24, 4),
-    rgbx8888 = definePixelFormat(.packed32, PackedOrder.rgbx, @intFromEnum(PackedLayout.@"8888"), 24, 4),
-    xbgr8888 = definePixelFormat(.packed32, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"8888"), 24, 4),
-    bgrx8888 = definePixelFormat(.packed32, PackedOrder.bgrx, @intFromEnum(PackedLayout.@"8888"), 24, 4),
-    argb8888 = definePixelFormat(.packed32, PackedOrder.argb, @intFromEnum(PackedLayout.@"8888"), 32, 4),
-    rgba8888 = definePixelFormat(.packed32, PackedOrder.rgba, @intFromEnum(PackedLayout.@"8888"), 32, 4),
-    abgr8888 = definePixelFormat(.packed32, PackedOrder.abgr, @intFromEnum(PackedLayout.@"8888"), 32, 4),
-    bgra8888 = definePixelFormat(.packed32, PackedOrder.bgra, @intFromEnum(PackedLayout.@"8888"), 32, 4),
-    argb2101010 = definePixelFormat(.packed32, PackedOrder.argb, @intFromEnum(PackedLayout.@"2101010"), 32, 4),
+pub const PixelFormatEnum = enum(c_int) {
+    index1lsb = definePixelFormatEnum(.index1, BitmapOrder.@"4321", 0, 1, 0),
+    index1msb = definePixelFormatEnum(.index1, BitmapOrder.@"1234", 0, 1, 0),
+    index4lsb = definePixelFormatEnum(.index4, BitmapOrder.@"4321", 0, 4, 0),
+    index4msb = definePixelFormatEnum(.index4, BitmapOrder.@"1234", 0, 4, 0),
+    index8 = definePixelFormatEnum(.index8, BitmapOrder.none, 0, 8, 1),
+    rgb332 = definePixelFormatEnum(.packed8, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"332"), 8, 1),
+    xrgb4444 = definePixelFormatEnum(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"4444"), 12, 2),
+    xbgr4444 = definePixelFormatEnum(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"4444"), 12, 2),
+    xrgb1555 = definePixelFormatEnum(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"1555"), 15, 2),
+    xbgr1555 = definePixelFormatEnum(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"1555"), 15, 2),
+    argb4444 = definePixelFormatEnum(.packed16, PackedOrder.argb, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    rgba4444 = definePixelFormatEnum(.packed16, PackedOrder.rgba, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    abgr4444 = definePixelFormatEnum(.packed16, PackedOrder.abgr, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    bgra4444 = definePixelFormatEnum(.packed16, PackedOrder.bgra, @intFromEnum(PackedLayout.@"4444"), 16, 2),
+    argb1555 = definePixelFormatEnum(.packed16, PackedOrder.argb, @intFromEnum(PackedLayout.@"1555"), 16, 2),
+    rgba5551 = definePixelFormatEnum(.packed16, PackedOrder.rgba, @intFromEnum(PackedLayout.@"5551"), 16, 2),
+    abgr1555 = definePixelFormatEnum(.packed16, PackedOrder.abgr, @intFromEnum(PackedLayout.@"1555"), 16, 2),
+    bgra5551 = definePixelFormatEnum(.packed16, PackedOrder.bgra, @intFromEnum(PackedLayout.@"5551"), 16, 2),
+    rgb565 = definePixelFormatEnum(.packed16, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"565"), 16, 2),
+    bgr565 = definePixelFormatEnum(.packed16, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"565"), 16, 2),
+    rgb24 = definePixelFormatEnum(.arrayu8, ArrayOrder.rgb, 0, 24, 3),
+    bgr24 = definePixelFormatEnum(.arrayu8, ArrayOrder.bgr, 0, 24, 3),
+    xrgb8888 = definePixelFormatEnum(.packed32, PackedOrder.xrgb, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    rgbx8888 = definePixelFormatEnum(.packed32, PackedOrder.rgbx, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    xbgr8888 = definePixelFormatEnum(.packed32, PackedOrder.xbgr, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    bgrx8888 = definePixelFormatEnum(.packed32, PackedOrder.bgrx, @intFromEnum(PackedLayout.@"8888"), 24, 4),
+    argb8888 = definePixelFormatEnum(.packed32, PackedOrder.argb, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    rgba8888 = definePixelFormatEnum(.packed32, PackedOrder.rgba, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    abgr8888 = definePixelFormatEnum(.packed32, PackedOrder.abgr, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    bgra8888 = definePixelFormatEnum(.packed32, PackedOrder.bgra, @intFromEnum(PackedLayout.@"8888"), 32, 4),
+    argb2101010 = definePixelFormatEnum(.packed32, PackedOrder.argb, @intFromEnum(PackedLayout.@"2101010"), 32, 4),
 };
 
 pub const Color = extern struct {
@@ -979,41 +992,41 @@ pub const Rect = extern struct {
     h: i32,
 
     pub fn hasIntersection(a: *const Rect, b: *const Rect) bool {
-        return SDL_HasIntersection(a, b) == 1;
+        return SDL_HasIntersection(a, b) == True;
     }
-    extern fn SDL_HasIntersection(a: *const Rect, b: *const Rect) i32;
+    extern fn SDL_HasIntersection(a: *const Rect, b: *const Rect) Bool;
 
     pub fn intersectRect(a: *const Rect, b: *const Rect, result: *Rect) bool {
-        return SDL_IntersectRect(a, b, result) == 1;
+        return SDL_IntersectRect(a, b, result) == True;
     }
-    extern fn SDL_IntersectRect(a: *const Rect, b: *const Rect, result: *Rect) i32;
+    extern fn SDL_IntersectRect(a: *const Rect, b: *const Rect, result: *Rect) Bool;
 
     pub fn intersectRectAndLine(rect: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) bool {
-        return SDL_IntersectRectAndLine(rect, x1, y1, x2, y2) == 1;
+        return SDL_IntersectRectAndLine(rect, x1, y1, x2, y2) == True;
     }
-    extern fn SDL_IntersectRectAndLine(r: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) i32;
+    extern fn SDL_IntersectRectAndLine(r: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) Bool;
 };
 
-pub const RectF = extern struct {
+pub const FRect = extern struct {
     x: f32,
     y: f32,
     w: f32,
     h: f32,
 
-    pub fn hasIntersection(a: *const Rect, b: *const Rect) bool {
-        return SDL_HasIntersectionF(a, b);
+    pub fn hasIntersection(a: *const FRect, b: *const FRect) bool {
+        return SDL_HasIntersectionF(a, b) == True;
     }
-    extern fn SDL_HasIntersectionF(a: *const Rect, b: *const Rect) bool;
+    extern fn SDL_HasIntersectionF(a: *const FRect, b: *const FRect) Bool;
 
-    pub fn intersectRect(a: *const Rect, b: *const Rect, result: *Rect) bool {
-        return SDL_IntersectFRect(a, b, result);
+    pub fn intersectRect(a: *const FRect, b: *const FRect, result: *FRect) bool {
+        return SDL_IntersectFRect(a, b, result) == True;
     }
-    extern fn SDL_IntersectFRect(a: *const Rect, b: *const Rect, result: *Rect) bool;
+    extern fn SDL_IntersectFRect(a: *const FRect, b: *const FRect, result: *FRect) Bool;
 
-    pub fn intersectRectAndLine(rect: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) bool {
-        return SDL_IntersectFRectAndLine(rect, x1, y1, x2, y2);
+    pub fn intersectLine(rect: *const FRect, x1: *f32, y1: *f32, x2: *f32, y2: *f32) bool {
+        return SDL_IntersectFRectAndLine(rect, x1, y1, x2, y2) == True;
     }
-    extern fn SDL_IntersectFRectAndLine(r: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) bool;
+    extern fn SDL_IntersectFRectAndLine(r: *const FRect, x1: *f32, y1: *f32, x2: *f32, y2: *f32) Bool;
 };
 
 pub const Point = extern struct {
@@ -1573,12 +1586,17 @@ pub fn pauseAudioDevice(device: AudioDeviceId, pause: bool) void {
 }
 extern fn SDL_PauseAudioDevice(AudioDeviceId, pause: c_int) void;
 
-pub fn queueAudio(comptime SampleType: type, device: AudioDeviceId, data: []const SampleType) bool {
-    return SDL_QueueAudio(device, data.ptr, @sizeOf(SampleType) * @as(u32, @intCast(data.len))) == 0;
+pub fn queueAudio(
+    comptime SampleType: type,
+    device: AudioDeviceId,
+    data: []const SampleType,
+) Error!void {
+    if (SDL_QueueAudio(device, data.ptr, @sizeOf(SampleType) * @as(u32, @intCast(data.len))) != 0) {
+        return makeError();
+    }
 }
 extern fn SDL_QueueAudio(AudioDeviceId, data: *const anyopaque, len: u32) c_int;
 
-/// `pub fn getQueuedAudioSize(device: AudioDeviceId) u32`
 pub const getQueuedAudioSize = SDL_GetQueuedAudioSize;
 extern fn SDL_GetQueuedAudioSize(AudioDeviceId) u32;
 
@@ -1718,3 +1736,6 @@ extern fn SDL_ShowSimpleMessageBox(
 // Standard Library Functionality
 //
 //--------------------------------------------------------------------------------------------------
+pub const Bool = c_int;
+pub const False = @as(Bool, 0);
+pub const True = @as(Bool, 1);
