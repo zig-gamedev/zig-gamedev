@@ -15,7 +15,9 @@ pub const Package = struct {
         exe.addModule("ztracy", pkg.ztracy);
         exe.addModule("ztracy_options", pkg.ztracy_options);
         if (pkg.options.enable_ztracy) {
-            exe.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
+            exe.addIncludePath(std.Build.LazyPath{
+                .path = thisDir() ++ "/libs/tracy/tracy",
+            });
             exe.linkLibrary(pkg.ztracy_c_cpp);
         }
     }
@@ -50,9 +52,14 @@ pub fn package(
             .optimize = optimize,
         });
 
-        ztracy_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
+        ztracy_c_cpp.addIncludePath(std.Build.LazyPath{
+            .path = thisDir() ++ "/libs/tracy/tracy",
+        });
+
         ztracy_c_cpp.addCSourceFile(.{
-            .file = .{ .path = thisDir() ++ "/libs/tracy/TracyClient.cpp" },
+            .file = std.Build.LazyPath{
+                .path = thisDir() ++ "/libs/tracy/TracyClient.cpp",
+            },
             .flags = &.{
                 "-DTRACY_ENABLE",
                 enable_fibers,
@@ -72,9 +79,9 @@ pub fn package(
                 ztracy_c_cpp.linkSystemLibraryName("dbghelp");
             },
             .macos => {
-                ztracy_c_cpp.addFrameworkPath(
-                    .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
-                );
+                ztracy_c_cpp.addFrameworkPath(std.Build.LazyPath{
+                    .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks",
+                });
             },
             else => {},
         }
