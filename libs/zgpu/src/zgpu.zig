@@ -96,7 +96,7 @@ pub const GraphicsContext = struct {
 
         if (!emscripten) dniDiscoverDefaultAdapters(native_instance);
 
-        const instance = if (emscripten) wgpu.createInstance(.{}) else dniGetWgpuInstance(native_instance);
+        const instance = if (emscripten) wgpu.createInstance(.{}) else dniGetWgpuInstance(native_instance).?;
 
         const adapter = adapter: {
             const Response = struct {
@@ -1079,7 +1079,7 @@ const DawnNativeInstance = ?*opaque {};
 const DawnProcsTable = ?*opaque {};
 extern fn dniCreate() DawnNativeInstance;
 extern fn dniDestroy(dni: DawnNativeInstance) void;
-extern fn dniGetWgpuInstance(dni: DawnNativeInstance) wgpu.Instance;
+extern fn dniGetWgpuInstance(dni: DawnNativeInstance) ?wgpu.Instance;
 extern fn dniDiscoverDefaultAdapters(dni: DawnNativeInstance) void;
 extern fn dnGetProcs() DawnProcsTable;
 
