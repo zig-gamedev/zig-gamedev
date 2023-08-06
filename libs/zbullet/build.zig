@@ -26,8 +26,8 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zbullet_c_cpp.addIncludePath(thisDir() ++ "/libs/cbullet");
-    zbullet_c_cpp.addIncludePath(thisDir() ++ "/libs/bullet");
+    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cbullet" });
+    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/bullet" });
     zbullet_c_cpp.linkLibC();
     zbullet_c_cpp.linkLibCpp();
 
@@ -38,10 +38,12 @@ pub fn package(
         "-std=c++11",
         "-fno-sanitize=undefined",
     };
-    zbullet_c_cpp.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", flags);
-    zbullet_c_cpp.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", flags);
-    zbullet_c_cpp.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", flags);
-    zbullet_c_cpp.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", flags);
+    zbullet_c_cpp.addCSourceFiles(&.{
+        thisDir() ++ "/libs/cbullet/cbullet.cpp",
+        thisDir() ++ "/libs/bullet/btLinearMathAll.cpp",
+        thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp",
+        thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp",
+    }, flags);
 
     return .{
         .zbullet = zbullet,

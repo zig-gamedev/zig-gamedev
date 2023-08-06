@@ -1469,8 +1469,7 @@ pub fn comboFromEnum(
     /// that is backed by some kind of integer that can safely cast into an
     /// i32 (the underlying imgui restriction)
     current_item: anytype,
-) bool 
-{
+) bool {
     const item_names = comptime lbl: {
         const item_type = @typeInfo(@TypeOf(current_item.*));
         switch (item_type) {
@@ -1483,23 +1482,17 @@ pub fn comboFromEnum(
                 break :lbl str;
             },
             else => {
-                @compileError(
-                    "Error: current_item must be a pointer-to-an-enum, not a "
-                    ++ @TypeOf(current_item)
-                );
-            }
+                @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(current_item));
+            },
         }
     };
 
-    var item:i32 = @intCast(@intFromEnum(current_item.*));
+    var item: i32 = @intCast(@intFromEnum(current_item.*));
 
-    const result = combo(
-        label,
-        .{
-            .items_separated_by_zeros = item_names,
-            .current_item = &item,
-        }
-    );
+    const result = combo(label, .{
+        .items_separated_by_zeros = item_names,
+        .current_item = &item,
+    });
 
     current_item.* = @enumFromInt(item);
 
@@ -2914,8 +2907,8 @@ pub const BeginTable = struct {
     outer_size: [2]f32 = .{ 0, 0 },
     inner_width: f32 = 0,
 };
-pub fn beginTable(name: [:0]const u8, args: BeginTable) void {
-    zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
+pub fn beginTable(name: [:0]const u8, args: BeginTable) bool {
+    return zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
 }
 extern fn zguiBeginTable(
     str_id: [*:0]const u8,
@@ -2923,7 +2916,7 @@ extern fn zguiBeginTable(
     flags: TableFlags,
     outer_size: *const [2]f32,
     inner_width: f32,
-) void;
+) bool;
 
 pub fn endTable() void {
     zguiEndTable();
@@ -3236,6 +3229,8 @@ pub fn beginPopupModal(name: [:0]const u8, args: Begin) bool {
 pub fn openPopup(str_id: [:0]const u8, flags: PopupFlags) void {
     zguiOpenPopup(str_id, flags);
 }
+/// `pub fn beginPopup(str_id: [:0]const u8, flags: WindowFlags) bool`
+pub const beginPopup = zguiBeginPopup;
 /// `pub fn endPopup() void`
 pub const endPopup = zguiEndPopup;
 /// `pub fn closeCurrentPopup() void`
@@ -3243,6 +3238,7 @@ pub const closeCurrentPopup = zguiCloseCurrentPopup;
 extern fn zguiBeginPopupContextWindow() bool;
 extern fn zguiBeginPopupContextItem() bool;
 extern fn zguiBeginPopupModal(name: [*:0]const u8, popen: ?*bool, flags: WindowFlags) bool;
+extern fn zguiBeginPopup(str_id: [*:0]const u8, flags: WindowFlags) bool;
 extern fn zguiEndPopup() void;
 extern fn zguiOpenPopup(str_id: [*:0]const u8, flags: PopupFlags) void;
 extern fn zguiCloseCurrentPopup() void;

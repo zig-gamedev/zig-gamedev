@@ -5,7 +5,7 @@ pub const Package = struct {
     zflecs_c_cpp: *std.Build.CompileStep,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addIncludePath(thisDir() ++ "/libs/flecs");
+        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
         exe.linkLibrary(pkg.zflecs_c_cpp);
     }
 };
@@ -26,12 +26,15 @@ pub fn package(
         .optimize = optimize,
     });
     zflecs_c_cpp.linkLibC();
-    zflecs_c_cpp.addIncludePath(thisDir() ++ "/libs/flecs");
-    zflecs_c_cpp.addCSourceFile(thisDir() ++ "/libs/flecs/flecs.c", &.{
-        "-fno-sanitize=undefined",
-        "-DFLECS_NO_CPP",
-        "-DFLECS_USE_OS_ALLOC",
-        if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
+    zflecs_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
+    zflecs_c_cpp.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/libs/flecs/flecs.c" },
+        .flags = &.{
+            "-fno-sanitize=undefined",
+            "-DFLECS_NO_CPP",
+            "-DFLECS_USE_OS_ALLOC",
+            if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
+        },
     });
 
     if (zflecs_c_cpp.target.isWindows()) {
