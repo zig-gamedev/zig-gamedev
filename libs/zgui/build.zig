@@ -117,7 +117,7 @@ pub fn package(
             if (emscripten) {
                 const emsdk_path = b.env_map.get("EMSDK") orelse @panic("Failed to get emscripten SDK path, have you installed & sourced the SDK?");
                 const emscripten_include = b.pathJoin(&.{ emsdk_path, "upstream", "emscripten", "cache", "sysroot", "include" });
-                zgui_c_cpp.addSystemIncludePath(emscripten_include);
+                zgui_c_cpp.addSystemIncludePath(.{ .path = emscripten_include });
             } else {
                 zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zglfw/libs/glfw/include" });
                 zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zgpu/libs/dawn/include" });

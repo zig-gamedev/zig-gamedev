@@ -62,7 +62,7 @@ const DemoState = struct {
 };
 
 fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
 
     // Create a bind group layout needed for our render pipeline.
     const bind_group_layout = gctx.createBindGroupLayout(&.{
@@ -176,7 +176,7 @@ fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t : f32 = @floatCast(gctx.stats.time);
+    const t: f32 = @floatCast(gctx.stats.time);
 
     if (!gctx.canRender()) {
         std.log.err("Can't render out of buffers!", .{});
@@ -431,4 +431,3 @@ export fn tickCB(time: f64, user_data: ?*anyopaque) c_int {
     tick();
     return 1; // return 0 to stop emscripten_request_animation_frame_loop
 }
-

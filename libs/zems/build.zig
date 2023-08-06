@@ -58,7 +58,7 @@ pub const EmscriptenStep = struct {
         std.debug.assert(self.link_step == null);
         const b = self.b;
 
-        exe.addSystemIncludePath(self.emsdk_include_path);
+        exe.addSystemIncludePath(.{ .path = self.emsdk_include_path });
         exe.stack_protector = false;
         exe.disable_stack_probing = true;
         exe.linkLibC();
@@ -75,8 +75,8 @@ pub const EmscriptenStep = struct {
         }
         const out_path: []const u8 = self.out_path orelse b.pathJoin(&.{ b.pathFromRoot("."), "zig-out", "web", exe.name });
         std.fs.cwd().makePath(out_path) catch unreachable;
-        const out_file = std.mem.concat(b.allocator, u8, &.{out_path, std.fs.path.sep_str ++ "index.html" }) catch unreachable;
-        emlink.addArgs(&.{"-o", out_file});
+        const out_file = std.mem.concat(b.allocator, u8, &.{ out_path, std.fs.path.sep_str ++ "index.html" }) catch unreachable;
+        emlink.addArgs(&.{ "-o", out_file });
 
         if (self.args.exported_functions.items.len > 0) {
             var s = std.mem.join(self.b.allocator, "','", self.args.exported_functions.items) catch unreachable;
