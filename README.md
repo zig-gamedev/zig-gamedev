@@ -4,7 +4,7 @@
 
 # zig-gamedev project
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday since July 2021. Please consider [supporting the project](https://github.com/sponsors/michal-z). We create:
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/michal-z). We create:
 
 * Cross-platform and composable [libraries](#libraries)
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
@@ -12,22 +12,22 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * Mini-games (in planning)
 
 To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
-```
+```sh
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 ## Quick start (D3D12)
 
-To use zig-gamedev in your project copy or download zig-gamedev as a sumboulde, for example:
+To use zig-gamedev in your project copy or download zig-gamedev as a submodule, for example:
 
 ```sh
 git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
 ```
 
-Currently we have minimal low-level API which allows you to build the lib once (`package()`) and link it with many executables (`link()`).
+Currently, we have minimal low-level API which allows you to build the lib once (`package()`) and link it with many executables (`link()`).
 
-Include neccessary libraries in `build.zig` like:
+Include necessary libraries in `build.zig` like:
 
 ```zig
 // Fetch the library
@@ -95,28 +95,28 @@ pub fn build(b: *std.Build) void {
 </details>
 
 ## Libraries
-Library | Latest version | Description
-------- | --------- | ---------------
-**[zphysics](libs/zphysics)** | 0.0.6 | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)
-**[zflecs](libs/zflecs)** | 0.0.1 | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS
-**[zopengl](libs/zopengl)** | 0.1.0 | OpenGL loader (supports 3.3 Core Profile and ES 2.0 Profile) 
-**[zsdl](libs/zsdl)** | 0.0.1 | Bindings for SDL2 (wip)
-**[zgpu](libs/zgpu)** | 0.9.1 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
-**[zgui](libs/zgui)** | 1.89.6 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
-**[zaudio](libs/zaudio)** | 0.9.3 | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
-**[zmath](libs/zmath)** | 0.9.6 | SIMD math library for game developers
-**[zstbi](libs/zstbi)** | 0.9.3 | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries
-**[zmesh](libs/zmesh)** | 0.9.0 | Loading, generating, processing and optimizing triangle meshes
-**[ztracy](libs/ztracy)** | 0.9.0 | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
-**[zpool](libs/zpool)** | 0.9.0 | Generic pool & handle implementation
-**[zglfw](libs/zglfw)** | 0.5.2 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
-**[znoise](libs/znoise)** | 0.1.0 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
-**[zjobs](libs/zjobs)** | 0.1.0 | Generic job queue implementation
-**[zbullet](libs/zbullet)** | 0.2.0 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
-**[zwin32](libs/zwin32)** | 0.9.0 | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)
-**[zd3d12](libs/zd3d12)** | 0.9.0 | Helper library for DirectX 12
-**[zxaudio2](libs/zxaudio2)** | 0.9.0 | Helper library for XAudio2
-**[zpix](libs/zpix)** | 0.9.0 | Support for GPU profiling with PIX for Windows
+| Library                       | Latest version | Description                                                                                                                |
+|-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
+| **[zphysics](libs/zphysics)** | 0.0.6          | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
+| **[zflecs](libs/zflecs)**     | 0.0.1          | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
+| **[zopengl](libs/zopengl)**   | 0.1.0          | OpenGL loader (supports 3.3 Core Profile and ES 2.0 Profile)                                                               |
+| **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
+| **[zgpu](libs/zgpu)**         | 0.9.1          | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
+| **[zgui](libs/zgui)**         | 1.89.6         | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot)) |
+| **[zaudio](libs/zaudio)**     | 0.9.3          | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)                             |
+| **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
+| **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
+| **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
+| **[ztracy](libs/ztracy)**     | 0.9.0          | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
+| **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
+| **[zglfw](libs/zglfw)**       | 0.5.2          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
+| **[znoise](libs/znoise)**     | 0.1.0          | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
+| **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
+| **[zbullet](libs/zbullet)**   | 0.2.0          | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
+| **[zwin32](libs/zwin32)**     | 0.9.0          | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                              |
+| **[zd3d12](libs/zd3d12)**     | 0.9.0          | Helper library for DirectX 12                                                                                              |
+| **[zxaudio2](libs/zxaudio2)** | 0.9.0          | Helper library for XAudio2                                                                                                 |
+| **[zpix](libs/zpix)**         | 0.9.0          | Support for GPU profiling with PIX for Windows                                                                             |
 
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs
@@ -124,7 +124,7 @@ Library | Latest version | Description
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings for carefully selected C/C++ libraries
-* Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) or OpenGL for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
+* Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) or OpenGL for cross-platform graphics and DirectX 12 for low-level graphics on Windows
 
 ## Sample applications (native wgpu)
 
@@ -132,43 +132,43 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 1. [physically based rendering (wgpu)](samples/physically_based_rendering_wgpu): This sample implements physically-based rendering (PBR) and image-based lighting (IBL) to achive realistic looking rendering results.<br />`zig build physically_based_rendering_wgpu-run`
 
-    <a href="samples/physically_based_rendering_wgpu"><img src="samples/physically_based_rendering_wgpu/screenshot0.jpg" alt="physically based rendering (wgpu)" height="200"></a>
+   <a href="samples/physically_based_rendering_wgpu"><img src="samples/physically_based_rendering_wgpu/screenshot0.jpg" alt="physically based rendering (wgpu)" height="200"></a>
 
-1. [audio experiments (wgpu)](samples/audio_experiments_wgpu): This sample lets the user to experiment with audio and observe data that feeds the hardware.<br />`zig build audio_experiments_wgpu-run`
+1. [audio experiments (wgpu)](samples/audio_experiments_wgpu): This sample lets the user experiment with audio and observe data that feeds the hardware.<br />`zig build audio_experiments_wgpu-run`
 
-    <a href="samples/audio_experiments_wgpu"><img src="samples/audio_experiments_wgpu/screenshot.png" alt="audio experiments (wgpu)" height="200"></a>
+   <a href="samples/audio_experiments_wgpu"><img src="samples/audio_experiments_wgpu/screenshot.png" alt="audio experiments (wgpu)" height="200"></a>
 
 1. [bullet physics test (wgpu)](samples/bullet_physics_test_wgpu): This sample application demonstrates how to use full 3D physics engine in your Zig programs.<br />`zig build bullet_physics_test_wgpu-run`
 
-    <a href="samples/bullet_physics_test_wgpu"><img src="samples/bullet_physics_test_wgpu/screenshot.jpg" alt="bullet physics test (wgpu)" height="200"></a>
+   <a href="samples/bullet_physics_test_wgpu"><img src="samples/bullet_physics_test_wgpu/screenshot.jpg" alt="bullet physics test (wgpu)" height="200"></a>
 
 1. [procedural mesh (wgpu)](samples/procedural_mesh_wgpu): This sample shows how to efficiently draw several procedurally generated meshes.<br />`zig build procedural_mesh_wgpu-run`
 
-    <a href="samples/procedural_mesh_wgpu"><img src="samples/procedural_mesh_wgpu/screenshot.png" alt="procedural mesh (wgpu)" height="200"></a>
+   <a href="samples/procedural_mesh_wgpu"><img src="samples/procedural_mesh_wgpu/screenshot.png" alt="procedural mesh (wgpu)" height="200"></a>
 
 1. [gui test (wgpu)](samples/gui_test_wgpu): This sample shows how to use our [zgui](libs/zgui) library.<br />`zig build gui_test_wgpu-run`
 
-    <a href="samples/gui_test_wgpu"><img src="samples/gui_test_wgpu/screenshot.png" alt="gui test (wgpu)" height="200"></a>
-    
+   <a href="samples/gui_test_wgpu"><img src="samples/gui_test_wgpu/screenshot.png" alt="gui test (wgpu)" height="200"></a>
+
 ## Sample applications (DirectX 12)
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory. They can be built and run on Windows and Linux (Wine + VKD3D-Proton 2.8+):
 
-1. [bindless](samples/bindless): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. It uses bindless textures and HLSL 6.6 dynamic resources.<br />`zig build bindless-run`
+1. [bindless](samples/bindless): This sample implements physically based shading and image based lighting to achieve realistic looking rendering results. It uses bindless textures and HLSL 6.6 dynamic resources.<br />`zig build bindless-run`
 
-    <a href="samples/bindless"><img src="samples/bindless/screenshot.png" alt="bindless" height="200"></a>
+   <a href="samples/bindless"><img src="samples/bindless/screenshot.png" alt="bindless" height="200"></a>
 
 1. [rasterization](samples/rasterization): This sample application shows how GPU rasterizes triangles in slow motion.<br />`zig build rasterization-run`
 
-    <a href="samples/rasterization"><img src="samples/rasterization/screenshot.png" alt="rasterization" height="200"></a>
+   <a href="samples/rasterization"><img src="samples/rasterization/screenshot.png" alt="rasterization" height="200"></a>
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing (DXR) for shadow rays.<br />`zig build simple_raytracer-run`
 
-    <a href="samples/simple_raytracer"><img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200"></a>
+   <a href="samples/simple_raytracer"><img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200"></a>
 
 1. [mesh shader test](samples/mesh_shader_test): This sample shows how to use DirectX 12 Mesh Shader.<br />`zig build mesh_shader_test-run`
 
-    <a href="samples/mesh_shader_test"><img src="samples/mesh_shader_test/screenshot.png" alt="mesh shader test" height="200"></a>
+   <a href="samples/mesh_shader_test"><img src="samples/mesh_shader_test/screenshot.png" alt="mesh shader test" height="200"></a>
 
 ## Others using zig-gamedev
 
