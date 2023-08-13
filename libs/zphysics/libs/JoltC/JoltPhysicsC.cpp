@@ -1956,6 +1956,12 @@ JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_b
     toJph(in_iface)->AddAngularImpulse(toJph(in_body_id), loadVec3(in_impulse));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API JPC_MotionType 
+JPC_BodyInterface_GetMotionType(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
+{
+    return toJpc(toJph(in_iface)->GetMotionType(toJph(in_body_id)));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_SetMotionType(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_MotionType in_motion_type, JPC_Activation in_activation)
 {
