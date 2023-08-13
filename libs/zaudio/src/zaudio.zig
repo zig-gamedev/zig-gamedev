@@ -1676,6 +1676,7 @@ pub const Engine = opaque {
         context: ?*Context,
         device: ?*Device,
         playback_device_id: ?*Device.Id,
+        data_callback: ?Device.DataProc,
         notification_callback: ?Device.NotificationProc,
         log: ?*Log,
         listener_count: u32,
@@ -1685,11 +1686,14 @@ pub const Engine = opaque {
         period_size_in_milliseconds: u32,
         gain_smooth_time_in_frames: u32,
         gain_smooth_time_in_milliseconds: u32,
+        default_volume_smooth_time_in_pcm_frames: u32,
         allocation_callbacks: AllocationCallbacks,
         no_auto_start: Bool32,
         no_device: Bool32,
         mono_expansion_mode: MonoExpansionMode,
         resource_manager_vfs: ?*Vfs,
+        process_callback: ?ProcessProc,
+        user_data: ?*anyopaque,
 
         pub fn init() Config {
             var config: Config = undefined;
@@ -1698,6 +1702,12 @@ pub const Engine = opaque {
         }
         extern fn zaudioEngineConfigInit(out_config: *Config) void;
     };
+
+    pub const ProcessProc = *const fn (
+        user_data: ?*anyopaque,
+        frames_out: ?[*]f32,
+        frame_count: u64,
+    ) callconv(.C) void;
 
     pub fn create(config: ?Config) Error!*Engine {
         var handle: ?*Engine = null;
