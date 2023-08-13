@@ -109,18 +109,14 @@ pub const Version = extern struct {
     patch: u8,
 };
 
-// Compile-time Version
-pub inline fn SDL_VERSION(version: *Version) void {
-    version.major = SDL_MAJOR_VERSION;
-    version.minor = SDL_MINOR_VERSION;
-    version.patch = SDL_PATCHLEVEL;
-}
+/// Compiled SDL version
+pub const VERSION = Version{
+    .major = 2,
+    .minor = 24,
+    .patch = 1,
+};
 
-pub const SDL_MAJOR_VERSION: u8 = 2;
-pub const SDL_MINOR_VERSION: u8 = 24;
-pub const SDL_PATCHLEVEL: u8 = 1;
-
-// Runtime Version
+/// Returns the linked SDL version
 pub fn getVersion(version: *Version) void {
     SDL_GetVersion(version);
 }
