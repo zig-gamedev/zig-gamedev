@@ -117,8 +117,11 @@ pub const VERSION = Version{
 };
 
 /// Returns the linked SDL version
-pub fn getVersion(version: *Version) void {
-    SDL_GetVersion(version);
+pub fn getVersion() Version {
+    var version: Version = undefined;
+    SDL_GetVersion(&version);
+
+    return version;
 }
 extern fn SDL_GetVersion(version: *Version) void;
 
