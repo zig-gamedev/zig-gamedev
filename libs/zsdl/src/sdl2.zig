@@ -103,6 +103,27 @@ pub fn makeError() error{SdlError} {
 // Querying SDL Version
 //
 //--------------------------------------------------------------------------------------------------
+pub const Version = extern struct {
+    major: u8,
+    minor: u8,
+    patch: u8,
+};
+
+/// Compiled SDL version
+pub const VERSION = Version{
+    .major = 2,
+    .minor = 24,
+    .patch = 1,
+};
+
+/// Returns the linked SDL version
+pub fn getVersion() Version {
+    var version: Version = undefined;
+    SDL_GetVersion(&version);
+
+    return version;
+}
+extern fn SDL_GetVersion(version: *Version) void;
 
 //--------------------------------------------------------------------------------------------------
 //
