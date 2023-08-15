@@ -77,3 +77,10 @@ pub fn main() !void {
     std.debug.print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
 }
 ```
+
+Finally, `zig build run` should result in:
+```
+Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
+Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
+Bob's position is (2, 4)
+```
