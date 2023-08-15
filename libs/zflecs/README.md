@@ -78,7 +78,7 @@ pub fn main() !void {
 }
 ```
 
-Finally, `zig build run` should result in:
+`zig build run` should result in:
 ```
 Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
 Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
