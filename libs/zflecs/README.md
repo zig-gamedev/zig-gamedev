@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
 
     const zflecs_pkg = zflecs.package(b, target, optimize, .{});
 
+    exe.addModule("zflecs", zflecs_pkg.zflecs);
     zflecs_pkg.link(exe);
 }
 ```
@@ -27,6 +28,8 @@ Now in your code you may import and use `zflecs`:
 const std = @import("std");
 const ecs = @import("zflecs");
 
+const Position = struct { x: f32, y: f32 };
+const Velocity = struct { x: f32, y: f32 };
 const Eats = struct {};
 const Apples = struct {};
 
