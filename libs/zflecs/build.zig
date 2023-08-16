@@ -5,6 +5,7 @@ pub const Package = struct {
     zflecs_c_cpp: *std.Build.CompileStep,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addModule("zflecs", pkg.zflecs);
         exe.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
         exe.linkLibrary(pkg.zflecs_c_cpp);
     }
