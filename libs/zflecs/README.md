@@ -17,7 +17,6 @@ pub fn build(b: *std.Build) void {
 
     const zflecs_pkg = zflecs.package(b, target, optimize, .{});
 
-    exe.addModule("zflecs", zflecs_pkg.zflecs);
     zflecs_pkg.link(exe);
 }
 ```
@@ -79,6 +78,7 @@ pub fn main() !void {
 ```
 
 `zig build run` should result in:
+
 ```
 Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
 Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
