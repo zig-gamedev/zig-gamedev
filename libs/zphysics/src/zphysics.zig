@@ -689,16 +689,20 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
     }
 
     pub fn getPrimitiveFromBatch(batch_in: *const TriangleBatch) *const Primitive {
+        // zig fmt: off
         return @as(*const Primitive, @ptrCast(c.JPC_DebugRenderer_TriangleBatch_GetPrimitive(
             @as(*const c.JPC_DebugRenderer_TriangleBatch, @ptrCast(batch_in))
         )));
+        // zig fmt: on
     }
 
     pub fn createBodyDrawFilter(filter_func: BodyDrawFilterFunc) *BodyDrawFilter {
+        // zig fmt: off
         return @as(
             *BodyDrawFilter,
             @ptrCast(c.JPC_BodyDrawFilter_Create(@as(c.JPC_BodyDrawFilterFunc, @ptrCast(filter_func))))
         );
+        // zig fmt: on
     }
 
     pub fn destroyBodyDrawFilter(filter: *BodyDrawFilter) void {
@@ -885,6 +889,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         bounds: *AABox,
     };
 
+    // zig fmt: off
     pub const BodyDrawSettings = extern struct {
         get_support_func: bool = false,      // Draw the GetSupport() function, used for convex collision detection
         get_support_dir: bool = false,       // If above true, also draw direction mapped to a specific support point
@@ -899,6 +904,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         mass_and_inertia: bool = false,      // Draw the mass and inertia (as the box equivalent) for each body
         sleep_stats: bool = false,           // Draw stats regarding the sleeping algorithm of each body
     };
+    // zig fmt: on
 
     pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);
     pub const BodyDrawFilterFunc = *const fn (*const Body) align(BodyDrawFilterFuncAlignment) callconv(.C) bool;
@@ -914,6 +920,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         incomplete_impl = c.JPC_DEBUGRENDERER_INCOMPLETE_IMPL,
     };
 
+    // zig fmt: off
     pub const ShapeColor = enum(c.JPC_ShapeColor) {
         instance_color = c.JPC_INSTANCE_COLOR,       // Random color per instance
         shape_type_color = c.JPC_SHAPE_TYPE_COLOR,   // Convex = green, scaled = yellow, compound = orange, mesh = red
@@ -922,6 +929,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) void else extern struct {
         island_color = c.JPC_ISLAND_COLOR,           // Static = grey, active = random per island, sleeping = light grey
         material_color = c.JPC_MATERIAL_COLOR,       // Color as defined by the PhysicsMaterial of the shape
     };
+    // zig fmt: on
 
     pub const CullMode = enum(c.JPC_CullMode) {
         cull_back_face = c.JPC_CULL_BACK_FACE,
@@ -1563,6 +1571,15 @@ pub const BodyInterface = opaque {
             body_id,
             &impulse,
         );
+    }
+
+    pub fn getMotionType(body_iface: *const BodyInterface, body_id: BodyId) MotionType {
+        return @as(MotionType, @enumFromInt(
+            c.JPC_BodyInterface_GetMotionType(
+                @ptrCast(body_iface),
+                body_id,
+            ),
+        ));
     }
 
     pub fn setMotionType(body_iface: *BodyInterface, body_id: BodyId, in_motion_type: MotionType, in_activation_type: Activation) void {
