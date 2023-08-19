@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 0 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 1 };
 //--------------------------------------------------------------------------------------------------
 // zgpu is a small helper library built on top of native wgpu implementation (Dawn).
 //
@@ -55,7 +55,11 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    pub fn create(allocator: std.mem.Allocator, window: *zglfw.Window, options: GraphicsContextOptions) !*GraphicsContext {
+    pub fn create(
+        allocator: std.mem.Allocator,
+        window: *zglfw.Window,
+        options: GraphicsContextOptions,
+    ) !*GraphicsContext {
         const checkGraphicsApiSupport = (struct {
             fn impl() error{VulkanNotSupported}!void {
                 // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
