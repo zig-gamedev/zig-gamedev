@@ -308,3 +308,20 @@ test "zflecs.try_different_alignments" {
         _ = ecs.get(world, entity, Component);
     }
 }
+
+test "zflecs.pairs" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const Speed = u8;
+    ecs.COMPONENT(world, Speed);
+    ecs.TAG(world, Walking);
+
+    const entity = ecs.new_entity(world, "Bob");
+
+    _ = ecs.set_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed, 2);
+    try expect(ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
+
+    _ = ecs.remove_pair(world, entity, ecs.id(Speed), ecs.id(Walking));
+    try expect(!ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
+}
