@@ -309,7 +309,24 @@ test "zflecs.try_different_alignments" {
     }
 }
 
-test "zflecs.pairs" {
+test "zflecs.pairs.tag-tag" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const Slowly = struct {};
+    ecs.TAG(world, Slowly);
+    ecs.TAG(world, Walking);
+
+    const entity = ecs.new_entity(world, "Bob");
+
+    _ = ecs.add_pair(world, entity, ecs.id(Slowly), ecs.id(Walking));
+    try expect(ecs.has_pair(world, entity, ecs.id(Slowly), ecs.id(Walking)));
+
+    _ = ecs.remove_pair(world, entity, ecs.id(Slowly), ecs.id(Walking));
+    try expect(!ecs.has_pair(world, entity, ecs.id(Slowly), ecs.id(Walking)));
+}
+
+test "zflecs.pairs.component-tag" {
     const world = ecs.init();
     defer _ = ecs.fini(world);
 
