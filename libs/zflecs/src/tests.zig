@@ -2,6 +2,7 @@ const std = @import("std");
 const ecs = @import("zflecs.zig");
 
 const expect = std.testing.expect;
+const expectEqual = std.testing.expectEqual;
 
 const print = std.log.info;
 //const print = std.debug.print;
@@ -338,7 +339,9 @@ test "zflecs.pairs.component-tag" {
 
     _ = ecs.set_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed, 2);
     try expect(ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
+    try expectEqual(@as(u8, 2), ecs.get_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed).?.*);
 
     _ = ecs.remove_pair(world, entity, ecs.id(Speed), ecs.id(Walking));
     try expect(!ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
+    try expectEqual(@as(?*const u8, null), ecs.get_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed));
 }
