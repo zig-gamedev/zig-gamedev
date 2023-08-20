@@ -408,9 +408,9 @@ pub const Texture = opaque {
 };
 
 pub const Vertex = extern struct {
-    position: PointF,
+    position: FPoint,
     color: Color,
-    tex_coord: PointF = undefined,
+    tex_coord: FPoint,
 };
 
 pub const BlendMode = enum(i32) {
@@ -951,7 +951,7 @@ pub const Point = extern struct {
     y: i32,
 };
 
-pub const PointF = extern struct {
+pub const FPoint = extern struct {
     x: f32,
     y: f32,
 };
