@@ -476,16 +476,16 @@ pub const Renderer = opaque {
         src: ?*const Rect,
         dst: ?*const Rect,
     ) Error!void {
-        if (SDL_RenderCopy(r, tex, src, dst) < 0) return makeError();
+        if (SDL_RenderTexture(r, tex, src, dst) < 0) return makeError();
     }
-    extern fn SDL_RenderCopy(
+    extern fn SDL_RenderTexture(
         r: *Renderer,
         t: *Texture,
         srcrect: ?*const Rect,
         dstrect: ?*const Rect,
     ) c_int;
 
-    pub fn copyEx(
+    pub fn textureRotated(
         r: *Renderer,
         tex: *Texture,
         src: ?*const Rect,
@@ -494,9 +494,9 @@ pub const Renderer = opaque {
         center: ?*const Point,
         flip: RendererFlip,
     ) Error!void {
-        if (SDL_RenderCopyEx(r, tex, src, dst, angle, center, flip) < 0) return makeError();
+        if (SDL_RenderTextureRotated(r, tex, src, dst, angle, center, flip) < 0) return makeError();
     }
-    extern fn SDL_RenderCopyEx(
+    extern fn SDL_RenderTextureRotated(
         r: *Renderer,
         t: *Texture,
         srcrect: ?*const Rect,
@@ -507,9 +507,9 @@ pub const Renderer = opaque {
     ) c_int;
 
     pub fn setScale(renderer: *Renderer, x: f32, y: f32) Error!void {
-        if (SDL_RenderSetScale(renderer, x, y) > 0) return makeError();
+        if (SDL_SetRenderScale(renderer, x, y) > 0) return makeError();
     }
-    extern fn SDL_RenderSetScale(renderer: *Renderer, scaleX: f32, scaleY: f32) c_int;
+    extern fn SDL_SetRenderScale(renderer: *Renderer, scaleX: f32, scaleY: f32) c_int;
 
     pub fn line(renderer: *Renderer, x0: f32, y0: f32, x1: f32, y1: f32) Error!void {
         if (SDL_RenderLine(renderer, x0, y0, x1, y1) < 0) return makeError();
