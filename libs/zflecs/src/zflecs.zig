@@ -2201,6 +2201,19 @@ pub fn set_pair(
     return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @as(*const anyopaque, @ptrCast(@alignCast(&val))));
 }
 
+pub fn get_pair(
+    world: *world_t,
+    subject: entity_t,
+    first: entity_t,
+    second: entity_t,
+    comptime T: type,
+) ?*const T {
+    if (get_id(world, subject, pair(first, second))) |ptr| {
+        return cast(T, ptr);
+    }
+    return null;
+}
+
 pub fn has_pair(
     world: *world_t,
     subject: entity_t,
