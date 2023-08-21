@@ -261,7 +261,7 @@ pub const gl = struct {
         floatbuffers,
     };
 
-    pub const Profile = enum(i32) {
+    pub const Profile = enum(c_int) {
         core = 0x0001,
         compatibility = 0x0002,
         es = 0x0004,
@@ -280,7 +280,7 @@ pub const gl = struct {
         __unused: i31 = 0,
     };
 
-    pub const ContextResetNotification = enum(i32) {
+    pub const ContextResetNotification = enum(c_int) {
         no_notification = 0x0000,
         lose_context = 0x0001,
     };
@@ -288,36 +288,36 @@ pub const gl = struct {
     pub fn setAttribute(attr: Attr, value: i32) Error!void {
         if (SDL_GL_SetAttribute(attr, value) < 0) return makeError();
     }
-    extern fn SDL_GL_SetAttribute(attr: Attr, value: i32) i32;
+    extern fn SDL_GL_SetAttribute(attr: Attr, value: c_int) c_int;
 
     pub fn getAttribute(attr: Attr) Error!i32 {
         var value: i32 = undefined;
         if (SDL_GL_GetAttribute(attr, &value) < 0) return makeError();
         return value;
     }
-    extern fn SDL_GL_GetAttribute(attr: Attr, value: i32) i32;
+    extern fn SDL_GL_GetAttribute(attr: Attr, value: *c_int) c_int;
 
     pub fn setSwapInterval(interval: i32) Error!void {
         if (SDL_GL_SetSwapInterval(interval) < 0) return makeError();
     }
-    extern fn SDL_GL_SetSwapInterval(interval: i32) i32;
+    extern fn SDL_GL_SetSwapInterval(interval: c_int) c_int;
 
-    pub fn getSwapInterval() i32 {
+    pub fn getSwapInterval() Error!i32 {
         var interval: c_int = undefined;
         if (SDL_GL_GetSwapInterval(&interval) < 0) return makeError();
         return @intCast(interval);
     }
     extern fn SDL_GL_GetSwapInterval(interval: *c_int) c_int;
 
-    pub fn swapWindow() Error!void {
-        if (SDL_GL_SwapWindow() < 0) return makeError();
+    pub fn swapWindow(window: *Window) Error!void {
+        if (SDL_GL_SwapWindow(window) < 0) return makeError();
     }
     extern fn SDL_GL_SwapWindow(window: *Window) c_int;
 
-    pub fn getProcAddress(proc: [:0]const u8) ?FunctionPointer {
+    pub fn getProcAddress(proc: [:0]const u8) FunctionPointer {
         return SDL_GL_GetProcAddress(proc);
     }
-    extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) ?FunctionPointer;
+    extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) FunctionPointer;
 
     pub fn isExtensionSupported(extension: [:0]const u8) bool {
         return SDL_GL_ExtensionSupported(extension) == True;
@@ -332,7 +332,7 @@ pub const gl = struct {
     pub fn makeCurrent(window: *Window, context: Context) Error!void {
         if (SDL_GL_MakeCurrent(window, context) < 0) return makeError();
     }
-    extern fn SDL_GL_MakeCurrent(window: *Window, context: Context) i32;
+    extern fn SDL_GL_MakeCurrent(window: *Window, context: Context) c_int;
 
     pub const deleteContext = SDL_GL_DeleteContext;
     extern fn SDL_GL_DeleteContext(context: Context) void;
@@ -343,7 +343,7 @@ pub const gl = struct {
 // 2D Accelerated Rendering
 //
 //--------------------------------------------------------------------------------------------------
-pub const TextureAccess = enum(i32) {
+pub const TextureAccess = enum(c_int) {
     static,
     streaming,
     target,
@@ -362,27 +362,21 @@ pub const Texture = opaque {
         w: ?*i32,
         h: ?*i32,
     ) !void {
-        if (SDL_QueryTexture(
-            texture,
-            @as(?*u32, @ptrCast(format)),
-            @as(?*c_int, @ptrCast(access)),
-            w,
-            h,
-        ) != 0) {
+        if (SDL_QueryTexture(texture, format, access, w, h) != 0) {
             return makeError();
         }
     }
     extern fn SDL_QueryTexture(
         texture: *Texture,
-        format: ?*u32,
-        access: ?*c_int,
+        format: ?*PixelFormatEnum,
+        access: ?*TextureAccess,
         w: ?*c_int,
         h: ?*c_int,
     ) c_int;
 
     pub fn lock(texture: *Texture, rect: ?*Rect) !struct {
         pixels: [*]u8,
-        pitch: u32,
+        pitch: i32,
     } {
         var pixels: *anyopaque = undefined;
         var pitch: i32 = undefined;
@@ -391,7 +385,7 @@ pub const Texture = opaque {
         }
         return .{
             .pixels = @ptrCast(pixels),
-            .pitch = @bitCast(pitch),
+            .pitch = pitch,
         };
     }
     extern fn SDL_LockTexture(
@@ -413,7 +407,7 @@ pub const Vertex = extern struct {
     tex_coord: FPoint,
 };
 
-pub const BlendMode = enum(i32) {
+pub const BlendMode = enum(c_int) {
     none = 0x00000000,
     blend = 0x00000001,
     add = 0x00000002,
@@ -422,13 +416,13 @@ pub const BlendMode = enum(i32) {
     invalid = 0x7fffffff,
 };
 
-pub const ScaleMode = enum(i32) {
+pub const ScaleMode = enum(c_int) {
     nearest = 0x0000,
     linear = 0x0001,
-    best = 0x0001,
+    best = 0x0002,
 };
 
-pub const RendererFlip = enum(i32) {
+pub const RendererFlip = enum(c_int) {
     none = 0x0000,
     horizontal = 0x0001,
     vertical = 0x0002,
@@ -457,13 +451,13 @@ pub const Renderer = opaque {
         software: bool = false,
         accelerated: bool = false,
         present_vsync: bool = false,
-        __unused5: u29 = false,
+        __unused5: u29 = 0,
     };
 
     pub fn create(window: *Window, name: ?[:0]const u8, flags: Flags) Error!*Renderer {
-        return SDL_CreateRenderer(window, name, flags) orelse makeError();
+        return SDL_CreateRenderer(window, @ptrCast(name), flags) orelse makeError();
     }
-    extern fn SDL_CreateRenderer(window: *Window, index: i32, flags: Flags) ?*Renderer;
+    extern fn SDL_CreateRenderer(window: *Window, name: ?[*:0]const u8, flags: Flags) ?*Renderer;
 
     pub const destroy = SDL_DestroyRenderer;
     extern fn SDL_DestroyRenderer(r: *Renderer) void;
@@ -508,7 +502,7 @@ pub const Renderer = opaque {
         srcrect: ?*const Rect,
         dstrect: ?*const Rect,
         angle: f64,
-        center: *const Point,
+        center: ?*const Point,
         flip: RendererFlip,
     ) c_int;
 
@@ -569,34 +563,34 @@ pub const Renderer = opaque {
     }
     extern fn SDL_SetRenderDrawColor(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) c_int;
 
-    pub fn getDrawColor(renderer: *Renderer) Error!Color {
+    pub fn getDrawColor(renderer: *const Renderer) Error!Color {
         var color: Color = undefined;
         if (SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a) < 0) {
             return makeError();
         }
         return color;
     }
-    extern fn SDL_GetRenderDrawColor(renderer: *Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
+    extern fn SDL_GetRenderDrawColor(renderer: *const Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
 
-    pub fn getDrawBlendMode(r: *Renderer) Error!BlendMode {
+    pub fn getDrawBlendMode(r: *const Renderer) Error!BlendMode {
         var blend_mode: BlendMode = undefined;
         if (SDL_GetRenderDrawBlendMode(r, &blend_mode) < 0) return makeError();
         return blend_mode;
     }
-    extern fn SDL_GetRenderDrawBlendMode(renderer: *Renderer, blendMode: *BlendMode) c_int;
+    extern fn SDL_GetRenderDrawBlendMode(renderer: *const Renderer, blendMode: *BlendMode) c_int;
 
     pub fn setDrawBlendMode(r: *Renderer, blend_mode: BlendMode) Error!void {
         if (SDL_SetRenderDrawBlendMode(r, blend_mode) < 0) return makeError();
     }
     extern fn SDL_SetRenderDrawBlendMode(renderer: *Renderer, blendMode: BlendMode) c_int;
 
-    pub fn getCurrentOutputSize(r: *Renderer) Error!struct { w: i32, h: i32 } {
+    pub fn getCurrentOutputSize(r: *const Renderer) Error!struct { w: i32, h: i32 } {
         var w: i32 = undefined;
         var h: i32 = undefined;
         if (SDL_GetCurrentRenderOutputSize(r, &w, &h) < 0) return makeError();
         return .{ .w = w, .h = h };
     }
-    extern fn SDL_GetCurrentRenderOutputSize(renderer: *Renderer, w: *i32, h: *i32) c_int;
+    extern fn SDL_GetCurrentRenderOutputSize(renderer: *const Renderer, w: *i32, h: *i32) c_int;
 
     pub fn createTexture(
         renderer: *Renderer,
@@ -605,20 +599,14 @@ pub const Renderer = opaque {
         width: i32,
         height: i32,
     ) Error!*Texture {
-        return SDL_CreateTexture(
-            renderer,
-            @intFromEnum(format),
-            @intFromEnum(access),
-            width,
-            height,
-        ) orelse makeError();
+        return SDL_CreateTexture(renderer, format, access, width, height) orelse makeError();
     }
     extern fn SDL_CreateTexture(
         renderer: *Renderer,
-        format: u32,
-        access: i32,
-        w: i32,
-        h: i32,
+        format: PixelFormatEnum,
+        access: TextureAccess,
+        w: c_int,
+        h: c_int,
     ) ?*Texture;
 
     pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*Texture {
@@ -626,24 +614,24 @@ pub const Renderer = opaque {
     }
     extern fn SDL_CreateTextureFromSurface(renderer: *Renderer, surface: *Surface) ?*Texture;
 
-    pub fn getInfo(r: *Renderer) Error!RendererInfo {
+    pub fn getInfo(r: *const Renderer) Error!RendererInfo {
         var result: RendererInfo = undefined;
         if (SDL_GetRendererInfo(r, &result) < 0) return makeError();
         return result;
     }
-    extern fn SDL_GetRendererInfo(renderer: *Renderer, info: *RendererInfo) c_int;
+    extern fn SDL_GetRendererInfo(renderer: *const Renderer, info: *RendererInfo) c_int;
 
-    pub fn clipEnabled() bool {
-        return SDL_RenderClipEnabled() == True;
+    pub fn clipEnabled(renderer: *const Renderer) bool {
+        return SDL_RenderClipEnabled(renderer) == True;
     }
-    pub extern fn SDL_RenderClipEnabled(renderer: *Renderer) Bool;
+    pub extern fn SDL_RenderClipEnabled(renderer: *const Renderer) Bool;
 
     pub fn setClipRect(r: *Renderer, clip_rect: ?*const Rect) Error!void {
         if (SDL_SetRenderClipRect(r, clip_rect) < 0) return makeError();
     }
     extern fn SDL_SetRenderClipRect(renderer: *Renderer, rect: ?*const Rect) c_int;
 
-    pub fn clipRect(r: *Renderer) Error!?*const Rect {
+    pub fn getClipRect(r: *Renderer) Error!Rect {
         var clip_rect: Rect = undefined;
         if (SDL_GetRenderClipRect(r, &clip_rect) != 0) return makeError();
         return clip_rect;
@@ -651,7 +639,7 @@ pub const Renderer = opaque {
     extern fn SDL_GetRenderClipRect(renderer: *Renderer, rect: ?*Rect) c_int;
 
     pub fn getLogicalPresentation(
-        renderer: *Renderer,
+        renderer: *const Renderer,
         w: *i32,
         h: *i32,
         mode: *RendererLogicalPresentationMode,
@@ -662,12 +650,12 @@ pub const Renderer = opaque {
         }
     }
     extern fn SDL_GetRenderLogicalPresentation(
-        renderer: *Renderer,
+        renderer: *const Renderer,
         w: *i32,
         h: *i32,
         mode: *RendererLogicalPresentationMode,
         scale_mode: *ScaleMode,
-    ) void;
+    ) c_int;
 
     pub fn setLogicalPresentation(
         renderer: *Renderer,
@@ -688,19 +676,19 @@ pub const Renderer = opaque {
         scale_mode: ScaleMode,
     ) c_int;
 
-    pub fn getViewport(renderer: *Renderer) Error!Rect {
+    pub fn getViewport(renderer: *const Renderer) Error!Rect {
         var viewport: Rect = undefined;
         if (SDL_GetRenderViewport(renderer, &viewport) != 0) return makeError();
-        return rect;
+        return viewport;
     }
-    extern fn SDL_GetRenderViewport(renderer: *Renderer, rect: *Rect) c_int;
+    extern fn SDL_GetRenderViewport(renderer: *const Renderer, rect: *Rect) c_int;
 
-    pub fn setViewport(r: *Renderer, maybe_rect: ?Rect) Error!void {
-        if (SDL_SetRenderViewport(r, if (maybe_rect) |_rect| &_rect else null) != 0) {
+    pub fn setViewport(renderer: *Renderer, maybe_rect: ?*const Rect) Error!void {
+        if (SDL_SetRenderViewport(renderer, maybe_rect) != 0) {
             return makeError();
         }
     }
-    extern fn SDL_SetRenderViewport(renderer: *Renderer, rect: *const Rect) c_int;
+    extern fn SDL_SetRenderViewport(renderer: *Renderer, rect: ?*const Rect) c_int;
 
     pub fn setTarget(r: *Renderer, tex: ?*const Texture) Error!void {
         if (SDL_SetRenderTarget(r, tex) < 0) return makeError();
@@ -708,26 +696,22 @@ pub const Renderer = opaque {
     extern fn SDL_SetRenderTarget(renderer: *Renderer, texture: ?*const Texture) c_int;
 
     pub fn readPixels(
-        r: *Renderer,
+        renderer: *const Renderer,
         _rect: ?*const Rect,
-        format: ?PixelFormatEnum,
+        format: PixelFormatEnum,
         pixels: [*]u8,
-        pitch: u32,
+        pitch: i32,
     ) Error!void {
-        if (SDL_RenderReadPixels(
-            r,
-            _rect,
-            if (format) |f| @intFromEnum(f) else 0,
-            pixels,
-            @as(i32, @intCast(pitch)),
-        ) < 0) return makeError();
+        if (SDL_RenderReadPixels(renderer, _rect, format, pixels, pitch) < 0) {
+            return makeError();
+        }
     }
     extern fn SDL_RenderReadPixels(
-        renderer: *Renderer,
+        renderer: *const Renderer,
         rect: ?*const Rect,
-        format: u32,
+        format: PixelFormatEnum,
         pixels: ?*anyopaque,
-        pitch: i32,
+        pitch: c_int,
     ) c_int;
 };
 
@@ -792,7 +776,7 @@ fn definePixelFormatEnum(
     layout: u32,
     bits: u32,
     bytes: u32,
-) c_int {
+) u32 {
     switch (_type) {
         .index1, .index4, .index8 => {
             assert(@TypeOf(order) == BitmapOrder);
@@ -808,7 +792,7 @@ fn definePixelFormatEnum(
     return ((1 << 28) | ((@intFromEnum(_type)) << 24) | ((@intFromEnum(order)) << 20) |
         ((layout) << 16) | ((bits) << 8) | ((bytes) << 0));
 }
-pub const PixelFormatEnum = enum(c_int) {
+pub const PixelFormatEnum = enum(u32) {
     index1lsb = definePixelFormatEnum(.index1, BitmapOrder.@"4321", 0, 1, 0),
     index1msb = definePixelFormatEnum(.index1, BitmapOrder.@"1234", 0, 1, 0),
     index4lsb = definePixelFormatEnum(.index4, BitmapOrder.@"4321", 0, 4, 0),
@@ -927,7 +911,7 @@ extern fn SDL_HasRectIntersectionFloat(a: *const FRect, b: *const FRect) Bool;
 pub fn getRectIntersectionFloat(a: *const FRect, b: *const FRect, result: *FRect) bool {
     return SDL_GetRectIntersectionFloat(a, b, result) == True;
 }
-extern fn SDL_GetRectIntersectionFloat(a: *const FRect, b: *const FRect, result: *FRect) bool;
+extern fn SDL_GetRectIntersectionFloat(a: *const FRect, b: *const FRect, result: *FRect) Bool;
 
 pub fn getRectAndLineIntersectionFloat(
     r: *const FRect,

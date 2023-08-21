@@ -276,7 +276,7 @@ pub const gl = struct {
         floatbuffers,
     };
 
-    pub const Profile = enum(i32) {
+    pub const Profile = enum(c_int) {
         core = 0x0001,
         compatibility = 0x0002,
         es = 0x0004,
@@ -295,7 +295,7 @@ pub const gl = struct {
         __unused: i31 = 0,
     };
 
-    pub const ContextResetNotification = enum(i32) {
+    pub const ContextResetNotification = enum(c_int) {
         no_notification = 0x0000,
         lose_context = 0x0001,
     };
@@ -303,25 +303,23 @@ pub const gl = struct {
     pub fn setAttribute(attr: Attr, value: i32) Error!void {
         if (SDL_GL_SetAttribute(attr, value) < 0) return makeError();
     }
-    extern fn SDL_GL_SetAttribute(attr: Attr, value: i32) i32;
+    extern fn SDL_GL_SetAttribute(attr: Attr, value: c_int) c_int;
 
     pub fn getAttribute(attr: Attr) Error!i32 {
-        var value: i32 = undefined;
+        var value: c_int = undefined;
         if (SDL_GL_GetAttribute(attr, &value) < 0) return makeError();
         return value;
     }
-    extern fn SDL_GL_GetAttribute(attr: Attr, value: i32) i32;
+    extern fn SDL_GL_GetAttribute(attr: Attr, value: *c_int) c_int;
 
     pub fn setSwapInterval(interval: i32) Error!void {
         if (SDL_GL_SetSwapInterval(interval) < 0) return makeError();
     }
-    extern fn SDL_GL_SetSwapInterval(interval: i32) i32;
+    extern fn SDL_GL_SetSwapInterval(interval: c_int) c_int;
 
-    /// `pub fn getSwapInterval() i32`
     pub const getSwapInterval = SDL_GL_GetSwapInterval;
-    extern fn SDL_GL_GetSwapInterval() i32;
+    extern fn SDL_GL_GetSwapInterval() c_int;
 
-    /// `pub fn swapWindow(window: *Window) void`
     pub const swapWindow = SDL_GL_SwapWindow;
     extern fn SDL_GL_SwapWindow(window: *Window) void;
 
@@ -343,15 +341,13 @@ pub const gl = struct {
     pub fn makeCurrent(window: *Window, context: Context) Error!void {
         if (SDL_GL_MakeCurrent(window, context) < 0) return makeError();
     }
-    extern fn SDL_GL_MakeCurrent(window: *Window, context: Context) i32;
+    extern fn SDL_GL_MakeCurrent(window: *Window, context: Context) c_int;
 
-    /// `pub fn deleteContext(context: Context) void`
     pub const deleteContext = SDL_GL_DeleteContext;
     extern fn SDL_GL_DeleteContext(context: Context) void;
 
-    /// `pub fn getDrawableSize(window: *Window, w: ?*i32, h: ?*i32) void`
     pub const getDrawableSize = SDL_GL_GetDrawableSize;
-    extern fn SDL_GL_GetDrawableSize(window: *Window, w: ?*i32, h: ?*i32) void;
+    extern fn SDL_GL_GetDrawableSize(window: *Window, w: ?*c_int, h: ?*c_int) void;
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -359,7 +355,7 @@ pub const gl = struct {
 // 2D Accelerated Rendering
 //
 //--------------------------------------------------------------------------------------------------
-pub const TextureAccess = enum(i32) {
+pub const TextureAccess = enum(c_int) {
     static,
     streaming,
     target,
@@ -378,27 +374,21 @@ pub const Texture = opaque {
         w: ?*i32,
         h: ?*i32,
     ) !void {
-        if (SDL_QueryTexture(
-            texture,
-            @as(?*u32, @ptrCast(format)),
-            @as(?*c_int, @ptrCast(access)),
-            w,
-            h,
-        ) != 0) {
+        if (SDL_QueryTexture(texture, format, access, w, h) != 0) {
             return makeError();
         }
     }
     extern fn SDL_QueryTexture(
         texture: *Texture,
-        format: ?*u32,
-        access: ?*c_int,
+        format: ?*PixelFormatEnum,
+        access: ?*TextureAccess,
         w: ?*c_int,
         h: ?*c_int,
     ) c_int;
 
     pub fn lock(texture: *Texture, rect: ?*Rect) !struct {
         pixels: [*]u8,
-        pitch: u32,
+        pitch: i32,
     } {
         var pixels: *anyopaque = undefined;
         var pitch: i32 = undefined;
@@ -407,7 +397,7 @@ pub const Texture = opaque {
         }
         return .{
             .pixels = @ptrCast(pixels),
-            .pitch = @bitCast(pitch),
+            .pitch = pitch,
         };
     }
     extern fn SDL_LockTexture(
@@ -429,7 +419,7 @@ pub const Vertex = extern struct {
     tex_coord: FPoint,
 };
 
-pub const BlendMode = enum(i32) {
+pub const BlendMode = enum(c_int) {
     none = 0x00000000,
     blend = 0x00000001,
     add = 0x00000002,
@@ -438,13 +428,13 @@ pub const BlendMode = enum(i32) {
     invalid = 0x7fffffff,
 };
 
-pub const ScaleMode = enum(i32) {
+pub const ScaleMode = enum(c_int) {
     nearest = 0x0000,
     linear = 0x0001,
-    best = 0x0001,
+    best = 0x0002,
 };
 
-pub const RendererFlip = enum(i32) {
+pub const RendererFlip = enum(c_int) {
     none = 0x0000,
     horizontal = 0x0001,
     vertical = 0x0002,
@@ -532,7 +522,7 @@ pub const Renderer = opaque {
         srcrect: ?*const Rect,
         dstrect: ?*const Rect,
         angle: f64,
-        center: *const Point,
+        center: ?*const Point,
         flip: RendererFlip,
     ) c_int;
 
@@ -545,7 +535,7 @@ pub const Renderer = opaque {
         center: ?*const FPoint,
         flip: RendererFlip,
     ) Error!void {
-        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, @intFromEnum(flip)) < 0) {
+        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, flip) < 0) {
             return makeError();
         }
     }
@@ -555,7 +545,7 @@ pub const Renderer = opaque {
         srcrect: ?*const Rect,
         dstrect: ?*const FRect,
         angle: f64,
-        center: *const FPoint,
+        center: ?*const FPoint,
         flip: RendererFlip,
     ) c_int;
 
@@ -642,34 +632,34 @@ pub const Renderer = opaque {
     }
     extern fn SDL_SetRenderDrawColor(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) c_int;
 
-    pub fn getDrawColor(renderer: *Renderer) Error!Color {
+    pub fn getDrawColor(renderer: *const Renderer) Error!Color {
         var color: Color = undefined;
         if (SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a) < 0) {
             return makeError();
         }
         return color;
     }
-    extern fn SDL_GetRenderDrawColor(renderer: *Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
+    extern fn SDL_GetRenderDrawColor(renderer: *const Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
 
-    pub fn getDrawBlendMode(r: *Renderer) Error!BlendMode {
+    pub fn getDrawBlendMode(r: *const Renderer) Error!BlendMode {
         var blend_mode: BlendMode = undefined;
         if (SDL_GetRenderDrawBlendMode(r, &blend_mode) < 0) return makeError();
         return blend_mode;
     }
-    extern fn SDL_GetRenderDrawBlendMode(renderer: *Renderer, blendMode: *BlendMode) c_int;
+    extern fn SDL_GetRenderDrawBlendMode(renderer: *const Renderer, blendMode: *BlendMode) c_int;
 
     pub fn setDrawBlendMode(r: *Renderer, blend_mode: BlendMode) Error!void {
         if (SDL_SetRenderDrawBlendMode(r, blend_mode) < 0) return makeError();
     }
     extern fn SDL_SetRenderDrawBlendMode(renderer: *Renderer, blendMode: BlendMode) c_int;
 
-    pub fn getOutputSize(renderer: *Renderer) Error!struct { w: i32, h: i32 } {
+    pub fn getOutputSize(renderer: *const Renderer) Error!struct { w: i32, h: i32 } {
         var w: i32 = undefined;
         var h: i32 = undefined;
         if (SDL_GetRendererOutputSize(renderer, &w, &h) < 0) return makeError();
         return .{ .w = w, .h = h };
     }
-    extern fn SDL_GetRendererOutputSize(renderer: *Renderer, w: *i32, h: *i32) c_int;
+    extern fn SDL_GetRendererOutputSize(renderer: *const Renderer, w: *i32, h: *i32) c_int;
 
     pub fn createTexture(
         renderer: *Renderer,
@@ -678,20 +668,14 @@ pub const Renderer = opaque {
         width: i32,
         height: i32,
     ) Error!*Texture {
-        return SDL_CreateTexture(
-            renderer,
-            @intFromEnum(format),
-            @intFromEnum(access),
-            width,
-            height,
-        ) orelse makeError();
+        return SDL_CreateTexture(renderer, format, access, width, height) orelse makeError();
     }
     extern fn SDL_CreateTexture(
         renderer: *Renderer,
-        format: u32,
-        access: i32,
-        w: i32,
-        h: i32,
+        format: PixelFormatEnum,
+        access: TextureAccess,
+        w: c_int,
+        h: c_int,
     ) ?*Texture;
 
     pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*Texture {
@@ -699,31 +683,31 @@ pub const Renderer = opaque {
     }
     extern fn SDL_CreateTextureFromSurface(renderer: *Renderer, surface: *Surface) ?*Texture;
 
-    pub fn getInfo(r: *Renderer) Error!RendererInfo {
+    pub fn getInfo(r: *const Renderer) Error!RendererInfo {
         var result: RendererInfo = undefined;
         if (SDL_GetRendererInfo(r, &result) < 0) return makeError();
         return result;
     }
-    extern fn SDL_GetRendererInfo(renderer: *Renderer, info: *RendererInfo) c_int;
+    extern fn SDL_GetRendererInfo(renderer: *const Renderer, info: *RendererInfo) c_int;
 
-    pub fn isClipEnabled() bool {
-        return SDL_RenderIsClipEnabled() == True;
+    pub fn isClipEnabled(renderer: *const Renderer) bool {
+        return SDL_RenderIsClipEnabled(renderer) == True;
     }
-    pub extern fn SDL_RenderIsClipEnabled(renderer: *Renderer) Bool;
+    pub extern fn SDL_RenderIsClipEnabled(renderer: *const Renderer) Bool;
 
     pub fn setClipRect(r: *Renderer, clip_rect: ?*const Rect) Error!void {
         if (SDL_RenderSetClipRect(r, clip_rect) < 0) return makeError();
     }
     extern fn SDL_RenderSetClipRect(renderer: *Renderer, rect: ?*const Rect) c_int;
 
-    pub fn getClipRect(r: *Renderer) ?*const Rect {
+    pub fn getClipRect(r: *const Renderer) Rect {
         var clip_rect: Rect = undefined;
         SDL_RenderGetClipRect(r, &clip_rect);
         return clip_rect;
     }
-    extern fn SDL_RenderGetClipRect(renderer: *Renderer, rect: ?*Rect) void;
+    extern fn SDL_RenderGetClipRect(renderer: *const Renderer, rect: ?*Rect) void;
 
-    pub fn getLogicalSize(r: *Renderer) struct { width: i32, height: i32 } {
+    pub fn getLogicalSize(r: *const Renderer) struct { width: i32, height: i32 } {
         var width: i32 = undefined;
         var height: i32 = undefined;
         SDL_RenderGetLogicalSize(r, &width, &height);
@@ -732,22 +716,22 @@ pub const Renderer = opaque {
             .height = height,
         };
     }
-    extern fn SDL_RenderGetLogicalSize(renderer: *Renderer, w: *i32, h: *i32) void;
+    extern fn SDL_RenderGetLogicalSize(renderer: *const Renderer, w: *i32, h: *i32) void;
 
     pub fn setLogicalSize(r: *Renderer, width: i32, height: i32) Error!void {
         if (SDL_RenderSetLogicalSize(r, width, height) < 0) return makeError();
     }
     extern fn SDL_RenderSetLogicalSize(renderer: *Renderer, w: i32, h: i32) c_int;
 
-    pub fn getViewport(r: *Renderer) Rect {
+    pub fn getViewport(r: *const Renderer) Rect {
         var result: Rect = undefined;
         SDL_RenderGetViewport(r, &result);
         return result;
     }
-    extern fn SDL_RenderGetViewport(renderer: *Renderer, rect: *Rect) void;
+    extern fn SDL_RenderGetViewport(renderer: *const Renderer, rect: *Rect) void;
 
-    pub fn setViewport(r: *Renderer, maybe_rect: ?Rect) Error!void {
-        if (SDL_RenderSetViewport(r, if (maybe_rect) |rect| &rect else null) != 0) {
+    pub fn setViewport(renderer: *Renderer, maybe_rect: ?*const Rect) Error!void {
+        if (SDL_RenderSetViewport(renderer, maybe_rect) != 0) {
             return makeError();
         }
     }
@@ -759,26 +743,22 @@ pub const Renderer = opaque {
     extern fn SDL_SetRenderTarget(renderer: *Renderer, texture: ?*const Texture) c_int;
 
     pub fn readPixels(
-        r: *Renderer,
+        renderer: *const Renderer,
         rect: ?*const Rect,
-        format: ?PixelFormatEnum,
+        format: PixelFormatEnum,
         pixels: [*]u8,
-        pitch: u32,
+        pitch: i32,
     ) Error!void {
-        if (SDL_RenderReadPixels(
-            r,
-            rect,
-            if (format) |f| @intFromEnum(f) else 0,
-            pixels,
-            @as(i32, @intCast(pitch)),
-        ) < 0) return makeError();
+        if (SDL_RenderReadPixels(renderer, rect, format, pixels, pitch) < 0) {
+            return makeError();
+        }
     }
     extern fn SDL_RenderReadPixels(
-        renderer: *Renderer,
+        renderer: *const Renderer,
         rect: ?*const Rect,
-        format: u32,
+        format: PixelFormatEnum,
         pixels: ?*anyopaque,
-        pitch: i32,
+        pitch: c_int,
     ) c_int;
 };
 
@@ -843,7 +823,7 @@ fn definePixelFormatEnum(
     layout: u32,
     bits: u32,
     bytes: u32,
-) c_int {
+) u32 {
     switch (_type) {
         .index1, .index4, .index8 => {
             assert(@TypeOf(order) == BitmapOrder);
@@ -859,7 +839,7 @@ fn definePixelFormatEnum(
     return ((1 << 28) | ((@intFromEnum(_type)) << 24) | ((@intFromEnum(order)) << 20) |
         ((layout) << 16) | ((bits) << 8) | ((bytes) << 0));
 }
-pub const PixelFormatEnum = enum(c_int) {
+pub const PixelFormatEnum = enum(u32) {
     index1lsb = definePixelFormatEnum(.index1, BitmapOrder.@"4321", 0, 1, 0),
     index1msb = definePixelFormatEnum(.index1, BitmapOrder.@"1234", 0, 1, 0),
     index4lsb = definePixelFormatEnum(.index4, BitmapOrder.@"4321", 0, 4, 0),
@@ -894,111 +874,10 @@ pub const PixelFormatEnum = enum(c_int) {
 };
 
 pub const Color = extern struct {
-    pub const black = rgb(0x00, 0x00, 0x00);
-    pub const white = rgb(0xFF, 0xFF, 0xFF);
-    pub const red = rgb(0xFF, 0x00, 0x00);
-    pub const green = rgb(0x00, 0xFF, 0x00);
-    pub const blue = rgb(0x00, 0x00, 0xFF);
-    pub const magenta = rgb(0xFF, 0x00, 0xFF);
-    pub const cyan = rgb(0x00, 0xFF, 0xFF);
-    pub const yellow = rgb(0xFF, 0xFF, 0x00);
-
     r: u8,
     g: u8,
     b: u8,
     a: u8,
-
-    /// Returns a initialized color struct with alpha = 255
-    pub fn rgb(r: u8, g: u8, b: u8) Color {
-        return Color{ .r = r, .g = g, .b = b, .a = 255 };
-    }
-
-    /// Returns a initialized color struct
-    pub fn rgba(r: u8, g: u8, b: u8, a: u8) Color {
-        return Color{ .r = r, .g = g, .b = b, .a = a };
-    }
-
-    pub const ParseError = error{
-        UnknownFormat,
-        InvalidCharacter,
-        Overflow,
-    };
-
-    /// Parses a hex string color literal.
-    /// allowed formats are:
-    /// - `RGB`
-    /// - `RGBA`
-    /// - `#RGB`
-    /// - `#RGBA`
-    /// - `RRGGBB`
-    /// - `#RRGGBB`
-    /// - `RRGGBBAA`
-    /// - `#RRGGBBAA`
-    pub fn parse(str: []const u8) ParseError!Color {
-        switch (str.len) {
-            // RGB
-            3 => {
-                const r = try std.fmt.parseInt(u8, str[0..1], 16);
-                const g = try std.fmt.parseInt(u8, str[1..2], 16);
-                const b = try std.fmt.parseInt(u8, str[2..3], 16);
-
-                return rgb(
-                    r | (r << 4),
-                    g | (g << 4),
-                    b | (b << 4),
-                );
-            },
-
-            // #RGB, RGBA
-            4 => {
-                if (str[0] == '#')
-                    return parse(str[1..]);
-
-                const r = try std.fmt.parseInt(u8, str[0..1], 16);
-                const g = try std.fmt.parseInt(u8, str[1..2], 16);
-                const b = try std.fmt.parseInt(u8, str[2..3], 16);
-                const a = try std.fmt.parseInt(u8, str[3..4], 16);
-
-                // bit-expand the patters to a uniform range
-                return rgba(
-                    r | (r << 4),
-                    g | (g << 4),
-                    b | (b << 4),
-                    a | (a << 4),
-                );
-            },
-
-            // #RGBA
-            5 => return parse(str[1..]),
-
-            // RRGGBB
-            6 => {
-                const r = try std.fmt.parseInt(u8, str[0..2], 16);
-                const g = try std.fmt.parseInt(u8, str[2..4], 16);
-                const b = try std.fmt.parseInt(u8, str[4..6], 16);
-
-                return rgb(r, g, b);
-            },
-
-            // #RRGGBB
-            7 => return parse(str[1..]),
-
-            // RRGGBBAA
-            8 => {
-                const r = try std.fmt.parseInt(u8, str[0..2], 16);
-                const g = try std.fmt.parseInt(u8, str[2..4], 16);
-                const b = try std.fmt.parseInt(u8, str[4..6], 16);
-                const a = try std.fmt.parseInt(u8, str[6..8], 16);
-
-                return rgba(r, g, b, a);
-            },
-
-            // #RRGGBBAA
-            9 => return parse(str[1..]),
-
-            else => return error.UnknownFormat,
-        }
-    }
 };
 
 //--------------------------------------------------------------------------------------------------

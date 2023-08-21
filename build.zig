@@ -224,6 +224,7 @@ fn tests(b: *std.Build, options: Options) void {
     test_step.dependOn(zaudio.runTests(b, options.optimize, options.target));
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
