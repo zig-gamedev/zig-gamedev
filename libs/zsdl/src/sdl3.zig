@@ -376,7 +376,7 @@ pub const Texture = opaque {
 
     pub fn lock(texture: *Texture, rect: ?*Rect) !struct {
         pixels: [*]u8,
-        pitch: u32,
+        pitch: i32,
     } {
         var pixels: *anyopaque = undefined;
         var pitch: i32 = undefined;
@@ -385,7 +385,7 @@ pub const Texture = opaque {
         }
         return .{
             .pixels = @ptrCast(pixels),
-            .pitch = @bitCast(pitch),
+            .pitch = pitch,
         };
     }
     extern fn SDL_LockTexture(
@@ -700,9 +700,9 @@ pub const Renderer = opaque {
         _rect: ?*const Rect,
         format: PixelFormatEnum,
         pixels: [*]u8,
-        pitch: u16,
+        pitch: i32,
     ) Error!void {
-        if (SDL_RenderReadPixels(renderer, _rect, format, pixels, @intCast(pitch)) < 0) {
+        if (SDL_RenderReadPixels(renderer, _rect, format, pixels, pitch) < 0) {
             return makeError();
         }
     }
