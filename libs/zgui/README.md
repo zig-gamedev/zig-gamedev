@@ -1,6 +1,6 @@
 # zgui v1.89.6 - dear imgui bindings
 
-Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. For a test application please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu).
+Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. [Here](https://github.com/michal-z/zig-gamedev/tree/main/samples/minimal_zgpu_zgui) is a simple sample application, and [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu) is a full one.
 
 ## Features
 
@@ -13,7 +13,7 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 
 Copy `zgui` folder to a `libs` subdirectory of the root of your project.
 
-To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw` and `zpool` folders (see [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend, see: [backend_glfw_wgpu.zig](src/backend_glfw_wgpu.zig) for an example.
+To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw`, `zpool` and `system-sdk` folders (see [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend, see: [backend_glfw_wgpu.zig](src/backend_glfw_wgpu.zig) for an example.
 
 Then in your `build.zig` add:
 ```zig
