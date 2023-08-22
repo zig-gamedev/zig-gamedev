@@ -1132,24 +1132,40 @@ pub const SysWMInfo_wayland = extern struct {
     shell_surface: *opaque {},
 };
 
+pub const SysWMInfo_android = extern struct {
+    window: *opaque {},
+    surface: *opaque {},
+};
+
+pub const SysWMInfo_vivante = extern struct {
+    display: *opaque {},
+    window: *opaque {},
+};
+
+const SysWMInfo_info = extern union {
+    win: SysWMInfo_win,
+    x11: SysWMInfo_x11,
+    winrt: SysWMInfo_winrt,
+    dfb: SysWMInfo_dfb,
+    cocoa: SysWMInfo_cocoa,
+    uikit: SysWMInfo_uikit,
+    wl: SysWMInfo_wayland,
+    android: SysWMInfo_android,
+    vivante: SysWMInfo_vivante,
+    // MIR -- SDL unsupported and recommended to drop after 2.1
+
+    // This union has a "soft" maximum size of 64 bytes
+    // SDL denotes this with a dummy value of [64]u8
+    // We can use a comptime assert to make this a hard requirement
+    comptime {
+        assert(@sizeOf(SysWMInfo_info) <= 64);
+    }
+};
+
 pub const SysWMInfo = extern struct {
     version: Version,
     subsystem: SysWMType,
-    info: extern union {
-        win: SysWMInfo_win,
-        x11: SysWMInfo_x11,
-        winrt: SysWMInfo_winrt,
-        dfb: SysWMInfo_dfb,
-        cocoa: SysWMInfo_cocoa,
-        uikit: SysWMInfo_uikit,
-        wl: SysWMInfo_wayland,
-        // Android -- Uncertain on struct definition
-        // Vivante -- Uncertain on struct definition
-        // MIR -- Did not include, SDL unsupported and recommended to drop after 2.1
-        android: [64]u8,
-        vivante: [64]u8,
-        dummy: [64]u8,
-    },
+    info: SysWMInfo_info,
 };
 
 //--------------------------------------------------------------------------------------------------
