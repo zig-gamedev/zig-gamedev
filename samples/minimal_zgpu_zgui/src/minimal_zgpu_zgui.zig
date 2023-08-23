@@ -14,6 +14,13 @@ pub fn main() !void {
     };
     defer zglfw.terminate();
 
+    // Change current working directory to where the executable is located.
+    {
+        var buffer: [1024]u8 = undefined;
+        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
+        std.os.chdir(path) catch {};
+    }
+
     const window = zglfw.Window.create(800, 500, window_title, null) catch {
         std.log.err("Failed to create window.", .{});
         return;
@@ -28,10 +35,18 @@ pub fn main() !void {
     const gctx = try zgpu.GraphicsContext.create(gpa, window, .{});
     defer gctx.destroy(gpa);
 
+    const scale_factor = scale_factor: {
+        const scale = window.getContentScale();
+        break :scale_factor @max(scale[0], scale[1]);
+    };
+
     zgui.init(gpa);
     defer zgui.deinit();
 
-    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0);
+    _ = zgui.io.addFontFromFile(
+        content_dir ++ "Roboto-Medium.ttf",
+        std.math.floor(16.0 * scale_factor),
+    );
 
     zgui.backend.init(
         window,
@@ -39,6 +54,8 @@ pub fn main() !void {
         @intFromEnum(zgpu.GraphicsContext.swapchain_format),
     );
     defer zgui.backend.deinit();
+
+    zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
