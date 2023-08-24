@@ -956,6 +956,107 @@ pub const Surface = opaque {
 // Platform-specific Window Management
 //
 //--------------------------------------------------------------------------------------------------
+pub const SysWMType = enum(i32) {
+    unknown,
+    windows,
+    x11,
+    directfb,
+    cocoa,
+    uikit,
+    wayland,
+    mir, // no longer available, left for api/abi compatibility. remove in 2.1!
+    winrt,
+    android,
+    vivante,
+    os2,
+    haiku,
+    kmsdrm,
+    riscos,
+};
+
+/// Get driver-specific information about a window.
+///
+/// The caller must initialize the `info` structure's version by using
+/// `VERSION`, and then this function will fill in the rest
+/// of the structure with information about the given window.
+///
+/// returns true if the function is implemented and the `version` member
+/// of the `info` struct is valid, or false if the information
+/// could not be retrieved
+pub fn getWindowWMInfo(window: *Window, info: *SysWMInfo) bool {
+    return SDL_GetWindowWMInfo(window, info) == True;
+}
+extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) Bool;
+
+pub const SysWMInfo_win = extern struct {
+    hwnd: *opaque {},
+    hdc: *opaque {},
+    hinstance: *opaque {},
+};
+
+pub const SysWMInfo_x11 = extern struct {
+    display: *opaque {},
+    window: *opaque {},
+};
+
+pub const SysWMInfo_winrt = extern struct {
+    window: *opaque {},
+};
+
+pub const SysWMInfo_dfb = extern struct {
+    dfb: *opaque {},
+    window: *opaque {},
+    surface: *opaque {},
+};
+
+pub const SysWMInfo_cocoa = extern struct {
+    window: *opaque {},
+};
+
+pub const SysWMInfo_uikit = extern struct {
+    window: *opaque {},
+    frame_buffer: u32,
+    color_buffer: u32,
+    resolve_frame_buffer: u32,
+};
+
+pub const SysWMInfo_wayland = extern struct {
+    display: *opaque {},
+    surface: *opaque {},
+    shell_surface: *opaque {},
+};
+
+pub const SysWMInfo_android = extern struct {
+    window: *opaque {},
+    surface: *opaque {},
+};
+
+pub const SysWMInfo_vivante = extern struct {
+    display: *opaque {},
+    window: *opaque {},
+};
+
+pub const SysWMInfo = extern struct {
+    version: Version,
+    subsystem: SysWMType,
+    info: extern union {
+        win: SysWMInfo_win,
+        x11: SysWMInfo_x11,
+        winrt: SysWMInfo_winrt,
+        dfb: SysWMInfo_dfb,
+        cocoa: SysWMInfo_cocoa,
+        uikit: SysWMInfo_uikit,
+        wl: SysWMInfo_wayland,
+        android: SysWMInfo_android,
+        vivante: SysWMInfo_vivante,
+        dummy: [64]u8,
+        // MIR -- SDL unsupported and recommended to drop after 2.1
+
+        comptime {
+            assert(@sizeOf(@This()) == 64);
+        }
+    },
+};
 
 //--------------------------------------------------------------------------------------------------
 //
