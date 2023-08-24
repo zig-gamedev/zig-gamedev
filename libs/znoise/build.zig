@@ -26,11 +26,11 @@ pub fn package(
         .optimize = optimize,
     });
     znoise_c_cpp.linkLibC();
-    znoise_c_cpp.addIncludePath(thisDir() ++ "/libs/FastNoiseLite");
-    znoise_c_cpp.addCSourceFile(
-        thisDir() ++ "/libs/FastNoiseLite/FastNoiseLite.c",
-        &.{ "-std=c99", "-fno-sanitize=undefined" },
-    );
+    znoise_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/FastNoiseLite" });
+    znoise_c_cpp.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/libs/FastNoiseLite/FastNoiseLite.c" },
+        .flags = &.{ "-std=c99", "-fno-sanitize=undefined" },
+    });
 
     return .{
         .znoise = znoise,

@@ -23,7 +23,7 @@ const wgsl_vs = wgsl_common ++
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) uv: vec2<f32>,
 \\  }
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec2<f32>,
 \\      @location(1) uv: vec2<f32>,
 \\  ) -> VertexOut {
@@ -37,7 +37,7 @@ const wgsl_vs = wgsl_common ++
 const wgsl_fs = wgsl_common ++
 \\  @group(0) @binding(1) var image: texture_2d<f32>;
 \\  @group(0) @binding(2) var image_sampler: sampler;
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) uv: vec2<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      return textureSampleLevel(image, image_sampler, uv, uniforms.mip_level);
@@ -72,7 +72,7 @@ const DemoState = struct {
 };
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();

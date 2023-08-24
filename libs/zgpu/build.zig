@@ -25,29 +25,38 @@ pub const Package = struct {
         exe.addModule("zgpu", pkg.zgpu);
         exe.addModule("zgpu_options", pkg.zgpu_options);
 
+        const b = exe.step.owner;
+
         switch (target.os.tag) {
             .windows => {
-                exe.addLibraryPath(thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu");
-                exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-windows-gnu");
+                const dawn_dep = b.dependency("dawn_x86_64_windows_gnu", .{});
+                exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu" });
 
                 exe.linkSystemLibraryName("ole32");
                 exe.linkSystemLibraryName("dxguid");
             },
             .linux => {
-                if (target.cpu.arch.isX86())
-                    exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-linux-gnu")
-                else
-                    exe.addLibraryPath(thisDir() ++ "/libs/dawn/aarch64-linux-gnu");
+                if (target.cpu.arch.isX86()) {
+                    const dawn_dep = b.dependency("dawn_x86_64_linux_gnu", .{});
+                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
+                } else {
+                    const dawn_dep = b.dependency("dawn_aarch64_linux_gnu", .{});
+                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
+                }
             },
             .macos => {
-                exe.addFrameworkPath(thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks");
-                exe.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos12/usr/include");
-                exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
+                exe.addFrameworkPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" });
+                exe.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/include" });
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
 
-                if (target.cpu.arch.isX86())
-                    exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-macos-none")
-                else
-                    exe.addLibraryPath(thisDir() ++ "/libs/dawn/aarch64-macos-none");
+                if (target.cpu.arch.isX86()) {
+                    const dawn_dep = b.dependency("dawn_x86_64_macos", .{});
+                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
+                } else {
+                    const dawn_dep = b.dependency("dawn_aarch64_macos", .{});
+                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
+                }
 
                 exe.linkSystemLibraryName("objc");
                 exe.linkFramework("Metal");
@@ -64,10 +73,17 @@ pub const Package = struct {
         exe.linkLibC();
         exe.linkLibCpp();
 
-        exe.addIncludePath(thisDir() ++ "/libs/dawn/include");
-        exe.addIncludePath(thisDir() ++ "/src");
+        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/dawn/include" });
+        exe.addIncludePath(.{ .path = thisDir() ++ "/src" });
 
-        exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
+        exe.addCSourceFile(.{
+            .file = .{ .path = thisDir() ++ "/src/dawn.cpp" },
+            .flags = &.{ "-std=c++17", "-fno-sanitize=undefined" },
+        });
+        exe.addCSourceFile(.{
+            .file = .{ .path = thisDir() ++ "/src/dawn_proc.c" },
+            .flags = &.{"-fno-sanitize=undefined"},
+        });
     }
 };
 

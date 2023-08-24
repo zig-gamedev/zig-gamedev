@@ -12,7 +12,7 @@ pub const flags64_t = u64;
 pub const vector_t = opaque {};
 pub const mixins_t = opaque {};
 
-const filter_t_magic = 0x65637366;
+pub const filter_t_magic = 0x65637366;
 
 pub const error_t = error{FlecsError};
 fn make_error() error{FlecsError} {
@@ -1235,7 +1235,7 @@ pub const remove_id = ecs_remove_id;
 extern fn ecs_remove_id(world: *world_t, entity: entity_t, id: id_t) void;
 
 /// `pub fn override_id(world: *world_t, entity: entity_t, id: id_t) void`
-pub const override_id = ecs_remove_id;
+pub const override_id = ecs_override_id;
 extern fn ecs_override_id(world: *world_t, entity: entity_t, id: id_t) void;
 
 /// `pub fn clear(world: *world_t, entity: entity_t) void`
@@ -2198,7 +2198,29 @@ pub fn set_pair(
     comptime T: type,
     val: T,
 ) entity_t {
-    return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @as(*const anyopaque, @ptrCast(&val)));
+    return ecs_set_id(world, subject, pair(first, second), @sizeOf(T), @as(*const anyopaque, @ptrCast(@alignCast(&val))));
+}
+
+pub fn get_pair(
+    world: *world_t,
+    subject: entity_t,
+    first: entity_t,
+    second: entity_t,
+    comptime T: type,
+) ?*const T {
+    if (get_id(world, subject, pair(first, second))) |ptr| {
+        return cast(T, ptr);
+    }
+    return null;
+}
+
+pub fn has_pair(
+    world: *world_t,
+    subject: entity_t,
+    first: entity_t,
+    second: entity_t,
+) bool {
+    return ecs_has_id(world, subject, pair(first, second));
 }
 
 pub fn remove_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {

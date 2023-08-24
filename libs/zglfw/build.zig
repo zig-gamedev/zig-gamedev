@@ -12,14 +12,14 @@ pub const Package = struct {
         switch (host.os.tag) {
             .windows => {},
             .macos => {
-                exe.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
             },
             else => {
                 // We assume Linux (X11)
                 if (host.cpu.arch.isX86()) {
-                    exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu");
+                    exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu" });
                 } else {
-                    exe.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu");
+                    exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu" });
                 }
             },
         }
@@ -71,7 +71,7 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zglfw_c_cpp.addIncludePath(thisDir() ++ "/libs/glfw/include");
+    zglfw_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
     zglfw_c_cpp.linkLibC();
 
     const host = (std.zig.system.NativeTargetInfo.detect(zglfw_c_cpp.target) catch unreachable).target;
@@ -102,9 +102,11 @@ pub fn package(
             }, &.{"-D_GLFW_WIN32"});
         },
         .macos => {
-            zglfw_c_cpp.addFrameworkPath(thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks");
-            zglfw_c_cpp.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos12/usr/include");
-            zglfw_c_cpp.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
+            zglfw_c_cpp.addFrameworkPath(
+                .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
+            );
+            zglfw_c_cpp.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/include" });
+            zglfw_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
             zglfw_c_cpp.linkSystemLibraryName("objc");
             zglfw_c_cpp.linkFramework("IOKit");
             zglfw_c_cpp.linkFramework("CoreFoundation");
@@ -133,11 +135,11 @@ pub fn package(
         },
         else => {
             // We assume Linux (X11)
-            zglfw_c_cpp.addSystemIncludePath(thisDir() ++ "/../system-sdk/linux/include");
+            zglfw_c_cpp.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/linux/include" });
             if (host.cpu.arch.isX86()) {
-                zglfw_c_cpp.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu");
+                zglfw_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu" });
             } else {
-                zglfw_c_cpp.addLibraryPath(thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu");
+                zglfw_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu" });
             }
             zglfw_c_cpp.linkSystemLibraryName("X11");
             zglfw_c_cpp.addCSourceFiles(&.{

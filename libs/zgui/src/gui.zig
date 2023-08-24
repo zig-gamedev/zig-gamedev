@@ -224,6 +224,10 @@ pub const io = struct {
     pub const getFontsTexId = zguiIoGetFontsTexId;
     extern fn zguiIoGetFontsTexId() TextureIdent;
 
+    /// `pub fn zguiIoSetConfigWindowsMoveFromTitleBarOnly(bool) void`
+    pub const setConfigWindowsMoveFromTitleBarOnly = zguiIoSetConfigWindowsMoveFromTitleBarOnly;
+    extern fn zguiIoSetConfigWindowsMoveFromTitleBarOnly(enabled: bool) void;
+
     /// `pub fn zguiIoGetWantCaptureMouse() bool`
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
     extern fn zguiIoGetWantCaptureMouse() bool;
@@ -1159,6 +1163,13 @@ pub const setMouseCursor = zguiSetMouseCursor;
 extern fn zguiGetMouseCursor() Cursor;
 extern fn zguiSetMouseCursor(cursor: Cursor) void;
 //--------------------------------------------------------------------------------------------------
+pub fn getMousePos() [2]f32 {
+    var pos: [2]f32 = undefined;
+    zguiGetMousePos(&pos);
+    return pos;
+}
+extern fn zguiGetMousePos(pos: *[2]f32) void;
+//--------------------------------------------------------------------------------------------------
 /// `pub fn alignTextToFramePadding() void`
 pub const alignTextToFramePadding = zguiAlignTextToFramePadding;
 /// `pub fn getTextLineHeight() f32`
@@ -1449,6 +1460,43 @@ pub fn combo(label: [:0]const u8, args: Combo) bool {
         args.items_separated_by_zeros,
         args.popup_max_height_in_items,
     );
+}
+/// creates a combo box directly from a pointer to an enum value using zig's
+/// comptime mechanics to infer the items for the list at compile time
+pub fn comboFromEnum(
+    label: [:0]const u8,
+    /// must be a pointer to an enum value (var my_enum: *FoodKinds = .Banana)
+    /// that is backed by some kind of integer that can safely cast into an
+    /// i32 (the underlying imgui restriction)
+    current_item: anytype,
+) bool {
+    const item_names = comptime lbl: {
+        const item_type = @typeInfo(@TypeOf(current_item.*));
+        switch (item_type) {
+            .Enum => |e| {
+                comptime var str: [:0]const u8 = "";
+
+                inline for (e.fields) |f| {
+                    str = str ++ f.name ++ "\x00";
+                }
+                break :lbl str;
+            },
+            else => {
+                @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(current_item));
+            },
+        }
+    };
+
+    var item: i32 = @intCast(@intFromEnum(current_item.*));
+
+    const result = combo(label, .{
+        .items_separated_by_zeros = item_names,
+        .current_item = &item,
+    });
+
+    current_item.* = @enumFromInt(item);
+
+    return result;
 }
 extern fn zguiCombo(
     label: [*:0]const u8,
@@ -2859,8 +2907,8 @@ pub const BeginTable = struct {
     outer_size: [2]f32 = .{ 0, 0 },
     inner_width: f32 = 0,
 };
-pub fn beginTable(name: [:0]const u8, args: BeginTable) void {
-    zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
+pub fn beginTable(name: [:0]const u8, args: BeginTable) bool {
+    return zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
 }
 extern fn zguiBeginTable(
     str_id: [*:0]const u8,
@@ -2868,7 +2916,7 @@ extern fn zguiBeginTable(
     flags: TableFlags,
     outer_size: *const [2]f32,
     inner_width: f32,
-) void;
+) bool;
 
 pub fn endTable() void {
     zguiEndTable();
@@ -2968,6 +3016,11 @@ pub const MouseButton = enum(u32) {
     right = 1,
     middle = 2,
 };
+
+/// `pub fn isMouseDown(mouse_button: MouseButton) bool`
+pub const isMouseDown = zguiIsMouseDown;
+/// `pub fn isMouseClicked(mouse_button: MouseButton) bool`
+pub const isMouseClicked = zguiIsMouseClicked;
 /// `pub fn isMouseDoubleClicked(mouse_button: MouseButton) bool`
 pub const isMouseDoubleClicked = zguiIsMouseDoubleClicked;
 /// `pub fn isItemClicked(mouse_button: MouseButton) bool`
@@ -2990,6 +3043,8 @@ pub const isAnyItemHovered = zguiIsAnyItemHovered;
 pub const isAnyItemActive = zguiIsAnyItemActive;
 /// `pub fn isAnyItemFocused() bool`
 pub const isAnyItemFocused = zguiIsAnyItemFocused;
+extern fn zguiIsMouseDown(mouse_button: MouseButton) bool;
+extern fn zguiIsMouseClicked(mouse_button: MouseButton) bool;
 extern fn zguiIsMouseDoubleClicked(mouse_button: MouseButton) bool;
 extern fn zguiIsItemHovered(flags: HoveredFlags) bool;
 extern fn zguiIsItemActive() bool;
@@ -3174,6 +3229,8 @@ pub fn beginPopupModal(name: [:0]const u8, args: Begin) bool {
 pub fn openPopup(str_id: [:0]const u8, flags: PopupFlags) void {
     zguiOpenPopup(str_id, flags);
 }
+/// `pub fn beginPopup(str_id: [:0]const u8, flags: WindowFlags) bool`
+pub const beginPopup = zguiBeginPopup;
 /// `pub fn endPopup() void`
 pub const endPopup = zguiEndPopup;
 /// `pub fn closeCurrentPopup() void`
@@ -3181,6 +3238,7 @@ pub const closeCurrentPopup = zguiCloseCurrentPopup;
 extern fn zguiBeginPopupContextWindow() bool;
 extern fn zguiBeginPopupContextItem() bool;
 extern fn zguiBeginPopupModal(name: [*:0]const u8, popen: ?*bool, flags: WindowFlags) bool;
+extern fn zguiBeginPopup(str_id: [*:0]const u8, flags: WindowFlags) bool;
 extern fn zguiEndPopup() void;
 extern fn zguiOpenPopup(str_id: [*:0]const u8, flags: PopupFlags) void;
 extern fn zguiCloseCurrentPopup() void;

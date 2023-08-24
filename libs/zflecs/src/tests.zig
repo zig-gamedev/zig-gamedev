@@ -2,6 +2,7 @@ const std = @import("std");
 const ecs = @import("zflecs.zig");
 
 const expect = std.testing.expect;
+const expectEqual = std.testing.expectEqual;
 
 const print = std.log.info;
 //const print = std.debug.print;
@@ -307,4 +308,40 @@ test "zflecs.try_different_alignments" {
         _ = ecs.set(world, entity, Component, .{});
         _ = ecs.get(world, entity, Component);
     }
+}
+
+test "zflecs.pairs.tag-tag" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const Slowly = struct {};
+    ecs.TAG(world, Slowly);
+    ecs.TAG(world, Walking);
+
+    const entity = ecs.new_entity(world, "Bob");
+
+    _ = ecs.add_pair(world, entity, ecs.id(Slowly), ecs.id(Walking));
+    try expect(ecs.has_pair(world, entity, ecs.id(Slowly), ecs.id(Walking)));
+
+    _ = ecs.remove_pair(world, entity, ecs.id(Slowly), ecs.id(Walking));
+    try expect(!ecs.has_pair(world, entity, ecs.id(Slowly), ecs.id(Walking)));
+}
+
+test "zflecs.pairs.component-tag" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const Speed = u8;
+    ecs.COMPONENT(world, Speed);
+    ecs.TAG(world, Walking);
+
+    const entity = ecs.new_entity(world, "Bob");
+
+    _ = ecs.set_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed, 2);
+    try expect(ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
+    try expectEqual(@as(u8, 2), ecs.get_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed).?.*);
+
+    _ = ecs.remove_pair(world, entity, ecs.id(Speed), ecs.id(Walking));
+    try expect(!ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
+    try expectEqual(@as(?*const u8, null), ecs.get_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed));
 }

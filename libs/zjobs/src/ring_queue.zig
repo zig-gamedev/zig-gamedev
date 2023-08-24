@@ -13,7 +13,6 @@ pub fn RingQueue(comptime T: type, comptime _capacity: u16) type {
         // zig fmt: off
         _len  : usize       = 0,
         _head : usize       = 0,
-        _tail : usize       = 0,
         _data : [capacity]T = undefined,
         // zig fmt: on
 
@@ -59,17 +58,15 @@ pub fn RingQueue(comptime T: type, comptime _capacity: u16) type {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         inline fn enqueueUnchecked(self: *Self, value: T) void {
-            const old_tail_index = self._tail % capacity;
+            defer self._len += 1;
+            const old_tail_index = (self._head + self._len) % _capacity;
             self._data[old_tail_index] = value;
-            self._tail = (old_tail_index +% 1) % capacity;
-            self._len += 1;
         }
 
         inline fn dequeueUnchecked(self: *Self) T {
-            const old_head_index = self._head % capacity;
-            const value = self._data[old_head_index];
-            self._head = (old_head_index +% 1) % capacity;
-            self._len -= 1;
+            defer self._len -= 1;
+            const value = self._data[self._head];
+            self._head = (self._head + 1) % capacity;
             return value;
         }
     };

@@ -39,7 +39,7 @@ const cs_generate_mipmaps =
 \\      return vec4(red[index], green[index], blue[index], alpha[index]);
 \\  }
 \\
-\\  @stage(compute) @workgroup_size(8, 8, 1)
+\\  @compute @workgroup_size(8, 8, 1)
 \\  fn main(
 \\      @builtin(global_invocation_id) global_invocation_id: vec3<u32>,
 \\      @builtin(local_invocation_index) local_invocation_index : u32,

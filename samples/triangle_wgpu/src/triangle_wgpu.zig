@@ -16,7 +16,7 @@ const wgsl_vs =
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) color: vec3<f32>,
 \\  }
-\\  @stage(vertex) fn main(
+\\  @vertex fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) color: vec3<f32>,
 \\  ) -> VertexOut {
@@ -27,7 +27,7 @@ const wgsl_vs =
 \\  }
 ;
 const wgsl_fs =
-\\  @stage(fragment) fn main(
+\\  @fragment fn main(
 \\      @location(0) color: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      return vec4(color, 1.0);
@@ -54,7 +54,7 @@ const DemoState = struct {
 };
 
 fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
 
     // Create a bind group layout needed for our render pipeline.
     const bind_group_layout = gctx.createBindGroupLayout(&.{

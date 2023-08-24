@@ -366,6 +366,13 @@ pub const AaudioInputPreset = enum(u32) {
     voice_performance,
 };
 
+pub const AaudioAllowedCapturePolicy = enum(u32) {
+    default,
+    by_all,
+    by_system,
+    by_none,
+};
+
 pub const MonoExpansionMode = enum(u32) {
     duplicate,
     average,
@@ -397,6 +404,16 @@ pub const Channel = u8;
 
 pub const ResourceManager = opaque {
     // TODO: Add methods.
+
+    pub const PipelineNotifications = extern struct {
+        init: StageNotification,
+        done: StageNotification,
+
+        pub const StageNotification = extern struct {
+            notification: ?*anyopaque,
+            fence: ?*Fence,
+        };
+    };
 };
 
 pub const Vfs = opaque {
@@ -586,9 +603,10 @@ pub const Noise = opaque {
     extern fn ma_noise_set_amplitude(noise: *Noise, amplitude: f64) Result;
 
     pub fn setType(noise: *Noise, noise_type: Type) Error!void {
-        try maybeError(ma_noise_set_type(noise, noise_type));
+        _ = noise_type;
+        _ = noise;
+        unreachable; // Deprecated by miniaudio
     }
-    extern fn ma_noise_set_type(noise: *Noise, noise_type: Type) Result;
 
     pub fn create(config: Config) Error!*Noise {
         var handle: ?*Noise = null;
@@ -953,7 +971,7 @@ pub const BiquadNode = opaque {
 pub const LpfConfig = extern struct {
     format: Format,
     channels: u32,
-    sampleRate: u32,
+    sample_rate: u32,
     cutoff_frequency: f64,
     order: u32,
 };
@@ -1612,12 +1630,15 @@ pub const Device = opaque {
         opensl: extern struct {
             stream_type: OpenslStreamType,
             recording_preset: OpenslRecordingPreset,
+            enable_compatibility_workarounds: Bool32,
         },
         aaudio: extern struct {
             usage: AaudioUsage,
             content_type: AaudioContentType,
             input_preset: AaudioInputPreset,
+            allowed_capture_policy: AaudioAllowedCapturePolicy,
             no_auto_start_after_reroute: Bool32,
+            enable_compatibility_workarounds: Bool32,
         },
 
         pub fn init(device_type: Type) Config {
@@ -1676,6 +1697,7 @@ pub const Engine = opaque {
         context: ?*Context,
         device: ?*Device,
         playback_device_id: ?*Device.Id,
+        data_callback: ?Device.DataProc,
         notification_callback: ?Device.NotificationProc,
         log: ?*Log,
         listener_count: u32,
@@ -1685,11 +1707,14 @@ pub const Engine = opaque {
         period_size_in_milliseconds: u32,
         gain_smooth_time_in_frames: u32,
         gain_smooth_time_in_milliseconds: u32,
+        default_volume_smooth_time_in_pcm_frames: u32,
         allocation_callbacks: AllocationCallbacks,
         no_auto_start: Bool32,
         no_device: Bool32,
         mono_expansion_mode: MonoExpansionMode,
         resource_manager_vfs: ?*Vfs,
+        on_process: ?Engine.ProcessProc,
+        user_data: ?*anyopaque,
 
         pub fn init() Config {
             var config: Config = undefined;
@@ -1698,6 +1723,12 @@ pub const Engine = opaque {
         }
         extern fn zaudioEngineConfigInit(out_config: *Config) void;
     };
+
+    pub const ProcessProc = *const fn (
+        user_data: ?*anyopaque,
+        frames_out: [*]f32,
+        frame_count: u64,
+    ) callconv(.C) void;
 
     pub fn create(config: ?Config) Error!*Engine {
         var handle: ?*Engine = null;
@@ -2272,12 +2303,16 @@ pub const Sound = opaque {
         channels_out: u32,
         mono_expansion_mode: MonoExpansionMode,
         flags: Flags,
+        volume_smooth_time_in_pcm_frames: u32,
         initial_seek_point_in_pcm_frames: u64,
         range_beg_in_pcm_frames: u64,
         range_end_in_pcm_Frames: u64,
         loop_point_beg_in_pcm_frames: u64,
         loop_point_end_in_pcm_frames: u64,
         is_looping: Bool32,
+        end_callback: ?EndProc,
+        user_data: ?*anyopaque,
+        init_notifications: ResourceManager.PipelineNotifications,
         done_fence: ?*Fence,
 
         pub fn init() Config {
@@ -2287,6 +2322,11 @@ pub const Sound = opaque {
         }
         extern fn zaudioSoundConfigInit(out_config: *Config) void;
     };
+
+    pub const EndProc = *const fn (
+        user_data: ?*anyopaque,
+        sound: *Sound,
+    ) callconv(.C) void;
 };
 //--------------------------------------------------------------------------------------------------
 //

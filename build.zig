@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 0, .pre = "dev.3859" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.126" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -28,20 +28,6 @@ pub fn build(b: *std.Build) void {
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
     ensureGitLfsContent("/samples/triangle_wgpu/triangle_wgpu_content/Roboto-Medium.ttf") catch return;
-
-    // Fetch the latest Dawn/WebGPU binaries.
-    const skip_dawn_update = b.option(bool, "skip-dawn-update", "Skip updating Dawn binaries") orelse false;
-    if (!skip_dawn_update) {
-        var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
-        child.cwd = thisDir();
-        child.stderr = std.io.getStdErr();
-        child.stdout = std.io.getStdOut();
-        _ = child.spawnAndWait() catch {
-            std.log.err("Failed to fetch git submodule. Please try to re-clone.", .{});
-            return;
-        };
-    }
-    ensureGitLfsContent("/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib") catch return;
 
     //
     // Packages
@@ -174,6 +160,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
     const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
     const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+    const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
     const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
     const layers_wgpu = @import("samples/layers_wgpu/build.zig");
     const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
@@ -184,6 +171,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
     install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+    install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
     install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
     install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
@@ -214,15 +202,15 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
-    const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-    const audio_experiments = @import("samples/audio_experiments/build.zig");
+    //const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+    //const audio_experiments = @import("samples/audio_experiments/build.zig");
     const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-    const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
+    //const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
 
     install(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    install(b, audio_playback_test.build(b, options), "audio_playback_test");
-    install(b, audio_experiments.build(b, options), "audio_experiments");
+    //install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+    //install(b, audio_playback_test.build(b, options), "audio_playback_test");
+    //install(b, audio_experiments.build(b, options), "audio_experiments");
 }
 
 fn tests(b: *std.Build, options: Options) void {
@@ -238,6 +226,9 @@ fn tests(b: *std.Build, options: Options) void {
     test_step.dependOn(zaudio.runTests(b, options.optimize, options.target));
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
+
+    // TODO: zsdl test not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
+    //test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
@@ -313,7 +304,7 @@ fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8
     //comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
 
     const install_step = b.step(name, "Build '" ++ name ++ "' demo");
-    install_step.dependOn(&b.addInstallArtifact(exe).step);
+    install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 
     const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
     const run_cmd = b.addRunArtifact(exe);
@@ -374,9 +365,9 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
             \\
             \\x86_64-windows-gnu
             \\x86_64-linux-gnu
-            \\x86_64-macos.12-none
+            \\x86_64-macos.12.0.0-none
             \\aarch64-linux-gnu
-            \\aarch64-macos.12-none
+            \\aarch64-macos.12.0.0-none
             \\
             \\---------------------------------------------------------------------------
             \\
