@@ -977,22 +977,16 @@ pub const SysWMType = enum(i32) {
 /// Get driver-specific information about a window.
 ///
 /// The caller must initialize the `info` structure's version by using
-/// `VERSION(&info.version)`, and then this function will fill in the rest
+/// `VERSION`, and then this function will fill in the rest
 /// of the structure with information about the given window.
 ///
 /// returns true if the function is implemented and the `version` member
 /// of the `info` struct is valid, or false if the information
 /// could not be retrieved
-///
-/// ZSDL Note: Only implemented for SysWMType.windows & SysWMType.x11
 pub fn getWindowWMInfo(window: *Window, info: *SysWMInfo) bool {
-    const result: bool = SDL_GetWindowWMInfo(window, info);
-    return switch (info.subsystem) {
-        .windows, .x11 => result,
-        else => false,
-    };
+    return SDL_GetWindowWMInfo(window, info) == True;
 }
-extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) bool;
+extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) Bool;
 
 pub const SysWMInfo_win = extern struct {
     hwnd: *opaque {},
@@ -1042,30 +1036,26 @@ pub const SysWMInfo_vivante = extern struct {
     window: *opaque {},
 };
 
-const SysWMInfo_info = extern union {
-    win: SysWMInfo_win,
-    x11: SysWMInfo_x11,
-    winrt: SysWMInfo_winrt,
-    dfb: SysWMInfo_dfb,
-    cocoa: SysWMInfo_cocoa,
-    uikit: SysWMInfo_uikit,
-    wl: SysWMInfo_wayland,
-    android: SysWMInfo_android,
-    vivante: SysWMInfo_vivante,
-    // MIR -- SDL unsupported and recommended to drop after 2.1
-
-    // This union has a "soft" maximum size of 64 bytes
-    // SDL denotes this with a dummy value of [64]u8
-    // We can use a comptime assert to make this a hard requirement
-    comptime {
-        assert(@sizeOf(SysWMInfo_info) <= 64);
-    }
-};
-
 pub const SysWMInfo = extern struct {
     version: Version,
     subsystem: SysWMType,
-    info: SysWMInfo_info,
+    info: extern union {
+        win: SysWMInfo_win,
+        x11: SysWMInfo_x11,
+        winrt: SysWMInfo_winrt,
+        dfb: SysWMInfo_dfb,
+        cocoa: SysWMInfo_cocoa,
+        uikit: SysWMInfo_uikit,
+        wl: SysWMInfo_wayland,
+        android: SysWMInfo_android,
+        vivante: SysWMInfo_vivante,
+        dummy: [64]u8,
+        // MIR -- SDL unsupported and recommended to drop after 2.1
+
+        comptime {
+            assert(@sizeOf(@This()) == 64);
+        }
+    },
 };
 
 //--------------------------------------------------------------------------------------------------
