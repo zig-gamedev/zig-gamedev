@@ -1251,6 +1251,10 @@ pub fn pollEvent(event: ?*Event) bool {
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
 
+/// pub fn pushEvent(event: ?*Event) i32 {
+pub const pushEvent = SDL_PushEvent;
+extern fn SDL_PushEvent(event: ?*Event) i32;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Keyboard Support
