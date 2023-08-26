@@ -1503,6 +1503,7 @@ JPC_BodyInterface_GetAngularVelocity(const JPC_BodyInterface *in_iface,
                                      float out_velocity[3]);
 JPC_API void
 JPC_BodyInterface_GetPointVelocity(const JPC_BodyInterface *in_iface,
+                                   JPC_BodyID in_body_id,
                                    const JPC_Real in_point[3],
                                    float out_velocity[3]);
 JPC_API void
