@@ -1031,7 +1031,7 @@ pub const SysWMInfo = extern struct {
 };
 
 comptime {
-    assert(@sizeOf(SysWMInfo) >= SYSWM_CURRENT_INFO_SIZE);
+    assert(@sizeOf(SysWMInfo) == SYSWM_CURRENT_INFO_SIZE);
 }
 
 pub fn getWindowWMInfo(window: *Window) Error!SysWMInfo {
