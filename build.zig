@@ -152,7 +152,8 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 }
 
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
-    const minimal_gl = @import("samples/minimal_gl/build.zig");
+    const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
+    const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
     const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
     const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
     const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
@@ -167,7 +168,8 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
     const monolith = @import("samples/monolith/build.zig");
 
-    install(b, minimal_gl.build(b, options), "minimal_gl");
+    install(b, minimal_glfw_gl.build(b, options), "minimal_glfw_gl");
+    install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
     install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
     install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
