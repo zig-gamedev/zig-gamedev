@@ -2703,7 +2703,7 @@ extern fn zguiSetNextItemOpen(is_open: bool, cond: Condition) void;
 //--------------------------------------------------------------------------------------------------
 pub const SelectableFlags = packed struct(u32) {
     dont_close_popups: bool = false,
-    span_all_colums: bool = false,
+    span_all_columns: bool = false,
     allow_double_click: bool = false,
     disabled: bool = false,
     allow_item_overlap: bool = false,
