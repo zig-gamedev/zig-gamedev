@@ -8,12 +8,12 @@ pub fn main() !void {
 
     const gl_major = 3;
     const gl_minor = 3;
-    glfw.WindowHint.set(.context_version_major, gl_major);
-    glfw.WindowHint.set(.context_version_minor, gl_minor);
-    glfw.WindowHint.set(.opengl_profile, @intFromEnum(glfw.OpenGLProfile.opengl_core_profile));
-    glfw.WindowHint.set(.opengl_forward_compat, 1);
-    glfw.WindowHint.set(.client_api, @intFromEnum(glfw.ClientApi.opengl_api));
-    glfw.WindowHint.set(.doublebuffer, 1);
+    glfw.windowHintTyped(.context_version_major, gl_major);
+    glfw.windowHintTyped(.context_version_minor, gl_minor);
+    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
+    glfw.windowHintTyped(.opengl_forward_compat, true);
+    glfw.windowHintTyped(.client_api, .opengl_api);
+    glfw.windowHintTyped(.doublebuffer, true);
 
     const window = try glfw.Window.create(600, 600, "zig-gamedev: minimal_glfw_gl", null);
     defer window.destroy();
