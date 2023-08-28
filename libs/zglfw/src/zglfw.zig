@@ -124,12 +124,12 @@ extern fn glfwMakeContextCurrent(window: *Window) void;
 pub const swapInterval = glfwSwapInterval;
 extern fn glfwSwapInterval(interval: i32) void;
 
-pub const GlProc = ?*const anyopaque;
+pub const GlProc = *const anyopaque;
 
-pub fn getProcAddress(procname: [:0]const u8) GlProc {
+pub fn getProcAddress(procname: [:0]const u8) ?GlProc {
     return glfwGetProcAddress(procname);
 }
-extern fn glfwGetProcAddress(procname: [*:0]const u8) GlProc;
+extern fn glfwGetProcAddress(procname: [*:0]const u8) ?GlProc;
 
 //--------------------------------------------------------------------------------------------------
 //
