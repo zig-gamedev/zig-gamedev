@@ -4,8 +4,8 @@ const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "minimal_gl",
-        .root_source_file = .{ .path = thisDir() ++ "/src/minimal_gl.zig" },
+        .name = "minimal_sdl_gl",
+        .root_source_file = .{ .path = thisDir() ++ "/src/minimal_sdl_gl.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });

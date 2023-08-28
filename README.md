@@ -109,7 +109,7 @@ pub fn build(b: *std.Build) void {
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
 | **[ztracy](libs/ztracy)**     | 0.9.0          | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
 | **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
-| **[zglfw](libs/zglfw)**       | 0.5.2          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
+| **[zglfw](libs/zglfw)**       | 0.6.0          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
 | **[znoise](libs/znoise)**     | 0.1.0          | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
 | **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
 | **[zbullet](libs/zbullet)**   | 0.2.0          | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
