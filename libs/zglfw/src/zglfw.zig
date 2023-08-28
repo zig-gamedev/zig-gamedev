@@ -827,6 +827,8 @@ pub const WindowHint = enum(i32) {
         };
     }
 
+    /// DEPRECATED: Does not allow setting string type hints.
+    /// Use `windowHint`, `windowHintString` or `windowHintTyped` instead.
     pub const set = glfwWindowHint;
 };
 
