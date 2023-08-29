@@ -1,27 +1,35 @@
 const std = @import("std");
-const Options = @import("../../build.zig").Options;
 
-pub fn build(b: *std.Build, options: Options) void {
+const zsdl = @import("../../libs/zsdl/build.zig");
+const zopengl = @import("../../libs/zopengl/build.zig");
+const zmath = @import("../../libs/zmath/build.zig");
+const znoise = @import("../../libs/znoise/build.zig");
+const zstbi = @import("../../libs/zstbi/build.zig");
+
+var zsdl_pkg: zsdl.Package = undefined;
+var zopengl_pkg: zopengl.Package = undefined;
+var zmath_pkg: zmath.Package = undefined;
+var znoise_pkg: znoise.Package = undefined;
+var zstbi_pkg: zstbi.Package = undefined;
+
+const Options = @import("../build.zig").Options;
+
+pub fn buildWithOptions(b: *std.Build, options: Options) void {
+    zsdl_pkg = zsdl.package(b, options.target, options.optimize, .{});
+    zopengl_pkg = zopengl.package(b, options.target, options.optimize, .{});
+    zmath_pkg = zmath.package(b, options.target, options.optimize, .{});
+    znoise_pkg = znoise.package(b, options.target, options.optimize, .{});
+    zstbi_pkg = zstbi.package(b, options.target, options.optimize, .{});
+
     const latest_experiment = 31;
     inline for (1..latest_experiment + 1) |i| {
         if (i == 6 or i == 7 or i == 30) continue;
         const name = comptime std.fmt.comptimePrint("x{d:0>4}", .{i});
-        install(b, options.optimize, options.target, name);
+        install(b, name, options);
     }
 }
 
-fn install(
-    b: *std.build.Builder,
-    optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
-    comptime name: []const u8,
-) void {
-    const zsdl_pkg = @import("../../build.zig").zsdl_pkg;
-    const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const znoise_pkg = @import("../../build.zig").znoise_pkg;
-    const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
-
+fn install(b: *std.build.Builder, comptime name: []const u8, options: Options) void {
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
     comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
@@ -47,8 +55,8 @@ fn install(
     const exe = b.addExecutable(.{
         .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/genart.zig" },
-        .target = target,
-        .optimize = optimize,
+        .target = options.target,
+        .optimize = options.optimize,
     });
     exe.rdynamic = true;
     exe.addModule("xcommon", xcommon);

@@ -1,22 +1,24 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
 const content_dir = "physically_based_rendering_wgpu_content/";
+
+pub const name = "physically_based_rendering_wgpu";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "physically_based_rendering_wgpu",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/physically_based_rendering_wgpu.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
-    const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
-    const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
+    const zgui_pkg = @import("../build.zig").zgui_pkg;
+    const zmath_pkg = @import("../build.zig").zmath_pkg;
+    const zgpu_pkg = @import("../build.zig").zgpu_pkg;
+    const zglfw_pkg = @import("../build.zig").zglfw_pkg;
+    const zstbi_pkg = @import("../build.zig").zstbi_pkg;
+    const zmesh_pkg = @import("../build.zig").zmesh_pkg;
 
     zgui_pkg.link(exe);
     zgpu_pkg.link(exe);

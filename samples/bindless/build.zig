@@ -1,21 +1,23 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
 const content_dir = "bindless_content/";
+
+pub const name = "bindless";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "bindless",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/bindless.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
-    const common_pkg = @import("../../build.zig").common_pkg;
-    const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
-    const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
+    const zwin32_pkg = @import("../build.zig").zwin32_pkg;
+    const zd3d12_pkg = @import("../build.zig").zd3d12_pkg;
+    const common_pkg = @import("../build.zig").common_pkg;
+    const zmesh_pkg = @import("../build.zig").zmesh_pkg;
+    const zstbi_pkg = @import("../build.zig").zstbi_pkg;
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
     zmesh_pkg.link(exe);

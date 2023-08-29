@@ -1,21 +1,23 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
 const content_dir = "monolith_content/";
+
+pub const name = "monolith";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "monolith",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/monolith.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
-    const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
+    const zgui_pkg = @import("../build.zig").zgui_pkg;
+    const zmath_pkg = @import("../build.zig").zmath_pkg;
+    const zgpu_pkg = @import("../build.zig").zgpu_pkg;
+    const zglfw_pkg = @import("../build.zig").zglfw_pkg;
+    const zmesh_pkg = @import("../build.zig").zmesh_pkg;
 
     const zphysics_pkg = @import("../../libs/zphysics/build.zig").package(b, options.target, options.optimize, .{
         .options = .{

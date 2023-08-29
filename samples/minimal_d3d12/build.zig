@@ -1,16 +1,18 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
+
+pub const name = "minimal_d3d12";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "minimal_d3d12",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/minimal_d3d12.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
+    const zwin32_pkg = @import("../build.zig").zwin32_pkg;
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
 

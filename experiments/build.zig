@@ -1,8 +1,15 @@
 const std = @import("std");
-const Options = @import("../build.zig").Options;
 
-pub fn build(b: *std.Build, options: Options) void {
-    @import("genart/build.zig").build(b, options);
+pub const Options = struct {
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+};
+
+pub fn buildWithOptions(
+    b: *std.Build,
+    options: Options,
+) void {
+    @import("genart/build.zig").buildWithOptions(b, options);
 }
 
 inline fn thisDir() []const u8 {

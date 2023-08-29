@@ -1,21 +1,23 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
 const content_dir = "audio_experiments_content/";
+
+pub const name = "audio_experiments";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "audio_experiments",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/audio_experiments.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
-    const common_pkg = @import("../../build.zig").common_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zxaudio2_pkg = @import("../../build.zig").zxaudio2_pkg;
+    const zwin32_pkg = @import("../build.zig").zwin32_pkg;
+    const zd3d12_pkg = @import("../build.zig").zd3d12_pkg;
+    const common_pkg = @import("../build.zig").common_pkg;
+    const zmath_pkg = @import("../build.zig").zmath_pkg;
+    const zxaudio2_pkg = @import("../build.zig").zxaudio2_pkg;
 
     zwin32_pkg.link(exe, .{ .d3d12 = true, .xaudio2 = true });
     common_pkg.link(exe);

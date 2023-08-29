@@ -1,19 +1,21 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
 const content_dir = "triangle_content/";
+
+pub const name = "triangle";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "triangle",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/triangle.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
-    const common_pkg = @import("../../build.zig").common_pkg;
+    const zwin32_pkg = @import("../build.zig").zwin32_pkg;
+    const zd3d12_pkg = @import("../build.zig").zd3d12_pkg;
+    const common_pkg = @import("../build.zig").common_pkg;
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
     zd3d12_pkg.link(exe);

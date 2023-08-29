@@ -1,18 +1,20 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
+
+pub const name = "vector_graphics_test";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "vector_graphics_test",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/vector_graphics_test.zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zd3d12_d2d_pkg = @import("../../build.zig").zd3d12_d2d_pkg;
-    const common_d2d_pkg = @import("../../build.zig").common_d2d_pkg;
+    const zwin32_pkg = @import("../build.zig").zwin32_pkg;
+    const zd3d12_d2d_pkg = @import("../build.zig").zd3d12_d2d_pkg;
+    const common_d2d_pkg = @import("../build.zig").common_d2d_pkg;
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
     common_d2d_pkg.link(exe);

@@ -45,3 +45,6 @@
 zig-cache
 zig-out
 backup
+
+# Ignore special system paths
+*.DS_Store

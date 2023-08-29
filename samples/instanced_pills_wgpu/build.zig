@@ -1,23 +1,23 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
+const Options = @import("../build.zig").Options;
 
-const demo_name = "instanced_pills_wgpu";
+pub const name = "instanced_pills_wgpu";
 const demo_filename = "instanced_pills_wgpu";
-const content_dir = demo_name ++ "_content/";
+const content_dir = name ++ "_content/";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = demo_name,
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/" ++ demo_filename ++ ".zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
+    const zgui_pkg = @import("../build.zig").zgui_pkg;
+    const zmath_pkg = @import("../build.zig").zmath_pkg;
+    const zgpu_pkg = @import("../build.zig").zgpu_pkg;
+    const zglfw_pkg = @import("../build.zig").zglfw_pkg;
 
     zgui_pkg.link(exe);
     zgpu_pkg.link(exe);
