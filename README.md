@@ -197,7 +197,7 @@ To list all available sample names run `zig build --help` and navigate to `Steps
 #### Build options
 
 Options for optimizations:
-* `-Doptimize=[Debug|ReleaseFast|ReleaseSafe|ReleaseSmall]` - enable optimizations. try `-Doptimize=ReleaseFast` with the bullet sample!
+* `-Doptimize=[Debug|ReleaseFast|ReleaseSafe|ReleaseSmall]` - enable optimizations
 
 Options for Windows applications:
 * `-Dzd3d12-enable-debug-layer=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
