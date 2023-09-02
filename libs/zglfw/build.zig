@@ -3,11 +3,14 @@ const std = @import("std");
 pub const Package = struct {
     zglfw: *std.Build.Module,
     zglfw_c_cpp: *std.Build.CompileStep,
+    options: Options,
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.addModule("zglfw", pkg.zglfw);
 
         const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+
+        if (host.os.tag == .emscripten or host.os.tag == .freestanding) return; // emscripten
 
         switch (host.os.tag) {
             .windows => {},
@@ -52,6 +55,15 @@ pub fn package(
     const zglfw = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
+
+    // currently at link stage freestanding target is assumed to be emscripten
+    // if non emscripten .freestanding target is being implemented then this needs to be changed
+    std.debug.assert(target.getOsTag() != .freestanding or target.getCpuArch() == .wasm32); 
+    if (target.getOsTag() == .emscripten) return .{
+        .zglfw = zglfw,
+        .zglfw_c_cpp = undefined,
+        .options = args.options,
+    };
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
         const lib = b.addSharedLibrary(.{
@@ -166,6 +178,7 @@ pub fn package(
     return .{
         .zglfw = zglfw,
         .zglfw_c_cpp = zglfw_c_cpp,
+        .options = args.options,
     };
 }
 

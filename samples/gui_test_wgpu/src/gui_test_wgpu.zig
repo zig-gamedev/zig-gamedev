@@ -6,6 +6,12 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 const zstbi = @import("zstbi");
+const zems = @import("zems");
+
+pub const std_options = struct {
+    // pub const log_level = .info;
+    pub const logFn = if (zems.is_emscripten) zems.emscriptenLog else std.log.defaultLog;
+};
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: gui test (wgpu)";
@@ -579,40 +585,65 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    zglfw.init() catch {
-        std.log.err("Failed to initialize GLFW library.", .{});
+    zglfw.init() catch |err| {
+        std.log.err("Failed to initialize GLFW library: {}", .{err});
         return;
     };
     defer zglfw.terminate();
 
-    // Change current working directory to where the executable is located.
-    {
+    if (!zems.is_emscripten) {
+        // Change current working directory to where the executable is located.
         var buffer: [1024]u8 = undefined;
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
         std.os.chdir(path) catch {};
     }
 
-    const window = zglfw.Window.create(1600, 1000, window_title, null) catch {
-        std.log.err("Failed to create demo window.", .{});
+    if (zems.is_emscripten) zglfw.WindowHint.set(.client_api, @intFromEnum(zglfw.ClientApi.no_api));
+    const window = zglfw.Window.create(1600, 1000, window_title, null) catch |err| {
+        std.log.err("Failed to create demo window: {}", .{err});
         return;
     };
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    var gpa = if (zems.is_emscripten) zems.EmmalocAllocator{} else std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = if (!zems.is_emscripten) gpa.deinit();
 
     const allocator = gpa.allocator();
 
-    const demo = create(allocator, window) catch {
-        std.log.err("Failed to initialize the demo.", .{});
+    const demo = create(allocator, window) catch |err| {
+        std.log.err("Failed to initialize the demo: {}", .{err});
         return;
     };
     defer destroy(allocator, demo);
 
-    while (!window.shouldClose() and window.getKey(.escape) != .press) {
-        zglfw.pollEvents();
-        try update(demo);
-        draw(demo);
+    if (zems.is_emscripten) {
+        // requestAnimationFrame usage is needed to avoid flickering, otherwise could work in loop as well
+        zems.emscripten_request_animation_frame_loop(&tickEmcripten, demo);
+        // TODO: ideally we would store all state in globals and return, but for now I don't want to refactor it, so lets spin forever
+        while (true) zems.emscripten_sleep(1000);
+    } else while (!window.shouldClose() and window.getKey(.escape) != .press) {
+        try tick(demo);
     }
 }
+
+pub fn tick(demo: *DemoState) !void {
+    zglfw.pollEvents();
+    try update(demo);
+    draw(demo);
+}
+
+usingnamespace if (zems.is_emscripten) struct {
+    pub export fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) c_int {
+        _ = time;
+        const demo : *DemoState = @ptrCast(@alignCast(user_data.?));
+        if (demo.gctx.canRender()) tick(demo) catch |err| {
+            std.log.err("animation frame canceled! tick failed with: {}", .{err});
+            return 0; // FALSE - stop animation frame callback loop 
+        } else {
+            std.log.warn("canRender(): Frame skipped!", .{});
+        }
+        return 1; // TRUE - continue animation frame callback loop
+    }
+} else struct {};
+extern fn tickEmcripten(time: f64, user_data: ?*anyopaque) callconv(.C) c_int;

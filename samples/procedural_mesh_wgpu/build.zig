@@ -41,6 +41,17 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     return exe;
 }
 
+const zems = @import("../../build.zig").zems;
+pub fn buildEmscripten(b: *std.Build, options: Options)  *zems.EmscriptenStep {
+    const exe = build(b, options);
+    var ems_step = zems.EmscriptenStep.init(b);
+    ems_step.args.setDefault(options.optimize, false);
+    ems_step.args.setOrAssertOption("USE_GLFW", "3");
+    ems_step.args.setOrAssertOption("USE_WEBGPU", "");
+    ems_step.link(exe);
+    return ems_step;
+}
+
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

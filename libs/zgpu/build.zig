@@ -66,7 +66,12 @@ pub const Package = struct {
                 exe.linkFramework("IOSurface");
                 exe.linkFramework("QuartzCore");
             },
-            else => unreachable,
+            .emscripten, .freestanding => {
+                // assumes emscripten
+                std.debug.assert(target.cpu.arch == .wasm32);
+                return;
+            },
+            else => std.debug.panic("Unexpected target os: {}", .{target.os}),
         }
 
         exe.linkSystemLibraryName("dawn");
@@ -89,7 +94,7 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    target: std.zig.CrossTarget,
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -111,6 +116,7 @@ pub fn package(
     step.addOption(u32, "bind_group_pool_size", args.options.bind_group_pool_size);
     step.addOption(u32, "bind_group_layout_pool_size", args.options.bind_group_layout_pool_size);
     step.addOption(u32, "pipeline_layout_pool_size", args.options.pipeline_layout_pool_size);
+    step.addOption(bool, "emscripten", target.getOsTag() == .emscripten);
 
     const zgpu_options = step.createModule();
 

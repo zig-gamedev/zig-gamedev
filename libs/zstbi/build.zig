@@ -12,10 +12,12 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target_: std.zig.CrossTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
+    const emscripten = target_.getOsTag() == .emscripten;
+    const target = if (emscripten) std.zig.CrossTarget.parse(.{ .arch_os_abi = "wasm32-freestanding" }) catch unreachable else target_;
     const zstbi = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
     });
@@ -46,6 +48,10 @@ pub fn package(
         });
     }
     zstbi_c_cpp.linkLibC();
+    if (emscripten) {
+        zstbi_c_cpp.stack_protector = false;
+        zstbi_c_cpp.disable_stack_probing = true;
+    }
 
     return .{
         .zstbi = zstbi,

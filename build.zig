@@ -1,5 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
+pub const zems = @import("libs/zems/build.zig");
 
 pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.126" };
 
@@ -23,7 +24,7 @@ pub fn build(b: *std.Build) void {
         ) orelse false,
         .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
     };
-    ensureTarget(options.target) catch return;
+    ensureTarget(options) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
@@ -47,7 +48,8 @@ pub fn build(b: *std.Build) void {
     //
     // Sample applications
     //
-    samplesCrossPlatform(b, options);
+    if (options.target.getOsTag() == .emscripten) samplesEmscripten(b, options)
+    else samplesCrossPlatform(b, options);
 
     if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
@@ -81,15 +83,9 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     const target = options.target;
     const optimize = options.optimize;
 
-    zopengl_pkg = zopengl.package(b, target, optimize, .{});
     zmath_pkg = zmath.package(b, target, optimize, .{});
     zpool_pkg = zpool.package(b, target, optimize, .{});
     zglfw_pkg = zglfw.package(b, target, optimize, .{});
-    zsdl_pkg = zsdl.package(b, target, optimize, .{});
-    zmesh_pkg = zmesh.package(b, target, optimize, .{});
-    znoise_pkg = znoise.package(b, target, optimize, .{});
-    zstbi_pkg = zstbi.package(b, target, optimize, .{});
-    zbullet_pkg = zbullet.package(b, target, optimize, .{});
     zgui_pkg = zgui.package(b, target, optimize, .{
         .options = .{ .backend = .glfw_wgpu },
     });
@@ -97,12 +93,22 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
         .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
         .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
+    zems_pkg = zems.package(b, target, optimize, .{});
     ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{
-            .enable_ztracy = !target.isDarwin(), // TODO: ztracy fails to compile on macOS.
-            .enable_fibers = !target.isDarwin(),
+            .enable_ztracy = !target.isDarwin() and options.target.getOsTag() != .emscripten, // TODO: ztracy fails to compile on macOS.
+            .enable_fibers = !target.isDarwin() and options.target.getOsTag() != .emscripten,
         },
     });
+    zstbi_pkg = zstbi.package(b, target, optimize, .{});
+
+    if (options.target.getOsTag() == .emscripten) return;
+
+    zopengl_pkg = zopengl.package(b, target, optimize, .{});
+    zsdl_pkg = zsdl.package(b, target, optimize, .{});
+    zmesh_pkg = zmesh.package(b, target, optimize, .{});
+    znoise_pkg = znoise.package(b, target, optimize, .{});
+    zbullet_pkg = zbullet.package(b, target, optimize, .{});
     zphysics_pkg = zphysics.package(b, target, optimize, .{});
     zaudio_pkg = zaudio.package(b, target, optimize, .{});
     zflecs_pkg = zflecs.package(b, target, optimize, .{});
@@ -167,6 +173,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
     const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
     const monolith = @import("samples/monolith/build.zig");
+    const triangle_wgpu_emscripten = @import("samples/triangle_wgpu_emscripten/build.zig");
 
     install(b, minimal_glfw_gl.build(b, options), "minimal_glfw_gl");
     install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
@@ -183,6 +190,17 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
     install(b, monolith.build(b, options), "monolith");
     install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    install(b, triangle_wgpu_emscripten.build(b, options), "triangle_wgpu_emscripten");
+}
+
+fn samplesEmscripten(b: *std.Build, options: Options) void {
+    const triangle_wgpu_emscripten = @import("samples/triangle_wgpu_emscripten/build.zig");
+    const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+    const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
+
+    installEmscripten(b, triangle_wgpu_emscripten.buildEmscripten(b, options), "triangle_wgpu_emscripten");
+    installEmscripten(b, gui_test_wgpu.buildEmscripten(b, options), "gui_test_wgpu");
+    installEmscripten(b, instanced_pills_wgpu.buildEmscripten(b, options), "instanced_pills_wgpu");
 }
 
 fn samplesWindowsLinux(b: *std.Build, options: Options) void {
@@ -254,6 +272,7 @@ pub var ztracy_pkg: ztracy.Package = undefined;
 pub var zphysics_pkg: zphysics.Package = undefined;
 pub var zaudio_pkg: zaudio.Package = undefined;
 pub var zflecs_pkg: zflecs.Package = undefined;
+pub var zems_pkg : zems.Package = undefined;
 
 pub var zwin32_pkg: zwin32.Package = undefined;
 pub var zd3d12_pkg: zd3d12.Package = undefined;
@@ -298,7 +317,7 @@ pub const Options = struct {
 fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
-    if (exe.optimize == .ReleaseFast)
+    if (exe.optimize == .ReleaseFast or exe.optimize == .ReleaseSmall)
         exe.strip = true;
 
     //comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
@@ -313,6 +332,12 @@ fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
 
+    b.getInstallStep().dependOn(install_step);
+}
+
+fn installEmscripten(b: *std.Build, exe: *zems.EmscriptenStep, comptime name: []const u8) void {
+    const install_step = b.step(name, "Build '" ++ name ++ "' demo");
+    install_step.dependOn(&exe.link_step.?.step);
     b.getInstallStep().dependOn(install_step);
 }
 
@@ -339,7 +364,8 @@ fn ensureZigVersion() !void {
     }
 }
 
-fn ensureTarget(cross: std.zig.CrossTarget) !void {
+fn ensureTarget(options: Options) !void {
+    const cross = options.target;
     const target = (std.zig.system.NativeTargetInfo.detect(cross) catch unreachable).target;
 
     const supported = switch (target.os.tag) {
@@ -355,6 +381,7 @@ fn ensureTarget(cross: std.zig.CrossTarget) !void {
             ) == .lt) break :blk false;
             break :blk true;
         },
+        .emscripten => target.cpu.arch == .wasm32,
         else => false,
     };
     if (!supported) {

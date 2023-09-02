@@ -206,6 +206,50 @@ static uint32_t __glsl_shader_frag_spv[] =
     0x0003003e,0x00000009,0x00000022,0x000100fd,0x00010038
 };
 
+// sligtly modified version from: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_wgpu.cpp
+static const char __shader_vert_wgsl[] = R"(
+struct VertexInput {
+    @location(0) position: vec2<f32>,
+    @location(1) uv: vec2<f32>,
+    @location(2) color: vec4<f32>,
+};
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) color: vec4<f32>,
+    @location(1) uv: vec2<f32>,
+};
+struct Uniforms {
+    mvp: mat4x4<f32>,
+};
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@vertex
+fn main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.position = uniforms.mvp * vec4<f32>(in.position, 0.0, 1.0);
+    out.color = in.color;
+    out.uv = in.uv;
+    return out;
+}
+)";
+
+static const char __shader_frag_wgsl[] = R"(
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) color: vec4<f32>,
+    @location(1) uv: vec2<f32>,
+};
+struct Uniforms {
+    mvp: mat4x4<f32>,
+};
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var s: sampler;
+@group(1) @binding(0) var t: texture_2d<f32>;
+@fragment
+fn main(in: VertexOutput) -> @location(0) vec4<f32> {
+    return in.color * textureSample(t, s, in.uv);
+}
+)";
+
 static void SafeRelease(ImDrawIdx*& res)
 {
     if (res)
@@ -286,6 +330,21 @@ static void SafeRelease(FrameResources& res)
     SafeRelease(res.VertexBufferHost);
 }
 
+#ifdef __EMSCRIPTEN__
+static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(const char* source_data) {
+    WGPUShaderModuleWGSLDescriptor wgsl_desc = {};
+    wgsl_desc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
+    wgsl_desc.code = source_data;
+
+    WGPUShaderModuleDescriptor desc = {};
+    desc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(&wgsl_desc);
+
+    WGPUProgrammableStageDescriptor stage_desc = {};
+    stage_desc.module = wgpuDeviceCreateShaderModule(g_wgpuDevice, &desc);
+    stage_desc.entryPoint = "main";
+    return stage_desc;
+}
+#else
 static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(uint32_t* binary_data, uint32_t binary_data_size)
 {
     WGPUShaderModuleSPIRVDescriptor spirv_desc = {};
@@ -301,6 +360,7 @@ static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(uint32_
     stage_desc.entryPoint = "main";
     return stage_desc;
 }
+#endif
 
 static WGPUBindGroup ImGui_ImplWGPU_CreateImageBindGroup(WGPUBindGroupLayout layout, WGPUTextureView texture)
 {
@@ -591,7 +651,11 @@ bool ImGui_ImplWGPU_CreateDeviceObjects(void)
     graphics_pipeline_desc.layout = nullptr; // Use automatic layout generation
 
     // Create the vertex shader
+    #ifdef __EMSCRIPTEN__
+    WGPUProgrammableStageDescriptor vertex_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_vert_wgsl);
+    #else
     WGPUProgrammableStageDescriptor vertex_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__glsl_shader_vert_spv, sizeof(__glsl_shader_vert_spv) / sizeof(uint32_t));
+    #endif
     graphics_pipeline_desc.vertex.module = vertex_shader_desc.module;
     graphics_pipeline_desc.vertex.entryPoint = vertex_shader_desc.entryPoint;
 
@@ -613,7 +677,11 @@ bool ImGui_ImplWGPU_CreateDeviceObjects(void)
     graphics_pipeline_desc.vertex.buffers = buffer_layouts;
 
     // Create the pixel shader
+    #ifdef __EMSCRIPTEN__
+    WGPUProgrammableStageDescriptor pixel_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_frag_wgsl);
+    #else
     WGPUProgrammableStageDescriptor pixel_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__glsl_shader_frag_spv, sizeof(__glsl_shader_frag_spv) / sizeof(uint32_t));
+    #endif
 
     // Create the blending setup
     WGPUBlendState blend_state = {};
