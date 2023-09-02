@@ -2,9 +2,11 @@ const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 
+pub const name = "minimal_glfw_gl";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "minimal_glfw_gl",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/minimal_glfw_gl.zig" },
         .target = options.target,
         .optimize = options.optimize,

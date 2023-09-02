@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "physics_test_wgpu_content/";
 
+pub const name = "physics_test_wgpu";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "physics_test_wgpu",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/physics_test_wgpu.zig" },
         .target = options.target,
         .optimize = options.optimize,

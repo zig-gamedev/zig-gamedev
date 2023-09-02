@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "audio_playback_test_content/";
 
+pub const name = "audio_playback_test";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "audio_playback_test",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/audio_playback_test.zig" },
         .target = options.target,
         .optimize = options.optimize,

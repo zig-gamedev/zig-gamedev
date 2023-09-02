@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "bindless_content/";
 
+pub const name = "bindless";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "bindless",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/bindless.zig" },
         .target = options.target,
         .optimize = options.optimize,

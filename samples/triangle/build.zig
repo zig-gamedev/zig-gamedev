@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "triangle_content/";
 
+pub const name = "triangle";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "triangle",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/triangle.zig" },
         .target = options.target,
         .optimize = options.optimize,

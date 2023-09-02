@@ -47,15 +47,19 @@ pub fn build(b: *std.Build) void {
     //
     // Sample applications
     //
-    samplesCrossPlatform(b, options);
-
+    inline for (samples_cross_platform) |sample| {
+        buildAndInstallSample(b, sample, options);
+    }
     if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
-        samplesWindowsLinux(b, options);
-
+        inline for (samples_windows_linux) |sample| {
+            buildAndInstallSample(b, sample, options);
+        }
         if (builtin.target.os.tag == .windows) {
-            samplesWindows(b, options);
+            inline for (samples_windows) |sample| {
+                buildAndInstallSample(b, sample, options);
+            }
         }
     }
 
@@ -151,69 +155,40 @@ fn packagesWindows(b: *std.Build, options: Options) void {
     });
 }
 
-fn samplesCrossPlatform(b: *std.Build, options: Options) void {
-    const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
-    const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
-    const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
-    const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
-    const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
-    const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
-    const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
-    const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
-    const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
-    const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
-    const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
-    const layers_wgpu = @import("samples/layers_wgpu/build.zig");
-    const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
-    const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
-    const monolith = @import("samples/monolith/build.zig");
+const samples_cross_platform = .{
+    @import("samples/minimal_glfw_gl/build.zig"),
+    @import("samples/minimal_sdl_gl/build.zig"),
+    @import("samples/triangle_wgpu/build.zig"),
+    @import("samples/procedural_mesh_wgpu/build.zig"),
+    @import("samples/textured_quad_wgpu/build.zig"),
+    @import("samples/physically_based_rendering_wgpu/build.zig"),
+    @import("samples/bullet_physics_test_wgpu/build.zig"),
+    @import("samples/audio_experiments_wgpu/build.zig"),
+    @import("samples/gui_test_wgpu/build.zig"),
+    @import("samples/minimal_zgpu_zgui/build.zig"),
+    @import("samples/instanced_pills_wgpu/build.zig"),
+    @import("samples/layers_wgpu/build.zig"),
+    @import("samples/gamepad_wgpu/build.zig"),
+    @import("samples/physics_test_wgpu/build.zig"),
+    @import("samples/monolith/build.zig"),
+};
 
-    install(b, minimal_glfw_gl.build(b, options), "minimal_glfw_gl");
-    install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
-    install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
-    install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
-    install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-    install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
-    install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
-    install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
-    install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
-    install(b, layers_wgpu.build(b, options), "layers_wgpu");
-    install(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-    install(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
-    install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
-    install(b, monolith.build(b, options), "monolith");
-    install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-}
+const samples_windows_linux = .{
+    @import("samples/minimal_d3d12/build.zig"),
+    @import("samples/textured_quad/build.zig"),
+    @import("samples/triangle/build.zig"),
+    @import("samples/mesh_shader_test/build.zig"),
+    @import("samples/rasterization/build.zig"),
+    @import("samples/bindless/build.zig"),
+    @import("samples/simple_raytracer/build.zig"),
+};
 
-fn samplesWindowsLinux(b: *std.Build, options: Options) void {
-    const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
-    const textured_quad = @import("samples/textured_quad/build.zig");
-    const triangle = @import("samples/triangle/build.zig");
-    const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
-    const rasterization = @import("samples/rasterization/build.zig");
-    const bindless = @import("samples/bindless/build.zig");
-    const simple_raytracer = @import("samples/simple_raytracer/build.zig");
-
-    install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
-    install(b, bindless.build(b, options), "bindless");
-    install(b, triangle.build(b, options), "triangle");
-    install(b, simple_raytracer.build(b, options), "simple_raytracer");
-    install(b, textured_quad.build(b, options), "textured_quad");
-    install(b, rasterization.build(b, options), "rasterization");
-    install(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-}
-
-fn samplesWindows(b: *std.Build, options: Options) void {
-    //const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-    //const audio_experiments = @import("samples/audio_experiments/build.zig");
-    const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-    //const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
-
-    install(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    //install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    //install(b, audio_playback_test.build(b, options), "audio_playback_test");
-    //install(b, audio_experiments.build(b, options), "audio_experiments");
-}
+const samples_windows = .{
+    //@import("samples/audio_playback_test/build.zig"),
+    //@import("samples/audio_experiments/build.zig"),
+    @import("samples/vector_graphics_test/build.zig"),
+    //@import("samples/directml_convolution_test/build.zig"),
+};
 
 fn tests(b: *std.Build, options: Options) void {
     const test_step = b.step("test", "Run all tests");
@@ -295,20 +270,18 @@ pub const Options = struct {
     zpix_enable: bool,
 };
 
-fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
+fn buildAndInstallSample(b: *std.Build, sample: anytype, options: Options) void {
+    const exe = sample.build(b, options);
+
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
     if (exe.optimize == .ReleaseFast)
         exe.strip = true;
 
-    //comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
-    //comptime _ = std.mem.replace(u8, name, "", "", desc_name[0..]);
-    //comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
-
-    const install_step = b.step(name, "Build '" ++ name ++ "' demo");
+    const install_step = b.step(sample.name, "Build '" ++ sample.name ++ "' demo");
     install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 
-    const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
+    const run_step = b.step(sample.name ++ "-run", "Run '" ++ sample.name ++ "' demo");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);

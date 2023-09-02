@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "mesh_shader_test_content/";
 
+pub const name = "mesh_shader_test";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "mesh_shader_test",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/mesh_shader_test.zig" },
         .target = options.target,
         .optimize = options.optimize,

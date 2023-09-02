@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "physically_based_rendering_wgpu_content/";
 
+pub const name = "physically_based_rendering_wgpu";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "physically_based_rendering_wgpu",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/physically_based_rendering_wgpu.zig" },
         .target = options.target,
         .optimize = options.optimize,

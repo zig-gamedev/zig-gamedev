@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "monolith_content/";
 
+pub const name = "monolith";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "monolith",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/monolith.zig" },
         .target = options.target,
         .optimize = options.optimize,

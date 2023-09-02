@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "rasterization_content/";
 
+pub const name = "rasterization";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "rasterization",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/rasterization.zig" },
         .target = options.target,
         .optimize = options.optimize,

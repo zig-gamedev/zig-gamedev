@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "simple_raytracer_content/";
 
+pub const name = "simple_raytracer";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "simple_raytracer",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/simple_raytracer.zig" },
         .target = options.target,
         .optimize = options.optimize,

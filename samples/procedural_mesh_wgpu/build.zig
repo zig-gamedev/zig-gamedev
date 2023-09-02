@@ -3,9 +3,11 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "procedural_mesh_wgpu_content/";
 
+pub const name = "procedural_mesh_wgpu";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "procedural_mesh_wgpu",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/procedural_mesh_wgpu.zig" },
         .target = options.target,
         .optimize = options.optimize,

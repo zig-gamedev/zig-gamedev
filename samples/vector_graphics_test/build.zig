@@ -2,9 +2,11 @@ const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 
+pub const name = "vector_graphics_test";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const exe = b.addExecutable(.{
-        .name = "vector_graphics_test",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/vector_graphics_test.zig" },
         .target = options.target,
         .optimize = options.optimize,
