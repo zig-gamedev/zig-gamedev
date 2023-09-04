@@ -1466,6 +1466,9 @@ comptime {
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.4 (Core Profile)
     //----------------------------------------------------------------------------------------------
+    @export(bindings.blendFuncSeparate, .{ .name = "glBlendFuncSeparate", .linkage = linkage });
+    @export(bindings.multiDrawArrays, .{ .name = "glMultiDrawArrays", .linkage = linkage });
+    @export(bindings.multiDrawElements, .{ .name = "glMultiDrawElements", .linkage = linkage });
     @export(bindings.pointParameterf, .{ .name = "glPointParameterf", .linkage = linkage });
     @export(bindings.pointParameterfv, .{ .name = "glPointParameterfv", .linkage = linkage });
     @export(bindings.pointParameteri, .{ .name = "glPointParameteri", .linkage = linkage });
