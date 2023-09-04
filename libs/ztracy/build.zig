@@ -63,8 +63,10 @@ pub fn package(
             },
         });
 
+        const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
         ztracy_c_cpp.linkLibC();
-        ztracy_c_cpp.linkLibCpp();
+        if (abi != .msvc)
+            ztracy_c_cpp.linkLibCpp();
 
         switch (target.getOs().tag) {
             .windows => {

@@ -72,8 +72,10 @@ pub fn package(
     zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs" });
     zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/imgui" });
 
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
     zgui_c_cpp.linkLibC();
-    zgui_c_cpp.linkLibCpp();
+    if (abi != .msvc)
+        zgui_c_cpp.linkLibCpp();
 
     const cflags = &.{"-fno-sanitize=undefined"};
 
