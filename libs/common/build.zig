@@ -29,8 +29,10 @@ pub fn package(
         .optimize = optimize,
     });
 
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
     lib.linkLibC();
-    lib.linkLibCpp();
+    if (abi != .msvc)
+        lib.linkLibCpp();
     lib.linkSystemLibraryName("imm32");
 
     lib.addIncludePath(.{ .path = thisDir() ++ "/libs" });

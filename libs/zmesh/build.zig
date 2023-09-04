@@ -59,8 +59,10 @@ pub fn package(
         .optimize = optimize,
     });
 
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
     zmesh_c_cpp.linkLibC();
-    zmesh_c_cpp.linkLibCpp();
+    if (abi != .msvc)
+        zmesh_c_cpp.linkLibCpp();
 
     const par_shapes_t = if (args.options.shape_use_32bit_indices)
         "-DPAR_SHAPES_T=uint32_t"
