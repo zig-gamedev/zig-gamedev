@@ -26,15 +26,15 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zaudio_c_cpp.addIncludePath(thisDir() ++ "/libs/miniaudio");
+    zaudio_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/miniaudio" });
     zaudio_c_cpp.linkLibC();
 
     const host = (std.zig.system.NativeTargetInfo.detect(zaudio_c_cpp.target) catch unreachable).target;
 
     if (host.os.tag == .macos) {
-        zaudio_c_cpp.addFrameworkPath(thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks");
-        zaudio_c_cpp.addSystemIncludePath(thisDir() ++ "/../system-sdk/macos12/usr/include");
-        zaudio_c_cpp.addLibraryPath(thisDir() ++ "/../system-sdk/macos12/usr/lib");
+        zaudio_c_cpp.addFrameworkPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" });
+        zaudio_c_cpp.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/include" });
+        zaudio_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
         zaudio_c_cpp.linkFramework("CoreAudio");
         zaudio_c_cpp.linkFramework("CoreFoundation");
         zaudio_c_cpp.linkFramework("AudioUnit");
@@ -45,17 +45,23 @@ pub fn package(
         zaudio_c_cpp.linkSystemLibraryName("dl");
     }
 
-    zaudio_c_cpp.addCSourceFile(thisDir() ++ "/src/zaudio.c", &.{"-std=c99"});
-    zaudio_c_cpp.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
-        "-DMA_NO_WEBAUDIO",
-        "-DMA_NO_ENCODING",
-        "-DMA_NO_NULL",
-        "-DMA_NO_JACK",
-        "-DMA_NO_DSOUND",
-        "-DMA_NO_WINMM",
-        "-std=c99",
-        "-fno-sanitize=undefined",
-        if (host.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",
+    zaudio_c_cpp.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/src/zaudio.c" },
+        .flags = &.{"-std=c99"},
+    });
+    zaudio_c_cpp.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/libs/miniaudio/miniaudio.c" },
+        .flags = &.{
+            "-DMA_NO_WEBAUDIO",
+            "-DMA_NO_ENCODING",
+            "-DMA_NO_NULL",
+            "-DMA_NO_JACK",
+            "-DMA_NO_DSOUND",
+            "-DMA_NO_WINMM",
+            "-std=c99",
+            "-fno-sanitize=undefined",
+            if (host.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",
+        },
     });
 
     return .{

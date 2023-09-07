@@ -24,8 +24,7 @@ pub const Package = struct {
             .windows => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addIncludePath(thisDir() ++ "/libs/x86_64-windows-gnu/include");
-                exe.addLibraryPath(thisDir() ++ "/libs/x86_64-windows-gnu/lib");
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/lib" });
                 exe.linkSystemLibraryName("SDL2");
                 exe.linkSystemLibraryName("SDL2main");
 
@@ -36,19 +35,18 @@ pub const Package = struct {
             .linux => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addIncludePath(thisDir() ++ "/libs/x86_64-linux-gnu/include");
-                exe.addLibraryPath(thisDir() ++ "/libs/x86_64-linux-gnu/lib");
+                exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib" });
                 exe.linkSystemLibraryName("SDL2-2.0");
-                exe.addRPath("$ORIGIN");
+                exe.addRPath(.{ .path = "$ORIGIN" });
 
                 if (pkg.options.enable_ttf) {
                     exe.linkSystemLibraryName("SDL2_ttf-2.0");
                 }
             },
             .macos => {
-                exe.addFrameworkPath(thisDir() ++ "/libs/macos/Frameworks");
+                exe.addFrameworkPath(.{ .path = thisDir() ++ "/libs/macos/Frameworks" });
                 exe.linkFramework("SDL2");
-                exe.addRPath("@executable_path/Frameworks");
+                exe.addRPath(.{ .path = "@executable_path/Frameworks" });
 
                 if (pkg.options.enable_ttf) {
                     exe.linkFramework("SDL2_ttf");
@@ -142,7 +140,36 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const test_step = b.step("test", "Run zsdl tests");
+    test_step.dependOn(runTests(b, optimize, target));
+}
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const tests = b.addTest(.{
+        .name = "zsdl-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const zsdl_pkg = package(b, target, optimize, .{
+        .options = .{
+            .enable_ttf = true,
+        },
+    });
+    tests.addModule("zsdl_options", zsdl_pkg.zsdl_options);
+    zsdl_pkg.link(tests);
+
+    return &b.addRunArtifact(tests).step;
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

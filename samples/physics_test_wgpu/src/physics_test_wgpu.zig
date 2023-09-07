@@ -257,7 +257,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     //
     // Graphics
     //
-    const gctx = try zgpu.GraphicsContext.create(allocator, window);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
 
     // Uniform buffer and layout
     const uniform_bgl = gctx.createBindGroupLayout(&.{

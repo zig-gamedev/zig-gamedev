@@ -15,7 +15,7 @@ pub const Package = struct {
         exe.addModule("ztracy", pkg.ztracy);
         exe.addModule("ztracy_options", pkg.ztracy_options);
         if (pkg.options.enable_ztracy) {
-            exe.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
+            exe.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
             exe.linkLibrary(pkg.ztracy_c_cpp);
         }
     }
@@ -50,18 +50,23 @@ pub fn package(
             .optimize = optimize,
         });
 
-        ztracy_c_cpp.addIncludePath(thisDir() ++ "/libs/tracy/tracy");
-        ztracy_c_cpp.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
-            "-DTRACY_ENABLE",
-            enable_fibers,
-            // MinGW doesn't have all the newfangled windows features,
-            // so we need to pretend to have an older windows version.
-            "-D_WIN32_WINNT=0x601",
-            "-fno-sanitize=undefined",
+        ztracy_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
+        ztracy_c_cpp.addCSourceFile(.{
+            .file = .{ .path = thisDir() ++ "/libs/tracy/TracyClient.cpp" },
+            .flags = &.{
+                "-DTRACY_ENABLE",
+                enable_fibers,
+                // MinGW doesn't have all the newfangled windows features,
+                // so we need to pretend to have an older windows version.
+                "-D_WIN32_WINNT=0x601",
+                "-fno-sanitize=undefined",
+            },
         });
 
+        const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
         ztracy_c_cpp.linkLibC();
-        ztracy_c_cpp.linkLibCpp();
+        if (abi != .msvc)
+            ztracy_c_cpp.linkLibCpp();
 
         switch (target.getOs().tag) {
             .windows => {
@@ -70,7 +75,7 @@ pub fn package(
             },
             .macos => {
                 ztracy_c_cpp.addFrameworkPath(
-                    thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks",
+                    .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
                 );
             },
             else => {},

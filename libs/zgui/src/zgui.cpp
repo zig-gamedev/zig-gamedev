@@ -1472,6 +1472,10 @@ ZGUI_API void zguiEndTooltip(void) {
     ImGui::EndTooltip();
 }
 
+ZGUI_API bool zguiBeginPopup(const char* str_id, ImGuiWindowFlags flags){
+    return ImGui::BeginPopup(str_id, flags);
+}
+
 ZGUI_API bool zguiBeginPopupContextWindow(void) {
     return ImGui::BeginPopupContextWindow();
 }
@@ -2408,7 +2412,7 @@ ZGUI_API bool zguiPlot_DragPoint(
 }
 
 ZGUI_API void zguiPlot_PlotText(
-        const char* text, 
+        const char* text,
         double x, double y,
         const float pix_offset[2],
         ImPlotTextFlags flags=0

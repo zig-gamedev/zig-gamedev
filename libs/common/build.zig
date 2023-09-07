@@ -7,8 +7,8 @@ pub const Package = struct {
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.addModule("common", pkg.common);
         exe.linkLibrary(pkg.common_c_cpp);
-        exe.addIncludePath(thisDir() ++ "/libs/imgui");
-        exe.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");
+        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/imgui" });
+        exe.addIncludePath(.{ .path = thisDir() ++ "/../zmesh/libs/cgltf" });
     }
 };
 
@@ -29,20 +29,22 @@ pub fn package(
         .optimize = optimize,
     });
 
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
     lib.linkLibC();
-    lib.linkLibCpp();
+    if (abi != .msvc)
+        lib.linkLibCpp();
     lib.linkSystemLibraryName("imm32");
 
-    lib.addIncludePath(thisDir() ++ "/libs");
-    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
+    lib.addIncludePath(.{ .path = thisDir() ++ "/libs" });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui.cpp" }, .flags = &.{""} });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_widgets.cpp" }, .flags = &.{""} });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_tables.cpp" }, .flags = &.{""} });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_draw.cpp" }, .flags = &.{""} });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_demo.cpp" }, .flags = &.{""} });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/cimgui.cpp" }, .flags = &.{""} });
 
-    lib.addIncludePath(thisDir() ++ "/../zmesh/libs/cgltf");
-    lib.addCSourceFile(thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c", &.{"-std=c99"});
+    lib.addIncludePath(.{ .path = thisDir() ++ "/../zmesh/libs/cgltf" });
+    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c" }, .flags = &.{"-std=c99"} });
 
     return .{
         .common = b.createModule(.{

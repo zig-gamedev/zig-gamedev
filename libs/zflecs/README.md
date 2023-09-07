@@ -27,6 +27,8 @@ Now in your code you may import and use `zflecs`:
 const std = @import("std");
 const ecs = @import("zflecs");
 
+const Position = struct { x: f32, y: f32 };
+const Velocity = struct { x: f32, y: f32 };
 const Eats = struct {};
 const Apples = struct {};
 
@@ -73,4 +75,12 @@ pub fn main() !void {
     const p = ecs.get(world, bob, Position).?;
     std.debug.print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
 }
+```
+
+`zig build run` should result in:
+
+```
+Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
+Move entities with [main.Position, main.Velocity, (Identifier,Name), (main.Eats,main.Apples)]
+Bob's position is (2, 4)
 ```

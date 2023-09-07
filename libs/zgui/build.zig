@@ -69,42 +69,56 @@ pub fn package(
         .optimize = optimize,
     });
 
+    zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs" });
+    zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/imgui" });
+
+    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
     zgui_c_cpp.linkLibC();
-    zgui_c_cpp.linkLibCpp();
+    if (abi != .msvc)
+        zgui_c_cpp.linkLibCpp();
 
     const cflags = &.{"-fno-sanitize=undefined"};
 
-    zgui_c_cpp.addCSourceFile(thisDir() ++ "/src/zgui.cpp", cflags);
+    zgui_c_cpp.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/src/zgui.cpp" },
+        .flags = cflags,
+    });
 
     if (args.options.with_imgui) {
-        zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", cflags);
+        zgui_c_cpp.addCSourceFiles(&.{
+            thisDir() ++ "/libs/imgui/imgui.cpp",
+            thisDir() ++ "/libs/imgui/imgui_widgets.cpp",
+            thisDir() ++ "/libs/imgui/imgui_tables.cpp",
+            thisDir() ++ "/libs/imgui/imgui_draw.cpp",
+            thisDir() ++ "/libs/imgui/imgui_demo.cpp",
+        }, cflags);
     }
 
     if (args.options.with_implot) {
-        zgui_c_cpp.addIncludePath(thisDir() ++ "/libs/imgui");
         zgui_c_cpp.defineCMacro("ZGUI_IMPLOT", "1");
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", cflags);
-        zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", cflags);
+        zgui_c_cpp.addCSourceFiles(&.{
+            thisDir() ++ "/libs/imgui/implot_demo.cpp",
+            thisDir() ++ "/libs/imgui/implot.cpp",
+            thisDir() ++ "/libs/imgui/implot_items.cpp",
+        }, cflags);
     } else {
         zgui_c_cpp.defineCMacro("ZGUI_IMPLOT", "0");
     }
 
     switch (args.options.backend) {
         .glfw_wgpu => {
-            zgui_c_cpp.addIncludePath(thisDir() ++ "/../zglfw/libs/glfw/include");
-            zgui_c_cpp.addIncludePath(thisDir() ++ "/../zgpu/libs/dawn/include");
-            zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
-            zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", cflags);
+            zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zglfw/libs/glfw/include" });
+            zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zgpu/libs/dawn/include" });
+            zgui_c_cpp.addCSourceFiles(&.{
+                thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
+                thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp",
+            }, cflags);
         },
         .win32_dx12 => {
-            zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp", cflags);
-            zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_dx12.cpp", cflags);
+            zgui_c_cpp.addCSourceFiles(&.{
+                thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp",
+                thisDir() ++ "/libs/imgui/backends/imgui_impl_dx12.cpp",
+            }, cflags);
             zgui_c_cpp.linkSystemLibraryName("d3dcompiler_47");
             zgui_c_cpp.linkSystemLibraryName("dwmapi");
         },
