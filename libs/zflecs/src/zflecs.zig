@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.0";
+pub const flecs_version = "3.2.1";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -385,11 +385,12 @@ pub const filter_t = extern struct {
     flags: flags32_t = 0,
 
     variable_names: ?[*][*:0]u8 = null, // TODO: Only `variable_names[0]` is valid?
+    sizes: ?[*]i32 = null,
 
     entity: entity_t = 0,
-    world: ?*world_t = null,
     iterable: iterable_t = .{},
     dtor: ?poly_dtor_t = null,
+    world: ?*world_t = null,
 };
 
 pub const observer_t = extern struct {
@@ -1814,9 +1815,9 @@ extern fn ecs_query_next_instanced(iter: *iter_t) bool;
 pub const query_next_table = ecs_query_next_table;
 extern fn ecs_query_next_table(iter: *iter_t) bool;
 
-/// `pub fn query_populate(iter: *iter_t) c_int`
+/// `pub fn query_populate(iter: *iter_t, when_changed: bool) c_int`
 pub const query_populate = ecs_query_populate;
-extern fn ecs_query_populate(iter: *iter_t) c_int;
+extern fn ecs_query_populate(iter: *iter_t, when_changed: bool) c_int;
 
 /// `pub fn query_changed(query: *query_t, iter: *const iter_t) bool`
 pub const query_changed = ecs_query_changed;
@@ -1989,6 +1990,10 @@ extern fn ecs_field_is_set(it: *const iter_t, index: i32) bool;
 pub const field_id = ecs_field_id;
 extern fn ecs_field_id(it: *const iter_t, index: i32) id_t;
 
+/// `pub fn field_column_index(it: *const iter_t, index: i32) i32`
+pub const field_column_index = ecs_field_column_index;
+extern fn ecs_field_column_index(it: *const iter_t, index: i32) i32;
+
 /// `pub fn field_src(it: *const iter_t, index: i32) entity_t`
 pub const field_src = ecs_field_src;
 extern fn ecs_field_src(it: *const iter_t, index: i32) entity_t;
@@ -2017,9 +2022,17 @@ extern fn ecs_table_get_type(table: *const table_t) *const type_t;
 pub const table_get_column = ecs_table_get_column;
 extern fn ecs_table_get_column(table: *const table_t, index: i32, offset: i32) ?*anyopaque;
 
+/// `pub fn table_get_column_size(table: *const table_t, index: i32, offset: i32) ?*anyopaque`
+pub const table_get_column_size = ecs_table_get_column_size;
+extern fn ecs_table_get_column_size(table: *const table_t, index: i32) usize;
+
 /// `pub fn table_get_index(world: *const world_t, table: *const table_t, id: id_t) i32`
 pub const table_get_index = ecs_table_get_index;
 extern fn ecs_table_get_index(world: *const world_t, table: *const table_t, id: id_t) i32;
+
+/// `pub fn table_has_id(world: *const world_t, table: *const table_t, id: id_t) bool`
+pub const table_has_id = ecs_table_has_id;
+extern fn ecs_table_has_id(world: *const world_t, table: *const table_t, id: id_t) bool;
 
 /// `pub fn table_get_id(world: *const world_t, table: *const table_t, id: id_t, offset: i32) ?*anyopaque`
 pub const table_get_id = ecs_table_get_id;
