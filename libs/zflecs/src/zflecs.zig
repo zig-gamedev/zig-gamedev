@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.1";
+pub const flecs_version = "3.2.2";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -396,7 +396,7 @@ pub const filter_t = extern struct {
 pub const observer_t = extern struct {
     hdr: header_t,
     filter: filter_t,
-    events: [OBSERVER_DESC_EVENT_COUNT_MAX]entity_t,
+    events: [FLECS_EVENT_DESC_MAX]entity_t,
     event_count: i32,
     callback: iter_action_t,
     run: run_action_t,
@@ -474,6 +474,7 @@ pub const record_t = extern struct {
     idr: *id_record_t,
     table: *table_t,
     row: u32,
+    dense: i32,
 };
 
 pub const ref_t = extern struct {
@@ -670,8 +671,7 @@ pub const sparse_t = extern struct {
     pages: vec_t,
     size: size_t,
     count: i32,
-    max_id_local: u64,
-    max_id: [*c]u64,
+    max_id: u64,
     allocator: [*c]allocator_t,
     page_allocator: [*c]block_allocator_t,
 };
@@ -758,7 +758,7 @@ pub const component_desc_t = extern struct {
     type: type_info_t,
 };
 
-pub const ID_CACHE_SIZE = 32;
+pub const FLECS_ID_DESC_MAX = 32;
 
 pub const entity_desc_t = extern struct {
     _canary: i32 = 0,
@@ -768,15 +768,15 @@ pub const entity_desc_t = extern struct {
     root_sep: ?[*:0]const u8 = null,
     symbol: ?[*:0]const u8 = null,
     use_low_id: bool = false,
-    add: [ID_CACHE_SIZE]id_t = [_]id_t{0} ** ID_CACHE_SIZE,
+    add: [FLECS_ID_DESC_MAX]id_t = [_]id_t{0} ** FLECS_ID_DESC_MAX,
     add_expr: ?[*:0]const u8 = null,
 };
 
-pub const TERM_DESC_CACHE_SIZE = 16;
+pub const FLECS_TERM_DESC_MAX = 16;
 
 pub const filter_desc_t = extern struct {
     _canary: i32 = 0,
-    terms: [TERM_DESC_CACHE_SIZE]term_t = [_]term_t{.{}} ** TERM_DESC_CACHE_SIZE,
+    terms: [FLECS_TERM_DESC_MAX]term_t = [_]term_t{.{}} ** FLECS_TERM_DESC_MAX,
     terms_buffer: ?[*]term_t = null,
     terms_buffer_count: i32 = 0,
     storage: ?*filter_t = null,
@@ -786,13 +786,13 @@ pub const filter_desc_t = extern struct {
     entity: entity_t = 0,
 };
 
-pub const OBSERVER_DESC_EVENT_COUNT_MAX = 8;
+pub const FLECS_EVENT_DESC_MAX = 8;
 
 pub const observer_desc_t = extern struct {
     _canary: i32 = 0,
     entity: entity_t = 0,
     filter: filter_desc_t = .{},
-    events: [OBSERVER_DESC_EVENT_COUNT_MAX]entity_t = [_]entity_t{0} ** OBSERVER_DESC_EVENT_COUNT_MAX,
+    events: [FLECS_EVENT_DESC_MAX]entity_t = [_]entity_t{0} ** FLECS_EVENT_DESC_MAX,
     yield_existing: bool = false,
     callback: iter_action_t,
     run: ?run_action_t = null,
@@ -807,7 +807,6 @@ pub const observer_desc_t = extern struct {
 
 pub const world_info_t = extern struct {
     last_component_id: entity_t,
-    last_id: entity_t,
     min_id: entity_t,
     max_id: entity_t,
     delta_time_raw: f32,
@@ -1200,6 +1199,10 @@ extern fn ecs_set_entity_range(world: *world_t, id_start: entity_t, id_end: enti
 /// `pub fn enable_range_check(world: *world_t, enable: bool) bool`
 pub const enable_range_check = ecs_enable_range_check;
 extern fn ecs_enable_range_check(world: *world_t, enable: bool) bool;
+
+/// `pub fn get_max_id(world: *const world_t) entity_t`
+pub const get_max_id = ecs_get_max_id;
+extern fn ecs_get_max_id(world: *const world_t) entity_t;
 
 /// `pub fn run_aperiodic(world: *world_t, flags: flags32_t) void`
 pub const run_aperiodic = ecs_run_aperiodic;
@@ -2286,7 +2289,10 @@ pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
 }
 
 pub fn new_prefab(world: *world_t, name: [*:0]const u8) entity_t {
-    return entity_init(world, &.{ .name = name, .add = [_]id_t{EcsPrefab} ++ [_]id_t{0} ** (ID_CACHE_SIZE - 1) });
+    return entity_init(world, &.{
+        .name = name,
+        .add = [_]id_t{EcsPrefab} ++ [_]id_t{0} ** (FLECS_ID_DESC_MAX - 1),
+    });
 }
 
 pub fn add_pair(world: *world_t, subject: entity_t, first: entity_t, second: entity_t) void {
