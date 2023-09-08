@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.6";
+pub const flecs_version = "3.2.7";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -65,12 +65,12 @@ extern const EcsOnRemove: entity_t;
 extern const EcsOnSet: entity_t;
 extern const EcsUnSet: entity_t;
 extern const EcsMonitor: entity_t;
-extern const EcsOnDelete: entity_t;
 extern const EcsOnTableCreate: entity_t;
 extern const EcsOnTableDelete: entity_t;
 extern const EcsOnTableEmpty: entity_t;
 extern const EcsOnTableFill: entity_t;
 
+extern const EcsOnDelete: entity_t;
 extern const EcsOnDeleteTarget: entity_t;
 extern const EcsRemove: entity_t;
 extern const EcsDelete: entity_t;
@@ -651,6 +651,7 @@ pub const iter_t = extern struct {
     priv: iter_private_t,
     next: iter_next_action_t,
     callback: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
+    set_var: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
 
@@ -757,6 +758,10 @@ pub const query_desc_t = extern struct {
     group_by_ctx: ?*anyopaque = null,
     group_by_ctx_free: ?ctx_free_t = null,
     parent: ?*query_t = null,
+    ctx: ?*anyopaque = null,
+    binding_ctx: ?*anyopaque = null,
+    ctx_free: ?ctx_free_t = null,
+    binding_ctx_free: ?ctx_free_t = null,
 };
 
 pub const component_desc_t = extern struct {
@@ -810,6 +815,19 @@ pub const observer_desc_t = extern struct {
     observable: ?*poly_t = null,
     last_event_id: ?*i32 = null,
     term_index: i32 = 0,
+};
+
+pub const event_desc_t = extern struct {
+    event: entity_t = 0,
+    ids: ?[*]const type_t = null,
+    table: ?*table_t = null,
+    other_table: ?*table_t = null,
+    offset: i32 = 0,
+    count: i32 = 0,
+    entity: entity_t = 0,
+    param: ?*const anyopaque = null,
+    observable: ?*poly_t = null,
+    flags: flags32_t = 0,
 };
 
 pub const world_info_t = extern struct {
@@ -1183,13 +1201,21 @@ extern fn ecs_stage_is_async(world: *const world_t) bool;
 // Misc
 //
 //--------------------------------------------------------------------------------------------------
-/// `pub fn set_context(world: *world_t, ctx: ?*anyopaque) void`
-pub const set_context = ecs_set_context;
-extern fn ecs_set_context(world: *world_t, ctx: ?*anyopaque) void;
+/// `pub fn set_ctx(world: *world_t, ctx: ?*anyopaque, ctx_free: ctx_free_t) void`
+pub const set_ctx = ecs_set_ctx;
+extern fn ecs_set_ctx(world: *world_t, ctx: ?*anyopaque, ctx_free: ctx_free_t) void;
 
-/// `pub fn get_context(world: *const world_t) ?*anyopaque`
-pub const get_context = ecs_get_context;
-extern fn ecs_get_context(world: *const world_t) ?*anyopaque;
+/// `pub fn set_binding_ctx(world: *world_t, ctx: ?*anyopaque, ctx_free: ctx_free_t) void`
+pub const set_binding_ctx = ecs_set_binding_ctx;
+extern fn ecs_set_binding_ctx(world: *world_t, ctx: ?*anyopaque, ctx_free: ctx_free_t) void;
+
+/// `pub fn get_ctx(world: *const world_t) ?*anyopaque`
+pub const get_ctx = ecs_get_ctx;
+extern fn ecs_get_ctx(world: *const world_t) ?*anyopaque;
+
+/// `pub fn get_binding_ctx(world: *const world_t) ?*anyopaque`
+pub const get_binding_ctx = ecs_get_binding_ctx;
+extern fn ecs_get_binding_ctx(world: *const world_t) ?*anyopaque;
 
 /// `pub fn ecs_get_world_info(world: *const world_t) *const world_info_t`
 pub const get_world_info = ecs_get_world_info;
@@ -1358,6 +1384,10 @@ extern fn ecs_ref_update(world: *const world_t, ref: *ref_t) void;
 /// `pub fn get_mut_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque`
 pub const get_mut_id = ecs_get_mut_id;
 extern fn ecs_get_mut_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque;
+
+/// `pub fn get_mut_modified_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque`
+pub const get_mut_modified_id = ecs_get_mut_modified_id;
+extern fn ecs_get_mut_modified_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque;
 
 /// `pub fn write_begin(world: *world_t, entity: entity_t) ?*record_t`
 pub const write_begin = ecs_write_begin;
@@ -1631,6 +1661,10 @@ extern fn ecs_get_lookup_path(world: *const world_t) ?[*]entity_t;
 pub const component_init = ecs_component_init;
 extern fn ecs_component_init(world: *world_t, desc: *const component_desc_t) entity_t;
 
+/// `pub fn get_type_info(world: *const world_t, id: id_t) *const type_info_t`
+pub const get_type_info = ecs_get_type_info;
+extern fn ecs_get_type_info(world: *const world_t, id: id_t) *const type_info_t;
+
 /// `pub fn set_hooks_id(world: *world_t, id: entity_t, hooks: *const type_hooks_t) void`
 pub const set_hooks_id = ecs_set_hooks_id;
 extern fn ecs_set_hooks_id(world: *world_t, id: entity_t, hooks: *const type_hooks_t) void;
@@ -1650,10 +1684,6 @@ extern fn ecs_id_is_union(world: *const world_t, id: id_t) bool;
 /// `pub fn id_in_use(world: *const world_t, id: id_t) bool`
 pub const id_in_use = ecs_id_in_use;
 extern fn ecs_id_in_use(world: *const world_t, id: id_t) bool;
-
-/// `pub fn get_type_info(world: *const world_t, id: id_t) *const type_info_t`
-pub const get_type_info = ecs_get_type_info;
-extern fn ecs_get_type_info(world: *const world_t, id: id_t) *const type_info_t;
 
 /// `pub fn get_typeid(world: *const world_t, id: id_t) entity_t`
 pub const get_typeid = ecs_get_typeid;
@@ -1878,24 +1908,20 @@ extern fn ecs_query_empty_table_count(query: *const query_t) i32;
 /// `pub fn query_entity_count(query: *const query_t) i32`
 pub const query_entity_count = ecs_query_entity_count;
 extern fn ecs_query_entity_count(query: *const query_t) i32;
+
+/// `pub fn query_get_ctx(query: *const query_t) i32`
+pub const query_get_ctx = ecs_query_get_ctx;
+extern fn ecs_query_get_ctx(query: *const query_t) ?*anyopaque;
+
+/// `pub fn query_get_binding_ctx(query: *const query_t) i32`
+pub const query_get_binding_ctx = ecs_query_get_binding_ctx;
+extern fn ecs_query_get_binding_ctx(query: *const query_t) ?*anyopaque;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with events and observers.
 //
 //--------------------------------------------------------------------------------------------------
-pub const event_desc_t = extern struct {
-    event: entity_t = 0,
-    ids: ?[*]const type_t = null,
-    table: ?*table_t = null,
-    other_table: ?*table_t = null,
-    offset: i32 = 0,
-    count: i32 = 0,
-    entity: entity_t = 0,
-    param: ?*const anyopaque = null,
-    observable: ?*poly_t = null,
-    flags: flags32_t = 0,
-};
-
 /// `pub fn emit(world: *world_t, desc: *event_desc_t) void`
 pub const emit = ecs_emit;
 extern fn ecs_emit(world: *world_t, desc: *event_desc_t) void;
@@ -1908,13 +1934,13 @@ extern fn ecs_observer_init(world: *world_t, desc: *const observer_desc_t) entit
 pub const observer_default_run_action = ecs_observer_default_run_action;
 extern fn ecs_observer_default_run_action(it: *iter_t) bool;
 
-/// `pub fn get_observer_ctx(world: *const world_t, observer: entity_t) ?*anyopaque`
-pub const get_observer_ctx = ecs_get_observer_ctx;
-extern fn ecs_get_observer_ctx(world: *const world_t, observer: entity_t) ?*anyopaque;
+/// `pub fn observer_get_ctx(world: *const world_t, observer: entity_t) ?*anyopaque`
+pub const observer_get_ctx = ecs_observer_get_ctx;
+extern fn ecs_observer_get_ctx(world: *const world_t, observer: entity_t) ?*anyopaque;
 
-/// `pub fn get_observer_binding_ctx(world: *const world_t, observer: entity_t) ?*anyopaque`
-pub const get_observer_binding_ctx = ecs_get_observer_binding_ctx;
-extern fn ecs_get_observer_binding_ctx(world: *const world_t, observer: entity_t) ?*anyopaque;
+/// `pub fn observer_get_binding_ctx(world: *const world_t, observer: entity_t) ?*anyopaque`
+pub const observer_get_binding_ctx = ecs_observer_get_binding_ctx;
+extern fn ecs_observer_get_binding_ctx(world: *const world_t, observer: entity_t) ?*anyopaque;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `iter_t`.
@@ -1972,6 +1998,10 @@ extern fn ecs_iter_get_var_as_range(it: *iter_t, var_id: i32) table_range_t;
 pub const iter_var_is_constrained = ecs_iter_var_is_constrained;
 extern fn ecs_iter_var_is_constrained(it: *iter_t, var_id: i32) bool;
 
+/// `pub fn iter_str(it: *const iter_t) ?[*:0]u8`
+pub const iter_str = ecs_iter_str;
+extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
+
 /// `pub fn page_iter(it: *const iter_t, offset: i32, limit: i32) iter_t`
 pub const page_iter = ecs_page_iter;
 extern fn ecs_page_iter(it: *const iter_t, offset: i32, limit: i32) iter_t;
@@ -2019,10 +2049,6 @@ extern fn ecs_field_size(it: *const iter_t, index: i32) usize;
 /// `pub fn field_is_self(it: *const iter_t, index: i32) bool`
 pub const field_is_self = ecs_field_is_self;
 extern fn ecs_field_is_self(it: *const iter_t, index: i32) bool;
-
-/// `pub fn iter_str(it: *const iter_t) ?[*:0]u8`
-pub const iter_str = ecs_iter_str;
-extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `table_t`.
