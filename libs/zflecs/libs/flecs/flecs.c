@@ -5061,7 +5061,9 @@ void flecs_table_replace_data(
 int32_t* flecs_table_get_dirty_state(
     ecs_world_t *world,
     ecs_table_t *table)
-{    
+{
+    ecs_poly_assert(world, ecs_world_t);
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
     if (!table->dirty_state) {
         int32_t column_count = table->storage_count;
         table->dirty_state = flecs_alloc_n(&world->allocator,
@@ -8875,6 +8877,14 @@ bool ecs_has_id(
     return true;
 error:
     return false;
+}
+
+bool ecs_owns_id(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id)
+{
+    return (ecs_search(world, ecs_get_table(world, entity), id, 0) != -1);
 }
 
 ecs_entity_t ecs_get_target(
@@ -13577,6 +13587,11 @@ int flecs_strbuf_ftoa(
             p1[0] = '.';
             do {
                 char t = (++p1)[0];
+                if (t == '.') {
+                    exp ++;
+                    p1 --;
+                    break;
+                }
                 p1[0] = c;
                 c = t;
                 exp ++;
@@ -22509,12 +22524,15 @@ ECS_COMPONENT_DECLARE(EcsMetricSource);
 ECS_TAG_DECLARE(EcsMetric);
 ECS_TAG_DECLARE(EcsCounter);
 ECS_TAG_DECLARE(EcsCounterIncrement);
+ECS_TAG_DECLARE(EcsCounterId);
 ECS_TAG_DECLARE(EcsGauge);
 
 /* Internal components */
 ECS_COMPONENT_DECLARE(EcsMetricMember);
 ECS_COMPONENT_DECLARE(EcsMetricId);
 ECS_COMPONENT_DECLARE(EcsMetricOneOf);
+ECS_COMPONENT_DECLARE(EcsMetricCountIds);
+ECS_COMPONENT_DECLARE(EcsMetricCountTargets);
 ECS_COMPONENT_DECLARE(EcsMetricMemberInstance);
 ECS_COMPONENT_DECLARE(EcsMetricIdInstance);
 ECS_COMPONENT_DECLARE(EcsMetricOneOfInstance);
@@ -22546,6 +22564,13 @@ typedef struct {
     ecs_map_t target_offset;         /**< Pair target to metric type offset */
 } ecs_oneof_metric_ctx_t;
 
+/** Context for metric that monitors how many entities have a pair target */
+typedef struct {
+    ecs_metric_ctx_t metric;
+    ecs_id_record_t *idr;            /**< Id record for monitored component */
+    ecs_map_t targets;               /**< Map of counters for each target */
+} ecs_count_targets_metric_ctx_t;
+
 /** Stores context shared for all instances of member metric */
 typedef struct {
     ecs_member_metric_ctx_t *ctx;
@@ -22560,6 +22585,16 @@ typedef struct {
 typedef struct {
     ecs_oneof_metric_ctx_t *ctx;
 } EcsMetricOneOf;
+
+/** Stores context shared for all instances of id counter metric */
+typedef struct {
+    ecs_id_t id;
+} EcsMetricCountIds;
+
+/** Stores context shared for all instances of target counter metric */
+typedef struct {
+    ecs_count_targets_metric_ctx_t *ctx;
+} EcsMetricCountTargets;
 
 /** Instance of member metric */
 typedef struct {
@@ -22607,6 +22642,18 @@ static ECS_DTOR(EcsMetricOneOf, ptr, {
 })
 
 static ECS_MOVE(EcsMetricOneOf, dst, src, {
+    *dst = *src;
+    src->ctx = NULL;
+})
+
+static ECS_DTOR(EcsMetricCountTargets, ptr, {
+    if (ptr->ctx) {
+        ecs_map_fini(&ptr->ctx->targets);
+        ecs_os_free(ptr->ctx);
+    }
+})
+
+static ECS_MOVE(EcsMetricCountTargets, dst, src, {
     *dst = *src;
     src->ctx = NULL;
 })
@@ -22823,6 +22870,49 @@ static void UpdateCounterOneOfInstance(ecs_iter_t *it) {
     UpdateOneOfInstance(it, true);
 }
 
+static void UpdateCountTargets(ecs_iter_t *it) {
+    ecs_world_t *world = it->real_world;
+    EcsMetricCountTargets *m = ecs_field(it, EcsMetricCountTargets, 1);
+
+    int32_t i, count = it->count;
+    for (i = 0; i < count; i ++) {
+        ecs_count_targets_metric_ctx_t *ctx = m[i].ctx;
+        ecs_id_record_t *cur = ctx->idr;
+        while ((cur = cur->first.next)) {
+            ecs_id_t id = cur->id;
+            ecs_entity_t *mi = ecs_map_ensure(&ctx->targets, id);
+            if (!mi[0]) {
+                mi[0] = ecs_new_w_pair(world, EcsChildOf, ctx->metric.metric);
+                ecs_entity_t tgt = ecs_pair_second(world, cur->id);
+                const char *name = ecs_get_name(world, tgt);
+                if (name) {
+                    ecs_set_name(world, mi[0], name);
+                }
+
+                EcsMetricSource *source = ecs_get_mut(
+                    world, mi[0], EcsMetricSource);
+                source->entity = tgt;
+            }
+
+            EcsMetricValue *value = ecs_get_mut(world, mi[0], EcsMetricValue);
+            value->value += (double)ecs_count_id(world, cur->id) * 
+                (double)it->delta_system_time;
+        }
+    }
+}
+
+static void UpdateCountIds(ecs_iter_t *it) {
+    ecs_world_t *world = it->real_world;
+    EcsMetricCountIds *m = ecs_field(it, EcsMetricCountIds, 1);
+    EcsMetricValue *v = ecs_field(it, EcsMetricValue, 2);
+
+    int32_t i, count = it->count;
+    for (i = 0; i < count; i ++) {
+        v[i].value += (double)ecs_count_id(world, m[i].id) * 
+            (double)it->delta_system_time;
+    }
+}
+
 /** Initialize member metric */
 static
 int flecs_member_metric_init(
@@ -23022,6 +23112,39 @@ error:
     return -1;
 }
 
+static
+int flecs_count_id_targets_metric_init(
+    ecs_world_t *world,
+    ecs_entity_t metric,
+    const ecs_metric_desc_t *desc)
+{
+    ecs_count_targets_metric_ctx_t *ctx = ecs_os_calloc_t(ecs_count_targets_metric_ctx_t);
+    ctx->metric.metric = metric;
+    ctx->metric.kind = desc->kind;
+    ctx->idr = flecs_id_record_ensure(world, desc->id);
+    ecs_check(ctx->idr != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_map_init(&ctx->targets, NULL);
+
+    ecs_set(world, metric, EcsMetricCountTargets, { .ctx = ctx });
+    ecs_add_pair(world, metric, EcsMetric, desc->kind);
+    ecs_add_id(world, metric, EcsMetric); 
+
+    return 0;
+error:
+    return -1;
+}
+
+static
+int flecs_count_ids_metric_init(
+    ecs_world_t *world,
+    ecs_entity_t metric,
+    const ecs_metric_desc_t *desc)
+{
+    ecs_set(world, metric, EcsMetricCountIds, { .id = desc->id });
+    ecs_set(world, metric, EcsMetricValue, { .value = 0 });
+    return 0;
+}
+
 ecs_entity_t ecs_metric_init(
     ecs_world_t *world,
     const ecs_metric_desc_t *desc)
@@ -23040,13 +23163,22 @@ ecs_entity_t ecs_metric_init(
         goto error;
     }
 
-    if (kind != EcsCounter && kind != EcsGauge && kind != EcsCounterIncrement) {
-        ecs_err("invalid metric kind");
+    if (kind != EcsGauge && 
+        kind != EcsCounter && 
+        kind != EcsCounterId &&
+        kind != EcsCounterIncrement) 
+    {
+        ecs_err("invalid metric kind %s", ecs_get_fullpath(world, kind));
         goto error;
     }
 
     if (kind == EcsCounterIncrement && !desc->member) {
         ecs_err("CounterIncrement can only be used in combination with member");
+        goto error;
+    }
+
+    if (kind == EcsCounterId && desc->member) {
+        ecs_err("CounterIncrement cannot be used in combination with member");
         goto error;
     }
 
@@ -23083,20 +23215,32 @@ ecs_entity_t ecs_metric_init(
                 goto error;
             }
 
-            ecs_entity_t first = ecs_pair_first(world, desc->id);
-            ecs_entity_t scope = flecs_get_oneof(world, first);
-            if (!scope) {
-                ecs_err("first element of pair must have OneOf with "
-                    " targets enabled");
-                goto error;
-            }
+            if (kind == EcsCounterId) {
+                if (flecs_count_id_targets_metric_init(world, result, desc)) {
+                    goto error;
+                }
+            } else {
+                ecs_entity_t first = ecs_pair_first(world, desc->id);
+                ecs_entity_t scope = flecs_get_oneof(world, first);
+                if (!scope) {
+                    ecs_err("first element of pair must have OneOf with "
+                        " targets enabled");
+                    goto error;
+                }
 
-            if (flecs_oneof_metric_init(world, result, scope, desc)) {
-                goto error;
+                if (flecs_oneof_metric_init(world, result, scope, desc)) {
+                    goto error;
+                }
             }
         } else {
-            if (flecs_id_metric_init(world, result, desc)) {
-                goto error;
+            if (kind == EcsCounterId) {
+                if (flecs_count_ids_metric_init(world, result, desc)) {
+                    goto error;
+                }
+            } else {
+                if (flecs_id_metric_init(world, result, desc)) {
+                    goto error;
+                }
             }
         }
     } else {
@@ -23124,6 +23268,7 @@ void FlecsMetricsImport(ecs_world_t *world) {
     ecs_entity_t old_scope = ecs_set_scope(world, EcsMetric);
     ECS_TAG_DEFINE(world, EcsCounter);
     ECS_TAG_DEFINE(world, EcsCounterIncrement);
+    ECS_TAG_DEFINE(world, EcsCounterId);
     ECS_TAG_DEFINE(world, EcsGauge);
     ecs_set_scope(world, old_scope);
 
@@ -23137,6 +23282,8 @@ void FlecsMetricsImport(ecs_world_t *world) {
     ECS_COMPONENT_DEFINE(world, EcsMetricMember);
     ECS_COMPONENT_DEFINE(world, EcsMetricId);
     ECS_COMPONENT_DEFINE(world, EcsMetricOneOf);
+    ECS_COMPONENT_DEFINE(world, EcsMetricCountIds);
+    ECS_COMPONENT_DEFINE(world, EcsMetricCountTargets);
 
     ecs_add_id(world, ecs_id(EcsMetricMemberInstance), EcsPrivate);
     ecs_add_id(world, ecs_id(EcsMetricIdInstance), EcsPrivate);
@@ -23172,6 +23319,12 @@ void FlecsMetricsImport(ecs_world_t *world) {
         .ctor = ecs_default_ctor,
         .dtor = ecs_dtor(EcsMetricOneOf),
         .move = ecs_move(EcsMetricOneOf)
+    });
+
+    ecs_set_hooks(world, EcsMetricCountTargets, {
+        .ctor = ecs_default_ctor,
+        .dtor = ecs_dtor(EcsMetricCountTargets),
+        .move = ecs_move(EcsMetricCountTargets)
     });
 
     ecs_add_id(world, EcsMetric, EcsOneOf);
@@ -23213,6 +23366,12 @@ void FlecsMetricsImport(ecs_world_t *world) {
         [none] (_, Value), 
         [in]   OneOfInstance,
         [none] (Metric, Counter));
+
+    ECS_SYSTEM(world, UpdateCountIds, EcsPreStore, 
+        [inout] CountIds, Value);
+
+    ECS_SYSTEM(world, UpdateCountTargets, EcsPreStore, 
+        [inout] CountTargets);
 }
 
 #endif
@@ -36822,7 +36981,7 @@ void http_sock_keep_alive(
 }
 
 static
-void http_sock_nonblock(ecs_http_socket_t sock) {
+void http_sock_nonblock(ecs_http_socket_t sock, bool enable) {
     (void)sock;
 #ifdef ECS_TARGET_POSIX
     int flags;
@@ -36832,7 +36991,11 @@ void http_sock_nonblock(ecs_http_socket_t sock) {
             ecs_os_strerror(errno));
         return;
     }
-    flags = fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+    if (enable) {
+        flags = fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+    } else {
+        flags = fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
+    }
     if (flags == -1) {
         ecs_warn("http: failed to set socket NONBLOCK: %s",
             ecs_os_strerror(errno));
@@ -37410,6 +37573,8 @@ void* http_server_send_queue(void* arg) {
             if (http_socket_is_valid(sock)) {
                 bool error = false;
 
+                http_sock_nonblock(sock, false);
+
                 /* Write headers */
                 ecs_size_t written = http_send(sock, headers, headers_length, 0);
                 if (written != headers_length) {
@@ -37616,7 +37781,7 @@ http_conn_res_t http_init_connection(
 {
     http_sock_set_timeout(sock_conn, 100);
     http_sock_keep_alive(sock_conn);
-    http_sock_nonblock(sock_conn);
+    http_sock_nonblock(sock_conn, true);
 
     /* Create new connection */
     ecs_os_mutex_lock(srv->lock);
@@ -43990,6 +44155,10 @@ const char* meta_parse_member(
         goto error;
     }
 
+    if (!ptr[0]) {
+        return ptr;        
+    }
+
     /* Next token is the identifier */
     ptr = parse_c_identifier(ptr, token->name, NULL, ctx);
     if (!ptr) {
@@ -44543,6 +44712,8 @@ static ecs_app_desc_t ecs_app_desc;
 
 /* Serve REST API from wasm image when running in emscripten */
 #ifdef ECS_TARGET_EM
+#include <emscripten.h>
+
 ecs_http_server_t *flecs_wasm_rest_server;
 
 EMSCRIPTEN_KEEPALIVE
@@ -51610,7 +51781,8 @@ void flecs_observer_invoke(
 
     bool instanced = filter->flags & EcsFilterIsInstanced;
     bool match_this = filter->flags & EcsFilterMatchThis;
-    if (match_this && (simple_result || instanced)) {
+    bool table_only = it->flags & EcsIterTableOnly;
+    if (match_this && (simple_result || instanced || table_only)) {
         callback(it);
     } else {
         ecs_entity_t observer_src = term->src.id;
@@ -51757,6 +51929,7 @@ bool flecs_multi_observer_invoke(ecs_iter_t *it) {
     user_it.ptrs = NULL;
 
     flecs_iter_init(it->world, &user_it, flecs_iter_cache_all);
+    user_it.flags |= (it->flags & EcsIterTableOnly);
 
     ecs_table_t *table = it->table;
     ecs_table_t *prev_table = it->other_table;
@@ -53677,12 +53850,14 @@ void flecs_query_sync_match_monitor(
 
     int32_t *monitor = match->monitor;
     ecs_table_t *table = match->node.table;
-    int32_t *dirty_state = flecs_table_get_dirty_state(query->filter.world, table);
-    ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
+    if (table) {
+        int32_t *dirty_state = flecs_table_get_dirty_state(
+            query->filter.world, table);
+        ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
+        monitor[0] = dirty_state[0]; /* Did table gain/lose entities */
+    }
+
     table_dirty_state_t cur;
-
-    monitor[0] = dirty_state[0]; /* Did table gain/lose entities */
-
     int32_t i, term_count = query->filter.term_count;
     for (i = 0; i < term_count; i ++) {
         int32_t t = query->filter.terms[i].field_index;
@@ -53711,6 +53886,8 @@ void flecs_query_sync_match_monitor(
             }
         }
     }
+
+    query->prev_match_count = query->match_count;
 }
 
 /* Check if single match term has changed */
@@ -53727,20 +53904,24 @@ bool flecs_query_check_match_monitor_term(
     }
     
     int32_t *monitor = match->monitor;
-    ecs_table_t *table = match->node.table;
-    int32_t *dirty_state = flecs_table_get_dirty_state(query->filter.world, table);
-    ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
-    table_dirty_state_t cur;
-
     int32_t state = monitor[term];
     if (state == -1) {
         return false;
     }
 
-    if (!term) {
-        return monitor[0] != dirty_state[0];
+    ecs_table_t *table = match->node.table;
+    if (table) {
+        int32_t *dirty_state = flecs_table_get_dirty_state(
+            query->filter.world, table);
+        ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
+        if (!term) {
+            return monitor[0] != dirty_state[0];
+        }
+    } else if (!term) {
+        return false;
     }
 
+    table_dirty_state_t cur;
     flecs_query_get_dirty_state(query, match, term - 1, &cur);
     ecs_assert(cur.column != -1, ECS_INTERNAL_ERROR, NULL);
 
@@ -53762,14 +53943,17 @@ bool flecs_query_check_match_monitor(
 
     int32_t *monitor = match->monitor;
     ecs_table_t *table = match->node.table;
-    int32_t *dirty_state = flecs_table_get_dirty_state(query->filter.world, table);
-    bool has_flat = false;
-    ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    if (monitor[0] != dirty_state[0]) {
-        return true;
+    int32_t *dirty_state = NULL;
+    if (table) {
+        dirty_state = flecs_table_get_dirty_state(
+            query->filter.world, table);
+        ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
+        if (monitor[0] != dirty_state[0]) {
+            return true;
+        }
     }
 
+    bool has_flat = false;
     ecs_world_t *world = query->filter.world;
     int32_t i, field_count = query->filter.field_count;
     int32_t *storage_columns = match->storage_columns;
@@ -53787,6 +53971,7 @@ bool flecs_query_check_match_monitor(
         int32_t column = storage_columns[i];
         if (column >= 0) {
             /* owned component */
+            ecs_assert(dirty_state != NULL, ECS_INTERNAL_ERROR, NULL);
             if (mon != dirty_state[column + 1]) {
                 return true;
             }
@@ -55282,8 +55467,6 @@ ecs_iter_t ecs_query_iter(
         flecs_eval_component_monitors(world);
     }
 
-    query->prev_match_count = query->match_count;
-
     /* Prepare iterator */
 
     int32_t table_count;
@@ -55485,6 +55668,7 @@ bool ecs_query_next_table(
     }
 
 error:
+    query->match_count = query->prev_match_count;
     ecs_iter_fini(it);
     return false;
 }
@@ -55699,6 +55883,7 @@ bool ecs_query_next_instanced(
     }
 
 done: error:
+    query->match_count = query->prev_match_count;
     ecs_iter_fini(it);
     return false;
 
@@ -57302,7 +57487,7 @@ void flecs_iter_populate_data(
     it->offset = offset;
     it->count = count;
     if (table) {
-        ecs_assert(count != 0 || !ecs_table_count(table), 
+        ecs_assert(count != 0 || !ecs_table_count(table) || (it->flags & EcsIterTableOnly), 
             ECS_INTERNAL_ERROR, NULL);
         if (count) {
             it->entities = ecs_vec_get_t(

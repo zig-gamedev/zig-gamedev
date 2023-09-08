@@ -364,10 +364,10 @@ extern "C" {
 #define EcsIterProfile                 (1u << 11u) /* Profile iterator performance */
 
 ////////////////////////////////////////////////////////////////////////////////
-//// Filter flags (used by ecs_filter_t::flags)
+//// Event flags (used by ecs_event_decs_t::flags)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define EcsEventTableOnly              (1u << 8u)   /* Table event (no data, same as iter flags) */
+#define EcsEventTableOnly              (1u << 4u)   /* Table event (no data, same as iter flags) */
 #define EcsEventNoOnSet                (1u << 16u)  /* Don't emit OnSet/UnSet for inherited ids */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -5562,17 +5562,31 @@ char* ecs_entity_str(
     const ecs_world_t *world,
     ecs_entity_t entity);
 
-/** Test if an entity has an entity.
- * This operation returns true if the entity has the provided entity in its 
- * type.
+/** Test if an entity has an id.
+ * This operation returns true if the entity has or inherits the specified id.
  *
  * @param world The world.
  * @param entity The entity.
  * @param id The id to test for.
- * @return True if the entity has the entity, false if not.
+ * @return True if the entity has the id, false if not.
  */
 FLECS_API
 bool ecs_has_id(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id);
+
+/** Test if an entity owns an id.
+ * This operation returns true if the entity has the specified id. Other than
+ * ecs_has_id this operation will not return true if the id is inherited.
+ *
+ * @param world The world.
+ * @param entity The entity.
+ * @param id The id to test for.
+ * @return True if the entity has the id, false if not.
+ */
+FLECS_API
+bool ecs_owns_id(
     const ecs_world_t *world,
     ecs_entity_t entity,
     ecs_id_t id);
@@ -8506,9 +8520,6 @@ int ecs_value_move_ctor(
 #define ecs_has_pair(world, entity, first, second)\
     ecs_has_id(world, entity, ecs_pair(first, second))
 
-#define ecs_owns_id(world, entity, id)\
-    (ecs_search(world, ecs_get_table(world, entity), id, 0) != -1)
-
 #define ecs_owns_pair(world, entity, first, second)\
     ecs_owns_id(world, entity, ecs_pair(first, second))
 
@@ -11314,6 +11325,9 @@ FLECS_API extern ECS_TAG_DECLARE(EcsCounter);
 /** Counter metric that is auto-incremented by source value */
 FLECS_API extern ECS_TAG_DECLARE(EcsCounterIncrement);
 
+/** Counter metric that counts the number of entities with an id */
+FLECS_API extern ECS_TAG_DECLARE(EcsCounterId);
+
 /** Metric that represents current value */
 FLECS_API extern ECS_TAG_DECLARE(EcsGauge);
 
@@ -11339,7 +11353,7 @@ typedef struct ecs_metric_desc_t {
     ecs_entity_t entity;
     
     /* Entity associated with member that stores metric value. Must not be set
-     * at the same time as id. */
+     * at the same time as id. Cannot be combined with EcsCounterId. */
     ecs_entity_t member;
 
     /* Tracks whether entities have the specified component id. Must not be set
@@ -11347,10 +11361,12 @@ typedef struct ecs_metric_desc_t {
     ecs_id_t id;
 
     /* If id is a (R, *) wildcard and relationship R has the OneOf property, the
-     * setting this value to true will track individual targets. */
+     * setting this value to true will track individual targets. 
+     * If the kind is EcsCountId and the id is a (R, *) wildcard, this value
+     * will create a metric per target. */
     bool targets;
 
-    /* Must be either EcsGauge, EcsCounter or EcsCounterIncrement. */
+    /* Must be EcsGauge, EcsCounter, EcsCounterIncrement or EcsCounterId */
     ecs_entity_t kind;
 
     /* Description of metric. Will only be set if FLECS_DOC addon is enabled */
@@ -17386,6 +17402,7 @@ struct metrics {
     struct Metric { };
     struct Counter { };
     struct CounterIncrement { };
+    struct CounterId { };
     struct Gauge { };
 
     metrics(flecs::world& world);
@@ -26145,6 +26162,11 @@ struct filter_builder final : _::filter_builder_base<Components...> {
             this->m_desc.entity = ecs_entity_init(world, &entity_desc);
         }
     }
+
+    template <typename Func>
+    void each(Func&& func) {
+        this->build().each(FLECS_FWD(func));
+    }
 };
 
 }
@@ -28580,6 +28602,7 @@ inline metrics::metrics(flecs::world& world) {
     world.entity<metrics::Instance>("::flecs::metrics::Instance");
     world.entity<metrics::Metric>("::flecs::metrics::Metric");
     world.entity<metrics::Counter>("::flecs::metrics::Metric::Counter");
+    world.entity<metrics::CounterId>("::flecs::metrics::Metric::CounterId");
     world.entity<metrics::CounterIncrement>("::flecs::metrics::Metric::CounterIncrement");
     world.entity<metrics::Gauge>("::flecs::metrics::Metric::Gauge");
 }

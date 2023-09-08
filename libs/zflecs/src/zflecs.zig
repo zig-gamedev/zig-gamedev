@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.2";
+pub const flecs_version = "3.2.3";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -1459,6 +1459,10 @@ extern fn ecs_entity_str(world: *const world_t, entity: entity_t) ?[*:0]u8;
 /// `pub fn has_id(world: *const world_t, entity: entity_t, id: id_t) bool`
 pub const has_id = ecs_has_id;
 extern fn ecs_has_id(world: *const world_t, entity: entity_t, id: id_t) bool;
+
+/// `pub fn owns_id(world: *const world_t, entity: entity_t, id: id_t) bool`
+pub const owns_id = ecs_owns_id;
+extern fn ecs_owns_id(world: *const world_t, entity: entity_t, id: id_t) bool;
 
 /// `pub fn get_target(world: *const world_t, entity: entity_t, rel: entity_t, index: i32) entity_t`
 pub const get_target = ecs_get_target;
