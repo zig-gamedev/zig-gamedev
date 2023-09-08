@@ -353,9 +353,9 @@ extern "C" {
 #define ECS_ID_ON_DELETE(flags) \
     ((ecs_entity_t[]){0, EcsRemove, EcsDelete, 0, EcsPanic}\
         [((flags) & EcsIdOnDeleteMask)])
-#define ECS_ID_ON_DELETE_OBJECT(flags) ECS_ID_ON_DELETE(flags >> 3)
+#define ECS_ID_ON_DELETE_TARGET(flags) ECS_ID_ON_DELETE(flags >> 3)
 #define ECS_ID_ON_DELETE_FLAG(id) (1u << ((id) - EcsRemove))
-#define ECS_ID_ON_DELETE_OBJECT_FLAG(id) (1u << (3 + ((id) - EcsRemove)))
+#define ECS_ID_ON_DELETE_TARGET_FLAG(id) (1u << (3 + ((id) - EcsRemove)))
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -468,7 +468,7 @@ extern "C" {
 #endif
 
 
-#if defined(_WIN32) || defined(_MSC_VER) || defined(__MING32__)
+#if defined(_WIN32) || defined(_MSC_VER)
 #define ECS_TARGET_WINDOWS
 #elif defined(__ANDROID__)
 #define ECS_TARGET_ANDROID
@@ -487,8 +487,8 @@ extern "C" {
 #define ECS_TARGET_POSIX
 #endif
 
-#if defined(__MING32__)
-#define ECS_TARGET_POSIX
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define ECS_TARGET_MINGW
 #endif
 
 #if defined(_MSC_VER)
@@ -525,6 +525,8 @@ extern "C" {
 
 /* Ignored warnings */
 #if defined(ECS_TARGET_CLANG)
+/* Ignore unknown options so we don't have to care about the compiler version */
+#pragma clang diagnostic ignored "-Wunknown-warning-option"
 /* Warns for double or redundant semicolons. There are legitimate cases where a
  * semicolon after an empty statement is useful, for example after a macro that
  * is replaced with a code block. With this warning enabled, semicolons would 
@@ -555,6 +557,12 @@ extern "C" {
 /* clang 13 can throw this warning for a define in ctype.h */
 #pragma clang diagnostic ignored "-Wreserved-identifier"
 #endif
+/* Filenames aren't consistent across targets as they can use different casing 
+ * (e.g. WinSock2 vs winsock2). */
+#pragma clang diagnostic ignored "-Wnonportable-system-include-path"
+/* Enum reflection relies on testing constant values that may not be valid for
+ * the enumeration. */
+#pragma clang diagnostic ignored "-Wenum-constexpr-conversion"
 #elif defined(ECS_TARGET_GNU)
 #ifndef __cplusplus
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
@@ -709,6 +717,13 @@ typedef struct ecs_allocator_t ecs_allocator_t;
 #define ECS_CONST_CAST(type, value) ((type)(uintptr_t)(value))
 #else
 #define ECS_CONST_CAST(type, value) (const_cast<type>(value))
+#endif
+
+/* Utility macro for doing pointer casts without warnings */
+#ifndef __cplusplus
+#define ECS_PTR_CAST(type, value) ((type)(uintptr_t)(value))
+#else
+#define ECS_PTR_CAST(type, value) (reinterpret_cast<type>(value))
 #endif
 
 /* Utility macro's to do bitwise comparisons between floats without warnings */
@@ -1563,14 +1578,14 @@ void ecs_map_copy(
 #define ecs_map_get_deref(m, T, k) ECS_CAST(T*, ecs_map_get_deref_(m, k))
 #define ecs_map_ensure_ref(m, T, k) ECS_CAST(T**, ecs_map_ensure(m, k))
 
-#define ecs_map_insert_ptr(m, k, v) ecs_map_insert(m, k, ECS_CAST(ecs_map_val_t, v))
+#define ecs_map_insert_ptr(m, k, v) ecs_map_insert(m, k, ECS_CAST(ecs_map_val_t, ECS_PTR_CAST(uintptr_t, v)))
 #define ecs_map_insert_alloc_t(m, T, k) ECS_CAST(T*, ecs_map_insert_alloc(m, ECS_SIZEOF(T), k))
-#define ecs_map_ensure_alloc_t(m, T, k) ECS_CAST(T*, ecs_map_ensure_alloc(m, ECS_SIZEOF(T), k))
-#define ecs_map_remove_ptr(m, k) ((void*)(ecs_map_remove(m, k)))
+#define ecs_map_ensure_alloc_t(m, T, k) ECS_PTR_CAST(T*, (uintptr_t)ecs_map_ensure_alloc(m, ECS_SIZEOF(T), k))
+#define ecs_map_remove_ptr(m, k) (ECS_PTR_CAST(void*, ECS_CAST(uintptr_t, (ecs_map_remove(m, k)))))
 
 #define ecs_map_key(it) ((it)->res[0])
 #define ecs_map_value(it) ((it)->res[1])
-#define ecs_map_ptr(it) ECS_CAST(void*, ecs_map_value(it))
+#define ecs_map_ptr(it) ECS_PTR_CAST(void*, ECS_CAST(uintptr_t, ecs_map_value(it)))
 #define ecs_map_ref(it, T) (ECS_CAST(T**, &((it)->res[1])))
 
 #ifdef __cplusplus
@@ -2275,7 +2290,7 @@ void ecs_os_set_api_defaults(void);
 #define ecs_offset(ptr, T, index)\
     ECS_CAST(T*, ECS_OFFSET(ptr, ECS_SIZEOF(T) * index))
 
-#ifndef ECS_TARGET_POSIX
+#if !defined(ECS_TARGET_POSIX) && !defined(ECS_TARGET_MINGW)
 #define ecs_os_strcat(str1, str2) strcat_s(str1, INT_MAX, str2)
 #define ecs_os_sprintf(ptr, ...) sprintf_s(ptr, INT_MAX, __VA_ARGS__)
 #define ecs_os_vsprintf(ptr, fmt, args) vsprintf_s(ptr, INT_MAX, fmt, args)
@@ -2369,6 +2384,16 @@ void ecs_os_strset(char **str, const char *value);
 #define ecs_os_linc(v) (++(*v))
 #define ecs_os_dec(v)  (--(*v))
 #define ecs_os_ldec(v) (--(*v))
+#endif
+
+#ifdef ECS_TARGET_MINGW
+/* mingw bug: without this a conversion error is thrown, but isnan/isinf should
+ * accept float, double and long double. */
+#define ecs_os_isnan(val) (isnan((float)val))
+#define ecs_os_isinf(val) (isinf((float)val))
+#else
+#define ecs_os_isnan(val) (isnan(val))
+#define ecs_os_isinf(val) (isinf(val))
 #endif
 
 /* Application termination */
@@ -7628,6 +7653,7 @@ char* ecs_iter_str(
  */
 
 /** Get type for table.
+ * The table type is a vector that contains all component, tag and pair ids.
  *
  * @param table The table.
  * @return The type of the table.
@@ -7636,33 +7662,7 @@ FLECS_API
 const ecs_type_t* ecs_table_get_type(
     const ecs_table_t *table);
 
-/** Get column from table.
- * This operation returns the component array for the provided index.
- * 
- * @param table The table.
- * @param index The index of the column (corresponds with element in type).
- * @param offset The index of the first row to return (0 for entire column).
- * @return The component array, or NULL if the index is not a component.
- */
-FLECS_API
-void* ecs_table_get_column(
-    const ecs_table_t *table,
-    int32_t index,
-    int32_t offset);
-
-/** Get column size from table.
- * This operation returns the component size for the provided index.
- * 
- * @param table The table.
- * @param index The index of the column (corresponds with element in type).
- * @return The component size, or 0 if the index is not a component.
- */
-FLECS_API
-size_t ecs_table_get_column_size(
-    const ecs_table_t *table,
-    int32_t index);
-
-/** Get column index for id.
+/** Get type index for id.
  * This operation returns the index for an id in the table's type.
  * 
  * @param world The world.
@@ -7671,24 +7671,79 @@ size_t ecs_table_get_column_size(
  * @return The index of the id in the table type, or -1 if not found.
  */
 FLECS_API
-int32_t ecs_table_get_index(
+int32_t ecs_table_get_type_index(
     const ecs_world_t *world,
     const ecs_table_t *table,
     ecs_id_t id);
 
-/** Test if table has id.
- * Same as ecs_table_get_index(world, table, id) != -1.
+/** Get column index for id.
+ * This operation returns the column index for an id in the table's type. If the
+ * id is not a component, the function will return -1.
  * 
  * @param world The world.
  * @param table The table.
- * @param id The id.
- * @return True if the table has the id, false if the table doesn't.
+ * @param id The component id.
+ * @return The column index of the id, or -1 if not found/not a component.
  */
 FLECS_API
-bool ecs_table_has_id(
+int32_t ecs_table_get_column_index(
     const ecs_world_t *world,
     const ecs_table_t *table,
     ecs_id_t id);
+
+/** Return number of columns in table. 
+ * Similar to ecs_table_get_type(table)->count, except that the column count 
+ * only counts the number of components in a table.
+ * 
+ * @param table The table.
+ * @return The number of columns in the table.
+ */
+FLECS_API
+int32_t ecs_table_column_count(
+    const ecs_table_t *table);
+
+/** Convert type index to column index. 
+ * Tables have an array of columns for each component in the table. This array
+ * does not include elements for tags, which means that the index for a 
+ * component in the table type is not necessarily the same as the index in the
+ * column array. This operation converts from an index in the table type to an
+ * index in the column array.
+ * 
+ * @param table The table.
+ * @param index The index in the table type.
+ * @return The index in the table column array.
+ */
+FLECS_API
+int32_t ecs_table_type_to_column_index(
+    const ecs_table_t *table,
+    int32_t index);
+
+/** Convert column index to type index.
+ * Same as ecs_table_type_to_column_index, but converts from an index in the
+ * column array to an index in the table type.
+ * 
+ * @param table The table.
+ * @param index The column index.
+ * @return The index in the table type.
+ */
+FLECS_API
+int32_t ecs_table_column_to_type_index(
+    const ecs_table_t *table,
+    int32_t index);
+
+/** Get column from table by column index.
+ * This operation returns the component array for the provided index.
+ * 
+ * @param table The table.
+ * @param index The column index.
+ * @param offset The index of the first row to return (0 for entire column).
+ * @return The component array, or NULL if the index is not a component.
+ */
+FLECS_API
+void* ecs_table_get_column(
+    const ecs_table_t *table,
+    int32_t index,
+    int32_t offset);
 
 /** Get column from table by component id.
  * This operation returns the component array for the provided component  id.
@@ -7705,6 +7760,44 @@ void* ecs_table_get_id(
     ecs_id_t id,
     int32_t offset);
 
+/** Get column size from table.
+ * This operation returns the component size for the provided index.
+ * 
+ * @param table The table.
+ * @param index The column index.
+ * @return The component size, or 0 if the index is not a component.
+ */
+FLECS_API
+size_t ecs_table_get_column_size(
+    const ecs_table_t *table,
+    int32_t index);
+
+/** Returns the number of records in the table. 
+ * This operation returns the number of records that have been populated through
+ * the regular (entity) API as well as the number of records that have been
+ * inserted using the direct access API.
+ *
+ * @param table The table.
+ * @return The number of records in a table.
+ */
+FLECS_API
+int32_t ecs_table_count(
+    const ecs_table_t *table);
+
+/** Test if table has id.
+ * Same as ecs_table_get_type_index(world, table, id) != -1.
+ * 
+ * @param world The world.
+ * @param table The table.
+ * @param id The id.
+ * @return True if the table has the id, false if the table doesn't.
+ */
+FLECS_API
+bool ecs_table_has_id(
+    const ecs_world_t *world,
+    const ecs_table_t *table,
+    ecs_id_t id);
+
 /** Return depth for table in tree for relationship rel.
  * Depth is determined by counting the number of targets encountered while 
  * traversing up the relationship tree for rel. Only acyclic relationships are
@@ -7720,39 +7813,6 @@ int32_t ecs_table_get_depth(
     const ecs_world_t *world,
     const ecs_table_t *table,
     ecs_entity_t rel);
-
-/** Get storage type for table.
- *
- * @param table The table.
- * @return The storage type of the table (components only).
- */
-FLECS_API
-ecs_table_t* ecs_table_get_storage_table(
-    const ecs_table_t *table);
-
-/** Convert index in table type to index in table storage type. */
-FLECS_API
-int32_t ecs_table_type_to_storage_index(
-    const ecs_table_t *table,
-    int32_t index);
-
-/** Convert index in table storage type to index in table type. */
-FLECS_API
-int32_t ecs_table_storage_to_type_index(
-    const ecs_table_t *table,
-    int32_t index);
-
-/** Returns the number of records in the table. 
- * This operation returns the number of records that have been populated through
- * the regular (entity) API as well as the number of records that have been
- * inserted using the direct access API.
- *
- * @param table The table.
- * @return The number of records in a table.
- */
-FLECS_API
-int32_t ecs_table_count(
-    const ecs_table_t *table);
 
 /** Get table that has all components of current table plus the specified id.
  * If the provided table already has the provided id, the operation will return
@@ -7831,16 +7891,19 @@ void ecs_table_unlock(
     ecs_world_t *world,
     ecs_table_t *table);    
 
-/** Returns whether table is a module or contains module contents
- * Returns true for tables that have module contents. Can be used to filter out
- * tables that do not contain application data.
+/** Test table for flags.
+ * Test if table has all of the provided flags. See 
+ * include/flecs/private/api_flags.h for a list of table flags that can be used 
+ * with this function.
  *
  * @param table The table.
- * @return true if table contains module contents, false if not.
+ * @param flags The flags to test for.
+ * @return Whether the specified flags are set for the table.
  */
 FLECS_API
-bool ecs_table_has_module(
-    ecs_table_t *table);
+bool ecs_table_has_flags(
+    ecs_table_t *table,
+    ecs_flags32_t flags);
 
 /** Swaps two elements inside the table. This is useful for implementing custom
  * table sorting algorithms.
@@ -13024,8 +13087,6 @@ typedef struct EcsMetaType {
     ecs_type_kind_t kind;
     bool existing;         /**< Did the type exist or is it populated from reflection */
     bool partial;          /**< Is the reflection data a partial type description */
-    ecs_size_t size;       /**< Computed size */
-    ecs_size_t alignment;  /**< Computed alignment */
 } EcsMetaType;
 
 /** Primitive type kinds supported by meta addon */
@@ -15846,7 +15907,7 @@ struct string {
         return m_const_str;
     }
 
-    std::size_t length() {
+    std::size_t length() const {
         return static_cast<std::size_t>(m_length);
     }
 
@@ -15855,7 +15916,7 @@ struct string {
         return N - 1;
     }
 
-    std::size_t size() {
+    std::size_t size() const {
         return length();
     }
 
@@ -15958,16 +16019,30 @@ struct enum_last {
 
 namespace _ {
 
-#ifdef ECS_TARGET_MSVC
-#define ECS_SIZE_T_STR "unsigned __int64"
-#elif defined(__clang__)
-#define ECS_SIZE_T_STR "size_t"
+#if INTPTR_MAX == INT64_MAX
+    #ifdef ECS_TARGET_MSVC
+        #define ECS_SIZE_T_STR "unsigned __int64"
+    #elif defined(__clang__)
+        #define ECS_SIZE_T_STR "size_t"
+    #else
+        #ifdef ECS_TARGET_WINDOWS
+            #define ECS_SIZE_T_STR "constexpr size_t; size_t = long long unsigned int"
+        #else
+            #define ECS_SIZE_T_STR "constexpr size_t; size_t = long unsigned int"
+        #endif
+    #endif
 #else
-#ifdef ECS_TARGET_WINDOWS
-#define ECS_SIZE_T_STR "constexpr size_t; size_t = long long unsigned int"
-#else
-#define ECS_SIZE_T_STR "constexpr size_t; size_t = long unsigned int"
-#endif
+    #ifdef ECS_TARGET_MSVC
+        #define ECS_SIZE_T_STR "unsigned __int32"
+    #elif defined(__clang__)
+        #define ECS_SIZE_T_STR "size_t"
+    #else
+        #ifdef ECS_TARGET_WINDOWS
+            #define ECS_SIZE_T_STR "constexpr size_t; size_t = unsigned int"
+        #else
+            #define ECS_SIZE_T_STR "constexpr size_t; size_t = unsigned int"
+        #endif
+    #endif
 #endif
 
 template <typename E>
@@ -19709,6 +19784,8 @@ struct world {
     template <typename T>
     flecs::scoped_world scope() const;
 
+    flecs::scoped_world scope(const char* name) const;
+
     /** Delete all entities with specified id. */
     void delete_with(id_t the_id) const {
         ecs_delete_with(m_world, the_id);
@@ -20820,11 +20897,6 @@ public:
     flecs::table table() const;
 
     flecs::table_range range() const;
-
-    /** Is current type a module or does it contain module contents? */
-    bool has_module() const {
-        return ecs_table_has_module(m_iter->table);
-    }
 
     /** Access ctx. 
      * ctx contains the context pointer assigned to a system.
@@ -23788,13 +23860,12 @@ struct entity_with_invoker_impl<arg_list<Args ...>> {
         return true;
     }
 
-    static bool get_ptrs(world_t *world, const ecs_record_t *r, ecs_table_t *table,
+    static 
+    bool get_ptrs(world_t *world, const ecs_record_t *r, ecs_table_t *table,
         ArrayType& ptrs) 
     {
         ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-
-        ecs_table_t *storage_table = ecs_table_get_storage_table(table);
-        if (!storage_table) {
+        if (!ecs_table_column_count(table)) {
             return false;
         }
 
@@ -23803,8 +23874,8 @@ struct entity_with_invoker_impl<arg_list<Args ...>> {
 
         /* Get column indices for components */
         ColumnArray columns ({
-            ecs_search_offset(real_world, storage_table, 0, 
-                _::cpp_type<Args>().id(world), 0)...
+            ecs_table_get_column_index(real_world, table, 
+                _::cpp_type<Args>().id(world))...
         });
 
         /* Get pointers for columns for entity */
@@ -24181,7 +24252,6 @@ struct iter_iterable final : iterable<Components...> {
  */
 
 iter_iterable<Components...>& set_var(const char *name, flecs::entity_t value) {
-    ecs_assert(m_it.next == ecs_rule_next, ECS_INVALID_OPERATION, NULL);
     ecs_rule_iter_t *rit = &m_it.priv.iter.rule;
     int var_id = ecs_rule_find_var(rit->rule, name);
     ecs_assert(var_id != -1, ECS_INVALID_PARAMETER, name);
@@ -24702,25 +24772,6 @@ struct untyped_component : entity {
  * @{
  */
 
-/** Add member. */
-untyped_component& member(flecs::entity_t type_id, const char *name, int32_t count = 0, size_t offset = 0) {
-    ecs_entity_desc_t desc = {};
-    desc.name = name;
-    desc.add[0] = ecs_pair(flecs::ChildOf, m_id);
-    ecs_entity_t eid = ecs_entity_init(m_world, &desc);
-    ecs_assert(eid != 0, ECS_INTERNAL_ERROR, NULL);
-
-    flecs::entity e(m_world, eid);
-
-    Member m = {};
-    m.type = type_id;
-    m.count = count;
-    m.offset = static_cast<int32_t>(offset);
-    e.set<Member>(m);
-
-    return *this;
-}
-
 /** Add member with unit. */
 untyped_component& member(flecs::entity_t type_id, flecs::entity_t unit, const char *name, int32_t count = 0, size_t offset = 0) {
     ecs_entity_desc_t desc = {};
@@ -24739,6 +24790,11 @@ untyped_component& member(flecs::entity_t type_id, flecs::entity_t unit, const c
     e.set<Member>(m);
 
     return *this;
+}
+
+/** Add member. */
+untyped_component& member(flecs::entity_t type_id, const char* name, int32_t count = 0, size_t offset = 0) {
+    return member(type_id, 0, name, count, offset);
 }
 
 /** Add member. */
@@ -24761,6 +24817,31 @@ untyped_component& member(const char *name, int32_t count = 0, size_t offset = 0
     flecs::entity_t type_id = _::cpp_type<MemberType>::id(m_world);
     flecs::entity_t unit_id = _::cpp_type<UnitType>::id(m_world);
     return member(type_id, unit_id, name, count, offset);
+}
+
+/** Add member using pointer-to-member. */
+template <typename MemberType, typename ComponentType, typename RealType = typename std::remove_extent<MemberType>::type>
+untyped_component& member(const char* name, const MemberType ComponentType::* ptr) {
+    flecs::entity_t type_id = _::cpp_type<RealType>::id(m_world);
+    size_t offset = reinterpret_cast<size_t>(&(static_cast<ComponentType*>(nullptr)->*ptr));
+    return member(type_id, name, std::extent<MemberType>::value, offset);
+}
+
+/** Add member with unit using pointer-to-member. */
+template <typename MemberType, typename ComponentType, typename RealType = typename std::remove_extent<MemberType>::type>
+untyped_component& member(flecs::entity_t unit, const char* name, const MemberType ComponentType::* ptr) {
+    flecs::entity_t type_id = _::cpp_type<RealType>::id(m_world);
+    size_t offset = reinterpret_cast<size_t>(&(static_cast<ComponentType*>(nullptr)->*ptr));
+    return member(type_id, unit, name, std::extent<MemberType>::value, offset);
+}
+
+/** Add member with unit using pointer-to-member. */
+template <typename UnitType, typename MemberType, typename ComponentType, typename RealType = typename std::remove_extent<MemberType>::type>
+untyped_component& member(const char* name, const MemberType ComponentType::* ptr) {
+    flecs::entity_t type_id = _::cpp_type<RealType>::id(m_world);
+    flecs::entity_t unit_id = _::cpp_type<UnitType>::id(m_world);
+    size_t offset = reinterpret_cast<size_t>(&(static_cast<ComponentType*>(nullptr)->*ptr));
+    return member(type_id, unit_id, name, std::extent<MemberType>::value, offset);
 }
 
 /** Add constant. */
@@ -25251,52 +25332,100 @@ struct table {
         return ecs_table_count(m_table);
     }
 
-    /** Find index for (component) id. 
+    /** Find type index for (component) id. 
      * 
      * @param id The (component) id.
      * @return The index of the id in the table type, -1 if not found/
      */
-    int32_t search(flecs::id_t id) const {
-        return ecs_search(m_world, m_table, id, 0);
+    int32_t type_index(flecs::id_t id) const {
+        return ecs_table_get_type_index(m_world, m_table, id);
     }
 
-    /** Find index for type. 
+    /** Find type index for type. 
      * 
      * @tparam T The type.
      * @return True if the table has the type, false if not.
      */
     template <typename T>
-    int32_t search() const {
-        return search(_::cpp_type<T>::id(m_world));
+    int32_t type_index() const {
+        return type_index(_::cpp_type<T>::id(m_world));
     }
 
-    /** Find index for pair. 
+    /** Find type index for pair. 
      * @param first First element of pair.
      * @param second Second element of pair.
      * @return True if the table has the pair, false if not.
      */
-    int32_t search(flecs::entity_t first, flecs::entity_t second) const {
-        return search(ecs_pair(first, second));
+    int32_t type_index(flecs::entity_t first, flecs::entity_t second) const {
+        return type_index(ecs_pair(first, second));
     }
 
-    /** Find index for pair. 
+    /** Find type index for pair. 
      * @tparam First First element of pair.
      * @param second Second element of pair.
      * @return True if the table has the pair, false if not.
      */
     template <typename First>
-    int32_t search(flecs::entity_t second) const {
-        return search(_::cpp_type<First>::id(m_world), second);
+    int32_t type_index(flecs::entity_t second) const {
+        return type_index(_::cpp_type<First>::id(m_world), second);
     }
 
-    /** Find index for pair. 
+    /** Find type index for pair. 
      * @tparam First First element of pair.
      * @tparam Second Second element of pair.
      * @return True if the table has the pair, false if not.
      */
     template <typename First, typename Second>
-    int32_t search() const {
-        return search<First>(_::cpp_type<Second>::id(m_world));
+    int32_t type_index() const {
+        return type_index<First>(_::cpp_type<Second>::id(m_world));
+    }
+
+    /** Find column index for (component) id. 
+     * 
+     * @param id The (component) id.
+     * @return The index of the id in the table type, -1 if not found/
+     */
+    int32_t column_index(flecs::id_t id) const {
+        return ecs_table_get_column_index(m_world, m_table, id);
+    }
+
+    /** Find column index for type. 
+     * 
+     * @tparam T The type.
+     * @return True if the table has the type, false if not.
+     */
+    template <typename T>
+    int32_t column_index() const {
+        return column_index(_::cpp_type<T>::id(m_world));
+    }
+
+    /** Find column index for pair. 
+     * @param first First element of pair.
+     * @param second Second element of pair.
+     * @return True if the table has the pair, false if not.
+     */
+    int32_t column_index(flecs::entity_t first, flecs::entity_t second) const {
+        return column_index(ecs_pair(first, second));
+    }
+
+    /** Find column index for pair. 
+     * @tparam First First element of pair.
+     * @param second Second element of pair.
+     * @return True if the table has the pair, false if not.
+     */
+    template <typename First>
+    int32_t column_index(flecs::entity_t second) const {
+        return column_index(_::cpp_type<First>::id(m_world), second);
+    }
+
+    /** Find column index for pair. 
+     * @tparam First First element of pair.
+     * @tparam Second Second element of pair.
+     * @return True if the table has the pair, false if not.
+     */
+    template <typename First, typename Second>
+    int32_t column_index() const {
+        return column_index<First>(_::cpp_type<Second>::id(m_world));
     }
 
     /** Test if table has (component) id. 
@@ -25305,7 +25434,7 @@ struct table {
      * @return True if the table has the id, false if not.
      */
     bool has(flecs::id_t id) const {
-        return search(id) != -1;
+        return type_index(id) != -1;
     }
 
     /** Test if table has the type. 
@@ -25315,7 +25444,7 @@ struct table {
      */
     template <typename T>
     bool has() const {
-        return search<T>() != -1;
+        return type_index<T>() != -1;
     }
 
     /** Test if table has the pair.
@@ -25325,7 +25454,7 @@ struct table {
      * @return True if the table has the pair, false if not.
      */
     bool has(flecs::entity_t first, flecs::entity_t second) const {
-        return search(first, second) != -1;
+        return type_index(first, second) != -1;
     }
 
     /** Test if table has the pair.
@@ -25336,7 +25465,7 @@ struct table {
      */
     template <typename First>
     bool has(flecs::entity_t second) const {
-        return search<First>(second) != -1;
+        return type_index<First>(second) != -1;
     }
 
     /** Test if table has the pair.
@@ -25347,7 +25476,7 @@ struct table {
      */
     template <typename First, typename Second>
     bool has() const {
-        return search<First, Second>() != -1;
+        return type_index<First, Second>() != -1;
     }
 
     /** Get pointer to component array by column index. 
@@ -25355,7 +25484,7 @@ struct table {
      * @param index The column index.
      * @return Pointer to the column, NULL if not a component.
      */
-    virtual void* get_by_index(int32_t index) const {
+    virtual void* get_column(int32_t index) const {
         return ecs_table_get_column(m_table, index, 0);
     }
 
@@ -25365,11 +25494,11 @@ struct table {
      * @return Pointer to the column, NULL if not found.
      */
     void* get(flecs::id_t id) const {
-        int32_t index = search(id);
+        int32_t index = column_index(id);
         if (index == -1) {
             return NULL;
         }
-        return get_by_index(index);
+        return get_column(index);
     }
 
     /** Get pointer to component array by pair.
@@ -25427,8 +25556,8 @@ struct table {
     }
 
     /** Get column size */
-    size_t column_size(int32_t column_index) {
-        return ecs_table_get_column_size(m_table, column_index);
+    size_t column_size(int32_t index) {
+        return ecs_table_get_column_size(m_table, index);
     }
 
     /** Get depth for given relationship.
@@ -25484,7 +25613,7 @@ struct table_range : table {
      * @param index The column index.
      * @return Pointer to the column, NULL if not a component.
      */
-    void* get_by_index(int32_t index) const override {
+    void* get_column(int32_t index) const override {
         return ecs_table_get_column(m_table, index, m_offset);
     }
 
@@ -29751,7 +29880,6 @@ inline flecs::table_range iter::range() const {
 
 #ifdef FLECS_RULES
 inline flecs::entity iter::get_var(int var_id) const {
-    ecs_assert(m_iter->next == ecs_rule_next, ECS_INVALID_OPERATION, NULL);
     ecs_assert(var_id != -1, ECS_INVALID_PARAMETER, 0);
     return flecs::entity(m_iter->world, ecs_iter_get_var(m_iter, var_id));
 }
@@ -29760,7 +29888,6 @@ inline flecs::entity iter::get_var(int var_id) const {
  * Get value of a query variable for current result.
  */
 inline flecs::entity iter::get_var(const char *name) const {
-    ecs_assert(m_iter->next == ecs_rule_next, ECS_INVALID_OPERATION, NULL);
     ecs_rule_iter_t *rit = &m_iter->priv.iter.rule;
     const flecs::rule_t *r = rit->rule;
     int var_id = ecs_rule_find_var(r, name);
@@ -30051,6 +30178,10 @@ template <typename T>
 inline flecs::scoped_world world::scope() const {
     flecs::id_t parent = _::cpp_type<T>::id(m_world);
     return scoped_world(m_world, parent);
+}
+
+inline flecs::scoped_world world::scope(const char* name) const {
+  return scope(entity(name));
 }
 
 } // namespace flecs

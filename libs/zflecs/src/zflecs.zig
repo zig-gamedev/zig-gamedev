@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.5";
+pub const flecs_version = "3.2.6";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -2032,45 +2032,49 @@ extern fn ecs_iter_str(it: *const iter_t) ?[*:0]u8;
 pub const table_get_type = ecs_table_get_type;
 extern fn ecs_table_get_type(table: *const table_t) *const type_t;
 
+/// `pub fn table_get_type_index(world: *const world_t, table: *const table_t, id: id_t) i32`
+pub const table_get_type_index = ecs_table_get_type_index;
+extern fn ecs_table_get_type_index(world: *const world_t, table: *const table_t, id: id_t) i32;
+
+/// `pub fn table_get_column_index(world: *const world_t, table: *const table_t, id: id_t) i32`
+pub const table_get_column_index = ecs_table_get_column_index;
+extern fn ecs_table_get_column_index(world: *const world_t, table: *const table_t, id: id_t) i32;
+
+/// `pub fn table_column_count(table: *const table_t) i32`
+pub const table_column_count = ecs_table_column_count;
+extern fn ecs_table_column_count(table: *const table_t) i32;
+
+/// `pub fn table_type_to_column_index(table: *const table_t, index:i32) i32`
+pub const table_type_to_column_index = ecs_table_type_to_column_index;
+extern fn ecs_table_type_to_column_index(table: *const table_t, index: i32) i32;
+
+/// `pub fn table_column_to_type_index(table: *const table_t, index:i32) i32`
+pub const table_column_to_type_index = ecs_table_column_to_type_index;
+extern fn ecs_table_column_to_type_index(table: *const table_t, index: i32) i32;
+
 /// `pub fn table_get_column(table: *const table_t, index: i32, offset: i32) ?*anyopaque`
 pub const table_get_column = ecs_table_get_column;
 extern fn ecs_table_get_column(table: *const table_t, index: i32, offset: i32) ?*anyopaque;
+
+/// `pub fn table_get_id(world: *const world_t, table: *const table_t, id:id_t, offset: i32) ?*anyopaque`
+pub const table_get_id = ecs_table_get_id;
+extern fn ecs_table_get_id(world: *const world_t, table: *const table_t, id: id_t, offset: i32) ?*anyopaque;
 
 /// `pub fn table_get_column_size(table: *const table_t, index: i32, offset: i32) ?*anyopaque`
 pub const table_get_column_size = ecs_table_get_column_size;
 extern fn ecs_table_get_column_size(table: *const table_t, index: i32) usize;
 
-/// `pub fn table_get_index(world: *const world_t, table: *const table_t, id: id_t) i32`
-pub const table_get_index = ecs_table_get_index;
-extern fn ecs_table_get_index(world: *const world_t, table: *const table_t, id: id_t) i32;
+/// `pub fn table_count(table: *const table_t) i32`
+pub const table_count = ecs_table_count;
+extern fn ecs_table_count(table: *const table_t) i32;
 
 /// `pub fn table_has_id(world: *const world_t, table: *const table_t, id: id_t) bool`
 pub const table_has_id = ecs_table_has_id;
 extern fn ecs_table_has_id(world: *const world_t, table: *const table_t, id: id_t) bool;
 
-/// `pub fn table_get_id(world: *const world_t, table: *const table_t, id: id_t, offset: i32) ?*anyopaque`
-pub const table_get_id = ecs_table_get_id;
-extern fn ecs_table_get_id(world: *const world_t, table: *const table_t, id: id_t, offset: i32) ?*anyopaque;
-
 /// `pub fn table_get_depth(world: *const world_t, table: *const table_t, rel: entity_t) i32`
 pub const table_get_depth = ecs_table_get_depth;
 extern fn ecs_table_get_depth(world: *const world_t, table: *const table_t, rel: entity_t) i32;
-
-/// `pub fn table_get_storage_table(table: *const table_t) *table_t`
-pub const table_get_storage_table = ecs_table_get_storage_table;
-extern fn ecs_table_get_storage_table(table: *const table_t) *table_t;
-
-/// `pub fn table_type_to_storage_index(table: *const table_t, index: i32) i32`
-pub const table_type_to_storage_index = ecs_table_type_to_storage_index;
-extern fn ecs_table_type_to_storage_index(table: *const table_t, index: i32) i32;
-
-/// `pub fn table_storage_to_type_index(table: *const table_t, index: i32) i32`
-pub const table_storage_to_type_index = ecs_table_storage_to_type_index;
-extern fn ecs_table_storage_to_type_index(table: *const table_t, index: i32) i32;
-
-/// `pub fn table_count(table: *const table_t) i32`
-pub const table_count = ecs_table_count;
-extern fn ecs_table_count(table: *const table_t) i32;
 
 /// `pub fn table_add_id(world: *world_t, table: *table_t, id: id_t) *table_t`
 pub const table_add_id = ecs_table_add_id;
@@ -2091,6 +2095,10 @@ extern fn ecs_table_lock(world: *world_t, table: *table_t) void;
 /// `pub fn table_unlock(world: *world_t, table: *table_t) void`
 pub const table_unlock = ecs_table_unlock;
 extern fn ecs_table_unlock(world: *world_t, table: *table_t) void;
+
+/// `pub fn table_has_flags(table: *table_t, flags: flags32_t) bool`
+pub const table_has_flags = ecs_table_has_flags;
+extern fn ecs_table_has_flags(table: *table_t, flags: flags32_t) bool;
 
 /// `pub fn table_has_module(table: *const table_t) bool`
 pub const table_has_module = ecs_table_has_module;
