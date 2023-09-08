@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.4";
+pub const flecs_version = "3.2.5";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -340,9 +340,12 @@ pub const TermTransitive = 1 << 4;
 pub const TermReflexive = 1 << 5;
 pub const TermIdInherited = 1 << 6;
 
+pub const TermMatchDisabled = 1 << 7;
+pub const TermMatchPrefab = 1 << 8;
+
 pub const term_id_t = extern struct {
     id: entity_t = 0,
-    name: ?[*:0]u8 = null,
+    name: ?[*:0]const u8 = null,
     trav: entity_t = 0,
     flags: flags32_t = 0,
 };
@@ -485,10 +488,14 @@ pub const ref_t = extern struct {
 };
 
 pub const stack_page_t = opaque {};
+pub const stack_t = opaque {};
 
 pub const stack_cursor_t = extern struct {
-    cur: ?*stack_page_t,
+    prev: ?*stack_cursor_t,
+    page: ?*stack_page_t,
     sp: i16,
+    is_free: bool,
+    owner: if (flecs_is_debug) ?*stack_t else void,
 };
 
 pub const page_iter_t = extern struct {
@@ -511,7 +518,7 @@ pub const table_cache_iter_t = extern struct {
 };
 
 pub const iter_cache_t = extern struct {
-    stack_cursor: stack_cursor_t,
+    stack_cursor: ?*stack_cursor_t,
     used: flags8_t,
     allocated: flags8_t,
 };
@@ -1536,9 +1543,9 @@ extern fn ecs_lookup_path_w_sep(
     recursive: bool,
 ) entity_t;
 
-/// `pub fn lookup_symbol(world: *const world_t, symbol: ?[*:0]const u8, lookup_as_path: bool) entity_t`
+/// `pub fn lookup_symbol(world: *const world_t, symbol: ?[*:0]const u8, lookup_as_path: bool, recursive: bool) entity_t`
 pub const lookup_symbol = ecs_lookup_symbol;
-extern fn ecs_lookup_symbol(world: *const world_t, symbol: ?[*:0]const u8, lookup_as_path: bool) entity_t;
+extern fn ecs_lookup_symbol(world: *const world_t, symbol: ?[*:0]const u8, lookup_as_path: bool, recursive: bool) entity_t;
 
 /// ```
 /// pub fn ecs_get_path_w_sep(
