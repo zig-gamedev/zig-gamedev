@@ -2,6 +2,11 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
+pub const flecs_version = "3.2.0";
+
+// TODO: Ensure synced with flecs build flags.
+const flecs_is_debug = builtin.mode == .Debug;
+
 pub const ftime_t = f32;
 pub const size_t = i32;
 pub const flags8_t = u8;
@@ -9,7 +14,6 @@ pub const flags16_t = u16;
 pub const flags32_t = u32;
 pub const flags64_t = u64;
 
-pub const vector_t = opaque {};
 pub const mixins_t = opaque {};
 
 pub const filter_t_magic = 0x65637366;
@@ -28,6 +32,7 @@ extern const EcsTransitive: entity_t;
 extern const EcsReflexive: entity_t;
 extern const EcsFinal: entity_t;
 extern const EcsDontInherit: entity_t;
+extern const EcsAlwaysOverride: entity_t;
 extern const EcsSymmetric: entity_t;
 extern const EcsExclusive: entity_t;
 extern const EcsAcyclic: entity_t;
@@ -69,6 +74,14 @@ extern const EcsOnTableFill: entity_t;
 extern const EcsOnDeleteTarget: entity_t;
 extern const EcsRemove: entity_t;
 extern const EcsDelete: entity_t;
+extern const EcsPanic: entity_t;
+
+extern const EcsFlatten: entity_t;
+extern const EcsDefaultChildComponent: entity_t;
+
+extern const EcsPredEq: entity_t;
+extern const EcsPredMatch: entity_t;
+extern const EcsPredLookup: entity_t;
 
 extern const EcsIsA: entity_t;
 extern const EcsDependsOn: entity_t;
@@ -79,17 +92,22 @@ pub var Transitive: entity_t = undefined;
 pub var Reflexive: entity_t = undefined;
 pub var Final: entity_t = undefined;
 pub var DontInherit: entity_t = undefined;
-pub var Symmetric: entity_t = undefined;
+pub var Tag: entity_t = undefined;
+pub var Union: entity_t = undefined;
 pub var Exclusive: entity_t = undefined;
 pub var Acyclic: entity_t = undefined;
 pub var Traversable: entity_t = undefined;
+pub var Symmetric: entity_t = undefined;
 pub var With: entity_t = undefined;
 pub var OneOf: entity_t = undefined;
-pub var Tag: entity_t = undefined;
-pub var Union: entity_t = undefined;
-pub var Alias: entity_t = undefined;
+
+pub var IsA: entity_t = undefined;
 pub var ChildOf: entity_t = undefined;
+pub var DependsOn: entity_t = undefined;
 pub var SlotOf: entity_t = undefined;
+
+pub var AlwaysOverride: entity_t = undefined;
+pub var Alias: entity_t = undefined;
 pub var Prefab: entity_t = undefined;
 pub var Disabled: entity_t = undefined;
 
@@ -111,18 +129,23 @@ pub var OnRemove: entity_t = undefined;
 pub var OnSet: entity_t = undefined;
 pub var UnSet: entity_t = undefined;
 pub var Monitor: entity_t = undefined;
-pub var OnDelete: entity_t = undefined;
 pub var OnTableCreate: entity_t = undefined;
 pub var OnTableDelete: entity_t = undefined;
 pub var OnTableEmpty: entity_t = undefined;
 pub var OnTableFill: entity_t = undefined;
 
+pub var OnDelete: entity_t = undefined;
 pub var OnDeleteTarget: entity_t = undefined;
 pub var Remove: entity_t = undefined;
 pub var Delete: entity_t = undefined;
+pub var Panic: entity_t = undefined;
 
-pub var IsA: entity_t = undefined;
-pub var DependsOn: entity_t = undefined;
+pub var DefaultChildComponent: entity_t = undefined;
+
+pub var PredEq: entity_t = undefined;
+pub var PredMatch: entity_t = undefined;
+pub var PredLookup: entity_t = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Types for core API objects.
@@ -305,8 +328,17 @@ pub const Cascade = 1 << 5;
 pub const Parent = 1 << 6;
 pub const IsVariable = 1 << 7;
 pub const IsEntity = 1 << 8;
-pub const Filter = 1 << 9;
+pub const IsName = 1 << 9;
+pub const Filter = 1 << 10;
 pub const TraverseFlags = Up | Down | TraverseAll | Self | Cascade | Parent;
+
+pub const TermMatchAny = 1 << 0;
+pub const TermMatchAnySrc = 1 << 1;
+pub const TermSrcFirstEq = 1 << 2;
+pub const TermSrcSecondEq = 1 << 3;
+pub const TermTransitive = 1 << 4;
+pub const TermReflexive = 1 << 5;
+pub const TermIdInherited = 1 << 6;
 
 pub const term_id_t = extern struct {
     id: entity_t = 0,
@@ -330,6 +362,8 @@ pub const term_t = extern struct {
 
     field_index: i32 = 0,
     idr: ?*id_record_t = null,
+
+    flags: flags16_t = 0,
 
     move: bool = true,
 };
@@ -526,22 +560,32 @@ pub const query_iter_t = extern struct {
     skip_count: i32,
 };
 
+pub const rule_var_t = opaque {};
+pub const rule_op_t = opaque {};
 pub const rule_op_ctx_t = opaque {};
+
+pub const rule_op_profile_t = extern struct {
+    count: [2]i32,
+};
 
 pub const rule_iter_t = extern struct {
     rule: ?*const rule_t,
-    registers: [*c]var_t,
+    vars: [*c]var_t,
+    rule_vars: ?*rule_var_t,
+    ops: ?*rule_op_t,
     op_ctx: ?*rule_op_ctx_t,
-    columns: [*c]i32,
-    entity: entity_t,
+    written: *u64,
+
+    profile: if (flecs_is_debug) rule_op_profile_t else void,
+
     redo: bool,
-    op: i32,
-    sp: i32,
+    op: i16,
+    sp: i16,
 };
 
 pub const snapshot_iter_t = extern struct {
     filter: filter_t,
-    tables: ?*vector_t,
+    tables: vec_t,
     index: i32,
 };
 
@@ -934,17 +978,33 @@ pub fn init() *world_t {
     Reflexive = EcsReflexive;
     Final = EcsFinal;
     DontInherit = EcsDontInherit;
-    Symmetric = EcsSymmetric;
     Exclusive = EcsExclusive;
     Acyclic = EcsAcyclic;
     Traversable = EcsTraversable;
+    Symmetric = EcsSymmetric;
     With = EcsWith;
     OneOf = EcsOneOf;
+
+    IsA = EcsIsA;
+    ChildOf = EcsChildOf;
+    DependsOn = EcsDependsOn;
+    SlotOf = EcsSlotOf;
+
+    OnDelete = EcsOnDelete;
+    OnDeleteTarget = EcsOnDeleteTarget;
+    Remove = EcsRemove;
+    Delete = EcsDelete;
+    Panic = EcsPanic;
+
+    DefaultChildComponent = EcsDefaultChildComponent;
+
+    PredEq = EcsPredEq;
+    PredMatch = EcsPredMatch;
+    PredLookup = EcsPredLookup;
+
     Tag = EcsTag;
     Union = EcsUnion;
     Alias = EcsAlias;
-    ChildOf = EcsChildOf;
-    SlotOf = EcsSlotOf;
     Prefab = EcsPrefab;
     Disabled = EcsDisabled;
     OnStart = EcsOnStart;
@@ -964,16 +1024,10 @@ pub fn init() *world_t {
     OnSet = EcsOnSet;
     UnSet = EcsUnSet;
     Monitor = EcsMonitor;
-    OnDelete = EcsOnDelete;
     OnTableCreate = EcsOnTableCreate;
     OnTableDelete = EcsOnTableDelete;
     OnTableEmpty = EcsOnTableEmpty;
     OnTableFill = EcsOnTableFill;
-    OnDeleteTarget = EcsOnDeleteTarget;
-    Remove = EcsRemove;
-    Delete = EcsDelete;
-    IsA = EcsIsA;
-    DependsOn = EcsDependsOn;
 
     return world;
 }
@@ -1310,6 +1364,10 @@ extern fn ecs_read_begin(world: *world_t, entity: entity_t) ?*const record_t;
 pub const read_end = ecs_read_end;
 extern fn ecs_read_end(record: *const record_t) void;
 
+/// `pub fn record_get_entity(record: *const record_t) entity_t`
+pub const record_get_entity = ecs_record_get_entity;
+extern fn ecs_record_get_entity(record: *const record_t) entity_t;
+
 /// `pub fn record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque`
 pub const record_get_id = ecs_record_get_id;
 extern fn ecs_record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque;
@@ -1317,6 +1375,10 @@ extern fn ecs_record_get_id(world: *world_t, record: *const record_t, id: id_t) 
 /// `pub fn record_get_mut_id(world: *world_t, record: *record_t, id: id_t) ?*anyopaque`
 pub const record_get_mut_id = ecs_record_get_mut_id;
 extern fn ecs_record_get_mut_id(world: *world_t, record: *record_t, id: id_t) ?*anyopaque;
+
+/// `pub fn record_has_id(world: *world_t, record: *const record_t, id: id_t) bool`
+pub const record_has_id = ecs_record_has_id;
+extern fn ecs_record_has_id(world: *world_t, record: *const record_t, id: id_t) bool;
 
 /// `pub fn emplace_id(world: *world_t, entity: entity_t, id: id_t) ?*anyopaque`
 pub const emplace_id = ecs_emplace_id;
@@ -1397,6 +1459,10 @@ extern fn ecs_has_id(world: *const world_t, entity: entity_t, id: id_t) bool;
 /// `pub fn get_target(world: *const world_t, entity: entity_t, rel: entity_t, index: i32) entity_t`
 pub const get_target = ecs_get_target;
 extern fn ecs_get_target(world: *const world_t, entity: entity_t, rel: entity_t, index: i32) entity_t;
+
+/// `pub fn get_target(world: *const world_t, entity: entity_t, rel: entity_t, index: i32) entity_t`
+pub const get_parent = ecs_get_parent;
+extern fn ecs_get_parent(world: *const world_t, entity: entity_t) entity_t;
 
 /// `pub fn get_target_for_id(world: *const world_t, entity: entity_t, rel: entity_t, id: id_t) entity_t`
 pub const get_target_for_id = ecs_get_target_for_id;
@@ -1728,9 +1794,9 @@ extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) ?*query_t;
 pub const query_fini = ecs_query_fini;
 extern fn ecs_query_fini(query: *query_t) void;
 
-/// `pub fn query_get_filter(query: *query_t) *const filter_t`
+/// `pub fn query_get_filter(query: *const query_t) *const filter_t`
 pub const query_get_filter = ecs_query_get_filter;
-extern fn ecs_query_get_filter(query: *query_t) *const filter_t;
+extern fn ecs_query_get_filter(query: *const query_t) *const filter_t;
 
 /// `pub fn query_iter(world: *const world_t: query: *query_t) iter_t`
 pub const query_iter = ecs_query_iter;
@@ -1748,9 +1814,9 @@ extern fn ecs_query_next_instanced(iter: *iter_t) bool;
 pub const query_next_table = ecs_query_next_table;
 extern fn ecs_query_next_table(iter: *iter_t) bool;
 
-/// `pub fn query_populate(iter: *iter_t) bool`
+/// `pub fn query_populate(iter: *iter_t) c_int`
 pub const query_populate = ecs_query_populate;
-extern fn ecs_query_populate(iter: *iter_t) bool;
+extern fn ecs_query_populate(iter: *iter_t) c_int;
 
 /// `pub fn query_changed(query: *query_t, iter: *const iter_t) bool`
 pub const query_changed = ecs_query_changed;
@@ -1764,9 +1830,9 @@ extern fn ecs_query_skip(iter: *iter_t) void;
 pub const query_set_group = ecs_query_set_group;
 extern fn ecs_query_set_group(iter: *iter_t, group_id: u64) void;
 
-/// `pub fn query_get_group_ctx(query: *query_t, group_id: u64) ?*anyopaque`
+/// `pub fn query_get_group_ctx(query: *const query_t, group_id: u64) ?*anyopaque`
 pub const query_get_group_ctx = ecs_query_get_group_ctx;
-extern fn ecs_query_get_group_ctx(query: *query_t, group_id: u64) ?*anyopaque;
+extern fn ecs_query_get_group_ctx(query: *const query_t, group_id: u64) ?*anyopaque;
 
 pub const query_group_info_t = extern struct {
     match_count: i32,
@@ -1774,9 +1840,9 @@ pub const query_group_info_t = extern struct {
     ctx: ?*anyopaque,
 };
 
-/// `pub fn query_get_group_info(query: *query_t, group_id: u64) ?*const query_group_info_t`
+/// `pub fn query_get_group_info(query: *const query_t, group_id: u64) ?*const query_group_info_t`
 pub const query_get_group_info = ecs_query_get_group_info;
-extern fn ecs_query_get_group_info(query: *query_t, group_id: u64) ?*const query_group_info_t;
+extern fn ecs_query_get_group_info(query: *const query_t, group_id: u64) ?*const query_group_info_t;
 
 /// `pub fn query_orphaned(query: *const query_t) bool`
 pub const query_orphaned = ecs_query_orphaned;
@@ -2084,6 +2150,30 @@ extern fn ecs_search_relation(
 ) i32;
 //--------------------------------------------------------------------------------------------------
 //
+// Log api
+//
+//--------------------------------------------------------------------------------------------------
+
+pub const log_set_level = ecs_log_set_level;
+extern fn ecs_log_set_level(level: c_int) c_int;
+
+pub const log_get_level = ecs_log_get_level;
+extern fn ecs_log_get_level() c_int;
+
+pub const log_enable_colors = ecs_log_enable_colors;
+extern fn ecs_log_enable_colors(enabled: bool) bool;
+
+pub const log_enable_timestamp = ecs_log_enable_timestamp;
+extern fn ecs_log_enable_timestamp(enabled: bool) bool;
+
+pub const log_enable_timedelta = ecs_log_enable_timedelta;
+extern fn ecs_log_enable_timedelta(enabled: bool) bool;
+
+pub const log_last_error = ecs_log_last_error;
+extern fn ecs_log_last_error() c_int;
+
+//--------------------------------------------------------------------------------------------------
+//
 // Construct, destruct, copy and move dynamically created values.
 //
 //--------------------------------------------------------------------------------------------------
@@ -2325,6 +2415,19 @@ inline fn perTypeGlobalVarPtr(comptime T: type) *id_t {
 // OS API
 //
 //--------------------------------------------------------------------------------------------------
+
+pub const os_init = ecs_os_init;
+extern fn ecs_os_init() void;
+
+pub const os_fini = ecs_os_fini;
+extern fn ecs_os_fini() void;
+
+pub const os_get_api = ecs_os_get_api;
+extern fn ecs_os_get_api() os.api_t;
+
+pub const os_set_api = ecs_os_set_api;
+extern fn ecs_os_set_api(api: *os.api_t) void;
+
 pub const time_t = extern struct {
     sec: u32,
     nanosec: u32,
