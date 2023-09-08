@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.3";
+pub const flecs_version = "3.2.4";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -166,7 +166,7 @@ pub const query_t = opaque {};
 
 pub const table_record_t = opaque {};
 pub const id_record_t = opaque {};
-pub const query_table_node_t = opaque {};
+pub const query_table_match_t = opaque {};
 pub const rule_t = opaque {};
 
 pub const poly_t = anyopaque;
@@ -553,9 +553,9 @@ pub const filter_iter_t = extern struct {
 
 pub const query_iter_t = extern struct {
     query: ?*query_t,
-    node: ?*query_table_node_t,
-    prev: ?*query_table_node_t,
-    last: ?*query_table_node_t,
+    node: ?*query_table_match_t,
+    prev: ?*query_table_match_t,
+    last: ?*query_table_match_t,
     sparse_smallest: i32,
     sparse_first: i32,
     bitset_first: i32,
@@ -2475,6 +2475,8 @@ pub const os = struct {
     pub const api_thread_new_t = *const fn (thread_callback_t, ?*anyopaque) callconv(.C) thread_t;
     pub const api_thread_join_t = *const fn (thread_t) callconv(.C) ?*anyopaque;
     pub const api_thread_self_t = *const fn () callconv(.C) thread_id_t;
+    pub const api_task_new_t = *const fn (thread_callback_t, ?*anyopaque) callconv(.C) thread_t;
+    pub const api_task_join_t = *const fn (thread_t) callconv(.C) ?*anyopaque;
     pub const api_ainc_t = *const fn (*i32) callconv(.C) i32;
     pub const api_lainc_t = *const fn (*i64) callconv(.C) i64;
     pub const api_mutex_new_t = *const fn () callconv(.C) mutex_t;
@@ -2508,6 +2510,8 @@ pub const os = struct {
         thread_new_: api_thread_new_t,
         thread_join_: api_thread_join_t,
         thread_self_: api_thread_self_t,
+        task_new_: api_task_new_t,
+        task_join_: api_task_join_t,
         ainc_: api_ainc_t,
         adec_: api_ainc_t,
         lainc_: api_lainc_t,
