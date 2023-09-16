@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2022 Evan Pezent
+// Copyright (c) 2023 Evan Pezent
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// ImPlot v0.14
+// ImPlot v0.16
 
 // Table of Contents:
 //
@@ -60,7 +60,7 @@
 #endif
 
 // ImPlot version string.
-#define IMPLOT_VERSION "0.14"
+#define IMPLOT_VERSION "0.16"
 // Indicates variable should deduced automatically.
 #define IMPLOT_AUTO -1
 // Special color used to indicate that a color should be deduced automatically.
@@ -468,7 +468,7 @@ struct ImPlotPoint {
     double x, y;
     ImPlotPoint()                         { x = y = 0.0;      }
     ImPlotPoint(double _x, double _y)     { x = _x; y = _y;   }
-    ImPlotPoint(const ImVec2& p)          { x = p.x; y = p.y; }
+    ImPlotPoint(const ImVec2& p)          { x = (double)p.x; y = (double)p.y; }
     double  operator[] (size_t idx) const { return (&x)[idx]; }
     double& operator[] (size_t idx)       { return (&x)[idx]; }
 #ifdef IMPLOT_POINT_CLASS_EXTRA
@@ -728,7 +728,7 @@ IMPLOT_API void EndSubplots();
 
 // Enables an axis or sets the label and/or flags for an existing axis. Leave #label = nullptr for no label.
 IMPLOT_API void SetupAxis(ImAxis axis, const char* label=nullptr, ImPlotAxisFlags flags=0);
-// Sets an axis range limits. If ImPlotCond_Always is used, the axes limits will be locked.
+// Sets an axis range limits. If ImPlotCond_Always is used, the axes limits will be locked. Inversion with v_min > v_max is not supported; use SetupAxisLimits instead.
 IMPLOT_API void SetupAxisLimits(ImAxis axis, double v_min, double v_max, ImPlotCond cond = ImPlotCond_Once);
 // Links an axis range limits to external values. Set to nullptr for no linkage. The pointer data must remain valid until EndPlot.
 IMPLOT_API void SetupAxisLinks(ImAxis axis, double* link_min, double* link_max);

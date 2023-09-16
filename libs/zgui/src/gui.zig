@@ -124,9 +124,33 @@ pub const ConfigFlags = packed struct(u32) {
     nav_no_capture_keyboard: bool = false,
     no_mouse: bool = false,
     no_mouse_cursor_change: bool = false,
-    user_storage: u14 = 0,
+
+    // Docking
+    docking_enable: bool = false,
+
+    _reserved7: bool = false,
+    _reserved8: bool = false,
+    _reserved9: bool = false,
+
+    // Viewports
+    viewports_enable: bool = false,
+
+    _reserved11: bool = false,
+    _reserved12: bool = false,
+    _reserved13: bool = false,
+
+    dpi_enable_scale_viewports: bool = false,
+    dpi_enable_scale_fonts: bool = false,
+
+    _reserved16: bool = false,
+    _reserved17: bool = false,
+    _reserved18: bool = false,
+    _reserved19: bool = false,
+
+    // User storage
     is_srgb: bool = false,
     is_touch_screen: bool = false,
+
     _padding: u10 = 0,
 };
 
@@ -179,7 +203,7 @@ pub const io = struct {
     ) Font;
 
     pub fn addFontFromMemory(fontdata: []const u8, size_pixels: f32) Font {
-        return zguiIoAddFontFromMemory(fontdata.ptr, @as(i32, @intCast(fontdata.len)), size_pixels);
+        return zguiIoAddFontFromMemory(fontdata.ptr, @intCast(fontdata.len), size_pixels);
     }
     extern fn zguiIoAddFontFromMemory(font_data: *const anyopaque, font_size: i32, size_pixels: f32) Font;
 
@@ -191,7 +215,7 @@ pub const io = struct {
     ) Font {
         return zguiIoAddFontFromMemoryWithConfig(
             fontdata.ptr,
-            @as(i32, @intCast(fontdata.len)),
+            @intCast(fontdata.len),
             size_pixels,
             if (config) |c| &c else null,
             ranges,
@@ -481,12 +505,20 @@ pub const WindowFlags = packed struct(u32) {
     always_vertical_scrollbar: bool = false,
     always_horizontal_scrollbar: bool = false,
     always_use_window_padding: bool = false,
+
+    _reserved17: bool = false,
+
     no_nav_inputs: bool = false,
     no_nav_focus: bool = false,
     unsaved_document: bool = false,
-    _padding: u12 = 0,
+    no_docking: bool = false,
 
-    pub const no_nav = WindowFlags{ .no_nav_inputs = true, .no_nav_focus = true };
+    _padding: u10 = 0,
+
+    pub const no_nav = WindowFlags{
+        .no_nav_inputs = true,
+        .no_nav_focus = true,
+    };
     pub const no_decoration = WindowFlags{
         .no_title_bar = true,
         .no_resize = true,
@@ -505,10 +537,12 @@ pub const SliderFlags = packed struct(u32) {
     _reserved1: bool = false,
     _reserved2: bool = false,
     _reserved3: bool = false,
+
     always_clamp: bool = false,
     logarithmic: bool = false,
     no_round_to_format: bool = false,
     no_input: bool = false,
+
     _padding: u24 = 0,
 };
 //--------------------------------------------------------------------------------------------------
@@ -516,6 +550,7 @@ pub const ButtonFlags = packed struct(u32) {
     mouse_button_left: bool = false,
     mouse_button_right: bool = false,
     mouse_button_middle: bool = false,
+
     _padding: u29 = 0,
 };
 //--------------------------------------------------------------------------------------------------
@@ -696,9 +731,14 @@ pub const FocusedFlags = packed struct(u32) {
     root_window: bool = false,
     any_window: bool = false,
     no_popup_hierarchy: bool = false,
-    _padding: u28 = 0,
+    dock_hierarchy: bool = false,
 
-    pub const root_and_child_windows = FocusedFlags{ .root_window = true, .child_windows = true };
+    _padding: u27 = 0,
+
+    pub const root_and_child_windows = FocusedFlags{
+        .root_window = true,
+        .child_windows = true,
+    };
 };
 //--------------------------------------------------------------------------------------------------
 pub const HoveredFlags = packed struct(u32) {
@@ -706,21 +746,32 @@ pub const HoveredFlags = packed struct(u32) {
     root_window: bool = false,
     any_window: bool = false,
     no_popup_hierarchy: bool = false,
-    _reserved0: bool = false,
+    dock_heirarchy: bool = false,
     allow_when_blocked_by_popup: bool = false,
-    _reserved1: bool = false,
+
+    _reserved6: bool = false,
+
     allow_when_blocked_by_active_item: bool = false,
-    allow_when_overlapped: bool = false,
+    allow_when_overlapped_by_item: bool = false,
+    allow_when_overlapped_by_window: bool = false,
     allow_when_disabled: bool = false,
     no_nav_override: bool = false,
-    _padding: u21 = 0,
 
+    _padding: u22 = 0,
+
+    pub const allow_when_overlapped = HoveredFlags{
+        .allow_when_overlapped_by_item = true,
+        .allow_when_overlapped_by_window = true,
+    };
     pub const rect_only = HoveredFlags{
         .allow_when_blocked_by_popup = true,
         .allow_when_blocked_by_active_item = true,
         .allow_when_overlapped = true,
     };
-    pub const root_and_child_windows = HoveredFlags{ .root_window = true, .child_windows = true };
+    pub const root_and_child_windows = HoveredFlags{
+        .root_window = true,
+        .child_windows = true,
+    };
 };
 //--------------------------------------------------------------------------------------------------
 /// `pub fn isWindowAppearing() bool`
@@ -1513,6 +1564,7 @@ pub const ComboFlags = packed struct(u32) {
     height_largest: bool = false,
     no_arrow_button: bool = false,
     no_preview: bool = false,
+
     _padding: u25 = 0,
 };
 //--------------------------------------------------------------------------------------------------
@@ -2142,7 +2194,9 @@ pub const InputTextFlags = packed struct(u32) {
     chars_scientific: bool = false,
     callback_resize: bool = false,
     callback_edit: bool = false,
-    _padding: u12 = 0,
+    escape_clears_all: bool = false,
+
+    _padding: u11 = 0,
 };
 //--------------------------------------------------------------------------------------------------
 pub const InputTextCallbackData = extern struct {
@@ -2493,12 +2547,13 @@ pub const ColorEditFlags = packed struct(u32) {
     no_drag_drop: bool = false,
     no_border: bool = false,
 
-    _reserved0: bool = false,
-    _reserved1: bool = false,
-    _reserved2: bool = false,
-    _reserved3: bool = false,
-    _reserved4: bool = false,
+    _reserved11: bool = false,
+    _reserved12: bool = false,
+    _reserved13: bool = false,
+    _reserved14: bool = false,
+    _reserved15: bool = false,
 
+    // User Options
     alpha_bar: bool = false,
     alpha_preview: bool = false,
     alpha_preview_half: bool = false,
@@ -2594,7 +2649,7 @@ extern fn zguiColorButton(
 pub const TreeNodeFlags = packed struct(u32) {
     selected: bool = false,
     framed: bool = false,
-    allow_item_overlap: bool = false,
+    allow_overlap: bool = false,
     no_tree_push_on_open: bool = false,
     no_auto_open_on_log: bool = false,
     default_open: bool = false,
@@ -2606,6 +2661,7 @@ pub const TreeNodeFlags = packed struct(u32) {
     span_avail_width: bool = false,
     span_full_width: bool = false,
     nav_left_jumps_back_here: bool = false,
+
     _padding: u18 = 0,
 
     pub const collapsing_header = TreeNodeFlags{
@@ -2706,7 +2762,8 @@ pub const SelectableFlags = packed struct(u32) {
     span_all_columns: bool = false,
     allow_double_click: bool = false,
     disabled: bool = false,
-    allow_item_overlap: bool = false,
+    allow_overlap: bool = false,
+
     _padding: u27 = 0,
 };
 //--------------------------------------------------------------------------------------------------
@@ -2794,12 +2851,15 @@ pub const TableBorderFlags = packed struct(u4) {
     }; // Draw all borders.
 };
 pub const TableFlags = packed struct(u32) {
+    // Features
     resizable: bool = false,
     reorderable: bool = false,
     hideable: bool = false,
     sortable: bool = false,
     no_saved_settings: bool = false,
     context_menu_in_body: bool = false,
+
+    // Decorations
     row_bg: bool = false,
     borders: TableBorderFlags = .{},
     no_borders_in_body: bool = false,
@@ -2866,7 +2926,12 @@ pub const TableColumnFlags = packed struct(u32) {
     indent_enable: bool = false,
     indent_disable: bool = false,
 
-    _padding0: u6 = 0,
+    _reserved18: bool = false,
+    _reserved19: bool = false,
+    _reserved20: bool = false,
+    _reserved21: bool = false,
+    _reserved22: bool = false,
+    _reserved23: bool = false,
 
     // Output status flags, read-only via TableGetColumnFlags()
     is_enabled: bool = false,
@@ -2874,7 +2939,7 @@ pub const TableColumnFlags = packed struct(u32) {
     is_sorted: bool = false,
     is_hovered: bool = false,
 
-    _padding1: u4 = 0,
+    _padding: u4 = 0,
 };
 
 pub const TableColumnSortSpecs = extern struct {
@@ -3211,17 +3276,24 @@ pub const beginPopupContextWindow = zguiBeginPopupContextWindow;
 /// `pub fn beginPopupContextItem() bool`
 pub const beginPopupContextItem = zguiBeginPopupContextItem;
 pub const PopupFlags = packed struct(u32) {
-    mouse_button_left: bool = false,
     mouse_button_right: bool = false,
     mouse_button_middle: bool = false,
-    mouse_button_mask_: bool = false,
-    mouse_button_default_: bool = false,
+
+    _reserved2: bool = false,
+    _reserved3: bool = false,
+    _reserved4: bool = false,
+
     no_open_over_existing_popup: bool = false,
     no_open_over_items: bool = false,
     any_popup_id: bool = false,
     any_popup_level: bool = false,
-    any_popup: bool = false,
+
     _padding: u22 = 0,
+
+    pub const any_popup = PopupFlags{
+        .any_popup_id = true,
+        .any_popup_level = true,
+    };
 };
 pub fn beginPopupModal(name: [:0]const u8, args: Begin) bool {
     return zguiBeginPopupModal(name, args.popen, args.flags);
@@ -3256,13 +3328,8 @@ pub const TabBarFlags = packed struct(u32) {
     no_tooltip: bool = false,
     fitting_policy_resize_down: bool = false,
     fitting_policy_scroll: bool = false,
-    _padding: u24 = 0,
 
-    pub const fitting_policy_mask = TabBarFlags{
-        .fitting_policy_resize_down = true,
-        .fitting_policy_scroll = true,
-    };
-    pub const fitting_policy_default = TabBarFlags{ .fitting_policy_resize_down = true };
+    _padding: u24 = 0,
 };
 pub const TabItemFlags = packed struct(u32) {
     unsaved_document: bool = false,
@@ -3273,6 +3340,7 @@ pub const TabItemFlags = packed struct(u32) {
     no_reorder: bool = false,
     leading: bool = false,
     trailing: bool = false,
+
     _padding: u24 = 0,
 };
 pub fn beginTabBar(label: [:0]const u8, flags: TabBarFlags) bool {
@@ -3375,34 +3443,35 @@ extern fn zguiResetMouseDragDelta(button: MouseButton) void;
 //--------------------------------------------------------------------------------------------------
 pub const DrawFlags = packed struct(u32) {
     closed: bool = false,
-    _padding0: u3 = 0,
+
+    _reserved1: bool = false,
+    _reserved2: bool = false,
+    _reserved3: bool = false,
+
     round_corners_top_left: bool = false,
     round_corners_top_right: bool = false,
     round_corners_bottom_left: bool = false,
     round_corners_bottom_right: bool = false,
     round_corners_none: bool = false,
-    _padding1: u23 = 0,
+
+    _padding: u23 = 0,
 
     pub const round_corners_top = DrawFlags{
         .round_corners_top_left = true,
         .round_corners_top_right = true,
     };
-
     pub const round_corners_bottom = DrawFlags{
         .round_corners_bottom_left = true,
         .round_corners_bottom_right = true,
     };
-
     pub const round_corners_left = DrawFlags{
         .round_corners_top_left = true,
         .round_corners_bottom_left = true,
     };
-
     pub const round_corners_right = DrawFlags{
         .round_corners_top_right = true,
         .round_corners_bottom_right = true,
     };
-
     pub const round_corners_all = DrawFlags{
         .round_corners_top_left = true,
         .round_corners_top_right = true,
@@ -3806,7 +3875,7 @@ pub const DrawList = *opaque {
         zguiDrawList_AddPolyline(
             draw_list,
             points.ptr,
-            @as(u32, @intCast(points.len)),
+            @intCast(points.len),
             args.col,
             args.flags,
             args.thickness,
@@ -3829,7 +3898,7 @@ pub const DrawList = *opaque {
         zguiDrawList_AddConvexPolyFilled(
             draw_list,
             points.ptr,
-            @as(u32, @intCast(points.len)),
+            @intCast(points.len),
             col,
         );
     }

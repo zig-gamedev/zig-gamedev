@@ -138,7 +138,12 @@ const DemoState = struct {
         assert(zgui.io.getFont(0) == font_normal);
 
         // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
+        zgui.backend.init(
+            window,
+            gctx.device,
+            @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+            0,
+        );
 
         const style = zgui.getStyle();
 
