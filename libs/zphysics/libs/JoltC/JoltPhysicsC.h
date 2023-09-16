@@ -257,6 +257,7 @@ typedef struct JPC_ConvexHullShapeSettings     JPC_ConvexHullShapeSettings;
 typedef struct JPC_HeightFieldShapeSettings    JPC_HeightFieldShapeSettings;
 typedef struct JPC_MeshShapeSettings           JPC_MeshShapeSettings;
 typedef struct JPC_DecoratedShapeSettings      JPC_DecoratedShapeSettings;
+typedef struct JPC_CharacterContactSettings    JPC_CharacterContactSettings;
 
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
@@ -264,6 +265,7 @@ typedef struct JPC_SharedMutex   JPC_SharedMutex;
 typedef struct JPC_Shape            JPC_Shape;
 typedef struct JPC_PhysicsMaterial  JPC_PhysicsMaterial;
 typedef struct JPC_GroupFilter      JPC_GroupFilter;
+typedef struct JPC_Character        JPC_Character;
 typedef struct JPC_CharacterVirtual JPC_CharacterVirtual;
 
 #if JPC_DEBUG_RENDERER == 1
@@ -391,6 +393,16 @@ typedef struct JPC_CharacterBaseSettings
     float               max_slope_angle;
     const JPC_Shape *   shape;
 } JPC_CharacterBaseSettings;
+
+// NOTE: Needs to be kept in sync
+typedef struct JPC_CharacterSettings
+{
+    JPC_CharacterBaseSettings base;
+    JPC_ObjectLayer layer;
+    float mass;
+    float friction;
+    float gravity_factor;
+} JPC_CharacterSettings;
 
 // NOTE: Needs to be kept in sync
 typedef struct JPC_CharacterVirtualSettings
@@ -689,6 +701,26 @@ typedef struct JPC_BodyFilterVTable
     (*ShouldCollideLocked)(const void *in_self, const JPC_Body *in_body);
 } JPC_BodyFilterVTable;
 
+typedef struct JPC_ShapeFilterVTable
+{
+    _JPC_VTABLE_HEADER;
+
+    // Required, *cannot* be NULL.
+    bool
+    (*ShouldCollide)(const void *in_self, const JPC_Shape *in_shape, const JPC_SubShapeID *in_sub_shape_id);
+
+    // Required, *cannot* be NULL.
+    bool
+    (*PairShouldCollide)(const void *in_self,
+                         const JPC_Shape *in_shape1,
+                         const JPC_SubShapeID *in_sub_shape_id1,
+                         const JPC_Shape *in_shape2,
+                         const JPC_SubShapeID *in_sub_shape_id2);
+
+    // Set by the collision detection functions to the body ID of the "receiving" body before ShouldCollide is called.
+    uint32_t bodyId2;
+} JPC_ShapeFilterVTable;
+
 typedef struct JPC_PhysicsStepListenerVTable
 {
     _JPC_VTABLE_HEADER;
@@ -697,6 +729,50 @@ typedef struct JPC_PhysicsStepListenerVTable
     void
     (*OnStep)(float in_delta_time, JPC_PhysicsSystem *in_physics_system);
 } JPC_PhysicsStepListener;
+
+// Made all callbacks required for this one for simplicity's sake, but can be modified to imitate ContactListener later.
+typedef struct JPC_CharacterContactListenerVTable
+{
+    _JPC_VTABLE_HEADER;
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnAdjustBodyVelocity)(void *in_self,
+                            const JPC_CharacterVirtual *in_character,
+                            const JPC_Body *in_body2,
+                            const float io_linear_velocity[3],
+                            const float io_angular_velocity[3]);
+
+    // Required, *cannot* be NULL.
+    bool
+    (*OnContactValidate)(void *in_self,
+                         const JPC_CharacterVirtual *in_character,
+                         const JPC_Body *in_body2,
+                         const JPC_SubShapeID *sub_shape_id);
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnContactAdded)(void *in_self,
+                      const JPC_CharacterVirtual *in_character,
+                      const JPC_Body *in_body2,
+                      const JPC_SubShapeID *sub_shape_id,
+                      const JPC_Real contact_position[3],
+                      const float contact_normal[3],
+                      JPC_CharacterContactSettings *io_settings);
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnContactSolve)(void *in_self,
+                      const JPC_CharacterVirtual *in_character,
+                      const JPC_Body *in_body2,
+                      const JPC_SubShapeID *sub_shape_id,
+                      const JPC_Real contact_position[3],
+                      const float contact_normal[3],
+                      const float contact_velocity[3],
+                      const JPC_PhysicsMaterial *contact_material,
+                      const float character_velocity_in[3],
+                      float character_velocity_out[3]);
+} JPC_CharacterContactListenerVTable;
 
 typedef struct JPC_ContactListenerVTable
 {
@@ -1763,6 +1839,48 @@ JPC_API bool
 JPC_BodyID_IsInvalid(JPC_BodyID in_body_id);
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_CharacterSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterSettings *
+JPC_CharacterSettings_Create();
+
+JPC_API void
+JPC_CharacterSettings_Release(JPC_CharacterSettings *in_settings);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_Character
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_Character *
+JPC_Character_Create(const JPC_CharacterSettings *in_settings,
+                     const JPC_Real in_position[3],
+                     const float in_rotation[4],
+                     uint64_t in_user_data,
+                     JPC_PhysicsSystem *in_physics_system);
+
+JPC_API void
+JPC_Character_Destroy(JPC_Character *in_character);
+
+JPC_API void
+JPC_Character_AddToPhysicsSystem(JPC_Character *in_character, JPC_Activation in_activation, bool in_lock_bodies);
+
+JPC_API void
+JPC_Character_RemoveFromPhysicsSystem(JPC_Character *in_character, bool in_lock_bodies);
+
+JPC_API void
+JPC_Character_GetPosition(const JPC_Character *in_character, JPC_Real out_position[3]);
+
+JPC_API void
+JPC_Character_SetPosition(JPC_Character *in_character, const JPC_Real in_position[3]);
+
+JPC_API void
+JPC_Character_GetLinearVelocity(const JPC_Character *in_character, float out_linear_velocity[3]);
+
+JPC_API void
+JPC_Character_SetLinearVelocity(JPC_Character *in_character, const float in_linear_velocity[3]);
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_CharacterVirtualSettings
 //
 //--------------------------------------------------------------------------------------------------
@@ -1792,7 +1910,11 @@ JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
                             const void *in_broad_phase_layer_filter,
                             const void *in_object_layer_filter,
                             const void *in_body_filter,
+                            const void *in_shape_filter,
                             JPC_TempAllocator *in_temp_allocator);
+
+JPC_API void
+JPC_CharacterVirtual_SetListener(JPC_CharacterVirtual *in_character, void *in_listener);
 
 JPC_API void
 JPC_CharacterVirtual_UpdateGroundVelocity(JPC_CharacterVirtual *in_character);
@@ -1805,6 +1927,9 @@ JPC_CharacterVirtual_GetGroundState(JPC_CharacterVirtual *in_character);
 
 JPC_API void
 JPC_CharacterVirtual_GetPosition(const JPC_CharacterVirtual *in_character, JPC_Real out_position[3]);
+
+JPC_API void
+JPC_CharacterVirtual_SetPosition(JPC_CharacterVirtual *in_character, const JPC_Real in_position[3]);
 
 JPC_API void
 JPC_CharacterVirtual_GetRotation(const JPC_CharacterVirtual *in_character, float out_rotation[4]);
