@@ -121,6 +121,9 @@ extern fn glfwRawMouseMotionSupported() i32;
 pub const makeContextCurrent = glfwMakeContextCurrent;
 extern fn glfwMakeContextCurrent(window: *Window) void;
 
+pub const getCurrentContext = glfwGetCurrentContext;
+extern fn glfwGetCurrentContext() *Window;
+
 pub const swapInterval = glfwSwapInterval;
 extern fn glfwSwapInterval(interval: i32) void;
 
