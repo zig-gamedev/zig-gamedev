@@ -2610,16 +2610,22 @@ JPC_CharacterSettings_Release(JPC_CharacterSettings *in_settings)
     toJph(in_settings)->Release();
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterSettings_AddRef(JPC_CharacterSettings *in_settings)
+{
+    toJph(in_settings)->AddRef();
+}
+//--------------------------------------------------------------------------------------------------
 //
 // JPC_Character
 //
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_Character *
 JPC_Character_Create(const JPC_CharacterSettings *in_settings,
-                            const JPC_Real in_position[3],
-                            const float in_rotation[4],
-                            uint64_t in_user_data,
-                            JPC_PhysicsSystem *in_physics_system)
+                     const JPC_Real in_position[3],
+                     const float in_rotation[4],
+                     uint64_t in_user_data,
+                     JPC_PhysicsSystem *in_physics_system)
 {
     auto character = new JPH::Character(toJph(in_settings),
                                         loadVec3(in_position),

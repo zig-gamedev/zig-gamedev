@@ -845,6 +845,9 @@ pub const CharacterSettings = extern struct {
     pub fn release(settings: *CharacterSettings) void {
         c.JPC_CharacterSettings_Release(@as(*c.JPC_CharacterSettings, @ptrCast(settings)));
     }
+    pub fn addRef(settings: *CharacterSettings) void {
+        c.JPC_CharacterSettings_AddRef(@as(*c.JPC_CharacterSettings, @ptrCast(settings)));
+    }
 
     base: CharacterBaseSettings,
     layer: ObjectLayer,

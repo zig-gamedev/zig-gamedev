@@ -1847,6 +1847,9 @@ JPC_CharacterSettings_Create();
 
 JPC_API void
 JPC_CharacterSettings_Release(JPC_CharacterSettings *in_settings);
+
+JPC_API void
+JPC_CharacterSettings_AddRef(JPC_CharacterSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_Character
