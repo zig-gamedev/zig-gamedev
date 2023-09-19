@@ -68,7 +68,7 @@ test "zflecs.entities.basics" {
             .terms = [_]ecs.term_t{
                 .{ .id = ecs.id(Position) },
                 .{ .id = ecs.id(Walking) },
-            } ++ ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 2),
+            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
         });
         defer ecs.filter_fini(filter);
 
@@ -96,7 +96,7 @@ test "zflecs.entities.basics" {
                 .terms = [_]ecs.term_t{
                     .{ .id = ecs.id(Position) },
                     .{ .id = ecs.id(Walking) },
-                } ++ ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 2),
+                } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
             },
         });
         defer ecs.query_fini(query);
