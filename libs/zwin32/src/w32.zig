@@ -137,6 +137,14 @@ pub const POINT = extern struct {
     y: LONG,
 };
 
+pub const MINMAXINFO = extern struct {
+    ptReserved: POINT,
+    ptMaxSize: POINT,
+    ptMaxPosition: POINT,
+    ptMinTrackSize: POINT,
+    ptMaxTrackSize: POINT,
+};
+
 pub extern "user32" fn SetProcessDPIAware() callconv(WINAPI) BOOL;
 
 pub extern "user32" fn GetClientRect(HWND, *RECT) callconv(WINAPI) BOOL;
@@ -304,6 +312,7 @@ pub const WM_ENABLE = 0x000A;
 pub const WM_PAINT = 0x000F;
 pub const WM_CLOSE = 0x0010;
 pub const WM_QUIT = 0x0012;
+pub const WM_GETMINMAXINFO = 0x0024;
 
 pub const SECURITY_ATTRIBUTES = extern struct {
     nLength: DWORD,

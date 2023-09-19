@@ -24,6 +24,12 @@ fn processWindowMessage(
                 return 0;
             }
         },
+        w32.WM_GETMINMAXINFO => {
+            var info: *w32.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
+            info.ptMinTrackSize.x = 400;
+            info.ptMinTrackSize.y = 400;
+            return 0;
+        },
         w32.WM_DESTROY => {
             w32.PostQuitMessage(0);
             return 0;
@@ -39,9 +45,9 @@ fn createWindow(width: u32, height: u32) w32.HWND {
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @as(w32.HINSTANCE, @ptrCast(w32.GetModuleHandleA(null))),
+        .hInstance = @ptrCast(w32.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @as(w32.LPCSTR, @ptrFromInt(32512))),
+        .hCursor = w32.LoadCursorA(null, @ptrFromInt(32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = window_name,
@@ -54,8 +60,8 @@ fn createWindow(width: u32, height: u32) w32.HWND {
     var rect = w32.RECT{
         .left = 0,
         .top = 0,
-        .right = @as(w32.LONG, @intCast(width)),
-        .bottom = @as(w32.LONG, @intCast(height)),
+        .right = @intCast(width),
+        .bottom = @intCast(height),
     };
     _ = w32.AdjustWindowRectEx(&rect, style, w32.FALSE, 0);
 
@@ -110,12 +116,12 @@ pub fn main() !void {
             pso_desc.VS.pShaderBytecode.?,
             pso_desc.VS.BytecodeLength,
             &d3d12.IID_IRootSignature,
-            @as(*?*anyopaque, @ptrCast(&root_signature)),
+            @ptrCast(&root_signature),
         ));
         hrPanicOnFail(dx12.device.CreateGraphicsPipelineState(
             &pso_desc,
             &d3d12.IID_IPipelineState,
-            @as(*?*anyopaque, @ptrCast(&pipeline)),
+            @ptrCast(&pipeline),
         ));
     }
     defer _ = pipeline.Release();
@@ -165,9 +171,9 @@ pub fn main() !void {
 
                 for (&dx12.swap_chain_textures, 0..) |*texture, i| {
                     hrPanicOnFail(dx12.swap_chain.GetBuffer(
-                        @as(u32, @intCast(i)),
+                        @intCast(i),
                         &d3d12.IID_IResource,
-                        @as(*?*anyopaque, @ptrCast(&texture.*)),
+                        @ptrCast(&texture.*),
                     ));
                 }
 
@@ -191,16 +197,16 @@ pub fn main() !void {
         dx12.command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = @as(f32, @floatFromInt(window_rect.right)),
-            .Height = @as(f32, @floatFromInt(window_rect.bottom)),
+            .Width = @floatFromInt(window_rect.right),
+            .Height = @floatFromInt(window_rect.bottom),
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
         dx12.command_list.RSSetScissorRects(1, &[_]d3d12.RECT{.{
             .left = 0,
             .top = 0,
-            .right = @as(c_long, @intCast(window_rect.right)),
-            .bottom = @as(c_long, @intCast(window_rect.bottom)),
+            .right = @intCast(window_rect.right),
+            .bottom = @intCast(window_rect.bottom),
         }});
 
         const back_buffer_index = dx12.swap_chain.GetCurrentBackBufferIndex();
@@ -251,7 +257,7 @@ pub fn main() !void {
 
         dx12.command_queue.ExecuteCommandLists(
             1,
-            &[_]*d3d12.ICommandList{@as(*d3d12.ICommandList, @ptrCast(dx12.command_list))},
+            &[_]*d3d12.ICommandList{@ptrCast(dx12.command_list)},
         );
 
         dx12.present();
@@ -294,14 +300,14 @@ const Dx12State = struct {
         hrPanicOnFail(dxgi.CreateDXGIFactory2(
             0,
             &dxgi.IID_IFactory6,
-            @as(*?*anyopaque, @ptrCast(&dxgi_factory)),
+            @ptrCast(&dxgi_factory),
         ));
 
         std.log.info("DXGI factory created", .{});
 
         {
             var maybe_debug: ?*d3d12d.IDebug1 = null;
-            _ = d3d12.GetDebugInterface(&d3d12d.IID_IDebug1, @as(*?*anyopaque, @ptrCast(&maybe_debug)));
+            _ = d3d12.GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(&maybe_debug));
             if (maybe_debug) |debug| {
                 // Uncomment below line to enable debug layer
                 //debug.EnableDebugLayer();
@@ -313,12 +319,7 @@ const Dx12State = struct {
         // D3D12 Device
         //
         var device: *d3d12.IDevice9 = undefined;
-        if (d3d12.CreateDevice(
-            null,
-            .@"11_0",
-            &d3d12.IID_IDevice9,
-            @as(?*?*anyopaque, @ptrCast(&device)),
-        ) != w32.S_OK) {
+        if (d3d12.CreateDevice(null, .@"11_0", &d3d12.IID_IDevice9, @ptrCast(&device)) != w32.S_OK) {
             _ = w32.MessageBoxA(
                 window,
                 "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
@@ -340,7 +341,7 @@ const Dx12State = struct {
             .Priority = @intFromEnum(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
             .Flags = .{},
             .NodeMask = 0,
-        }, &d3d12.IID_ICommandQueue, @as(*?*anyopaque, @ptrCast(&command_queue))));
+        }, &d3d12.IID_ICommandQueue, @ptrCast(&command_queue)));
 
         std.log.info("D3D12 command queue created", .{});
 
@@ -354,8 +355,8 @@ const Dx12State = struct {
         {
             var desc = dxgi.SWAP_CHAIN_DESC{
                 .BufferDesc = .{
-                    .Width = @as(u32, @intCast(rect.right)),
-                    .Height = @as(u32, @intCast(rect.bottom)),
+                    .Width = @intCast(rect.right),
+                    .Height = @intCast(rect.bottom),
                     .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
                     .Format = .R8G8B8A8_UNORM,
                     .ScanlineOrdering = .UNSPECIFIED,
@@ -371,16 +372,13 @@ const Dx12State = struct {
             };
             var temp_swap_chain: *dxgi.ISwapChain = undefined;
             hrPanicOnFail(dxgi_factory.CreateSwapChain(
-                @as(*w32.IUnknown, @ptrCast(command_queue)),
+                @ptrCast(command_queue),
                 &desc,
-                @as(*?*dxgi.ISwapChain, @ptrCast(&temp_swap_chain)),
+                @ptrCast(&temp_swap_chain),
             ));
             defer _ = temp_swap_chain.Release();
 
-            hrPanicOnFail(temp_swap_chain.QueryInterface(
-                &dxgi.IID_ISwapChain3,
-                @as(*?*anyopaque, @ptrCast(&swap_chain)),
-            ));
+            hrPanicOnFail(temp_swap_chain.QueryInterface(&dxgi.IID_ISwapChain3, @ptrCast(&swap_chain)));
         }
 
         // Disable ALT + ENTER
@@ -389,11 +387,7 @@ const Dx12State = struct {
         var swap_chain_textures: [num_frames]*d3d12.IResource = undefined;
 
         for (&swap_chain_textures, 0..) |*texture, i| {
-            hrPanicOnFail(swap_chain.GetBuffer(
-                @as(u32, @intCast(i)),
-                &d3d12.IID_IResource,
-                @as(*?*anyopaque, @ptrCast(&texture.*)),
-            ));
+            hrPanicOnFail(swap_chain.GetBuffer(@intCast(i), &d3d12.IID_IResource, @ptrCast(&texture.*)));
         }
 
         std.log.info("Swap chain created", .{});
@@ -407,7 +401,7 @@ const Dx12State = struct {
             .NumDescriptors = 16,
             .Flags = .{},
             .NodeMask = 0,
-        }, &d3d12.IID_IDescriptorHeap, @as(*?*anyopaque, @ptrCast(&rtv_heap))));
+        }, &d3d12.IID_IDescriptorHeap, @ptrCast(&rtv_heap)));
 
         const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
 
@@ -425,7 +419,7 @@ const Dx12State = struct {
         // Frame Fence
         //
         var frame_fence: *d3d12.IFence = undefined;
-        hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @as(*?*anyopaque, @ptrCast(&frame_fence))));
+        hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(&frame_fence)));
 
         var frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
 
@@ -440,7 +434,7 @@ const Dx12State = struct {
             hrPanicOnFail(device.CreateCommandAllocator(
                 .DIRECT,
                 &d3d12.IID_ICommandAllocator,
-                @as(*?*anyopaque, @ptrCast(&cmdalloc.*)),
+                @ptrCast(&cmdalloc.*),
             ));
         }
 
@@ -456,7 +450,7 @@ const Dx12State = struct {
             command_allocators[0],
             null,
             &d3d12.IID_IGraphicsCommandList6,
-            @as(*?*anyopaque, @ptrCast(&command_list)),
+            @ptrCast(&command_list),
         ));
         hrPanicOnFail(command_list.Close());
 
