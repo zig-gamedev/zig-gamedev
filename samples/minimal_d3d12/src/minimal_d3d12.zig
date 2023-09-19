@@ -230,7 +230,7 @@ pub fn main() !void {
 
         dx12.command_list.OMSetRenderTargets(
             1,
-            &d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
+            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
             w32.TRUE,
             null,
         );
