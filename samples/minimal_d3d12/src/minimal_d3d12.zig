@@ -96,9 +96,7 @@ pub fn main() !void {
     var dx12 = Dx12State.init(window);
     defer dx12.deinit();
 
-    var root_signature: *d3d12.IRootSignature = undefined;
-    var pipeline: *d3d12.IPipelineState = undefined;
-    {
+    const root_signature: *d3d12.IRootSignature, const pipeline: *d3d12.IPipelineState = blk: {
         const vs_cso = @embedFile("./minimal_d3d12.vs.cso");
         const ps_cso = @embedFile("./minimal_d3d12.ps.cso");
 
@@ -111,6 +109,7 @@ pub fn main() !void {
         pso_desc.VS = .{ .pShaderBytecode = vs_cso, .BytecodeLength = vs_cso.len };
         pso_desc.PS = .{ .pShaderBytecode = ps_cso, .BytecodeLength = ps_cso.len };
 
+        var root_signature: *d3d12.IRootSignature = undefined;
         hrPanicOnFail(dx12.device.CreateRootSignature(
             0,
             pso_desc.VS.pShaderBytecode.?,
@@ -118,12 +117,16 @@ pub fn main() !void {
             &d3d12.IID_IRootSignature,
             @ptrCast(&root_signature),
         ));
+
+        var pipeline: *d3d12.IPipelineState = undefined;
         hrPanicOnFail(dx12.device.CreateGraphicsPipelineState(
             &pso_desc,
             &d3d12.IID_IPipelineState,
             @ptrCast(&pipeline),
         ));
-    }
+
+        break :blk .{ root_signature, pipeline };
+    };
     defer _ = pipeline.Release();
     defer _ = root_signature.Release();
 

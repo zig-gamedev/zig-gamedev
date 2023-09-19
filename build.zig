@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.126" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.415" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -204,15 +204,15 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
-    //const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-    //const audio_experiments = @import("samples/audio_experiments/build.zig");
+    const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+    const audio_experiments = @import("samples/audio_experiments/build.zig");
     const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-    //const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
+    const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
 
     install(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    //install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    //install(b, audio_playback_test.build(b, options), "audio_playback_test");
-    //install(b, audio_experiments.build(b, options), "audio_experiments");
+    install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+    install(b, audio_playback_test.build(b, options), "audio_playback_test");
+    install(b, audio_experiments.build(b, options), "audio_experiments");
 }
 
 fn tests(b: *std.Build, options: Options) void {
