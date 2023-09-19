@@ -161,10 +161,7 @@ pub fn main() !void {
             if (rect.right != window_rect.right or rect.bottom != window_rect.bottom) {
                 rect.right = @max(1, rect.right);
                 rect.bottom = @max(1, rect.bottom);
-                std.log.info(
-                    "Window resized to {d}x{d}",
-                    .{ window_rect.right, window_rect.bottom },
-                );
+                std.log.info("Window resized to {d}x{d}", .{ rect.right, rect.bottom });
 
                 dx12.finishGpuCommands();
 
@@ -233,7 +230,7 @@ pub fn main() !void {
 
         dx12.command_list.OMSetRenderTargets(
             1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
+            &d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
             w32.TRUE,
             null,
         );
@@ -258,10 +255,7 @@ pub fn main() !void {
         }});
         hrPanicOnFail(dx12.command_list.Close());
 
-        dx12.command_queue.ExecuteCommandLists(
-            1,
-            &[_]*d3d12.ICommandList{@ptrCast(dx12.command_list)},
-        );
+        dx12.command_queue.ExecuteCommandLists(1, &[_]*d3d12.ICommandList{@ptrCast(dx12.command_list)});
 
         dx12.present();
 
