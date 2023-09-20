@@ -757,7 +757,7 @@ pub const HoveredFlags = packed struct(u32) {
     allow_when_disabled: bool = false,
     no_nav_override: bool = false,
 
-    _padding: u22 = 0,
+    _padding: u20 = 0,
 
     pub const allow_when_overlapped = HoveredFlags{
         .allow_when_overlapped_by_item = true,
@@ -879,14 +879,20 @@ pub const Style = extern struct {
     separator_text_padding: [2]f32,
     display_window_padding: [2]f32,
     display_safe_area_padding: [2]f32,
+    docking_separator_size: f32,
     mouse_cursor_scale: f32,
     anti_aliased_lines: bool,
     anti_aliased_lines_use_tex: bool,
     anti_aliased_fill: bool,
     curve_tessellation_tol: f32,
     circle_tessellation_max_error: f32,
-
     colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
+
+    hover_stationary_delay: f32,
+    hover_delay_short: f32,
+    hover_delay_normal: f32,
+    hover_flags_for_tooltip_mouse: HoveredFlags,
+    hover_flags_for_tooltip_nav: HoveredFlags,
 
     /// `pub fn init() Style`
     pub const init = zguiStyle_Init;
