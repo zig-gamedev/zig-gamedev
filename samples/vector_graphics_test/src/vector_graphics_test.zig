@@ -12,7 +12,7 @@ const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const c = common.c;
 
-pub export const D3D12SDKVersion: u32 = 608;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const window_name = "zig-gamedev: vector graphics test";

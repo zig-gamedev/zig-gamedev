@@ -6,7 +6,7 @@ const d3d12 = zwin32.d3d12;
 const d3d12d = zwin32.d3d12d;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 
-pub export const D3D12SDKVersion: u32 = 608;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const window_name = "zig-gamedev: minimal d3d12";

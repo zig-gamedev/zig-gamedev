@@ -14,7 +14,7 @@ const GuiRenderer = common.GuiRenderer;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 
-pub export const D3D12SDKVersion: u32 = 608;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;
