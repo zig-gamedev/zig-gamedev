@@ -2453,6 +2453,25 @@ pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
 pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @as(*T, @ptrCast(@alignCast(val)));
 }
+
+// Entity Names
+
+pub fn lookup_path(world: *const world_t, parent: entity_t, path: [*:0]const u8) entity_t {
+    return ecs_lookup_path_w_sep(world, parent, path, ".", null, true);
+}
+
+pub fn lookup_fullpath(world: *const world_t, path: [*:0]const u8) entity_t {
+    return ecs_lookup_path_w_sep(world, 0, path, ".", null, true);
+}
+
+pub fn get_path(world: *const world_t, parent: entity_t, child: entity_t) [*:0]u8 {
+    return ecs_get_path_w_sep(world, parent, child, ".", null);
+}
+
+pub fn get_fullpath(world: *const world_t, child: entity_t) [*:0]u8 {
+    return ecs_get_path_w_sep(world, 0, child, ".", null);
+}
+
 //--------------------------------------------------------------------------------------------------
 fn PerTypeGlobalVar(comptime in_type: type) type {
     if (@alignOf(in_type) > EcsAllocator.Alignment) {
