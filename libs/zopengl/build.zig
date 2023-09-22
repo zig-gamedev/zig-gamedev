@@ -49,7 +49,35 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const tests = b.addTest(.{
+        .name = "zopengl-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zopengl.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    const zopengl_pkg = package(b, target, optimize, .{
+        .options = .{
+            .api = .wrapper,
+        },
+    });
+    tests.addModule("zopengl_options", zopengl_pkg.zopengl_options);
+    zopengl_pkg.link(tests);
+
+    return &b.addRunArtifact(tests).step;
+}
+
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const test_step = b.step("test", "Run zopengl tests");
+    test_step.dependOn(runTests(b, optimize, target));
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

@@ -1190,7 +1190,7 @@ pub fn depthFunc(func: DepthFunc) void {
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
 pub fn getError() Error {
     const res = bindings.getError();
-    return std.meta.enumFromInt(Error, res) catch onInvalid: {
+    return std.meta.intToEnum(Error, res) catch onInvalid: {
         log.warn("getError returned unexpected value {}", .{res});
         assert(false);
         break :onInvalid .no_error;
@@ -1358,7 +1358,7 @@ pub fn deleteTexture(ptr: *const Texture) void {
     bindings.deleteTextures(1, @as([*c]const Uint, @ptrCast(ptr)));
 }
 pub fn deleteTextures(textures: []const Texture) void {
-    bindings.deleteTextures(textures.len, @as([*c]const Uint, @ptrCast(textures.ptr)));
+    bindings.deleteTextures(@intCast(textures.len), @as([*c]const Uint, @ptrCast(textures.ptr)));
 }
 
 // pub var genTextures: *const fn (n: Sizei, textures: [*c]Uint) callconv(.C) void = undefined;
@@ -1366,7 +1366,7 @@ pub fn genTexture(ptr: *Texture) void {
     bindings.genTextures(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genTextures(textures: []Texture) void {
-    bindings.genTextures(textures.len, @as([*c]Uint, @ptrCast(textures.ptr)));
+    bindings.genTextures(@intCast(textures.len), @as([*c]Uint, @ptrCast(textures.ptr)));
 }
 
 // pub var isTexture: *const fn (texture: Uint) callconv(.C) Boolean = undefined;
@@ -1707,7 +1707,7 @@ pub fn genBuffer(ptr: *Buffer) void {
     bindings.genBuffers(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genBuffers(buffers: []Buffer) void {
-    bindings.genBuffers(buffers.len, @as([*c]Uint, @ptrCast(buffers.ptr)));
+    bindings.genBuffers(@intCast(buffers.len), @as([*c]Uint, @ptrCast(buffers.ptr)));
 }
 
 // pub var isBuffer: *const fn (buffer: Uint) callconv(.C) Boolean = undefined;
@@ -2672,7 +2672,7 @@ pub fn deleteRenderbuffer(ptr: *const Renderbuffer) void {
     bindings.deleteRenderbuffers(1, @as([*c]const Uint, @ptrCast(ptr)));
 }
 pub fn deleteRenderbuffers(renderbuffers: []const Renderbuffer) void {
-    bindings.deleteRenderbuffers(renderbuffers.len, @as([*c]const Uint, @ptrCast(renderbuffers.ptr)));
+    bindings.deleteRenderbuffers(@intCast(renderbuffers.len), @as([*c]const Uint, @ptrCast(renderbuffers.ptr)));
 }
 
 // pub var genRenderbuffers: *const fn (n: Sizei, renderbuffers: [*c]Uint) callconv(.C) void = undefined;
@@ -2680,7 +2680,7 @@ pub fn genRenderbuffer(ptr: *Renderbuffer) void {
     bindings.genRenderbuffers(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genRenderbuffers(renderbuffers: []Renderbuffer) void {
-    bindings.genRenderbuffers(renderbuffers.len, @as([*c]Uint, @ptrCast(renderbuffers.ptr)));
+    bindings.genRenderbuffers(@intCast(renderbuffers.len), @as([*c]Uint, @ptrCast(renderbuffers.ptr)));
 }
 
 // pub var renderbufferStorage: *const fn (
@@ -2724,7 +2724,7 @@ pub fn deleteFramebuffer(ptr: *const Framebuffer) void {
     bindings.deleteFramebuffers(1, @as([*c]const Uint, @ptrCast(ptr)));
 }
 pub fn deleteFramebuffers(framebuffers: []const Framebuffer) void {
-    bindings.deleteFramebuffers(framebuffers.len, @as([*c]const Uint, @ptrCast(framebuffers.ptr)));
+    bindings.deleteFramebuffers(@intCast(framebuffers.len), @as([*c]const Uint, @ptrCast(framebuffers.ptr)));
 }
 
 // pub var genFramebuffers: *const fn (n: Sizei, framebuffers: [*c]Uint) callconv(.C) void = undefined;
@@ -2732,13 +2732,13 @@ pub fn genFramebuffer(ptr: *Framebuffer) void {
     bindings.genFramebuffers(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genFramebuffers(framebuffers: []Framebuffer) void {
-    bindings.genFramebuffers(framebuffers.len, @as([*c]Uint, @ptrCast(framebuffers.ptr)));
+    bindings.genFramebuffers(@intCast(framebuffers.len), @as([*c]Uint, @ptrCast(framebuffers.ptr)));
 }
 
 // pub var checkFramebufferStatus: *const fn (target: Enum) callconv(.C) Enum = undefined;
 pub fn checkFramebufferStatus(target: FramebufferTarget) FramebufferStatus {
     const res = bindings.checkFramebufferStatus(@intFromEnum(target));
-    return std.meta.enumFromInt(FramebufferStatus, res) catch onInvalid: {
+    return std.meta.intToEnum(FramebufferStatus, res) catch onInvalid: {
         log.warn("checkFramebufferStatus returned unexpected value {}", .{res});
         std.debug.assert(false);
         break :onInvalid .complete;
@@ -2871,10 +2871,10 @@ pub fn bindVertexArray(array: VertexArrayObject) void {
 
 // pub var deleteVertexArrays: *const fn (n: Sizei, arrays: [*c]const Uint) callconv(.C) void = undefined;
 pub fn deleteVertexArray(ptr: *const VertexArrayObject) void {
-    bindings.deleteVertexArrays(1, @as([*c]Uint, @ptrCast(ptr)));
+    bindings.deleteVertexArrays(1, @ptrCast(ptr));
 }
 pub fn deleteVertexArrays(arrays: []const VertexArrayObject) void {
-    bindings.deleteVertexArrays(arrays.len, @as([*c]Uint, @ptrCast(arrays.ptr)));
+    bindings.deleteVertexArrays(@intCast(arrays.len), @ptrCast(arrays.ptr));
 }
 
 // pub var genVertexArrays: *const fn (n: Sizei, arrays: [*c]Uint) callconv(.C) void = undefined;
@@ -2882,7 +2882,7 @@ pub fn genVertexArray(ptr: *VertexArrayObject) void {
     bindings.genVertexArrays(1, @as([*c]Uint, @ptrCast(ptr)));
 }
 pub fn genVertexArrays(arrays: []VertexArrayObject) void {
-    bindings.genVertexArrays(arrays.len, @as([*c]Uint, @ptrCast(arrays.ptr)));
+    bindings.genVertexArrays(@intCast(arrays.len), @ptrCast(arrays.ptr));
 }
 
 // pub var isVertexArray: *const fn (array: Uint) callconv(.C) Boolean = undefined;
@@ -3026,7 +3026,7 @@ pub const INVALID_INDEX = bindings.INVALID_INDEX;
 // OpenGL 3.2 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
-pub const Sync = *bindings.Sync{};
+pub const Sync = bindings.Sync;
 pub const Uint64 = bindings.Uint64;
 pub const Int64 = bindings.Int64;
 
