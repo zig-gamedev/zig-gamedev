@@ -7,7 +7,7 @@ const epsilon: f32 = 0.00001;
 
 pub fn modAngle(in_angle: f32) f32 {
     const angle = in_angle + math.pi;
-    var temp: f32 = @fabs(angle);
+    var temp: f32 = @abs(angle);
     temp = temp - (2.0 * math.pi * @as(f32, @floatFromInt(@as(i32, @intFromFloat(temp / math.pi)))));
     temp = temp - math.pi;
     if (angle < 0.0) {

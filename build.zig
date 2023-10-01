@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.415" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.696" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -192,12 +192,12 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
     const rasterization = @import("samples/rasterization/build.zig");
     const bindless = @import("samples/bindless/build.zig");
-    const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+    //const simple_raytracer = @import("samples/simple_raytracer/build.zig");
 
     install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
     install(b, bindless.build(b, options), "bindless");
     install(b, triangle.build(b, options), "triangle");
-    install(b, simple_raytracer.build(b, options), "simple_raytracer");
+    //install(b, simple_raytracer.build(b, options), "simple_raytracer");
     install(b, textured_quad.build(b, options), "textured_quad");
     install(b, rasterization.build(b, options), "rasterization");
     install(b, mesh_shader_test.build(b, options), "mesh_shader_test");
