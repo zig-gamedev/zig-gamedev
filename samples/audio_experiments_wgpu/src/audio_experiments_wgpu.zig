@@ -852,7 +852,7 @@ fn draw(demo: *DemoState) void {
                 const color = zm.vecToArr3(zm.lerp(
                     zm.f32x4(0.2, 1.0, 0.0, 0.0),
                     zm.f32x4(1.0, 0.0, 0.0, 0.0),
-                    1.2 * @sqrt(f) * @fabs(sample),
+                    1.2 * @sqrt(f) * @abs(sample),
                 ));
 
                 mem[x + set * AudioState.usable_samples_per_set] = Vertex{

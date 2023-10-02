@@ -957,6 +957,95 @@ pub const Surface = opaque {
 // Platform-specific Window Management
 //
 //--------------------------------------------------------------------------------------------------
+const SYSWM_CURRENT_VERSION = 1;
+const SYSWM_INFO_SIZE_V1 = 16 * 8;
+const SYSWM_CURRENT_INFO_SIZE = SYSWM_INFO_SIZE_V1;
+
+pub const SysWMType = enum(u32) {
+    unknown,
+    android,
+    cocoa,
+    haiku,
+    kmsdrm,
+    riscos,
+    uikit,
+    vivante,
+    wayland,
+    windows,
+    winrt,
+    x11,
+    _,
+};
+
+pub const SysWMInfo = extern struct {
+    version: u32,
+    subsystem: SysWMType,
+    _: [(2 * 8 - 2 * 4) / 4]u8 = undefined, // padding
+    info: extern union {
+        win: extern struct {
+            window: *opaque {},
+            hdc: *opaque {},
+            hinstance: *opaque {},
+        },
+        winrt: extern struct {
+            window: *opaque {},
+        },
+        x11: extern struct {
+            display: *opaque {},
+            screen: c_int,
+            window: *opaque {},
+        },
+        cocoa: extern struct {
+            window: *opaque {},
+        },
+        uikit: extern struct {
+            window: *opaque {},
+            framebuffer: c_uint,
+            colorbuffer: c_uint,
+            resolveFramebuffer: c_uint,
+        },
+        wl: extern struct {
+            display: *opaque {},
+            surface: *opaque {},
+            egl_window: *opaque {},
+            xdg_surface: *opaque {},
+            xdg_toplevel: *opaque {},
+            xdg_popup: *opaque {},
+            xdg_positioner: *opaque {},
+        },
+        android: extern struct {
+            window: *opaque {},
+            surface: *opaque {},
+        },
+        vivante: extern struct {
+            display: *opaque {},
+            window: *opaque {},
+        },
+        kmsdrm: extern struct {
+            dev_index: c_int,
+            drm_fd: c_int,
+            gbm_dev: *opaque {},
+        },
+        dummy: [14]u64,
+    },
+};
+
+comptime {
+    assert(@sizeOf(SysWMInfo) == SYSWM_CURRENT_INFO_SIZE);
+}
+
+pub fn getWindowWMInfo(window: *Window) Error!SysWMInfo {
+    var info = SysWMInfo{
+        .version = SYSWM_CURRENT_VERSION,
+        .subsystem = undefined,
+        .info = undefined,
+    };
+    if (SDL_GetWindowWMInfo(window, &info) == 0) {
+        return info;
+    }
+    return makeError();
+}
+extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) c_int;
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -1242,6 +1331,17 @@ pub fn pollEvent(event: ?*Event) bool {
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
 
+/// You should set the common.timestamp field before passing an event to `pushEvent`.
+/// If the timestamp is 0 it will be filled in with `getTicksNS()`.
+/// Returns true if event was added
+///         false if event was filtered out
+pub fn pushEvent(event: *Event) Error!bool {
+    const status = SDL_PushEvent(event);
+    if (status < 0) return makeError();
+    return status == 1;
+}
+extern fn SDL_PushEvent(event: *Event) c_int;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Keyboard Support
@@ -1507,6 +1607,10 @@ extern fn SDL_ClearQueuedAudio(AudioDeviceId) void;
 // Timer Support
 //
 //--------------------------------------------------------------------------------------------------
+/// Get the number of nanoseconds since SDL library initialization.
+pub const getTicksNS = SDL_GetTicksNS;
+extern fn SDL_GetTicksNS() u64;
+
 pub const getPerformanceCounter = SDL_GetPerformanceCounter;
 extern fn SDL_GetPerformanceCounter() u64;
 

@@ -24,7 +24,6 @@ pub const Package = struct {
             .windows => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addIncludePath(.{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/include" });
                 exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/lib" });
                 exe.linkSystemLibraryName("SDL2");
                 exe.linkSystemLibraryName("SDL2main");
@@ -36,7 +35,6 @@ pub const Package = struct {
             .linux => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addIncludePath(.{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/include" });
                 exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib" });
                 exe.linkSystemLibraryName("SDL2-2.0");
                 exe.addRPath(.{ .path = "$ORIGIN" });

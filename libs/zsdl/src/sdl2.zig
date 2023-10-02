@@ -974,6 +974,58 @@ pub const SysWMType = enum(i32) {
     riscos,
 };
 
+pub const SysWMInfo = extern struct {
+    version: Version,
+    subsystem: SysWMType,
+    info: extern union {
+        win: extern struct {
+            hwnd: *opaque {},
+            hdc: *opaque {},
+            hinstance: *opaque {},
+        },
+        x11: extern struct {
+            display: *opaque {},
+            window: *opaque {},
+        },
+        winrt: extern struct {
+            window: *opaque {},
+        },
+        dfb: extern struct {
+            dfb: *opaque {},
+            window: *opaque {},
+            surface: *opaque {},
+        },
+        cocoa: extern struct {
+            window: *opaque {},
+        },
+        uikit: extern struct {
+            window: *opaque {},
+            framebuffer: c_uint,
+            colorbuffer: c_uint,
+            resolveFramebuffer: c_uint,
+        },
+        wl: extern struct {
+            display: *opaque {},
+            surface: *opaque {},
+            shell_surface: *opaque {},
+        },
+        android: extern struct {
+            window: *opaque {},
+            surface: *opaque {},
+        },
+        vivante: extern struct {
+            display: *opaque {},
+            window: *opaque {},
+        },
+        dummy: [64]u8,
+        // MIR -- SDL unsupported and recommended to drop after 2.1
+
+        comptime {
+            assert(@sizeOf(@This()) == 64);
+        }
+    },
+};
+
 /// Get driver-specific information about a window.
 ///
 /// The caller must initialize the `info` structure's version by using
@@ -987,76 +1039,6 @@ pub fn getWindowWMInfo(window: *Window, info: *SysWMInfo) bool {
     return SDL_GetWindowWMInfo(window, info) == True;
 }
 extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) Bool;
-
-pub const SysWMInfo_win = extern struct {
-    hwnd: *opaque {},
-    hdc: *opaque {},
-    hinstance: *opaque {},
-};
-
-pub const SysWMInfo_x11 = extern struct {
-    display: *opaque {},
-    window: *opaque {},
-};
-
-pub const SysWMInfo_winrt = extern struct {
-    window: *opaque {},
-};
-
-pub const SysWMInfo_dfb = extern struct {
-    dfb: *opaque {},
-    window: *opaque {},
-    surface: *opaque {},
-};
-
-pub const SysWMInfo_cocoa = extern struct {
-    window: *opaque {},
-};
-
-pub const SysWMInfo_uikit = extern struct {
-    window: *opaque {},
-    frame_buffer: u32,
-    color_buffer: u32,
-    resolve_frame_buffer: u32,
-};
-
-pub const SysWMInfo_wayland = extern struct {
-    display: *opaque {},
-    surface: *opaque {},
-    shell_surface: *opaque {},
-};
-
-pub const SysWMInfo_android = extern struct {
-    window: *opaque {},
-    surface: *opaque {},
-};
-
-pub const SysWMInfo_vivante = extern struct {
-    display: *opaque {},
-    window: *opaque {},
-};
-
-pub const SysWMInfo = extern struct {
-    version: Version,
-    subsystem: SysWMType,
-    info: extern union {
-        win: SysWMInfo_win,
-        x11: SysWMInfo_x11,
-        winrt: SysWMInfo_winrt,
-        dfb: SysWMInfo_dfb,
-        cocoa: SysWMInfo_cocoa,
-        uikit: SysWMInfo_uikit,
-        wl: SysWMInfo_wayland,
-        android: SysWMInfo_android,
-        vivante: SysWMInfo_vivante,
-        dummy: [64]u8,
-        // MIR -- SDL unsupported and recommended to drop after 2.1
-
-        comptime {
-            assert(@sizeOf(@This()) == 64);
-        }
-    },
-};
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -1351,6 +1333,15 @@ pub fn pollEvent(event: ?*Event) bool {
     return SDL_PollEvent(event) != 0;
 }
 extern fn SDL_PollEvent(event: ?*Event) i32;
+
+/// Returns true if event was added
+///         false if event was filtered out
+pub fn pushEvent(event: *Event) Error!bool {
+    const status = SDL_PushEvent(event);
+    if (status < 0) return makeError();
+    return status == 1;
+}
+extern fn SDL_PushEvent(event: *Event) i32;
 
 //--------------------------------------------------------------------------------------------------
 //

@@ -75,6 +75,15 @@ pub const RTV_DIMENSION = enum(UINT) {
     TEXTURE3D = 8,
 };
 
+pub const BOX = extern struct {
+    left: UINT,
+    top: UINT,
+    front: UINT,
+    right: UINT,
+    bottom: UINT,
+    back: UINT,
+};
+
 pub const BUFFER_RTV = extern struct {
     u0: extern union {
         FirstElement: UINT,
@@ -138,8 +147,10 @@ pub const RENDER_TARGET_VIEW_DESC = extern struct {
 
 pub const INPUT_CLASSIFICATION = enum(UINT) {
     INPUT_PER_VERTEX_DATA = 0,
-    INPUT_PER_INSTNACE_DATA = 1,
+    INPUT_PER_INSTANCE_DATA = 1,
 };
+
+pub const APPEND_ALIGNED_ELEMENT: UINT = 0xffffffff;
 
 pub const INPUT_ELEMENT_DESC = extern struct {
     SemanticName: LPCSTR,
@@ -165,9 +176,10 @@ pub const USAGE = enum(UINT) {
 };
 
 pub const CPU_ACCCESS_FLAG = packed struct(UINT) {
+    __unused0: u16 = 0,
     WRITE: bool = false,
     READ: bool = false,
-    __unused: u30 = 0,
+    __unused: u14 = 0,
 };
 
 pub const RESOURCE_MISC_FLAG = packed struct(UINT) {
@@ -289,12 +301,12 @@ pub const BLEND_OP = enum(UINT) {
     MAX = 5,
 };
 
-pub const COLOR_WRITE_ENABLE = packed struct(UINT) {
+pub const COLOR_WRITE_ENABLE = packed struct(u8) {
     RED: bool = false,
     GREEN: bool = false,
     BLUE: bool = false,
     ALPHA: bool = false,
-    __unused: u28 = 0,
+    __unused: u4 = 0,
 
     pub const ALL = COLOR_WRITE_ENABLE{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
 };
@@ -307,7 +319,7 @@ pub const RENDER_TARGET_BLEND_DESC = extern struct {
     SrcBlendAlpha: BLEND,
     DestBlendAlpha: BLEND,
     BlendOpAlpha: BLEND_OP,
-    RenderTargetWriteMask: UINT8,
+    RenderTargetWriteMask: COLOR_WRITE_ENABLE,
 };
 
 pub const BLEND_DESC = extern struct {
@@ -663,6 +675,20 @@ pub const IDeviceContext = extern struct {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
                     .Draw(@as(*IDeviceContext, @ptrCast(self)), VertexCount, StartVertexLocation);
             }
+            pub inline fn DrawIndexed(
+                self: *T,
+                IndexCount: UINT,
+                StartIndexLocation: UINT,
+                BaseVertexLocation: INT,
+            ) void {
+                @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
+                    .DrawIndexed(
+                    @ptrCast(self),
+                    IndexCount,
+                    StartIndexLocation,
+                    BaseVertexLocation,
+                );
+            }
             pub inline fn Map(
                 self: *T,
                 pResource: *IResource,
@@ -718,6 +744,19 @@ pub const IDeviceContext = extern struct {
                     pOffsets,
                 );
             }
+            pub inline fn IASetIndexBuffer(
+                self: *T,
+                pIndexBuffer: ?*IBuffer,
+                Format: dxgi.FORMAT,
+                Offset: UINT,
+            ) void {
+                @as(*const IDeviceContext.VTable, @ptrCast(self.__v)).IASetIndexBuffer(
+                    @ptrCast(self),
+                    pIndexBuffer,
+                    Format,
+                    Offset,
+                );
+            }
             pub inline fn IASetPrimitiveTopology(self: *T, Topology: PRIMITIVE_TOPOLOGY) void {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
                     .IASetPrimitiveTopology(@as(*IDeviceContext, @ptrCast(self)), Topology);
@@ -738,7 +777,7 @@ pub const IDeviceContext = extern struct {
             pub inline fn OMSetRenderTargets(
                 self: *T,
                 NumViews: UINT,
-                ppRenderTargetViews: ?[*]const IRenderTargetView,
+                ppRenderTargetViews: ?[*]const *IRenderTargetView,
                 pDepthStencilView: ?*IDepthStencilView,
             ) void {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v)).OMSetRenderTargets(
@@ -788,6 +827,26 @@ pub const IDeviceContext = extern struct {
             pub inline fn Flush(self: *T) void {
                 @as(*const IDeviceContext.VTable, @ptrCast(self.__v)).Flush(@as(*IDeviceContext, @ptrCast(self)));
             }
+            pub inline fn UpdateSubresource(
+                self: *T,
+                pDstResource: *IResource,
+                DstSubresource: UINT,
+                pDstBox: ?*BOX,
+                pSrcData: *anyopaque,
+                SrcRowPitch: UINT,
+                SrcDepthPitch: UINT,
+            ) void {
+                @as(*const IDeviceContext.VTable, @ptrCast(self.__v))
+                    .UpdateSubresource(
+                    @ptrCast(self),
+                    pDstResource,
+                    DstSubresource,
+                    pDstBox,
+                    pSrcData,
+                    SrcRowPitch,
+                    SrcDepthPitch,
+                );
+            }
         };
     }
 
@@ -824,7 +883,7 @@ pub const IDeviceContext = extern struct {
             ?[*]const *IClassInstance,
             UINT,
         ) callconv(WINAPI) void,
-        DrawIndexed: *anyopaque,
+        DrawIndexed: *const fn (*T, UINT, UINT, INT) callconv(WINAPI) void,
         Draw: *const fn (*T, UINT, UINT) callconv(WINAPI) void,
         Map: *const fn (
             *T,
@@ -850,7 +909,12 @@ pub const IDeviceContext = extern struct {
             ?[*]const UINT,
             ?[*]const UINT,
         ) callconv(WINAPI) void,
-        IASetIndexBuffer: *anyopaque,
+        IASetIndexBuffer: *const fn (
+            *T,
+            ?*IBuffer,
+            dxgi.FORMAT,
+            UINT,
+        ) callconv(WINAPI) void,
         DrawIndexedInstanced: *anyopaque,
         DrawInstanced: *anyopaque,
         GSSetConstantBuffers: *anyopaque,
@@ -872,7 +936,7 @@ pub const IDeviceContext = extern struct {
         OMSetRenderTargets: *const fn (
             *T,
             UINT,
-            ?[*]const IRenderTargetView,
+            ?[*]const *IRenderTargetView,
             ?*IDepthStencilView,
         ) callconv(WINAPI) void,
         OMSetRenderTargetsAndUnorderedAccessViews: *anyopaque,
@@ -894,7 +958,7 @@ pub const IDeviceContext = extern struct {
         RSSetScissorRects: *const fn (*T, UINT, ?[*]const RECT) callconv(WINAPI) void,
         CopySubresourceRegion: *anyopaque,
         CopyResource: *anyopaque,
-        UpdateSubresource: *anyopaque,
+        UpdateSubresource: *const fn (*T, *IResource, UINT, ?*BOX, *anyopaque, UINT, UINT) callconv(WINAPI) void,
         CopyStructureCount: *anyopaque,
         ClearRenderTargetView: *const fn (*T, *IRenderTargetView, *const [4]FLOAT) callconv(WINAPI) void,
         ClearUnorderedAccessViewUint: *anyopaque,
@@ -1028,9 +1092,9 @@ pub const IDevice = extern struct {
             }
             pub inline fn CreateInputLayout(
                 self: *T,
-                pInputElementDescs: *const INPUT_ELEMENT_DESC,
+                pInputElementDescs: ?[*]const INPUT_ELEMENT_DESC,
                 NumElements: UINT,
-                pShaderBytecodeWithInputSignature: *anyopaque,
+                pShaderBytecodeWithInputSignature: *const anyopaque,
                 BytecodeLength: SIZE_T,
                 ppInputLayout: *?*IInputLayout,
             ) HRESULT {
@@ -1045,7 +1109,7 @@ pub const IDevice = extern struct {
             }
             pub inline fn CreateVertexShader(
                 self: *T,
-                pShaderBytecode: *anyopaque,
+                pShaderBytecode: *const anyopaque,
                 BytecodeLength: SIZE_T,
                 pClassLinkage: ?*IClassLinkage,
                 ppVertexShader: ?*?*IVertexShader,
@@ -1060,7 +1124,7 @@ pub const IDevice = extern struct {
             }
             pub inline fn CreatePixelShader(
                 self: *T,
-                pShaderBytecode: *anyopaque,
+                pShaderBytecode: *const anyopaque,
                 BytecodeLength: SIZE_T,
                 pClassLinkage: ?*IClassLinkage,
                 ppPixelShader: ?*?*IPixelShader,
@@ -1139,15 +1203,15 @@ pub const IDevice = extern struct {
         CreateDepthStencilView: *anyopaque,
         CreateInputLayout: *const fn (
             *T,
-            *const INPUT_ELEMENT_DESC,
+            ?[*]const INPUT_ELEMENT_DESC,
             UINT,
-            *anyopaque,
+            *const anyopaque,
             SIZE_T,
             *?*IInputLayout,
         ) callconv(WINAPI) HRESULT,
         CreateVertexShader: *const fn (
             *T,
-            ?*anyopaque,
+            ?*const anyopaque,
             SIZE_T,
             ?*IClassLinkage,
             ?*?*IVertexShader,
@@ -1156,7 +1220,7 @@ pub const IDevice = extern struct {
         CreateGeometryShaderWithStreamOutput: *anyopaque,
         CreatePixelShader: *const fn (
             *T,
-            ?*anyopaque,
+            ?*const anyopaque,
             SIZE_T,
             ?*IClassLinkage,
             ?*?*IPixelShader,

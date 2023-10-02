@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const testing = std.testing;
 
 const options = @import("zopengl_options");
 
@@ -676,7 +677,52 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 4.0
     if (ver >= 40) {
-        // TODO
+        bindings.minSampleShading = try getProcAddress(@TypeOf(bindings.minSampleShading), "glMinSampleShading");
+        bindings.blendEquationi = try getProcAddress(@TypeOf(bindings.blendEquationi), "glBlendEquationi");
+        bindings.blendEquationSeparatei = try getProcAddress(@TypeOf(bindings.blendEquationSeparatei), "glBlendEquationSeparatei");
+        bindings.blendFunci = try getProcAddress(@TypeOf(bindings.blendFunci), "glBlendFunci");
+        bindings.blendFuncSeparatei = try getProcAddress(@TypeOf(bindings.blendFuncSeparatei), "glBlendFuncSeparatei");
+        bindings.drawArraysIndirect = try getProcAddress(@TypeOf(bindings.drawArraysIndirect), "glDrawArraysIndirect");
+        bindings.drawElementsIndirect = try getProcAddress(@TypeOf(bindings.drawElementsIndirect), "glDrawElementsIndirect");
+        bindings.uniform1d = try getProcAddress(@TypeOf(bindings.uniform1d), "glUniform1d");
+        bindings.uniform2d = try getProcAddress(@TypeOf(bindings.uniform2d), "glUniform2d");
+        bindings.uniform3d = try getProcAddress(@TypeOf(bindings.uniform3d), "glUniform3d");
+        bindings.uniform4d = try getProcAddress(@TypeOf(bindings.uniform4d), "glUniform4d");
+        bindings.uniform1dv = try getProcAddress(@TypeOf(bindings.uniform1dv), "glUniform1dv");
+        bindings.uniform2dv = try getProcAddress(@TypeOf(bindings.uniform2dv), "glUniform2dv");
+        bindings.uniform3dv = try getProcAddress(@TypeOf(bindings.uniform3dv), "glUniform3dv");
+        bindings.uniform4dv = try getProcAddress(@TypeOf(bindings.uniform4dv), "glUniform4dv");
+        bindings.uniformMatrix2dv = try getProcAddress(@TypeOf(bindings.uniformMatrix2dv), "glUniformMatrix2dv");
+        bindings.uniformMatrix3dv = try getProcAddress(@TypeOf(bindings.uniformMatrix3dv), "glUniformMatrix3dv");
+        bindings.uniformMatrix4dv = try getProcAddress(@TypeOf(bindings.uniformMatrix4dv), "glUniformMatrix4dv");
+        bindings.uniformMatrix2x3dv = try getProcAddress(@TypeOf(bindings.uniformMatrix2x3dv), "glUniformMatrix2x3dv");
+        bindings.uniformMatrix2x4dv = try getProcAddress(@TypeOf(bindings.uniformMatrix2x4dv), "glUniformMatrix2x4dv");
+        bindings.uniformMatrix3x2dv = try getProcAddress(@TypeOf(bindings.uniformMatrix3x2dv), "glUniformMatrix3x2dv");
+        bindings.uniformMatrix3x4dv = try getProcAddress(@TypeOf(bindings.uniformMatrix3x4dv), "glUniformMatrix3x4dv");
+        bindings.uniformMatrix4x2dv = try getProcAddress(@TypeOf(bindings.uniformMatrix4x2dv), "glUniformMatrix4x2dv");
+        bindings.uniformMatrix4x3dv = try getProcAddress(@TypeOf(bindings.uniformMatrix4x3dv), "glUniformMatrix4x3dv");
+        bindings.getUniformdv = try getProcAddress(@TypeOf(bindings.getUniformdv), "glGetUniformdv");
+        bindings.getSubroutineUniformLocation = try getProcAddress(@TypeOf(bindings.getSubroutineUniformLocation), "glGetSubroutineUniformLocation");
+        bindings.getSubroutineIndex = try getProcAddress(@TypeOf(bindings.getSubroutineIndex), "glGetSubroutineIndex");
+        bindings.getActiveSubroutineUniformiv = try getProcAddress(@TypeOf(bindings.getActiveSubroutineUniformiv), "glGetActiveSubroutineUniformiv");
+        bindings.getActiveSubroutineUniformName = try getProcAddress(@TypeOf(bindings.getActiveSubroutineUniformName), "glGetActiveSubroutineUniformName");
+        bindings.getActiveSubroutineName = try getProcAddress(@TypeOf(bindings.getActiveSubroutineName), "glGetActiveSubroutineName");
+        bindings.uniformSubroutinesuiv = try getProcAddress(@TypeOf(bindings.uniformSubroutinesuiv), "glUniformSubroutinesuiv");
+        bindings.getUniformSubroutineuiv = try getProcAddress(@TypeOf(bindings.getUniformSubroutineuiv), "glGetUniformSubroutineuiv");
+        bindings.getProgramStageiv = try getProcAddress(@TypeOf(bindings.getProgramStageiv), "glGetProgramStageiv");
+        bindings.patchParameteri = try getProcAddress(@TypeOf(bindings.patchParameteri), "glPatchParameteri");
+        bindings.patchParameterfv = try getProcAddress(@TypeOf(bindings.patchParameterfv), "glPatchParameterfv");
+        bindings.bindTransformFeedback = try getProcAddress(@TypeOf(bindings.bindTransformFeedback), "glBindTransformFeedback");
+        bindings.deleteTransformFeedbacks = try getProcAddress(@TypeOf(bindings.deleteTransformFeedbacks), "glDeleteTransformFeedbacks");
+        bindings.genTransformFeedbacks = try getProcAddress(@TypeOf(bindings.genTransformFeedbacks), "glGenTransformFeedbacks");
+        bindings.isTransformFeedback = try getProcAddress(@TypeOf(bindings.isTransformFeedback), "glIsTransformFeedback");
+        bindings.pauseTransformFeedback = try getProcAddress(@TypeOf(bindings.pauseTransformFeedback), "glPauseTransformFeedback");
+        bindings.resumeTransformFeedback = try getProcAddress(@TypeOf(bindings.resumeTransformFeedback), "glResumeTransformFeedback");
+        bindings.drawTransformFeedback = try getProcAddress(@TypeOf(bindings.drawTransformFeedback), "glDrawTransformFeedback");
+        bindings.drawTransformFeedbackStream = try getProcAddress(@TypeOf(bindings.drawTransformFeedbackStream), "glDrawTransformFeedbackStream");
+        bindings.beginQueryIndexed = try getProcAddress(@TypeOf(bindings.beginQueryIndexed), "glBeginQueryIndexed");
+        bindings.endQueryIndexed = try getProcAddress(@TypeOf(bindings.endQueryIndexed), "glEndQueryIndexed");
+        bindings.glGetQueryIndexediv = try getProcAddress(@TypeOf(bindings.glGetQueryIndexediv), "glGetQueryIndexediv");
     }
 
     // OpenGL 4.1
@@ -1466,6 +1512,9 @@ comptime {
     //----------------------------------------------------------------------------------------------
     // OpenGL 1.4 (Core Profile)
     //----------------------------------------------------------------------------------------------
+    @export(bindings.blendFuncSeparate, .{ .name = "glBlendFuncSeparate", .linkage = linkage });
+    @export(bindings.multiDrawArrays, .{ .name = "glMultiDrawArrays", .linkage = linkage });
+    @export(bindings.multiDrawElements, .{ .name = "glMultiDrawElements", .linkage = linkage });
     @export(bindings.pointParameterf, .{ .name = "glPointParameterf", .linkage = linkage });
     @export(bindings.pointParameterfv, .{ .name = "glPointParameterfv", .linkage = linkage });
     @export(bindings.pointParameteri, .{ .name = "glPointParameteri", .linkage = linkage });
@@ -1762,4 +1811,8 @@ comptime {
     @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
     @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
     @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
+}
+
+test {
+    _ = testing.refAllDecls(@This());
 }

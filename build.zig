@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.126" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.696" };
 
 pub fn build(b: *std.Build) void {
     //
@@ -152,7 +152,8 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 }
 
 fn samplesCrossPlatform(b: *std.Build, options: Options) void {
-    const minimal_gl = @import("samples/minimal_gl/build.zig");
+    const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
+    const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
     const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
     const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
     const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
@@ -167,7 +168,8 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
     const monolith = @import("samples/monolith/build.zig");
 
-    install(b, minimal_gl.build(b, options), "minimal_gl");
+    install(b, minimal_glfw_gl.build(b, options), "minimal_glfw_gl");
+    install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
     install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
     install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
@@ -190,27 +192,27 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
     const rasterization = @import("samples/rasterization/build.zig");
     const bindless = @import("samples/bindless/build.zig");
-    const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+    //const simple_raytracer = @import("samples/simple_raytracer/build.zig");
 
     install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
     install(b, bindless.build(b, options), "bindless");
     install(b, triangle.build(b, options), "triangle");
-    install(b, simple_raytracer.build(b, options), "simple_raytracer");
+    //install(b, simple_raytracer.build(b, options), "simple_raytracer");
     install(b, textured_quad.build(b, options), "textured_quad");
     install(b, rasterization.build(b, options), "rasterization");
     install(b, mesh_shader_test.build(b, options), "mesh_shader_test");
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
-    //const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-    //const audio_experiments = @import("samples/audio_experiments/build.zig");
+    const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+    const audio_experiments = @import("samples/audio_experiments/build.zig");
     const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-    //const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
+    const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
 
     install(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    //install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    //install(b, audio_playback_test.build(b, options), "audio_playback_test");
-    //install(b, audio_experiments.build(b, options), "audio_experiments");
+    install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+    install(b, audio_playback_test.build(b, options), "audio_playback_test");
+    install(b, audio_experiments.build(b, options), "audio_experiments");
 }
 
 fn tests(b: *std.Build, options: Options) void {
@@ -226,6 +228,7 @@ fn tests(b: *std.Build, options: Options) void {
     test_step.dependOn(zaudio.runTests(b, options.optimize, options.target));
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
 
     // TODO: zsdl test not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
     //test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));

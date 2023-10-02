@@ -137,6 +137,14 @@ pub const POINT = extern struct {
     y: LONG,
 };
 
+pub const MINMAXINFO = extern struct {
+    ptReserved: POINT,
+    ptMaxSize: POINT,
+    ptMaxPosition: POINT,
+    ptMinTrackSize: POINT,
+    ptMaxTrackSize: POINT,
+};
+
 pub extern "user32" fn SetProcessDPIAware() callconv(WINAPI) BOOL;
 
 pub extern "user32" fn GetClientRect(HWND, *RECT) callconv(WINAPI) BOOL;
@@ -174,6 +182,10 @@ pub extern "user32" fn GetCursorPos(point: *POINT) callconv(WINAPI) BOOL;
 pub extern "user32" fn ScreenToClient(hWnd: ?HWND, lpPoint: *POINT) callconv(WINAPI) BOOL;
 
 pub extern "user32" fn RegisterClassExA(*const WNDCLASSEXA) callconv(WINAPI) ATOM;
+
+pub extern "user32" fn GetWindowLongPtrA(hWnd: ?HWND, nIndex: INT) callconv(WINAPI) ?*anyopaque;
+
+pub extern "user32" fn SetWindowLongPtrA(hWnd: ?HWND, nIndex: INT, dwNewLong: ?*anyopaque) callconv(WINAPI) LONG_PTR;
 
 pub extern "user32" fn AdjustWindowRectEx(
     lpRect: *RECT,
@@ -291,8 +303,16 @@ pub const WM_SYSKEYDOWN = 0x0104;
 pub const WM_SYSKEYUP = 0x0105;
 pub const WM_SETFOCUS = 0x0007;
 pub const WM_KILLFOCUS = 0x0008;
+pub const WM_CREATE = 0x0001;
 pub const WM_DESTROY = 0x0002;
+pub const WM_MOVE = 0x0003;
+pub const WM_SIZE = 0x0005;
+pub const WM_ACTIVATE = 0x0006;
+pub const WM_ENABLE = 0x000A;
+pub const WM_PAINT = 0x000F;
+pub const WM_CLOSE = 0x0010;
 pub const WM_QUIT = 0x0012;
+pub const WM_GETMINMAXINFO = 0x0024;
 
 pub const SECURITY_ATTRIBUTES = extern struct {
     nLength: DWORD,

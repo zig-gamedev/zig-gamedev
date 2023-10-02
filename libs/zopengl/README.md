@@ -1,7 +1,7 @@
 # zopengl - OpenGL loader
 
 Supports:
-  * OpenGL Core Profile up to version 3.3
+  * OpenGL Core Profile up to version 4.0
   * OpenGL ES up to version 2.0
 
 ## Getting started
@@ -33,7 +33,7 @@ const gl = @import("zopengl");
 pub fn main() !void {
     // Create window and OpenGL context here... (you can use our `zsdl` or `zglfw` libs for this)
 
-    try gl.loadCoreProfile(getProcAddress, 3, 3);
+    try gl.loadCoreProfile(getProcAddress, 4, 0);
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
 }

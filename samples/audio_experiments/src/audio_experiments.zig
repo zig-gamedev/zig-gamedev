@@ -19,7 +19,7 @@ const c = common.c;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 
-pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;
@@ -478,7 +478,7 @@ fn draw(demo: *DemoState) void {
                 zm.store(color[0..], zm.lerp(
                     zm.f32x4(0.2, 1.0, 0.0, 0.0),
                     zm.f32x4(1.0, 0.0, 0.0, 0.0),
-                    1.2 * @sqrt(f) * @fabs(sample),
+                    1.2 * @sqrt(f) * @abs(sample),
                 ), 3);
 
                 mem.cpu_slice[x] = Pso_Vertex{

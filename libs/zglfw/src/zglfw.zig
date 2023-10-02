@@ -1,4 +1,4 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 5, .patch = 2 };
+pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 6, .patch = 0 };
 const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 //
@@ -121,8 +121,18 @@ extern fn glfwRawMouseMotionSupported() i32;
 pub const makeContextCurrent = glfwMakeContextCurrent;
 extern fn glfwMakeContextCurrent(window: *Window) void;
 
+pub const getCurrentContext = glfwGetCurrentContext;
+extern fn glfwGetCurrentContext() *Window;
+
 pub const swapInterval = glfwSwapInterval;
 extern fn glfwSwapInterval(interval: i32) void;
+
+pub const GlProc = *const anyopaque;
+
+pub fn getProcAddress(procname: [:0]const u8) ?GlProc {
+    return glfwGetProcAddress(procname);
+}
+extern fn glfwGetProcAddress(procname: [*:0]const u8) ?GlProc;
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -796,11 +806,58 @@ pub const WindowHint = enum(i32) {
     x11_class_name = 0x00024001,
     x11_instance_name = 0x00024002,
 
-    pub fn set(window_hint: WindowHint, value: i32) void {
-        glfwWindowHint(window_hint, value);
+    fn ValueType(comptime window_hint: WindowHint) type {
+        return switch (window_hint) {
+            .focused, .iconified, .resizable, .visible, .decorated, .auto_iconify, .floating, .maximized, .center_cursor, .transparent_framebuffer, .hovered, .focus_on_show => bool,
+            .red_bits, .green_bits, .blue_bits, .alpha_bits, .depth_bits, .stencil_bits => i32,
+            .stereo => bool,
+            .samples => i32,
+            .srgb_capable => bool,
+            .refresh_rate => i32,
+            .doublebuffer => bool,
+            .client_api => ClientApi,
+            .context_version_major, .context_version_minor, .context_revision => i32,
+            .context_robustness => ContextRobustness,
+            .opengl_forward_compat, .opengl_debug_context => bool,
+            .opengl_profile => OpenGLProfile,
+            .context_release_behaviour => ReleaseBehaviour,
+            .context_no_error => bool,
+            .context_creation_api => ContextCreationApi,
+            .scale_to_monitor, .cocoa_retina_framebuffer => bool,
+            .cocoa_frame_name => [:0]const u8,
+            .cocoa_graphics_switching => bool,
+            .x11_class_name, .x11_instance_name => [:0]const u8,
+        };
     }
-    extern fn glfwWindowHint(window_hint: WindowHint, value: i32) void;
+
+    /// DEPRECATED: Does not allow setting string type hints.
+    /// Use `windowHint`, `windowHintString` or `windowHintTyped` instead.
+    pub const set = glfwWindowHint;
 };
+
+pub fn windowHintTyped(
+    comptime window_hint: WindowHint,
+    value: WindowHint.ValueType(window_hint),
+) void {
+    const ValueType = WindowHint.ValueType(window_hint);
+    switch (ValueType) {
+        else => windowHint(window_hint, switch (@typeInfo(ValueType)) {
+            .Int => @intCast(value),
+            .Enum => @intFromEnum(value),
+            .Bool => @intFromBool(value),
+            else => unreachable,
+        }),
+        [:0]const u8 => windowHintString(window_hint, value),
+    }
+}
+
+pub const windowHint = glfwWindowHint;
+extern fn glfwWindowHint(WindowHint, value: i32) void;
+
+pub fn windowHintString(window_hint: WindowHint, string: [:0]const u8) void {
+    glfwWindowHintString(window_hint, string);
+}
+extern fn glfwWindowHintString(WindowHint, string: [*:0]const u8) void;
 
 pub const ClientApi = enum(i32) {
     no_api = 0,
@@ -813,6 +870,25 @@ pub const OpenGLProfile = enum(i32) {
     opengl_core_profile = 0x00032001,
     opengl_compat_profile = 0x00032002,
 };
+
+pub const ContextRobustness = enum(i32) {
+    no_robustness = 0,
+    no_reset_notification = 0x00031001,
+    lose_context_on_reset = 0x00031002,
+};
+
+pub const ReleaseBehaviour = enum(i32) {
+    any = 0,
+    flush = 0x00035001,
+    none = 0x00035002,
+};
+
+pub const ContextCreationApi = enum(i32) {
+    native = 0x00036001,
+    egl = 0x00036002,
+    osmesa = 0x00036003,
+};
+
 //--------------------------------------------------------------------------------------------------
 //
 // Native
