@@ -791,6 +791,7 @@ pub inline fn min(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     return @min(v0, v1); // minps, cmpunordps, andps, andnps, orps
 }
 test "zmath.min" {
+    // Calling math.inf causes test to fail!
     if (builtin.target.os.tag == .macos) return error.SkipZigTest;
     {
         const v0 = f32x4(1.0, 3.0, 2.0, 7.0);
@@ -815,6 +816,7 @@ test "zmath.min" {
         try expect(v[3] == math.inf(f32));
         try expect(!math.isNan(v[3]));
     }
+
     {
         const v0 = f32x4(-math.inf(f32), math.inf(f32), math.inf(f32), math.snan(f32));
         const v1 = f32x4(math.snan(f32), -math.inf(f32), math.snan(f32), math.nan(f32));
@@ -833,6 +835,7 @@ pub inline fn max(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     return @max(v0, v1); // maxps, cmpunordps, andps, andnps, orps
 }
 test "zmath.max" {
+    // Calling math.inf causes test to fail!
     if (builtin.target.os.tag == .macos) return error.SkipZigTest;
     {
         const v0 = f32x4(1.0, 3.0, 2.0, 7.0);
@@ -1246,6 +1249,7 @@ pub inline fn clamp(v: anytype, vmin: anytype, vmax: anytype) @TypeOf(v, vmin, v
     return result;
 }
 test "zmath.clamp" {
+    // Calling math.inf causes test to fail!
     if (builtin.target.os.tag == .macos) return error.SkipZigTest;
     {
         const v0 = f32x4(-1.0, 0.2, 1.1, -0.3);
@@ -1289,6 +1293,7 @@ pub inline fn saturate(v: anytype) @TypeOf(v) {
     return result;
 }
 test "zmath.saturate" {
+    // Calling math.inf causes test to fail!
     if (builtin.target.os.tag == .macos) return error.SkipZigTest;
     {
         const v0 = f32x4(-1.0, 0.2, 1.1, -0.3);
