@@ -1814,5 +1814,6 @@ comptime {
 }
 
 test {
+    @setEvalBranchQuota(100_000);
     _ = testing.refAllDecls(@This());
 }

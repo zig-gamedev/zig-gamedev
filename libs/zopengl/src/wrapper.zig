@@ -75,9 +75,14 @@ pub const Capability = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     depth_clamp = DEPTH_CLAMP,
     sample_mask = SAMPLE_MASK,
+    texture_cube_map_seamless = TEXTURE_CUBE_MAP_SEAMLESS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 4.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    sample_shading = SAMPLE_SHADING,
 };
 
-pub const StringName = enum(Enum) {
+pub const StringParamName = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
     //---------------------------------------------------------------------------------------------
@@ -91,47 +96,31 @@ pub const StringName = enum(Enum) {
     shading_language_version = SHADING_LANGUAGE_VERSION,
 };
 
-pub const ParameterName = enum(Enum) {
+pub const IntParamName = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.0 (Core Profile)
     //---------------------------------------------------------------------------------------------
-    cull_face = CULL_FACE,
     polygon_mode = POLYGON_MODE,
-    polygon_smooth = POLYGON_SMOOTH,
     polygon_smooth_hint = POLYGON_SMOOTH_HINT,
-    point_size = POINT_SIZE,
-    point_size_granularity = POINT_SIZE_GRANULARITY,
-    point_size_range = POINT_SIZE_RANGE,
-    line_smooth = LINE_SMOOTH,
     line_smooth_hint = LINE_SMOOTH_HINT,
-    line_width = LINE_WIDTH,
     logic_op_mode = LOGIC_OP_MODE,
-    dither = DITHER,
-    blend = BLEND,
     color_clear_value = COLOR_CLEAR_VALUE,
-    color_writemask = COLOR_WRITEMASK,
     depth_clear_value = DEPTH_CLEAR_VALUE,
     depth_func = DEPTH_FUNC,
     depth_range = DEPTH_RANGE,
-    depth_test = DEPTH_TEST,
-    depth_writemask = DEPTH_WRITEMASK,
     stencil_clear_value = STENCIL_CLEAR_VALUE,
     stencil_fail = STENCIL_FAIL,
     stencil_func = STENCIL_FUNC,
     stencil_pass_depth_fail = STENCIL_PASS_DEPTH_FAIL,
     stencil_pass_depth_pass = STENCIL_PASS_DEPTH_PASS,
     stencil_ref = STENCIL_REF,
-    stencil_test = STENCIL_TEST,
     stencil_value_mask = STENCIL_VALUE_MASK,
     stencil_writemask = STENCIL_WRITEMASK,
     viewport = VIEWPORT,
-    doublebuffer = DOUBLEBUFFER,
-    stereo = STEREO,
     subpixel_bits = SUBPIXEL_BITS,
     draw_buffer = DRAW_BUFFER,
     read_buffer = READ_BUFFER,
     scissor_box = SCISSOR_BOX,
-    scissor_test = SCISSOR_TEST,
     pack_alignment = PACK_ALIGNMENT,
     pack_lsb_first = PACK_LSB_FIRST,
     pack_row_length = PACK_ROW_LENGTH,
@@ -149,20 +138,11 @@ pub const ParameterName = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.1 (Core Profile)
     //---------------------------------------------------------------------------------------------
-    polygon_offset_factor = POLYGON_OFFSET_FACTOR,
-    polygon_offset_fill = POLYGON_OFFSET_FILL,
-    polygon_offset_line = POLYGON_OFFSET_LINE,
-    polygon_offset_point = POLYGON_OFFSET_POINT,
-    polygon_offset_units = POLYGON_OFFSET_UNITS,
-    color_logic_op = COLOR_LOGIC_OP,
     texture_binding_1d = TEXTURE_BINDING_1D,
     texture_binding_2d = TEXTURE_BINDING_2D,
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.2 (Core Profile)
     //---------------------------------------------------------------------------------------------
-    aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
-    smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
-    smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
     pack_image_height = PACK_IMAGE_HEIGHT,
     pack_skip_images = PACK_SKIP_IMAGES,
     unpack_image_height = UNPACK_IMAGE_HEIGHT,
@@ -180,20 +160,15 @@ pub const ParameterName = enum(Enum) {
     compressed_texture_formats = COMPRESSED_TEXTURE_FORMATS,
     samples = SAMPLES,
     sample_buffers = SAMPLE_BUFFERS,
-    sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
-    sample_coverage_value = SAMPLE_COVERAGE_VALUE,
     num_compressed_texture_formats = NUM_COMPRESSED_TEXTURE_FORMATS,
     max_cube_map_texture_size = MAX_CUBE_MAP_TEXTURE_SIZE,
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.4 (Core Profile)
     //---------------------------------------------------------------------------------------------
-    blend_color = BLEND_COLOR,
     blend_src_rgb = BLEND_SRC_RGB,
     blend_src_alpha = BLEND_SRC_ALPHA,
     blend_dst_rgb = BLEND_DST_RGB,
     blend_dst_alpha = BLEND_DST_ALPHA,
-    point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
-    max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
     //---------------------------------------------------------------------------------------------
     // OpenGL 1.5 (Core Profile)
     //---------------------------------------------------------------------------------------------
@@ -288,7 +263,6 @@ pub const ParameterName = enum(Enum) {
     //---------------------------------------------------------------------------------------------
     // OpenGL 3.2 (Core Profile)
     //---------------------------------------------------------------------------------------------
-    program_point_size = PROGRAM_POINT_SIZE,
     provoking_vertex = PROVOKING_VERTEX,
     texture_binding_2d_multisample = TEXTURE_BINDING_2D_MULTISAMPLE,
     texture_binding_2d_multisample_array = TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
@@ -309,6 +283,77 @@ pub const ParameterName = enum(Enum) {
     max_dual_source_draw_buffers = MAX_DUAL_SOURCE_DRAW_BUFFERS,
     sampler_binding = SAMPLER_BINDING,
     timestamp = TIMESTAMP,
+};
+
+pub const BoolParamName = enum(Enum) {
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    cull_face = CULL_FACE,
+    polygon_smooth = POLYGON_SMOOTH,
+    line_smooth = LINE_SMOOTH,
+    dither = DITHER,
+    blend = BLEND,
+    color_writemask = COLOR_WRITEMASK,
+    depth_test = DEPTH_TEST,
+    depth_writemask = DEPTH_WRITEMASK,
+    stencil_test = STENCIL_TEST,
+    doublebuffer = DOUBLEBUFFER,
+    stereo = STEREO,
+    scissor_test = SCISSOR_TEST,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.1 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    polygon_offset_fill = POLYGON_OFFSET_FILL,
+    polygon_offset_line = POLYGON_OFFSET_LINE,
+    polygon_offset_point = POLYGON_OFFSET_POINT,
+    color_logic_op = COLOR_LOGIC_OP,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.3 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 3.2 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    program_point_size = PROGRAM_POINT_SIZE,
+};
+
+pub const FloatParamName = enum(Enum) {
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.0 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    point_size = POINT_SIZE,
+    point_size_granularity = POINT_SIZE_GRANULARITY,
+    point_size_range = POINT_SIZE_RANGE,
+    line_width = LINE_WIDTH,
+    color_clear_value = COLOR_CLEAR_VALUE,
+    depth_clear_value = DEPTH_CLEAR_VALUE,
+    depth_range = DEPTH_RANGE,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.1 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    polygon_offset_factor = POLYGON_OFFSET_FACTOR,
+    polygon_offset_units = POLYGON_OFFSET_UNITS,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.2 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
+    smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
+    smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.3 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    sample_coverage_value = SAMPLE_COVERAGE_VALUE,
+    //---------------------------------------------------------------------------------------------
+    // OpenGL 1.4 (Core Profile)
+    //---------------------------------------------------------------------------------------------
+    blend_color = BLEND_COLOR,
+    point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
+    max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
+};
+
+pub const DoubleParamName = enum(Enum) {
+    // TODO
 };
 
 pub const DepthFunc = enum(Enum) {
@@ -568,6 +613,10 @@ pub const TextureTarget = enum(Enum) {
     //----------------------------------------------------------------------------------------------
     texture_2d_multisample = TEXTURE_2D_MULTISAMPLE,
     texture_2d_multisample_array = TEXTURE_2D_MULTISAMPLE_ARRAY,
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    texure_cube_map_array = TEXTURE_CUBE_MAP_ARRAY,
 };
 
 pub const InternalFormat = enum(Enum) {
@@ -1184,8 +1233,16 @@ pub fn depthFunc(func: DepthFunc) void {
 //     type: Enum,
 //     pixels: ?*anyopaque,
 // ) callconv(.C) void = undefined;
+
 // pub var getBooleanv: *const fn (pname: Enum, data: [*c]Boolean) callconv(.C) void = undefined;
+pub fn getBooleanv(pname: BoolParamName, ptr: [*]Boolean) void {
+    bindings.getBooleanv(@intFromEnum(pname), ptr);
+}
+
 // pub var getDoublev: *const fn (pname: Enum, data: [*c]Double) callconv(.C) void = undefined;
+pub fn getDoublev(pname: DoubleParamName, ptr: [*]Double) void {
+    bindings.getDoublev(@intFromEnum(pname), ptr);
+}
 
 // pub var getError: *const fn () callconv(.C) Enum = undefined;
 pub fn getError() Error {
@@ -1198,14 +1255,17 @@ pub fn getError() Error {
 }
 
 // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
+pub fn getFloatv(pname: FloatParamName, ptr: [*]Float) void {
+    bindings.getFloatv(@intFromEnum(pname), ptr);
+}
 
 // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
-pub fn getIntegerv(pname: ParameterName, ptr: [*]Int) void {
+pub fn getIntegerv(pname: IntParamName, ptr: [*]Int) void {
     bindings.getIntegerv(@intFromEnum(pname), ptr);
 }
 
 // pub var getString: *const fn (name: Enum) callconv(.C) [*c]const Ubyte = undefined;
-pub fn getString(name: StringName) [*:0]const u8 {
+pub fn getString(name: StringParamName) [*:0]const u8 {
     return bindings.getString(@intFromEnum(name));
 }
 
@@ -2653,7 +2713,7 @@ pub const VERTEX_ARRAY_BINDING = bindings.VERTEX_ARRAY_BINDING;
 // ) callconv(.C) void = undefined;
 
 // pub var getStringi: *const fn (name: Enum, index: Uint) callconv(.C) [*c]const Ubyte = undefined;
-pub fn getStringi(name: StringName, index: Uint) [*:0]const u8 {
+pub fn getStringi(name: StringParamName, index: Uint) [*:0]const u8 {
     return bindings.getStringi(@intFromEnum(name), index);
 }
 
@@ -3299,6 +3359,139 @@ pub const INT_2_10_10_10_REV = bindings.INT_2_10_10_10_REV;
 //     normalized: Boolean,
 //     value: [*c]const Uint,
 // ) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 4.0 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const SAMPLE_SHADING = bindings.SAMPLE_SHADING;
+pub const MIN_SAMPLE_SHADING_VALUE = bindings.MIN_SAMPLE_SHADING_VALUE;
+pub const MIN_PROGRAM_TEXTURE_GATHER_OFFSET = bindings.MIN_PROGRAM_TEXTURE_GATHER_OFFSET;
+pub const MAX_PROGRAM_TEXTURE_GATHER_OFFSET = bindings.MAX_PROGRAM_TEXTURE_GATHER_OFFSET;
+pub const TEXTURE_CUBE_MAP_ARRAY = bindings.TEXTURE_CUBE_MAP_ARRAY;
+pub const TEXTURE_BINDING_CUBE_MAP_ARRAY = bindings.TEXTURE_BINDING_CUBE_MAP_ARRAY;
+pub const PROXY_TEXTURE_CUBE_MAP_ARRAY = bindings.PROXY_TEXTURE_CUBE_MAP_ARRAY;
+pub const SAMPLER_CUBE_MAP_ARRAY = bindings.SAMPLER_CUBE_MAP_ARRAY;
+pub const SAMPLER_CUBE_MAP_ARRAY_SHADOW = bindings.SAMPLER_CUBE_MAP_ARRAY_SHADOW;
+pub const INT_SAMPLER_CUBE_MAP_ARRAY = bindings.INT_SAMPLER_CUBE_MAP_ARRAY;
+pub const UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY = bindings.UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY;
+pub const DRAW_INDIRECT_BUFFER = bindings.DRAW_INDIRECT_BUFFER;
+pub const DRAW_INDIRECT_BUFFER_BINDING = bindings.DRAW_INDIRECT_BUFFER_BINDING;
+pub const GEOMETRY_SHADER_INVOCATIONS = bindings.GEOMETRY_SHADER_INVOCATIONS;
+pub const MAX_GEOMETRY_SHADER_INVOCATIONS = bindings.MAX_GEOMETRY_SHADER_INVOCATIONS;
+pub const MIN_FRAGMENT_INTERPOLATION_OFFSET = bindings.MIN_FRAGMENT_INTERPOLATION_OFFSET;
+pub const MAX_FRAGMENT_INTERPOLATION_OFFSET = bindings.MAX_FRAGMENT_INTERPOLATION_OFFSET;
+pub const FRAGMENT_INTERPOLATION_OFFSET_BITS = bindings.FRAGMENT_INTERPOLATION_OFFSET_BITS;
+pub const MAX_VERTEX_STREAMS = bindings.MAX_VERTEX_STREAMS;
+pub const DOUBLE_VEC2 = bindings.DOUBLE_VEC2;
+pub const DOUBLE_VEC3 = bindings.DOUBLE_VEC3;
+pub const DOUBLE_VEC4 = bindings.DOUBLE_VEC4;
+pub const DOUBLE_MAT2 = bindings.DOUBLE_MAT2;
+pub const DOUBLE_MAT3 = bindings.DOUBLE_MAT3;
+pub const DOUBLE_MAT4 = bindings.DOUBLE_MAT4;
+pub const DOUBLE_MAT2x3 = bindings.DOUBLE_MAT2x3;
+pub const DOUBLE_MAT2x4 = bindings.DOUBLE_MAT2x4;
+pub const DOUBLE_MAT3x2 = bindings.DOUBLE_MAT3x2;
+pub const DOUBLE_MAT3x4 = bindings.DOUBLE_MAT3x4;
+pub const DOUBLE_MAT4x2 = bindings.DOUBLE_MAT4x2;
+pub const DOUBLE_MAT4x3 = bindings.DOUBLE_MAT4x3;
+pub const ACTIVE_SUBROUTINES = bindings.ACTIVE_SUBROUTINES;
+pub const ACTIVE_SUBROUTINE_UNIFORMS = bindings.ACTIVE_SUBROUTINE_UNIFORMS;
+pub const ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS = bindings.ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS;
+pub const ACTIVE_SUBROUTINE_MAX_LENGTH = bindings.ACTIVE_SUBROUTINE_MAX_LENGTH;
+pub const ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH = bindings.ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH;
+pub const MAX_SUBROUTINES = bindings.MAX_SUBROUTINES;
+pub const MAX_SUBROUTINE_UNIFORM_LOCATIONS = bindings.MAX_SUBROUTINE_UNIFORM_LOCATIONS;
+pub const NUM_COMPATIBLE_SUBROUTINES = bindings.NUM_COMPATIBLE_SUBROUTINES;
+pub const COMPATIBLE_SUBROUTINES = bindings.COMPATIBLE_SUBROUTINES;
+pub const PATCHES = bindings.PATCHES;
+pub const PATCH_VERTICES = bindings.PATCH_VERTICES;
+pub const PATCH_DEFAULT_INNER_LEVEL = bindings.PATCH_DEFAULT_INNER_LEVEL;
+pub const PATCH_DEFAULT_OUTER_LEVEL = bindings.PATCH_DEFAULT_OUTER_LEVEL;
+pub const TESS_CONTROL_OUTPUT_VERTICES = bindings.TESS_CONTROL_OUTPUT_VERTICES;
+pub const TESS_GEN_MODE = bindings.TESS_GEN_MODE;
+pub const TESS_GEN_SPACING = bindings.TESS_GEN_SPACING;
+pub const TESS_GEN_VERTEX_ORDER = bindings.TESS_GEN_VERTEX_ORDER;
+pub const TESS_GEN_POINT_MODE = bindings.TESS_GEN_POINT_MODE;
+pub const ISOLINES = bindings.ISOLINES;
+pub const FRACTIONAL_ODD = bindings.FRACTIONAL_ODD;
+pub const FRACTIONAL_EVEN = bindings.FRACTIONAL_EVEN;
+pub const MAX_PATCH_VERTICES = bindings.MAX_PATCH_VERTICES;
+pub const MAX_TESS_GEN_LEVEL = bindings.MAX_TESS_GEN_LEVEL;
+pub const MAX_TESS_CONTROL_UNIFORM_COMPONENTS = bindings.MAX_TESS_CONTROL_UNIFORM_COMPONENTS;
+pub const MAX_TESS_EVALUATION_UNIFORM_COMPONENTS = bindings.MAX_TESS_EVALUATION_UNIFORM_COMPONENTS;
+pub const MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS = bindings.MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS;
+pub const MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS = bindings.MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS;
+pub const MAX_TESS_CONTROL_OUTPUT_COMPONENTS = bindings.MAX_TESS_CONTROL_OUTPUT_COMPONENTS;
+pub const MAX_TESS_PATCH_COMPONENTS = bindings.MAX_TESS_PATCH_COMPONENTS;
+pub const MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS = bindings.MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS;
+pub const MAX_TESS_EVALUATION_OUTPUT_COMPONENTS = bindings.MAX_TESS_EVALUATION_OUTPUT_COMPONENTS;
+pub const MAX_TESS_CONTROL_UNIFORM_BLOCKS = bindings.MAX_TESS_CONTROL_UNIFORM_BLOCKS;
+pub const MAX_TESS_EVALUATION_UNIFORM_BLOCKS = bindings.MAX_TESS_EVALUATION_UNIFORM_BLOCKS;
+pub const MAX_TESS_CONTROL_INPUT_COMPONENTS = bindings.MAX_TESS_CONTROL_INPUT_COMPONENTS;
+pub const MAX_TESS_EVALUATION_INPUT_COMPONENTS = bindings.MAX_TESS_EVALUATION_INPUT_COMPONENTS;
+pub const MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS = bindings.MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS;
+pub const MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS = bindings.MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS;
+pub const UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER = bindings.UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER;
+pub const UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER = bindings.UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER;
+pub const TESS_EVALUATION_SHADER = bindings.TESS_EVALUATION_SHADER;
+pub const TESS_CONTROL_SHADER = bindings.TESS_CONTROL_SHADER;
+pub const TRANSFORM_FEEDBACK = bindings.TRANSFORM_FEEDBACK;
+pub const TRANSFORM_FEEDBACK_BUFFER_PAUSED = bindings.TRANSFORM_FEEDBACK_BUFFER_PAUSED;
+pub const TRANSFORM_FEEDBACK_BUFFER_ACTIVE = bindings.TRANSFORM_FEEDBACK_BUFFER_ACTIVE;
+pub const TRANSFORM_FEEDBACK_BINDING = bindings.TRANSFORM_FEEDBACK_BINDING;
+pub const MAX_TRANSFORM_FEEDBACK_BUFFERS = bindings.MAX_TRANSFORM_FEEDBACK_BUFFERS;
+
+pub const DrawArraysIndirectCommand = bindings.DrawArraysIndirectCommand;
+pub const DrawElementsIndirectCommand = bindings.DrawElementsIndirectCommand;
+
+// pub var minSampleShading: *const fn (value: Float) callconv(.C) void = undefined;
+// pub var blendEquationi: *const fn (buf: Uint, mode: Enum) callconv(.C) void = undefined;
+// pub var blendEquationSeparatei: *const fn (buf: Uint, modeRGB: Enum, modeAlpha: Enum) callconv(.C) void = undefined;
+// pub var blendFunci: *const fn (buf: Uint, src: Enum, dst: Enum) callconv(.C) void = undefined;
+// pub var blendFuncSeparatei: *const fn (buf: Uint, srcRGB: Enum, dstRGB: Enum, srcAlpha: Enum, dstAlpha: Enum) callconv(.C) void = undefined;
+// pub var drawArraysIndirect: *const fn (mode: Enum, indirect: *const DrawArraysIndirectCommand) callconv(.C) void = undefined;
+// pub var drawElementsIndirect: *const fn (mode: Enum, type: Enum, indirect: *const DrawElementsIndirectCommand) callconv(.C) void = undefined;
+// pub var uniform1d: *const fn (location: Int, x: Double) callconv(.C) void = undefined;
+// pub var uniform2d: *const fn (location: Int, x: Double, y: Double) callconv(.C) void = undefined;
+// pub var uniform3d: *const fn (location: Int, x: Double, y: Double, z: Double) callconv(.C) void = undefined;
+// pub var uniform4d: *const fn (location: Int, x: Double, y: Double, z: Double, w: Double) callconv(.C) void = undefined;
+// pub var uniform1dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniform2dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniform3dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniform4dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix2dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix3dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix4dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix2x3dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix2x4dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix3x2dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix3x4dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix4x2dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var uniformMatrix4x3dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+// pub var getUniformdv: *const fn (program: Uint, location: Int, params: [*c]Double) callconv(.C) void = undefined;
+// pub var getSubroutineUniformLocation: *const fn (program: Uint, shadertype: Enum, name: [*c]const Char) callconv(.C) Int = undefined;
+// pub var getSubroutineIndex: *const fn (program: Uint, shadertype: Enum, name: [*c]const Char) callconv(.C) Uint = undefined;
+// pub var getActiveSubroutineUniformiv: *const fn (program: Uint, shadertype: Enum, index: Uint, pname: Enum, values: [*c]Int) callconv(.C) void = undefined;
+// pub var getActiveSubroutineUniformName: *const fn (program: Uint, shadertype: Enum, index: Uint, bufsize: Sizei, length: [*c]Sizei, name: [*c]Char) callconv(.C) void = undefined;
+// pub var getActiveSubroutineName: *const fn (program: Uint, shadertype: Enum, index: Uint, bufsize: Sizei, length: [*c]Sizei, name: [*c]Char) callconv(.C) void = undefined;
+// pub var uniformSubroutinesuiv: *const fn (shadertype: Enum, count: Sizei, indices: [*c]const Uint) callconv(.C) void = undefined;
+// pub var getUniformSubroutineuiv: *const fn (shadertype: Enum, location: Int, params: [*c]const Uint) callconv(.C) void = undefined;
+// pub var getProgramStageiv: *const fn (program: Uint, shadertype: Enum, pname: Enum, values: [*c]Int) callconv(.C) void = undefined;
+// pub var patchParameteri: *const fn (pname: Enum, value: Int) callconv(.C) void = undefined;
+// pub var patchParameterfv: *const fn (pname: Enum, values: [*c]const Float) callconv(.C) void = undefined;
+// pub var bindTransformFeedback: *const fn (target: Enum, id: Uint) callconv(.C) Boolean = undefined;
+// pub var deleteTransformFeedbacks: *const fn (n: Sizei, ids: [*c]const Uint) callconv(.C) void = undefined;
+// pub var genTransformFeedbacks: *const fn (n: Sizei, ids: [*c]Uint) callconv(.C) void = undefined;
+// pub var isTransformFeedback: *const fn (id: Uint) callconv(.C) void = undefined;
+// pub var pauseTransformFeedback: *const fn () callconv(.C) void = undefined;
+// pub var resumeTransformFeedback: *const fn () callconv(.C) void = undefined;
+// pub var drawTransformFeedback: *const fn (mode: Enum, id: Uint) callconv(.C) void = undefined;
+// pub var drawTransformFeedbackStream: *const fn (mode: Enum, id: Uint, stream: Uint) callconv(.C) void = undefined;
+// pub var beginQueryIndexed: *const fn (target: Enum, index: Uint, id: Uint) callconv(.C) void = undefined;
+// pub var endQueryIndexed: *const fn (target: Enum, index: Uint) callconv(.C) void = undefined;
+// pub var glGetQueryIndexediv: *const fn (target: Enum, index: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
 
 //--------------------------------------------------------------------------------------------------
 //
