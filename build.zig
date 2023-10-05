@@ -90,8 +90,11 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     znoise_pkg = znoise.package(b, target, optimize, .{});
     zstbi_pkg = zstbi.package(b, target, optimize, .{});
     zbullet_pkg = zbullet.package(b, target, optimize, .{});
-    zgui_pkg = zgui.package(b, target, optimize, .{
+    zgui_glfw_wgpu_pkg = zgui.package(b, target, optimize, .{
         .options = .{ .backend = .glfw_wgpu },
+    });
+    zgui_glfw_gl_pkg = zgui.package(b, target, optimize, .{
+        .options = .{ .backend = .glfw_opengl3 },
     });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
@@ -162,6 +165,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
     const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
     const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
+    const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
     const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
     const layers_wgpu = @import("samples/layers_wgpu/build.zig");
     const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
@@ -174,6 +178,7 @@ fn samplesCrossPlatform(b: *std.Build, options: Options) void {
     install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
     install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
+    install(b, minimal_zgui_glfw_gl.build(b, options), "minimal_zgui_glfw_gl");
     install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
     install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
@@ -249,7 +254,8 @@ pub var zmesh_pkg: zmesh.Package = undefined;
 pub var zglfw_pkg: zglfw.Package = undefined;
 pub var zstbi_pkg: zstbi.Package = undefined;
 pub var zbullet_pkg: zbullet.Package = undefined;
-pub var zgui_pkg: zgui.Package = undefined;
+pub var zgui_glfw_wgpu_pkg: zgui.Package = undefined;
+pub var zgui_glfw_gl_pkg: zgui.Package = undefined;
 pub var zgpu_pkg: zgpu.Package = undefined;
 pub var ztracy_pkg: ztracy.Package = undefined;
 pub var zphysics_pkg: zphysics.Package = undefined;
