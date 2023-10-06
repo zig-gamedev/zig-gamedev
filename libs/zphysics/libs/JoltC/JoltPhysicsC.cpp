@@ -32,6 +32,8 @@
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Body/BodyManager.h>
 #include <Jolt/Physics/Body/BodyFilter.h>
+#include <Jolt/Physics/Character/Character.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #if JPC_DEBUG_RENDERER == 1
 #include <string_view>
@@ -276,6 +278,27 @@ FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
 FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
 FN(toJpc)(JPH::EMotionQuality in) { return static_cast<JPC_MotionQuality>(in); }
+FN(toJpc)(JPH::CharacterBase::EGroundState in) { return static_cast<JPC_CharacterGroundState>(in); }
+
+FN(toJph)(const JPC_Character *in) { assert(in); return reinterpret_cast<const JPH::Character *>(in); }
+FN(toJph)(JPC_Character *in) { assert(in); return reinterpret_cast<JPH::Character *>(in); }
+FN(toJpc)(const JPH::Character *in) { assert(in); return reinterpret_cast<const JPC_Character *>(in); }
+FN(toJpc)(JPH::Character *in) { assert(in); return reinterpret_cast<JPC_Character *>(in); }
+
+FN(toJph)(const JPC_CharacterSettings *in) { assert(in); return reinterpret_cast<const JPH::CharacterSettings *>(in); }
+FN(toJph)(JPC_CharacterSettings *in) { assert(in); return reinterpret_cast<JPH::CharacterSettings *>(in); }
+FN(toJpc)(const JPH::CharacterSettings *in) { assert(in); return reinterpret_cast<const JPC_CharacterSettings *>(in); }
+FN(toJpc)(JPH::CharacterSettings *in) { assert(in); return reinterpret_cast<JPC_CharacterSettings *>(in); }
+
+FN(toJph)(const JPC_CharacterVirtual *in) { assert(in); return reinterpret_cast<const JPH::CharacterVirtual *>(in); }
+FN(toJph)(JPC_CharacterVirtual *in) { assert(in); return reinterpret_cast<JPH::CharacterVirtual *>(in); }
+FN(toJpc)(const JPH::CharacterVirtual *in) { assert(in); return reinterpret_cast<const JPC_CharacterVirtual *>(in); }
+FN(toJpc)(JPH::CharacterVirtual *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtual *>(in); }
+
+FN(toJph)(const JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPH::CharacterVirtualSettings *>(in); }
+FN(toJph)(JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPH::CharacterVirtualSettings *>(in); }
+FN(toJpc)(const JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPC_CharacterVirtualSettings *>(in); }
+FN(toJpc)(JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtualSettings *>(in); }
 
 #if JPC_DEBUG_RENDERER == 1
 FN(toJpc)(const JPH::BodyManager::DrawSettings *in) { assert(in); return reinterpret_cast<const JPC_BodyManager_DrawSettings *>(in); }
@@ -1715,6 +1738,14 @@ JPC_BodyInterface_CreateBody(JPC_BodyInterface *in_iface, const JPC_BodyCreation
     return toJpc(toJph(in_iface)->CreateBody(*toJph(in_settings)));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API JPC_Body *
+JPC_BodyInterface_CreateBodyWithID(JPC_BodyInterface *in_iface,
+                                   JPC_BodyID in_body_id,
+                                   const JPC_BodyCreationSettings *in_settings)
+{
+    return toJpc(toJph(in_iface)->CreateBodyWithID(toJph(in_body_id), *toJph(in_settings)));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_BodyInterface_DestroyBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
@@ -2291,7 +2322,7 @@ JPC_Body_GetWorldSpaceBounds(const JPC_Body *in_body, float out_min[3], float ou
 {
     const JPH::AABox& aabb = toJph(in_body)->GetWorldSpaceBounds();
     storeVec3(out_min, aabb.mMin);
-    storeVec3(out_min, aabb.mMax);
+    storeVec3(out_max, aabb.mMax);
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_MotionProperties *
@@ -2561,3 +2592,217 @@ JPC_BodyID_IsInvalid(JPC_BodyID in_body_id)
     return JPH::BodyID(in_body_id).IsInvalid();
 }
 //--------------------------------------------------------------------------------------------------
+//
+// JPC_CharacterSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterSettings *
+JPC_CharacterSettings_Create()
+{
+    auto settings = new JPH::CharacterSettings();
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterSettings_Release(JPC_CharacterSettings *in_settings)
+{
+    toJph(in_settings)->Release();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterSettings_AddRef(JPC_CharacterSettings *in_settings)
+{
+    toJph(in_settings)->AddRef();
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_Character
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_Character *
+JPC_Character_Create(const JPC_CharacterSettings *in_settings,
+                     const JPC_Real in_position[3],
+                     const float in_rotation[4],
+                     uint64_t in_user_data,
+                     JPC_PhysicsSystem *in_physics_system)
+{
+    auto character = new JPH::Character(toJph(in_settings),
+                                        loadVec3(in_position),
+                                        JPH::Quat(loadVec4(in_rotation)),
+                                        in_user_data,
+                                        toJph(in_physics_system));
+    return toJpc(character);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_Destroy(JPC_Character *in_character)
+{
+    delete toJph(in_character);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_AddToPhysicsSystem(JPC_Character *in_character, JPC_Activation in_activation, bool in_lock_bodies)
+{
+    toJph(in_character)->AddToPhysicsSystem(static_cast<JPH::EActivation>(in_activation), in_lock_bodies);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_RemoveFromPhysicsSystem(JPC_Character *in_character, bool in_lock_bodies)
+{
+    toJph(in_character)->RemoveFromPhysicsSystem(in_lock_bodies);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_GetPosition(const JPC_Character *in_character, JPC_Real out_position[3])
+{
+    storeRVec3(out_position, toJph(in_character)->GetPosition());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_SetPosition(JPC_Character *in_character, const JPC_Real in_position[3])
+{
+    toJph(in_character)->SetPosition(loadRVec3(in_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_GetLinearVelocity(const JPC_Character *in_character, float out_linear_velocity[3])
+{
+    storeVec3(out_linear_velocity, toJph(in_character)->GetLinearVelocity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Character_SetLinearVelocity(JPC_Character *in_character, const float in_linear_velocity[3])
+{
+    toJph(in_character)->SetLinearVelocity(loadVec3(in_linear_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_CharacterVirtualSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterVirtualSettings *
+JPC_CharacterVirtualSettings_Create()
+{
+    auto settings = new JPH::CharacterVirtualSettings();
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtualSettings_Release(JPC_CharacterVirtualSettings *in_settings)
+{
+    toJph(in_settings)->Release();
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_CharacterVirtual
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterVirtual *
+JPC_CharacterVirtual_Create(const JPC_CharacterVirtualSettings *in_settings,
+                            const JPC_Real in_position[3],
+                            const float in_rotation[4],
+                            JPC_PhysicsSystem *in_physics_system)
+{
+    auto character = new JPH::CharacterVirtual(
+        toJph(in_settings), loadVec3(in_position), JPH::Quat(loadVec4(in_rotation)), toJph(in_physics_system));
+    return toJpc(character);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_Destroy(JPC_CharacterVirtual *in_character)
+{
+    delete toJph(in_character);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
+                            float in_delta_time,
+                            const float in_gravity[3],
+                            const void *in_broad_phase_layer_filter,
+                            const void *in_object_layer_filter,
+                            const void *in_body_filter,
+                            const void *in_shape_filter,
+                            JPC_TempAllocator *in_temp_allocator)
+{
+    const JPH::BroadPhaseLayerFilter broad_phase_layer_filter{};
+    const JPH::ObjectLayerFilter object_layer_filter{};
+    const JPH::BodyFilter body_filter{};
+    const JPH::ShapeFilter shape_filter{};
+    toJph(in_character)->Update(
+        in_delta_time,
+        loadVec3(in_gravity),
+        in_broad_phase_layer_filter ?
+        *static_cast<const JPH::BroadPhaseLayerFilter *>(in_broad_phase_layer_filter) : broad_phase_layer_filter,
+        in_object_layer_filter ?
+        *static_cast<const JPH::ObjectLayerFilter *>(in_object_layer_filter) : object_layer_filter,
+        in_body_filter ? *static_cast<const JPH::BodyFilter *>(in_body_filter) : body_filter,
+        in_shape_filter ? *static_cast<const JPH::ShapeFilter *>(in_shape_filter) : shape_filter,
+        *reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CharacterGroundState
+JPC_CharacterVirtual_GetGroundState(JPC_CharacterVirtual *in_character)
+{
+    return toJpc(toJph(in_character)->GetGroundState());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_SetListener(JPC_CharacterVirtual *in_character, void *in_listener)
+{
+    if (in_listener == nullptr)
+    {
+        toJph(in_character)->SetListener(nullptr);
+        return;
+    }
+    toJph(in_character)->SetListener(static_cast<JPH::CharacterContactListener *>(in_listener));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_UpdateGroundVelocity(JPC_CharacterVirtual *in_character)
+{
+    toJph(in_character)->UpdateGroundVelocity();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetGroundVelocity(const JPC_CharacterVirtual *in_character, float out_ground_velocity[3])
+{
+    storeVec3(out_ground_velocity, toJph(in_character)->GetGroundVelocity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetPosition(const JPC_CharacterVirtual *in_character, JPC_Real out_position[3])
+{
+    storeRVec3(out_position, toJph(in_character)->GetPosition());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_SetPosition(JPC_CharacterVirtual *in_character, const JPC_Real in_position[3])
+{
+    toJph(in_character)->SetPosition(loadRVec3(in_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetRotation(const JPC_CharacterVirtual *in_character, float out_rotation[4])
+{
+    storeVec4(out_rotation, toJph(in_character)->GetRotation().GetXYZW());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_SetRotation(JPC_CharacterVirtual *in_character, const float in_rotation[4])
+{
+    toJph(in_character)->SetRotation(JPH::Quat(loadVec4(in_rotation)));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_GetLinearVelocity(const JPC_CharacterVirtual *in_character, float out_linear_velocity[3])
+{
+    storeVec3(out_linear_velocity, toJph(in_character)->GetLinearVelocity());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_SetLinearVelocity(JPC_CharacterVirtual *in_character, const float in_linear_velocity[3])
+{
+    toJph(in_character)->SetLinearVelocity(loadVec3(in_linear_velocity));
+}
