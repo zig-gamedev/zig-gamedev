@@ -165,16 +165,10 @@ pub const Window = opaque {
         tooltip: bool = false,
         popup_menu: bool = false,
         keyboard_grabbed: bool = false,
-
-        __unused21: bool = false,
-        __unused22: bool = false,
-        __unused23: bool = false,
-        __unused24: bool = false,
-
-        vulkan: bool = false,
+        __unused21: u7 = 0,
+        vulkan: bool = false, // 0x10000000
         metal: bool = false,
-
-        __unused: u5 = 0,
+        __unused30: u2 = 0,
 
         pub const fullscreen_desktop: Flags = .{ .fullscreen = true, ._desktop = true };
         pub const input_grabbed: Flags = .{ .mouse_grabbed = true };
