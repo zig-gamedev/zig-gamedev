@@ -161,10 +161,10 @@ pub const Window = opaque {
         tooltip: bool = false,
         popup_menu: bool = false,
         keyboard_grabbed: bool = false,
-        __unused21: u4 = 0,
-        vulkan: bool = false,
+        __unused21: u7 = 0,
+        vulkan: bool = false, // 0x10000000
         metal: bool = false,
-        __unused27: u5 = 0,
+        __unused30: u2 = 0,
     };
 
     pub const pos_undefined = posUndefinedDisplay(0);
@@ -1058,6 +1058,36 @@ extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) c_int;
 // Vulkan Support
 //
 //--------------------------------------------------------------------------------------------------
+pub const vk = struct {
+
+    pub const FunctionPointer = ?*const anyopaque;
+    pub const Instance = enum(usize) { null_handle = 0, _ };
+
+    pub fn loadLibrary(path: ?[*:0]const u8) Error!void {
+        if (SDL_Vulkan_LoadLibrary(path) < 0) return makeError();
+    }
+    extern fn SDL_Vulkan_LoadLibrary(path: ?[*]const u8) i32;
+
+    pub fn getVkGetInstanceProcAddr() FunctionPointer {
+        return SDL_Vulkan_GetVkGetInstanceProcAddr();
+    }
+    extern fn SDL_Vulkan_GetVkGetInstanceProcAddr() FunctionPointer;
+
+    pub fn unloadLibrary() void {
+        SDL_Vulkan_UnloadLibrary();
+    }
+    extern fn SDL_Vulkan_UnloadLibrary() void;
+
+    pub fn getInstanceExtensions(count: *i32, maybe_names: ?[*][*:0]u8) bool {
+        return SDL_Vulkan_GetInstanceExtensions(count, maybe_names);
+    }
+    extern fn SDL_Vulkan_GetInstanceExtensions(count: *i32, names: ?[*][*]u8) bool;
+
+    pub fn createSurface(window: *Window, instance: Instance, surface: *anyopaque) bool {
+        return SDL_Vulkan_CreateSurface(window, instance, surface);
+    }
+    extern fn SDL_Vulkan_CreateSurface(window: *Window, instance: Instance, surface: *anyopaque) bool;
+};
 
 //--------------------------------------------------------------------------------------------------
 //
