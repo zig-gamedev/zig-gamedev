@@ -1474,6 +1474,8 @@ pub const GraphicsContext = struct {
         const eql = std.mem.eql;
         const asBytes = std.mem.asBytes;
         const num_components: u32 = blk: {
+            if (eql(u8, asBytes(&pixel_format), asBytes(&wic.GUID_PixelFormat2bppIndexed))) break :blk 4;
+
             if (eql(u8, asBytes(&pixel_format), asBytes(&wic.GUID_PixelFormat24bppRGB))) break :blk 4;
             if (eql(u8, asBytes(&pixel_format), asBytes(&wic.GUID_PixelFormat32bppRGB))) break :blk 4;
             if (eql(u8, asBytes(&pixel_format), asBytes(&wic.GUID_PixelFormat32bppRGBA))) break :blk 4;
