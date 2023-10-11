@@ -1,10 +1,12 @@
 const std = @import("std");
 
+pub const API = enum {
+    raw_bindings,
+    wrapper,
+};
+
 pub const Options = struct {
-    api: enum {
-        raw,
-        wrapper,
-    },
+    api: API,
 };
 
 pub const Package = struct {
@@ -23,7 +25,7 @@ pub fn package(
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{
-            .api = .raw,
+            .api = .raw_bindings,
         },
     },
 ) Package {
@@ -35,7 +37,7 @@ pub fn package(
 
     const options = options_step.createModule();
 
-    const zopengl = b.createModule(.{
+    const zopengl = b.addModule("zopengl", .{
         .source_file = .{ .path = thisDir() ++ "/src/zopengl.zig" },
         .dependencies = &.{
             .{ .name = "zopengl_options", .module = options },
@@ -77,6 +79,12 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zopengl tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .api = b.option(API, "api", "Select API") orelse .raw_bindings,
+        },
+    });
 }
 
 inline fn thisDir() []const u8 {
