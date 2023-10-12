@@ -3179,6 +3179,12 @@ pub const Shape = opaque {
             pub fn setUserData(shape: *T, user_data: u64) void {
                 return c.JPC_Shape_SetUserData(@as(*c.JPC_Shape, @ptrCast(shape)), user_data);
             }
+
+            pub fn getCenterOfMass(shape: *const T) [3]Real {
+                var center: [3]Real = undefined;
+                c.JPC_Shape_GetCenterOfMass(@as(*const c.JPC_Shape, @ptrCast(shape)), &center);
+                return center;
+            }
         };
     }
 };
