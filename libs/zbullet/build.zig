@@ -38,12 +38,15 @@ pub fn package(
         "-std=c++11",
         "-fno-sanitize=undefined",
     };
-    zbullet_c_cpp.addCSourceFiles(&.{
-        thisDir() ++ "/libs/cbullet/cbullet.cpp",
-        thisDir() ++ "/libs/bullet/btLinearMathAll.cpp",
-        thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp",
-        thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp",
-    }, flags);
+    zbullet_c_cpp.addCSourceFiles(.{
+        .files = &.{
+            thisDir() ++ "/libs/cbullet/cbullet.cpp",
+            thisDir() ++ "/libs/bullet/btLinearMathAll.cpp",
+            thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp",
+            thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp",
+        },
+        .flags = flags,
+    });
 
     return .{
         .zbullet = zbullet,
