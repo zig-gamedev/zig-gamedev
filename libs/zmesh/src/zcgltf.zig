@@ -217,6 +217,10 @@ pub const BufferView = extern struct {
     extras: Extras,
     extensions_count: usize,
     extensions: ?[*]Extension,
+
+    pub fn data(bv: BufferView) ?[*]u8 {
+        return cgltf_buffer_view_data(&bv);
+    }
 };
 
 pub const AccessorSparse = extern struct {
@@ -262,6 +266,15 @@ pub const Accessor = extern struct {
 
     pub fn unpackFloats(accessor: Accessor, out: []f32) []f32 {
         const count = cgltf_accessor_unpack_floats(&accessor, out.ptr, out.len);
+        return out[0..count];
+    }
+
+    pub fn unpackIndicesCount(accessor: Accessor) usize {
+        return cgltf_accessor_unpack_indices(&accessor, null, 0);
+    }
+
+    pub fn unpackIndices(accessor: Accessor, out: []u32) []u32 {
+        const count = cgltf_accessor_unpack_indices(&accessor, out.ptr, out.len);
         return out[0..count];
     }
 
@@ -407,6 +420,12 @@ pub const Iridescence = extern struct {
     iridescence_thickness_texture: TextureView,
 };
 
+pub const Anisotropy = extern struct {
+    anisotropy_strength: f32,
+    anisotropy_rotation: f32,
+    anisotropy_texture: TextureView,
+};
+
 pub const Material = extern struct {
     name: ?MutCString,
     has_pbr_metallic_roughness: Bool32,
@@ -419,6 +438,7 @@ pub const Material = extern struct {
     has_sheen: Bool32,
     has_emissive_strength: Bool32,
     has_iridescence: Bool32,
+    has_anisotropy: Bool32,
     pbr_metallic_roughness: PbrMetallicRoughness,
     pbr_specular_glossiness: PbrSpecularGlossiness,
     clearcoat: Clearcoat,
@@ -429,6 +449,7 @@ pub const Material = extern struct {
     volume: Volume,
     emissive_strength: EmissiveStrength,
     iridescence: Iridescence,
+    anisotropy: Anisotropy,
     normal_texture: TextureView,
     occlusion_texture: TextureView,
     emissive_texture: TextureView,
@@ -460,7 +481,6 @@ pub const DracoMeshCompression = extern struct {
 };
 
 pub const MeshGpuInstancing = extern struct {
-    buffer_view: ?*BufferView,
     attributes: ?[*]Attribute,
     attributes_count: usize,
 };
@@ -710,6 +730,15 @@ pub const Data = extern struct {
 
     memory: MemoryOptions,
     file: FileOptions,
+
+    pub fn writeFile(data: Data, path: [*:0]const u8, options: Options) !void {
+        const result = cgltf_write_file(&options, path, &data);
+        resultToError(result, null) catch |err| return err;
+    }
+
+    pub fn writeBuffer(data: Data, buffer: []u8, options: Options) usize {
+        return cgltf_write(&options, buffer.ptr, buffer.len, &data);
+    }
 };
 
 pub const Error = error{
@@ -784,6 +813,8 @@ extern fn cgltf_validate(data: ?*Data) Result;
 extern fn cgltf_node_transform_local(node: ?*const Node, out_matrix: ?*[16]f32) void;
 extern fn cgltf_node_transform_world(node: ?*const Node, out_matrix: ?*[16]f32) void;
 
+extern fn cgltf_buffer_view_data(view: ?*const BufferView) ?[*]u8;
+
 extern fn cgltf_accessor_read_float(
     accessor: ?*const Accessor,
     index: usize,
@@ -809,12 +840,31 @@ extern fn cgltf_accessor_unpack_floats(
     float_count: usize,
 ) usize;
 
+extern fn cgltf_accessor_unpack_indices(
+    accessor: ?*const Accessor,
+    out: ?[*]u32,
+    index_count: usize,
+) usize;
+
 extern fn cgltf_copy_extras_json(
     data: ?*const Data,
     extras: ?*const Extras,
     dest: ?[*]u8,
     dest_size: ?*usize,
 ) Result;
+
+extern fn cgltf_write_file(
+    options: ?*const Options,
+    path: ?[*:0]const u8,
+    data: ?*const Data,
+) Result;
+
+extern fn cgltf_write(
+    options: ?*const Options,
+    buffer: ?[*]u8,
+    size: usize,
+    data: ?*const Data,
+) usize;
 
 fn resultToError(result: Result, data: ?*Data) Error!*Data {
     if (result == .success)
