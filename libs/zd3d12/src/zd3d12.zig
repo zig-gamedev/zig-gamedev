@@ -1891,10 +1891,10 @@ const ResourcePool = struct {
     }
 
     fn deinit(pool: *ResourcePool, allocator: std.mem.Allocator) void {
-        // for (pool.resources) |resource| {
-        //     if (resource.raw != null)
-        //         _ = resource.raw.?.Release();
-        // }
+        for (pool.resources) |resource| {
+            if (resource.raw != null)
+                _ = resource.raw.?.Release();
+        }
         allocator.free(pool.resources);
         allocator.free(pool.generations);
         pool.* = undefined;
