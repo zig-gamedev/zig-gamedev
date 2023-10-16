@@ -1,0 +1,5 @@
+.{
+    .name = "zglfw",
+    .version = "0.7.0",
+    .paths = .{""},
+}
