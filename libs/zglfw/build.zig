@@ -49,13 +49,13 @@ pub fn package(
     const step = b.addOptions();
     step.addOption(bool, "shared", args.options.shared);
 
-    const zglfw = b.createModule(.{
+    const zglfw = b.addModule("zglfw", .{
         .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
         const lib = b.addSharedLibrary(.{
-            .name = "zglfw",
+            .name = "libglfw",
             .target = target,
             .optimize = optimize,
         });
@@ -66,7 +66,7 @@ pub fn package(
 
         break :blk lib;
     } else b.addStaticLibrary(.{
-        .name = "zglfw",
+        .name = "libglfw",
         .target = target,
         .optimize = optimize,
     });
@@ -184,6 +184,9 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zglfw tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    const pkg = package(b, target, optimize, .{});
+    b.installArtifact(pkg.zglfw_c_cpp);
 }
 
 pub fn runTests(
