@@ -393,7 +393,7 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
         }
     }).impl;
     const argv = &[_][]const u8{ "git", "version" };
-    const result = std.ChildProcess.exec(.{
+    const result = std.ChildProcess.run(.{
         .allocator = allocator,
         .argv = argv,
         .cwd = thisDir(),
@@ -427,7 +427,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
         }
     }).impl;
     const argv = &[_][]const u8{ "git", "lfs", cmd };
-    const result = std.ChildProcess.exec(.{
+    const result = std.ChildProcess.run(.{
         .allocator = allocator,
         .argv = argv,
         .cwd = thisDir(),
