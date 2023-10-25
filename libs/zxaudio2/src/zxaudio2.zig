@@ -618,7 +618,7 @@ const SimpleAudioProcessor = extern struct {
     refcount: u32 = 1,
     is_locked: bool = false,
     num_channels: u16 = 0,
-    process: *const fn ([]f32, u32, ?*anyopaque) void,
+    process: *const fn ([*]f32, u32, u32, ?*anyopaque) callconv(.C) void,
     context: ?*anyopaque,
 
     const vtable = xapo.IXAPO.VTable{
@@ -829,7 +829,8 @@ const SimpleAudioProcessor = extern struct {
             const num_samples = input_params.?[0].ValidFrameCount * self.num_channels;
 
             self.process(
-                samples[0..num_samples],
+                samples,
+                num_samples,
                 if (input_params.?[0].BufferFlags == .VALID) self.num_channels else 0,
                 self.context,
             );
@@ -849,7 +850,7 @@ const SimpleAudioProcessor = extern struct {
 };
 
 pub fn createSimpleProcessor(
-    process: *const fn ([]f32, u32, ?*anyopaque) void,
+    process: *const fn ([*]f32, u32, u32, ?*anyopaque) callconv(.C) void,
     context: ?*anyopaque,
 ) *IUnknown {
     const ptr = w32.CoTaskMemAlloc(@sizeOf(SimpleAudioProcessor)).?;
