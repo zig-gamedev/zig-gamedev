@@ -26,6 +26,8 @@
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 #include <Jolt/Physics/Collision/Shape/OffsetCenterOfMassShape.h>
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
+#include <Jolt/Physics/Collision/Shape/MutableCompoundShape.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
@@ -203,6 +205,19 @@ FN(toJpc)(JPH::OffsetCenterOfMassShapeSettings *in) {
 FN(toJph)(JPC_DecoratedShapeSettings *in) {
     ENSURE_TYPE(in, JPH::DecoratedShapeSettings);
     return reinterpret_cast<JPH::DecoratedShapeSettings *>(in);
+}
+
+FN(toJpc)(JPH::StaticCompoundShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_CompoundShapeSettings *>(in);
+}
+FN(toJpc)(JPH::MutableCompoundShapeSettings *in) {
+    assert(in);
+    return reinterpret_cast<JPC_CompoundShapeSettings *>(in);
+}
+FN(toJph)(JPC_CompoundShapeSettings *in) {
+    ENSURE_TYPE(in, JPH::CompoundShapeSettings);
+    return reinterpret_cast<JPH::CompoundShapeSettings *>(in);
 }
 
 FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
@@ -1643,6 +1658,39 @@ JPC_OffsetCenterOfMassShapeSettings_Create(const JPC_ShapeSettings *in_inner_sha
 }
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_CompoundShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CompoundShapeSettings *
+JPC_StaticCompoundShapeSettings_Create()
+{
+    auto settings = new JPH::StaticCompoundShapeSettings();
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CompoundShapeSettings *
+JPC_MutableCompoundShapeSettings_Create()
+{
+    auto settings = new JPH::MutableCompoundShapeSettings();
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CompoundShapeSettings_AddShape(JPC_CompoundShapeSettings *in_settings,
+                                   const JPC_Real in_position[3],
+                                   const JPC_Real in_rotation[4],
+                                   const JPC_ShapeSettings *in_shape,
+                                   const uint32_t in_user_data)
+{
+    toJph(in_settings)->AddShape(loadRVec3(in_position),
+                                 JPH::Quat(loadVec4(in_rotation)),
+                                 toJph(in_shape),
+                                 in_user_data);
+}
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_BodyManager_DrawSettings
 //
 //--------------------------------------------------------------------------------------------------
@@ -2003,6 +2051,18 @@ JPC_API void
 JPC_BodyInterface_SetMotionType(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_MotionType in_motion_type, JPC_Activation in_activation)
 {
     toJph(in_iface)->SetMotionType(toJph(in_body_id), static_cast<JPH::EMotionType>(in_motion_type), static_cast<JPH::EActivation>(in_activation));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_ObjectLayer
+JPC_BodyInterface_GetObjectLayer(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
+{
+    return toJpc(toJph(in_iface)->GetObjectLayer(toJph(in_body_id)));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BodyInterface_SetObjectLayer(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_ObjectLayer in_layer)
+{
+    toJph(in_iface)->SetObjectLayer(toJph(in_body_id), static_cast<JPH::ObjectLayer>(in_layer));
 }
 //--------------------------------------------------------------------------------------------------
 //
