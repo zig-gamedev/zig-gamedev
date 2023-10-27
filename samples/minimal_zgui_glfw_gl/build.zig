@@ -2,7 +2,7 @@ const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 
-const demo_name = "minimal_zgpu_zgui";
+const demo_name = "minimal_zgui_glfw_gl";
 const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
@@ -13,12 +13,12 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_glfw_wgpu_pkg;
-    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
+    const zgui_pkg = @import("../../build.zig").zgui_glfw_gl_pkg;
+    const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
     const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
 
     zgui_pkg.link(exe);
-    zgpu_pkg.link(exe);
+    zopengl_pkg.link(exe);
     zglfw_pkg.link(exe);
 
     const exe_options = b.addOptions();
