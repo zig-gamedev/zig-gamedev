@@ -257,6 +257,7 @@ typedef struct JPC_ConvexHullShapeSettings     JPC_ConvexHullShapeSettings;
 typedef struct JPC_HeightFieldShapeSettings    JPC_HeightFieldShapeSettings;
 typedef struct JPC_MeshShapeSettings           JPC_MeshShapeSettings;
 typedef struct JPC_DecoratedShapeSettings      JPC_DecoratedShapeSettings;
+typedef struct JPC_CompoundShapeSettings       JPC_CompoundShapeSettings;
 typedef struct JPC_CharacterContactSettings    JPC_CharacterContactSettings;
 
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
@@ -1466,6 +1467,23 @@ JPC_OffsetCenterOfMassShapeSettings_Create(const JPC_ShapeSettings *in_inner_sha
                                            const JPC_Real in_center_of_mass[3]);
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_CompoundShapeSettings (-> JPC_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_CompoundShapeSettings *
+JPC_StaticCompoundShapeSettings_Create();
+
+JPC_API JPC_CompoundShapeSettings *
+JPC_MutableCompoundShapeSettings_Create();
+
+JPC_API void
+JPC_CompoundShapeSettings_AddShape(JPC_CompoundShapeSettings *in_settings,
+                                   const JPC_Real in_position[3],
+                                   const JPC_Real in_rotation[4],
+                                   const JPC_ShapeSettings *in_shape,
+                                   const uint32_t in_user_data);
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_BodyManager_DrawSettings
 //
 //--------------------------------------------------------------------------------------------------
@@ -1655,6 +1673,12 @@ JPC_BodyInterface_GetMotionType(const JPC_BodyInterface *in_iface, JPC_BodyID in
 
 JPC_API void
 JPC_BodyInterface_SetMotionType(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_MotionType motion_type, JPC_Activation activation);
+
+JPC_API JPC_ObjectLayer
+JPC_BodyInterface_GetObjectLayer(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
+
+JPC_API void
+JPC_BodyInterface_SetObjectLayer(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, JPC_ObjectLayer in_layer);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_Body

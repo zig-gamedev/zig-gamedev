@@ -1889,6 +1889,18 @@ pub const BodyInterface = opaque {
             @intFromEnum(in_activation_type),
         );
     }
+
+    pub fn getObjectLayer(body_iface: *BodyInterface, body_id: BodyId) ObjectLayer {
+        return c.JPC_BodyInterface_GetObjectLayer(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
+    }
+
+    pub fn setObjectLayer(body_iface: *BodyInterface, body_id: BodyId, in_layer: ObjectLayer) void {
+        c.JPC_BodyInterface_SetObjectLayer(
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            body_id,
+            in_layer,
+        );
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -3086,6 +3098,42 @@ pub const DecoratedShapeSettings = opaque {
         );
         if (settings == null) return error.FailedToCreateDecoratedShapeSettings;
         return @as(*DecoratedShapeSettings, @ptrCast(settings));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// CompoundShapeSettings (-> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const CompoundShapeSettings = opaque {
+    pub usingnamespace ShapeSettings.Methods(@This());
+
+    pub fn createStatic() !*CompoundShapeSettings {
+        const settings = c.JPC_StaticCompoundShapeSettings_Create();
+        if (settings == null) return error.FailedToCreateCompoundShapeSettings;
+        return @as(*CompoundShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn createMutable() !*CompoundShapeSettings {
+        const settings = c.JPC_MutableCompoundShapeSettings_Create();
+        if (settings == null) return error.FailedToCreateCompoundShapeSettings;
+        return @as(*CompoundShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn addShape(
+        settings: *CompoundShapeSettings,
+        position: [3]Real,
+        rotation: [4]Real,
+        shape: *const ShapeSettings,
+        user_data: u32
+    ) void {
+        c.JPC_CompoundShapeSettings_AddShape(
+            @as(*c.JPC_CompoundShapeSettings, @ptrCast(settings)),
+            &position,
+            &rotation,
+            @as(*const c.JPC_ShapeSettings, @ptrCast(shape)),
+            user_data,
+        );
     }
 };
 //--------------------------------------------------------------------------------------------------
