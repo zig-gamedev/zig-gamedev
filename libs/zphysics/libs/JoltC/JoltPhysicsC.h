@@ -123,6 +123,42 @@ enum
     JPC_SHAPE_SUB_TYPE_USER_CONVEX8          = 29,
 };
 
+typedef enum JPC_ConstraintType
+{
+    JPC_CONSTRAINT_TYPE_CONSTRAINT          = 0,
+    JPC_CONSTRAINT_TYPE_TWO_BODY_CONSTRAINT = 1,
+    _JPC_CONSTRAINT_TYPE_FORCEU32           = 0x7fffffff
+} JPC_ConstraintType;
+
+typedef enum JPC_ConstraintSubType
+{
+    JPC_CONSTRAINT_SUB_TYPE_FIXED           = 0,
+    JPC_CONSTRAINT_SUB_TYPE_POINT           = 1,
+    JPC_CONSTRAINT_SUB_TYPE_HINGE           = 2,
+    JPC_CONSTRAINT_SUB_TYPE_SLIDER          = 3,
+    JPC_CONSTRAINT_SUB_TYPE_DISTANCE        = 4,
+    JPC_CONSTRAINT_SUB_TYPE_CONE            = 5,
+    JPC_CONSTRAINT_SUB_TYPE_SWING_TWIST     = 6,
+    JPC_CONSTRAINT_SUB_TYPE_SIX_DOF         = 7,
+    JPC_CONSTRAINT_SUB_TYPE_PATH            = 8,
+    JPC_CONSTRAINT_SUB_TYPE_VEHICLE         = 9,
+    JPC_CONSTRAINT_SUB_TYPE_RACK_AND_PINION = 10,
+    JPC_CONSTRAINT_SUB_TYPE_GEAR            = 11,
+    JPC_CONSTRAINT_SUB_TYPE_PULLEY          = 12,
+    JPC_CONSTRAINT_SUB_TYPE_USER1           = 13,
+    JPC_CONSTRAINT_SUB_TYPE_USER2           = 14,
+    JPC_CONSTRAINT_SUB_TYPE_USER3           = 15,
+    JPC_CONSTRAINT_SUB_TYPE_USER4           = 16,
+    _JPC_CONSTRAINT_SUB_TYPE_FORCEU32       = 0x7fffffff
+} JPC_ConstraintSubType;
+
+typedef enum JPC_ConstraintSpace
+{
+    JPC_CONSTRAINT_SPACE_LOCAL_TO_BODY_COM = 0,
+    JPC_CONSTRAINT_SPACE_WORLD_SPACE       = 1,
+    _JPC_CONSTRAINT_SPACE_FORCEU32         = 0x7fffffff
+} JPC_ConstraintSpace;
+
 typedef uint8_t JPC_MotionType;
 enum
 {
@@ -260,10 +296,15 @@ typedef struct JPC_DecoratedShapeSettings      JPC_DecoratedShapeSettings;
 typedef struct JPC_CompoundShapeSettings       JPC_CompoundShapeSettings;
 typedef struct JPC_CharacterContactSettings    JPC_CharacterContactSettings;
 
+typedef struct JPC_ConstraintSettings        JPC_ConstraintSettings;
+typedef struct JPC_TwoBodyConstraintSettings JPC_TwoBodyConstraintSettings;
+typedef struct JPC_FixedConstraintSettings   JPC_FixedConstraintSettings;
+
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
 
 typedef struct JPC_Shape            JPC_Shape;
+typedef struct JPC_Constraint       JPC_Constraint;
 typedef struct JPC_PhysicsMaterial  JPC_PhysicsMaterial;
 typedef struct JPC_GroupFilter      JPC_GroupFilter;
 typedef struct JPC_Character        JPC_Character;
@@ -1106,6 +1147,12 @@ JPC_PhysicsSystem_AddStepListener(JPC_PhysicsSystem *in_physics_system, void *in
 JPC_API void
 JPC_PhysicsSystem_RemoveStepListener(JPC_PhysicsSystem *in_physics_system, void *in_listener);
 
+JPC_API void
+JPC_PhysicsSystem_AddConstraint(JPC_PhysicsSystem *in_physics_system, void *in_two_body_constraint);
+
+JPC_API void
+JPC_PhysicsSystem_RemoveConstraint(JPC_PhysicsSystem *in_physics_system, void *in_two_body_constraint);
+
 JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          float in_delta_time,
@@ -1534,6 +1581,72 @@ JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data);
 
 JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_ConstraintSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_ConstraintSettings_AddRef(JPC_ConstraintSettings *in_settings);
+
+JPC_API void
+JPC_ConstraintSettings_Release(JPC_ConstraintSettings *in_settings);
+
+JPC_API uint32_t
+JPC_ConstraintSettings_GetRefCount(const JPC_ConstraintSettings *in_settings);
+
+JPC_API uint64_t
+JPC_ConstraintSettings_GetUserData(const JPC_ConstraintSettings *in_settings);
+
+JPC_API void
+JPC_ConstraintSettings_SetUserData(JPC_ConstraintSettings *in_settings, uint64_t in_user_data);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_TwoBodyConstraintSettings (-> JPC_ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_Constraint *
+JPC_TwoBodyConstraintSettings_CreateConstraint(const JPC_TwoBodyConstraintSettings *in_settings,
+                                               JPC_Body *in_body1,
+                                               JPC_Body *in_body2);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_FixedConstraintSettings (-> JPC_TwoBodyConstraintSettings -> JPC_ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_FixedConstraintSettings *
+JPC_FixedConstraintSettings_Create();
+
+JPC_API void
+JPC_FixedConstraintSettings_SetSpace(JPC_FixedConstraintSettings *in_settings, JPC_ConstraintSpace in_space);
+
+JPC_API void
+JPC_FixedConstraintSettings_SetAutoDetectPoint(JPC_FixedConstraintSettings *in_settings, bool in_enabled);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_Constraint
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Constraint_AddRef(JPC_Constraint *in_shape);
+
+JPC_API void
+JPC_Constraint_Release(JPC_Constraint *in_shape);
+
+JPC_API uint32_t
+JPC_Constraint_GetRefCount(const JPC_Constraint *in_shape);
+
+JPC_API JPC_ConstraintType
+JPC_Constraint_GetType(const JPC_Constraint *in_shape);
+
+JPC_API JPC_ConstraintSubType
+JPC_Constraint_GetSubType(const JPC_Constraint *in_shape);
+
+JPC_API uint64_t
+JPC_Constraint_GetUserData(const JPC_Constraint *in_shape);
+
+JPC_API void
+JPC_Constraint_SetUserData(JPC_Constraint *in_shape, uint64_t in_user_data);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BodyInterface

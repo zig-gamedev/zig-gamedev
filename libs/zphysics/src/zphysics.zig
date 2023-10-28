@@ -1420,6 +1420,13 @@ pub const PhysicsSystem = opaque {
         c.JPC_PhysicsSystem_RemoveStepListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
     }
 
+    pub fn addConstraint(physics_system: *PhysicsSystem, two_body_constraint: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_AddConstraint(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), two_body_constraint);
+    }
+    pub fn removeConstraint(physics_system: *PhysicsSystem, two_body_constraint: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_RemoveConstraint(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), two_body_constraint);
+    }
+
     pub fn update(
         physics_system: *PhysicsSystem,
         delta_time: f32,
@@ -3232,6 +3239,185 @@ pub const Shape = opaque {
                 var center: [3]Real = undefined;
                 c.JPC_Shape_GetCenterOfMass(@as(*const c.JPC_Shape, @ptrCast(shape)), &center);
                 return center;
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// ConstraintSettings
+//
+//--------------------------------------------------------------------------------------------------
+pub const ConstraintSettings = opaque {
+    pub usingnamespace Methods(@This());
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asConstraintSettings(constraint_settings: *const T) *const ConstraintSettings {
+                return @as(*const ConstraintSettings, @ptrCast(constraint_settings));
+            }
+            pub fn asConstraintSettingsMut(constraint_settings: *T) *ConstraintSettings {
+                return @as(*ConstraintSettings, @ptrCast(constraint_settings));
+            }
+
+            pub fn addRef(constraint_settings: *T) void {
+                c.JPC_ConstraintSettings_AddRef(@as(*c.JPC_ConstraintSettings, @ptrCast(constraint_settings)));
+            }
+            pub fn release(constraint_settings: *T) void {
+                c.JPC_ConstraintSettings_Release(@as(*c.JPC_ConstraintSettings, @ptrCast(constraint_settings)));
+            }
+            pub fn getRefCount(constraint_settings: *const T) u32 {
+                return c.JPC_ConstraintSettings_GetRefCount(
+                    @as(*const c.JPC_ConstraintSettings, @ptrCast(constraint_settings))
+                );
+            }
+
+            pub fn getUserData(constraint_settings: *const T) u64 {
+                return c.JPC_ConstraintSettings_GetUserData(
+                    @as(*const c.JPC_ConstraintSettings, @ptrCast(constraint_settings))
+                );
+            }
+            pub fn setUserData(constraint_settings: *T, user_data: u64) void {
+                return c.JPC_ConstraintSettings_SetUserData(
+                    @as(*c.JPC_ConstraintSettings, @ptrCast(constraint_settings)),
+                    user_data,
+                );
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// TwoBodyConstraintSettings (-> ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const TwoBodyConstraintSettings = opaque {
+    pub usingnamespace Methods(@This());
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub usingnamespace ConstraintSettings.Methods(T);
+
+            pub fn asTwoBodyConstraintSettings(two_body_constraint_settings: *T) *TwoBodyConstraintSettings {
+                return @as(*TwoBodyConstraintSettings, @ptrCast(two_body_constraint_settings));
+            }
+
+            pub fn createConstraint(two_body_constraint_settings: *const T, body1: *Body, body2: *Body) !*Constraint {
+                const constraint = c.JPC_TwoBodyConstraintSettings_CreateConstraint(
+                    @as(*const c.JPC_TwoBodyConstraintSettings, @ptrCast(two_body_constraint_settings)),
+                    @as(*c.JPC_Body, @ptrCast(body1)),
+                    @as(*c.JPC_Body, @ptrCast(body2)),
+                );
+                if (constraint == null)
+                    return error.FailedToCreateConstraint;
+                return @as(*Constraint, @ptrCast(constraint));
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// FixedConstraintSettings (-> TwoBodyConstraintSettings -> ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const FixedConstraintSettings = opaque {
+    pub usingnamespace TwoBodyConstraintSettings.Methods(@This());
+
+    pub fn create() !*FixedConstraintSettings {
+        const fixed_constraint_settings = c.JPC_FixedConstraintSettings_Create();
+        if (fixed_constraint_settings == null) return error.FailedToCreateFixedConstraintSettings;
+        return @as(*FixedConstraintSettings, @ptrCast(fixed_constraint_settings));
+    }
+
+    pub fn setSpace(settings: *FixedConstraintSettings, space: Constraint.Space) void {
+        c.JPC_FixedConstraintSettings_SetSpace(
+            @as(*c.JPC_FixedConstraintSettings, @ptrCast(settings)),
+            @intFromEnum(space),
+        );
+    }
+
+    pub fn setAutoDetectPoint(settings: *FixedConstraintSettings, enabled: bool) void {
+        c.JPC_FixedConstraintSettings_SetAutoDetectPoint(
+            @as(*c.JPC_FixedConstraintSettings, @ptrCast(settings)),
+            enabled,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Constraint
+//
+//--------------------------------------------------------------------------------------------------
+pub const Constraint = opaque {
+    pub usingnamespace Methods(@This());
+
+    pub const Type = enum(c.JPC_ConstraintType) {
+        constraint = c.JPC_CONSTRAINT_TYPE_CONSTRAINT,
+        two_body_constraint = c.JPC_CONSTRAINT_TYPE_TWO_BODY_CONSTRAINT,
+    };
+
+    pub const SubType = enum(c.JPC_ConstraintSubType) {
+        fixed = c.JPC_CONSTRAINT_SUB_TYPE_FIXED,
+        point = c.JPC_CONSTRAINT_SUB_TYPE_POINT,
+        hinge = c.JPC_CONSTRAINT_SUB_TYPE_HINGE,
+        slider = c.JPC_CONSTRAINT_SUB_TYPE_SLIDER,
+        distance = c.JPC_CONSTRAINT_SUB_TYPE_DISTANCE,
+        cone = c.JPC_CONSTRAINT_SUB_TYPE_CONE,
+        swing_twist = c.JPC_CONSTRAINT_SUB_TYPE_SWING_TWIST,
+        six_dof = c.JPC_CONSTRAINT_SUB_TYPE_SIX_DOF,
+        path = c.JPC_CONSTRAINT_SUB_TYPE_PATH,
+        vehicle = c.JPC_CONSTRAINT_SUB_TYPE_VEHICLE,
+        rack_and_pinion = c.JPC_CONSTRAINT_SUB_TYPE_RACK_AND_PINION,
+        gear = c.JPC_CONSTRAINT_SUB_TYPE_GEAR,
+        pulley = c.JPC_CONSTRAINT_SUB_TYPE_PULLEY,
+        user1 = c.JPC_CONSTRAINT_SUB_TYPE_USER1,
+        user2 = c.JPC_CONSTRAINT_SUB_TYPE_USER2,
+        user3 = c.JPC_CONSTRAINT_SUB_TYPE_USER3,
+        user4 = c.JPC_CONSTRAINT_SUB_TYPE_USER4,
+    };
+
+    pub const Space = enum(c.JPC_ConstraintSpace) {
+        local_to_body_com = c.JPC_CONSTRAINT_SPACE_LOCAL_TO_BODY_COM,
+        world_space = c.JPC_CONSTRAINT_SPACE_WORLD_SPACE,
+    };
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asConstraint(constraint: *const T) *const Constraint {
+                return @as(*const Constraint, @ptrCast(constraint));
+            }
+            pub fn asConstraintMut(constraint: *T) *Constraint {
+                return @as(*Constraint, @ptrCast(constraint));
+            }
+
+            pub fn addRef(constraint: *T) void {
+                c.JPC_Constraint_AddRef(@as(*c.JPC_Constraint, @ptrCast(constraint)));
+            }
+            pub fn release(constraint: *T) void {
+                c.JPC_Constraint_Release(@as(*c.JPC_Constraint, @ptrCast(constraint)));
+            }
+            pub fn getRefCount(constraint: *const T) u32 {
+                return c.JPC_Constraint_GetRefCount(@as(*const c.JPC_Constraint, @ptrCast(constraint)));
+            }
+
+            pub fn getType(constraint: *const T) Type {
+                return @as(
+                    Type,
+                    @enumFromInt(c.JPC_Constraint_GetType(@as(*const c.JPC_Constraint, @ptrCast(constraint)))),
+                );
+            }
+            pub fn getSubType(constraint: *const T) SubType {
+                return @as(
+                    SubType,
+                    @enumFromInt(c.JPC_Constraint_GetSubType(@as(*const c.JPC_Constraint, @ptrCast(constraint)))),
+                );
+            }
+
+            pub fn getUserData(constraint: *const T) u64 {
+                return c.JPC_Constraint_GetUserData(@as(*const c.JPC_Constraint, @ptrCast(constraint)));
+            }
+            pub fn setUserData(constraint: *T, user_data: u64) void {
+                return c.JPC_Constraint_SetUserData(@as(*c.JPC_Constraint, @ptrCast(constraint)), user_data);
             }
         };
     }

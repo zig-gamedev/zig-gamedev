@@ -29,6 +29,7 @@
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/MutableCompoundShape.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
+#include <Jolt/Physics/Constraints/FixedConstraint.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
@@ -220,6 +221,38 @@ FN(toJph)(JPC_CompoundShapeSettings *in) {
     return reinterpret_cast<JPH::CompoundShapeSettings *>(in);
 }
 
+FN(toJph)(const JPC_ConstraintSettings *in) {
+    ENSURE_TYPE(in, JPH::ConstraintSettings);
+    return reinterpret_cast<const JPH::ConstraintSettings *>(in);
+}
+FN(toJph)(JPC_ConstraintSettings *in) {
+    ENSURE_TYPE(in, JPH::ConstraintSettings);
+    return reinterpret_cast<JPH::ConstraintSettings *>(in);
+}
+FN(toJpc)(const JPH::ConstraintSettings *in) { assert(in); return reinterpret_cast<const JPC_ConstraintSettings *>(in); }
+FN(toJpc)(JPH::ConstraintSettings *in) { assert(in); return reinterpret_cast<JPC_ConstraintSettings *>(in); }
+
+FN(toJph)(const JPC_TwoBodyConstraintSettings *in) {
+    ENSURE_TYPE(in, JPH::TwoBodyConstraintSettings);
+    return reinterpret_cast<const JPH::TwoBodyConstraintSettings *>(in);
+}
+FN(toJph)(JPC_TwoBodyConstraintSettings *in) {
+    ENSURE_TYPE(in, JPH::TwoBodyConstraintSettings);
+    return reinterpret_cast<JPH::TwoBodyConstraintSettings *>(in);
+}
+FN(toJpc)(const JPH::TwoBodyConstraintSettings *in) { assert(in); return reinterpret_cast<const JPC_TwoBodyConstraintSettings *>(in); }
+FN(toJpc)(JPH::TwoBodyConstraintSettings *in) { assert(in); return reinterpret_cast<JPC_TwoBodyConstraintSettings *>(in); }
+
+FN(toJph)(const JPC_FixedConstraintSettings *in) {
+    ENSURE_TYPE(in, JPH::FixedConstraintSettings);
+    return reinterpret_cast<const JPH::FixedConstraintSettings *>(in);
+}
+FN(toJph)(JPC_FixedConstraintSettings *in) {
+    ENSURE_TYPE(in, JPH::FixedConstraintSettings);
+    return reinterpret_cast<JPH::FixedConstraintSettings *>(in);
+}
+FN(toJpc)(JPH::FixedConstraintSettings *in) { assert(in); return reinterpret_cast<JPC_FixedConstraintSettings *>(in); }
+
 FN(toJph)(const JPC_CollisionGroup *in) { assert(in); return reinterpret_cast<const JPH::CollisionGroup *>(in); }
 FN(toJpc)(const JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<const JPC_CollisionGroup *>(in); }
 FN(toJpc)(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_CollisionGroup *>(in); }
@@ -245,6 +278,11 @@ FN(toJpc)(const JPH::Shape *in) { assert(in); return reinterpret_cast<const JPC_
 FN(toJph)(const JPC_Shape *in) { assert(in); return reinterpret_cast<const JPH::Shape *>(in); }
 FN(toJpc)(JPH::Shape *in) { assert(in); return reinterpret_cast<JPC_Shape *>(in); }
 FN(toJph)(JPC_Shape *in) { assert(in); return reinterpret_cast<JPH::Shape *>(in); }
+
+FN(toJpc)(const JPH::Constraint *in) { assert(in); return reinterpret_cast<const JPC_Constraint *>(in); }
+FN(toJph)(const JPC_Constraint *in) { assert(in); return reinterpret_cast<const JPH::Constraint *>(in); }
+FN(toJpc)(JPH::Constraint *in) { assert(in); return reinterpret_cast<JPC_Constraint *>(in); }
+FN(toJph)(JPC_Constraint *in) { assert(in); return reinterpret_cast<JPH::Constraint *>(in); }
 
 FN(toJpc)(const JPH::BodyInterface *in) { assert(in); return reinterpret_cast<const JPC_BodyInterface *>(in); }
 FN(toJph)(const JPC_BodyInterface *in) { assert(in); return reinterpret_cast<const JPH::BodyInterface *>(in); }
@@ -290,10 +328,15 @@ FN(toJpc)(JPH::BroadPhaseLayer in) { return static_cast<JPC_BroadPhaseLayer>(in)
 FN(toJpc)(JPH::ObjectLayer in) { return static_cast<JPC_ObjectLayer>(in); }
 FN(toJpc)(JPH::EShapeType in) { return static_cast<JPC_ShapeType>(in); }
 FN(toJpc)(JPH::EShapeSubType in) { return static_cast<JPC_ShapeSubType>(in); }
+FN(toJpc)(JPH::EConstraintType in) { return static_cast<JPC_ConstraintType>(in); }
+FN(toJpc)(JPH::EConstraintSubType in) { return static_cast<JPC_ConstraintSubType>(in); }
+FN(toJpc)(JPH::EConstraintSpace in) { return static_cast<JPC_ConstraintSpace>(in); }
 FN(toJpc)(JPH::EMotionType in) { return static_cast<JPC_MotionType>(in); }
 FN(toJpc)(JPH::EActivation in) { return static_cast<JPC_Activation>(in); }
 FN(toJpc)(JPH::EMotionQuality in) { return static_cast<JPC_MotionQuality>(in); }
 FN(toJpc)(JPH::CharacterBase::EGroundState in) { return static_cast<JPC_CharacterGroundState>(in); }
+
+FN(toJph)(JPC_ConstraintSpace in) { return static_cast<JPH::EConstraintSpace>(in); }
 
 FN(toJph)(const JPC_Character *in) { assert(in); return reinterpret_cast<const JPH::Character *>(in); }
 FN(toJph)(JPC_Character *in) { assert(in); return reinterpret_cast<JPH::Character *>(in); }
@@ -1009,6 +1052,20 @@ JPC_PhysicsSystem_RemoveStepListener(JPC_PhysicsSystem *in_physics_system, void 
 {
     assert(in_listener != nullptr);
     toJph(in_physics_system)->RemoveStepListener(static_cast<JPH::PhysicsStepListener *>(in_listener));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_AddConstraint(JPC_PhysicsSystem *in_physics_system, void *in_two_body_constraint)
+{
+    assert(in_two_body_constraint != nullptr);
+    toJph(in_physics_system)->AddConstraint(static_cast<JPH::TwoBodyConstraint *>(in_two_body_constraint));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_PhysicsSystem_RemoveConstraint(JPC_PhysicsSystem *in_physics_system, void *in_two_body_constraint)
+{
+    assert(in_two_body_constraint != nullptr);
+    toJph(in_physics_system)->RemoveConstraint(static_cast<JPH::TwoBodyConstraint *>(in_two_body_constraint));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_PhysicsUpdateError
@@ -1780,6 +1837,124 @@ JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3])
 {
     storeRVec3(out_position, toJph(in_shape)->GetCenterOfMass());
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_ConstraintSettings
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_ConstraintSettings_AddRef(JPC_ConstraintSettings *in_settings)
+{
+    toJph(in_settings)->AddRef();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_ConstraintSettings_Release(JPC_ConstraintSettings *in_settings)
+{
+    toJph(in_settings)->Release();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_ConstraintSettings_GetRefCount(const JPC_ConstraintSettings *in_settings)
+{
+    return toJph(in_settings)->GetRefCount();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint64_t
+JPC_ConstraintSettings_GetUserData(const JPC_ConstraintSettings *in_settings)
+{
+    return toJph(in_settings)->mUserData;
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_ConstraintSettings_SetUserData(JPC_ConstraintSettings *in_settings, uint64_t in_user_data)
+{
+    toJph(in_settings)->mUserData = in_user_data;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_TwoBodyConstraintSettings (-> JPC_ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_Constraint *
+JPC_TwoBodyConstraintSettings_CreateConstraint(const JPC_TwoBodyConstraintSettings *in_settings,
+                                               JPC_Body *in_body1,
+                                               JPC_Body *in_body2)
+{
+    auto constraint = toJph(in_settings)->Create(*toJph(in_body1), *toJph(in_body2));
+    if (constraint != nullptr) constraint->AddRef();
+    return toJpc(constraint);
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_FixedConstraintSettings (-> JPC_TwoBodyConstraintSettings -> JPC_ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_FixedConstraintSettings *
+JPC_FixedConstraintSettings_Create()
+{
+    auto settings = new JPH::FixedConstraintSettings();
+    settings->AddRef();
+    return toJpc(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_FixedConstraintSettings_SetSpace(JPC_FixedConstraintSettings *in_settings, JPC_ConstraintSpace in_space)
+{
+    toJph(in_settings)->mSpace = toJph(in_space);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_FixedConstraintSettings_SetAutoDetectPoint(JPC_FixedConstraintSettings *in_settings, bool in_enabled)
+{
+    toJph(in_settings)->mAutoDetectPoint = in_enabled;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_Constraint
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Constraint_AddRef(JPC_Constraint *in_shape)
+{
+    toJph(in_shape)->AddRef();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Constraint_Release(JPC_Constraint *in_shape)
+{
+    toJph(in_shape)->Release();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_Constraint_GetRefCount(const JPC_Constraint *in_shape)
+{
+    return toJph(in_shape)->GetRefCount();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_ConstraintType
+JPC_Constraint_GetType(const JPC_Constraint *in_shape)
+{
+    return toJpc(toJph(in_shape)->GetType());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_ConstraintSubType
+JPC_Constraint_GetSubType(const JPC_Constraint *in_shape)
+{
+    return toJpc(toJph(in_shape)->GetSubType());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint64_t
+JPC_Constraint_GetUserData(const JPC_Constraint *in_shape)
+{
+    return toJph(in_shape)->GetUserData();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Constraint_SetUserData(JPC_Constraint *in_shape, uint64_t in_user_data)
+{
+    return toJph(in_shape)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
 //
