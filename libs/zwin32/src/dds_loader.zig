@@ -155,7 +155,7 @@ pub fn loadTextureFromMemory(file_data: []u8, arena: std.mem.Allocator, device: 
     var reader = stream.reader();
 
     // Check DDS_MAGIC
-    const magic = try reader.readIntNative(u32);
+    const magic = try reader.readInt(u32, .little);
     if (magic != DDS_MAGIC) {
         return DdsError.InvalidDDSData;
     }
