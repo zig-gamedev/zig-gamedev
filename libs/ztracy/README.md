@@ -1,4 +1,4 @@
-# ztracy v0.9.0 - performance markers for Tracy 0.9
+# ztracy v0.10.0 - performance markers for Tracy 0.10
 
 Initial Zig bindings created by [Martin Wickham](https://github.com/SpexGuy/Zig-Tracy)
 

@@ -7,7 +7,7 @@ const options = @import("zopengl_options");
 const bindings = @import("bindings.zig");
 
 pub usingnamespace switch (options.api) {
-    .raw => bindings,
+    .raw_bindings => bindings,
     .wrapper => @import("wrapper.zig"),
 };
 //--------------------------------------------------------------------------------------------------

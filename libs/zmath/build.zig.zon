@@ -1,0 +1,5 @@
+.{
+    .name = "zmath",
+    .version = "0.9.6",
+    .paths = .{""},
+}

@@ -32,7 +32,7 @@ pub fn package(
 
     const zmath_options = step.createModule();
 
-    const zmath = b.createModule(.{
+    const zmath = b.addModule("zmath", .{
         .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .dependencies = &.{
             .{ .name = "zmath_options", .module = zmath_options },
@@ -49,6 +49,10 @@ pub fn package(
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
+
+    _ = package(b, target, optimize, .{ .options = .{
+        .enable_cross_platform_determinism = b.option(bool, "enable_cross_platform_determinism", "Whether to enable cross-platform determinism.") orelse true,
+    } });
 
     const test_step = b.step("test", "Run zmath tests");
     test_step.dependOn(runTests(b, optimize, target));

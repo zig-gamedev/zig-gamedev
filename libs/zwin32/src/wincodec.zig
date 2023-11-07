@@ -316,6 +316,13 @@ pub const IID_IImagingFactory = GUID{
     .Data4 = .{ 0x9c, 0x77, 0x54, 0xd7, 0xa9, 0x35, 0xff, 0x70 },
 };
 
+pub const GUID_PixelFormat2bppIndexed = PixelFormatGUID{
+    .Data1 = 0x6fddc324,
+    .Data2 = 0x4e03,
+    .Data3 = 0x4bfe,
+    .Data4 = .{ 0xb1, 0x85, 0x3d, 0x77, 0x76, 0x8d, 0xc9, 0x02 },
+};
+
 pub const GUID_PixelFormat24bppRGB = PixelFormatGUID{
     .Data1 = 0x6fddc324,
     .Data2 = 0x4e03,

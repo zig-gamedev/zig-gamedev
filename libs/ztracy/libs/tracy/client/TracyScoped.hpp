@@ -108,7 +108,7 @@ public:
 
     tracy_force_inline void Text( const char* txt, size_t size )
     {
-        assert( size < std::numeric_limits<uint16_t>::max() );
+        assert( size < (std::numeric_limits<uint16_t>::max)() );
         if( !m_active ) return;
 #ifdef TRACY_ON_DEMAND
         if( GetProfiler().ConnectionId() != m_connectionId ) return;
@@ -123,7 +123,7 @@ public:
 
     tracy_force_inline void Name( const char* txt, size_t size )
     {
-        assert( size < std::numeric_limits<uint16_t>::max() );
+        assert( size < (std::numeric_limits<uint16_t>::max)() );
         if( !m_active ) return;
 #ifdef TRACY_ON_DEMAND
         if( GetProfiler().ConnectionId() != m_connectionId ) return;
@@ -143,9 +143,9 @@ public:
         if( GetProfiler().ConnectionId() != m_connectionId ) return;
 #endif
         TracyQueuePrepare( QueueType::ZoneColor );
-        MemWrite( &item->zoneColor.r, uint8_t( ( color       ) & 0xFF ) );
+        MemWrite( &item->zoneColor.b, uint8_t( ( color       ) & 0xFF ) );
         MemWrite( &item->zoneColor.g, uint8_t( ( color >> 8  ) & 0xFF ) );
-        MemWrite( &item->zoneColor.b, uint8_t( ( color >> 16 ) & 0xFF ) );
+        MemWrite( &item->zoneColor.r, uint8_t( ( color >> 16 ) & 0xFF ) );
         TracyQueueCommit( zoneColorThread );
     }
 
@@ -166,7 +166,7 @@ private:
     const bool m_active;
 
 #ifdef TRACY_ON_DEMAND
-    uint64_t m_connectionId;
+    uint64_t m_connectionId = 0;
 #endif
 };
 

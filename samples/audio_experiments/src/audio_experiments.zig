@@ -104,7 +104,8 @@ const DemoState = struct {
     } = .{},
 };
 
-fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
+fn processAudio(samples: [*]f32, num_samples: u32, num_channels: u32, context: ?*anyopaque) callconv(.C) void {
+    _ = num_samples;
     const audio_data = @as(*AudioData, @ptrCast(@alignCast(context)));
 
     audio_data.mutex.lock();

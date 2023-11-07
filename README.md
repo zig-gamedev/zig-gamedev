@@ -99,7 +99,7 @@ pub fn build(b: *std.Build) void {
 |-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
 | **[zphysics](libs/zphysics)** | 0.0.6          | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
 | **[zflecs](libs/zflecs)**     | 0.0.1          | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
-| **[zopengl](libs/zopengl)**   | 0.1.2          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
+| **[zopengl](libs/zopengl)**   | 0.1.3          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
 | **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
 | **[zgpu](libs/zgpu)**         | 0.9.1          | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
 | **[zgui](libs/zgui)**         | 1.89.6         | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot)) |
@@ -107,9 +107,9 @@ pub fn build(b: *std.Build) void {
 | **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
 | **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
-| **[ztracy](libs/ztracy)**     | 0.9.0          | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
+| **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
 | **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
-| **[zglfw](libs/zglfw)**       | 0.6.0          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
+| **[zglfw](libs/zglfw)**       | 0.7.0          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
 | **[znoise](libs/znoise)**     | 0.1.0          | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
 | **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
 | **[zbullet](libs/zbullet)**   | 0.2.0          | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
