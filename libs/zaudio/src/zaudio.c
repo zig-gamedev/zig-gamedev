@@ -55,15 +55,9 @@ void zaudioDataSourceConfigInit(ma_data_source_config* out_config) {
     *out_config = ma_data_source_config_init();
 }
 
-ma_result zaudioDataSourceCreate(const ma_data_source_config* config, ma_data_source** out_handle) {
-    assert(config != NULL && out_handle != NULL);
-    *out_handle = s_mem.onMalloc(sizeof(ma_data_source), s_mem.pUserData);
-    ma_result res = ma_data_source_init(config, *out_handle);
-    if (res != MA_SUCCESS) {
-        s_mem.onFree(*out_handle, s_mem.pUserData);
-        *out_handle = NULL;
-    }
-    return res;
+ma_result zaudioDataSourceCreate(const ma_data_source_config* config, ma_data_source_base* ptr_to_data_source_base) {
+    assert(config != NULL);
+    return ma_data_source_init(config, ptr_to_data_source_base);
 }
 
 void zaudioDataSourceDestroy(ma_data_source* handle) {
