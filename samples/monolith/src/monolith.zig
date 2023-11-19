@@ -25,11 +25,13 @@ const monolith_rotate_t = zm.transpose(monolith_rotate);
 const FrameUniforms = extern struct {
     world_to_clip: zm.Mat align(16),
     floor_material: [4]f32 align(16),
+    // zig fmt: off
     monolith_rotation: [3][4]f32 align(16), // GPU will expect each element to be 16-aligned too, so extra f32 padding.
     monolith_center: [4]f32 align(16),      // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
     monolith_ray_radius: [4]f32 align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
     monolith_inv_radius: [4]f32 align(16),  // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
     camera_position: [3]f32 align(16),      // Only [3]f32 logically, but [4]f32 in memory, so 3 or 4 works the same.
+    // zig fmt: on
     lights: [9][4]f32 align(16) = .{.{ 0, 0, 0, 0 }} ** 9, // padding again - only using vec3s.
 };
 
@@ -399,7 +401,7 @@ const DebugRenderer = struct {
                 1,
                 @as(u32, @intCast(instance.prim.index_start)),
                 @as(i32, @intCast(instance.prim.vert_offset)),
-                0
+                0,
             );
         }
         self.body_draw_list.clearRetainingCapacity();
@@ -432,8 +434,7 @@ const DebugRenderer = struct {
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
             zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Controls: ");
             zgui.sameLine(.{});
-            zgui.textWrapped(
-                "WASD. Left ALT moves down. SPACE moves up. Hold shift for speed. Right click to capture mouse " ++
+            zgui.textWrapped("WASD. Left ALT moves down. SPACE moves up. Hold shift for speed. Right click to capture mouse " ++
                 "cursor and enable mouse look. Left click to disable mouse look and free mouse cursor.", .{});
             zgui.dummy(.{ .w = -1.0, .h = 5.0 });
 
@@ -449,7 +450,7 @@ const DebugRenderer = struct {
     }
 
     pub fn shouldBodyDraw(
-        body: *const zphy.Body
+        body: *const zphy.Body,
     ) align(zphy.DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
         if (body.object_layer == object_layers.non_moving) return false;
         return true;
@@ -514,9 +515,7 @@ const DebugRenderer = struct {
         _: zphy.DebugRenderer.DrawMode,
     ) callconv(.C) void {
         const batch = geometry.LODs[0].batch;
-        const prim = @as(*const Primitive,
-            @alignCast(@ptrCast(zphy.DebugRenderer.getPrimitiveFromBatch(batch)))
-        );
+        const prim = @as(*const Primitive, @alignCast(@ptrCast(zphy.DebugRenderer.getPrimitiveFromBatch(batch))));
         self.body_draw_list.append(.{
             .prim = prim,
             .mat = model_matrix.*,
@@ -766,9 +765,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     {
         const body_interface = physics_system.getBodyInterfaceMut();
 
-        const monolith_shape_settings = try zphy.BoxShapeSettings.create(.{
-            monolith_radius[0], monolith_radius[1], monolith_radius[2]
-        });
+        const monolith_shape_settings = try zphy.BoxShapeSettings.create(.{ monolith_radius[0], monolith_radius[1], monolith_radius[2] });
         defer monolith_shape_settings.release();
         const monolith_shape = try monolith_shape_settings.createShape();
         defer monolith_shape.release();
@@ -1138,9 +1135,7 @@ fn draw(demo: *DemoState) void {
                 .monolith_rotation = .{ monolith_rotate_t[0], monolith_rotate_t[1], monolith_rotate_t[2] },
                 .monolith_center = monolith_center,
                 .monolith_ray_radius = monolith_ray_radius,
-                .monolith_inv_radius = .{
-                    1.0 / monolith_ray_radius[0], 1.0 / monolith_ray_radius[1], 1.0 / monolith_ray_radius[2], 0
-                },
+                .monolith_inv_radius = .{ 1.0 / monolith_ray_radius[0], 1.0 / monolith_ray_radius[1], 1.0 / monolith_ray_radius[2], 0 },
                 .camera_position = demo.camera.position,
             };
             const bodies = demo.physics_system.getBodiesUnsafe();
@@ -1313,6 +1308,7 @@ pub fn main() !void {
         window,
         demo.gctx.device,
         @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+        0,
     );
     defer zgui.backend.deinit();
 

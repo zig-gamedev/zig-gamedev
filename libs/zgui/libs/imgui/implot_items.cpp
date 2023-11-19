@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2020 Evan Pezent
+// Copyright (c) 2023 Evan Pezent
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// ImPlot v0.14
+// ImPlot v0.16
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "implot.h"
@@ -98,11 +98,11 @@ static IMPLOT_INLINE float  ImInvSqrt(float x) { return 1.0f / sqrtf(x); }
 #define _CAT(x, y) _CAT_(x, y)
 #define _CAT_(x,y) x ## y
 #define _INSTANTIATE_FOR_NUMERIC_TYPES(chain) _CAT(_INSTANTIATE_FOR_NUMERIC_TYPES_1 chain, _END)
-#define _INSTANTIATE_FOR_NUMERIC_TYPES_1(T) INSTANTIATE_MACRO(T); _INSTANTIATE_FOR_NUMERIC_TYPES_2
-#define _INSTANTIATE_FOR_NUMERIC_TYPES_2(T) INSTANTIATE_MACRO(T); _INSTANTIATE_FOR_NUMERIC_TYPES_1
+#define _INSTANTIATE_FOR_NUMERIC_TYPES_1(T) INSTANTIATE_MACRO(T) _INSTANTIATE_FOR_NUMERIC_TYPES_2
+#define _INSTANTIATE_FOR_NUMERIC_TYPES_2(T) INSTANTIATE_MACRO(T) _INSTANTIATE_FOR_NUMERIC_TYPES_1
 #define _INSTANTIATE_FOR_NUMERIC_TYPES_1_END
 #define _INSTANTIATE_FOR_NUMERIC_TYPES_2_END
-#define CALL_INSTANTIATE_FOR_NUMERIC_TYPES() _INSTANTIATE_FOR_NUMERIC_TYPES(IMPLOT_NUMERIC_TYPES);
+#define CALL_INSTANTIATE_FOR_NUMERIC_TYPES() _INSTANTIATE_FOR_NUMERIC_TYPES(IMPLOT_NUMERIC_TYPES)
 
 namespace ImPlot {
 
@@ -2597,8 +2597,8 @@ void PlotDigitalEx(const char* label_id, Getter getter, ImPlotDigitalFlags flags
                 //do not extend plot outside plot range
                 if (pMin.x < x_axis.PixelMin) pMin.x = x_axis.PixelMin;
                 if (pMax.x < x_axis.PixelMin) pMax.x = x_axis.PixelMin;
-                if (pMin.x > x_axis.PixelMax) pMin.x = x_axis.PixelMax;
-                if (pMax.x > x_axis.PixelMax) pMax.x = x_axis.PixelMax;
+                if (pMin.x > x_axis.PixelMax) pMin.x = x_axis.PixelMax - 1; //fix issue related to https://github.com/ocornut/imgui/issues/3976
+                if (pMax.x > x_axis.PixelMax) pMax.x = x_axis.PixelMax - 1; //fix issue related to https://github.com/ocornut/imgui/issues/3976
                 //plot a rectangle that extends up to x2 with y1 height
                 if ((pMax.x > pMin.x) && (gp.CurrentPlot->PlotRect.Contains(pMin) || gp.CurrentPlot->PlotRect.Contains(pMax))) {
                     // ImVec4 colAlpha = item->Color;

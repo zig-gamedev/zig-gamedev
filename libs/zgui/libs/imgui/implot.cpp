@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2022 Evan Pezent
+// Copyright (c) 2023 Evan Pezent
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// ImPlot v0.14
+// ImPlot v0.16
 
 /*
 
@@ -31,6 +31,8 @@ Below is a change-log of API breaking changes only. If you are using one of the 
 When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all implot files.
 You can read releases logs https://github.com/epezent/implot/releases for more details.
 
+- 2023/06/26 (0.15) - Various build fixes related to updates in Dear ImGui internals.
+- 2022/11/25 (0.15) - Make PlotText honor ImPlotItemFlags_NoFit.
 - 2022/06/19 (0.14) - The signature of ColormapScale has changed to accommodate a new ImPlotColormapScaleFlags parameter
 - 2022/06/17 (0.14) - **IMPORTANT** All PlotX functions now take an ImPlotX_Flags `flags` parameter. Where applicable, it is located before the existing `offset` and `stride` parameters.
                       If you were providing offset and stride values, you will need to update your function call to include a `flags` value. If you fail to do this, you will likely see
@@ -131,6 +133,11 @@ You can read releases logs https://github.com/epezent/implot/releases for more d
 // Support for pre-1.82 versions. Users on 1.82+ can use 0 (default) flags to mean "all corners" but in order to support older versions we are more explicit.
 #if (IMGUI_VERSION_NUM < 18102) && !defined(ImDrawFlags_RoundCornersAll)
 #define ImDrawFlags_RoundCornersAll ImDrawCornerFlags_All
+#endif
+
+// Support for pre-1.89.7 versions.
+#if (IMGUI_VERSION_NUM < 18966)
+#define ImGuiButtonFlags_AllowOverlap ImGuiButtonFlags_AllowItemOverlap
 #endif
 
 // Visual Studio warnings
@@ -1296,12 +1303,12 @@ bool DragFloat(const char*, F*, float, F, F) {
 
 template <>
 bool DragFloat<double>(const char* label, double* v, float v_speed, double v_min, double v_max) {
-    return ImGui::DragScalar(label, ImGuiDataType_Double, v, v_speed, &v_min, &v_max, "%.3f", 1);
+    return ImGui::DragScalar(label, ImGuiDataType_Double, v, v_speed, &v_min, &v_max, "%.3g", 1);
 }
 
 template <>
 bool DragFloat<float>(const char* label, float* v, float v_speed, float v_min, float v_max) {
-    return ImGui::DragScalar(label, ImGuiDataType_Float, v, v_speed, &v_min, &v_max, "%.3f", 1);
+    return ImGui::DragScalar(label, ImGuiDataType_Float, v, v_speed, &v_min, &v_max, "%.3g", 1);
 }
 
 inline void BeginDisabledControls(bool cond) {
@@ -1548,7 +1555,7 @@ void ShowPlotContextMenu(ImPlotPlot& plot) {
             ImFlipFlag(plot.Flags, ImPlotFlags_Crosshairs);
         ImGui::EndMenu();
     }
-    if (gp.CurrentSubplot != nullptr && !ImHasFlag(gp.CurrentPlot->Flags, ImPlotSubplotFlags_NoMenus)) {
+    if (gp.CurrentSubplot != nullptr && !ImHasFlag(gp.CurrentSubplot->Flags, ImPlotSubplotFlags_NoMenus)) {
         ImGui::Separator();
         if ((ImGui::BeginMenu("Subplots"))) {
             ShowSubplotsContextMenu(*gp.CurrentSubplot);
@@ -1808,7 +1815,7 @@ bool UpdateInput(ImPlotPlot& plot) {
 
     // BUTTON STATE -----------------------------------------------------------
 
-    const ImGuiButtonFlags plot_button_flags = ImGuiButtonFlags_AllowItemOverlap
+    const ImGuiButtonFlags plot_button_flags = ImGuiButtonFlags_AllowOverlap
                                              | ImGuiButtonFlags_PressedOnClick
                                              | ImGuiButtonFlags_PressedOnDoubleClick
                                              | ImGuiButtonFlags_MouseButtonLeft
@@ -1818,7 +1825,9 @@ bool UpdateInput(ImPlotPlot& plot) {
                                              | plot_button_flags;
 
     const bool plot_clicked = ImGui::ButtonBehavior(plot.PlotRect,plot.ID,&plot.Hovered,&plot.Held,plot_button_flags);
-    ImGui::SetItemAllowOverlap();
+#if (IMGUI_VERSION_NUM < 18966)
+    ImGui::SetItemAllowOverlap(); // Handled by ButtonBehavior()
+#endif
 
     if (plot_clicked) {
         if (!ImHasFlag(plot.Flags, ImPlotFlags_NoBoxSelect) && IO.MouseClicked[gp.InputMap.Select] && ImHasFlag(IO.KeyMods, gp.InputMap.SelectMod)) {
@@ -2550,7 +2559,7 @@ void SetupFinish() {
     // (2) get y tick labels (needed for left/right pad)
     for (int i = 0; i < IMPLOT_NUM_Y_AXES; i++) {
         ImPlotAxis& axis = plot.YAxis(i);
-        if (axis.WillRender() && axis.ShowDefaultTicks) {
+        if (axis.WillRender() && axis.ShowDefaultTicks && plot_height > 0) {
             axis.Locator(axis.Ticker, axis.Range, plot_height, true, axis.Formatter, axis.FormatterData);
         }
     }
@@ -2563,7 +2572,7 @@ void SetupFinish() {
     // (4) get x ticks
     for (int i = 0; i < IMPLOT_NUM_X_AXES; i++) {
         ImPlotAxis& axis = plot.XAxis(i);
-        if (axis.WillRender() && axis.ShowDefaultTicks) {
+        if (axis.WillRender() && axis.ShowDefaultTicks && plot_width > 0) {
             axis.Locator(axis.Ticker, axis.Range, plot_width, false, axis.Formatter, axis.FormatterData);
         }
     }
@@ -3350,7 +3359,7 @@ bool BeginSubplots(const char* title, int rows, int cols, const ImVec2& size, Im
     subplot.FrameRect = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
     subplot.GridRect.Min = subplot.FrameRect.Min + half_pad + ImVec2(0,pad_top);
     subplot.GridRect.Max = subplot.FrameRect.Max - half_pad;
-    subplot.FrameHovered = subplot.FrameRect.Contains(ImGui::GetMousePos()) && ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+    subplot.FrameHovered = subplot.FrameRect.Contains(ImGui::GetMousePos()) && ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows|ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
     // outside legend adjustments (TODO: make function)
     const bool share_items = ImHasFlag(subplot.Flags, ImPlotSubplotFlags_ShareItems);
@@ -3397,7 +3406,7 @@ bool BeginSubplots(const char* title, int rows, int cols, const ImVec2& size, Im
             ImGui::KeepAliveID(sep_id);
             const ImRect sep_bb = ImRect(subplot.GridRect.Min.x, ypos-SUBPLOT_SPLITTER_HALF_THICKNESS, subplot.GridRect.Max.x, ypos+SUBPLOT_SPLITTER_HALF_THICKNESS);
             bool sep_hov = false, sep_hld = false;
-            const bool sep_clk = ImGui::ButtonBehavior(sep_bb, sep_id, &sep_hov, &sep_hld, ImGuiButtonFlags_FlattenChildren | ImGuiButtonFlags_AllowItemOverlap | ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_PressedOnDoubleClick);
+            const bool sep_clk = ImGui::ButtonBehavior(sep_bb, sep_id, &sep_hov, &sep_hld, ImGuiButtonFlags_FlattenChildren | ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_PressedOnDoubleClick);
             if ((sep_hov && G.HoveredIdTimer > SUBPLOT_SPLITTER_FEEDBACK_TIMER) || sep_hld) {
                 if (sep_clk && ImGui::IsMouseDoubleClicked(0)) {
                     float p = (subplot.RowRatios[r] + subplot.RowRatios[r+1])/2;
@@ -3427,7 +3436,7 @@ bool BeginSubplots(const char* title, int rows, int cols, const ImVec2& size, Im
             ImGui::KeepAliveID(sep_id);
             const ImRect sep_bb = ImRect(xpos-SUBPLOT_SPLITTER_HALF_THICKNESS, subplot.GridRect.Min.y, xpos+SUBPLOT_SPLITTER_HALF_THICKNESS, subplot.GridRect.Max.y);
             bool sep_hov = false, sep_hld = false;
-            const bool sep_clk = ImGui::ButtonBehavior(sep_bb, sep_id, &sep_hov, &sep_hld, ImGuiButtonFlags_FlattenChildren | ImGuiButtonFlags_AllowItemOverlap | ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_PressedOnDoubleClick);
+            const bool sep_clk = ImGui::ButtonBehavior(sep_bb, sep_id, &sep_hov, &sep_hld, ImGuiButtonFlags_FlattenChildren | ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_PressedOnDoubleClick);
             if ((sep_hov && G.HoveredIdTimer > SUBPLOT_SPLITTER_FEEDBACK_TIMER) || sep_hld) {
                 if (sep_clk && ImGui::IsMouseDoubleClicked(0)) {
                     float p = (subplot.ColRatios[c] + subplot.ColRatios[c+1])/2;
