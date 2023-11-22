@@ -432,6 +432,18 @@ pub const Log = opaque {
 // DataSource
 //
 //--------------------------------------------------------------------------------------------------
+pub const DataSourceBase = extern struct {
+    vtable: *const DataSource.VTable,
+    range_begin_in_frames: u64,
+    range_end_in_frames: u64,
+    loop_begin_in_frames: u64,
+    loop_end_in_frames: u64,
+    p_current: *DataSource,
+    p_next: *DataSource,
+    onGetNext: ?*const fn (*DataSource) callconv(.C) void,
+    is_looping: Bool32,
+};
+
 pub const DataSource = opaque {
     pub usingnamespace Methods(@This());
 
@@ -452,7 +464,7 @@ pub const DataSource = opaque {
     }
 
     pub const Config = extern struct {
-        vtable: *VTable,
+        vtable: *const VTable,
 
         pub fn init() Config {
             var config: Config = undefined;
@@ -462,12 +474,11 @@ pub const DataSource = opaque {
         extern fn zaudioDataSourceConfigInit(out_config: *Config) void;
     };
 
-    pub fn create(config: Config) Error!*DataSource {
-        var handle: ?*DataSource = null;
-        try maybeError(zaudioDataSourceCreate(&config, &handle));
-        return handle.?;
+    pub fn create(config: Config, data_source_base: *DataSourceBase) Error!*DataSource {
+        try maybeError(zaudioDataSourceCreate(&config, data_source_base));
+        return @ptrCast(data_source_base);
     }
-    extern fn zaudioDataSourceCreate(config: *const Config, out_handle: ?*?*DataSource) Result;
+    extern fn zaudioDataSourceCreate(config: *const Config, data_source_base: *DataSourceBase) Result;
 
     pub const Flags = packed struct(u32) {
         self_managed_range_and_loop_point: bool = false,
