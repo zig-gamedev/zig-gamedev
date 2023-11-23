@@ -1507,20 +1507,20 @@ pub const AUDIO_F32LSB = 0x8120;
 pub const AUDIO_F32MSB = 0x9120;
 pub const AUDIO_F32 = AUDIO_F32LSB;
 pub const AUDIO_U16SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_U16LSB,
-    .Big => AUDIO_U16MSB,
+    .little => AUDIO_U16LSB,
+    .big => AUDIO_U16MSB,
 };
 pub const AUDIO_S16SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_S16LSB,
-    .Big => AUDIO_S16MSB,
+    .little => AUDIO_S16LSB,
+    .big => AUDIO_S16MSB,
 };
 pub const AUDIO_S32SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_S32LSB,
-    .Big => AUDIO_S32MSB,
+    .little => AUDIO_S32LSB,
+    .big => AUDIO_S32MSB,
 };
 pub const AUDIO_F32SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_F32LSB,
-    .Big => AUDIO_F32MSB,
+    .little => AUDIO_F32LSB,
+    .big => AUDIO_F32MSB,
 };
 
 pub const AudioCallback = *const fn (
