@@ -48,7 +48,7 @@ pub fn draw() void {
             while (x <= bounds) : (x += 0.001) {
                 const xoff = 0.00025 * (-1.0 + 2.0 * random.floatNorm(f64));
                 const yoff = 0.00025 * (-1.0 + 2.0 * random.floatNorm(f64));
-                var v = Vec2{ x, y };
+                const v = Vec2{ x, y };
 
                 gl.vertex2d(v[0] + xoff, v[1] + yoff);
             }
