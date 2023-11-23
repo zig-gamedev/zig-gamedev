@@ -136,8 +136,8 @@ pub fn loadTextureFromFile(
     }
 
     // Read all file
-    var file_data = try arena.alloc(u8, file_size);
-    var read_bytes = try file.readAll(file_data);
+    const file_data = try arena.alloc(u8, file_size);
+    const read_bytes = try file.readAll(file_data);
     if (read_bytes != file_size) {
         return DdsError.InvalidDDSData;
     }
@@ -671,7 +671,7 @@ fn getSurfaceInfo(
     var row_bytes: u64 = 0;
     var num_rows: u64 = 0;
 
-    var format_data = switch (format) {
+    const format_data = switch (format) {
         .BC1_TYPELESS, .BC1_UNORM, .BC1_UNORM_SRGB, .BC4_TYPELESS, .BC4_UNORM, .BC4_SNORM => FormatData{
             .bc = true,
             .@"packed" = false,
@@ -786,7 +786,7 @@ fn adjustPlaneResource(format: dxgi.FORMAT, height: u32, slice_plane: u32, resou
             resource.SlicePitch = resource.RowPitch * height;
         } else {
             // Plane 1
-            var offset: u32 = resource.RowPitch * height;
+            const offset: u32 = resource.RowPitch * height;
             // resource.pData = resource.pData[offset..];
             resource.pData = resource.pData.? + offset;
             resource.SlicePitch = resource.RowPitch * ((height + 1) >> 1);
@@ -797,7 +797,7 @@ fn adjustPlaneResource(format: dxgi.FORMAT, height: u32, slice_plane: u32, resou
             resource.SlicePitch = resource.RowPitch * height;
         } else {
             // Plane 1
-            var offset: u32 = resource.RowPitch * height;
+            const offset: u32 = resource.RowPitch * height;
             // resource.pData = resource.pData[offset..];
             resource.pData = resource.pData.? + offset;
             resource.RowPitch = (resource.RowPitch >> 1);

@@ -467,7 +467,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     //
     gctx.beginFrame();
 
-    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     // Upload vertex buffer.
     {

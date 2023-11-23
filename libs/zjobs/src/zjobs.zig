@@ -1117,7 +1117,7 @@ test "JobQueue throughput" {
         }
     };
 
-    var job_stats = try allocator.alloc(JobStat, job_count);
+    const job_stats = try allocator.alloc(JobStat, job_count);
     defer allocator.free(job_stats);
     for (job_stats) |*job_stat| {
         job_stat.* = .{ .main = main_thread };

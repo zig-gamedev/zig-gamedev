@@ -335,7 +335,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     gctx.beginFrame();
 
-    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     const mesh_textures = [_]zd3d12.ResourceHandle{
         gctx.createAndUploadTex2dFromFile(

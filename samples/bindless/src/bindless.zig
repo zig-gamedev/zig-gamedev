@@ -184,7 +184,7 @@ fn loadMesh(
             var lod_indices = std.ArrayList(u32).init(arena);
             lod_indices.resize(indices.items.len) catch unreachable;
             var lod_error: f32 = 0.0;
-            var lod_indices_count = zmesh.opt.simplifySloppy(
+            const lod_indices_count = zmesh.opt.simplifySloppy(
                 [3]f32,
                 lod_indices.items,
                 indices.items,
@@ -461,10 +461,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     gctx.beginFrame();
 
-    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     const vertex_buffer = blk: {
-        var vertex_buffer = gctx.createCommittedResource(
+        const vertex_buffer = gctx.createCommittedResource(
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
@@ -487,7 +487,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     };
 
     const index_buffer = blk: {
-        var index_buffer = gctx.createCommittedResource(
+        const index_buffer = gctx.createCommittedResource(
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),

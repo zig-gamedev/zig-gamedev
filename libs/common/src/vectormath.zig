@@ -988,11 +988,11 @@ pub const Mat4 = extern struct {
         v0 = v0.mul(v1);
 
         v1 = Vec4.init(vin.c[3], vin.c[3], vin.c[3], vin.c[3]);
-        var v2 = Vec4.init(q0.c[1], q0.c[2], q0.c[0], q0.c[3]);
+        const v2 = Vec4.init(q0.c[1], q0.c[2], q0.c[0], q0.c[3]);
         v1 = v1.mul(v2);
 
-        var r1 = v0.add(v1);
-        var r2 = v0.sub(v1);
+        const r1 = v0.add(v1);
+        const r2 = v0.sub(v1);
 
         v0 = Vec4.init(r1.c[1], r2.c[0], r2.c[1], r1.c[2]);
         v1 = Vec4.init(r1.c[0], r2.c[2], r1.c[0], r2.c[2]);

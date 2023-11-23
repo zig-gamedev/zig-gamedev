@@ -897,9 +897,9 @@ const EcsAllocator = struct {
             return null;
         }
 
-        var allocation_size = Alignment + @as(usize, @intCast(size));
+        const allocation_size = Alignment + @as(usize, @intCast(size));
 
-        var data = allocator.?.alignedAlloc(u8, Alignment, allocation_size) catch {
+        const data = allocator.?.alignedAlloc(u8, Alignment, allocation_size) catch {
             return null;
         };
 
@@ -918,7 +918,7 @@ const EcsAllocator = struct {
             return;
         }
         var ptr_unwrapped = @as([*]u8, @ptrCast(ptr.?)) - Alignment;
-        var allocation_header = @as(
+        const allocation_header = @as(
             *align(Alignment) AllocationHeader,
             @ptrCast(@alignCast(ptr_unwrapped)),
         );
@@ -933,9 +933,9 @@ const EcsAllocator = struct {
             return alloc(size);
         }
 
-        var ptr_unwrapped = @as([*]u8, @ptrCast(old.?)) - Alignment;
+        const ptr_unwrapped = @as([*]u8, @ptrCast(old.?)) - Alignment;
 
-        var allocation_header = @as(
+        const allocation_header = @as(
             *align(Alignment) AllocationHeader,
             @ptrCast(@alignCast(ptr_unwrapped)),
         );
@@ -945,7 +945,7 @@ const EcsAllocator = struct {
         const old_slice_aligned = @as([]align(Alignment) u8, @alignCast(old_slice));
 
         const new_allocation_size = Alignment + @as(usize, @intCast(size));
-        var new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
+        const new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
             return null;
         };
 
@@ -956,7 +956,7 @@ const EcsAllocator = struct {
     }
 
     fn calloc(size: i32) callconv(.C) ?*anyopaque {
-        var data_maybe = alloc(size);
+        const data_maybe = alloc(size);
         if (data_maybe) |data| {
             @memset(@as([*]u8, @ptrCast(data))[0..@as(usize, @intCast(size))], 0);
         }
@@ -1069,7 +1069,7 @@ pub fn fini(world: *world_t) i32 {
     }
     component_ids_hm.clearRetainingCapacity();
 
-    var fini_result = ecs_fini(world);
+    const fini_result = ecs_fini(world);
 
     if (num_worlds == 0) {
         _ = EcsAllocator.gpa.?.deinit();
@@ -2475,7 +2475,7 @@ pub fn get_fullpath(world: *const world_t, child: entity_t) [*:0]u8 {
 //--------------------------------------------------------------------------------------------------
 fn PerTypeGlobalVar(comptime in_type: type) type {
     if (@alignOf(in_type) > EcsAllocator.Alignment) {
-        var message = std.fmt.comptimePrint(
+        const message = std.fmt.comptimePrint(
             "Type [{s}] requires an alignment of [{}] but the EcsAllocator only provides an alignment of [{}].",
             .{
                 @typeName(in_type),
@@ -2659,4 +2659,3 @@ pub const EcsRest = extern struct {
     ipaddr: ?[*:0]u8 = null,
     impl: ?*anyopaque = null,
 };
-

@@ -111,10 +111,10 @@ pub const GraphicsContext = struct {
         defer _ = factory.Release();
 
         var present_flags: dxgi.PRESENT_FLAG = .{};
-        var present_interval: w32.UINT = 0;
+        const present_interval: w32.UINT = 0;
         {
             var allow_tearing: w32.BOOL = w32.FALSE;
-            var hr = factory.CheckFeatureSupport(
+            const hr = factory.CheckFeatureSupport(
                 .PRESENT_ALLOW_TEARING,
                 &allow_tearing,
                 @sizeOf(@TypeOf(allow_tearing)),
@@ -289,13 +289,13 @@ pub const GraphicsContext = struct {
             break :blk swapchain3;
         };
 
-        var resource_pool = ResourcePool.init(allocator);
-        var pipeline_pool = PipelinePool.init(allocator);
+        const resource_pool = ResourcePool.init(allocator);
+        const pipeline_pool = PipelinePool.init(allocator);
 
-        var rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
-        var dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, .{});
+        const rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
+        const dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, .{});
 
-        var cbv_srv_uav_cpu_heap = DescriptorHeap.init(
+        const cbv_srv_uav_cpu_heap = DescriptorHeap.init(
             device,
             num_cbv_srv_uav_cpu_descriptors,
             .CBV_SRV_UAV,
@@ -1695,7 +1695,7 @@ pub const GraphicsContext = struct {
             const upload = gctx.allocateUploadBufferRegion(u8, @as(u32, @intCast(required_size)));
             layout[0].Offset = upload.buffer_offset;
 
-            var subresource = &subresources.items[subresource_index];
+            const subresource = &subresources.items[subresource_index];
             var row: u32 = 0;
 
             const row_size_in_bytes_fixed = row_size_in_bytes[0];
@@ -1924,7 +1924,7 @@ const ResourcePool = struct {
     fn init(allocator: std.mem.Allocator) ResourcePool {
         return .{
             .resources = blk: {
-                var resources = allocator.alloc(
+                const resources = allocator.alloc(
                     Resource,
                     max_num_resources + 1,
                 ) catch unreachable;
@@ -1938,7 +1938,7 @@ const ResourcePool = struct {
                 break :blk resources;
             },
             .generations = blk: {
-                var generations = allocator.alloc(
+                const generations = allocator.alloc(
                     u16,
                     max_num_resources + 1,
                 ) catch unreachable;
@@ -2035,7 +2035,7 @@ const PipelinePool = struct {
     fn init(allocator: std.mem.Allocator) PipelinePool {
         return .{
             .pipelines = blk: {
-                var pipelines = allocator.alloc(
+                const pipelines = allocator.alloc(
                     Pipeline,
                     max_num_pipelines + 1,
                 ) catch unreachable;
@@ -2045,7 +2045,7 @@ const PipelinePool = struct {
                 break :blk pipelines;
             },
             .generations = blk: {
-                var generations = allocator.alloc(
+                const generations = allocator.alloc(
                     u16,
                     max_num_pipelines + 1,
                 ) catch unreachable;

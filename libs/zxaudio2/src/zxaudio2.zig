@@ -282,7 +282,7 @@ pub const Stream = struct {
             break :blk voice.?;
         };
 
-        var stream = allocator.create(Stream) catch unreachable;
+        const stream = allocator.create(Stream) catch unreachable;
         stream.* = .{
             .critical_section = cs,
             .allocator = allocator,
@@ -538,7 +538,7 @@ const SoundPool = struct {
     fn init(allocator: std.mem.Allocator) SoundPool {
         return .{
             .sounds = blk: {
-                var sounds = allocator.alloc(Sound, max_num_sounds + 1) catch unreachable;
+                const sounds = allocator.alloc(Sound, max_num_sounds + 1) catch unreachable;
                 for (sounds) |*sound| {
                     sound.* = .{
                         .data = null,
@@ -547,7 +547,7 @@ const SoundPool = struct {
                 break :blk sounds;
             },
             .generations = blk: {
-                var generations = allocator.alloc(u16, max_num_sounds + 1) catch unreachable;
+                const generations = allocator.alloc(u16, max_num_sounds + 1) catch unreachable;
                 for (generations) |*gen|
                     gen.* = 0;
                 break :blk generations;
@@ -587,7 +587,7 @@ const SoundPool = struct {
     }
 
     fn destroySound(pool: SoundPool, allocator: std.mem.Allocator, handle: SoundHandle) void {
-        var sound = pool.lookupSound(handle);
+        const sound = pool.lookupSound(handle);
         if (sound == null)
             return;
 
@@ -825,7 +825,7 @@ const SimpleAudioProcessor = extern struct {
         assert(input_params.?[0].pBuffer == output_params.?[0].pBuffer);
 
         if (is_enabled == w32.TRUE) {
-            var samples = @as([*]f32, @ptrCast(@alignCast(input_params.?[0].pBuffer)));
+            const samples = @as([*]f32, @ptrCast(@alignCast(input_params.?[0].pBuffer)));
             const num_samples = input_params.?[0].ValidFrameCount * self.num_channels;
 
             self.process(

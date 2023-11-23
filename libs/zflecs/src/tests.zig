@@ -178,7 +178,7 @@ test "zflecs.basic" {
 
     const PrintIdHelper = struct {
         fn printId(in_world: *ecs.world_t, comptime T: type) void {
-            var id_str = ecs.id_str(in_world, ecs.id(T)).?;
+            const id_str = ecs.id_str(in_world, ecs.id(T)).?;
             defer ecs.os.free(id_str);
 
             print("{s} id: {d}\n", .{ id_str, ecs.id(T) });
@@ -303,7 +303,7 @@ test "zflecs.try_different_alignments" {
         const Component = AlignedComponent.Component(component_alignment);
 
         ecs.COMPONENT(world, Component);
-        var entity = ecs.new_entity(world, "");
+        const entity = ecs.new_entity(world, "");
 
         _ = ecs.set(world, entity, Component, .{});
         _ = ecs.get(world, entity, Component);

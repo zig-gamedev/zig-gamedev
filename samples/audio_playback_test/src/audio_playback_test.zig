@@ -305,7 +305,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     gctx.beginFrame();
 
-    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     const image = gctx.createAndUploadTex2dFromFile(
         content_dir ++ "genart_008b.png",

@@ -24,7 +24,7 @@ fn install(
 
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
-    comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
+    const desc_size = comptime std.mem.indexOf(u8, &desc_name, "\x00").?;
 
     const xcommon = b.createModule(.{
         .source_file = .{ .path = thisDir() ++ "/src/xcommon.zig" },

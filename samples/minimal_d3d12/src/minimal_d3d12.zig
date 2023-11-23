@@ -418,7 +418,7 @@ const Dx12State = struct {
         var frame_fence: *d3d12.IFence = undefined;
         hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(&frame_fence)));
 
-        var frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
+        const frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
 
         std.log.info("Frame fence created ", .{});
 

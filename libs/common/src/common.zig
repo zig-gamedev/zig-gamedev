@@ -76,8 +76,8 @@ fn processWindowMessage(
     lparam: w32.LPARAM,
 ) callconv(w32.WINAPI) w32.LRESULT {
     assert(c.igGetCurrentContext() != null);
-    var ui = c.igGetIO().?;
-    var ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
+    const ui = c.igGetIO().?;
+    const ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
     switch (message) {
         w32.WM_LBUTTONDOWN,
         w32.WM_RBUTTONDOWN,
@@ -215,7 +215,7 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
     assert(c.igGetCurrentContext() == null);
     _ = c.igCreateContext(null);
 
-    var ui = c.igGetIO().?;
+    const ui = c.igGetIO().?;
     assert(ui.*.BackendPlatformUserData == null);
 
     const ui_backend = allocator.create(GuiBackendState) catch unreachable;
@@ -279,7 +279,7 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
 }
 
 pub fn deinitWindow(allocator: std.mem.Allocator) void {
-    var ui = c.igGetIO().?;
+    const ui = c.igGetIO().?;
     assert(ui.*.BackendPlatformUserData != null);
     allocator.destroy(@as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData))));
     c.igDestroyContext(null);
@@ -414,8 +414,8 @@ fn vkKeyToImGuiKey(wparam: w32.WPARAM) c.ImGuiKey {
 pub fn newImGuiFrame(delta_time: f32) void {
     assert(c.igGetCurrentContext() != null);
 
-    var ui = c.igGetIO().?;
-    var ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
+    const ui = c.igGetIO().?;
+    const ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
     assert(ui_backend.*.window != null);
 
     var rect: w32.RECT = undefined;
