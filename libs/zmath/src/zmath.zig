@@ -341,7 +341,7 @@ pub inline fn splatInt(comptime T: type, value: u32) T {
 
 pub fn load(mem: []const f32, comptime T: type, comptime len: u32) T {
     var v = splat(T, 0.0);
-    comptime var loop_len = if (len == 0) veclen(T) else len;
+    const loop_len = if (len == 0) veclen(T) else len;
     comptime var i: u32 = 0;
     inline while (i < loop_len) : (i += 1) {
         v[i] = mem[i];
@@ -368,7 +368,7 @@ test "zmath.load" {
 
 pub fn store(mem: []f32, v: anytype, comptime len: u32) void {
     const T = @TypeOf(v);
-    comptime var loop_len = if (len == 0) veclen(T) else len;
+    const loop_len = if (len == 0) veclen(T) else len;
     comptime var i: u32 = 0;
     inline while (i < loop_len) : (i += 1) {
         mem[i] = v[i];
@@ -474,7 +474,7 @@ pub fn all(vb: anytype, comptime len: u32) bool {
     if (len > veclen(T)) {
         @compileError("zmath.all(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    comptime var loop_len = if (len == 0) veclen(T) else len;
+    const loop_len = if (len == 0) veclen(T) else len;
     const ab: [veclen(T)]bool = vb;
     comptime var i: u32 = 0;
     var result = true;
@@ -501,7 +501,7 @@ pub fn any(vb: anytype, comptime len: u32) bool {
     if (len > veclen(T)) {
         @compileError("zmath.any(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    comptime var loop_len = if (len == 0) veclen(T) else len;
+    const loop_len = if (len == 0) veclen(T) else len;
     const ab: [veclen(T)]bool = vb;
     comptime var i: u32 = 0;
     var result = false;
@@ -924,7 +924,7 @@ test "zmath.round" {
         try expect(all(isNan(round(splat(F32x4, -math.snan(f32)))), 0));
     }
     {
-        var v = round(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
+        const v = round(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
         try expect(approxEqAbs(
             v,
             f32x16(1.0, -1.0, -2.0, 2.0, 2.0, 3.0, 3.0, 4.0, 6.0, 6.0, 8.0, 9.0, 10.0, 11.0, 13.0, 13.0),
@@ -1018,7 +1018,7 @@ test "zmath.trunc" {
         try expect(all(isNan(trunc(splat(F32x4, -math.snan(f32)))), 0));
     }
     {
-        var v = trunc(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
+        const v = trunc(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
         try expect(approxEqAbs(
             v,
             f32x16(1.0, -1.0, -1.0, 1.0, 2.0, 2.0, 2.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 11.0, 12.0, 13.0),
@@ -1110,7 +1110,7 @@ test "zmath.floor" {
         try expect(all(isNan(floor(splat(F32x4, -math.snan(f32)))), 0));
     }
     {
-        var v = floor(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
+        const v = floor(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
         try expect(approxEqAbs(
             v,
             f32x16(1.0, -2.0, -2.0, 1.0, 2.0, 2.0, 2.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 11.0, 12.0, 13.0),
@@ -1202,7 +1202,7 @@ test "zmath.ceil" {
         try expect(all(isNan(ceil(splat(F32x4, -math.snan(f32)))), 0));
     }
     {
-        var v = ceil(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
+        const v = ceil(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
         try expect(approxEqAbs(
             v,
             f32x16(2.0, -1.0, -1.0, 2.0, 3.0, 3.0, 3.0, 5.0, 6.0, 7.0, 8.0, 9.0, 11.0, 12.0, 13.0, 14.0),
@@ -1912,14 +1912,14 @@ test "zmath.atan2" {
 // ------------------------------------------------------------------------------
 pub inline fn dot2(v0: Vec, v1: Vec) F32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
+    const xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
     xmm0 = f32x4(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
     return swizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot2" {
     const v0 = f32x4(-1.0, 2.0, 300.0, -2.0);
     const v1 = f32x4(4.0, 5.0, 600.0, 2.0);
-    var v = dot2(v0, v1);
+    const v = dot2(v0, v1);
     try expect(approxEqAbs(v, splat(F32x4, 6.0), 0.0001));
 }
 
@@ -1930,7 +1930,7 @@ pub inline fn dot3(v0: Vec, v1: Vec) F32x4 {
 test "zmath.dot3" {
     const v0 = f32x4(-1.0, 2.0, 3.0, 1.0);
     const v1 = f32x4(4.0, 5.0, 6.0, 1.0);
-    var v = dot3(v0, v1);
+    const v = dot3(v0, v1);
     try expect(approxEqAbs(v, splat(F32x4, 24.0), 0.0001));
 }
 
@@ -1945,7 +1945,7 @@ pub inline fn dot4(v0: Vec, v1: Vec) F32x4 {
 test "zmath.dot4" {
     const v0 = f32x4(-1.0, 2.0, 3.0, -2.0);
     const v1 = f32x4(4.0, 5.0, 6.0, 2.0);
-    var v = dot4(v0, v1);
+    const v = dot4(v0, v1);
     try expect(approxEqAbs(v, splat(F32x4, 20.0), 0.0001));
 }
 
@@ -1962,19 +1962,19 @@ test "zmath.cross3" {
     {
         const v0 = f32x4(1.0, 0.0, 0.0, 1.0);
         const v1 = f32x4(0.0, 1.0, 0.0, 1.0);
-        var v = cross3(v0, v1);
+        const v = cross3(v0, v1);
         try expect(approxEqAbs(v, f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
     }
     {
         const v0 = f32x4(1.0, 0.0, 0.0, 1.0);
         const v1 = f32x4(0.0, -1.0, 0.0, 1.0);
-        var v = cross3(v0, v1);
+        const v = cross3(v0, v1);
         try expect(approxEqAbs(v, f32x4(0.0, 0.0, -1.0, 0.0), 0.0001));
     }
     {
         const v0 = f32x4(-3.0, 0, -2.0, 1.0);
         const v1 = f32x4(5.0, -1.0, 2.0, 1.0);
-        var v = cross3(v0, v1);
+        const v = cross3(v0, v1);
         try expect(approxEqAbs(v, f32x4(-2.0, -4.0, 3.0, 0.0), 0.0001));
     }
 }
@@ -2029,7 +2029,7 @@ pub inline fn normalize4(v: Vec) Vec {
 test "zmath.normalize3" {
     {
         const v0 = f32x4(1.0, -2.0, 3.0, 1000.0);
-        var v = normalize3(v0);
+        const v = normalize3(v0);
         try expect(approxEqAbs(v, v0 * splat(F32x4, 1.0 / math.sqrt(14.0)), 0.0005));
     }
     {
@@ -2042,7 +2042,7 @@ test "zmath.normalize3" {
 test "zmath.normalize4" {
     {
         const v0 = f32x4(1.0, -2.0, 3.0, 10.0);
-        var v = normalize4(v0);
+        const v = normalize4(v0);
         try expect(approxEqAbs(v, v0 * splat(F32x4, 1.0 / math.sqrt(114.0)), 0.0005));
     }
     {
@@ -2054,10 +2054,10 @@ test "zmath.normalize4" {
 }
 
 fn vecMulMat(v: Vec, m: Mat) Vec {
-    var vx = @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
-    var vy = @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
-    var vz = @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
-    var vw = @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
+    const vx = @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
+    const vy = @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
+    const vz = @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
+    const vw = @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
     return vx * m[0] + vy * m[1] + vz * m[2] + vw * m[3];
 }
 fn matMulVec(m: Mat, v: Vec) Vec {
@@ -2501,7 +2501,7 @@ pub fn determinant(m: Mat) F32x4 {
     v1 = swizzle(m[1], .z, .z, .y, .y);
     v2 = swizzle(m[1], .y, .x, .x, .x);
 
-    var s = m[0] * f32x4(1.0, -1.0, 1.0, -1.0);
+    const s = m[0] * f32x4(1.0, -1.0, 1.0, -1.0);
     var r = v0 * p0;
     r = mulAdd(-v1, p1, r);
     r = mulAdd(v2, p2, r);
@@ -2721,7 +2721,7 @@ test "zmath.matrix.matFromAxisAngle" {
 }
 
 pub fn matFromQuat(quat: Quat) Mat {
-    var q0 = quat + quat;
+    const q0 = quat + quat;
     var q1 = quat * q0;
 
     var v0 = swizzle(q1, .y, .x, .x, .w);
@@ -2730,18 +2730,18 @@ pub fn matFromQuat(quat: Quat) Mat {
     var v1 = swizzle(q1, .z, .z, .y, .w);
     v1 = andInt(v1, f32x4_mask3);
 
-    var r0 = (f32x4(1.0, 1.0, 1.0, 0.0) - v0) - v1;
+    const r0 = (f32x4(1.0, 1.0, 1.0, 0.0) - v0) - v1;
 
     v0 = swizzle(quat, .x, .x, .y, .w);
     v1 = swizzle(q0, .z, .y, .z, .w);
     v0 = v0 * v1;
 
     v1 = swizzle(quat, .w, .w, .w, .w);
-    var v2 = swizzle(q0, .y, .z, .x, .w);
+    const v2 = swizzle(q0, .y, .z, .x, .w);
     v1 = v1 * v2;
 
-    var r1 = v0 + v1;
-    var r2 = v0 - v1;
+    const r1 = v0 + v1;
+    const r2 = v0 - v1;
 
     v0 = @shuffle(f32, r1, r2, [4]i32{ 1, 2, ~@as(i32, 0), ~@as(i32, 1) });
     v0 = swizzle(v0, .x, .z, .w, .y);
@@ -2974,7 +2974,7 @@ test "zmath.quatFromMat" {
 }
 
 pub fn quatFromNormAxisAngle(axis: Vec, angle: f32) Quat {
-    var n = f32x4(axis[0], axis[1], axis[2], 1.0);
+    const n = f32x4(axis[0], axis[1], axis[2], 1.0);
     const sc = sincos(0.5 * angle);
     return n * f32x4(sc[0], sc[0], sc[0], sc[1]);
 }
@@ -3066,7 +3066,7 @@ pub fn slerpV(q0: Quat, q1: Quat, t: F32x4) Quat {
     var s0 = sin(v01 * omega) / sin_omega;
     s0 = select(cos_omega < splat(F32x4, 1.0 - 0.00001), s0, v01);
 
-    var s1 = swizzle(s0, .y, .y, .y, .y);
+    const s1 = swizzle(s0, .y, .y, .y, .y);
     s0 = swizzle(s0, .x, .x, .x, .x);
 
     return q0 * s0 + sign * q1 * s1;
@@ -3097,9 +3097,9 @@ pub fn quatToRollPitchYaw(q: Quat) [3]f32 {
         angles[2] = 0.0;
     } else {
         const sq = p * p;
-        var y = splat(F32x4, 2.0) * f32x4(p[0] * p[1] - sign * p[2] * p[3], p[0] * p[3] - sign * p[1] * p[2], 0.0, 0.0);
-        var x = splat(F32x4, 1.0) - (splat(F32x4, 2.0) * f32x4(sq[1] + sq[2], sq[2] + sq[3], 0.0, 0.0));
-        var res = atan2(y, x);
+        const y = splat(F32x4, 2.0) * f32x4(p[0] * p[1] - sign * p[2] * p[3], p[0] * p[3] - sign * p[1] * p[2], 0.0, 0.0);
+        const x = splat(F32x4, 1.0) - (splat(F32x4, 2.0) * f32x4(sq[1] + sq[2], sq[2] + sq[3], 0.0, 0.0));
+        const res = atan2(y, x);
         angles[0] = math.asin(2.0 * singularity);
         angles[1] = res[0];
         angles[2] = res[1];
@@ -3513,7 +3513,7 @@ test "zmath.linePointDistance" {
         const linept0 = f32x4(-1.0, -2.0, -3.0, 1.0);
         const linept1 = f32x4(1.0, 2.0, 3.0, 1.0);
         const pt = f32x4(1.0, 1.0, 1.0, 1.0);
-        var v = linePointDistance(linept0, linept1, pt);
+        const v = linePointDistance(linept0, linept1, pt);
         try expect(approxEqAbs(v, splat(F32x4, 0.654), 0.001));
     }
 }
@@ -4312,8 +4312,8 @@ pub fn fft(re: []F32x4, im: []F32x4, unity_table: []const F32x4) void {
 
     var re_temp_storage: [128]F32x4 = undefined;
     var im_temp_storage: [128]F32x4 = undefined;
-    var re_temp = re_temp_storage[0..re.len];
-    var im_temp = im_temp_storage[0..im.len];
+    const re_temp = re_temp_storage[0..re.len];
+    const im_temp = im_temp_storage[0..im.len];
 
     std.mem.copy(F32x4, re_temp, re);
     std.mem.copy(F32x4, im_temp, im);

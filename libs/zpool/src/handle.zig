@@ -95,7 +95,7 @@ pub fn Handle(
         pub const nil = Self{ .id = 0 };
 
         pub fn init(i: IndexType, c: CycleType) Self {
-            var u = HandleUnion{ .bits = .{
+            const u = HandleUnion{ .bits = .{
                 .cycle = c,
                 .index = i,
             } };
@@ -103,12 +103,12 @@ pub fn Handle(
         }
 
         pub fn cycle(self: Self) CycleType {
-            var u = HandleUnion{ .id = self.id };
+            const u = HandleUnion{ .id = self.id };
             return u.bits.cycle;
         }
 
         pub fn index(self: Self) IndexType {
-            var u = HandleUnion{ .id = self.id };
+            const u = HandleUnion{ .id = self.id };
             return u.bits.index;
         }
 
@@ -116,7 +116,7 @@ pub fn Handle(
         /// `Handle.id` into an `AddressableHandle`, which stores
         /// the `index` and `cycle` values in pointer-addressable fields.
         pub fn addressable(self: Self) AddressableHandle {
-            var u = HandleUnion{ .id = self.id };
+            const u = HandleUnion{ .id = self.id };
             return .{
                 .cycle = u.bits.cycle,
                 .index = u.bits.index,
@@ -134,7 +134,7 @@ pub fn Handle(
 
             /// Returns the corresponding `Handle`
             pub fn handle(self: AddressableHandle) HandleType {
-                var u = HandleUnion{ .bits = .{
+                const u = HandleUnion{ .bits = .{
                     .cycle = @as(CycleType, @intCast(self.cycle)),
                     .index = @as(IndexType, @intCast(self.index)),
                 } };
