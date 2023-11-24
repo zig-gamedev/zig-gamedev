@@ -162,7 +162,7 @@ const impl = struct {
 
         var alloc_buffer: [2048]u8 = undefined;
         var alloc_state = std.heap.FixedBufferAllocator.init(alloc_buffer[0..]);
-        var alloc = alloc_state.allocator();
+        const alloc = alloc_state.allocator();
 
         const program_files_path = std.unicode.utf16leToUtf8AllocZ(
             alloc,
