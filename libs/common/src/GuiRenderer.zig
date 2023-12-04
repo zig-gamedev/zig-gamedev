@@ -183,13 +183,11 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
             const list = draw_data.?.*.CmdLists[cmdlist_idx];
             const list_vb_size = @as(u32, @intCast(list.*.VtxBuffer.Size));
             const list_ib_size = @as(u32, @intCast(list.*.IdxBuffer.Size));
-            std.mem.copy(
-                c.ImDrawVert,
+            @memcpy(
                 vb_slice[vb_idx .. vb_idx + list_vb_size],
                 list.*.VtxBuffer.Data[0..list_vb_size],
             );
-            std.mem.copy(
-                c.ImDrawIdx,
+            @memcpy(
                 ib_slice[ib_idx .. ib_idx + list_ib_size],
                 list.*.IdxBuffer.Data[0..list_ib_size],
             );
