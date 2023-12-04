@@ -156,7 +156,9 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             }
 
             @memset(&self.data, 0);
-            std.mem.copy(u8, &self.data, std.mem.asBytes(job));
+
+            const job_bytes = std.mem.asBytes(job);
+            @memcpy(self.data[0..job_bytes.len], job_bytes);
 
             const exec: *const fn (*Job) void = &@field(Job, "exec");
             const id = jobId(@as(u16, @truncate(index)), new_cycle);

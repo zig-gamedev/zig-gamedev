@@ -4315,8 +4315,8 @@ pub fn fft(re: []F32x4, im: []F32x4, unity_table: []const F32x4) void {
     const re_temp = re_temp_storage[0..re.len];
     const im_temp = im_temp_storage[0..im.len];
 
-    std.mem.copy(F32x4, re_temp, re);
-    std.mem.copy(F32x4, im_temp, im);
+    @memcpy(re_temp, re);
+    @memcpy(im_temp, im);
 
     if (length > 16) {
         assert(unity_table.len == length);
