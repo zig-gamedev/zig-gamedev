@@ -1477,7 +1477,7 @@ pub fn comboFromEnum(
             .Enum => |e| {
                 comptime var str: [:0]const u8 = "";
 
-                inline for (e.fields) |f| {
+                for (e.fields) |f| {
                     str = str ++ f.name ++ "\x00";
                 }
                 break :lbl str;
