@@ -2415,7 +2415,7 @@ pub const CharacterVirtual = opaque {
 pub const MotionProperties = extern struct {
     linear_velocity: [4]f32 align(16), // 4th element is ignored
     angular_velocity: [4]f32 align(16), // 4th element is ignored
-    inv_inertia_diagnonal: [4]f32 align(16),
+    inv_inertia_diagonal: [4]f32 align(16),
     inertia_rotation: [4]f32 align(16),
 
     force: [3]f32,
@@ -2458,10 +2458,10 @@ pub const MotionProperties = extern struct {
         return velocity;
     }
     pub fn setAngularVelocity(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetAnglularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
+        c.JPC_MotionProperties_SetAngularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
     pub fn setAngularVelocityClamped(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetAnglularVelocityClamped(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
+        c.JPC_MotionProperties_SetAngularVelocityClamped(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
 
     /// `point` is relative to the center of mass (com)
