@@ -332,7 +332,7 @@ typedef struct JPC_MotionProperties
 {
     alignas(16) float  linear_velocity[4]; // 4th element is ignored
     alignas(16) float  angular_velocity[4]; // 4th element is ignored
-    alignas(16) float  inv_inertia_diagnonal[4]; // 4th element is ignored
+    alignas(16) float  inv_inertia_diagonal[4]; // 4th element is ignored
     alignas(16) float  inertia_rotation[4];
 
     float              force[3];
