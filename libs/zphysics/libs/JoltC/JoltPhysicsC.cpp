@@ -2389,13 +2389,13 @@ JPC_Body_GetAngularVelocity(const JPC_Body *in_body, float out_angular_velocity[
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_SetAnglularVelocity(JPC_Body *in_body, const float in_angular_velocity[3])
+JPC_Body_SetAngularVelocity(JPC_Body *in_body, const float in_angular_velocity[3])
 {
     toJph(in_body)->SetAngularVelocity(loadVec3(in_angular_velocity));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API void
-JPC_Body_SetAnglularVelocityClamped(JPC_Body *in_body, const float in_angular_velocity[3])
+JPC_Body_SetAngularVelocityClamped(JPC_Body *in_body, const float in_angular_velocity[3])
 {
     toJph(in_body)->SetAngularVelocityClamped(loadVec3(in_angular_velocity));
 }

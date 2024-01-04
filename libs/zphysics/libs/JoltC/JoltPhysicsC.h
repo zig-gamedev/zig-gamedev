@@ -332,14 +332,14 @@ typedef struct JPC_MotionProperties
 {
     alignas(16) float  linear_velocity[4]; // 4th element is ignored
     alignas(16) float  angular_velocity[4]; // 4th element is ignored
-    alignas(16) float  inv_inertia_diagnonal[4]; // 4th element is ignored
+    alignas(16) float  inv_inertia_diagonal[4]; // 4th element is ignored
     alignas(16) float  inertia_rotation[4];
 
     float              force[3];
     float              torque[3];
     float              inv_mass;
     float              linear_damping;
-    float              angular_daming;
+    float              angular_damping;
     float              max_linear_velocity;
     float              max_angular_velocity;
     float              gravity_factor;
@@ -1870,10 +1870,10 @@ JPC_API void
 JPC_Body_GetAngularVelocity(const JPC_Body *in_body, float out_angular_velocity[3]);
 
 JPC_API void
-JPC_Body_SetAnglularVelocity(JPC_Body *in_body, const float in_angular_velocity[3]);
+JPC_Body_SetAngularVelocity(JPC_Body *in_body, const float in_angular_velocity[3]);
 
 JPC_API void
-JPC_Body_SetAnglularVelocityClamped(JPC_Body *in_body, const float in_angular_velocity[3]);
+JPC_Body_SetAngularVelocityClamped(JPC_Body *in_body, const float in_angular_velocity[3]);
 
 JPC_API void
 JPC_Body_GetPointVelocityCOM(const JPC_Body *in_body,
