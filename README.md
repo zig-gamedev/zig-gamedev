@@ -1,5 +1,3 @@
-**Please note that the project requires latest Zig compiler (master/nightly). It can be downloaded [here](https://ziglang.org/download/).**
-
 [Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
 
 # zig-gamedev project
@@ -10,6 +8,17 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
 * DirectX 12 [sample applications](#sample-applications-directx-12)
 * Mini-games (in planning)
+
+Please note that Zig is still in development. Our [main](https://github.com/michal-z/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently, which can be downloaded using the links below.
+
+If you are using the nightly build of Zig, you may want to use our [unstable](https://github.com/michal-z/zig-gamedev/tree/unstable) branch instead.
+
+| OS/Arch         | Download link               |
+| --------------- | --------------------------- |
+| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz) |
 
 To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```sh
