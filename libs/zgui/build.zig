@@ -63,6 +63,10 @@ pub fn package(
             lib.defineCMacro("ZGUI_API", "__declspec(dllexport)");
         }
 
+        if (target.isDarwin()) {
+            lib.linker_allow_shlib_undefined = true;
+        }
+
         break :blk lib;
     } else b.addStaticLibrary(.{
         .name = "zgui",
