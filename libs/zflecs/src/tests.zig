@@ -12,6 +12,10 @@ const Velocity = struct { x: f32, y: f32 };
 const Walking = struct {};
 const Direction = enum { north, south, east, west };
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 test "zflecs.entities.basics" {
     print("\n", .{});
 
