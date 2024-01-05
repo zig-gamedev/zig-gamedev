@@ -158,7 +158,34 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const test_step = b.step("test", "Run zgui tests");
+    test_step.dependOn(runTests(b, optimize, target));
+}
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const gui_tests = b.addTest(.{
+        .name = "gui-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const zgui_pkg = package(b, target, optimize, .{
+        .options = .{ .backend = .no_backend },
+    });
+    gui_tests.addModule("zgui_options", zgui_pkg.zgui_options);
+    zgui_pkg.link(gui_tests);
+
+    return &b.addRunArtifact(gui_tests).step;
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

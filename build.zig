@@ -234,6 +234,7 @@ fn tests(b: *std.Build, options: Options) void {
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
     test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zgui.runTests(b, options.optimize, options.target));
 
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
     // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl2));

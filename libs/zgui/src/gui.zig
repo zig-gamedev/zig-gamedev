@@ -4224,3 +4224,7 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_AddResetRenderStateCallback(draw_list: DrawList) void;
 };
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
