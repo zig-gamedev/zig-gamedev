@@ -3087,12 +3087,14 @@ pub fn colorConvertFloat3ToU32(in: [3]f32) u32 {
 
 pub fn colorConvertRgbToHsv(r: f32, g: f32, b: f32) [3]f32 {
     var hsv: [3]f32 = undefined;
-    return zguiColorConvertRGBtoHSV(r, g, b, &hsv[0], &hsv[1], &hsv[2]);
+    zguiColorConvertRGBtoHSV(r, g, b, &hsv[0], &hsv[1], &hsv[2]);
+    return hsv;
 }
 
 pub fn colorConvertHsvToRgb(h: f32, s: f32, v: f32) [3]f32 {
     var rgb: [3]f32 = undefined;
-    return zguiColorConvertHSVtoRGB(h, s, v, &rgb[0], &rgb[1], &rgb[2]);
+    zguiColorConvertHSVtoRGB(h, s, v, &rgb[0], &rgb[1], &rgb[2]);
+    return rgb;
 }
 
 extern fn zguiColorConvertU32ToFloat4(in: u32, rgba: *[4]f32) void;
