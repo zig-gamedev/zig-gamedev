@@ -14,7 +14,7 @@ pub fn package(
     _: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const zpool = b.createModule(.{
+    const zpool = b.addModule("zpool", .{
         .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
     });
     return .{ .zpool = zpool };
@@ -26,6 +26,8 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zpool tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{});
 }
 
 pub fn runTests(
