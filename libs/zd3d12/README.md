@@ -1,4 +1,4 @@
-# zd3d12 - helper library for DirectX 12
+# zd3d12 v0.9.0 - helper library for DirectX 12
 
 ## Features
 

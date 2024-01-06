@@ -1,9 +1,10 @@
 .{
-    .name = "zmath",
-    .version = "0.9.6",
+    .name = "zaudio",
+    .version = "0.9.3",
     .paths = .{
         "build.zig",
         "build.zig.zon",
+        "libs",
         "src",
         "README.md",
     },

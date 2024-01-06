@@ -1,6 +1,6 @@
 .{
-    .name = "zmath",
-    .version = "0.9.6",
+    .name = "zpool",
+    .version = "0.9.0",
     .paths = .{
         "build.zig",
         "build.zig.zon",

@@ -1,4 +1,4 @@
-# zwin32 - Zig bindings for Win32 API
+# zwin32 v0.9.0 - Zig bindings for Win32 API
 
 Can be used on Windows and Linux. Contains partial bindings for:
 * Win32 API

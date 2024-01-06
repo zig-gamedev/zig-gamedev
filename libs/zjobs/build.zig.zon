@@ -1,6 +1,6 @@
 .{
-    .name = "zmath",
-    .version = "0.9.6",
+    .name = "zjobs",
+    .version = "0.1.0",
     .paths = .{
         "build.zig",
         "build.zig.zon",

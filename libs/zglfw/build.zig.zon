@@ -1,5 +1,11 @@
 .{
     .name = "zglfw",
     .version = "0.7.0",
-    .paths = .{""},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "libs",
+        "src",
+        "README.md",
+    },
 }

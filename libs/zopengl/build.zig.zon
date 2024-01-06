@@ -1,5 +1,10 @@
 .{
     .name = "zopengl",
     .version = "0.1.3",
-    .paths = .{""},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "README.md",
+    },
 }

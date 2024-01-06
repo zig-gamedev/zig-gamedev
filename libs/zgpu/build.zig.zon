@@ -1,9 +1,10 @@
 .{
-    .name = "zmath",
-    .version = "0.9.6",
+    .name = "zgpu",
+    .version = "0.9.1",
     .paths = .{
         "build.zig",
         "build.zig.zon",
+        "libs",
         "src",
         "README.md",
     },

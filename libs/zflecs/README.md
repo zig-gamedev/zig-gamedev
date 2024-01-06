@@ -1,4 +1,4 @@
-# zflecs - bindings for flecs ECS (wip)
+# zflecs v0.0.1 - bindings for flecs ECS (wip)
 
 ## Getting started
 

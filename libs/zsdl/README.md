@@ -1,4 +1,4 @@
-# zsdl - bindings for SDL2 (wip)
+# zsdl v0.0.1 - bindings for SDL2 (wip)
 
 ## Getting started
 

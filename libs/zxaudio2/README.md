@@ -1,4 +1,4 @@
-# zxaudio2 - helper library for XAudio2
+# zxaudio2 v0.9.0 - helper library for XAudio2
 
 ## Getting started
 
