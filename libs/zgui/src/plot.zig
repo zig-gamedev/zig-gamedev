@@ -574,16 +574,16 @@ const PlotText = struct {
     pix_offset: [2]f32 = .{ 0, 0 },
     flags: PlotTextFlags = .{},
 };
-pub fn plotText(text: [*:0]const u8, args:PlotText) void {
+pub fn plotText(text: [*:0]const u8, args: PlotText) void {
     zguiPlot_PlotText(text, args.x, args.y, &args.pix_offset, args.flags);
 }
 extern fn zguiPlot_PlotText(
-    text:[*:0]const u8,
-    x:f64, y:f64,
+    text: [*:0]const u8,
+    x: f64,
+    y: f64,
     pix_offset: *const [2]f32,
     flags: PlotTextFlags,
 ) void;
-
 
 //----------------------------------------------------------------------------------------------
 /// `pub fn showDemoWindow(popen: ?*bool) void`
