@@ -14,7 +14,7 @@ pub fn package(
     _: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const zjobs = b.createModule(.{
+    const zjobs = b.addModule("zjobs", .{
         .source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
     });
     return .{ .zjobs = zjobs };
@@ -26,6 +26,8 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zjobs tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{});
 }
 
 pub fn runTests(
