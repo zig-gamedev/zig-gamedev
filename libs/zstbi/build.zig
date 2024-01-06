@@ -16,7 +16,7 @@ pub fn package(
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const zstbi = b.createModule(.{
+    const zstbi = b.addModule("zstbi", .{
         .source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
     });
 
@@ -59,6 +59,8 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zstbi tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{});
 }
 
 pub fn runTests(
