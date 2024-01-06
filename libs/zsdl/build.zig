@@ -20,6 +20,7 @@ pub const Package = struct {
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.linkLibC();
 
+        exe.addModule("zsdl_options", pkg.zsdl_options);
         exe.addModule("zsdl", pkg.zsdl);
 
         exe.step.dependOn(pkg.install);
@@ -109,7 +110,7 @@ pub fn package(
 
     const options = options_step.createModule();
 
-    const zsdl = b.createModule(.{
+    const zsdl = b.addModule("zsdl", .{
         .source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
         .dependencies = &.{
             .{ .name = "zsdl_options", .module = options },
@@ -198,6 +199,12 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run zsdl tests");
     test_step.dependOn(runTests(b, optimize, target, .sdl2));
     test_step.dependOn(runTests(b, optimize, target, .sdl3));
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .api_version = b.option(ApiVersion, "api_version", "Select an SDL API version") orelse .sdl2,
+        },
+    });
 }
 
 pub fn runTests(
@@ -218,7 +225,6 @@ pub fn runTests(
             .enable_ttf = true,
         },
     });
-    tests.addModule("zsdl_options", zsdl_pkg.zsdl_options);
     zsdl_pkg.link(tests);
     return &b.addRunArtifact(tests).step;
 }
