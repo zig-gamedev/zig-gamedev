@@ -1,17 +1,31 @@
 const std = @import("std");
 
+const default_options = struct {
+    const uniforms_buffer_size = 4 * 1024 * 1024;
+    const dawn_skip_validation = false;
+    const buffer_pool_size = 256;
+    const texture_pool_size = 256;
+    const texture_view_pool_size = 256;
+    const sampler_pool_size = 16;
+    const render_pipeline_pool_size = 128;
+    const compute_pipeline_pool_size = 128;
+    const bind_group_pool_size = 32;
+    const bind_group_layout_pool_size = 32;
+    const pipeline_layout_pool_size = 32;
+};
+
 pub const Options = struct {
-    uniforms_buffer_size: u64 = 4 * 1024 * 1024,
-    dawn_skip_validation: bool = false,
-    buffer_pool_size: u32 = 256,
-    texture_pool_size: u32 = 256,
-    texture_view_pool_size: u32 = 256,
-    sampler_pool_size: u32 = 16,
-    render_pipeline_pool_size: u32 = 128,
-    compute_pipeline_pool_size: u32 = 128,
-    bind_group_pool_size: u32 = 32,
-    bind_group_layout_pool_size: u32 = 32,
-    pipeline_layout_pool_size: u32 = 32,
+    uniforms_buffer_size: u64 = default_options.uniforms_buffer_size,
+    dawn_skip_validation: bool = default_options.dawn_skip_validation,
+    buffer_pool_size: u32 = default_options.buffer_pool_size,
+    texture_pool_size: u32 = default_options.texture_pool_size,
+    texture_view_pool_size: u32 = default_options.texture_view_pool_size,
+    sampler_pool_size: u32 = default_options.sampler_pool_size,
+    render_pipeline_pool_size: u32 = default_options.render_pipeline_pool_size,
+    compute_pipeline_pool_size: u32 = default_options.compute_pipeline_pool_size,
+    bind_group_pool_size: u32 = default_options.bind_group_pool_size,
+    bind_group_layout_pool_size: u32 = default_options.bind_group_layout_pool_size,
+    pipeline_layout_pool_size: u32 = default_options.pipeline_layout_pool_size,
 };
 
 pub const Package = struct {
@@ -114,7 +128,7 @@ pub fn package(
 
     const zgpu_options = step.createModule();
 
-    const zgpu = b.createModule(.{
+    const zgpu = b.addModule("zgpu", .{
         .source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .dependencies = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
@@ -130,7 +144,77 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zglfw = b.dependency("zglfw", .{});
+    const zpool = b.dependency("zpool", .{});
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .uniforms_buffer_size = b.option(
+                u64,
+                "uniforms_buffer_size",
+                "Set uniforms buffer size",
+            ) orelse default_options.uniforms_buffer_size,
+            .dawn_skip_validation = b.option(
+                bool,
+                "dawn_skip_validation",
+                "Disable Dawn validation",
+            ) orelse default_options.dawn_skip_validation,
+            .buffer_pool_size = b.option(
+                u32,
+                "buffer_pool_size",
+                "Set buffer pool size",
+            ) orelse default_options.buffer_pool_size,
+            .texture_pool_size = b.option(
+                u32,
+                "texture_pool_size",
+                "Set texture pool size",
+            ) orelse default_options.texture_pool_size,
+            .texture_view_pool_size = b.option(
+                u32,
+                "texture_view_pool_size",
+                "Set texture view pool size",
+            ) orelse default_options.texture_view_pool_size,
+            .sampler_pool_size = b.option(
+                u32,
+                "sampler_pool_size",
+                "Set sample pool size",
+            ) orelse default_options.sampler_pool_size,
+            .render_pipeline_pool_size = b.option(
+                u32,
+                "render_pipeline_pool_size",
+                "Set render pipeline pool size",
+            ) orelse default_options.render_pipeline_pool_size,
+            .compute_pipeline_pool_size = b.option(
+                u32,
+                "compute_pipeline_pool_size",
+                "Set compute pipeline pool size",
+            ) orelse default_options.compute_pipeline_pool_size,
+            .bind_group_pool_size = b.option(
+                u32,
+                "bind_group_pool_size",
+                "Set bind group pool size",
+            ) orelse default_options.bind_group_pool_size,
+            .bind_group_layout_pool_size = b.option(
+                u32,
+                "bind_group_layout_pool_size",
+                "Set bind group layout pool size",
+            ) orelse default_options.bind_group_layout_pool_size,
+            .pipeline_layout_pool_size = b.option(
+                u32,
+                "pipeline_layout_pool_size",
+                "Set pipeline layout pool size",
+            ) orelse default_options.pipeline_layout_pool_size,
+        },
+        .deps = .{
+            .zglfw = zglfw.module("zglfw"),
+            .zpool = zpool.module("zpool"),
+        },
+    });
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
