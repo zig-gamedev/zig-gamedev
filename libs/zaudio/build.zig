@@ -16,7 +16,7 @@ pub fn package(
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const zaudio = b.createModule(.{
+    const zaudio = b.addModule("zaudio", .{
         .source_file = .{ .path = thisDir() ++ "/src/zaudio.zig" },
     });
 
@@ -76,6 +76,8 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zaudio tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{});
 }
 
 pub fn runTests(
