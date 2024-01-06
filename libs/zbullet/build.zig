@@ -16,7 +16,7 @@ pub fn package(
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const zbullet = b.createModule(.{
+    const zbullet = b.addModule("zbullet", .{
         .source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
     });
 
@@ -54,8 +54,12 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
+    _ = package(b, target, optimize, .{});
+}
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
