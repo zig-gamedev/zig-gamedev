@@ -42,7 +42,7 @@ pub fn package(
 
     const zgui_options = step.createModule();
 
-    const zgui = b.createModule(.{
+    const zgui = b.addModule("zgui", .{
         .source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
         .dependencies = &.{
             .{ .name = "zgui_options", .module = zgui_options },
@@ -164,6 +164,15 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zgui tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .backend = b.option(Backend, "backend", "Select a backend") orelse .no_backend,
+            .shared = b.option(bool, "shared", "Bulid as a shared library") orelse false,
+            .with_imgui = b.option(bool, "with_imgui", "Build with bundled imgui source") orelse true,
+            .with_implot = b.option(bool, "with_implot", "Build with bundled implot source") orelse false,
+        },
+    });
 }
 
 pub fn runTests(
