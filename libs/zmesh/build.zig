@@ -32,7 +32,7 @@ pub fn package(
 
     const zmesh_options = step.createModule();
 
-    const zmesh = b.createModule(.{
+    const zmesh = b.addModule("zmesh", .{
         .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .dependencies = &.{
             .{ .name = "zmesh_options", .module = zmesh_options },
@@ -110,6 +110,13 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zmesh tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .shape_use_32bit_indices = b.option(bool, "shape_use_32bit_indices", "Enable par shapes 32-bit indices") orelse true,
+            .shared = b.option(bool, "shared", "Build as shared library") orelse false,
+        },
+    });
 }
 
 pub fn runTests(
