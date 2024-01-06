@@ -1,10 +1,17 @@
 const std = @import("std");
 
+const default_options = struct {
+    const enable_debug_layer = false;
+    const enable_gbv = false;
+    const enable_d2d = false;
+    const upload_heap_capacity = 24 * 1024 * 1024;
+};
+
 pub const Options = struct {
-    enable_debug_layer: bool = false,
-    enable_gbv: bool = false,
-    enable_d2d: bool = false,
-    upload_heap_capacity: u32 = 24 * 1024 * 1024,
+    enable_debug_layer: bool = default_options.enable_debug_layer,
+    enable_gbv: bool = default_options.enable_gbv,
+    enable_d2d: bool = default_options.enable_d2d,
+    upload_heap_capacity: u32 = default_options.upload_heap_capacity,
 };
 
 pub const Package = struct {
@@ -35,7 +42,7 @@ pub fn package(
 
     const zd3d12_options = step.createModule();
 
-    const zd3d12 = b.createModule(.{
+    const zd3d12 = b.addModule("zd3d12", .{
         .source_file = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
         .dependencies = &.{
             .{ .name = "zd3d12_options", .module = zd3d12_options },
@@ -50,7 +57,40 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zwin32 = b.dependency("zwin32", .{});
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .enable_debug_layer = b.option(
+                bool,
+                "enable_debug_layer",
+                "Enable debug layer",
+            ) orelse default_options.enable_debug_layer,
+            .enable_gbv = b.option(
+                bool,
+                "enable_gbv",
+                "Enable GPU-based validation",
+            ) orelse default_options.enable_gbv,
+            .enable_d2d = b.option(
+                bool,
+                "enable_d2d",
+                "Enable Direct2D",
+            ) orelse default_options.enable_d2d,
+            .upload_heap_capacity = b.option(
+                u32,
+                "upload_heap_capacity",
+                "Set upload heap capacity",
+            ) orelse default_options.upload_heap_capacity,
+        },
+        .deps = .{
+            .zwin32 = zwin32.module("zwin32"),
+        },
+    });
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
