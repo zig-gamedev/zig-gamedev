@@ -29,7 +29,7 @@ pub fn package(
 
     const zxaudio2_options = step.createModule();
 
-    const zxaudio2 = b.createModule(.{
+    const zxaudio2 = b.addModule("zxaudio2", .{
         .source_file = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
         .dependencies = &.{
             .{ .name = "zxaudio2_options", .module = zxaudio2_options },
