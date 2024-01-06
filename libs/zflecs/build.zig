@@ -17,7 +17,7 @@ pub fn package(
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const zflecs = b.createModule(.{
+    const zflecs = b.addModule("zflecs", .{
         .source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
     });
 
@@ -54,6 +54,8 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zflecs tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{});
 }
 
 pub fn runTests(
