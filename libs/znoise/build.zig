@@ -16,7 +16,7 @@ pub fn package(
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
-    const znoise = b.createModule(.{
+    const znoise = b.addModule("znoise", .{
         .source_file = .{ .path = thisDir() ++ "/src/znoise.zig" },
     });
 
@@ -44,6 +44,8 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run znoise tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{});
 }
 
 pub fn runTests(
