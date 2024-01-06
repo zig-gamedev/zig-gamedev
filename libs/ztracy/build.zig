@@ -34,7 +34,7 @@ pub fn package(
 
     const ztracy_options = step.createModule();
 
-    const ztracy = b.createModule(.{
+    const ztracy = b.addModule("ztracy", .{
         .source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
         .dependencies = &.{
             .{ .name = "ztracy_options", .module = ztracy_options },
@@ -92,7 +92,17 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .enable_ztracy = b.option(bool, "enable_ztracy", "Enable Tracy profile markers") orelse false,
+            .enable_fibers = b.option(bool, "enable_fibers", "Enable Tracy fiber support") orelse false,
+        },
+    });
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
