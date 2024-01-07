@@ -2,22 +2,22 @@ const std = @import("std");
 
 pub const Package = struct {
     znoise: *std.Build.Module,
-    znoise_c_cpp: *std.Build.CompileStep,
+    znoise_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("znoise", pkg.znoise);
-        exe.linkLibrary(pkg.znoise_c_cpp);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("znoise", pkg.znoise);
+        exe.root_module.linkLibrary(pkg.znoise_c_cpp);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
     const znoise = b.addModule("znoise", .{
-        .source_file = .{ .path = thisDir() ++ "/src/znoise.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/znoise.zig" },
     });
 
     const znoise_c_cpp = b.addStaticLibrary(.{
@@ -25,9 +25,9 @@ pub fn package(
         .target = target,
         .optimize = optimize,
     });
-    znoise_c_cpp.linkLibC();
-    znoise_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/FastNoiseLite" });
-    znoise_c_cpp.addCSourceFile(.{
+    znoise_c_cpp.root_module.link_libc = true;
+    znoise_c_cpp.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/FastNoiseLite" });
+    znoise_c_cpp.root_module.addCSourceFile(.{
         .file = .{ .path = thisDir() ++ "/libs/FastNoiseLite/FastNoiseLite.c" },
         .flags = &.{ "-std=c99", "-fno-sanitize=undefined" },
     });
@@ -51,7 +51,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "znoise-tests",
