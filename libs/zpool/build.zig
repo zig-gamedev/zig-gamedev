@@ -3,19 +3,19 @@ const std = @import("std");
 pub const Package = struct {
     zpool: *std.Build.Module,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zpool", pkg.zpool);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zpool", pkg.zpool);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    _: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zpool = b.addModule("zpool", .{
-        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
     });
     return .{ .zpool = zpool };
 }
@@ -33,7 +33,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zpool-tests",
