@@ -2,22 +2,22 @@ const std = @import("std");
 
 pub const Package = struct {
     zbullet: *std.Build.Module,
-    zbullet_c_cpp: *std.Build.CompileStep,
+    zbullet_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.linkLibrary(pkg.zbullet_c_cpp);
-        exe.addModule("zbullet", pkg.zbullet);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.linkLibrary(pkg.zbullet_c_cpp);
+        exe.root_module.addImport("zbullet", pkg.zbullet);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zbullet = b.addModule("zbullet", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
     });
 
     const zbullet_c_cpp = b.addStaticLibrary(.{
@@ -26,10 +26,14 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cbullet" });
-    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/bullet" });
-    zbullet_c_cpp.linkLibC();
-    zbullet_c_cpp.linkLibCpp();
+    zbullet_c_cpp.root_module.addIncludePath(.{
+        .path = thisDir() ++ "/libs/cbullet",
+    });
+    zbullet_c_cpp.root_module.addIncludePath(.{
+        .path = thisDir() ++ "/libs/bullet",
+    });
+    zbullet_c_cpp.root_module.link_libc = true;
+    zbullet_c_cpp.root_module.link_libcpp = true;
 
     // TODO: Use the old damping method for now otherwise there is a hang in powf().
     const flags = &.{
@@ -38,7 +42,7 @@ pub fn package(
         "-std=c++11",
         "-fno-sanitize=undefined",
     };
-    zbullet_c_cpp.addCSourceFiles(.{
+    zbullet_c_cpp.root_module.addCSourceFiles(.{
         .files = &.{
             thisDir() ++ "/libs/cbullet/cbullet.cpp",
             thisDir() ++ "/libs/bullet/btLinearMathAll.cpp",
