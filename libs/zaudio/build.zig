@@ -2,22 +2,22 @@ const std = @import("std");
 
 pub const Package = struct {
     zaudio: *std.Build.Module,
-    zaudio_c_cpp: *std.Build.CompileStep,
+    zaudio_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.linkLibrary(pkg.zaudio_c_cpp);
-        exe.addModule("zaudio", pkg.zaudio);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.linkLibrary(pkg.zaudio_c_cpp);
+        exe.root_module.addImport("zaudio", pkg.zaudio);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zaudio = b.addModule("zaudio", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zaudio.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zaudio.zig" },
     });
 
     const zaudio_c_cpp = b.addStaticLibrary(.{
@@ -26,23 +26,31 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zaudio_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/miniaudio" });
-    zaudio_c_cpp.linkLibC();
+    zaudio_c_cpp.root_module.addIncludePath(.{
+        .path = thisDir() ++ "/libs/miniaudio",
+    });
+    zaudio_c_cpp.root_module.link_libc = true;
 
-    const host = (std.zig.system.NativeTargetInfo.detect(zaudio_c_cpp.target) catch unreachable).target;
+    const host = target.result;
 
     if (host.os.tag == .macos) {
-        zaudio_c_cpp.addFrameworkPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" });
-        zaudio_c_cpp.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/include" });
-        zaudio_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
-        zaudio_c_cpp.linkFramework("CoreAudio");
-        zaudio_c_cpp.linkFramework("CoreFoundation");
-        zaudio_c_cpp.linkFramework("AudioUnit");
-        zaudio_c_cpp.linkFramework("AudioToolbox");
+        zaudio_c_cpp.root_module.addFrameworkPath(.{
+            .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks",
+        });
+        zaudio_c_cpp.root_module.addSystemIncludePath(.{
+            .path = thisDir() ++ "/../system-sdk/macos12/usr/include",
+        });
+        zaudio_c_cpp.root_module.addLibraryPath(.{
+            .path = thisDir() ++ "/../system-sdk/macos12/usr/lib",
+        });
+        zaudio_c_cpp.root_module.linkFramework("CoreAudio", .{});
+        zaudio_c_cpp.root_module.linkFramework("CoreFoundation", .{});
+        zaudio_c_cpp.root_module.linkFramework("AudioUnit", .{});
+        zaudio_c_cpp.root_module.linkFramework("AudioToolbox", .{});
     } else if (host.os.tag == .linux) {
-        zaudio_c_cpp.linkSystemLibraryName("pthread");
-        zaudio_c_cpp.linkSystemLibraryName("m");
-        zaudio_c_cpp.linkSystemLibraryName("dl");
+        zaudio_c_cpp.root_module.linkSystemLibrary("pthread", .{});
+        zaudio_c_cpp.root_module.linkSystemLibrary("m", .{});
+        zaudio_c_cpp.root_module.linkSystemLibrary("dl", .{});
     }
 
     zaudio_c_cpp.addCSourceFile(.{
@@ -83,7 +91,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zaudio-tests",
