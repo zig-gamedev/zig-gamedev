@@ -2,23 +2,23 @@ const std = @import("std");
 
 pub const Package = struct {
     zflecs: *std.Build.Module,
-    zflecs_c_cpp: *std.Build.CompileStep,
+    zflecs_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zflecs", pkg.zflecs);
-        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
-        exe.linkLibrary(pkg.zflecs_c_cpp);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zflecs", pkg.zflecs);
+        exe.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
+        exe.root_module.linkLibrary(pkg.zflecs_c_cpp);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zflecs = b.addModule("zflecs", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
     });
 
     const zflecs_c_cpp = b.addStaticLibrary(.{
@@ -26,9 +26,9 @@ pub fn package(
         .target = target,
         .optimize = optimize,
     });
-    zflecs_c_cpp.linkLibC();
-    zflecs_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
-    zflecs_c_cpp.addCSourceFile(.{
+    zflecs_c_cpp.root_module.link_libc = true;
+    zflecs_c_cpp.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
+    zflecs_c_cpp.root_module.addCSourceFile(.{
         .file = .{ .path = thisDir() ++ "/libs/flecs/flecs.c" },
         .flags = &.{
             "-fno-sanitize=undefined",
@@ -38,8 +38,8 @@ pub fn package(
         },
     });
 
-    if (zflecs_c_cpp.target.isWindows()) {
-        zflecs_c_cpp.linkSystemLibraryName("ws2_32");
+    if (target.result.os.tag == .windows) {
+        zflecs_c_cpp.root_module.linkSystemLibrary("ws2_32", .{});
     }
 
     return .{
@@ -61,7 +61,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zflecs-tests",
