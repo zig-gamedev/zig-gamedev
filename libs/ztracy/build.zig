@@ -6,19 +6,19 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     options: Options,
     ztracy: *std.Build.Module,
     ztracy_options: *std.Build.Module,
-    ztracy_c_cpp: *std.Build.CompileStep,
+    ztracy_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("ztracy", pkg.ztracy);
-        exe.addModule("ztracy_options", pkg.ztracy_options);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("ztracy", pkg.ztracy);
+        exe.root_module.addImport("ztracy_options", pkg.ztracy_options);
         if (pkg.options.enable_ztracy) {
-            exe.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
-            exe.linkLibrary(pkg.ztracy_c_cpp);
+            exe.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
+            exe.root_module.linkLibrary(pkg.ztracy_c_cpp);
         }
     }
 
@@ -36,7 +36,7 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -48,8 +48,8 @@ pub fn package(
     const ztracy_options = step.createModule();
 
     const ztracy = b.addModule("ztracy", .{
-        .source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
+        .imports = &.{
             .{ .name = "ztracy_options", .module = ztracy_options },
         },
     });
@@ -63,8 +63,8 @@ pub fn package(
             .optimize = optimize,
         });
 
-        ztracy_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
-        ztracy_c_cpp.addCSourceFile(.{
+        ztracy_c_cpp.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
+        ztracy_c_cpp.root_module.addCSourceFile(.{
             .file = .{ .path = thisDir() ++ "/libs/tracy/TracyClient.cpp" },
             .flags = &.{
                 "-DTRACY_ENABLE",
@@ -76,18 +76,17 @@ pub fn package(
             },
         });
 
-        const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
-        ztracy_c_cpp.linkLibC();
-        if (abi != .msvc)
-            ztracy_c_cpp.linkLibCpp();
+        ztracy_c_cpp.root_module.link_libc = true;
+        if (target.result.abi != .msvc)
+            ztracy_c_cpp.root_module.link_libcpp = true;
 
-        switch (target.getOs().tag) {
+        switch (target.result.os.tag) {
             .windows => {
-                ztracy_c_cpp.linkSystemLibraryName("ws2_32");
-                ztracy_c_cpp.linkSystemLibraryName("dbghelp");
+                ztracy_c_cpp.root_module.linkSystemLibrary("ws2_32", .{});
+                ztracy_c_cpp.root_module.linkSystemLibrary("dbghelp", .{});
             },
             .macos => {
-                ztracy_c_cpp.addFrameworkPath(
+                ztracy_c_cpp.root_module.addFrameworkPath(
                     .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
                 );
             },
