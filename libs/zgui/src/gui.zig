@@ -3469,11 +3469,20 @@ pub const DrawList = *opaque {
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
     extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]DrawVert;
+    pub fn getVertexBuffer(draw_list: DrawList) []DrawVert {
+        const len: usize = @intCast(draw_list.getVertexBufferLength());
+        return draw_list.getVertexBufferData()[0..len];
+    }
 
     pub const getIndexBufferLength = zguiDrawList_GetIndexBufferLength;
     extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) i32;
     pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
     extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]DrawIdx;
+    pub fn getIndexBuffer(draw_list: DrawList) []DrawIdx {
+        const len: usize = @intCast(draw_list.getIndexBufferLength());
+        return draw_list.getIndexBufferData()[0..len];
+    }
+
     pub const getCurrentIndex = zguiDrawList_GetCurrentIndex;
     extern fn zguiDrawList_GetCurrentIndex(draw_list: DrawList) u32;
 
@@ -3481,6 +3490,10 @@ pub const DrawList = *opaque {
     extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) i32;
     pub const getCmdBufferData = zguiDrawList_GetCmdBufferData;
     extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]DrawCmd;
+    pub fn getCmdBuffer(draw_list: DrawList) []DrawCmd {
+        const len: usize = @intCast(draw_list.getCmdBufferLength());
+        return draw_list.getCmdBufferData()[0..len];
+    }
 
     pub const DrawListFlags = packed struct(u32) {
         anti_aliased_lines: bool = false,
