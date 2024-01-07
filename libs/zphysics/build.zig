@@ -11,19 +11,19 @@ pub const Package = struct {
     options: Options,
     zphysics: *std.Build.Module,
     zphysics_options: *std.Build.Module,
-    zphysics_c_cpp: *std.Build.CompileStep,
+    zphysics_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
-        exe.linkLibrary(pkg.zphysics_c_cpp);
-        exe.addModule("zphysics", pkg.zphysics);
-        exe.addModule("zphysics_options", pkg.zphysics_options);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
+        exe.root_module.linkLibrary(pkg.zphysics_c_cpp);
+        exe.root_module.addImport("zphysics", pkg.zphysics);
+        exe.root_module.addImport("zphysics_options", pkg.zphysics_options);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -32,14 +32,18 @@ pub fn package(
     const step = b.addOptions();
     step.addOption(bool, "use_double_precision", args.options.use_double_precision);
     step.addOption(bool, "enable_asserts", args.options.enable_asserts);
-    step.addOption(bool, "enable_cross_platform_determinism", args.options.enable_cross_platform_determinism);
+    step.addOption(
+        bool,
+        "enable_cross_platform_determinism",
+        args.options.enable_cross_platform_determinism,
+    );
     step.addOption(bool, "enable_debug_renderer", args.options.enable_debug_renderer);
 
     const zphysics_options = step.createModule();
 
     const zphysics = b.addModule("zphysics", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
+        .imports = &.{
             .{ .name = "zphysics_options", .module = zphysics_options },
         },
     });
@@ -50,27 +54,25 @@ pub fn package(
         .optimize = optimize,
     });
 
-    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
-
-    zphysics_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs" });
-    zphysics_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
-    zphysics_c_cpp.linkLibC();
-    if (abi != .msvc)
+    zphysics_c_cpp.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs" });
+    zphysics_c_cpp.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
+    zphysics_c_cpp.root_module.link_libc = true;
+    if (target.result.abi != .msvc)
         zphysics_c_cpp.linkLibCpp();
 
     const flags = &.{
         "-std=c++17",
-        if (abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
+        if (target.result.abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
         if (args.options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
         if (args.options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
         if (args.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
-        if (args.options.enable_asserts or zphysics_c_cpp.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+        if (args.options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
         "-fno-access-control",
         "-fno-sanitize=undefined",
     };
 
     const src_dir = thisDir() ++ "/libs/Jolt";
-    zphysics_c_cpp.addCSourceFiles(.{
+    zphysics_c_cpp.root_module.addCSourceFiles(.{
         .files = &.{
             thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp",
             thisDir() ++ "/libs/JoltC/JoltPhysicsC_Extensions.cpp",
@@ -227,7 +229,11 @@ pub fn build(b: *std.Build) void {
         .options = .{
             .use_double_precision = b.option(bool, "use_double_precision", "Enable double precision") orelse false,
             .enable_asserts = b.option(bool, "enable_asserts", "Enable assertions") orelse false,
-            .enable_cross_platform_determinism = b.option(bool, "enable_cross_platform_determinism", "Enables cross-platform determinism") orelse true,
+            .enable_cross_platform_determinism = b.option(
+                bool,
+                "enable_cross_platform_determinism",
+                "Enables cross-platform determinism",
+            ) orelse true,
             .enable_debug_renderer = b.option(bool, "enable_debug_renderer", "Enable debug renderer") orelse false,
         },
     });
@@ -236,7 +242,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const parent_step = b.allocator.create(std.Build.Step) catch @panic("OOM");
     parent_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zphysics-tests", .owner = b });
@@ -260,9 +266,9 @@ fn testStep(
     b: *std.Build,
     name: []const u8,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     options: Options,
-) *std.Build.RunStep {
+) *std.Build.Step.Run {
     const test_exe = b.addTest(.{
         .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
@@ -273,13 +279,11 @@ fn testStep(
     // TODO: Problems with LTO on Windows.
     test_exe.want_lto = false;
 
-    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
-
-    test_exe.addCSourceFile(.{
+    test_exe.root_module.addCSourceFile(.{
         .file = .{ .path = thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c" },
         .flags = &.{
             "-std=c11",
-            if (abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
+            if (target.result.abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
             if (options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
             if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
@@ -291,7 +295,7 @@ fn testStep(
     const zphysics_pkg = package(b, target, optimize, .{ .options = options });
     zphysics_pkg.link(test_exe);
 
-    test_exe.addModule("zphysics_options", zphysics_pkg.zphysics_options);
+    test_exe.root_module.addImport("zphysics_options", zphysics_pkg.zphysics_options);
 
     return b.addRunArtifact(test_exe);
 }
