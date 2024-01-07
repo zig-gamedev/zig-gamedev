@@ -17,28 +17,30 @@ pub const Package = struct {
     zsdl_options: *std.Build.Module,
     install: *std.Build.Step,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.linkLibC();
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.link_libc = true;
 
-        exe.addModule("zsdl_options", pkg.zsdl_options);
-        exe.addModule("zsdl", pkg.zsdl);
+        exe.root_module.addImport("zsdl_options", pkg.zsdl_options);
+        exe.root_module.addImport("zsdl", pkg.zsdl);
 
         exe.step.dependOn(pkg.install);
 
-        const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+        const target = exe.rootModuleTarget();
 
         switch (target.os.tag) {
             .windows => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-windows-gnu/lib" });
+                exe.root_module.addLibraryPath(.{
+                    .path = thisDir() ++ "/libs/x86_64-windows-gnu/lib",
+                });
 
                 switch (pkg.options.api_version) {
                     .sdl2 => {
-                        exe.linkSystemLibraryName("SDL2");
-                        exe.linkSystemLibraryName("SDL2main");
+                        exe.root_module.linkSystemLibrary("SDL2", .{});
+                        exe.root_module.linkSystemLibrary("SDL2main", .{});
                         if (pkg.options.enable_ttf) {
-                            exe.linkSystemLibraryName("SDL2_ttf");
+                            exe.root_module.linkSystemLibrary("SDL2_ttf", .{});
                         }
                     },
                     .sdl3 => {
@@ -49,15 +51,17 @@ pub const Package = struct {
             .linux => {
                 assert(target.cpu.arch.isX86());
 
-                exe.addRPath(.{ .path = "$ORIGIN" });
+                exe.root_module.addRPath(.{ .path = "$ORIGIN" });
 
-                exe.addLibraryPath(.{ .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib" });
+                exe.root_module.addLibraryPath(.{
+                    .path = thisDir() ++ "/libs/x86_64-linux-gnu/lib",
+                });
 
                 switch (pkg.options.api_version) {
                     .sdl2 => {
-                        exe.linkSystemLibraryName("SDL2-2.0");
+                        exe.root_module.linkSystemLibrary("SDL2-2.0", .{});
                         if (pkg.options.enable_ttf) {
-                            exe.linkSystemLibraryName("SDL2_ttf-2.0");
+                            exe.root_module.linkSystemLibrary("SDL2_ttf-2.0", .{});
                         }
                     },
                     .sdl3 => {
@@ -66,25 +70,27 @@ pub const Package = struct {
                 }
             },
             .macos => {
-                exe.addRPath(.{ .path = "@executable_path/Frameworks" });
+                exe.root_module.addRPath(.{ .path = "@executable_path/Frameworks" });
 
-                exe.addFrameworkPath(.{ .path = thisDir() ++ "/libs/macos/Frameworks" });
+                exe.root_module.addFrameworkPath(.{
+                    .path = thisDir() ++ "/libs/macos/Frameworks",
+                });
 
                 switch (pkg.options.api_version) {
                     .sdl2 => {
-                        exe.linkFramework("SDL2");
+                        exe.root_module.linkFramework("SDL2", .{});
                         if (pkg.options.enable_ttf) {
-                            exe.linkFramework("SDL2_ttf");
+                            exe.root_module.linkFramework("SDL2_ttf", .{});
                         }
                     },
                     .sdl3 => {
                         // TODO: bundle SDL3.framework instead of this hack
                         // exe.linkFramework("SDL3");
-                        exe.addLibraryPath(.{ .path = "/usr/local/lib" });
-                        exe.linkSystemLibraryName("SDL3");
+                        exe.root_module.addLibraryPath(.{ .path = "/usr/local/lib" });
+                        exe.root_module.linkSystemLibrary("SDL3", .{});
 
                         if (pkg.options.enable_ttf) {
-                            exe.linkFramework("SDL2_ttf");
+                            exe.root_module.linkFramework("SDL2_ttf", .{});
                         }
                     },
                 }
@@ -96,7 +102,7 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -111,8 +117,8 @@ pub fn package(
     const options = options_step.createModule();
 
     const zsdl = b.addModule("zsdl", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
+        .imports = &.{
             .{ .name = "zsdl_options", .module = options },
         },
     });
@@ -120,7 +126,7 @@ pub fn package(
     const install_step = b.allocator.create(std.Build.Step) catch @panic("OOM");
     install_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zsdl-install", .owner = b });
 
-    if (target.isWindows()) {
+    if (target.result.os.tag == .windows) {
         switch (args.options.api_version) {
             .sdl2 => {
                 install_step.dependOn(
@@ -140,7 +146,7 @@ pub fn package(
             },
             .sdl3 => {},
         }
-    } else if (target.isLinux()) {
+    } else if (target.result.os.tag == .linux) {
         switch (args.options.api_version) {
             .sdl2 => {
                 install_step.dependOn(
@@ -160,7 +166,7 @@ pub fn package(
             },
             .sdl3 => {},
         }
-    } else if (target.isDarwin()) {
+    } else if (target.result.os.tag == .macos) {
         switch (args.options.api_version) {
             .sdl2 => {
                 install_step.dependOn(
@@ -210,7 +216,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     api_version: ApiVersion,
 ) *std.Build.Step {
     const tests = b.addTest(.{
