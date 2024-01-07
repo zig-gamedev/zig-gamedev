@@ -65,6 +65,7 @@ pub fn package(
         if (args.options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
         if (args.options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
         if (args.options.enable_asserts or zphysics_c_cpp.optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+        "-fno-access-control",
         "-fno-sanitize=undefined",
     };
 
