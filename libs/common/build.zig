@@ -2,19 +2,23 @@ const std = @import("std");
 
 pub const Package = struct {
     common: *std.Build.Module,
-    common_c_cpp: *std.Build.CompileStep,
+    common_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("common", pkg.common);
-        exe.linkLibrary(pkg.common_c_cpp);
-        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/imgui" });
-        exe.addIncludePath(.{ .path = thisDir() ++ "/../zmesh/libs/cgltf" });
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("common", pkg.common);
+        exe.root_module.linkLibrary(pkg.common_c_cpp);
+        exe.root_module.addIncludePath(.{
+            .path = thisDir() ++ "/libs/imgui",
+        });
+        exe.root_module.addIncludePath(
+            .{ .path = thisDir() ++ "/../zmesh/libs/cgltf" },
+        );
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     args: struct {
         deps: struct {
@@ -29,27 +33,34 @@ pub fn package(
         .optimize = optimize,
     });
 
-    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
-    lib.linkLibC();
-    if (abi != .msvc)
-        lib.linkLibCpp();
-    lib.linkSystemLibraryName("imm32");
+    lib.root_module.link_libc = true;
+    if (target.result.abi != .msvc)
+        lib.root_module.link_libcpp = true;
+    lib.root_module.linkSystemLibrary("imm32", .{});
 
-    lib.addIncludePath(.{ .path = thisDir() ++ "/libs" });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui.cpp" }, .flags = &.{""} });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_widgets.cpp" }, .flags = &.{""} });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_tables.cpp" }, .flags = &.{""} });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_draw.cpp" }, .flags = &.{""} });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/imgui_demo.cpp" }, .flags = &.{""} });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/libs/imgui/cimgui.cpp" }, .flags = &.{""} });
+    lib.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs" });
+    lib.root_module.addCSourceFiles(.{
+        .files = &.{
+            thisDir() ++ "/libs/imgui/imgui.cpp",
+            thisDir() ++ "/libs/imgui/imgui_widgets.cpp",
+            thisDir() ++ "/libs/imgui/imgui_tables.cpp",
+            thisDir() ++ "/libs/imgui/imgui_draw.cpp",
+            thisDir() ++ "/libs/imgui/imgui_demo.cpp",
+            thisDir() ++ "/libs/imgui/cimgui.cpp",
+        },
+        .flags = &.{""},
+    });
 
-    lib.addIncludePath(.{ .path = thisDir() ++ "/../zmesh/libs/cgltf" });
-    lib.addCSourceFile(.{ .file = .{ .path = thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c" }, .flags = &.{"-std=c99"} });
+    lib.root_module.addIncludePath(.{ .path = thisDir() ++ "/../zmesh/libs/cgltf" });
+    lib.root_module.addCSourceFile(.{
+        .file = .{ .path = thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c" },
+        .flags = &.{"-std=c99"},
+    });
 
     return .{
         .common = b.createModule(.{
-            .source_file = .{ .path = thisDir() ++ "/src/common.zig" },
-            .dependencies = &.{
+            .root_source_file = .{ .path = thisDir() ++ "/src/common.zig" },
+            .imports = &.{
                 .{ .name = "zwin32", .module = args.deps.zwin32 },
                 .{ .name = "zd3d12", .module = args.deps.zd3d12 },
             },
