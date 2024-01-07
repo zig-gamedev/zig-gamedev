@@ -2,22 +2,22 @@ const std = @import("std");
 
 pub const Package = struct {
     zstbi: *std.Build.Module,
-    zstbi_c_cpp: *std.Build.CompileStep,
+    zstbi_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.linkLibrary(pkg.zstbi_c_cpp);
-        exe.addModule("zstbi", pkg.zstbi);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.linkLibrary(pkg.zstbi_c_cpp);
+        exe.root_module.addImport("zstbi", pkg.zstbi);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zstbi = b.addModule("zstbi", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zstbi.zig" },
     });
 
     const zstbi_c_cpp = b.addStaticLibrary(.{
@@ -27,7 +27,7 @@ pub fn package(
     });
     if (optimize == .Debug) {
         // TODO: Workaround for Zig bug.
-        zstbi_c_cpp.addCSourceFile(.{
+        zstbi_c_cpp.root_module.addCSourceFile(.{
             .file = .{ .path = thisDir() ++ "/libs/stbi/stb_image.c" },
             .flags = &.{
                 "-std=c99",
@@ -37,7 +37,7 @@ pub fn package(
             },
         });
     } else {
-        zstbi_c_cpp.addCSourceFile(.{
+        zstbi_c_cpp.root_module.addCSourceFile(.{
             .file = .{ .path = thisDir() ++ "/libs/stbi/stb_image.c" },
             .flags = &.{
                 "-std=c99",
@@ -45,7 +45,7 @@ pub fn package(
             },
         });
     }
-    zstbi_c_cpp.linkLibC();
+    zstbi_c_cpp.root_module.link_libc = true;
 
     return .{
         .zstbi = zstbi,
@@ -66,7 +66,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zstbi-tests",
