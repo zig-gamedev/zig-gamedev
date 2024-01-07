@@ -3,19 +3,19 @@ const std = @import("std");
 pub const Package = struct {
     zjobs: *std.Build.Module,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zjobs", pkg.zjobs);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zjobs", pkg.zjobs);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    _: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zjobs = b.addModule("zjobs", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zjobs.zig" },
     });
     return .{ .zjobs = zjobs };
 }
@@ -33,7 +33,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zjobs-tests",
