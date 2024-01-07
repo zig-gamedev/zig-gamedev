@@ -34,7 +34,7 @@ pub fn build(b: *std.Build) void {
     //
     packagesCrossPlatform(b, options);
 
-    if (options.target.isWindows() and
+    if (options.target.result.os.tag == .windows and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
         packagesWindowsLinux(b, options);
@@ -49,7 +49,7 @@ pub fn build(b: *std.Build) void {
     //
     samplesCrossPlatform(b, options);
 
-    if (options.target.isWindows() and
+    if (options.target.result.os.tag == .windows and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
         samplesWindowsLinux(b, options);
@@ -295,7 +295,7 @@ const zflecs = @import("zflecs");
 
 pub const Options = struct {
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 
     zd3d12_enable_debug_layer: bool,
     zd3d12_enable_gbv: bool,
@@ -303,11 +303,12 @@ pub const Options = struct {
     zpix_enable: bool,
 };
 
-fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
+fn install(b: *std.Build, exe: *std.Build.Step.Compile, comptime name: []const u8) void {
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
-    if (exe.optimize == .ReleaseFast)
-        exe.strip = true;
+    if (exe.root_module.optimize) |o| {
+        if (o == .ReleaseFast) exe.root_module.strip = true;
+    }
 
     //comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     //comptime _ = std.mem.replace(u8, name, "", "", desc_name[0..]);
@@ -347,8 +348,8 @@ fn ensureZigVersion() !void {
     }
 }
 
-fn ensureTarget(cross: std.zig.CrossTarget) !void {
-    const target = (std.zig.system.NativeTargetInfo.detect(cross) catch unreachable).target;
+fn ensureTarget(cross: std.Build.ResolvedTarget) !void {
+    const target = cross.result;
 
     const supported = switch (target.os.tag) {
         .windows => target.cpu.arch.isX86() and target.abi.isGnu(),
