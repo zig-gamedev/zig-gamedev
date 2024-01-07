@@ -3,7 +3,7 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "mesh_shader_test_content/";
 
-pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "mesh_shader_test",
         .root_source_file = .{ .path = thisDir() ++ "/src/mesh_shader_test.zig" },
@@ -22,7 +22,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     zd3d12_pkg.link(exe);
 
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const dxc_step = buildShaders(b);
