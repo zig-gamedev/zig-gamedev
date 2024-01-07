@@ -9,15 +9,15 @@ pub const Package = struct {
     zpix: *std.Build.Module,
     zpix_options: *std.Build.Module,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zpix", pkg.zpix);
-        exe.addModule("zpix_options", pkg.zpix_options);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zpix", pkg.zpix);
+        exe.root_module.addImport("zpix_options", pkg.zpix_options);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    _: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -30,8 +30,8 @@ pub fn package(
     const zpix_options = step.createModule();
 
     const zpix = b.createModule(.{
-        .source_file = .{ .path = thisDir() ++ "/src/zpix.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/zpix.zig" },
+        .imports = &.{
             .{ .name = "zpix_options", .module = zpix_options },
             .{ .name = "zwin32", .module = args.deps.zwin32 },
         },
