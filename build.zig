@@ -101,10 +101,7 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
         .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
     });
     ztracy_pkg = ztracy.package(b, target, optimize, .{
-        .options = .{
-            .enable_ztracy = !target.isDarwin(), // TODO: ztracy fails to compile on macOS.
-            .enable_fibers = !target.isDarwin(),
-        },
+        .options = .{ .enable_ztracy = true, .enable_fibers = true },
     });
     zphysics_pkg = zphysics.package(b, target, optimize, .{});
     zaudio_pkg = zaudio.package(b, target, optimize, .{});
@@ -239,6 +236,8 @@ fn tests(b: *std.Build, options: Options) void {
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
     // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl2));
     // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl3));
+
+    test_step.dependOn(ztracy_pkg.makeTestStep(b));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {

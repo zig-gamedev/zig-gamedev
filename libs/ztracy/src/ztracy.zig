@@ -537,3 +537,7 @@ const tracy_full = struct {
         c.___tracy_emit_message_appinfo(text.ptr, text.len);
     }
 };
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
