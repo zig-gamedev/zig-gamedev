@@ -1,4 +1,3 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 3 };
 const std = @import("std");
 const assert = std.debug.assert;
 

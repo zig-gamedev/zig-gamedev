@@ -1,4 +1,3 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 6, .patch = 0 };
 const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 //

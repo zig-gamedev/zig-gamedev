@@ -1,5 +1,3 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 0 };
-
 pub const Shape = @import("Shape.zig");
 pub const io = @import("io.zig");
 pub const opt = @import("zmeshoptimizer.zig");
