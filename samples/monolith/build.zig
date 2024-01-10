@@ -17,7 +17,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
     const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
 
-    const zphysics_pkg = @import("../../libs/zphysics/build.zig").package(b, options.target, options.optimize, .{
+    const zphysics_pkg = @import("zphysics").package(b, options.target, options.optimize, .{
         .options = .{
             .use_double_precision = false,
             .enable_debug_renderer = true,
