@@ -98,7 +98,7 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
-        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
+        .deps = .{ .zpool = zpool_pkg, .zglfw = zglfw_pkg },
     });
     ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{ .enable_ztracy = true, .enable_fibers = true },
@@ -237,6 +237,7 @@ fn tests(b: *std.Build, options: Options) void {
     // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl2));
     // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl3));
 
+    test_step.dependOn(zgpu_pkg.makeTestStep(b));
     test_step.dependOn(ztracy_pkg.makeTestStep(b));
 }
 

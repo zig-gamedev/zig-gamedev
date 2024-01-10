@@ -1,5 +1,8 @@
 const std = @import("std");
 
+const zglfw = @import("zglfw");
+const zpool = @import("zpool");
+
 const default_options = struct {
     const uniforms_buffer_size = 4 * 1024 * 1024;
     const dawn_skip_validation = false;
@@ -29,9 +32,15 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.OptimizeMode,
     options: Options,
     zgpu: *std.Build.Module,
     zgpu_options: *std.Build.Module,
+    deps: struct {
+        zglfw: zglfw.Package,
+        zpool: zpool.Package,
+    },
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
@@ -99,17 +108,30 @@ pub const Package = struct {
             .flags = &.{"-fno-sanitize=undefined"},
         });
     }
+
+    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
+        const tests = b.addTest(.{
+            .name = "zgpu-tests",
+            .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+            .target = pkg.target,
+            .optimize = pkg.optimize,
+        });
+        pkg.link(tests);
+        pkg.deps.zglfw.link(tests);
+        pkg.deps.zpool.link(tests);
+        return &b.addRunArtifact(tests).step;
+    }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
-    _: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.Mode,
     args: struct {
         options: Options = .{},
         deps: struct {
-            zglfw: *std.Build.Module,
-            zpool: *std.Build.Module,
+            zglfw: zglfw.Package,
+            zpool: zpool.Package,
         },
     },
 ) Package {
@@ -132,15 +154,21 @@ pub fn package(
         .source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .dependencies = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
-            .{ .name = "zglfw", .module = args.deps.zglfw },
-            .{ .name = "zpool", .module = args.deps.zpool },
+            .{ .name = "zglfw", .module = args.deps.zglfw.zglfw },
+            .{ .name = "zpool", .module = args.deps.zpool.zpool },
         },
     });
 
     return .{
+        .target = target,
+        .optimize = optimize,
         .options = args.options,
         .zgpu = zgpu,
         .zgpu_options = zgpu_options,
+        .deps = .{
+            .zglfw = args.deps.zglfw,
+            .zpool = args.deps.zpool,
+        },
     };
 }
 
@@ -148,10 +176,10 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const zglfw = b.dependency("zglfw", .{});
-    const zpool = b.dependency("zpool", .{});
+    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    const zpool_pkg = zpool.package(b, target, optimize, .{});
 
-    _ = package(b, target, optimize, .{
+    const pkg = package(b, target, optimize, .{
         .options = .{
             .uniforms_buffer_size = b.option(
                 u64,
@@ -210,10 +238,13 @@ pub fn build(b: *std.Build) void {
             ) orelse default_options.pipeline_layout_pool_size,
         },
         .deps = .{
-            .zglfw = zglfw.module("zglfw"),
-            .zpool = zpool.module("zpool"),
+            .zglfw = zglfw_pkg,
+            .zpool = zpool_pkg,
         },
     });
+
+    const test_step = b.step("test", "Run zgpu tests");
+    test_step.dependOn(pkg.makeTestStep(b));
 }
 
 inline fn thisDir() []const u8 {
