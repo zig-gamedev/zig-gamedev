@@ -1,4 +1,5 @@
 const std = @import("std");
+const system_sdk = @import("system_sdk");
 
 pub const Package = struct {
     zglfw: *std.Build.Module,
@@ -12,14 +13,14 @@ pub const Package = struct {
         switch (host.os.tag) {
             .windows => {},
             .macos => {
-                exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
+                exe.addLibraryPath(.{ .path = system_sdk.path ++ "/macos12/usr/lib" });
             },
             else => {
                 // We assume Linux (X11)
                 if (host.cpu.arch.isX86()) {
-                    exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu" });
+                    exe.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/x86_64-linux-gnu" });
                 } else {
-                    exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu" });
+                    exe.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/aarch64-linux-gnu" });
                 }
             },
         }
@@ -106,10 +107,10 @@ pub fn package(
         },
         .macos => {
             zglfw_c_cpp.addFrameworkPath(
-                .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
+                .{ .path = system_sdk.path ++ "/macos12/System/Library/Frameworks" },
             );
-            zglfw_c_cpp.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/include" });
-            zglfw_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
+            zglfw_c_cpp.addSystemIncludePath(.{ .path = system_sdk.path ++ "/macos12/usr/include" });
+            zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path ++ "/macos12/usr/lib" });
             zglfw_c_cpp.linkSystemLibraryName("objc");
             zglfw_c_cpp.linkFramework("IOKit");
             zglfw_c_cpp.linkFramework("CoreFoundation");
@@ -141,11 +142,11 @@ pub fn package(
         },
         else => {
             // We assume Linux (X11)
-            zglfw_c_cpp.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/linux/include" });
+            zglfw_c_cpp.addSystemIncludePath(.{ .path = system_sdk.path ++ "/linux/include" });
             if (host.cpu.arch.isX86()) {
-                zglfw_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/x86_64-linux-gnu" });
+                zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/x86_64-linux-gnu" });
             } else {
-                zglfw_c_cpp.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/linux/lib/aarch64-linux-gnu" });
+                zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/aarch64-linux-gnu" });
             }
             zglfw_c_cpp.linkSystemLibraryName("X11");
             zglfw_c_cpp.addCSourceFiles(.{

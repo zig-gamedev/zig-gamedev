@@ -1,4 +1,5 @@
 const std = @import("std");
+const system_sdk = @import("system_sdk");
 
 const zglfw = @import("zglfw");
 const zpool = @import("zpool");
@@ -54,7 +55,7 @@ pub const Package = struct {
             .windows => {
                 const dawn_dep = b.dependency("dawn_x86_64_windows_gnu", .{});
                 exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
-                exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu" });
+                exe.addLibraryPath(.{ .path = system_sdk.path ++ "/windows/lib/x86_64-windows-gnu" });
 
                 exe.linkSystemLibraryName("ole32");
                 exe.linkSystemLibraryName("dxguid");
@@ -69,9 +70,9 @@ pub const Package = struct {
                 }
             },
             .macos => {
-                exe.addFrameworkPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" });
-                exe.addSystemIncludePath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/include" });
-                exe.addLibraryPath(.{ .path = thisDir() ++ "/../system-sdk/macos12/usr/lib" });
+                exe.addFrameworkPath(.{ .path = system_sdk.path ++ "/macos12/System/Library/Frameworks" });
+                exe.addSystemIncludePath(.{ .path = system_sdk.path ++ "/macos12/usr/include" });
+                exe.addLibraryPath(.{ .path = system_sdk.path ++ "/macos12/usr/lib" });
 
                 if (target.cpu.arch.isX86()) {
                     const dawn_dep = b.dependency("dawn_x86_64_macos", .{});
