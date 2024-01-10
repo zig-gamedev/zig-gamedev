@@ -53,6 +53,8 @@ pub fn package(
             .{ .name = "ztracy_options", .module = ztracy_options },
         },
     });
+    // Below necessary to avoid missing cInclude in project `build.zig`
+    ztracy.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
 
     const ztracy_c_cpp = if (args.options.enable_ztracy) ztracy_c_cpp: {
         const enable_fibers = if (args.options.enable_fibers) "-DTRACY_FIBERS" else "";

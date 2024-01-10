@@ -48,6 +48,10 @@ pub fn package(
         },
     });
 
+    // Below necessary to avoid missing cInclude errors in project `build.zig`
+    zphysics.addIncludePath(.{ .path = thisDir() ++ "/libs" });
+    zphysics.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
+
     const zphysics_c_cpp = b.addStaticLibrary(.{
         .name = "zphysics",
         .target = target,
