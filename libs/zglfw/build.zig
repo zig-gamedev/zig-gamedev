@@ -1,6 +1,12 @@
 const std = @import("std");
 const system_sdk = @import("system_sdk");
 
+pub const path = getPath();
+
+inline fn getPath() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse unreachable;
+}
+
 pub const Package = struct {
     zglfw: *std.Build.Module,
     zglfw_c_cpp: *std.Build.CompileStep,
@@ -51,7 +57,7 @@ pub fn package(
     step.addOption(bool, "shared", args.options.shared);
 
     const zglfw = b.addModule("zglfw", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
+        .source_file = .{ .path = path ++ "/src/zglfw.zig" },
     });
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
@@ -72,12 +78,12 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zglfw_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
+    zglfw_c_cpp.addIncludePath(.{ .path = path ++ "/libs/glfw/include" });
     zglfw_c_cpp.linkLibC();
 
     const host = (std.zig.system.NativeTargetInfo.detect(zglfw_c_cpp.target) catch unreachable).target;
 
-    const src_dir = thisDir() ++ "/libs/glfw/src/";
+    const src_dir = path ++ "/libs/glfw/src/";
 
     switch (host.os.tag) {
         .windows => {
@@ -197,7 +203,7 @@ pub fn runTests(
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zglfw-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
+        .root_source_file = .{ .path = path ++ "/src/zglfw.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -206,8 +212,4 @@ pub fn runTests(
     zglfw_pkg.link(tests);
 
     return &b.addRunArtifact(tests).step;
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
