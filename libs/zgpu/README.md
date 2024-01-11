@@ -16,43 +16,15 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu`, `zpool`, `zglfw` and `system-sdk` folders to a `libs` subdirectory of the root of your project.
-
-Then in your `build.zig` add:
+Copy `zgpu`, `zpool`, `zglfw` and `system-sdk` folders to a `libs` of the root of your project and add the following to your `build.zig.zon` file:
 ```zig
-const std = @import("std");
-const zgpu = @import("libs/zgpu/build.zig");
-const zpool = @import("libs/zpool/build.zig");
-const zglfw = @import("libs/zglfw/build.zig");
-
-pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
-
-    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
-    const zpool_pkg = zpool.package(b, target, optimize, .{});
-    const zgpu_pkg = zgpu.package(b, target, optimize, .{
-        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
-    });
-
-    zgpu_pkg.link(exe);
-    zglfw_pkg.link(exe);
-}
-```
-------------
-#### NOTE
-
-`zgpu` depends on WebGPU implementation. We use open-source implementation called `Dawn` and
-we provide pre-compiled binaries for most popular platforms.
-
-`zgpu` requires you to add below `build.zig.zon` file to your project:
-
-```
 .{
     .name = "your_project_name",
     .version = "0.1.0",
     .dependencies = .{
+        .zgpu = .{ .path = libs/zgpu" },
+        .zpool = .{ .path = libs/zpool" },
+        .zglfw = .{ .path = libs/zglfw" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
             .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
@@ -73,9 +45,38 @@ we provide pre-compiled binaries for most popular platforms.
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
             .hash = "1220b1f02f2f7edd98a078c64e3100907d90311d94880a3cc5927e1ac009d002667a",
         },
-     }
+    }
+
+    ...
 }
 ```
+
+then in your `build.zig file:
+```zig
+const std = @import("std");
+const zgpu = @import("zgpu");
+const zpool = @import("zpool");
+const zglfw = @import("zglfw");
+
+pub fn build(b: *std.Build) void {
+    ...
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    const zpool_pkg = zpool.package(b, target, optimize, .{});
+    const zgpu_pkg = zgpu.package(b, target, optimize, .{
+        .deps = .{
+            .zpool = zpool_pkg,
+            .zglfw = zglfw_pkg,
+        },
+    });
+
+    zgpu_pkg.link(exe);
+    zglfw_pkg.link(exe);
+}
+```
+
 --------------
 ## Sample applications
 
@@ -92,36 +93,29 @@ Below you can find an overview of main `zgpu` features.
 
 ### Compile-time options
 
-The list of compile-time options with default values:
-
-```zig
-pub const BuildOptions = struct {
-    uniforms_buffer_size: u64 = 4 * 1024 * 1024,
-
-    dawn_skip_validation: bool = false, // Skip expensive Dawn validation
-
-    buffer_pool_size: u32 = 256,
-    texture_pool_size: u32 = 256,
-    texture_view_pool_size: u32 = 256,
-    sampler_pool_size: u32 = 16,
-    render_pipeline_pool_size: u32 = 128,
-    compute_pipeline_pool_size: u32 = 128,
-    bind_group_pool_size: u32 = 32,
-    bind_group_layout_pool_size: u32 = 32,
-    pipeline_layout_pool_size: u32 = 32,
-};
-```
-You can override default values in your `build.zig`:
+You can override default options in your `build.zig`:
 ```zig
 pub fn build(b: *std.Build) void {
     ...
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
-        .uniforms_buffer_size = 8 * 1024 * 1024,
-        .dawn_skip_validation = true,
-    });
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
-    zgpu.link(exe, zgpu_options);
+    const zgpu = @import("zgpu").package(b, target, optimize, .{
+        .options = .{
+            .uniforms_buffer_size = 4 * 1024 * 1024,
+            .dawn_skip_validation = false,
+            .buffer_pool_size = 256,
+            .texture_pool_size = 256,
+            .texture_view_pool_size = 256,
+            .sampler_pool_size = 16,
+            .render_pipeline_pool_size = 128,
+            .compute_pipeline_pool_size = 128,
+            .bind_group_pool_size = 32,
+            .bind_group_layout_pool_size = 32,
+            .pipeline_layout_pool_size = 32,
+        },
+    });
+
+    zgpu.link(exe);
+
     ...
 }
 ```

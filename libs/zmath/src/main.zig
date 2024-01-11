@@ -7,8 +7,6 @@
 // See util.zig for additional functionality.
 //
 //--------------------------------------------------------------------------------------------------
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 6 };
-
 pub usingnamespace @import("zmath.zig");
 pub const util = @import("util.zig");
 

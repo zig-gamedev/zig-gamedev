@@ -11,13 +11,13 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_pkg;
+    const zgui_pkg = @import("../../build.zig").zgui_glfw_wgpu_pkg;
     const zmath_pkg = @import("../../build.zig").zmath_pkg;
     const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
     const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
     const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
 
-    const zphysics_pkg = @import("../../libs/zphysics/build.zig").package(b, options.target, options.optimize, .{
+    const zphysics_pkg = @import("zphysics").package(b, options.target, options.optimize, .{
         .options = .{
             .use_double_precision = false,
             .enable_debug_renderer = true,

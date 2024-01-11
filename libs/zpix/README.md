@@ -1,4 +1,4 @@
-# zpix - performance markers for PIX
+# zpix v0.9.0 - performance markers for PIX
 
 ## Getting started
 

@@ -4,11 +4,10 @@
 // named parameters and Zig style text formatting.
 //
 //--------------------------------------------------------------------------------------------------
-pub const version = @import("std").SemanticVersion{ .major = 1, .minor = 89, .patch = 6 };
-
 pub const plot = @import("plot.zig");
 pub const backend = switch (@import("zgui_options").backend) {
     .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
+    .glfw_opengl3 => @import("backend_glfw_opengl.zig"),
     .win32_dx12 => .{}, // TODO:
     .no_backend => .{},
 };
@@ -1476,7 +1475,7 @@ pub fn comboFromEnum(
             .Enum => |e| {
                 comptime var str: [:0]const u8 = "";
 
-                inline for (e.fields) |f| {
+                for (e.fields) |f| {
                     str = str ++ f.name ++ "\x00";
                 }
                 break :lbl str;
@@ -3086,12 +3085,14 @@ pub fn colorConvertFloat3ToU32(in: [3]f32) u32 {
 
 pub fn colorConvertRgbToHsv(r: f32, g: f32, b: f32) [3]f32 {
     var hsv: [3]f32 = undefined;
-    return zguiColorConvertRGBtoHSV(r, g, b, &hsv[0], &hsv[1], &hsv[2]);
+    zguiColorConvertRGBtoHSV(r, g, b, &hsv[0], &hsv[1], &hsv[2]);
+    return hsv;
 }
 
 pub fn colorConvertHsvToRgb(h: f32, s: f32, v: f32) [3]f32 {
     var rgb: [3]f32 = undefined;
-    return zguiColorConvertHSVtoRGB(h, s, v, &rgb[0], &rgb[1], &rgb[2]);
+    zguiColorConvertHSVtoRGB(h, s, v, &rgb[0], &rgb[1], &rgb[2]);
+    return rgb;
 }
 
 extern fn zguiColorConvertU32ToFloat4(in: u32, rgba: *[4]f32) void;
@@ -3465,19 +3466,32 @@ pub const DrawList = *opaque {
     pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
     extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
-    extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]const DrawVert;
+    extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]DrawVert;
+    pub fn getVertexBuffer(draw_list: DrawList) []DrawVert {
+        const len: usize = @intCast(draw_list.getVertexBufferLength());
+        return draw_list.getVertexBufferData()[0..len];
+    }
 
     pub const getIndexBufferLength = zguiDrawList_GetIndexBufferLength;
     extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) i32;
     pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
-    extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]const DrawIdx;
+    extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]DrawIdx;
+    pub fn getIndexBuffer(draw_list: DrawList) []DrawIdx {
+        const len: usize = @intCast(draw_list.getIndexBufferLength());
+        return draw_list.getIndexBufferData()[0..len];
+    }
+
     pub const getCurrentIndex = zguiDrawList_GetCurrentIndex;
     extern fn zguiDrawList_GetCurrentIndex(draw_list: DrawList) u32;
 
     pub const getCmdBufferLength = zguiDrawList_GetCmdBufferLength;
     extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) i32;
     pub const getCmdBufferData = zguiDrawList_GetCmdBufferData;
-    extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]const DrawCmd;
+    extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]DrawCmd;
+    pub fn getCmdBuffer(draw_list: DrawList) []DrawCmd {
+        const len: usize = @intCast(draw_list.getCmdBufferLength());
+        return draw_list.getCmdBufferData()[0..len];
+    }
 
     pub const DrawListFlags = packed struct(u32) {
         anti_aliased_lines: bool = false,
@@ -4223,3 +4237,7 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_AddResetRenderStateCallback(draw_list: DrawList) void;
 };
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}

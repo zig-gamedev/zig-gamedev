@@ -109,7 +109,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
         .{ queue_config.max_job_size, cache_line_size },
     );
 
-    const Atomic = std.atomic.Atomic;
+    const Atomic = std.atomic.Value;
 
     const Slot = struct {
         const Self = @This();
@@ -124,7 +124,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
         exec           : Main align(cache_line_size) = undefined,
         id             : JobId                       = JobId.none,
         prereq         : JobId                       = JobId.none,
-        cycle          : Atomic(u16)                 = .{ .value = 0 },
+        cycle          : Atomic(u16)                 = .{ .raw = 0 },
         idle_mutex     : std.Thread.Mutex            = .{},
         idle_condition : std.Thread.Condition        = .{},
         // zig fmg: on
@@ -146,7 +146,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
                 self.idle_mutex.lock();
                 defer self.idle_mutex.unlock();
 
-                const acquired: bool = null == self.cycle.compareAndSwap(
+                const acquired: bool = null == self.cycle.cmpxchgStrong(
                     old_cycle,
                     new_cycle,
                     .Monotonic,
@@ -156,7 +156,9 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             }
 
             @memset(&self.data, 0);
-            std.mem.copy(u8, &self.data, std.mem.asBytes(job));
+
+            const job_bytes = std.mem.asBytes(job);
+            @memcpy(self.data[0..job_bytes.len], job_bytes);
 
             const exec: *const fn (*Job) void = &@field(Job, "exec");
             const id = jobId(@as(u16, @truncate(index)), new_cycle);
@@ -182,7 +184,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             {
                 self.idle_mutex.lock();
                 defer self.idle_mutex.unlock();
-                const released: bool = null == self.cycle.compareAndSwap(
+                const released: bool = null == self.cycle.cmpxchgStrong(
                     old_cycle,
                     new_cycle,
                     .Monotonic,
@@ -250,12 +252,12 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
         _free_queue     : FreeQueue    = .{},
         _idle_event     : ResetEvent   = .{},
         _num_threads    : u64          = 0,
-        _main_thread    : Atomic(u64)  = .{ .value = 0 },
-        _lock_thread    : Atomic(u64)  = .{ .value = 0 },
-        _initialized    : Atomic(bool) = .{ .value = false },
-        _started        : Atomic(bool) = .{ .value = false },
-        _running        : Atomic(bool) = .{ .value = false },
-        _stopping       : Atomic(bool) = .{ .value = false },
+        _main_thread    : Atomic(u64)  = .{ .raw = 0 },
+        _lock_thread    : Atomic(u64)  = .{ .raw = 0 },
+        _initialized    : Atomic(bool) = .{ .raw = false },
+        _started        : Atomic(bool) = .{ .raw = false },
+        _running        : Atomic(bool) = .{ .raw = false },
+        _stopping       : Atomic(bool) = .{ .raw = false },
         // zig fmt: on
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1117,7 +1119,7 @@ test "JobQueue throughput" {
         }
     };
 
-    var job_stats = try allocator.alloc(JobStat, job_count);
+    const job_stats = try allocator.alloc(JobStat, job_count);
     defer allocator.free(job_stats);
     for (job_stats) |*job_stat| {
         job_stat.* = .{ .main = main_thread };
@@ -1180,7 +1182,7 @@ test "combine jobs respect prereq" {
     var jobs = Jobs.init();
     defer jobs.deinit();
 
-    const Counter = std.atomic.Atomic(u32);
+    const Counter = std.atomic.Value(u32);
 
     const PrereqJob = struct {
         counter: *Counter,

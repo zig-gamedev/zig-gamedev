@@ -1,5 +1,3 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 0, .patch = 5 };
-
 const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
@@ -315,6 +313,133 @@ pub const BodyActivationListener = extern struct {
     }
 };
 
+pub const CharacterContactListener = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn OnAdjustBodyVelocity(
+                self: *const T,
+                character: *const CharacterVirtual,
+                body: *const Body,
+                io_linear_velocity: *[3]f32,
+                io_angular_velocity: *[3]f32,
+            ) void {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnAdjustBodyVelocity(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    body,
+                    io_linear_velocity,
+                    io_angular_velocity,
+                );
+            }
+            pub inline fn OnContactValidate(
+                self: *const T,
+                character: *const CharacterVirtual,
+                body: *const Body,
+                sub_shape_id: *const SubShapeId,
+            ) bool {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnContactValidate(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    body,
+                    sub_shape_id,
+                );
+            }
+            pub inline fn OnContactAdded(
+                self: *const T,
+                character: *const CharacterVirtual,
+                body: *const Body,
+                sub_shape_id: *const SubShapeId,
+                contact_position: *const [3]Real,
+                contact_normal: *const [3]f32,
+                io_settings: *CharacterContactSettings,
+            ) void {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnContactAdded(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    body,
+                    sub_shape_id,
+                    contact_position,
+                    contact_normal,
+                    io_settings,
+                );
+            }
+            pub inline fn OnContactSolve(
+                self: *const T,
+                character: *const CharacterVirtual,
+                body: *const Body,
+                sub_shape_id: *const SubShapeId,
+                contact_position: *const [3]Real,
+                contact_normal: *const [3]f32,
+                contact_velocity: *const [3]f32,
+                contact_material: *const Material,
+                character_velocity: *const [3]f32,
+                character_velocity_out: *[3]f32,
+            ) void {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnContactSolve(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    body,
+                    sub_shape_id,
+                    contact_position,
+                    contact_normal,
+                    contact_velocity,
+                    contact_material,
+                    character_velocity,
+                    character_velocity_out,
+                );
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        OnAdjustBodyVelocity: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            body: *const Body,
+            io_linear_velocity: *[3]f32,
+            io_angular_velocity: *[3]f32,
+        ) callconv(.C) void,
+        OnContactValidate: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            body: *const Body,
+            sub_shape_id: *const SubShapeId,
+        ) callconv(.C) bool,
+        OnContactAdded: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            body: *const Body,
+            sub_shape_id: *const SubShapeId,
+            contact_position: *const [3]Real,
+            contact_normal: *const [3]f32,
+            io_settings: *CharacterContactSettings,
+        ) callconv(.C) void,
+        OnContactSolve: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            body: *const Body,
+            sub_shape_id: *const SubShapeId,
+            contact_position: *const [3]Real,
+            contact_normal: *const [3]f32,
+            contact_velocity: *const [3]f32,
+            contact_material: *const Material,
+            character_velocity: *const [3]f32,
+            character_velocity_out: *[3]f32,
+        ) callconv(.C) void,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_CharacterContactListenerVTable));
+        assert(@offsetOf(VTable, "OnAdjustBodyVelocity") == @offsetOf(c.JPC_CharacterContactListenerVTable, "OnAdjustBodyVelocity"));
+        assert(@offsetOf(VTable, "OnContactSolve") == @offsetOf(c.JPC_CharacterContactListenerVTable, "OnContactSolve"));
+    }
+};
+
 pub const ContactListener = extern struct {
     __v: *const VTable,
 
@@ -441,6 +566,65 @@ pub const BodyFilter = extern struct {
         assert(
             @offsetOf(VTable, "shouldCollideLocked") == @offsetOf(c.JPC_BodyFilterVTable, "ShouldCollideLocked"),
         );
+    }
+};
+
+pub const ShapeFilter = extern struct {
+    __v: *const VTable,
+
+    pub usingnamespace Methods(@This());
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn shouldCollide(
+                self: *const T,
+                receiving_body_id: u32,
+                shape: *const Shape,
+                sub_shape_id: *const SubShapeId,
+            ) bool {
+                _ = receiving_body_id;
+                return @as(*const ShapeFilter.VTable, @ptrCast(self.__v)).shouldCollide(
+                    @as(*const ShapeFilter, @ptrCast(self)),
+                    @as(*const ShapeFilter.VTable, @ptrCast(self.__v)).receiving_body_id,
+                    shape,
+                    sub_shape_id,
+                );
+            }
+            pub inline fn pairShouldCollide(
+                self: *const T,
+                receiving_body_id: u32,
+                shape1: *const Shape,
+                sub_shape_id1: *const SubShapeId,
+                shape2: *const Shape,
+                sub_shape_id2: *const SubShapeId,
+            ) bool {
+                _ = receiving_body_id;
+                return @as(*const ShapeFilter.VTable, @ptrCast(self.__v)).pairShouldCollide(@as(*const ShapeFilter, @ptrCast(self)), @as(*const ShapeFilter.VTable, @ptrCast(self.__v)).receiving_body_id, shape1, sub_shape_id1, shape2, sub_shape_id2);
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        shouldCollide: *const fn (
+            self: *const ShapeFilter,
+            shape: *const Shape,
+            sub_shape_id: *const SubShapeId,
+        ) callconv(.C) bool,
+        pairShouldCollide: *const fn (
+            self: *const ShapeFilter,
+            shape1: *const Shape,
+            sub_shape_id1: *const SubShapeId,
+            shape2: *const Shape,
+            sub_shape_id2: *const SubShapeId,
+        ) callconv(.C) bool,
+        receiving_body_id: u32 = body_id_invalid, // set by jolt before each call to either of the functions above
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_ShapeFilterVTable));
+        assert(@offsetOf(VTable, "shouldCollide") == @offsetOf(c.JPC_ShapeFilterVTable, "ShouldCollide"));
+        assert(@offsetOf(VTable, "receiving_body_id") == @offsetOf(c.JPC_ShapeFilterVTable, "bodyId2"));
     }
 };
 
@@ -574,6 +758,13 @@ pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
     mass_inertia_provided = c.JPC_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED,
 };
 
+pub const CharacterGroundState = enum(c.JPC_CharacterGroundState) {
+    on_ground = c.JPC_CHARACTER_GROUND_STATE_ON_GROUND,
+    on_steep_ground = c.JPC_CHARACTER_GROUND_STATE_ON_STEEP_GROUND,
+    not_supported = c.JPC_CHARACTER_GROUND_STATE_NOT_SUPPORTED,
+    in_air = c.JPC_CHARACTER_GROUND_STATE_IN_AIR,
+};
+
 pub const BodyCreationSettings = extern struct {
     position: [4]Real align(rvec_align) = .{ 0, 0, 0, 0 }, // 4th element is ignored
     rotation: [4]f32 align(16) = .{ 0, 0, 0, 1 },
@@ -608,6 +799,88 @@ pub const BodyCreationSettings = extern struct {
         assert(@offsetOf(BodyCreationSettings, "user_data") == @offsetOf(c.JPC_BodyCreationSettings, "user_data"));
         assert(@offsetOf(BodyCreationSettings, "motion_quality") ==
             @offsetOf(c.JPC_BodyCreationSettings, "motion_quality"));
+    }
+};
+
+pub const CharacterContactSettings = extern struct {
+    can_push_character: bool = true,
+    can_receive_impulses: bool = true,
+};
+
+pub const CharacterBaseSettings = extern struct {
+    __header: VTableHeader = .{},
+    up: [4]f32 align(16), // 4th element is ignored
+    supporting_volume: [4]f32 align(16), // JPH::Plane - 4th element is used
+    max_slope_angle: f32,
+    shape: *Shape, // must provide valid shape (such as the typical capsule)
+
+    comptime {
+        assert(@sizeOf(CharacterBaseSettings) == @sizeOf(c.JPC_CharacterBaseSettings));
+        assert(@offsetOf(CharacterBaseSettings, "up") == @offsetOf(c.JPC_CharacterBaseSettings, "up"));
+        assert(@offsetOf(CharacterBaseSettings, "shape") == @offsetOf(c.JPC_CharacterBaseSettings, "shape"));
+    }
+};
+
+pub const CharacterSettings = extern struct {
+    pub fn create() !*CharacterSettings {
+        const settings = c.JPC_CharacterSettings_Create();
+        if (settings == null) return error.FailedToCreateCharacterSettings;
+        return @as(*CharacterSettings, @ptrCast(settings));
+    }
+    pub fn release(settings: *CharacterSettings) void {
+        c.JPC_CharacterSettings_Release(@as(*c.JPC_CharacterSettings, @ptrCast(settings)));
+    }
+    pub fn addRef(settings: *CharacterSettings) void {
+        c.JPC_CharacterSettings_AddRef(@as(*c.JPC_CharacterSettings, @ptrCast(settings)));
+    }
+
+    base: CharacterBaseSettings,
+    layer: ObjectLayer,
+    mass: f32,
+    friction: f32,
+    gravity_factor: f32,
+
+    comptime {
+        assert(@sizeOf(CharacterSettings) == @sizeOf(c.JPC_CharacterSettings));
+        assert(@offsetOf(CharacterSettings, "base") == @offsetOf(c.JPC_CharacterSettings, "base"));
+        assert(@offsetOf(CharacterSettings, "layer") == @offsetOf(c.JPC_CharacterSettings, "layer"));
+        assert(@offsetOf(CharacterSettings, "friction") == @offsetOf(c.JPC_CharacterSettings, "friction"));
+    }
+};
+
+pub const CharacterVirtualSettings = extern struct {
+    pub fn create() !*CharacterVirtualSettings {
+        const settings = c.JPC_CharacterVirtualSettings_Create();
+        if (settings == null) return error.FailedToCreateCharacterVirtualSettings;
+        return @as(*CharacterVirtualSettings, @ptrCast(settings));
+    }
+    pub fn release(settings: *CharacterVirtualSettings) void {
+        c.JPC_CharacterVirtualSettings_Release(@as(*c.JPC_CharacterVirtualSettings, @ptrCast(settings)));
+    }
+
+    base: CharacterBaseSettings,
+    mass: f32,
+    max_strength: f32,
+    shape_offset: [4]f32 align(16), // 4th element is ignored
+    back_face_mode: BackFaceMode,
+    predictive_contact_distance: f32,
+    max_collision_iterations: u32,
+    max_constraint_iterations: u32,
+    min_time_remaining: f32,
+    collision_tolerance: f32,
+    character_padding: f32,
+    max_num_hits: u32,
+    hit_reduction_cos_max_angle: f32,
+    penetration_recovery_speed: f32,
+
+    comptime {
+        assert(@sizeOf(CharacterVirtualSettings) == @sizeOf(c.JPC_CharacterVirtualSettings));
+        assert(@offsetOf(CharacterVirtualSettings, "base") == @offsetOf(c.JPC_CharacterVirtualSettings, "base"));
+        assert(@offsetOf(CharacterVirtualSettings, "mass") == @offsetOf(c.JPC_CharacterVirtualSettings, "mass"));
+        assert(@offsetOf(CharacterVirtualSettings, "max_num_hits") ==
+            @offsetOf(c.JPC_CharacterVirtualSettings, "max_num_hits"));
+        assert(@offsetOf(CharacterVirtualSettings, "penetration_recovery_speed") ==
+            @offsetOf(c.JPC_CharacterVirtualSettings, "penetration_recovery_speed"));
     }
 };
 
@@ -1132,6 +1405,13 @@ pub const PhysicsSystem = opaque {
         c.JPC_PhysicsSystem_RemoveStepListener(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), listener);
     }
 
+    pub fn addConstraint(physics_system: *PhysicsSystem, two_body_constraint: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_AddConstraint(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), two_body_constraint);
+    }
+    pub fn removeConstraint(physics_system: *PhysicsSystem, two_body_constraint: ?*anyopaque) void {
+        c.JPC_PhysicsSystem_RemoveConstraint(@as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)), two_body_constraint);
+    }
+
     pub fn update(
         physics_system: *PhysicsSystem,
         delta_time: f32,
@@ -1310,6 +1590,17 @@ pub const BodyInterface = opaque {
     pub fn createBody(body_iface: *BodyInterface, settings: BodyCreationSettings) !*Body {
         const body = c.JPC_BodyInterface_CreateBody(
             @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            @as(*const c.JPC_BodyCreationSettings, @ptrCast(&settings)),
+        );
+        if (body == null)
+            return error.FailedToCreateBody;
+        return @as(*Body, @ptrCast(body));
+    }
+
+    pub fn createBodyWithId(body_iface: *BodyInterface, body_id: BodyId, settings: BodyCreationSettings) !*Body {
+        const body = c.JPC_BodyInterface_CreateBodyWithID(
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            body_id,
             @as(*const c.JPC_BodyCreationSettings, @ptrCast(&settings)),
         );
         if (body == null)
@@ -1588,6 +1879,18 @@ pub const BodyInterface = opaque {
             body_id,
             @intFromEnum(in_motion_type),
             @intFromEnum(in_activation_type),
+        );
+    }
+
+    pub fn getObjectLayer(body_iface: *BodyInterface, body_id: BodyId) ObjectLayer {
+        return c.JPC_BodyInterface_GetObjectLayer(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id);
+    }
+
+    pub fn setObjectLayer(body_iface: *BodyInterface, body_id: BodyId, in_layer: ObjectLayer) void {
+        c.JPC_BodyInterface_SetObjectLayer(
+            @as(*c.JPC_BodyInterface, @ptrCast(body_iface)),
+            body_id,
+            in_layer,
         );
     }
 };
@@ -1943,13 +2246,157 @@ pub const Body = extern struct {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Character
+//
+//--------------------------------------------------------------------------------------------------
+pub const Character = opaque {
+    pub fn create(
+        in_settings: *const CharacterSettings,
+        in_position: [3]Real,
+        in_rotation: [4]f32,
+        in_user_data: u64,
+        in_physics_system: *PhysicsSystem,
+    ) !*Character {
+        return @as(*Character, @ptrCast(c.JPC_Character_Create(
+            @as(*const c.JPC_CharacterSettings, @ptrCast(in_settings)),
+            &in_position,
+            &in_rotation,
+            in_user_data,
+            @as(*c.JPC_PhysicsSystem, @ptrCast(in_physics_system)),
+        )));
+    }
+    pub fn destroy(character: *Character) void {
+        c.JPC_Character_Destroy(@as(*c.JPC_Character, @ptrCast(character)));
+    }
+
+    pub fn addToPhysicsSystem(character: *Character, args: struct { activation: Activation = .activate, lock_bodies: bool = true }) void {
+        c.JPC_Character_AddToPhysicsSystem(
+            @as(*c.JPC_Character, @ptrCast(character)),
+            @intFromEnum(args.activation),
+            args.lock_bodies,
+        );
+    }
+    pub fn removeFromPhysicsSystem(character: *Character, args: struct { lock_bodies: bool = true }) void {
+        c.JPC_Character_RemoveFromPhysicsSystem(@as(*c.JPC_Character, @ptrCast(character)), args.lock_bodies);
+    }
+
+    pub fn getPosition(character: *const Character) [3]Real {
+        var position: [3]Real = undefined;
+        c.JPC_Character_GetPosition(@as(*const c.JPC_Character, @ptrCast(character)), &position);
+        return position;
+    }
+    pub fn setPosition(character: *Character, position: [3]Real) void {
+        c.JPC_Character_SetPosition(@as(*c.JPC_Character, @ptrCast(character)), &position);
+    }
+
+    pub fn getLinearVelocity(character: *const Character) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_Character_GetLinearVelocity(@as(*const c.JPC_Character, @ptrCast(character)), &velocity);
+        return velocity;
+    }
+    pub fn setLinearVelocity(character: *Character, velocity: [3]f32) void {
+        c.JPC_Character_SetLinearVelocity(@as(*c.JPC_Character, @ptrCast(character)), &velocity);
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// CharacterVirtual
+//
+//--------------------------------------------------------------------------------------------------
+pub const CharacterVirtual = opaque {
+    pub fn create(
+        in_settings: *const CharacterVirtualSettings,
+        in_position: [3]Real,
+        in_rotation: [4]f32,
+        in_physics_system: *PhysicsSystem,
+    ) !*CharacterVirtual {
+        return @as(*CharacterVirtual, @ptrCast(c.JPC_CharacterVirtual_Create(
+            @as(*const c.JPC_CharacterVirtualSettings, @ptrCast(in_settings)),
+            &in_position,
+            &in_rotation,
+            @as(*c.JPC_PhysicsSystem, @ptrCast(in_physics_system)),
+        )));
+    }
+
+    pub fn destroy(character: *CharacterVirtual) void {
+        c.JPC_CharacterVirtual_Destroy(@as(*c.JPC_CharacterVirtual, @ptrCast(character)));
+    }
+
+    pub fn update(
+        character: *CharacterVirtual,
+        delta_time: f32,
+        gravity: [3]f32,
+        args: struct {
+            broad_phase_layer_filter: ?*const BroadPhaseLayerFilter = null,
+            object_layer_filter: ?*const ObjectLayerFilter = null,
+            body_filter: ?*const BodyFilter = null,
+            shape_filter: ?*const ShapeFilter = null,
+        },
+    ) void {
+        c.JPC_CharacterVirtual_Update(
+            @as(*c.JPC_CharacterVirtual, @ptrCast(character)),
+            delta_time,
+            &gravity,
+            args.broad_phase_layer_filter,
+            args.object_layer_filter,
+            args.body_filter,
+            args.shape_filter,
+            @as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)),
+        );
+    }
+
+    pub fn setListener(character: *CharacterVirtual, listener: ?*anyopaque) void {
+        c.JPC_CharacterVirtual_SetListener(@as(*c.JPC_CharacterVirtual, @ptrCast(character)), listener);
+    }
+    pub fn updateGroundVelocity(character: *CharacterVirtual) void {
+        c.JPC_CharacterVirtual_UpdateGroundVelocity(@as(*c.JPC_CharacterVirtual, @ptrCast(character)));
+    }
+    pub fn getGroundVelocity(character: *const CharacterVirtual) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_CharacterVirtual_GetGroundVelocity(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &velocity);
+        return velocity;
+    }
+    pub fn getGroundState(character: *CharacterVirtual) CharacterGroundState {
+        return @enumFromInt(c.JPC_CharacterVirtual_GetGroundState(@as(*c.JPC_CharacterVirtual, @ptrCast(character))));
+    }
+
+    pub fn getPosition(character: *const CharacterVirtual) [3]Real {
+        var position: [3]Real = undefined;
+        c.JPC_CharacterVirtual_GetPosition(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &position);
+        return position;
+    }
+
+    pub fn setPosition(character: *CharacterVirtual, position: [3]Real) void {
+        c.JPC_CharacterVirtual_SetPosition(@as(*c.JPC_CharacterVirtual, @ptrCast(character)), &position);
+    }
+
+    pub fn getRotation(character: *const CharacterVirtual) [4]f32 {
+        var rotation: [4]f32 = undefined;
+        c.JPC_CharacterVirtual_GetRotation(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &rotation);
+        return rotation;
+    }
+    pub fn setRotation(character: *CharacterVirtual, rotation: [4]f32) void {
+        c.JPC_CharacterVirtual_SetRotation(@as(*c.JPC_CharacterVirtual, @ptrCast(character)), &rotation);
+    }
+
+    pub fn getLinearVelocity(character: *const CharacterVirtual) [3]f32 {
+        var velocity: [3]f32 = undefined;
+        c.JPC_CharacterVirtual_GetLinearVelocity(@as(*const c.JPC_CharacterVirtual, @ptrCast(character)), &velocity);
+        return velocity;
+    }
+    pub fn setLinearVelocity(character: *CharacterVirtual, velocity: [3]f32) void {
+        c.JPC_CharacterVirtual_SetLinearVelocity(@as(*c.JPC_CharacterVirtual, @ptrCast(character)), &velocity);
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // MotionProperties
 //
 //--------------------------------------------------------------------------------------------------
 pub const MotionProperties = extern struct {
     linear_velocity: [4]f32 align(16), // 4th element is ignored
     angular_velocity: [4]f32 align(16), // 4th element is ignored
-    inv_inertia_diagnonal: [4]f32 align(16),
+    inv_inertia_diagonal: [4]f32 align(16),
     inertia_rotation: [4]f32 align(16),
 
     force: [3]f32,
@@ -1992,10 +2439,10 @@ pub const MotionProperties = extern struct {
         return velocity;
     }
     pub fn setAngularVelocity(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetAnglularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
+        c.JPC_MotionProperties_SetAngularVelocity(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
     pub fn setAngularVelocityClamped(motion: *MotionProperties, velocity: [3]f32) void {
-        c.JPC_MotionProperties_SetAnglularVelocityClamped(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
+        c.JPC_MotionProperties_SetAngularVelocityClamped(@as(*c.JPC_MotionProperties, @ptrCast(motion)), &velocity);
     }
 
     /// `point` is relative to the center of mass (com)
@@ -2643,6 +3090,36 @@ pub const DecoratedShapeSettings = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// CompoundShapeSettings (-> ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const CompoundShapeSettings = opaque {
+    pub usingnamespace ShapeSettings.Methods(@This());
+
+    pub fn createStatic() !*CompoundShapeSettings {
+        const settings = c.JPC_StaticCompoundShapeSettings_Create();
+        if (settings == null) return error.FailedToCreateCompoundShapeSettings;
+        return @as(*CompoundShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn createMutable() !*CompoundShapeSettings {
+        const settings = c.JPC_MutableCompoundShapeSettings_Create();
+        if (settings == null) return error.FailedToCreateCompoundShapeSettings;
+        return @as(*CompoundShapeSettings, @ptrCast(settings));
+    }
+
+    pub fn addShape(settings: *CompoundShapeSettings, position: [3]Real, rotation: [4]Real, shape: *const ShapeSettings, user_data: u32) void {
+        c.JPC_CompoundShapeSettings_AddShape(
+            @as(*c.JPC_CompoundShapeSettings, @ptrCast(settings)),
+            &position,
+            &rotation,
+            @as(*const c.JPC_ShapeSettings, @ptrCast(shape)),
+            user_data,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
@@ -2731,6 +3208,187 @@ pub const Shape = opaque {
             }
             pub fn setUserData(shape: *T, user_data: u64) void {
                 return c.JPC_Shape_SetUserData(@as(*c.JPC_Shape, @ptrCast(shape)), user_data);
+            }
+
+            pub fn getCenterOfMass(shape: *const T) [3]Real {
+                var center: [3]Real = undefined;
+                c.JPC_Shape_GetCenterOfMass(@as(*const c.JPC_Shape, @ptrCast(shape)), &center);
+                return center;
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// ConstraintSettings
+//
+//--------------------------------------------------------------------------------------------------
+pub const ConstraintSettings = opaque {
+    pub usingnamespace Methods(@This());
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asConstraintSettings(constraint_settings: *const T) *const ConstraintSettings {
+                return @as(*const ConstraintSettings, @ptrCast(constraint_settings));
+            }
+            pub fn asConstraintSettingsMut(constraint_settings: *T) *ConstraintSettings {
+                return @as(*ConstraintSettings, @ptrCast(constraint_settings));
+            }
+
+            pub fn addRef(constraint_settings: *T) void {
+                c.JPC_ConstraintSettings_AddRef(@as(*c.JPC_ConstraintSettings, @ptrCast(constraint_settings)));
+            }
+            pub fn release(constraint_settings: *T) void {
+                c.JPC_ConstraintSettings_Release(@as(*c.JPC_ConstraintSettings, @ptrCast(constraint_settings)));
+            }
+            pub fn getRefCount(constraint_settings: *const T) u32 {
+                return c.JPC_ConstraintSettings_GetRefCount(@as(*const c.JPC_ConstraintSettings, @ptrCast(constraint_settings)));
+            }
+
+            pub fn getUserData(constraint_settings: *const T) u64 {
+                return c.JPC_ConstraintSettings_GetUserData(@as(*const c.JPC_ConstraintSettings, @ptrCast(constraint_settings)));
+            }
+            pub fn setUserData(constraint_settings: *T, user_data: u64) void {
+                return c.JPC_ConstraintSettings_SetUserData(
+                    @as(*c.JPC_ConstraintSettings, @ptrCast(constraint_settings)),
+                    user_data,
+                );
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// TwoBodyConstraintSettings (-> ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const TwoBodyConstraintSettings = opaque {
+    pub usingnamespace Methods(@This());
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub usingnamespace ConstraintSettings.Methods(T);
+
+            pub fn asTwoBodyConstraintSettings(two_body_constraint_settings: *T) *TwoBodyConstraintSettings {
+                return @as(*TwoBodyConstraintSettings, @ptrCast(two_body_constraint_settings));
+            }
+
+            pub fn createConstraint(two_body_constraint_settings: *const T, body1: *Body, body2: *Body) !*Constraint {
+                const constraint = c.JPC_TwoBodyConstraintSettings_CreateConstraint(
+                    @as(*const c.JPC_TwoBodyConstraintSettings, @ptrCast(two_body_constraint_settings)),
+                    @as(*c.JPC_Body, @ptrCast(body1)),
+                    @as(*c.JPC_Body, @ptrCast(body2)),
+                );
+                if (constraint == null)
+                    return error.FailedToCreateConstraint;
+                return @as(*Constraint, @ptrCast(constraint));
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// FixedConstraintSettings (-> TwoBodyConstraintSettings -> ConstraintSettings)
+//
+//--------------------------------------------------------------------------------------------------
+pub const FixedConstraintSettings = opaque {
+    pub usingnamespace TwoBodyConstraintSettings.Methods(@This());
+
+    pub fn create() !*FixedConstraintSettings {
+        const fixed_constraint_settings = c.JPC_FixedConstraintSettings_Create();
+        if (fixed_constraint_settings == null) return error.FailedToCreateFixedConstraintSettings;
+        return @as(*FixedConstraintSettings, @ptrCast(fixed_constraint_settings));
+    }
+
+    pub fn setSpace(settings: *FixedConstraintSettings, space: Constraint.Space) void {
+        c.JPC_FixedConstraintSettings_SetSpace(
+            @as(*c.JPC_FixedConstraintSettings, @ptrCast(settings)),
+            @intFromEnum(space),
+        );
+    }
+
+    pub fn setAutoDetectPoint(settings: *FixedConstraintSettings, enabled: bool) void {
+        c.JPC_FixedConstraintSettings_SetAutoDetectPoint(
+            @as(*c.JPC_FixedConstraintSettings, @ptrCast(settings)),
+            enabled,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Constraint
+//
+//--------------------------------------------------------------------------------------------------
+pub const Constraint = opaque {
+    pub usingnamespace Methods(@This());
+
+    pub const Type = enum(c.JPC_ConstraintType) {
+        constraint = c.JPC_CONSTRAINT_TYPE_CONSTRAINT,
+        two_body_constraint = c.JPC_CONSTRAINT_TYPE_TWO_BODY_CONSTRAINT,
+    };
+
+    pub const SubType = enum(c.JPC_ConstraintSubType) {
+        fixed = c.JPC_CONSTRAINT_SUB_TYPE_FIXED,
+        point = c.JPC_CONSTRAINT_SUB_TYPE_POINT,
+        hinge = c.JPC_CONSTRAINT_SUB_TYPE_HINGE,
+        slider = c.JPC_CONSTRAINT_SUB_TYPE_SLIDER,
+        distance = c.JPC_CONSTRAINT_SUB_TYPE_DISTANCE,
+        cone = c.JPC_CONSTRAINT_SUB_TYPE_CONE,
+        swing_twist = c.JPC_CONSTRAINT_SUB_TYPE_SWING_TWIST,
+        six_dof = c.JPC_CONSTRAINT_SUB_TYPE_SIX_DOF,
+        path = c.JPC_CONSTRAINT_SUB_TYPE_PATH,
+        vehicle = c.JPC_CONSTRAINT_SUB_TYPE_VEHICLE,
+        rack_and_pinion = c.JPC_CONSTRAINT_SUB_TYPE_RACK_AND_PINION,
+        gear = c.JPC_CONSTRAINT_SUB_TYPE_GEAR,
+        pulley = c.JPC_CONSTRAINT_SUB_TYPE_PULLEY,
+        user1 = c.JPC_CONSTRAINT_SUB_TYPE_USER1,
+        user2 = c.JPC_CONSTRAINT_SUB_TYPE_USER2,
+        user3 = c.JPC_CONSTRAINT_SUB_TYPE_USER3,
+        user4 = c.JPC_CONSTRAINT_SUB_TYPE_USER4,
+    };
+
+    pub const Space = enum(c.JPC_ConstraintSpace) {
+        local_to_body_com = c.JPC_CONSTRAINT_SPACE_LOCAL_TO_BODY_COM,
+        world_space = c.JPC_CONSTRAINT_SPACE_WORLD_SPACE,
+    };
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asConstraint(constraint: *const T) *const Constraint {
+                return @as(*const Constraint, @ptrCast(constraint));
+            }
+            pub fn asConstraintMut(constraint: *T) *Constraint {
+                return @as(*Constraint, @ptrCast(constraint));
+            }
+
+            pub fn addRef(constraint: *T) void {
+                c.JPC_Constraint_AddRef(@as(*c.JPC_Constraint, @ptrCast(constraint)));
+            }
+            pub fn release(constraint: *T) void {
+                c.JPC_Constraint_Release(@as(*c.JPC_Constraint, @ptrCast(constraint)));
+            }
+            pub fn getRefCount(constraint: *const T) u32 {
+                return c.JPC_Constraint_GetRefCount(@as(*const c.JPC_Constraint, @ptrCast(constraint)));
+            }
+
+            pub fn getType(constraint: *const T) Type {
+                return @as(
+                    Type,
+                    @enumFromInt(c.JPC_Constraint_GetType(@as(*const c.JPC_Constraint, @ptrCast(constraint)))),
+                );
+            }
+            pub fn getSubType(constraint: *const T) SubType {
+                return @as(
+                    SubType,
+                    @enumFromInt(c.JPC_Constraint_GetSubType(@as(*const c.JPC_Constraint, @ptrCast(constraint)))),
+                );
+            }
+
+            pub fn getUserData(constraint: *const T) u64 {
+                return c.JPC_Constraint_GetUserData(@as(*const c.JPC_Constraint, @ptrCast(constraint)));
+            }
+            pub fn setUserData(constraint: *T, user_data: u64) void {
+                return c.JPC_Constraint_SetUserData(@as(*c.JPC_Constraint, @ptrCast(constraint)), user_data);
             }
         };
     }

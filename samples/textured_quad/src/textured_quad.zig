@@ -12,7 +12,7 @@ const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
 
-pub export const D3D12SDKVersion: u32 = 608;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;

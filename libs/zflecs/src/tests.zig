@@ -12,6 +12,10 @@ const Velocity = struct { x: f32, y: f32 };
 const Walking = struct {};
 const Direction = enum { north, south, east, west };
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 test "zflecs.entities.basics" {
     print("\n", .{});
 
@@ -68,7 +72,7 @@ test "zflecs.entities.basics" {
             .terms = [_]ecs.term_t{
                 .{ .id = ecs.id(Position) },
                 .{ .id = ecs.id(Walking) },
-            } ++ ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 2),
+            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
         });
         defer ecs.filter_fini(filter);
 
@@ -96,7 +100,7 @@ test "zflecs.entities.basics" {
                 .terms = [_]ecs.term_t{
                     .{ .id = ecs.id(Position) },
                     .{ .id = ecs.id(Walking) },
-                } ++ ecs.array(ecs.term_t, ecs.TERM_DESC_CACHE_SIZE - 2),
+                } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
             },
         });
         defer ecs.query_fini(query);
@@ -178,7 +182,7 @@ test "zflecs.basic" {
 
     const PrintIdHelper = struct {
         fn printId(in_world: *ecs.world_t, comptime T: type) void {
-            var id_str = ecs.id_str(in_world, ecs.id(T)).?;
+            const id_str = ecs.id_str(in_world, ecs.id(T)).?;
             defer ecs.os.free(id_str);
 
             print("{s} id: {d}\n", .{ id_str, ecs.id(T) });
@@ -303,7 +307,7 @@ test "zflecs.try_different_alignments" {
         const Component = AlignedComponent.Component(component_alignment);
 
         ecs.COMPONENT(world, Component);
-        var entity = ecs.new_entity(world, "");
+        const entity = ecs.new_entity(world, "");
 
         _ = ecs.set(world, entity, Component, .{});
         _ = ecs.get(world, entity, Component);

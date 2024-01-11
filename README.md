@@ -1,19 +1,27 @@
-**Please note that the project requires latest Zig compiler (master/nightly). It can be downloaded [here](https://ziglang.org/download/).**
-
-[Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
+[Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Progress Reports](https://github.com/zig-gamedev-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/zig-gamedev/zig-gamedev/wiki/Roadmap)
 
 # zig-gamedev project
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/michal-z). We create:
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/hazeycode). We create:
 
 * Cross-platform and composable [libraries](#libraries)
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
 * DirectX 12 [sample applications](#sample-applications-directx-12)
-* Mini-games (in planning)
 
-To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
+Please note that Zig is still in development. Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently, which can be downloaded using the links below.
+
+| OS/Arch         | Download link               |
+| --------------- | --------------------------- |
+| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+
+If you need to use a more recent version of Zig, you may want to use our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
+
+To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```sh
-git clone https://github.com/michal-z/zig-gamedev.git
+git clone https://github.com/zig-gamedev/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
@@ -22,7 +30,7 @@ zig build physically_based_rendering_wgpu-run
 To use zig-gamedev in your project copy or download zig-gamedev as a submodule, for example:
 
 ```sh
-git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
+git submodule add https://github.com/zig-gamedev/zig-gamedev.git libs/zig-gamedev
 ```
 
 Currently, we have minimal low-level API which allows you to build the lib once (`package()`) and link it with many executables (`link()`).
@@ -99,7 +107,7 @@ pub fn build(b: *std.Build) void {
 |-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
 | **[zphysics](libs/zphysics)** | 0.0.6          | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
 | **[zflecs](libs/zflecs)**     | 0.0.1          | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
-| **[zopengl](libs/zopengl)**   | 0.1.0          | OpenGL loader (supports 3.3 Core Profile and ES 2.0 Profile)                                                               |
+| **[zopengl](libs/zopengl)**   | 0.1.3          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
 | **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
 | **[zgpu](libs/zgpu)**         | 0.9.1          | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
 | **[zgui](libs/zgui)**         | 1.89.6         | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot)) |
@@ -107,9 +115,9 @@ pub fn build(b: *std.Build) void {
 | **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
 | **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
-| **[ztracy](libs/ztracy)**     | 0.9.0          | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
+| **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
 | **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
-| **[zglfw](libs/zglfw)**       | 0.6.0          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
+| **[zglfw](libs/zglfw)**       | 0.7.0          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
 | **[znoise](libs/znoise)**     | 0.1.0          | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
 | **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
 | **[zbullet](libs/zbullet)**   | 0.2.0          | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
@@ -182,7 +190,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 To build all sample applications (assuming `zig` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
 
-1. `git clone https://github.com/michal-z/zig-gamedev.git`
+1. `git clone https://github.com/zig-gamedev/zig-gamedev.git`
 1. `cd zig-gamedev`
 1. `zig build`
 

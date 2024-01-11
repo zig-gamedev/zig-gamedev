@@ -1,0 +1,11 @@
+.{
+    .name = "zwin32",
+    .version = "0.9.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "bin",
+        "src",
+        "README.md",
+    },
+}

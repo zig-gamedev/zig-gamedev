@@ -1,7 +1,38 @@
 .{
     .name = "zig-gamedev",
-    .version = "0.1.0",
+    .version = "0.5.1",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "experiments",
+        "libs",
+        "samples",
+        "README.md",
+        "LICENSE",
+    },
     .dependencies = .{
+        .zsdl = .{ .path = "libs/zsdl" },
+        .zopengl = .{ .path = "libs/zopengl" },
+        .zmath = .{ .path = "libs/zmath" },
+        .zglfw = .{ .path = "libs/zglfw" },
+        .zpool = .{ .path = "libs/zpool" },
+        .zjobs = .{ .path = "libs/zjobs" },
+        .zmesh = .{ .path = "libs/zmesh" },
+        .znoise = .{ .path = "libs/znoise" },
+        .zstbi = .{ .path = "libs/zstbi" },
+        .zwin32 = .{ .path = "libs/zwin32" },
+        .zd3d12 = .{ .path = "libs/zd3d12" },
+        .zxaudio2 = .{ .path = "libs/zxaudio2" },
+        .zpix = .{ .path = "libs/zpix" },
+        .common = .{ .path = "libs/common" },
+        .zbullet = .{ .path = "libs/zbullet" },
+        .zgui = .{ .path = "libs/zgui" },
+        .zgpu = .{ .path = "libs/zgpu" },
+        .ztracy = .{ .path = "libs/ztracy" },
+        .zphysics = .{ .path = "libs/zphysics" },
+        .zaudio = .{ .path = "libs/zaudio" },
+        .zflecs = .{ .path = "libs/zflecs" },
+        .system_sdk = .{ .path = "libs/system-sdk" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
             .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
@@ -16,11 +47,11 @@
         },
         .dawn_aarch64_macos = .{
             .url = "https://github.com/michal-z/webgpu_dawn-aarch64-macos/archive/d2360cdfff0cf4a780cb77aa47c57aca03cc6dfe.tar.gz",
-            .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa"
+            .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa",
         },
         .dawn_x86_64_macos = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
             .hash = "1220b1f02f2f7edd98a078c64e3100907d90311d94880a3cc5927e1ac009d002667a",
         },
-     }
+    },
 }

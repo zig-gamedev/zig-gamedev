@@ -1,0 +1,11 @@
+.{
+    .name = "zbullet",
+    .version = "0.2.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "libs",
+        "src",
+        "README.md",
+    },
+}

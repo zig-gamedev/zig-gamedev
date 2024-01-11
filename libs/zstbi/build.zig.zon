@@ -1,0 +1,11 @@
+.{
+    .name = "zstbi",
+    .version = "0.9.3",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "libs",
+        "src",
+        "README.md",
+    },
+}

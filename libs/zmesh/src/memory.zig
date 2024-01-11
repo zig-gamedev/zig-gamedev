@@ -74,7 +74,7 @@ fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
 
     const old_size = if (ptr != null) mem_allocations.?.get(@intFromPtr(ptr.?)).? else 0;
 
-    var old_mem = if (old_size > 0)
+    const old_mem = if (old_size > 0)
         @as([*]align(mem_alignment) u8, @ptrCast(@alignCast(ptr)))[0..old_size]
     else
         @as([*]align(mem_alignment) u8, undefined)[0..0];

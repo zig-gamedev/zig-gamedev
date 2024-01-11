@@ -44,6 +44,22 @@ pub fn package(
     };
 }
 
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zwin32 = b.dependency("zwin32", .{});
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .enable = b.option(bool, "enable", "enable zpix") orelse false,
+        },
+        .deps = .{
+            .zwin32 = zwin32.module("zwin32"),
+        },
+    });
+}
+
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

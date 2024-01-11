@@ -1,0 +1,13 @@
+.{
+    .name = "zxaudio2",
+    .version = "0.9.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "README.md",
+    },
+    .dependencies = .{
+        .zwin32 = .{ .path = "../zwin32" },
+    },
+}

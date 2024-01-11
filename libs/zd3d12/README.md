@@ -1,4 +1,4 @@
-# zd3d12 - helper library for DirectX 12
+# zd3d12 v0.9.0 - helper library for DirectX 12
 
 ## Features
 
@@ -49,7 +49,7 @@ Now in your code you may import and use zd3d12:
 const zd3d12 = @import("zd3d12");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
-pub export const D3D12SDKVersion: u32 = 608;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 pub fn main() !void {

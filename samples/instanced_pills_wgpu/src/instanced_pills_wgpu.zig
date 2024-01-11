@@ -317,10 +317,10 @@ const DemoState = struct {
         const gctx = demo.gctx;
 
         const vertex_count = 2 * (segments + 1);
-        var vertex_data = try allocator.alloc(Vertex, @as(usize, @intCast(vertex_count)));
+        const vertex_data = try allocator.alloc(Vertex, @as(usize, @intCast(vertex_count)));
         defer allocator.free(vertex_data);
 
-        var index_data = try allocator.alloc(u16, @as(usize, @intCast(vertex_count)));
+        const index_data = try allocator.alloc(u16, @as(usize, @intCast(vertex_count)));
         defer allocator.free(index_data);
 
         vertex_generator.pill(segments, vertex_data, index_data);

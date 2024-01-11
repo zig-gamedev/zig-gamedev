@@ -1966,6 +1966,154 @@ pub var vertexAttribP4uiv: *const fn (
     normalized: Boolean,
     value: [*c]const Uint,
 ) callconv(.C) void = undefined;
+
+//--------------------------------------------------------------------------------------------------
+//
+// OpenGL 4.0 (Core Profile)
+//
+//--------------------------------------------------------------------------------------------------
+pub const SAMPLE_SHADING = 0x8C36;
+pub const MIN_SAMPLE_SHADING_VALUE = 0x8C37;
+pub const MIN_PROGRAM_TEXTURE_GATHER_OFFSET = 0x8E5E;
+pub const MAX_PROGRAM_TEXTURE_GATHER_OFFSET = 0x8E5F;
+pub const TEXTURE_CUBE_MAP_ARRAY = 0x9009;
+pub const TEXTURE_BINDING_CUBE_MAP_ARRAY = 0x900A;
+pub const PROXY_TEXTURE_CUBE_MAP_ARRAY = 0x900B;
+pub const SAMPLER_CUBE_MAP_ARRAY = 0x900C;
+pub const SAMPLER_CUBE_MAP_ARRAY_SHADOW = 0x900D;
+pub const INT_SAMPLER_CUBE_MAP_ARRAY = 0x900E;
+pub const UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY = 0x900F;
+pub const DRAW_INDIRECT_BUFFER = 0x8F3F;
+pub const DRAW_INDIRECT_BUFFER_BINDING = 0x8F43;
+pub const GEOMETRY_SHADER_INVOCATIONS = 0x887F;
+pub const MAX_GEOMETRY_SHADER_INVOCATIONS = 0x8E5A;
+pub const MIN_FRAGMENT_INTERPOLATION_OFFSET = 0x8E5B;
+pub const MAX_FRAGMENT_INTERPOLATION_OFFSET = 0x8E5C;
+pub const FRAGMENT_INTERPOLATION_OFFSET_BITS = 0x8E5D;
+pub const MAX_VERTEX_STREAMS = 0x8E71;
+pub const DOUBLE_VEC2 = 0x8FFC;
+pub const DOUBLE_VEC3 = 0x8FFD;
+pub const DOUBLE_VEC4 = 0x8FFE;
+pub const DOUBLE_MAT2 = 0x8F46;
+pub const DOUBLE_MAT3 = 0x8F47;
+pub const DOUBLE_MAT4 = 0x8F48;
+pub const DOUBLE_MAT2x3 = 0x8F49;
+pub const DOUBLE_MAT2x4 = 0x8F4A;
+pub const DOUBLE_MAT3x2 = 0x8F4B;
+pub const DOUBLE_MAT3x4 = 0x8F4C;
+pub const DOUBLE_MAT4x2 = 0x8F4D;
+pub const DOUBLE_MAT4x3 = 0x8F4E;
+pub const ACTIVE_SUBROUTINES = 0x8DE5;
+pub const ACTIVE_SUBROUTINE_UNIFORMS = 0x8DE6;
+pub const ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS = 0x8E47;
+pub const ACTIVE_SUBROUTINE_MAX_LENGTH = 0x8E48;
+pub const ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH = 0x8E49;
+pub const MAX_SUBROUTINES = 0x8DE7;
+pub const MAX_SUBROUTINE_UNIFORM_LOCATIONS = 0x8DE8;
+pub const NUM_COMPATIBLE_SUBROUTINES = 0x8E4A;
+pub const COMPATIBLE_SUBROUTINES = 0x8E4B;
+pub const PATCHES = 0x000E;
+pub const PATCH_VERTICES = 0x8E72;
+pub const PATCH_DEFAULT_INNER_LEVEL = 0x8E73;
+pub const PATCH_DEFAULT_OUTER_LEVEL = 0x8E74;
+pub const TESS_CONTROL_OUTPUT_VERTICES = 0x8E75;
+pub const TESS_GEN_MODE = 0x8E76;
+pub const TESS_GEN_SPACING = 0x8E77;
+pub const TESS_GEN_VERTEX_ORDER = 0x8E78;
+pub const TESS_GEN_POINT_MODE = 0x8E79;
+pub const ISOLINES = 0x8E7A;
+pub const FRACTIONAL_ODD = 0x8E7B;
+pub const FRACTIONAL_EVEN = 0x8E7C;
+pub const MAX_PATCH_VERTICES = 0x8E7D;
+pub const MAX_TESS_GEN_LEVEL = 0x8E7E;
+pub const MAX_TESS_CONTROL_UNIFORM_COMPONENTS = 0x8E7F;
+pub const MAX_TESS_EVALUATION_UNIFORM_COMPONENTS = 0x8E80;
+pub const MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS = 0x8E81;
+pub const MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS = 0x8E82;
+pub const MAX_TESS_CONTROL_OUTPUT_COMPONENTS = 0x8E83;
+pub const MAX_TESS_PATCH_COMPONENTS = 0x8E84;
+pub const MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS = 0x8E85;
+pub const MAX_TESS_EVALUATION_OUTPUT_COMPONENTS = 0x8E86;
+pub const MAX_TESS_CONTROL_UNIFORM_BLOCKS = 0x8E89;
+pub const MAX_TESS_EVALUATION_UNIFORM_BLOCKS = 0x8E8A;
+pub const MAX_TESS_CONTROL_INPUT_COMPONENTS = 0x886C;
+pub const MAX_TESS_EVALUATION_INPUT_COMPONENTS = 0x886D;
+pub const MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS = 0x8E1E;
+pub const MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS = 0x8E1F;
+pub const UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER = 0x84F0;
+pub const UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER = 0x84F1;
+pub const TESS_EVALUATION_SHADER = 0x8E87;
+pub const TESS_CONTROL_SHADER = 0x8E88;
+pub const TRANSFORM_FEEDBACK = 0x8E22;
+pub const TRANSFORM_FEEDBACK_BUFFER_PAUSED = 0x8E23;
+pub const TRANSFORM_FEEDBACK_BUFFER_ACTIVE = 0x8E24;
+pub const TRANSFORM_FEEDBACK_BINDING = 0x8E25;
+pub const MAX_TRANSFORM_FEEDBACK_BUFFERS = 0x8E70;
+
+pub const DrawArraysIndirectCommand = extern struct {
+    count: Uint,
+    instance_count: Uint,
+    first: Uint,
+    /// base_instance should always be set to zero for GL versions < 4.2
+    base_instance: Uint = 0,
+};
+
+pub const DrawElementsIndirectCommand = extern struct {
+    count: Uint,
+    instance_count: Uint,
+    first_index: Uint,
+    base_vertex: Int,
+    /// base_instance should always be set to zero for GL versions < 4.2
+    base_instance: Uint = 0,
+};
+
+pub var minSampleShading: *const fn (value: Float) callconv(.C) void = undefined;
+pub var blendEquationi: *const fn (buf: Uint, mode: Enum) callconv(.C) void = undefined;
+pub var blendEquationSeparatei: *const fn (buf: Uint, modeRGB: Enum, modeAlpha: Enum) callconv(.C) void = undefined;
+pub var blendFunci: *const fn (buf: Uint, src: Enum, dst: Enum) callconv(.C) void = undefined;
+pub var blendFuncSeparatei: *const fn (buf: Uint, srcRGB: Enum, dstRGB: Enum, srcAlpha: Enum, dstAlpha: Enum) callconv(.C) void = undefined;
+pub var drawArraysIndirect: *const fn (mode: Enum, indirect: *const DrawArraysIndirectCommand) callconv(.C) void = undefined;
+pub var drawElementsIndirect: *const fn (mode: Enum, type: Enum, indirect: *const DrawElementsIndirectCommand) callconv(.C) void = undefined;
+pub var uniform1d: *const fn (location: Int, x: Double) callconv(.C) void = undefined;
+pub var uniform2d: *const fn (location: Int, x: Double, y: Double) callconv(.C) void = undefined;
+pub var uniform3d: *const fn (location: Int, x: Double, y: Double, z: Double) callconv(.C) void = undefined;
+pub var uniform4d: *const fn (location: Int, x: Double, y: Double, z: Double, w: Double) callconv(.C) void = undefined;
+pub var uniform1dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniform2dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniform3dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniform4dv: *const fn (location: Int, count: Sizei, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix2dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix3dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix4dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix2x3dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix2x4dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix3x2dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix3x4dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix4x2dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var uniformMatrix4x3dv: *const fn (location: Int, count: Sizei, transpose: Boolean, value: [*c]const Double) callconv(.C) void = undefined;
+pub var getUniformdv: *const fn (program: Uint, location: Int, params: [*c]Double) callconv(.C) void = undefined;
+pub var getSubroutineUniformLocation: *const fn (program: Uint, shadertype: Enum, name: [*c]const Char) callconv(.C) Int = undefined;
+pub var getSubroutineIndex: *const fn (program: Uint, shadertype: Enum, name: [*c]const Char) callconv(.C) Uint = undefined;
+pub var getActiveSubroutineUniformiv: *const fn (program: Uint, shadertype: Enum, index: Uint, pname: Enum, values: [*c]Int) callconv(.C) void = undefined;
+pub var getActiveSubroutineUniformName: *const fn (program: Uint, shadertype: Enum, index: Uint, bufsize: Sizei, length: [*c]Sizei, name: [*c]Char) callconv(.C) void = undefined;
+pub var getActiveSubroutineName: *const fn (program: Uint, shadertype: Enum, index: Uint, bufsize: Sizei, length: [*c]Sizei, name: [*c]Char) callconv(.C) void = undefined;
+pub var uniformSubroutinesuiv: *const fn (shadertype: Enum, count: Sizei, indices: [*c]const Uint) callconv(.C) void = undefined;
+pub var getUniformSubroutineuiv: *const fn (shadertype: Enum, location: Int, params: [*c]const Uint) callconv(.C) void = undefined;
+pub var getProgramStageiv: *const fn (program: Uint, shadertype: Enum, pname: Enum, values: [*c]Int) callconv(.C) void = undefined;
+pub var patchParameteri: *const fn (pname: Enum, value: Int) callconv(.C) void = undefined;
+pub var patchParameterfv: *const fn (pname: Enum, values: [*c]const Float) callconv(.C) void = undefined;
+pub var bindTransformFeedback: *const fn (target: Enum, id: Uint) callconv(.C) Boolean = undefined;
+pub var deleteTransformFeedbacks: *const fn (n: Sizei, ids: [*c]const Uint) callconv(.C) void = undefined;
+pub var genTransformFeedbacks: *const fn (n: Sizei, ids: [*c]Uint) callconv(.C) void = undefined;
+pub var isTransformFeedback: *const fn (id: Uint) callconv(.C) void = undefined;
+pub var pauseTransformFeedback: *const fn () callconv(.C) void = undefined;
+pub var resumeTransformFeedback: *const fn () callconv(.C) void = undefined;
+pub var drawTransformFeedback: *const fn (mode: Enum, id: Uint) callconv(.C) void = undefined;
+pub var drawTransformFeedbackStream: *const fn (mode: Enum, id: Uint, stream: Uint) callconv(.C) void = undefined;
+pub var beginQueryIndexed: *const fn (target: Enum, index: Uint, id: Uint) callconv(.C) void = undefined;
+pub var endQueryIndexed: *const fn (target: Enum, index: Uint) callconv(.C) void = undefined;
+pub var glGetQueryIndexediv: *const fn (target: Enum, index: Uint, pname: Enum, params: [*c]Int) callconv(.C) void = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 4.1 (Core Profile)
@@ -2000,7 +2148,7 @@ pub const DEBUGPROC = *const fn (
     length: Sizei,
     message: [*c]const Char,
     userParam: *const anyopaque,
-) void;
+) callconv(.C) void;
 pub const DEBUG_SOURCE_API = 0x8246;
 pub const DEBUG_SOURCE_WINDOW_SYSTEM = 0x8247;
 pub const DEBUG_SOURCE_SHADER_COMPILER = 0x8248;

@@ -32,7 +32,7 @@ pub fn package(
 
     const zmesh_options = step.createModule();
 
-    const zmesh = b.createModule(.{
+    const zmesh = b.addModule("zmesh", .{
         .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
         .dependencies = &.{
             .{ .name = "zmesh_options", .module = zmesh_options },
@@ -75,18 +75,21 @@ pub fn package(
         .flags = &.{ "-std=c99", "-fno-sanitize=undefined", par_shapes_t },
     });
 
-    zmesh_c_cpp.addCSourceFiles(&.{
-        thisDir() ++ "/libs/meshoptimizer/clusterizer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/indexgenerator.cpp",
-        thisDir() ++ "/libs/meshoptimizer/vcacheoptimizer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/vcacheanalyzer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/vfetchoptimizer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/vfetchanalyzer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/overdrawoptimizer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/overdrawanalyzer.cpp",
-        thisDir() ++ "/libs/meshoptimizer/simplifier.cpp",
-        thisDir() ++ "/libs/meshoptimizer/allocator.cpp",
-    }, &.{""});
+    zmesh_c_cpp.addCSourceFiles(.{
+        .files = &.{
+            thisDir() ++ "/libs/meshoptimizer/clusterizer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/indexgenerator.cpp",
+            thisDir() ++ "/libs/meshoptimizer/vcacheoptimizer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/vcacheanalyzer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/vfetchoptimizer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/vfetchanalyzer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/overdrawoptimizer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/overdrawanalyzer.cpp",
+            thisDir() ++ "/libs/meshoptimizer/simplifier.cpp",
+            thisDir() ++ "/libs/meshoptimizer/allocator.cpp",
+        },
+        .flags = &.{""},
+    });
     zmesh_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cgltf" });
     zmesh_c_cpp.addCSourceFile(.{
         .file = .{ .path = thisDir() ++ "/libs/cgltf/cgltf.c" },
@@ -107,6 +110,13 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zmesh tests");
     test_step.dependOn(runTests(b, optimize, target));
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .shape_use_32bit_indices = b.option(bool, "shape_use_32bit_indices", "Enable par shapes 32-bit indices") orelse true,
+            .shared = b.option(bool, "shared", "Build as shared library") orelse false,
+        },
+    });
 }
 
 pub fn runTests(

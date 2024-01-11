@@ -6,8 +6,8 @@ pub fn main() !void {
     try glfw.init();
     defer glfw.terminate();
 
-    const gl_major = 3;
-    const gl_minor = 3;
+    const gl_major = 4;
+    const gl_minor = 0;
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);

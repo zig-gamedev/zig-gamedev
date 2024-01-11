@@ -1,4 +1,3 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 6, .patch = 0 };
 const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 //
@@ -120,6 +119,9 @@ extern fn glfwRawMouseMotionSupported() i32;
 
 pub const makeContextCurrent = glfwMakeContextCurrent;
 extern fn glfwMakeContextCurrent(window: *Window) void;
+
+pub const getCurrentContext = glfwGetCurrentContext;
+extern fn glfwGetCurrentContext() *Window;
 
 pub const swapInterval = glfwSwapInterval;
 extern fn glfwSwapInterval(interval: i32) void;

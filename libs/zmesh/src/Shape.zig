@@ -41,15 +41,14 @@ pub fn init(
         @ptrCast(@alignCast(zmeshMalloc(indices.items.len * @sizeOf(IndexType)))),
     );
     parmesh.ntriangles = @as(c_int, @intCast(@divExact(indices.items.len, 3)));
-    std.mem.copy(IndexType, parmesh.triangles[0..indices.items.len], indices.items);
+    @memcpy(parmesh.triangles[0..indices.items.len], indices.items);
 
     parmesh.points = @as(
         [*]f32,
         @ptrCast(@alignCast(zmeshMalloc(positions.items.len * @sizeOf(f32) * 3))),
     );
     parmesh.npoints = @as(c_int, @intCast(positions.items.len));
-    std.mem.copy(
-        f32,
+    @memcpy(
         parmesh.points[0 .. positions.items.len * 3],
         @as([*]f32, @ptrCast(positions.items.ptr))[0 .. positions.items.len * 3],
     );
@@ -61,8 +60,7 @@ pub fn init(
             [*]f32,
             @ptrCast(@alignCast(zmeshMalloc(normals.items.len * @sizeOf(f32) * 3))),
         );
-        std.mem.copy(
-            f32,
+        @memcpy(
             parmesh.normals.?[0 .. normals.items.len * 3],
             @as([*]f32, @ptrCast(normals.items.ptr))[0 .. normals.items.len * 3],
         );
@@ -75,8 +73,7 @@ pub fn init(
             [*]f32,
             @ptrCast(@alignCast(zmeshMalloc(texcoords.items.len * @sizeOf(f32) * 2))),
         );
-        std.mem.copy(
-            f32,
+        @memcpy(
             parmesh.tcoords.?[0 .. texcoords.items.len * 2],
             @as([*]f32, @ptrCast(texcoords.items.ptr))[0 .. texcoords.items.len * 2],
         );

@@ -1,4 +1,5 @@
 const std = @import("std");
+const system_sdk = @import("system_sdk");
 
 pub const Options = struct {
     enable_ztracy: bool = false,
@@ -6,6 +7,8 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.OptimizeMode,
     options: Options,
     ztracy: *std.Build.Module,
     ztracy_options: *std.Build.Module,
@@ -18,6 +21,17 @@ pub const Package = struct {
             exe.addIncludePath(.{ .path = thisDir() ++ "/libs/tracy/tracy" });
             exe.linkLibrary(pkg.ztracy_c_cpp);
         }
+    }
+
+    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
+        const tests = b.addTest(.{
+            .name = "ztracy-tests",
+            .root_source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
+            .target = pkg.target,
+            .optimize = pkg.optimize,
+        });
+        pkg.link(tests);
+        return &b.addRunArtifact(tests).step;
     }
 };
 
@@ -34,7 +48,7 @@ pub fn package(
 
     const ztracy_options = step.createModule();
 
-    const ztracy = b.createModule(.{
+    const ztracy = b.addModule("ztracy", .{
         .source_file = .{ .path = thisDir() ++ "/src/ztracy.zig" },
         .dependencies = &.{
             .{ .name = "ztracy_options", .module = ztracy_options },
@@ -75,7 +89,7 @@ pub fn package(
             },
             .macos => {
                 ztracy_c_cpp.addFrameworkPath(
-                    .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
+                    .{ .path = system_sdk.path ++ "/System/Library/Frameworks" },
                 );
             },
             else => {},
@@ -85,6 +99,8 @@ pub fn package(
     } else undefined;
 
     return .{
+        .target = target,
+        .optimize = optimize,
         .options = args.options,
         .ztracy = ztracy,
         .ztracy_options = ztracy_options,
@@ -92,7 +108,20 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const pkg = package(b, target, optimize, .{
+        .options = .{
+            .enable_ztracy = b.option(bool, "enable_ztracy", "Enable Tracy profile markers") orelse false,
+            .enable_fibers = b.option(bool, "enable_fibers", "Enable Tracy fiber support") orelse false,
+        },
+    });
+
+    const test_step = b.step("test", "Run ztracy tests");
+    test_step.dependOn(pkg.makeTestStep(b));
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

@@ -19,7 +19,7 @@ const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
 
-pub export const D3D12SDKVersion: u32 = 608;
+pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;
@@ -676,7 +676,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     //
     gctx.beginFrame();
 
-    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);

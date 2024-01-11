@@ -29,7 +29,7 @@ pub fn package(
 
     const zxaudio2_options = step.createModule();
 
-    const zxaudio2 = b.createModule(.{
+    const zxaudio2 = b.addModule("zxaudio2", .{
         .source_file = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
         .dependencies = &.{
             .{ .name = "zxaudio2_options", .module = zxaudio2_options },
@@ -44,7 +44,21 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    const zwin32 = b.dependency("zwin32", .{});
+
+    _ = package(b, target, optimize, .{
+        .options = .{
+            .enable_debug_layer = b.option(bool, "enable_debug_layer", "Enables debug layer") orelse false,
+        },
+        .deps = .{
+            .zwin32 = zwin32.module("zwin32"),
+        },
+    });
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

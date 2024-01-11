@@ -5,9 +5,6 @@
 #ifdef _MSC_VER
 #define _ALLOW_KEYWORD_MACROS
 #endif
-// We do this because we add some low-level functions which need access to private fields.
-// Also, we static assert offsets of some private fields (see bottom of this file).
-#define private public
 
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>

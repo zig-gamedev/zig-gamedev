@@ -1,0 +1,14 @@
+.{
+    .name = "ztracy",
+    .version = "0.10.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "libs",
+        "src",
+        "README.md",
+    },
+    .dependencies = .{
+        .system_sdk = .{ .path = "../system-sdk" },
+    },
+}

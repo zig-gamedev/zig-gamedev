@@ -755,6 +755,9 @@ const BodyImpl = opaque {
     pub const applyCentralImpulse = cbtBodyApplyCentralImpulse;
     extern fn cbtBodyApplyCentralImpulse(body: Body, impulse: *const [3]f32) void;
 
+    pub const applyBodyTorque = cbtBodyApplyTorque;
+    extern fn cbtBodyApplyTorque(body: Body, impulse: *const [3]f32) void;
+
     pub const setUserIndex = cbtBodySetUserIndex;
     extern fn cbtBodySetUserIndex(body: Body, slot: u32, index: i32) void;
 

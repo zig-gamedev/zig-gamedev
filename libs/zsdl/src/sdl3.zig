@@ -161,10 +161,10 @@ pub const Window = opaque {
         tooltip: bool = false,
         popup_menu: bool = false,
         keyboard_grabbed: bool = false,
-        __unused21: u4 = 0,
-        vulkan: bool = false,
+        __unused21: u7 = 0,
+        vulkan: bool = false, // 0x10000000
         metal: bool = false,
-        __unused27: u5 = 0,
+        __unused30: u2 = 0,
     };
 
     pub const pos_undefined = posUndefinedDisplay(0);
@@ -1058,6 +1058,35 @@ extern fn SDL_GetWindowWMInfo(window: *Window, info: *SysWMInfo) c_int;
 // Vulkan Support
 //
 //--------------------------------------------------------------------------------------------------
+pub const vk = struct {
+    pub const FunctionPointer = ?*const anyopaque;
+    pub const Instance = enum(usize) { null_handle = 0, _ };
+
+    pub fn loadLibrary(path: ?[*:0]const u8) Error!void {
+        if (SDL_Vulkan_LoadLibrary(path) < 0) return makeError();
+    }
+    extern fn SDL_Vulkan_LoadLibrary(path: ?[*]const u8) i32;
+
+    pub fn getVkGetInstanceProcAddr() FunctionPointer {
+        return SDL_Vulkan_GetVkGetInstanceProcAddr();
+    }
+    extern fn SDL_Vulkan_GetVkGetInstanceProcAddr() FunctionPointer;
+
+    pub fn unloadLibrary() void {
+        SDL_Vulkan_UnloadLibrary();
+    }
+    extern fn SDL_Vulkan_UnloadLibrary() void;
+
+    pub fn getInstanceExtensions(count: *i32, maybe_names: ?[*][*:0]u8) bool {
+        return SDL_Vulkan_GetInstanceExtensions(count, maybe_names);
+    }
+    extern fn SDL_Vulkan_GetInstanceExtensions(count: *i32, names: ?[*][*]u8) bool;
+
+    pub fn createSurface(window: *Window, instance: Instance, surface: *anyopaque) bool {
+        return SDL_Vulkan_CreateSurface(window, instance, surface);
+    }
+    extern fn SDL_Vulkan_CreateSurface(window: *Window, instance: Instance, surface: *anyopaque) bool;
+};
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -1506,16 +1535,16 @@ pub const AUDIO_F32LSB = 0x8120;
 pub const AUDIO_F32MSB = 0x9120;
 pub const AUDIO_F32 = AUDIO_F32LSB;
 pub const AUDIO_S16SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_S16LSB,
-    .Big => AUDIO_S16MSB,
+    .little => AUDIO_S16LSB,
+    .big => AUDIO_S16MSB,
 };
 pub const AUDIO_S32SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_S32LSB,
-    .Big => AUDIO_S32MSB,
+    .little => AUDIO_S32LSB,
+    .big => AUDIO_S32MSB,
 };
 pub const AUDIO_F32SYS = switch (builtin.target.cpu.arch.endian()) {
-    .Little => AUDIO_F32LSB,
-    .Big => AUDIO_F32MSB,
+    .little => AUDIO_F32LSB,
+    .big => AUDIO_F32MSB,
 };
 
 pub const AudioCallback = *const fn (

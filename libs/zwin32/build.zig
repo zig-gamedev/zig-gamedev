@@ -70,7 +70,7 @@ pub fn package(
     );
 
     return .{
-        .zwin32 = b.createModule(.{
+        .zwin32 = b.addModule("zwin32", .{
             .source_file = .{ .path = thisDir() ++ "/src/zwin32.zig" },
         }),
         .install_d3d12 = install_d3d12,
@@ -79,7 +79,12 @@ pub fn package(
     };
 }
 
-pub fn build(_: *std.Build) void {}
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
+
+    _ = package(b, target, optimize, .{});
+}
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

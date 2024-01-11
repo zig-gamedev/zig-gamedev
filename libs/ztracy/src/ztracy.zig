@@ -1,5 +1,3 @@
-pub const version = @import("std").SemanticVersion{ .major = 0, .minor = 9, .patch = 0 };
-
 const std = @import("std");
 const builtin = @import("builtin");
 const Src = std.builtin.SourceLocation;
@@ -539,3 +537,7 @@ const tracy_full = struct {
         c.___tracy_emit_message_appinfo(text.ptr, text.len);
     }
 };
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
