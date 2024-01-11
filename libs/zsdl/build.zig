@@ -70,7 +70,7 @@ pub const Package = struct {
                 }
             },
             .macos => {
-                exe.root_module.addRPath(.{ .path = "@executable_path/Frameworks" });
+               exe.root_module.addRPathSpecial("@executable_path/Frameworks");
 
                 exe.root_module.addFrameworkPath(.{
                     .path = thisDir() ++ "/libs/macos/Frameworks",
