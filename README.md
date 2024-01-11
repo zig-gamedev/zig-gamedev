@@ -8,14 +8,14 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
 * DirectX 12 [sample applications](#sample-applications-directx-12)
 
-Please note that Zig is still in development. Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently, which can be downloaded using the links below.
+Please note that Zig is still in development. Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.2139+e025ad7b4** currently, which can be downloaded using the links below.
 
 | OS/Arch         | Download link               |
 | --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.2139+e025ad7b4.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.2139+e025ad7b4.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.2139+e025ad7b4.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.2139+e025ad7b4.tar.xz) |
 
 If you need to use a more recent version of Zig, you may want to use our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
 
