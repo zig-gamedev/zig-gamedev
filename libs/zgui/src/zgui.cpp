@@ -1,5 +1,8 @@
-#include "./imgui/imgui.h"
-#include "./imgui/implot.h"
+#include "imgui.h"
+
+#if ZGUI_IMPLOT
+#include "implot.h"
+#endif
 
 #ifndef ZGUI_API
 #define ZGUI_API
@@ -2155,6 +2158,8 @@ ZGUI_API void zguiViewport_GetWorkSize(ImGuiViewport* viewport, float p[2]) {
     p[0] = sz.x;
     p[1] = sz.y;
 }
+
+#if ZGUI_IMPLOT
 //--------------------------------------------------------------------------------------------------
 //
 // ImPlot
@@ -2415,6 +2420,7 @@ ZGUI_API void zguiPlot_PlotText(
     const ImVec2 p(pix_offset[0], pix_offset[1]);
     ImPlot::PlotText(text, x, y, p, flags);
 }
+#endif /* #ifdef ZGUI_IMPLOT */
 
 //--------------------------------------------------------------------------------------------------
 } /* extern "C" */

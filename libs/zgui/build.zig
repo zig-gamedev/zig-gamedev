@@ -125,6 +125,7 @@ pub fn package(
     }
 
     if (args.options.with_implot) {
+        zgui_c_cpp.defineCMacro("ZGUI_IMPLOT", "1");
         zgui_c_cpp.addCSourceFiles(.{
             .files = &.{
                 thisDir() ++ "/libs/imgui/implot_demo.cpp",
@@ -133,6 +134,8 @@ pub fn package(
             },
             .flags = cflags,
         });
+    } else {
+        zgui_c_cpp.defineCMacro("ZGUI_IMPLOT", "0");
     }
 
     switch (args.options.backend) {
