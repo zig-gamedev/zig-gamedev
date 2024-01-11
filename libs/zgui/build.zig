@@ -1,5 +1,8 @@
 const std = @import("std");
 
+const zglfw = @import("zglfw");
+const zgpu = @import("zgpu");
+
 pub const Backend = enum {
     no_backend,
     glfw_wgpu,
@@ -17,6 +20,8 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.Mode,
     options: Options,
     zgui: *std.Build.Module,
     zgui_options: *std.Build.Module,
@@ -25,6 +30,23 @@ pub const Package = struct {
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         exe.linkLibrary(pkg.zgui_c_cpp);
         exe.addModule("zgui", pkg.zgui);
+        exe.addModule("zgui_options", pkg.zgui_options);
+    }
+
+    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
+        const gui_tests = b.addTest(.{
+            .name = "gui-tests",
+            .root_source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
+            .target = pkg.target,
+            .optimize = pkg.optimize,
+        });
+
+        const zgui_pkg = package(b, pkg.target, pkg.optimize, .{
+            .options = .{ .backend = .no_backend },
+        });
+        zgui_pkg.link(gui_tests);
+
+        return &b.addRunArtifact(gui_tests).step;
     }
 };
 
@@ -115,8 +137,8 @@ pub fn package(
 
     switch (args.options.backend) {
         .glfw_wgpu => {
-            zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zglfw/libs/glfw/include" });
-            zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zgpu/libs/dawn/include" });
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path ++ "/libs/glfw/include" });
+            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path ++ "/libs/dawn/include" });
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -126,8 +148,8 @@ pub fn package(
             });
         },
         .glfw_opengl3 => {
-            zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zglfw/libs/glfw/include" });
-            zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/../zgpu/libs/dawn/include" });
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path ++ "/libs/glfw/include" });
+            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path ++ "/libs/dawn/include" });
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -151,6 +173,8 @@ pub fn package(
     }
 
     return .{
+        .target = target,
+        .optimize = optimize,
         .options = args.options,
         .zgui = zgui,
         .zgui_options = zgui_options,
@@ -162,10 +186,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const test_step = b.step("test", "Run zgui tests");
-    test_step.dependOn(runTests(b, optimize, target));
-
-    _ = package(b, target, optimize, .{
+    const pkg = package(b, target, optimize, .{
         .options = .{
             .backend = b.option(Backend, "backend", "Select a backend") orelse .no_backend,
             .shared = b.option(bool, "shared", "Bulid as a shared library") orelse false,
@@ -173,27 +194,9 @@ pub fn build(b: *std.Build) void {
             .with_implot = b.option(bool, "with_implot", "Build with bundled implot source") orelse false,
         },
     });
-}
 
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
-) *std.Build.Step {
-    const gui_tests = b.addTest(.{
-        .name = "gui-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const zgui_pkg = package(b, target, optimize, .{
-        .options = .{ .backend = .no_backend },
-    });
-    gui_tests.addModule("zgui_options", zgui_pkg.zgui_options);
-    zgui_pkg.link(gui_tests);
-
-    return &b.addRunArtifact(gui_tests).step;
+    const test_step = b.step("test", "Run zgui tests");
+    test_step.dependOn(pkg.makeTestStep(b));
 }
 
 inline fn thisDir() []const u8 {
