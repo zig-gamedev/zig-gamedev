@@ -10,13 +10,19 @@ pub const Backend = enum {
     win32_dx12,
 };
 
+const default_options = struct {
+    const shared = false;
+    const with_imgui = true;
+    const with_implot = true;
+};
+
 pub const Options = struct {
     backend: Backend,
-    shared: bool = false,
+    shared: bool = default_options.shared,
     /// use bundled imgui source
-    with_imgui: bool = true,
+    with_imgui: bool = default_options.with_imgui,
     /// use bundled implot source
-    with_implot: bool = true,
+    with_implot: bool = default_options.with_implot,
 };
 
 pub const Package = struct {
@@ -40,12 +46,7 @@ pub const Package = struct {
             .target = pkg.target,
             .optimize = pkg.optimize,
         });
-
-        const zgui_pkg = package(b, pkg.target, pkg.optimize, .{
-            .options = .{ .backend = .no_backend },
-        });
-        zgui_pkg.link(gui_tests);
-
+        pkg.link(gui_tests);
         return &b.addRunArtifact(gui_tests).step;
     }
 };
@@ -191,10 +192,22 @@ pub fn build(b: *std.Build) void {
 
     const pkg = package(b, target, optimize, .{
         .options = .{
-            .backend = b.option(Backend, "backend", "Select a backend") orelse .no_backend,
-            .shared = b.option(bool, "shared", "Bulid as a shared library") orelse false,
-            .with_imgui = b.option(bool, "with_imgui", "Build with bundled imgui source") orelse true,
-            .with_implot = b.option(bool, "with_implot", "Build with bundled implot source") orelse false,
+            .backend = b.option(Backend, "backend", "Select backend") orelse .no_backend,
+            .shared = b.option(
+                bool,
+                "shared",
+                "Bulid as a shared library",
+            ) orelse default_options.shared,
+            .with_imgui = b.option(
+                bool,
+                "with_imgui",
+                "Build with bundled imgui source",
+            ) orelse default_options.with_imgui,
+            .with_implot = b.option(
+                bool,
+                "with_implot",
+                "Build with bundled implot source",
+            ) orelse default_options.with_implot,
         },
     });
 

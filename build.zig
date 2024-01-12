@@ -237,9 +237,17 @@ fn tests(b: *std.Build, options: Options) void {
     // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl3));
 
     test_step.dependOn(zgpu_pkg.makeTestStep(b));
-    test_step.dependOn(zgui_glfw_wgpu_pkg.makeTestStep(b));
-    test_step.dependOn(zgui_glfw_gl_pkg.makeTestStep(b));
     test_step.dependOn(ztracy_pkg.makeTestStep(b));
+
+    // TODO(hazeycode): Make zgui with backends testable. For now we just run the no_backend package tests instead.
+    // test_step.dependOn(zgui_glfw_wgpu_pkg.makeTestStep(b));
+    // test_step.dependOn(zgui_glfw_gl_pkg.makeTestStep(b));
+    test_step.dependOn(zgui.package(
+        b,
+        options.target,
+        options.optimize,
+        .{ .options = .{ .backend = .no_backend } },
+    ).makeTestStep(b));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
