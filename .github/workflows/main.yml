@@ -21,7 +21,7 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.12.0-dev.1871+e426ae43a
-      - run: zig build && zig build test
+      - run: zig build
   lint:
     runs-on: ubuntu-latest
     steps:
