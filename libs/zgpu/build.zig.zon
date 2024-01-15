@@ -9,6 +9,7 @@
         "README.md",
     },
     .dependencies = .{
+        .system_sdk = .{ .path = "../system-sdk" },
         .zglfw = .{ .path = "../zglfw" },
         .zpool = .{ .path = "../zpool" },
         .dawn_x86_64_windows_gnu = .{

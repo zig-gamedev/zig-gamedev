@@ -4191,7 +4191,6 @@ test "zphysics.body.motion" {
 }
 
 test "zphysics.debugrenderer" {
-    if (builtin.target.os.tag == .macos and builtin.target.cpu.arch == .aarch64) return error.SkipZigTest;
     if (!debug_renderer_enabled) return;
 
     try init(std.testing.allocator, .{});

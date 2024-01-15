@@ -57,7 +57,28 @@ pub fn build(b: *std.Build) void {
     zgpu_pkg.link(exe);
 }
 ```
+
+You may also include zgui without bundled imgui or implot:
+
+```zig
+// In build.zig
+
+    const pkg = zgui.package(b, exe.target, .ReleaseSafe, .{
+        .options = .{
+            .backend = .no_backend,
+            .with_imgui = false,
+            .with_implot = false,
+        },
+    });
+    const lib = pkg.zgui_c_cpp;
+    lib.defineCMacro("IMGUI_USER_CONFIG",
+        \\"../imconfig_custom.h"
+    );
+    lib.addIncludePath("lib/imgui");
+```
+
 Now in your code you may import and use `zgui`:
+
 ```zig
 const zgui = @import("zgui");
 

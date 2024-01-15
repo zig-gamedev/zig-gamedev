@@ -97,8 +97,8 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
         .options = .{ .backend = .glfw_opengl3 },
     });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
-        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
-        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
+        .options = .{},
+        .deps = .{ .zpool = zpool_pkg, .zglfw = zglfw_pkg },
     });
     ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{ .enable_ztracy = true, .enable_fibers = true },
@@ -231,13 +231,12 @@ fn tests(b: *std.Build, options: Options) void {
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
     test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zgpu.runTests(b, options.optimize, options.target));
     test_step.dependOn(zgui.runTests(b, options.optimize, options.target));
+    test_step.dependOn(ztracy.runTests(b, options.optimize, options.target));
 
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
-    // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl2));
-    // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl3));
-
-    test_step.dependOn(ztracy_pkg.makeTestStep(b));
+    //test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
@@ -271,27 +270,27 @@ pub var common_pkg: common.Package = undefined;
 pub var common_d2d_pkg: common.Package = undefined;
 pub var zd3d12_d2d_pkg: zd3d12.Package = undefined;
 
-const zsdl = @import("libs/zsdl/build.zig");
-const zopengl = @import("libs/zopengl/build.zig");
-const zmath = @import("libs/zmath/build.zig");
-const zglfw = @import("libs/zglfw/build.zig");
-const zpool = @import("libs/zpool/build.zig");
-const zjobs = @import("libs/zjobs/build.zig");
-const zmesh = @import("libs/zmesh/build.zig");
-const znoise = @import("libs/znoise/build.zig");
-const zstbi = @import("libs/zstbi/build.zig");
-const zwin32 = @import("libs/zwin32/build.zig");
-const zd3d12 = @import("libs/zd3d12/build.zig");
-const zxaudio2 = @import("libs/zxaudio2/build.zig");
-const zpix = @import("libs/zpix/build.zig");
-const common = @import("libs/common/build.zig");
-const zbullet = @import("libs/zbullet/build.zig");
-const zgui = @import("libs/zgui/build.zig");
-const zgpu = @import("libs/zgpu/build.zig");
-const ztracy = @import("libs/ztracy/build.zig");
-const zphysics = @import("libs/zphysics/build.zig");
-const zaudio = @import("libs/zaudio/build.zig");
-const zflecs = @import("libs/zflecs/build.zig");
+const zsdl = @import("zsdl");
+const zopengl = @import("zopengl");
+const zmath = @import("zmath");
+const zglfw = @import("zglfw");
+const zpool = @import("zpool");
+const zjobs = @import("zjobs");
+const zmesh = @import("zmesh");
+const znoise = @import("znoise");
+const zstbi = @import("zstbi");
+const zwin32 = @import("zwin32");
+const zd3d12 = @import("zd3d12");
+const zxaudio2 = @import("zxaudio2");
+const zpix = @import("zpix");
+const common = @import("common");
+const zbullet = @import("zbullet");
+const zgui = @import("zgui");
+const zgpu = @import("zgpu");
+const ztracy = @import("ztracy");
+const zphysics = @import("zphysics");
+const zaudio = @import("zaudio");
+const zflecs = @import("zflecs");
 
 pub const Options = struct {
     optimize: std.builtin.Mode,

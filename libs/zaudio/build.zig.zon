@@ -8,4 +8,7 @@
         "src",
         "README.md",
     },
+    .dependencies = .{
+        .system_sdk = .{ .path = "../system-sdk" },
+    },
 }

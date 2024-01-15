@@ -1,15 +1,14 @@
-[Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
+[Libraries](#libraries) - [Sample applications](#sample-applications-native-wgpu) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Progress Reports](https://github.com/zig-gamedev-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/zig-gamedev/zig-gamedev/wiki/Roadmap)
 
 # zig-gamedev project
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/michal-z). We create:
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/hazeycode). We create:
 
 * Cross-platform and composable [libraries](#libraries)
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
 * DirectX 12 [sample applications](#sample-applications-directx-12)
-* Mini-games (in planning)
 
-Please note that Zig is still in development. Our [main](https://github.com/michal-z/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently, which can be downloaded using the links below.
+Please note that Zig is still in development. Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently, which can be downloaded using the links below.
 
 | OS/Arch         | Download link               |
 | --------------- | --------------------------- |
@@ -18,11 +17,11 @@ Please note that Zig is still in development. Our [main](https://github.com/mich
 | macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
 | macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz) |
 
-If you need to use a more recent version of Zig, you may want to use our [unstable](https://github.com/michal-z/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
+If you need to use a more recent version of Zig, you may want to use our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
 
-To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
+To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```sh
-git clone https://github.com/michal-z/zig-gamedev.git
+git clone https://github.com/zig-gamedev/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
@@ -31,7 +30,7 @@ zig build physically_based_rendering_wgpu-run
 To use zig-gamedev in your project copy or download zig-gamedev as a submodule, for example:
 
 ```sh
-git submodule add https://github.com/michal-z/zig-gamedev.git libs/zig-gamedev
+git submodule add https://github.com/zig-gamedev/zig-gamedev.git libs/zig-gamedev
 ```
 
 Currently, we have minimal low-level API which allows you to build the lib once (`package()`) and link it with many executables (`link()`).
@@ -191,7 +190,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 To build all sample applications (assuming `zig` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
 
-1. `git clone https://github.com/michal-z/zig-gamedev.git`
+1. `git clone https://github.com/zig-gamedev/zig-gamedev.git`
 1. `cd zig-gamedev`
 1. `zig build`
 

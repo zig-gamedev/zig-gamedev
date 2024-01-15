@@ -8,4 +8,8 @@
         "src",
         "README.md",
     },
+    .dependencies = .{
+        .zglfw = .{ .path = "../zglfw" },
+        .zgpu = .{ .path = "../zgpu" },
+    },
 }
