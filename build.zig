@@ -220,23 +220,23 @@ fn samplesWindows(b: *std.Build, options: Options) void {
 fn tests(b: *std.Build, options: Options) void {
     const test_step = b.step("test", "Run all tests");
 
-    test_step.dependOn(zmath.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zmesh.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zstbi.runTests(b, options.optimize, options.target));
-    test_step.dependOn(znoise.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zglfw.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zpool.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zjobs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zaudio.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zbullet.runTests(b, options.optimize, options.target));
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zglfw.runTests(b, options.optimize, options.target));
     test_step.dependOn(zgpu.runTests(b, options.optimize, options.target));
     test_step.dependOn(zgui.runTests(b, options.optimize, options.target));
-    test_step.dependOn(ztracy.runTests(b, options.optimize, options.target));
-
+    test_step.dependOn(zjobs.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zmath.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zmesh.runTests(b, options.optimize, options.target));
+    test_step.dependOn(znoise.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zpool.runTests(b, options.optimize, options.target));
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
     //test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zstbi.runTests(b, options.optimize, options.target));
+    test_step.dependOn(ztracy.runTests(b, options.optimize, options.target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {

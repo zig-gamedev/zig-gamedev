@@ -8,4 +8,8 @@
         "src",
         "README.md",
     },
+    .dependencies = .{
+        // Required for tests
+        .zmath = .{ .path = "../zmath" },
+    },
 }

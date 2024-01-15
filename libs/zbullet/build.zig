@@ -58,8 +58,33 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    const test_step = b.step("test", "Run zbullet tests");
+    test_step.dependOn(runTests(b, optimize, target));
+
     _ = package(b, target, optimize, .{});
 }
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const zmath = b.dependency("zmath", .{});
+
+    var tests = b.addTest(.{
+        .name = "zbullet-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    tests.addModule("zmath", zmath.module("zmath"));
+
+    const pkg = package(b, target, optimize, .{});
+    pkg.link(tests);
+
+    return &b.addRunArtifact(tests).step;
+}
+
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

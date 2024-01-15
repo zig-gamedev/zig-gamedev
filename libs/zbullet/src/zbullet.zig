@@ -1077,6 +1077,10 @@ pub const DebugDrawer = struct {
     }
 };
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 test "zbullet.world.gravity" {
     const zm = @import("zmath");
     init(std.testing.allocator);
