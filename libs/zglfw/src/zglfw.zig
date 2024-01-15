@@ -997,6 +997,11 @@ fn keyCallback(window: *Window, key: Key, scancode: i32, action: Action, mods: M
 }
 
 test "zglfw.basic" {
+    // TODO: Make this test headless or only skip for CI
+    if (true) {
+        return error.SkipZigTest;
+    }
+
     try init();
     defer terminate();
 
