@@ -26,8 +26,6 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
-    target: std.zig.CrossTarget,
-    optimize: std.builtin.Mode,
     options: Options,
     zgui: *std.Build.Module,
     zgui_options: *std.Build.Module,
@@ -37,17 +35,6 @@ pub const Package = struct {
         exe.linkLibrary(pkg.zgui_c_cpp);
         exe.addModule("zgui", pkg.zgui);
         exe.addModule("zgui_options", pkg.zgui_options);
-    }
-
-    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
-        const gui_tests = b.addTest(.{
-            .name = "gui-tests",
-            .root_source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
-            .target = pkg.target,
-            .optimize = pkg.optimize,
-        });
-        pkg.link(gui_tests);
-        return &b.addRunArtifact(gui_tests).step;
     }
 };
 
@@ -177,8 +164,6 @@ pub fn package(
     }
 
     return .{
-        .target = target,
-        .optimize = optimize,
         .options = args.options,
         .zgui = zgui,
         .zgui_options = zgui_options,
@@ -190,7 +175,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const pkg = package(b, target, optimize, .{
+    _ = package(b, target, optimize, .{
         .options = .{
             .backend = b.option(Backend, "backend", "Select backend") orelse .no_backend,
             .shared = b.option(
@@ -212,7 +197,25 @@ pub fn build(b: *std.Build) void {
     });
 
     const test_step = b.step("test", "Run zgui tests");
-    test_step.dependOn(pkg.makeTestStep(b));
+    test_step.dependOn(runTests(b, optimize, target));
+}
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.OptimizeMode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const gui_tests = b.addTest(.{
+        .name = "gui-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    const pkg = package(b, target, optimize, .{
+        .options = .{ .backend = .no_backend },
+    });
+    pkg.link(gui_tests);
+    return &b.addRunArtifact(gui_tests).step;
 }
 
 inline fn thisDir() []const u8 {

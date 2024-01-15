@@ -197,8 +197,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     const test_step = b.step("test", "Run zsdl tests");
-    test_step.dependOn(runTests(b, optimize, target, .sdl2));
-    test_step.dependOn(runTests(b, optimize, target, .sdl3));
+    test_step.dependOn(runTests(b, optimize, target));
 
     _ = package(b, target, optimize, .{
         .options = .{
@@ -211,7 +210,6 @@ pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
     target: std.zig.CrossTarget,
-    api_version: ApiVersion,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zsdl-tests",
@@ -221,7 +219,7 @@ pub fn runTests(
     });
     const zsdl_pkg = package(b, target, optimize, .{
         .options = .{
-            .api_version = api_version,
+            .api_version = .sdl2,
             .enable_ttf = true,
         },
     });

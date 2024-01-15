@@ -97,7 +97,7 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
         .options = .{ .backend = .glfw_opengl3 },
     });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
-        .options = .{ .uniforms_buffer_size = 4 * 1024 * 1024 },
+        .options = .{},
         .deps = .{ .zpool = zpool_pkg, .zglfw = zglfw_pkg },
     });
     ztracy_pkg = ztracy.package(b, target, optimize, .{
@@ -231,23 +231,12 @@ fn tests(b: *std.Build, options: Options) void {
     test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
     test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
     test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zgpu.runTests(b, options.optimize, options.target));
+    test_step.dependOn(zgui.runTests(b, options.optimize, options.target));
+    test_step.dependOn(ztracy.runTests(b, options.optimize, options.target));
 
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
-    // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl2));
-    // test_step.dependOn(zsdl.runTests(b, options.optimize, options.target, .sdl3));
-
-    test_step.dependOn(zgpu_pkg.makeTestStep(b));
-    test_step.dependOn(ztracy_pkg.makeTestStep(b));
-
-    // TODO(hazeycode): Make zgui with backends testable. For now we just run the no_backend package tests instead.
-    // test_step.dependOn(zgui_glfw_wgpu_pkg.makeTestStep(b));
-    // test_step.dependOn(zgui_glfw_gl_pkg.makeTestStep(b));
-    test_step.dependOn(zgui.package(
-        b,
-        options.target,
-        options.optimize,
-        .{ .options = .{ .backend = .no_backend } },
-    ).makeTestStep(b));
+    test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {

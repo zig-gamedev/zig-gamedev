@@ -39,15 +39,9 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
-    target: std.zig.CrossTarget,
-    optimize: std.builtin.OptimizeMode,
     options: Options,
     zgpu: *std.Build.Module,
     zgpu_options: *std.Build.Module,
-    deps: struct {
-        zglfw: zglfw.Package,
-        zpool: zpool.Package,
-    },
 
     pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
@@ -115,25 +109,12 @@ pub const Package = struct {
             .flags = &.{"-fno-sanitize=undefined"},
         });
     }
-
-    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
-        const tests = b.addTest(.{
-            .name = "zgpu-tests",
-            .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
-            .target = pkg.target,
-            .optimize = pkg.optimize,
-        });
-        pkg.link(tests);
-        pkg.deps.zglfw.link(tests);
-        pkg.deps.zpool.link(tests);
-        return &b.addRunArtifact(tests).step;
-    }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
-    optimize: std.builtin.Mode,
+    _: std.zig.CrossTarget,
+    _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
         deps: struct {
@@ -167,15 +148,9 @@ pub fn package(
     });
 
     return .{
-        .target = target,
-        .optimize = optimize,
         .options = args.options,
         .zgpu = zgpu,
         .zgpu_options = zgpu_options,
-        .deps = .{
-            .zglfw = args.deps.zglfw,
-            .zpool = args.deps.zpool,
-        },
     };
 }
 
@@ -186,7 +161,7 @@ pub fn build(b: *std.Build) void {
     const zglfw_pkg = zglfw.package(b, target, optimize, .{});
     const zpool_pkg = zpool.package(b, target, optimize, .{});
 
-    const pkg = package(b, target, optimize, .{
+    _ = package(b, target, optimize, .{
         .options = .{
             .uniforms_buffer_size = b.option(
                 u64,
@@ -251,5 +226,28 @@ pub fn build(b: *std.Build) void {
     });
 
     const test_step = b.step("test", "Run zgpu tests");
-    test_step.dependOn(pkg.makeTestStep(b));
+    test_step.dependOn(runTests(b, optimize, target));
+}
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.OptimizeMode,
+    target: std.zig.CrossTarget,
+) *std.Build.Step {
+    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    const zpool_pkg = zpool.package(b, target, optimize, .{});
+
+    const tests = b.addTest(.{
+        .name = "zgpu-tests",
+        .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    const pkg = package(b, target, optimize, .{
+        .options = .{},
+        .deps = .{ .zglfw = zglfw_pkg, .zpool = zpool_pkg },
+    });
+    pkg.link(tests);
+    zglfw_pkg.link(tests);
+    return &b.addRunArtifact(tests).step;
 }
