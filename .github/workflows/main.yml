@@ -11,7 +11,7 @@ concurrency:
   group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
   cancel-in-progress: true
 jobs:
-  test:
+  build-and-test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -21,7 +21,7 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.12.0-dev.1871+e426ae43a
-      - run: zig build
+      - run: zig build && zig build test
   lint:
     runs-on: ubuntu-latest
     steps:
