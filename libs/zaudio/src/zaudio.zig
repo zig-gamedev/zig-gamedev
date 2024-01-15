@@ -879,8 +879,8 @@ pub const DataSourceNode = opaque {
     pub const destroy = zaudioDataSourceNodeDestroy;
     extern fn zaudioDataSourceNodeDestroy(handle: *DataSourceNode) void;
 
-    pub fn setLooping(handle: *DataSourceNode, is_looping: bool) void {
-        try maybeError(ma_data_source_node_set_looping(handle, @intFromBool(is_looping)));
+    pub fn setLooping(handle: *DataSourceNode, is_looping: bool) !void {
+        try maybeError(ma_data_source_node_set_looping(handle, if (is_looping) .true32 else .false32));
     }
     extern fn ma_data_source_node_set_looping(handle: *DataSourceNode, is_looping: Bool32) Result;
 
@@ -1352,14 +1352,14 @@ pub const NodeGraph = opaque {
                 out_handle: ?*?*DataSourceNode,
             ) Result;
 
-            pub fn createBiquadNode(node_graph: *T, config: BiquadNode.NodeConfig) Error!*BiquadNode {
+            pub fn createBiquadNode(node_graph: *T, config: BiquadNode.Config) Error!*BiquadNode {
                 var handle: ?*BiquadNode = null;
                 try maybeError(zaudioBiquadNodeCreate(node_graph.asNodeGraphMut(), &config, &handle));
                 return handle.?;
             }
             extern fn zaudioBiquadNodeCreate(
                 node_graph: *NodeGraph,
-                config: *const BiquadNode.NodeConfig,
+                config: *const BiquadNode.Config,
                 out_handle: ?*?*BiquadNode,
             ) Result;
 
@@ -2054,7 +2054,7 @@ pub const Sound = opaque {
     extern fn ma_sound_get_pitch(sound: *const Sound) f32;
 
     pub fn setSpatializationEnabled(sound: *Sound, enabled: bool) void {
-        ma_sound_set_spatialization_enabled(sound, @intFromBool(enabled));
+        ma_sound_set_spatialization_enabled(sound, if (enabled) .true32 else .false32);
     }
     extern fn ma_sound_set_spatialization_enabled(sound: *Sound, enabled: Bool32) void;
 
@@ -2401,7 +2401,7 @@ pub const SoundGroup = opaque {
     extern fn ma_sound_group_get_pitch(sound: *const SoundGroup) f32;
 
     pub fn setSpatializationEnabled(sound: *SoundGroup, enabled: bool) void {
-        ma_sound_group_set_spatialization_enabled(sound, @intFromBool(enabled));
+        ma_sound_group_set_spatialization_enabled(sound, if (enabled) .true32 else .false32);
     }
     extern fn ma_sound_group_set_spatialization_enabled(sound: *SoundGroup, enabled: Bool32) void;
 
@@ -2759,6 +2759,10 @@ test "zaudio.soundgroup.basic" {
             return err;
         };
     }
+}
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
 }
 
 test "zaudio.fence.basic" {
