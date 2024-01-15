@@ -223,6 +223,7 @@ pub fn runTests(
             .enable_ttf = true,
         },
     });
+    // TODO: Also test SDL3 bindings
     zsdl_pkg.link(tests);
     return &b.addRunArtifact(tests).step;
 }
