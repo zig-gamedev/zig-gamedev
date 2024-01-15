@@ -4,13 +4,16 @@ const std = @import("std");
 pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.1871" };
 
 pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
     //
     // Options and system checks
     //
     ensureZigVersion() catch return;
     const options = Options{
-        .optimize = b.standardOptimizeOption(.{}),
-        .target = b.standardTargetOptions(.{}),
+        .optimize = optimize,
+        .target = target,
         .zd3d12_enable_debug_layer = b.option(
             bool,
             "zd3d12-enable-debug-layer",
@@ -23,7 +26,7 @@ pub fn build(b: *std.Build) void {
         ) orelse false,
         .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
     };
-    ensureTarget(options.target) catch return;
+    ensureTarget(target) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
@@ -34,7 +37,7 @@ pub fn build(b: *std.Build) void {
     //
     packagesCrossPlatform(b, options);
 
-    if (options.target.isWindows() and
+    if (target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
         packagesWindowsLinux(b, options);
@@ -62,7 +65,11 @@ pub fn build(b: *std.Build) void {
     //
     // Tests
     //
-    tests(b, options);
+    const test_step = b.step("test", "Run all tests");
+    testsCrossPlatform(b, target, optimize, test_step);
+    if (builtin.target.os.tag == .windows) {
+        testsWindows(b, target, optimize, test_step);
+    }
 
     //
     // Benchmarks
@@ -217,26 +224,46 @@ fn samplesWindows(b: *std.Build, options: Options) void {
     install(b, audio_experiments.build(b, options), "audio_experiments");
 }
 
-fn tests(b: *std.Build, options: Options) void {
-    const test_step = b.step("test", "Run all tests");
-
-    test_step.dependOn(zaudio.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zbullet.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zflecs.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zglfw.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zgpu.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zgui.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zjobs.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zmath.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zmesh.runTests(b, options.optimize, options.target));
-    test_step.dependOn(znoise.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zopengl.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zphysics.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zpool.runTests(b, options.optimize, options.target));
+fn testsCrossPlatform(
+    b: *std.Build,
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.OptimizeMode,
+    test_step: *std.Build.Step,
+) void {
+    test_step.dependOn(zaudio.runTests(b, optimize, target));
+    test_step.dependOn(zbullet.runTests(b, optimize, target));
+    test_step.dependOn(zflecs.runTests(b, optimize, target));
+    test_step.dependOn(zglfw.runTests(b, optimize, target));
+    test_step.dependOn(zgpu.runTests(b, optimize, target));
+    test_step.dependOn(zgui.runTests(b, optimize, target));
+    test_step.dependOn(zjobs.runTests(b, optimize, target));
+    test_step.dependOn(zmath.runTests(b, optimize, target));
+    test_step.dependOn(zmesh.runTests(b, optimize, target));
+    test_step.dependOn(znoise.runTests(b, optimize, target));
+    test_step.dependOn(zopengl.runTests(b, optimize, target));
+    test_step.dependOn(zphysics.runTests(b, optimize, target));
+    test_step.dependOn(zpool.runTests(b, optimize, target));
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
-    //test_step.dependOn(zsdl.runTests(b, options.optimize, options.target));
-    test_step.dependOn(zstbi.runTests(b, options.optimize, options.target));
-    test_step.dependOn(ztracy.runTests(b, options.optimize, options.target));
+    //test_step.dependOn(zsdl.runTests(b, optimize, target));
+    test_step.dependOn(zstbi.runTests(b, optimize, target));
+    test_step.dependOn(ztracy.runTests(b, optimize, target));
+}
+
+fn testsWindows(
+    b: *std.Build,
+    target: std.zig.CrossTarget,
+    optimize: std.builtin.OptimizeMode,
+    test_step: *std.Build.Step,
+) void {
+    // TODO
+    _ = b;
+    _ = target;
+    _ = optimize;
+    _ = test_step;
+    //test_step.dependOn(zd3d12.runTests(b, optimize, target));
+    //test_step.dependOn(zpix.runTests(b, optimize, target));
+    //test_step.dependOn(zwin32.runTests(b, optimize, target));
+    //test_step.dependOn(zxaudio2.runTests(b, optimize, target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {
