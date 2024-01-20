@@ -52,7 +52,7 @@ pub fn build(b: *std.Build) void {
     //
     samplesCrossPlatform(b, options);
 
-    if (target.isWindows() and
+    if (options.target.isWindows() and
         (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
     {
         samplesWindowsLinux(b, options);
@@ -241,10 +241,7 @@ fn testsCrossPlatform(
     test_step.dependOn(zmesh.runTests(b, optimize, target));
     test_step.dependOn(znoise.runTests(b, optimize, target));
     test_step.dependOn(zopengl.runTests(b, optimize, target));
-    // TODO: Fix zphysics tests on Windows
-    if (builtin.target.os.tag != .windows) {
-        test_step.dependOn(zphysics.runTests(b, optimize, target));
-    }
+    test_step.dependOn(zphysics.runTests(b, optimize, target));
     test_step.dependOn(zpool.runTests(b, optimize, target));
     // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
     //test_step.dependOn(zsdl.runTests(b, optimize, target));
