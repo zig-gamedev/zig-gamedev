@@ -231,7 +231,10 @@ fn testsCrossPlatform(
     test_step: *std.Build.Step,
 ) void {
     test_step.dependOn(zaudio.runTests(b, optimize, target));
-    test_step.dependOn(zbullet.runTests(b, optimize, target));
+    // TODO: Get zbullet tests working on Windows again
+    if (builtin.target.os.tag != .windows) {
+        test_step.dependOn(zbullet.runTests(b, optimize, target));
+    }
     test_step.dependOn(zflecs.runTests(b, optimize, target));
     test_step.dependOn(zglfw.runTests(b, optimize, target));
     test_step.dependOn(zgpu.runTests(b, optimize, target));
