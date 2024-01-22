@@ -1,8 +1,5 @@
 const std = @import("std");
 
-const zglfw = @import("zglfw");
-const zgpu = @import("zgpu");
-
 pub const Backend = enum {
     no_backend,
     glfw_wgpu,
@@ -128,8 +125,10 @@ pub fn package(
 
     switch (args.options.backend) {
         .glfw_wgpu => {
-            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path ++ "/libs/glfw/include" });
-            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path ++ "/libs/dawn/include" });
+            const zglfw = b.dependency("zglfw", .{});
+            const zgpu = b.dependency("zgpu", .{});
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("/libs/glfw/include").getPath(b) });
+            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path("/libs/dawn/include").getPath(b) });
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -139,8 +138,8 @@ pub fn package(
             });
         },
         .glfw_opengl3 => {
-            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path ++ "/libs/glfw/include" });
-            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path ++ "/libs/dawn/include" });
+            const zglfw = b.dependency("zglfw", .{});
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("/libs/glfw/include").getPath(b) });
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
