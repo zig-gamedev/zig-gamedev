@@ -1,11 +1,4 @@
 const std = @import("std");
-const system_sdk = @import("system_sdk");
-
-pub const path = getPath();
-
-inline fn getPath() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse unreachable;
-}
 
 pub const Package = struct {
     zglfw: *std.Build.Module,
@@ -16,17 +9,21 @@ pub const Package = struct {
 
         const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
+        const b = exe.step.owner;
+
+        const system_sdk = b.dependency("system_sdk", .{});
+
         switch (host.os.tag) {
             .windows => {},
             .macos => {
-                exe.addLibraryPath(.{ .path = system_sdk.path ++ "/macos12/usr/lib" });
+                exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
             },
             else => {
                 // We assume Linux (X11)
                 if (host.cpu.arch.isX86()) {
-                    exe.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/x86_64-linux-gnu" });
+                    exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b) });
                 } else {
-                    exe.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/aarch64-linux-gnu" });
+                    exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b) });
                 }
             },
         }
@@ -57,7 +54,7 @@ pub fn package(
     step.addOption(bool, "shared", args.options.shared);
 
     const zglfw = b.addModule("zglfw", .{
-        .source_file = .{ .path = path ++ "/src/zglfw.zig" },
+        .source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
@@ -78,12 +75,14 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zglfw_c_cpp.addIncludePath(.{ .path = path ++ "/libs/glfw/include" });
+    zglfw_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
     zglfw_c_cpp.linkLibC();
 
     const host = (std.zig.system.NativeTargetInfo.detect(zglfw_c_cpp.target) catch unreachable).target;
 
-    const src_dir = path ++ "/libs/glfw/src/";
+    const system_sdk = b.dependency("system_sdk", .{});
+
+    const src_dir = thisDir() ++ "/libs/glfw/src/";
 
     switch (host.os.tag) {
         .windows => {
@@ -113,10 +112,12 @@ pub fn package(
         },
         .macos => {
             zglfw_c_cpp.addFrameworkPath(
-                .{ .path = system_sdk.path ++ "/macos12/System/Library/Frameworks" },
+                .{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) },
             );
-            zglfw_c_cpp.addSystemIncludePath(.{ .path = system_sdk.path ++ "/macos12/usr/include" });
-            zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path ++ "/macos12/usr/lib" });
+            zglfw_c_cpp.addSystemIncludePath(.{
+                .path = system_sdk.path("macos12/usr/include").getPath(b),
+            });
+            zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
             zglfw_c_cpp.linkSystemLibraryName("objc");
             zglfw_c_cpp.linkFramework("IOKit");
             zglfw_c_cpp.linkFramework("CoreFoundation");
@@ -148,11 +149,17 @@ pub fn package(
         },
         else => {
             // We assume Linux (X11)
-            zglfw_c_cpp.addSystemIncludePath(.{ .path = system_sdk.path ++ "/linux/include" });
+            zglfw_c_cpp.addSystemIncludePath(.{
+                .path = system_sdk.path("linux/include").getPath(b),
+            });
             if (host.cpu.arch.isX86()) {
-                zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/x86_64-linux-gnu" });
+                zglfw_c_cpp.addLibraryPath(.{
+                    .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b),
+                });
             } else {
-                zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path ++ "/linux/lib/aarch64-linux-gnu" });
+                zglfw_c_cpp.addLibraryPath(.{
+                    .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b),
+                });
             }
             zglfw_c_cpp.linkSystemLibraryName("X11");
             zglfw_c_cpp.addCSourceFiles(.{
@@ -203,7 +210,7 @@ pub fn runTests(
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zglfw-tests",
-        .root_source_file = .{ .path = path ++ "/src/zglfw.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -212,4 +219,8 @@ pub fn runTests(
     zglfw_pkg.link(tests);
 
     return &b.addRunArtifact(tests).step;
+}
+
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

@@ -127,8 +127,8 @@ pub fn package(
         .glfw_wgpu => {
             const zglfw = b.dependency("zglfw", .{});
             const zgpu = b.dependency("zgpu", .{});
-            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("/libs/glfw/include").getPath(b) });
-            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path("/libs/dawn/include").getPath(b) });
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("libs/glfw/include").getPath(b) });
+            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path("libs/dawn/include").getPath(b) });
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -139,7 +139,7 @@ pub fn package(
         },
         .glfw_opengl3 => {
             const zglfw = b.dependency("zglfw", .{});
-            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("/libs/glfw/include").getPath(b) });
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("libs/glfw/include").getPath(b) });
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",

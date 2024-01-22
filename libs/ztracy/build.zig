@@ -1,5 +1,4 @@
 const std = @import("std");
-const system_sdk = @import("system_sdk");
 
 pub const Options = struct {
     enable_ztracy: bool = false,
@@ -75,8 +74,9 @@ pub fn package(
                 ztracy_c_cpp.linkSystemLibraryName("dbghelp");
             },
             .macos => {
+                const system_sdk = b.dependency("system_sdk", .{});
                 ztracy_c_cpp.addFrameworkPath(
-                    .{ .path = system_sdk.path ++ "/System/Library/Frameworks" },
+                    .{ .path = system_sdk.path("System/Library/Frameworks").getPath(b) },
                 );
             },
             else => {},

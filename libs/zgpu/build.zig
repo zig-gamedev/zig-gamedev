@@ -1,14 +1,7 @@
 const std = @import("std");
 
-const system_sdk = @import("system_sdk");
 const zglfw = @import("zglfw");
 const zpool = @import("zpool");
-
-pub const path = getPath();
-
-inline fn getPath() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse unreachable;
-}
 
 const default_options = struct {
     const uniforms_buffer_size = 4 * 1024 * 1024;
@@ -51,11 +44,13 @@ pub const Package = struct {
 
         const b = exe.step.owner;
 
+        const system_sdk = b.dependency("system_sdk", .{});
+
         switch (target.os.tag) {
             .windows => {
                 const dawn_dep = b.dependency("dawn_x86_64_windows_gnu", .{});
                 exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
-                exe.addLibraryPath(.{ .path = system_sdk.path ++ "/windows/lib/x86_64-windows-gnu" });
+                exe.addLibraryPath(.{ .path = system_sdk.path("windows/lib/x86_64-windows-gnu").getPath(b) });
 
                 exe.linkSystemLibraryName("ole32");
                 exe.linkSystemLibraryName("dxguid");
@@ -70,9 +65,9 @@ pub const Package = struct {
                 }
             },
             .macos => {
-                exe.addFrameworkPath(.{ .path = system_sdk.path ++ "/macos12/System/Library/Frameworks" });
-                exe.addSystemIncludePath(.{ .path = system_sdk.path ++ "/macos12/usr/include" });
-                exe.addLibraryPath(.{ .path = system_sdk.path ++ "/macos12/usr/lib" });
+                exe.addFrameworkPath(.{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) });
+                exe.addSystemIncludePath(.{ .path = system_sdk.path("macos12/usr/include").getPath(b) });
+                exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
 
                 if (target.cpu.arch.isX86()) {
                     const dawn_dep = b.dependency("dawn_x86_64_macos", .{});
@@ -97,15 +92,15 @@ pub const Package = struct {
         exe.linkLibC();
         exe.linkLibCpp();
 
-        exe.addIncludePath(.{ .path = path ++ "/libs/dawn/include" });
-        exe.addIncludePath(.{ .path = path ++ "/src" });
+        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/dawn/include" });
+        exe.addIncludePath(.{ .path = thisDir() ++ "/src" });
 
         exe.addCSourceFile(.{
-            .file = .{ .path = path ++ "/src/dawn.cpp" },
+            .file = .{ .path = thisDir() ++ "/src/dawn.cpp" },
             .flags = &.{ "-std=c++17", "-fno-sanitize=undefined" },
         });
         exe.addCSourceFile(.{
-            .file = .{ .path = path ++ "/src/dawn_proc.c" },
+            .file = .{ .path = thisDir() ++ "/src/dawn_proc.c" },
             .flags = &.{"-fno-sanitize=undefined"},
         });
     }
@@ -139,7 +134,7 @@ pub fn package(
     const zgpu_options = step.createModule();
 
     const zgpu = b.addModule("zgpu", .{
-        .source_file = .{ .path = path ++ "/src/zgpu.zig" },
+        .source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .dependencies = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
             .{ .name = "zglfw", .module = args.deps.zglfw.zglfw },
@@ -239,7 +234,7 @@ pub fn runTests(
 
     const tests = b.addTest(.{
         .name = "zgpu-tests",
-        .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -250,4 +245,8 @@ pub fn runTests(
     pkg.link(tests);
     zglfw_pkg.link(tests);
     return &b.addRunArtifact(tests).step;
+}
+
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
