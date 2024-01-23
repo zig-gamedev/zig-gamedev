@@ -43,18 +43,18 @@ We build game development ecosystem for [Zig programming language](https://zigla
 
 ## Getting Started
 
-You just need [Git LFS](https://git-lfs.github.com/) and [Zig](https://ziglang.org)...
+You only need [Zig](https://ziglang.org) and [Git LFS](https://git-lfs.github.com/) to get started!
 
-Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently.
+Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.12.0-dev.2063+804cee3b9** as [nominated by the Mach engine project](https://machengine.org/about/nominated-zig) to maintain compatibilty for users of both projects.
 
 We recommend [zigup](https://github.com/marler8997/zigup) for managing compiler versions. Alternatively, you can download and install manually using the links below:
 
 | OS/Arch         | Download link               |
 | --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.2063+804cee3b9.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.2063+804cee3b9.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz) |
 
 If you need to use a more recent version of Zig, you can try our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
 

@@ -1,9 +1,10 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "triangle_content/";
 
-pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "triangle",
         .root_source_file = .{ .path = thisDir() ++ "/src/triangle.zig" },
@@ -20,16 +21,19 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     common_pkg.link(exe);
 
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
-    const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ content_dir,
     });
-    install_content_step.step.dependOn(dxc_step);
+    if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
+        const dxc_step = buildShaders(b);
+        exe.step.dependOn(dxc_step);
+        install_content_step.step.dependOn(dxc_step);
+    }
     exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
@@ -79,11 +83,14 @@ fn makeDxcCmd(
     const shader_ver = "6_6";
     const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
 
+    const dxc_path = switch (builtin.target.os.tag) {
+        .windows => thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
+        .linux => thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
+        else => @panic("Unsupported target"),
+    };
+
     const dxc_command = [9][]const u8{
-        if (@import("builtin").target.os.tag == .windows)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
-        else if (@import("builtin").target.os.tag == .linux)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
+        dxc_path,
         thisDir() ++ "/" ++ input_path,
         "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
@@ -95,8 +102,12 @@ fn makeDxcCmd(
     };
 
     const cmd_step = b.addSystemCommand(&dxc_command);
-    if (@import("builtin").target.os.tag == .linux)
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+    if (builtin.target.os.tag == .linux) {
+        cmd_step.setEnvironmentVariable(
+            "LD_LIBRARY_PATH",
+            thisDir() ++ "/../../libs/zwin32/bin/x64",
+        );
+    }
     dxc_step.dependOn(&cmd_step.step);
 }
 

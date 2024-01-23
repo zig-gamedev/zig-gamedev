@@ -3,7 +3,7 @@ const std = @import("std");
 const Options = @import("../../build.zig").Options;
 const content_dir = "monolith_content/";
 
-pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "monolith",
         .root_source_file = .{ .path = thisDir() ++ "/src/monolith.zig" },
@@ -33,7 +33,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     zphysics_pkg.link(exe);
 
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const install_content_step = b.addInstallDirectory(.{

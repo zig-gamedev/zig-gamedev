@@ -14,14 +14,14 @@ pub const Package = struct {
     zopengl: *std.Build.Module,
     zopengl_options: *std.Build.Module,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zopengl", pkg.zopengl);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zopengl", pkg.zopengl);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    _: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{
@@ -38,8 +38,8 @@ pub fn package(
     const options = options_step.createModule();
 
     const zopengl = b.addModule("zopengl", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zopengl.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/zopengl.zig" },
+        .imports = &.{
             .{ .name = "zopengl_options", .module = options },
         },
     });
@@ -54,7 +54,7 @@ pub fn package(
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zopengl-tests",
@@ -67,7 +67,7 @@ pub fn runTests(
             .api = .wrapper,
         },
     });
-    tests.addModule("zopengl_options", zopengl_pkg.zopengl_options);
+    tests.root_module.addImport("zopengl_options", zopengl_pkg.zopengl_options);
     zopengl_pkg.link(tests);
 
     return &b.addRunArtifact(tests).step;

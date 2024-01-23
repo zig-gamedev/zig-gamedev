@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.1871" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.2063" };
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -24,7 +24,11 @@ pub fn build(b: *std.Build) void {
             "zd3d12-enable-gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
-        .zpix_enable = b.option(bool, "zpix-enable", "Enable PIX for Windows profiler") orelse false,
+        .zpix_enable = b.option(
+            bool,
+            "zpix-enable",
+            "Enable PIX for Windows profiler",
+        ) orelse false,
     };
     ensureTarget(target) catch return;
     ensureGit(b.allocator) catch return;
@@ -37,28 +41,28 @@ pub fn build(b: *std.Build) void {
     //
     packagesCrossPlatform(b, options);
 
-    if (target.isWindows() and
-        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
-    {
-        packagesWindowsLinux(b, options);
+    if (target.result.os.tag == .windows) {
+        if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
+            packagesWindowsLinux(b, options);
 
-        if (builtin.target.os.tag == .windows) {
-            packagesWindows(b, options);
+            if (builtin.os.tag == .windows) {
+                packagesWindows(b, options);
+            }
         }
     }
 
     //
     // Sample applications
     //
-    samplesCrossPlatform(b, options);
+    samples(b, options);
 
-    if (options.target.isWindows() and
-        (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux))
-    {
-        samplesWindowsLinux(b, options);
+    if (target.result.os.tag == .windows) {
+        if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
+            samplesWindowsLinux(b, options);
 
-        if (builtin.target.os.tag == .windows) {
-            samplesWindows(b, options);
+            if (builtin.os.tag == .windows) {
+                samplesWindows(b, options);
+            }
         }
     }
 
@@ -66,8 +70,8 @@ pub fn build(b: *std.Build) void {
     // Tests
     //
     const test_step = b.step("test", "Run all tests");
-    testsCrossPlatform(b, target, optimize, test_step);
-    if (builtin.target.os.tag == .windows) {
+    tests(b, target, optimize, test_step);
+    if (builtin.os.tag == .windows) {
         testsWindows(b, target, optimize, test_step);
     }
 
@@ -158,7 +162,7 @@ fn packagesWindows(b: *std.Build, options: Options) void {
     });
 }
 
-fn samplesCrossPlatform(b: *std.Build, options: Options) void {
+fn samples(b: *std.Build, options: Options) void {
     const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
     const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
     const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
@@ -224,15 +228,15 @@ fn samplesWindows(b: *std.Build, options: Options) void {
     install(b, audio_experiments.build(b, options), "audio_experiments");
 }
 
-fn testsCrossPlatform(
+fn tests(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
     test_step.dependOn(zaudio.runTests(b, optimize, target));
     // TODO: Get zbullet tests working on Windows again
-    if (builtin.target.os.tag != .windows) {
+    if (target.result.os.tag != .windows) {
         test_step.dependOn(zbullet.runTests(b, optimize, target));
     }
     test_step.dependOn(zflecs.runTests(b, optimize, target));
@@ -254,7 +258,7 @@ fn testsCrossPlatform(
 
 fn testsWindows(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
@@ -324,7 +328,7 @@ const zflecs = @import("zflecs");
 
 pub const Options = struct {
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 
     zd3d12_enable_debug_layer: bool,
     zd3d12_enable_gbv: bool,
@@ -332,11 +336,15 @@ pub const Options = struct {
     zpix_enable: bool,
 };
 
-fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8) void {
+fn install(b: *std.Build, exe: *std.Build.Step.Compile, comptime name: []const u8) void {
     // TODO: Problems with LTO on Windows.
-    exe.want_lto = false;
-    if (exe.optimize == .ReleaseFast)
-        exe.strip = true;
+    if (exe.rootModuleTarget().os.tag == .windows) {
+        exe.want_lto = false;
+    }
+
+    if (exe.root_module.optimize == .ReleaseFast) {
+        exe.root_module.strip = true;
+    }
 
     //comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     //comptime _ = std.mem.replace(u8, name, "", "", desc_name[0..]);
@@ -354,7 +362,7 @@ fn install(b: *std.Build, exe: *std.Build.CompileStep, comptime name: []const u8
 }
 
 fn ensureZigVersion() !void {
-    var installed_ver = @import("builtin").zig_version;
+    var installed_ver = builtin.zig_version;
     installed_ver.build = null;
 
     if (installed_ver.order(min_zig_version) == .lt) {
@@ -376,18 +384,16 @@ fn ensureZigVersion() !void {
     }
 }
 
-fn ensureTarget(cross: std.zig.CrossTarget) !void {
-    const target = (std.zig.system.NativeTargetInfo.detect(cross) catch unreachable).target;
-
-    const supported = switch (target.os.tag) {
-        .windows => target.cpu.arch.isX86() and target.abi.isGnu(),
-        .linux => (target.cpu.arch.isX86() or target.cpu.arch.isAARCH64()) and target.abi.isGnu(),
+fn ensureTarget(target: std.Build.ResolvedTarget) !void {
+    const supported = switch (target.result.os.tag) {
+        .windows => target.result.cpu.arch.isX86() and target.result.abi.isGnu(),
+        .linux => (target.result.cpu.arch.isX86() or target.result.cpu.arch.isAARCH64()) and target.result.abi.isGnu(),
         .macos => blk: {
-            if (!target.cpu.arch.isX86() and !target.cpu.arch.isAARCH64()) break :blk false;
+            if (!target.result.cpu.arch.isX86() and !target.result.cpu.arch.isAARCH64()) break :blk false;
 
             // If min. target macOS version is lesser than the min version we have available, then
             // our Dawn binary is incompatible with the target.
-            if (target.os.version_range.semver.min.order(
+            if (target.result.os.version_range.semver.min.order(
                 .{ .major = 12, .minor = 0, .patch = 0 },
             ) == .lt) break :blk false;
             break :blk true;

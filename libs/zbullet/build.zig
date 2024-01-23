@@ -2,22 +2,22 @@ const std = @import("std");
 
 pub const Package = struct {
     zbullet: *std.Build.Module,
-    zbullet_c_cpp: *std.Build.CompileStep,
+    zbullet_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         exe.linkLibrary(pkg.zbullet_c_cpp);
-        exe.addModule("zbullet", pkg.zbullet);
+        exe.root_module.addImport("zbullet", pkg.zbullet);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     _: struct {},
 ) Package {
     const zbullet = b.addModule("zbullet", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
     });
 
     const zbullet_c_cpp = b.addStaticLibrary(.{
@@ -67,7 +67,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const zmath = b.dependency("zmath", .{});
 
@@ -77,7 +77,7 @@ pub fn runTests(
         .target = target,
         .optimize = optimize,
     });
-    tests.addModule("zmath", zmath.module("zmath"));
+    tests.root_module.addImport("zmath", zmath.module("zmath"));
 
     const pkg = package(b, target, optimize, .{});
     pkg.link(tests);

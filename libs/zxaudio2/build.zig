@@ -9,15 +9,15 @@ pub const Package = struct {
     zxaudio2: *std.Build.Module,
     zxaudio2_options: *std.Build.Module,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zxaudio2", pkg.zxaudio2);
-        exe.addModule("zxaudio2_options", pkg.zxaudio2_options);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zxaudio2", pkg.zxaudio2);
+        exe.root_module.addImport("zxaudio2_options", pkg.zxaudio2_options);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    _: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -30,8 +30,8 @@ pub fn package(
     const zxaudio2_options = step.createModule();
 
     const zxaudio2 = b.addModule("zxaudio2", .{
-        .source_file = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
+        .imports = &.{
             .{ .name = "zxaudio2_options", .module = zxaudio2_options },
             .{ .name = "zwin32", .module = args.deps.zwin32 },
         },
