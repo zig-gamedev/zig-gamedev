@@ -26,18 +26,18 @@ pub const Package = struct {
     options: Options,
     zgui: *std.Build.Module,
     zgui_options: *std.Build.Module,
-    zgui_c_cpp: *std.Build.CompileStep,
+    zgui_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         exe.linkLibrary(pkg.zgui_c_cpp);
-        exe.addModule("zgui", pkg.zgui);
-        exe.addModule("zgui_options", pkg.zgui_options);
+        exe.root_module.addImport("zgui", pkg.zgui);
+        exe.root_module.addImport("zgui_options", pkg.zgui_options);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     args: struct {
         options: Options,
@@ -50,8 +50,8 @@ pub fn package(
     const zgui_options = step.createModule();
 
     const zgui = b.addModule("zgui", .{
-        .source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/gui.zig" },
+        .imports = &.{
             .{ .name = "zgui_options", .module = zgui_options },
         },
     });
@@ -64,13 +64,13 @@ pub fn package(
         });
 
         b.installArtifact(lib);
-        if (target.isWindows()) {
+        if (target.result.os.tag == .windows) {
             lib.defineCMacro("IMGUI_API", "__declspec(dllexport)");
             lib.defineCMacro("IMPLOT_API", "__declspec(dllexport)");
             lib.defineCMacro("ZGUI_API", "__declspec(dllexport)");
         }
 
-        if (target.isDarwin()) {
+        if (target.result.os.tag == .macos) {
             lib.linker_allow_shlib_undefined = true;
         }
 
@@ -84,7 +84,7 @@ pub fn package(
     zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs" });
     zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/imgui" });
 
-    const abi = (std.zig.system.NativeTargetInfo.detect(target) catch unreachable).target.abi;
+    const abi = target.result.abi;
     zgui_c_cpp.linkLibC();
     if (abi != .msvc)
         zgui_c_cpp.linkLibCpp();
@@ -156,8 +156,8 @@ pub fn package(
                 },
                 .flags = cflags,
             });
-            zgui_c_cpp.linkSystemLibraryName("d3dcompiler_47");
-            zgui_c_cpp.linkSystemLibraryName("dwmapi");
+            zgui_c_cpp.linkSystemLibrary("d3dcompiler_47");
+            zgui_c_cpp.linkSystemLibrary("dwmapi");
         },
         .no_backend => {},
     }
@@ -202,7 +202,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.OptimizeMode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const gui_tests = b.addTest(.{
         .name = "gui-tests",

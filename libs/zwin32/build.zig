@@ -13,8 +13,8 @@ pub const Package = struct {
     install_xaudio2: *std.Build.Step,
     install_directml: *std.Build.Step,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep, libs: Libs) void {
-        exe.addModule("zwin32", pkg.zwin32);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile, libs: Libs) void {
+        exe.root_module.addImport("zwin32", pkg.zwin32);
         if (libs.d3d12) exe.step.dependOn(pkg.install_d3d12);
         if (libs.xaudio2) exe.step.dependOn(pkg.install_xaudio2);
         if (libs.directml) exe.step.dependOn(pkg.install_directml);
@@ -23,7 +23,7 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    _: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     _: struct {},
 ) Package {
@@ -71,7 +71,7 @@ pub fn package(
 
     return .{
         .zwin32 = b.addModule("zwin32", .{
-            .source_file = .{ .path = thisDir() ++ "/src/zwin32.zig" },
+            .root_source_file = .{ .path = thisDir() ++ "/src/zwin32.zig" },
         }),
         .install_d3d12 = install_d3d12,
         .install_xaudio2 = install_xaudio2,

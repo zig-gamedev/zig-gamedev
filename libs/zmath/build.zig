@@ -5,19 +5,20 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
+    target: std.Build.ResolvedTarget,
     options: Options,
     zmath: *std.Build.Module,
     zmath_options: *std.Build.Module,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zmath", pkg.zmath);
-        exe.addModule("zmath_options", pkg.zmath_options);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zmath", pkg.zmath);
+        exe.root_module.addImport("zmath_options", pkg.zmath_options);
     }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -33,13 +34,14 @@ pub fn package(
     const zmath_options = step.createModule();
 
     const zmath = b.addModule("zmath", .{
-        .source_file = .{ .path = thisDir() ++ "/src/main.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .imports = &.{
             .{ .name = "zmath_options", .module = zmath_options },
         },
     });
 
     return .{
+        .target = target,
         .options = args.options,
         .zmath = zmath,
         .zmath_options = zmath_options,
@@ -64,7 +66,7 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zmath-tests",
@@ -74,14 +76,14 @@ pub fn runTests(
     });
 
     const zmath_pkg = package(b, target, optimize, .{});
-    tests.addModule("zmath_options", zmath_pkg.zmath_options);
+    tests.root_module.addImport("zmath_options", zmath_pkg.zmath_options);
 
     return &b.addRunArtifact(tests).step;
 }
 
 pub fn runBenchmarks(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
     const exe = b.addExecutable(.{
         .name = "zmath-benchmarks",
@@ -91,7 +93,7 @@ pub fn runBenchmarks(
     });
 
     const zmath_pkg = package(b, target, .ReleaseFast, .{});
-    exe.addModule("zmath", zmath_pkg.zmath);
+    exe.root_module.addImport("zmath", zmath_pkg.zmath);
 
     return &b.addRunArtifact(exe).step;
 }

@@ -1,8 +1,9 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 
-pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "minimal_d3d12",
         .root_source_file = .{ .path = thisDir() ++ "/src/minimal_d3d12.zig" },
@@ -14,8 +15,10 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
 
-    const dxc_step = buildShaders(b);
-    exe.step.dependOn(dxc_step);
+    if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
+        const dxc_step = buildShaders(b);
+        exe.step.dependOn(dxc_step);
+    }
 
     exe.rdynamic = true;
 
@@ -43,11 +46,14 @@ fn makeDxcCmd(
     const shader_ver = "6_0";
     const shader_dir = thisDir() ++ "/src/";
 
+    const dxc_path = switch (builtin.target.os.tag) {
+        .windows => thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
+        .linux => thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
+        else => @panic("Unsupported target"),
+    };
+
     const dxc_command = [9][]const u8{
-        if (@import("builtin").target.os.tag == .windows)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
-        else if (@import("builtin").target.os.tag == .linux)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
+        dxc_path,
         thisDir() ++ "/" ++ input_path,
         "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
@@ -59,8 +65,12 @@ fn makeDxcCmd(
     };
 
     const cmd_step = b.addSystemCommand(&dxc_command);
-    if (@import("builtin").target.os.tag == .linux)
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+    if (builtin.target.os.tag == .linux) {
+        cmd_step.setEnvironmentVariable(
+            "LD_LIBRARY_PATH",
+            thisDir() ++ "/../../libs/zwin32/bin/x64",
+        );
+    }
     dxc_step.dependOn(&cmd_step.step);
 }
 

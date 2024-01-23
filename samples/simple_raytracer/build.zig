@@ -1,9 +1,10 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "simple_raytracer_content/";
 
-pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
+pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "simple_raytracer",
         .root_source_file = .{ .path = thisDir() ++ "/src/simple_raytracer.zig" },
@@ -22,16 +23,19 @@ pub fn build(b: *std.Build, options: Options) *std.Build.CompileStep {
     zd3d12_pkg.link(exe);
 
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
-    const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ content_dir,
     });
-    install_content_step.step.dependOn(dxc_step);
+    if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
+        const dxc_step = buildShaders(b);
+        exe.step.dependOn(dxc_step);
+        install_content_step.step.dependOn(dxc_step);
+    }
     exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
