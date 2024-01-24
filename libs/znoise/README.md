@@ -2,13 +2,16 @@
 
 ## Getting started
 
-Copy `znoise` folder to a `libs` subdirectory of the root of your project.
+Copy `znoise` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .znoise = .{ .path = "libs/znoise" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const znoise = @import("libs/znoise/build.zig");
+const znoise = @import("znoise");
 
 pub fn build(b: *std.Build) void {
     ...

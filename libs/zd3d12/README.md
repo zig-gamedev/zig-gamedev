@@ -15,14 +15,18 @@ Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intr
 
 ## Getting started
 
-Copy `zd3d12` and `zwin32` folders to a `libs` subdirectory of the root of your project.
+Copy `zd3d12` and `zwin32` folders to a `libs` subdirectory of the root of your project and and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zd3d12 = .{ .path = "libs/zd3d12" },
+    .zwin32 = .{ .path = "libs/zwin32" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zwin32 = @import("libs/zwin32/build.zig");
-const zd3d12 = @import("libs/zd3d12/build.zig");
+const zwin32 = @import("zwin32");
+const zd3d12 = @import("zd3d12");
 
 pub fn build(b: *std.Build) void {
     ...

@@ -23,13 +23,16 @@ and handle types can be distinct types even when other parameters are the same.
 
 ## Getting started
 
-Copy `zpool` folder to a `libs` subdirectory of the root of your project.
+Copy `zpool` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zpool = .{ .path = "libs/zpool" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zpool = @import("libs/zpool/build.zig");
+const zpool = @import("zpool");
 
 pub fn build(b: *std.Build) void {
     ...

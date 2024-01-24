@@ -2,13 +2,16 @@
 
 ## Getting started
 
-Copy `zflecs` folder to a `libs` subdirectory of the root of your project.
+Copy `zflecs` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zflecs = .{ .path = "libs/zflecs" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zflecs = @import("libs/zflecs/build.zig");
+const zflecs = @import("zflecs");
 
 pub fn build(b: *std.Build) void {
     ...

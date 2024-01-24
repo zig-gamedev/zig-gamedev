@@ -8,13 +8,16 @@ For a simple sample applications please see [here](https://github.com/michal-z/z
 
 ## Getting started
 
-Copy `zphysics` folder to a `libs` subdirectory of the root of your project.
+Copy `zphysics` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zphysics = .{ .path = "libs/zphysics" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zphysics = @import("libs/zphysics/build.zig");
+const zphysics = @import("zphysics");
 
 pub fn build(b: *std.Build) void {
     ...

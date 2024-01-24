@@ -10,13 +10,16 @@ be executed on a background thread by the `JobQueue`.
 
 ## Getting started
 
-Copy `zjobs` folder to a `libs` subdirectory of the root of your project.
+Copy `zjobs` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zjobs = .{ .path = "libs/zjobs" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zjobs = @import("libs/zjobs/build.zig");
+const zjobs = @import("zjobs");
 
 pub fn build(b: *std.build.Builder) void {
     ...

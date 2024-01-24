@@ -6,13 +6,16 @@ Supports:
 
 ## Getting started
 
-Copy `zopengl` folder to a `libs` subdirectory of the root of your project.
+Copy `zopengl` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zopengl = .{ .path = "libs/zopengl" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zopengl = @import("libs/zopengl/build.zig");
+const zopengl = @import("zopengl");
 
 pub fn build(b: *std.Build) void {
     ...

@@ -14,13 +14,16 @@ All memory allocations go through user-supplied, Zig allocator.
 
 ## Getting started
 
-Copy `zmesh` folder to a `libs` subdirectory of the root of your project.
+Copy `zmesh` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zmesh = .{ .path = "libs/zmesh" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zmesh = @import("libs/zmesh/build.zig");
+const zmesh = @import("zmesh");
 
 pub fn build(b: *std.Build) void {
     ...

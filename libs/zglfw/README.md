@@ -2,11 +2,15 @@
 
 ## Getting started
 
-Copy `zglfw` and `system-sdk` folders to a `libs` subdirectory of the root of your project.
+Copy `zglfw` and `system-sdk` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .system_sdk = .{ .path = "libs/system-sdk" },
+    .zglfw = .{ .path = "libs/zglfw" },
+```
 
 Then in your `build.zig` add:
 ```zig
-const zglfw = @import("libs/zglfw/build.zig");
+const zglfw = @import("zglfw");
 
 pub fn build(b: *std.Build) void {
     ...

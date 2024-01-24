@@ -28,13 +28,16 @@ For an example code please see:
 
 ## Getting started
 
-Copy `zbullet` folder to a `libs` subdirectory of the root of your project.
+Copy `zbullet` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zbullet = .{ .path = "libs/zbullet" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zbullet = @import("libs/zbullet/build.zig");
+const zbullet = @import("zbullet");
 
 pub fn build(b: *std.Build) void {
     ...

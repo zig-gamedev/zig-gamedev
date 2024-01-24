@@ -11,29 +11,21 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 
 ## Getting started
 
-Copy `zgui` folder to a `libs` subdirectory of the root of your project.
-
-To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw`, `zpool` and `system-sdk` folders (see [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend, see: [backend_glfw_wgpu.zig](src/backend_glfw_wgpu.zig) for an example.
-
-Next, copy [build.zig.zon](build.zig.zon) from the root of the `zig-gamedev` project to the root of your project and adjust `name` and `version` accordingly:
-
-``` zig
-.{
-    .name = "<your_project_name>",
-    .version = "<your_project_version",
-    // leave the rest unchanged
-    ...
-}
+Copy `zgui` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zgui = .{ .path = "libs/zgui" },
 ```
+
+To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw`, `zpool` and `system-sdk` folders and add the depenency paths (see [zgpu](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend by specifying `.no_backend` in the package options.
 
 Then in your `build.zig` add:
 ```zig
-const zgui = @import("libs/zgui/build.zig");
+const zgui = @import("zgui");
 
 // Needed for glfw/wgpu rendering backend
-const zglfw = @import("libs/zglfw/build.zig");
-const zgpu = @import("libs/zgpu/build.zig");
-const zpool = @import("libs/zpool/build.zig");
+const zglfw = @import("zglfw");
+const zgpu = @import("zgpu");
+const zpool = @import("zpool");
 
 pub fn build(b: *std.Build) void {
     ...

@@ -2,14 +2,18 @@
 
 ## Getting started
 
-Copy `zpix` and `zwin32` folders to a `libs` subdirectory of the root of your project.
+Copy `zpix` and `zwin32` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zpix = .{ .path = "libs/zpix" },
+    .zwin32 = .{ .path = "libs/zwin32" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zpix = @import("libs/zpix/build.zig");
-const zwin32 = @import("libs/zwin32/build.zig");
+const zpix = @import("zpix");
+const zwin32 = @import("zwin32");
 
 pub fn build(b: *std.Build) void {
     ...

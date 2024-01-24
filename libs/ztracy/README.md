@@ -4,13 +4,16 @@ Initial Zig bindings created by [Martin Wickham](https://github.com/SpexGuy/Zig-
 
 ## Getting started
 
-Copy `ztracy` folder to a `libs` subdirectory of the root of your project.
+Copy `ztracy` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .ztracy = .{ .path = "libs/ztracy" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const ztracy = @import("libs/ztracy/build.zig");
+const ztracy = @import("ztracy");
 
 pub fn build(b: *std.Build) void {
     ...

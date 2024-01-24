@@ -2,14 +2,18 @@
 
 ## Getting started
 
-Copy `zxaudio2` and `zwin32` folders to a `libs` subdirectory of the root of your project.
+Copy `zxaudio2` and `zwin32` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zxaudio2 = .{ .path = "libs/zxaudio2" },
+    .zwin32 = .{ .path = "libs/zwin32" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zwin32 = @import("libs/zwin32/build.zig");
-const zxaudio2 = @import("libs/zxaudio2/build.zig");
+const zwin32 = @import("zwin32");
+const zxaudio2 = @import("zxaudio2");
 
 pub fn build(b: *std.Build) void {
     ...

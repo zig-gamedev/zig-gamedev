@@ -11,11 +11,14 @@
 
 ## Getting started
 
-Copy `zstbi` folder to a `libs` subdirectory of the root of your project.
+Copy `zstbi` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .zstbi = .{ .path = "libs/zstbi" },
+```
 
 Then in your `build.zig` add:
 ```zig
-const zstbi = @import("libs/zstbi/build.zig");
+const zstbi = @import("zstbi");
 
 pub fn build(b: *std.Build) void {
     ...

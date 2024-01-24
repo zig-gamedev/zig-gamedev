@@ -36,13 +36,17 @@ Provided structs:
 
 ## Getting started
 
-Copy `zaudio` and `system-sdk` folders to a `libs` subdirectory of the root of your project.
+Copy `zaudio` and `system-sdk` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+```zig
+    .system_sdk = .{ .path = "libs/system-sdk" },
+    .zaudio = .{ .path = "libs/zaudio" },
+```
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zaudio = @import("libs/zaudio/build.zig");
+const zaudio = @import("zaudio");
 
 pub fn build(b: *std.Build) void {
     ...
