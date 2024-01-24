@@ -170,7 +170,7 @@ fn samples(b: *std.Build, options: Options) void {
     install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
     install(b, minimal_zgui_glfw_gl.build(b, options), "minimal_zgui_glfw_gl");
 
-    if (zgpu.isTargetSupported(options.target)) {
+    if (zgpu.checkTargetSupported(options.target)) {
         const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
         const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
         const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");

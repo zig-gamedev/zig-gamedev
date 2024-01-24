@@ -1,4 +1,5 @@
 const std = @import("std");
+const log = std.log.scoped(.zgpu);
 
 const zglfw = @import("zglfw");
 const zpool = @import("zpool");
@@ -38,23 +39,7 @@ pub const Package = struct {
     zgpu_options: *std.Build.Module,
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        if (!isTargetSupported(pkg.target)) {
-            std.log.err("\n" ++
-                \\---------------------------------------------------------------------------
-                \\
-                \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
-                \\
-                \\Following targets are supported:
-                \\
-                \\x86_64-windows-gnu
-                \\x86_64-linux-gnu
-                \\x86_64-macos.12.0.0-none
-                \\aarch64-linux-gnu
-                \\aarch64-macos.12.0.0-none
-                \\
-                \\---------------------------------------------------------------------------
-                \\
-            , .{});
+        if (!checkTargetSupported(pkg.target)) {
             @panic("Unsupported target");
         }
 
@@ -262,8 +247,8 @@ inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn isTargetSupported(target: std.Build.ResolvedTarget) bool {
-    return switch (target.result.os.tag) {
+pub fn checkTargetSupported(target: std.Build.ResolvedTarget) bool {
+    const supported = switch (target.result.os.tag) {
         .windows => target.result.cpu.arch.isX86() and target.result.abi.isGnu(),
         .linux => (target.result.cpu.arch.isX86() or target.result.cpu.arch.isAARCH64()) and target.result.abi.isGnu(),
         .macos => blk: {
@@ -278,4 +263,23 @@ pub fn isTargetSupported(target: std.Build.ResolvedTarget) bool {
         },
         else => false,
     };
+    if (supported == false) {
+        log.warn("\n" ++
+            \\---------------------------------------------------------------------------
+            \\
+            \\Dawn/WebGPU binary for this target is not available.
+            \\
+            \\Following targets are supported:
+            \\
+            \\x86_64-windows-gnu
+            \\x86_64-linux-gnu
+            \\x86_64-macos.12.0.0-none
+            \\aarch64-linux-gnu
+            \\aarch64-macos.12.0.0-none
+            \\
+            \\---------------------------------------------------------------------------
+            \\
+        , .{});
+    }
+    return supported;
 }
