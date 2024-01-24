@@ -274,7 +274,7 @@ pub fn isTargetSupported(target: std.Build.ResolvedTarget) bool {
             if (target.result.os.version_range.semver.min.order(
                 .{ .major = 12, .minor = 0, .patch = 0 },
             ) == .lt) break :blk false;
-            break :blk false;
+            break :blk true;
         },
         else => false,
     };
