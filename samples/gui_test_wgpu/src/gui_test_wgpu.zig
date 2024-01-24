@@ -22,6 +22,7 @@ const DemoState = struct {
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+    errdefer gctx.destroy(allocator);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
@@ -579,10 +580,7 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    zglfw.init() catch {
-        std.log.err("Failed to initialize GLFW library.", .{});
-        return;
-    };
+    try zglfw.init();
     defer zglfw.terminate();
 
     // Change current working directory to where the executable is located.
@@ -592,10 +590,7 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    const window = zglfw.Window.create(1600, 1000, window_title, null) catch {
-        std.log.err("Failed to create demo window.", .{});
-        return;
-    };
+    const window = try zglfw.Window.create(1600, 1000, window_title, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
@@ -604,10 +599,7 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    const demo = create(allocator, window) catch {
-        std.log.err("Failed to initialize the demo.", .{});
-        return;
-    };
+    const demo = try create(allocator, window);
     defer destroy(allocator, demo);
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {

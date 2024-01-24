@@ -8,10 +8,7 @@ const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: minimal zgpu zgui";
 
 pub fn main() !void {
-    zglfw.init() catch {
-        std.log.err("Failed to initialize GLFW library.", .{});
-        return;
-    };
+    try zglfw.init();
     defer zglfw.terminate();
 
     // Change current working directory to where the executable is located.
@@ -21,10 +18,7 @@ pub fn main() !void {
         std.os.chdir(path) catch {};
     }
 
-    const window = zglfw.Window.create(800, 500, window_title, null) catch {
-        std.log.err("Failed to create window.", .{});
-        return;
-    };
+    const window = try zglfw.Window.create(800, 500, window_title, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

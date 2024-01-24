@@ -49,6 +49,7 @@ pub const State = struct {
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !State {
         const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+        errdefer gctx.destroy(allocator);
 
         zgui.init(allocator);
         const scale_factor = scale_factor: {
