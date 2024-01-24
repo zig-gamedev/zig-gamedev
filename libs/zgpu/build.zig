@@ -117,6 +117,8 @@ pub fn package(
         },
     },
 ) Package {
+    ensureTarget(target);
+
     const step = b.addOptions();
     step.addOption(u64, "uniforms_buffer_size", args.options.uniforms_buffer_size);
     step.addOption(bool, "dawn_skip_validation", args.options.dawn_skip_validation);
@@ -249,4 +251,40 @@ pub fn runTests(
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
+
+fn ensureTarget(target: std.Build.ResolvedTarget) void {
+    if (!switch (target.result.os.tag) {
+        .windows => target.result.cpu.arch.isX86() and target.result.abi.isGnu(),
+        .linux => (target.result.cpu.arch.isX86() or target.result.cpu.arch.isAARCH64()) and target.result.abi.isGnu(),
+        .macos => blk: {
+            if (!target.result.cpu.arch.isX86() and !target.result.cpu.arch.isAARCH64()) break :blk false;
+
+            // If min. target macOS version is lesser than the min version we have available, then
+            // our Dawn binary is incompatible with the target.
+            if (target.result.os.version_range.semver.min.order(
+                .{ .major = 12, .minor = 0, .patch = 0 },
+            ) == .lt) break :blk false;
+            break :blk true;
+        },
+        else => false,
+    }) {
+        std.log.err("\n" ++
+            \\---------------------------------------------------------------------------
+            \\
+            \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
+            \\
+            \\Following targets are supported:
+            \\
+            \\x86_64-windows-gnu
+            \\x86_64-linux-gnu
+            \\x86_64-macos.12.0.0-none
+            \\aarch64-linux-gnu
+            \\aarch64-macos.12.0.0-none
+            \\
+            \\---------------------------------------------------------------------------
+            \\
+        , .{});
+        @panic("Unsupported target");
+    }
 }

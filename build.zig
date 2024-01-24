@@ -30,7 +30,6 @@ pub fn build(b: *std.Build) void {
             "Enable PIX for Windows profiler",
         ) orelse false,
     };
-    ensureTarget(target) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator, "install") catch return;
     ensureGitLfs(b.allocator, "pull") catch return;
@@ -381,43 +380,6 @@ fn ensureZigVersion() !void {
             \\
         , .{ min_zig_version, installed_ver });
         return error.ZigIsTooOld;
-    }
-}
-
-fn ensureTarget(target: std.Build.ResolvedTarget) !void {
-    const supported = switch (target.result.os.tag) {
-        .windows => target.result.cpu.arch.isX86() and target.result.abi.isGnu(),
-        .linux => (target.result.cpu.arch.isX86() or target.result.cpu.arch.isAARCH64()) and target.result.abi.isGnu(),
-        .macos => blk: {
-            if (!target.result.cpu.arch.isX86() and !target.result.cpu.arch.isAARCH64()) break :blk false;
-
-            // If min. target macOS version is lesser than the min version we have available, then
-            // our Dawn binary is incompatible with the target.
-            if (target.result.os.version_range.semver.min.order(
-                .{ .major = 12, .minor = 0, .patch = 0 },
-            ) == .lt) break :blk false;
-            break :blk true;
-        },
-        else => false,
-    };
-    if (!supported) {
-        std.log.err("\n" ++
-            \\---------------------------------------------------------------------------
-            \\
-            \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
-            \\
-            \\Following targets are supported:
-            \\
-            \\x86_64-windows-gnu
-            \\x86_64-linux-gnu
-            \\x86_64-macos.12.0.0-none
-            \\aarch64-linux-gnu
-            \\aarch64-macos.12.0.0-none
-            \\
-            \\---------------------------------------------------------------------------
-            \\
-        , .{});
-        return error.TargetNotSupported;
     }
 }
 
