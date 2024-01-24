@@ -164,37 +164,41 @@ fn packagesWindows(b: *std.Build, options: Options) void {
 fn samples(b: *std.Build, options: Options) void {
     const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
     const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
-    const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
-    const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
-    const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
-    const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
-    const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
-    const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
-    const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
-    const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
     const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
-    const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
-    const layers_wgpu = @import("samples/layers_wgpu/build.zig");
-    const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
-    const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
-    const monolith = @import("samples/monolith/build.zig");
 
     install(b, minimal_glfw_gl.build(b, options), "minimal_glfw_gl");
     install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
-    install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
-    install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
-    install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-    install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
     install(b, minimal_zgui_glfw_gl.build(b, options), "minimal_zgui_glfw_gl");
-    install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
-    install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
-    install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
-    install(b, layers_wgpu.build(b, options), "layers_wgpu");
-    install(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-    install(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
-    install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
-    install(b, monolith.build(b, options), "monolith");
-    install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+
+    if (zgpu.isTargetSupported(options.target)) {
+        const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
+        const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
+        const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
+        const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
+        const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
+        const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
+        const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+        const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
+        const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
+        const layers_wgpu = @import("samples/layers_wgpu/build.zig");
+        const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
+        const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+        const monolith = @import("samples/monolith/build.zig");
+
+        install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
+        install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
+        install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+        install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
+        install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
+        install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
+        install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
+        install(b, layers_wgpu.build(b, options), "layers_wgpu");
+        install(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
+        install(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
+        install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
+        install(b, monolith.build(b, options), "monolith");
+        install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    }
 }
 
 fn samplesWindowsLinux(b: *std.Build, options: Options) void {

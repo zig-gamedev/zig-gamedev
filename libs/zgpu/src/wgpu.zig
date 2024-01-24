@@ -1,5 +1,9 @@
 const std = @import("std");
 
+test {
+    std.testing.refAllDecls(@This());
+}
+
 pub const AdapterType = enum(u32) {
     discrete_gpu,
     integrated_gpu,

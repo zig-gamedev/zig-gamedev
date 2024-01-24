@@ -13,6 +13,10 @@ const wgsl = @import("common_wgsl.zig");
 const zgpu_options = @import("zgpu_options");
 pub const wgpu = @import("wgpu.zig");
 
+test {
+    _ = wgpu;
+}
+
 pub const GraphicsContextOptions = struct {
     present_mode: wgpu.PresentMode = .fifo,
 };
@@ -79,7 +83,7 @@ pub const GraphicsContext = struct {
                     \\---------------------------------------------------------------------------
                     \\
                     \\This program requires:
-                    \\
+                    \\if (zgpu.isTargetSupported(options.target)) {
                     \\  * Vulkan graphics driver on Linux (OpenGL is NOT supported)
                     \\
                     \\Please install latest supported driver and try again.

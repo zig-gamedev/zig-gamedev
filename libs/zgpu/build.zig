@@ -38,6 +38,26 @@ pub const Package = struct {
     zgpu_options: *std.Build.Module,
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        if (!isTargetSupported(pkg.target)) {
+            std.log.err("\n" ++
+                \\---------------------------------------------------------------------------
+                \\
+                \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
+                \\
+                \\Following targets are supported:
+                \\
+                \\x86_64-windows-gnu
+                \\x86_64-linux-gnu
+                \\x86_64-macos.12.0.0-none
+                \\aarch64-linux-gnu
+                \\aarch64-macos.12.0.0-none
+                \\
+                \\---------------------------------------------------------------------------
+                \\
+            , .{});
+            @panic("Unsupported target");
+        }
+
         exe.root_module.addImport("zgpu", pkg.zgpu);
         exe.root_module.addImport("zgpu_options", pkg.zgpu_options);
 
@@ -117,8 +137,6 @@ pub fn package(
         },
     },
 ) Package {
-    ensureTarget(target);
-
     const step = b.addOptions();
     step.addOption(u64, "uniforms_buffer_size", args.options.uniforms_buffer_size);
     step.addOption(bool, "dawn_skip_validation", args.options.dawn_skip_validation);
@@ -231,21 +249,12 @@ pub fn runTests(
     optimize: std.builtin.OptimizeMode,
     target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
-    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
-    const zpool_pkg = zpool.package(b, target, optimize, .{});
-
     const tests = b.addTest(.{
         .name = "zgpu-tests",
         .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .target = target,
         .optimize = optimize,
     });
-    const pkg = package(b, target, optimize, .{
-        .options = .{},
-        .deps = .{ .zglfw = zglfw_pkg, .zpool = zpool_pkg },
-    });
-    pkg.link(tests);
-    zglfw_pkg.link(tests);
     return &b.addRunArtifact(tests).step;
 }
 
@@ -253,8 +262,8 @@ inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
-fn ensureTarget(target: std.Build.ResolvedTarget) void {
-    if (!switch (target.result.os.tag) {
+pub fn isTargetSupported(target: std.Build.ResolvedTarget) bool {
+    return switch (target.result.os.tag) {
         .windows => target.result.cpu.arch.isX86() and target.result.abi.isGnu(),
         .linux => (target.result.cpu.arch.isX86() or target.result.cpu.arch.isAARCH64()) and target.result.abi.isGnu(),
         .macos => blk: {
@@ -265,26 +274,8 @@ fn ensureTarget(target: std.Build.ResolvedTarget) void {
             if (target.result.os.version_range.semver.min.order(
                 .{ .major = 12, .minor = 0, .patch = 0 },
             ) == .lt) break :blk false;
-            break :blk true;
+            break :blk false;
         },
         else => false,
-    }) {
-        std.log.err("\n" ++
-            \\---------------------------------------------------------------------------
-            \\
-            \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
-            \\
-            \\Following targets are supported:
-            \\
-            \\x86_64-windows-gnu
-            \\x86_64-linux-gnu
-            \\x86_64-macos.12.0.0-none
-            \\aarch64-linux-gnu
-            \\aarch64-macos.12.0.0-none
-            \\
-            \\---------------------------------------------------------------------------
-            \\
-        , .{});
-        @panic("Unsupported target");
-    }
+    };
 }
