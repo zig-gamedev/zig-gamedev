@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace wgpu {
 
@@ -66,6 +67,10 @@ namespace wgpu {
         SrcAlphaSaturated = 0x0000000A,
         Constant = 0x0000000B,
         OneMinusConstant = 0x0000000C,
+        Src1 = 0x0000000D,
+        OneMinusSrc1 = 0x0000000E,
+        Src1Alpha = 0x0000000F,
+        OneMinusSrc1Alpha = 0x00000010,
     };
 
     enum class BlendOperation : uint32_t {
@@ -187,7 +192,6 @@ namespace wgpu {
         RG11B10UfloatRenderable = 0x0000000A,
         BGRA8UnormStorage = 0x0000000B,
         Float32Filterable = 0x0000000C,
-        DawnShaderFloat16 = 0x000003E9,
         DawnInternalUsages = 0x000003EA,
         DawnMultiPlanarFormats = 0x000003EB,
         DawnNative = 0x000003EC,
@@ -197,6 +201,23 @@ namespace wgpu {
         SurfaceCapabilities = 0x000003F0,
         TransientAttachments = 0x000003F1,
         MSAARenderToSingleSampled = 0x000003F2,
+        DualSourceBlending = 0x000003F3,
+        D3D11MultithreadProtected = 0x000003F4,
+        ANGLETextureSharing = 0x000003F5,
+        SharedTextureMemoryVkDedicatedAllocation = 0x0000044C,
+        SharedTextureMemoryAHardwareBuffer = 0x0000044D,
+        SharedTextureMemoryDmaBuf = 0x0000044E,
+        SharedTextureMemoryOpaqueFD = 0x0000044F,
+        SharedTextureMemoryZirconHandle = 0x00000450,
+        SharedTextureMemoryDXGISharedHandle = 0x00000451,
+        SharedTextureMemoryD3D11Texture2D = 0x00000452,
+        SharedTextureMemoryIOSurface = 0x00000453,
+        SharedTextureMemoryEGLImage = 0x00000454,
+        SharedFenceVkSemaphoreOpaqueFD = 0x000004B0,
+        SharedFenceVkSemaphoreSyncFD = 0x000004B1,
+        SharedFenceVkSemaphoreZirconHandle = 0x000004B2,
+        SharedFenceDXGISharedHandle = 0x000004B3,
+        SharedFenceMTLSharedEvent = 0x000004B4,
     };
 
     enum class FilterMode : uint32_t {
@@ -320,6 +341,30 @@ namespace wgpu {
         RequestAdapterOptionsGetGLProc = 0x000003F3,
         DawnMultisampleStateRenderToSingleSampled = 0x000003F4,
         DawnRenderPassColorAttachmentRenderToSingleSampled = 0x000003F5,
+        SharedTextureMemoryVkImageDescriptor = 0x0000044C,
+        SharedTextureMemoryVkDedicatedAllocationDescriptor = 0x0000044D,
+        SharedTextureMemoryAHardwareBufferDescriptor = 0x0000044E,
+        SharedTextureMemoryDmaBufDescriptor = 0x0000044F,
+        SharedTextureMemoryOpaqueFDDescriptor = 0x00000450,
+        SharedTextureMemoryZirconHandleDescriptor = 0x00000451,
+        SharedTextureMemoryDXGISharedHandleDescriptor = 0x00000452,
+        SharedTextureMemoryD3D11Texture2DDescriptor = 0x00000453,
+        SharedTextureMemoryIOSurfaceDescriptor = 0x00000454,
+        SharedTextureMemoryEGLImageDescriptor = 0x00000455,
+        SharedTextureMemoryInitializedBeginState = 0x000004B0,
+        SharedTextureMemoryInitializedEndState = 0x000004B1,
+        SharedTextureMemoryVkImageLayoutBeginState = 0x000004B2,
+        SharedTextureMemoryVkImageLayoutEndState = 0x000004B3,
+        SharedFenceVkSemaphoreOpaqueFDDescriptor = 0x000004B4,
+        SharedFenceVkSemaphoreOpaqueFDExportInfo = 0x000004B5,
+        SharedFenceVkSemaphoreSyncFDDescriptor = 0x000004B6,
+        SharedFenceVkSemaphoreSyncFDExportInfo = 0x000004B7,
+        SharedFenceVkSemaphoreZirconHandleDescriptor = 0x000004B8,
+        SharedFenceVkSemaphoreZirconHandleExportInfo = 0x000004B9,
+        SharedFenceDXGISharedHandleDescriptor = 0x000004BA,
+        SharedFenceDXGISharedHandleExportInfo = 0x000004BB,
+        SharedFenceMTLSharedEventDescriptor = 0x000004BC,
+        SharedFenceMTLSharedEventExportInfo = 0x000004BD,
     };
 
     enum class SamplerBindingType : uint32_t {
@@ -327,6 +372,15 @@ namespace wgpu {
         Filtering = 0x00000001,
         NonFiltering = 0x00000002,
         Comparison = 0x00000003,
+    };
+
+    enum class SharedFenceType : uint32_t {
+        Undefined = 0x00000000,
+        VkSemaphoreOpaqueFD = 0x00000001,
+        VkSemaphoreSyncFD = 0x00000002,
+        VkSemaphoreZirconHandle = 0x00000003,
+        DXGISharedHandle = 0x00000004,
+        MTLSharedEvent = 0x00000005,
     };
 
     enum class StencilOperation : uint32_t {
@@ -603,6 +657,8 @@ namespace wgpu {
     class RenderPipeline;
     class Sampler;
     class ShaderModule;
+    class SharedFence;
+    class SharedTextureMemory;
     class Surface;
     class SwapChain;
     class Texture;
@@ -654,6 +710,31 @@ namespace wgpu {
     struct ShaderModuleDescriptor;
     struct ShaderModuleSPIRVDescriptor;
     struct ShaderModuleWGSLDescriptor;
+    struct SharedFenceDescriptor;
+    struct SharedFenceDXGISharedHandleDescriptor;
+    struct SharedFenceDXGISharedHandleExportInfo;
+    struct SharedFenceExportInfo;
+    struct SharedFenceMTLSharedEventDescriptor;
+    struct SharedFenceMTLSharedEventExportInfo;
+    struct SharedFenceVkSemaphoreOpaqueFDDescriptor;
+    struct SharedFenceVkSemaphoreOpaqueFDExportInfo;
+    struct SharedFenceVkSemaphoreSyncFDDescriptor;
+    struct SharedFenceVkSemaphoreSyncFDExportInfo;
+    struct SharedFenceVkSemaphoreZirconHandleDescriptor;
+    struct SharedFenceVkSemaphoreZirconHandleExportInfo;
+    struct SharedTextureMemoryAHardwareBufferDescriptor;
+    struct SharedTextureMemoryBeginAccessDescriptor;
+    struct SharedTextureMemoryDescriptor;
+    struct SharedTextureMemoryDmaBufDescriptor;
+    struct SharedTextureMemoryDXGISharedHandleDescriptor;
+    struct SharedTextureMemoryEGLImageDescriptor;
+    struct SharedTextureMemoryEndAccessState;
+    struct SharedTextureMemoryIOSurfaceDescriptor;
+    struct SharedTextureMemoryOpaqueFDDescriptor;
+    struct SharedTextureMemoryVkDedicatedAllocationDescriptor;
+    struct SharedTextureMemoryVkImageLayoutBeginState;
+    struct SharedTextureMemoryVkImageLayoutEndState;
+    struct SharedTextureMemoryZirconHandleDescriptor;
     struct StencilFaceState;
     struct StorageTextureBindingLayout;
     struct SurfaceDescriptor;
@@ -683,6 +764,8 @@ namespace wgpu {
     struct ProgrammableStageDescriptor;
     struct RenderPassColorAttachment;
     struct RequiredLimits;
+    struct SharedTextureMemoryProperties;
+    struct SharedTextureMemoryVkImageDescriptor;
     struct SupportedLimits;
     struct TextureDescriptor;
     struct VertexBufferLayout;
@@ -694,6 +777,24 @@ namespace wgpu {
     struct VertexState;
     struct FragmentState;
     struct RenderPipelineDescriptor;
+
+
+    // Special class for booleans in order to allow implicit conversions.
+    class Bool {
+      public:
+        constexpr Bool() = default;
+        // NOLINTNEXTLINE(runtime/explicit) allow implicit construction
+        constexpr Bool(bool value) : mValue(static_cast<WGPUBool>(value)) {}
+        // NOLINTNEXTLINE(runtime/explicit) allow implicit construction
+        Bool(WGPUBool value): mValue(value) {}
+
+        constexpr operator bool() const { return static_cast<bool>(mValue); }
+
+      private:
+        friend struct std::hash<Bool>;
+        // Default to false.
+        WGPUBool mValue = static_cast<WGPUBool>(false);
+    };
 
     template<typename Derived, typename CType>
     class ObjectBase {
@@ -786,9 +887,9 @@ namespace wgpu {
         Device CreateDevice(DeviceDescriptor const * descriptor = nullptr) const;
         size_t EnumerateFeatures(FeatureName * features) const;
         Instance GetInstance() const;
-        bool GetLimits(SupportedLimits * limits) const;
+        Bool GetLimits(SupportedLimits * limits) const;
         void GetProperties(AdapterProperties * properties) const;
-        bool HasFeature(FeatureName feature) const;
+        Bool HasFeature(FeatureName feature) const;
         void RequestDevice(DeviceDescriptor const * descriptor, RequestDeviceCallback callback, void * userdata) const;
 
       private:
@@ -869,7 +970,6 @@ namespace wgpu {
         void CopyBufferToTexture(ImageCopyBuffer const * source, ImageCopyTexture const * destination, Extent3D const * copySize) const;
         void CopyTextureToBuffer(ImageCopyTexture const * source, ImageCopyBuffer const * destination, Extent3D const * copySize) const;
         void CopyTextureToTexture(ImageCopyTexture const * source, ImageCopyTexture const * destination, Extent3D const * copySize) const;
-        void CopyTextureToTextureInternal(ImageCopyTexture const * source, ImageCopyTexture const * destination, Extent3D const * copySize) const;
         CommandBuffer Finish(CommandBufferDescriptor const * descriptor = nullptr) const;
         void InjectValidationError(char const * message) const;
         void InsertDebugMarker(char const * markerLabel) const;
@@ -951,10 +1051,12 @@ namespace wgpu {
         size_t EnumerateFeatures(FeatureName * features) const;
         void ForceLoss(DeviceLostReason type, char const * message) const;
         Adapter GetAdapter() const;
-        bool GetLimits(SupportedLimits * limits) const;
+        Bool GetLimits(SupportedLimits * limits) const;
         Queue GetQueue() const;
         TextureUsage GetSupportedSurfaceUsage(Surface const& surface) const;
-        bool HasFeature(FeatureName feature) const;
+        Bool HasFeature(FeatureName feature) const;
+        SharedFence ImportSharedFence(SharedFenceDescriptor const * descriptor) const;
+        SharedTextureMemory ImportSharedTextureMemory(SharedTextureMemoryDescriptor const * descriptor) const;
         void InjectError(ErrorType type, char const * message) const;
         void PopErrorScope(ErrorCallback callback, void * userdata) const;
         void PushErrorScope(ErrorFilter filter) const;
@@ -1162,6 +1264,36 @@ namespace wgpu {
         static void WGPURelease(WGPUShaderModule handle);
     };
 
+    class SharedFence : public ObjectBase<SharedFence, WGPUSharedFence> {
+      public:
+        using ObjectBase::ObjectBase;
+        using ObjectBase::operator=;
+
+        void ExportInfo(SharedFenceExportInfo * info) const;
+
+      private:
+        friend ObjectBase<SharedFence, WGPUSharedFence>;
+        static void WGPUReference(WGPUSharedFence handle);
+        static void WGPURelease(WGPUSharedFence handle);
+    };
+
+    class SharedTextureMemory : public ObjectBase<SharedTextureMemory, WGPUSharedTextureMemory> {
+      public:
+        using ObjectBase::ObjectBase;
+        using ObjectBase::operator=;
+
+        void BeginAccess(Texture const& texture, SharedTextureMemoryBeginAccessDescriptor const * descriptor) const;
+        Texture CreateTexture(TextureDescriptor const * descriptor) const;
+        void EndAccess(Texture const& texture, SharedTextureMemoryEndAccessState * descriptor) const;
+        void GetProperties(SharedTextureMemoryProperties * properties) const;
+        void SetLabel(char const * label) const;
+
+      private:
+        friend ObjectBase<SharedTextureMemory, WGPUSharedTextureMemory>;
+        static void WGPUReference(WGPUSharedTextureMemory handle);
+        static void WGPURelease(WGPUSharedTextureMemory handle);
+    };
+
     class Surface : public ObjectBase<Surface, WGPUSurface> {
       public:
         using ObjectBase::ObjectBase;
@@ -1230,26 +1362,32 @@ namespace wgpu {
     Proc GetProcAddress(Device device, char const * procName);
 
     struct AdapterProperties {
+        AdapterProperties() = default;
+        ~AdapterProperties();
+        AdapterProperties(const AdapterProperties&) = delete;
+        AdapterProperties& operator=(const AdapterProperties&) = delete;
+        AdapterProperties(AdapterProperties&&);
+        AdapterProperties& operator=(AdapterProperties&&);
         ChainedStructOut  * nextInChain = nullptr;
-        uint32_t vendorID;
-        char const * vendorName;
-        char const * architecture;
-        uint32_t deviceID;
-        char const * name;
-        char const * driverDescription;
-        AdapterType adapterType;
-        BackendType backendType;
-        bool compatibilityMode = false;
+        uint32_t const vendorID = {};
+        char const * const vendorName = nullptr;
+        char const * const architecture = nullptr;
+        uint32_t const deviceID = {};
+        char const * const name = nullptr;
+        char const * const driverDescription = nullptr;
+        AdapterType const adapterType = {};
+        BackendType const backendType = {};
+        Bool const compatibilityMode = false;
     };
 
     struct BindGroupEntry {
         ChainedStruct const * nextInChain = nullptr;
         uint32_t binding;
-        Buffer buffer = nullptr;
+        Buffer buffer;
         uint64_t offset = 0;
         uint64_t size = WGPU_WHOLE_SIZE;
-        Sampler sampler = nullptr;
-        TextureView textureView = nullptr;
+        Sampler sampler;
+        TextureView textureView;
     };
 
     struct BlendComponent {
@@ -1261,7 +1399,7 @@ namespace wgpu {
     struct BufferBindingLayout {
         ChainedStruct const * nextInChain = nullptr;
         BufferBindingType type = BufferBindingType::Undefined;
-        bool hasDynamicOffset = false;
+        Bool hasDynamicOffset = false;
         uint64_t minBindingSize = 0;
     };
 
@@ -1270,7 +1408,7 @@ namespace wgpu {
         char const * label = nullptr;
         BufferUsage usage;
         uint64_t size;
-        bool mappedAtCreation = false;
+        Bool mappedAtCreation = false;
     };
 
     struct Color {
@@ -1317,14 +1455,14 @@ namespace wgpu {
 
     struct CopyTextureForBrowserOptions {
         ChainedStruct const * nextInChain = nullptr;
-        bool flipY = false;
-        bool needsColorSpaceConversion = false;
+        Bool flipY = false;
+        Bool needsColorSpaceConversion = false;
         AlphaMode srcAlphaMode = AlphaMode::Unpremultiplied;
         float const * srcTransferFunctionParameters = nullptr;
         float const * conversionMatrix = nullptr;
         float const * dstTransferFunctionParameters = nullptr;
         AlphaMode dstAlphaMode = AlphaMode::Unpremultiplied;
-        bool internalUsage = false;
+        Bool internalUsage = false;
     };
 
     // Can be chained in AdapterProperties
@@ -1341,8 +1479,8 @@ namespace wgpu {
         DawnBufferDescriptorErrorInfoFromWireClient() {
             sType = SType::DawnBufferDescriptorErrorInfoFromWireClient;
         }
-        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(bool ));
-        alignas(kFirstMemberAlignment) bool outOfMemory = false;
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(Bool ));
+        alignas(kFirstMemberAlignment) Bool outOfMemory = false;
     };
 
     // Can be chained in DeviceDescriptor
@@ -1359,8 +1497,8 @@ namespace wgpu {
         DawnEncoderInternalUsageDescriptor() {
             sType = SType::DawnEncoderInternalUsageDescriptor;
         }
-        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(bool ));
-        alignas(kFirstMemberAlignment) bool useInternalUsages = false;
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(Bool ));
+        alignas(kFirstMemberAlignment) Bool useInternalUsages = false;
     };
 
     // Can be chained in MultisampleState
@@ -1368,8 +1506,8 @@ namespace wgpu {
         DawnMultisampleStateRenderToSingleSampled() {
             sType = SType::DawnMultisampleStateRenderToSingleSampled;
         }
-        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(bool ));
-        alignas(kFirstMemberAlignment) bool enabled = false;
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(Bool ));
+        alignas(kFirstMemberAlignment) Bool enabled = false;
     };
 
     // Can be chained in RenderPassColorAttachment
@@ -1386,8 +1524,8 @@ namespace wgpu {
         DawnShaderModuleSPIRVOptionsDescriptor() {
             sType = SType::DawnShaderModuleSPIRVOptionsDescriptor;
         }
-        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(bool ));
-        alignas(kFirstMemberAlignment) bool allowNonUniformDerivatives = false;
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(Bool ));
+        alignas(kFirstMemberAlignment) Bool allowNonUniformDerivatives = false;
     };
 
     // Can be chained in TextureDescriptor
@@ -1414,8 +1552,8 @@ namespace wgpu {
     };
 
     struct Extent2D {
-        uint32_t width = 0;
-        uint32_t height = 1;
+        uint32_t width;
+        uint32_t height;
     };
 
     struct Extent3D {
@@ -1483,7 +1621,7 @@ namespace wgpu {
         ChainedStruct const * nextInChain = nullptr;
         uint32_t count = 1;
         uint32_t mask = 0xFFFFFFFF;
-        bool alphaToCoverageEnabled = false;
+        Bool alphaToCoverageEnabled = false;
     };
 
     struct Origin2D {
@@ -1509,8 +1647,8 @@ namespace wgpu {
         PrimitiveDepthClipControl() {
             sType = SType::PrimitiveDepthClipControl;
         }
-        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(bool ));
-        alignas(kFirstMemberAlignment) bool unclippedDepth = false;
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(Bool ));
+        alignas(kFirstMemberAlignment) Bool unclippedDepth = false;
     };
 
     struct PrimitiveState {
@@ -1547,8 +1685,8 @@ namespace wgpu {
         TextureFormat const * colorFormats;
         TextureFormat depthStencilFormat = TextureFormat::Undefined;
         uint32_t sampleCount = 1;
-        bool depthReadOnly = false;
-        bool stencilReadOnly = false;
+        Bool depthReadOnly = false;
+        Bool stencilReadOnly = false;
     };
 
     struct RenderPassDepthStencilAttachment {
@@ -1556,11 +1694,11 @@ namespace wgpu {
         LoadOp depthLoadOp = LoadOp::Undefined;
         StoreOp depthStoreOp = StoreOp::Undefined;
         float depthClearValue = NAN;
-        bool depthReadOnly = false;
+        Bool depthReadOnly = false;
         LoadOp stencilLoadOp = LoadOp::Undefined;
         StoreOp stencilStoreOp = StoreOp::Undefined;
         uint32_t stencilClearValue = 0;
-        bool stencilReadOnly = false;
+        Bool stencilReadOnly = false;
     };
 
     // Can be chained in RenderPassDescriptor
@@ -1580,11 +1718,11 @@ namespace wgpu {
 
     struct RequestAdapterOptions {
         ChainedStruct const * nextInChain = nullptr;
-        Surface compatibleSurface = nullptr;
+        Surface compatibleSurface;
         PowerPreference powerPreference = PowerPreference::Undefined;
         BackendType backendType = BackendType::Undefined;
-        bool forceFallbackAdapter = false;
-        bool compatibilityMode = false;
+        Bool forceFallbackAdapter = false;
+        Bool compatibilityMode = false;
     };
 
     struct SamplerBindingLayout {
@@ -1629,6 +1767,232 @@ namespace wgpu {
         }
         static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(char const * ));
         alignas(kFirstMemberAlignment) char const * code;
+    };
+
+    struct SharedFenceDescriptor {
+        ChainedStruct const * nextInChain = nullptr;
+        char const * label = nullptr;
+    };
+
+    // Can be chained in SharedFenceDescriptor
+    struct SharedFenceDXGISharedHandleDescriptor : ChainedStruct {
+        SharedFenceDXGISharedHandleDescriptor() {
+            sType = SType::SharedFenceDXGISharedHandleDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * handle;
+    };
+
+    // Can be chained in SharedFenceExportInfo
+    struct SharedFenceDXGISharedHandleExportInfo : ChainedStructOut {
+        SharedFenceDXGISharedHandleExportInfo() {
+            sType = SType::SharedFenceDXGISharedHandleExportInfo;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * handle;
+    };
+
+    struct SharedFenceExportInfo {
+        ChainedStructOut  * nextInChain = nullptr;
+        SharedFenceType type;
+    };
+
+    // Can be chained in SharedFenceDescriptor
+    struct SharedFenceMTLSharedEventDescriptor : ChainedStruct {
+        SharedFenceMTLSharedEventDescriptor() {
+            sType = SType::SharedFenceMTLSharedEventDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * sharedEvent;
+    };
+
+    // Can be chained in SharedFenceExportInfo
+    struct SharedFenceMTLSharedEventExportInfo : ChainedStructOut {
+        SharedFenceMTLSharedEventExportInfo() {
+            sType = SType::SharedFenceMTLSharedEventExportInfo;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * sharedEvent;
+    };
+
+    // Can be chained in SharedFenceDescriptor
+    struct SharedFenceVkSemaphoreOpaqueFDDescriptor : ChainedStruct {
+        SharedFenceVkSemaphoreOpaqueFDDescriptor() {
+            sType = SType::SharedFenceVkSemaphoreOpaqueFDDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int ));
+        alignas(kFirstMemberAlignment) int handle;
+    };
+
+    // Can be chained in SharedFenceExportInfo
+    struct SharedFenceVkSemaphoreOpaqueFDExportInfo : ChainedStructOut {
+        SharedFenceVkSemaphoreOpaqueFDExportInfo() {
+            sType = SType::SharedFenceVkSemaphoreOpaqueFDExportInfo;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int ));
+        alignas(kFirstMemberAlignment) int handle;
+    };
+
+    // Can be chained in SharedFenceDescriptor
+    struct SharedFenceVkSemaphoreSyncFDDescriptor : ChainedStruct {
+        SharedFenceVkSemaphoreSyncFDDescriptor() {
+            sType = SType::SharedFenceVkSemaphoreSyncFDDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int ));
+        alignas(kFirstMemberAlignment) int handle;
+    };
+
+    // Can be chained in SharedFenceExportInfo
+    struct SharedFenceVkSemaphoreSyncFDExportInfo : ChainedStructOut {
+        SharedFenceVkSemaphoreSyncFDExportInfo() {
+            sType = SType::SharedFenceVkSemaphoreSyncFDExportInfo;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int ));
+        alignas(kFirstMemberAlignment) int handle;
+    };
+
+    // Can be chained in SharedFenceDescriptor
+    struct SharedFenceVkSemaphoreZirconHandleDescriptor : ChainedStruct {
+        SharedFenceVkSemaphoreZirconHandleDescriptor() {
+            sType = SType::SharedFenceVkSemaphoreZirconHandleDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(uint32_t ));
+        alignas(kFirstMemberAlignment) uint32_t handle;
+    };
+
+    // Can be chained in SharedFenceExportInfo
+    struct SharedFenceVkSemaphoreZirconHandleExportInfo : ChainedStructOut {
+        SharedFenceVkSemaphoreZirconHandleExportInfo() {
+            sType = SType::SharedFenceVkSemaphoreZirconHandleExportInfo;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(uint32_t ));
+        alignas(kFirstMemberAlignment) uint32_t handle;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryAHardwareBufferDescriptor : ChainedStruct {
+        SharedTextureMemoryAHardwareBufferDescriptor() {
+            sType = SType::SharedTextureMemoryAHardwareBufferDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * handle;
+    };
+
+    struct SharedTextureMemoryBeginAccessDescriptor {
+        ChainedStruct const * nextInChain = nullptr;
+        Bool initialized;
+        size_t fenceCount;
+        SharedFence const * fences;
+        uint64_t const * signaledValues;
+    };
+
+    struct SharedTextureMemoryDescriptor {
+        ChainedStruct const * nextInChain = nullptr;
+        char const * label = nullptr;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryDmaBufDescriptor : ChainedStruct {
+        SharedTextureMemoryDmaBufDescriptor() {
+            sType = SType::SharedTextureMemoryDmaBufDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int ));
+        alignas(kFirstMemberAlignment) int memoryFD;
+        uint64_t allocationSize;
+        uint64_t drmModifier;
+        size_t planeCount;
+        uint64_t const * planeOffsets;
+        uint32_t const * planeStrides;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryDXGISharedHandleDescriptor : ChainedStruct {
+        SharedTextureMemoryDXGISharedHandleDescriptor() {
+            sType = SType::SharedTextureMemoryDXGISharedHandleDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * handle;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryEGLImageDescriptor : ChainedStruct {
+        SharedTextureMemoryEGLImageDescriptor() {
+            sType = SType::SharedTextureMemoryEGLImageDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * image;
+    };
+
+    struct SharedTextureMemoryEndAccessState {
+        SharedTextureMemoryEndAccessState() = default;
+        ~SharedTextureMemoryEndAccessState();
+        SharedTextureMemoryEndAccessState(const SharedTextureMemoryEndAccessState&) = delete;
+        SharedTextureMemoryEndAccessState& operator=(const SharedTextureMemoryEndAccessState&) = delete;
+        SharedTextureMemoryEndAccessState(SharedTextureMemoryEndAccessState&&);
+        SharedTextureMemoryEndAccessState& operator=(SharedTextureMemoryEndAccessState&&);
+        ChainedStructOut  * nextInChain = nullptr;
+        Bool const initialized = {};
+        size_t const fenceCount = {};
+        SharedFence const * const fences = {};
+        uint64_t const * const signaledValues = {};
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryIOSurfaceDescriptor : ChainedStruct {
+        SharedTextureMemoryIOSurfaceDescriptor() {
+            sType = SType::SharedTextureMemoryIOSurfaceDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(void * ));
+        alignas(kFirstMemberAlignment) void * ioSurface;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryOpaqueFDDescriptor : ChainedStruct {
+        SharedTextureMemoryOpaqueFDDescriptor() {
+            sType = SType::SharedTextureMemoryOpaqueFDDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int ));
+        alignas(kFirstMemberAlignment) int memoryFD;
+        uint64_t allocationSize;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryVkDedicatedAllocationDescriptor : ChainedStruct {
+        SharedTextureMemoryVkDedicatedAllocationDescriptor() {
+            sType = SType::SharedTextureMemoryVkDedicatedAllocationDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(Bool ));
+        alignas(kFirstMemberAlignment) Bool dedicatedAllocation;
+    };
+
+    // Can be chained in SharedTextureMemoryBeginAccessDescriptor
+    struct SharedTextureMemoryVkImageLayoutBeginState : ChainedStruct {
+        SharedTextureMemoryVkImageLayoutBeginState() {
+            sType = SType::SharedTextureMemoryVkImageLayoutBeginState;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int32_t ));
+        alignas(kFirstMemberAlignment) int32_t oldLayout;
+        int32_t newLayout;
+    };
+
+    // Can be chained in SharedTextureMemoryEndAccessState
+    struct SharedTextureMemoryVkImageLayoutEndState : ChainedStructOut {
+        SharedTextureMemoryVkImageLayoutEndState() {
+            sType = SType::SharedTextureMemoryVkImageLayoutEndState;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int32_t ));
+        alignas(kFirstMemberAlignment) int32_t oldLayout;
+        int32_t newLayout;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryZirconHandleDescriptor : ChainedStruct {
+        SharedTextureMemoryZirconHandleDescriptor() {
+            sType = SType::SharedTextureMemoryZirconHandleDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(uint32_t ));
+        alignas(kFirstMemberAlignment) uint32_t memoryFD;
+        uint64_t allocationSize;
     };
 
     struct StencilFaceState {
@@ -1739,7 +2103,7 @@ namespace wgpu {
         ChainedStruct const * nextInChain = nullptr;
         TextureSampleType sampleType = TextureSampleType::Undefined;
         TextureViewDimension viewDimension = TextureViewDimension::Undefined;
-        bool multisampled = false;
+        Bool multisampled = false;
     };
 
     struct TextureDataLayout {
@@ -1806,7 +2170,7 @@ namespace wgpu {
     struct DepthStencilState {
         ChainedStruct const * nextInChain = nullptr;
         TextureFormat format;
-        bool depthWriteEnabled;
+        Bool depthWriteEnabled;
         CompareFunction depthCompare;
         StencilFaceState stencilFront;
         StencilFaceState stencilBack;
@@ -1821,15 +2185,15 @@ namespace wgpu {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
         TextureView plane0;
-        TextureView plane1 = nullptr;
+        TextureView plane1;
         Origin2D visibleOrigin;
         Extent2D visibleSize;
-        bool doYuvToRgbConversionOnly = false;
+        Bool doYuvToRgbConversionOnly = false;
         float const * yuvToRgbConversionMatrix = nullptr;
         float const * srcTransferFunctionParameters;
         float const * dstTransferFunctionParameters;
         float const * gamutConversionMatrix;
-        bool flipY = false;
+        Bool flipY = false;
         ExternalTextureRotation rotation = ExternalTextureRotation::Rotate0Degrees;
     };
 
@@ -1864,8 +2228,8 @@ namespace wgpu {
 
     struct RenderPassColorAttachment {
         ChainedStruct const * nextInChain = nullptr;
-        TextureView view = nullptr;
-        TextureView resolveTarget = nullptr;
+        TextureView view;
+        TextureView resolveTarget;
         LoadOp loadOp;
         StoreOp storeOp;
         Color clearValue;
@@ -1874,6 +2238,24 @@ namespace wgpu {
     struct RequiredLimits {
         ChainedStruct const * nextInChain = nullptr;
         Limits limits;
+    };
+
+    struct SharedTextureMemoryProperties {
+        ChainedStructOut  * nextInChain = nullptr;
+        TextureUsage usage;
+        Extent3D size;
+        TextureFormat format;
+    };
+
+    // Can be chained in SharedTextureMemoryDescriptor
+    struct SharedTextureMemoryVkImageDescriptor : ChainedStruct {
+        SharedTextureMemoryVkImageDescriptor() {
+            sType = SType::SharedTextureMemoryVkImageDescriptor;
+        }
+        static constexpr size_t kFirstMemberAlignment = detail::ConstexprMax(alignof(ChainedStruct), alignof(int32_t ));
+        alignas(kFirstMemberAlignment) int32_t vkFormat;
+        int32_t vkUsageFlags;
+        Extent3D vkExtent3D;
     };
 
     struct SupportedLimits {
@@ -1918,7 +2300,7 @@ namespace wgpu {
     struct ComputePipelineDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
-        PipelineLayout layout = nullptr;
+        PipelineLayout layout;
         ProgrammableStageDescriptor compute;
     };
 
@@ -1939,7 +2321,7 @@ namespace wgpu {
         size_t colorAttachmentCount;
         RenderPassColorAttachment const * colorAttachments;
         RenderPassDepthStencilAttachment const * depthStencilAttachment = nullptr;
-        QuerySet occlusionQuerySet = nullptr;
+        QuerySet occlusionQuerySet;
         size_t timestampWriteCount = 0;
         RenderPassTimestampWrite const * timestampWrites;
     };
@@ -1967,7 +2349,7 @@ namespace wgpu {
     struct RenderPipelineDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
-        PipelineLayout layout = nullptr;
+        PipelineLayout layout;
         VertexState vertex;
         PrimitiveState primitive;
         DepthStencilState const * depthStencil = nullptr;
@@ -2008,5 +2390,16 @@ namespace dawn {
     };
 
 } // namespace dawn
+
+namespace std {
+// Custom boolean class needs corresponding hash function so that it appears as a transparent bool.
+template <>
+struct hash<wgpu::Bool> {
+  public:
+    size_t operator()(const wgpu::Bool &v) const {
+        return hash<bool>()(v);
+    }
+};
+}  // namespace std
 
 #endif // WEBGPU_CPP_H_

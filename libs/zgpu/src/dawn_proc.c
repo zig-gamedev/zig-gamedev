@@ -29,13 +29,13 @@ return     procs.adapterEnumerateFeatures(adapter, features);
 WGPUInstance wgpuAdapterGetInstance(WGPUAdapter adapter) {
 return     procs.adapterGetInstance(adapter);
 }
-bool wgpuAdapterGetLimits(WGPUAdapter adapter, WGPUSupportedLimits * limits) {
+WGPUBool wgpuAdapterGetLimits(WGPUAdapter adapter, WGPUSupportedLimits * limits) {
 return     procs.adapterGetLimits(adapter, limits);
 }
 void wgpuAdapterGetProperties(WGPUAdapter adapter, WGPUAdapterProperties * properties) {
     procs.adapterGetProperties(adapter, properties);
 }
-bool wgpuAdapterHasFeature(WGPUAdapter adapter, WGPUFeatureName feature) {
+WGPUBool wgpuAdapterHasFeature(WGPUAdapter adapter, WGPUFeatureName feature) {
 return     procs.adapterHasFeature(adapter, feature);
 }
 void wgpuAdapterRequestDevice(WGPUAdapter adapter, WGPUDeviceDescriptor const * descriptor, WGPURequestDeviceCallback callback, void * userdata) {
@@ -132,9 +132,6 @@ void wgpuCommandEncoderCopyTextureToBuffer(WGPUCommandEncoder commandEncoder, WG
 }
 void wgpuCommandEncoderCopyTextureToTexture(WGPUCommandEncoder commandEncoder, WGPUImageCopyTexture const * source, WGPUImageCopyTexture const * destination, WGPUExtent3D const * copySize) {
     procs.commandEncoderCopyTextureToTexture(commandEncoder, source, destination, copySize);
-}
-void wgpuCommandEncoderCopyTextureToTextureInternal(WGPUCommandEncoder commandEncoder, WGPUImageCopyTexture const * source, WGPUImageCopyTexture const * destination, WGPUExtent3D const * copySize) {
-    procs.commandEncoderCopyTextureToTextureInternal(commandEncoder, source, destination, copySize);
 }
 WGPUCommandBuffer wgpuCommandEncoderFinish(WGPUCommandEncoder commandEncoder, WGPUCommandBufferDescriptor const * descriptor) {
 return     procs.commandEncoderFinish(commandEncoder, descriptor);
@@ -292,7 +289,7 @@ void wgpuDeviceForceLoss(WGPUDevice device, WGPUDeviceLostReason type, char cons
 WGPUAdapter wgpuDeviceGetAdapter(WGPUDevice device) {
 return     procs.deviceGetAdapter(device);
 }
-bool wgpuDeviceGetLimits(WGPUDevice device, WGPUSupportedLimits * limits) {
+WGPUBool wgpuDeviceGetLimits(WGPUDevice device, WGPUSupportedLimits * limits) {
 return     procs.deviceGetLimits(device, limits);
 }
 WGPUQueue wgpuDeviceGetQueue(WGPUDevice device) {
@@ -301,7 +298,7 @@ return     procs.deviceGetQueue(device);
 WGPUTextureUsageFlags wgpuDeviceGetSupportedSurfaceUsage(WGPUDevice device, WGPUSurface surface) {
 return     procs.deviceGetSupportedSurfaceUsage(device, surface);
 }
-bool wgpuDeviceHasFeature(WGPUDevice device, WGPUFeatureName feature) {
+WGPUBool wgpuDeviceHasFeature(WGPUDevice device, WGPUFeatureName feature) {
 return     procs.deviceHasFeature(device, feature);
 }
 void wgpuDeviceInjectError(WGPUDevice device, WGPUErrorType type, char const * message) {
