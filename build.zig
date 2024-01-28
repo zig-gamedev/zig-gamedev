@@ -266,7 +266,7 @@ fn testsWindows(
     test_step: *std.Build.Step,
 ) void {
     test_step.dependOn(zd3d12.runTests(b, optimize, target));
-    // test_step.dependOn(zpix.runTests(b, optimize, target));
+    test_step.dependOn(zpix.runTests(b, optimize, target));
     // test_step.dependOn(zwin32.runTests(b, optimize, target));
     // test_step.dependOn(zxaudio2.runTests(b, optimize, target));
 }

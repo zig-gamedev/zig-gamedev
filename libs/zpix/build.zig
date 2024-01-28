@@ -48,6 +48,9 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    const test_step = b.step("test", "Run zpix tests");
+    test_step.dependOn(runTests(b, optimize, target));
+
     const zwin32 = b.dependency("zwin32", .{});
 
     _ = package(b, target, optimize, .{
@@ -59,6 +62,31 @@ pub fn build(b: *std.Build) void {
         },
     });
 }
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.Build.ResolvedTarget,
+) *std.Build.Step {
+    const zwin32 = b.dependency("zwin32", .{}).module("zwin32");
+
+    const tests = b.addTest(.{
+        .name = "zpix-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zpix.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const pkg = package(b, target, optimize, .{
+        .deps = .{ .zwin32 = zwin32 },
+    });
+    pkg.link(tests);
+
+    tests.root_module.addImport("zwin32", zwin32);
+
+    return &b.addRunArtifact(tests).step;
+}
+
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";

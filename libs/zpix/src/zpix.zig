@@ -17,6 +17,10 @@ const UINT32 = u32;
 const options = @import("zpix_options");
 const enable = if (@hasDecl(options, "enable")) options.enable else false;
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 pub const CAPTURE_FLAGS = packed struct(UINT32) {
     TIMING: bool = false,
     GPU: bool = false,
