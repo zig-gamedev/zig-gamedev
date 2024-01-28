@@ -265,15 +265,10 @@ fn testsWindows(
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
-    // TODO
-    _ = b;
-    _ = target;
-    _ = optimize;
-    _ = test_step;
-    //test_step.dependOn(zd3d12.runTests(b, optimize, target));
-    //test_step.dependOn(zpix.runTests(b, optimize, target));
-    //test_step.dependOn(zwin32.runTests(b, optimize, target));
-    //test_step.dependOn(zxaudio2.runTests(b, optimize, target));
+    test_step.dependOn(zd3d12.runTests(b, optimize, target));
+    // test_step.dependOn(zpix.runTests(b, optimize, target));
+    // test_step.dependOn(zwin32.runTests(b, optimize, target));
+    // test_step.dependOn(zxaudio2.runTests(b, optimize, target));
 }
 
 fn benchmarks(b: *std.Build, options: Options) void {

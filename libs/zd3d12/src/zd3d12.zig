@@ -21,6 +21,10 @@ const enable_gbv = @import("zd3d12_options").enable_gbv;
 const enable_d2d = @import("zd3d12_options").enable_d2d;
 const upload_heap_capacity = @import("zd3d12_options").upload_heap_capacity;
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
     state_before: d3d12.RESOURCE_STATES,

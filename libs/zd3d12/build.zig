@@ -61,6 +61,9 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    const test_step = b.step("test", "Run zd3d12 tests");
+    test_step.dependOn(runTests(b, optimize, target));
+
     const zwin32 = b.dependency("zwin32", .{});
 
     _ = package(b, target, optimize, .{
@@ -90,6 +93,30 @@ pub fn build(b: *std.Build) void {
             .zwin32 = zwin32.module("zwin32"),
         },
     });
+}
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.Build.ResolvedTarget,
+) *std.Build.Step {
+    const zwin32 = b.dependency("zwin32", .{}).module("zwin32");
+
+    const tests = b.addTest(.{
+        .name = "zd3d12-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const pkg = package(b, target, optimize, .{
+        .deps = .{ .zwin32 = zwin32 },
+    });
+    pkg.link(tests);
+
+    tests.root_module.addImport("zwin32", zwin32);
+
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {
