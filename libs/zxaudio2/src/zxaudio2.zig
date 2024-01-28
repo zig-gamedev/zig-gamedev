@@ -20,6 +20,10 @@ const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
 const enable_debug_layer = @import("zxaudio2_options").enable_debug_layer;
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 const optimal_voice_format = WAVEFORMATEX{
     .wFormatTag = wasapi.WAVE_FORMAT_PCM,
     .nChannels = 1,
