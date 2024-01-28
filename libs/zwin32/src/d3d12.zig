@@ -426,6 +426,7 @@ pub const ROOT_DESCRIPTOR_FLAGS = packed struct(UINT) {
     DATA_VOLATILE: bool = false,
     DATA_STATIC_WHILE_SET_AT_EXECUTE: bool = false,
     DATA_STATIC: bool = false,
+    _: u28 = 0,
 };
 
 pub const ROOT_DESCRIPTOR1 = extern struct {

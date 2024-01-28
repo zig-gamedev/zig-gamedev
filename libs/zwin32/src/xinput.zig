@@ -189,7 +189,7 @@ pub extern "xinput1_4" fn XInputGetState(dwUserIndex: DWORD, pState: *STATE) cal
 
 pub extern "xinput1_4" fn XInputSetState(dwUserIndex: DWORD, pVibration: *VIBRATION) callconv(WINAPI) DWORD;
 
-pub const ERROR_SUCCESS = w32.SUCCESS;
+pub const ERROR_SUCCESS = w32.ERROR_SUCCESS;
 pub const ERROR_EMPTY = w32.ERROR_EMPTY;
 pub const ERROR_DEVICE_NOT_CONNECTED = w32.ERROR_DEVICE_NOT_CONNECTED;
 

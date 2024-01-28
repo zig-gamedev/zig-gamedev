@@ -1321,7 +1321,7 @@ pub const IDepthStencilView = extern struct {
     };
 };
 
-pub const IID_IShaderResourceView = GUID.parse("{b0e06fe0-8192-4e1a-b1ca-36d7414710b}");
+pub const IID_IShaderResourceView = GUID.parse("{b0e06fe0-8192-4e1a-b1ca-36d7414710b2}");
 pub const IShaderResourceView = extern struct {
     __v: *const VTable,
 

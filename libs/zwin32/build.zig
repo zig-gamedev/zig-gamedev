@@ -83,7 +83,24 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    const test_step = b.step("test", "Run zwin32 tests");
+    test_step.dependOn(runTests(b, optimize, target));
+
     _ = package(b, target, optimize, .{});
+}
+
+pub fn runTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.Build.ResolvedTarget,
+) *std.Build.Step {
+    const tests = b.addTest(.{
+        .name = "zwin32-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zwin32.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    return &b.addRunArtifact(tests).step;
 }
 
 inline fn thisDir() []const u8 {

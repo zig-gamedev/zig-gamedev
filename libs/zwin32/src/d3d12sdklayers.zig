@@ -28,7 +28,7 @@ pub const IDebug = extern struct {
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
-        EnableDebugLayer: fn (*IDebug) callconv(WINAPI) void,
+        EnableDebugLayer: *const fn (*IDebug) callconv(WINAPI) void,
     };
 };
 

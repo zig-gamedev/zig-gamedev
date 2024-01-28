@@ -17,10 +17,11 @@ pub const xaudio2fx = @import("xaudio2fx.zig");
 pub const xapo = @import("xapo.zig");
 pub const xinput = @import("xinput.zig");
 pub const dds_loader = @import("dds_loader.zig");
-
-/// Bindings for D3DCompiler_47
-/// Not recommended. Precompile your shaders with dxc instead.
 pub const d3dcompiler = @import("d3dcompiler.zig");
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
 
 const HRESULT = w32.HRESULT;
 const S_OK = w32.S_OK;
