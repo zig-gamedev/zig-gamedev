@@ -5,21 +5,30 @@ test "extern struct ABI compatibility" {
     const wgpu = @cImport(@cInclude("dawn/webgpu.h"));
     inline for (comptime std.meta.declarations(@This())) |decl| {
         const ZigType = @field(@This(), decl.name);
-        comptime if (std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
             @typeInfo(ZigType).Struct.layout == .Extern)
         {
             const wgpu_name = "WGPU" ++ decl.name;
             const CType = @field(wgpu, wgpu_name);
-            try std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType));
+            std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType)) catch |err| {
+                std.log.err("@sizeOf({s}) != @sizeOf({s})", .{ wgpu_name, decl.name });
+                return err;
+            };
             comptime var i: usize = 0;
-            for (std.meta.fieldNames(CType)) |field_name| {
-                try std.testing.expectEqual(
-                    @offsetOf(CType, field_name),
+            inline for (comptime std.meta.fieldNames(CType)) |c_field_name| {
+                std.testing.expectEqual(
+                    @offsetOf(CType, c_field_name),
                     @offsetOf(ZigType, std.meta.fieldNames(ZigType)[i]),
-                );
+                ) catch |err| {
+                    std.log.err(
+                        "@offsetOf({s}, {s}) != @offsetOf({s}, {s})",
+                        .{ wgpu_name, c_field_name, decl.name, std.meta.fieldNames(ZigType)[i] },
+                    );
+                    return err;
+                };
                 i += 1;
             }
-        };
+        }
     }
 }
 
