@@ -1,7 +1,26 @@
 const std = @import("std");
 
-test {
-    std.testing.refAllDecls(@This());
+test "extern struct ABI compatibility" {
+    @setEvalBranchQuota(10_000);
+    const wgpu = @cImport(@cInclude("dawn/webgpu.h"));
+    inline for (comptime std.meta.declarations(@This())) |decl| {
+        const ZigType = @field(@This(), decl.name);
+        comptime if (std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
+            @typeInfo(ZigType).Struct.layout == .Extern)
+        {
+            const wgpu_name = "WGPU" ++ decl.name;
+            const CType = @field(wgpu, wgpu_name);
+            try std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType));
+            comptime var i: usize = 0;
+            for (std.meta.fieldNames(CType)) |field_name| {
+                try std.testing.expectEqual(
+                    @offsetOf(CType, field_name),
+                    @offsetOf(ZigType, std.meta.fieldNames(ZigType)[i]),
+                );
+                i += 1;
+            }
+        };
+    }
 }
 
 pub const AdapterType = enum(u32) {
@@ -863,7 +882,7 @@ pub const ShaderModuleDescriptor = extern struct {
     label: ?[*:0]const u8 = null,
 };
 
-pub const ShaderModuleWgslDescriptor = extern struct {
+pub const ShaderModuleWGSLDescriptor = extern struct {
     chain: ChainedStruct,
     code: [*:0]const u8,
 };
@@ -947,7 +966,7 @@ pub const SupportedLimits = extern struct {
     limits: Limits,
 };
 
-pub const QueueDescription = extern struct {
+pub const QueueDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
 };
@@ -955,7 +974,7 @@ pub const QueueDescription = extern struct {
 // Can be chained in InstanceDescriptor
 // Can be chained in RequestAdapterOptions
 // Can be chained in DeviceDescriptor
-pub const DawnTogglesDeviceDescriptor = extern struct {
+pub const DawnTogglesDescriptor = extern struct {
     chain: ChainedStruct,
     enabled_toggles_count: usize = 0,
     enabled_toggles: ?[*]const [*:0]const u8 = null,
@@ -974,7 +993,7 @@ pub const DeviceDescriptor = extern struct {
     required_features_count: usize = 0,
     required_features: ?[*]const FeatureName = null,
     required_limits: ?[*]const RequiredLimits = null,
-    default_queue: QueueDescription = .{},
+    default_queue: QueueDescriptor = .{},
     device_lost_callback: ?DeviceLostCallback = null,
     device_lost_user_data: ?*anyopaque = null,
 };

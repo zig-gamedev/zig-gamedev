@@ -240,6 +240,7 @@ pub fn runTests(
         .target = target,
         .optimize = optimize,
     });
+    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/dawn/include" });
     return &b.addRunArtifact(tests).step;
 }
 

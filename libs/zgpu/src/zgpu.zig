@@ -168,7 +168,7 @@ pub const GraphicsContext = struct {
             }).callback;
 
             const toggles = [_][*:0]const u8{"skip_validation"};
-            const dawn_toggles = wgpu.DawnTogglesDeviceDescriptor{
+            const dawn_toggles = wgpu.DawnTogglesDescriptor{
                 .chain = .{ .next = null, .struct_type = .dawn_toggles_descriptor },
                 .enabled_toggles_count = toggles.len,
                 .enabled_toggles = &toggles,
@@ -1229,7 +1229,7 @@ pub fn createWgslShaderModule(
     source: [*:0]const u8,
     label: ?[*:0]const u8,
 ) wgpu.ShaderModule {
-    const wgsl_desc = wgpu.ShaderModuleWgslDescriptor{
+    const wgsl_desc = wgpu.ShaderModuleWGSLDescriptor{
         .chain = .{ .next = null, .struct_type = .shader_module_wgsl_descriptor },
         .code = source,
     };
