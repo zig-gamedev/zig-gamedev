@@ -87,7 +87,6 @@ pub fn runTests(
     return &b.addRunArtifact(tests).step;
 }
 
-
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
