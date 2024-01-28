@@ -82,6 +82,7 @@ zgui.backend.init(
     window,
     demo.gctx.device,
     @enumToInt(swapchain_format),
+    @enumToInt(depth_format),
 );
 ```
 

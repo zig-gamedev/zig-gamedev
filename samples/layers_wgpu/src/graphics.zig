@@ -59,7 +59,12 @@ pub const State = struct {
         _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
 
         // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
+        zgui.backend.init(
+            window,
+            gctx.device,
+            @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+            @intFromEnum(wgpu.TextureFormat.undef),
+        );
 
         // Create a color/depth texture and its 'view'.
         const color = createColorTexture(gctx);

@@ -947,7 +947,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
             .height = gctx.swapchain_descriptor.height,
             .depth_or_array_layers = 1,
         },
-        .format = .depth32_float,
+        .format = wgpu.TextureFormat.depth32_float,
         .mip_level_count = 1,
         .sample_count = 1,
     });
@@ -992,6 +992,7 @@ pub fn main() !void {
         window,
         demo.gctx.device,
         @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(wgpu.TextureFormat.undef),
     );
     defer zgui.backend.deinit();
 

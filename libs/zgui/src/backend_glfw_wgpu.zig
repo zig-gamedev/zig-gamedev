@@ -1,35 +1,21 @@
 const gui = @import("gui.zig");
 
-pub const TextureFilterMode = enum(u32) {
-    nearest,
-    linear,
-};
-
-pub const Config = extern struct {
-    pipeline_multisample_count: u32 = 1,
-    texture_filter_mode: TextureFilterMode = .linear,
-};
-
 // This call will install GLFW callbacks to handle GUI interactions.
 // Those callbacks will chain-call user's previously installed callbacks, if any.
 // This means that custom user's callbacks need to be installed *before* calling zgpu.gui.init().
-pub fn initWithConfig(
+pub fn init(
     window: *const anyopaque, // zglfw.Window
-    wgpu_device: *const anyopaque, // wgpu.Device
-    wgpu_swap_chain_format: u32, // wgpu.TextureFormat
-    config: Config,
+    wgpu_device: *const anyopaque, // WGPUDevice
+    wgpu_swap_chain_format: u32, // WGPUTextureFormat
+    wgpu_depth_format: u32, // WGPUTextureFormat
 ) void {
     if (!ImGui_ImplGlfw_InitForOther(window, true)) {
         unreachable;
     }
 
-    if (!ImGui_ImplWGPU_Init(wgpu_device, 1, wgpu_swap_chain_format, &config)) {
+    if (!ImGui_ImplWGPU_Init(wgpu_device, 1, wgpu_swap_chain_format, wgpu_depth_format)) {
         unreachable;
     }
-}
-
-pub fn init(window: *const anyopaque, wgpu_device: *const anyopaque, wgpu_swap_chain_format: u32) void {
-    initWithConfig(window, wgpu_device, wgpu_swap_chain_format, .{});
 }
 
 pub fn deinit() void {
@@ -58,10 +44,10 @@ extern fn ImGui_ImplGlfw_InitForOther(window: *const anyopaque, install_callback
 extern fn ImGui_ImplGlfw_NewFrame() void;
 extern fn ImGui_ImplGlfw_Shutdown() void;
 extern fn ImGui_ImplWGPU_Init(
-    device: *const anyopaque,
+    device: *const anyopaque, // WGPUDevice
     num_frames_in_flight: u32,
-    rt_format: u32,
-    config: *const Config,
+    rt_format: u32, // WGPUTextureFormat
+    wgpu_depth_format: u32, // WGPUTextureFormat
 ) bool;
 extern fn ImGui_ImplWGPU_NewFrame() void;
 extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *const anyopaque, pass_encoder: *const anyopaque) void;

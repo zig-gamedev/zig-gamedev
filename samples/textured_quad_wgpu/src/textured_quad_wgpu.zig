@@ -368,6 +368,7 @@ pub fn main() !void {
         window,
         demo.gctx.device,
         @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(wgpu.TextureFormat.undef),
     );
     defer zgui.backend.deinit();
 

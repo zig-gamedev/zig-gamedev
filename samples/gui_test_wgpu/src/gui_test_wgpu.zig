@@ -75,11 +75,11 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     assert(zgui.io.getFont(1) == font_normal);
 
     // This needs to be called *after* adding your custom fonts.
-    zgui.backend.initWithConfig(
+    zgui.backend.init(
         window,
         gctx.device,
         @intFromEnum(zgpu.GraphicsContext.swapchain_format),
-        .{ .texture_filter_mode = .linear, .pipeline_multisample_count = 1 },
+        @intFromEnum(wgpu.TextureFormat.undef),
     );
 
     // This call is optional. Initially, zgui.io.getFont(0) is a default font.

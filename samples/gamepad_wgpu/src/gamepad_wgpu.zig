@@ -30,7 +30,12 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(20.0 * scale_factor));
 
     // This needs to be called *after* adding your custom fonts.
-    zgui.backend.init(window, gctx.device, @intFromEnum(zgpu.GraphicsContext.swapchain_format));
+    zgui.backend.init(
+        window,
+        gctx.device,
+        @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(wgpu.TextureFormat.undef),
+    );
 
     // You can directly manipulate zgui.Style *before* `newFrame()` call.
     // Once frame is started (after `newFrame()` call) you have to use

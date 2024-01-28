@@ -2,6 +2,7 @@ const std = @import("std");
 
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
+const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 
 const content_dir = @import("build_options").content_dir;
@@ -46,6 +47,7 @@ pub fn main() !void {
         window,
         gctx.device,
         @intFromEnum(zgpu.GraphicsContext.swapchain_format),
+        @intFromEnum(wgpu.TextureFormat.undef),
     );
     defer zgui.backend.deinit();
 
