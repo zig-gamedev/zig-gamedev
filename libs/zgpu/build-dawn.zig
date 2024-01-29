@@ -151,6 +151,7 @@ pub fn buildStaticLibrary(
         else => if (isLinuxDesktopLike(target.result.os.tag)) {
             lib.addSystemIncludePath(.{ .path = system_sdk.path("linux/include").getPath(b) });
             lib.addLibraryPath(.{ .path = system_sdk.path("linux/lib").getPath(b) });
+            lib.addSystemIncludePath(.{ .path = thisDir() ++ "/libs/vulkan-headers/include" });
         },
     }
 
