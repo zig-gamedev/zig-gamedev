@@ -19,6 +19,7 @@ test {
 
 pub const GraphicsContextOptions = struct {
     present_mode: wgpu.PresentMode = .fifo,
+    required_features: []const wgpu.FeatureName = &[_]wgpu.FeatureName{},
 };
 
 pub const GraphicsContext = struct {
@@ -181,6 +182,8 @@ pub const GraphicsContext = struct {
                         @ptrCast(&dawn_toggles)
                     else
                         null,
+                    .required_features_count = options.required_features.len,
+                    .required_features = options.required_features.ptr,
                 },
                 callback,
                 @ptrCast(&response),
