@@ -253,8 +253,7 @@ fn tests(
     test_step.dependOn(zopengl.runTests(b, optimize, target));
     test_step.dependOn(zphysics.runTests(b, optimize, target));
     test_step.dependOn(zpool.runTests(b, optimize, target));
-    // TODO: zsdl tests not included in top-level tests until https://github.com/michal-z/zig-gamedev/issues/312 is resolved
-    //test_step.dependOn(zsdl.runTests(b, optimize, target));
+    test_step.dependOn(zsdl.runTests(b, optimize, target));
     test_step.dependOn(zstbi.runTests(b, optimize, target));
     test_step.dependOn(ztracy.runTests(b, optimize, target));
 }

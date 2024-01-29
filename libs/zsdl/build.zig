@@ -224,20 +224,39 @@ pub fn runTests(
     optimize: std.builtin.Mode,
     target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
+    const step = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    step.* = std.Build.Step.init(.{ .id = .custom, .name = "zsdl-tests", .owner = b });
+
+    step.dependOn(testStep(b, "zsdl-tests-sdl2", target, optimize, .{
+        .api_version = .sdl2,
+        .enable_ttf = true,
+    }));
+
+    // TODO: link SDL3 libs on all platforms
+    // step.dependOn(testStep(b, "zsdl-tests-sdl3", target, optimize, .{
+    //     .api_version = .sdl3,
+    //     .enable_ttf = true,
+    // }));
+
+    return step;
+}
+
+fn testStep(
+    b: *std.Build,
+    name: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.Mode,
+    options: Options,
+) *std.Build.Step {
     const tests = b.addTest(.{
-        .name = "zsdl-tests",
+        .name = name,
         .root_source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
         .target = target,
         .optimize = optimize,
     });
-    const zsdl_pkg = package(b, target, optimize, .{
-        .options = .{
-            .api_version = .sdl2,
-            .enable_ttf = true,
-        },
-    });
-    // TODO: Also test SDL3 bindings
-    zsdl_pkg.link(tests);
+    const pkg = package(b, target, optimize, .{ .options = options });
+    pkg.link(tests);
+    tests.addRPath(.{ .path = b.getInstallPath(.bin, "") });
     return &b.addRunArtifact(tests).step;
 }
 
