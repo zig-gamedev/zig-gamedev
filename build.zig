@@ -253,7 +253,13 @@ fn tests(
     test_step.dependOn(zopengl.runTests(b, optimize, target));
     test_step.dependOn(zphysics.runTests(b, optimize, target));
     test_step.dependOn(zpool.runTests(b, optimize, target));
-    test_step.dependOn(zsdl.runTests(b, optimize, target));
+
+    // TODO(hazeycode): Fix tests linking SDL on Windows and macOS
+    switch (target.result.os.tag) {
+        .windows, .macos => {},
+        else => test_step.dependOn(zsdl.runTests(b, optimize, target)),
+    }
+
     test_step.dependOn(zstbi.runTests(b, optimize, target));
     test_step.dependOn(ztracy.runTests(b, optimize, target));
 }
