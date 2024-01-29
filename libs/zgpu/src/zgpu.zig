@@ -19,7 +19,7 @@ test {
 
 pub const GraphicsContextOptions = struct {
     present_mode: wgpu.PresentMode = .fifo,
-    required_features: ?[]const wgpu.FeatureName = null,
+    required_features: []const wgpu.FeatureName = &[_]wgpu.FeatureName{},
 };
 
 pub const GraphicsContext = struct {
@@ -182,8 +182,8 @@ pub const GraphicsContext = struct {
                         @ptrCast(&dawn_toggles)
                     else
                         null,
-                    .required_features_count = if (options.required_features) |r| r.len else 0,
-                    .required_features = if (options.required_features) |r| r.ptr else null,
+                    .required_features_count = options.required_features.len,
+                    .required_features = options.required_features.ptr,
                 },
                 callback,
                 @ptrCast(&response),
