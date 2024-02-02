@@ -1,6 +1,6 @@
 const std = @import("std");
 const glfw = @import("zglfw");
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
 
 pub fn main() !void {
     try glfw.init();
@@ -20,7 +20,9 @@ pub fn main() !void {
 
     glfw.makeContextCurrent(window);
 
-    try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+    try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+
+    const gl = zopengl.bindings;
 
     glfw.swapInterval(1);
 

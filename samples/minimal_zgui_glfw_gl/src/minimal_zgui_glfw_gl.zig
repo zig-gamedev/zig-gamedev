@@ -2,7 +2,7 @@ const std = @import("std");
 
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: minimal zgpu glfw opengl3";
@@ -34,7 +34,9 @@ pub fn main() !void {
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
 
-    try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+    try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+
+    const gl = zopengl.bindings;
 
     var gpa_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa_state.deinit();

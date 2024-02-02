@@ -1,4 +1,4 @@
-# zopengl v0.1.3 - OpenGL loader
+# zopengl v0.2.0 - OpenGL loader
 
 Supports:
   * OpenGL Core Profile up to version 4.0
@@ -31,12 +31,14 @@ pub fn build(b: *std.Build) void {
 Now in your code you may import and use `zopengl`:
 
 ```zig
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
 
 pub fn main() !void {
     // Create window and OpenGL context here... (you can use our `zsdl` or `zglfw` libs for this)
 
-    try gl.loadCoreProfile(getProcAddress, 4, 0);
+    try zopengl.loadCoreProfile(getProcAddress, 4, 0);
+
+    const gl = zopengl.bindings; // or zopengl.wrapper (experimental)
 
     gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
 }

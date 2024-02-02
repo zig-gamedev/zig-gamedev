@@ -1,5 +1,5 @@
 const std = @import("std");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const zstbi = @import("zstbi");
 
 pub var display_fbo: gl.Uint = undefined;

@@ -1,6 +1,6 @@
 const std = @import("std");
 const sdl = @import("zsdl");
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
 const ximpl = @import("ximpl");
 const xcommon = @import("xcommon");
 
@@ -54,9 +54,11 @@ pub fn main() !void {
         return;
     }
 
-    try gl.loadCompatProfileExt(sdl.gl.getProcAddress);
-    try gl.loadExtension(sdl.gl.getProcAddress, .NV_bindless_texture);
-    try gl.loadExtension(sdl.gl.getProcAddress, .NV_shader_buffer_load);
+    try zopengl.loadCompatProfileExt(sdl.gl.getProcAddress);
+    try zopengl.loadExtension(sdl.gl.getProcAddress, .NV_bindless_texture);
+    try zopengl.loadExtension(sdl.gl.getProcAddress, .NV_shader_buffer_load);
+
+    const gl = zopengl.bindings;
 
     std.log.info("OpenGL vendor: {s}", .{gl.getString(gl.VENDOR)});
     std.log.info("OpenGL renderer: {s}", .{gl.getString(gl.RENDERER)});

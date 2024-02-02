@@ -4,12 +4,9 @@ const testing = std.testing;
 
 const options = @import("zopengl_options");
 
-const bindings = @import("bindings.zig");
+pub const bindings = @import("bindings.zig");
+pub const wrapper = @import("wrapper.zig").Wrap(bindings);
 
-pub usingnamespace switch (options.api) {
-    .raw_bindings => bindings,
-    .wrapper => @import("wrapper.zig"),
-};
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for loading OpenGL function pointers
