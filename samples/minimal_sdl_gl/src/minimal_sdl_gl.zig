@@ -1,6 +1,6 @@
 const std = @import("std");
 const sdl = @import("zsdl");
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
 
 pub fn main() !void {
     _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
@@ -31,7 +31,9 @@ pub fn main() !void {
     try sdl.gl.makeCurrent(window, gl_context);
     try sdl.gl.setSwapInterval(0);
 
-    try gl.loadCoreProfile(sdl.gl.getProcAddress, gl_major, gl_minor);
+    try zopengl.loadCoreProfile(sdl.gl.getProcAddress, gl_major, gl_minor);
+
+    const gl = zopengl.bindings;
 
     {
         var w: i32 = undefined;

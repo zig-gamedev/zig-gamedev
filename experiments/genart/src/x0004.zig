@@ -1,7 +1,7 @@
 const std = @import("std");
 const math = std.math;
 const sdl = @import("zsdl");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const xcommon = @import("xcommon");
 
 pub const name = "generative art experiment: x0004";
