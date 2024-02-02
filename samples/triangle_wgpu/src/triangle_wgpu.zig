@@ -330,8 +330,10 @@ pub fn main() !void {
     defer deinit(allocator, &demo);
 
     const scale_factor = scale_factor: {
-        const scale = window.getContentScale();
-        break :scale_factor @max(scale[0], scale[1]);
+        var scale_x: f32 = undefined;
+        var scale_y: f32 = undefined;
+        window.getContentScale(&scale_x, &scale_y);
+        break :scale_factor @max(scale_x, scale_y);
     };
 
     zgui.init(allocator);

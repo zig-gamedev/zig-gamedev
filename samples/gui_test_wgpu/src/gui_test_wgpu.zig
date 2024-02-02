@@ -65,8 +65,10 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zgui.init(allocator);
     zgui.plot.init();
     const scale_factor = scale_factor: {
-        const scale = window.getContentScale();
-        break :scale_factor @max(scale[0], scale[1]);
+        var scale_x: f32 = undefined;
+        var scale_y: f32 = undefined;
+        window.getContentScale(&scale_x, &scale_y);
+        break :scale_factor @max(scale_x, scale_y);
     };
     const font_size = 16.0 * scale_factor;
     const font_large = zgui.io.addFontFromMemory(embedded_font_data, math.floor(font_size * 1.1));

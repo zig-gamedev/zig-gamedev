@@ -44,8 +44,10 @@ pub fn main() !void {
     defer zgui.deinit();
 
     const scale_factor = scale_factor: {
-        const scale = window.getContentScale();
-        break :scale_factor @max(scale[0], scale[1]);
+        var scale_x: f32 = undefined;
+        var scale_y: f32 = undefined;
+        window.getContentScale(&scale_x, &scale_y);
+        break :scale_factor @max(scale_x, scale_y);
     };
     _ = zgui.io.addFontFromFile(
         content_dir ++ "Roboto-Medium.ttf",
@@ -62,9 +64,11 @@ pub fn main() !void {
 
         gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0, 0, 0, 1.0 });
 
-        const fb_size = window.getFramebufferSize();
+        var fb_width: u32 = undefined;
+        var fb_height: u32 = undefined;
+        window.getFramebufferSize(&fb_width, &fb_height);
 
-        zgui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
+        zgui.backend.newFrame(@intCast(fb_width), @intCast(fb_height));
 
         // Set the starting window position and size to custom values
         zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .first_use_ever });

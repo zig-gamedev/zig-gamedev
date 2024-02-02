@@ -129,8 +129,10 @@ const DemoState = struct {
 
         zgui.init(allocator);
         const scale_factor = scale_factor: {
-            const scale = window.getContentScale();
-            break :scale_factor @max(scale[0], scale[1]);
+            var scale_x: f32 = undefined;
+            var scale_y: f32 = undefined;
+            window.getContentScale(&scale_x, &scale_y);
+            break :scale_factor @max(scale_x, scale_y);
         };
         const font_normal = zgui.io.addFontFromFile(
             content_dir ++ "Roboto-Medium.ttf",
@@ -461,21 +463,28 @@ const DemoState = struct {
                     var object_position_start: zm.F32x4 = undefined;
                     var vertex_start: zm.F32x4 = undefined;
                 };
-                const scale = gctx.window.getContentScale();
+
+                var scale_x: f32 = undefined;
+                var scale_y: f32 = undefined;
+                gctx.window.getContentScale(&scale_x, &scale_y);
+
                 const screen_to_clip = zm.mul(
                     zm.scaling(
-                        2 * scale[0] / @as(f32, @floatFromInt(gctx.swapchain_descriptor.width)),
-                        -2 * scale[1] / @as(f32, @floatFromInt(gctx.swapchain_descriptor.height)),
+                        2 * scale_x / @as(f32, @floatFromInt(gctx.swapchain_descriptor.width)),
+                        -2 * scale_y / @as(f32, @floatFromInt(gctx.swapchain_descriptor.height)),
                         1,
                     ),
                     zm.translation(-1, 1, 0.0),
                 );
                 const clip_to_object = zm.scaling(2 / demo.dimension.width, 2 / demo.dimension.height, 1.0);
 
-                const cursor_position = demo.gctx.window.getCursorPos();
+                var cursor_x: f64 = undefined;
+                var cursor_y: f64 = undefined;
+                gctx.window.getCursorPos(&cursor_x, &cursor_y);
+
                 const screen_position = zm.f32x4(
-                    @as(f32, @floatCast(cursor_position[0])),
-                    @as(f32, @floatCast(cursor_position[1])),
+                    @as(f32, @floatCast(cursor_x)),
+                    @as(f32, @floatCast(cursor_y)),
                     0.0,
                     1.0,
                 );

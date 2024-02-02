@@ -548,63 +548,43 @@ pub const Window = opaque {
 
     /// `pub fn destroy(window: *Window) void`
     pub const destroy = glfwDestroyWindow;
-    extern fn glfwDestroyWindow(window: *Window) void;
+    extern fn glfwDestroyWindow(window: *const Window) void;
 
     /// `pub fn setSizeLimits(window: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void`
     pub const setSizeLimits = glfwSetWindowSizeLimits;
-    extern fn glfwSetWindowSizeLimits(window: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void;
+    extern fn glfwSetWindowSizeLimits(window: *const Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void;
 
-    pub fn getContentScale(window: *Window) [2]f32 {
-        var xscale: f32 = 0.0;
-        var yscale: f32 = 0.0;
-        glfwGetWindowContentScale(window, &xscale, &yscale);
-        return .{ xscale, yscale };
-    }
-    extern fn glfwGetWindowContentScale(window: *Window, xscale: *f32, yscale: *f32) void;
+    pub const getContentScale = glfwGetWindowContentScale;
+    extern fn glfwGetWindowContentScale(window: *const Window, xscale: ?*f32, yscale: ?*f32) void;
 
     /// `pub getKey(window: *Window, key: Key) Action`
     pub const getKey = glfwGetKey;
-    extern fn glfwGetKey(window: *Window, key: Key) Action;
+    extern fn glfwGetKey(window: *const Window, key: Key) Action;
 
     /// `pub fn getMouseButton(window: *Window, button: MouseButton) Action`
     pub const getMouseButton = glfwGetMouseButton;
-    extern fn glfwGetMouseButton(window: *Window, button: MouseButton) Action;
+    extern fn glfwGetMouseButton(window: *const Window, button: MouseButton) Action;
 
-    pub fn getCursorPos(window: *Window) [2]f64 {
-        var xpos: f64 = 0.0;
-        var ypos: f64 = 0.0;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        return .{ xpos, ypos };
+    pub const getCursorPos = glfwGetCursorPos;
+    extern fn glfwGetCursorPos(window: *const Window, xpos: ?*f64, ypos: ?*f64) void;
+
+    pub fn getFramebufferSize(window: *const Window, out_width: ?*u32, out_height: ?*u32) void {
+        glfwGetFramebufferSize(window, @ptrCast(out_width), @ptrCast(out_height));
     }
-    extern fn glfwGetCursorPos(window: *Window, xpos: *f64, ypos: *f64) void;
+    extern fn glfwGetFramebufferSize(window: *const Window, width: ?*c_int, height: ?*c_int) void;
 
-    pub fn getFramebufferSize(window: *Window) [2]i32 {
-        var width: i32 = 0.0;
-        var height: i32 = 0.0;
-        glfwGetFramebufferSize(window, &width, &height);
-        return .{ width, height };
+    pub fn getSize(window: *const Window, out_width: ?*u32, out_height: ?*u32) void {
+        glfwGetWindowSize(window, @ptrCast(out_width), @ptrCast(out_height));
     }
-    extern fn glfwGetFramebufferSize(window: *Window, width: *i32, height: *i32) void;
+    extern fn glfwGetWindowSize(window: *const Window, width: ?*c_int, height: ?*c_int) void;
 
-    pub fn getSize(window: *Window) [2]i32 {
-        var width: i32 = 0.0;
-        var height: i32 = 0.0;
-        glfwGetWindowSize(window, &width, &height);
-        return .{ width, height };
+    pub fn setSize(window: *Window, width: u32, height: u32) void {
+        glfwSetWindowSize(window, @bitCast(width), @bitCast(height));
     }
-    extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
+    extern fn glfwSetWindowSize(window: *Window, width: c_int, height: c_int) void;
 
-    /// `pub fn setSize(window: *Window, width: i32, height: i32) void`
-    pub const setSize = glfwSetWindowSize;
-    extern fn glfwSetWindowSize(window: *Window, width: i32, height: i32) void;
-
-    pub fn getPos(window: *Window) [2]i32 {
-        var xpos: i32 = 0.0;
-        var ypos: i32 = 0.0;
-        glfwGetWindowPos(window, &xpos, &ypos);
-        return .{ xpos, ypos };
-    }
-    extern fn glfwGetWindowPos(window: *Window, xpos: *i32, ypos: *i32) void;
+    pub const getPos = glfwGetWindowPos;
+    extern fn glfwGetWindowPos(window: *const Window, xpos: ?*i32, ypos: ?*i32) void;
 
     /// `pub fn setPos(window: *Window, width: i32, height: i32) void`
     pub const setPos = glfwSetWindowPos;
@@ -1054,10 +1034,16 @@ test "zglfw.basic" {
     window.setSize(300, 200);
     while (timer.read() < std.time.ns_per_s) {
         waitEventsTimeout(0.0001);
-        const size = window.getSize();
-        if (size[0] == 300 and size[1] == 200) break;
+        var width: u32 = undefined;
+        var height: u32 = undefined;
+        window.getSize(&width, &height);
+        if (width == 300 and height == 200) break;
     } else {
-        try std.testing.expectEqualSlices(i32, &.{ 300, 200 }, &window.getSize());
+        var width: u32 = undefined;
+        var height: u32 = undefined;
+        window.getSize(&width, &height);
+        try std.testing.expectEqualSlices(u32, 300, width);
+        try std.testing.expectEqualSlices(u32, 200, height);
     }
 
     timer.reset();
@@ -1079,9 +1065,10 @@ test "zglfw.basic" {
 
     if (window.getKey(.a) == .press) {}
     if (window.getMouseButton(.right) == .press) {}
-    const cursor_pos = window.getCursorPos();
-    _ = cursor_pos[0];
-    _ = cursor_pos[1];
+
+    var cursor_x: f64 = undefined;
+    var cursor_y: f64 = undefined;
+    window.getCursorPos(&cursor_x, &cursor_y);
 
     const window_native = try switch (@import("builtin").target.os.tag) {
         .windows => native.getWin32Window(window),
@@ -1092,9 +1079,11 @@ test "zglfw.basic" {
     _ = window_native;
 
     window.setSizeLimits(10, 10, 300, 300);
-    const content_scale = window.getContentScale();
-    _ = content_scale[0];
-    _ = content_scale[1];
+
+    var scale_x: f32 = undefined;
+    var scale_y: f32 = undefined;
+    window.getContentScale(&scale_x, &scale_y);
+
     pollEvents();
     try maybeError();
 }

@@ -61,7 +61,7 @@ pub const GraphicsContext = struct {
 
     pub fn create(
         allocator: std.mem.Allocator,
-        window: *zglfw.Window,
+        window: anytype,
         options: GraphicsContextOptions,
     ) !*GraphicsContext {
         const checkGraphicsApiSupport = (struct {
@@ -202,14 +202,16 @@ pub const GraphicsContext = struct {
         const surface = createSurfaceForWindow(instance, window);
         errdefer surface.release();
 
-        const framebuffer_size = window.getFramebufferSize();
+        var fb_width: u32 = undefined;
+        var fb_height: u32 = undefined;
+        window.getFramebufferSize(&fb_width, &fb_height);
 
         const swapchain_descriptor = wgpu.SwapChainDescriptor{
             .label = "zig-gamedev-gctx-swapchain",
             .usage = .{ .render_attachment = true },
             .format = swapchain_format,
-            .width = @intCast(framebuffer_size[0]),
-            .height = @intCast(framebuffer_size[1]),
+            .width = @intCast(fb_width),
+            .height = @intCast(fb_height),
             .present_mode = options.present_mode,
         };
         const swapchain = device.createSwapChain(surface, swapchain_descriptor);
@@ -444,13 +446,15 @@ pub const GraphicsContext = struct {
     } {
         gctx.swapchain.present();
 
-        const fb_size = gctx.window.getFramebufferSize();
-        if (gctx.swapchain_descriptor.width != fb_size[0] or
-            gctx.swapchain_descriptor.height != fb_size[1])
+        var fb_width: u32 = undefined;
+        var fb_height: u32 = undefined;
+        gctx.window.getFramebufferSize(&fb_width, &fb_height);
+        if (gctx.swapchain_descriptor.width != fb_width or
+            gctx.swapchain_descriptor.height != fb_height)
         {
-            if (fb_size[0] != 0 and fb_size[1] != 0) {
-                gctx.swapchain_descriptor.width = @intCast(fb_size[0]);
-                gctx.swapchain_descriptor.height = @intCast(fb_size[1]);
+            if (fb_width != 0 and fb_height != 0) {
+                gctx.swapchain_descriptor.width = @intCast(fb_width);
+                gctx.swapchain_descriptor.height = @intCast(fb_height);
                 gctx.swapchain.release();
 
                 gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);

@@ -104,7 +104,8 @@ const DemoState = struct {
     },
     camera: Camera,
     mouse: struct {
-        cursor_pos: [2]f64 = .{ 0, 0 },
+        cursor_x: f64 = 0,
+        cursor_y: f64 = 0,
     } = .{},
     pick: struct {
         body: ?zbt.Body = null,
@@ -384,10 +385,13 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        const cursor_pos = window.getCursorPos();
-        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
-        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
-        demo.mouse.cursor_pos = cursor_pos;
+        var cursor_x: f64 = undefined;
+        var cursor_y: f64 = undefined;
+        window.getCursorPos(&cursor_x, &cursor_y);
+        const delta_x = @as(f32, @floatCast(cursor_x - demo.mouse.cursor_x));
+        const delta_y = @as(f32, @floatCast(cursor_y - demo.mouse.cursor_y));
+        demo.mouse.cursor_x = cursor_x;
+        demo.mouse.cursor_y = cursor_y;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
@@ -1201,15 +1205,21 @@ fn objectPicking(demo: *DemoState, want_capture_mouse: bool) void {
 
     const ray_from = zm.loadArr3(demo.camera.position);
     const ray_to = ray_to: {
-        const cursor_pos = window.getCursorPos();
-        const mousex = @as(f32, @floatCast(cursor_pos[0]));
-        const mousey = @as(f32, @floatCast(cursor_pos[1]));
+        var cursor_x: f64 = undefined;
+        var cursor_y: f64 = undefined;
+        window.getCursorPos(&cursor_x, &cursor_y);
+        const mousex = @as(f32, @floatCast(cursor_x));
+        const mousey = @as(f32, @floatCast(cursor_y));
 
         const far_plane = zm.f32x4s(10_000.0);
         const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
-        const winsize = window.getSize();
-        const width = @as(f32, @floatFromInt(winsize[0]));
-        const height = @as(f32, @floatFromInt(winsize[1]));
+
+        var window_width: u32 = 0;
+        var window_height: u32 = 0;
+        window.getSize(&window_width, &window_height);
+
+        const width = @as(f32, @floatFromInt(window_width));
+        const height = @as(f32, @floatFromInt(window_height));
         const aspect = zm.f32x4s(width / height);
 
         const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
@@ -1346,8 +1356,10 @@ pub fn main() !void {
     defer destroy(allocator, demo);
 
     const scale_factor = scale_factor: {
-        const scale = window.getContentScale();
-        break :scale_factor @max(scale[0], scale[1]);
+        var scale_x: f32 = undefined;
+        var scale_y: f32 = undefined;
+        window.getContentScale(&scale_x, &scale_y);
+        break :scale_factor @max(scale_x, scale_y);
     };
 
     zgui.init(allocator);

@@ -166,7 +166,8 @@ const DemoState = struct {
         yaw: f32 = 0.0,
     } = .{},
     mouse: struct {
-        cursor_pos: [2]f64 = .{ 0, 0 },
+        cursor_x: f64 = 0,
+        cursor_y: f64 = 0,
     } = .{},
 };
 
@@ -437,10 +438,13 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        const cursor_pos = window.getCursorPos();
-        const delta_x = @as(f32, @floatCast(cursor_pos[0] - demo.mouse.cursor_pos[0]));
-        const delta_y = @as(f32, @floatCast(cursor_pos[1] - demo.mouse.cursor_pos[1]));
-        demo.mouse.cursor_pos = cursor_pos;
+        var cursor_x: f64 = undefined;
+        var cursor_y: f64 = undefined;
+        window.getCursorPos(&cursor_x, &cursor_y);
+        const delta_x = @as(f32, @floatCast(cursor_x - demo.mouse.cursor_x));
+        const delta_y = @as(f32, @floatCast(cursor_y - demo.mouse.cursor_y));
+        demo.mouse.cursor_x = cursor_x;
+        demo.mouse.cursor_y = cursor_y;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
@@ -655,8 +659,10 @@ pub fn main() !void {
     defer destroy(allocator, demo);
 
     const scale_factor = scale_factor: {
-        const scale = window.getContentScale();
-        break :scale_factor @max(scale[0], scale[1]);
+        var scale_x: f32 = undefined;
+        var scale_y: f32 = undefined;
+        window.getContentScale(&scale_x, &scale_y);
+        break :scale_factor @max(scale_x, scale_y);
     };
 
     zgui.init(allocator);
