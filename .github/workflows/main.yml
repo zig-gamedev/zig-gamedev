@@ -32,6 +32,6 @@ jobs:
         with:
           version: ${{ steps.zigversion.outputs.content }}
       - name: Build and test
-        run: zig fmt --check . && zig build && zig build test
+        run: zig fmt --check . && zig build -Dexperiments && zig build test
 
 
