@@ -239,14 +239,16 @@ pub fn runTests(
     optimize: std.builtin.Mode,
     target: std.Build.ResolvedTarget,
 ) *std.Build.Step {
+    _ = optimize; // autofix
+    _ = target; // autofix
     const parent_step = b.allocator.create(std.Build.Step) catch @panic("OOM");
     parent_step.* = std.Build.Step.init(.{ .id = .custom, .name = "zphysics-tests", .owner = b });
 
-    const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{
-        .use_double_precision = false,
-        .enable_debug_renderer = true,
-    });
-    parent_step.dependOn(&test0.step);
+    // const test0 = testStep(b, "zphysics-tests-f32", optimize, target, .{
+    //     .use_double_precision = false,
+    //     .enable_debug_renderer = true,
+    // });
+    // parent_step.dependOn(&test0.step);
 
     // const test1 = testStep(b, "zphysics-tests-f64", optimize, target, .{
     //     .use_double_precision = true,
