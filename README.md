@@ -19,7 +19,7 @@ We build game development ecosystem for [Zig programming language](https://zigla
 ## Libraries
 | Library                       | Latest version | Description                                                                                                                |
 |-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
-| **[zphysics](libs/zphysics)** | 0.0.6          | Zig API and C API for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
+| **[zphysics](libs/zphysics)** | 0.0.6          | Zig build sys & bindings ontop of a [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zphysics/libs/JoltC) for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
 | **[zflecs](libs/zflecs)**     | 0.0.1          | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
 | **[zopengl](libs/zopengl)**   | 0.1.3          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
 | **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
@@ -31,10 +31,10 @@ We build game development ecosystem for [Zig programming language](https://zigla
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
 | **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
 | **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
-| **[zglfw](libs/zglfw)**       | 0.7.0          | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency                                  |
-| **[znoise](libs/znoise)**     | 0.1.0          | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
+| **[zglfw](libs/zglfw)**       | 0.7.0          | Zig build sys & bindings for [GLFW](https://github.com/glfw/glfw)                                  |
+| **[znoise](libs/znoise)**     | 0.1.0          | Zig build sys & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
 | **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
-| **[zbullet](libs/zbullet)**   | 0.2.0          | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
+| **[zbullet](libs/zbullet)**   | 0.2.0          | Zig build sys and bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
 | **[zwin32](libs/zwin32)**     | 0.9.0          | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                              |
 | **[zd3d12](libs/zd3d12)**     | 0.9.0          | Helper library for DirectX 12                                                                                              |
 | **[zxaudio2](libs/zxaudio2)** | 0.9.0          | Helper library for XAudio2                                                                                                 |
