@@ -3,6 +3,7 @@ const std = @import("std");
 pub const Package = struct {
     zflecs: *std.Build.Module,
     zflecs_c_cpp: *std.Build.Step.Compile,
+    tests_step: *std.Build.Step,
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         exe.root_module.addImport("zflecs", pkg.zflecs);
@@ -42,9 +43,19 @@ pub fn package(
         zflecs_c_cpp.linkSystemLibrary("ws2_32");
     }
 
+    const tests = b.addTest(.{
+        .name = "zflecs-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/flecs" });
+    tests.linkLibrary(zflecs_c_cpp);
+
     return .{
         .zflecs = zflecs,
         .zflecs_c_cpp = zflecs_c_cpp,
+        .tests_step = &b.addRunArtifact(tests).step,
     };
 }
 
@@ -52,28 +63,9 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const test_step = b.step("test", "Run zflecs tests");
-    test_step.dependOn(runTests(b, optimize, target));
+    const pkg = package(b, target, optimize, .{});
 
-    _ = package(b, target, optimize, .{});
-}
-
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
-    const tests = b.addTest(.{
-        .name = "zflecs-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zflecs.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const zflecs_pkg = package(b, target, optimize, .{});
-    zflecs_pkg.link(tests);
-
-    return &b.addRunArtifact(tests).step;
+    b.step("test", "Run zflecs tests").dependOn(pkg.tests_step);
 }
 
 inline fn thisDir() []const u8 {

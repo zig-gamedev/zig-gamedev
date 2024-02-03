@@ -242,7 +242,7 @@ fn tests(
     if (target.result.os.tag != .windows) {
         test_step.dependOn(zbullet_pkg.tests_step);
     }
-    test_step.dependOn(zflecs.runTests(b, optimize, target));
+    test_step.dependOn(zflecs_pkg.tests_step);
     test_step.dependOn(zglfw.runTests(b, optimize, target));
     test_step.dependOn(zgpu.runTests(b, optimize, target));
     test_step.dependOn(zgui.runTests(b, optimize, target));
@@ -270,7 +270,7 @@ fn testsWindows(
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
-    test_step.dependOn(zd3d12_pkg.tests_step));
+    test_step.dependOn(zd3d12_pkg.tests_step);
     test_step.dependOn(zpix.runTests(b, optimize, target));
     test_step.dependOn(zwin32.runTests(b, optimize, target));
     test_step.dependOn(zxaudio2.runTests(b, optimize, target));
