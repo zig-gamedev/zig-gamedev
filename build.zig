@@ -240,7 +240,7 @@ fn tests(
     test_step.dependOn(zaudio_pkg.tests_step);
     // TODO: Get zbullet tests working on Windows again
     if (target.result.os.tag != .windows) {
-        test_step.dependOn(zbullet.runTests(b, optimize, target));
+        test_step.dependOn(zbullet_pkg.tests_step);
     }
     test_step.dependOn(zflecs.runTests(b, optimize, target));
     test_step.dependOn(zglfw.runTests(b, optimize, target));
