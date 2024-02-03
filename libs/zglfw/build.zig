@@ -1,5 +1,29 @@
 const std = @import("std");
 
+pub fn addSystemSdk(exe: *std.Build.Step.Compile) void {
+    const b = exe.step.owner;
+    const target = exe.rootModuleTarget();
+
+    const system_sdk = b.dependency("system_sdk", .{});
+
+    switch (target.os.tag) {
+        .windows => {},
+        .macos => {
+            exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
+        },
+        .linux => switch (target.cpu.arch) {
+            .x86_64 => exe.addLibraryPath(.{
+                .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b),
+            }),
+            .aarch64 => exe.addLibraryPath(.{
+                .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b),
+            }),
+            else => {},
+        },
+        else => {},
+    }
+}
+
 pub const Package = struct {
     target: std.Build.ResolvedTarget,
     zglfw: *std.Build.Module,
@@ -7,33 +31,27 @@ pub const Package = struct {
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         exe.root_module.addImport("zglfw", pkg.zglfw);
-
-        const b = exe.step.owner;
-
-        const system_sdk = b.dependency("system_sdk", .{});
-
-        switch (pkg.target.result.os.tag) {
-            .windows => {},
-            .macos => {
-                exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
-            },
-            else => {
-                // We assume Linux (X11)
-                if (pkg.target.result.cpu.arch.isX86()) {
-                    exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b) });
-                } else {
-                    exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b) });
-                }
-            },
-        }
-
+        addSystemSdk(exe);
         if (pkg.zglfw_c_cpp.linkage) |linkage| {
             if (pkg.target.result.os.tag == .windows and linkage == .dynamic) {
                 exe.defineCMacro("GLFW_DLL", null);
             }
         }
-
         exe.linkLibrary(pkg.zglfw_c_cpp);
+    }
+
+    pub fn addTests(pkg: Package, tests_step: *std.Build.Step) void {
+        const b = tests_step.owner;
+        inline for (comptime std.meta.tags(std.builtin.Mode)) |optimize| {
+            const tests = b.addTest(.{
+                .name = "zglfw-tests-" ++ @tagName(optimize),
+                .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
+                .target = pkg.target,
+                .optimize = optimize,
+            });
+            tests.linkLibrary(pkg.zglfw_c_cpp);
+            tests_step.dependOn(&b.addRunArtifact(tests).step);
+        }
     }
 };
 
@@ -194,29 +212,10 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const test_step = b.step("test", "Run zglfw tests");
-    test_step.dependOn(runTests(b, optimize, target));
-
     const pkg = package(b, target, optimize, .{});
     b.installArtifact(pkg.zglfw_c_cpp);
-}
 
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
-    const tests = b.addTest(.{
-        .name = "zglfw-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const zglfw_pkg = package(b, target, optimize, .{});
-    zglfw_pkg.link(tests);
-
-    return &b.addRunArtifact(tests).step;
+    pkg.addTests(b.step("test", "Run zglfw tests"));
 }
 
 inline fn thisDir() []const u8 {

@@ -243,7 +243,7 @@ fn tests(
         test_step.dependOn(zbullet_pkg.tests_step);
     }
     test_step.dependOn(zflecs_pkg.tests_step);
-    test_step.dependOn(zglfw.runTests(b, optimize, target));
+    zglfw_pkg.addTests(test_step);
     test_step.dependOn(zgpu.runTests(b, optimize, target));
     test_step.dependOn(zgui.runTests(b, optimize, target));
     test_step.dependOn(zjobs.runTests(b, optimize, target));
