@@ -3,6 +3,7 @@ const std = @import("std");
 pub const Package = struct {
     zaudio: *std.Build.Module,
     zaudio_c_cpp: *std.Build.Step.Compile,
+    tests_step: *std.Build.Step,
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         exe.linkLibrary(pkg.zaudio_c_cpp);
@@ -32,9 +33,15 @@ pub fn package(
     const system_sdk = b.dependency("system_sdk", .{});
 
     if (target.result.os.tag == .macos) {
-        zaudio_c_cpp.addFrameworkPath(.{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) });
-        zaudio_c_cpp.addSystemIncludePath(.{ .path = system_sdk.path("macos12/usr/include").getPath(b) });
-        zaudio_c_cpp.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
+        zaudio_c_cpp.addFrameworkPath(.{
+            .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b),
+        });
+        zaudio_c_cpp.addSystemIncludePath(.{
+            .path = system_sdk.path("macos12/usr/include").getPath(b),
+        });
+        zaudio_c_cpp.addLibraryPath(.{
+            .path = system_sdk.path("macos12/usr/lib").getPath(b),
+        });
         zaudio_c_cpp.linkFramework("CoreAudio");
         zaudio_c_cpp.linkFramework("CoreFoundation");
         zaudio_c_cpp.linkFramework("AudioUnit");
@@ -64,9 +71,18 @@ pub fn package(
         },
     });
 
+    const tests = b.addTest(.{
+        .name = "zaudio-tests",
+        .root_source_file = .{ .path = thisDir() ++ "/src/zaudio.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    tests.linkLibrary(zaudio_c_cpp);
+
     return .{
         .zaudio = zaudio,
         .zaudio_c_cpp = zaudio_c_cpp,
+        .tests_step = &b.addRunArtifact(tests).step,
     };
 }
 
@@ -74,28 +90,9 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const test_step = b.step("test", "Run zaudio tests");
-    test_step.dependOn(runTests(b, optimize, target));
+    const pkg = package(b, target, optimize, .{});
 
-    _ = package(b, target, optimize, .{});
-}
-
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
-    const tests = b.addTest(.{
-        .name = "zaudio-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zaudio.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const zaudio_pkg = package(b, target, optimize, .{});
-    zaudio_pkg.link(tests);
-
-    return &b.addRunArtifact(tests).step;
+    b.step("test", "Run zaudio tests").dependOn(pkg.tests_step);
 }
 
 inline fn thisDir() []const u8 {

@@ -237,7 +237,7 @@ fn tests(
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
-    test_step.dependOn(zaudio.runTests(b, optimize, target));
+    test_step.dependOn(zaudio_pkg.tests_step);
     // TODO: Get zbullet tests working on Windows again
     if (target.result.os.tag != .windows) {
         test_step.dependOn(zbullet.runTests(b, optimize, target));
