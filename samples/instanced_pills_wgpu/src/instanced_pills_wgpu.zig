@@ -106,6 +106,7 @@ const UpdatedPill = struct {
 };
 
 const DemoState = struct {
+    window: *zglfw.Window,
     gctx: *zgpu.GraphicsContext,
 
     pills: std.ArrayList(Pill),
@@ -124,7 +125,19 @@ const DemoState = struct {
     depth_texture_view: zgpu.TextureViewHandle,
 
     fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
-        const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+        const gctx = try zgpu.GraphicsContext.create(
+            allocator,
+            .{
+                .window = window,
+                .fn_getTime = @ptrCast(&zglfw.getTime),
+                .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+                .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+                .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+                .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+                .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+            },
+            .{},
+        );
         errdefer gctx.destroy(allocator);
 
         zgui.init(allocator);
@@ -264,6 +277,7 @@ const DemoState = struct {
         const depth = createDepthTexture(gctx);
 
         return .{
+            .window = window,
             .gctx = gctx,
             .pills = std.ArrayList(Pill).init(allocator),
             .vertex_count = 0,
@@ -461,7 +475,7 @@ const DemoState = struct {
                     var object_position_start: zm.F32x4 = undefined;
                     var vertex_start: zm.F32x4 = undefined;
                 };
-                const scale = gctx.window.getContentScale();
+                const scale = demo.window.getContentScale();
                 const screen_to_clip = zm.mul(
                     zm.scaling(
                         2 * scale[0] / @as(f32, @floatFromInt(gctx.swapchain_descriptor.width)),
@@ -472,7 +486,7 @@ const DemoState = struct {
                 );
                 const clip_to_object = zm.scaling(2 / demo.dimension.width, 2 / demo.dimension.height, 1.0);
 
-                const cursor_position = demo.gctx.window.getCursorPos();
+                const cursor_position = demo.window.getCursorPos();
                 const screen_position = zm.f32x4(
                     @as(f32, @floatCast(cursor_position[0])),
                     @as(f32, @floatCast(cursor_position[1])),
@@ -492,8 +506,8 @@ const DemoState = struct {
                 const v0 = zm.mul(v, zm.mul(width_mat, zm.mul(v0_length_mat, zm.mul(angle_mat, position_mat))));
                 const v1 = zm.mul(v, zm.mul(width_mat, zm.mul(v1_length_mat, zm.mul(angle_mat, position_mat))));
 
-                if (dragging.state == .idle and demo.gctx.window.getMouseButton(.left) == .press) {
-                    gctx.window.setInputMode(.cursor, .disabled);
+                if (dragging.state == .idle and demo.window.getMouseButton(.left) == .press) {
+                    demo.window.setInputMode(.cursor, .disabled);
 
                     const v0_dx = object_position[0] - v0[0];
                     const v0_dy = object_position[1] - v0[1];
@@ -511,9 +525,9 @@ const DemoState = struct {
                     }
                     dragging.object_position_start = object_position;
                 } else {
-                    if (demo.gctx.window.getMouseButton(.left) == .release) {
+                    if (demo.window.getMouseButton(.left) == .release) {
                         dragging.state = .idle;
-                        gctx.window.setInputMode(.cursor, .normal);
+                        demo.window.setInputMode(.cursor, .normal);
                     } else {
                         const object_position_delta = zm.f32x4(
                             object_position[0] - dragging.object_position_start[0],

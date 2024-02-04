@@ -8,7 +8,6 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const zglfw = @import("zglfw");
 const wgsl = @import("common_wgsl.zig");
 const zgpu_options = @import("zgpu_options");
 pub const wgpu = @import("wgpu.zig");
@@ -16,6 +15,40 @@ pub const wgpu = @import("wgpu.zig");
 test {
     _ = wgpu;
 }
+
+pub const WindowProvider = struct {
+    window: *anyopaque,
+    fn_getTime: *const fn () f64,
+    fn_getFramebufferSize: *const fn (window: *const anyopaque) [2]u32,
+    fn_getWin32Window: *const fn (window: *const anyopaque) ?*anyopaque = undefined,
+    fn_getX11Display: *const fn () ?*anyopaque = undefined,
+    fn_getX11Window: *const fn (window: *const anyopaque) u32 = undefined,
+    fn_getCocoaWindow: *const fn (window: *const anyopaque) ?*anyopaque = undefined,
+
+    fn getTime(self: WindowProvider) f64 {
+        return self.fn_getTime();
+    }
+
+    fn getFramebufferSize(self: WindowProvider) [2]u32 {
+        return self.fn_getFramebufferSize(self.window);
+    }
+
+    fn getWin32Window(self: WindowProvider) ?*anyopaque {
+        return self.fn_getWin32Window(self.window);
+    }
+
+    fn getX11Display(self: WindowProvider) ?*anyopaque {
+        return self.fn_getX11Display();
+    }
+
+    fn getX11Window(self: WindowProvider) u32 {
+        return self.fn_getX11Window(self.window);
+    }
+
+    fn getCocoaWindow(self: WindowProvider) ?*anyopaque {
+        return self.fn_getCocoaWindow(self.window);
+    }
+};
 
 pub const GraphicsContextOptions = struct {
     present_mode: wgpu.PresentMode = .fifo,
@@ -25,7 +58,8 @@ pub const GraphicsContextOptions = struct {
 pub const GraphicsContext = struct {
     pub const swapchain_format = wgpu.TextureFormat.bgra8_unorm;
 
-    window: *zglfw.Window,
+    window_provider: WindowProvider,
+
     stats: FrameStats = .{},
 
     native_instance: DawnNativeInstance,
@@ -61,40 +95,9 @@ pub const GraphicsContext = struct {
 
     pub fn create(
         allocator: std.mem.Allocator,
-        window: *zglfw.Window,
+        window_provider: WindowProvider,
         options: GraphicsContextOptions,
     ) !*GraphicsContext {
-        const checkGraphicsApiSupport = (struct {
-            fn impl() error{VulkanNotSupported}!void {
-                // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
-
-                // On Linux we require Vulkan support.
-                if (@import("builtin").target.os.tag == .linux) {
-                    if (!zglfw.isVulkanSupported()) {
-                        return error.VulkanNotSupported;
-                    }
-                    _ = zglfw.getRequiredInstanceExtensions() catch return error.VulkanNotSupported;
-                }
-            }
-        }).impl;
-
-        checkGraphicsApiSupport() catch |err| switch (err) {
-            error.VulkanNotSupported => {
-                std.log.err("\n" ++
-                    \\---------------------------------------------------------------------------
-                    \\
-                    \\This program requires:
-                    \\  * Vulkan graphics driver on Linux (OpenGL is NOT supported)
-                    \\
-                    \\Please install latest supported driver and try again.
-                    \\
-                    \\---------------------------------------------------------------------------
-                    \\
-                , .{});
-                return err;
-            },
-        };
-
         dawnProcSetProcs(dnGetProcs());
 
         const native_instance = dniCreate();
@@ -197,10 +200,10 @@ pub const GraphicsContext = struct {
 
         device.setUncapturedErrorCallback(logUnhandledError, null);
 
-        const surface = createSurfaceForWindow(instance, window);
+        const surface = createSurfaceForWindow(instance, window_provider);
         errdefer surface.release();
 
-        const framebuffer_size = window.getFramebufferSize();
+        const framebuffer_size = window_provider.getFramebufferSize();
 
         const swapchain_descriptor = wgpu.SwapChainDescriptor{
             .label = "zig-gamedev-gctx-swapchain",
@@ -215,11 +218,11 @@ pub const GraphicsContext = struct {
 
         const gctx = try allocator.create(GraphicsContext);
         gctx.* = .{
+            .window_provider = window_provider,
             .native_instance = native_instance,
             .instance = instance,
             .device = device,
             .queue = device.getQueue(),
-            .window = window,
             .surface = surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
@@ -424,7 +427,8 @@ pub const GraphicsContext = struct {
         gctx.queue.onSubmittedWorkDone(0, gpuWorkDone, @ptrCast(&gctx.stats.gpu_frame_number));
         gctx.queue.submit(command_buffers.slice());
 
-        gctx.stats.tick();
+        gctx.stats.tick(gctx.window_provider.getTime());
+
         gctx.uniformsNextStagingBuffer();
     }
 
@@ -442,7 +446,7 @@ pub const GraphicsContext = struct {
     } {
         gctx.swapchain.present();
 
-        const fb_size = gctx.window.getFramebufferSize();
+        const fb_size = gctx.window_provider.getFramebufferSize();
         if (gctx.swapchain_descriptor.width != fb_size[0] or
             gctx.swapchain_descriptor.height != fb_size[1])
         {
@@ -1493,8 +1497,8 @@ const FrameStats = struct {
     cpu_frame_number: u64 = 0,
     gpu_frame_number: u64 = 0,
 
-    fn tick(stats: *FrameStats) void {
-        stats.time = zglfw.getTime();
+    fn tick(stats: *FrameStats, now_secs: f64) void {
+        stats.time = now_secs;
         stats.delta_time = @floatCast(stats.time - stats.previous_time);
         stats.previous_time = stats.time;
 
@@ -1536,23 +1540,35 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
     },
 };
 
-fn createSurfaceForWindow(instance: wgpu.Instance, window: *zglfw.Window) wgpu.Surface {
+fn isLinuxDesktopLike(tag: std.Target.Os.Tag) bool {
+    return switch (tag) {
+        .linux,
+        .freebsd,
+        .kfreebsd,
+        .openbsd,
+        .dragonfly,
+        => true,
+        else => false,
+    };
+}
+
+fn createSurfaceForWindow(instance: wgpu.Instance, window_provider: WindowProvider) wgpu.Surface {
     const os_tag = @import("builtin").target.os.tag;
 
     const descriptor = if (os_tag == .windows) SurfaceDescriptor{
         .windows_hwnd = .{
             .label = "basic surface",
             .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
-            .hwnd = zglfw.native.getWin32Window(window) catch unreachable,
+            .hwnd = window_provider.getWin32Window().?,
         },
-    } else if (os_tag == .linux) SurfaceDescriptor{
+    } else if (isLinuxDesktopLike(os_tag)) SurfaceDescriptor{
         .xlib = .{
             .label = "basic surface",
-            .display = zglfw.native.getX11Display() catch unreachable,
-            .window = zglfw.native.getX11Window(window) catch unreachable,
+            .display = window_provider.getX11Display().?,
+            .window = window_provider.getX11Window(),
         },
     } else if (os_tag == .macos) blk: {
-        const ns_window = zglfw.native.getCocoaWindow(window) catch unreachable;
+        const ns_window = window_provider.getCocoaWindow().?;
         const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
 
         // Create a CAMetalLayer that covers the whole window that will be passed to CreateSurface.

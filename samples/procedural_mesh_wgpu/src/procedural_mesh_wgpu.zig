@@ -44,6 +44,7 @@ const Drawable = struct {
 };
 
 const DemoState = struct {
+    window: *zglfw.Window,
     gctx: *zgpu.GraphicsContext,
 
     pipeline: zgpu.RenderPipelineHandle,
@@ -303,7 +304,19 @@ fn initScene(
 }
 
 fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+    const gctx = try zgpu.GraphicsContext.create(
+        allocator,
+        .{
+            .window = window,
+            .fn_getTime = @ptrCast(&zglfw.getTime),
+            .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+            .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+            .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+            .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+            .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+        },
+        .{},
+    );
     errdefer gctx.destroy(allocator);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
@@ -415,6 +428,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
     const depth = createDepthTexture(gctx);
 
     return DemoState{
+        .window = window,
         .gctx = gctx,
         .pipeline = pipeline,
         .bind_group = bind_group,
@@ -453,7 +467,7 @@ fn update(demo: *DemoState) void {
     }
     zgui.end();
 
-    const window = demo.gctx.window;
+    const window = demo.window;
 
     // Handle camera rotation with mouse.
     {

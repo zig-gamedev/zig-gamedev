@@ -29,7 +29,19 @@ pub fn main() !void {
     defer _ = gpa_state.deinit();
     const gpa = gpa_state.allocator();
 
-    const gctx = try zgpu.GraphicsContext.create(gpa, window, .{});
+    const gctx = try zgpu.GraphicsContext.create(
+        gpa,
+        .{
+            .window = window,
+            .fn_getTime = @ptrCast(&zglfw.getTime),
+            .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+            .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+            .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+            .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+            .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+        },
+        .{},
+    );
     defer gctx.destroy(gpa);
 
     const scale_factor = scale_factor: {

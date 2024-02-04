@@ -16,6 +16,31 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) or OpenGL for cross-platform graphics and DirectX 12 for low-level graphics on Windows
 
 
+## Libraries
+| Library                       | Latest version | Description                                                                                                                |
+|-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
+| **[zphysics](libs/zphysics)** | 0.0.6          | Zig build sys & bindings ontop of a [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zphysics/libs/JoltC) for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
+| **[zflecs](libs/zflecs)**     | 0.0.1          | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
+| **[zopengl](libs/zopengl)**   | 0.2.0          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
+| **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
+| **[zgpu](libs/zgpu)**         | 0.10.0          | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
+| **[zgui](libs/zgui)**         | 1.89.6         | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot)) |
+| **[zaudio](libs/zaudio)**     | 0.9.3          | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)                             |
+| **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
+| **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
+| **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
+| **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
+| **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
+| **[zglfw](libs/zglfw)**       | 0.7.0          | Zig build sys & bindings for [GLFW](https://github.com/glfw/glfw)                                  |
+| **[znoise](libs/znoise)**     | 0.1.0          | Zig build sys & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
+| **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
+| **[zbullet](libs/zbullet)**   | 0.2.0          | Zig build sys and bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
+| **[zwin32](libs/zwin32)**     | 0.9.0          | Zig bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                              |
+| **[zd3d12](libs/zd3d12)**     | 0.9.0          | Helper library for DirectX 12                                                                                              |
+| **[zxaudio2](libs/zxaudio2)** | 0.9.0          | Helper library for XAudio2                                                                                                 |
+| **[zpix](libs/zpix)**         | 0.9.0          | Support for GPU profiling with PIX for Windows                                                                             |
+
+
 ## Getting Started
 
 Download the [latest archive](https://github.com/zig-gamedev/zig-gamedev/archive/refs/heads/main.zip) or clone/submodule with Git.

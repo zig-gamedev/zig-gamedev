@@ -1,7 +1,6 @@
 const std = @import("std");
 const log = std.log.scoped(.zgpu);
 
-const zglfw = @import("zglfw");
 const zpool = @import("zpool");
 
 const default_options = struct {
@@ -117,7 +116,6 @@ pub fn package(
     args: struct {
         options: Options = .{},
         deps: struct {
-            zglfw: zglfw.Package,
             zpool: zpool.Package,
         },
     },
@@ -141,7 +139,6 @@ pub fn package(
         .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .imports = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
-            .{ .name = "zglfw", .module = args.deps.zglfw.zglfw },
             .{ .name = "zpool", .module = args.deps.zpool.zpool },
         },
     });
@@ -158,7 +155,6 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
     const zpool_pkg = zpool.package(b, target, optimize, .{});
 
     _ = package(b, target, optimize, .{
@@ -220,7 +216,6 @@ pub fn build(b: *std.Build) void {
             ) orelse default_options.pipeline_layout_pool_size,
         },
         .deps = .{
-            .zglfw = zglfw_pkg,
             .zpool = zpool_pkg,
         },
     });
