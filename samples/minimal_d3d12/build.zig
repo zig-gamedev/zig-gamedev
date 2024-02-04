@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
+const content_dir = "minimal_d3d12_content/";
 
 pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
@@ -15,10 +16,23 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
 
+    const exe_options = b.addOptions();
+    exe.root_module.addOptions("build_options", exe_options);
+    exe_options.addOption([]const u8, "content_dir", content_dir);
+
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const dxc_step = buildShaders(b);
+        const dxc_step = buildShaders(
+            b,
+        );
         exe.step.dependOn(dxc_step);
+        install_content_step.step.dependOn(dxc_step);
     }
+    exe.step.dependOn(&install_content_step.step);
 
     exe.rdynamic = true;
 
@@ -28,8 +42,8 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
 fn buildShaders(b: *std.Build) *std.Build.Step {
     const dxc_step = b.step("minimal_d3d12-dxc", "Build shaders for 'minimal d3d12' demo");
 
-    makeDxcCmd(b, dxc_step, "src/minimal_d3d12.hlsl", "vsMain", "minimal_d3d12.vs.cso", "vs", "");
-    makeDxcCmd(b, dxc_step, "src/minimal_d3d12.hlsl", "psMain", "minimal_d3d12.ps.cso", "ps", "");
+    makeDxcCmd(b, dxc_step, "src/minimal_d3d12.hlsl", "vsMain", "../" ++ content_dir ++ "minimal_d3d12.vs.cso", "vs", "");
+    makeDxcCmd(b, dxc_step, "src/minimal_d3d12.hlsl", "psMain", "../" ++ content_dir ++ "minimal_d3d12.ps.cso", "ps", "");
 
     return dxc_step;
 }
