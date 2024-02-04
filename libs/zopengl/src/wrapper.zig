@@ -1432,7 +1432,6 @@ pub fn Wrap(comptime bindings: anytype) type {
 
         // pub var texParameterfv: *const fn (target: Enum, pname: Enum, params: [*c]const Float) callconv(.C) void = undefined;
         pub fn texParameterfv(target: TextureTarget, pname: TexParameter, params: []const f32) void {
-            assert(params.len > 1);
             bindings.texParameterfv(@intFromEnum(target), @intFromEnum(pname), params.ptr);
         }
 
@@ -1443,7 +1442,6 @@ pub fn Wrap(comptime bindings: anytype) type {
 
         // pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
         pub fn texParameteriv(target: TextureTarget, pname: TexParameter, params: []const i32) void {
-            assert(params.len > 1);
             bindings.texParameteriv(@intFromEnum(target), @intFromEnum(pname), params.ptr);
         }
 
@@ -1705,7 +1703,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             const res = bindings.getError();
             return std.meta.intToEnum(Error, res) catch onInvalid: {
                 log.warn("getError returned unexpected value {}", .{res});
-                assert(false);
                 break :onInvalid .no_error;
             };
         }
@@ -2299,7 +2296,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             bytes: ?[*]const u8,
             usage: BufferUsage,
         ) void {
-            assert(size > 0);
             bindings.bufferData(
                 @intFromEnum(target),
                 @as(Sizeiptr, @bitCast(size)),
@@ -2315,7 +2311,6 @@ pub fn Wrap(comptime bindings: anytype) type {
         //     data: ?*const anyopaque,
         // ) callconv(.C) void = undefined;
         pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) void {
-            assert(bytes.len > 0);
             bindings.bufferSubData(
                 @intFromEnum(target),
                 @as(Intptr, @bitCast(offset)),
@@ -3315,7 +3310,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             const res = bindings.checkFramebufferStatus(@intFromEnum(target));
             return std.meta.intToEnum(FramebufferStatus, res) catch onInvalid: {
                 log.warn("checkFramebufferStatus returned unexpected value {}", .{res});
-                std.debug.assert(false);
                 break :onInvalid .complete;
             };
         }
