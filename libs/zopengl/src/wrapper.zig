@@ -1526,6 +1526,21 @@ pub fn Wrap(comptime bindings: anytype) type {
             __unused3: u3 = 0,
             color: bool = false,
             __unused4: u17 = 0,
+
+            test {
+                try std.testing.expectEqual(
+                    @clz(@bitReverse(@as(Bitfield, DEPTH_BUFFER_BIT))),
+                    @bitOffsetOf(@This(), "depth"),
+                );
+                try std.testing.expectEqual(
+                    @clz(@bitReverse(@as(Bitfield, STENCIL_BUFFER_BIT))),
+                    @bitOffsetOf(@This(), "stencil"),
+                );
+                try std.testing.expectEqual(
+                    @clz(@bitReverse(@as(Bitfield, COLOR_BUFFER_BIT))),
+                    @bitOffsetOf(@This(), "color"),
+                );
+            }
         }) void {
             bindings.clear(@bitCast(mask));
         }
