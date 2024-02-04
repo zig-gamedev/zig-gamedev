@@ -1520,11 +1520,11 @@ pub fn Wrap(comptime bindings: anytype) type {
         // pub var clear: *const fn (mask: Bitfield) callconv(.C) void = undefined;
         pub fn clear(mask: packed struct(Bitfield) {
             __unused1: u8 = 0,
-            color: bool = false,
-            __unused2: u1 = 0,
             depth: bool = false,
-            __unused3: u3 = 0,
+            __unused2: u1 = 0,
             stencil: bool = false,
+            __unused3: u3 = 0,
+            color: bool = false,
             __unused4: u17 = 0,
         }) void {
             bindings.clear(@bitCast(mask));
