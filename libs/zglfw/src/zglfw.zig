@@ -989,56 +989,54 @@ pub const ContextCreationApi = enum(i32) {
 // Native
 //
 //--------------------------------------------------------------------------------------------------
-pub const native = switch (builtin.target.os.tag) {
-    .windows => struct {
-        pub fn getWin32Adapter(monitor: *Monitor) Error![:0]const u8 {
-            if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
-            try maybeError();
-            unreachable;
-        }
-        extern fn glfwGetWin32Adapter(monitor: *Monitor) ?[*:0]const u8;
+pub const getWin32Adapter = if (builtin.target.os.tag == .windows) glfwGetWin32Adapter else _getWin32Adapter;
+extern fn glfwGetWin32Adapter(*Monitor) ?[*:0]const u8;
+fn _getWin32Adapter(_: *Monitor) ?[*:0]const u8 {
+    return null;
+}
 
-        pub fn getWin32Window(window: *Window) Error!std.os.windows.HWND {
-            if (glfwGetWin32Window(window)) |hwnd| return hwnd;
-            try maybeError();
-            unreachable;
-        }
-        extern fn glfwGetWin32Window(window: *Window) ?std.os.windows.HWND;
-    },
-    .macos => struct {
-        pub fn getCocoaWindow(window: *Window) Error!*anyopaque {
-            if (glfwGetCocoaWindow(window)) |window_native| return window_native;
-            try maybeError();
-            unreachable;
-        }
-        extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
-    },
-    .linux => struct {
-        pub fn getX11Adapter(monitor: *Monitor) Error!u32 {
-            const adapter = glfwGetX11Adapter(monitor);
-            if (adapter != 0) return adapter;
-            try maybeError();
-            unreachable;
-        }
-        extern fn glfwGetX11Adapter(monitor: *Monitor) u32;
+pub const getWin32Window = if (builtin.target.os.tag == .windows) glfwGetWin32Window else _getWin32Window;
+extern fn glfwGetWin32Window(*Window) ?std.os.windows.HWND;
+fn _getWin32Window(_: *Window) ?std.os.windows.HWND {
+    return null;
+}
 
-        pub fn getX11Display() Error!*anyopaque {
-            if (glfwGetX11Display()) |display| return display;
-            try maybeError();
-            unreachable;
-        }
-        extern fn glfwGetX11Display() ?*anyopaque;
+pub const getX11Adapter = if (_isLinuxDesktopLike()) glfwGetX11Adapter else _getX11Adapter;
+extern fn glfwGetX11Adapter(*Monitor) u32;
+fn _getX11Adapter(_: *Monitor) u32 {
+    return 0;
+}
 
-        pub fn getX11Window(window: *Window) Error!u32 {
-            const window_native = glfwGetX11Window(window);
-            if (window_native != 0) return window_native;
-            try maybeError();
-            unreachable;
-        }
-        extern fn glfwGetX11Window(window: *Window) u32;
-    },
-    else => @compileError("Unsupported target OS"),
-};
+pub const getX11Display = if (_isLinuxDesktopLike()) glfwGetX11Display else _getX11Display;
+extern fn glfwGetX11Display() ?*anyopaque;
+fn _getX11Display() ?*anyopaque {
+    return null;
+}
+
+pub const getX11Window = if (_isLinuxDesktopLike()) glfwGetX11Window else _getX11Window;
+extern fn glfwGetX11Window(window: *Window) u32;
+fn _getX11Window(_: *Window) u32 {
+    return 0;
+}
+
+pub const getCocoaWindow = if (builtin.target.os.tag == .macos) glfwGetCocoaWindow else _getCocoaWindow;
+extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
+fn _getCocoaWindow(_: *Window) ?*anyopaque {
+    return null;
+}
+
+fn _isLinuxDesktopLike() bool {
+    return switch (builtin.target.os.tag) {
+        .linux,
+        .freebsd,
+        .kfreebsd,
+        .openbsd,
+        .dragonfly,
+        => true,
+        else => false,
+    };
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // Test
@@ -1131,8 +1129,8 @@ test "zglfw.basic" {
         _ = pos[1];
 
         const adapter = switch (@import("builtin").target.os.tag) {
-            .windows => try native.getWin32Adapter(monitor),
-            .linux => try native.getX11Adapter(monitor),
+            .windows => try getWin32Adapter(monitor),
+            .linux => try getX11Adapter(monitor),
             else => {},
         };
         _ = adapter;
@@ -1195,9 +1193,9 @@ test "zglfw.basic" {
     _ = cursor_pos[1];
 
     const window_native = try switch (builtin.target.os.tag) {
-        .windows => native.getWin32Window(window),
-        .linux => native.getX11Window(window),
-        .macos => native.getCocoaWindow(window),
+        .windows => getWin32Window(window),
+        .linux => getX11Window(window),
+        .macos => getCocoaWindow(window),
         else => unreachable,
     };
     _ = window_native;
