@@ -86,6 +86,8 @@ fn createWindow(width: u32, height: u32) w32.HWND {
 }
 
 pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+
     _ = w32.CoInitializeEx(null, w32.COINIT_MULTITHREADED);
     defer w32.CoUninitialize();
 
@@ -97,8 +99,24 @@ pub fn main() !void {
     defer dx12.deinit();
 
     const root_signature: *d3d12.IRootSignature, const pipeline: *d3d12.IPipelineState = blk: {
-        const vs_cso = @embedFile("./minimal_d3d12.vs.cso");
-        const ps_cso = @embedFile("./minimal_d3d12.ps.cso");
+        var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+        defer arena.deinit();
+
+        const self_exe_dir_path = std.fs.selfExeDirPathAlloc(arena.allocator()) catch unreachable;
+
+        const ps_cso = readVsCode: {
+            const abspath = std.fs.path.join(arena.allocator(), &.{ self_exe_dir_path, "/minimal_d3d12.vs.cso" }) catch unreachable;
+            const vs_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
+            defer vs_file.close();
+            break :readVsCode vs_file.reader().readAllAlloc(arena.allocator(), 256 * 1024) catch unreachable;
+        };
+
+        const vs_cso = readPsCode: {
+            const abspath = std.fs.path.join(arena.allocator(), &.{ self_exe_dir_path, "/minimal_d3d12.ps.cso" }) catch unreachable;
+            const ps_file = std.fs.openFileAbsolute(abspath, .{}) catch unreachable;
+            defer ps_file.close();
+            break :readPsCode ps_file.reader().readAllAlloc(arena.allocator(), 256 * 1024) catch unreachable;
+        };
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
@@ -106,8 +124,8 @@ pub fn main() !void {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-        pso_desc.VS = .{ .pShaderBytecode = vs_cso, .BytecodeLength = vs_cso.len };
-        pso_desc.PS = .{ .pShaderBytecode = ps_cso, .BytecodeLength = ps_cso.len };
+        pso_desc.VS = .{ .pShaderBytecode = vs_cso.ptr, .BytecodeLength = vs_cso.len };
+        pso_desc.PS = .{ .pShaderBytecode = ps_cso.ptr, .BytecodeLength = ps_cso.len };
 
         var root_signature: *d3d12.IRootSignature = undefined;
         hrPanicOnFail(dx12.device.CreateRootSignature(
