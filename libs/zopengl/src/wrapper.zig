@@ -96,10 +96,22 @@ pub fn Wrap(comptime bindings: anytype) type {
             shading_language_version = SHADING_LANGUAGE_VERSION,
         };
 
-        pub const IntParamName = enum(Enum) {
+        pub const ParamName = enum(Enum) {
             //--------------------------------------------------------------------------------------
             // OpenGL 1.0 (Core Profile)
             //--------------------------------------------------------------------------------------
+            cull_face = CULL_FACE,
+            polygon_smooth = POLYGON_SMOOTH,
+            line_smooth = LINE_SMOOTH,
+            dither = DITHER,
+            blend = BLEND,
+            color_writemask = COLOR_WRITEMASK,
+            depth_test = DEPTH_TEST,
+            depth_writemask = DEPTH_WRITEMASK,
+            stencil_test = STENCIL_TEST,
+            doublebuffer = DOUBLEBUFFER,
+            stereo = STEREO,
+            scissor_test = SCISSOR_TEST,
             polygon_mode = POLYGON_MODE,
             polygon_smooth_hint = POLYGON_SMOOTH_HINT,
             line_smooth_hint = LINE_SMOOTH_HINT,
@@ -135,11 +147,21 @@ pub fn Wrap(comptime bindings: anytype) type {
             unpack_swap_bytes = UNPACK_SWAP_BYTES,
             max_texture_size = MAX_TEXTURE_SIZE,
             max_viewport_dims = MAX_VIEWPORT_DIMS,
+            point_size = POINT_SIZE,
+            point_size_granularity = POINT_SIZE_GRANULARITY,
+            point_size_range = POINT_SIZE_RANGE,
+            line_width = LINE_WIDTH,
             //--------------------------------------------------------------------------------------
             // OpenGL 1.1 (Core Profile)
             //--------------------------------------------------------------------------------------
+            polygon_offset_fill = POLYGON_OFFSET_FILL,
+            polygon_offset_line = POLYGON_OFFSET_LINE,
+            polygon_offset_point = POLYGON_OFFSET_POINT,
+            color_logic_op = COLOR_LOGIC_OP,
             texture_binding_1d = TEXTURE_BINDING_1D,
             texture_binding_2d = TEXTURE_BINDING_2D,
+            polygon_offset_factor = POLYGON_OFFSET_FACTOR,
+            polygon_offset_units = POLYGON_OFFSET_UNITS,
             //--------------------------------------------------------------------------------------
             // OpenGL 1.2 (Core Profile)
             //--------------------------------------------------------------------------------------
@@ -151,9 +173,13 @@ pub fn Wrap(comptime bindings: anytype) type {
             max_3d_texture_size = MAX_3D_TEXTURE_SIZE,
             max_elements_indices = MAX_ELEMENTS_INDICES,
             max_elements_vertices = MAX_ELEMENTS_VERTICES,
+            aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
+            smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
+            smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
             //--------------------------------------------------------------------------------------
             // OpenGL 1.3 (Core Profile)
             //--------------------------------------------------------------------------------------
+            sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
             active_texture = ACTIVE_TEXTURE,
             texture_binding_cube_map = TEXTURE_BINDING_CUBE_MAP,
             texture_compression_hint = TEXTURE_COMPRESSION_HINT,
@@ -162,6 +188,7 @@ pub fn Wrap(comptime bindings: anytype) type {
             sample_buffers = SAMPLE_BUFFERS,
             num_compressed_texture_formats = NUM_COMPRESSED_TEXTURE_FORMATS,
             max_cube_map_texture_size = MAX_CUBE_MAP_TEXTURE_SIZE,
+            sample_coverage_value = SAMPLE_COVERAGE_VALUE,
             //--------------------------------------------------------------------------------------
             // OpenGL 1.4 (Core Profile)
             //--------------------------------------------------------------------------------------
@@ -169,6 +196,9 @@ pub fn Wrap(comptime bindings: anytype) type {
             blend_src_alpha = BLEND_SRC_ALPHA,
             blend_dst_rgb = BLEND_DST_RGB,
             blend_dst_alpha = BLEND_DST_ALPHA,
+            blend_color = BLEND_COLOR,
+            point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
+            max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
             //--------------------------------------------------------------------------------------
             // OpenGL 1.5 (Core Profile)
             //--------------------------------------------------------------------------------------
@@ -263,6 +293,7 @@ pub fn Wrap(comptime bindings: anytype) type {
             //--------------------------------------------------------------------------------------
             // OpenGL 3.2 (Core Profile)
             //--------------------------------------------------------------------------------------
+            program_point_size = PROGRAM_POINT_SIZE,
             provoking_vertex = PROVOKING_VERTEX,
             texture_binding_2d_multisample = TEXTURE_BINDING_2D_MULTISAMPLE,
             texture_binding_2d_multisample_array = TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
@@ -283,77 +314,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             max_dual_source_draw_buffers = MAX_DUAL_SOURCE_DRAW_BUFFERS,
             sampler_binding = SAMPLER_BINDING,
             timestamp = TIMESTAMP,
-        };
-
-        pub const BoolParamName = enum(Enum) {
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.0 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            cull_face = CULL_FACE,
-            polygon_smooth = POLYGON_SMOOTH,
-            line_smooth = LINE_SMOOTH,
-            dither = DITHER,
-            blend = BLEND,
-            color_writemask = COLOR_WRITEMASK,
-            depth_test = DEPTH_TEST,
-            depth_writemask = DEPTH_WRITEMASK,
-            stencil_test = STENCIL_TEST,
-            doublebuffer = DOUBLEBUFFER,
-            stereo = STEREO,
-            scissor_test = SCISSOR_TEST,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.1 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            polygon_offset_fill = POLYGON_OFFSET_FILL,
-            polygon_offset_line = POLYGON_OFFSET_LINE,
-            polygon_offset_point = POLYGON_OFFSET_POINT,
-            color_logic_op = COLOR_LOGIC_OP,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.3 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 3.2 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            program_point_size = PROGRAM_POINT_SIZE,
-        };
-
-        pub const FloatParamName = enum(Enum) {
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.0 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            point_size = POINT_SIZE,
-            point_size_granularity = POINT_SIZE_GRANULARITY,
-            point_size_range = POINT_SIZE_RANGE,
-            line_width = LINE_WIDTH,
-            color_clear_value = COLOR_CLEAR_VALUE,
-            depth_clear_value = DEPTH_CLEAR_VALUE,
-            depth_range = DEPTH_RANGE,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.1 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            polygon_offset_factor = POLYGON_OFFSET_FACTOR,
-            polygon_offset_units = POLYGON_OFFSET_UNITS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.2 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
-            smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
-            smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.3 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            sample_coverage_value = SAMPLE_COVERAGE_VALUE,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.4 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            blend_color = BLEND_COLOR,
-            point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
-            max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
-        };
-
-        pub const DoubleParamName = enum(Enum) {
-            // TODO
         };
 
         pub const Func = enum(Enum) {
@@ -1432,7 +1392,6 @@ pub fn Wrap(comptime bindings: anytype) type {
 
         // pub var texParameterfv: *const fn (target: Enum, pname: Enum, params: [*c]const Float) callconv(.C) void = undefined;
         pub fn texParameterfv(target: TextureTarget, pname: TexParameter, params: []const f32) void {
-            assert(params.len > 1);
             bindings.texParameterfv(@intFromEnum(target), @intFromEnum(pname), params.ptr);
         }
 
@@ -1443,7 +1402,6 @@ pub fn Wrap(comptime bindings: anytype) type {
 
         // pub var texParameteriv: *const fn (target: Enum, pname: Enum, params: [*c]const Int) callconv(.C) void = undefined;
         pub fn texParameteriv(target: TextureTarget, pname: TexParameter, params: []const i32) void {
-            assert(params.len > 1);
             bindings.texParameteriv(@intFromEnum(target), @intFromEnum(pname), params.ptr);
         }
 
@@ -1520,12 +1478,27 @@ pub fn Wrap(comptime bindings: anytype) type {
         // pub var clear: *const fn (mask: Bitfield) callconv(.C) void = undefined;
         pub fn clear(mask: packed struct(Bitfield) {
             __unused1: u8 = 0,
-            color: bool = false,
-            __unused2: u1 = 0,
             depth: bool = false,
-            __unused3: u3 = 0,
+            __unused2: u1 = 0,
             stencil: bool = false,
+            __unused3: u3 = 0,
+            color: bool = false,
             __unused4: u17 = 0,
+
+            test {
+                try std.testing.expectEqual(
+                    @clz(@bitReverse(@as(Bitfield, DEPTH_BUFFER_BIT))),
+                    @bitOffsetOf(@This(), "depth"),
+                );
+                try std.testing.expectEqual(
+                    @clz(@bitReverse(@as(Bitfield, STENCIL_BUFFER_BIT))),
+                    @bitOffsetOf(@This(), "stencil"),
+                );
+                try std.testing.expectEqual(
+                    @clz(@bitReverse(@as(Bitfield, COLOR_BUFFER_BIT))),
+                    @bitOffsetOf(@This(), "color"),
+                );
+            }
         }) void {
             bindings.clear(@bitCast(mask));
         }
@@ -1676,12 +1649,12 @@ pub fn Wrap(comptime bindings: anytype) type {
         }
 
         // pub var getBooleanv: *const fn (pname: Enum, data: [*c]Boolean) callconv(.C) void = undefined;
-        pub fn getBooleanv(pname: BoolParamName, ptr: [*]Boolean) void {
+        pub fn getBooleanv(pname: ParamName, ptr: [*]Boolean) void {
             bindings.getBooleanv(@intFromEnum(pname), ptr);
         }
 
         // pub var getDoublev: *const fn (pname: Enum, data: [*c]Double) callconv(.C) void = undefined;
-        pub fn getDoublev(pname: DoubleParamName, ptr: [*]Double) void {
+        pub fn getDoublev(pname: ParamName, ptr: [*]Double) void {
             bindings.getDoublev(@intFromEnum(pname), ptr);
         }
 
@@ -1690,18 +1663,17 @@ pub fn Wrap(comptime bindings: anytype) type {
             const res = bindings.getError();
             return std.meta.intToEnum(Error, res) catch onInvalid: {
                 log.warn("getError returned unexpected value {}", .{res});
-                assert(false);
                 break :onInvalid .no_error;
             };
         }
 
         // pub var getFloatv: *const fn (pname: Enum, data: [*c]Float) callconv(.C) void = undefined;
-        pub fn getFloatv(pname: FloatParamName, ptr: [*]Float) void {
+        pub fn getFloatv(pname: ParamName, ptr: [*]Float) void {
             bindings.getFloatv(@intFromEnum(pname), ptr);
         }
 
         // pub var getIntegerv: *const fn (pname: Enum, data: [*c]Int) callconv(.C) void = undefined;
-        pub fn getIntegerv(pname: IntParamName, ptr: [*]Int) void {
+        pub fn getIntegerv(pname: ParamName, ptr: [*]Int) void {
             bindings.getIntegerv(@intFromEnum(pname), ptr);
         }
 
@@ -2284,7 +2256,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             bytes: ?[*]const u8,
             usage: BufferUsage,
         ) void {
-            assert(size > 0);
             bindings.bufferData(
                 @intFromEnum(target),
                 @as(Sizeiptr, @bitCast(size)),
@@ -2300,7 +2271,6 @@ pub fn Wrap(comptime bindings: anytype) type {
         //     data: ?*const anyopaque,
         // ) callconv(.C) void = undefined;
         pub fn bufferSubData(target: BufferTarget, offset: usize, bytes: []const u8) void {
-            assert(bytes.len > 0);
             bindings.bufferSubData(
                 @intFromEnum(target),
                 @as(Intptr, @bitCast(offset)),
@@ -3300,7 +3270,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             const res = bindings.checkFramebufferStatus(@intFromEnum(target));
             return std.meta.intToEnum(FramebufferStatus, res) catch onInvalid: {
                 log.warn("checkFramebufferStatus returned unexpected value {}", .{res});
-                std.debug.assert(false);
                 break :onInvalid .complete;
             };
         }
