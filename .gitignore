@@ -3,6 +3,7 @@
 !*/
 
 !.zigversion
+!.lfs-content-token
 
 !*.c
 !*.cpp
