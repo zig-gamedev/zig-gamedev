@@ -56,7 +56,83 @@ We recommend [zigup](https://github.com/marler8997/zigup) for managing compiler 
 | macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
 | macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz) |
 
-If you need to use a more recent version of Zig, you can try our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
+If you need to use a more recent version of Zig, you can try our
+[unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But
+this is not generally recommended.
+
+### Project Setup
+
+To integrate `zig-gamedev` into your own zig project, create a zig project and
+clone `zig-gamedev` as a [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
+
+```
+mkdir mygame
+zig init
+git init .
+git submodule add git@github.com:zig-gamedev/zig-gamedev.git libs/zig-gamedev
+```
+
+To add any of `zig-gamedev`s libraries to your project, open your
+`build.zig.zon` file and add them with their local path:
+
+```zig
+.{
+    .name = "mygame",
+    .version = "0.0.0",
+    .dependencies = .{
+        .zopengl = .{
+            .path = "./libs/zig-gamedev/libs/zopengl",
+        },
+        .zglfw = .{
+            .path = "./libs/zig-gamedev/libs/zglfw",
+        },
+        .system_sdk = .{
+            .path = "./libs/zig-gamedev/libs/system-sdk",
+        },
+    },
+    .paths = .{
+        "",
+    },
+}
+```
+
+In your `build.zig` file, import the libraries:
+
+```zig
+const std = @import("std");
+const zglfw = @import("zglfw"); // import zglfw from zig-gamedev
+const zopengl = @import("zopengl"); // import zopengl from zig-gamedev
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const exe = b.addExecutable(.{
+        .name = "sketchbook.new.zig",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    b.installArtifact(exe);
+
+    // Add the zig-gamedev libraries by their package definitions
+    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
+
+    // Link the packages with your executable
+    zglfw_pkg.link(exe);
+    zopengl_pkg.link(exe);
+
+    const run_cmd = b.addRunArtifact(exe);
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
+}
+```
 
 ### Build and run the samples
 
