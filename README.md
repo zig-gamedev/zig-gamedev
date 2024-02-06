@@ -16,6 +16,78 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) or OpenGL for cross-platform graphics and DirectX 12 for low-level graphics on Windows
 
 
+## Getting Started
+
+Download the [latest archive](https://github.com/zig-gamedev/zig-gamedev/archive/refs/heads/main.zip) or clone/submodule with Git.
+
+Note: If using Git then you will need [Git LFS](https://git-lfs.github.com/) to be installed.
+
+### Get Zig
+
+Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.12.0-dev.2063+804cee3b9** as [nominated by the Mach engine project](https://machengine.org/about/nominated-zig) to maintain compatibilty for users of both projects.
+
+[zigup](https://github.com/marler8997/zigup) is recommended for managing compiler versions. Alternatively, you can download and install manually using the links below:
+
+| OS/Arch         | Download link               |
+| --------------- | --------------------------- |
+| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.2063+804cee3b9.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.2063+804cee3b9.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz) |
+
+If you need to use a more recent version of Zig, you can try our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
+
+### Build and run the [Samples](#sample-applications-native-wgpu)
+
+To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
+```
+zig build physically_based_rendering_wgpu-run
+```
+
+To get a list of all available build steps:
+```
+zig build -l
+```
+
+### Using the [Libraries](#Libraries)
+
+Option to download packages using Zig Package Manager **coming soon!**
+
+Copy each library to a subdirectory in your project and add them as local package dependencies. For example:
+
+`build.zig.zon`
+
+ ```zig
+ .{
+     .name = "MyGame",
+     .version = "0.0.0",
+     .dependencies = .{
+         .zglfw = .{ .path = "libs/zglfw" },
+         .system_sdk = .{ .path = "libs/system-sdk" },
+     },
+     .paths = "",
+ }
+ ```
+
+`build.zig`
+
+ ```zig
+ const zglfw = @import("zglfw");
+
+ pub fn build(b: *std.Build) void {
+      const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+
+      ...
+
+      zglfw_pkg.link(exe);
+
+      ...
+ }
+ ```
+
+Refer to each lib's README.md for further usage intructions.
+
+
 ## Libraries
 | Library                       | Latest version | Description                                                                                                                |
 |-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
@@ -39,36 +111,6 @@ We build game development ecosystem for [Zig programming language](https://zigla
 | **[zd3d12](libs/zd3d12)**     | 0.9.0          | Helper library for DirectX 12                                                                                              |
 | **[zxaudio2](libs/zxaudio2)** | 0.9.0          | Helper library for XAudio2                                                                                                 |
 | **[zpix](libs/zpix)**         | 0.9.0          | Support for GPU profiling with PIX for Windows                                                                             |
-
-
-## Getting Started
-
-You only need [Zig](https://ziglang.org) and [Git LFS](https://git-lfs.github.com/) to get started!
-
-Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.12.0-dev.2063+804cee3b9** as [nominated by the Mach engine project](https://machengine.org/about/nominated-zig) to maintain compatibilty for users of both projects.
-
-We recommend [zigup](https://github.com/marler8997/zigup) for managing compiler versions. Alternatively, you can download and install manually using the links below:
-
-| OS/Arch         | Download link               |
-| --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.2063+804cee3b9.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.2063+804cee3b9.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.2063+804cee3b9.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.2063+804cee3b9.tar.xz) |
-
-If you need to use a more recent version of Zig, you can try our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
-
-### Build and run the samples
-
-To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
-```
-zig build physically_based_rendering_wgpu-run
-```
-
-To get a list of all available build steps:
-```
-zig build -l
-```
 
 ## Sample applications (native wgpu)
 

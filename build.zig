@@ -4,13 +4,30 @@ const std = @import("std");
 pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.2063" };
 
 pub fn build(b: *std.Build) void {
+    ensureZigVersion() catch return;
+
+    if (checkGitLfsContent() == false) {
+        ensureGit(b.allocator) catch return;
+        ensureGitLfs(b.allocator, "install") catch return;
+        ensureGitLfs(b.allocator, "pull") catch return;
+        if (checkGitLfsContent() == false) {
+            std.log.err("\n" ++
+                \\---------------------------------------------------------------------------
+                \\
+                \\Something went wrong, Git LFS content has not been downloaded.
+                \\
+                \\Please try to re-clone the repo and build again.
+                \\
+                \\---------------------------------------------------------------------------
+                \\
+            , .{});
+            return;
+        }
+    }
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    //
-    // Options and system checks
-    //
-    ensureZigVersion() catch return;
     const options = Options{
         .optimize = optimize,
         .target = target,
@@ -30,10 +47,6 @@ pub fn build(b: *std.Build) void {
             "Enable PIX for Windows profiler",
         ) orelse false,
     };
-    ensureGit(b.allocator) catch return;
-    ensureGitLfs(b.allocator, "install") catch return;
-    ensureGitLfs(b.allocator, "pull") catch return;
-    ensureGitLfsContent("/samples/triangle_wgpu/triangle_wgpu_content/Roboto-Medium.ttf") catch return;
 
     //
     // Packages
@@ -453,35 +466,20 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
     }
 }
 
-fn ensureGitLfsContent(comptime file_path: []const u8) !void {
-    const printNoGitLfsContent = (struct {
-        fn impl() void {
-            std.log.err("\n" ++
-                \\---------------------------------------------------------------------------
-                \\
-                \\Something went wrong, Git LFS content has not been downloaded.
-                \\
-                \\Please try to re-clone the repo and build again.
-                \\
-                \\---------------------------------------------------------------------------
-                \\
-            , .{});
-        }
-    }).impl;
-    const file = std.fs.openFileAbsolute(thisDir() ++ file_path, .{}) catch {
-        printNoGitLfsContent();
-        return error.GitLfsNoContent;
+fn checkGitLfsContent() bool {
+    const file = std.fs.openFileAbsolute(thisDir() ++ "/.lfs-content-token", .{}) catch {
+        return false;
     };
     defer file.close();
-
-    const size = file.getEndPos() catch {
-        printNoGitLfsContent();
-        return error.GitLfsNoContent;
+    const expected_contents =
+        \\DO NOT EDIT OR DELETE
+        \\This file is used to check if Git LFS content has been downloaded
+    ;
+    var buf: [expected_contents.len]u8 = undefined;
+    _ = file.readAll(&buf) catch {
+        return false;
     };
-    if (size <= 1024) {
-        printNoGitLfsContent();
-        return error.GitLfsNoContent;
-    }
+    return std.mem.eql(u8, expected_contents, &buf);
 }
 
 inline fn thisDir() []const u8 {
