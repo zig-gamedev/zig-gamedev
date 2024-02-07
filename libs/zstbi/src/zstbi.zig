@@ -1,4 +1,5 @@
 const std = @import("std");
+const testing = std.testing;
 const assert = std.debug.assert;
 
 pub fn init(allocator: std.mem.Allocator) void {
@@ -557,10 +558,40 @@ extern fn stbi_write_jpg_to_func(
     quality: c_int,
 ) c_int;
 
-test "zstbi.basic" {
-    init(std.testing.allocator);
+test "zstbi basic" {
+    init(testing.allocator);
     defer deinit();
 
-    var image = try Image.createEmpty(64, 64, 4, .{});
-    defer image.deinit();
+    var im1 = try Image.createEmpty(8, 6, 4, .{});
+    defer im1.deinit();
+
+    try testing.expect(im1.width == 8);
+    try testing.expect(im1.height == 6);
+    try testing.expect(im1.num_components == 4);
+}
+
+test "zstbi resize" {
+    init(testing.allocator);
+    defer deinit();
+
+    var im1 = try Image.createEmpty(32, 32, 4, .{});
+    defer im1.deinit();
+
+    var im2 = try Image.createEmpty(8, 6, 3, .{});
+    defer im2.deinit();
+
+    try testing.expect(im2.width == 8);
+    try testing.expect(im2.height == 6);
+    try testing.expect(im2.num_components == 3);
+}
+
+test "zstbi write" {
+    init(testing.allocator);
+    defer deinit();
+
+    var im1 = try Image.createEmpty(8, 6, 4, .{});
+    defer im1.deinit();
+
+    try im1.writeToFile("test_img.png", ImageWriteFormat.png);
+    // try im1.writeToFile("test_img.jpg", .{ .jpg = .{ .quality = 80 } });
 }
