@@ -88,7 +88,7 @@ pub const Package = struct {
                     },
                 }
             },
-            else => unreachable,
+            else => {},
         }
     }
 };
