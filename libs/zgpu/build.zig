@@ -89,7 +89,7 @@ pub const Package = struct {
                 exe.linkFramework("IOSurface");
                 exe.linkFramework("QuartzCore");
             },
-            else => unreachable,
+            else => {},
         }
 
         exe.linkSystemLibrary("dawn");
