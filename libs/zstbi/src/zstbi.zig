@@ -585,13 +585,30 @@ test "zstbi resize" {
     try testing.expect(im2.num_components == 3);
 }
 
-test "zstbi write" {
+test "zstbi write and load file" {
     init(testing.allocator);
     defer deinit();
 
-    var im1 = try Image.createEmpty(8, 6, 4, .{});
-    defer im1.deinit();
+    var img = try Image.createEmpty(8, 6, 4, .{});
+    defer img.deinit();
 
-    try im1.writeToFile("test_img.png", ImageWriteFormat.png);
-    // try im1.writeToFile("test_img.jpg", .{ .jpg = .{ .quality = 80 } });
+    try img.writeToFile("test_img.png", ImageWriteFormat.png);
+    try img.writeToFile("test_img.jpg", .{ .jpg = .{ .quality = 80 } });
+
+    var img_png = try Image.loadFromFile("test_img.png", 0);
+    defer img_png.deinit();
+
+    try testing.expect(img_png.width == img.width);
+    try testing.expect(img_png.height == img.height);
+    try testing.expect(img_png.num_components == img.num_components);
+
+    var img_jpg = try Image.loadFromFile("test_img.jpg", 0);
+    defer img_jpg.deinit();
+
+    try testing.expect(img_jpg.width == img.width);
+    try testing.expect(img_jpg.height == img.height);
+    try testing.expect(img_jpg.num_components == 3); // RGB JPEG
+
+    try std.fs.cwd().deleteFile("test_img.png");
+    try std.fs.cwd().deleteFile("test_img.jpg");
 }
