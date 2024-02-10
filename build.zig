@@ -292,7 +292,7 @@ fn testsWindows(
 fn benchmarks(b: *std.Build, options: Options) void {
     const benchmark_step = b.step("benchmark", "Run all benchmarks");
 
-    benchmark_step.dependOn(zmath.runBenchmarks(b, options.target));
+    benchmark_step.dependOn(zmath.runBenchmarks(b, options.target, options.optimize));
 }
 
 pub var zmath_pkg: zmath.Package = undefined;

@@ -60,7 +60,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(runTests(b, optimize, target));
 
     const benchmark_step = b.step("benchmark", "Run zmath benchmarks");
-    benchmark_step.dependOn(runBenchmarks(b, target));
+    benchmark_step.dependOn(runBenchmarks(b, target, optimize));
 }
 
 pub fn runTests(
@@ -84,12 +84,13 @@ pub fn runTests(
 pub fn runBenchmarks(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
 ) *std.Build.Step {
     const exe = b.addExecutable(.{
         .name = "zmath-benchmarks",
         .root_source_file = .{ .path = thisDir() ++ "/src/benchmark.zig" },
         .target = target,
-        .optimize = .ReleaseFast,
+        .optimize = optimize,
     });
 
     const zmath_pkg = package(b, target, .ReleaseFast, .{});
