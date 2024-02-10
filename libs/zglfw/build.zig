@@ -1,7 +1,6 @@
 const std = @import("std");
 
 pub const Package = struct {
-    target: std.Build.ResolvedTarget,
     zglfw: *std.Build.Module,
     zglfw_c_cpp: *std.Build.Step.Compile,
 
@@ -9,28 +8,34 @@ pub const Package = struct {
         exe.root_module.addImport("zglfw", pkg.zglfw);
 
         const b = exe.step.owner;
+        const target = exe.rootModuleTarget();
 
         const system_sdk = b.dependency("system_sdk", .{});
 
-        switch (pkg.target.result.os.tag) {
+        switch (target.os.tag) {
             .windows => {},
             .macos => {
                 exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
             },
-            else => {
-                // We assume Linux (X11)
-                if (pkg.target.result.cpu.arch.isX86()) {
+            .linux => {
+                if (target.cpu.arch.isX86()) {
                     exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b) });
                 } else {
                     exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b) });
                 }
             },
+            else => {},
         }
 
-        if (pkg.zglfw_c_cpp.linkage) |linkage| {
-            if (pkg.target.result.os.tag == .windows and linkage == .dynamic) {
-                exe.defineCMacro("GLFW_DLL", null);
-            }
+        switch (target.os.tag) {
+            .windows => {
+                if (pkg.zglfw_c_cpp.linkage) |linkage| {
+                    if (linkage == .dynamic) {
+                        exe.defineCMacro("GLFW_DLL", null);
+                    }
+                }
+            },
+            else => {},
         }
 
         exe.linkLibrary(pkg.zglfw_c_cpp);
@@ -184,7 +189,6 @@ pub fn package(
     }
 
     return .{
-        .target = target,
         .zglfw = zglfw,
         .zglfw_c_cpp = zglfw_c_cpp,
     };
