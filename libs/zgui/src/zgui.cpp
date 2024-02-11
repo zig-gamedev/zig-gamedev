@@ -460,6 +460,54 @@ ZGUI_API bool zguiDragScalarN(
     return ImGui::DragScalarN(label, data_type, p_data, components, v_speed, p_min, p_max, format, flags);
 }
 
+ZGUI_API bool zguiBeginDragDropSource(ImGuiDragDropFlags flags = 0) {
+  return ImGui::BeginDragDropSource(flags);
+}
+ZGUI_API bool zguiSetDragDropPayload(
+    const char* type,
+    const void* data,
+    size_t sz,
+    ImGuiCond cond = 0
+) {
+  return ImGui::SetDragDropPayload(type, data, sz, cond);
+}
+ZGUI_API void zguiEndDragDropSource() {
+  return ImGui::EndDragDropSource();
+}
+ZGUI_API bool zguiBeginDragDropTarget() {
+  return ImGui::BeginDragDropTarget();
+}
+ZGUI_API const ImGuiPayload* zguiAcceptDragDropPayload(
+    const char* type,
+    ImGuiDragDropFlags flags = 0
+) {
+  return ImGui::AcceptDragDropPayload(type);
+}
+ZGUI_API void zguiEndDragDropTarget() {
+  return ImGui::EndDragDropTarget();
+}
+ZGUI_API const ImGuiPayload* zguiGetDragDropPayload() {
+  return ImGui::GetDragDropPayload();
+}
+
+
+ZGUI_API ImGuiPayload zguiImGuiPayload_Init() { return ImGuiPayload(); }
+
+ZGUI_API void zguiImGuiPayload_Clear(ImGuiPayload* payload) { payload->Clear(); }
+
+ZGUI_API bool zguiImGuiPayload_IsDataType(const ImGuiPayload* payload, const char* type) {
+  return payload->IsDataType(type);
+}
+
+ZGUI_API bool zguiImGuiPayload_IsPreview(const ImGuiPayload* payload) {
+  return payload->IsPreview();
+}
+
+ZGUI_API bool zguiImGuiPayload_IsDelivery(const ImGuiPayload* payload) {
+  return payload->IsDelivery();
+}
+
+
 ZGUI_API bool zguiCombo(
     const char* label,
     int* current_item,
