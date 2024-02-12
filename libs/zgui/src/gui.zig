@@ -3399,7 +3399,7 @@ const Payload = extern struct {
     source_id: c_uint = 0,
     source_parent_id: c_uint = 0,
     data_frame_count: c_int = -1,
-    data_type: [32 + 1]c_char,
+    data_type: [32:0]c_char,
     preview: bool = false,
     delivery: bool = false,
 
@@ -3430,7 +3430,7 @@ pub fn beginDragDropSource(flags: DragDropFlags) bool {
     return zguiBeginDragDropSource(flags);
 }
 pub fn setDragDropPayload(payload_type: [*:0]const u8, data: []const u8, cond: Condition) bool {
-    return zguiSetDragDropPayload(payload_type, data.ptr, data.len, cond);
+    return zguiSetDragDropPayload(payload_type, @alignCast(@ptrCast(data.ptr)), data.len, cond);
 }
 pub fn endDragDropSource() void {
     zguiEndDragDropSource();
@@ -3448,7 +3448,7 @@ pub fn getDragDropPayload() ?*Payload {
     return zguiGetDragDropPayload();
 }
 extern fn zguiBeginDragDropSource(flags: DragDropFlags) bool;
-extern fn zguiSetDragDropPayload(type: [*:0]const u8, data: *anyopaque, sz: usize, cond: Condition) bool;
+extern fn zguiSetDragDropPayload(type: [*:0]const u8, data: *const anyopaque, sz: usize, cond: Condition) bool;
 extern fn zguiEndDragDropSource() void;
 extern fn zguiBeginDragDropTarget() bool;
 extern fn zguiAcceptDragDropPayload(type: [*:0]const u8, flags: DragDropFlags) [*c]Payload;
