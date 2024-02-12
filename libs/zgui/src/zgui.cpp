@@ -490,9 +490,6 @@ ZGUI_API const ImGuiPayload* zguiGetDragDropPayload() {
   return ImGui::GetDragDropPayload();
 }
 
-
-ZGUI_API ImGuiPayload zguiImGuiPayload_Init() { return ImGuiPayload(); }
-
 ZGUI_API void zguiImGuiPayload_Clear(ImGuiPayload* payload) { payload->Clear(); }
 
 ZGUI_API bool zguiImGuiPayload_IsDataType(const ImGuiPayload* payload, const char* type) {

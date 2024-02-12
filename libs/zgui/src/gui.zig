@@ -3374,7 +3374,7 @@ extern fn zguiResetMouseDragDelta(button: MouseButton) void;
 // Drag and Drop
 //
 //--------------------------------------------------------------------------------------------------
-pub const DragDropFlags = packed struct(u32) {
+pub const DragDropFlags = packed struct(c_int) {
     source_no_preview_tooltip: bool = false,
     source_no_disable_hover: bool = false,
     source_no_hold_open_to_others: bool = false,
@@ -3387,24 +3387,27 @@ pub const DragDropFlags = packed struct(u32) {
     accept_before_delivery: bool = false,
     accept_no_draw_default_rect: bool = false,
     accept_no_preview_tooltip: bool = false,
-    accept_peek_only: bool = false,
 
-    _padding1: u18 = 0,
+    _padding1: u19 = 0,
+
+    pub const accept_peek_only = @This(){ .accept_before_delivery = true, .accept_no_draw_default_rect = true };
 };
 
 const Payload = extern struct {
     data: *anyopaque = null,
-    data_size: i32 = 0,
-    source_id: u32 = 0,
-    source_parent_id: u32 = 0,
-    data_frame_count: i32 = -1,
-    data_type: [32 + 1]u8,
+    data_size: c_int = 0,
+    source_id: c_uint = 0,
+    source_parent_id: c_uint = 0,
+    data_frame_count: c_int = -1,
+    data_type: [32 + 1]c_char,
     preview: bool = false,
     delivery: bool = false,
 
-    /// `pub fn init() Payload`
-    pub const init = zguiImGuiPayload_Init;
-    extern fn zguiImGuiPayload_Init() Payload;
+    pub fn init() Payload {
+        var payload = Payload{};
+        payload.clear();
+        return payload;
+    }
 
     /// `pub fn clear(payload: *Payload) void`
     pub const clear = zguiImGuiPayload_Clear;
@@ -3426,8 +3429,8 @@ const Payload = extern struct {
 pub fn beginDragDropSource(flags: DragDropFlags) bool {
     return zguiBeginDragDropSource(flags);
 }
-pub fn setDragDropPayload(payload_type: [*:0]const u8, data: *anyopaque, sz: usize, cond: Condition) bool {
-    return zguiSetDragDropPayload(payload_type, data, sz, cond);
+pub fn setDragDropPayload(payload_type: [*:0]const u8, data: []const u8, cond: Condition) bool {
+    return zguiSetDragDropPayload(payload_type, data.ptr, data.len, cond);
 }
 pub fn endDragDropSource() void {
     zguiEndDragDropSource();
