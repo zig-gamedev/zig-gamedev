@@ -3441,7 +3441,7 @@ pub fn acceptDragDropPayload(payload_type: [*:0]const u8, flags: DragDropFlags) 
 pub fn endDragDropTarget() void {
     zguiEndDragDropTarget();
 }
-pub fn getDragDropPayload() *Payload {
+pub fn getDragDropPayload() ?*Payload {
     return zguiGetDragDropPayload();
 }
 extern fn zguiBeginDragDropSource(flags: DragDropFlags) bool;
