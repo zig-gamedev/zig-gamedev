@@ -48,10 +48,12 @@ pub const Package = struct {
 
         const b = exe.step.owner;
 
-        const system_sdk = b.dependency("system_sdk", .{});
+        const target_os = pkg.target.result.os.tag;
 
-        switch (pkg.target.result.os.tag) {
+        switch (target_os) {
             .windows => {
+                const system_sdk = b.dependency("system_sdk", .{});
+
                 const dawn_dep = b.dependency("dawn_x86_64_windows_gnu", .{});
                 exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 exe.addLibraryPath(.{ .path = system_sdk.path("windows/lib/x86_64-windows-gnu").getPath(b) });
@@ -69,6 +71,8 @@ pub const Package = struct {
                 }
             },
             .macos => {
+                const system_sdk = b.dependency("system_sdk", .{});
+
                 exe.addFrameworkPath(.{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) });
                 exe.addSystemIncludePath(.{ .path = system_sdk.path("macos12/usr/include").getPath(b) });
                 exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
@@ -92,21 +96,23 @@ pub const Package = struct {
             else => {},
         }
 
-        exe.linkSystemLibrary("dawn");
-        exe.linkLibC();
-        exe.linkLibCpp();
+        if (target_os != .emscripten) {
+            exe.linkSystemLibrary("dawn");
+            exe.linkLibC();
+            exe.linkLibCpp();
 
-        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/dawn/include" });
-        exe.addIncludePath(.{ .path = thisDir() ++ "/src" });
+            exe.addIncludePath(.{ .path = thisDir() ++ "/libs/dawn/include" });
+            exe.addIncludePath(.{ .path = thisDir() ++ "/src" });
 
-        exe.addCSourceFile(.{
-            .file = .{ .path = thisDir() ++ "/src/dawn.cpp" },
-            .flags = &.{ "-std=c++17", "-fno-sanitize=undefined" },
-        });
-        exe.addCSourceFile(.{
-            .file = .{ .path = thisDir() ++ "/src/dawn_proc.c" },
-            .flags = &.{"-fno-sanitize=undefined"},
-        });
+            exe.addCSourceFile(.{
+                .file = .{ .path = thisDir() ++ "/src/dawn.cpp" },
+                .flags = &.{ "-std=c++17", "-fno-sanitize=undefined" },
+            });
+            exe.addCSourceFile(.{
+                .file = .{ .path = thisDir() ++ "/src/dawn_proc.c" },
+                .flags = &.{"-fno-sanitize=undefined"},
+            });
+        }
     }
 };
 
@@ -262,6 +268,7 @@ pub fn checkTargetSupported(target: std.Build.ResolvedTarget) bool {
             ) == .lt) break :blk false;
             break :blk true;
         },
+        .emscripten => true,
         else => false,
     };
     if (supported == false) {
