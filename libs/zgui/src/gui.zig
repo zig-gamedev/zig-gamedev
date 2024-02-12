@@ -3371,6 +3371,95 @@ extern fn zguiGetMouseDragDelta(button: MouseButton, lock_threshold: f32, delta:
 extern fn zguiResetMouseDragDelta(button: MouseButton) void;
 //--------------------------------------------------------------------------------------------------
 //
+// Drag and Drop
+//
+//--------------------------------------------------------------------------------------------------
+pub const DragDropFlags = packed struct(c_int) {
+    source_no_preview_tooltip: bool = false,
+    source_no_disable_hover: bool = false,
+    source_no_hold_open_to_others: bool = false,
+    source_allow_null_id: bool = false,
+    source_extern: bool = false,
+    source_auto_expire_payload: bool = false,
+
+    _padding0: u4 = 0,
+
+    accept_before_delivery: bool = false,
+    accept_no_draw_default_rect: bool = false,
+    accept_no_preview_tooltip: bool = false,
+
+    _padding1: u19 = 0,
+
+    pub const accept_peek_only = @This(){ .accept_before_delivery = true, .accept_no_draw_default_rect = true };
+};
+
+const Payload = extern struct {
+    data: *anyopaque = null,
+    data_size: c_int = 0,
+    source_id: c_uint = 0,
+    source_parent_id: c_uint = 0,
+    data_frame_count: c_int = -1,
+    data_type: [32:0]c_char,
+    preview: bool = false,
+    delivery: bool = false,
+
+    pub fn init() Payload {
+        var payload = Payload{};
+        payload.clear();
+        return payload;
+    }
+
+    /// `pub fn clear(payload: *Payload) void`
+    pub const clear = zguiImGuiPayload_Clear;
+    extern fn zguiImGuiPayload_Clear(payload: *Payload) void;
+
+    /// `pub fn isDataType(payload: *const Payload, type: [*:0]const u8) bool`
+    pub const isDataType = zguiImGuiPayload_IsDataType;
+    extern fn zguiImGuiPayload_IsDataType(payload: *const Payload, type: [*:0]const u8) bool;
+
+    /// `pub fn isPreview(payload: *const Payload) bool`
+    pub const isPreview = zguiImGuiPayload_IsPreview;
+    extern fn zguiImGuiPayload_IsPreview(payload: *const Payload) bool;
+
+    /// `pub fn isDelivery(payload: *const Payload) bool;
+    pub const isDelivery = zguiImGuiPayload_IsDelivery;
+    extern fn zguiImGuiPayload_IsDelivery(payload: *const Payload) bool;
+};
+
+pub fn beginDragDropSource(flags: DragDropFlags) bool {
+    return zguiBeginDragDropSource(flags);
+}
+
+/// Note: `payload_type` can be at most 32 characters long
+pub fn setDragDropPayload(payload_type: [*:0]const u8, data: []const u8, cond: Condition) bool {
+    return zguiSetDragDropPayload(payload_type, @alignCast(@ptrCast(data.ptr)), data.len, cond);
+}
+pub fn endDragDropSource() void {
+    zguiEndDragDropSource();
+}
+pub fn beginDragDropTarget() bool {
+    return zguiBeginDragDropTarget();
+}
+
+/// Note: `payload_type` can be at most 32 characters long
+pub fn acceptDragDropPayload(payload_type: [*:0]const u8, flags: DragDropFlags) ?*Payload {
+    return zguiAcceptDragDropPayload(payload_type, flags);
+}
+pub fn endDragDropTarget() void {
+    zguiEndDragDropTarget();
+}
+pub fn getDragDropPayload() ?*Payload {
+    return zguiGetDragDropPayload();
+}
+extern fn zguiBeginDragDropSource(flags: DragDropFlags) bool;
+extern fn zguiSetDragDropPayload(type: [*:0]const u8, data: *const anyopaque, sz: usize, cond: Condition) bool;
+extern fn zguiEndDragDropSource() void;
+extern fn zguiBeginDragDropTarget() bool;
+extern fn zguiAcceptDragDropPayload(type: [*:0]const u8, flags: DragDropFlags) [*c]Payload;
+extern fn zguiEndDragDropTarget() void;
+extern fn zguiGetDragDropPayload() [*c]Payload;
+//--------------------------------------------------------------------------------------------------
+//
 // DrawFlags
 //
 //--------------------------------------------------------------------------------------------------
