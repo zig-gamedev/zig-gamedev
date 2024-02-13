@@ -529,6 +529,7 @@ extern fn stbi_write_jpg(
     data: [*]const u8,
     quality: c_int,
 ) c_int;
+
 extern fn stbi_write_png(
     filename: [*:0]const u8,
     w: c_int,
@@ -577,12 +578,12 @@ test "zstbi resize" {
     var im1 = try Image.createEmpty(32, 32, 4, .{});
     defer im1.deinit();
 
-    var im2 = try Image.createEmpty(8, 6, 3, .{});
+    var im2 = im1.resize(8, 6);
     defer im2.deinit();
 
     try testing.expect(im2.width == 8);
     try testing.expect(im2.height == 6);
-    try testing.expect(im2.num_components == 3);
+    try testing.expect(im2.num_components == 4);
 }
 
 test "zstbi write and load file" {
