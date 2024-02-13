@@ -1,10 +1,10 @@
 // -------------------------------------------------------------------------------------------------
 // zmath - benchmarks
 // -------------------------------------------------------------------------------------------------
-// 'zig build benchmark' in the root project directory will build and run 'ReleaseFast' configuration.
+// 'zig build benchmark -Doptimize=ReleaseFast' will build and benchmakrs with all optimisations.
 //
 // -------------------------------------------------------------------------------------------------
-// 'AMD Ryzen 9 3950X 16-Core Processor', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f
+// 'AMD Ryzen 9 3950X 16-Core Processor', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f, ReleaseFast
 // -------------------------------------------------------------------------------------------------
 //                matrix mul benchmark (AOS) - scalar version: 1.5880s, zmath version: 1.0642s
 //       cross3, scale, bias benchmark (AOS) - scalar version: 0.9318s, zmath version: 0.6888s
@@ -13,7 +13,7 @@
 //                      wave benchmark (SOA) - scalar version: 4.8165s, zmath version: 0.7338s
 //
 // -------------------------------------------------------------------------------------------------
-// 'AMD Ryzen 7 5800X 8-Core Processer', Linux 5.17.14, Zig 0.10.0-dev.2624+d506275a0
+// 'AMD Ryzen 7 5800X 8-Core Processer', Linux 5.17.14, Zig 0.10.0-dev.2624+d506275a0, ReleaseFast
 // -------------------------------------------------------------------------------------------------
 //                matrix mul benchmark (AOS) - scalar version: 1.3672s, zmath version: 0.8617s
 //       cross3, scale, bias benchmark (AOS) - scalar version: 0.6586s, zmath version: 0.4803s
@@ -22,7 +22,7 @@
 //                      wave benchmark (SOA) - scalar version: 3.6598s, zmath version: 0.4231s
 //
 // -------------------------------------------------------------------------------------------------
-// 'Apple M1 Max', macOS Version 12.4, Zig 0.10.0-dev.2657+74442f350
+// 'Apple M1 Max', macOS Version 12.4, Zig 0.10.0-dev.2657+74442f350, ReleaseFast
 // -------------------------------------------------------------------------------------------------
 //                matrix mul benchmark (AOS) - scalar version: 1.0297s, zmath version: 1.0538s
 //       cross3, scale, bias benchmark (AOS) - scalar version: 0.6294s, zmath version: 0.6532s
@@ -31,7 +31,7 @@
 //                      wave benchmark (SOA) - scalar version: 3.4220s, zmath version: 1.0255s
 //
 // -------------------------------------------------------------------------------------------------
-// '11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f
+// '11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f, ReleaseFast
 // -------------------------------------------------------------------------------------------------
 //                matrix mul benchmark (AOS) - scalar version: 2.2308s, zmath version: 0.9376s
 //       cross3, scale, bias benchmark (AOS) - scalar version: 1.0821s, zmath version: 0.5110s
