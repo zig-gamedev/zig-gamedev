@@ -11,6 +11,7 @@ const window_title = "zig-gamedev: frame pacing (wgpu)";
 const Surface = struct {
     window: *zglfw.Window,
     gctx: *zgpu.GraphicsContext,
+    scale_factor: f32,
 
     const Self = @This();
 
@@ -36,12 +37,11 @@ const Surface = struct {
             @intFromEnum(wgpu.TextureFormat.undef),
         );
 
+        const scale_factor = scale_factor: {
+            const scale = window.getContentScale();
+            break :scale_factor @max(scale[0], scale[1]);
+        };
         {
-            const scale_factor = scale_factor: {
-                const scale = window.getContentScale();
-                break :scale_factor @max(scale[0], scale[1]);
-            };
-
             _ = zgui.io.addFontFromFile(
                 content_dir ++ "Roboto-Medium.ttf",
                 std.math.floor(16.0 * scale_factor),
@@ -52,6 +52,7 @@ const Surface = struct {
         return .{
             .window = window,
             .gctx = gctx,
+            .scale_factor = scale_factor,
         };
     }
 
@@ -232,7 +233,7 @@ pub fn main() !void {
                         "{d:.3} ms/frame ({d:.1} fps)",
                         .{ surface.gctx.stats.average_cpu_time, surface.gctx.stats.fps },
                     );
-                    if (zgui.plot.beginPlot("frame times", .{ .h = 100 })) {
+                    if (zgui.plot.beginPlot("frame times", .{ .h = surface.scale_factor * 100 })) {
                         defer zgui.plot.endPlot();
                         zgui.plot.setupAxis(.x1, .{
                             .flags = .{
