@@ -1302,6 +1302,10 @@ ZGUI_API bool zguiIoGetWantCaptureKeyboard(void) {
     return ImGui::GetIO().WantCaptureKeyboard;
 }
 
+ZGUI_API bool zguiIoGetWantTextInput(void) {
+    return ImGui::GetIO().WantTextInput;
+}
+
 ZGUI_API void zguiIoSetIniFilename(const char* filename) {
     ImGui::GetIO().IniFilename = filename;
 }
