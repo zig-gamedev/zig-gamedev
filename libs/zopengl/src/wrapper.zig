@@ -80,6 +80,10 @@ pub fn Wrap(comptime bindings: anytype) type {
             // OpenGL 4.0 (Core Profile)
             //--------------------------------------------------------------------------------------
             sample_shading = SAMPLE_SHADING,
+            //--------------------------------------------------------------------------------------
+            // OpenGL 4.3 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            debug_output = DEBUG_OUTPUT,
         };
 
         pub const StringParamName = enum(Enum) {
@@ -3976,6 +3980,7 @@ pub fn Wrap(comptime bindings: anytype) type {
             message: [*]const u8,
             userParam: ?*const anyopaque,
         ) void;
+        pub const DEBUG_OUTPUT = bindings.DEBUG_OUTPUT;
         pub const DEBUG_SOURCE_API = bindings.DEBUG_SOURCE_API;
         pub const DEBUG_SOURCE_WINDOW_SYSTEM = bindings.DEBUG_SOURCE_WINDOW_SYSTEM;
         pub const DEBUG_SOURCE_SHADER_COMPILER = bindings.DEBUG_SOURCE_SHADER_COMPILER;
