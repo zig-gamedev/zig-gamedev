@@ -4328,5 +4328,31 @@ pub const DrawList = *opaque {
 };
 
 test {
-    std.testing.refAllDeclsRecursive(@This());
+    const testing = std.testing;
+
+    testing.refAllDeclsRecursive(@This());
+
+    init(testing.allocator);
+    defer deinit();
+
+    {
+        var w: i32 = undefined;
+        var h: i32 = undefined;
+        try testing.expect(io.getFontsTextDataAsRgba32(&w, &h) != null);
+    }
+
+    io.setDisplaySize(1, 1);
+
+    newFrame();
+
+    try testing.expect(begin("testing", .{}));
+    defer end();
+
+    const Testing = enum {
+        one,
+        two,
+        three,
+    };
+    var value = Testing.one;
+    _ = comboFromEnum("comboFromEnum", &value);
 }
