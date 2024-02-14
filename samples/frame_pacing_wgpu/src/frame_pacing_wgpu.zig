@@ -18,14 +18,23 @@ const Surface = struct {
     fn init(allocator: std.mem.Allocator, monitor: ?*zglfw.Monitor) !Self {
         var width: i32 = 1280;
         var height: i32 = 720;
+
+        // default windowed vsync on (monitor is null)
+        var present_mode: wgpu.PresentMode = .fifo;
+
         if (monitor) |m| {
             const video_mode = try m.getVideoMode();
             width = video_mode.width;
             height = video_mode.height;
+
+            // vsync off
+            present_mode = .immediate;
         }
         const window = try zglfw.Window.create(width, height, window_title, monitor);
 
-        const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+        const gctx = try zgpu.GraphicsContext.create(allocator, window, .{
+            .present_mode = present_mode,
+        });
 
         zgui.init(allocator);
         zgui.plot.init();
