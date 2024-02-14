@@ -1473,7 +1473,7 @@ pub fn comboFromEnum(
         const item_type = @typeInfo(@TypeOf(current_item.*));
         switch (item_type) {
             .Enum => |e| {
-                comptime var str: [:0]const u8 = "";
+                var str: [:0]const u8 = "";
 
                 for (e.fields) |f| {
                     str = str ++ f.name ++ "\x00";
