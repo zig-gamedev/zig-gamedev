@@ -2145,7 +2145,8 @@ pub const InputTextFlags = packed struct(u32) {
     chars_scientific: bool = false,
     callback_resize: bool = false,
     callback_edit: bool = false,
-    _padding: u12 = 0,
+    escape_clears_all: bool = false,
+    _padding: u11 = 0,
 };
 //--------------------------------------------------------------------------------------------------
 pub const InputTextCallbackData = extern struct {
