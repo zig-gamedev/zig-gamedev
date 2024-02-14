@@ -235,6 +235,10 @@ pub const io = struct {
     pub const getWantCaptureKeyboard = zguiIoGetWantCaptureKeyboard;
     extern fn zguiIoGetWantCaptureKeyboard() bool;
 
+    /// `pub fn zguiIoGetWantTextInput() bool`
+    pub const getWantTextInput = zguiIoGetWantTextInput;
+    extern fn zguiIoGetWantTextInput() bool;
+
     pub fn setIniFilename(filename: ?[*:0]const u8) void {
         zguiIoSetIniFilename(filename);
     }
