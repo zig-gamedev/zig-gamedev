@@ -484,6 +484,7 @@ pub const WindowFlags = packed struct(u32) {
     always_vertical_scrollbar: bool = false,
     always_horizontal_scrollbar: bool = false,
     always_use_window_padding: bool = false,
+    _removed: u1 = 0,
     no_nav_inputs: bool = false,
     no_nav_focus: bool = false,
     unsaved_document: bool = false,
