@@ -4340,6 +4340,8 @@ test {
     init(testing.allocator);
     defer deinit();
 
+    io.setIniFilename(null);
+
     {
         var w: i32 = undefined;
         var h: i32 = undefined;
