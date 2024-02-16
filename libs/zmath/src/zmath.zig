@@ -2265,12 +2265,12 @@ pub fn lookToLh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat {
     const az = normalize3(eyedir);
     const ax = normalize3(cross3(updir, az));
     const ay = normalize3(cross3(az, ax));
-    return transpose(.{
-        f32x4(ax[0], ax[1], ax[2], -dot3(ax, eyepos)[0]),
-        f32x4(ay[0], ay[1], ay[2], -dot3(ay, eyepos)[0]),
-        f32x4(az[0], az[1], az[2], -dot3(az, eyepos)[0]),
-        f32x4(0.0, 0.0, 0.0, 1.0),
-    });
+    return .{
+        f32x4(ax[0], ay[0], az[0], 0),
+        f32x4(ax[1], ay[1], az[1], 0),
+        f32x4(ax[2], ay[2], az[2], 0),
+        f32x4(-dot3(ax, eyepos)[0], -dot3(ay, eyepos)[0], -dot3(az, eyepos)[0], 1.0),
+    };
 }
 pub fn lookToRh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat {
     return lookToLh(eyepos, -eyedir, updir);
