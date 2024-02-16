@@ -488,7 +488,7 @@ pub const WindowFlags = packed struct(u32) {
     no_nav_inputs: bool = false,
     no_nav_focus: bool = false,
     unsaved_document: bool = false,
-    _padding: u12 = 0,
+    _padding: u11 = 0,
 
     pub const no_nav = WindowFlags{ .no_nav_inputs = true, .no_nav_focus = true };
     pub const no_decoration = WindowFlags{
