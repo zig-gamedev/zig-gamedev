@@ -590,6 +590,10 @@ test "zstbi write and load file" {
     init(testing.allocator);
     defer deinit();
 
+    const pth = try std.fs.selfExeDirPathAlloc(testing.allocator);
+    defer testing.allocator.free(pth);
+    try std.os.chdir(pth);
+
     var img = try Image.createEmpty(8, 6, 4, .{});
     defer img.deinit();
 
