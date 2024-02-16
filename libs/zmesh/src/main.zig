@@ -16,3 +16,7 @@ pub fn deinit() void {
 comptime {
     _ = Shape;
 }
+
+test {
+    _ = io;
+}

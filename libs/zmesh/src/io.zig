@@ -124,3 +124,7 @@ pub fn appendMeshPrimitive(
         }
     }
 }
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}

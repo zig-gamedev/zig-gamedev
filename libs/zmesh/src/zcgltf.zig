@@ -2,6 +2,10 @@ const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 pub const Bool32 = i32;
 pub const CString = [*:0]const u8;
 pub const MutCString = [*:0]u8;
@@ -733,7 +737,7 @@ pub const Data = extern struct {
 
     pub fn writeFile(data: Data, path: [*:0]const u8, options: Options) !void {
         const result = cgltf_write_file(&options, path, &data);
-        resultToError(result, null) catch |err| return err;
+        try resultToError(result);
     }
 
     pub fn writeBuffer(data: Data, buffer: []u8, options: Options) usize {
@@ -756,18 +760,20 @@ pub const Error = error{
 pub fn parse(options: Options, data: []const u8) Error!*Data {
     var out_data: ?*Data = null;
     const result = cgltf_parse(&options, data.ptr, data.len, &out_data);
-    return try resultToError(result, out_data);
+    try resultToError(result);
+    return out_data.?;
 }
 
 pub fn parseFile(options: Options, path: [*:0]const u8) Error!*Data {
     var out_data: ?*Data = null;
     const result = cgltf_parse_file(&options, path, &out_data);
-    return try resultToError(result, out_data);
+    try resultToError(result);
+    return out_data.?;
 }
 
 pub fn loadBuffers(options: Options, data: *Data, gltf_path: [*:0]const u8) Error!void {
     const result = cgltf_load_buffers(&options, data, gltf_path);
-    _ = try resultToError(result, data);
+    try resultToError(result);
 }
 
 pub fn free(data: *Data) void {
@@ -866,20 +872,17 @@ extern fn cgltf_write(
     data: ?*const Data,
 ) usize;
 
-fn resultToError(result: Result, data: ?*Data) Error!*Data {
-    if (result == .success)
-        return data.?;
-
-    return switch (result) {
-        .data_too_short => error.DataTooShort,
-        .unknown_format => error.UnknownFormat,
-        .invalid_json => error.InvalidJson,
-        .invalid_gltf => error.InvalidGltf,
-        .invalid_options => error.InvalidOptions,
-        .file_not_found => error.FileNotFound,
-        .io_error => error.IoError,
-        .out_of_memory => error.OutOfMemory,
-        .legacy_gltf => error.LegacyGltf,
-        else => unreachable,
-    };
+fn resultToError(result: Result) Error!void {
+    switch (result) {
+        .success => return,
+        .data_too_short => return error.DataTooShort,
+        .unknown_format => return error.UnknownFormat,
+        .invalid_json => return error.InvalidJson,
+        .invalid_gltf => return error.InvalidGltf,
+        .invalid_options => return error.InvalidOptions,
+        .file_not_found => return error.FileNotFound,
+        .io_error => return error.IoError,
+        .out_of_memory => return error.OutOfMemory,
+        .legacy_gltf => return error.LegacyGltf,
+    }
 }
