@@ -1412,6 +1412,16 @@ extern fn SDL_GetMouseFocus() ?*Window;
 pub const getMouseState = SDL_GetMouseState;
 extern fn SDL_GetMouseState(x: ?*f32, y: ?*f32) u32;
 
+pub fn showCursor() Error!void {
+    if (SDL_ShowCursor() < 0) return makeError();
+}
+extern fn SDL_ShowCursor() c_int;
+
+pub fn hideCursor() Error!void {
+    if (SDL_HideCursor() < 0) return makeError();
+}
+extern fn SDL_HideCursor() c_int;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Joystick Support
@@ -1480,22 +1490,6 @@ pub const Gamepad = opaque {
     }
     extern fn SDL_GetGamepadButton(controller: *Gamepad, button: c_int) u8;
 };
-
-//--------------------------------------------------------------------------------------------------
-//
-// Cursor
-//
-//--------------------------------------------------------------------------------------------------
-
-pub fn showCursor() Error!void {
-    if (SDL_ShowCursor() < 0) return makeError();
-}
-extern fn SDL_ShowCursor() c_int;
-
-pub fn hideCursor() Error!void {
-    if (SDL_HideCursor() < 0) return makeError();
-}
-extern fn SDL_HideCursor() c_int;
 
 //--------------------------------------------------------------------------------------------------
 //
