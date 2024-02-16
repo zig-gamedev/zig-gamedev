@@ -116,7 +116,7 @@ extern fn zguiSetAllocatorFunctions(
     free_func: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
 ) void;
 //--------------------------------------------------------------------------------------------------
-pub const ConfigFlags = packed struct(u32) {
+pub const ConfigFlags = packed struct(c_int) {
     nav_enable_keyboard: bool = false,
     nav_enable_gamepad: bool = false,
     nav_enable_set_mouse_pos: bool = false,
@@ -131,12 +131,12 @@ pub const ConfigFlags = packed struct(u32) {
 
 pub const FontConfig = extern struct {
     font_data: ?*anyopaque,
-    font_data_size: i32,
+    font_data_size: c_int,
     font_data_owned_by_atlas: bool,
-    font_no: i32,
+    font_no: c_int,
     size_pixels: f32,
-    oversample_h: i32,
-    oversample_v: i32,
+    oversample_h: c_int,
+    oversample_v: c_int,
     pixel_snap_h: bool,
     glyph_extra_spacing: [2]f32,
     glyph_offset: [2]f32,
@@ -144,7 +144,7 @@ pub const FontConfig = extern struct {
     glyph_min_advance_x: f32,
     glyph_max_advance_x: f32,
     merge_mode: bool,
-    font_builder_flags: u32,
+    font_builder_flags: c_uint,
     rasterizer_multiply: f32,
     ellipsis_char: Wchar,
     name: [40]u8,
@@ -178,9 +178,9 @@ pub const io = struct {
     ) Font;
 
     pub fn addFontFromMemory(fontdata: []const u8, size_pixels: f32) Font {
-        return zguiIoAddFontFromMemory(fontdata.ptr, @as(i32, @intCast(fontdata.len)), size_pixels);
+        return zguiIoAddFontFromMemory(fontdata.ptr, @intCast(fontdata.len), size_pixels);
     }
-    extern fn zguiIoAddFontFromMemory(font_data: *const anyopaque, font_size: i32, size_pixels: f32) Font;
+    extern fn zguiIoAddFontFromMemory(font_data: *const anyopaque, font_size: c_int, size_pixels: f32) Font;
 
     pub fn addFontFromMemoryWithConfig(
         fontdata: []const u8,
@@ -190,7 +190,7 @@ pub const io = struct {
     ) Font {
         return zguiIoAddFontFromMemoryWithConfig(
             fontdata.ptr,
-            @as(i32, @intCast(fontdata.len)),
+            @intCast(fontdata.len),
             size_pixels,
             if (config) |c| &c else null,
             ranges,
@@ -198,23 +198,36 @@ pub const io = struct {
     }
     extern fn zguiIoAddFontFromMemoryWithConfig(
         font_data: *const anyopaque,
-        font_size: i32,
+        font_size: c_int,
         size_pixels: f32,
         config: ?*const FontConfig,
         ranges: ?[*]const Wchar,
     ) Font;
 
-    /// `pub fn getFont(index: u32) Font`
-    pub const getFont = zguiIoGetFont;
-    extern fn zguiIoGetFont(index: u32) Font;
+    pub fn getFont(index: u32) Font {
+        return zguiIoGetFont(index);
+    }
+    extern fn zguiIoGetFont(index: c_uint) Font;
 
     /// `pub fn setDefaultFont(font: Font) void`
     pub const setDefaultFont = zguiIoSetDefaultFont;
     extern fn zguiIoSetDefaultFont(font: Font) void;
 
-    /// `pub fn getFontsTextDataAsRgba32() return fonts pixel data and size
-    pub const getFontsTextDataAsRgba32 = zguiIoGetFontsTexDataAsRgba32;
-    extern fn zguiIoGetFontsTexDataAsRgba32(width: *i32, height: *i32) [*c]const u32;
+    pub fn getFontsTextDataAsRgba32() struct {
+        width: i32,
+        height: i32,
+        pixels: ?[*]const u32,
+    } {
+        var width: i32 = undefined;
+        var height: i32 = undefined;
+        const ptr = zguiIoGetFontsTexDataAsRgba32(&width, &height);
+        return .{
+            .width = width,
+            .height = height,
+            .pixels = ptr,
+        };
+    }
+    extern fn zguiIoGetFontsTexDataAsRgba32(width: *c_int, height: *c_int) [*c]const u32;
 
     /// `pub fn setFontsTexId(id:TextureIdent) set the backend Id for the fonts atlas
     pub const setFontsTexId = zguiIoSetFontsTexId;
@@ -285,11 +298,15 @@ pub const io = struct {
     pub const addInputCharactersUTF8 = zguiIoAddInputCharactersUTF8;
     extern fn zguiIoAddInputCharactersUTF8(utf8_chars: ?[*:0]const u8) void;
 
-    pub const setKeyEventNativeData = zguiIoSetKeyEventNativeData;
-    extern fn zguiIoSetKeyEventNativeData(key: Key, keycode: i32, scancode: i32) void;
+    pub fn setKeyEventNativeData(key: Key, keycode: i32, scancode: i32) void {
+        zguiIoSetKeyEventNativeData(key, keycode, scancode);
+    }
+    extern fn zguiIoSetKeyEventNativeData(key: Key, keycode: c_int, scancode: c_int) void;
 
-    pub const addCharacterEvent = zguiIoAddCharacterEvent;
-    extern fn zguiIoAddCharacterEvent(char: i32) void;
+    pub fn addCharacterEvent(char: i32) void {
+        zguiIoAddCharacterEvent(char);
+    }
+    extern fn zguiIoAddCharacterEvent(char: c_int) void;
 };
 
 pub fn setClipboardText(value: [:0]const u8) void {
@@ -305,9 +322,9 @@ extern fn zguiGetClipboardText() [*:0]const u8;
 const Context = *opaque {};
 pub const DrawData = *extern struct {
     valid: bool,
-    cmd_lists_count: i32,
-    total_idx_count: i32,
-    total_vtx_count: i32,
+    cmd_lists_count: c_int,
+    total_idx_count: c_int,
+    total_vtx_count: c_int,
     cmd_lists: [*]DrawList,
     display_pos: [2]f32,
     display_size: [2]f32,
@@ -317,7 +334,7 @@ pub const Font = *opaque {};
 pub const Ident = u32;
 pub const TextureIdent = *anyopaque;
 pub const Wchar = u16;
-pub const Key = enum(u32) {
+pub const Key = enum(c_int) {
     none = 0,
     tab = 512,
     left_arrow,
@@ -466,7 +483,7 @@ pub const Key = enum(u32) {
     mod_mask_ = 0xf000,
 };
 //--------------------------------------------------------------------------------------------------
-pub const WindowFlags = packed struct(u32) {
+pub const WindowFlags = packed struct(c_int) {
     no_title_bar: bool = false,
     no_resize: bool = false,
     no_move: bool = false,
@@ -504,7 +521,7 @@ pub const WindowFlags = packed struct(u32) {
     };
 };
 //--------------------------------------------------------------------------------------------------
-pub const SliderFlags = packed struct(u32) {
+pub const SliderFlags = packed struct(c_int) {
     _reserved0: bool = false,
     _reserved1: bool = false,
     _reserved2: bool = false,
@@ -516,14 +533,14 @@ pub const SliderFlags = packed struct(u32) {
     _padding: u24 = 0,
 };
 //--------------------------------------------------------------------------------------------------
-pub const ButtonFlags = packed struct(u32) {
+pub const ButtonFlags = packed struct(c_int) {
     mouse_button_left: bool = false,
     mouse_button_right: bool = false,
     mouse_button_middle: bool = false,
     _padding: u29 = 0,
 };
 //--------------------------------------------------------------------------------------------------
-pub const Direction = enum(i32) {
+pub const Direction = enum(c_int) {
     none = -1,
     left = 0,
     right = 1,
@@ -531,9 +548,9 @@ pub const Direction = enum(i32) {
     down = 3,
 };
 //--------------------------------------------------------------------------------------------------
-pub const DataType = enum(u32) { I8, U8, I16, U16, I32, U32, I64, U64, F32, F64 };
+pub const DataType = enum(c_int) { I8, U8, I16, U16, I32, U32, I64, U64, F32, F64 };
 //--------------------------------------------------------------------------------------------------
-pub const Condition = enum(u32) {
+pub const Condition = enum(c_int) {
     none = 0,
     always = 1,
     once = 2,
@@ -612,9 +629,11 @@ pub fn setNextWindowBgAlpha(args: SetNextWindowBgAlpha) void {
 }
 extern fn zguiSetNextWindowBgAlpha(alpha: f32) void;
 
-/// `pub fn setKeyboardFocusHere(offset: i32) void`
-pub const setKeyboardFocusHere = zguiSetKeyboardFocusHere;
-extern fn zguiSetKeyboardFocusHere(offset: i32) void;
+pub fn setKeyboardFocusHere(offset: i32) void {
+    zguiSetKeyboardFocusHere(offset);
+}
+extern fn zguiSetKeyboardFocusHere(offset: c_int) void;
+
 //--------------------------------------------------------------------------------------------------
 const Begin = struct {
     popen: ?*bool = null,
@@ -695,7 +714,7 @@ extern fn zguiSetScrollHereY(center_y_ratio: f32) void;
 extern fn zguiSetScrollFromPosX(local_x: f32, center_x_ratio: f32) void;
 extern fn zguiSetScrollFromPosY(local_y: f32, center_y_ratio: f32) void;
 //--------------------------------------------------------------------------------------------------
-pub const FocusedFlags = packed struct(u32) {
+pub const FocusedFlags = packed struct(c_int) {
     child_windows: bool = false,
     root_window: bool = false,
     any_window: bool = false,
@@ -705,7 +724,7 @@ pub const FocusedFlags = packed struct(u32) {
     pub const root_and_child_windows = FocusedFlags{ .root_window = true, .child_windows = true };
 };
 //--------------------------------------------------------------------------------------------------
-pub const HoveredFlags = packed struct(u32) {
+pub const HoveredFlags = packed struct(c_int) {
     child_windows: bool = false,
     root_window: bool = false,
     any_window: bool = false,
@@ -850,17 +869,17 @@ pub const Style = extern struct {
     extern fn zguiStyle_ScaleAllSizes(style: *Style, scale_factor: f32) void;
 
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
-        return style.colors[@intFromEnum(idx)];
+        return style.colors[@intCast(@intFromEnum(idx))];
     }
     pub fn setColor(style: *Style, idx: StyleCol, color: [4]f32) void {
-        style.colors[@intFromEnum(idx)] = color;
+        style.colors[@intCast(@intFromEnum(idx))] = color;
     }
 };
 /// `pub fn getStyle() *Style`
 pub const getStyle = zguiGetStyle;
 extern fn zguiGetStyle() *Style;
 //--------------------------------------------------------------------------------------------------
-pub const StyleCol = enum(u32) {
+pub const StyleCol = enum(c_int) {
     text,
     text_disabled,
     window_bg,
@@ -915,38 +934,41 @@ pub const StyleCol = enum(u32) {
     nav_windowing_dim_bg,
     modal_window_dim_bg,
 };
-const PushStyleColor4f = struct {
+
+pub fn pushStyleColor4f(args: struct {
     idx: StyleCol,
     c: [4]f32,
-};
-pub fn pushStyleColor4f(args: PushStyleColor4f) void {
+}) void {
     zguiPushStyleColor4f(args.idx, &args.c);
 }
-const PushStyleColor1u = struct {
+extern fn zguiPushStyleColor4f(idx: StyleCol, col: *const [4]f32) void;
+
+pub fn pushStyleColor1u(args: struct {
     idx: StyleCol,
     c: u32,
-};
-pub fn pushStyleColor1u(args: PushStyleColor1u) void {
+}) void {
     zguiPushStyleColor1u(args.idx, args.c);
 }
-const PopStyleColor = struct {
+extern fn zguiPushStyleColor1u(idx: StyleCol, col: c_uint) void;
+
+pub fn popStyleColor(args: struct {
     count: i32 = 1,
-};
-pub fn popStyleColor(args: PopStyleColor) void {
+}) void {
     zguiPopStyleColor(args.count);
 }
+extern fn zguiPopStyleColor(count: c_int) void;
+
 /// `fn pushTextWrapPos(wrap_pos_x: f32) void`
 pub const pushTextWrapPos = zguiPushTextWrapPos;
+extern fn zguiPushTextWrapPos(wrap_pos_x: f32) void;
+
 /// `fn popTextWrapPos() void`
 pub const popTextWrapPos = zguiPopTextWrapPos;
-extern fn zguiPushStyleColor4f(idx: StyleCol, col: *const [4]f32) void;
-extern fn zguiPushStyleColor1u(idx: StyleCol, col: u32) void;
-extern fn zguiPopStyleColor(count: i32) void;
-extern fn zguiPushTextWrapPos(wrap_pos_x: f32) void;
 extern fn zguiPopTextWrapPos() void;
+
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
-pub const StyleVar = enum(u32) {
+pub const StyleVar = enum(c_int) {
     alpha, // 1f
     disabled_alpha, // 1f
     window_padding, // 2f
@@ -976,29 +998,30 @@ pub const StyleVar = enum(u32) {
     separator_text_align, // 2f
     separator_text_padding, // 2f
 };
-const PushStyleVar1f = struct {
+
+pub fn pushStyleVar1f(args: struct {
     idx: StyleVar,
     v: f32,
-};
-pub fn pushStyleVar1f(args: PushStyleVar1f) void {
+}) void {
     zguiPushStyleVar1f(args.idx, args.v);
 }
-const PushStyleVar2f = struct {
+extern fn zguiPushStyleVar1f(idx: StyleVar, v: f32) void;
+
+pub fn pushStyleVar2f(args: struct {
     idx: StyleVar,
     v: [2]f32,
-};
-pub fn pushStyleVar2f(args: PushStyleVar2f) void {
+}) void {
     zguiPushStyleVar2f(args.idx, &args.v);
 }
-const PopStyleVar = struct {
+extern fn zguiPushStyleVar2f(idx: StyleVar, v: *const [2]f32) void;
+
+pub fn popStyleVar(args: struct {
     count: i32 = 1,
-};
-pub fn popStyleVar(args: PopStyleVar) void {
+}) void {
     zguiPopStyleVar(args.count);
 }
-extern fn zguiPushStyleVar1f(idx: StyleVar, v: f32) void;
-extern fn zguiPushStyleVar2f(idx: StyleVar, v: *const [2]f32) void;
-extern fn zguiPopStyleVar(count: i32) void;
+extern fn zguiPopStyleVar(count: c_int) void;
+
 //--------------------------------------------------------------------------------------------------
 /// `void pushItemWidth(item_width: f32) void`
 pub const pushItemWidth = zguiPushItemWidth;
@@ -1147,7 +1170,7 @@ extern fn zguiGetCursorStartPos(pos: *[2]f32) void;
 extern fn zguiGetCursorScreenPos(pos: *[2]f32) void;
 extern fn zguiSetCursorScreenPos(screen_x: f32, screen_y: f32) void;
 //--------------------------------------------------------------------------------------------------
-pub const Cursor = enum(i32) {
+pub const Cursor = enum(c_int) {
     none = -1,
     arrow = 0,
     text_input,
@@ -1210,36 +1233,42 @@ extern fn zguiGetItemRectMin(rect: *[2]f32) void;
 pub fn pushStrId(str_id: []const u8) void {
     zguiPushStrId(str_id.ptr, str_id.ptr + str_id.len);
 }
+extern fn zguiPushStrId(str_id_begin: [*]const u8, str_id_end: [*]const u8) void;
+
 pub fn pushStrIdZ(str_id: [:0]const u8) void {
     zguiPushStrIdZ(str_id);
 }
+extern fn zguiPushStrIdZ(str_id: [*:0]const u8) void;
+
 pub fn pushPtrId(ptr_id: *const anyopaque) void {
     zguiPushPtrId(ptr_id);
 }
+extern fn zguiPushPtrId(ptr_id: *const anyopaque) void;
+
 pub fn pushIntId(int_id: i32) void {
     zguiPushIntId(int_id);
 }
-extern fn zguiPushStrId(str_id_begin: [*]const u8, str_id_end: [*]const u8) void;
-extern fn zguiPushStrIdZ(str_id: [*:0]const u8) void;
-extern fn zguiPushPtrId(ptr_id: *const anyopaque) void;
-extern fn zguiPushIntId(int_id: i32) void;
-//--------------------------------------------------------------------------------------------------
+extern fn zguiPushIntId(int_id: c_int) void;
+
 /// `pub fn popId() void`
 pub const popId = zguiPopId;
 extern fn zguiPopId() void;
-//--------------------------------------------------------------------------------------------------
+
 pub fn getStrId(str_id: []const u8) Ident {
     return zguiGetStrId(str_id.ptr, str_id.ptr + str_id.len);
 }
+extern fn zguiGetStrId(str_id_begin: [*]const u8, str_id_end: [*]const u8) Ident;
+
 pub fn getStrIdZ(str_id: [:0]const u8) Ident {
     return zguiGetStrIdZ(str_id);
 }
+extern fn zguiGetStrIdZ(str_id: [*:0]const u8) Ident;
+
 pub fn getPtrId(ptr_id: *const anyopaque) Ident {
     return zguiGetPtrId(ptr_id);
 }
-extern fn zguiGetStrId(str_id_begin: [*]const u8, str_id_end: [*]const u8) Ident;
-extern fn zguiGetStrIdZ(str_id: [*:0]const u8) Ident;
 extern fn zguiGetPtrId(ptr_id: *const anyopaque) Ident;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Widgets: Text
@@ -1403,39 +1432,35 @@ extern fn zguiImageButton(
 pub const bullet = zguiBullet;
 extern fn zguiBullet() void;
 //--------------------------------------------------------------------------------------------------
-const RadioButton = struct {
+pub fn radioButton(label: [:0]const u8, args: struct {
     active: bool,
-};
-pub fn radioButton(label: [:0]const u8, args: RadioButton) bool {
+}) bool {
     return zguiRadioButton(label, args.active);
 }
 extern fn zguiRadioButton(label: [*:0]const u8, active: bool) bool;
 //--------------------------------------------------------------------------------------------------
-const RadioButtonStatePtr = struct {
+pub fn radioButtonStatePtr(label: [:0]const u8, args: struct {
     v: *i32,
     v_button: i32,
-};
-pub fn radioButtonStatePtr(label: [:0]const u8, args: RadioButtonStatePtr) bool {
+}) bool {
     return zguiRadioButtonStatePtr(label, args.v, args.v_button);
 }
-extern fn zguiRadioButtonStatePtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
+extern fn zguiRadioButtonStatePtr(label: [*:0]const u8, v: *c_int, v_button: c_int) bool;
 //--------------------------------------------------------------------------------------------------
-const Checkbox = struct {
+pub fn checkbox(label: [:0]const u8, args: struct {
     v: *bool,
-};
-pub fn checkbox(label: [:0]const u8, args: Checkbox) bool {
+}) bool {
     return zguiCheckbox(label, args.v);
 }
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 //--------------------------------------------------------------------------------------------------
-const CheckboxBits = struct {
+pub fn checkboxBits(label: [:0]const u8, args: struct {
     bits: *u32,
     bits_value: u32,
-};
-pub fn checkboxBits(label: [:0]const u8, args: CheckboxBits) bool {
+}) bool {
     return zguiCheckboxBits(label, args.bits, args.bits_value);
 }
-extern fn zguiCheckboxBits(label: [*:0]const u8, bits: *u32, bits_value: u32) bool;
+extern fn zguiCheckboxBits(label: [*:0]const u8, bits: *c_uint, bits_value: c_uint) bool;
 //--------------------------------------------------------------------------------------------------
 const ProgressBar = struct {
     fraction: f32,
@@ -1452,12 +1477,11 @@ extern fn zguiProgressBar(fraction: f32, w: f32, h: f32, overlay: ?[*:0]const u8
 // Widgets: Combo Box
 //
 //--------------------------------------------------------------------------------------------------
-const Combo = struct {
+pub fn combo(label: [:0]const u8, args: struct {
     current_item: *i32,
     items_separated_by_zeros: [:0]const u8,
     popup_max_height_in_items: i32 = -1,
-};
-pub fn combo(label: [:0]const u8, args: Combo) bool {
+}) bool {
     return zguiCombo(
         label,
         args.current_item,
@@ -1504,12 +1528,12 @@ pub fn comboFromEnum(
 }
 extern fn zguiCombo(
     label: [*:0]const u8,
-    current_item: *i32,
+    current_item: *c_int,
     items_separated_by_zeros: [*:0]const u8,
-    popup_max_height_in_items: i32,
+    popup_max_height_in_items: c_int,
 ) bool;
 //--------------------------------------------------------------------------------------------------
-pub const ComboFlags = packed struct(u32) {
+pub const ComboFlags = packed struct(c_int) {
     popup_align_left: bool = false,
     height_small: bool = false,
     height_regular: bool = false,
@@ -1833,9 +1857,8 @@ fn SliderFloatGen(comptime T: type) type {
         flags: SliderFlags = .{},
     };
 }
-//--------------------------------------------------------------------------------------------------
-const SliderFloat = SliderFloatGen(f32);
-pub fn sliderFloat(label: [:0]const u8, args: SliderFloat) bool {
+
+pub fn sliderFloat(label: [:0]const u8, args: SliderFloatGen(f32)) bool {
     return zguiSliderFloat(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderFloat(
@@ -1846,9 +1869,8 @@ extern fn zguiSliderFloat(
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const SliderFloat2 = SliderFloatGen([2]f32);
-pub fn sliderFloat2(label: [:0]const u8, args: SliderFloat2) bool {
+
+pub fn sliderFloat2(label: [:0]const u8, args: SliderFloatGen([2]f32)) bool {
     return zguiSliderFloat2(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderFloat2(
@@ -1859,9 +1881,8 @@ extern fn zguiSliderFloat2(
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const SliderFloat3 = SliderFloatGen([3]f32);
-pub fn sliderFloat3(label: [:0]const u8, args: SliderFloat3) bool {
+
+pub fn sliderFloat3(label: [:0]const u8, args: SliderFloatGen([3]f32)) bool {
     return zguiSliderFloat3(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderFloat3(
@@ -1872,9 +1893,8 @@ extern fn zguiSliderFloat3(
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const SliderFloat4 = SliderFloatGen([4]f32);
-pub fn sliderFloat4(label: [:0]const u8, args: SliderFloat4) bool {
+
+pub fn sliderFloat4(label: [:0]const u8, args: SliderFloatGen([4]f32)) bool {
     return zguiSliderFloat4(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderFloat4(
@@ -1885,6 +1905,7 @@ extern fn zguiSliderFloat4(
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
+
 //--------------------------------------------------------------------------------------------------
 fn SliderIntGen(comptime T: type) type {
     return struct {
@@ -1895,58 +1916,55 @@ fn SliderIntGen(comptime T: type) type {
         flags: SliderFlags = .{},
     };
 }
-//--------------------------------------------------------------------------------------------------
-const SliderInt = SliderIntGen(i32);
-pub fn sliderInt(label: [:0]const u8, args: SliderInt) bool {
+
+pub fn sliderInt(label: [:0]const u8, args: SliderIntGen(i32)) bool {
     return zguiSliderInt(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderInt(
     label: [*:0]const u8,
-    v: *i32,
-    min: i32,
-    max: i32,
+    v: *c_int,
+    min: c_int,
+    max: c_int,
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const SliderInt2 = SliderIntGen([2]i32);
-pub fn sliderInt2(label: [:0]const u8, args: SliderInt2) bool {
+
+pub fn sliderInt2(label: [:0]const u8, args: SliderIntGen([2]i32)) bool {
     return zguiSliderInt2(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderInt2(
     label: [*:0]const u8,
-    v: *[2]i32,
-    min: i32,
-    max: i32,
+    v: *[2]c_int,
+    min: c_int,
+    max: c_int,
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const SliderInt3 = SliderIntGen([3]i32);
-pub fn sliderInt3(label: [:0]const u8, args: SliderInt3) bool {
+
+pub fn sliderInt3(label: [:0]const u8, args: SliderIntGen([3]i32)) bool {
     return zguiSliderInt3(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderInt3(
     label: [*:0]const u8,
-    v: *[3]i32,
-    min: i32,
-    max: i32,
+    v: *[3]c_int,
+    min: c_int,
+    max: c_int,
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const SliderInt4 = SliderIntGen([4]i32);
-pub fn sliderInt4(label: [:0]const u8, args: SliderInt4) bool {
+
+pub fn sliderInt4(label: [:0]const u8, args: SliderIntGen([4]i32)) bool {
     return zguiSliderInt4(label, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiSliderInt4(
     label: [*:0]const u8,
-    v: *[4]i32,
-    min: i32,
-    max: i32,
+    v: *[4]c_int,
+    min: c_int,
+    max: c_int,
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
+
 //--------------------------------------------------------------------------------------------------
 fn SliderScalarGen(comptime T: type) type {
     return struct {
@@ -1977,6 +1995,7 @@ extern fn zguiSliderScalar(
     cfmt: ?[*:0]const u8,
     flags: SliderFlags,
 ) bool;
+
 //--------------------------------------------------------------------------------------------------
 fn SliderScalarNGen(comptime T: type) type {
     const ScalarType = @typeInfo(T).Array.child;
@@ -2013,7 +2032,7 @@ extern fn zguiSliderScalarN(
     flags: SliderFlags,
 ) bool;
 //--------------------------------------------------------------------------------------------------
-const VSliderFloat = struct {
+pub fn vsliderFloat(label: [:0]const u8, args: struct {
     w: f32,
     h: f32,
     v: *f32,
@@ -2021,9 +2040,17 @@ const VSliderFloat = struct {
     max: f32,
     cfmt: [:0]const u8 = "%.3f",
     flags: SliderFlags = .{},
-};
-pub fn vsliderFloat(label: [:0]const u8, args: VSliderFloat) bool {
-    return zguiVSliderFloat(label, args.w, args.h, args.v, args.min, args.max, args.cfmt, args.flags);
+}) bool {
+    return zguiVSliderFloat(
+        label,
+        args.w,
+        args.h,
+        args.v,
+        args.min,
+        args.max,
+        args.cfmt,
+        args.flags,
+    );
 }
 extern fn zguiVSliderFloat(
     label: [*:0]const u8,
@@ -2036,7 +2063,7 @@ extern fn zguiVSliderFloat(
     flags: SliderFlags,
 ) bool;
 //--------------------------------------------------------------------------------------------------
-const VSliderInt = struct {
+pub fn vsliderInt(label: [:0]const u8, args: struct {
     w: f32,
     h: f32,
     v: *i32,
@@ -2044,8 +2071,7 @@ const VSliderInt = struct {
     max: i32,
     cfmt: [:0]const u8 = "%d",
     flags: SliderFlags = .{},
-};
-pub fn vsliderInt(label: [:0]const u8, args: VSliderInt) bool {
+}) bool {
     return zguiVSliderInt(label, args.w, args.h, args.v, args.min, args.max, args.cfmt, args.flags);
 }
 extern fn zguiVSliderInt(
@@ -2053,8 +2079,8 @@ extern fn zguiVSliderInt(
     w: f32,
     h: f32,
     v: *i32,
-    min: i32,
-    max: i32,
+    min: c_int,
+    max: c_int,
     cfmt: [*:0]const u8,
     flags: SliderFlags,
 ) bool;
@@ -2125,7 +2151,7 @@ extern fn zguiSliderAngle(
 // Widgets: Input with Keyboard
 //
 //--------------------------------------------------------------------------------------------------
-pub const InputTextFlags = packed struct(u32) {
+pub const InputTextFlags = packed struct(c_int) {
     chars_decimal: bool = false,
     chars_hexadecimal: bool = false,
     chars_uppercase: bool = false,
@@ -2167,13 +2193,25 @@ pub const InputTextCallbackData = extern struct {
 
     /// `pub fn init() InputTextCallbackData`
     pub const init = zguiInputTextCallbackData_Init;
+    extern fn zguiInputTextCallbackData_Init() InputTextCallbackData;
 
     /// `pub fn deleteChars(data: *InputTextCallbackData, pos: i32, bytes_count: i32) void`
     pub const deleteChars = zguiInputTextCallbackData_DeleteChars;
+    extern fn zguiInputTextCallbackData_DeleteChars(
+        data: *InputTextCallbackData,
+        pos: c_int,
+        bytes_count: c_int,
+    ) void;
 
     pub fn insertChars(data: *InputTextCallbackData, pos: i32, txt: []const u8) void {
         zguiInputTextCallbackData_InsertChars(data, pos, txt.ptr, txt.ptr + txt.len);
     }
+    extern fn zguiInputTextCallbackData_InsertChars(
+        data: *InputTextCallbackData,
+        pos: c_int,
+        text: [*]const u8,
+        text_end: [*]const u8,
+    ) void;
 
     pub fn selectAll(data: *InputTextCallbackData) void {
         data.selection_start = 0;
@@ -2188,30 +2226,16 @@ pub const InputTextCallbackData = extern struct {
     pub fn hasSelection(data: InputTextCallbackData) bool {
         return data.selection_start != data.selection_end;
     }
-
-    extern fn zguiInputTextCallbackData_Init() InputTextCallbackData;
-    extern fn zguiInputTextCallbackData_DeleteChars(
-        data: *InputTextCallbackData,
-        pos: i32,
-        bytes_count: i32,
-    ) void;
-    extern fn zguiInputTextCallbackData_InsertChars(
-        data: *InputTextCallbackData,
-        pos: i32,
-        text: [*]const u8,
-        text_end: [*]const u8,
-    ) void;
 };
 
 pub const InputTextCallback = *const fn (data: *InputTextCallbackData) i32;
 //--------------------------------------------------------------------------------------------------
-const InputText = struct {
+pub fn inputText(label: [:0]const u8, args: struct {
     buf: []u8,
     flags: InputTextFlags = .{},
     callback: ?InputTextCallback = null,
     user_data: ?*anyopaque = null,
-};
-pub fn inputText(label: [:0]const u8, args: InputText) bool {
+}) bool {
     return zguiInputText(
         label,
         args.buf.ptr,
@@ -2230,15 +2254,14 @@ extern fn zguiInputText(
     user_data: ?*anyopaque,
 ) bool;
 //--------------------------------------------------------------------------------------------------
-const InputTextMultiline = struct {
+pub fn inputTextMultiline(label: [:0]const u8, args: struct {
     buf: []u8,
     w: f32 = 0.0,
     h: f32 = 0.0,
     flags: InputTextFlags = .{},
     callback: ?InputTextCallback = null,
     user_data: ?*anyopaque = null,
-};
-pub fn inputTextMultiline(label: [:0]const u8, args: InputTextMultiline) bool {
+}) bool {
     return zguiInputTextMultiline(
         label,
         args.buf.ptr,
@@ -2261,14 +2284,13 @@ extern fn zguiInputTextMultiline(
     user_data: ?*anyopaque,
 ) bool;
 //--------------------------------------------------------------------------------------------------
-const InputTextWithHint = struct {
+pub fn inputTextWithHint(label: [:0]const u8, args: struct {
     hint: [:0]const u8,
     buf: []u8,
     flags: InputTextFlags = .{},
     callback: ?InputTextCallback = null,
     user_data: ?*anyopaque = null,
-};
-pub fn inputTextWithHint(label: [:0]const u8, args: InputTextWithHint) bool {
+}) bool {
     return zguiInputTextWithHint(
         label,
         args.hint,
@@ -2289,14 +2311,13 @@ extern fn zguiInputTextWithHint(
     user_data: ?*anyopaque,
 ) bool;
 //--------------------------------------------------------------------------------------------------
-const InputFloat = struct {
+pub fn inputFloat(label: [:0]const u8, args: struct {
     v: *f32,
     step: f32 = 0.0,
     step_fast: f32 = 0.0,
     cfmt: [:0]const u8 = "%.3f",
     flags: InputTextFlags = .{},
-};
-pub fn inputFloat(label: [:0]const u8, args: InputFloat) bool {
+}) bool {
     return zguiInputFloat(
         label,
         args.v,
@@ -2314,6 +2335,7 @@ extern fn zguiInputFloat(
     cfmt: [*:0]const u8,
     flags: InputTextFlags,
 ) bool;
+
 //--------------------------------------------------------------------------------------------------
 fn InputFloatGen(comptime T: type) type {
     return struct {
@@ -2322,9 +2344,7 @@ fn InputFloatGen(comptime T: type) type {
         flags: InputTextFlags = .{},
     };
 }
-//--------------------------------------------------------------------------------------------------
-const InputFloat2 = InputFloatGen([2]f32);
-pub fn inputFloat2(label: [:0]const u8, args: InputFloat2) bool {
+pub fn inputFloat2(label: [:0]const u8, args: InputFloatGen([2]f32)) bool {
     return zguiInputFloat2(label, args.v, args.cfmt, args.flags);
 }
 extern fn zguiInputFloat2(
@@ -2333,9 +2353,8 @@ extern fn zguiInputFloat2(
     cfmt: [*:0]const u8,
     flags: InputTextFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const InputFloat3 = InputFloatGen([3]f32);
-pub fn inputFloat3(label: [:0]const u8, args: InputFloat3) bool {
+
+pub fn inputFloat3(label: [:0]const u8, args: InputFloatGen([3]f32)) bool {
     return zguiInputFloat3(label, args.v, args.cfmt, args.flags);
 }
 extern fn zguiInputFloat3(
@@ -2344,9 +2363,8 @@ extern fn zguiInputFloat3(
     cfmt: [*:0]const u8,
     flags: InputTextFlags,
 ) bool;
-//--------------------------------------------------------------------------------------------------
-const InputFloat4 = InputFloatGen([4]f32);
-pub fn inputFloat4(label: [:0]const u8, args: InputFloat4) bool {
+
+pub fn inputFloat4(label: [:0]const u8, args: InputFloatGen([4]f32)) bool {
     return zguiInputFloat4(label, args.v, args.cfmt, args.flags);
 }
 extern fn zguiInputFloat4(
@@ -2355,23 +2373,24 @@ extern fn zguiInputFloat4(
     cfmt: [*:0]const u8,
     flags: InputTextFlags,
 ) bool;
+
 //--------------------------------------------------------------------------------------------------
-const InputInt = struct {
+pub fn inputInt(label: [:0]const u8, args: struct {
     v: *i32,
     step: i32 = 1,
     step_fast: i32 = 100,
     flags: InputTextFlags = .{},
-};
-pub fn inputInt(label: [:0]const u8, args: InputInt) bool {
+}) bool {
     return zguiInputInt(label, args.v, args.step, args.step_fast, args.flags);
 }
 extern fn zguiInputInt(
     label: [*:0]const u8,
-    v: *i32,
-    step: i32,
-    step_fast: i32,
+    v: *c_int,
+    step: c_int,
+    step_fast: c_int,
     flags: InputTextFlags,
 ) bool;
+
 //--------------------------------------------------------------------------------------------------
 fn InputIntGen(comptime T: type) type {
     return struct {
@@ -2379,24 +2398,21 @@ fn InputIntGen(comptime T: type) type {
         flags: InputTextFlags = .{},
     };
 }
-//--------------------------------------------------------------------------------------------------
-const InputInt2 = InputIntGen([2]i32);
-pub fn inputInt2(label: [:0]const u8, args: InputInt2) bool {
+pub fn inputInt2(label: [:0]const u8, args: InputIntGen([2]i32)) bool {
     return zguiInputInt2(label, args.v, args.flags);
 }
-extern fn zguiInputInt2(label: [*:0]const u8, v: *[2]i32, flags: InputTextFlags) bool;
-//--------------------------------------------------------------------------------------------------
-const InputInt3 = InputIntGen([3]i32);
-pub fn inputInt3(label: [:0]const u8, args: InputInt3) bool {
+extern fn zguiInputInt2(label: [*:0]const u8, v: *[2]c_int, flags: InputTextFlags) bool;
+
+pub fn inputInt3(label: [:0]const u8, args: InputIntGen([3]i32)) bool {
     return zguiInputInt3(label, args.v, args.flags);
 }
-extern fn zguiInputInt3(label: [*:0]const u8, v: *[3]i32, flags: InputTextFlags) bool;
-//--------------------------------------------------------------------------------------------------
-const InputInt4 = InputIntGen([4]i32);
-pub fn inputInt4(label: [:0]const u8, args: InputInt4) bool {
+extern fn zguiInputInt3(label: [*:0]const u8, v: *[3]c_int, flags: InputTextFlags) bool;
+
+pub fn inputInt4(label: [:0]const u8, args: InputIntGen([4]i32)) bool {
     return zguiInputInt4(label, args.v, args.flags);
 }
-extern fn zguiInputInt4(label: [*:0]const u8, v: *[4]i32, flags: InputTextFlags) bool;
+extern fn zguiInputInt4(label: [*:0]const u8, v: *[4]c_int, flags: InputTextFlags) bool;
+
 //--------------------------------------------------------------------------------------------------
 const InputDouble = struct {
     v: *f64,
@@ -2486,7 +2502,7 @@ extern fn zguiInputScalarN(
 // Widgets: Color Editor/Picker
 //
 //--------------------------------------------------------------------------------------------------
-pub const ColorEditFlags = packed struct(u32) {
+pub const ColorEditFlags = packed struct(c_int) {
     no_alpha: bool = false,
     no_picker: bool = false,
     no_options: bool = false,
@@ -2596,7 +2612,7 @@ extern fn zguiColorButton(
 // Widgets: Trees
 //
 //--------------------------------------------------------------------------------------------------
-pub const TreeNodeFlags = packed struct(u32) {
+pub const TreeNodeFlags = packed struct(c_int) {
     selected: bool = false,
     framed: bool = false,
     allow_item_overlap: bool = false,
@@ -2706,7 +2722,7 @@ extern fn zguiSetNextItemOpen(is_open: bool, cond: Condition) void;
 // Selectables
 //
 //--------------------------------------------------------------------------------------------------
-pub const SelectableFlags = packed struct(u32) {
+pub const SelectableFlags = packed struct(c_int) {
     dont_close_popups: bool = false,
     span_all_columns: bool = false,
     allow_double_click: bool = false,
@@ -2798,7 +2814,7 @@ pub const TableBorderFlags = packed struct(u4) {
         .outer_h = true,
     }; // Draw all borders.
 };
-pub const TableFlags = packed struct(u32) {
+pub const TableFlags = packed struct(c_int) {
     resizable: bool = false,
     reorderable: bool = false,
     hideable: bool = false,
@@ -2844,13 +2860,13 @@ pub const TableFlags = packed struct(u32) {
     _padding: u4 = 0,
 };
 
-pub const TableRowFlags = packed struct(u32) {
+pub const TableRowFlags = packed struct(c_int) {
     headers: bool = false,
 
     _padding: u31 = 0,
 };
 
-pub const TableColumnFlags = packed struct(u32) {
+pub const TableColumnFlags = packed struct(c_int) {
     // Input configuration flags
     disabled: bool = false,
     default_hide: bool = false,
@@ -2895,29 +2911,28 @@ pub const TableColumnSortSpecs = extern struct {
 
 pub const TableSortSpecs = *extern struct {
     specs: [*]TableColumnSortSpecs,
-    count: i32,
+    count: c_int,
     dirty: bool,
 };
 
-pub const TableBgTarget = enum(u32) {
+pub const TableBgTarget = enum(c_int) {
     none = 0,
     row_bg0 = 1,
     row_bg1 = 2,
     cell_bg = 3,
 };
 
-pub const BeginTable = struct {
+pub fn beginTable(name: [:0]const u8, args: struct {
     column: i32,
     flags: TableFlags = .{},
     outer_size: [2]f32 = .{ 0, 0 },
     inner_width: f32 = 0,
-};
-pub fn beginTable(name: [:0]const u8, args: BeginTable) bool {
+}) bool {
     return zguiBeginTable(name, args.column, args.flags, &args.outer_size, args.inner_width);
 }
 extern fn zguiBeginTable(
     str_id: [*:0]const u8,
-    column: i32,
+    column: c_int,
     flags: TableFlags,
     outer_size: *const [2]f32,
     inner_width: f32,
@@ -2995,15 +3010,15 @@ extern fn zguiTableGetColumnFlags(column_n: i32) TableColumnFlags;
 pub const tableSetColumnEnabled = zguiTableSetColumnEnabled;
 extern fn zguiTableSetColumnEnabled(column_n: i32, v: bool) void;
 
-pub const TableSetBgColor = struct {
+pub fn tableSetBgColor(args: struct {
     target: TableBgTarget,
     color: u32,
     column_n: i32 = -1,
-};
-pub fn tableSetBgColor(args: TableSetBgColor) void {
+}) void {
     zguiTableSetBgColor(args.target, args.color, args.column_n);
 }
-extern fn zguiTableSetBgColor(target: TableBgTarget, color: u32, column_n: i32) void;
+extern fn zguiTableSetBgColor(target: TableBgTarget, color: c_uint, column_n: c_int) void;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Item/Widgets Utilities and Query Functions
@@ -3217,7 +3232,7 @@ extern fn zguiEndTooltip() void;
 pub const beginPopupContextWindow = zguiBeginPopupContextWindow;
 /// `pub fn beginPopupContextItem() bool`
 pub const beginPopupContextItem = zguiBeginPopupContextItem;
-pub const PopupFlags = packed struct(u32) {
+pub const PopupFlags = packed struct(c_int) {
     mouse_button_left: bool = false,
     mouse_button_right: bool = false,
     mouse_button_middle: bool = false,
@@ -3254,7 +3269,7 @@ extern fn zguiCloseCurrentPopup() void;
 // Tabs
 //
 //--------------------------------------------------------------------------------------------------
-pub const TabBarFlags = packed struct(u32) {
+pub const TabBarFlags = packed struct(c_int) {
     reorderable: bool = false,
     auto_select_new_tabs: bool = false,
     tab_list_popup_button: bool = false,
@@ -3271,7 +3286,7 @@ pub const TabBarFlags = packed struct(u32) {
     };
     pub const fitting_policy_default = TabBarFlags{ .fitting_policy_resize_down = true };
 };
-pub const TabItemFlags = packed struct(u32) {
+pub const TabItemFlags = packed struct(c_int) {
     unsaved_document: bool = false,
     set_selected: bool = false,
     no_close_with_middle_mouse_button: bool = false,
@@ -3469,7 +3484,7 @@ extern fn zguiGetDragDropPayload() [*c]Payload;
 // DrawFlags
 //
 //--------------------------------------------------------------------------------------------------
-pub const DrawFlags = packed struct(u32) {
+pub const DrawFlags = packed struct(c_int) {
     closed: bool = false,
     _padding0: u3 = 0,
     round_corners_top_left: bool = false,
@@ -3510,9 +3525,9 @@ pub const DrawFlags = packed struct(u32) {
 pub const DrawCmd = extern struct {
     clip_rect: [4]f32,
     texture_id: TextureIdent,
-    vtx_offset: u32,
-    idx_offset: u32,
-    elem_count: u32,
+    vtx_offset: c_uint,
+    idx_offset: c_uint,
+    elem_count: c_uint,
     user_callback: ?DrawCallback,
     user_callback_data: ?*anyopaque,
 };
@@ -3558,8 +3573,11 @@ pub const DrawList = *opaque {
     extern fn zguiDrawList_ClearFreeMemory(draw_list: DrawList) void;
 
     //----------------------------------------------------------------------------------------------
-    pub const getVertexBufferLength = zguiDrawList_GetVertexBufferLength;
-    extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) i32;
+    pub fn getVertexBufferLength(draw_list: DrawList) i32 {
+        return zguiDrawList_GetVertexBufferLength(draw_list);
+    }
+    extern fn zguiDrawList_GetVertexBufferLength(draw_list: DrawList) c_int;
+
     pub const getVertexBufferData = zguiDrawList_GetVertexBufferData;
     extern fn zguiDrawList_GetVertexBufferData(draw_list: DrawList) [*]DrawVert;
     pub fn getVertexBuffer(draw_list: DrawList) []DrawVert {
@@ -3567,8 +3585,11 @@ pub const DrawList = *opaque {
         return draw_list.getVertexBufferData()[0..len];
     }
 
-    pub const getIndexBufferLength = zguiDrawList_GetIndexBufferLength;
-    extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) i32;
+    pub fn getIndexBufferLength(draw_list: DrawList) i32 {
+        return zguiDrawList_GetIndexBufferLength(draw_list);
+    }
+    extern fn zguiDrawList_GetIndexBufferLength(draw_list: DrawList) c_int;
+
     pub const getIndexBufferData = zguiDrawList_GetIndexBufferData;
     extern fn zguiDrawList_GetIndexBufferData(draw_list: DrawList) [*]DrawIdx;
     pub fn getIndexBuffer(draw_list: DrawList) []DrawIdx {
@@ -3576,11 +3597,16 @@ pub const DrawList = *opaque {
         return draw_list.getIndexBufferData()[0..len];
     }
 
-    pub const getCurrentIndex = zguiDrawList_GetCurrentIndex;
-    extern fn zguiDrawList_GetCurrentIndex(draw_list: DrawList) u32;
+    pub fn getCurrentIndex(draw_list: DrawList) u32 {
+        return zguiDrawList_GetCurrentIndex(draw_list);
+    }
+    extern fn zguiDrawList_GetCurrentIndex(draw_list: DrawList) c_uint;
 
-    pub const getCmdBufferLength = zguiDrawList_GetCmdBufferLength;
-    extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) i32;
+    pub fn getCmdBufferLength(draw_list: DrawList) i32 {
+        return zguiDrawList_GetCmdBufferLength(draw_list);
+    }
+    extern fn zguiDrawList_GetCmdBufferLength(draw_list: DrawList) c_int;
+
     pub const getCmdBufferData = zguiDrawList_GetCmdBufferData;
     extern fn zguiDrawList_GetCmdBufferData(draw_list: DrawList) [*]DrawCmd;
     pub fn getCmdBuffer(draw_list: DrawList) []DrawCmd {
@@ -3588,7 +3614,7 @@ pub const DrawList = *opaque {
         return draw_list.getCmdBufferData()[0..len];
     }
 
-    pub const DrawListFlags = packed struct(u32) {
+    pub const DrawListFlags = packed struct(c_int) {
         anti_aliased_lines: bool = false,
         anti_aliased_lines_use_tex: bool = false,
         anti_aliased_fill: bool = false,
@@ -3649,13 +3675,12 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_GetClipRectMax(draw_list: DrawList, clip_min: *[2]f32) void;
     //----------------------------------------------------------------------------------------------
-    const AddLine = struct {
+    pub fn addLine(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         col: u32,
         thickness: f32,
-    };
-    pub fn addLine(draw_list: DrawList, args: AddLine) void {
+    }) void {
         zguiDrawList_AddLine(draw_list, &args.p1, &args.p2, args.col, args.thickness);
     }
     extern fn zguiDrawList_AddLine(
@@ -3666,15 +3691,14 @@ pub const DrawList = *opaque {
         thickness: f32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddRect = struct {
+    pub fn addRect(draw_list: DrawList, args: struct {
         pmin: [2]f32,
         pmax: [2]f32,
         col: u32,
         rounding: f32 = 0.0,
         flags: DrawFlags = .{},
         thickness: f32 = 1.0,
-    };
-    pub fn addRect(draw_list: DrawList, args: AddRect) void {
+    }) void {
         zguiDrawList_AddRect(
             draw_list,
             &args.pmin,
@@ -3695,15 +3719,21 @@ pub const DrawList = *opaque {
         thickness: f32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddRectFilled = struct {
+    pub fn addRectFilled(draw_list: DrawList, args: struct {
         pmin: [2]f32,
         pmax: [2]f32,
         col: u32,
         rounding: f32 = 0.0,
         flags: DrawFlags = .{},
-    };
-    pub fn addRectFilled(draw_list: DrawList, args: AddRectFilled) void {
-        zguiDrawList_AddRectFilled(draw_list, &args.pmin, &args.pmax, args.col, args.rounding, args.flags);
+    }) void {
+        zguiDrawList_AddRectFilled(
+            draw_list,
+            &args.pmin,
+            &args.pmax,
+            args.col,
+            args.rounding,
+            args.flags,
+        );
     }
     extern fn zguiDrawList_AddRectFilled(
         draw_list: DrawList,
@@ -3714,15 +3744,14 @@ pub const DrawList = *opaque {
         flags: DrawFlags,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddRectFilledMultiColor = struct {
+    pub fn addRectFilledMultiColor(draw_list: DrawList, args: struct {
         pmin: [2]f32,
         pmax: [2]f32,
         col_upr_left: u32,
         col_upr_right: u32,
         col_bot_right: u32,
         col_bot_left: u32,
-    };
-    pub fn addRectFilledMultiColor(draw_list: DrawList, args: AddRectFilledMultiColor) void {
+    }) void {
         zguiDrawList_AddRectFilledMultiColor(
             draw_list,
             &args.pmin,
@@ -3737,22 +3766,29 @@ pub const DrawList = *opaque {
         draw_list: DrawList,
         pmin: *const [2]f32,
         pmax: *const [2]f32,
-        col_upr_left: u32,
-        col_upr_right: u32,
-        col_bot_right: u32,
-        col_bot_left: u32,
+        col_upr_left: c_uint,
+        col_upr_right: c_uint,
+        col_bot_right: c_uint,
+        col_bot_left: c_uint,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddQuad = struct {
+    pub fn addQuad(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
         col: u32,
         thickness: f32 = 1.0,
-    };
-    pub fn addQuad(draw_list: DrawList, args: AddQuad) void {
-        zguiDrawList_AddQuad(draw_list, &args.p1, &args.p2, &args.p3, &args.p4, args.col, args.thickness);
+    }) void {
+        zguiDrawList_AddQuad(
+            draw_list,
+            &args.p1,
+            &args.p2,
+            &args.p3,
+            &args.p4,
+            args.col,
+            args.thickness,
+        );
     }
     extern fn zguiDrawList_AddQuad(
         draw_list: DrawList,
@@ -3764,14 +3800,13 @@ pub const DrawList = *opaque {
         thickness: f32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddQuadFilled = struct {
+    pub fn addQuadFilled(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
         col: u32,
-    };
-    pub fn addQuadFilled(draw_list: DrawList, args: AddQuadFilled) void {
+    }) void {
         zguiDrawList_AddQuadFilled(draw_list, &args.p1, &args.p2, &args.p3, &args.p4, args.col);
     }
     extern fn zguiDrawList_AddQuadFilled(
@@ -3783,14 +3818,13 @@ pub const DrawList = *opaque {
         col: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddTriangle = struct {
+    pub fn addTriangle(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         col: u32,
         thickness: f32 = 1.0,
-    };
-    pub fn addTriangle(draw_list: DrawList, args: AddTriangle) void {
+    }) void {
         zguiDrawList_AddTriangle(draw_list, &args.p1, &args.p2, &args.p3, args.col, args.thickness);
     }
     extern fn zguiDrawList_AddTriangle(
@@ -3802,13 +3836,12 @@ pub const DrawList = *opaque {
         thickness: f32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddTriangleFilled = struct {
+    pub fn addTriangleFilled(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         col: u32,
-    };
-    pub fn addTriangleFilled(draw_list: DrawList, args: AddTriangleFilled) void {
+    }) void {
         zguiDrawList_AddTriangleFilled(draw_list, &args.p1, &args.p2, &args.p3, args.col);
     }
     extern fn zguiDrawList_AddTriangleFilled(
@@ -3819,32 +3852,37 @@ pub const DrawList = *opaque {
         col: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddCircle = struct {
+    pub fn addCircle(draw_list: DrawList, args: struct {
         p: [2]f32,
         r: f32,
         col: u32,
-        num_segments: u32 = 0,
+        num_segments: i32 = 0,
         thickness: f32 = 1.0,
-    };
-    pub fn addCircle(draw_list: DrawList, args: AddCircle) void {
-        zguiDrawList_AddCircle(draw_list, &args.p, args.r, args.col, args.num_segments, args.thickness);
+    }) void {
+        zguiDrawList_AddCircle(
+            draw_list,
+            &args.p,
+            args.r,
+            args.col,
+            args.num_segments,
+            args.thickness,
+        );
     }
     extern fn zguiDrawList_AddCircle(
         draw_list: DrawList,
         center: *const [2]f32,
         radius: f32,
         col: u32,
-        num_segments: u32,
+        num_segments: c_int,
         thickness: f32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddCircleFilled = struct {
+    pub fn addCircleFilled(draw_list: DrawList, args: struct {
         p: [2]f32,
         r: f32,
         col: u32,
-        num_segments: u32 = 0,
-    };
-    pub fn addCircleFilled(draw_list: DrawList, args: AddCircleFilled) void {
+        num_segments: u16 = 0,
+    }) void {
         zguiDrawList_AddCircleFilled(draw_list, &args.p, args.r, args.col, args.num_segments);
     }
     extern fn zguiDrawList_AddCircleFilled(
@@ -3852,35 +3890,40 @@ pub const DrawList = *opaque {
         center: *const [2]f32,
         radius: f32,
         col: u32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddNgon = struct {
+    pub fn addNgon(draw_list: DrawList, args: struct {
         p: [2]f32,
         r: f32,
         col: u32,
         num_segments: u32,
         thickness: f32 = 1.0,
-    };
-    pub fn addNgon(draw_list: DrawList, args: AddNgon) void {
-        zguiDrawList_AddNgon(draw_list, &args.p, args.r, args.col, args.num_segments, args.thickness);
+    }) void {
+        zguiDrawList_AddNgon(
+            draw_list,
+            &args.p,
+            args.r,
+            args.col,
+            args.num_segments,
+            args.thickness,
+        );
     }
     extern fn zguiDrawList_AddNgon(
         draw_list: DrawList,
         center: *const [2]f32,
         radius: f32,
         col: u32,
-        num_segments: u32,
+        num_segments: c_int,
         thickness: f32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddNgonFilled = struct {
+    pub fn addNgonFilled(draw_list: DrawList, args: struct {
         p: [2]f32,
         r: f32,
         col: u32,
         num_segments: u32,
-    };
-    pub fn addNgonFilled(draw_list: DrawList, args: AddNgonFilled) void {
+    }) void {
         zguiDrawList_AddNgonFilled(draw_list, &args.p, args.r, args.col, args.num_segments);
     }
     extern fn zguiDrawList_AddNgonFilled(
@@ -3888,7 +3931,7 @@ pub const DrawList = *opaque {
         center: *const [2]f32,
         radius: f32,
         col: u32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
     pub fn addText(draw_list: DrawList, pos: [2]f32, col: u32, comptime fmt: []const u8, args: anytype) void {
@@ -3906,16 +3949,15 @@ pub const DrawList = *opaque {
         text_end: [*]const u8,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddPolyline = struct {
+    pub fn addPolyline(draw_list: DrawList, points: []const [2]f32, args: struct {
         col: u32,
         flags: DrawFlags = .{},
         thickness: f32 = 1.0,
-    };
-    pub fn addPolyline(draw_list: DrawList, points: []const [2]f32, args: AddPolyline) void {
+    }) void {
         zguiDrawList_AddPolyline(
             draw_list,
             points.ptr,
-            @as(u32, @intCast(points.len)),
+            @intCast(points.len),
             args.col,
             args.flags,
             args.thickness,
@@ -3924,7 +3966,7 @@ pub const DrawList = *opaque {
     extern fn zguiDrawList_AddPolyline(
         draw_list: DrawList,
         points: [*]const [2]f32,
-        num_points: u32,
+        num_points: c_int,
         col: u32,
         flags: DrawFlags,
         thickness: f32,
@@ -3938,18 +3980,18 @@ pub const DrawList = *opaque {
         zguiDrawList_AddConvexPolyFilled(
             draw_list,
             points.ptr,
-            @as(u32, @intCast(points.len)),
+            @intCast(points.len),
             col,
         );
     }
     extern fn zguiDrawList_AddConvexPolyFilled(
         draw_list: DrawList,
         points: [*]const [2]f32,
-        num_points: u32,
+        num_points: c_int,
         col: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddBezierCubic = struct {
+    pub fn addBezierCubic(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
@@ -3957,8 +3999,7 @@ pub const DrawList = *opaque {
         col: u32,
         thickness: f32 = 1.0,
         num_segments: u32 = 0,
-    };
-    pub fn addBezierCubic(draw_list: DrawList, args: AddBezierCubic) void {
+    }) void {
         zguiDrawList_AddBezierCubic(
             draw_list,
             &args.p1,
@@ -3978,18 +4019,17 @@ pub const DrawList = *opaque {
         p4: *const [2]f32,
         col: u32,
         thickness: f32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddBezierQuadratic = struct {
+    pub fn addBezierQuadratic(draw_list: DrawList, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         col: u32,
         thickness: f32 = 1.0,
         num_segments: u32 = 0,
-    };
-    pub fn addBezierQuadratic(draw_list: DrawList, args: AddBezierQuadratic) void {
+    }) void {
         zguiDrawList_AddBezierQuadratic(
             draw_list,
             &args.p1,
@@ -4007,17 +4047,16 @@ pub const DrawList = *opaque {
         p3: *const [2]f32,
         col: u32,
         thickness: f32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddImage = struct {
+    pub fn addImage(draw_list: DrawList, user_texture_id: TextureIdent, args: struct {
         pmin: [2]f32,
         pmax: [2]f32,
         uvmin: [2]f32 = .{ 0, 0 },
         uvmax: [2]f32 = .{ 1, 1 },
         col: u32 = 0xff_ff_ff_ff,
-    };
-    pub fn addImage(draw_list: DrawList, user_texture_id: TextureIdent, args: AddImage) void {
+    }) void {
         zguiDrawList_AddImage(
             draw_list,
             user_texture_id,
@@ -4038,7 +4077,7 @@ pub const DrawList = *opaque {
         col: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddImageQuad = struct {
+    pub fn addImageQuad(draw_list: DrawList, user_texture_id: TextureIdent, args: struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
@@ -4048,8 +4087,7 @@ pub const DrawList = *opaque {
         uv3: [2]f32 = .{ 1, 1 },
         uv4: [2]f32 = .{ 0, 1 },
         col: u32 = 0xff_ff_ff_ff,
-    };
-    pub fn addImageQuad(draw_list: DrawList, user_texture_id: TextureIdent, args: AddImageQuad) void {
+    }) void {
         zguiDrawList_AddImageQuad(
             draw_list,
             user_texture_id,
@@ -4078,7 +4116,7 @@ pub const DrawList = *opaque {
         col: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const AddImageRounded = struct {
+    pub fn addImageRounded(draw_list: DrawList, user_texture_id: TextureIdent, args: struct {
         pmin: [2]f32,
         pmax: [2]f32,
         uvmin: [2]f32 = .{ 0, 0 },
@@ -4086,8 +4124,7 @@ pub const DrawList = *opaque {
         col: u32 = 0xff_ff_ff_ff,
         rounding: f32 = 4.0,
         flags: DrawFlags = .{},
-    };
-    pub fn addImageRounded(draw_list: DrawList, user_texture_id: TextureIdent, args: AddImageRounded) void {
+    }) void {
         zguiDrawList_AddImageRounded(
             draw_list,
             user_texture_id,
@@ -4125,27 +4162,27 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_PathLineToMergeDuplicate(draw_list: DrawList, pos: *const [2]f32) void;
     //----------------------------------------------------------------------------------------------
-    pub const pathFillConvex = zguiDrawList_PathFillConvex;
-    extern fn zguiDrawList_PathFillConvex(draw_list: DrawList, col: u32) void;
+    pub fn pathFillConvex(draw_list: DrawList, col: u32) void {
+        return zguiDrawList_PathFillConvex(draw_list, col);
+    }
+    extern fn zguiDrawList_PathFillConvex(draw_list: DrawList, col: c_uint) void;
     //----------------------------------------------------------------------------------------------
-    const PathStroke = struct {
+    pub fn pathStroke(draw_list: DrawList, args: struct {
         col: u32,
         flags: DrawFlags = .{},
         thickness: f32 = 1.0,
-    };
-    pub fn pathStroke(draw_list: DrawList, args: PathStroke) void {
+    }) void {
         zguiDrawList_PathStroke(draw_list, args.col, args.flags, args.thickness);
     }
     extern fn zguiDrawList_PathStroke(draw_list: DrawList, col: u32, flags: DrawFlags, thickness: f32) void;
     //----------------------------------------------------------------------------------------------
-    const PathArcTo = struct {
+    pub fn pathArcTo(draw_list: DrawList, args: struct {
         p: [2]f32,
         r: f32,
         amin: f32,
         amax: f32,
-        num_segments: u32 = 0,
-    };
-    pub fn pathArcTo(draw_list: DrawList, args: PathArcTo) void {
+        num_segments: u16 = 0,
+    }) void {
         zguiDrawList_PathArcTo(
             draw_list,
             &args.p,
@@ -4161,56 +4198,59 @@ pub const DrawList = *opaque {
         radius: f32,
         amin: f32,
         amax: f32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const PathArcToFast = struct {
+    pub fn pathArcToFast(draw_list: DrawList, args: struct {
         p: [2]f32,
         r: f32,
-        amin_of_12: f32,
-        amax_of_12: f32,
-    };
-    pub fn pathArcToFast(draw_list: DrawList, args: PathArcToFast) void {
+        amin_of_12: u16,
+        amax_of_12: u16,
+    }) void {
         zguiDrawList_PathArcToFast(draw_list, &args.p, args.r, args.amin_of_12, args.amax_of_12);
     }
     extern fn zguiDrawList_PathArcToFast(
         draw_list: DrawList,
         center: *const [2]f32,
         radius: f32,
-        a_min_of_12: f32,
-        a_max_of_12: f32,
+        a_min_of_12: c_int,
+        a_max_of_12: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const PathBezierCubicCurveTo = struct {
+    pub fn pathBezierCubicCurveTo(draw_list: DrawList, args: struct {
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
-        num_segments: u32 = 0,
-    };
-    pub fn pathBezierCubicCurveTo(draw_list: DrawList, args: PathBezierCubicCurveTo) void {
-        zguiDrawList_PathBezierCubicCurveTo(draw_list, &args.p2, &args.p3, &args.p4, args.num_segments);
+        num_segments: u16 = 0,
+    }) void {
+        zguiDrawList_PathBezierCubicCurveTo(
+            draw_list,
+            &args.p2,
+            &args.p3,
+            &args.p4,
+            args.num_segments,
+        );
     }
     extern fn zguiDrawList_PathBezierCubicCurveTo(
         draw_list: DrawList,
         p2: *const [2]f32,
         p3: *const [2]f32,
         p4: *const [2]f32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
-    const PathBezierQuadraticCurveTo = struct {
+    pub fn pathBezierQuadraticCurveTo(draw_list: DrawList, args: struct {
         p2: [2]f32,
         p3: [2]f32,
-        num_segments: u32 = 0,
-    };
-    pub fn pathBezierQuadraticCurveTo(draw_list: DrawList, args: PathBezierQuadraticCurveTo) void {
+        num_segments: u16 = 0,
+    }) void {
         zguiDrawList_PathBezierQuadraticCurveTo(draw_list, &args.p2, &args.p3, args.num_segments);
     }
     extern fn zguiDrawList_PathBezierQuadraticCurveTo(
         draw_list: DrawList,
         p2: *const [2]f32,
         p3: *const [2]f32,
-        num_segments: u32,
+        num_segments: c_int,
     ) void;
     //----------------------------------------------------------------------------------------------
     const PathRect = struct {
@@ -4231,7 +4271,19 @@ pub const DrawList = *opaque {
     ) void;
     //----------------------------------------------------------------------------------------------
     pub const primReserve = zguiDrawList_PrimReserve;
+    extern fn zguiDrawList_PrimReserve(
+        draw_list: DrawList,
+        idx_count: i32,
+        vtx_count: i32,
+    ) void;
+
     pub const primUnreserve = zguiDrawList_PrimUnreserve;
+    extern fn zguiDrawList_PrimUnreserve(
+        draw_list: DrawList,
+        idx_count: i32,
+        vtx_count: i32,
+    ) void;
+
     pub fn primRect(
         draw_list: DrawList,
         a: [2]f32,
@@ -4240,6 +4292,13 @@ pub const DrawList = *opaque {
     ) void {
         return zguiDrawList_PrimRect(draw_list, &a, &b, col);
     }
+    extern fn zguiDrawList_PrimRect(
+        draw_list: DrawList,
+        a: *const [2]f32,
+        b: *const [2]f32,
+        col: u32,
+    ) void;
+
     pub fn primRectUV(
         draw_list: DrawList,
         a: [2]f32,
@@ -4250,6 +4309,15 @@ pub const DrawList = *opaque {
     ) void {
         return zguiDrawList_PrimRectUV(draw_list, &a, &b, &uv_a, &uv_b, col);
     }
+    extern fn zguiDrawList_PrimRectUV(
+        draw_list: DrawList,
+        a: *const [2]f32,
+        b: *const [2]f32,
+        uv_a: *const [2]f32,
+        uv_b: *const [2]f32,
+        col: u32,
+    ) void;
+
     pub fn primQuadUV(
         draw_list: DrawList,
         a: [2]f32,
@@ -4264,40 +4332,6 @@ pub const DrawList = *opaque {
     ) void {
         return zguiDrawList_PrimQuadUV(draw_list, &a, &b, &c, &d, &uv_a, &uv_b, &uv_c, &uv_d, col);
     }
-    pub fn primWriteVtx(
-        draw_list: DrawList,
-        pos: [2]f32,
-        uv: [2]f32,
-        col: u32,
-    ) void {
-        return zguiDrawList_PrimWriteVtx(draw_list, &pos, &uv, col);
-    }
-    pub const primWriteIdx = zguiDrawList_PrimWriteIdx;
-
-    extern fn zguiDrawList_PrimReserve(
-        draw_list: DrawList,
-        idx_count: i32,
-        vtx_count: i32,
-    ) void;
-    extern fn zguiDrawList_PrimUnreserve(
-        draw_list: DrawList,
-        idx_count: i32,
-        vtx_count: i32,
-    ) void;
-    extern fn zguiDrawList_PrimRect(
-        draw_list: DrawList,
-        a: *const [2]f32,
-        b: *const [2]f32,
-        col: u32,
-    ) void;
-    extern fn zguiDrawList_PrimRectUV(
-        draw_list: DrawList,
-        a: *const [2]f32,
-        b: *const [2]f32,
-        uv_a: *const [2]f32,
-        uv_b: *const [2]f32,
-        col: u32,
-    ) void;
     extern fn zguiDrawList_PrimQuadUV(
         draw_list: DrawList,
         a: *const [2]f32,
@@ -4310,12 +4344,23 @@ pub const DrawList = *opaque {
         uv_d: *const [2]f32,
         col: u32,
     ) void;
+
+    pub fn primWriteVtx(
+        draw_list: DrawList,
+        pos: [2]f32,
+        uv: [2]f32,
+        col: u32,
+    ) void {
+        return zguiDrawList_PrimWriteVtx(draw_list, &pos, &uv, col);
+    }
     extern fn zguiDrawList_PrimWriteVtx(
         draw_list: DrawList,
         pos: *const [2]f32,
         uv: *const [2]f32,
         col: u32,
     ) void;
+
+    pub const primWriteIdx = zguiDrawList_PrimWriteIdx;
     extern fn zguiDrawList_PrimWriteIdx(
         draw_list: DrawList,
         idx: DrawIdx,
@@ -4343,11 +4388,7 @@ test {
 
     io.setIniFilename(null);
 
-    {
-        var w: i32 = undefined;
-        var h: i32 = undefined;
-        try testing.expect(io.getFontsTextDataAsRgba32(&w, &h) != null);
-    }
+    _ = io.getFontsTextDataAsRgba32();
 
     io.setDisplaySize(1, 1);
 
