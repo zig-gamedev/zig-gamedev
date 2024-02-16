@@ -1070,7 +1070,7 @@ ZGUI_API void zguiPushStyleColor4f(ImGuiCol idx, const float col[4]) {
     ImGui::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
 }
 
-ZGUI_API void zguiPushStyleColor1u(ImGuiCol idx, unsigned int col) {
+ZGUI_API void zguiPushStyleColor1u(ImGuiCol idx, ImU32 col) {
     ImGui::PushStyleColor(idx, col);
 }
 
@@ -1360,7 +1360,7 @@ ZGUI_API void zguiIoSetKeyEventNativeData(ImGuiKey key, int keycode, int scancod
     ImGui::GetIO().SetKeyEventNativeData(key, keycode, scancode);
 }
 
-ZGUI_API void zguiIoAddCharacterEvent(int c) {
+ZGUI_API void zguiIoAddCharacterEvent(unsigned int c) {
     ImGui::GetIO().AddInputCharacter(c);
 }
 
@@ -1628,7 +1628,7 @@ ZGUI_API void zguiTableSetColumnEnabled(int column_n, bool v) {
     ImGui::TableSetColumnEnabled(column_n, v);
 }
 
-ZGUI_API void zguiTableSetBgColor(ImGuiTableBgTarget target, unsigned int color, int column_n) {
+ZGUI_API void zguiTableSetBgColor(ImGuiTableBgTarget target, ImU32 color, int column_n) {
     ImGui::TableSetBgColor(target, color, column_n);
 }
 //--------------------------------------------------------------------------------------------------
@@ -1776,7 +1776,7 @@ ZGUI_API void zguiDrawList_AddLine(
     ImDrawList* draw_list,
     const float p1[2],
     const float p2[2],
-    unsigned int col,
+    ImU32 col,
     float thickness
 ) {
     draw_list->AddLine({ p1[0], p1[1] }, { p2[0], p2[1] }, col, thickness);
@@ -1786,7 +1786,7 @@ ZGUI_API void zguiDrawList_AddRect(
     ImDrawList* draw_list,
     const float pmin[2],
     const float pmax[2],
-    unsigned int col,
+    ImU32 col,
     float rounding,
     ImDrawFlags flags,
     float thickness
@@ -1798,7 +1798,7 @@ ZGUI_API void zguiDrawList_AddRectFilled(
     ImDrawList* draw_list,
     const float pmin[2],
     const float pmax[2],
-    unsigned int col,
+    ImU32 col,
     float rounding,
     ImDrawFlags flags
 ) {
@@ -1809,10 +1809,10 @@ ZGUI_API void zguiDrawList_AddRectFilledMultiColor(
     ImDrawList* draw_list,
     const float pmin[2],
     const float pmax[2],
-    unsigned int col_upr_left,
-    unsigned int col_upr_right,
-    unsigned int col_bot_right,
-    unsigned int col_bot_left
+    ImU32 col_upr_left,
+    ImU32 col_upr_right,
+    ImU32 col_bot_right,
+    ImU32 col_bot_left
 ) {
     draw_list->AddRectFilledMultiColor(
         { pmin[0], pmin[1] },
@@ -1830,7 +1830,7 @@ ZGUI_API void zguiDrawList_AddQuad(
     const float p2[2],
     const float p3[2],
     const float p4[2],
-    unsigned int col,
+    ImU32 col,
     float thickness
 ) {
     draw_list->AddQuad({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, { p4[0], p4[1] }, col, thickness);
@@ -1842,7 +1842,7 @@ ZGUI_API void zguiDrawList_AddQuadFilled(
     const float p2[2],
     const float p3[2],
     const float p4[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->AddQuadFilled({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, { p4[0], p4[1] }, col);
 }
@@ -1852,7 +1852,7 @@ ZGUI_API void zguiDrawList_AddTriangle(
     const float p1[2],
     const float p2[2],
     const float p3[2],
-    unsigned int col,
+    ImU32 col,
     float thickness
 ) {
     draw_list->AddTriangle({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, col, thickness);
@@ -1863,7 +1863,7 @@ ZGUI_API void zguiDrawList_AddTriangleFilled(
     const float p1[2],
     const float p2[2],
     const float p3[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->AddTriangleFilled({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, col);
 }
@@ -1872,7 +1872,7 @@ ZGUI_API void zguiDrawList_AddCircle(
     ImDrawList* draw_list,
     const float center[2],
     float radius,
-    unsigned int col,
+    ImU32 col,
     int num_segments,
     float thickness
 ) {
@@ -1883,7 +1883,7 @@ ZGUI_API void zguiDrawList_AddCircleFilled(
     ImDrawList* draw_list,
     const float center[2],
     float radius,
-    unsigned int col,
+    ImU32 col,
     int num_segments
 ) {
     draw_list->AddCircleFilled({ center[0], center[1] }, radius, col, num_segments);
@@ -1893,7 +1893,7 @@ ZGUI_API void zguiDrawList_AddNgon(
     ImDrawList* draw_list,
     const float center[2],
     float radius,
-    unsigned int col,
+    ImU32 col,
     int num_segments,
     float thickness
 ) {
@@ -1904,7 +1904,7 @@ ZGUI_API void zguiDrawList_AddNgonFilled(
     ImDrawList* draw_list,
     const float center[2],
     float radius,
-    unsigned int col,
+    ImU32 col,
     int num_segments
 ) {
     draw_list->AddNgonFilled({ center[0], center[1] }, radius, col, num_segments);
@@ -1913,7 +1913,7 @@ ZGUI_API void zguiDrawList_AddNgonFilled(
 ZGUI_API void zguiDrawList_AddText(
     ImDrawList* draw_list,
     const float pos[2],
-    unsigned int col,
+    ImU32 col,
     const char* text_begin,
     const char* text_end
 ) {
@@ -1924,7 +1924,7 @@ ZGUI_API void zguiDrawList_AddPolyline(
     ImDrawList* draw_list,
     const float points[][2],
     int num_points,
-    unsigned int col,
+    ImU32 col,
     ImDrawFlags flags,
     float thickness
 ) {
@@ -1935,7 +1935,7 @@ ZGUI_API void zguiDrawList_AddConvexPolyFilled(
     ImDrawList* draw_list,
     const float points[][2],
     int num_points,
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->AddConvexPolyFilled((const ImVec2*)&points[0][0], num_points, col);
 }
@@ -1946,7 +1946,7 @@ ZGUI_API void zguiDrawList_AddBezierCubic(
     const float p2[2],
     const float p3[2],
     const float p4[2],
-    unsigned int col,
+    ImU32 col,
     float thickness,
     int num_segments
 ) {
@@ -1960,7 +1960,7 @@ ZGUI_API void zguiDrawList_AddBezierQuadratic(
     const float p1[2],
     const float p2[2],
     const float p3[2],
-    unsigned int col,
+    ImU32 col,
     float thickness,
     int num_segments
 ) {
@@ -1976,7 +1976,7 @@ ZGUI_API void zguiDrawList_AddImage(
     const float pmax[2],
     const float uvmin[2],
     const float uvmax[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->AddImage(
         user_texture_id,
@@ -1999,7 +1999,7 @@ ZGUI_API void zguiDrawList_AddImageQuad(
     const float uv2[2],
     const float uv3[2],
     const float uv4[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->AddImageQuad(
         user_texture_id,
@@ -2022,7 +2022,7 @@ ZGUI_API void zguiDrawList_AddImageRounded(
     const float pmax[2],
     const float uvmin[2],
     const float uvmax[2],
-    unsigned int col,
+    ImU32 col,
     float rounding,
     ImDrawFlags flags
 ) {
@@ -2050,11 +2050,11 @@ ZGUI_API void zguiDrawList_PathLineToMergeDuplicate(ImDrawList* draw_list, const
     draw_list->PathLineToMergeDuplicate({ pos[0], pos[1] });
 }
 
-ZGUI_API void zguiDrawList_PathFillConvex(ImDrawList* draw_list, unsigned int col) {
+ZGUI_API void zguiDrawList_PathFillConvex(ImDrawList* draw_list, ImU32 col) {
     draw_list->PathFillConvex(col);
 }
 
-ZGUI_API void zguiDrawList_PathStroke(ImDrawList* draw_list, unsigned int col, ImDrawFlags flags, float thickness) {
+ZGUI_API void zguiDrawList_PathStroke(ImDrawList* draw_list, ImU32 col, ImDrawFlags flags, float thickness) {
     draw_list->PathStroke(col, flags, thickness);
 }
 
@@ -2120,7 +2120,7 @@ ZGUI_API void zguiDrawList_PrimRect(
     ImDrawList* draw_list,
     const float a[2],
     const float b[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->PrimRect({ a[0], a[1] }, { b[0], b[1] }, col);
 }
@@ -2131,7 +2131,7 @@ ZGUI_API void zguiDrawList_PrimRectUV(
     const float b[2],
     const float uv_a[2],
     const float uv_b[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->PrimRectUV({ a[0], a[1] }, { b[0], b[1] }, { uv_a[0], uv_a[1] }, { uv_b[0], uv_b[1] }, col);
 }
@@ -2146,7 +2146,7 @@ ZGUI_API void zguiDrawList_PrimQuadUV(
     const float uv_b[2],
     const float uv_c[2],
     const float uv_d[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->PrimQuadUV(
         { a[0], a[1] }, { b[0], b[1] }, { c[0], c[1] }, { d[0], d[1] },
@@ -2159,7 +2159,7 @@ ZGUI_API void zguiDrawList_PrimWriteVtx(
     ImDrawList* draw_list,
     const float pos[2],
     const float uv[2],
-    unsigned int col
+    ImU32 col
 ) {
     draw_list->PrimWriteVtx({ pos[0], pos[1] }, { uv[0], uv[1] }, col);
 }
@@ -2238,7 +2238,7 @@ ZGUI_API void zguiPlot_PushStyleColor4f(ImPlotCol idx, const float col[4]) {
     ImPlot::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
 }
 
-ZGUI_API void zguiPlot_PushStyleColor1u(ImPlotCol idx, unsigned int col) {
+ZGUI_API void zguiPlot_PushStyleColor1u(ImPlotCol idx, ImU32 col) {
     ImPlot::PushStyleColor(idx, col);
 }
 

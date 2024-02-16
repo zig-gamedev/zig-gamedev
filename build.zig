@@ -192,6 +192,7 @@ fn samples(b: *std.Build, options: Options) void {
         const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
         const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
         const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
+        const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");
         const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
         const layers_wgpu = @import("samples/layers_wgpu/build.zig");
         const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
@@ -202,6 +203,7 @@ fn samples(b: *std.Build, options: Options) void {
         install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
         install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
         install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
+        install(b, frame_pacing_wgpu.build(b, options), "frame_pacing_wgpu");
         install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
         install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
         install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");

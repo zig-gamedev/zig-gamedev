@@ -159,8 +159,9 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 ## Others using zig-gamedev
 
-* [Tides of Revival](https://github.com/Srekel/tides-of-revival) - Ambitious first-person, open-world, fantasy RPG being developed in the open
+* [Tides of Revival](https://github.com/Srekel/tides-of-revival) - First-person, open-world, fantasy RPG being developed in the open
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
+* [krateroid](https://github.com/kussakaa/krateroid) - 3D strategy game
+* [jok](https://github.com/jack-ji/jok) - A minimal 2D/3D game framework for Zig
 * [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
 * [Pixi](https://github.com/foxnne/pixi) - Pixel art editor made with Zig
-* [jok](https://github.com/jack-ji/jok) - A minimal 2D/3D game framework for Zig
