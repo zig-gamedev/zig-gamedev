@@ -1381,6 +1381,11 @@ extern fn SDL_GetMouseFocus() ?*Window;
 pub const getMouseState = SDL_GetMouseState;
 extern fn SDL_GetMouseState(x: ?*i32, y: ?*i32) u32;
 
+pub fn showCursor(toggle: enum(i32) { enable = 1, disable = 0 }) Error!void {
+    if (SDL_ShowCursor(@intFromEnum(toggle)) < 0) return makeError();
+}
+extern fn SDL_ShowCursor(toggle: c_int) c_int;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Joystick Support

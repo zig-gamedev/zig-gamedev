@@ -2149,6 +2149,7 @@ pub const DEBUGPROC = *const fn (
     message: [*c]const Char,
     userParam: *const anyopaque,
 ) callconv(.C) void;
+pub const DEBUG_OUTPUT = 0x92E0;
 pub const DEBUG_SOURCE_API = 0x8246;
 pub const DEBUG_SOURCE_WINDOW_SYSTEM = 0x8247;
 pub const DEBUG_SOURCE_SHADER_COMPILER = 0x8248;

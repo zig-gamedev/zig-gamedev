@@ -675,6 +675,14 @@ pub const Window = opaque {
         mods: Mods,
     ) callconv(.C) void;
 
+    /// `pub fn setCharCallback(window: *Window, callback: ?CharFn) ?CharFn`
+    pub const setCharCallback = glfwSetCharCallback;
+    extern fn glfwSetCharCallback(window: *Window, callback: ?CharFn) ?CharFn;
+    pub const CharFn = *const fn (
+        window: *Window,
+        codepoint: u32,
+    ) callconv(.C) void;
+
     /// `pub fn setDropCallback(window: *Window, callback: ?DropFn) ?DropFn`
     pub const setDropCallback = glfwSetDropCallback;
     extern fn glfwSetDropCallback(window: *Window, callback: ?DropFn) ?DropFn;
@@ -996,6 +1004,11 @@ fn keyCallback(window: *Window, key: Key, scancode: i32, action: Action, mods: M
     _ = mods;
 }
 
+fn charCallback(window: *Window, codepoint: u32) callconv(.C) void {
+    _ = window;
+    _ = codepoint;
+}
+
 test "zglfw.basic" {
     // TODO: Make this test headless or only skip for CI
     if (true) {
@@ -1044,6 +1057,7 @@ test "zglfw.basic" {
     _ = window.setCursorPosCallback(cursorPosCallback);
     _ = window.setMouseButtonCallback(mouseButtonCallback);
     _ = window.setKeyCallback(keyCallback);
+    _ = window.setCharCallback(charCallback);
     _ = window.setScrollCallback(scrollCallback);
     _ = window.setKeyCallback(null);
 
