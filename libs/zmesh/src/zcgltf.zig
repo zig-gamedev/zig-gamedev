@@ -6,6 +6,54 @@ test {
     std.testing.refAllDeclsRecursive(@This());
 }
 
+test "extern struct ABI compatibility" {
+    @setEvalBranchQuota(10_000);
+    const c = @cImport(@cInclude("cgltf.h"));
+    inline for (comptime std.meta.declarations(@This())) |decl| {
+        const ZigType = @field(@This(), decl.name);
+        if (@TypeOf(ZigType) != type) {
+            return;
+        }
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
+            @typeInfo(ZigType).Struct.layout == .Extern)
+        {
+            const c_name = comptime buildName: {
+                comptime var buf: [256]u8 = undefined;
+                comptime var fbs = std.io.fixedBufferStream(&buf);
+                try fbs.writer().writeAll("cgltf");
+                for (decl.name) |char| {
+                    if (std.ascii.isUpper(char)) {
+                        try fbs.writer().writeByte('_');
+                        try fbs.writer().writeByte(std.ascii.toLower(char));
+                    } else {
+                        try fbs.writer().writeByte(char);
+                    }
+                }
+                break :buildName fbs.getWritten();
+            };
+            const CType = @field(c, c_name);
+            std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType)) catch |err| {
+                std.log.err("@sizeOf({s}) != @sizeOf({s})", .{ c_name, decl.name });
+                return err;
+            };
+            comptime var i: usize = 0;
+            inline for (comptime std.meta.fieldNames(CType)) |c_field_name| {
+                std.testing.expectEqual(
+                    @offsetOf(CType, c_field_name),
+                    @offsetOf(ZigType, std.meta.fieldNames(ZigType)[i]),
+                ) catch |err| {
+                    std.log.err(
+                        "@offsetOf({s}, {s}) != @offsetOf({s}, {s})",
+                        .{ c_name, c_field_name, decl.name, std.meta.fieldNames(ZigType)[i] },
+                    );
+                    return err;
+                };
+                i += 1;
+            }
+        }
+    }
+}
+
 pub const Bool32 = i32;
 pub const CString = [*:0]const u8;
 pub const MutCString = [*:0]u8;

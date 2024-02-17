@@ -130,6 +130,8 @@ pub fn runTests(
         .optimize = optimize,
     });
 
+    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/cgltf" });
+
     const zmesh_pkg = package(b, target, optimize, .{});
     zmesh_pkg.link(tests);
 
