@@ -733,7 +733,7 @@ pub const Data = extern struct {
 
     pub fn writeFile(data: Data, path: [*:0]const u8, options: Options) !void {
         const result = cgltf_write_file(&options, path, &data);
-        resultToError(result, null) catch |err| return err;
+        try resultToError(result);
     }
 
     pub fn writeBuffer(data: Data, buffer: []u8, options: Options) usize {
@@ -756,18 +756,20 @@ pub const Error = error{
 pub fn parse(options: Options, data: []const u8) Error!*Data {
     var out_data: ?*Data = null;
     const result = cgltf_parse(&options, data.ptr, data.len, &out_data);
-    return try resultToError(result, out_data);
+    try resultToError(result);
+    return out_data.?;
 }
 
 pub fn parseFile(options: Options, path: [*:0]const u8) Error!*Data {
     var out_data: ?*Data = null;
     const result = cgltf_parse_file(&options, path, &out_data);
-    return try resultToError(result, out_data);
+    try resultToError(result);
+    return out_data.?;
 }
 
 pub fn loadBuffers(options: Options, data: *Data, gltf_path: [*:0]const u8) Error!void {
     const result = cgltf_load_buffers(&options, data, gltf_path);
-    _ = try resultToError(result, data);
+    try resultToError(result);
 }
 
 pub fn free(data: *Data) void {
@@ -866,20 +868,113 @@ extern fn cgltf_write(
     data: ?*const Data,
 ) usize;
 
-fn resultToError(result: Result, data: ?*Data) Error!*Data {
-    if (result == .success)
-        return data.?;
+fn resultToError(result: Result) Error!void {
+    switch (result) {
+        .success => return,
+        .data_too_short => return error.DataTooShort,
+        .unknown_format => return error.UnknownFormat,
+        .invalid_json => return error.InvalidJson,
+        .invalid_gltf => return error.InvalidGltf,
+        .invalid_options => return error.InvalidOptions,
+        .file_not_found => return error.FileNotFound,
+        .io_error => return error.IoError,
+        .out_of_memory => return error.OutOfMemory,
+        .legacy_gltf => return error.LegacyGltf,
+    }
+}
 
-    return switch (result) {
-        .data_too_short => error.DataTooShort,
-        .unknown_format => error.UnknownFormat,
-        .invalid_json => error.InvalidJson,
-        .invalid_gltf => error.InvalidGltf,
-        .invalid_options => error.InvalidOptions,
-        .file_not_found => error.FileNotFound,
-        .io_error => error.IoError,
-        .out_of_memory => error.OutOfMemory,
-        .legacy_gltf => error.LegacyGltf,
-        else => unreachable,
-    };
+// TESTS ///////////////////////////////////////////////////////////////////////////////////////////
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
+test "extern struct layout" {
+    @setEvalBranchQuota(10_000);
+    const c = @cImport(@cInclude("cgltf.h"));
+    inline for (comptime std.meta.declarations(@This())) |decl| {
+        const ZigType = @field(@This(), decl.name);
+        if (@TypeOf(ZigType) != type) {
+            continue;
+        }
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
+            @typeInfo(ZigType).Struct.layout == .Extern)
+        {
+            comptime var c_name_buf: [256]u8 = undefined;
+            const c_name = comptime try cTypeNameFromZigTypeName(&c_name_buf, decl.name);
+            const CType = @field(c, c_name);
+            std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType)) catch |err| {
+                std.log.err("@sizeOf({s}) != @sizeOf({s})", .{ decl.name, c_name });
+                return err;
+            };
+            comptime var i: usize = 0;
+            inline for (comptime std.meta.fieldNames(CType)) |c_field_name| {
+                std.testing.expectEqual(
+                    @offsetOf(CType, c_field_name),
+                    @offsetOf(ZigType, std.meta.fieldNames(ZigType)[i]),
+                ) catch |err| {
+                    std.log.err(
+                        "@offsetOf({s}, {s}) != @offsetOf({s}, {s})",
+                        .{ decl.name, std.meta.fieldNames(ZigType)[i], c_name, c_field_name },
+                    );
+                    return err;
+                };
+                i += 1;
+            }
+        }
+    }
+}
+
+test "enum" {
+    @setEvalBranchQuota(10_000);
+    const c = @cImport(@cInclude("cgltf.h"));
+    inline for (comptime std.meta.declarations(@This())) |decl| {
+        const ZigType = @field(@This(), decl.name);
+        if (@TypeOf(ZigType) != type) {
+            continue;
+        }
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Enum) {
+            comptime var c_name_buf: [256]u8 = undefined;
+            const c_name = comptime try cTypeNameFromZigTypeName(&c_name_buf, decl.name);
+            const CType = @field(c, c_name);
+            std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType)) catch |err| {
+                std.log.err("@sizeOf({s}) != @sizeOf({s})", .{ decl.name, c_name });
+                return err;
+            };
+            inline for (comptime std.meta.fieldNames(ZigType)) |field_name| {
+                const c_field_name = comptime buildName: {
+                    comptime var buf: [256]u8 = undefined;
+                    comptime var fbs = std.io.fixedBufferStream(&buf);
+                    try fbs.writer().writeAll(c_name);
+                    try fbs.writer().writeByte('_');
+                    try fbs.writer().writeAll(field_name);
+                    break :buildName fbs.getWritten();
+                };
+                std.testing.expectEqual(
+                    @field(c, c_field_name),
+                    @intFromEnum(@field(ZigType, field_name)),
+                ) catch |err| {
+                    std.log.err("{s}.{s} != {s}", .{ decl.name, field_name, c_field_name });
+                    return err;
+                };
+            }
+        }
+    }
+}
+
+fn cTypeNameFromZigTypeName(
+    comptime buf: []u8,
+    comptime zig_name: []const u8,
+) ![]const u8 {
+    comptime var fbs = std.io.fixedBufferStream(buf);
+    try fbs.writer().writeAll("cgltf");
+    for (zig_name) |char| {
+        if (std.ascii.isUpper(char)) {
+            try fbs.writer().writeByte('_');
+            try fbs.writer().writeByte(std.ascii.toLower(char));
+        } else {
+            try fbs.writer().writeByte(char);
+        }
+    }
+    return fbs.getWritten();
 }
