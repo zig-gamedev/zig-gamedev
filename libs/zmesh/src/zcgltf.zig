@@ -12,7 +12,7 @@ test "extern struct ABI compatibility" {
     inline for (comptime std.meta.declarations(@This())) |decl| {
         const ZigType = @field(@This(), decl.name);
         if (@TypeOf(ZigType) != type) {
-            return;
+            continue;
         }
         if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
             @typeInfo(ZigType).Struct.layout == .Extern)
