@@ -18,6 +18,7 @@
         .zpool = .{ .path = "libs/zpool" },
         .zjobs = .{ .path = "libs/zjobs" },
         .zmesh = .{ .path = "libs/zmesh" },
+        .zcgltf = .{ .path = "libs/zcgltf" },
         .znoise = .{ .path = "libs/znoise" },
         .zstbi = .{ .path = "libs/zstbi" },
         .zwin32 = .{ .path = "libs/zwin32" },

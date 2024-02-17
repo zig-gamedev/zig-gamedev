@@ -1,0 +1,11 @@
+.{
+    .name = "zgltf",
+    .version = "0.1.0",
+    .paths = .{
+        "cgltf",
+        "src",
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+    },
+}

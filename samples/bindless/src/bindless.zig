@@ -154,9 +154,9 @@ fn loadMesh(
         path,
     }) catch unreachable;
 
-    const data = try zmesh.io.parseAndLoadFile(pathname);
-    defer zmesh.io.freeData(data);
-    try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+    const data = try zmesh.io.parseAndLoadFileGltf(pathname);
+    defer zmesh.io.freeDataGltf(data);
+    try zmesh.io.appendMeshPrimitiveGltf(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     var mesh = Mesh{
         .vertex_offset = @as(u32, @intCast(pre_positions_len)),

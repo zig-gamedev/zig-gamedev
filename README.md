@@ -101,6 +101,7 @@ Refer to each lib's README.md for further usage intructions.
 | **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
 | **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
+| **[zcgltf](libs/zcgltf)**     | 0.1.0          | Zig build system and bindings for [cgltf](https://github.com/jkuhlmann/cgltf)                                                       |
 | **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
 | **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
 | **[zglfw](libs/zglfw)**       | 0.7.0          | Zig build sys & bindings for [GLFW](https://github.com/glfw/glfw)                                  |

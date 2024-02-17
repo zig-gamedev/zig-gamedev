@@ -125,9 +125,9 @@ fn loadMeshAndGenerateMeshlets(
         relpath,
     }) catch unreachable;
 
-    const data = try zmesh.io.parseAndLoadFile(abspath);
-    defer zmesh.io.freeData(data);
-    try zmesh.io.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+    const data = try zmesh.io.parseAndLoadFileGltf(abspath);
+    defer zmesh.io.freeDataGltf(data);
+    try zmesh.io.appendMeshPrimitiveGltf(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
     var src_vertices = try std.ArrayList(Vertex).initCapacity(
         arena_allocator,
