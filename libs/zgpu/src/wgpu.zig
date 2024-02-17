@@ -5,6 +5,9 @@ test "extern struct ABI compatibility" {
     const wgpu = @cImport(@cInclude("dawn/webgpu.h"));
     inline for (comptime std.meta.declarations(@This())) |decl| {
         const ZigType = @field(@This(), decl.name);
+        if (@TypeOf(ZigType) != type) {
+            continue;
+        }
         if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
             @typeInfo(ZigType).Struct.layout == .Extern)
         {
