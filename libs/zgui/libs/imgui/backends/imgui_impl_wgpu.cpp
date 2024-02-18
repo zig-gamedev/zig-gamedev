@@ -189,6 +189,13 @@ static void SafeRelease(WGPUBuffer& res)
         wgpuBufferRelease(res);
     res = nullptr;
 }
+// FIX(zig-gamedev): https://github.com/ocornut/imgui/commit/9266c0d2d1390e50d2d8070896932c2564594407
+static void SafeRelease(WGPUPipelineLayout& res)
+ {
+     if (res)
+         wgpuPipelineLayoutRelease(res);
+     res = nullptr;
+ }
 static void SafeRelease(WGPURenderPipeline& res)
 {
     if (res)
@@ -664,7 +671,15 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     depth_stencil_state.depthWriteEnabled = false;
     depth_stencil_state.depthCompare = WGPUCompareFunction_Always;
     depth_stencil_state.stencilFront.compare = WGPUCompareFunction_Always;
+    // FIX(zig-gamedev): https://github.com/ocornut/imgui/commit/03417cc77d15100b18c486b55db409ee5e9c363e
+    depth_stencil_state.stencilFront.failOp = WGPUStencilOperation_Keep;
+    depth_stencil_state.stencilFront.depthFailOp = WGPUStencilOperation_Keep;
+    depth_stencil_state.stencilFront.passOp = WGPUStencilOperation_Keep;
     depth_stencil_state.stencilBack.compare = WGPUCompareFunction_Always;
+    // FIX(zig-gamedev): https://github.com/ocornut/imgui/commit/03417cc77d15100b18c486b55db409ee5e9c363e
+    depth_stencil_state.stencilBack.failOp = WGPUStencilOperation_Keep;
+    depth_stencil_state.stencilBack.depthFailOp = WGPUStencilOperation_Keep;
+    depth_stencil_state.stencilBack.passOp = WGPUStencilOperation_Keep;
 
     // Configure disabled depth-stencil state
     graphics_pipeline_desc.depthStencil = (bd->depthStencilFormat == WGPUTextureFormat_Undefined) ? nullptr :  &depth_stencil_state;
@@ -694,6 +709,8 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
 
     SafeRelease(vertex_shader_desc.module);
     SafeRelease(pixel_shader_desc.module);
+    // FIX(zig-gamedev): https://github.com/ocornut/imgui/commit/9266c0d2d1390e50d2d8070896932c2564594407
+    SafeRelease(graphics_pipeline_desc.layout);
     SafeRelease(bg_layouts[0]);
 
     return true;
