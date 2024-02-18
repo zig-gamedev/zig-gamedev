@@ -600,6 +600,13 @@ fn update(demo: *DemoState) void {
 
         zm.storeArr3(&demo.camera.position, cam_pos);
     }
+
+    // Keyboard shortcut for switching scenes
+    if (demo.is_lighting_precomputed == true and window.getKey(.tab) == .press) {
+        demo.current_hdri_index += 1;
+        if (demo.current_hdri_index >= 3) demo.current_hdri_index = 0;
+        demo.is_lighting_precomputed = false;
+    }
 }
 
 fn draw(demo: *DemoState) void {
