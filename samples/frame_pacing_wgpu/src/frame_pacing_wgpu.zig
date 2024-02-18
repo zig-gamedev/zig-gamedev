@@ -15,17 +15,22 @@ const Surface = struct {
 
     const Self = @This();
 
-    fn init(allocator: std.mem.Allocator, monitor: ?*zglfw.Monitor) !Self {
+    fn init(allocator: std.mem.Allocator, monitor_video_mode: ?MonitorVideoMode) !Self {
         var width: i32 = 1280;
         var height: i32 = 720;
 
         // default windowed vsync on (monitor is null)
         var present_mode: wgpu.PresentMode = .fifo;
 
-        if (monitor) |m| {
-            const video_mode = try m.getVideoMode();
-            width = video_mode.width;
-            height = video_mode.height;
+        var monitor: ?*zglfw.Monitor = null;
+        if (monitor_video_mode) |mvm| {
+            monitor = mvm.monitor;
+            width = mvm.video_mode.width;
+            height = mvm.video_mode.height;
+            zglfw.windowHintTyped(.red_bits, mvm.video_mode.red_bits);
+            zglfw.windowHintTyped(.green_bits, mvm.video_mode.green_bits);
+            zglfw.windowHintTyped(.blue_bits, mvm.video_mode.blue_bits);
+            zglfw.windowHintTyped(.refresh_rate, mvm.video_mode.refresh_rate);
 
             // vsync off
             present_mode = .immediate;
@@ -65,9 +70,9 @@ const Surface = struct {
         };
     }
 
-    fn reinit(self: *Self, allocator: std.mem.Allocator, monitor: ?*zglfw.Monitor) !void {
+    fn reinit(self: *Self, allocator: std.mem.Allocator, monitor_video_mode: ?MonitorVideoMode) !void {
         self.deinit(allocator);
-        const other = try Self.init(allocator, monitor);
+        const other = try Self.init(allocator, monitor_video_mode);
         self.window = other.window;
         self.gctx = other.gctx;
     }
@@ -116,6 +121,11 @@ const XyLine = struct {
     }
 };
 
+const MonitorVideoMode = struct {
+    monitor: *zglfw.Monitor,
+    video_mode: zglfw.VideoMode,
+};
+
 pub fn main() !void {
     try zglfw.init();
     defer zglfw.terminate();
@@ -162,13 +172,29 @@ pub fn main() !void {
         }
         monitor_names.deinit();
     }
+
+    var monitor_video_modes = std.ArrayList(MonitorVideoMode).init(allocator);
+    defer monitor_video_modes.deinit();
+
     if (zglfw.Monitor.getAll()) |monitors| {
-        for (monitors, 0..) |monitor, i| {
-            const video_mode = try monitor.getVideoMode();
-            try monitor_names.append(try std.fmt.allocPrintZ(allocator, "monitor {} {}×{} {}hz", .{ i, video_mode.width, video_mode.height, video_mode.refresh_rate }));
+        for (monitors) |monitor| {
+            for (try monitor.getVideoModes()) |video_mode| {
+                const bits = video_mode.red_bits + video_mode.green_bits + video_mode.blue_bits;
+                try monitor_names.append(try std.fmt.allocPrintZ(allocator, "{s} {}×{} {}-bits {}hz", .{
+                    try monitor.getName(),
+                    video_mode.width,
+                    video_mode.height,
+                    bits,
+                    video_mode.refresh_rate,
+                }));
+                try monitor_video_modes.append(.{
+                    .monitor = monitor,
+                    .video_mode = video_mode,
+                });
+            }
         }
     }
-    var selected_monitor: usize = 0;
+    var selected_monitor_video_mode: usize = 0;
 
     var reinit_surface: bool = false;
 
@@ -178,11 +204,8 @@ pub fn main() !void {
             switch (mode) {
                 .windowed => try surface.reinit(allocator, null),
                 .fullscreen => {
-                    if (zglfw.Monitor.getAll()) |monitors| {
-                        if (selected_monitor < monitors.len) {
-                            try surface.reinit(allocator, monitors[selected_monitor]);
-                        }
-                    }
+                    const monitor_video_mode = monitor_video_modes.items[selected_monitor_video_mode];
+                    try surface.reinit(allocator, monitor_video_mode);
                 },
             }
             reinit_surface = false;
@@ -268,20 +291,22 @@ pub fn main() !void {
                         mode = .windowed;
                         reinit_surface = true;
                     }
-                    if (zgui.radioButton("fullscreen vsync off", .{ .active = mode == .fullscreen })) {
-                        mode = .fullscreen;
-                        reinit_surface = true;
-                    }
                     {
-                        zgui.beginDisabled(.{ .disabled = mode != .fullscreen });
-                        defer zgui.endDisabled();
+                        if (zgui.radioButton("fullscreen vsync off", .{ .active = mode == .fullscreen })) {
+                            mode = .fullscreen;
+                            reinit_surface = true;
+                        }
+                        zgui.sameLine(.{});
+                        {
+                            if (zgui.beginCombo("##monitor", .{ .preview_value = monitor_names.items[selected_monitor_video_mode] })) {
+                                defer zgui.endCombo();
 
-                        if (zgui.beginCombo("monitor", .{ .preview_value = monitor_names.items[selected_monitor] })) {
-                            defer zgui.endCombo();
-
-                            for (monitor_names.items, 0..) |monitor_name, i| {
-                                if (zgui.selectable(monitor_name, .{ .selected = i == selected_monitor })) {
-                                    selected_monitor = i;
+                                for (monitor_names.items, 0..) |monitor_name, i| {
+                                    if (zgui.selectable(monitor_name, .{ .selected = i == selected_monitor_video_mode })) {
+                                        selected_monitor_video_mode = i;
+                                        mode = .fullscreen;
+                                        reinit_surface = true;
+                                    }
                                 }
                             }
                         }
@@ -292,26 +317,30 @@ pub fn main() !void {
                     if (zgui.radioButton("unlimited", .{ .active = frame_target_option == .unlimited })) {
                         frame_target_option = .unlimited;
                     }
-                    if (zgui.radioButton("frame rate", .{ .active = frame_target_option == .frame_rate })) {
-                        frame_target_option = .frame_rate;
-                    }
-                    zgui.sameLine(.{});
                     {
-                        zgui.beginDisabled(.{ .disabled = frame_target_option != .frame_rate });
-                        defer zgui.endDisabled();
+                        if (zgui.radioButton("frame rate", .{ .active = frame_target_option == .frame_rate })) {
+                            frame_target_option = .frame_rate;
+                        }
+                        zgui.sameLine(.{});
+                        {
+                            zgui.beginDisabled(.{ .disabled = frame_target_option != .frame_rate });
+                            defer zgui.endDisabled();
 
-                        _ = zgui.sliderInt("##frame rate", .{ .v = &frame_rate_target, .min = 0, .max = 1000 });
+                            _ = zgui.sliderInt("##frame rate", .{ .v = &frame_rate_target, .min = 0, .max = 1000 });
+                        }
                     }
 
-                    if (zgui.radioButton("frame time (ms)", .{ .active = frame_target_option == .frame_time })) {
-                        frame_target_option = .frame_time;
-                    }
-                    zgui.sameLine(.{});
                     {
-                        zgui.beginDisabled(.{ .disabled = frame_target_option != .frame_time });
-                        defer zgui.endDisabled();
+                        if (zgui.radioButton("frame time (ms)", .{ .active = frame_target_option == .frame_time })) {
+                            frame_target_option = .frame_time;
+                        }
+                        zgui.sameLine(.{});
+                        {
+                            zgui.beginDisabled(.{ .disabled = frame_target_option != .frame_time });
+                            defer zgui.endDisabled();
 
-                        _ = zgui.sliderFloat("##frame time", .{ .v = &frame_time_target, .min = 0, .max = 100 });
+                            _ = zgui.sliderFloat("##frame time", .{ .v = &frame_time_target, .min = 0, .max = 100 });
+                        }
                     }
                 }
             }

@@ -480,12 +480,31 @@ pub const Monitor = opaque {
     }
     extern fn glfwGetMonitors(count: *i32) ?[*]*Monitor;
 
+    pub fn getName(monitor: *Monitor) Error![*:0]const u8 {
+        if (glfwGetMonitorName(monitor)) |name| {
+            return name;
+        }
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetMonitorName(monitor: *Monitor) ?[*:0]const u8;
+
     pub fn getVideoMode(monitor: *Monitor) Error!*VideoMode {
         if (glfwGetVideoMode(monitor)) |video_mode| return video_mode;
         try maybeError();
         unreachable;
     }
     extern fn glfwGetVideoMode(monitor: *Monitor) ?*VideoMode;
+
+    pub fn getVideoModes(monitor: *Monitor) Error![]VideoMode {
+        var count: i32 = 0;
+        if (glfwGetVideoModes(monitor, &count)) |video_modes| {
+            return video_modes[0..@as(usize, @intCast(count))];
+        }
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwGetVideoModes(monitor: *Monitor, count: *i32) ?[*]VideoMode;
 };
 
 pub const VideoMode = extern struct {
