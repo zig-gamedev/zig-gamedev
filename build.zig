@@ -119,6 +119,9 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     zgui_glfw_gl_pkg = zgui.package(b, target, optimize, .{
         .options = .{ .backend = .glfw_opengl3 },
     });
+    zgui_win32_d3d12_pkg = zgui.package(b, target, optimize, .{
+        .options = .{ .backend = .win32_d3d12 },
+    });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{},
         .deps = .{ .zpool = zpool_pkg, .zglfw = zglfw_pkg },
@@ -224,6 +227,7 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     const rasterization = @import("samples/rasterization/build.zig");
     const bindless = @import("samples/bindless/build.zig");
     //const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+    const minimal_zgui_zd3d12 = @import("samples/minimal_zgui_zd3d12/build.zig");
 
     install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
     install(b, bindless.build(b, options), "bindless");
@@ -232,6 +236,7 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     install(b, textured_quad.build(b, options), "textured_quad");
     install(b, rasterization.build(b, options), "rasterization");
     install(b, mesh_shader_test.build(b, options), "mesh_shader_test");
+    install(b, minimal_zgui_zd3d12.build(b, options), "minimal_zgui_zd3d12");
 }
 
 fn samplesWindows(b: *std.Build, options: Options) void {
@@ -308,6 +313,7 @@ pub var zstbi_pkg: zstbi.Package = undefined;
 pub var zbullet_pkg: zbullet.Package = undefined;
 pub var zgui_glfw_wgpu_pkg: zgui.Package = undefined;
 pub var zgui_glfw_gl_pkg: zgui.Package = undefined;
+pub var zgui_win32_d3d12_pkg: zgui.Package = undefined;
 pub var zgpu_pkg: zgpu.Package = undefined;
 pub var ztracy_pkg: ztracy.Package = undefined;
 pub var zphysics_pkg: zphysics.Package = undefined;
