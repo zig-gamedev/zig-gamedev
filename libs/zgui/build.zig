@@ -4,7 +4,7 @@ pub const Backend = enum {
     no_backend,
     glfw_wgpu,
     glfw_opengl3,
-    win32_dx12,
+    win32_d3d12,
 };
 
 const default_options = struct {
@@ -148,7 +148,7 @@ pub fn package(
                 .flags = &(cflags.* ++ .{"-DIMGUI_IMPL_OPENGL_LOADER_CUSTOM"}),
             });
         },
-        .win32_dx12 => {
+        .win32_d3d12 => {
             zgui_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     thisDir() ++ "/libs/imgui/backends/imgui_impl_win32.cpp",
@@ -158,6 +158,7 @@ pub fn package(
             });
             zgui_c_cpp.linkSystemLibrary("d3dcompiler_47");
             zgui_c_cpp.linkSystemLibrary("dwmapi");
+            zgui_c_cpp.linkSystemLibrary("Gdi32");
         },
         .no_backend => {},
     }
