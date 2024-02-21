@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 //
@@ -920,56 +921,65 @@ pub const ContextCreationApi = enum(i32) {
 // Native
 //
 //--------------------------------------------------------------------------------------------------
-pub const native = struct {
-    pub fn getWin32Adapter(monitor: *Monitor) Error![:0]const u8 {
-        if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
-        try maybeError();
-        unreachable;
-    }
-    extern fn glfwGetWin32Adapter(monitor: *Monitor) ?[*:0]const u8;
+pub const native = switch (builtin.target.os.tag) {
+    .windows => struct {
+        pub fn getWin32Adapter(monitor: *Monitor) Error![:0]const u8 {
+            if (glfwGetWin32Adapter(monitor)) |adapter| return std.mem.span(adapter);
+            try maybeError();
+            unreachable;
+        }
+        extern fn glfwGetWin32Adapter(monitor: *Monitor) ?[*:0]const u8;
 
-    pub fn getWin32Window(window: *Window) Error!std.os.windows.HWND {
-        if (glfwGetWin32Window(window)) |hwnd| return hwnd;
-        try maybeError();
-        unreachable;
-    }
-    extern fn glfwGetWin32Window(window: *Window) ?std.os.windows.HWND;
+        pub fn getWin32Window(window: *Window) Error!std.os.windows.HWND {
+            if (glfwGetWin32Window(window)) |hwnd| return hwnd;
+            try maybeError();
+            unreachable;
+        }
+        extern fn glfwGetWin32Window(window: *Window) ?std.os.windows.HWND;
+    },
+    .macos => struct {
+        pub fn getCocoaWindow(window: *Window) Error!*anyopaque {
+            if (glfwGetCocoaWindow(window)) |window_native| return window_native;
+            try maybeError();
+            unreachable;
+        }
+        extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
+    },
+    .linux => struct {
+        pub fn getX11Adapter(monitor: *Monitor) Error!u32 {
+            const adapter = glfwGetX11Adapter(monitor);
+            if (adapter != 0) return adapter;
+            try maybeError();
+            unreachable;
+        }
+        extern fn glfwGetX11Adapter(monitor: *Monitor) u32;
 
-    pub fn getX11Adapter(monitor: *Monitor) Error!u32 {
-        const adapter = glfwGetX11Adapter(monitor);
-        if (adapter != 0) return adapter;
-        try maybeError();
-        unreachable;
-    }
-    extern fn glfwGetX11Adapter(monitor: *Monitor) u32;
+        pub fn getX11Display() Error!*anyopaque {
+            if (glfwGetX11Display()) |display| return display;
+            try maybeError();
+            unreachable;
+        }
+        extern fn glfwGetX11Display() ?*anyopaque;
 
-    pub fn getX11Display() Error!*anyopaque {
-        if (glfwGetX11Display()) |display| return display;
-        try maybeError();
-        unreachable;
-    }
-    extern fn glfwGetX11Display() ?*anyopaque;
-
-    pub fn getX11Window(window: *Window) Error!u32 {
-        const window_native = glfwGetX11Window(window);
-        if (window_native != 0) return window_native;
-        try maybeError();
-        unreachable;
-    }
-    extern fn glfwGetX11Window(window: *Window) u32;
-
-    pub fn getCocoaWindow(window: *Window) Error!*anyopaque {
-        if (glfwGetCocoaWindow(window)) |window_native| return window_native;
-        try maybeError();
-        unreachable;
-    }
-    extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
+        pub fn getX11Window(window: *Window) Error!u32 {
+            const window_native = glfwGetX11Window(window);
+            if (window_native != 0) return window_native;
+            try maybeError();
+            unreachable;
+        }
+        extern fn glfwGetX11Window(window: *Window) u32;
+    },
+    else => @compileError("Unsupported target OS"),
 };
 //--------------------------------------------------------------------------------------------------
 //
 // Test
 //
 //--------------------------------------------------------------------------------------------------
+test {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 const expect = std.testing.expect;
 
 fn contentScaleCallback(window: *Window, xscale: f32, yscale: f32) callconv(.C) void {
@@ -1116,7 +1126,7 @@ test "zglfw.basic" {
     _ = cursor_pos[0];
     _ = cursor_pos[1];
 
-    const window_native = try switch (@import("builtin").target.os.tag) {
+    const window_native = try switch (builtin.target.os.tag) {
         .windows => native.getWin32Window(window),
         .linux => native.getX11Window(window),
         .macos => native.getCocoaWindow(window),
