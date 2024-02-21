@@ -435,7 +435,7 @@ pub const Gamepad = struct {
         axes: [6]f32,
 
         test {
-            const c = @cImport(@cInclude("glfw/glfw3.h"));
+            const c = @cImport(@cInclude("GLFW/glfw3.h"));
             try std.testing.expectEqual(@sizeOf(c.GLFWgamepadstate), @sizeOf(State));
             inline for (comptime std.meta.fieldNames(State)) |field_name| {
                 try std.testing.expectEqual(
@@ -528,7 +528,7 @@ pub const VideoMode = extern struct {
     refresh_rate: c_int,
 
     test {
-        const c = @cImport(@cInclude("glfw/glfw3.h"));
+        const c = @cImport(@cInclude("GLFW/glfw3.h"));
 
         try std.testing.expectEqual(@sizeOf(c.GLFWvidmode), @sizeOf(VideoMode));
 
