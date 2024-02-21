@@ -220,6 +220,8 @@ pub fn runTests(
     const zglfw_pkg = package(b, target, optimize, .{});
     zglfw_pkg.link(tests);
 
+    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
+
     return &b.addRunArtifact(tests).step;
 }
 

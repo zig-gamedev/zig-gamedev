@@ -433,6 +433,17 @@ pub const Gamepad = struct {
     pub const State = extern struct {
         buttons: [15]Joystick.ButtonAction,
         axes: [6]f32,
+
+        test {
+            const c = @cImport(@cInclude("glfw/glfw3.h"));
+            try std.testing.expectEqual(@sizeOf(c.GLFWgamepadstate), @sizeOf(State));
+            inline for (comptime std.meta.fieldNames(State)) |field_name| {
+                try std.testing.expectEqual(
+                    @offsetOf(c.GLFWgamepadstate, field_name),
+                    @offsetOf(State, field_name),
+                );
+            }
+        }
     };
 
     pub fn getName(self: Gamepad) [:0]const u8 {
@@ -515,6 +526,21 @@ pub const VideoMode = extern struct {
     green_bits: c_int,
     blue_bits: c_int,
     refresh_rate: c_int,
+
+    test {
+        const c = @cImport(@cInclude("glfw/glfw3.h"));
+
+        try std.testing.expectEqual(@sizeOf(c.GLFWvidmode), @sizeOf(VideoMode));
+
+        comptime var i = 0;
+        inline for (comptime std.meta.fieldNames(VideoMode)) |field_name| {
+            try std.testing.expectEqual(
+                @offsetOf(c.GLFWvidmode, std.meta.fieldNames(c.GLFWvidmode)[i]),
+                @offsetOf(VideoMode, field_name),
+            );
+            i += 1;
+        }
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
