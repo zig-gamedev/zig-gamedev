@@ -221,6 +221,14 @@ pub fn runTests(
     zglfw_pkg.link(tests);
 
     tests.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
+    switch (target.result.os.tag) {
+        .linux => {
+            tests.addSystemIncludePath(.{
+                .path = b.dependency("system_sdk", .{}).path("linux/include").getPath(b),
+            });
+        },
+        else => {},
+    }
 
     return &b.addRunArtifact(tests).step;
 }
