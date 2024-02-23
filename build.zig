@@ -48,6 +48,14 @@ pub fn build(b: *std.Build) void {
         ) orelse false,
     };
 
+    if (target.result.os.tag == .emscripten) {
+        zemscripten_pkg = zemscripten.package(b);
+        if (b.sysroot == null) {
+            b.sysroot = zemscripten_pkg.emsdk_sysroot;
+            std.log.info("sysroot set to \"{s}\"", .{zemscripten_pkg.emsdk_sysroot});
+        }
+    }
+
     //
     // Packages
     //
@@ -95,7 +103,11 @@ pub fn build(b: *std.Build) void {
     //
     // Experiments
     //
-    if (b.option(bool, "experiments", "Build our prototypes and experimental programs") orelse false) {
+    if (b.option(
+        bool,
+        "experiments",
+        "Build our prototypes and experimental programs",
+    ) orelse false) {
         @import("experiments/build.zig").build(b, options);
     }
 }
@@ -297,6 +309,7 @@ fn benchmarks(b: *std.Build, options: Options) void {
     benchmark_step.dependOn(zmath.runBenchmarks(b, options.target, options.optimize));
 }
 
+pub var zemscripten_pkg: zemscripten.Package = undefined;
 pub var zmath_pkg: zmath.Package = undefined;
 pub var znoise_pkg: znoise.Package = undefined;
 pub var zopengl_pkg: zopengl.Package = undefined;
@@ -322,6 +335,7 @@ pub var common_pkg: common.Package = undefined;
 pub var common_d2d_pkg: common.Package = undefined;
 pub var zd3d12_d2d_pkg: zd3d12.Package = undefined;
 
+const zemscripten = @import("zemscripten");
 const zsdl = @import("zsdl");
 const zopengl = @import("zopengl");
 const zmath = @import("zmath");

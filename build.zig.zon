@@ -27,12 +27,19 @@
         .common = .{ .path = "libs/common" },
         .zbullet = .{ .path = "libs/zbullet" },
         .zgui = .{ .path = "libs/zgui" },
-        .zgpu = .{ .path = "libs/zgpu" },
         .ztracy = .{ .path = "libs/ztracy" },
         .zphysics = .{ .path = "libs/zphysics" },
         .zaudio = .{ .path = "libs/zaudio" },
         .zflecs = .{ .path = "libs/zflecs" },
         .system_sdk = .{ .path = "libs/system-sdk" },
+
+        .zemscripten = .{ .path = "libs/zemscripten" },
+        .emsdk = .{
+            .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.52.tar.gz",
+            .hash = "12202192726bf983ec243c7eea956d6107baf6f49d50b62f6a91f5d7471bc6daf53b",
+        },
+
+        .zgpu = .{ .path = "libs/zgpu" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
             .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",

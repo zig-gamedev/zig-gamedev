@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 pub const Package = struct {
@@ -34,12 +35,19 @@ pub fn package(
             "-fno-sanitize=undefined",
             "-DFLECS_NO_CPP",
             "-DFLECS_USE_OS_ALLOC",
-            if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
+            if (builtin.mode == .Debug) "-DFLECS_SANITIZE" else "",
         },
     });
 
-    if (target.result.os.tag == .windows) {
-        zflecs_c_cpp.linkSystemLibrary("ws2_32");
+    switch (target.result.os.tag) {
+        .windows => {
+            zflecs_c_cpp.linkSystemLibrary("ws2_32");
+        },
+        .emscripten => {
+            zflecs_c_cpp.defineCMacro("__EMSCRIPTEN__", "1");
+            zflecs_c_cpp.addIncludePath(.{ .path = b.pathJoin(&.{ b.sysroot.?, "include" }) });
+        },
+        else => {},
     }
 
     return .{

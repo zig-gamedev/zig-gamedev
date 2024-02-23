@@ -84,10 +84,11 @@ pub fn package(
     zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs" });
     zgui_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/imgui" });
 
-    const abi = target.result.abi;
-    zgui_c_cpp.linkLibC();
-    if (abi != .msvc)
-        zgui_c_cpp.linkLibCpp();
+    if (target.result.os.tag != .emscripten) {
+        zgui_c_cpp.linkLibC();
+        if (target.result.abi != .msvc)
+            zgui_c_cpp.linkLibCpp();
+    }
 
     const cflags = &.{"-fno-sanitize=undefined"};
 
@@ -125,17 +126,19 @@ pub fn package(
 
     switch (args.options.backend) {
         .glfw_wgpu => {
-            const zglfw = b.dependency("zglfw", .{});
-            const zgpu = b.dependency("zgpu", .{});
-            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("libs/glfw/include").getPath(b) });
-            zgui_c_cpp.addIncludePath(.{ .path = zgpu.path("libs/dawn/include").getPath(b) });
-            zgui_c_cpp.addCSourceFiles(.{
-                .files = &.{
-                    thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
-                    thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp",
-                },
-                .flags = cflags,
-            });
+            if (target.result.os.tag != .emscripten) {
+                const zglfw = b.dependency("zglfw", .{});
+                const zgpu = b.dependency("zgpu", .{});
+                zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("libs/glfw/include").getPath(b) });
+                zgui_c_cpp.addIncludePath(.{ .path = zgpu.path("libs/dawn/include").getPath(b) });
+                zgui_c_cpp.addCSourceFiles(.{
+                    .files = &.{
+                        thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
+                        thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp",
+                    },
+                    .flags = cflags,
+                });
+            }
         },
         .glfw_opengl3 => {
             const zglfw = b.dependency("zglfw", .{});
@@ -160,6 +163,11 @@ pub fn package(
             zgui_c_cpp.linkSystemLibrary("dwmapi");
         },
         .no_backend => {},
+    }
+
+    if (target.result.os.tag == .emscripten) {
+        zgui_c_cpp.defineCMacro("__EMSCRIPTEN__", null);
+        zgui_c_cpp.addSystemIncludePath(.{ .path = b.pathJoin(&.{ b.sysroot.?, "include" }) });
     }
 
     return .{
