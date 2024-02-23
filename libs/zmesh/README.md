@@ -14,9 +14,10 @@ All memory allocations go through user-supplied, Zig allocator.
 
 ## Getting started
 
-Copy `zmesh` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zmesh` and `zcglf` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zmesh = .{ .path = "libs/zmesh" },
+    .zcgltf = .{ .path = "libs/zcgltf" },
 ```
 
 Then in your `build.zig` add:
@@ -78,16 +79,16 @@ pub fn main() !void {
     defer zmesh.deinit();
 
     //
-    // Load mesh
+    // Load mesh from gltf file
     //
-    const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
-    defer zmesh.io.freeData(data);
+    const data = try zmesh.io.parseAndLoadFileGltf(content_dir ++ "cube.gltf");
+    defer zmesh.io.freeDataGltf(data);
 
     var mesh_indices = std.ArrayList(u32).init(allocator);
     var mesh_positions = std.ArrayList([3]f32).init(allocator);
     var mesh_normals = std.ArrayList([3]f32).init(allocator);
 
-    zmesh.io.appendMeshPrimitive(
+    zmesh.io.appendMeshPrimitiveGltf(
         data, // *zmesh.io.cgltf.Data
         0, // mesh index
         0, // gltf primitive index (submesh index)

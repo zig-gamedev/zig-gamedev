@@ -39,6 +39,10 @@ pub fn package(
         },
     });
 
+    const zcgltf = b.dependency("zcgltf", .{});
+    zmesh.addImport("zcgltf", zcgltf.module("root"));
+    zmesh.linkLibrary(zcgltf.artifact("cgltf"));
+
     const zmesh_c_cpp = if (args.options.shared) blk: {
         const lib = b.addSharedLibrary(.{
             .name = "zmesh",
@@ -47,7 +51,6 @@ pub fn package(
         });
 
         if (target.result.os.tag == .windows) {
-            lib.defineCMacro("CGLTF_API", "__declspec(dllexport)");
             lib.defineCMacro("MESHOPTIMIZER_API", "__declspec(dllexport)");
             lib.defineCMacro("ZMESH_API", "__declspec(dllexport)");
         }
@@ -89,11 +92,6 @@ pub fn package(
         },
         .flags = &.{""},
     });
-    zmesh_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cgltf" });
-    zmesh_c_cpp.addCSourceFile(.{
-        .file = .{ .path = thisDir() ++ "/libs/cgltf/cgltf.c" },
-        .flags = &.{"-std=c99"},
-    });
 
     return .{
         .options = args.options,
@@ -130,10 +128,12 @@ pub fn runTests(
         .optimize = optimize,
     });
 
-    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/cgltf" });
-
     const zmesh_pkg = package(b, target, optimize, .{});
     zmesh_pkg.link(tests);
+
+    const zcgltf = b.dependency("zcgltf", .{});
+    tests.root_module.addImport("zcgltf", zcgltf.module("root"));
+    tests.linkLibrary(zcgltf.artifact("cgltf"));
 
     return &b.addRunArtifact(tests).step;
 }

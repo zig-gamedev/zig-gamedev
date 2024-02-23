@@ -1160,9 +1160,9 @@ fn initMeshes(
         var normals = std.ArrayList([3]f32).init(arena);
         defer normals.deinit();
 
-        const data = try zmesh.io.parseAndLoadFile(content_dir ++ "world.gltf");
-        defer zmesh.io.freeData(data);
-        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, null, null);
+        const data = try zmesh.io.parseAndLoadFileGltf(content_dir ++ "world.gltf");
+        defer zmesh.io.freeDataGltf(data);
+        try zmesh.io.appendMeshPrimitiveGltf(data, 0, 0, &indices, &positions, &normals, null, null);
 
         // "Unweld" mesh, this creates un-optimized mesh with duplicated vertices.
         // We need it for wireframes and facet look.

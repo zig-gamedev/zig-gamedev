@@ -1,9 +1,9 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = @import("memory.zig");
-pub const zcgltf = @import("zcgltf.zig");
+pub const zcgltf = @import("zcgltf");
 
-pub fn parseAndLoadFile(pathname: [:0]const u8) zcgltf.Error!*zcgltf.Data {
+pub fn parseAndLoadFileGltf(pathname: [:0]const u8) zcgltf.Error!*zcgltf.Data {
     const options = zcgltf.Options{
         .memory = .{
             .alloc_func = mem.zmeshAllocUser,
@@ -19,11 +19,11 @@ pub fn parseAndLoadFile(pathname: [:0]const u8) zcgltf.Error!*zcgltf.Data {
     return data;
 }
 
-pub fn freeData(data: *zcgltf.Data) void {
+pub fn freeDataGltf(data: *zcgltf.Data) void {
     zcgltf.free(data);
 }
 
-pub fn appendMeshPrimitive(
+pub fn appendMeshPrimitiveGltf(
     data: *zcgltf.Data,
     mesh_index: u32,
     prim_index: u32,
