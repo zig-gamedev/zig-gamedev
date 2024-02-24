@@ -7,8 +7,12 @@ const std = @import("std");
 //--------------------------------------------------------------------------------------------------
 pub const Hint = enum(i32) {
     joystick_hat_buttons = 0x00050001,
+    angle_platform_type = 0x00050002,
+    platform = 0x00050003,
     cocoa_chdir_resources = 0x00051001,
     cocoa_menubar = 0x00051002,
+    x11_xcb_vulkan_surface = 0x00052001,
+    wayland_libdecor = 0x00053001,
 
     pub fn set(hint: Hint, value: bool) void {
         glfwInitHint(hint, @intFromBool(value));
