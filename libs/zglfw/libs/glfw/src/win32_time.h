@@ -1,6 +1,7 @@
 //========================================================================
-// GLFW 3.4 Cocoa - www.glfw.org
+// GLFW 3.4 Win32 - www.glfw.org
 //------------------------------------------------------------------------
+// Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
@@ -24,26 +25,19 @@
 //
 //========================================================================
 
-#include <IOKit/IOKitLib.h>
-#include <IOKit/IOCFPlugIn.h>
-#include <IOKit/hid/IOHIDKeys.h>
+// This is a workaround for the fact that glfw3.h needs to export APIENTRY (for
+// example to allow applications to correctly declare a GL_KHR_debug callback)
+// but windows.h assumes no one will define APIENTRY before it does
+#undef APIENTRY
 
-#define GLFW_COCOA_JOYSTICK_STATE         _GLFWjoystickNS ns;
-#define GLFW_COCOA_LIBRARY_JOYSTICK_STATE
+#include <windows.h>
 
-// Cocoa-specific per-joystick data
+#define GLFW_WIN32_LIBRARY_TIMER_STATE  _GLFWtimerWin32   win32;
+
+// Win32-specific global timer data
 //
-typedef struct _GLFWjoystickNS
+typedef struct _GLFWtimerWin32
 {
-    IOHIDDeviceRef      device;
-    CFMutableArrayRef   axes;
-    CFMutableArrayRef   buttons;
-    CFMutableArrayRef   hats;
-} _GLFWjoystickNS;
-
-GLFWbool _glfwInitJoysticksCocoa(void);
-void _glfwTerminateJoysticksCocoa(void);
-GLFWbool _glfwPollJoystickCocoa(_GLFWjoystick* js, int mode);
-const char* _glfwGetMappingNameCocoa(void);
-void _glfwUpdateGamepadGUIDCocoa(char* guid);
+    uint64_t            frequency;
+} _GLFWtimerWin32;
 
