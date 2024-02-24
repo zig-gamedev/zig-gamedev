@@ -314,14 +314,21 @@ pub const Cursor = opaque {
         ibeam = 0x00036002,
         crosshair = 0x00036003,
         hand = 0x00036004,
-        hresize = 0x00036005,
-        vresize = 0x00036006,
+        /// Previously named hresize
+        resize_ew = 0x00036005,
+        /// Previously named vresize
+        resize_ns = 0x00036006,
+        resize_nwse = 0x00036007,
+        resize_nesw = 0x00036008,
+        resize_all = 0x00036009,
+        not_allowed = 0x0003600A,
     };
 
     pub const Mode = enum(i32) {
         normal = 0x00034001,
         hidden = 0x00034002,
         disabled = 0x00034003,
+        captured = 0x00034004,
     };
 
     /// `pub fn destroy(cursor: *Cursor) void`
