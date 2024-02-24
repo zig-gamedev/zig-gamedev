@@ -1,4 +1,4 @@
-# zglfw v0.7.1 - GLFW 3.4 build system & bindings
+# zglfw v0.8.0 - GLFW 3.4 build system & bindings
 
 ## Getting started
 
