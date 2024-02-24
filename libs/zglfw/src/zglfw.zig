@@ -77,6 +77,10 @@ pub const Error = error{
     PlatformError,
     FormatUnavailable,
     NoWindowContext,
+    CursorUnavailable,
+    FeatureUnavailable,
+    FeatureUnimplemented,
+    PlatformUnavailable,
     Unknown,
 };
 
@@ -93,6 +97,10 @@ fn convertError(e: i32) Error!void {
         0x00010008 => Error.PlatformError,
         0x00010009 => Error.FormatUnavailable,
         0x0001000A => Error.NoWindowContext,
+        0x0001000B => Error.CursorUnavailable,
+        0x0001000C => Error.FeatureUnavailable,
+        0x0001000D => Error.FeatureUnimplemented,
+        0x0001000E => Error.PlatformUnavailable,
         else => Error.Unknown,
     };
 }
