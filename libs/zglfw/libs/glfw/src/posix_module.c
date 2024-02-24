@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.4 Cocoa - www.glfw.org
+// GLFW 3.4 POSIX - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2021 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,26 +24,30 @@
 //
 //========================================================================
 
-#include <IOKit/IOKitLib.h>
-#include <IOKit/IOCFPlugIn.h>
-#include <IOKit/hid/IOHIDKeys.h>
+#include "internal.h"
 
-#define GLFW_COCOA_JOYSTICK_STATE         _GLFWjoystickNS ns;
-#define GLFW_COCOA_LIBRARY_JOYSTICK_STATE
+#if defined(GLFW_BUILD_POSIX_MODULE)
 
-// Cocoa-specific per-joystick data
-//
-typedef struct _GLFWjoystickNS
+#include <dlfcn.h>
+
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW platform API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+void* _glfwPlatformLoadModule(const char* path)
 {
-    IOHIDDeviceRef      device;
-    CFMutableArrayRef   axes;
-    CFMutableArrayRef   buttons;
-    CFMutableArrayRef   hats;
-} _GLFWjoystickNS;
+    return dlopen(path, RTLD_LAZY | RTLD_LOCAL);
+}
 
-GLFWbool _glfwInitJoysticksCocoa(void);
-void _glfwTerminateJoysticksCocoa(void);
-GLFWbool _glfwPollJoystickCocoa(_GLFWjoystick* js, int mode);
-const char* _glfwGetMappingNameCocoa(void);
-void _glfwUpdateGamepadGUIDCocoa(char* guid);
+void _glfwPlatformFreeModule(void* module)
+{
+    dlclose(module);
+}
+
+GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name)
+{
+    return dlsym(module, name);
+}
+
+#endif // GLFW_BUILD_POSIX_MODULE
 

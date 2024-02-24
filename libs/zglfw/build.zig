@@ -85,7 +85,6 @@ pub fn package(
     const system_sdk = b.dependency("system_sdk", .{});
 
     const src_dir = thisDir() ++ "/libs/glfw/src/";
-
     switch (target.result.os.tag) {
         .windows => {
             zglfw_c_cpp.linkSystemLibrary("gdi32");
@@ -93,6 +92,7 @@ pub fn package(
             zglfw_c_cpp.linkSystemLibrary("shell32");
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
+                    src_dir ++ "platform.c",
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
@@ -101,6 +101,10 @@ pub fn package(
                     src_dir ++ "window.c",
                     src_dir ++ "osmesa_context.c",
                     src_dir ++ "egl_context.c",
+                    src_dir ++ "null_init.c",
+                    src_dir ++ "null_monitor.c",
+                    src_dir ++ "null_window.c",
+                    src_dir ++ "null_joystick.c",
                     src_dir ++ "wgl_context.c",
                     src_dir ++ "win32_thread.c",
                     src_dir ++ "win32_init.c",
@@ -108,6 +112,7 @@ pub fn package(
                     src_dir ++ "win32_time.c",
                     src_dir ++ "win32_joystick.c",
                     src_dir ++ "win32_window.c",
+                    src_dir ++ "win32_module.c",
                 },
                 .flags = &.{"-D_GLFW_WIN32"},
             });
@@ -130,6 +135,7 @@ pub fn package(
             zglfw_c_cpp.linkFramework("Foundation");
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
+                    src_dir ++ "platform.c",
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
@@ -138,8 +144,14 @@ pub fn package(
                     src_dir ++ "window.c",
                     src_dir ++ "osmesa_context.c",
                     src_dir ++ "egl_context.c",
-                    src_dir ++ "nsgl_context.m",
+                    src_dir ++ "null_init.c",
+                    src_dir ++ "null_monitor.c",
+                    src_dir ++ "null_window.c",
+                    src_dir ++ "null_joystick.c",
                     src_dir ++ "posix_thread.c",
+                    src_dir ++ "posix_module.c",
+                    src_dir ++ "posix_poll.c",
+                    src_dir ++ "nsgl_context.m",
                     src_dir ++ "cocoa_time.c",
                     src_dir ++ "cocoa_joystick.m",
                     src_dir ++ "cocoa_init.m",
@@ -165,6 +177,7 @@ pub fn package(
             zglfw_c_cpp.linkSystemLibrary("X11");
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
+                    src_dir ++ "platform.c",
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
@@ -173,9 +186,16 @@ pub fn package(
                     src_dir ++ "window.c",
                     src_dir ++ "osmesa_context.c",
                     src_dir ++ "egl_context.c",
-                    src_dir ++ "glx_context.c",
+                    src_dir ++ "null_init.c",
+                    src_dir ++ "null_monitor.c",
+                    src_dir ++ "null_window.c",
+                    src_dir ++ "null_joystick.c",
                     src_dir ++ "posix_time.c",
                     src_dir ++ "posix_thread.c",
+                    src_dir ++ "posix_module.c",
+                    src_dir ++ "posix_poll.c",
+                    src_dir ++ "egl_context.c",
+                    src_dir ++ "glx_context.c",
                     src_dir ++ "linux_joystick.c",
                     src_dir ++ "xkb_unicode.c",
                     src_dir ++ "x11_init.c",

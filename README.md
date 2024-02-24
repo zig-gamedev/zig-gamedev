@@ -103,7 +103,7 @@ Refer to each lib's README.md for further usage intructions.
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
 | **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
 | **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
-| **[zglfw](libs/zglfw)**       | 0.7.0          | Zig build sys & bindings for [GLFW](https://github.com/glfw/glfw)                                  |
+| **[zglfw](libs/zglfw)**       | 0.7.1          | Zig build sys & bindings for [GLFW](https://github.com/glfw/glfw)                                  |
 | **[znoise](libs/znoise)**     | 0.1.0          | Zig build sys & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
 | **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
 | **[zbullet](libs/zbullet)**   | 0.2.0          | Zig build sys and bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
