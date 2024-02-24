@@ -31,6 +31,7 @@ const Surface = struct {
             zglfw.windowHintTyped(.green_bits, mvm.video_mode.green_bits);
             zglfw.windowHintTyped(.blue_bits, mvm.video_mode.blue_bits);
             zglfw.windowHintTyped(.refresh_rate, mvm.video_mode.refresh_rate);
+            zglfw.windowHintTyped(.client_api, .no_api);
 
             // vsync off
             present_mode = .immediate;
