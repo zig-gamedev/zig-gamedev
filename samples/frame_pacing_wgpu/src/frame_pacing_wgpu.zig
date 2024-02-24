@@ -31,11 +31,11 @@ const Surface = struct {
             zglfw.windowHintTyped(.green_bits, mvm.video_mode.green_bits);
             zglfw.windowHintTyped(.blue_bits, mvm.video_mode.blue_bits);
             zglfw.windowHintTyped(.refresh_rate, mvm.video_mode.refresh_rate);
-            zglfw.windowHintTyped(.client_api, .no_api);
 
             // vsync off
             present_mode = .immediate;
         }
+        zglfw.windowHintTyped(.client_api, .no_api);
         const window = try zglfw.Window.create(width, height, window_title, monitor);
 
         const gctx = try zgpu.GraphicsContext.create(allocator, window, .{
