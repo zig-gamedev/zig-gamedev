@@ -1270,4 +1270,53 @@ comptime {
     @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
     @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
     @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @export(bindings.minSampleShading, .{ .name = "glMinSampleShading", .linkage = linkage });
+    @export(bindings.blendEquationi, .{ .name = "glBlendEquationi", .linkage = linkage });
+    @export(bindings.blendEquationSeparatei, .{ .name = "glBlendEquationSeparatei", .linkage = linkage });
+    @export(bindings.blendFunci, .{ .name = "glBlendFunci", .linkage = linkage });
+    @export(bindings.blendFuncSeparatei, .{ .name = "glBlendFuncSeparatei", .linkage = linkage });
+    @export(bindings.drawArraysIndirect, .{ .name = "glDrawArraysIndirect", .linkage = linkage });
+    @export(bindings.drawElementsIndirect, .{ .name = "glDrawElementsIndirect", .linkage = linkage });
+    @export(bindings.uniform1d, .{ .name = "glUniform1d", .linkage = linkage });
+    @export(bindings.uniform2d, .{ .name = "glUniform2d", .linkage = linkage });
+    @export(bindings.uniform3d, .{ .name = "glUniform3d", .linkage = linkage });
+    @export(bindings.uniform4d, .{ .name = "glUniform4d", .linkage = linkage });
+    @export(bindings.uniform1dv, .{ .name = "glUniform1dv", .linkage = linkage });
+    @export(bindings.uniform2dv, .{ .name = "glUniform2dv", .linkage = linkage });
+    @export(bindings.uniform3dv, .{ .name = "glUniform3dv", .linkage = linkage });
+    @export(bindings.uniform4dv, .{ .name = "glUniform4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix2dv, .{ .name = "glUniformMatrix2dv", .linkage = linkage });
+    @export(bindings.uniformMatrix3dv, .{ .name = "glUniformMatrix3dv", .linkage = linkage });
+    @export(bindings.uniformMatrix4dv, .{ .name = "glUniformMatrix4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix2x3dv, .{ .name = "glUniformMatrix2x3dv", .linkage = linkage });
+    @export(bindings.uniformMatrix2x4dv, .{ .name = "glUniformMatrix2x4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix3x2dv, .{ .name = "glUniformMatrix3x2dv", .linkage = linkage });
+    @export(bindings.uniformMatrix3x4dv, .{ .name = "glUniformMatrix3x4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix4x2dv, .{ .name = "glUniformMatrix4x2dv", .linkage = linkage });
+    @export(bindings.uniformMatrix4x3dv, .{ .name = "glUniformMatrix4x3dv", .linkage = linkage });
+    @export(bindings.getUniformdv, .{ .name = "glGetUniformdv", .linkage = linkage });
+    @export(bindings.getSubroutineUniformLocation, .{ .name = "glGetSubroutineUniformLocation", .linkage = linkage });
+    @export(bindings.getSubroutineIndex, .{ .name = "glGetSubroutineIndex", .linkage = linkage });
+    @export(bindings.getActiveSubroutineUniformiv, .{ .name = "glGetActiveSubroutineUniformiv", .linkage = linkage });
+    @export(bindings.getActiveSubroutineUniformName, .{ .name = "glGetActiveSubroutineUniformName", .linkage = linkage });
+    @export(bindings.getActiveSubroutineName, .{ .name = "glGetActiveSubroutineName", .linkage = linkage });
+    @export(bindings.uniformSubroutinesuiv, .{ .name = "glUniformSubroutinesuiv", .linkage = linkage });
+    @export(bindings.getUniformSubroutineuiv, .{ .name = "glGetUniformSubroutineuiv", .linkage = linkage });
+    @export(bindings.getProgramStageiv, .{ .name = "glGetProgramStageiv", .linkage = linkage });
+    @export(bindings.patchParameteri, .{ .name = "glPatchParameteri", .linkage = linkage });
+    @export(bindings.patchParameterfv, .{ .name = "glPatchParameterfv", .linkage = linkage });
+    @export(bindings.bindTransformFeedback, .{ .name = "glBindTransformFeedback", .linkage = linkage });
+    @export(bindings.deleteTransformFeedbacks, .{ .name = "glDeleteTransformFeedbacks", .linkage = linkage });
+    @export(bindings.genTransformFeedbacks, .{ .name = "glGenTransformFeedbacks", .linkage = linkage });
+    @export(bindings.isTransformFeedback, .{ .name = "glIsTransformFeedback", .linkage = linkage });
+    @export(bindings.pauseTransformFeedback, .{ .name = "glPauseTransformFeedback", .linkage = linkage });
+    @export(bindings.resumeTransformFeedback, .{ .name = "glResumeTransformFeedback", .linkage = linkage });
+    @export(bindings.drawTransformFeedback, .{ .name = "glDrawTransformFeedback", .linkage = linkage });
+    @export(bindings.drawTransformFeedbackStream, .{ .name = "glDrawTransformFeedbackStream", .linkage = linkage });
+    @export(bindings.beginQueryIndexed, .{ .name = "glBeginQueryIndexed", .linkage = linkage });
+    @export(bindings.endQueryIndexed, .{ .name = "glEndQueryIndexed", .linkage = linkage });
+    @export(bindings.glGetQueryIndexediv, .{ .name = "glGetQueryIndexediv", .linkage = linkage });
 }
