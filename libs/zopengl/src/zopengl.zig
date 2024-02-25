@@ -397,6 +397,14 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glTexImage3DMultisample", .{&bindings.texImage3DMultisample});
         try load("glGetMultisamplefv", .{&bindings.getMultisamplefv});
         try load("glSampleMaski", .{&bindings.sampleMaski});
+        try load("glVertexAttribP1ui", .{&bindings.vertexAttribP1ui});
+        try load("glVertexAttribP1uiv", .{&bindings.vertexAttribP1uiv});
+        try load("glVertexAttribP2ui", .{&bindings.vertexAttribP2ui});
+        try load("glVertexAttribP2uiv", .{&bindings.vertexAttribP2uiv});
+        try load("glVertexAttribP3ui", .{&bindings.vertexAttribP3ui});
+        try load("glVertexAttribP3uiv", .{&bindings.vertexAttribP3uiv});
+        try load("glVertexAttribP4ui", .{&bindings.vertexAttribP4ui});
+        try load("glVertexAttribP4uiv", .{&bindings.vertexAttribP4uiv});
     }
 
     // OpenGL 3.3
@@ -421,14 +429,6 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glGetQueryObjecti64v", .{&bindings.getQueryObjecti64v});
         try load("glGetQueryObjectui64v", .{&bindings.getQueryObjectui64v});
         try load("glVertexAttribDivisor", .{&bindings.vertexAttribDivisor});
-        try load("glVertexAttribP1ui", .{&bindings.vertexAttribP1ui});
-        try load("glVertexAttribP1uiv", .{&bindings.vertexAttribP1uiv});
-        try load("glVertexAttribP2ui", .{&bindings.vertexAttribP2ui});
-        try load("glVertexAttribP2uiv", .{&bindings.vertexAttribP2uiv});
-        try load("glVertexAttribP3ui", .{&bindings.vertexAttribP3ui});
-        try load("glVertexAttribP3uiv", .{&bindings.vertexAttribP3uiv});
-        try load("glVertexAttribP4ui", .{&bindings.vertexAttribP4ui});
-        try load("glVertexAttribP4uiv", .{&bindings.vertexAttribP4uiv});
     }
 
     // OpenGL 4.0
@@ -1239,6 +1239,14 @@ comptime {
     @export(bindings.texImage3DMultisample, .{ .name = "glTexImage3DMultisample", .linkage = linkage });
     @export(bindings.getMultisamplefv, .{ .name = "glGetMultisamplefv", .linkage = linkage });
     @export(bindings.sampleMaski, .{ .name = "glSampleMaski", .linkage = linkage });
+    @export(bindings.vertexAttribP1ui, .{ .name = "glVertexAttribP1ui", .linkage = linkage });
+    @export(bindings.vertexAttribP1uiv, .{ .name = "glVertexAttribP1uiv", .linkage = linkage });
+    @export(bindings.vertexAttribP2ui, .{ .name = "glVertexAttribP2ui", .linkage = linkage });
+    @export(bindings.vertexAttribP2uiv, .{ .name = "glVertexAttribP2uiv", .linkage = linkage });
+    @export(bindings.vertexAttribP3ui, .{ .name = "glVertexAttribP3ui", .linkage = linkage });
+    @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
+    @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
+    @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.3 (Core Profile)
     //----------------------------------------------------------------------------------------------
@@ -1262,14 +1270,6 @@ comptime {
     @export(bindings.getQueryObjecti64v, .{ .name = "glGetQueryObjecti64v", .linkage = linkage });
     @export(bindings.getQueryObjectui64v, .{ .name = "glGetQueryObjectui64v", .linkage = linkage });
     @export(bindings.vertexAttribDivisor, .{ .name = "glVertexAttribDivisor", .linkage = linkage });
-    @export(bindings.vertexAttribP1ui, .{ .name = "glVertexAttribP1ui", .linkage = linkage });
-    @export(bindings.vertexAttribP1uiv, .{ .name = "glVertexAttribP1uiv", .linkage = linkage });
-    @export(bindings.vertexAttribP2ui, .{ .name = "glVertexAttribP2ui", .linkage = linkage });
-    @export(bindings.vertexAttribP2uiv, .{ .name = "glVertexAttribP2uiv", .linkage = linkage });
-    @export(bindings.vertexAttribP3ui, .{ .name = "glVertexAttribP3ui", .linkage = linkage });
-    @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
-    @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
-    @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 4.0 (Core Profile)
     //----------------------------------------------------------------------------------------------

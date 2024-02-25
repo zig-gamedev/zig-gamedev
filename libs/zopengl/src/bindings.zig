@@ -1839,6 +1839,55 @@ pub var texImage3DMultisample: *const fn (
 ) callconv(.C) void = undefined;
 pub var getMultisamplefv: *const fn (pname: Enum, index: Uint, val: [*c]Float) callconv(.C) void = undefined;
 pub var sampleMaski: *const fn (maskNumber: Uint, mask: Bitfield) callconv(.C) void = undefined;
+pub var vertexAttribP1ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP1uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP2ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP2uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP3ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP3uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: [*c]const Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP4ui: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: Uint,
+) callconv(.C) void = undefined;
+pub var vertexAttribP4uiv: *const fn (
+    index: Uint,
+    type: Enum,
+    normalized: Boolean,
+    value: [*c]const Uint,
+) callconv(.C) void = undefined;
+
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 3.3 (Core Profile)
@@ -1918,54 +1967,6 @@ pub var queryCounter: *const fn (id: Uint, target: Enum) callconv(.C) void = und
 pub var getQueryObjecti64v: *const fn (id: Uint, pname: Enum, params: [*c]Int64) callconv(.C) void = undefined;
 pub var getQueryObjectui64v: *const fn (id: Uint, pname: Enum, params: [*c]Uint64) callconv(.C) void = undefined;
 pub var vertexAttribDivisor: *const fn (index: Uint, divisor: Uint) callconv(.C) void = undefined;
-pub var vertexAttribP1ui: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP1uiv: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: [*c]const Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP2ui: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP2uiv: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: [*c]const Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP3ui: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP3uiv: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: [*c]const Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP4ui: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: Uint,
-) callconv(.C) void = undefined;
-pub var vertexAttribP4uiv: *const fn (
-    index: Uint,
-    type: Enum,
-    normalized: Boolean,
-    value: [*c]const Uint,
-) callconv(.C) void = undefined;
 
 //--------------------------------------------------------------------------------------------------
 //
