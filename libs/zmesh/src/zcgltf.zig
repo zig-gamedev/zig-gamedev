@@ -943,8 +943,8 @@ test "enum" {
             };
             inline for (comptime std.meta.fieldNames(ZigType)) |field_name| {
                 const c_field_name = comptime buildName: {
-                    comptime var buf: [256]u8 = undefined;
-                    comptime var fbs = std.io.fixedBufferStream(&buf);
+                    var buf: [256]u8 = undefined;
+                    var fbs = std.io.fixedBufferStream(&buf);
                     try fbs.writer().writeAll(c_name);
                     try fbs.writer().writeByte('_');
                     try fbs.writer().writeAll(field_name);
