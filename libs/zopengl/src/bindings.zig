@@ -2202,7 +2202,7 @@ pub var activeShaderProgram: *const fn (
 pub var createShaderProgramv: *const fn (
     type: Enum,
     count: Sizei,
-    strings: [*][*:0]const u8,
+    strings: [*c]const [*c]const Char,
 ) callconv(.C) Uint = undefined;
 pub var bindProgramPipeline: *const fn (pipeline: Uint) callconv(.C) void = undefined;
 pub var deleteProgramPipelines: *const fn (
