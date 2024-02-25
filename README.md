@@ -93,7 +93,7 @@ Refer to each lib's README.md for further usage intructions.
 |-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
 | **[zphysics](libs/zphysics)** | 0.0.6          | Zig build sys & bindings ontop of a [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zphysics/libs/JoltC) for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
 | **[zflecs](libs/zflecs)**     | 0.0.1          | Zig bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
-| **[zopengl](libs/zopengl)**   | 0.2.0          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
+| **[zopengl](libs/zopengl)**   | 0.3.0          | OpenGL loader (supports 4.0 Core Profile and ES 2.0 Profile)                                                               |
 | **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
 | **[zgpu](libs/zgpu)**         | 0.9.1          | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
 | **[zgui](libs/zgui)**         | 1.89.6         | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot)) |
