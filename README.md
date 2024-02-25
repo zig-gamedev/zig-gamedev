@@ -162,6 +162,8 @@ Some of the sample applications are listed below. More can be found in [samples]
 * [Tides of Revival](https://github.com/Srekel/tides-of-revival) - First-person, open-world, fantasy RPG being developed in the open
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
 * [krateroid](https://github.com/kussakaa/krateroid) - 3D strategy game
+* [blokens](https://github.com/btipling/blockens) - Voxel game
+* [Delve Framework](https://github.com/Interrupt/delve-framework) - Simple game framework for making games with Lua
 * [jok](https://github.com/jack-ji/jok) - A minimal 2D/3D game framework for Zig
 * [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
 * [Pixi](https://github.com/foxnne/pixi) - Pixel art editor made with Zig
