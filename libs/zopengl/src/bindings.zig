@@ -2663,6 +2663,8 @@ pub const DEBUG_SEVERITY_HIGH = 0x9146;
 pub const DEBUG_SEVERITY_MEDIUM = 0x9147;
 pub const DEBUG_SEVERITY_LOW = 0x9148;
 pub const DEBUG_SEVERITY_NOTIFICATION = 0x826B;
+pub const SHADER_STORAGE_BUFFER = 0x90D2;
+pub const SHADER_STORAGE_BLOCK = 0x92e6;
 
 pub var debugMessageControl: *const fn (
     source: Enum,
@@ -2728,6 +2730,16 @@ pub var getObjectPtrLabel: *const fn (
     bufSize: Sizei,
     length: *Sizei,
     label: [*c]Char,
+) callconv(.C) void = undefined;
+pub var getProgramResourceIndex: *const fn (
+    program: Uint,
+    programInterface: Enum,
+    name: [*c]const Char,
+) callconv(.C) Uint = undefined;
+pub var shaderStorageBlockBinding: *const fn (
+    program: Uint,
+    storageBlockIndex: Uint,
+    storageBlockBinding: Uint,
 ) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //

@@ -591,6 +591,8 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glGetObjectLabel", .{&bindings.getObjectLabel});
         try load("glObjectPtrLabel", .{&bindings.objectPtrLabel});
         try load("glGetObjectPtrLabel", .{&bindings.getObjectPtrLabel});
+        try load("glGetProgramResourceIndex", .{&bindings.getProgramResourceIndex});
+        try load("glShaderStorageBlockBinding", .{&bindings.shaderStorageBlockBinding});
         // TODO
     }
 
