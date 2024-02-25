@@ -2629,6 +2629,17 @@ comptime {
 //
 //--------------------------------------------------------------------------------------------------
 
+// ecs_new_w_pair
+pub fn new_w_pair(world: *world_t, first: entity_t, second: entity_t) entity_t {
+    const pair_id = make_pair(first, second);
+    return new_w_id(world, pair_id);
+}
+
+// ecs_delete_children
+pub fn delete_children(world: *world_t, parent: entity_t) void {
+    delete_with(world, make_pair(ChildOf, parent));
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // FLECS_MODULE
