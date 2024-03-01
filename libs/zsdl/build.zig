@@ -256,8 +256,16 @@ fn testStep(
     });
     const pkg = package(b, target, optimize, .{ .options = options });
     pkg.link(tests);
-    tests.addRPath(.{ .path = b.getInstallPath(.bin, "") });
-    return &b.addRunArtifact(tests).step;
+    var test_run = b.addRunArtifact(tests);
+    switch (target.result.os.tag) {
+        .windows => test_run.setCwd(.{
+            .path = b.getInstallPath(.bin, ""),
+        }),
+        else => tests.addRPath(.{
+            .path = b.getInstallPath(.bin, ""),
+        }),
+    }
+    return &test_run.step;
 }
 
 inline fn thisDir() []const u8 {

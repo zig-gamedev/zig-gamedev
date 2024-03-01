@@ -125,6 +125,10 @@ pub fn getVersion() Version {
 }
 extern fn SDL_GetVersion(version: *Version) void;
 
+test "compiled version should be same as linked version" {
+    try std.testing.expectEqual(VERSION, getVersion());
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // Display and Window management
