@@ -100,8 +100,6 @@ pub const GraphicsContext = struct {
         const native_instance = dniCreate();
         errdefer dniDestroy(native_instance);
 
-        dniDiscoverDefaultAdapters(native_instance);
-
         const instance = dniGetWgpuInstance(native_instance).?;
 
         const adapter = adapter: {
@@ -1048,7 +1046,6 @@ const DawnProcsTable = ?*opaque {};
 extern fn dniCreate() DawnNativeInstance;
 extern fn dniDestroy(dni: DawnNativeInstance) void;
 extern fn dniGetWgpuInstance(dni: DawnNativeInstance) ?wgpu.Instance;
-extern fn dniDiscoverDefaultAdapters(dni: DawnNativeInstance) void;
 extern fn dnGetProcs() DawnProcsTable;
 
 // Defined in Dawn codebase
