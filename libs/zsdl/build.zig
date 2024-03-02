@@ -212,6 +212,12 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run zsdl tests");
     test_step.dependOn(runTests(b, optimize, target));
 
+    const version_check_step = b.step("version-check", "checks runtime library version is the same as the compiled version");
+    version_check_step.dependOn(testStep("src/sdl2_version_check.zig", b, "zsdl-sdl2-version-check", target, optimize, .{
+        .api_version = .sdl2,
+        .enable_ttf = true,
+    }));
+
     _ = package(b, target, optimize, .{
         .options = .{
             .api_version = b.option(ApiVersion, "api_version", "Select an SDL API version") orelse .sdl2,
@@ -227,13 +233,13 @@ pub fn runTests(
     const step = b.allocator.create(std.Build.Step) catch @panic("OOM");
     step.* = std.Build.Step.init(.{ .id = .custom, .name = "zsdl-tests", .owner = b });
 
-    step.dependOn(testStep(b, "zsdl-tests-sdl2", target, optimize, .{
+    step.dependOn(testStep("src/zsdl.zig", b, "zsdl-tests-sdl2", target, optimize, .{
         .api_version = .sdl2,
         .enable_ttf = true,
     }));
 
     // TODO: link SDL3 libs on all platforms
-    // step.dependOn(testStep(b, "zsdl-tests-sdl3", target, optimize, .{
+    // step.dependOn(testStep("src/zsdl.zig", b, "zsdl-tests-sdl3", target, optimize, .{
     //     .api_version = .sdl3,
     //     .enable_ttf = true,
     // }));
@@ -242,6 +248,7 @@ pub fn runTests(
 }
 
 fn testStep(
+    comptime test_entry: []const u8,
     b: *std.Build,
     name: []const u8,
     target: std.Build.ResolvedTarget,
@@ -250,7 +257,7 @@ fn testStep(
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = name,
-        .root_source_file = .{ .path = thisDir() ++ "/src/zsdl.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/" ++ test_entry },
         .target = target,
         .optimize = optimize,
     });
