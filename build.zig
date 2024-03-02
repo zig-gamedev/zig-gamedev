@@ -269,9 +269,9 @@ fn tests(
     test_step.dependOn(zphysics.runTests(b, optimize, target));
     test_step.dependOn(zpool.runTests(b, optimize, target));
 
-    // TODO(hazeycode): Fix tests linking SDL on Windows and macOS
+    // TODO(hazeycode): Fix tests linking SDL on macOS
     switch (target.result.os.tag) {
-        .windows, .macos => {},
+        .macos => {},
         else => test_step.dependOn(zsdl.runTests(b, optimize, target)),
     }
 
