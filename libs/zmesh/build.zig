@@ -5,6 +5,13 @@ pub const Options = struct {
     shared: bool = false,
 };
 
+pub fn link(d: *std.Build.Dependency, exe: *std.Build.Step.Compile) void {
+    exe.linkLibrary(d.artifact("zmesh"));
+    exe.root_module.addImport("zmesh", d.module("zmesh"));
+    exe.root_module.addImport("zmesh_options", d.module("zmesh_options"));
+}
+
+/// deprecated: use b.dependency and call link on the result
 pub const Package = struct {
     options: Options,
     zmesh: *std.Build.Module,
@@ -31,9 +38,12 @@ pub fn package(
     step.addOption(bool, "shared", args.options.shared);
 
     const zmesh_options = step.createModule();
+    _ = b.addModule("zmesh_options", .{
+        .root_source_file = step.getOutput(),
+    });
 
     const zmesh = b.addModule("zmesh", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .root_source_file = .{ .path = "src/main.zig" },
         .imports = &.{
             .{ .name = "zmesh_options", .module = zmesh_options },
         },
@@ -59,6 +69,8 @@ pub fn package(
         .optimize = optimize,
     });
 
+    b.getInstallStep().dependOn(&b.addInstallArtifact(zmesh_c_cpp, .{}).step);
+
     zmesh_c_cpp.linkLibC();
     if (target.result.abi != .msvc)
         zmesh_c_cpp.linkLibCpp();
@@ -68,30 +80,30 @@ pub fn package(
     else
         "-DPAR_SHAPES_T=uint16_t";
 
-    zmesh_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/par_shapes" });
+    zmesh_c_cpp.addIncludePath(.{ .path = "libs/par_shapes" });
     zmesh_c_cpp.addCSourceFile(.{
-        .file = .{ .path = thisDir() ++ "/libs/par_shapes/par_shapes.c" },
+        .file = .{ .path = "libs/par_shapes/par_shapes.c" },
         .flags = &.{ "-std=c99", "-fno-sanitize=undefined", par_shapes_t },
     });
 
     zmesh_c_cpp.addCSourceFiles(.{
         .files = &.{
-            thisDir() ++ "/libs/meshoptimizer/clusterizer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/indexgenerator.cpp",
-            thisDir() ++ "/libs/meshoptimizer/vcacheoptimizer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/vcacheanalyzer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/vfetchoptimizer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/vfetchanalyzer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/overdrawoptimizer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/overdrawanalyzer.cpp",
-            thisDir() ++ "/libs/meshoptimizer/simplifier.cpp",
-            thisDir() ++ "/libs/meshoptimizer/allocator.cpp",
+            "libs/meshoptimizer/clusterizer.cpp",
+            "libs/meshoptimizer/indexgenerator.cpp",
+            "libs/meshoptimizer/vcacheoptimizer.cpp",
+            "libs/meshoptimizer/vcacheanalyzer.cpp",
+            "libs/meshoptimizer/vfetchoptimizer.cpp",
+            "libs/meshoptimizer/vfetchanalyzer.cpp",
+            "libs/meshoptimizer/overdrawoptimizer.cpp",
+            "libs/meshoptimizer/overdrawanalyzer.cpp",
+            "libs/meshoptimizer/simplifier.cpp",
+            "libs/meshoptimizer/allocator.cpp",
         },
         .flags = &.{""},
     });
-    zmesh_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cgltf" });
+    zmesh_c_cpp.addIncludePath(.{ .path = "libs/cgltf" });
     zmesh_c_cpp.addCSourceFile(.{
-        .file = .{ .path = thisDir() ++ "/libs/cgltf/cgltf.c" },
+        .file = .{ .path = "libs/cgltf/cgltf.c" },
         .flags = &.{"-std=c99"},
     });
 
@@ -107,37 +119,25 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const test_step = b.step("test", "Run zmesh tests");
-    test_step.dependOn(runTests(b, optimize, target));
-
-    _ = package(b, target, optimize, .{
+    const pkg  = package(b, target, optimize, .{
         .options = .{
             .shape_use_32bit_indices = b.option(bool, "shape_use_32bit_indices", "Enable par shapes 32-bit indices") orelse true,
             .shared = b.option(bool, "shared", "Build as shared library") orelse false,
         },
     });
-}
 
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zmesh-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
     });
 
-    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/cgltf" });
+    tests.addIncludePath(.{ .path = "libs/cgltf" });
+    pkg.link(tests);
 
-    const zmesh_pkg = package(b, target, optimize, .{});
-    zmesh_pkg.link(tests);
+    const test_step = b.step("test", "Run zmesh tests");
+    test_step.dependOn(&b.addRunArtifact(tests).step);
 
-    return &b.addRunArtifact(tests).step;
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
+    b.getInstallStep().dependOn(&b.addInstallArtifact(tests, .{}).step);
 }

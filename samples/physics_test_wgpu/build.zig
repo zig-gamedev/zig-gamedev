@@ -22,7 +22,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     zgui_pkg.link(exe);
     zgpu_pkg.link(exe);
     zglfw_pkg.link(exe);
-    zmesh_pkg.link(exe);
+    @import("zmesh").link(zmesh_pkg, exe);
     zphysics_pkg.link(exe);
 
     const exe_options = b.addOptions();

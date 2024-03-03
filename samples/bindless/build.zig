@@ -19,7 +19,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
 
     zwin32_pkg.link(exe, .{ .d3d12 = true });
-    zmesh_pkg.link(exe);
+    @import("zmesh").link(zmesh_pkg, exe);
     common_pkg.link(exe);
     zstbi_pkg.link(exe);
     zd3d12_pkg.link(exe);

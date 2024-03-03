@@ -109,7 +109,7 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     zpool_pkg = zpool.package(b, target, optimize, .{});
     zglfw_pkg = zglfw.package(b, target, optimize, .{});
     zsdl_pkg = zsdl.package(b, target, optimize, .{});
-    zmesh_pkg = zmesh.package(b, target, optimize, .{});
+    zmesh_pkg = b.dependency("zmesh", .{ .target = target, .optimize = optimize});
     znoise_pkg = znoise.package(b, target, optimize, .{});
     zstbi_pkg = zstbi.package(b, target, optimize, .{});
     zbullet_pkg = zbullet.package(b, target, optimize, .{});
@@ -263,7 +263,7 @@ fn tests(
     test_step.dependOn(zgui.runTests(b, optimize, target));
     test_step.dependOn(zjobs.runTests(b, optimize, target));
     test_step.dependOn(zmath.runTests(b, optimize, target));
-    test_step.dependOn(zmesh.runTests(b, optimize, target));
+    test_step.dependOn(&b.addRunArtifact(zmesh_pkg.artifact("zmesh-tests")).step);
     test_step.dependOn(znoise.runTests(b, optimize, target));
     test_step.dependOn(zopengl.runTests(b, optimize, target));
     test_step.dependOn(zphysics.runTests(b, optimize, target));
@@ -302,7 +302,7 @@ pub var znoise_pkg: znoise.Package = undefined;
 pub var zopengl_pkg: zopengl.Package = undefined;
 pub var zsdl_pkg: zsdl.Package = undefined;
 pub var zpool_pkg: zpool.Package = undefined;
-pub var zmesh_pkg: zmesh.Package = undefined;
+pub var zmesh_pkg: *std.Build.Dependency = undefined;
 pub var zglfw_pkg: zglfw.Package = undefined;
 pub var zstbi_pkg: zstbi.Package = undefined;
 pub var zbullet_pkg: zbullet.Package = undefined;
