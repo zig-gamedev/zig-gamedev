@@ -1,6 +1,6 @@
-# zaudio v0.9.3 - Cross-platform audio
+# zaudio v0.9.4 - Cross-platform audio
 
-Zig bindings for [miniaudio](https://github.com/mackron/miniaudio) library. Tested on Windows, Linux and macOS but should also work on mobile/web platforms.
+Zig build package and bindings for [miniaudio](https://github.com/mackron/miniaudio) v0.11.21
 
 As an example program please see [audio experiments (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/audio_experiments_wgpu).
 

@@ -97,7 +97,7 @@ Refer to each lib's README.md for further usage intructions.
 | **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 (wip)                                                                                                    |
 | **[zgpu](libs/zgpu)**         | 0.9.1          | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
 | **[zgui](libs/zgui)**         | 1.89.6         | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot)) |
-| **[zaudio](libs/zaudio)**     | 0.9.3          | Fully-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)                             |
+| **[zaudio](libs/zaudio)**     | 0.9.4          | Zig build package and bindings for [miniaudio](https://github.com/mackron/miniaudio)                             |
 | **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
 | **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
 | **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
