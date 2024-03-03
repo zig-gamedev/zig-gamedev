@@ -58,7 +58,7 @@ pub fn package(
     step.addOption(bool, "shared", args.options.shared);
 
     const zglfw = b.addModule("zglfw", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
+        .root_source_file = .{ .cwd_relative = thisDir() ++ "/src/zglfw.zig" },
     });
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
@@ -79,7 +79,7 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zglfw_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
+    zglfw_c_cpp.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/glfw/include" });
     zglfw_c_cpp.linkLibC();
 
     const system_sdk = b.dependency("system_sdk", .{});
@@ -91,28 +91,29 @@ pub fn package(
             zglfw_c_cpp.linkSystemLibrary("user32");
             zglfw_c_cpp.linkSystemLibrary("shell32");
             zglfw_c_cpp.addCSourceFiles(.{
+                .root = .{ .cwd_relative = src_dir },
                 .files = &.{
-                    src_dir ++ "platform.c",
-                    src_dir ++ "monitor.c",
-                    src_dir ++ "init.c",
-                    src_dir ++ "vulkan.c",
-                    src_dir ++ "input.c",
-                    src_dir ++ "context.c",
-                    src_dir ++ "window.c",
-                    src_dir ++ "osmesa_context.c",
-                    src_dir ++ "egl_context.c",
-                    src_dir ++ "null_init.c",
-                    src_dir ++ "null_monitor.c",
-                    src_dir ++ "null_window.c",
-                    src_dir ++ "null_joystick.c",
-                    src_dir ++ "wgl_context.c",
-                    src_dir ++ "win32_thread.c",
-                    src_dir ++ "win32_init.c",
-                    src_dir ++ "win32_monitor.c",
-                    src_dir ++ "win32_time.c",
-                    src_dir ++ "win32_joystick.c",
-                    src_dir ++ "win32_window.c",
-                    src_dir ++ "win32_module.c",
+                    "platform.c",
+                    "monitor.c",
+                    "init.c",
+                    "vulkan.c",
+                    "input.c",
+                    "context.c",
+                    "window.c",
+                    "osmesa_context.c",
+                    "egl_context.c",
+                    "null_init.c",
+                    "null_monitor.c",
+                    "null_window.c",
+                    "null_joystick.c",
+                    "wgl_context.c",
+                    "win32_thread.c",
+                    "win32_init.c",
+                    "win32_monitor.c",
+                    "win32_time.c",
+                    "win32_joystick.c",
+                    "win32_window.c",
+                    "win32_module.c",
                 },
                 .flags = &.{"-D_GLFW_WIN32"},
             });
@@ -134,29 +135,30 @@ pub fn package(
             zglfw_c_cpp.linkFramework("CoreGraphics");
             zglfw_c_cpp.linkFramework("Foundation");
             zglfw_c_cpp.addCSourceFiles(.{
+                .root = .{ .cwd_relative = src_dir },
                 .files = &.{
-                    src_dir ++ "platform.c",
-                    src_dir ++ "monitor.c",
-                    src_dir ++ "init.c",
-                    src_dir ++ "vulkan.c",
-                    src_dir ++ "input.c",
-                    src_dir ++ "context.c",
-                    src_dir ++ "window.c",
-                    src_dir ++ "osmesa_context.c",
-                    src_dir ++ "egl_context.c",
-                    src_dir ++ "null_init.c",
-                    src_dir ++ "null_monitor.c",
-                    src_dir ++ "null_window.c",
-                    src_dir ++ "null_joystick.c",
-                    src_dir ++ "posix_thread.c",
-                    src_dir ++ "posix_module.c",
-                    src_dir ++ "posix_poll.c",
-                    src_dir ++ "nsgl_context.m",
-                    src_dir ++ "cocoa_time.c",
-                    src_dir ++ "cocoa_joystick.m",
-                    src_dir ++ "cocoa_init.m",
-                    src_dir ++ "cocoa_window.m",
-                    src_dir ++ "cocoa_monitor.m",
+                    "platform.c",
+                    "monitor.c",
+                    "init.c",
+                    "vulkan.c",
+                    "input.c",
+                    "context.c",
+                    "window.c",
+                    "osmesa_context.c",
+                    "egl_context.c",
+                    "null_init.c",
+                    "null_monitor.c",
+                    "null_window.c",
+                    "null_joystick.c",
+                    "posix_thread.c",
+                    "posix_module.c",
+                    "posix_poll.c",
+                    "nsgl_context.m",
+                    "cocoa_time.c",
+                    "cocoa_joystick.m",
+                    "cocoa_init.m",
+                    "cocoa_window.m",
+                    "cocoa_monitor.m",
                 },
                 .flags = &.{"-D_GLFW_COCOA"},
             });
@@ -176,31 +178,32 @@ pub fn package(
             }
             zglfw_c_cpp.linkSystemLibrary("X11");
             zglfw_c_cpp.addCSourceFiles(.{
+                .root = .{ .cwd_relative = src_dir },
                 .files = &.{
-                    src_dir ++ "platform.c",
-                    src_dir ++ "monitor.c",
-                    src_dir ++ "init.c",
-                    src_dir ++ "vulkan.c",
-                    src_dir ++ "input.c",
-                    src_dir ++ "context.c",
-                    src_dir ++ "window.c",
-                    src_dir ++ "osmesa_context.c",
-                    src_dir ++ "egl_context.c",
-                    src_dir ++ "null_init.c",
-                    src_dir ++ "null_monitor.c",
-                    src_dir ++ "null_window.c",
-                    src_dir ++ "null_joystick.c",
-                    src_dir ++ "posix_time.c",
-                    src_dir ++ "posix_thread.c",
-                    src_dir ++ "posix_module.c",
-                    src_dir ++ "posix_poll.c",
-                    src_dir ++ "egl_context.c",
-                    src_dir ++ "glx_context.c",
-                    src_dir ++ "linux_joystick.c",
-                    src_dir ++ "xkb_unicode.c",
-                    src_dir ++ "x11_init.c",
-                    src_dir ++ "x11_window.c",
-                    src_dir ++ "x11_monitor.c",
+                    "platform.c",
+                    "monitor.c",
+                    "init.c",
+                    "vulkan.c",
+                    "input.c",
+                    "context.c",
+                    "window.c",
+                    "osmesa_context.c",
+                    "egl_context.c",
+                    "null_init.c",
+                    "null_monitor.c",
+                    "null_window.c",
+                    "null_joystick.c",
+                    "posix_time.c",
+                    "posix_thread.c",
+                    "posix_module.c",
+                    "posix_poll.c",
+                    "egl_context.c",
+                    "glx_context.c",
+                    "linux_joystick.c",
+                    "xkb_unicode.c",
+                    "x11_init.c",
+                    "x11_window.c",
+                    "x11_monitor.c",
                 },
                 .flags = &.{"-D_GLFW_X11"},
             });
@@ -232,7 +235,7 @@ pub fn runTests(
 ) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zglfw-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
+        .root_source_file = .{ .cwd_relative = thisDir() ++ "/src/zglfw.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -240,7 +243,7 @@ pub fn runTests(
     const zglfw_pkg = package(b, target, optimize, .{});
     zglfw_pkg.link(tests);
 
-    tests.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
+    tests.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/glfw/include" });
     switch (target.result.os.tag) {
         .linux => {
             tests.addSystemIncludePath(.{

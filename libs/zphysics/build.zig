@@ -14,7 +14,7 @@ pub const Package = struct {
     zphysics_c_cpp: *std.Build.Step.Compile,
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        exe.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
+        exe.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/JoltC" });
         exe.linkLibrary(pkg.zphysics_c_cpp);
         exe.root_module.addImport("zphysics", pkg.zphysics);
         exe.root_module.addImport("zphysics_options", pkg.zphysics_options);
@@ -38,14 +38,14 @@ pub fn package(
     const zphysics_options = step.createModule();
 
     const zphysics = b.addModule("zphysics", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
+        .root_source_file = .{ .cwd_relative = thisDir() ++ "/src/zphysics.zig" },
         .imports = &.{
             .{ .name = "zphysics_options", .module = zphysics_options },
         },
     });
 
-    zphysics.addIncludePath(.{ .path = thisDir() ++ "/libs" });
-    zphysics.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
+    zphysics.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs" });
+    zphysics.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/JoltC" });
 
     const zphysics_c_cpp = b.addStaticLibrary(.{
         .name = "zphysics",
@@ -53,8 +53,8 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zphysics_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs" });
-    zphysics_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/JoltC" });
+    zphysics_c_cpp.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs" });
+    zphysics_c_cpp.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/JoltC" });
     zphysics_c_cpp.linkLibC();
     if (target.result.abi != .msvc)
         zphysics_c_cpp.linkLibCpp();
@@ -70,11 +70,12 @@ pub fn package(
         "-fno-sanitize=undefined",
     };
 
-    const src_dir = thisDir() ++ "/libs/Jolt";
+    const src_dir = "libs/Jolt";
     zphysics_c_cpp.addCSourceFiles(.{
+        .root = .{ .cwd_relative = thisDir() },
         .files = &.{
-            thisDir() ++ "/libs/JoltC/JoltPhysicsC.cpp",
-            thisDir() ++ "/libs/JoltC/JoltPhysicsC_Extensions.cpp",
+            "libs/JoltC/JoltPhysicsC.cpp",
+            "libs/JoltC/JoltPhysicsC_Extensions.cpp",
             src_dir ++ "/AABBTree/AABBTreeBuilder.cpp",
             src_dir ++ "/Core/Color.cpp",
             src_dir ++ "/Core/Factory.cpp",
@@ -266,7 +267,7 @@ fn testStep(
 ) *std.Build.Step.Run {
     const test_exe = b.addTest(.{
         .name = name,
-        .root_source_file = .{ .path = thisDir() ++ "/src/zphysics.zig" },
+        .root_source_file = .{ .cwd_relative = thisDir() ++ "/src/zphysics.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -277,7 +278,7 @@ fn testStep(
     }
 
     test_exe.addCSourceFile(.{
-        .file = .{ .path = thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c" },
+        .file = .{ .cwd_relative = thisDir() ++ "/libs/JoltC/JoltPhysicsC_Tests.c" },
         .flags = &.{
             "-std=c11",
             if (target.result.abi != .msvc) "-DJPH_COMPILER_MINGW" else "",

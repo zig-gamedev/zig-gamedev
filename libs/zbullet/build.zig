@@ -17,7 +17,7 @@ pub fn package(
     _: struct {},
 ) Package {
     const zbullet = b.addModule("zbullet", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+        .root_source_file = .{ .cwd_relative = thisDir() ++ "/src/zbullet.zig" },
     });
 
     const zbullet_c_cpp = b.addStaticLibrary(.{
@@ -26,8 +26,8 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cbullet" });
-    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/bullet" });
+    zbullet_c_cpp.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/cbullet" });
+    zbullet_c_cpp.addIncludePath(.{ .cwd_relative = thisDir() ++ "/libs/bullet" });
     zbullet_c_cpp.linkLibC();
     zbullet_c_cpp.linkLibCpp();
 
@@ -39,11 +39,12 @@ pub fn package(
         "-fno-sanitize=undefined",
     };
     zbullet_c_cpp.addCSourceFiles(.{
+        .root = .{ .cwd_relative = thisDir() },
         .files = &.{
-            thisDir() ++ "/libs/cbullet/cbullet.cpp",
-            thisDir() ++ "/libs/bullet/btLinearMathAll.cpp",
-            thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp",
-            thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp",
+            "libs/cbullet/cbullet.cpp",
+            "libs/bullet/btLinearMathAll.cpp",
+            "libs/bullet/btBulletCollisionAll.cpp",
+            "libs/bullet/btBulletDynamicsAll.cpp",
         },
         .flags = flags,
     });
@@ -73,7 +74,7 @@ pub fn runTests(
 
     var tests = b.addTest(.{
         .name = "zbullet-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+        .root_source_file = .{ .cwd_relative = thisDir() ++ "/src/zbullet.zig" },
         .target = target,
         .optimize = optimize,
     });
