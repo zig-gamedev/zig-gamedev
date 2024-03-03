@@ -8,7 +8,7 @@ pub fn initWithGlSlVersion(
         unreachable;
     }
 
-    ImGui_ImplOpenGL3_Init(@ptrCast(glsl_version));
+    ImGui_ImplOpenGL3_Init(if (glsl_version) |version| @ptrCast(version) else null);
 }
 
 pub fn init(
