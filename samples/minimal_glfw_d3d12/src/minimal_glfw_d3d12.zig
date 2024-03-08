@@ -53,19 +53,17 @@ pub fn main() !void {
 
     var framebuffer_size = glfw_window.getFramebufferSize();
 
-    //
-    // Main Loop
-    //
-    main_loop: while (!glfw_window.shouldClose() and glfw_window.getKey(.escape) != .press) {
+    while (!glfw_window.shouldClose() and glfw_window.getKey(.escape) != .press) {
         glfw.pollEvents();
-        {
-            if (glfw_window.getAttribute(.iconified)) {
-                // Window is minimized
-                const ns_in_ms: u64 = 1_000_000;
-                std.time.sleep(10 * ns_in_ms);
-                continue :main_loop;
-            }
 
+        if (glfw_window.getAttribute(.iconified)) {
+            // Window is minimized
+            const ns_in_ms: u64 = 1_000_000;
+            std.time.sleep(10 * ns_in_ms);
+            continue;
+        }
+
+        {
             const next_framebuffer_size = glfw_window.getFramebufferSize();
             if (!std.meta.eql(framebuffer_size, next_framebuffer_size)) {
                 gctx.resize(@intCast(next_framebuffer_size[0]), @intCast(next_framebuffer_size[1]));
@@ -73,33 +71,34 @@ pub fn main() !void {
             framebuffer_size = next_framebuffer_size;
         }
 
-        gctx.beginFrame();
+        {
+            gctx.beginFrame();
+            defer gctx.endFrame();
 
-        const back_buffer = gctx.getBackBuffer();
-        gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
-        gctx.flushResourceBarriers();
+            const back_buffer = gctx.getBackBuffer();
+            gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
+            gctx.flushResourceBarriers();
 
-        gctx.cmdlist.OMSetRenderTargets(
-            1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-            w32.TRUE,
-            null,
-        );
-        gctx.cmdlist.ClearRenderTargetView(
-            back_buffer.descriptor_handle,
-            &.{ 0.2, frac, 0.8, 1.0 },
-            0,
-            null,
-        );
+            gctx.cmdlist.OMSetRenderTargets(
+                1,
+                &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+                w32.TRUE,
+                null,
+            );
+            gctx.cmdlist.ClearRenderTargetView(
+                back_buffer.descriptor_handle,
+                &.{ 0.2, frac, 0.8, 1.0 },
+                0,
+                null,
+            );
 
-        gctx.setCurrentPipeline(pipeline);
-        gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-        gctx.cmdlist.DrawInstanced(3, 1, 0, 0);
+            gctx.setCurrentPipeline(pipeline);
+            gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+            gctx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
-        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
-        gctx.flushResourceBarriers();
-
-        gctx.endFrame();
+            gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
+            gctx.flushResourceBarriers();
+        }
 
         frac += frac_delta;
         if (frac > 1.0 or frac < 0.0) {
