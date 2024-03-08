@@ -4,19 +4,14 @@ const testing = std.testing;
 
 const options = @import("zopengl_options");
 
-pub const bindings = @import("bindings.zig");
-pub const wrapper = @import("wrapper.zig").Wrap(bindings);
-
 test {
     @setEvalBranchQuota(100_000);
     _ = testing.refAllDeclsRecursive(@This());
 }
 
-//--------------------------------------------------------------------------------------------------
-//
-// Functions for loading OpenGL function pointers
-//
-//--------------------------------------------------------------------------------------------------
+pub const bindings = @import("bindings.zig");
+pub const wrapper = @import("wrapper.zig").Wrap(bindings);
+
 pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
 
 pub const Extension = enum {
@@ -30,6 +25,11 @@ pub const EsExtension = enum {
     KHR_debug,
 };
 
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for loading OpenGL function pointers
+//
+//--------------------------------------------------------------------------------------------------
 pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
@@ -397,6 +397,14 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glTexImage3DMultisample", .{&bindings.texImage3DMultisample});
         try load("glGetMultisamplefv", .{&bindings.getMultisamplefv});
         try load("glSampleMaski", .{&bindings.sampleMaski});
+    }
+
+    // OpenGL 3.3
+    if (ver >= 33) {
+        try load("glQueryCounter", .{&bindings.queryCounter});
+        try load("glGetQueryObjecti64v", .{&bindings.getQueryObjecti64v});
+        try load("glGetQueryObjectui64v", .{&bindings.getQueryObjectui64v});
+        try load("glVertexAttribDivisor", .{&bindings.vertexAttribDivisor});
         try load("glVertexAttribP1ui", .{&bindings.vertexAttribP1ui});
         try load("glVertexAttribP1uiv", .{&bindings.vertexAttribP1uiv});
         try load("glVertexAttribP2ui", .{&bindings.vertexAttribP2ui});
@@ -405,30 +413,36 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glVertexAttribP3uiv", .{&bindings.vertexAttribP3uiv});
         try load("glVertexAttribP4ui", .{&bindings.vertexAttribP4ui});
         try load("glVertexAttribP4uiv", .{&bindings.vertexAttribP4uiv});
-    }
-
-    // OpenGL 3.3
-    if (ver >= 33) {
-        try load("glBindFragDataLocationIndexed", .{&bindings.bindFragDataLocationIndexed});
-        try load("glGetFragDataIndex", .{&bindings.getFragDataIndex});
-        try load("glGenSamplers", .{&bindings.genSamplers});
-        try load("glDeleteSamplers", .{&bindings.deleteSamplers});
-        try load("glIsSampler", .{&bindings.isSampler});
-        try load("glBindSampler", .{&bindings.bindSampler});
-        try load("glSamplerParameteri", .{&bindings.samplerParameteri});
-        try load("glSamplerParameteriv", .{&bindings.samplerParameteriv});
-        try load("glSamplerParameterf", .{&bindings.samplerParameterf});
-        try load("glSamplerParameterfv", .{&bindings.samplerParameterfv});
-        try load("glSamplerParameterIiv", .{&bindings.samplerParameterIiv});
-        try load("glSamplerParameterIuiv", .{&bindings.samplerParameterIuiv});
-        try load("glGetSamplerParameteriv", .{&bindings.getSamplerParameteriv});
-        try load("glGetSamplerParameterIiv", .{&bindings.getSamplerParameterIiv});
-        try load("glGetSamplerParameterfv", .{&bindings.getSamplerParameterfv});
-        try load("glGetSamplerParameterIuiv", .{&bindings.getSamplerParameterIuiv});
-        try load("glQueryCounter", .{&bindings.queryCounter});
-        try load("glGetQueryObjecti64v", .{&bindings.getQueryObjecti64v});
-        try load("glGetQueryObjectui64v", .{&bindings.getQueryObjectui64v});
-        try load("glVertexAttribDivisor", .{&bindings.vertexAttribDivisor});
+        try load("glVertexP2ui", .{&bindings.vertexP2ui});
+        try load("glVertexP2uiv", .{&bindings.vertexP2uiv});
+        try load("glVertexP3ui", .{&bindings.vertexP3ui});
+        try load("glVertexP3uiv", .{&bindings.vertexP3uiv});
+        try load("glVertexP4ui", .{&bindings.vertexP4ui});
+        try load("glVertexP4uiv", .{&bindings.vertexP4uiv});
+        try load("glTexCoordP1ui", .{&bindings.texCoordP1ui});
+        try load("glTexCoordP1uiv", .{&bindings.texCoordP1uiv});
+        try load("glTexCoordP2ui", .{&bindings.texCoordP2ui});
+        try load("glTexCoordP2uiv", .{&bindings.texCoordP2uiv});
+        try load("glTexCoordP3ui", .{&bindings.texCoordP3ui});
+        try load("glTexCoordP3uiv", .{&bindings.texCoordP3uiv});
+        try load("glTexCoordP4ui", .{&bindings.texCoordP4ui});
+        try load("glTexCoordP4uiv", .{&bindings.texCoordP4uiv});
+        try load("glMultiTexCoordP1ui", .{&bindings.multiTexCoordP1ui});
+        try load("glMultiTexCoordP1uiv", .{&bindings.multiTexCoordP1uiv});
+        try load("glMultiTexCoordP2ui", .{&bindings.multiTexCoordP2ui});
+        try load("glMultiTexCoordP2uiv", .{&bindings.multiTexCoordP2uiv});
+        try load("glMultiTexCoordP3ui", .{&bindings.multiTexCoordP3ui});
+        try load("glMultiTexCoordP3uiv", .{&bindings.multiTexCoordP3uiv});
+        try load("glMultiTexCoordP4ui", .{&bindings.multiTexCoordP4ui});
+        try load("glMultiTexCoordP4uiv", .{&bindings.multiTexCoordP4uiv});
+        try load("glNormalP3ui", .{&bindings.normalP3ui});
+        try load("glNormalP3uiv", .{&bindings.normalP3uiv});
+        try load("glColorP3ui", .{&bindings.colorP3ui});
+        try load("glColorP3uiv", .{&bindings.colorP3uiv});
+        try load("glColorP4ui", .{&bindings.colorP4ui});
+        try load("glColorP4uiv", .{&bindings.colorP4uiv});
+        try load("glSecondaryColorP3ui", .{&bindings.secondaryColorP3ui});
+        try load("glSecondaryColorP3uiv", .{&bindings.secondaryColorP3uiv});
     }
 
     // OpenGL 4.0
@@ -573,9 +587,18 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 4.2
     if (ver >= 42) {
+        try load("glDrawArraysInstancedBaseInstance", .{&bindings.drawArraysInstancedBaseInstance});
+        try load("glDrawElementsInstancedBaseInstance", .{&bindings.drawElementsInstancedBaseInstance});
+        try load("glDrawElementsInstancedBaseVertexBaseInstance", .{&bindings.drawElementsInstancedBaseVertexBaseInstance});
+        try load("glGetInternalFormativ", .{&bindings.getInternalFormativ});
+        try load("glGetActiveAtomicCounterBufferiv", .{&bindings.getActiveAtomicCounterBufferiv});
         try load("glBindImageTexture", .{&bindings.bindImageTexture});
         try load("glMemoryBarrier", .{&bindings.memoryBarrier});
-        // TODO
+        try load("glTexStorage1D", .{&bindings.texStorage1D});
+        try load("glTexStorage2D", .{&bindings.texStorage2D});
+        try load("glTexStorage3D", .{&bindings.texStorage3D});
+        try load("glDrawTransformFeedbackInstanced", .{&bindings.drawTransformFeedbackInstanced});
+        try load("glDrawTransformFeedbackStreamInstanced", .{&bindings.drawTransformFeedbackStreamInstanced});
     }
 
     // OpenGL 4.3
@@ -1325,6 +1348,13 @@ comptime {
     @export(bindings.texImage3DMultisample, .{ .name = "glTexImage3DMultisample", .linkage = linkage });
     @export(bindings.getMultisamplefv, .{ .name = "glGetMultisamplefv", .linkage = linkage });
     @export(bindings.sampleMaski, .{ .name = "glSampleMaski", .linkage = linkage });
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 3.3 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @export(bindings.queryCounter, .{ .name = "glQueryCounter", .linkage = linkage });
+    @export(bindings.getQueryObjecti64v, .{ .name = "glGetQueryObjecti64v", .linkage = linkage });
+    @export(bindings.getQueryObjectui64v, .{ .name = "glGetQueryObjectui64v", .linkage = linkage });
+    @export(bindings.vertexAttribDivisor, .{ .name = "glVertexAttribDivisor", .linkage = linkage });
     @export(bindings.vertexAttribP1ui, .{ .name = "glVertexAttribP1ui", .linkage = linkage });
     @export(bindings.vertexAttribP1uiv, .{ .name = "glVertexAttribP1uiv", .linkage = linkage });
     @export(bindings.vertexAttribP2ui, .{ .name = "glVertexAttribP2ui", .linkage = linkage });
@@ -1333,29 +1363,36 @@ comptime {
     @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
     @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
     @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
-    //----------------------------------------------------------------------------------------------
-    // OpenGL 3.3 (Core Profile)
-    //----------------------------------------------------------------------------------------------
-    @export(bindings.bindFragDataLocationIndexed, .{ .name = "glBindFragDataLocationIndexed", .linkage = linkage });
-    @export(bindings.getFragDataIndex, .{ .name = "glGetFragDataIndex", .linkage = linkage });
-    @export(bindings.genSamplers, .{ .name = "glGenSamplers", .linkage = linkage });
-    @export(bindings.deleteSamplers, .{ .name = "glDeleteSamplers", .linkage = linkage });
-    @export(bindings.isSampler, .{ .name = "glIsSampler", .linkage = linkage });
-    @export(bindings.bindSampler, .{ .name = "glBindSampler", .linkage = linkage });
-    @export(bindings.samplerParameteri, .{ .name = "glSamplerParameteri", .linkage = linkage });
-    @export(bindings.samplerParameteriv, .{ .name = "glSamplerParameteriv", .linkage = linkage });
-    @export(bindings.samplerParameterf, .{ .name = "glSamplerParameterf", .linkage = linkage });
-    @export(bindings.samplerParameterfv, .{ .name = "glSamplerParameterfv", .linkage = linkage });
-    @export(bindings.samplerParameterIiv, .{ .name = "glSamplerParameterIiv", .linkage = linkage });
-    @export(bindings.samplerParameterIuiv, .{ .name = "glSamplerParameterIuiv", .linkage = linkage });
-    @export(bindings.getSamplerParameteriv, .{ .name = "glGetSamplerParameteriv", .linkage = linkage });
-    @export(bindings.getSamplerParameterIiv, .{ .name = "glGetSamplerParameterIiv", .linkage = linkage });
-    @export(bindings.getSamplerParameterfv, .{ .name = "glGetSamplerParameterfv", .linkage = linkage });
-    @export(bindings.getSamplerParameterIuiv, .{ .name = "glGetSamplerParameterIuiv", .linkage = linkage });
-    @export(bindings.queryCounter, .{ .name = "glQueryCounter", .linkage = linkage });
-    @export(bindings.getQueryObjecti64v, .{ .name = "glGetQueryObjecti64v", .linkage = linkage });
-    @export(bindings.getQueryObjectui64v, .{ .name = "glGetQueryObjectui64v", .linkage = linkage });
-    @export(bindings.vertexAttribDivisor, .{ .name = "glVertexAttribDivisor", .linkage = linkage });
+    @export(bindings.vertexP2ui, .{ .name = "glVertexP2ui", .linkage = linkage });
+    @export(bindings.vertexP2uiv, .{ .name = "glVertexP2uiv", .linkage = linkage });
+    @export(bindings.vertexP3ui, .{ .name = "glVertexP3ui", .linkage = linkage });
+    @export(bindings.vertexP3uiv, .{ .name = "glVertexP3uiv", .linkage = linkage });
+    @export(bindings.vertexP4ui, .{ .name = "glVertexP4ui", .linkage = linkage });
+    @export(bindings.vertexP4uiv, .{ .name = "glVertexP4uiv", .linkage = linkage });
+    @export(bindings.texCoordP1ui, .{ .name = "glTexCoordP1ui", .linkage = linkage });
+    @export(bindings.texCoordP1uiv, .{ .name = "glTexCoordP1uiv", .linkage = linkage });
+    @export(bindings.texCoordP2ui, .{ .name = "glTexCoordP2ui", .linkage = linkage });
+    @export(bindings.texCoordP2uiv, .{ .name = "glTexCoordP2uiv", .linkage = linkage });
+    @export(bindings.texCoordP3ui, .{ .name = "glTexCoordP3ui", .linkage = linkage });
+    @export(bindings.texCoordP3uiv, .{ .name = "glTexCoordP3uiv", .linkage = linkage });
+    @export(bindings.texCoordP4ui, .{ .name = "glTexCoordP4ui", .linkage = linkage });
+    @export(bindings.texCoordP4uiv, .{ .name = "glTexCoordP4uiv", .linkage = linkage });
+    @export(bindings.multiTexCoordP1ui, .{ .name = "glMultiTexCoordP1ui", .linkage = linkage });
+    @export(bindings.multiTexCoordP1uiv, .{ .name = "glMultiTexCoordP1uiv", .linkage = linkage });
+    @export(bindings.multiTexCoordP2ui, .{ .name = "glMultiTexCoordP2ui", .linkage = linkage });
+    @export(bindings.multiTexCoordP2uiv, .{ .name = "glMultiTexCoordP2uiv", .linkage = linkage });
+    @export(bindings.multiTexCoordP3ui, .{ .name = "glMultiTexCoordP3ui", .linkage = linkage });
+    @export(bindings.multiTexCoordP3uiv, .{ .name = "glMultiTexCoordP3uiv", .linkage = linkage });
+    @export(bindings.multiTexCoordP4ui, .{ .name = "glMultiTexCoordP4ui", .linkage = linkage });
+    @export(bindings.multiTexCoordP4uiv, .{ .name = "glMultiTexCoordP4uiv", .linkage = linkage });
+    @export(bindings.normalP3ui, .{ .name = "glNormalP3ui", .linkage = linkage });
+    @export(bindings.normalP3uiv, .{ .name = "glNormalP3uiv", .linkage = linkage });
+    @export(bindings.colorP3ui, .{ .name = "glColorP3ui", .linkage = linkage });
+    @export(bindings.colorP3uiv, .{ .name = "glColorP3uiv", .linkage = linkage });
+    @export(bindings.colorP4ui, .{ .name = "glColorP4ui", .linkage = linkage });
+    @export(bindings.colorP4uiv, .{ .name = "glColorP4uiv", .linkage = linkage });
+    @export(bindings.secondaryColorP3ui, .{ .name = "glSecondaryColorP3ui", .linkage = linkage });
+    @export(bindings.secondaryColorP3uiv, .{ .name = "glSecondaryColorP3uiv", .linkage = linkage });
     //----------------------------------------------------------------------------------------------
     // OpenGL 4.0 (Core Profile)
     //----------------------------------------------------------------------------------------------
@@ -1494,4 +1531,13 @@ comptime {
     @export(bindings.depthRangeIndexed, .{ .name = "glDepthRangeIndexed", .linkage = linkage });
     @export(bindings.getFloati_v, .{ .name = "glGetFloati_v", .linkage = linkage });
     @export(bindings.getDoublei_v, .{ .name = "glGetDoublei_v", .linkage = linkage });
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @export(bindings.getActiveAtomicCounterBufferiv, .{ .name = "glGetActiveAtomicCounterBufferiv", .linkage = linkage });
+    @export(bindings.bindImageTexture, .{ .name = "glBindImageTexture", .linkage = linkage });
+    @export(bindings.memoryBarrier, .{ .name = "glMemoryBarrier", .linkage = linkage });
+    @export(bindings.texStorage1D, .{ .name = "glTexStorage1D", .linkage = linkage });
+    @export(bindings.texStorage2D, .{ .name = "glTexStorage2D", .linkage = linkage });
+    @export(bindings.texStorage3D, .{ .name = "glTexStorage3D", .linkage = linkage });
 }
