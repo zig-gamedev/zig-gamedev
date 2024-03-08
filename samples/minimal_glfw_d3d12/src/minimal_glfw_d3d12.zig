@@ -100,7 +100,6 @@ pub fn main() !void {
         gctx.flushResourceBarriers();
 
         gctx.endFrame();
-        gctx.finishGpuCommands();
 
         frac += frac_delta;
         if (frac > 1.0 or frac < 0.0) {
