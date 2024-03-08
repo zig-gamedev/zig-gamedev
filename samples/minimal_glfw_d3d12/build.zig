@@ -14,9 +14,11 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
+    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
     const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
     const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
 
+    zd3d12_pkg.link(exe);
     zwin32_pkg.link(exe, .{ .d3d12 = true });
     zglfw_pkg.link(exe);
 
@@ -60,7 +62,7 @@ fn makeDxcCmd(
     comptime define: []const u8,
 ) void {
     const shader_ver = "6_0";
-    const shader_dir = thisDir() ++ "/src/";
+    const shader_dir = thisDir() ++ "/" ++ content_dir;
 
     const dxc_path = switch (builtin.target.os.tag) {
         .windows => thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
