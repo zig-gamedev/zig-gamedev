@@ -1526,6 +1526,7 @@ pub fn comboFromEnum(
 
     return result;
 }
+
 extern fn zguiCombo(
     label: [*:0]const u8,
     current_item: *c_int,
