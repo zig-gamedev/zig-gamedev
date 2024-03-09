@@ -4,6 +4,36 @@ const std = @import("std");
 const log = std.log.scoped(.zopengl);
 const assert = std.debug.assert;
 
+const meta = struct {
+    pub fn mergeEnums(comptime Enums: anytype) type {
+        const tag_type = @typeInfo(Enums[0]).Enum.tag_type;
+        const num_fields = countFields: {
+            var count: comptime_int = 0;
+            for (Enums) |Subset| {
+                for (std.meta.fields(Subset)) |_| count += 1;
+            }
+            break :countFields count;
+        };
+        comptime var fields: [num_fields]std.builtin.Type.EnumField = .{undefined} ** num_fields;
+        comptime var i = 0;
+        for (Enums) |Subset| {
+            const subset_info = @typeInfo(Subset).Enum;
+            assert(subset_info.tag_type == tag_type);
+            for (subset_info.fields) |field| {
+                assert(i < fields.len);
+                fields[i] = field;
+                i += 1;
+            }
+        }
+        return @Type(.{ .Enum = .{
+            .tag_type = tag_type,
+            .fields = &fields,
+            .decls = &.{},
+            .is_exhaustive = true,
+        } });
+    }
+};
+
 pub fn Wrap(comptime bindings: anytype) type {
     return struct {
         pub const Framebuffer = extern struct { name: Uint = 0 };
@@ -100,244 +130,247 @@ pub fn Wrap(comptime bindings: anytype) type {
             shading_language_version = SHADING_LANGUAGE_VERSION,
         };
 
-        pub const ParamName = enum(Enum) {
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.0 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            cull_face = CULL_FACE,
-            polygon_smooth = POLYGON_SMOOTH,
-            line_smooth = LINE_SMOOTH,
-            dither = DITHER,
-            blend = BLEND,
-            color_writemask = COLOR_WRITEMASK,
-            depth_test = DEPTH_TEST,
-            depth_writemask = DEPTH_WRITEMASK,
-            stencil_test = STENCIL_TEST,
-            doublebuffer = DOUBLEBUFFER,
-            stereo = STEREO,
-            scissor_test = SCISSOR_TEST,
-            polygon_mode = POLYGON_MODE,
-            polygon_smooth_hint = POLYGON_SMOOTH_HINT,
-            line_smooth_hint = LINE_SMOOTH_HINT,
-            logic_op_mode = LOGIC_OP_MODE,
-            color_clear_value = COLOR_CLEAR_VALUE,
-            depth_clear_value = DEPTH_CLEAR_VALUE,
-            depth_func = DEPTH_FUNC,
-            depth_range = DEPTH_RANGE,
-            stencil_clear_value = STENCIL_CLEAR_VALUE,
-            stencil_fail = STENCIL_FAIL,
-            stencil_func = STENCIL_FUNC,
-            stencil_pass_depth_fail = STENCIL_PASS_DEPTH_FAIL,
-            stencil_pass_depth_pass = STENCIL_PASS_DEPTH_PASS,
-            stencil_ref = STENCIL_REF,
-            stencil_value_mask = STENCIL_VALUE_MASK,
-            stencil_writemask = STENCIL_WRITEMASK,
-            viewport = VIEWPORT,
-            subpixel_bits = SUBPIXEL_BITS,
-            draw_buffer = DRAW_BUFFER,
-            read_buffer = READ_BUFFER,
-            scissor_box = SCISSOR_BOX,
-            pack_alignment = PACK_ALIGNMENT,
-            pack_lsb_first = PACK_LSB_FIRST,
-            pack_row_length = PACK_ROW_LENGTH,
-            pack_skip_pixels = PACK_SKIP_PIXELS,
-            pack_skip_rows = PACK_SKIP_ROWS,
-            pack_swap_bytes = PACK_SWAP_BYTES,
-            unpack_alignment = UNPACK_ALIGNMENT,
-            unpack_lsb_first = UNPACK_LSB_FIRST,
-            unpack_row_length = UNPACK_ROW_LENGTH,
-            unpack_skip_pixels = UNPACK_SKIP_PIXELS,
-            unpack_skip_rows = UNPACK_SKIP_ROWS,
-            unpack_swap_bytes = UNPACK_SWAP_BYTES,
-            max_texture_size = MAX_TEXTURE_SIZE,
-            max_viewport_dims = MAX_VIEWPORT_DIMS,
-            point_size = POINT_SIZE,
-            point_size_granularity = POINT_SIZE_GRANULARITY,
-            point_size_range = POINT_SIZE_RANGE,
-            line_width = LINE_WIDTH,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.1 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            polygon_offset_fill = POLYGON_OFFSET_FILL,
-            polygon_offset_line = POLYGON_OFFSET_LINE,
-            polygon_offset_point = POLYGON_OFFSET_POINT,
-            color_logic_op = COLOR_LOGIC_OP,
-            texture_binding_1d = TEXTURE_BINDING_1D,
-            texture_binding_2d = TEXTURE_BINDING_2D,
-            polygon_offset_factor = POLYGON_OFFSET_FACTOR,
-            polygon_offset_units = POLYGON_OFFSET_UNITS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.2 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            pack_image_height = PACK_IMAGE_HEIGHT,
-            pack_skip_images = PACK_SKIP_IMAGES,
-            unpack_image_height = UNPACK_IMAGE_HEIGHT,
-            unpack_skip_images = UNPACK_SKIP_IMAGES,
-            texture_binding_3d = TEXTURE_BINDING_3D,
-            max_3d_texture_size = MAX_3D_TEXTURE_SIZE,
-            max_elements_indices = MAX_ELEMENTS_INDICES,
-            max_elements_vertices = MAX_ELEMENTS_VERTICES,
-            aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
-            smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
-            smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.3 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
-            active_texture = ACTIVE_TEXTURE,
-            texture_binding_cube_map = TEXTURE_BINDING_CUBE_MAP,
-            texture_compression_hint = TEXTURE_COMPRESSION_HINT,
-            compressed_texture_formats = COMPRESSED_TEXTURE_FORMATS,
-            samples = SAMPLES,
-            sample_buffers = SAMPLE_BUFFERS,
-            num_compressed_texture_formats = NUM_COMPRESSED_TEXTURE_FORMATS,
-            max_cube_map_texture_size = MAX_CUBE_MAP_TEXTURE_SIZE,
-            sample_coverage_value = SAMPLE_COVERAGE_VALUE,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.4 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            blend_src_rgb = BLEND_SRC_RGB,
-            blend_src_alpha = BLEND_SRC_ALPHA,
-            blend_dst_rgb = BLEND_DST_RGB,
-            blend_dst_alpha = BLEND_DST_ALPHA,
-            blend_color = BLEND_COLOR,
-            point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
-            max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.5 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            array_buffer_binding = ARRAY_BUFFER_BINDING,
-            element_array_buffer_binding = ELEMENT_ARRAY_BUFFER_BINDING,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 2.0 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            current_program = CURRENT_PROGRAM,
-            blend_equation_rgb = BLEND_EQUATION_RGB,
-            blend_equation_alpha = BLEND_EQUATION_ALPHA,
-            stencil_back_fail = STENCIL_BACK_FAIL,
-            stencil_back_func = STENCIL_BACK_FUNC,
-            stencil_back_pass_depth_fail = STENCIL_BACK_PASS_DEPTH_FAIL,
-            stencil_back_pass_depth_pass = STENCIL_BACK_PASS_DEPTH_PASS,
-            stencil_back_ref = STENCIL_BACK_REF,
-            stencil_back_value_mask = STENCIL_BACK_VALUE_MASK,
-            stencil_back_writemask = STENCIL_BACK_WRITEMASK,
-            draw_buffer0 = DRAW_BUFFER0,
-            draw_buffer1 = DRAW_BUFFER1,
-            draw_buffer2 = DRAW_BUFFER2,
-            draw_buffer3 = DRAW_BUFFER3,
-            draw_buffer4 = DRAW_BUFFER4,
-            draw_buffer5 = DRAW_BUFFER5,
-            draw_buffer6 = DRAW_BUFFER6,
-            draw_buffer7 = DRAW_BUFFER7,
-            draw_buffer8 = DRAW_BUFFER8,
-            draw_buffer9 = DRAW_BUFFER9,
-            draw_buffer10 = DRAW_BUFFER10,
-            draw_buffer11 = DRAW_BUFFER11,
-            draw_buffer12 = DRAW_BUFFER12,
-            draw_buffer13 = DRAW_BUFFER13,
-            draw_buffer14 = DRAW_BUFFER14,
-            draw_buffer15 = DRAW_BUFFER15,
-            draw_framebuffer_binding = DRAW_FRAMEBUFFER_BINDING,
-            fragment_shader_derivative_hint = FRAGMENT_SHADER_DERIVATIVE_HINT,
-            max_combined_texture_image_units = MAX_COMBINED_TEXTURE_IMAGE_UNITS,
-            max_draw_buffers = MAX_DRAW_BUFFERS,
-            max_fragment_uniform_components = MAX_FRAGMENT_UNIFORM_COMPONENTS,
-            max_texture_image_units = MAX_TEXTURE_IMAGE_UNITS,
-            //max_varying_floats = MAX_VARYING_FLOATS, // NOTE: MAX_VARYING_FLOATS is equal to MAX_VARYING_COMPONENTS
-            max_vertex_attribs = MAX_VERTEX_ATTRIBS,
-            max_vertex_texture_image_units = MAX_VERTEX_TEXTURE_IMAGE_UNITS,
-            max_vertex_uniform_components = MAX_VERTEX_UNIFORM_COMPONENTS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 2.1 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            pixel_pack_buffer_binding = PIXEL_PACK_BUFFER_BINDING,
-            pixel_unpack_buffer_binding = PIXEL_UNPACK_BUFFER_BINDING,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 3.0 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            context_flags = CONTEXT_FLAGS,
-            major_version = MAJOR_VERSION,
-            minor_version = MINOR_VERSION,
-            num_extensions = NUM_EXTENSIONS,
-            texture_binding_1d_array = TEXTURE_BINDING_1D_ARRAY,
-            texture_binding_2d_array = TEXTURE_BINDING_2D_ARRAY,
-            transform_feedback_buffer_binding = TRANSFORM_FEEDBACK_BUFFER_BINDING,
-            transform_feedback_buffer_size = TRANSFORM_FEEDBACK_BUFFER_SIZE,
-            transform_feedback_buffer_start = TRANSFORM_FEEDBACK_BUFFER_START,
-            vertex_array_binding = VERTEX_ARRAY_BINDING,
-            read_framebuffer_binding = READ_FRAMEBUFFER_BINDING,
-            renderbuffer_binding = RENDERBUFFER_BINDING,
-            min_program_texel_offset = MIN_PROGRAM_TEXEL_OFFSET,
-            max_array_texture_layers = MAX_ARRAY_TEXTURE_LAYERS,
-            max_clip_distances = MAX_CLIP_DISTANCES,
-            max_program_texel_offset = MAX_PROGRAM_TEXEL_OFFSET,
-            max_renderbuffer_size = MAX_RENDERBUFFER_SIZE,
-            max_varying_components = MAX_VARYING_COMPONENTS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 3.1 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            primitive_restart_index = PRIMITIVE_RESTART_INDEX,
-            texture_binding_buffer = TEXTURE_BINDING_BUFFER,
-            texture_binding_rectangle = TEXTURE_BINDING_RECTANGLE,
-            uniform_buffer_binding = UNIFORM_BUFFER_BINDING,
-            uniform_buffer_offset_alignment = UNIFORM_BUFFER_OFFSET_ALIGNMENT,
-            uniform_buffer_size = UNIFORM_BUFFER_SIZE,
-            uniform_buffer_start = UNIFORM_BUFFER_START,
-            max_combined_vertex_uniform_components = MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
-            max_combined_fragment_uniform_components = MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
-            max_combined_geometry_uniform_components = MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS,
-            max_combined_uniform_blocks = MAX_COMBINED_UNIFORM_BLOCKS,
-            max_fragment_uniform_blocks = MAX_FRAGMENT_UNIFORM_BLOCKS,
-            max_geometry_uniform_blocks = MAX_GEOMETRY_UNIFORM_BLOCKS,
-            max_rectangle_texture_size = MAX_RECTANGLE_TEXTURE_SIZE,
-            max_texture_buffer_size = MAX_TEXTURE_BUFFER_SIZE,
-            max_uniform_block_size = MAX_UNIFORM_BLOCK_SIZE,
-            max_uniform_buffer_bindings = MAX_UNIFORM_BUFFER_BINDINGS,
-            max_vertex_uniform_blocks = MAX_VERTEX_UNIFORM_BLOCKS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 3.2 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            program_point_size = PROGRAM_POINT_SIZE,
-            provoking_vertex = PROVOKING_VERTEX,
-            texture_binding_2d_multisample = TEXTURE_BINDING_2D_MULTISAMPLE,
-            texture_binding_2d_multisample_array = TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
-            max_color_texture_samples = MAX_COLOR_TEXTURE_SAMPLES,
-            max_depth_texture_samples = MAX_DEPTH_TEXTURE_SAMPLES,
-            max_fragment_input_components = MAX_FRAGMENT_INPUT_COMPONENTS,
-            max_geometry_input_components = MAX_GEOMETRY_INPUT_COMPONENTS,
-            max_geometry_output_components = MAX_GEOMETRY_OUTPUT_COMPONENTS,
-            max_geometry_texture_image_units = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS,
-            max_geometry_uniform_components = MAX_GEOMETRY_UNIFORM_COMPONENTS,
-            max_integer_samples = MAX_INTEGER_SAMPLES,
-            max_sample_mask_words = MAX_SAMPLE_MASK_WORDS,
-            max_server_wait_timeout = MAX_SERVER_WAIT_TIMEOUT,
-            max_vertex_output_components = MAX_VERTEX_OUTPUT_COMPONENTS,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 3.3 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            max_dual_source_draw_buffers = MAX_DUAL_SOURCE_DRAW_BUFFERS,
-            sampler_binding = SAMPLER_BINDING,
-            timestamp = TIMESTAMP,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 4.1 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            shader_compiler = SHADER_COMPILER,
-            shader_binary_formats = SHADER_BINARY_FORMATS,
-            num_shader_binary_formats = NUM_SHADER_BINARY_FORMATS,
-            max_vertex_uniform_vectors = MAX_VERTEX_UNIFORM_VECTORS,
-            max_varying_vectors = MAX_VARYING_VECTORS,
-            max_fragment_uniform_vectors = MAX_FRAGMENT_UNIFORM_VECTORS,
-            implementation_color_read_type = IMPLEMENTATION_COLOR_READ_TYPE,
-            implementation_color_read_format = IMPLEMENTATION_COLOR_READ_FORMAT,
-            num_program_binary_formats = NUM_PROGRAM_BINARY_FORMATS,
-            program_binary_formats = PROGRAM_BINARY_FORMATS,
-            program_pipeline_binding = PROGRAM_PIPELINE_BINDING,
-            max_viewports = MAX_VIEWPORTS,
-            viewport_subpixel_bits = VIEWPORT_SUBPIXEL_BITS,
-            viewport_bounds_range = VIEWPORT_BOUNDS_RANGE,
-            layer_provoking_vertex = LAYER_PROVOKING_VERTEX,
-            viewport_index_provoking_vertex = VIEWPORT_INDEX_PROVOKING_VERTEX,
-        };
+        pub const ParamName = meta.mergeEnums(.{
+            enum(Enum) {
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.0 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                cull_face = CULL_FACE,
+                polygon_smooth = POLYGON_SMOOTH,
+                line_smooth = LINE_SMOOTH,
+                dither = DITHER,
+                blend = BLEND,
+                color_writemask = COLOR_WRITEMASK,
+                depth_test = DEPTH_TEST,
+                depth_writemask = DEPTH_WRITEMASK,
+                stencil_test = STENCIL_TEST,
+                doublebuffer = DOUBLEBUFFER,
+                stereo = STEREO,
+                scissor_test = SCISSOR_TEST,
+                polygon_mode = POLYGON_MODE,
+                polygon_smooth_hint = POLYGON_SMOOTH_HINT,
+                line_smooth_hint = LINE_SMOOTH_HINT,
+                logic_op_mode = LOGIC_OP_MODE,
+                color_clear_value = COLOR_CLEAR_VALUE,
+                depth_clear_value = DEPTH_CLEAR_VALUE,
+                depth_func = DEPTH_FUNC,
+                depth_range = DEPTH_RANGE,
+                stencil_clear_value = STENCIL_CLEAR_VALUE,
+                stencil_fail = STENCIL_FAIL,
+                stencil_func = STENCIL_FUNC,
+                stencil_pass_depth_fail = STENCIL_PASS_DEPTH_FAIL,
+                stencil_pass_depth_pass = STENCIL_PASS_DEPTH_PASS,
+                stencil_ref = STENCIL_REF,
+                stencil_value_mask = STENCIL_VALUE_MASK,
+                stencil_writemask = STENCIL_WRITEMASK,
+                viewport = VIEWPORT,
+                subpixel_bits = SUBPIXEL_BITS,
+                draw_buffer = DRAW_BUFFER,
+                read_buffer = READ_BUFFER,
+                scissor_box = SCISSOR_BOX,
+                pack_alignment = PACK_ALIGNMENT,
+                pack_lsb_first = PACK_LSB_FIRST,
+                pack_row_length = PACK_ROW_LENGTH,
+                pack_skip_pixels = PACK_SKIP_PIXELS,
+                pack_skip_rows = PACK_SKIP_ROWS,
+                pack_swap_bytes = PACK_SWAP_BYTES,
+                unpack_alignment = UNPACK_ALIGNMENT,
+                unpack_lsb_first = UNPACK_LSB_FIRST,
+                unpack_row_length = UNPACK_ROW_LENGTH,
+                unpack_skip_pixels = UNPACK_SKIP_PIXELS,
+                unpack_skip_rows = UNPACK_SKIP_ROWS,
+                unpack_swap_bytes = UNPACK_SWAP_BYTES,
+                max_texture_size = MAX_TEXTURE_SIZE,
+                max_viewport_dims = MAX_VIEWPORT_DIMS,
+                point_size = POINT_SIZE,
+                point_size_granularity = POINT_SIZE_GRANULARITY,
+                point_size_range = POINT_SIZE_RANGE,
+                line_width = LINE_WIDTH,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.1 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                polygon_offset_fill = POLYGON_OFFSET_FILL,
+                polygon_offset_line = POLYGON_OFFSET_LINE,
+                polygon_offset_point = POLYGON_OFFSET_POINT,
+                color_logic_op = COLOR_LOGIC_OP,
+                texture_binding_1d = TEXTURE_BINDING_1D,
+                texture_binding_2d = TEXTURE_BINDING_2D,
+                polygon_offset_factor = POLYGON_OFFSET_FACTOR,
+                polygon_offset_units = POLYGON_OFFSET_UNITS,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.2 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                pack_image_height = PACK_IMAGE_HEIGHT,
+                pack_skip_images = PACK_SKIP_IMAGES,
+                unpack_image_height = UNPACK_IMAGE_HEIGHT,
+                unpack_skip_images = UNPACK_SKIP_IMAGES,
+                texture_binding_3d = TEXTURE_BINDING_3D,
+                max_3d_texture_size = MAX_3D_TEXTURE_SIZE,
+                max_elements_indices = MAX_ELEMENTS_INDICES,
+                max_elements_vertices = MAX_ELEMENTS_VERTICES,
+                aliased_line_width_range = ALIASED_LINE_WIDTH_RANGE,
+                smooth_line_width_granularity = SMOOTH_LINE_WIDTH_GRANULARITY,
+                smooth_line_width_range = SMOOTH_LINE_WIDTH_RANGE,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.3 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                sample_coverage_invert = SAMPLE_COVERAGE_INVERT,
+                active_texture = ACTIVE_TEXTURE,
+                texture_binding_cube_map = TEXTURE_BINDING_CUBE_MAP,
+                texture_compression_hint = TEXTURE_COMPRESSION_HINT,
+                compressed_texture_formats = COMPRESSED_TEXTURE_FORMATS,
+                samples = SAMPLES,
+                sample_buffers = SAMPLE_BUFFERS,
+                num_compressed_texture_formats = NUM_COMPRESSED_TEXTURE_FORMATS,
+                max_cube_map_texture_size = MAX_CUBE_MAP_TEXTURE_SIZE,
+                sample_coverage_value = SAMPLE_COVERAGE_VALUE,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.4 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                blend_src_rgb = BLEND_SRC_RGB,
+                blend_src_alpha = BLEND_SRC_ALPHA,
+                blend_dst_rgb = BLEND_DST_RGB,
+                blend_dst_alpha = BLEND_DST_ALPHA,
+                blend_color = BLEND_COLOR,
+                point_fade_threshold_size = POINT_FADE_THRESHOLD_SIZE,
+                max_texture_lod_bias = MAX_TEXTURE_LOD_BIAS,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.5 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                array_buffer_binding = ARRAY_BUFFER_BINDING,
+                element_array_buffer_binding = ELEMENT_ARRAY_BUFFER_BINDING,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 2.0 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                current_program = CURRENT_PROGRAM,
+                blend_equation_rgb = BLEND_EQUATION_RGB,
+                blend_equation_alpha = BLEND_EQUATION_ALPHA,
+                stencil_back_fail = STENCIL_BACK_FAIL,
+                stencil_back_func = STENCIL_BACK_FUNC,
+                stencil_back_pass_depth_fail = STENCIL_BACK_PASS_DEPTH_FAIL,
+                stencil_back_pass_depth_pass = STENCIL_BACK_PASS_DEPTH_PASS,
+                stencil_back_ref = STENCIL_BACK_REF,
+                stencil_back_value_mask = STENCIL_BACK_VALUE_MASK,
+                stencil_back_writemask = STENCIL_BACK_WRITEMASK,
+                draw_buffer0 = DRAW_BUFFER0,
+                draw_buffer1 = DRAW_BUFFER1,
+                draw_buffer2 = DRAW_BUFFER2,
+                draw_buffer3 = DRAW_BUFFER3,
+                draw_buffer4 = DRAW_BUFFER4,
+                draw_buffer5 = DRAW_BUFFER5,
+                draw_buffer6 = DRAW_BUFFER6,
+                draw_buffer7 = DRAW_BUFFER7,
+                draw_buffer8 = DRAW_BUFFER8,
+                draw_buffer9 = DRAW_BUFFER9,
+                draw_buffer10 = DRAW_BUFFER10,
+                draw_buffer11 = DRAW_BUFFER11,
+                draw_buffer12 = DRAW_BUFFER12,
+                draw_buffer13 = DRAW_BUFFER13,
+                draw_buffer14 = DRAW_BUFFER14,
+                draw_buffer15 = DRAW_BUFFER15,
+                draw_framebuffer_binding = DRAW_FRAMEBUFFER_BINDING,
+                fragment_shader_derivative_hint = FRAGMENT_SHADER_DERIVATIVE_HINT,
+                max_combined_texture_image_units = MAX_COMBINED_TEXTURE_IMAGE_UNITS,
+                max_draw_buffers = MAX_DRAW_BUFFERS,
+                max_fragment_uniform_components = MAX_FRAGMENT_UNIFORM_COMPONENTS,
+                max_texture_image_units = MAX_TEXTURE_IMAGE_UNITS,
+                //max_varying_floats = MAX_VARYING_FLOATS, // NOTE: MAX_VARYING_FLOATS is equal to MAX_VARYING_COMPONENTS
+                max_vertex_attribs = MAX_VERTEX_ATTRIBS,
+                max_vertex_texture_image_units = MAX_VERTEX_TEXTURE_IMAGE_UNITS,
+                max_vertex_uniform_components = MAX_VERTEX_UNIFORM_COMPONENTS,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 2.1 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                pixel_pack_buffer_binding = PIXEL_PACK_BUFFER_BINDING,
+                pixel_unpack_buffer_binding = PIXEL_UNPACK_BUFFER_BINDING,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 3.0 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                context_flags = CONTEXT_FLAGS,
+                major_version = MAJOR_VERSION,
+                minor_version = MINOR_VERSION,
+                num_extensions = NUM_EXTENSIONS,
+                texture_binding_1d_array = TEXTURE_BINDING_1D_ARRAY,
+                texture_binding_2d_array = TEXTURE_BINDING_2D_ARRAY,
+                transform_feedback_buffer_binding = TRANSFORM_FEEDBACK_BUFFER_BINDING,
+                transform_feedback_buffer_size = TRANSFORM_FEEDBACK_BUFFER_SIZE,
+                transform_feedback_buffer_start = TRANSFORM_FEEDBACK_BUFFER_START,
+                vertex_array_binding = VERTEX_ARRAY_BINDING,
+                read_framebuffer_binding = READ_FRAMEBUFFER_BINDING,
+                renderbuffer_binding = RENDERBUFFER_BINDING,
+                min_program_texel_offset = MIN_PROGRAM_TEXEL_OFFSET,
+                max_array_texture_layers = MAX_ARRAY_TEXTURE_LAYERS,
+                max_clip_distances = MAX_CLIP_DISTANCES,
+                max_program_texel_offset = MAX_PROGRAM_TEXEL_OFFSET,
+                max_renderbuffer_size = MAX_RENDERBUFFER_SIZE,
+                max_varying_components = MAX_VARYING_COMPONENTS,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 3.1 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                primitive_restart_index = PRIMITIVE_RESTART_INDEX,
+                texture_binding_buffer = TEXTURE_BINDING_BUFFER,
+                texture_binding_rectangle = TEXTURE_BINDING_RECTANGLE,
+                uniform_buffer_binding = UNIFORM_BUFFER_BINDING,
+                uniform_buffer_offset_alignment = UNIFORM_BUFFER_OFFSET_ALIGNMENT,
+                uniform_buffer_size = UNIFORM_BUFFER_SIZE,
+                uniform_buffer_start = UNIFORM_BUFFER_START,
+                max_combined_vertex_uniform_components = MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
+                max_combined_fragment_uniform_components = MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
+                max_combined_geometry_uniform_components = MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS,
+                max_combined_uniform_blocks = MAX_COMBINED_UNIFORM_BLOCKS,
+                max_fragment_uniform_blocks = MAX_FRAGMENT_UNIFORM_BLOCKS,
+                max_geometry_uniform_blocks = MAX_GEOMETRY_UNIFORM_BLOCKS,
+                max_rectangle_texture_size = MAX_RECTANGLE_TEXTURE_SIZE,
+                max_texture_buffer_size = MAX_TEXTURE_BUFFER_SIZE,
+                max_uniform_block_size = MAX_UNIFORM_BLOCK_SIZE,
+                max_uniform_buffer_bindings = MAX_UNIFORM_BUFFER_BINDINGS,
+                max_vertex_uniform_blocks = MAX_VERTEX_UNIFORM_BLOCKS,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 3.2 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                program_point_size = PROGRAM_POINT_SIZE,
+                provoking_vertex = PROVOKING_VERTEX,
+                texture_binding_2d_multisample = TEXTURE_BINDING_2D_MULTISAMPLE,
+                texture_binding_2d_multisample_array = TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
+                max_color_texture_samples = MAX_COLOR_TEXTURE_SAMPLES,
+                max_depth_texture_samples = MAX_DEPTH_TEXTURE_SAMPLES,
+                max_fragment_input_components = MAX_FRAGMENT_INPUT_COMPONENTS,
+                max_geometry_input_components = MAX_GEOMETRY_INPUT_COMPONENTS,
+                max_geometry_output_components = MAX_GEOMETRY_OUTPUT_COMPONENTS,
+                max_geometry_texture_image_units = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS,
+                max_geometry_uniform_components = MAX_GEOMETRY_UNIFORM_COMPONENTS,
+                max_integer_samples = MAX_INTEGER_SAMPLES,
+                max_sample_mask_words = MAX_SAMPLE_MASK_WORDS,
+                max_server_wait_timeout = MAX_SERVER_WAIT_TIMEOUT,
+                max_vertex_output_components = MAX_VERTEX_OUTPUT_COMPONENTS,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 3.3 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                max_dual_source_draw_buffers = MAX_DUAL_SOURCE_DRAW_BUFFERS,
+                sampler_binding = SAMPLER_BINDING,
+                timestamp = TIMESTAMP,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 4.1 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                shader_compiler = SHADER_COMPILER,
+                shader_binary_formats = SHADER_BINARY_FORMATS,
+                num_shader_binary_formats = NUM_SHADER_BINARY_FORMATS,
+                max_vertex_uniform_vectors = MAX_VERTEX_UNIFORM_VECTORS,
+                max_varying_vectors = MAX_VARYING_VECTORS,
+                max_fragment_uniform_vectors = MAX_FRAGMENT_UNIFORM_VECTORS,
+                implementation_color_read_type = IMPLEMENTATION_COLOR_READ_TYPE,
+                implementation_color_read_format = IMPLEMENTATION_COLOR_READ_FORMAT,
+                num_program_binary_formats = NUM_PROGRAM_BINARY_FORMATS,
+                program_binary_formats = PROGRAM_BINARY_FORMATS,
+                program_pipeline_binding = PROGRAM_PIPELINE_BINDING,
+                max_viewports = MAX_VIEWPORTS,
+                viewport_subpixel_bits = VIEWPORT_SUBPIXEL_BITS,
+                viewport_bounds_range = VIEWPORT_BOUNDS_RANGE,
+                layer_provoking_vertex = LAYER_PROVOKING_VERTEX,
+                viewport_index_provoking_vertex = VIEWPORT_INDEX_PROVOKING_VERTEX,
+            },
+            CompressedTexturePixelStorage,
+        });
 
         pub const Func = enum(Enum) {
             never = NEVER,
@@ -842,6 +875,13 @@ pub fn Wrap(comptime bindings: anytype) type {
             // OpenGL 4.1 (Core Profile)
             //--------------------------------------------------------------------------------------
             rgb565 = RGB565,
+            //--------------------------------------------------------------------------------------
+            // OpenGL 4.2 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            compressed_rgba_bptc_unorm = COMPRESSED_RGBA_BPTC_UNORM,
+            compressed_srgb_alpha_bptc_unorm = COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
+            compressed_rgb_bptc_signed_float = COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
+            compressed_rgb_bptc_unsigned_float = COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
         };
 
         pub const PixelFormat = enum(Enum) {
@@ -873,6 +913,16 @@ pub fn Wrap(comptime bindings: anytype) type {
             bgr_integer = BGR_INTEGER,
             rgba_integer = RGBA_INTEGER,
             bgra_integer = BGRA_INTEGER,
+        };
+
+        pub const CompressedPixelFormat = enum(Enum) {
+            //--------------------------------------------------------------------------------------
+            // OpenGL 4.2 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            compressed_rgba_bptc_unorm = COMPRESSED_RGBA_BPTC_UNORM,
+            compressed_srgb_alpha_bptc_unorm = COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
+            compressed_rgb_bptc_signed_float = COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
+            compressed_rgb_bptc_unsigned_float = COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
         };
 
         pub const PixelType = enum(Enum) {
@@ -970,6 +1020,10 @@ pub fn Wrap(comptime bindings: anytype) type {
             swizzle_b = TEXTURE_SWIZZLE_B,
             swizzle_a = TEXTURE_SWIZZLE_A,
             swizzle_rgba = TEXTURE_SWIZZLE_RGBA,
+            //--------------------------------------------------------------------------------------
+            // OpenGL 4.2 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            texture_immutable_format = TEXTURE_IMMUTABLE_FORMAT,
         };
 
         pub const GetTexLevelParameter = enum(Enum) {
@@ -1004,29 +1058,46 @@ pub fn Wrap(comptime bindings: anytype) type {
             // buffer_offset = TEXTURE_BUFFER_OFFSET,
         };
 
-        pub const PixelStoreParameter = enum(Enum) {
+        pub const PixelStoreParameter = meta.mergeEnums(.{
+            enum(Enum) {
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.0 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                pack_swap_bytes = PACK_SWAP_BYTES,
+                pack_lsb_first = PACK_LSB_FIRST,
+                pack_row_length = PACK_ROW_LENGTH,
+                pack_skip_pixels = PACK_SKIP_PIXELS,
+                pack_skip_rows = PACK_SKIP_ROWS,
+                pack_alignment = PACK_ALIGNMENT,
+                unpack_swap_bytes = UNPACK_SWAP_BYTES,
+                unpack_lsb_first = UNPACK_LSB_FIRST,
+                unpack_row_length = UNPACK_ROW_LENGTH,
+                unpack_skip_pixels = UNPACK_SKIP_PIXELS,
+                unpack_skip_rows = UNPACK_SKIP_ROWS,
+                unpack_alignment = UNPACK_ALIGNMENT,
+                //--------------------------------------------------------------------------------------
+                // OpenGL 1.2 (Core Profile)
+                //--------------------------------------------------------------------------------------
+                pack_image_height = PACK_IMAGE_HEIGHT,
+                pack_skip_images = PACK_SKIP_IMAGES,
+                unpack_image_height = UNPACK_IMAGE_HEIGHT,
+                unpack_skip_images = UNPACK_SKIP_IMAGES,
+            },
+            CompressedTexturePixelStorage,
+        });
+
+        const CompressedTexturePixelStorage = enum(Enum) {
             //--------------------------------------------------------------------------------------
-            // OpenGL 1.0 (Core Profile)
+            // OpenGL 4.2 (Core Profile)
             //--------------------------------------------------------------------------------------
-            pack_swap_bytes = PACK_SWAP_BYTES,
-            pack_lsb_first = PACK_LSB_FIRST,
-            pack_row_length = PACK_ROW_LENGTH,
-            pack_skip_pixels = PACK_SKIP_PIXELS,
-            pack_skip_rows = PACK_SKIP_ROWS,
-            pack_alignment = PACK_ALIGNMENT,
-            unpack_swap_bytes = UNPACK_SWAP_BYTES,
-            unpack_lsb_first = UNPACK_LSB_FIRST,
-            unpack_row_length = UNPACK_ROW_LENGTH,
-            unpack_skip_pixels = UNPACK_SKIP_PIXELS,
-            unpack_skip_rows = UNPACK_SKIP_ROWS,
-            unpack_alignment = UNPACK_ALIGNMENT,
-            //--------------------------------------------------------------------------------------
-            // OpenGL 1.2 (Core Profile)
-            //--------------------------------------------------------------------------------------
-            pack_image_height = PACK_IMAGE_HEIGHT,
-            pack_skip_images = PACK_SKIP_IMAGES,
-            unpack_image_height = UNPACK_IMAGE_HEIGHT,
-            unpack_skip_images = UNPACK_SKIP_IMAGES,
+            unpack_compressed_block_width = UNPACK_COMPRESSED_BLOCK_WIDTH,
+            unpack_compressed_block_height = UNPACK_COMPRESSED_BLOCK_HEIGHT,
+            unpack_compressed_block_depth = UNPACK_COMPRESSED_BLOCK_DEPTH,
+            unpack_compressed_block_size = UNPACK_COMPRESSED_BLOCK_SIZE,
+            pack_compressed_block_width = PACK_COMPRESSED_BLOCK_WIDTH,
+            pack_compressed_block_height = PACK_COMPRESSED_BLOCK_HEIGHT,
+            pack_compressed_block_depth = PACK_COMPRESSED_BLOCK_DEPTH,
+            pack_compressed_block_size = PACK_COMPRESSED_BLOCK_SIZE,
         };
 
         pub const BufferTarget = enum(Enum) {
@@ -1051,6 +1122,13 @@ pub fn Wrap(comptime bindings: anytype) type {
             copy_write_buffer = COPY_WRITE_BUFFER,
             texture_buffer = TEXTURE_BUFFER,
             uniform_buffer = UNIFORM_BUFFER,
+        };
+
+        pub const IndexedBufferTarget = enum(Enum) {
+            //--------------------------------------------------------------------------------------
+            // OpenGL 4.2 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            atomic_counter_buffer = ATOMIC_COUNTER_BUFFER,
         };
 
         pub const BufferUsage = enum(Enum) {
@@ -2881,6 +2959,7 @@ pub fn Wrap(comptime bindings: anytype) type {
         //     transpose: Boolean,
         //     value: [*c]const Float,
         // ) callconv(.C) void = undefined;
+
         //------------------------------------------------------------------------------------------
         //
         // OpenGL 3.0 (Core Profile)
@@ -3134,6 +3213,7 @@ pub fn Wrap(comptime bindings: anytype) type {
         // pub var isEnabledi: *const fn (target: Enum, index: Uint) callconv(.C) Boolean = undefined;
         // pub var beginTransformFeedback: *const fn (primitiveMode: Enum) callconv(.C) void = undefined;
         // pub var endTransformFeedback: *const fn () callconv(.C) void = undefined;
+
         // pub var bindBufferRange: *const fn (
         //     target: Enum,
         //     index: Uint,
@@ -3141,7 +3221,21 @@ pub fn Wrap(comptime bindings: anytype) type {
         //     offset: Intptr,
         //     size: Sizeiptr,
         // ) callconv(.C) void = undefined;
+        pub fn bindbufferRange(
+            target: IndexedBufferTarget,
+            index: Uint,
+            buffer: Buffer,
+            offset: Intptr,
+            size: Sizeiptr,
+        ) void {
+            bindings.bindBufferRange(@intFromEnum(target), index, buffer.name, offset, size);
+        }
+
         // pub var bindBufferBase: *const fn (target: Enum, index: Uint, buffer: Uint) callconv(.C) void = undefined;
+        pub fn bindBufferBase(target: IndexedBufferTarget, index: Uint, buffer: Buffer) void {
+            bindings.bindBufferBase(@intFromEnum(target), index, buffer.name);
+        }
+
         // pub var transformFeedbackVaryings: *const fn (
         //     program: Uint,
         //     count: Sizei,
@@ -3710,7 +3804,18 @@ pub fn Wrap(comptime bindings: anytype) type {
         // pub var deleteSync: *const fn (sync: Sync) callconv(.C) void = undefined;
         // pub var clientWaitSync: *const fn (sync: Sync, flags: Bitfield, timeout: Uint64) callconv(.C) Enum = undefined;
         // pub var waitSync: *const fn (sync: Sync, flags: Bitfield, timeout: Uint64) callconv(.C) void = undefined;
+
         // pub var getInteger64v: *const fn (pname: Enum, data: [*c]Int64) callconv(.C) void = undefined;
+        pub fn getInteger64v(pname: meta.mergeEnums(.{
+            ParamName,
+            enum(Enum) {
+                ATOMIC_COUNTER_BUFFER_START,
+                ATOMIC_COUNTER_BUFFER_SIZE,
+            },
+        }), ptr: [*]Int64) void {
+            bindings.getInteger64v(@intFromEnum(pname), ptr);
+        }
+
         // pub var getSynciv: *const fn (
         //     sync: Sync,
         //     pname: Enum,
@@ -3749,54 +3854,6 @@ pub fn Wrap(comptime bindings: anytype) type {
         // ) callconv(.C) void = undefined;
         // pub var getMultisamplefv: *const fn (pname: Enum, index: Uint, val: [*c]Float) callconv(.C) void = undefined;
         // pub var sampleMaski: *const fn (maskNumber: Uint, mask: Bitfield) callconv(.C) void = undefined;
-        // pub var vertexAttribP1ui: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP1uiv: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: [*c]const Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP2ui: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP2uiv: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: [*c]const Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP3ui: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP3uiv: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: [*c]const Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP4ui: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: Uint,
-        // ) callconv(.C) void = undefined;
-        // pub var vertexAttribP4uiv: *const fn (
-        //     index: Uint,
-        //     type: Enum,
-        //     normalized: Boolean,
-        //     value: [*c]const Uint,
-        // ) callconv(.C) void = undefined;
 
         //------------------------------------------------------------------------------------------
         //
@@ -3877,6 +3934,44 @@ pub fn Wrap(comptime bindings: anytype) type {
         // pub var getQueryObjecti64v: *const fn (id: Uint, pname: Enum, params: [*c]Int64) callconv(.C) void = undefined;
         // pub var getQueryObjectui64v: *const fn (id: Uint, pname: Enum, params: [*c]Uint64) callconv(.C) void = undefined;
         // pub var vertexAttribDivisor: *const fn (index: Uint, divisor: Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP1ui: *const fn (index: Uint, type: Enum, normalized: Boolean, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP1uiv: *const fn (index: Uint, type: Enum, normalized: Boolean, value: *const Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP2ui: *const fn (index: Uint, type: Enum, normalized: Boolean, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP2uiv: *const fn (index: Uint, type: Enum, normalized: Boolean, value: *const Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP3ui: *const fn (index: Uint, type: Enum, normalized: Boolean, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP3uiv: *const fn (index: Uint, type: Enum, normalized: Boolean, value: *const Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP4ui: *const fn (index: Uint, type: Enum, normalized: Boolean, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexAttribP4uiv: *const fn (index: Uint, type: Enum, normalized: Boolean, value: *const Uint) callconv(.C) void = undefined;
+        // pub var vertexP2ui: *const fn (type: Enum, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexP2uiv: *const fn (type: Enum, value: *const Uint) callconv(.C) void = undefined;
+        // pub var vertexP3ui: *const fn (type: Enum, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexP3uiv: *const fn (type: Enum, value: *const Uint) callconv(.C) void = undefined;
+        // pub var vertexP4ui: *const fn (type: Enum, value: Uint) callconv(.C) void = undefined;
+        // pub var vertexP4uiv: *const fn (type: Enum, value: *const Uint) callconv(.C) void = undefined;
+        // pub var texCoordP1ui: *const fn (type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var texCoordP1uiv: *const fn (type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var texCoordP2ui: *const fn (type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var texCoordP2uiv: *const fn (type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var texCoordP3ui: *const fn (type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var texCoordP3uiv: *const fn (type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var texCoordP4ui: *const fn (type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var texCoordP4uiv: *const fn (type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP1ui: *const fn (texture: Enum, type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP1uiv: *const fn (texture: Enum, type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP2ui: *const fn (texture: Enum, type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP2uiv: *const fn (texture: Enum, type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP3ui: *const fn (texture: Enum, type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP3uiv: *const fn (texture: Enum, type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP4ui: *const fn (texture: Enum, type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var multiTexCoordP4uiv: *const fn (texture: Enum, type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var normalP3ui: *const fn (type: Enum, coords: Uint) callconv(.C) void = undefined;
+        // pub var normalP3uiv: *const fn (type: Enum, coords: *const Uint) callconv(.C) void = undefined;
+        // pub var colorP3ui: *const fn (type: Enum, color: Uint) callconv(.C) void = undefined;
+        // pub var colorP3uiv: *const fn (type: Enum, color: *const Uint) callconv(.C) void = undefined;
+        // pub var colorP4ui: *const fn (type: Enum, color: Uint) callconv(.C) void = undefined;
+        // pub var colorP4uiv: *const fn (type: Enum, color: *const Uint) callconv(.C) void = undefined;
+        // pub var secondaryColorP3ui: *const fn (type: Enum, color: Uint) callconv(.C) void = undefined;
+        // pub var secondaryColorP3uiv: *const fn (type: Enum, color: *const Uint) callconv(.C) void = undefined;
 
         //--------------------------------------------------------------------------------------------------
         //
@@ -3901,7 +3996,18 @@ pub fn Wrap(comptime bindings: anytype) type {
         pub const MIN_FRAGMENT_INTERPOLATION_OFFSET = bindings.MIN_FRAGMENT_INTERPOLATION_OFFSET;
         pub const MAX_FRAGMENT_INTERPOLATION_OFFSET = bindings.MAX_FRAGMENT_INTERPOLATION_OFFSET;
         pub const FRAGMENT_INTERPOLATION_OFFSET_BITS = bindings.FRAGMENT_INTERPOLATION_OFFSET_BITS;
-        pub const MAX_VERTEX_STREAMS = bindings.MAX_VERTEX_STREAMS;
+        pub const DOUBLE_VEC2 = bindings.DOUBLE_VEC2;
+        pub const DOUBLE_VEC3 = bindings.DOUBLE_VEC3;
+        pub const DOUBLE_VEC4 = bindings.DOUBLE_VEC4;
+        pub const DOUBLE_MAT2 = bindings.DOUBLE_MAT2;
+        pub const DOUBLE_MAT3 = bindings.DOUBLE_MAT3;
+        pub const DOUBLE_MAT4 = bindings.DOUBLE_MAT4;
+        pub const DOUBLE_MAT2x3 = bindings.DOUBLE_MAT2x3;
+        pub const DOUBLE_MAT2x4 = bindings.DOUBLE_MAT2x4;
+        pub const DOUBLE_MAT3x2 = bindings.DOUBLE_MAT3x2;
+        pub const DOUBLE_MAT3x4 = bindings.DOUBLE_MAT3x4;
+        pub const DOUBLE_MAT4x2 = bindings.DOUBLE_MAT4x2;
+        pub const DOUBLE_MAT4x3 = bindings.DOUBLE_MAT4x3;
         pub const ACTIVE_SUBROUTINES = bindings.ACTIVE_SUBROUTINES;
         pub const ACTIVE_SUBROUTINE_UNIFORMS = bindings.ACTIVE_SUBROUTINE_UNIFORMS;
         pub const ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS = bindings.ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS;
@@ -3948,6 +4054,7 @@ pub fn Wrap(comptime bindings: anytype) type {
         pub const TRANSFORM_FEEDBACK_BUFFER_ACTIVE = bindings.TRANSFORM_FEEDBACK_BUFFER_ACTIVE;
         pub const TRANSFORM_FEEDBACK_BINDING = bindings.TRANSFORM_FEEDBACK_BINDING;
         pub const MAX_TRANSFORM_FEEDBACK_BUFFERS = bindings.MAX_TRANSFORM_FEEDBACK_BUFFERS;
+        pub const MAX_VERTEX_STREAMS = bindings.MAX_VERTEX_STREAMS;
 
         pub const DrawArraysIndirectCommand = bindings.DrawArraysIndirectCommand;
         pub const DrawElementsIndirectCommand = bindings.DrawElementsIndirectCommand;
@@ -4004,21 +4111,21 @@ pub fn Wrap(comptime bindings: anytype) type {
         // OpenGL 4.1 (Core Profile)
         //
         //--------------------------------------------------------------------------------------------------
-        pub const SHADER_COMPILER = bindings.SHADER_COMPILER;
-        pub const SHADER_BINARY_FORMATS = bindings.SHADER_BINARY_FORMATS;
-        pub const NUM_SHADER_BINARY_FORMATS = bindings.NUM_SHADER_BINARY_FORMATS;
-        pub const MAX_VERTEX_UNIFORM_VECTORS = bindings.MAX_VERTEX_UNIFORM_VECTORS;
-        pub const MAX_VARYING_VECTORS = bindings.MAX_VARYING_VECTORS;
-        pub const MAX_FRAGMENT_UNIFORM_VECTORS = bindings.MAX_FRAGMENT_UNIFORM_VECTORS;
+        pub const FIXED = bindings.FIXED;
         pub const IMPLEMENTATION_COLOR_READ_TYPE = bindings.IMPLEMENTATION_COLOR_READ_TYPE;
         pub const IMPLEMENTATION_COLOR_READ_FORMAT = bindings.IMPLEMENTATION_COLOR_READ_FORMAT;
-        pub const FIXED = bindings.FIXED;
         pub const LOW_FLOAT = bindings.LOW_FLOAT;
         pub const MEDIUM_FLOAT = bindings.MEDIUM_FLOAT;
         pub const HIGH_FLOAT = bindings.HIGH_FLOAT;
         pub const LOW_INT = bindings.LOW_INT;
         pub const MEDIUM_INT = bindings.MEDIUM_INT;
         pub const HIGH_INT = bindings.HIGH_INT;
+        pub const SHADER_COMPILER = bindings.SHADER_COMPILER;
+        pub const SHADER_BINARY_FORMATS = bindings.SHADER_BINARY_FORMATS;
+        pub const NUM_SHADER_BINARY_FORMATS = bindings.NUM_SHADER_BINARY_FORMATS;
+        pub const MAX_VERTEX_UNIFORM_VECTORS = bindings.MAX_VERTEX_UNIFORM_VECTORS;
+        pub const MAX_VARYING_VECTORS = bindings.MAX_VARYING_VECTORS;
+        pub const MAX_FRAGMENT_UNIFORM_VECTORS = bindings.MAX_FRAGMENT_UNIFORM_VECTORS;
         pub const RGB565 = bindings.RGB565;
         pub const PROGRAM_BINARY_RETRIEVABLE_HINT = bindings.PROGRAM_BINARY_RETRIEVABLE_HINT;
         pub const PROGRAM_BINARY_LENGTH = bindings.PROGRAM_BINARY_LENGTH;
@@ -4033,18 +4140,6 @@ pub fn Wrap(comptime bindings: anytype) type {
         pub const PROGRAM_SEPARABLE = bindings.PROGRAM_SEPARABLE;
         pub const ACTIVE_PROGRAM = bindings.ACTIVE_PROGRAM;
         pub const PROGRAM_PIPELINE_BINDING = bindings.PROGRAM_PIPELINE_BINDING;
-        pub const DOUBLE_VEC2 = bindings.DOUBLE_VEC2;
-        pub const DOUBLE_VEC3 = bindings.DOUBLE_VEC3;
-        pub const DOUBLE_VEC4 = bindings.DOUBLE_VEC4;
-        pub const DOUBLE_MAT2 = bindings.DOUBLE_MAT2;
-        pub const DOUBLE_MAT3 = bindings.DOUBLE_MAT3;
-        pub const DOUBLE_MAT4 = bindings.DOUBLE_MAT4;
-        pub const DOUBLE_MAT2x3 = bindings.DOUBLE_MAT2x3;
-        pub const DOUBLE_MAT2x4 = bindings.DOUBLE_MAT2x4;
-        pub const DOUBLE_MAT3x2 = bindings.DOUBLE_MAT3x2;
-        pub const DOUBLE_MAT3x4 = bindings.DOUBLE_MAT3x4;
-        pub const DOUBLE_MAT4x2 = bindings.DOUBLE_MAT4x2;
-        pub const DOUBLE_MAT4x3 = bindings.DOUBLE_MAT4x3;
         pub const MAX_VIEWPORTS = bindings.MAX_VIEWPORTS;
         pub const VIEWPORT_SUBPIXEL_BITS = bindings.VIEWPORT_SUBPIXEL_BITS;
         pub const VIEWPORT_BOUNDS_RANGE = bindings.VIEWPORT_BOUNDS_RANGE;
@@ -4516,7 +4611,224 @@ pub fn Wrap(comptime bindings: anytype) type {
         // OpenGL 4.2 (Core Profile)
         //
         //--------------------------------------------------------------------------------------------------
-        // TODO
+        pub const COPY_READ_BUFFER_BINDING = bindings.COPY_READ_BUFFER_BINDING;
+        pub const COPY_WRITE_BUFFER_BINDING = bindings.COPY_WRITE_BUFFER_BINDING;
+        pub const TRANSFORM_FEEDBACK_ACTIVE = bindings.TRANSFORM_FEEDBACK_ACTIVE;
+        pub const TRANSFORM_FEEDBACK_PAUSED = bindings.TRANSFORM_FEEDBACK_PAUSED;
+        pub const UNPACK_COMPRESSED_BLOCK_WIDTH = bindings.UNPACK_COMPRESSED_BLOCK_WIDTH;
+        pub const UNPACK_COMPRESSED_BLOCK_HEIGHT = bindings.UNPACK_COMPRESSED_BLOCK_HEIGHT;
+        pub const UNPACK_COMPRESSED_BLOCK_DEPTH = bindings.UNPACK_COMPRESSED_BLOCK_DEPTH;
+        pub const UNPACK_COMPRESSED_BLOCK_SIZE = bindings.UNPACK_COMPRESSED_BLOCK_SIZE;
+        pub const PACK_COMPRESSED_BLOCK_WIDTH = bindings.PACK_COMPRESSED_BLOCK_WIDTH;
+        pub const PACK_COMPRESSED_BLOCK_HEIGHT = bindings.PACK_COMPRESSED_BLOCK_HEIGHT;
+        pub const PACK_COMPRESSED_BLOCK_DEPTH = bindings.PACK_COMPRESSED_BLOCK_DEPTH;
+        pub const PACK_COMPRESSED_BLOCK_SIZE = bindings.PACK_COMPRESSED_BLOCK_SIZE;
+        pub const NUM_SAMPLE_COUNTS = bindings.NUM_SAMPLE_COUNTS;
+        pub const MIN_MAP_BUFFER_ALIGNMENT = bindings.MIN_MAP_BUFFER_ALIGNMENT;
+        pub const ATOMIC_COUNTER_BUFFER = bindings.ATOMIC_COUNTER_BUFFER;
+        pub const ATOMIC_COUNTER_BUFFER_BINDING = bindings.ATOMIC_COUNTER_BUFFER_BINDING;
+        pub const ATOMIC_COUNTER_BUFFER_START = bindings.ATOMIC_COUNTER_BUFFER_START;
+        pub const ATOMIC_COUNTER_BUFFER_SIZE = bindings.ATOMIC_COUNTER_BUFFER_SIZE;
+        pub const ATOMIC_COUNTER_BUFFER_DATA_SIZE = bindings.ATOMIC_COUNTER_BUFFER_DATA_SIZE;
+        pub const ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS = bindings.ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS;
+        pub const ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES = bindings.ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES;
+        pub const ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER = bindings.ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER;
+        pub const ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER = bindings.ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER;
+        pub const ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER = bindings.ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER;
+        pub const ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER = bindings.ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER;
+        pub const ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER = bindings.ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER;
+        pub const MAX_VERTEX_ATOMIC_COUNTER_BUFFERS = bindings.MAX_VERTEX_ATOMIC_COUNTER_BUFFERS;
+        pub const MAX_TESS_CONTROL_ATOMIC_COUNTER_BUFFERS = bindings.MAX_TESS_CONTROL_ATOMIC_COUNTER_BUFFERS;
+        pub const MAX_TESS_EVALUATION_ATOMIC_COUNTER_BUFFERS = bindings.MAX_TESS_EVALUATION_ATOMIC_COUNTER_BUFFERS;
+        pub const MAX_GEOMETRY_ATOMIC_COUNTER_BUFFERS = bindings.MAX_GEOMETRY_ATOMIC_COUNTER_BUFFERS;
+        pub const MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS = bindings.MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS;
+        pub const MAX_COMBINED_ATOMIC_COUNTER_BUFFERS = bindings.MAX_COMBINED_ATOMIC_COUNTER_BUFFERS;
+        pub const MAX_VERTEX_ATOMIC_COUNTERS = bindings.MAX_VERTEX_ATOMIC_COUNTERS;
+        pub const MAX_TESS_CONTROL_ATOMIC_COUNTERS = bindings.MAX_TESS_CONTROL_ATOMIC_COUNTERS;
+        pub const MAX_TESS_EVALUATION_ATOMIC_COUNTERS = bindings.MAX_TESS_EVALUATION_ATOMIC_COUNTERS;
+        pub const MAX_GEOMETRY_ATOMIC_COUNTERS = bindings.MAX_GEOMETRY_ATOMIC_COUNTERS;
+        pub const MAX_FRAGMENT_ATOMIC_COUNTERS = bindings.MAX_FRAGMENT_ATOMIC_COUNTERS;
+        pub const MAX_COMBINED_ATOMIC_COUNTERS = bindings.MAX_COMBINED_ATOMIC_COUNTERS;
+        pub const MAX_ATOMIC_COUNTER_BUFFER_SIZE = bindings.MAX_ATOMIC_COUNTER_BUFFER_SIZE;
+        pub const MAX_ATOMIC_COUNTER_BUFFER_BINDINGS = bindings.MAX_ATOMIC_COUNTER_BUFFER_BINDINGS;
+        pub const ACTIVE_ATOMIC_COUNTER_BUFFERS = bindings.ACTIVE_ATOMIC_COUNTER_BUFFERS;
+        pub const UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX = bindings.UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX;
+        pub const UNSIGNED_INT_ATOMIC_COUNTER = bindings.UNSIGNED_INT_ATOMIC_COUNTER;
+        pub const VERTEX_ATTRIB_ARRAY_BARRIER_BIT = bindings.VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
+        pub const ELEMENT_ARRAY_BARRIER_BIT = bindings.ELEMENT_ARRAY_BARRIER_BIT;
+        pub const UNIFORM_BARRIER_BIT = bindings.UNIFORM_BARRIER_BIT;
+        pub const TEXTURE_FETCH_BARRIER_BIT = bindings.TEXTURE_FETCH_BARRIER_BIT;
+        pub const SHADER_IMAGE_ACCESS_BARRIER_BIT = bindings.SHADER_IMAGE_ACCESS_BARRIER_BIT;
+        pub const COMMAND_BARRIER_BIT = bindings.COMMAND_BARRIER_BIT;
+        pub const PIXEL_BUFFER_BARRIER_BIT = bindings.PIXEL_BUFFER_BARRIER_BIT;
+        pub const TEXTURE_UPDATE_BARRIER_BIT = bindings.TEXTURE_UPDATE_BARRIER_BIT;
+        pub const BUFFER_UPDATE_BARRIER_BIT = bindings.BUFFER_UPDATE_BARRIER_BIT;
+        pub const FRAMEBUFFER_BARRIER_BIT = bindings.FRAMEBUFFER_BARRIER_BIT;
+        pub const TRANSFORM_FEEDBACK_BARRIER_BIT = bindings.TRANSFORM_FEEDBACK_BARRIER_BIT;
+        pub const ATOMIC_COUNTER_BARRIER_BIT = bindings.ATOMIC_COUNTER_BARRIER_BIT;
+        pub const MAX_IMAGE_UNITS = bindings.MAX_IMAGE_UNITS;
+        pub const MAX_COMBINED_IMAGE_UNITS_AND_FRAGMENT_OUTPUTS = bindings.MAX_COMBINED_IMAGE_UNITS_AND_FRAGMENT_OUTPUTS;
+        pub const IMAGE_BINDING_NAME = bindings.IMAGE_BINDING_NAME;
+        pub const IMAGE_BINDING_LEVEL = bindings.IMAGE_BINDING_LEVEL;
+        pub const IMAGE_BINDING_LAYERED = bindings.IMAGE_BINDING_LAYERED;
+        pub const IMAGE_BINDING_LAYER = bindings.IMAGE_BINDING_LAYER;
+        pub const IMAGE_BINDING_ACCESS = bindings.IMAGE_BINDING_ACCESS;
+        pub const IMAGE_1D = bindings.IMAGE_1D;
+        pub const IMAGE_2D = bindings.IMAGE_2D;
+        pub const IMAGE_3D = bindings.IMAGE_3D;
+        pub const IMAGE_2D_RECT = bindings.IMAGE_2D_RECT;
+        pub const IMAGE_CUBE = bindings.IMAGE_CUBE;
+        pub const IMAGE_BUFFER = bindings.IMAGE_BUFFER;
+        pub const IMAGE_1D_ARRAY = bindings.IMAGE_1D_ARRAY;
+        pub const IMAGE_2D_ARRAY = bindings.IMAGE_2D_ARRAY;
+        pub const IMAGE_CUBE_MAP_ARRAY = bindings.IMAGE_CUBE_MAP_ARRAY;
+        pub const IMAGE_2D_MULTISAMPLE = bindings.IMAGE_2D_MULTISAMPLE;
+        pub const IMAGE_2D_MULTISAMPLE_ARRAY = bindings.IMAGE_2D_MULTISAMPLE_ARRAY;
+        pub const INT_IMAGE_1D = bindings.INT_IMAGE_1D;
+        pub const INT_IMAGE_2D = bindings.INT_IMAGE_2D;
+        pub const INT_IMAGE_3D = bindings.INT_IMAGE_3D;
+        pub const INT_IMAGE_2D_RECT = bindings.INT_IMAGE_2D_RECT;
+        pub const INT_IMAGE_CUBE = bindings.INT_IMAGE_CUBE;
+        pub const INT_IMAGE_BUFFER = bindings.INT_IMAGE_BUFFER;
+        pub const INT_IMAGE_1D_ARRAY = bindings.INT_IMAGE_1D_ARRAY;
+        pub const INT_IMAGE_2D_ARRAY = bindings.INT_IMAGE_2D_ARRAY;
+        pub const INT_IMAGE_CUBE_MAP_ARRAY = bindings.INT_IMAGE_CUBE_MAP_ARRAY;
+        pub const INT_IMAGE_2D_MULTISAMPLE = bindings.INT_IMAGE_2D_MULTISAMPLE;
+        pub const INT_IMAGE_2D_MULTISAMPLE_ARRAY = bindings.INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+        pub const UNSIGNED_INT_IMAGE_1D = bindings.UNSIGNED_INT_IMAGE_1D;
+        pub const UNSIGNED_INT_IMAGE_2D = bindings.UNSIGNED_INT_IMAGE_2D;
+        pub const UNSIGNED_INT_IMAGE_3D = bindings.UNSIGNED_INT_IMAGE_3D;
+        pub const UNSIGNED_INT_IMAGE_2D_RECT = bindings.UNSIGNED_INT_IMAGE_2D_RECT;
+        pub const UNSIGNED_INT_IMAGE_CUBE = bindings.UNSIGNED_INT_IMAGE_CUBE;
+        pub const UNSIGNED_INT_IMAGE_BUFFER = bindings.UNSIGNED_INT_IMAGE_BUFFER;
+        pub const UNSIGNED_INT_IMAGE_1D_ARRAY = bindings.UNSIGNED_INT_IMAGE_1D_ARRAY;
+        pub const UNSIGNED_INT_IMAGE_2D_ARRAY = bindings.UNSIGNED_INT_IMAGE_2D_ARRAY;
+        pub const UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY = bindings.UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY;
+        pub const UNSIGNED_INT_IMAGE_2D_MULTISAMPLE = bindings.UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
+        pub const UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY = bindings.UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+        pub const MAX_IMAGE_SAMPLES = bindings.MAX_IMAGE_SAMPLES;
+        pub const IMAGE_BINDING_FORMAT = bindings.IMAGE_BINDING_FORMAT;
+        pub const IMAGE_FORMAT_COMPATIBILITY_TYPE = bindings.IMAGE_FORMAT_COMPATIBILITY_TYPE;
+        pub const IMAGE_FORMAT_COMPATIBILITY_BY_SIZE = bindings.IMAGE_FORMAT_COMPATIBILITY_BY_SIZE;
+        pub const IMAGE_FORMAT_COMPATIBILITY_BY_CLASS = bindings.IMAGE_FORMAT_COMPATIBILITY_BY_CLASS;
+        pub const MAX_VERTEX_IMAGE_UNIFORMS = bindings.MAX_VERTEX_IMAGE_UNIFORMS;
+        pub const MAX_TESS_CONTROL_IMAGE_UNIFORMS = bindings.MAX_TESS_CONTROL_IMAGE_UNIFORMS;
+        pub const MAX_TESS_EVALUATION_IMAGE_UNIFORMS = bindings.MAX_TESS_EVALUATION_IMAGE_UNIFORMS;
+        pub const MAX_GEOMETRY_IMAGE_UNIFORMS = bindings.MAX_GEOMETRY_IMAGE_UNIFORMS;
+        pub const MAX_FRAGMENT_IMAGE_UNIFORMS = bindings.MAX_FRAGMENT_IMAGE_UNIFORMS;
+        pub const MAX_COMBINED_IMAGE_UNIFORMS = bindings.MAX_COMBINED_IMAGE_UNIFORMS;
+        pub const COMPRESSED_RGBA_BPTC_UNORM = bindings.COMPRESSED_RGBA_BPTC_UNORM;
+        pub const COMPRESSED_SRGB_ALPHA_BPTC_UNORM = bindings.COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+        pub const COMPRESSED_RGB_BPTC_SIGNED_FLOAT = bindings.COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+        pub const COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT = bindings.COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+        pub const TEXTURE_IMMUTABLE_FORMAT = bindings.TEXTURE_IMMUTABLE_FORMAT;
+
+        // pub var drawArraysInstancedBaseInstance: *const fn (
+        //     mode: Enum,
+        //     first: Int,
+        //     count: Sizei,
+        //     instancecount: Sizei,
+        //     baseinstance: Uint,
+        // ) callconv(.C) void = undefined;
+        // pub var drawElementsInstancedBaseInstance: *const fn (
+        //     mode: Enum,
+        //     count: Sizei,
+        //     type: Enum,
+        //     indices: *const anyopaque,
+        //     instancecount: Sizei,
+        //     baseinstance: Uint,
+        // ) callconv(.C) void = undefined;
+        // pub var drawElementsInstancedBaseVertexBaseInstance: *const fn (
+        //     mode: Enum,
+        //     count: Sizei,
+        //     type: Enum,
+        //     indices: *const anyopaque,
+        //     instancecount: Sizei,
+        //     basevertex: Int,
+        //     baseinstance: Uint,
+        // ) callconv(.C) void = undefined;
+        // pub var getInternalFormativ: *const fn (
+        //     target: Enum,
+        //     internalformat: Enum,
+        //     pname: Enum,
+        //     count: Sizei,
+        //     params: [*c]Int,
+        // ) callconv(.C) void = undefined;
+
+        // pub var getActiveAtomicCounterBufferiv: *const fn (
+        //     program: Uint,
+        //     bufferIndex: Uint,
+        //     pname: Enum,
+        //     params: [*c]Int,
+        // ) callconv(.C) void = undefined;
+        pub fn getActiveAtomicCounterBufferiv(
+            program: Program,
+            bufferIndex: Uint,
+            pname: enum(Enum) {
+                atomic_counter_buffer_size = ATOMIC_COUNTER_BUFFER_SIZE,
+                atomic_counter_buffer_data_size = ATOMIC_COUNTER_BUFFER_DATA_SIZE,
+                atomic_counter_buffer_active_atomic_counters = ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS,
+                atomic_counter_buffer_active_atomic_counter_indices = ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES,
+                atomic_counter_buffer_referenced_by_vertex_shader = ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER,
+                atomic_counter_buffer_referenced_by_tess_control_shader = ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER,
+                atomic_counter_buffer_referenced_by_tess_evaluation_shader = ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER,
+                atomic_counter_buffer_referenced_by_geometry_shader = ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER,
+                atomic_counter_buffer_referenced_by_fragment_shader = ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER,
+            },
+            params: []Int,
+        ) void {
+            bindings.getActiveAtomicCounterBufferiv(
+                program.name,
+                bufferIndex,
+                @intFromEnum(pname),
+                @ptrCast(params.ptr),
+            );
+        }
+
+        // pub var bindImageTexture: *const fn (
+        //     unit: Uint,
+        //     texture: Uint,
+        //     level: Int,
+        //     layered: Boolean,
+        //     layer: Int,
+        //     access: Enum,
+        //     format: Enum,
+        // ) callconv(.C) void = undefined;
+        // pub var memoryBarrier: *const fn (
+        //     barriers: Bitfield,
+        // ) callconv(.C) void = undefined;
+        // pub var texStorage1D: *const fn (
+        //     target: Enum,
+        //     levels: Sizei,
+        //     internalformat: Enum,
+        //     width: Sizei,
+        // ) callconv(.C) void = undefined;
+        // pub var texStorage2D: *const fn (
+        //     target: Enum,
+        //     levels: Sizei,
+        //     internalformat: Enum,
+        //     width: Sizei,
+        //     height: Sizei,
+        // ) callconv(.C) void = undefined;
+        // pub var texStorage3D: *const fn (
+        //     target: Enum,
+        //     levels: Sizei,
+        //     internalformat: Enum,
+        //     width: Sizei,
+        //     height: Sizei,
+        //     depth: Sizei,
+        // ) callconv(.C) void = undefined;
+        // pub var drawTransformFeedbackInstanced: *const fn (
+        //     mode: Enum,
+        //     id: Uint,
+        //     instancecount: Sizei,
+        // ) callconv(.C) void = undefined;
+        // pub var drawTransformFeedbackStreamInstanced: *const fn (
+        //     mode: Enum,
+        //     id: Uint,
+        //     stream: Uint,
+        //     instancecount: Sizei,
+        // ) callconv(.C) void = undefined;
 
         //--------------------------------------------------------------------------------------------------
         //
