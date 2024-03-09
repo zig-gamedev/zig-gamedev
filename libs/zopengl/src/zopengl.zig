@@ -1566,10 +1566,16 @@ comptime {
     //----------------------------------------------------------------------------------------------
     // OpenGL 4.2 (Core Profile)
     //----------------------------------------------------------------------------------------------
+    @export(bindings.drawArraysInstancedBaseInstance, .{ .name = "glDrawArraysInstancedBaseInstance", .linkage = linkage });
+    @export(bindings.drawElementsInstancedBaseInstance, .{ .name = "glDrawElementsInstancedBaseInstance", .linkage = linkage });
+    @export(bindings.drawElementsInstancedBaseVertexBaseInstance, .{ .name = "glDrawElementsInstancedBaseVertexBaseInstance", .linkage = linkage });
+    @export(bindings.getInternalFormativ, .{ .name = "glGetInternalFormativ", .linkage = linkage });
     @export(bindings.getActiveAtomicCounterBufferiv, .{ .name = "glGetActiveAtomicCounterBufferiv", .linkage = linkage });
     @export(bindings.bindImageTexture, .{ .name = "glBindImageTexture", .linkage = linkage });
     @export(bindings.memoryBarrier, .{ .name = "glMemoryBarrier", .linkage = linkage });
     @export(bindings.texStorage1D, .{ .name = "glTexStorage1D", .linkage = linkage });
     @export(bindings.texStorage2D, .{ .name = "glTexStorage2D", .linkage = linkage });
     @export(bindings.texStorage3D, .{ .name = "glTexStorage3D", .linkage = linkage });
+    @export(bindings.drawTransformFeedbackInstanced, .{ .name = "glDrawTransformFeedbackInstanced", .linkage = linkage });
+    @export(bindings.drawTransformFeedbackStreamInstanced, .{ .name = "glDrawTransformFeedbackStreamInstanced", .linkage = linkage });
 }

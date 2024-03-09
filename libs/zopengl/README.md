@@ -1,4 +1,4 @@
-# zopengl v0.4.1 - OpenGL loader
+# zopengl v0.4.2 - OpenGL loader
 
 Supports:
   * OpenGL Core Profile up to version 4.2
