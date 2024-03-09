@@ -401,6 +401,22 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 3.3
     if (ver >= 33) {
+        try load("glBindFragDataLocationIndexed", .{&bindings.bindFragDataLocationIndexed});
+        try load("glGetFragDataIndex", .{&bindings.getFragDataIndex});
+        try load("glGenSamplers", .{&bindings.genSamplers});
+        try load("glDeleteSamplers", .{&bindings.deleteSamplers});
+        try load("glIsSampler", .{&bindings.isSampler});
+        try load("glBindSampler", .{&bindings.bindSampler});
+        try load("glSamplerParameteri", .{&bindings.samplerParameteri});
+        try load("glSamplerParameteriv", .{&bindings.samplerParameteriv});
+        try load("glSamplerParameterf", .{&bindings.samplerParameterf});
+        try load("glSamplerParameterfv", .{&bindings.samplerParameterfv});
+        try load("glSamplerParameterIiv", .{&bindings.samplerParameterIiv});
+        try load("glSamplerParameterIuiv", .{&bindings.samplerParameterIuiv});
+        try load("glGetSamplerParameteriv", .{&bindings.getSamplerParameteriv});
+        try load("glGetSamplerParameterIiv", .{&bindings.getSamplerParameterIiv});
+        try load("glGetSamplerParameterfv", .{&bindings.getSamplerParameterfv});
+        try load("glGetSamplerParameterIuiv", .{&bindings.getSamplerParameterIuiv});
         try load("glQueryCounter", .{&bindings.queryCounter});
         try load("glGetQueryObjecti64v", .{&bindings.getQueryObjecti64v});
         try load("glGetQueryObjectui64v", .{&bindings.getQueryObjectui64v});
@@ -1351,6 +1367,22 @@ comptime {
     //----------------------------------------------------------------------------------------------
     // OpenGL 3.3 (Core Profile)
     //----------------------------------------------------------------------------------------------
+    @export(bindings.bindFragDataLocationIndexed, .{ .name = "glBindFragDataLocationIndexed", .linkage = linkage });
+    @export(bindings.getFragDataIndex, .{ .name = "glGetFragDataIndex", .linkage = linkage });
+    @export(bindings.genSamplers, .{ .name = "glGenSamplers", .linkage = linkage });
+    @export(bindings.deleteSamplers, .{ .name = "glDeleteSamplers", .linkage = linkage });
+    @export(bindings.isSampler, .{ .name = "glIsSampler", .linkage = linkage });
+    @export(bindings.bindSampler, .{ .name = "glBindSampler", .linkage = linkage });
+    @export(bindings.samplerParameteri, .{ .name = "glSamplerParameteri", .linkage = linkage });
+    @export(bindings.samplerParameteriv, .{ .name = "glSamplerParameteriv", .linkage = linkage });
+    @export(bindings.samplerParameterf, .{ .name = "glSamplerParameterf", .linkage = linkage });
+    @export(bindings.samplerParameterfv, .{ .name = "glSamplerParameterfv", .linkage = linkage });
+    @export(bindings.samplerParameterIiv, .{ .name = "glSamplerParameterIiv", .linkage = linkage });
+    @export(bindings.samplerParameterIuiv, .{ .name = "glSamplerParameterIuiv", .linkage = linkage });
+    @export(bindings.getSamplerParameteriv, .{ .name = "glGetSamplerParameteriv", .linkage = linkage });
+    @export(bindings.getSamplerParameterIiv, .{ .name = "glGetSamplerParameterIiv", .linkage = linkage });
+    @export(bindings.getSamplerParameterfv, .{ .name = "glGetSamplerParameterfv", .linkage = linkage });
+    @export(bindings.getSamplerParameterIuiv, .{ .name = "glGetSamplerParameterIuiv", .linkage = linkage });
     @export(bindings.queryCounter, .{ .name = "glQueryCounter", .linkage = linkage });
     @export(bindings.getQueryObjecti64v, .{ .name = "glGetQueryObjecti64v", .linkage = linkage });
     @export(bindings.getQueryObjectui64v, .{ .name = "glGetQueryObjectui64v", .linkage = linkage });
