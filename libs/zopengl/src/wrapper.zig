@@ -3942,6 +3942,8 @@ pub fn Wrap(comptime bindings: anytype) type {
         // pub var vertexAttribP3uiv: *const fn (index: Uint, type: Enum, normalized: Boolean, value: *const Uint) callconv(.C) void = undefined;
         // pub var vertexAttribP4ui: *const fn (index: Uint, type: Enum, normalized: Boolean, value: Uint) callconv(.C) void = undefined;
         // pub var vertexAttribP4uiv: *const fn (index: Uint, type: Enum, normalized: Boolean, value: *const Uint) callconv(.C) void = undefined;
+
+        // TODO: where do these belong?
         // pub var vertexP2ui: *const fn (type: Enum, value: Uint) callconv(.C) void = undefined;
         // pub var vertexP2uiv: *const fn (type: Enum, value: *const Uint) callconv(.C) void = undefined;
         // pub var vertexP3ui: *const fn (type: Enum, value: Uint) callconv(.C) void = undefined;
