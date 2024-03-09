@@ -140,6 +140,7 @@ const ContactListener = extern struct {
 };
 
 const DemoState = struct {
+    window: *zglfw.Window,
     gctx: *zgpu.GraphicsContext,
 
     render_pipe: zgpu.RenderPipelineHandle = .{},
@@ -257,7 +258,19 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     //
     // Graphics
     //
-    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+    const gctx = try zgpu.GraphicsContext.create(
+        allocator,
+        .{
+            .window = window,
+            .fn_getTime = @ptrCast(&zglfw.getTime),
+            .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+            .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+            .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+            .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+            .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+        },
+        .{},
+    );
     errdefer gctx.destroy(allocator);
 
     // Uniform buffer and layout
@@ -376,6 +389,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     //
     const demo = try allocator.create(DemoState);
     demo.* = .{
+        .window = window,
         .gctx = gctx,
         .uniform_bg = uniform_bg,
         .vertex_buf = vertex_buf,
@@ -433,7 +447,7 @@ fn update(demo: *DemoState) void {
     zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
     demo.physics_system.update(1.0 / 60.0, .{}) catch unreachable;
 
-    const window = demo.gctx.window;
+    const window = demo.window;
 
     // Handle camera rotation with mouse.
     {

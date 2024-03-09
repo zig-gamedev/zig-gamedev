@@ -121,7 +121,7 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{},
-        .deps = .{ .zpool = zpool_pkg, .zglfw = zglfw_pkg },
+        .deps = .{ .zpool = zpool_pkg },
     });
     ztracy_pkg = ztracy.package(b, target, optimize, .{
         .options = .{ .enable_ztracy = true, .enable_fibers = true },

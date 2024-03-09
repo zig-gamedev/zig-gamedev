@@ -24,7 +24,7 @@ pub fn main() !void {
     const glfw_window = try glfw.Window.create(1600, 1200, window_name, null);
     defer glfw_window.destroy();
 
-    const window = try glfw.native.getWin32Window(glfw_window);
+    const window = glfw.getWin32Window(glfw_window) orelse return error.FailedToGetWin32Window;
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
     defer gctx.deinit(allocator);
 

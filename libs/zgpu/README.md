@@ -1,4 +1,4 @@
-# zgpu v0.9.1 - Cross-platform graphics library
+# zgpu v0.10.0 - Cross-platform graphics library
 
 `zgpu` is a small helper library built on top of native wgpu implementation (Dawn).
 
@@ -16,7 +16,7 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu`, `zpool`, `zglfw` and `system-sdk` folders to a `libs` of the root of your project and add the following to your `build.zig.zon` file:
+Copy `zgpu`, `zpool` and `system-sdk` folders to a `libs` of the root of your project and add the following to your `build.zig.zon` file:
 ```zig
 .{
     .name = "your_project_name",
@@ -24,7 +24,6 @@ Copy `zgpu`, `zpool`, `zglfw` and `system-sdk` folders to a `libs` of the root o
     .dependencies = .{
         .zgpu = .{ .path = libs/zgpu" },
         .zpool = .{ .path = libs/zpool" },
-        .zglfw = .{ .path = libs/zglfw" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
             .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
@@ -56,24 +55,20 @@ then in your `build.zig file:
 const std = @import("std");
 const zgpu = @import("zgpu");
 const zpool = @import("zpool");
-const zglfw = @import("zglfw");
 
 pub fn build(b: *std.Build) void {
     ...
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
     const zpool_pkg = zpool.package(b, target, optimize, .{});
     const zgpu_pkg = zgpu.package(b, target, optimize, .{
         .deps = .{
             .zpool = zpool_pkg,
-            .zglfw = zglfw_pkg,
         },
     });
 
     zgpu_pkg.link(exe);
-    zglfw_pkg.link(exe);
 }
 ```
 
@@ -119,6 +114,27 @@ pub fn build(b: *std.Build) void {
     ...
 }
 ```
+
+### Graphics Context
+Create a `GraphicsContext` using a `WindowProvider`. For example, using [zglfw](https://github.com/zig-gamedev):
+```zig
+const gctx = try zgpu.GraphicsContext.create(
+    alloctor,
+    .{
+        .window = window,
+        .fn_getTime = @ptrCast(&zglfw.getTime),
+        .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+
+        // optional fields
+        .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+        .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+        .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+        .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+    },
+    .{}, // default context creation options
+);
+```
+
 ### Uniforms
 
 * Implemented as a uniform buffer pool

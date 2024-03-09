@@ -1,6 +1,6 @@
 .{
     .name = "zgpu",
-    .version = "0.9.1",
+    .version = "0.10.0",
     .paths = .{
         "build.zig",
         "build.zig.zon",
@@ -10,7 +10,6 @@
     },
     .dependencies = .{
         .system_sdk = .{ .path = "../system-sdk" },
-        .zglfw = .{ .path = "../zglfw" },
         .zpool = .{ .path = "../zpool" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",

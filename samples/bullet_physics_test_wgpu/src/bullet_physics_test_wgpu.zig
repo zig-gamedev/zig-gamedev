@@ -75,6 +75,7 @@ const ccd_swept_sphere_radius: f32 = 0.5;
 const default_gravity: f32 = 10.0;
 
 const DemoState = struct {
+    window: *zglfw.Window,
     gctx: *zgpu.GraphicsContext,
 
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
@@ -117,7 +118,19 @@ const DemoState = struct {
 };
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+    const gctx = try zgpu.GraphicsContext.create(
+        allocator,
+        .{
+            .window = window,
+            .fn_getTime = @ptrCast(&zglfw.getTime),
+            .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+            .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+            .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+            .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+            .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+        },
+        .{},
+    );
     errdefer gctx.destroy(allocator);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
@@ -208,6 +221,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
+        .window = window,
         .gctx = gctx,
         .vertex_buf = vertex_buf,
         .index_buf = index_buf,
@@ -380,7 +394,7 @@ fn update(demo: *DemoState) void {
     }
     zgui.end();
 
-    const window = demo.gctx.window;
+    const window = demo.window;
 
     // Handle camera rotation with mouse.
     {
@@ -1195,7 +1209,7 @@ fn initMeshes(
 }
 
 fn objectPicking(demo: *DemoState, want_capture_mouse: bool) void {
-    const window = demo.gctx.window;
+    const window = demo.window;
 
     const mouse_button_is_down = window.getMouseButton(.left) == .press and !want_capture_mouse;
 
