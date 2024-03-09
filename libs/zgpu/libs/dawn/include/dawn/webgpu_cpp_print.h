@@ -142,6 +142,18 @@ namespace wgpu {
       case BlendFactor::OneMinusConstant:
         o << "BlendFactor::OneMinusConstant";
         break;
+      case BlendFactor::Src1:
+        o << "BlendFactor::Src1";
+        break;
+      case BlendFactor::OneMinusSrc1:
+        o << "BlendFactor::OneMinusSrc1";
+        break;
+      case BlendFactor::Src1Alpha:
+        o << "BlendFactor::Src1Alpha";
+        break;
+      case BlendFactor::OneMinusSrc1Alpha:
+        o << "BlendFactor::OneMinusSrc1Alpha";
+        break;
           default:
             o << "BlendFactor::" << std::showbase << std::hex << std::setfill('0') << std::setw(4) << static_cast<typename std::underlying_type<BlendFactor>::type>(value);
       }
@@ -490,9 +502,6 @@ namespace wgpu {
       case FeatureName::Float32Filterable:
         o << "FeatureName::Float32Filterable";
         break;
-      case FeatureName::DawnShaderFloat16:
-        o << "FeatureName::DawnShaderFloat16";
-        break;
       case FeatureName::DawnInternalUsages:
         o << "FeatureName::DawnInternalUsages";
         break;
@@ -519,6 +528,57 @@ namespace wgpu {
         break;
       case FeatureName::MSAARenderToSingleSampled:
         o << "FeatureName::MSAARenderToSingleSampled";
+        break;
+      case FeatureName::DualSourceBlending:
+        o << "FeatureName::DualSourceBlending";
+        break;
+      case FeatureName::D3D11MultithreadProtected:
+        o << "FeatureName::D3D11MultithreadProtected";
+        break;
+      case FeatureName::ANGLETextureSharing:
+        o << "FeatureName::ANGLETextureSharing";
+        break;
+      case FeatureName::SharedTextureMemoryVkDedicatedAllocation:
+        o << "FeatureName::SharedTextureMemoryVkDedicatedAllocation";
+        break;
+      case FeatureName::SharedTextureMemoryAHardwareBuffer:
+        o << "FeatureName::SharedTextureMemoryAHardwareBuffer";
+        break;
+      case FeatureName::SharedTextureMemoryDmaBuf:
+        o << "FeatureName::SharedTextureMemoryDmaBuf";
+        break;
+      case FeatureName::SharedTextureMemoryOpaqueFD:
+        o << "FeatureName::SharedTextureMemoryOpaqueFD";
+        break;
+      case FeatureName::SharedTextureMemoryZirconHandle:
+        o << "FeatureName::SharedTextureMemoryZirconHandle";
+        break;
+      case FeatureName::SharedTextureMemoryDXGISharedHandle:
+        o << "FeatureName::SharedTextureMemoryDXGISharedHandle";
+        break;
+      case FeatureName::SharedTextureMemoryD3D11Texture2D:
+        o << "FeatureName::SharedTextureMemoryD3D11Texture2D";
+        break;
+      case FeatureName::SharedTextureMemoryIOSurface:
+        o << "FeatureName::SharedTextureMemoryIOSurface";
+        break;
+      case FeatureName::SharedTextureMemoryEGLImage:
+        o << "FeatureName::SharedTextureMemoryEGLImage";
+        break;
+      case FeatureName::SharedFenceVkSemaphoreOpaqueFD:
+        o << "FeatureName::SharedFenceVkSemaphoreOpaqueFD";
+        break;
+      case FeatureName::SharedFenceVkSemaphoreSyncFD:
+        o << "FeatureName::SharedFenceVkSemaphoreSyncFD";
+        break;
+      case FeatureName::SharedFenceVkSemaphoreZirconHandle:
+        o << "FeatureName::SharedFenceVkSemaphoreZirconHandle";
+        break;
+      case FeatureName::SharedFenceDXGISharedHandle:
+        o << "FeatureName::SharedFenceDXGISharedHandle";
+        break;
+      case FeatureName::SharedFenceMTLSharedEvent:
+        o << "FeatureName::SharedFenceMTLSharedEvent";
         break;
           default:
             o << "FeatureName::" << std::showbase << std::hex << std::setfill('0') << std::setw(4) << static_cast<typename std::underlying_type<FeatureName>::type>(value);
@@ -873,6 +933,78 @@ namespace wgpu {
       case SType::DawnRenderPassColorAttachmentRenderToSingleSampled:
         o << "SType::DawnRenderPassColorAttachmentRenderToSingleSampled";
         break;
+      case SType::SharedTextureMemoryVkImageDescriptor:
+        o << "SType::SharedTextureMemoryVkImageDescriptor";
+        break;
+      case SType::SharedTextureMemoryVkDedicatedAllocationDescriptor:
+        o << "SType::SharedTextureMemoryVkDedicatedAllocationDescriptor";
+        break;
+      case SType::SharedTextureMemoryAHardwareBufferDescriptor:
+        o << "SType::SharedTextureMemoryAHardwareBufferDescriptor";
+        break;
+      case SType::SharedTextureMemoryDmaBufDescriptor:
+        o << "SType::SharedTextureMemoryDmaBufDescriptor";
+        break;
+      case SType::SharedTextureMemoryOpaqueFDDescriptor:
+        o << "SType::SharedTextureMemoryOpaqueFDDescriptor";
+        break;
+      case SType::SharedTextureMemoryZirconHandleDescriptor:
+        o << "SType::SharedTextureMemoryZirconHandleDescriptor";
+        break;
+      case SType::SharedTextureMemoryDXGISharedHandleDescriptor:
+        o << "SType::SharedTextureMemoryDXGISharedHandleDescriptor";
+        break;
+      case SType::SharedTextureMemoryD3D11Texture2DDescriptor:
+        o << "SType::SharedTextureMemoryD3D11Texture2DDescriptor";
+        break;
+      case SType::SharedTextureMemoryIOSurfaceDescriptor:
+        o << "SType::SharedTextureMemoryIOSurfaceDescriptor";
+        break;
+      case SType::SharedTextureMemoryEGLImageDescriptor:
+        o << "SType::SharedTextureMemoryEGLImageDescriptor";
+        break;
+      case SType::SharedTextureMemoryInitializedBeginState:
+        o << "SType::SharedTextureMemoryInitializedBeginState";
+        break;
+      case SType::SharedTextureMemoryInitializedEndState:
+        o << "SType::SharedTextureMemoryInitializedEndState";
+        break;
+      case SType::SharedTextureMemoryVkImageLayoutBeginState:
+        o << "SType::SharedTextureMemoryVkImageLayoutBeginState";
+        break;
+      case SType::SharedTextureMemoryVkImageLayoutEndState:
+        o << "SType::SharedTextureMemoryVkImageLayoutEndState";
+        break;
+      case SType::SharedFenceVkSemaphoreOpaqueFDDescriptor:
+        o << "SType::SharedFenceVkSemaphoreOpaqueFDDescriptor";
+        break;
+      case SType::SharedFenceVkSemaphoreOpaqueFDExportInfo:
+        o << "SType::SharedFenceVkSemaphoreOpaqueFDExportInfo";
+        break;
+      case SType::SharedFenceVkSemaphoreSyncFDDescriptor:
+        o << "SType::SharedFenceVkSemaphoreSyncFDDescriptor";
+        break;
+      case SType::SharedFenceVkSemaphoreSyncFDExportInfo:
+        o << "SType::SharedFenceVkSemaphoreSyncFDExportInfo";
+        break;
+      case SType::SharedFenceVkSemaphoreZirconHandleDescriptor:
+        o << "SType::SharedFenceVkSemaphoreZirconHandleDescriptor";
+        break;
+      case SType::SharedFenceVkSemaphoreZirconHandleExportInfo:
+        o << "SType::SharedFenceVkSemaphoreZirconHandleExportInfo";
+        break;
+      case SType::SharedFenceDXGISharedHandleDescriptor:
+        o << "SType::SharedFenceDXGISharedHandleDescriptor";
+        break;
+      case SType::SharedFenceDXGISharedHandleExportInfo:
+        o << "SType::SharedFenceDXGISharedHandleExportInfo";
+        break;
+      case SType::SharedFenceMTLSharedEventDescriptor:
+        o << "SType::SharedFenceMTLSharedEventDescriptor";
+        break;
+      case SType::SharedFenceMTLSharedEventExportInfo:
+        o << "SType::SharedFenceMTLSharedEventExportInfo";
+        break;
           default:
             o << "SType::" << std::showbase << std::hex << std::setfill('0') << std::setw(4) << static_cast<typename std::underlying_type<SType>::type>(value);
       }
@@ -895,6 +1027,32 @@ namespace wgpu {
         break;
           default:
             o << "SamplerBindingType::" << std::showbase << std::hex << std::setfill('0') << std::setw(4) << static_cast<typename std::underlying_type<SamplerBindingType>::type>(value);
+      }
+      return o;
+  }
+  template <typename CharT, typename Traits>
+  std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& o, SharedFenceType value) {
+      switch (value) {
+      case SharedFenceType::Undefined:
+        o << "SharedFenceType::Undefined";
+        break;
+      case SharedFenceType::VkSemaphoreOpaqueFD:
+        o << "SharedFenceType::VkSemaphoreOpaqueFD";
+        break;
+      case SharedFenceType::VkSemaphoreSyncFD:
+        o << "SharedFenceType::VkSemaphoreSyncFD";
+        break;
+      case SharedFenceType::VkSemaphoreZirconHandle:
+        o << "SharedFenceType::VkSemaphoreZirconHandle";
+        break;
+      case SharedFenceType::DXGISharedHandle:
+        o << "SharedFenceType::DXGISharedHandle";
+        break;
+      case SharedFenceType::MTLSharedEvent:
+        o << "SharedFenceType::MTLSharedEvent";
+        break;
+          default:
+            o << "SharedFenceType::" << std::showbase << std::hex << std::setfill('0') << std::setw(4) << static_cast<typename std::underlying_type<SharedFenceType>::type>(value);
       }
       return o;
   }

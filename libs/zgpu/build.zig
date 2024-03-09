@@ -4,7 +4,9 @@ const log = std.log.scoped(.zgpu);
 const zglfw = @import("zglfw");
 const zpool = @import("zpool");
 
-const default_options = struct {
+const dawn = @import("build-dawn.zig");
+
+const DefaultOptions = struct {
     const uniforms_buffer_size = 4 * 1024 * 1024;
     const dawn_skip_validation = false;
     const buffer_pool_size = 256;
@@ -19,17 +21,17 @@ const default_options = struct {
 };
 
 pub const Options = struct {
-    uniforms_buffer_size: u64 = default_options.uniforms_buffer_size,
-    dawn_skip_validation: bool = default_options.dawn_skip_validation,
-    buffer_pool_size: u32 = default_options.buffer_pool_size,
-    texture_pool_size: u32 = default_options.texture_pool_size,
-    texture_view_pool_size: u32 = default_options.texture_view_pool_size,
-    sampler_pool_size: u32 = default_options.sampler_pool_size,
-    render_pipeline_pool_size: u32 = default_options.render_pipeline_pool_size,
-    compute_pipeline_pool_size: u32 = default_options.compute_pipeline_pool_size,
-    bind_group_pool_size: u32 = default_options.bind_group_pool_size,
-    bind_group_layout_pool_size: u32 = default_options.bind_group_layout_pool_size,
-    pipeline_layout_pool_size: u32 = default_options.pipeline_layout_pool_size,
+    uniforms_buffer_size: u64 = DefaultOptions.uniforms_buffer_size,
+    dawn_skip_validation: bool = DefaultOptions.dawn_skip_validation,
+    buffer_pool_size: u32 = DefaultOptions.buffer_pool_size,
+    texture_pool_size: u32 = DefaultOptions.texture_pool_size,
+    texture_view_pool_size: u32 = DefaultOptions.texture_view_pool_size,
+    sampler_pool_size: u32 = DefaultOptions.sampler_pool_size,
+    render_pipeline_pool_size: u32 = DefaultOptions.render_pipeline_pool_size,
+    compute_pipeline_pool_size: u32 = DefaultOptions.compute_pipeline_pool_size,
+    bind_group_pool_size: u32 = DefaultOptions.bind_group_pool_size,
+    bind_group_layout_pool_size: u32 = DefaultOptions.bind_group_layout_pool_size,
+    pipeline_layout_pool_size: u32 = DefaultOptions.pipeline_layout_pool_size,
 };
 
 pub const Package = struct {
@@ -37,12 +39,9 @@ pub const Package = struct {
     options: Options,
     zgpu: *std.Build.Module,
     zgpu_options: *std.Build.Module,
+    dawn_lib: *std.Build.Step.Compile,
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        if (!checkTargetSupported(pkg.target)) {
-            @panic("Unsupported target");
-        }
-
         exe.root_module.addImport("zgpu", pkg.zgpu);
         exe.root_module.addImport("zgpu_options", pkg.zgpu_options);
 
@@ -52,34 +51,16 @@ pub const Package = struct {
 
         switch (pkg.target.result.os.tag) {
             .windows => {
-                const dawn_dep = b.dependency("dawn_x86_64_windows_gnu", .{});
-                exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 exe.addLibraryPath(.{ .path = system_sdk.path("windows/lib/x86_64-windows-gnu").getPath(b) });
 
                 exe.linkSystemLibrary("ole32");
                 exe.linkSystemLibrary("dxguid");
             },
-            .linux => {
-                if (pkg.target.result.cpu.arch.isX86()) {
-                    const dawn_dep = b.dependency("dawn_x86_64_linux_gnu", .{});
-                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
-                } else {
-                    const dawn_dep = b.dependency("dawn_aarch64_linux_gnu", .{});
-                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
-                }
-            },
+            .linux => {},
             .macos => {
                 exe.addFrameworkPath(.{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) });
                 exe.addSystemIncludePath(.{ .path = system_sdk.path("macos12/usr/include").getPath(b) });
                 exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
-
-                if (pkg.target.result.cpu.arch.isX86()) {
-                    const dawn_dep = b.dependency("dawn_x86_64_macos", .{});
-                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
-                } else {
-                    const dawn_dep = b.dependency("dawn_aarch64_macos", .{});
-                    exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
-                }
 
                 exe.linkSystemLibrary("objc");
                 exe.linkFramework("Metal");
@@ -92,7 +73,8 @@ pub const Package = struct {
             else => {},
         }
 
-        exe.linkSystemLibrary("dawn");
+        exe.linkLibrary(pkg.dawn_lib);
+
         exe.linkLibC();
         exe.linkLibCpp();
 
@@ -116,26 +98,20 @@ pub fn package(
     _: std.builtin.Mode,
     args: struct {
         options: Options = .{},
+        dawn_lib_options: dawn.Options = .{},
         deps: struct {
             zglfw: zglfw.Package,
             zpool: zpool.Package,
         },
     },
 ) Package {
-    const step = b.addOptions();
-    step.addOption(u64, "uniforms_buffer_size", args.options.uniforms_buffer_size);
-    step.addOption(bool, "dawn_skip_validation", args.options.dawn_skip_validation);
-    step.addOption(u32, "buffer_pool_size", args.options.buffer_pool_size);
-    step.addOption(u32, "texture_pool_size", args.options.texture_pool_size);
-    step.addOption(u32, "texture_view_pool_size", args.options.texture_view_pool_size);
-    step.addOption(u32, "sampler_pool_size", args.options.sampler_pool_size);
-    step.addOption(u32, "render_pipeline_pool_size", args.options.render_pipeline_pool_size);
-    step.addOption(u32, "compute_pipeline_pool_size", args.options.compute_pipeline_pool_size);
-    step.addOption(u32, "bind_group_pool_size", args.options.bind_group_pool_size);
-    step.addOption(u32, "bind_group_layout_pool_size", args.options.bind_group_layout_pool_size);
-    step.addOption(u32, "pipeline_layout_pool_size", args.options.pipeline_layout_pool_size);
+    const options_step = b.addOptions();
+    inline for (std.meta.fields(Options)) |option_field| {
+        const option_val = @field(args.options, option_field.name);
+        options_step.addOption(@TypeOf(option_val), option_field.name, option_val);
+    }
 
-    const zgpu_options = step.createModule();
+    const zgpu_options = options_step.createModule();
 
     const zgpu = b.addModule("zgpu", .{
         .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
@@ -146,11 +122,15 @@ pub fn package(
         },
     });
 
+    const dawn_lib = dawn.buildStaticLibrary(b, target, args.dawn_lib_options) catch
+        @panic("Failed to build dawn lib");
+
     return .{
         .target = target,
         .options = args.options,
         .zgpu = zgpu,
         .zgpu_options = zgpu_options,
+        .dawn_lib = dawn_lib,
     };
 }
 
@@ -167,57 +147,69 @@ pub fn build(b: *std.Build) void {
                 u64,
                 "uniforms_buffer_size",
                 "Set uniforms buffer size",
-            ) orelse default_options.uniforms_buffer_size,
+            ) orelse DefaultOptions.uniforms_buffer_size,
             .dawn_skip_validation = b.option(
                 bool,
                 "dawn_skip_validation",
                 "Disable Dawn validation",
-            ) orelse default_options.dawn_skip_validation,
+            ) orelse DefaultOptions.dawn_skip_validation,
             .buffer_pool_size = b.option(
                 u32,
                 "buffer_pool_size",
                 "Set buffer pool size",
-            ) orelse default_options.buffer_pool_size,
+            ) orelse DefaultOptions.buffer_pool_size,
             .texture_pool_size = b.option(
                 u32,
                 "texture_pool_size",
                 "Set texture pool size",
-            ) orelse default_options.texture_pool_size,
+            ) orelse DefaultOptions.texture_pool_size,
             .texture_view_pool_size = b.option(
                 u32,
                 "texture_view_pool_size",
                 "Set texture view pool size",
-            ) orelse default_options.texture_view_pool_size,
+            ) orelse DefaultOptions.texture_view_pool_size,
             .sampler_pool_size = b.option(
                 u32,
                 "sampler_pool_size",
                 "Set sample pool size",
-            ) orelse default_options.sampler_pool_size,
+            ) orelse DefaultOptions.sampler_pool_size,
             .render_pipeline_pool_size = b.option(
                 u32,
                 "render_pipeline_pool_size",
                 "Set render pipeline pool size",
-            ) orelse default_options.render_pipeline_pool_size,
+            ) orelse DefaultOptions.render_pipeline_pool_size,
             .compute_pipeline_pool_size = b.option(
                 u32,
                 "compute_pipeline_pool_size",
                 "Set compute pipeline pool size",
-            ) orelse default_options.compute_pipeline_pool_size,
+            ) orelse DefaultOptions.compute_pipeline_pool_size,
             .bind_group_pool_size = b.option(
                 u32,
                 "bind_group_pool_size",
                 "Set bind group pool size",
-            ) orelse default_options.bind_group_pool_size,
+            ) orelse DefaultOptions.bind_group_pool_size,
             .bind_group_layout_pool_size = b.option(
                 u32,
                 "bind_group_layout_pool_size",
                 "Set bind group layout pool size",
-            ) orelse default_options.bind_group_layout_pool_size,
+            ) orelse DefaultOptions.bind_group_layout_pool_size,
             .pipeline_layout_pool_size = b.option(
                 u32,
                 "pipeline_layout_pool_size",
                 "Set pipeline layout pool size",
-            ) orelse default_options.pipeline_layout_pool_size,
+            ) orelse DefaultOptions.pipeline_layout_pool_size,
+        },
+        .dawn_lib_options = .{
+            .optimize = b.option(
+                std.builtin.Mode,
+                "dawn_lib_optimize",
+                "Specifiy build mode for Dawn lib",
+            ) orelse dawn.DefaultOptions.optimize,
+            .disable_logging = b.option(
+                bool,
+                "dawn_lib_disable_options",
+                "Whether to build Dawn lib with logging disabled",
+            ) orelse dawn.DefaultOptions.disable_logging,
         },
         .deps = .{
             .zglfw = zglfw_pkg,
@@ -246,41 +238,4 @@ pub fn runTests(
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
-}
-
-pub fn checkTargetSupported(target: std.Build.ResolvedTarget) bool {
-    const supported = switch (target.result.os.tag) {
-        .windows => target.result.cpu.arch.isX86() and target.result.abi.isGnu(),
-        .linux => (target.result.cpu.arch.isX86() or target.result.cpu.arch.isAARCH64()) and target.result.abi.isGnu(),
-        .macos => blk: {
-            if (!target.result.cpu.arch.isX86() and !target.result.cpu.arch.isAARCH64()) break :blk false;
-
-            // If min. target macOS version is lesser than the min version we have available, then
-            // our Dawn binary is incompatible with the target.
-            if (target.result.os.version_range.semver.min.order(
-                .{ .major = 12, .minor = 0, .patch = 0 },
-            ) == .lt) break :blk false;
-            break :blk true;
-        },
-        else => false,
-    };
-    if (supported == false) {
-        log.warn("\n" ++
-            \\---------------------------------------------------------------------------
-            \\
-            \\Dawn/WebGPU binary for this target is not available.
-            \\
-            \\Following targets are supported:
-            \\
-            \\x86_64-windows-gnu
-            \\x86_64-linux-gnu
-            \\x86_64-macos.12.0.0-none
-            \\aarch64-linux-gnu
-            \\aarch64-macos.12.0.0-none
-            \\
-            \\---------------------------------------------------------------------------
-            \\
-        , .{});
-    }
-    return supported;
 }

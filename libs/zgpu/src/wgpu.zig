@@ -772,8 +772,8 @@ pub const RenderBundleEncoderDescriptor = extern struct {
     color_formats: ?[*]const TextureFormat,
     depth_stencil_format: TextureFormat,
     sample_count: u32,
-    depth_read_only: bool,
-    stencil_read_only: bool,
+    depth_read_only: bool align(4),
+    stencil_read_only: bool align(4),
 };
 
 pub const VertexAttribute = extern struct {
@@ -1020,8 +1020,8 @@ pub const RequestAdapterOptions = extern struct {
     compatible_surface: ?Surface = null,
     power_preference: PowerPreference,
     backend_type: BackendType = .undef,
-    force_fallback_adapter: bool = false,
-    compatibility_mode: bool = false,
+    force_fallback_adapter: bool align(4) = false,
+    compatibility_mode: bool align(4) = false,
 };
 
 pub const ComputePassTimestampWrite = extern struct {
@@ -1128,14 +1128,14 @@ pub const CommandBufferDescriptor = extern struct {
 
 pub const CopyTextureForBrowserOptions = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    flip_y: bool,
-    needs_color_space_conversion: bool,
+    flip_y: bool align(4),
+    needs_color_space_conversion: bool align(4),
     src_alpha_mode: AlphaMode,
     src_transfer_function_parameters: ?[*]const f32,
     conversion_matrix: ?[*]const f32,
     dst_transfer_function_parameters: ?[*]const f32,
     dst_alpha_mode: AlphaMode,
-    internal_usage: bool,
+    internal_usage: bool align(4),
 };
 
 pub const TextureViewDescriptor = extern struct {
