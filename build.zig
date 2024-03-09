@@ -218,6 +218,7 @@ fn samples(b: *std.Build, options: Options) void {
 
 fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
+    const minimal_glfw_d3d12 = @import("samples/minimal_glfw_d3d12/build.zig");
     const textured_quad = @import("samples/textured_quad/build.zig");
     const triangle = @import("samples/triangle/build.zig");
     const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
@@ -226,6 +227,7 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     //const simple_raytracer = @import("samples/simple_raytracer/build.zig");
 
     install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
+    install(b, minimal_glfw_d3d12.build(b, options), "minimal_glfw_d3d12");
     install(b, bindless.build(b, options), "bindless");
     install(b, triangle.build(b, options), "triangle");
     //install(b, simple_raytracer.build(b, options), "simple_raytracer");
