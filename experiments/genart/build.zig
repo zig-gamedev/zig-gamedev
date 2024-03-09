@@ -16,11 +16,30 @@ fn install(
     target: std.Build.ResolvedTarget,
     comptime name: []const u8,
 ) void {
-    const zsdl_pkg = @import("../../build.zig").zsdl_pkg;
-    const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const znoise_pkg = @import("../../build.zig").znoise_pkg;
-    const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
+    const zsdl = b.dependency("zsdl", .{
+        .target = target,
+    });
+    const zsdl2_module = zsdl.module("zsdl2");
+
+    const zopengl = b.dependency("zopengl", .{
+        .target = target,
+    });
+    const zopengl_module = zopengl.module("root");
+
+    const zmath = b.dependency("zmath", .{
+        .target = target,
+    });
+    const zmath_module = zmath.module("root");
+
+    const znoise = b.dependency("znoise", .{
+        .target = target,
+    });
+    const znoise_module = znoise.module("root");
+
+    const zstbi = b.dependency("zstbi", .{
+        .target = target,
+    });
+    const zstbi_module = zstbi.module("root");
 
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
@@ -29,18 +48,18 @@ fn install(
     const xcommon = b.createModule(.{
         .root_source_file = .{ .path = thisDir() ++ "/src/xcommon.zig" },
         .imports = &.{
-            .{ .name = "zsdl", .module = zsdl_pkg.zsdl },
-            .{ .name = "zopengl", .module = zopengl_pkg.zopengl },
-            .{ .name = "zstbi", .module = zstbi_pkg.zstbi },
+            .{ .name = "zsdl2", .module = zsdl2_module },
+            .{ .name = "zopengl", .module = zopengl_module },
+            .{ .name = "zstbi", .module = zstbi_module },
         },
     });
     const ximpl = b.createModule(.{
         .root_source_file = .{ .path = thisDir() ++ "/src/" ++ name ++ ".zig" },
         .imports = &.{
-            .{ .name = "zsdl", .module = zsdl_pkg.zsdl },
-            .{ .name = "zopengl", .module = zopengl_pkg.zopengl },
-            .{ .name = "zmath", .module = zmath_pkg.zmath },
-            .{ .name = "znoise", .module = znoise_pkg.znoise },
+            .{ .name = "zsdl2", .module = zsdl2_module },
+            .{ .name = "zopengl", .module = zopengl_module },
+            .{ .name = "zmath", .module = zmath_module },
+            .{ .name = "znoise", .module = znoise_module },
             .{ .name = "xcommon", .module = xcommon },
         },
     });
@@ -53,14 +72,48 @@ fn install(
     exe.rdynamic = true;
     exe.root_module.addImport("xcommon", xcommon);
     exe.root_module.addImport("ximpl", ximpl);
-    zsdl_pkg.link(exe);
-    zopengl_pkg.link(exe);
-    zstbi_pkg.link(exe);
 
-    const install_step = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment");
+    exe.root_module.addImport("zstbi", zstbi_module);
+    exe.linkLibrary(zstbi.artifact("zstbi"));
+
+    exe.root_module.addImport("zsdl2", zsdl2_module);
+    switch (target.result.os.tag) {
+        .windows => {
+            if (target.result.cpu.arch.isX86()) {
+                exe.addLibraryPath(.{
+                    .path = zsdl.path("libs/x86_64-windows-gnu/lib").getPath(b),
+                });
+            }
+        },
+        .linux => {
+            if (target.result.cpu.arch.isX86()) {
+                exe.addLibraryPath(.{
+                    .path = zsdl.path("libs/x86_64-linux-gnu/lib").getPath(b),
+                });
+            }
+        },
+        .macos => {
+            exe.addFrameworkPath(.{
+                .path = zsdl.path("libs/macos/Frameworks").getPath(b),
+            });
+        },
+        else => {},
+    }
+
+    @import("zsdl").link_SDL2(exe);
+
+    exe.root_module.addImport("zopengl", zopengl_module);
+
+    const install_step = b.step(
+        name,
+        "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment",
+    );
     install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 
-    const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' genart experiment");
+    const run_step = b.step(
+        name ++ "-run",
+        "Run '" ++ desc_name[0..desc_size] ++ "' genart experiment",
+    );
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);

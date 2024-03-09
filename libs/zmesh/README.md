@@ -1,6 +1,6 @@
 ![image](logo.jpg)
 
-# zmesh v0.9.0 - loading, generating, processing and optimizing triangle meshes
+# zmesh v0.10.0 - loading, generating, processing and optimizing triangle meshes
 
 As an example program please see [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu).
 
@@ -14,25 +14,19 @@ All memory allocations go through user-supplied, Zig allocator.
 
 ## Getting started
 
-Copy `zmesh` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zmesh` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zmesh = .{ .path = "libs/zmesh" },
 ```
 
 Then in your `build.zig` add:
-
 ```zig
-const std = @import("std");
-const zmesh = @import("zmesh");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zmesh_pkg = zmesh.package(b, target, optimize, .{});
-
-    zmesh_pkg.link(exe);
+    const zmesh = b.dependency("zmesh", .{});
+    exe.root_module.addImport("zmesh", zmesh.module("root"));
+    exe.linkLibrary(zmesh.artifact("zmesh"));
 }
 ```
 

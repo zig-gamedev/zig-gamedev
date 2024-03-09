@@ -11,9 +11,12 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zwin32_pkg.link(exe, .{ .d3d12 = true });
+    const zwin32 = b.dependency("zwin32", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zwin32", zwin32.module("root"));
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
         const dxc_step = buildShaders(b);

@@ -1,4 +1,4 @@
-# zgui v1.89.6 - dear imgui bindings
+# zgui v0.1.0 - dear imgui bindings
 
 Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. [Here](https://github.com/michal-z/zig-gamedev/tree/main/samples/minimal_zgpu_zgui) is a simple sample application, and [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu) is a full one.
 
@@ -11,62 +11,39 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 
 ## Getting started
 
-Copy `zgui` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zgui` to a subdirectory in your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zgui = .{ .path = "libs/zgui" },
 ```
 
-To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw`, `zpool` and `system-sdk` folders and add the depenency paths (see [zgpu](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend by specifying `.no_backend` in the package options.
+To get glfw/wgpu rendering backend working also copy `zglfw`, `system-sdk`, `zgpu` and `zpool` folders and add the depenency paths (see [zgpu](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zgpu) for the details).
 
 Then in your `build.zig` add:
 ```zig
-const zgui = @import("zgui");
-
-// Needed for glfw/wgpu rendering backend
-const zglfw = @import("zglfw");
-const zgpu = @import("zgpu");
-const zpool = @import("zpool");
 
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zgui_pkg = zgui.package(b, target, optimize, .{
-        .options = .{ .backend = .glfw_wgpu },
+    const zgui = b.dependency("zgui", .{
+        .shared = false,
+        .with_implot = true,
     });
-
-    zgui_pkg.link(exe);
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
     
-    // Needed for glfw/wgpu rendering backend
-    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
-    const zpool_pkg = zpool.package(b, target, optimize, .{});
-    const zgpu_pkg = zgpu.package(b, target, optimize, .{
-        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
-    });
+    { // Needed for glfw/wgpu rendering backend
+        const zglfw = b.dependency("zglfw", .{});
+        exe.root_module.addImport("zglfw", zglfw.module("root"));
+        exe.linkLibrary(zglfw.artifact("glfw"));
 
-    zglfw_pkg.link(exe);
-    zgpu_pkg.link(exe);
+        const zpool = b.dependency("zpool", .{});
+        exe.root_module.addImport("zpool", zglfw.module("root"));
+
+        const zgpu = b.dependency("zgpu", .{});
+        exe.root_module.addImport("zgpu", zglfw.module("root"));
+        exe.linkLibrary(zglfw.artifact("wgpu"));
+    }
 }
-```
-
-You may also include zgui without bundled imgui or implot:
-
-```zig
-// In build.zig
-
-    const pkg = zgui.package(b, exe.target, .ReleaseSafe, .{
-        .options = .{
-            .backend = .no_backend,
-            .with_imgui = false,
-            .with_implot = false,
-        },
-    });
-    const lib = pkg.zgui_c_cpp;
-    lib.defineCMacro("IMGUI_USER_CONFIG",
-        \\"../imconfig_custom.h"
-    );
-    lib.addIncludePath("lib/imgui");
 ```
 
 Now in your code you may import and use `zgui`:

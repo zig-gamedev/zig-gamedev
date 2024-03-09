@@ -1,4 +1,4 @@
-# zopengl v0.4.3 - OpenGL loader
+# zopengl v0.5.0 - OpenGL loader, bindings and optional Zig wrapper
 
 Supports:
   * OpenGL Core Profile up to version 4.2
@@ -6,25 +6,19 @@ Supports:
 
 ## Getting started
 
-Copy `zopengl` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zopengl` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
-    .zopengl = .{ .path = "libs/zopengl" },
+    .zopengl = .{ .path = "local/path/to/zopengl" },
 ```
 
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zopengl = @import("zopengl");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
-
-    zopengl_pkg.link(exe);
+    const zopengl = b.dependency("zopengl", .{});
+    exe.root_module.addImport("zopengl", zopengl.module("root"));
 }
 ```
 

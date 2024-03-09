@@ -2,10 +2,9 @@
 // https://github.com/microsoft/DirectXTK12/blob/main/Src/DDSTextureLoader.cpp
 const std = @import("std");
 const assert = std.debug.assert;
-const zwin32 = @import("zwin32.zig");
-const w32 = zwin32.w32;
-const dxgi = zwin32.dxgi;
-const d3d12 = zwin32.d3d12;
+const w32 = @import("w32.zig");
+const dxgi = @import("dxgi.zig");
+const d3d12 = @import("d3d12.zig");
 
 const DDS_HEADER_FLAGS_TEXTURE: u32 = 0x00001007; // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
 const DDS_HEADER_FLAGS_MIPMAP: u32 = 0x00020000; // DDSD_MIPMAPCOUNT

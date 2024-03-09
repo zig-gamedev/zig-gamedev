@@ -1,4 +1,4 @@
-# zstbi v0.9.3 - stb image bindings
+# zstbi v0.10.0 - stb image bindings
 
 ## Features
 
@@ -11,23 +11,19 @@
 
 ## Getting started
 
-Copy `zstbi` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zstbi` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zstbi = .{ .path = "libs/zstbi" },
 ```
 
 Then in your `build.zig` add:
 ```zig
-const zstbi = @import("zstbi");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
-
-    zstbi_pkg.link(exe);
+    const zstbi = b.dependency("zstbi", .{});
+    exe.root_module.addImport("zstbi", zstbi.module("root"));
+    exe.linkLibrary(zstbi.artifact("zstbi"));
 }
 ```
 Now in your code you may import and use `zstbi`.

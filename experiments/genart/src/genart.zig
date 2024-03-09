@@ -1,5 +1,5 @@
 const std = @import("std");
-const sdl = @import("zsdl");
+const sdl = @import("zsdl2");
 const zopengl = @import("zopengl");
 const ximpl = @import("ximpl");
 const xcommon = @import("xcommon");

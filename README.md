@@ -51,8 +51,6 @@ zig build -l
 
 ### Using the [Libraries](#Libraries)
 
-Option to download packages using Zig Package Manager **coming soon!**
-
 Copy each library to a subdirectory in your project and add them as local package dependencies. For example:
 
 `build.zig.zon`
@@ -72,45 +70,44 @@ Copy each library to a subdirectory in your project and add them as local packag
 `build.zig`
 
  ```zig
- const zglfw = @import("zglfw");
-
  pub fn build(b: *std.Build) void {
-      const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    const exe = b.addExecutable(.{ ... });
 
-      ...
-
-      zglfw_pkg.link(exe);
-
-      ...
- }
+    const zglfw = b.dependency("zglfw", .{});
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+}
  ```
 
 Refer to each lib's README.md for further usage intructions.
 
+Option to download packages using Zig Package Manager **coming soon!**
+
 
 ## Libraries
-| Library                       | Latest version | Description                                                                                                                |
-|-------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------|
-| **[zphysics](libs/zphysics)** | 0.0.6          | Build package, [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zphysics/libs/JoltC) and bindings for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                                |
-| **[zflecs](libs/zflecs)**     | 0.0.1          | Build package and bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                       |
-| **[zopengl](libs/zopengl)**   | 0.4.3          | OpenGL loader (supports 4.2 Core Profile and ES 2.0 Profile)                                                               |
-| **[zsdl](libs/zsdl)**         | 0.0.1          | Bindings for SDL2 and SDL3 (wip)                                                                                                    |
-| **[zgpu](libs/zgpu)**         | 0.9.1          | Small helper library built on top of native WebGPU implementation ([Dawn](https://github.com/michal-z/dawn-bin))             |
-| **[zgui](libs/zgui)**         | 1.89.6         | Build package and bindings for [Dear Imgui](https://github.com/ocornut/imgui) (includes [ImPlot](https://github.com/epezent/implot)) |
-| **[zaudio](libs/zaudio)**     | 0.9.4          | Build package and bindings for [miniaudio](https://github.com/mackron/miniaudio)                             |
-| **[zmath](libs/zmath)**       | 0.9.6          | SIMD math library for game developers                                                                                      |
-| **[zstbi](libs/zstbi)**       | 0.9.3          | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                  |
-| **[zmesh](libs/zmesh)**       | 0.9.0          | Loading, generating, processing and optimizing triangle meshes                                                             |
-| **[ztracy](libs/ztracy)**     | 0.10.0         | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                   |
-| **[zpool](libs/zpool)**       | 0.9.0          | Generic pool & handle implementation                                                                                       |
-| **[zglfw](libs/zglfw)**       | 0.8.0          | Build pacakage & bindings for [GLFW](https://github.com/glfw/glfw)                                  |
-| **[znoise](libs/znoise)**     | 0.1.0          | Build pacakge & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                  |
-| **[zjobs](libs/zjobs)**       | 0.1.0          | Generic job queue implementation                                                                                           |
-| **[zbullet](libs/zbullet)**   | 0.2.0          | Build package, C API and bindings for [Bullet physics library](https://github.com/bulletphysics/bullet3)                              |
-| **[zwin32](libs/zwin32)**     | 0.9.0          | Bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                              |
-| **[zd3d12](libs/zd3d12)**     | 0.9.0          | Helper library for DirectX 12                                                                                              |
-| **[zxaudio2](libs/zxaudio2)** | 0.9.0          | Helper library for XAudio2                                                                                                 |
-| **[zpix](libs/zpix)**         | 0.9.0          | Support for GPU profiling with PIX for Windows                                                                             |
+| Library                       | Description                                                                                                                |
+|-------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| **[zaudio](libs/zaudio)**     | Cross-platform audio using [miniaudio](https://github.com/mackron/miniaudio)                                                                         |
+| **[zbullet](libs/zbullet)**   | Build package, [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zbullet/libs/cbullet) and bindings for [Bullet physics](https://github.com/bulletphysics/bullet3)                                                                           |
+| **[zd3d12](libs/zd3d12)**     | Helper library for DirectX 12                                                                                 |
+| **[zflecs](libs/zflecs)**     | Build package and bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                                                |
+| **[zglfw](libs/zglfw)**       | Build package & bindings for [GLFW](https://github.com/glfw/glfw)                                                                              |
+| **[zgpu](libs/zgpu)**         | Small helper library built on top of [Dawn](https://github.com/zig-gamedev/dawn) native WebGPU implementation                                                       |
+| **[zgui](libs/zgui)**         | Build package and bindings for [Dear Imgui](https://github.com/ocornut/imgui) (includes [ImPlot](https://github.com/epezent/implot))                             |
+| **[zjobs](libs/zjobs)**       | Generic job queue implementation                                                                     |
+| **[zmath](libs/zmath)**       | SIMD math library for game developers                                                                         |
+| **[zmesh](libs/zmesh)**       | Loading, generating, processing and optimizing triangle meshes                                                                             |
+| **[znoise](libs/znoise)**     | Build pacakge & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                                     |
+| **[zopengl](libs/zopengl)**   | OpenGL loader (supports 4.2 Core Profile and ES 2.0 Profile)                                                                           |
+| **[zphysics](libs/zphysics)** | Build package, [C API](libs/zphysics/libs/JoltC) and bindings for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                                            |
+| **[zpix](libs/zpix)**         | Support for GPU profiling with PIX for Windows    
+                                                                                   |
+| **[zpool](libs/zpool)**       | Generic pool & handle implementation                                                                     |
+| **[zsdl](libs/zsdl)**         | Bindings for SDL2 and SDL3                                                                               |
+| **[zstbi](libs/zstbi)**       | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                                                                          |
+| **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                             |
+| **[zwin32](libs/zwin32)**     | Bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                                                              |
+| **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                            |                                                                        |
 
 ## Sample applications (native wgpu)
 

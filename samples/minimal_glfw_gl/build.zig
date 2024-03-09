@@ -10,11 +10,18 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
-    const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zglfw_pkg.link(exe);
-    zopengl_pkg.link(exe);
+    const zglfw = b.dependency("zglfw", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+
+    const zopengl = b.dependency("zopengl", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zopengl", zopengl.module("root"));
 
     return exe;
 }

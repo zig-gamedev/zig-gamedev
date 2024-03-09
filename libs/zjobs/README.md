@@ -10,7 +10,7 @@ be executed on a background thread by the `JobQueue`.
 
 ## Getting started
 
-Copy `zjobs` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zjobs` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zjobs = .{ .path = "libs/zjobs" },
 ```
@@ -18,17 +18,11 @@ Copy `zjobs` folder to a `libs` subdirectory of the root of your project and add
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zjobs = @import("zjobs");
+pub fn build(b: *std.Build) void {
+    const exe = b.addExecutable(.{ ... });
 
-pub fn build(b: *std.build.Builder) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
-
-    const zjobs_pkg = zjobs.package(b, target, optimize, .{});
-
-    zjobs_pkg.link(exe);
+    const zjobs = b.dependency("zjobs", .{});
+    exe.root_module.addImport("zjobs", zjobs.module("root"));
 }
 ```
 

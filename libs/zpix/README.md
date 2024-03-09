@@ -1,8 +1,8 @@
-# zpix v0.9.0 - performance markers for PIX
+# zpix v0.10.0 - performance markers for PIX
 
 ## Getting started
 
-Copy `zpix` and `zwin32` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zpix` and `zwin32` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zpix = .{ .path = "libs/zpix" },
     .zwin32 = .{ .path = "libs/zwin32" },
@@ -11,22 +11,14 @@ Copy `zpix` and `zwin32` folders to a `libs` subdirectory of the root of your pr
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zpix = @import("zpix");
-const zwin32 = @import("zwin32");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
-    const zpix_pkg = zpix.package(b, target, optimize, .{
-        .options = .{ .enable = true },
-        .deps = .{ .zwin32 = zwin32_pkg.zwin32 },
+    const zpix = b.dependency("zpix", .{
+        .use_double_precision = false,
+        .enable_cross_platform_determinism = true,
     });
-
-    zpix_pkg.link(exe);
+    exe.root_module.addImport("zpix", zpix.module("root"));
 }
 ```
 

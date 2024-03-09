@@ -1,35 +1,24 @@
 const std = @import("std");
 
-pub const Package = struct {
-    zbullet: *std.Build.Module,
-    zbullet_c_cpp: *std.Build.Step.Compile,
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        exe.linkLibrary(pkg.zbullet_c_cpp);
-        exe.root_module.addImport("zbullet", pkg.zbullet);
-    }
-};
-
-pub fn package(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.Mode,
-    _: struct {},
-) Package {
-    const zbullet = b.addModule("zbullet", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+    _ = b.addModule("root", .{
+        .root_source_file = .{ .path = "src/zbullet.zig" },
     });
 
-    const zbullet_c_cpp = b.addStaticLibrary(.{
-        .name = "zbullet",
+    const cbullet = b.addStaticLibrary(.{
+        .name = "cbullet",
         .target = target,
         .optimize = optimize,
     });
+    b.installArtifact(cbullet);
 
-    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/cbullet" });
-    zbullet_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/bullet" });
-    zbullet_c_cpp.linkLibC();
-    zbullet_c_cpp.linkLibCpp();
+    cbullet.addIncludePath(.{ .path = "libs/cbullet" });
+    cbullet.addIncludePath(.{ .path = "libs/bullet" });
+    cbullet.linkLibC();
+    cbullet.linkLibCpp();
 
     // TODO: Use the old damping method for now otherwise there is a hang in powf().
     const flags = &.{
@@ -38,53 +27,31 @@ pub fn package(
         "-std=c++11",
         "-fno-sanitize=undefined",
     };
-    zbullet_c_cpp.addCSourceFiles(.{
+    cbullet.addCSourceFiles(.{
         .files = &.{
-            thisDir() ++ "/libs/cbullet/cbullet.cpp",
-            thisDir() ++ "/libs/bullet/btLinearMathAll.cpp",
-            thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp",
-            thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp",
+            "libs/cbullet/cbullet.cpp",
+            "libs/bullet/btLinearMathAll.cpp",
+            "libs/bullet/btBulletCollisionAll.cpp",
+            "libs/bullet/btBulletDynamicsAll.cpp",
         },
         .flags = flags,
     });
 
-    return .{
-        .zbullet = zbullet,
-        .zbullet_c_cpp = zbullet_c_cpp,
-    };
-}
-
-pub fn build(b: *std.Build) void {
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
-
     const test_step = b.step("test", "Run zbullet tests");
-    test_step.dependOn(runTests(b, optimize, target));
 
-    _ = package(b, target, optimize, .{});
-}
-
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
     const zmath = b.dependency("zmath", .{});
 
     var tests = b.addTest(.{
         .name = "zbullet-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+        .root_source_file = .{ .path = "src/zbullet.zig" },
         .target = target,
         .optimize = optimize,
     });
-    tests.root_module.addImport("zmath", zmath.module("zmath"));
+    b.installArtifact(tests);
 
-    const pkg = package(b, target, optimize, .{});
-    pkg.link(tests);
+    tests.root_module.addImport("zmath", zmath.module("root"));
 
-    return &b.addRunArtifact(tests).step;
-}
+    tests.linkLibrary(cbullet);
 
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
+    test_step.dependOn(&b.addRunArtifact(tests).step);
 }

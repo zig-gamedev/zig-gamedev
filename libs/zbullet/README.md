@@ -1,8 +1,8 @@
-# zbullet v0.2.0 - Zig bindings for Bullet Physics SDK
+# zbullet v0.3.0 - Zig bindings for Bullet Physics SDK
 
 ## Overview
 
-Bullet Physics SDK 3.25 (**C++**) ---> cbullet v0.2 (**C**) ---> zbullet v0.2 (**Zig**)
+Bullet Physics SDK 3.25 (**C++**) ---> cbullet v0.2 (**C**) ---> zbullet (**Zig**)
 
 `cbullet` is C API for Bullet Physics SDK which is being developed as a part of zig-gamedev project ([source code](https://github.com/michal-z/zig-gamedev/tree/main/libs/zbullet/libs/cbullet)).
 
@@ -28,25 +28,21 @@ For an example code please see:
 
 ## Getting started
 
-Copy `zbullet` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zbullet` and `zmath` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
-    .zbullet = .{ .path = "libs/zbullet" },
+    .zbullet = .{ .path = "local/path/to/zbullet" },
+    .zmath = .{ .path = "local/path/to/zmath" }, // required for tests
 ```
 
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zbullet = @import("zbullet");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zbullet_pkg = zbullet.package(b, target, optimize, .{});
-
-    zbullet_pkg.link(exe);
+    const zbullet = b.dependency("zbullet", .{});
+    exe.root_module.addImport("zbullet", zbullet.module("root"));
+    exe.linkLibrary(zbullet.artifact("cbullet"));
 }
 ```
 

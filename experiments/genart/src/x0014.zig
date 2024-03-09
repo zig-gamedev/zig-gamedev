@@ -1,6 +1,6 @@
 const std = @import("std");
 const math = std.math;
-const sdl = @import("zsdl");
+const sdl = @import("zsdl2");
 const gl = @import("zopengl").bindings;
 const xcommon = @import("xcommon");
 
