@@ -1,8 +1,8 @@
-# znoise v0.1.0 - Zig bindings for FastNoiseLite
+# znoise v0.2.0 - Zig bindings for FastNoiseLite
 
 ## Getting started
 
-Copy `znoise` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `znoise` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .znoise = .{ .path = "libs/znoise" },
 ```
@@ -10,17 +10,12 @@ Copy `znoise` folder to a `libs` subdirectory of the root of your project and ad
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const znoise = @import("znoise");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const znoise_pkg = znoise.package(b, target, optimize, .{});
-
-    znoise_pkg.link(exe);
+    const znoise = b.dependency("znoise", .{});
+    exe.root_module.addImport("znoise", znoise.module("root"));
+    exe.linkLibrary(znoise.artifact("FastNoiseLite"));
 }
 ```
 

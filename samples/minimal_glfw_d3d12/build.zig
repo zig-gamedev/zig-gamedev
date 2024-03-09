@@ -14,13 +14,25 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zd3d12_pkg.link(exe);
-    zwin32_pkg.link(exe, .{ .d3d12 = true });
-    zglfw_pkg.link(exe);
+    const zglfw = b.dependency("zglfw", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+
+    const zwin32 = b.dependency("zwin32", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zwin32", zwin32.module("root"));
+
+    const zd3d12 = b.dependency("zd3d12", .{
+        .target = options.target,
+        .debug_layer = options.zd3d12_enable_debug_layer,
+        .gbv = options.zd3d12_enable_gbv,
+    });
+    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
         const dxc_step = buildShaders(b);

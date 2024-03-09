@@ -13,19 +13,44 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_glfw_wgpu_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
-    const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
-    const zbullet_pkg = @import("../../build.zig").zbullet_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zgui_pkg.link(exe);
-    zgpu_pkg.link(exe);
-    zglfw_pkg.link(exe);
-    zbullet_pkg.link(exe);
-    zmesh_pkg.link(exe);
-    zmath_pkg.link(exe);
+    const zglfw = b.dependency("zglfw", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+
+    @import("zgpu").addLibraryPathsTo(exe);
+    const zgpu = b.dependency("zgpu", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zgpu", zgpu.module("root"));
+    exe.linkLibrary(zgpu.artifact("zdawn"));
+
+    const zmath = b.dependency("zmath", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zmath", zmath.module("root"));
+
+    const zbullet = b.dependency("zbullet", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zbullet", zbullet.module("root"));
+    exe.linkLibrary(zbullet.artifact("cbullet"));
+
+    const zgui = b.dependency("zgui", .{
+        .target = options.target,
+        .backend = .glfw_wgpu,
+    });
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
+
+    const zmesh = b.dependency("zmesh", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zmesh", zmesh.module("root"));
+    exe.linkLibrary(zmesh.artifact("zmesh"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

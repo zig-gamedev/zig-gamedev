@@ -1,37 +1,29 @@
-# zphysics v0.0.6 - Zig API and C API for Jolt Physics
+# zphysics v0.1.0 - Build package, [C API](libs/JoltC) and bindings for Jolt Physics
 
 [Jolt Physics](https://github.com/jrouwe/JoltPhysics) is a fast and modern physics library written in C++.
 
-This project aims to provide high-performance, consistent and roboust [C API](libs) and Zig API for Jolt.
+This project aims to provide high-performance, consistent and roboust [C API](libs/JoltC) and Zig API for Jolt.
 
 For a simple sample applications please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/physics_test_wgpu/src/physics_test_wgpu.zig).
 
 ## Getting started
 
-Copy `zphysics` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zphysics` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zphysics = .{ .path = "libs/zphysics" },
 ```
 
 Then in your `build.zig` add:
-
 ```zig
-const std = @import("std");
-const zphysics = @import("zphysics");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zphysics_pkg = zphysics.package(b, target, optimize, .{
-        .options = .{
-            .use_double_precision = false,
-            .enable_cross_platform_determinism = true,
-        },
+    const zphysics = b.dependency("zphysics", .{
+        .use_double_precision = false,
+        .enable_cross_platform_determinism = true,
     });
-
-    zphysics_pkg.link(exe);
+    exe.root_module.addImport("zphysics", zphysics.module("root"));
+    exe.linkLibrary(zphysics.artifact("joltc"));
 }
 ```
 

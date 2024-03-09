@@ -11,26 +11,47 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_glfw_wgpu_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zgpu_pkg = @import("../../build.zig").zgpu_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
-    const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    const zphysics_pkg = @import("zphysics").package(b, options.target, options.optimize, .{
-        .options = .{
-            .use_double_precision = false,
-            .enable_debug_renderer = true,
-            .enable_asserts = true,
-        },
+    const zglfw = b.dependency("zglfw", .{
+        .target = options.target,
     });
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
 
-    zmath_pkg.link(exe);
-    zgui_pkg.link(exe);
-    zgpu_pkg.link(exe);
-    zglfw_pkg.link(exe);
-    zmesh_pkg.link(exe);
-    zphysics_pkg.link(exe);
+    @import("zgpu").addLibraryPathsTo(exe);
+    const zgpu = b.dependency("zgpu", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zgpu", zgpu.module("root"));
+    exe.linkLibrary(zgpu.artifact("zdawn"));
+
+    const zgui = b.dependency("zgui", .{
+        .target = options.target,
+        .backend = .glfw_wgpu,
+    });
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
+
+    const zmath = b.dependency("zmath", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zmath", zmath.module("root"));
+
+    const zmesh = b.dependency("zmesh", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zmesh", zmesh.module("root"));
+    exe.linkLibrary(zmesh.artifact("zmesh"));
+
+    const zphysics = b.dependency("zphysics", .{
+        .target = options.target,
+        .use_double_precision = false,
+        .enable_debug_renderer = true,
+        .enable_asserts = true,
+    });
+    exe.root_module.addImport("zphysics", zphysics.module("root"));
+    exe.linkLibrary(zphysics.artifact("joltc"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

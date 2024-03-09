@@ -1,4 +1,4 @@
-# zpool v0.9.0 - Generic pool & handle implementation
+# zpool v0.10.0 - Generic pool & handle implementation
 
 Based on [Andre Weissflog's "Handles Are The Better Pointers"](https://floooh.github.io/2018/06/17/handles-vs-pointers.html)
 
@@ -23,7 +23,7 @@ and handle types can be distinct types even when other parameters are the same.
 
 ## Getting started
 
-Copy `zpool` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zpool` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zpool = .{ .path = "libs/zpool" },
 ```
@@ -31,17 +31,11 @@ Copy `zpool` folder to a `libs` subdirectory of the root of your project and add
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zpool = @import("zpool");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zpool_pkg = zpool.package(b, target, optimize, .{});
-
-    zpool_pkg.link(exe);
+    const zpool = b.dependency("zpool", .{});
+    exe.root_module.addImport("zpool", zpool.module("root"));
 }
 ```
 

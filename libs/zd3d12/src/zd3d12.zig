@@ -16,9 +16,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const hrErrorOnFail = zwin32.hrErrorOnFail;
 
-const enable_debug_layer = @import("zd3d12_options").enable_debug_layer;
-const enable_gbv = @import("zd3d12_options").enable_gbv;
-const enable_d2d = @import("zd3d12_options").enable_d2d;
+const enable_debug_layer = @import("zd3d12_options").debug_layer;
+const enable_gbv = @import("zd3d12_options").gbv;
+const enable_d2d = @import("zd3d12_options").d2d;
 const upload_heap_capacity = @import("zd3d12_options").upload_heap_capacity;
 
 test {

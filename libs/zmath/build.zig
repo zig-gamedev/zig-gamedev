@@ -1,104 +1,62 @@
 const std = @import("std");
 
-pub const Options = struct {
-    enable_cross_platform_determinism: bool = true,
-};
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
 
-pub const Package = struct {
-    target: std.Build.ResolvedTarget,
-    options: Options,
-    zmath: *std.Build.Module,
-    zmath_options: *std.Build.Module,
+    const options = .{
+        .optimize = b.option(
+            std.builtin.OptimizeMode,
+            "optimize",
+            "Select optimization mode",
+        ) orelse b.standardOptimizeOption(.{
+            .preferred_optimize_mode = .ReleaseFast,
+        }),
+        .enable_cross_platform_determinism = b.option(
+            bool,
+            "enable_cross_platform_determinism",
+            "Enable cross-platform determinism",
+        ) orelse true,
+    };
 
-    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        exe.root_module.addImport("zmath", pkg.zmath);
-        exe.root_module.addImport("zmath_options", pkg.zmath_options);
+    const options_step = b.addOptions();
+    inline for (std.meta.fields(@TypeOf(options))) |field| {
+        options_step.addOption(field.type, field.name, @field(options, field.name));
     }
-};
 
-pub fn package(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    _: std.builtin.Mode,
-    args: struct {
-        options: Options = .{},
-    },
-) Package {
-    const step = b.addOptions();
-    step.addOption(
-        bool,
-        "enable_cross_platform_determinism",
-        args.options.enable_cross_platform_determinism,
-    );
+    const options_module = options_step.createModule();
 
-    const zmath_options = step.createModule();
-
-    const zmath = b.addModule("zmath", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+    const zmath = b.addModule("root", .{
+        .root_source_file = .{ .path = "src/main.zig" },
         .imports = &.{
-            .{ .name = "zmath_options", .module = zmath_options },
+            .{ .name = "zmath_options", .module = options_module },
         },
     });
 
-    return .{
-        .target = target,
-        .options = args.options,
-        .zmath = zmath,
-        .zmath_options = zmath_options,
-    };
-}
-
-pub fn build(b: *std.Build) void {
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
-
-    _ = package(b, target, optimize, .{ .options = .{
-        .enable_cross_platform_determinism = b.option(bool, "enable_cross_platform_determinism", "Whether to enable cross-platform determinism.") orelse true,
-    } });
-
     const test_step = b.step("test", "Run zmath tests");
-    test_step.dependOn(runTests(b, optimize, target));
 
-    const benchmark_step = b.step("benchmark", "Run zmath benchmarks");
-    benchmark_step.dependOn(runBenchmarks(b, target, optimize));
-}
-
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
     const tests = b.addTest(.{
         .name = "zmath-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/main.zig" },
+        .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
-        .optimize = optimize,
+        .optimize = options.optimize,
     });
+    b.installArtifact(tests);
 
-    const zmath_pkg = package(b, target, optimize, .{});
-    tests.root_module.addImport("zmath_options", zmath_pkg.zmath_options);
+    tests.root_module.addImport("zmath_options", options_module);
 
-    return &b.addRunArtifact(tests).step;
-}
+    test_step.dependOn(&b.addRunArtifact(tests).step);
 
-pub fn runBenchmarks(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-) *std.Build.Step {
-    const exe = b.addExecutable(.{
+    const benchmark_step = b.step("benchmark", "Run zmath benchmarks");
+
+    const benchmarks = b.addExecutable(.{
         .name = "zmath-benchmarks",
-        .root_source_file = .{ .path = thisDir() ++ "/src/benchmark.zig" },
+        .root_source_file = .{ .path = "src/benchmark.zig" },
         .target = target,
-        .optimize = optimize,
+        .optimize = options.optimize,
     });
+    b.installArtifact(benchmarks);
 
-    const zmath_pkg = package(b, target, .ReleaseFast, .{});
-    exe.root_module.addImport("zmath", zmath_pkg.zmath);
+    benchmarks.root_module.addImport("zmath", zmath);
 
-    return &b.addRunArtifact(exe).step;
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
+    benchmark_step.dependOn(&b.addRunArtifact(benchmarks).step);
 }

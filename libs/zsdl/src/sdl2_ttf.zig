@@ -1,4 +1,9 @@
+const std = @import("std");
 const sdl = @import("sdl2.zig");
+
+test {
+    _ = std.testing.refAllDecls(@This());
+}
 
 pub fn init() !void {
     if (TTF_Init() < 0) return sdl.makeError();

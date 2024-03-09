@@ -1,5 +1,5 @@
 const std = @import("std");
-const sdl = @import("zsdl");
+const sdl = @import("zsdl2");
 const zopengl = @import("zopengl");
 
 pub fn main() !void {

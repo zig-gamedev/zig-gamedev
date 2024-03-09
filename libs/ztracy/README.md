@@ -1,10 +1,10 @@
-# ztracy v0.10.0 - performance markers for Tracy 0.10
+# ztracy v0.11.0 - performance markers for Tracy 0.10
 
 Initial Zig bindings created by [Martin Wickham](https://github.com/SpexGuy/Zig-Tracy)
 
 ## Getting started
 
-Copy `ztracy` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `ztracy` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .ztracy = .{ .path = "libs/ztracy" },
 ```
@@ -12,19 +12,15 @@ Copy `ztracy` folder to a `libs` subdirectory of the root of your project and ad
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const ztracy = @import("ztracy");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const ztracy_pkg = ztracy.package(b, target, optimize, .{
-        .options = .{ .enable_ztracy = true },
+    const ztracy = b.dependency("ztracy", .{
+        .enable_ztracy = true,
+        .enable_fibers = true,
     });
-
-    ztracy_pkg.link(exe);
+    exe.root_module.addImport("ztracy", ztracy.module("root"));
+    exe.linkLibrary(ztracy.artifact("tracy"));
 }
 ```
 
