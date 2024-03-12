@@ -2513,6 +2513,14 @@ fn PerTypeGlobalVar(comptime in_type: type) type {
 
     return struct {
         var id: id_t = 0;
+
+        // Ensure that a unique struct type is generated for each unique `in_type`. See
+        // https://github.com/ziglang/zig/issues/18816
+        comptime {
+            // We cannot just do `_ = in_type`
+            // https://github.com/ziglang/zig/issues/19274
+            _ = @alignOf(in_type);
+        }
     };
 }
 inline fn perTypeGlobalVarPtr(comptime T: type) *id_t {
