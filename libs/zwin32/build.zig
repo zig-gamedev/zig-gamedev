@@ -15,6 +15,7 @@ pub const Package = struct {
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile, libs: Libs) void {
         exe.root_module.addImport("zwin32", pkg.zwin32);
+        exe.linkSystemLibrary("ole32");
         if (libs.d3d12) exe.step.dependOn(pkg.install_d3d12);
         if (libs.xaudio2) exe.step.dependOn(pkg.install_xaudio2);
         if (libs.directml) exe.step.dependOn(pkg.install_directml);
