@@ -119,6 +119,9 @@ fn packagesCrossPlatform(b: *std.Build, options: Options) void {
     zgui_glfw_gl_pkg = zgui.package(b, target, optimize, .{
         .options = .{ .backend = .glfw_opengl3 },
     });
+    zgui_glfw_d3d12_pkg = zgui.package(b, target, optimize, .{
+        .options = .{ .backend = .glfw_dx12 },
+    });
     zgpu_pkg = zgpu.package(b, target, optimize, .{
         .options = .{},
         .deps = .{ .zpool = zpool_pkg },
@@ -219,6 +222,7 @@ fn samples(b: *std.Build, options: Options) void {
 fn samplesWindowsLinux(b: *std.Build, options: Options) void {
     const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
     const minimal_glfw_d3d12 = @import("samples/minimal_glfw_d3d12/build.zig");
+    const minimal_zgui_glfw_d3d12 = @import("samples/minimal_zgui_glfw_d3d12/build.zig");
     const textured_quad = @import("samples/textured_quad/build.zig");
     const triangle = @import("samples/triangle/build.zig");
     const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
@@ -228,6 +232,7 @@ fn samplesWindowsLinux(b: *std.Build, options: Options) void {
 
     install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
     install(b, minimal_glfw_d3d12.build(b, options), "minimal_glfw_d3d12");
+    install(b, minimal_zgui_glfw_d3d12.build(b, options), "minimal_zgui_glfw_d3d12");
     install(b, bindless.build(b, options), "bindless");
     install(b, triangle.build(b, options), "triangle");
     //install(b, simple_raytracer.build(b, options), "simple_raytracer");
@@ -310,6 +315,7 @@ pub var zstbi_pkg: zstbi.Package = undefined;
 pub var zbullet_pkg: zbullet.Package = undefined;
 pub var zgui_glfw_wgpu_pkg: zgui.Package = undefined;
 pub var zgui_glfw_gl_pkg: zgui.Package = undefined;
+pub var zgui_glfw_d3d12_pkg: zgui.Package = undefined;
 pub var zgpu_pkg: zgpu.Package = undefined;
 pub var ztracy_pkg: ztracy.Package = undefined;
 pub var zphysics_pkg: zphysics.Package = undefined;

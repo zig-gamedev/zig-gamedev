@@ -4,6 +4,7 @@ pub const Backend = enum {
     no_backend,
     glfw_wgpu,
     glfw_opengl3,
+    glfw_dx12,
     win32_dx12,
 };
 
@@ -147,6 +148,18 @@ pub fn package(
                 },
                 .flags = &(cflags.* ++ .{"-DIMGUI_IMPL_OPENGL_LOADER_CUSTOM"}),
             });
+        },
+        .glfw_dx12 => {
+            const zglfw = b.dependency("zglfw", .{});
+            zgui_c_cpp.addIncludePath(.{ .path = zglfw.path("libs/glfw/include").getPath(b) });
+            zgui_c_cpp.addCSourceFiles(.{
+                .files = &.{
+                    thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp",
+                    thisDir() ++ "/libs/imgui/backends/imgui_impl_dx12.cpp",
+                },
+                .flags = cflags,
+            });
+            zgui_c_cpp.linkSystemLibrary("d3dcompiler_47");
         },
         .win32_dx12 => {
             zgui_c_cpp.addCSourceFiles(.{

@@ -8,6 +8,7 @@ pub const plot = @import("plot.zig");
 pub const backend = switch (@import("zgui_options").backend) {
     .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
     .glfw_opengl3 => @import("backend_glfw_opengl.zig"),
+    .glfw_dx12 => @import("backend_glfw_dx12.zig"),
     .win32_dx12 => .{}, // TODO:
     .no_backend => .{},
 };
