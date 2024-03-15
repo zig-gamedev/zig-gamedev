@@ -1062,14 +1062,14 @@ pub fn fini(world: *world_t) i32 {
     assert(num_worlds == 1);
     num_worlds -= 1;
 
+    const fini_result = ecs_fini(world);
+
     var it = component_ids_hm.iterator();
     while (it.next()) |kv| {
         const ptr = kv.key_ptr.*;
         ptr.* = 0;
     }
     component_ids_hm.clearRetainingCapacity();
-
-    const fini_result = ecs_fini(world);
 
     if (num_worlds == 0) {
         _ = EcsAllocator.gpa.?.deinit();
