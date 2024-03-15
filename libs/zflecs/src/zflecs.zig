@@ -2457,6 +2457,10 @@ pub fn override(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_override_id(world, entity, id(T));
 }
 
+pub fn modified(world: *world_t, entity: entity_t, comptime T: type) void {
+    ecs_modified_id(world, entity, id(T));
+}
+
 pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
     if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
         const ptr = @as([*]T, @ptrCast(@alignCast(anyptr)));
@@ -2477,6 +2481,30 @@ pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
 
 pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @as(*T, @ptrCast(@alignCast(val)));
+}
+
+pub fn singleton_set(world: *world_t, comptime T: type, val: T) entity_t {
+    return set(world, id(T), T, val);
+}
+
+pub fn singleton_get(world: *world_t, comptime T: type) ?*const T {
+    return get(world, id(T), T);
+}
+
+pub fn singleton_get_mut(world: *world_t, comptime T: type) ?*T {
+    return get_mut(world, id(T), T);
+}
+
+pub fn singleton_add(world: *world_t, comptime T: type) void {
+    add(world, id(T), T);
+}
+
+pub fn singleton_remove(world: *world_t, comptime T: type) void {
+    remove(world, id(T), T);
+}
+
+pub fn singleton_modified(world: *world_t, comptime T: type) void {
+    modified(world, id(T), T);
 }
 
 // Entity Names
