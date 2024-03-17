@@ -416,12 +416,13 @@ fn update(demo: *DemoState) !void {
         if (zgui.collapsingHeader("Widgets: Color Editor/Picker", .{})) {
             const static = struct {
                 var col3: [3]f32 = .{ 0, 0, 0 };
-                var col4: [4]f32 = .{ 0, 0, 0, 0 };
+                var col4: [4]f32 = .{ 0, 1, 0, 0 };
                 var col3p: [3]f32 = .{ 0, 0, 0 };
                 var col4p: [4]f32 = .{ 0, 0, 0, 0 };
             };
             _ = zgui.colorEdit3("Color edit 3", .{ .col = &static.col3 });
             _ = zgui.colorEdit4("Color edit 4", .{ .col = &static.col4 });
+            _ = zgui.colorEdit4("Color edit 4 float", .{ .col = &static.col4, .flags = .{ .float = true } });
             _ = zgui.colorPicker3("Color picker 3", .{ .col = &static.col3p });
             _ = zgui.colorPicker4("Color picker 4", .{ .col = &static.col4p });
             _ = zgui.colorButton("color_button_id", .{ .col = .{ 0, 1, 0, 1 } });
