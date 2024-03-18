@@ -3089,11 +3089,11 @@ pub fn quatToRollPitchYaw(q: Quat) [3]f32 {
     const singularity = p[0] * p[2] + sign * p[1] * p[3];
     if (singularity > 0.499) {
         angles[0] = math.pi * 0.5;
-        angles[1] = 2.0 * math.atan2(f32, p[1], p[0]);
+        angles[1] = 2.0 * math.atan2(p[1], p[0]);
         angles[2] = 0.0;
     } else if (singularity < -0.499) {
         angles[0] = -math.pi * 0.5;
-        angles[1] = 2.0 * math.atan2(f32, p[1], p[0]);
+        angles[1] = 2.0 * math.atan2(p[1], p[0]);
         angles[2] = 0.0;
     } else {
         const sq = p * p;
