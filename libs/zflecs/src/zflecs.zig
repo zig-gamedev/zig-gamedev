@@ -26,6 +26,16 @@ fn make_error() error{FlecsError} {
 pub const ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
 pub const COMPONENT_MASK: u64 = ~ID_FLAGS_MASK;
 
+pub fn ecs_id(comptime name: []const u8) *entity_t {
+    return @extern(*entity_t, .{
+        .name = "FLECS_ID" ++ name ++ "ID_",
+    });
+}
+
+extern const EcsFlecs: entity_t;
+extern const EcsFlecsCore: entity_t;
+extern const EcsWorld: entity_t;
+
 extern const EcsWildcard: entity_t;
 extern const EcsAny: entity_t;
 extern const EcsTransitive: entity_t;
@@ -44,6 +54,8 @@ extern const EcsUnion: entity_t;
 extern const EcsAlias: entity_t;
 extern const EcsChildOf: entity_t;
 extern const EcsSlotOf: entity_t;
+extern const EcsModule: entity_t;
+extern const EcsPrivate: entity_t;
 extern const EcsPrefab: entity_t;
 extern const EcsDisabled: entity_t;
 
@@ -86,6 +98,14 @@ extern const EcsPredLookup: entity_t;
 extern const EcsIsA: entity_t;
 extern const EcsDependsOn: entity_t;
 
+pub var Component: entity_t = undefined;
+pub var Identifier: entity_t = undefined;
+pub var Description: entity_t = undefined;
+
+pub var Flecs: entity_t = undefined;
+pub var FlecsCore: entity_t = undefined;
+pub var World: entity_t = undefined;
+
 pub var Wildcard: entity_t = undefined;
 pub var Any: entity_t = undefined;
 pub var Transitive: entity_t = undefined;
@@ -105,6 +125,9 @@ pub var IsA: entity_t = undefined;
 pub var ChildOf: entity_t = undefined;
 pub var DependsOn: entity_t = undefined;
 pub var SlotOf: entity_t = undefined;
+
+pub var Module: entity_t = undefined;
+pub var Private: entity_t = undefined;
 
 pub var AlwaysOverride: entity_t = undefined;
 pub var Alias: entity_t = undefined;
@@ -889,8 +912,7 @@ const EcsAllocator = struct {
 
     const Alignment = 16;
 
-    var gpa: ?std.heap.GeneralPurposeAllocator(.{}) = null;
-    var allocator: ?std.mem.Allocator = null;
+    var allocator: std.mem.Allocator = undefined;
 
     fn alloc(size: i32) callconv(.C) ?*anyopaque {
         if (size < 0) {
@@ -899,7 +921,7 @@ const EcsAllocator = struct {
 
         const allocation_size = Alignment + @as(usize, @intCast(size));
 
-        const data = allocator.?.alignedAlloc(u8, Alignment, allocation_size) catch {
+        const data = allocator.alignedAlloc(u8, Alignment, allocation_size) catch {
             return null;
         };
 
@@ -923,7 +945,7 @@ const EcsAllocator = struct {
             @ptrCast(@alignCast(ptr_unwrapped)),
         );
 
-        allocator.?.free(
+        allocator.free(
             @as([]align(Alignment) u8, @alignCast(ptr_unwrapped[0..allocation_header.size])),
         );
     }
@@ -945,7 +967,7 @@ const EcsAllocator = struct {
         const old_slice_aligned = @as([]align(Alignment) u8, @alignCast(old_slice));
 
         const new_allocation_size = Alignment + @as(usize, @intCast(size));
-        const new_data = allocator.?.realloc(old_slice_aligned, new_allocation_size) catch {
+        const new_data = allocator.realloc(old_slice_aligned, new_allocation_size) catch {
             return null;
         };
 
@@ -976,26 +998,57 @@ fn flecs_abort() callconv(.C) noreturn {
 // Creation & Deletion
 //
 //--------------------------------------------------------------------------------------------------
-pub fn init() *world_t {
+pub fn log_callback(level: i32, filename: [*c]const u8, line: i32, msg: [*c]const u8) callconv(.C) void {
+    _ = filename;
+    _ = line;
+
+    const level_name = switch (level) {
+        -4 => "fatal",
+        -3 => "error",
+        -2 => "warning",
+        -1 => "warning",
+        0 => "trace",
+        1 => "debug",
+        2 => "debug",
+        3 => "debug",
+        else => "unknown",
+    };
+    std.debug.print("flecs.{s: <8}| {s}\n", .{ level_name, msg });
+}
+
+pub fn init(allocator: std.mem.Allocator) *world_t {
+    os_init();
+    var api = os_get_api();
     if (builtin.os.tag == .windows) {
-        os.ecs_os_api.abort_ = flecs_abort;
+        api.abort_ = flecs_abort;
     }
 
     assert(num_worlds == 0);
 
     if (num_worlds == 0) {
-        EcsAllocator.gpa = .{};
-        EcsAllocator.allocator = EcsAllocator.gpa.?.allocator();
+        EcsAllocator.allocator = allocator;
 
-        os.ecs_os_api.malloc_ = &EcsAllocator.alloc;
-        os.ecs_os_api.free_ = &EcsAllocator.free;
-        os.ecs_os_api.realloc_ = &EcsAllocator.realloc;
-        os.ecs_os_api.calloc_ = &EcsAllocator.calloc;
+        api.malloc_ = &EcsAllocator.alloc;
+        api.free_ = &EcsAllocator.free;
+        api.realloc_ = &EcsAllocator.realloc;
+        api.calloc_ = &EcsAllocator.calloc;
     }
+
+    api.log_ = log_callback;
+
+    os_set_api(&api);
 
     num_worlds += 1;
     component_ids_hm.ensureTotalCapacity(32) catch @panic("OOM");
     const world = ecs_init();
+
+    Component = ecs_id("EcsComponent").*;
+    Identifier = ecs_id("EcsIdentifier").*;
+    Description = ecs_id("EcsDocDescription").*;
+
+    Flecs = EcsFlecs;
+    FlecsCore = EcsFlecsCore;
+    World = EcsWorld;
 
     Wildcard = EcsWildcard;
     Any = EcsAny;
@@ -1014,6 +1067,9 @@ pub fn init() *world_t {
     ChildOf = EcsChildOf;
     DependsOn = EcsDependsOn;
     SlotOf = EcsSlotOf;
+
+    Module = EcsModule;
+    Private = EcsPrivate;
 
     OnDelete = EcsOnDelete;
     OnDeleteTarget = EcsOnDeleteTarget;
@@ -1072,9 +1128,7 @@ pub fn fini(world: *world_t) i32 {
     const fini_result = ecs_fini(world);
 
     if (num_worlds == 0) {
-        _ = EcsAllocator.gpa.?.deinit();
-        EcsAllocator.gpa = null;
-        EcsAllocator.allocator = null;
+        EcsAllocator.allocator = undefined;
     }
 
     return fini_result;
@@ -1917,6 +1971,23 @@ extern fn ecs_query_get_ctx(query: *const query_t) ?*anyopaque;
 pub const query_get_binding_ctx = ecs_query_get_binding_ctx;
 extern fn ecs_query_get_binding_ctx(query: *const query_t) ?*anyopaque;
 
+pub const identifier_t = extern struct {
+    value: [*]u8,
+    length: size_t,
+    hash: u64,
+    index_hash: u64,
+    index: *opaque {},
+};
+
+pub const component_t = extern struct {
+    size: size_t,
+    alignment: size_t,
+};
+
+pub const description_t = extern struct {
+    value: [*:0]const u8,
+};
+
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with events and observers.
@@ -2265,6 +2336,15 @@ var num_worlds: u32 = 0;
 var component_ids_hm = std.AutoHashMap(*id_t, u0).init(std.heap.page_allocator);
 
 pub fn COMPONENT(world: *world_t, comptime T: type) void {
+    componentWithOptions(world, T, .{});
+}
+
+pub const ComponentOptions = struct {
+    name: ?[:0]const u8 = null,
+    symbol: ?[:0]const u8 = null,
+};
+
+pub fn componentWithOptions(world: *world_t, comptime T: type, options: ComponentOptions) void {
     if (@sizeOf(T) == 0)
         @compileError("Size of the type must be greater than zero");
 
@@ -2274,11 +2354,14 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
 
     component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
 
+    const name = options.name orelse typeName(T);
+    const symbol = options.symbol orelse typeName(T);
+
     type_id_ptr.* = ecs_component_init(world, &.{
         .entity = ecs_entity_init(world, &.{
             .use_low_id = true,
-            .name = typeName(T),
-            .symbol = typeName(T),
+            .name = name,
+            .symbol = symbol,
         }),
         .type = .{
             .alignment = @alignOf(T),
@@ -2288,6 +2371,14 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
 }
 
 pub fn TAG(world: *world_t, comptime T: type) void {
+    tagWithOptions(world, T, .{});
+}
+
+pub const TagOptions = struct {
+    name: ?[:0]const u8 = null,
+};
+
+pub fn tagWithOptions(world: *world_t, comptime T: type, options: TagOptions) void {
     if (@sizeOf(T) != 0)
         @compileError("Size of the type must be zero");
 
@@ -2297,7 +2388,9 @@ pub fn TAG(world: *world_t, comptime T: type) void {
 
     component_ids_hm.put(type_id_ptr, 0) catch @panic("OOM");
 
-    type_id_ptr.* = ecs_entity_init(world, &.{ .name = typeName(T) });
+    const name = options.name orelse typeName(T);
+
+    type_id_ptr.* = ecs_entity_init(world, &.{ .name = name });
 }
 
 pub fn SYSTEM(
