@@ -35,6 +35,7 @@ pub fn ecs_id(comptime name: []const u8) *entity_t {
 extern const EcsFlecs: entity_t;
 extern const EcsFlecsCore: entity_t;
 extern const EcsWorld: entity_t;
+extern const EcsSystem: entity_t;
 
 extern const EcsWildcard: entity_t;
 extern const EcsAny: entity_t;
@@ -105,6 +106,7 @@ pub var Description: entity_t = undefined;
 pub var Flecs: entity_t = undefined;
 pub var FlecsCore: entity_t = undefined;
 pub var World: entity_t = undefined;
+pub var System: entity_t = undefined;
 
 pub var Wildcard: entity_t = undefined;
 pub var Any: entity_t = undefined;
@@ -1049,6 +1051,7 @@ pub fn init(allocator: std.mem.Allocator) *world_t {
     Flecs = EcsFlecs;
     FlecsCore = EcsFlecsCore;
     World = EcsWorld;
+    System = EcsSystem;
 
     Wildcard = EcsWildcard;
     Any = EcsAny;
