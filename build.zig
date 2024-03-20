@@ -400,17 +400,27 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zpool.artifact("zpool-tests")).step);
 
-    // TODO(hazeycode): Fix tests linking SDL on macOS and Windows
-    if (target.result.os.tag != .windows) {
-        const zsdl = b.dependency("zsdl", .{
-            .target = target,
-            .optimize = optimize,
-        });
-        test_step.dependOn(&b.addRunArtifact(zsdl.artifact("sdl2-tests")).step);
-        test_step.dependOn(&b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests")).step);
-        // TODO(hazeycode): Enable SDL3 tests
-        // test_step.dependOn(&b.addRunArtifact(zsdl.artifact("sdl3-tests")).step);
+    const zsdl = b.dependency("zsdl", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const sdl2_tests = b.addRunArtifact(zsdl.artifact("sdl2-tests"));
+    install_sdl2(&sdl2_tests.step, target.result, .bin);
+    if (target.result.os.tag == .windows) {
+        sdl2_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
     }
+    test_step.dependOn(&sdl2_tests.step);
+
+    const sdl2_ttf_tests = b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests"));
+    install_sdl2(&sdl2_ttf_tests.step, target.result, .bin);
+    install_sdl2_ttf(&sdl2_ttf_tests.step, target.result, .bin);
+    if (target.result.os.tag == .windows) {
+        sdl2_ttf_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
+    }
+    test_step.dependOn(&sdl2_ttf_tests.step);
+
+    // TODO(hazeycode): SDL3 tests
 
     const zjobs = b.dependency("zjobs", .{
         .target = target,

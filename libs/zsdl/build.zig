@@ -34,7 +34,14 @@ pub fn build(b: *std.Build) !void {
         link_SDL2(tests_sdl2);
         b.installArtifact(tests_sdl2);
 
-        test_step.dependOn(&b.addRunArtifact(tests_sdl2).step);
+        const tests_exe = b.addRunArtifact(tests_sdl2);
+        install_sdl2(&tests_exe.step, target.result, .bin);
+        if (target.result.os.tag == .windows) {
+            tests_exe.setCwd(.{
+                .path = b.getInstallPath(.bin, ""),
+            });
+        }
+        test_step.dependOn(&tests_exe.step);
     }
 
     { // SDL2_ttf tests
@@ -49,7 +56,15 @@ pub fn build(b: *std.Build) !void {
         link_SDL2_ttf(tests_sdl2_ttf);
         b.installArtifact(tests_sdl2_ttf);
 
-        test_step.dependOn(&b.addRunArtifact(tests_sdl2_ttf).step);
+        const tests_exe = b.addRunArtifact(tests_sdl2_ttf);
+        install_sdl2(&tests_exe.step, target.result, .bin);
+        install_sdl2_ttf(&tests_exe.step, target.result, .bin);
+        if (target.result.os.tag == .windows) {
+            tests_exe.setCwd(.{
+                .path = b.getInstallPath(.bin, ""),
+            });
+        }
+        test_step.dependOn(&tests_exe.step);
     }
 
     // TODO(hazeycode):
@@ -82,7 +97,15 @@ pub fn build(b: *std.Build) !void {
         addLibraryPathsTo(tests_sdl2_version_check);
         link_SDL2(tests_sdl2_version_check);
 
-        version_check_step.dependOn(&b.addRunArtifact(tests_sdl2_version_check).step);
+        const version_check = b.addRunArtifact(tests_sdl2_version_check);
+        install_sdl2(&version_check.step, target.result, .bin);
+        if (target.result.os.tag == .windows) {
+            version_check.setCwd(.{
+                .path = b.getInstallPath(.bin, ""),
+            });
+        }
+        test_step.dependOn(&version_check.step);
+        version_check_step.dependOn(&version_check.step);
     }
 }
 
@@ -168,6 +191,94 @@ pub fn link_SDL3(compile_step: *std.Build.Step.Compile) void {
         .macos => {
             compile_step.linkFramework("SDL3");
             compile_step.root_module.addRPathSpecial("@executable_path");
+        },
+        else => {},
+    }
+}
+
+pub fn install_sdl2(
+    step: *std.Build.Step,
+    target: std.Target,
+    install_dir: std.Build.InstallDir,
+) void {
+    const b = step.owner;
+    switch (target.os.tag) {
+        .windows => {
+            if (target.cpu.arch.isX86()) {
+                step.dependOn(
+                    &b.addInstallFileWithDir(
+                        .{ .path = "libs/x86_64-windows-gnu/bin/SDL2.dll" },
+                        install_dir,
+                        "SDL2.dll",
+                    ).step,
+                );
+            }
+        },
+        .linux => {
+            if (target.cpu.arch.isX86()) {
+                step.dependOn(
+                    &b.addInstallFileWithDir(
+                        .{ .path = "libs/x86_64-linux-gnu/lib/libSDL2.so" },
+                        install_dir,
+                        "libSDL2.so",
+                    ).step,
+                );
+            }
+        },
+        .macos => {
+            step.dependOn(
+                &b.addInstallDirectory(.{
+                    .source_dir = .{
+                        .path = "libs/macos/Frameworks/SDL2.framework",
+                    },
+                    .install_dir = install_dir,
+                    .install_subdir = "SDL2.framework",
+                }).step,
+            );
+        },
+        else => {},
+    }
+}
+
+pub fn install_sdl2_ttf(
+    step: *std.Build.Step,
+    target: std.Target,
+    install_dir: std.Build.InstallDir,
+) void {
+    const b = step.owner;
+    switch (target.os.tag) {
+        .windows => {
+            if (target.cpu.arch.isX86()) {
+                step.dependOn(
+                    &b.addInstallFileWithDir(
+                        .{ .path = "libs/x86_64-windows-gnu/bin/SDL2_ttf.dll" },
+                        install_dir,
+                        "SDL2_ttf.dll",
+                    ).step,
+                );
+            }
+        },
+        .linux => {
+            if (target.cpu.arch.isX86()) {
+                step.dependOn(
+                    &b.addInstallFileWithDir(
+                        .{ .path = "libs/x86_64-linux-gnu/lib/libSDL2_ttf.so" },
+                        install_dir,
+                        "libSDL2_ttf.so",
+                    ).step,
+                );
+            }
+        },
+        .macos => {
+            step.dependOn(
+                &b.addInstallDirectory(.{
+                    .source_dir = .{
+                        .path = "libs/macos/Frameworks/SDL2_ttf.framework",
+                    },
+                    .install_dir = install_dir,
+                    .install_subdir = "SDL2_ttf.framework",
+                }).step,
+            );
         },
         else => {},
     }
