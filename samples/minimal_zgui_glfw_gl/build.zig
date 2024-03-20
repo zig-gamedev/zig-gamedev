@@ -13,13 +13,25 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zgui_pkg = @import("../../build.zig").zgui_glfw_gl_pkg;
-    const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
-    const zglfw_pkg = @import("../../build.zig").zglfw_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zgui_pkg.link(exe);
-    zopengl_pkg.link(exe);
-    zglfw_pkg.link(exe);
+    const zglfw = b.dependency("zglfw", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+
+    const zopengl = b.dependency("zopengl", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zopengl", zopengl.module("root"));
+
+    const zgui = b.dependency("zgui", .{
+        .target = options.target,
+        .backend = .glfw_opengl3,
+    });
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

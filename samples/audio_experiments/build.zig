@@ -12,17 +12,36 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
-    const common_pkg = @import("../../build.zig").common_pkg;
-    const zmath_pkg = @import("../../build.zig").zmath_pkg;
-    const zxaudio2_pkg = @import("../../build.zig").zxaudio2_pkg;
+    const common = b.dependency("common", .{
+        .target = options.target,
+        .zd3d12_debug_layer = options.zd3d12_enable_debug_layer,
+        .zd3d12_gbv = options.zd3d12_enable_gbv,
+    });
+    exe.root_module.addImport("common", common.module("root"));
+    exe.linkLibrary(common.artifact("common"));
 
-    zwin32_pkg.link(exe, .{ .d3d12 = true, .xaudio2 = true });
-    common_pkg.link(exe);
-    zmath_pkg.link(exe);
-    zd3d12_pkg.link(exe);
-    zxaudio2_pkg.link(exe);
+    const zwin32 = b.dependency("zwin32", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zwin32", zwin32.module("root"));
+
+    const zd3d12 = b.dependency("zd3d12", .{
+        .target = options.target,
+        .debug_layer = options.zd3d12_enable_debug_layer,
+        .gbv = options.zd3d12_enable_gbv,
+    });
+    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
+
+    const zmath = b.dependency("zmath", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zmath", zmath.module("root"));
+
+    const zxaudio2 = b.dependency("zxaudio2", .{
+        .target = options.target,
+        .debug_layer = false,
+    });
+    exe.root_module.addImport("zxaudio2", zxaudio2.module("root"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

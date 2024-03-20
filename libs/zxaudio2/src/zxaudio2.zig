@@ -18,7 +18,7 @@ const hrPanicOnFail = zwin32.hrPanicOnFail;
 
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
-const enable_debug_layer = @import("zxaudio2_options").enable_debug_layer;
+const enable_debug_layer = @import("zxaudio2_options").debug_layer;
 
 test {
     std.testing.refAllDeclsRecursive(@This());

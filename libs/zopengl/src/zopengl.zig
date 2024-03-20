@@ -4,19 +4,14 @@ const testing = std.testing;
 
 const options = @import("zopengl_options");
 
-pub const bindings = @import("bindings.zig");
-pub const wrapper = @import("wrapper.zig").Wrap(bindings);
-
 test {
     @setEvalBranchQuota(100_000);
     _ = testing.refAllDeclsRecursive(@This());
 }
 
-//--------------------------------------------------------------------------------------------------
-//
-// Functions for loading OpenGL function pointers
-//
-//--------------------------------------------------------------------------------------------------
+pub const bindings = @import("bindings.zig");
+pub const wrapper = @import("wrapper.zig").Wrap(bindings);
+
 pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
 
 pub const Extension = enum {
@@ -30,6 +25,11 @@ pub const EsExtension = enum {
     KHR_debug,
 };
 
+//--------------------------------------------------------------------------------------------------
+//
+// Functions for loading OpenGL function pointers
+//
+//--------------------------------------------------------------------------------------------------
 pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
     const ver = 10 * major + minor;
 
@@ -429,6 +429,38 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glVertexAttribP3uiv", .{&bindings.vertexAttribP3uiv});
         try load("glVertexAttribP4ui", .{&bindings.vertexAttribP4ui});
         try load("glVertexAttribP4uiv", .{&bindings.vertexAttribP4uiv});
+
+        // TODO: where do these belong?
+        // try load("glVertexP2ui", .{&bindings.vertexP2ui});
+        // try load("glVertexP2uiv", .{&bindings.vertexP2uiv});
+        // try load("glVertexP3ui", .{&bindings.vertexP3ui});
+        // try load("glVertexP3uiv", .{&bindings.vertexP3uiv});
+        // try load("glVertexP4ui", .{&bindings.vertexP4ui});
+        // try load("glVertexP4uiv", .{&bindings.vertexP4uiv});
+        // try load("glTexCoordP1ui", .{&bindings.texCoordP1ui});
+        // try load("glTexCoordP1uiv", .{&bindings.texCoordP1uiv});
+        // try load("glTexCoordP2ui", .{&bindings.texCoordP2ui});
+        // try load("glTexCoordP2uiv", .{&bindings.texCoordP2uiv});
+        // try load("glTexCoordP3ui", .{&bindings.texCoordP3ui});
+        // try load("glTexCoordP3uiv", .{&bindings.texCoordP3uiv});
+        // try load("glTexCoordP4ui", .{&bindings.texCoordP4ui});
+        // try load("glTexCoordP4uiv", .{&bindings.texCoordP4uiv});
+        // try load("glMultiTexCoordP1ui", .{&bindings.multiTexCoordP1ui});
+        // try load("glMultiTexCoordP1uiv", .{&bindings.multiTexCoordP1uiv});
+        // try load("glMultiTexCoordP2ui", .{&bindings.multiTexCoordP2ui});
+        // try load("glMultiTexCoordP2uiv", .{&bindings.multiTexCoordP2uiv});
+        // try load("glMultiTexCoordP3ui", .{&bindings.multiTexCoordP3ui});
+        // try load("glMultiTexCoordP3uiv", .{&bindings.multiTexCoordP3uiv});
+        // try load("glMultiTexCoordP4ui", .{&bindings.multiTexCoordP4ui});
+        // try load("glMultiTexCoordP4uiv", .{&bindings.multiTexCoordP4uiv});
+        // try load("glNormalP3ui", .{&bindings.normalP3ui});
+        // try load("glNormalP3uiv", .{&bindings.normalP3uiv});
+        // try load("glColorP3ui", .{&bindings.colorP3ui});
+        // try load("glColorP3uiv", .{&bindings.colorP3uiv});
+        // try load("glColorP4ui", .{&bindings.colorP4ui});
+        // try load("glColorP4uiv", .{&bindings.colorP4uiv});
+        // try load("glSecondaryColorP3ui", .{&bindings.secondaryColorP3ui});
+        // try load("glSecondaryColorP3uiv", .{&bindings.secondaryColorP3uiv});
     }
 
     // OpenGL 4.0
@@ -483,15 +515,108 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
 
     // OpenGL 4.1
     if (ver >= 41) {
+        try load("glReleaseShaderCompiler", .{&bindings.releaseShaderCompiler});
+        try load("glShaderBinary", .{&bindings.shaderBinary});
+        try load("glGetShaderPrecisionFormat", .{&bindings.getShaderPrecisionFormat});
+        try load("glDepthRangef", .{&bindings.depthRangef});
+        try load("glClearDepthf", .{&bindings.clearDepthf});
+        try load("glGetProgramBinary", .{&bindings.getProgramBinary});
+        try load("glProgramBinary", .{&bindings.programBinary});
+        try load("glProgramParameteri", .{&bindings.programParameteri});
+        try load("glUseProgramStages", .{&bindings.useProgramStages});
+        try load("glActiveShaderProgram", .{&bindings.activeShaderProgram});
         try load("glCreateShaderProgramv", .{&bindings.createShaderProgramv});
-        // TODO
+        try load("glBindProgramPipeline", .{&bindings.bindProgramPipeline});
+        try load("glDeleteProgramPipelines", .{&bindings.deleteProgramPipelines});
+        try load("glGenProgramPipelines", .{&bindings.genProgramPipelines});
+        try load("glIsProgramPipeline", .{&bindings.isProgramPipeline});
+        try load("glGetProgramPipelineiv", .{&bindings.getProgramPipelineiv});
+        try load("glProgramUniform1i", .{&bindings.programUniform1i});
+        try load("glProgramUniform2i", .{&bindings.programUniform2i});
+        try load("glProgramUniform3i", .{&bindings.programUniform3i});
+        try load("glProgramUniform4i", .{&bindings.programUniform4i});
+        try load("glProgramUniform1ui", .{&bindings.programUniform1ui});
+        try load("glProgramUniform2ui", .{&bindings.programUniform2ui});
+        try load("glProgramUniform3ui", .{&bindings.programUniform3ui});
+        try load("glProgramUniform4ui", .{&bindings.programUniform4ui});
+        try load("glProgramUniform1f", .{&bindings.programUniform1f});
+        try load("glProgramUniform2f", .{&bindings.programUniform2f});
+        try load("glProgramUniform3f", .{&bindings.programUniform3f});
+        try load("glProgramUniform4f", .{&bindings.programUniform4f});
+        try load("glProgramUniform1d", .{&bindings.programUniform1d});
+        try load("glProgramUniform2d", .{&bindings.programUniform2d});
+        try load("glProgramUniform3d", .{&bindings.programUniform3d});
+        try load("glProgramUniform4d", .{&bindings.programUniform4d});
+        try load("glProgramUniform1iv", .{&bindings.programUniform1iv});
+        try load("glProgramUniform2iv", .{&bindings.programUniform2iv});
+        try load("glProgramUniform3iv", .{&bindings.programUniform3iv});
+        try load("glProgramUniform4iv", .{&bindings.programUniform4iv});
+        try load("glProgramUniform1uiv", .{&bindings.programUniform1uiv});
+        try load("glProgramUniform2uiv", .{&bindings.programUniform2uiv});
+        try load("glProgramUniform3uiv", .{&bindings.programUniform3uiv});
+        try load("glProgramUniform4uiv", .{&bindings.programUniform4uiv});
+        try load("glProgramUniform1fv", .{&bindings.programUniform1fv});
+        try load("glProgramUniform2fv", .{&bindings.programUniform2fv});
+        try load("glProgramUniform3fv", .{&bindings.programUniform3fv});
+        try load("glProgramUniform4fv", .{&bindings.programUniform4fv});
+        try load("glProgramUniform1dv", .{&bindings.programUniform1dv});
+        try load("glProgramUniform2dv", .{&bindings.programUniform2dv});
+        try load("glProgramUniform3dv", .{&bindings.programUniform3dv});
+        try load("glProgramUniform4dv", .{&bindings.programUniform4dv});
+        try load("glProgramUniformMatrix2fv", .{&bindings.programUniformMatrix2fv});
+        try load("glProgramUniformMatrix3fv", .{&bindings.programUniformMatrix3fv});
+        try load("glProgramUniformMatrix4fv", .{&bindings.programUniformMatrix4fv});
+        try load("glProgramUniformMatrix2dv", .{&bindings.programUniformMatrix2dv});
+        try load("glProgramUniformMatrix3dv", .{&bindings.programUniformMatrix3dv});
+        try load("glProgramUniformMatrix4dv", .{&bindings.programUniformMatrix4dv});
+        try load("glProgramUniformMatrix2x3fv", .{&bindings.programUniformMatrix2x3fv});
+        try load("glProgramUniformMatrix3x2fv", .{&bindings.programUniformMatrix3x2fv});
+        try load("glProgramUniformMatrix2x4fv", .{&bindings.programUniformMatrix2x4fv});
+        try load("glProgramUniformMatrix4x2fv", .{&bindings.programUniformMatrix4x2fv});
+        try load("glProgramUniformMatrix3x4fv", .{&bindings.programUniformMatrix3x4fv});
+        try load("glProgramUniformMatrix4x3fv", .{&bindings.programUniformMatrix4x3fv});
+        try load("glProgramUniformMatrix2x3dv", .{&bindings.programUniformMatrix2x3dv});
+        try load("glProgramUniformMatrix3x2dv", .{&bindings.programUniformMatrix3x2dv});
+        try load("glProgramUniformMatrix2x4dv", .{&bindings.programUniformMatrix2x4dv});
+        try load("glProgramUniformMatrix4x2dv", .{&bindings.programUniformMatrix4x2dv});
+        try load("glProgramUniformMatrix3x4dv", .{&bindings.programUniformMatrix3x4dv});
+        try load("glProgramUniformMatrix4x3dv", .{&bindings.programUniformMatrix4x3dv});
+        try load("glValidateProgramPipeline", .{&bindings.validateProgramPipeline});
+        try load("glGetProgramPipelineInfoLog", .{&bindings.getProgramPipelineInfoLog});
+        try load("glVertexAttribL1d", .{&bindings.vertexAttribL1d});
+        try load("glVertexAttribL2d", .{&bindings.vertexAttribL2d});
+        try load("glVertexAttribL3d", .{&bindings.vertexAttribL3d});
+        try load("glVertexAttribL4d", .{&bindings.vertexAttribL4d});
+        try load("glVertexAttribL1dv", .{&bindings.vertexAttribL1dv});
+        try load("glVertexAttribL2dv", .{&bindings.vertexAttribL2dv});
+        try load("glVertexAttribL3dv", .{&bindings.vertexAttribL3dv});
+        try load("glVertexAttribL4dv", .{&bindings.vertexAttribL4dv});
+        try load("glViewportArrayv", .{&bindings.viewportArrayv});
+        try load("glViewportIndexedf", .{&bindings.viewportIndexedf});
+        try load("glViewportIndexedfv", .{&bindings.viewportIndexedfv});
+        try load("glScissorArrayv", .{&bindings.scissorArrayv});
+        try load("glScissorIndexed", .{&bindings.scissorIndexed});
+        try load("glScissorIndexedv", .{&bindings.scissorIndexedv});
+        try load("glDepthRangeArrayv", .{&bindings.depthRangeArrayv});
+        try load("glDepthRangeIndexed", .{&bindings.depthRangeIndexed});
+        try load("glGetFloati_v", .{&bindings.getFloati_v});
+        try load("glGetDoublei_v", .{&bindings.getDoublei_v});
     }
 
     // OpenGL 4.2
     if (ver >= 42) {
+        try load("glDrawArraysInstancedBaseInstance", .{&bindings.drawArraysInstancedBaseInstance});
+        try load("glDrawElementsInstancedBaseInstance", .{&bindings.drawElementsInstancedBaseInstance});
+        try load("glDrawElementsInstancedBaseVertexBaseInstance", .{&bindings.drawElementsInstancedBaseVertexBaseInstance});
+        try load("glGetInternalFormativ", .{&bindings.getInternalFormativ});
+        try load("glGetActiveAtomicCounterBufferiv", .{&bindings.getActiveAtomicCounterBufferiv});
         try load("glBindImageTexture", .{&bindings.bindImageTexture});
         try load("glMemoryBarrier", .{&bindings.memoryBarrier});
-        // TODO
+        try load("glTexStorage1D", .{&bindings.texStorage1D});
+        try load("glTexStorage2D", .{&bindings.texStorage2D});
+        try load("glTexStorage3D", .{&bindings.texStorage3D});
+        try load("glDrawTransformFeedbackInstanced", .{&bindings.drawTransformFeedbackInstanced});
+        try load("glDrawTransformFeedbackStreamInstanced", .{&bindings.drawTransformFeedbackStreamInstanced});
     }
 
     // OpenGL 4.3
@@ -507,6 +632,8 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glGetObjectLabel", .{&bindings.getObjectLabel});
         try load("glObjectPtrLabel", .{&bindings.objectPtrLabel});
         try load("glGetObjectPtrLabel", .{&bindings.getObjectPtrLabel});
+        try load("glGetProgramResourceIndex", .{&bindings.getProgramResourceIndex});
+        try load("glShaderStorageBlockBinding", .{&bindings.shaderStorageBlockBinding});
         // TODO
     }
 
@@ -1270,4 +1397,188 @@ comptime {
     @export(bindings.vertexAttribP3uiv, .{ .name = "glVertexAttribP3uiv", .linkage = linkage });
     @export(bindings.vertexAttribP4ui, .{ .name = "glVertexAttribP4ui", .linkage = linkage });
     @export(bindings.vertexAttribP4uiv, .{ .name = "glVertexAttribP4uiv", .linkage = linkage });
+    // TODO: where do these belong?
+    // @export(bindings.vertexP2ui, .{ .name = "glVertexP2ui", .linkage = linkage });
+    // @export(bindings.vertexP2uiv, .{ .name = "glVertexP2uiv", .linkage = linkage });
+    // @export(bindings.vertexP3ui, .{ .name = "glVertexP3ui", .linkage = linkage });
+    // @export(bindings.vertexP3uiv, .{ .name = "glVertexP3uiv", .linkage = linkage });
+    // @export(bindings.vertexP4ui, .{ .name = "glVertexP4ui", .linkage = linkage });
+    // @export(bindings.vertexP4uiv, .{ .name = "glVertexP4uiv", .linkage = linkage });
+    // @export(bindings.texCoordP1ui, .{ .name = "glTexCoordP1ui", .linkage = linkage });
+    // @export(bindings.texCoordP1uiv, .{ .name = "glTexCoordP1uiv", .linkage = linkage });
+    // @export(bindings.texCoordP2ui, .{ .name = "glTexCoordP2ui", .linkage = linkage });
+    // @export(bindings.texCoordP2uiv, .{ .name = "glTexCoordP2uiv", .linkage = linkage });
+    // @export(bindings.texCoordP3ui, .{ .name = "glTexCoordP3ui", .linkage = linkage });
+    // @export(bindings.texCoordP3uiv, .{ .name = "glTexCoordP3uiv", .linkage = linkage });
+    // @export(bindings.texCoordP4ui, .{ .name = "glTexCoordP4ui", .linkage = linkage });
+    // @export(bindings.texCoordP4uiv, .{ .name = "glTexCoordP4uiv", .linkage = linkage });
+    // @export(bindings.multiTexCoordP1ui, .{ .name = "glMultiTexCoordP1ui", .linkage = linkage });
+    // @export(bindings.multiTexCoordP1uiv, .{ .name = "glMultiTexCoordP1uiv", .linkage = linkage });
+    // @export(bindings.multiTexCoordP2ui, .{ .name = "glMultiTexCoordP2ui", .linkage = linkage });
+    // @export(bindings.multiTexCoordP2uiv, .{ .name = "glMultiTexCoordP2uiv", .linkage = linkage });
+    // @export(bindings.multiTexCoordP3ui, .{ .name = "glMultiTexCoordP3ui", .linkage = linkage });
+    // @export(bindings.multiTexCoordP3uiv, .{ .name = "glMultiTexCoordP3uiv", .linkage = linkage });
+    // @export(bindings.multiTexCoordP4ui, .{ .name = "glMultiTexCoordP4ui", .linkage = linkage });
+    // @export(bindings.multiTexCoordP4uiv, .{ .name = "glMultiTexCoordP4uiv", .linkage = linkage });
+    // @export(bindings.normalP3ui, .{ .name = "glNormalP3ui", .linkage = linkage });
+    // @export(bindings.normalP3uiv, .{ .name = "glNormalP3uiv", .linkage = linkage });
+    // @export(bindings.colorP3ui, .{ .name = "glColorP3ui", .linkage = linkage });
+    // @export(bindings.colorP3uiv, .{ .name = "glColorP3uiv", .linkage = linkage });
+    // @export(bindings.colorP4ui, .{ .name = "glColorP4ui", .linkage = linkage });
+    // @export(bindings.colorP4uiv, .{ .name = "glColorP4uiv", .linkage = linkage });
+    // @export(bindings.secondaryColorP3ui, .{ .name = "glSecondaryColorP3ui", .linkage = linkage });
+    // @export(bindings.secondaryColorP3uiv, .{ .name = "glSecondaryColorP3uiv", .linkage = linkage });
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.0 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @export(bindings.minSampleShading, .{ .name = "glMinSampleShading", .linkage = linkage });
+    @export(bindings.blendEquationi, .{ .name = "glBlendEquationi", .linkage = linkage });
+    @export(bindings.blendEquationSeparatei, .{ .name = "glBlendEquationSeparatei", .linkage = linkage });
+    @export(bindings.blendFunci, .{ .name = "glBlendFunci", .linkage = linkage });
+    @export(bindings.blendFuncSeparatei, .{ .name = "glBlendFuncSeparatei", .linkage = linkage });
+    @export(bindings.drawArraysIndirect, .{ .name = "glDrawArraysIndirect", .linkage = linkage });
+    @export(bindings.drawElementsIndirect, .{ .name = "glDrawElementsIndirect", .linkage = linkage });
+    @export(bindings.uniform1d, .{ .name = "glUniform1d", .linkage = linkage });
+    @export(bindings.uniform2d, .{ .name = "glUniform2d", .linkage = linkage });
+    @export(bindings.uniform3d, .{ .name = "glUniform3d", .linkage = linkage });
+    @export(bindings.uniform4d, .{ .name = "glUniform4d", .linkage = linkage });
+    @export(bindings.uniform1dv, .{ .name = "glUniform1dv", .linkage = linkage });
+    @export(bindings.uniform2dv, .{ .name = "glUniform2dv", .linkage = linkage });
+    @export(bindings.uniform3dv, .{ .name = "glUniform3dv", .linkage = linkage });
+    @export(bindings.uniform4dv, .{ .name = "glUniform4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix2dv, .{ .name = "glUniformMatrix2dv", .linkage = linkage });
+    @export(bindings.uniformMatrix3dv, .{ .name = "glUniformMatrix3dv", .linkage = linkage });
+    @export(bindings.uniformMatrix4dv, .{ .name = "glUniformMatrix4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix2x3dv, .{ .name = "glUniformMatrix2x3dv", .linkage = linkage });
+    @export(bindings.uniformMatrix2x4dv, .{ .name = "glUniformMatrix2x4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix3x2dv, .{ .name = "glUniformMatrix3x2dv", .linkage = linkage });
+    @export(bindings.uniformMatrix3x4dv, .{ .name = "glUniformMatrix3x4dv", .linkage = linkage });
+    @export(bindings.uniformMatrix4x2dv, .{ .name = "glUniformMatrix4x2dv", .linkage = linkage });
+    @export(bindings.uniformMatrix4x3dv, .{ .name = "glUniformMatrix4x3dv", .linkage = linkage });
+    @export(bindings.getUniformdv, .{ .name = "glGetUniformdv", .linkage = linkage });
+    @export(bindings.getSubroutineUniformLocation, .{ .name = "glGetSubroutineUniformLocation", .linkage = linkage });
+    @export(bindings.getSubroutineIndex, .{ .name = "glGetSubroutineIndex", .linkage = linkage });
+    @export(bindings.getActiveSubroutineUniformiv, .{ .name = "glGetActiveSubroutineUniformiv", .linkage = linkage });
+    @export(bindings.getActiveSubroutineUniformName, .{ .name = "glGetActiveSubroutineUniformName", .linkage = linkage });
+    @export(bindings.getActiveSubroutineName, .{ .name = "glGetActiveSubroutineName", .linkage = linkage });
+    @export(bindings.uniformSubroutinesuiv, .{ .name = "glUniformSubroutinesuiv", .linkage = linkage });
+    @export(bindings.getUniformSubroutineuiv, .{ .name = "glGetUniformSubroutineuiv", .linkage = linkage });
+    @export(bindings.getProgramStageiv, .{ .name = "glGetProgramStageiv", .linkage = linkage });
+    @export(bindings.patchParameteri, .{ .name = "glPatchParameteri", .linkage = linkage });
+    @export(bindings.patchParameterfv, .{ .name = "glPatchParameterfv", .linkage = linkage });
+    @export(bindings.bindTransformFeedback, .{ .name = "glBindTransformFeedback", .linkage = linkage });
+    @export(bindings.deleteTransformFeedbacks, .{ .name = "glDeleteTransformFeedbacks", .linkage = linkage });
+    @export(bindings.genTransformFeedbacks, .{ .name = "glGenTransformFeedbacks", .linkage = linkage });
+    @export(bindings.isTransformFeedback, .{ .name = "glIsTransformFeedback", .linkage = linkage });
+    @export(bindings.pauseTransformFeedback, .{ .name = "glPauseTransformFeedback", .linkage = linkage });
+    @export(bindings.resumeTransformFeedback, .{ .name = "glResumeTransformFeedback", .linkage = linkage });
+    @export(bindings.drawTransformFeedback, .{ .name = "glDrawTransformFeedback", .linkage = linkage });
+    @export(bindings.drawTransformFeedbackStream, .{ .name = "glDrawTransformFeedbackStream", .linkage = linkage });
+    @export(bindings.beginQueryIndexed, .{ .name = "glBeginQueryIndexed", .linkage = linkage });
+    @export(bindings.endQueryIndexed, .{ .name = "glEndQueryIndexed", .linkage = linkage });
+    @export(bindings.glGetQueryIndexediv, .{ .name = "glGetQueryIndexediv", .linkage = linkage });
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.1 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @export(bindings.releaseShaderCompiler, .{ .name = "glReleaseShaderCompiler", .linkage = linkage });
+    @export(bindings.shaderBinary, .{ .name = "glShaderBinary", .linkage = linkage });
+    @export(bindings.getShaderPrecisionFormat, .{ .name = "glGetShaderPrecisionFormat", .linkage = linkage });
+    @export(bindings.depthRangef, .{ .name = "glDepthRangef", .linkage = linkage });
+    @export(bindings.clearDepthf, .{ .name = "glClearDepthf", .linkage = linkage });
+    @export(bindings.getProgramBinary, .{ .name = "glGetProgramBinary", .linkage = linkage });
+    @export(bindings.programBinary, .{ .name = "glProgramBinary", .linkage = linkage });
+    @export(bindings.programParameteri, .{ .name = "glProgramParameteri", .linkage = linkage });
+    @export(bindings.useProgramStages, .{ .name = "glUseProgramStages", .linkage = linkage });
+    @export(bindings.activeShaderProgram, .{ .name = "glActiveShaderProgram", .linkage = linkage });
+    @export(bindings.createShaderProgramv, .{ .name = "glCreateShaderProgramv", .linkage = linkage });
+    @export(bindings.bindProgramPipeline, .{ .name = "glBindProgramPipeline", .linkage = linkage });
+    @export(bindings.deleteProgramPipelines, .{ .name = "glDeleteProgramPipelines", .linkage = linkage });
+    @export(bindings.genProgramPipelines, .{ .name = "glGenProgramPipelines", .linkage = linkage });
+    @export(bindings.isProgramPipeline, .{ .name = "glIsProgramPipeline", .linkage = linkage });
+    @export(bindings.getProgramPipelineiv, .{ .name = "glGetProgramPipelineiv", .linkage = linkage });
+    @export(bindings.programUniform1i, .{ .name = "glProgramUniform1i", .linkage = linkage });
+    @export(bindings.programUniform2i, .{ .name = "glProgramUniform2i", .linkage = linkage });
+    @export(bindings.programUniform3i, .{ .name = "glProgramUniform3i", .linkage = linkage });
+    @export(bindings.programUniform4i, .{ .name = "glProgramUniform4i", .linkage = linkage });
+    @export(bindings.programUniform1ui, .{ .name = "glProgramUniform1ui", .linkage = linkage });
+    @export(bindings.programUniform2ui, .{ .name = "glProgramUniform2ui", .linkage = linkage });
+    @export(bindings.programUniform3ui, .{ .name = "glProgramUniform3ui", .linkage = linkage });
+    @export(bindings.programUniform4ui, .{ .name = "glProgramUniform4ui", .linkage = linkage });
+    @export(bindings.programUniform1f, .{ .name = "glProgramUniform1f", .linkage = linkage });
+    @export(bindings.programUniform2f, .{ .name = "glProgramUniform2f", .linkage = linkage });
+    @export(bindings.programUniform3f, .{ .name = "glProgramUniform3f", .linkage = linkage });
+    @export(bindings.programUniform4f, .{ .name = "glProgramUniform4f", .linkage = linkage });
+    @export(bindings.programUniform1d, .{ .name = "glProgramUniform1d", .linkage = linkage });
+    @export(bindings.programUniform2d, .{ .name = "glProgramUniform2d", .linkage = linkage });
+    @export(bindings.programUniform3d, .{ .name = "glProgramUniform3d", .linkage = linkage });
+    @export(bindings.programUniform4d, .{ .name = "glProgramUniform4d", .linkage = linkage });
+    @export(bindings.programUniform1iv, .{ .name = "glProgramUniform1iv", .linkage = linkage });
+    @export(bindings.programUniform2iv, .{ .name = "glProgramUniform2iv", .linkage = linkage });
+    @export(bindings.programUniform3iv, .{ .name = "glProgramUniform3iv", .linkage = linkage });
+    @export(bindings.programUniform4iv, .{ .name = "glProgramUniform4iv", .linkage = linkage });
+    @export(bindings.programUniform1uiv, .{ .name = "glProgramUniform1uiv", .linkage = linkage });
+    @export(bindings.programUniform2uiv, .{ .name = "glProgramUniform2uiv", .linkage = linkage });
+    @export(bindings.programUniform3uiv, .{ .name = "glProgramUniform3uiv", .linkage = linkage });
+    @export(bindings.programUniform4uiv, .{ .name = "glProgramUniform4uiv", .linkage = linkage });
+    @export(bindings.programUniform1fv, .{ .name = "glProgramUniform1fv", .linkage = linkage });
+    @export(bindings.programUniform2fv, .{ .name = "glProgramUniform2fv", .linkage = linkage });
+    @export(bindings.programUniform3fv, .{ .name = "glProgramUniform3fv", .linkage = linkage });
+    @export(bindings.programUniform4fv, .{ .name = "glProgramUniform4fv", .linkage = linkage });
+    @export(bindings.programUniform1dv, .{ .name = "glProgramUniform1dv", .linkage = linkage });
+    @export(bindings.programUniform2dv, .{ .name = "glProgramUniform2dv", .linkage = linkage });
+    @export(bindings.programUniform3dv, .{ .name = "glProgramUniform3dv", .linkage = linkage });
+    @export(bindings.programUniform4dv, .{ .name = "glProgramUniform4dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix2fv, .{ .name = "glProgramUniformMatrix2fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix3fv, .{ .name = "glProgramUniformMatrix3fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix4fv, .{ .name = "glProgramUniformMatrix4fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix2dv, .{ .name = "glProgramUniformMatrix2dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix3dv, .{ .name = "glProgramUniformMatrix3dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix4dv, .{ .name = "glProgramUniformMatrix4dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix2x3fv, .{ .name = "glProgramUniformMatrix2x3fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix3x2fv, .{ .name = "glProgramUniformMatrix3x2fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix2x4fv, .{ .name = "glProgramUniformMatrix2x4fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix4x2fv, .{ .name = "glProgramUniformMatrix4x2fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix3x4fv, .{ .name = "glProgramUniformMatrix3x4fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix4x3fv, .{ .name = "glProgramUniformMatrix4x3fv", .linkage = linkage });
+    @export(bindings.programUniformMatrix2x3dv, .{ .name = "glProgramUniformMatrix2x3dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix3x2dv, .{ .name = "glProgramUniformMatrix3x2dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix2x4dv, .{ .name = "glProgramUniformMatrix2x4dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix4x2dv, .{ .name = "glProgramUniformMatrix4x2dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix3x4dv, .{ .name = "glProgramUniformMatrix3x4dv", .linkage = linkage });
+    @export(bindings.programUniformMatrix4x3dv, .{ .name = "glProgramUniformMatrix4x3dv", .linkage = linkage });
+    @export(bindings.validateProgramPipeline, .{ .name = "glValidateProgramPipeline", .linkage = linkage });
+    @export(bindings.getProgramPipelineInfoLog, .{ .name = "glGetProgramPipelineInfoLog", .linkage = linkage });
+    @export(bindings.vertexAttribL1d, .{ .name = "glVertexAttribL1d", .linkage = linkage });
+    @export(bindings.vertexAttribL2d, .{ .name = "glVertexAttribL2d", .linkage = linkage });
+    @export(bindings.vertexAttribL3d, .{ .name = "glVertexAttribL3d", .linkage = linkage });
+    @export(bindings.vertexAttribL4d, .{ .name = "glVertexAttribL4d", .linkage = linkage });
+    @export(bindings.vertexAttribL1dv, .{ .name = "glVertexAttribL1dv", .linkage = linkage });
+    @export(bindings.vertexAttribL2dv, .{ .name = "glVertexAttribL2dv", .linkage = linkage });
+    @export(bindings.vertexAttribL3dv, .{ .name = "glVertexAttribL3dv", .linkage = linkage });
+    @export(bindings.vertexAttribL4dv, .{ .name = "glVertexAttribL4dv", .linkage = linkage });
+    @export(bindings.viewportArrayv, .{ .name = "glViewportArrayv", .linkage = linkage });
+    @export(bindings.viewportIndexedf, .{ .name = "glViewportIndexedf", .linkage = linkage });
+    @export(bindings.viewportIndexedfv, .{ .name = "glViewportIndexedfv", .linkage = linkage });
+    @export(bindings.scissorArrayv, .{ .name = "glScissorArrayv", .linkage = linkage });
+    @export(bindings.scissorIndexed, .{ .name = "glScissorIndexed", .linkage = linkage });
+    @export(bindings.scissorIndexedv, .{ .name = "glScissorIndexedv", .linkage = linkage });
+    @export(bindings.depthRangeArrayv, .{ .name = "glDepthRangeArrayv", .linkage = linkage });
+    @export(bindings.depthRangeIndexed, .{ .name = "glDepthRangeIndexed", .linkage = linkage });
+    @export(bindings.getFloati_v, .{ .name = "glGetFloati_v", .linkage = linkage });
+    @export(bindings.getDoublei_v, .{ .name = "glGetDoublei_v", .linkage = linkage });
+    //----------------------------------------------------------------------------------------------
+    // OpenGL 4.2 (Core Profile)
+    //----------------------------------------------------------------------------------------------
+    @export(bindings.drawArraysInstancedBaseInstance, .{ .name = "glDrawArraysInstancedBaseInstance", .linkage = linkage });
+    @export(bindings.drawElementsInstancedBaseInstance, .{ .name = "glDrawElementsInstancedBaseInstance", .linkage = linkage });
+    @export(bindings.drawElementsInstancedBaseVertexBaseInstance, .{ .name = "glDrawElementsInstancedBaseVertexBaseInstance", .linkage = linkage });
+    @export(bindings.getInternalFormativ, .{ .name = "glGetInternalFormativ", .linkage = linkage });
+    @export(bindings.getActiveAtomicCounterBufferiv, .{ .name = "glGetActiveAtomicCounterBufferiv", .linkage = linkage });
+    @export(bindings.bindImageTexture, .{ .name = "glBindImageTexture", .linkage = linkage });
+    @export(bindings.memoryBarrier, .{ .name = "glMemoryBarrier", .linkage = linkage });
+    @export(bindings.texStorage1D, .{ .name = "glTexStorage1D", .linkage = linkage });
+    @export(bindings.texStorage2D, .{ .name = "glTexStorage2D", .linkage = linkage });
+    @export(bindings.texStorage3D, .{ .name = "glTexStorage3D", .linkage = linkage });
+    @export(bindings.drawTransformFeedbackInstanced, .{ .name = "glDrawTransformFeedbackInstanced", .linkage = linkage });
+    @export(bindings.drawTransformFeedbackStreamInstanced, .{ .name = "glDrawTransformFeedbackStreamInstanced", .linkage = linkage });
 }

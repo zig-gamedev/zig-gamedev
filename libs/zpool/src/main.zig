@@ -1,5 +1,3 @@
-// zpool v0.2
-
 pub const Handle = @import("handle.zig").Handle;
 pub const Pool = @import("pool.zig").Pool;
 

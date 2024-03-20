@@ -12,17 +12,39 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zwin32_pkg = @import("../../build.zig").zwin32_pkg;
-    const zd3d12_pkg = @import("../../build.zig").zd3d12_pkg;
-    const common_pkg = @import("../../build.zig").common_pkg;
-    const zmesh_pkg = @import("../../build.zig").zmesh_pkg;
-    const zstbi_pkg = @import("../../build.zig").zstbi_pkg;
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zwin32_pkg.link(exe, .{ .d3d12 = true });
-    zmesh_pkg.link(exe);
-    common_pkg.link(exe);
-    zstbi_pkg.link(exe);
-    zd3d12_pkg.link(exe);
+    const common = b.dependency("common", .{
+        .target = options.target,
+        .zd3d12_debug_layer = options.zd3d12_enable_debug_layer,
+        .zd3d12_gbv = options.zd3d12_enable_gbv,
+    });
+    exe.root_module.addImport("common", common.module("root"));
+    exe.linkLibrary(common.artifact("common"));
+
+    const zwin32 = b.dependency("zwin32", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zwin32", zwin32.module("root"));
+
+    const zd3d12 = b.dependency("zd3d12", .{
+        .target = options.target,
+        .debug_layer = options.zd3d12_enable_debug_layer,
+        .gbv = options.zd3d12_enable_gbv,
+    });
+    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
+
+    const zmesh = b.dependency("zmesh", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zmesh", zmesh.module("root"));
+    exe.linkLibrary(zmesh.artifact("zmesh"));
+
+    const zstbi = b.dependency("zstbi", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zstbi", zstbi.module("root"));
+    exe.linkLibrary(zstbi.artifact("zstbi"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

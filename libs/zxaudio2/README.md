@@ -1,8 +1,8 @@
-# zxaudio2 v0.9.0 - helper library for XAudio2
+# zxaudio2 v0.10.0 - helper library for XAudio2
 
 ## Getting started
 
-Copy `zxaudio2` and `zwin32` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zxaudio2` and `zwin32` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zxaudio2 = .{ .path = "libs/zxaudio2" },
     .zwin32 = .{ .path = "libs/zwin32" },
@@ -11,23 +11,11 @@ Copy `zxaudio2` and `zwin32` folders to a `libs` subdirectory of the root of you
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zwin32 = @import("zwin32");
-const zxaudio2 = @import("zxaudio2");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zwin32_pkg = zwin32.package(b, target, optimize, .{});
-    const zxaudio2_pkg = zxaudio2.package(b, target, optimize, .{
-        .options = .{ .enable_debug_layer = false },
-        .deps = .{ .zwin32 = zwin32_pkg.zwin32},
-    });
-
-    zwin32_pkg.link(exe, .{ .xaudio2 = true });
-    zxaudio2_pkg.link(exe);
+    const zxaudio2 = b.dependency("zxaudio2", .{});
+    exe.root_module.addImport("zxaudio2", zxaudio2.module("root"));
 }
 ```
 

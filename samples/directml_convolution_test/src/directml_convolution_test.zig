@@ -14,12 +14,11 @@ const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
 
-const enable_dx_debug = @import("zd3d12_options").enable_debug_layer;
-
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const content_dir = @import("build_options").content_dir;
+const build_options = @import("build_options");
+const content_dir = build_options.content_dir;
 
 const window_name = "zig-gamedev: DirectML convolution test";
 const window_width = 1800;
@@ -126,7 +125,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @as(*d3d12.IDevice, @ptrCast(gctx.device)),
-        .{ .DEBUG = enable_dx_debug },
+        .{ .DEBUG = build_options.zd3d12_enable_debug_layer },
         .@"4_1",
         &dml.IID_IDevice1,
         @as(*?*anyopaque, @ptrCast(&dml_device)),

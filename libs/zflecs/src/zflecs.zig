@@ -1121,14 +1121,14 @@ pub fn fini(world: *world_t) i32 {
     assert(num_worlds == 1);
     num_worlds -= 1;
 
+    const fini_result = ecs_fini(world);
+
     var it = component_ids_hm.iterator();
     while (it.next()) |kv| {
         const ptr = kv.key_ptr.*;
         ptr.* = 0;
     }
     component_ids_hm.clearRetainingCapacity();
-
-    const fini_result = ecs_fini(world);
 
     if (num_worlds == 0) {
         EcsAllocator.allocator = undefined;
@@ -2327,6 +2327,31 @@ extern fn ecs_value_init_w_type_info(world: *const world_t, ti: *const type_info
 /// `pub fn progress(world: *world_t, delta_time: ftime_t) bool`
 pub const progress = ecs_progress;
 extern fn ecs_progress(world: *world_t, delta_time: ftime_t) bool;
+
+/// `pub fn set_time_scale(world: *world_t, scale: ftime_t) void`
+pub const set_time_scale = ecs_set_time_scale;
+extern fn ecs_set_time_scale(world: *world_t, scale: ftime_t) void;
+
+/// `pub fn reset_clock(world: *world_t) void`
+pub const reset_clock = ecs_reset_clock;
+extern fn ecs_reset_clock(world: *world_t) void;
+
+/// `pub fn ecs_run_pipeline(world: *world_t, pipeline: entity_t, delta_time: ftime_t) void`
+pub const run_pipeline = ecs_run_pipeline;
+extern fn ecs_run_pipeline(world: *world_t, pipeline: entity_t, delta_time: ftime_t) void;
+
+/// `pub fn ecs_set_threads(world: *world_t, threads: i32) void`
+pub const set_threads = ecs_set_threads;
+extern fn ecs_set_threads(world: *world_t, threads: i32) void;
+
+/// `pub fn ecs_set_task_threads(world: *world_t, task_threads: i32) void`
+pub const set_task_threads = ecs_set_task_threads;
+extern fn ecs_set_task_threads(world: *world_t, task_threads: i32) void;
+
+/// `pub fn ecs_using_task_threads(world: *world_t) bool`
+pub const using_task_threads = ecs_using_task_threads;
+extern fn ecs_using_task_threads(world: *world_t) bool;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Declarative functions (ECS_* macros in flecs)
@@ -2528,6 +2553,10 @@ pub fn override(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_override_id(world, entity, id(T));
 }
 
+pub fn modified(world: *world_t, entity: entity_t, comptime T: type) void {
+    ecs_modified_id(world, entity, id(T));
+}
+
 pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
     if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
         const ptr = @as([*]T, @ptrCast(@alignCast(anyptr)));
@@ -2548,6 +2577,30 @@ pub fn cast(comptime T: type, val: ?*const anyopaque) *const T {
 
 pub fn cast_mut(comptime T: type, val: ?*anyopaque) *T {
     return @as(*T, @ptrCast(@alignCast(val)));
+}
+
+pub fn singleton_set(world: *world_t, comptime T: type, val: T) entity_t {
+    return set(world, id(T), T, val);
+}
+
+pub fn singleton_get(world: *world_t, comptime T: type) ?*const T {
+    return get(world, id(T), T);
+}
+
+pub fn singleton_get_mut(world: *world_t, comptime T: type) ?*T {
+    return get_mut(world, id(T), T);
+}
+
+pub fn singleton_add(world: *world_t, comptime T: type) void {
+    add(world, id(T), T);
+}
+
+pub fn singleton_remove(world: *world_t, comptime T: type) void {
+    remove(world, id(T), T);
+}
+
+pub fn singleton_modified(world: *world_t, comptime T: type) void {
+    modified(world, id(T), T);
 }
 
 // Entity Names
@@ -2584,6 +2637,14 @@ fn PerTypeGlobalVar(comptime in_type: type) type {
 
     return struct {
         var id: id_t = 0;
+
+        // Ensure that a unique struct type is generated for each unique `in_type`. See
+        // https://github.com/ziglang/zig/issues/18816
+        comptime {
+            // We cannot just do `_ = in_type`
+            // https://github.com/ziglang/zig/issues/19274
+            _ = @alignOf(in_type);
+        }
     };
 }
 inline fn perTypeGlobalVarPtr(comptime T: type) *id_t {
@@ -2724,6 +2785,17 @@ comptime {
 // ADDONS
 //
 //--------------------------------------------------------------------------------------------------
+
+// ecs_new_w_pair
+pub fn new_w_pair(world: *world_t, first: entity_t, second: entity_t) entity_t {
+    const pair_id = make_pair(first, second);
+    return new_w_id(world, pair_id);
+}
+
+// ecs_delete_children
+pub fn delete_children(world: *world_t, parent: entity_t) void {
+    delete_with(world, make_pair(ChildOf, parent));
+}
 
 //--------------------------------------------------------------------------------------------------
 //

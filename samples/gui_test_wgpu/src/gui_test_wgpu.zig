@@ -21,7 +21,19 @@ const DemoState = struct {
 };
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
-    const gctx = try zgpu.GraphicsContext.create(allocator, window, .{});
+    const gctx = try zgpu.GraphicsContext.create(
+        allocator,
+        .{
+            .window = window,
+            .fn_getTime = @ptrCast(&zglfw.getTime),
+            .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+            .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+            .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+            .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+            .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+        },
+        .{},
+    );
     errdefer gctx.destroy(allocator);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
@@ -404,12 +416,13 @@ fn update(demo: *DemoState) !void {
         if (zgui.collapsingHeader("Widgets: Color Editor/Picker", .{})) {
             const static = struct {
                 var col3: [3]f32 = .{ 0, 0, 0 };
-                var col4: [4]f32 = .{ 0, 0, 0, 0 };
+                var col4: [4]f32 = .{ 0, 1, 0, 0 };
                 var col3p: [3]f32 = .{ 0, 0, 0 };
                 var col4p: [4]f32 = .{ 0, 0, 0, 0 };
             };
             _ = zgui.colorEdit3("Color edit 3", .{ .col = &static.col3 });
             _ = zgui.colorEdit4("Color edit 4", .{ .col = &static.col4 });
+            _ = zgui.colorEdit4("Color edit 4 float", .{ .col = &static.col4, .flags = .{ .float = true } });
             _ = zgui.colorPicker3("Color picker 3", .{ .col = &static.col3p });
             _ = zgui.colorPicker4("Color picker 4", .{ .col = &static.col4p });
             _ = zgui.colorButton("color_button_id", .{ .col = .{ 0, 1, 0, 1 } });
@@ -589,6 +602,8 @@ pub fn main() !void {
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
         std.os.chdir(path) catch {};
     }
+
+    zglfw.windowHintTyped(.client_api, .no_api);
 
     const window = try zglfw.Window.create(1600, 1000, window_title, null);
     defer window.destroy();

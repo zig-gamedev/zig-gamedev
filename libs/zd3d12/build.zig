@@ -1,124 +1,61 @@
 const std = @import("std");
 
-const default_options = struct {
-    const enable_debug_layer = false;
-    const enable_gbv = false;
-    const enable_d2d = false;
-    const upload_heap_capacity = 24 * 1024 * 1024;
-};
-
-pub const Options = struct {
-    enable_debug_layer: bool = default_options.enable_debug_layer,
-    enable_gbv: bool = default_options.enable_gbv,
-    enable_d2d: bool = default_options.enable_d2d,
-    upload_heap_capacity: u32 = default_options.upload_heap_capacity,
-};
-
-pub const Package = struct {
-    options: Options,
-    zd3d12: *std.Build.Module,
-    zd3d12_options: *std.Build.Module,
-
-    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        exe.root_module.addImport("zd3d12", pkg.zd3d12);
-        exe.root_module.addImport("zd3d12_options", pkg.zd3d12_options);
-    }
-};
-
-pub fn package(
-    b: *std.Build,
-    _: std.Build.ResolvedTarget,
-    _: std.builtin.Mode,
-    args: struct {
-        options: Options = .{},
-        deps: struct { zwin32: *std.Build.Module },
-    },
-) Package {
-    const step = b.addOptions();
-    step.addOption(bool, "enable_debug_layer", args.options.enable_debug_layer);
-    step.addOption(bool, "enable_gbv", args.options.enable_gbv);
-    step.addOption(bool, "enable_d2d", args.options.enable_d2d);
-    step.addOption(u32, "upload_heap_capacity", args.options.upload_heap_capacity);
-
-    const zd3d12_options = step.createModule();
-
-    const zd3d12 = b.addModule("zd3d12", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
-        .imports = &.{
-            .{ .name = "zd3d12_options", .module = zd3d12_options },
-            .{ .name = "zwin32", .module = args.deps.zwin32 },
-        },
-    });
-
-    return .{
-        .options = args.options,
-        .zd3d12 = zd3d12,
-        .zd3d12_options = zd3d12_options,
-    };
-}
+const default_upload_heap_capacity: u32 = 32 * 1024 * 1024;
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const test_step = b.step("test", "Run zd3d12 tests");
-    test_step.dependOn(runTests(b, optimize, target));
+    const options = .{
+        .debug_layer = b.option(
+            bool,
+            "debug_layer",
+            "Enable debug layer",
+        ) orelse false,
+        .gbv = b.option(
+            bool,
+            "gbv",
+            "Enable GPU-based validation",
+        ) orelse false,
+        .d2d = b.option(bool, "d2d", "Enable Direct2D") orelse false,
+        .upload_heap_capacity = b.option(
+            u32,
+            "upload_heap_capacity",
+            "Set upload heap capacity",
+        ) orelse default_upload_heap_capacity,
+    };
 
-    const zwin32 = b.dependency("zwin32", .{});
+    const options_step = b.addOptions();
+    inline for (std.meta.fields(@TypeOf(options))) |field| {
+        options_step.addOption(field.type, field.name, @field(options, field.name));
+    }
 
-    _ = package(b, target, optimize, .{
-        .options = .{
-            .enable_debug_layer = b.option(
-                bool,
-                "enable_debug_layer",
-                "Enable debug layer",
-            ) orelse default_options.enable_debug_layer,
-            .enable_gbv = b.option(
-                bool,
-                "enable_gbv",
-                "Enable GPU-based validation",
-            ) orelse default_options.enable_gbv,
-            .enable_d2d = b.option(
-                bool,
-                "enable_d2d",
-                "Enable Direct2D",
-            ) orelse default_options.enable_d2d,
-            .upload_heap_capacity = b.option(
-                u32,
-                "upload_heap_capacity",
-                "Set upload heap capacity",
-            ) orelse default_options.upload_heap_capacity,
-        },
-        .deps = .{
-            .zwin32 = zwin32.module("zwin32"),
+    const options_module = options_step.createModule();
+
+    const zwin32 = b.dependency("zwin32", .{
+        .target = target,
+    });
+    const zwin32_module = zwin32.module("root");
+
+    _ = b.addModule("root", .{
+        .root_source_file = .{ .path = "src/zd3d12.zig" },
+        .imports = &.{
+            .{ .name = "zd3d12_options", .module = options_module },
+            .{ .name = "zwin32", .module = zwin32_module },
         },
     });
-}
 
-pub fn runTests(
-    b: *std.Build,
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-) *std.Build.Step {
-    const zwin32 = b.dependency("zwin32", .{}).module("zwin32");
+    const test_step = b.step("test", "Run zd3d12 tests");
 
     const tests = b.addTest(.{
         .name = "zd3d12-tests",
-        .root_source_file = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
+        .root_source_file = .{ .path = "src/zd3d12.zig" },
         .target = target,
         .optimize = optimize,
     });
+    tests.root_module.addImport("zwin32", zwin32_module);
+    tests.root_module.addImport("zd3d12_options", options_module);
+    b.installArtifact(tests);
 
-    const pkg = package(b, target, optimize, .{
-        .deps = .{ .zwin32 = zwin32 },
-    });
-    pkg.link(tests);
-
-    tests.root_module.addImport("zwin32", zwin32);
-
-    return &b.addRunArtifact(tests).step;
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
+    test_step.dependOn(&b.addRunArtifact(tests).step);
 }

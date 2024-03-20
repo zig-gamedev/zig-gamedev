@@ -1555,14 +1555,14 @@ pub const Device = opaque {
     }
     extern fn ma_device_get_master_volume(device: *const Device, volume: *f32) Result;
 
-    pub const Type = enum(u32) {
+    pub const Type = enum(c_int) {
         playback = 1,
         capture = 2,
         duplex = 3,
         loopback = 4,
     };
 
-    pub const State = enum(u32) {
+    pub const State = enum(c_int) {
         uninitialized = 0,
         stopped = 1,
         started = 2,
