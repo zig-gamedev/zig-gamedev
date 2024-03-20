@@ -2,6 +2,10 @@ const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 
+test {
+    _ = std.testing.refAllDecls(@This());
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 // Initialzation and Shutdown

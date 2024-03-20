@@ -1,8 +1,8 @@
-# zgpu v0.9.1 - Cross-platform graphics library
+# zgpu v0.11.0 - Cross-platform graphics library
 
-`zgpu` is a small helper library built on top of native wgpu implementation (Dawn).
+Small helper library built on top of [Dawn](https://github.com/zig-gamedev/dawn) native WebGPU implementation
 
-It supports Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan).
+Supports Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan).
 
 ## Features:
 
@@ -16,64 +16,46 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu`, `zpool`, `zglfw` and `system-sdk` folders to a `libs` of the root of your project and add the following to your `build.zig.zon` file:
+Copy `zgpu`, `zpool` and `system-sdk` to a subdirectory of your project and add the following to your `build.zig.zon` dependencies:
 ```zig
 .{
-    .name = "your_project_name",
-    .version = "0.1.0",
-    .dependencies = .{
-        .zgpu = .{ .path = libs/zgpu" },
-        .zpool = .{ .path = libs/zpool" },
-        .zglfw = .{ .path = libs/zglfw" },
-        .dawn_x86_64_windows_gnu = .{
-            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
-            .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
-        },
-        .dawn_x86_64_linux_gnu = .{
-            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/7d70db023bf254546024629cbec5ee6113e12a42.tar.gz",
-            .hash = "12204a3519efd49ea2d7cf63b544492a3a771d37eda320f86380813376801e4cfa73",
-        },
-        .dawn_aarch64_linux_gnu = .{
-            .url = "https://github.com/michal-z/webgpu_dawn-aarch64-linux-gnu/archive/c1f55e740a62f6942ff046e709ecd509a005dbeb.tar.gz",
-            .hash = "12205cd13f6849f94ef7688ee88c6b74c7918a5dfb514f8a403fcc2929a0aa342627",
-        },
-        .dawn_aarch64_macos = .{
-            .url = "https://github.com/michal-z/webgpu_dawn-aarch64-macos/archive/d2360cdfff0cf4a780cb77aa47c57aca03cc6dfe.tar.gz",
-            .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa"
-        },
-        .dawn_x86_64_macos = .{
-            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
-            .hash = "1220b1f02f2f7edd98a078c64e3100907d90311d94880a3cc5927e1ac009d002667a",
-        },
-    }
-
-    ...
+    .zgpu = .{ .path = libs/zgpu" },
+    .zpool = .{ .path = libs/zpool" },
+    .dawn_x86_64_windows_gnu = .{
+        .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
+        .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
+    },
+    .dawn_x86_64_linux_gnu = .{
+        .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/7d70db023bf254546024629cbec5ee6113e12a42.tar.gz",
+        .hash = "12204a3519efd49ea2d7cf63b544492a3a771d37eda320f86380813376801e4cfa73",
+    },
+    .dawn_aarch64_linux_gnu = .{
+        .url = "https://github.com/michal-z/webgpu_dawn-aarch64-linux-gnu/archive/c1f55e740a62f6942ff046e709ecd509a005dbeb.tar.gz",
+        .hash = "12205cd13f6849f94ef7688ee88c6b74c7918a5dfb514f8a403fcc2929a0aa342627",
+    },
+    .dawn_aarch64_macos = .{
+        .url = "https://github.com/michal-z/webgpu_dawn-aarch64-macos/archive/d2360cdfff0cf4a780cb77aa47c57aca03cc6dfe.tar.gz",
+        .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa"
+    },
+    .dawn_x86_64_macos = .{
+        .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
+        .hash = "1220b1f02f2f7edd98a078c64e3100907d90311d94880a3cc5927e1ac009d002667a",
+    },
 }
 ```
 
-then in your `build.zig file:
+then in your `build.zig`:
 ```zig
-const std = @import("std");
-const zgpu = @import("zgpu");
-const zpool = @import("zpool");
-const zglfw = @import("zglfw");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
-    const zpool_pkg = zpool.package(b, target, optimize, .{});
-    const zgpu_pkg = zgpu.package(b, target, optimize, .{
-        .deps = .{
-            .zpool = zpool_pkg,
-            .zglfw = zglfw_pkg,
-        },
-    });
+    @import("system_sdk").addLibraryPathsTo(exe);
 
-    zgpu_pkg.link(exe);
-    zglfw_pkg.link(exe);
+    @import("zgpu").addLibraryPathsTo(exe);
+
+    const zgpu = b.dependency("zgpu", .{});
+    exe.root_module.addImport("zgpu", zgpu.module("root"));
+    exe.linkLibrary(zgpu.artifact("zdawn"));
 }
 ```
 
@@ -119,6 +101,27 @@ pub fn build(b: *std.Build) void {
     ...
 }
 ```
+
+### Graphics Context
+Create a `GraphicsContext` using a `WindowProvider`. For example, using [zglfw](https://github.com/zig-gamedev):
+```zig
+const gctx = try zgpu.GraphicsContext.create(
+    alloctor,
+    .{
+        .window = window,
+        .fn_getTime = @ptrCast(&zglfw.getTime),
+        .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+
+        // optional fields
+        .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+        .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+        .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+        .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+    },
+    .{}, // default context creation options
+);
+```
+
 ### Uniforms
 
 * Implemented as a uniform buffer pool

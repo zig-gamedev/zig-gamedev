@@ -1,0 +1,14 @@
+.{
+    .name = "common",
+    .version = "0.1.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "libs",
+    },
+    .dependencies = .{
+        .zwin32 = .{ .path = "../zwin32" },
+        .zd3d12 = .{ .path = "../zd3d12" },
+    },
+}

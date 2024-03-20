@@ -35,11 +35,24 @@ const Surface = struct {
             // vsync off
             present_mode = .immediate;
         }
+        zglfw.windowHintTyped(.client_api, .no_api);
         const window = try zglfw.Window.create(width, height, window_title, monitor);
 
-        const gctx = try zgpu.GraphicsContext.create(allocator, window, .{
-            .present_mode = present_mode,
-        });
+        const gctx = try zgpu.GraphicsContext.create(
+            allocator,
+            .{
+                .window = window,
+                .fn_getTime = @ptrCast(&zglfw.getTime),
+                .fn_getFramebufferSize = @ptrCast(&zglfw.Window.getFramebufferSize),
+                .fn_getWin32Window = @ptrCast(&zglfw.getWin32Window),
+                .fn_getX11Display = @ptrCast(&zglfw.getX11Display),
+                .fn_getX11Window = @ptrCast(&zglfw.getX11Window),
+                .fn_getCocoaWindow = @ptrCast(&zglfw.getCocoaWindow),
+            },
+            .{
+                .present_mode = present_mode,
+            },
+        );
 
         zgui.init(allocator);
         zgui.plot.init();

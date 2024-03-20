@@ -1,8 +1,8 @@
-# zflecs v0.0.1 - bindings for flecs ECS (wip)
+# zflecs v0.1.0 - Build package and bindings for [flecs](https://github.com/SanderMertens/flecs) ECS 
 
 ## Getting started
 
-Copy `zflecs` folder to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zflecs` folder to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zflecs = .{ .path = "libs/zflecs" },
 ```
@@ -10,17 +10,12 @@ Copy `zflecs` folder to a `libs` subdirectory of the root of your project and ad
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zflecs = @import("zflecs");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zflecs_pkg = zflecs.package(b, target, optimize, .{});
-
-    zflecs_pkg.link(exe);
+    const zflecs = b.dependency("zflecs", .{});
+    exe.root_module.addImport("zflecs", zflecs.module("root"));
+    exe.linkLibrary(zbullet.artifact("flecs"));
 }
 ```
 

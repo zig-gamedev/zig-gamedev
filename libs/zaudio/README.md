@@ -1,6 +1,6 @@
-# zaudio v0.9.3 - Cross-platform audio
+# zaudio v0.10.0 - Cross-platform audio
 
-Zig bindings for [miniaudio](https://github.com/mackron/miniaudio) library. Tested on Windows, Linux and macOS but should also work on mobile/web platforms.
+Zig build package and wrapper for [miniaudio](https://github.com/mackron/miniaudio) v0.11.21
 
 As an example program please see [audio experiments (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/audio_experiments_wgpu).
 
@@ -36,26 +36,21 @@ Provided structs:
 
 ## Getting started
 
-Copy `zaudio` and `system-sdk` folders to a `libs` subdirectory of the root of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zaudio` and `system-sdk` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
-    .system_sdk = .{ .path = "libs/system-sdk" },
-    .zaudio = .{ .path = "libs/zaudio" },
+    .system_sdk = .{ .path = "local/path/to/system-sdk" },
+    .zaudio = .{ .path = "local/path/to/zaudio" },
 ```
 
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
-const zaudio = @import("zaudio");
-
 pub fn build(b: *std.Build) void {
-    ...
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
+    const exe = b.addExecutable(.{ ... });
 
-    const zaudio_pkg = zaudio.package(b, target, optimize, .{});
-
-    zaudio_pkg.link(exe);
+    const zaudio = b.dependency("zaudio", .{});
+    exe.root_module.addImport("zaudio", zaudio.module("root"));
+    exe.linkLibrary(zaudio.artifact("miniaudio"));
 }
 ```
 

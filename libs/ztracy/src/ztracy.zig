@@ -235,6 +235,20 @@ const tracy_stub = struct {
     pub inline fn AppInfo(text: []const u8) void {
         _ = text;
     }
+
+    pub const TracyAllocator = struct {
+        child_allocator: std.mem.Allocator,
+
+        pub fn init(child_allocator: std.mem.Allocator) TracyAllocator {
+            return .{
+                .child_allocator = child_allocator,
+            };
+        }
+
+        pub fn allocator(self: *TracyAllocator) std.mem.Allocator {
+            return self.child_allocator;
+        }
+    };
 };
 
 const tracy_full = struct {
@@ -536,6 +550,76 @@ const tracy_full = struct {
     pub inline fn AppInfo(text: []const u8) void {
         c.___tracy_emit_message_appinfo(text.ptr, text.len);
     }
+
+    pub const TracyAllocator = struct {
+        child_allocator: std.mem.Allocator,
+
+        pub fn init(child_allocator: std.mem.Allocator) TracyAllocator {
+            return .{
+                .child_allocator = child_allocator,
+            };
+        }
+
+        pub fn allocator(self: *TracyAllocator) std.mem.Allocator {
+            return .{
+                .ptr = self,
+                .vtable = &.{
+                    .alloc = alloc,
+                    .resize = resize,
+                    .free = free,
+                },
+            };
+        }
+
+        fn alloc(
+            ctx: *anyopaque,
+            len: usize,
+            log2_ptr_align: u8,
+            ra: usize,
+        ) ?[*]u8 {
+            const self: *TracyAllocator = @ptrCast(@alignCast(ctx));
+            const result = self.child_allocator.rawAlloc(len, log2_ptr_align, ra);
+            if (result) |addr| {
+                Alloc(addr, len);
+            } else {
+                var buffer: [128]u8 = undefined;
+                const msg = std.fmt.bufPrint(&buffer, "alloc failed requesting {d}", .{len}) catch return result;
+                Message(msg);
+            }
+            return result;
+        }
+
+        fn resize(
+            ctx: *anyopaque,
+            buf: []u8,
+            log2_ptr_align: u8,
+            new_len: usize,
+            ra: usize,
+        ) ?[*]u8 {
+            const self: *TracyAllocator = @ptrCast(@alignCast(ctx));
+            const result = self.child_allocator.rawResize(buf, log2_ptr_align, new_len, ra);
+            if (result) |addr| {
+                Free(buf.ptr);
+                Alloc(addr, new_len);
+            } else {
+                var buffer: [128]u8 = undefined;
+                const msg = std.fmt.bufPrint(&buffer, "resize failed requesting {d} -> {d}", .{ buf.len, new_len }) catch return result;
+                Message(msg);
+            }
+            return result;
+        }
+
+        fn free(
+            ctx: *anyopaque,
+            buf: []u8,
+            log2_ptr_align: u8,
+            ra: usize,
+        ) void {
+            const self: *TracyAllocator = @ptrCast(@alignCast(ctx));
+            self.child_allocator.rawFree(buf, log2_ptr_align, ra);
+            Free(buf.ptr);
+        }
+    };
 };
 
 test {

@@ -10,11 +10,37 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zsdl_pkg = @import("../../build.zig").zsdl_pkg;
-    const zopengl_pkg = @import("../../build.zig").zopengl_pkg;
+    const zsdl = b.dependency("zsdl", .{
+        .target = options.target,
+    });
+    exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
+    @import("zsdl").link_SDL2(exe);
 
-    zsdl_pkg.link(exe);
-    zopengl_pkg.link(exe);
+    switch (options.target.result.os.tag) {
+        .windows => {
+            if (options.target.result.cpu.arch.isX86()) {
+                exe.addLibraryPath(
+                    .{ .path = zsdl.path("libs/x86_64-windows-gnu/lib").getPath(b) },
+                );
+            }
+        },
+        .linux => {
+            if (options.target.result.cpu.arch.isX86()) {
+                exe.addLibraryPath(
+                    .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib").getPath(b) },
+                );
+            }
+        },
+        .macos => {
+            exe.addFrameworkPath(
+                .{ .path = zsdl.path("libs/macos/Frameworks").getPath(b) },
+            );
+        },
+        else => {},
+    }
+
+    const zopengl = b.dependency("zopengl", .{});
+    exe.root_module.addImport("zopengl", zopengl.module("root"));
 
     return exe;
 }

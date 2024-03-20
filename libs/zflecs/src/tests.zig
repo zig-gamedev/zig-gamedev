@@ -349,3 +349,41 @@ test "zflecs.pairs.component-tag" {
     try expect(!ecs.has_pair(world, entity, ecs.id(Speed), ecs.id(Walking)));
     try expectEqual(@as(?*const u8, null), ecs.get_pair(world, entity, ecs.id(Speed), ecs.id(Walking), Speed));
 }
+
+test "zflecs.pairs.delete-children" {
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    const Camera = struct { id: u8 };
+
+    ecs.COMPONENT(world, Camera);
+
+    const entity = ecs.new_entity(world, "scene");
+
+    const fps = ecs.new_w_pair(world, ecs.ChildOf, entity);
+    _ = ecs.set(world, fps, Camera, .{ .id = 1 });
+    const third_person = ecs.new_w_pair(world, ecs.ChildOf, entity);
+    _ = ecs.set(world, third_person, Camera, .{ .id = 2 });
+
+    var found: u8 = 0;
+    var it = ecs.children(world, entity);
+    while (ecs.children_next(&it)) {
+        for (0..it.count()) |i| {
+            const child_entity = it.entities()[i];
+            const p: ?*const Camera = ecs.get(world, child_entity, Camera);
+            try expectEqual(@as(u8, @intCast(i)), p.?.id - @as(u8, 1));
+            found += 1;
+        }
+    }
+    try expectEqual(@as(u8, 2), found);
+    ecs.delete_children(world, entity);
+
+    found = 0;
+    it = ecs.children(world, entity);
+    while (ecs.children_next(&it)) {
+        for (0..it.count()) |_| {
+            found += 1;
+        }
+    }
+    try expectEqual(@as(u8, 0), found);
+}
