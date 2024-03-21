@@ -367,6 +367,7 @@ fn tests(
     const zgui = b.dependency("zgui", .{
         .target = target,
         .optimize = optimize,
+        .with_te = true,
     });
     test_step.dependOn(&b.addRunArtifact(zgui.artifact("zgui-tests")).step);
 

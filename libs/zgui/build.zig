@@ -24,6 +24,11 @@ pub fn build(b: *std.Build) void {
             "with_implot",
             "Build with bundled implot source",
         ) orelse true,
+        .with_te = b.option(
+            bool,
+            "with_te",
+            "Build with bundled test engine support",
+        ) orelse false,
     };
 
     const options_step = b.addOptions();
@@ -104,6 +109,69 @@ pub fn build(b: *std.Build) void {
         });
     } else {
         imgui.defineCMacro("ZGUI_IMPLOT", "0");
+    }
+
+    if (options.with_te) {
+        imgui.defineCMacro("ZGUI_TE", "1");
+
+        imgui.defineCMacro("IMGUI_ENABLE_TEST_ENGINE", null);
+        imgui.defineCMacro("IMGUI_TEST_ENGINE_ENABLE_COROUTINE_STDTHREAD_IMPL", "1");
+
+        imgui.addIncludePath(.{ .path = "libs/imgui_test_engine/" });
+
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_capture_tool.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_context.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_coroutine.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_engine.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_exporters.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_perftool.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_ui.cpp" }, .flags = cflags });
+        imgui.addCSourceFile(.{ .file = .{ .path = "libs/imgui_test_engine/imgui_te_utils.cpp" }, .flags = cflags });
+
+        // TODO: Workaround because zig on win64 doesn have phtreads
+        // TODO: Implement corutine in zig can solve this
+        if (target.result.os.tag == .windows) {
+            const src: []const []const u8 = &.{
+                "libs/winpthreads/src/nanosleep.c",
+                "libs/winpthreads/src/cond.c",
+                "libs/winpthreads/src/barrier.c",
+                "libs/winpthreads/src/misc.c",
+                "libs/winpthreads/src/clock.c",
+                "libs/winpthreads/src/libgcc/dll_math.c",
+                "libs/winpthreads/src/spinlock.c",
+                "libs/winpthreads/src/thread.c",
+                "libs/winpthreads/src/mutex.c",
+                "libs/winpthreads/src/sem.c",
+                "libs/winpthreads/src/sched.c",
+                "libs/winpthreads/src/ref.c",
+                "libs/winpthreads/src/rwlock.c",
+            };
+
+            const winpthreads = b.addStaticLibrary(.{
+                .name = "winpthreads",
+                .optimize = optimize,
+                .target = target,
+            });
+            winpthreads.want_lto = false;
+            winpthreads.root_module.sanitize_c = false;
+            if (optimize == .Debug or optimize == .ReleaseSafe)
+                winpthreads.bundle_compiler_rt = true
+            else
+                winpthreads.root_module.strip = true;
+            winpthreads.addCSourceFiles(.{ .files = src, .flags = &.{
+                "-Wall",
+                "-Wextra",
+            } });
+            winpthreads.defineCMacro("__USE_MINGW_ANSI_STDIO", "1");
+            winpthreads.addIncludePath(.{ .path = "libs/winpthreads/include" });
+            winpthreads.addIncludePath(.{ .path = "libs/winpthreads/src" });
+            winpthreads.linkLibC();
+            b.installArtifact(winpthreads);
+            imgui.linkLibrary(winpthreads);
+            imgui.addSystemIncludePath(.{ .path = "libs/winpthreads/include" });
+        }
+    } else {
+        imgui.defineCMacro("ZGUI_TE", "0");
     }
 
     switch (options.backend) {

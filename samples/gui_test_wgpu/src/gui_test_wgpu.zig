@@ -19,6 +19,7 @@ const DemoState = struct {
     font_large: zgui.Font,
     draw_list: zgui.DrawList,
 };
+var _te: *zgui.te.TestEngine = undefined;
 
 fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.create(
@@ -76,6 +77,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
 
     zgui.init(allocator);
     zgui.plot.init();
+    _te = zgui.te.getTestEngine().?;
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
         break :scale_factor @max(scale[0], scale[1]);
@@ -145,11 +147,76 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     allocator.destroy(demo);
 }
 
+var check_b = false;
+fn registerTests() void {
+    _ = _te.registerTest(
+        "Awesome",
+        "should_do_some_magic",
+        @src(),
+        struct {
+            pub fn gui(ctx: *zgui.te.TestContext) !void {
+                _ = ctx;
+            }
+
+            pub fn run(ctx: *zgui.te.TestContext) !void {
+                ctx.setRef("/Demo Settings");
+                ctx.windowFocus("");
+                ctx.itemAction(.open, "Widgets: Main", .{}, null);
+                ctx.itemAction(.click, "**/Button 1", .{}, null);
+                ctx.itemAction(.click, "**/Magic Is Everywhere", .{}, null);
+
+                std.testing.expect(true) catch |err| {
+                    zgui.te.checkTestError(@src(), err);
+                    return;
+                };
+            }
+        },
+    );
+
+    _ = _te.registerTest(
+        "Awesome",
+        "should_do_some_another_magic",
+        @src(),
+        struct {
+            pub fn gui(ctx: *zgui.te.TestContext) !void {
+                _ = ctx; // autofix
+                _ = zgui.begin("Test Window", .{ .flags = .{ .no_saved_settings = true } });
+                defer zgui.end();
+
+                zgui.text("Hello, automation world", .{});
+                _ = zgui.button("Click Me", .{});
+                if (zgui.treeNode("Node")) {
+                    defer zgui.treePop();
+
+                    _ = zgui.checkbox("Checkbox", .{ .v = &check_b });
+                }
+            }
+
+            pub fn run(ctx: *zgui.te.TestContext) !void {
+                ctx.setRef("/Test Window");
+                ctx.windowFocus("");
+
+                ctx.itemAction(.click, "Click Me", .{}, null);
+                ctx.itemAction(.open, "Node", .{}, null);
+                ctx.itemAction(.check, "Node/Checkbox", .{}, null);
+                ctx.itemAction(.uncheck, "Node/Checkbox", .{}, null);
+
+                std.testing.expect(true) catch |err| {
+                    zgui.te.checkTestError(@src(), err);
+                    return;
+                };
+            }
+        },
+    );
+}
+
 fn update(demo: *DemoState) !void {
     zgui.backend.newFrame(
         demo.gctx.swapchain_descriptor.width,
         demo.gctx.swapchain_descriptor.height,
     );
+
+    _te.showTestEngineWindows(null);
 
     zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .first_use_ever });
     zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .first_use_ever });
@@ -616,6 +683,8 @@ pub fn main() !void {
 
     const demo = try create(allocator, window);
     defer destroy(allocator, demo);
+
+    registerTests();
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
