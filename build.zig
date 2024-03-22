@@ -49,13 +49,13 @@ pub fn build(b: *std.Build) void {
     };
 
     if (target.result.os.tag == .windows) {
-        install_xaudio2(b.getInstallStep(), .bin);
-        install_d3d12(b.getInstallStep(), .bin);
-        install_directml(b.getInstallStep(), .bin);
+        install_xaudio2(b, .bin);
+        install_d3d12(b, .bin);
+        install_directml(b, .bin);
     }
 
-    install_sdl2(b.getInstallStep(), target.result, .bin);
-    install_sdl2_ttf(b.getInstallStep(), target.result, .bin);
+    install_sdl2(b, target.result, .bin);
+    install_sdl2_ttf(b, target.result, .bin);
 
     //
     // Sample applications
@@ -100,13 +100,9 @@ pub fn build(b: *std.Build) void {
     }
 }
 
-pub fn install_xaudio2(
-    step: *std.Build.Step,
-    install_dir: std.Build.InstallDir,
-) void {
-    const b = step.owner;
+pub fn install_xaudio2(b: *std.Build, install_dir: std.Build.InstallDir) void {
     const zwin32 = b.dependency("zwin32", .{});
-    step.dependOn(
+    b.default_step.dependOn(
         &b.addInstallFileWithDir(
             .{ .path = zwin32.path("bin/x64/xaudio2_9redist.dll").getPath(b) },
             install_dir,
@@ -115,20 +111,16 @@ pub fn install_xaudio2(
     );
 }
 
-pub fn install_d3d12(
-    step: *std.Build.Step,
-    install_dir: std.Build.InstallDir,
-) void {
-    const b = step.owner;
+pub fn install_d3d12(b: *std.Build, install_dir: std.Build.InstallDir) void {
     const zwin32 = b.dependency("zwin32", .{});
-    step.dependOn(
+    b.default_step.dependOn(
         &b.addInstallFileWithDir(
             .{ .path = zwin32.path("bin/x64/D3D12Core.dll").getPath(b) },
             install_dir,
             "d3d12/D3D12Core.dll",
         ).step,
     );
-    step.dependOn(
+    b.default_step.dependOn(
         &b.addInstallFileWithDir(
             .{ .path = zwin32.path("bin/x64/D3D12SDKLayers.dll").getPath(b) },
             install_dir,
@@ -137,20 +129,16 @@ pub fn install_d3d12(
     );
 }
 
-pub fn install_directml(
-    step: *std.Build.Step,
-    install_dir: std.Build.InstallDir,
-) void {
-    const b = step.owner;
+pub fn install_directml(b: *std.Build, install_dir: std.Build.InstallDir) void {
     const zwin32 = b.dependency("zwin32", .{});
-    step.dependOn(
+    b.default_step.dependOn(
         &b.addInstallFileWithDir(
             .{ .path = zwin32.path("bin/x64/DirectML.dll").getPath(b) },
             install_dir,
             "DirectML.dll",
         ).step,
     );
-    step.dependOn(
+    b.default_step.dependOn(
         &b.addInstallFileWithDir(
             .{ .path = zwin32.path("bin/x64/DirectML.Debug.dll").getPath(b) },
             install_dir,
@@ -159,17 +147,12 @@ pub fn install_directml(
     );
 }
 
-pub fn install_sdl2(
-    step: *std.Build.Step,
-    target: std.Target,
-    install_dir: std.Build.InstallDir,
-) void {
-    const b = step.owner;
+pub fn install_sdl2(b: *std.Build, target: std.Target, install_dir: std.Build.InstallDir) void {
     const zsdl = b.dependency("zsdl", .{});
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
+                b.default_step.dependOn(
                     &b.addInstallFileWithDir(
                         .{ .path = zsdl.path("libs/x86_64-windows-gnu/bin/SDL2.dll").getPath(b) },
                         install_dir,
@@ -180,7 +163,7 @@ pub fn install_sdl2(
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
+                b.default_step.dependOn(
                     &b.addInstallFileWithDir(
                         .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib/libSDL2.so").getPath(b) },
                         install_dir,
@@ -190,7 +173,7 @@ pub fn install_sdl2(
             }
         },
         .macos => {
-            step.dependOn(
+            b.default_step.dependOn(
                 &b.addInstallDirectory(.{
                     .source_dir = .{
                         .path = zsdl.path("libs/macos/Frameworks/SDL2.framework").getPath(b),
@@ -205,16 +188,15 @@ pub fn install_sdl2(
 }
 
 pub fn install_sdl2_ttf(
-    step: *std.Build.Step,
+    b: *std.Build,
     target: std.Target,
     install_dir: std.Build.InstallDir,
 ) void {
-    const b = step.owner;
     const zsdl = b.dependency("zsdl", .{});
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
+                b.default_step.dependOn(
                     &b.addInstallFileWithDir(
                         .{ .path = zsdl.path("libs/x86_64-windows-gnu/bin/SDL2_ttf.dll").getPath(b) },
                         install_dir,
@@ -225,7 +207,7 @@ pub fn install_sdl2_ttf(
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
+                b.default_step.dependOn(
                     &b.addInstallFileWithDir(
                         .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib/libSDL2_ttf.so").getPath(b) },
                         install_dir,
@@ -235,7 +217,7 @@ pub fn install_sdl2_ttf(
             }
         },
         .macos => {
-            step.dependOn(
+            b.default_step.dependOn(
                 &b.addInstallDirectory(.{
                     .source_dir = .{
                         .path = zsdl.path("libs/macos/Frameworks/SDL2_ttf.framework").getPath(b),
@@ -406,15 +388,12 @@ fn tests(
     });
 
     const sdl2_tests = b.addRunArtifact(zsdl.artifact("sdl2-tests"));
-    install_sdl2(&sdl2_tests.step, target.result, .bin);
     if (target.result.os.tag == .windows) {
         sdl2_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
     }
     test_step.dependOn(&sdl2_tests.step);
 
     const sdl2_ttf_tests = b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests"));
-    install_sdl2(&sdl2_ttf_tests.step, target.result, .bin);
-    install_sdl2_ttf(&sdl2_ttf_tests.step, target.result, .bin);
     if (target.result.os.tag == .windows) {
         sdl2_ttf_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
     }
@@ -492,15 +471,14 @@ fn install(b: *std.Build, exe: *std.Build.Step.Compile, comptime name: []const u
         exe.root_module.strip = true;
     }
 
-    const install_step = b.step(name, "Build '" ++ name ++ "' demo");
-    install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
+    const build_step = b.step(name, "Build '" ++ name ++ "' demo");
 
     const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
     const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(install_step);
+    run_cmd.step.dependOn(build_step);
     run_step.dependOn(&run_cmd.step);
 
-    install_step.dependOn(b.getInstallStep());
+    b.default_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 }
 
 fn ensureZigVersion() !void {
