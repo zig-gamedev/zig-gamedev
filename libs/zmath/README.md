@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
     const zmath = b.dependency("zmath", .{});
-    exe.root_module.addImport("zmath", zaudio.module("root"));
+    exe.root_module.addImport("zmath", zmath.module("root"));
 }
 ```
 
