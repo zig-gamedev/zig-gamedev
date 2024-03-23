@@ -10,36 +10,18 @@ Copy `zsdl` folder to a subdirectory of your project and add the following to yo
 Then in your `build.zig` add:
 
 ```zig
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{ ... });
 
     const zsdl = b.dependency("zsdl", .{});
+    const zsdl_path = zsdl.path("").getPath(b);
+
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
 
+    try @import("zsdl").addLibraryPathsTo(exe, zsdl_path);
     @import("zsdl").link_SDL2(exe);
 
-    switch (target.result.os.tag) {
-        .windows => {
-            if (target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(
-                    .{ .path = zsdl.path("libs/x86_64-windows-gnu/lib").getPath(b) },
-                );
-            }
-        },
-        .linux => {
-            if (target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(
-                    .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib").getPath(b) },
-                );
-            }
-        },
-        .macos => {
-            exe.addFrameworkPath(
-                .{ .path = zsdl.path("libs/macos/Frameworks").getPath(b) },
-            );
-        },
-        else => {},
-    }
+    try @import("zsdl").install_sdl2(&exe.step, options.target.result, .bin, zsdl_path);
 }
 ```
 

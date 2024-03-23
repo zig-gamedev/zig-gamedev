@@ -14,6 +14,9 @@ Then in your `build.zig` add:
 pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
+    // Optionally install xaudio2 libs to zig-out/bin (or somewhere else)
+    try @import("zwin32").install_xaudio2(&tests.step, .bin, zwin32.path("").getPath(b));
+
     const zxaudio2 = b.dependency("zxaudio2", .{});
     exe.root_module.addImport("zxaudio2", zxaudio2.module("root"));
 }

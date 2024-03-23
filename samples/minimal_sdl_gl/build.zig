@@ -13,31 +13,14 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const zsdl = b.dependency("zsdl", .{
         .target = options.target,
     });
+    const zsdl_path = zsdl.path("").getPath(b);
+
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
+
+    @import("zsdl").addLibraryPathsTo(exe, zsdl_path) catch unreachable;
     @import("zsdl").link_SDL2(exe);
 
-    switch (options.target.result.os.tag) {
-        .windows => {
-            if (options.target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(
-                    .{ .path = zsdl.path("libs/x86_64-windows-gnu/lib").getPath(b) },
-                );
-            }
-        },
-        .linux => {
-            if (options.target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(
-                    .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib").getPath(b) },
-                );
-            }
-        },
-        .macos => {
-            exe.addFrameworkPath(
-                .{ .path = zsdl.path("libs/macos/Frameworks").getPath(b) },
-            );
-        },
-        else => {},
-    }
+    @import("zsdl").install_sdl2(&exe.step, options.target.result, .bin, zsdl_path) catch unreachable;
 
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));

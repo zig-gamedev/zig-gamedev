@@ -27,6 +27,9 @@ Then in your `build.zig` add:
 pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
+    // Optionally install d3d12 libs to zig-out/bin (or somewhere else)
+    try @import("zwin32").install_d3d12(&tests.step, .bin, zwin32.path("").getPath(b));
+
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = false,
         .gbv = false,

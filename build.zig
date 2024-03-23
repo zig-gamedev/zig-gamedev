@@ -3,7 +3,7 @@ const std = @import("std");
 
 pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.2063" };
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     ensureZigVersion() catch return;
 
     if (checkGitLfsContent() == false) {
@@ -48,25 +48,15 @@ pub fn build(b: *std.Build) void {
         ) orelse false,
     };
 
-    if (target.result.os.tag == .windows) {
-        install_xaudio2(b, .bin);
-        install_d3d12(b, .bin);
-        install_directml(b, .bin);
-    }
-
-    install_sdl2(b, target.result, .bin);
-    install_sdl2_ttf(b, target.result, .bin);
-
     //
-    // Sample applications
+    // Build and install sample applications
     //
-    samples(b, options);
+    buildAndInstallSamples(b, options, samples_cross_platform);
     if (target.result.os.tag == .windows) {
         if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-            samplesWindowsLinux(b, options);
-
+            buildAndInstallSamples(b, options, samples_windows_linux);
             if (builtin.os.tag == .windows) {
-                samplesWindows(b, options);
+                buildAndInstallSamples(b, options, samples_windows);
             }
         }
     }
@@ -100,211 +90,70 @@ pub fn build(b: *std.Build) void {
     }
 }
 
-pub fn install_xaudio2(b: *std.Build, install_dir: std.Build.InstallDir) void {
-    const zwin32 = b.dependency("zwin32", .{});
-    b.default_step.dependOn(
-        &b.addInstallFileWithDir(
-            .{ .path = zwin32.path("bin/x64/xaudio2_9redist.dll").getPath(b) },
-            install_dir,
-            "xaudio2_9redist.dll",
-        ).step,
-    );
-}
+const samples_windows = struct {
+    pub const audio_experiments = @import("samples/audio_experiments/build.zig");
+    pub const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+    pub const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
+    pub const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
+};
 
-pub fn install_d3d12(b: *std.Build, install_dir: std.Build.InstallDir) void {
-    const zwin32 = b.dependency("zwin32", .{});
-    b.default_step.dependOn(
-        &b.addInstallFileWithDir(
-            .{ .path = zwin32.path("bin/x64/D3D12Core.dll").getPath(b) },
-            install_dir,
-            "d3d12/D3D12Core.dll",
-        ).step,
-    );
-    b.default_step.dependOn(
-        &b.addInstallFileWithDir(
-            .{ .path = zwin32.path("bin/x64/D3D12SDKLayers.dll").getPath(b) },
-            install_dir,
-            "d3d12/D3D12SDKLayers.dll",
-        ).step,
-    );
-}
+const samples_windows_linux = struct {
+    pub const bindless = @import("samples/bindless/build.zig");
+    pub const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
+    pub const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
+    pub const minimal_glfw_d3d12 = @import("samples/minimal_glfw_d3d12/build.zig");
+    pub const minimal_zgui_glfw_d3d12 = @import("samples/minimal_zgui_glfw_d3d12/build.zig");
+    pub const rasterization = @import("samples/rasterization/build.zig");
+    // TODO: get simple raytracer working again
+    //pub const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+    pub const textured_quad = @import("samples/textured_quad/build.zig");
+    pub const triangle = @import("samples/triangle/build.zig");
+};
 
-pub fn install_directml(b: *std.Build, install_dir: std.Build.InstallDir) void {
-    const zwin32 = b.dependency("zwin32", .{});
-    b.default_step.dependOn(
-        &b.addInstallFileWithDir(
-            .{ .path = zwin32.path("bin/x64/DirectML.dll").getPath(b) },
-            install_dir,
-            "DirectML.dll",
-        ).step,
-    );
-    b.default_step.dependOn(
-        &b.addInstallFileWithDir(
-            .{ .path = zwin32.path("bin/x64/DirectML.Debug.dll").getPath(b) },
-            install_dir,
-            "DirectML.Debug.dll",
-        ).step,
-    );
-}
+const samples_cross_platform = struct {
+    pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
+    pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
+    pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
 
-pub fn install_sdl2(b: *std.Build, target: std.Target, install_dir: std.Build.InstallDir) void {
-    const zsdl = b.dependency("zsdl", .{});
-    switch (target.os.tag) {
-        .windows => {
-            if (target.cpu.arch.isX86()) {
-                b.default_step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{ .path = zsdl.path("libs/x86_64-windows-gnu/bin/SDL2.dll").getPath(b) },
-                        install_dir,
-                        "SDL2.dll",
-                    ).step,
-                );
-            }
-        },
-        .linux => {
-            if (target.cpu.arch.isX86()) {
-                b.default_step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib/libSDL2.so").getPath(b) },
-                        install_dir,
-                        "libSDL2.so",
-                    ).step,
-                );
-            }
-        },
-        .macos => {
-            b.default_step.dependOn(
-                &b.addInstallDirectory(.{
-                    .source_dir = .{
-                        .path = zsdl.path("libs/macos/Frameworks/SDL2.framework").getPath(b),
-                    },
-                    .install_dir = install_dir,
-                    .install_subdir = "SDL2.framework",
-                }).step,
-            );
-        },
-        else => {},
+    usingnamespace struct { // WebGPU samples
+        pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
+        pub const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
+        pub const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");
+        pub const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
+        pub const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+        pub const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
+        pub const layers_wgpu = @import("samples/layers_wgpu/build.zig");
+        pub const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
+        pub const monolith = @import("samples/monolith/build.zig");
+        pub const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
+        pub const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+        pub const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
+        pub const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
+        pub const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
+    };
+};
+
+fn buildAndInstallSamples(b: *std.Build, options: Options, comptime samples: type) void {
+    inline for (comptime std.meta.declarations(samples)) |d| {
+        const exe = @field(samples, d.name).build(b, options);
+
+        // TODO: Problems with LTO on Windows.
+        if (exe.rootModuleTarget().os.tag == .windows) {
+            exe.want_lto = false;
+        }
+
+        if (exe.root_module.optimize == .ReleaseFast) {
+            exe.root_module.strip = true;
+        }
+
+        const install_exe = b.addInstallArtifact(exe, .{});
+        b.getInstallStep().dependOn(&install_exe.step);
+        b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(&install_exe.step);
+
+        const run_cmd = b.addRunArtifact(exe);
+        run_cmd.step.dependOn(&install_exe.step);
+        b.step(d.name ++ "-run", "Run '" ++ d.name ++ "' demo").dependOn(&run_cmd.step);
     }
-}
-
-pub fn install_sdl2_ttf(
-    b: *std.Build,
-    target: std.Target,
-    install_dir: std.Build.InstallDir,
-) void {
-    const zsdl = b.dependency("zsdl", .{});
-    switch (target.os.tag) {
-        .windows => {
-            if (target.cpu.arch.isX86()) {
-                b.default_step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{ .path = zsdl.path("libs/x86_64-windows-gnu/bin/SDL2_ttf.dll").getPath(b) },
-                        install_dir,
-                        "SDL2_ttf.dll",
-                    ).step,
-                );
-            }
-        },
-        .linux => {
-            if (target.cpu.arch.isX86()) {
-                b.default_step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{ .path = zsdl.path("libs/x86_64-linux-gnu/lib/libSDL2_ttf.so").getPath(b) },
-                        install_dir,
-                        "libSDL2_ttf.so",
-                    ).step,
-                );
-            }
-        },
-        .macos => {
-            b.default_step.dependOn(
-                &b.addInstallDirectory(.{
-                    .source_dir = .{
-                        .path = zsdl.path("libs/macos/Frameworks/SDL2_ttf.framework").getPath(b),
-                    },
-                    .install_dir = install_dir,
-                    .install_subdir = "SDL2_ttf.framework",
-                }).step,
-            );
-        },
-        else => {},
-    }
-}
-
-fn samples(b: *std.Build, options: Options) void {
-    const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
-    const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
-    const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
-
-    install(b, minimal_glfw_gl.build(b, options), "minimal_glfw_gl");
-    install(b, minimal_sdl_gl.build(b, options), "minimal_sdl_gl");
-    install(b, minimal_zgui_glfw_gl.build(b, options), "minimal_zgui_glfw_gl");
-
-    if (@import("zgpu").checkTargetSupported(options.target.result)) {
-        const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
-        const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
-        const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
-        const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
-        const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
-        const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
-        const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
-        const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
-        const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");
-        const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
-        const layers_wgpu = @import("samples/layers_wgpu/build.zig");
-        const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
-        const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
-        const monolith = @import("samples/monolith/build.zig");
-
-        install(b, triangle_wgpu.build(b, options), "triangle_wgpu");
-        install(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
-        install(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-        install(b, minimal_zgpu_zgui.build(b, options), "minimal_zgpu_zgui");
-        install(b, frame_pacing_wgpu.build(b, options), "frame_pacing_wgpu");
-        install(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
-        install(b, instanced_pills_wgpu.build(b, options), "instanced_pills_wgpu");
-        install(b, gamepad_wgpu.build(b, options), "gamepad_wgpu");
-        install(b, layers_wgpu.build(b, options), "layers_wgpu");
-        install(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-        install(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
-        install(b, physics_test_wgpu.build(b, options), "physics_test_wgpu");
-        install(b, monolith.build(b, options), "monolith");
-        install(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-    }
-}
-
-fn samplesWindowsLinux(b: *std.Build, options: Options) void {
-    const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
-    const minimal_glfw_d3d12 = @import("samples/minimal_glfw_d3d12/build.zig");
-    const minimal_zgui_glfw_d3d12 = @import("samples/minimal_zgui_glfw_d3d12/build.zig");
-    const textured_quad = @import("samples/textured_quad/build.zig");
-    const triangle = @import("samples/triangle/build.zig");
-    const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
-    const rasterization = @import("samples/rasterization/build.zig");
-    const bindless = @import("samples/bindless/build.zig");
-    //const simple_raytracer = @import("samples/simple_raytracer/build.zig");
-
-    install(b, minimal_d3d12.build(b, options), "minimal_d3d12");
-    install(b, minimal_glfw_d3d12.build(b, options), "minimal_glfw_d3d12");
-    install(b, minimal_zgui_glfw_d3d12.build(b, options), "minimal_zgui_glfw_d3d12");
-    install(b, bindless.build(b, options), "bindless");
-    install(b, triangle.build(b, options), "triangle");
-    //install(b, simple_raytracer.build(b, options), "simple_raytracer");
-    install(b, textured_quad.build(b, options), "textured_quad");
-    install(b, rasterization.build(b, options), "rasterization");
-    install(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-}
-
-fn samplesWindows(b: *std.Build, options: Options) void {
-    const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-    const audio_experiments = @import("samples/audio_experiments/build.zig");
-    const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-    const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
-
-    install(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    install(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    install(b, audio_playback_test.build(b, options), "audio_playback_test");
-    install(b, audio_experiments.build(b, options), "audio_experiments");
 }
 
 fn tests(
@@ -460,26 +309,6 @@ pub const Options = struct {
 
     zpix_enable: bool,
 };
-
-fn install(b: *std.Build, exe: *std.Build.Step.Compile, comptime name: []const u8) void {
-    // TODO: Problems with LTO on Windows.
-    if (exe.rootModuleTarget().os.tag == .windows) {
-        exe.want_lto = false;
-    }
-
-    if (exe.root_module.optimize == .ReleaseFast) {
-        exe.root_module.strip = true;
-    }
-
-    const build_step = b.step(name, "Build '" ++ name ++ "' demo");
-
-    const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(build_step);
-    run_step.dependOn(&run_cmd.step);
-
-    b.default_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
-}
 
 fn ensureZigVersion() !void {
     var installed_ver = builtin.zig_version;
