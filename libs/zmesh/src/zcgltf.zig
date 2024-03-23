@@ -898,7 +898,7 @@ test "extern struct layout" {
             continue;
         }
         if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
-            @typeInfo(ZigType).Struct.layout == .Extern)
+            @typeInfo(ZigType).Struct.layout == .@"extern")
         {
             comptime var c_name_buf: [256]u8 = undefined;
             const c_name = comptime try cTypeNameFromZigTypeName(&c_name_buf, decl.name);
