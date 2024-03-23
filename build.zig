@@ -166,10 +166,7 @@ fn tests(
         .target = target,
         .optimize = optimize,
     });
-    // TODO: Get zaudio tests working on Windows again
-    if (target.result.os.tag != .windows) {
-        test_step.dependOn(&b.addRunArtifact(zaudio.artifact("zaudio-tests")).step);
-    }
+    test_step.dependOn(&b.addRunArtifact(zaudio.artifact("zaudio-tests")).step);
 
     // TODO: Get zbullet tests working on Windows again
     if (target.result.os.tag != .windows) {
