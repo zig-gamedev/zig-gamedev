@@ -531,11 +531,6 @@ pub fn init() void {
             _ = w32.FreeLibrary(local_d3d12core_dll.?);
         }
     }
-
-    // Change directory to where an executable is located.
-    //var exe_path_buffer: [1024]u8 = undefined;
-    //const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
-    //std.os.chdir(exe_path) catch {};
 }
 
 pub fn deinit() void {
