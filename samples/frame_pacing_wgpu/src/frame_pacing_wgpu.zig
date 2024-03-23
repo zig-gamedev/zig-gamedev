@@ -147,7 +147,7 @@ pub fn main() !void {
     {
         var buffer: [1024]u8 = undefined;
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        try std.os.chdir(path);
+        try std.posix.chdir(path);
     }
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
