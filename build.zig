@@ -65,9 +65,9 @@ pub fn build(b: *std.Build) !void {
     // Tests
     //
     const test_step = b.step("test", "Run all tests");
-    tests(b, target, optimize, test_step);
+    try tests(b, target, optimize, test_step);
     if (builtin.os.tag == .windows) {
-        testsWindows(b, target, optimize, test_step);
+        try testsWindows(b, target, optimize, test_step);
     }
 
     //
@@ -161,7 +161,7 @@ fn tests(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
-) void {
+) !void {
     const zaudio = b.dependency("zaudio", .{
         .target = target,
         .optimize = optimize,
@@ -244,12 +244,14 @@ fn tests(
         sdl2_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
     }
     test_step.dependOn(&sdl2_tests.step);
+    try @import("zsdl").install_sdl2(&sdl2_tests.step, target.result, .bin, "libs/zsdl");
 
     const sdl2_ttf_tests = b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests"));
     if (target.result.os.tag == .windows) {
         sdl2_ttf_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
     }
     test_step.dependOn(&sdl2_ttf_tests.step);
+    try @import("zsdl").install_sdl2_ttf(&sdl2_tests.step, target.result, .bin, "libs/zsdl");
 
     // TODO(hazeycode): SDL3 tests
 
@@ -277,7 +279,7 @@ fn testsWindows(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
-) void {
+) !void {
     const zd3d12 = b.dependency("zd3d12", .{
         .target = target,
         .optimize = optimize,

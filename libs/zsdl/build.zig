@@ -21,69 +21,71 @@ pub fn build(b: *std.Build) !void {
         .imports = &.{},
     });
 
-    const test_step = b.step("test", "Run zsdl tests");
+    {
+        const unit_tests = b.step("test", "Run zsdl tests");
 
-    { // SDL2 tests
-        const tests_sdl2 = b.addTest(.{
-            .name = "sdl2-tests",
-            .root_source_file = .{ .path = "src/sdl2.zig" },
-            .target = target,
-            .optimize = optimize,
-        });
-        try addLibraryPathsTo(tests_sdl2, "");
-        try addRPathsTo(tests_sdl2, "");
-        link_SDL2(tests_sdl2);
-        b.installArtifact(tests_sdl2);
-
-        const tests_exe = b.addRunArtifact(tests_sdl2);
-        try install_sdl2(&tests_exe.step, target.result, .bin, "");
-        if (target.result.os.tag == .windows) {
-            tests_exe.setCwd(.{
-                .path = b.getInstallPath(.bin, ""),
+        { // SDL2 tests
+            const tests_sdl2 = b.addTest(.{
+                .name = "sdl2-tests",
+                .root_source_file = .{ .path = "src/sdl2.zig" },
+                .target = target,
+                .optimize = optimize,
             });
+            try addLibraryPathsTo(tests_sdl2, "");
+            try addRPathsTo(tests_sdl2, "");
+            link_SDL2(tests_sdl2);
+            b.installArtifact(tests_sdl2);
+
+            const tests_exe = b.addRunArtifact(tests_sdl2);
+            if (target.result.os.tag == .windows) {
+                tests_exe.setCwd(.{
+                    .path = b.getInstallPath(.bin, ""),
+                });
+            }
+            unit_tests.dependOn(&tests_exe.step);
         }
-        test_step.dependOn(&tests_exe.step);
-    }
 
-    { // SDL2_ttf tests
-        const tests_sdl2_ttf = b.addTest(.{
-            .name = "sdl2_ttf-tests",
-            .root_source_file = .{ .path = "src/sdl2_ttf.zig" },
-            .target = target,
-            .optimize = optimize,
-        });
-        try addLibraryPathsTo(tests_sdl2_ttf, "");
-        try addRPathsTo(tests_sdl2_ttf, "");
-        link_SDL2(tests_sdl2_ttf);
-        link_SDL2_ttf(tests_sdl2_ttf);
-        b.installArtifact(tests_sdl2_ttf);
-
-        const tests_exe = b.addRunArtifact(tests_sdl2_ttf);
-        try install_sdl2(&tests_exe.step, target.result, .bin, "");
-        try install_sdl2_ttf(&tests_exe.step, target.result, .bin, "");
-        if (target.result.os.tag == .windows) {
-            tests_exe.setCwd(.{
-                .path = b.getInstallPath(.bin, ""),
+        { // SDL2_ttf tests
+            const tests_sdl2_ttf = b.addTest(.{
+                .name = "sdl2_ttf-tests",
+                .root_source_file = .{ .path = "src/sdl2_ttf.zig" },
+                .target = target,
+                .optimize = optimize,
             });
+            try addLibraryPathsTo(tests_sdl2_ttf, "");
+            try addRPathsTo(tests_sdl2_ttf, "");
+            link_SDL2(tests_sdl2_ttf);
+            link_SDL2_ttf(tests_sdl2_ttf);
+            b.installArtifact(tests_sdl2_ttf);
+
+            const tests_exe = b.addRunArtifact(tests_sdl2_ttf);
+            if (target.result.os.tag == .windows) {
+                tests_exe.setCwd(.{
+                    .path = b.getInstallPath(.bin, ""),
+                });
+            }
+            unit_tests.dependOn(&tests_exe.step);
         }
-        test_step.dependOn(&tests_exe.step);
+
+        // TODO(hazeycode):
+        // { // SDL3 tests
+        //     const tests_sdl3 = b.addTest(.{
+        //         .name = "sdl3-tests",
+        //         .root_source_file = .{ .path = "src/sdl3.zig" },
+        //         .target = target,
+        //         .optimize = optimize,
+        //     });
+        //     b.installArtifact(tests_sdl3);
+
+        //     addLibraryPathsTo(tests_sdl3, "");
+        //     link_SDL3(tests_sdl3);
+
+        //     unit_tests.dependOn(&b.addRunArtifact(tests_sdl3).step);
+        // }
+
+        try install_sdl2(unit_tests, target.result, .bin, "");
+        try install_sdl2_ttf(unit_tests, target.result, .bin, "");
     }
-
-    // TODO(hazeycode):
-    // { // SDL3 tests
-    //     const tests_sdl3 = b.addTest(.{
-    //         .name = "sdl3-tests",
-    //         .root_source_file = .{ .path = "src/sdl3.zig" },
-    //         .target = target,
-    //         .optimize = optimize,
-    //     });
-    //     b.installArtifact(tests_sdl3);
-
-    //     addLibraryPathsTo(tests_sdl3, "");
-    //     link_SDL3(tests_sdl3);
-
-    //     test_step.dependOn(&b.addRunArtifact(tests_sdl3).step);
-    // }
 
     { // SDL2 version check step
         const version_check_step = b.step(
@@ -101,14 +103,14 @@ pub fn build(b: *std.Build) !void {
         link_SDL2(tests_sdl2_version_check);
 
         const version_check = b.addRunArtifact(tests_sdl2_version_check);
-        try install_sdl2(&version_check.step, target.result, .bin, "");
         if (target.result.os.tag == .windows) {
             version_check.setCwd(.{
                 .path = b.getInstallPath(.bin, ""),
             });
         }
-        test_step.dependOn(&version_check.step);
         version_check_step.dependOn(&version_check.step);
+
+        try install_sdl2(version_check_step, target.result, .bin, "");
     }
 }
 
