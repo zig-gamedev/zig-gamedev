@@ -8,6 +8,7 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 * All memory allocations go through user provided Zig allocator
 * [DrawList API](#drawlist-api) for vector graphics, text rendering and custom widgets
 * [Plot API](#plot-api) for advanced data visualizations
+* [Test engine API](#test-engine-api) for automatic testing
 
 ## Getting started
 
@@ -145,5 +146,50 @@ if (zgui.plot.beginPlot("Line Plot", .{ .h = -1.0 })) {
         .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
     });
     zgui.plot.endPlot();
+}
+```
+
+### Test Engine API
+Zig wraper for [ImGUI test engine](https://github.com/ocornut/imgui_test_engine).
+
+```zig
+var check_b = false;
+var _te: *zgui.te.TestEngine = zgui.te.getTestEngine().?;
+fn registerTests() void {
+    _ = _te.registerTest(
+        "Awesome",
+        "should_do_some_another_magic",
+        @src(),
+        struct {
+            pub fn gui(ctx: *zgui.te.TestContext) !void {
+                _ = ctx; // autofix
+                _ = zgui.begin("Test Window", .{ .flags = .{ .no_saved_settings = true } });
+                defer zgui.end();
+
+                zgui.text("Hello, automation world", .{});
+                _ = zgui.button("Click Me", .{});
+                if (zgui.treeNode("Node")) {
+                    defer zgui.treePop();
+
+                    _ = zgui.checkbox("Checkbox", .{ .v = &check_b });
+                }
+            }
+
+            pub fn run(ctx: *zgui.te.TestContext) !void {
+                ctx.setRef("/Test Window");
+                ctx.windowFocus("");
+
+                ctx.itemAction(.click, "Click Me", .{}, null);
+                ctx.itemAction(.open, "Node", .{}, null);
+                ctx.itemAction(.check, "Node/Checkbox", .{}, null);
+                ctx.itemAction(.uncheck, "Node/Checkbox", .{}, null);
+
+                std.testing.expect(true) catch |err| {
+                    zgui.te.checkTestError(@src(), err);
+                    return;
+                };
+            }
+        },
+    );
 }
 ```

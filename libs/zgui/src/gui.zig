@@ -5,6 +5,7 @@
 //
 //--------------------------------------------------------------------------------------------------
 pub const plot = @import("plot.zig");
+pub const te = @import("te.zig");
 pub const backend = switch (@import("zgui_options").backend) {
     .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
     .glfw_opengl3 => @import("backend_glfw_opengl.zig"),
@@ -12,6 +13,7 @@ pub const backend = switch (@import("zgui_options").backend) {
     .win32_dx12 => .{}, // TODO:
     .no_backend => .{},
 };
+const te_enabled = @import("zgui_options").with_te;
 //--------------------------------------------------------------------------------------------------
 const std = @import("std");
 const assert = std.debug.assert;
@@ -26,6 +28,7 @@ pub const DrawVert = extern struct {
     color: u32,
 };
 //--------------------------------------------------------------------------------------------------
+
 pub fn init(allocator: std.mem.Allocator) void {
     if (zguiGetCurrentContext() == null) {
         mem_allocator = allocator;
@@ -37,12 +40,22 @@ pub fn init(allocator: std.mem.Allocator) void {
 
         temp_buffer = std.ArrayList(u8).init(allocator);
         temp_buffer.?.resize(3 * 1024 + 1) catch unreachable;
+
+        if (te_enabled) {
+            te.init();
+        }
     }
 }
 pub fn deinit() void {
     if (zguiGetCurrentContext() != null) {
         temp_buffer.?.deinit();
         zguiDestroyContext(null);
+
+        // Must be after destroy imgui context.
+        // And before allocation check
+        if (te_enabled) {
+            te.deinit();
+        }
 
         if (mem_allocations.?.count() > 0) {
             var it = mem_allocations.?.iterator();
