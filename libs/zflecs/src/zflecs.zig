@@ -968,7 +968,7 @@ const EcsAllocator = struct {
 fn flecs_abort() callconv(.C) noreturn {
     std.debug.dumpCurrentStackTrace(@returnAddress());
     @breakpoint();
-    std.os.exit(1);
+    std.posix.exit(1);
 }
 
 //--------------------------------------------------------------------------------------------------
