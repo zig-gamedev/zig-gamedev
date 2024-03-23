@@ -23,7 +23,13 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         exe.step.dependOn(dxc_step);
     }
 
+    // This is needed to export symbols from an .exe file.
+    // We export D3D12SDKVersion and D3D12SDKPath symbols which
+    // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
+
+    @import("zwin32").install_xaudio2(&exe.step, .bin, "libs/zwin32") catch unreachable;
+    @import("zwin32").install_d3d12(&exe.step, .bin, "libs/zwin32") catch unreachable;
 
     return exe;
 }

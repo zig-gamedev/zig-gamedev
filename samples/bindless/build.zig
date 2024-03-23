@@ -67,6 +67,9 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
+    @import("zwin32").install_xaudio2(&exe.step, .bin, "libs/zwin32") catch unreachable;
+    @import("zwin32").install_d3d12(&exe.step, .bin, "libs/zwin32") catch unreachable;
+
     return exe;
 }
 

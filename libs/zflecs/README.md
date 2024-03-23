@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) void {
 
     const zflecs = b.dependency("zflecs", .{});
     exe.root_module.addImport("zflecs", zflecs.module("root"));
-    exe.linkLibrary(zbullet.artifact("flecs"));
+    exe.linkLibrary(zflecs.artifact("flecs"));
 }
 ```
 
