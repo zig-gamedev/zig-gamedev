@@ -441,7 +441,7 @@ const DebugRenderer = struct {
         zgui.end();
     }
 
-    pub fn shouldBodyDraw(body: *const zphy.Body) align(zphy.DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
+    pub fn shouldBodyDraw(body: *const zphy.Body) callconv(.C) bool {
         if (body.object_layer == object_layers.non_moving) return false;
         return true;
     }
