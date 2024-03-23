@@ -109,7 +109,7 @@ pub fn Pool(
         });
 
         const Storage = MultiArrayList(@Type(.{ .Struct = .{
-            .layout = std.builtin.Type.ContainerLayout.Auto,
+            .layout = .auto,
             .fields = private_fields ++ column_fields,
             .decls = &.{},
             .is_tuple = false,
