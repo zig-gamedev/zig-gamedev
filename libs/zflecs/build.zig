@@ -9,7 +9,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const flecs = b.addStaticLibrary(.{
-        .name = "zflecs",
+        .name = "flecs",
         .target = target,
         .optimize = optimize,
     });
@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) void {
             if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
         },
     });
+    b.installArtifact(flecs);
 
     if (target.result.os.tag == .windows) {
         flecs.linkSystemLibrary("ws2_32");
