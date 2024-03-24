@@ -2046,10 +2046,10 @@ pub const Body = extern struct {
         return velocity;
     }
     pub fn setAngularVelocity(body: *Body, velocity: [3]f32) void {
-        c.JPC_Body_SetAnglularVelocity(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
+        c.JPC_Body_SetAngularVelocity(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
     }
     pub fn setAngularVelocityClamped(body: *Body, velocity: [3]f32) void {
-        c.JPC_Body_SetAnglularVelocityClamped(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
+        c.JPC_Body_SetAngularVelocityClamped(@as(*c.JPC_Body, @ptrCast(body)), &velocity);
     }
 
     /// `point` is relative to the center of mass (com)
