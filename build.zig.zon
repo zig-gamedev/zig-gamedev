@@ -33,6 +33,7 @@
         .ztracy = .{ .path = "libs/ztracy" },
         .zwin32 = .{ .path = "libs/zwin32" },
         .zxaudio2 = .{ .path = "libs/zxaudio2" },
+        .znfde = .{ .path = "libs/znfde" },
 
         // zgpu dependencies
         .dawn_x86_64_windows_gnu = .{

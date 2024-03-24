@@ -1,0 +1,14 @@
+.{
+    .name = "znfde",
+    .version = "0.1.0",
+    .dependencies = .{
+        .system_sdk = .{ .path = "../system-sdk" },
+    },
+    .paths = .{
+        "nativefiledialog",
+        "src",
+        "README.md",
+        "build.zig",
+        "build.zig.zon",
+    },
+}

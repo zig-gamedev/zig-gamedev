@@ -107,6 +107,7 @@ Option to download packages using Zig Package Manager **coming soon!**
 | **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                   |
 | **[zwin32](libs/zwin32)**     | Bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                                                  |
 | **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                               |                                              
+| **[znfde](libs/znfde)**       | Build package and bindings for [Native file dialog - extended](https://github.com/btzy/nativefiledialog-extended)     |                                              
 
 ## Sample applications (native wgpu)
 

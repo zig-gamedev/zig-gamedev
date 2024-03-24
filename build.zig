@@ -235,6 +235,12 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zpool.artifact("zpool-tests")).step);
 
+    const znfde = b.dependency("znfde", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    test_step.dependOn(&b.addRunArtifact(znfde.artifact("znfde-tests")).step);
+
     const zsdl = b.dependency("zsdl", .{
         .target = target,
         .optimize = optimize,
