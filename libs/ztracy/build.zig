@@ -15,6 +15,11 @@ pub fn build(b: *std.Build) void {
             "enable_fibers",
             "Enable Tracy fiber support",
         ) orelse false,
+        .on_demand = b.option(
+            bool,
+            "on_demand",
+            "Build tracy with TRACY_ON_DEMAND",
+        ) orelse false,
     };
 
     const options_step = b.addOptions();
@@ -24,12 +29,13 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    _ = b.addModule("root", .{
+    const ztracy = b.addModule("root", .{
         .root_source_file = .{ .path = "src/ztracy.zig" },
         .imports = &.{
             .{ .name = "ztracy_options", .module = options_module },
         },
     });
+    ztracy.addIncludePath(.{ .path = "libs/tracy/tracy" });
 
     const tracy = b.addStaticLibrary(.{
         .name = "tracy",
@@ -49,6 +55,8 @@ pub fn build(b: *std.Build) void {
             "-fno-sanitize=undefined",
         },
     });
+
+    if (options.on_demand) tracy.defineCMacro("TRACY_ON_DEMAND", null);
 
     tracy.linkLibC();
     if (target.result.abi != .msvc)
