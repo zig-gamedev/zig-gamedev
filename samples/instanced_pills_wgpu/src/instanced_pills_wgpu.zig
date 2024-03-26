@@ -315,7 +315,7 @@ const DemoState = struct {
         const dx = v1[0] - v0[0];
         const dy = v1[1] - v0[1];
         const length = @sqrt(dx * dx + dy * dy);
-        const angle = math.atan2(f32, dy, dx);
+        const angle = math.atan2(dy, dx);
         const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
         try demo.addPill(.{
             .width = width,
