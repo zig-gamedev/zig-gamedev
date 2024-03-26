@@ -210,6 +210,18 @@ fn registerTests() void {
     );
 }
 
+const SimpleEnum = enum {
+    first,
+    second,
+    third,
+};
+
+const SparseEnum = enum(i32) {
+    first = 10,
+    second = 100,
+    third = 1000,
+};
+
 fn update(demo: *DemoState) !void {
     zgui.backend.newFrame(
         demo.gctx.swapchain_descriptor.width,
@@ -328,6 +340,8 @@ fn update(demo: *DemoState) !void {
             const static = struct {
                 var selection_index: u32 = 0;
                 var current_item: i32 = 0;
+                var simple_enum_value: SimpleEnum = .first;
+                var sparse_enum_value: SparseEnum = .first;
             };
 
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
@@ -344,6 +358,9 @@ fn update(demo: *DemoState) !void {
                 .current_item = &static.current_item,
                 .items_separated_by_zeros = "Item 0\x00Item 1\x00Item 2\x00Item 3\x00\x00",
             });
+
+            _ = zgui.comboFromEnum("simple enum", &static.simple_enum_value);
+            _ = zgui.comboFromEnum("sparse enum", &static.sparse_enum_value);
         }
 
         if (zgui.collapsingHeader("Widgets: Drag Sliders", .{})) {
