@@ -1515,31 +1515,33 @@ pub fn comboFromEnum(
     /// i32 (the underlying imgui restriction)
     current_item: anytype,
 ) bool {
-    const item_names = comptime lbl: {
-        const item_type = @typeInfo(@TypeOf(current_item.*));
-        switch (item_type) {
-            .Enum => |e| {
-                var str: [:0]const u8 = "";
-
-                for (e.fields) |f| {
-                    str = str ++ f.name ++ "\x00";
-                }
-                break :lbl str;
-            },
-            else => {
-                @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(current_item));
-            },
-        }
+    const EnumType = @TypeOf(current_item.*);
+    const enum_type_info = switch (@typeInfo(@TypeOf(current_item.*))) {
+        .Enum => |enum_type_info| enum_type_info,
+        else => @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(current_item)),
     };
 
-    var item: i32 = @intCast(@intFromEnum(current_item.*));
+    comptime var item_names: [:0]const u8 = "";
+    comptime var enum_to_int = std.EnumArray(EnumType, i32).initUndefined();
+    comptime var int_to_enum: [enum_type_info.fields.len]EnumType = undefined;
+
+    comptime {
+        for (enum_type_info.fields, 0..) |f, i| {
+            item_names = item_names ++ f.name ++ "\x00";
+            const e: EnumType = @enumFromInt(f.value);
+            enum_to_int.set(e, @intCast(i));
+            int_to_enum[i] = e;
+        }
+    }
+
+    var item: i32 = enum_to_int.get(current_item.*);
 
     const result = combo(label, .{
         .items_separated_by_zeros = item_names,
         .current_item = &item,
     });
 
-    current_item.* = @enumFromInt(item);
+    current_item.* = int_to_enum[@intCast(item)];
 
     return result;
 }
