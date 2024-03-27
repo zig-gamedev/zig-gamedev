@@ -3497,6 +3497,33 @@ test "zmath.color.srgbToRgb" {
         epsilon,
     ));
 }
+
+/// Fast approximate non-linear sRGB to linear sRGB conversion.
+pub fn srgbToLinearApprox(srgb: F32x4) F32x4 {
+    const a = srgb * srgb;
+    var b = a * @sqrt(srgb);
+    b = f32x4s(0.567) * a + f32x4s(1.0 - 0.567) * b;
+    return @shuffle(f32, b, srgb, [4]i32{ 0, 1, 2, ~@as(i32, 3) });
+}
+test "zmath.color.srgbToLinearApprox" {
+    // Results from https://davengrace.com/cgi-bin/cspace.pl
+    // sRGB' -> sRGB
+    try expect(approxEqAbs(
+        f32x4(0.132868321553818, 0.0331047665708851, 0.318546778125092, 1.0),
+        srgbToLinearApprox(f32x4(0.4, 0.2, 0.6, 1.0)),
+        0.00631738,
+    ));
+    try expect(approxEqAbs(
+        f32x4(0.318546778125092, 0.0732389558784054, 0.0245150137035247, 1.0),
+        srgbToLinearApprox(f32x4(0.6, 0.3, 0.17, 1.0)),
+        0.00631738,
+    ));
+    try expect(approxEqAbs(
+        f32x4(0.204901766398196, 0.406448301146754, 0.295699804625682, 1.0),
+        srgbToLinearApprox(f32x4(0.49, 0.67, 0.58, 1.0)),
+        0.00717974,
+    ));
+}
 // ------------------------------------------------------------------------------
 //
 // X. Misc functions
