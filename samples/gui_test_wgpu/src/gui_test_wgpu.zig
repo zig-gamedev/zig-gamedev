@@ -106,7 +106,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
 
     style.window_min_size = .{ 320.0, 240.0 };
     style.window_border_size = 8.0;
-    style.scrollbar_size = 6.0;
+    style.scrollbar_size = 12.0;
     {
         var color = style.getColor(.scrollbar_grab);
         color[1] = 0.8;

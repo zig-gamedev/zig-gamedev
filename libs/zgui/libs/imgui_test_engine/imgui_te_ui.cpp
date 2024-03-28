@@ -130,12 +130,14 @@ static void DrawTestLog(ImGuiTestEngine* e, ImGuiTest* test)
     const ImU32 unimportant_col = IM_COL32(190, 190, 190, 255);
     const float dpi_scale = GetDpiScale();
 
-    ImGuiTestLog* log = &test->TestLog;
-    const char* text = test->TestLog.Buffer.begin();
-    const char* text_end = test->TestLog.Buffer.end();
+    ImGuiTestOutput* test_output = &test->Output;
+
+    ImGuiTestLog* log = &test_output->Log;
+    const char* text = log->Buffer.begin();
+    const char* text_end = log->Buffer.end();
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 2.0f) * dpi_scale);
     ImGuiListClipper clipper;
-    ImGuiTestVerboseLevel max_log_level = test->Status == ImGuiTestStatus_Error ? e->IO.ConfigVerboseLevelOnError : e->IO.ConfigVerboseLevel;
+    ImGuiTestVerboseLevel max_log_level = test_output->Status == ImGuiTestStatus_Error ? e->IO.ConfigVerboseLevelOnError : e->IO.ConfigVerboseLevel;
     int line_count = log->ExtractLinesForVerboseLevels(ImGuiTestVerboseLevel_Silent, max_log_level, NULL);
     int current_index_clipped = -1;
     int current_index_abs = 0;
@@ -213,7 +215,7 @@ static bool ShowTestGroupFilterTest(ImGuiTestEngine* e, ImGuiTestGroup group, co
         return false;
     if (!ImGuiTestEngine_PassFilter(test, *filter ? filter : "all"))
         return false;
-    if ((e->UiFilterByStatusMask & (1 << test->Status)) == 0)
+    if ((e->UiFilterByStatusMask & (1 << test->Output.Status)) == 0)
         return false;
     return true;
 }
@@ -228,7 +230,7 @@ static void GetFailingTestsAsString(ImGuiTestEngine* e, ImGuiTestGroup group, ch
         Str* filter = (group == ImGuiTestGroup_Tests) ? e->UiFilterTests : e->UiFilterPerfs;
         if (failing_test->Group != group)
             continue;
-        if (failing_test->Status != ImGuiTestStatus_Error)
+        if (failing_test->Output.Status != ImGuiTestStatus_Error)
             continue;
         if (!ImGuiTestEngine_PassFilter(failing_test, filter->empty() ? "all" : filter->c_str()))
             continue;
@@ -239,7 +241,7 @@ static void GetFailingTestsAsString(ImGuiTestEngine* e, ImGuiTestGroup group, ch
     }
 }
 
-static void TestStatusButton(const char* id, const ImVec4& color, bool running)
+static void TestStatusButton(const char* id, const ImVec4& color, bool running, int display_counter)
 {
     ImGuiContext& g = *GImGui;
     ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, true);
@@ -255,6 +257,12 @@ static void TestStatusButton(const char* id, const ImVec4& color, bool running)
         ImGui::GetWindowDrawList()->AddLine(center - off, center + off, ImGui::GetColorU32(ImGuiCol_Text), 1.5f);
         //ImGui::RenderText(r.Min + style.FramePadding + ImVec2(0, 0), &"|\0/\0-\0\\"[(((ImGui::GetFrameCount() / 5) & 3) << 1)], NULL);
     }
+    else if (display_counter >= 0)
+    {
+        ImVec2 center = g.LastItemData.Rect.GetCenter();
+        Str30f buf("%d", display_counter);
+        ImGui::GetWindowDrawList()->AddText(center - ImGui::CalcTextSize(buf.c_str()) * 0.5f, ImGui::GetColorU32(ImGuiCol_Text), buf.c_str());
+    }
 }
 
 static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
@@ -263,16 +271,21 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
     ImGuiIO& io = ImGui::GetIO();
     const float dpi_scale = GetDpiScale();
 
-    // Save position of test run status button and make space for it.
+    // Colored Status button: will be displayed later below
+    // - Save position of test run status button and make space for it.
     const ImVec2 status_button_pos = ImGui::GetCursorPos();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetFrameHeight() + style.ItemInnerSpacing.x);
 
     //ImGui::Text("TESTS (%d)", engine->TestsAll.Size);
 #if IMGUI_VERSION_NUM >= 18837
-    if (ImGui::Button("Run") || ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_R))
+    bool run = ImGui::Button("Run") || ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_R);
 #else
-    if (ImGui::Button("Run"))
+    bool = ImGui::Button("Run");
 #endif
+#if IMGUI_VERSION_NUM > 18963
+    ImGui::SetItemTooltip("Ctrl+R");
+#endif
+    if (run)
     {
         for (int n = 0; n < e->TestsAll.Size; n++)
         {
@@ -358,14 +371,15 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
             if (!ShowTestGroupFilterTest(e, group, filter->c_str(), test))
                 continue;
 
-            ImGuiTestContext* test_context = (e->TestContext && e->TestContext->Test == test) ? e->TestContext : NULL;
+            ImGuiTestOutput* test_output = &test->Output;
+            ImGuiTestContext* test_context = (e->TestContext && e->TestContext->Test == test) ? e->TestContext : NULL; // Running context, if any
 
             ImGui::TableNextRow();
             ImGui::PushID(test_n);
 
             // Colors match general test status colors defined below.
             ImVec4 status_color;
-            switch (test->Status)
+            switch (test_output->Status)
             {
             case ImGuiTestStatus_Error:
                 status_color = ImVec4(0.9f, 0.1f, 0.1f, 1.0f);
@@ -391,22 +405,22 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
             }
 
             ImGui::TableNextColumn();
-            TestStatusButton("status", status_color, test->Status == ImGuiTestStatus_Running || test->Status == ImGuiTestStatus_Suspended);
+            TestStatusButton("status", status_color, test_output->Status == ImGuiTestStatus_Running || test_output->Status == ImGuiTestStatus_Suspended, -1);
             ImGui::SameLine();
 
             bool queue_test = false;
             bool queue_gui_func_toggle = false;
             bool select_test = false;
 
-            if (test->Status == ImGuiTestStatus_Suspended)
+            if (test_output->Status == ImGuiTestStatus_Suspended)
             {
                 // Resume IM_SUSPEND_TESTFUNC
                 // FIXME: Terrible user experience to have this here.
                 if (ImGui::Button("Con###Run"))
-                    test->Status = ImGuiTestStatus_Running;
+                    test_output->Status = ImGuiTestStatus_Running;
                 ImGui::SetItemTooltip("CTRL+Space to continue.");
                 if (ImGui::IsKeyPressed(ImGuiKey_Space) && io.KeyCtrl)
-                    test->Status = ImGuiTestStatus_Running;
+                    test_output->Status = ImGuiTestStatus_Running;
             }
             else
             {
@@ -473,7 +487,7 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
                 if (ImGui::MenuItem("Copy name", NULL, false))
                     ImGui::SetClipboardText(test->Name);
 
-                if (test->Status == ImGuiTestStatus_Error)
+                if (test_output->Status == ImGuiTestStatus_Error)
                     if (ImGui::MenuItem("Copy names of all failing tests"))
                     {
                         Str256 failing_tests;
@@ -481,7 +495,7 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
                         ImGui::SetClipboardText(failing_tests.c_str());
                     }
 
-                ImGuiTestLog* test_log = &test->TestLog;
+                ImGuiTestLog* test_log = &test_output->Log;
                 if (ImGui::BeginMenu("Copy log", !test_log->IsEmpty()))
                 {
                     for (int level_n = ImGuiTestVerboseLevel_Error; level_n < ImGuiTestVerboseLevel_COUNT; level_n++)
@@ -546,9 +560,9 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
             if (queue_gui_func_toggle && is_running_gui_func)
                 ImGuiTestEngine_AbortCurrentTest(e);
             else if (queue_gui_func_toggle && !e->IO.IsRunningTests)
-                ImGuiTestEngine_QueueTest(e, test, ImGuiTestRunFlags_ManualRun | ImGuiTestRunFlags_GuiFuncOnly);
+                ImGuiTestEngine_QueueTest(e, test, ImGuiTestRunFlags_RunFromGui | ImGuiTestRunFlags_GuiFuncOnly);
             if (queue_test && !e->IO.IsRunningTests)
-                ImGuiTestEngine_QueueTest(e, test, ImGuiTestRunFlags_ManualRun);
+                ImGuiTestEngine_QueueTest(e, test, ImGuiTestRunFlags_RunFromGui);
 
             ImGui::PopID();
         }
@@ -561,7 +575,7 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
     {
         ImVec4 status_color;
         if (tests_failed > 0)
-            status_color = ImVec4(0.9f, 0.1f, 0.1f, 1.0f);
+            status_color = ImVec4(0.9f, 0.1f, 0.1f, 1.0f); // Red
         else if (e->IO.IsRunningTests)
             status_color = ImVec4(0.8f, 0.4f, 0.1f, 1.0f);
         else if (tests_succeeded > 0 && tests_completed == tests_succeeded)
@@ -570,7 +584,7 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
             status_color = ImVec4(0.4f, 0.4f, 0.4f, 1.0f);
         //ImVec2 cursor_pos_bkp = ImGui::GetCursorPos();
         ImGui::SetCursorPos(status_button_pos);
-        TestStatusButton("status", status_color, false);// e->IO.IsRunningTests);
+        TestStatusButton("status", status_color, false, tests_failed > 0 ? tests_failed : -1);// e->IO.IsRunningTests);
         ImGui::SetItemTooltip("Filtered: %d\n- OK: %d\n- Errors: %d", tests_completed, tests_succeeded, tests_failed);
         //ImGui::SetCursorPos(cursor_pos_bkp);  // Restore cursor position for rendering further widgets
     }
@@ -586,17 +600,19 @@ static void ImGuiTestEngine_ShowLogAndTools(ImGuiTestEngine* engine)
 
     if (ImGui::BeginTabItem("LOG"))
     {
-        if (engine->UiSelectedTest)
-            ImGui::Text("Log for '%s' '%s'", engine->UiSelectedTest->Category, engine->UiSelectedTest->Name);
+        ImGuiTest* selected_test = engine->UiSelectedTest;
+
+        if (selected_test != NULL)
+            ImGui::Text("Log for '%s' '%s'", selected_test->Category, selected_test->Name);
         else
             ImGui::Text("N/A");
         if (ImGui::SmallButton("Clear"))
-            if (engine->UiSelectedTest)
-                engine->UiSelectedTest->TestLog.Clear();
+            if (selected_test)
+                selected_test->Output.Log.Clear();
         ImGui::SameLine();
         if (ImGui::SmallButton("Copy to clipboard"))
             if (engine->UiSelectedTest)
-                ImGui::SetClipboardText(engine->UiSelectedTest->TestLog.Buffer.c_str());
+                ImGui::SetClipboardText(selected_test->Output.Log.Buffer.c_str());
         ImGui::Separator();
 
         ImGui::BeginChild("Log");
@@ -695,11 +711,6 @@ static void ImGuiTestEngine_ShowTestTool(ImGuiTestEngine* engine, bool* p_open)
 {
     const float dpi_scale = GetDpiScale();
 
-    if (engine->UiFocus)
-    {
-        ImGui::SetNextWindowFocus();
-        engine->UiFocus = false;
-    }
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetFontSize() * 50, ImGui::GetFontSize() * 40), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Dear ImGui Test Engine", p_open, ImGuiWindowFlags_MenuBar))
     {
@@ -750,8 +761,8 @@ static void ImGuiTestEngine_ShowTestTool(ImGuiTestEngine* engine, bool* p_open)
     ImGui::Checkbox("KeepGUI", &engine->IO.ConfigKeepGuiFunc);
     ImGui::SetItemTooltip("Keep GUI function running after a test fails, or when a single queued test is finished.\nHold ESC to abort a running GUI function.");
     ImGui::SameLine();
-    ImGui::Checkbox("Refocus", &engine->IO.ConfigTakeFocusBackAfterTests);
-    ImGui::SetItemTooltip("Set focus back to Test window after running tests.");
+    ImGui::Checkbox("Refocus", &engine->IO.ConfigRestoreFocusAfterTests);
+    ImGui::SetItemTooltip("Restore focus back after running tests.");
     ImGui::SameLine();
     ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
     ImGui::SameLine();
@@ -806,8 +817,13 @@ void    ImGuiTestEngine_ShowTestEngineWindows(ImGuiTestEngine* e, bool* p_open)
     ImGuiTestEngine_ShowTestTool(e, p_open);
 
     // Stack Tool
+#if IMGUI_VERSION_NUM < 18993
     if (e->UiStackToolOpen)
         ImGui::ShowStackToolWindow(&e->UiStackToolOpen);
+#else
+    if (e->UiStackToolOpen)
+        ImGui::ShowIDStackToolWindow(&e->UiStackToolOpen);
+#endif
 
     // Capture Tool
     if (e->UiCaptureToolOpen)

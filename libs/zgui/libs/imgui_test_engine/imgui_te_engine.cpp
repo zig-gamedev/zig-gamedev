@@ -75,7 +75,6 @@ static void ImGuiTestEngine_PreRender(ImGuiTestEngine* engine, ImGuiContext* ui_
 static void ImGuiTestEngine_PostRender(ImGuiTestEngine* engine, ImGuiContext* ui_ctx);
 static void ImGuiTestEngine_UpdateHooks(ImGuiTestEngine* engine);
 static void ImGuiTestEngine_RunGuiFunc(ImGuiTestEngine* engine);
-static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* ctx);
 static void ImGuiTestEngine_TestQueueCoroutineMain(void* engine_opaque);
 
 // Settings
@@ -228,10 +227,6 @@ void    ImGuiTestEngine_DestroyContext(ImGuiTestEngine* engine)
     ImGuiTestEngine_CoroutineStopAndJoin(engine);
     if (engine->UiContextTarget != NULL)
         ImGuiTestEngine_UnbindImGuiContext(engine, engine->UiContextTarget);
-
-    IM_FREE(engine->UserDataBuffer);
-    engine->UserDataBuffer = NULL;
-    engine->UserDataBufferSize = 0;
 
     ImGuiTestEngine_ClearTests(engine);
 
@@ -404,6 +399,22 @@ bool    ImGuiTestEngine_TryAbortEngine(ImGuiTestEngine* engine)
     if (ImGuiTestEngine_IsTestQueueEmpty(engine))
         return true;
     return false; // Still running coroutine
+}
+
+// FIXME-OPT
+ImGuiTest* ImGuiTestEngine_FindTestByName(ImGuiTestEngine* engine, const char* category, const char* name)
+{
+    IM_ASSERT(category != NULL || name != NULL);
+    for (int n = 0; n < engine->TestsAll.Size; n++)
+    {
+        ImGuiTest* test = engine->TestsAll[n];
+        if (name != NULL && strcmp(test->Name, name) != 0)
+            continue;
+        if (category != NULL && strcmp(test->Category, category) != 0)
+            continue;
+        return test;
+    }
+    return NULL;
 }
 
 // FIXME-OPT
@@ -580,22 +591,44 @@ void ImGuiTestEngine_ApplyInputToImGuiContext(ImGuiTestEngine* engine)
             {
             case ImGuiTestInputType_Key:
             {
-                const ImGuiKey key = (ImGuiKey)(input.KeyChord & ~ImGuiMod_Mask_);
-                const ImGuiKeyChord mods = (input.KeyChord & ImGuiMod_Mask_);
+                ImGuiKeyChord key_chord = input.KeyChord;
+#if IMGUI_VERSION_NUM >= 19016
+                key_chord = ImGui::FixupKeyChord(&g, key_chord); // This will add ImGuiMod_Alt when pressing ImGuiKey_LeftAlt or ImGuiKey_LeftRight
+#endif
+                ImGuiKey key = (ImGuiKey)(key_chord & ~ImGuiMod_Mask_);
+                ImGuiKeyChord mods = (key_chord & ImGuiMod_Mask_);
                 if (mods != 0x00)
                 {
-                    if (mods & ImGuiMod_Ctrl)
-                        io.AddKeyEvent(ImGuiMod_Ctrl, input.Down);
-                    if (mods & ImGuiMod_Shift)
-                        io.AddKeyEvent(ImGuiMod_Shift, input.Down);
-                    if (mods & ImGuiMod_Alt)
-                        io.AddKeyEvent(ImGuiMod_Alt, input.Down);
-                    if (mods & ImGuiMod_Super)
-                        io.AddKeyEvent(ImGuiMod_Super, input.Down);
+                    // OSX conversion
 #if IMGUI_VERSION_NUM >= 18912
                     if (mods & ImGuiMod_Shortcut)
-                        io.AddKeyEvent(io.ConfigMacOSXBehaviors ? ImGuiMod_Super : ImGuiMod_Ctrl, input.Down);
+                        mods = (mods & ~ImGuiMod_Shortcut) | (g.IO.ConfigMacOSXBehaviors ? ImGuiMod_Super : ImGuiMod_Ctrl);
 #endif
+                    // Submitting a ImGuiMod_XXX without associated key needs to add at least one of the key.
+                    if (mods & ImGuiMod_Ctrl)
+                    {
+                        io.AddKeyEvent(ImGuiMod_Ctrl, input.Down);
+                        if (key != ImGuiKey_LeftCtrl && key != ImGuiKey_RightCtrl)
+                            io.AddKeyEvent(ImGuiKey_LeftCtrl, input.Down);
+                    }
+                    if (mods & ImGuiMod_Shift)
+                    {
+                        io.AddKeyEvent(ImGuiMod_Shift, input.Down);
+                        if (key != ImGuiKey_LeftShift && key != ImGuiKey_RightShift)
+                            io.AddKeyEvent(ImGuiKey_LeftShift, input.Down);
+                    }
+                    if (mods & ImGuiMod_Alt)
+                    {
+                        io.AddKeyEvent(ImGuiMod_Alt, input.Down);
+                        if (key != ImGuiKey_LeftAlt && key != ImGuiKey_RightAlt)
+                            io.AddKeyEvent(ImGuiKey_LeftAlt, input.Down);
+                    }
+                    if (mods & ImGuiMod_Super)
+                    {
+                        io.AddKeyEvent(ImGuiMod_Super, input.Down);
+                        if (key != ImGuiKey_LeftSuper && key != ImGuiKey_RightSuper)
+                            io.AddKeyEvent(ImGuiKey_LeftSuper, input.Down);
+                    }
                 }
 
                 if (key != ImGuiKey_None)
@@ -664,7 +697,7 @@ static void ImGuiTestEngine_UpdateWatchdog(ImGuiTestEngine* engine, ImGuiContext
     if (engine->IO.ConfigRunSpeed != ImGuiTestRunSpeed_Fast || ImOsIsDebuggerPresent())
         return;
 
-    if (test_ctx->RunFlags & ImGuiTestRunFlags_ManualRun)
+    if (test_ctx->RunFlags & ImGuiTestRunFlags_RunFromGui)
         return;
 
     const float timer_warn = engine->IO.ConfigWatchdogWarning;
@@ -831,6 +864,18 @@ static void ImGuiTestEngine_PostRender(ImGuiTestEngine* engine, ImGuiContext* ui
     if (!engine->IO.ConfigMouseDrawCursor && !g.IO.MouseDrawCursor && ImGuiTestEngine_IsUsingSimulatedInputs(engine))
         g.MouseCursor = ImGuiMouseCursor_Arrow;
 
+
+    // Check ImDrawData integrity
+    // This is currently a very cheap operation but may later become slower we if e.g. check idx boundaries.
+#ifdef IMGUI_HAS_DOCK
+    if (engine->IO.CheckDrawDataIntegrity)
+        for (ImGuiViewport* viewport : ImGui::GetPlatformIO().Viewports)
+            DrawDataVerifyMatchingBufferCount(viewport->DrawData);
+#else
+    if (engine->IO.CheckDrawDataIntegrity)
+        DrawDataVerifyMatchingBufferCount(ImGui::GetDrawData());
+#endif
+
     engine->CaptureContext.PostRender();
 }
 
@@ -839,7 +884,6 @@ static void ImGuiTestEngine_RunGuiFunc(ImGuiTestEngine* engine)
     ImGuiTestContext* ctx = engine->TestContext;
     if (ctx && ctx->Test->GuiFunc)
     {
-        ctx->Test->GuiFuncLastFrame = ctx->UiContext->FrameCount;
         if (!(ctx->RunFlags & ImGuiTestRunFlags_GuiFuncDisable))
         {
             ImGuiTestActiveFunc backup_active_func = ctx->ActiveFunc;
@@ -902,6 +946,15 @@ void ImGuiTestEngine_SetDeltaTime(ImGuiTestEngine* engine, float delta_time)
 int ImGuiTestEngine_GetFrameCount(ImGuiTestEngine* engine)
 {
     return engine->FrameCount;
+}
+
+const char* ImGuiTestEngine_GetStatusName(ImGuiTestStatus v)
+{
+    static const char* names[ImGuiTestStatus_COUNT] = { "Success", "Queued", "Running", "Error", "Suspended" };
+    IM_STATIC_ASSERT(IM_ARRAYSIZE(names) == ImGuiTestStatus_COUNT);
+    if (v >= 0 && v < IM_ARRAYSIZE(names))
+        return names[v];
+    return "N/A";
 }
 
 const char* ImGuiTestEngine_GetRunSpeedName(ImGuiTestRunSpeed v)
@@ -1011,96 +1064,44 @@ bool ImGuiTestEngine_CaptureEndVideo(ImGuiTestEngine* engine, ImGuiCaptureArgs* 
 static void ImGuiTestEngine_ProcessTestQueue(ImGuiTestEngine* engine)
 {
     // Avoid tracking scrolling in UI when running a single test
-    const bool track_scrolling = (engine->TestsQueue.Size > 1) || (engine->TestsQueue.Size == 1 && (engine->TestsQueue[0].RunFlags & ImGuiTestRunFlags_CommandLine));
+    const bool track_scrolling = (engine->TestsQueue.Size > 1) || (engine->TestsQueue.Size == 1 && (engine->TestsQueue[0].RunFlags & ImGuiTestRunFlags_RunFromCommandLine));
+
+    // Backup some state
     ImGuiIO& io = ImGui::GetIO();
-    const char* settings_ini_backup = io.IniFilename;
+    const char* backup_ini_filename = io.IniFilename;
+    ImGuiWindow* backup_nav_window = engine->UiContextTarget->NavWindow;
     io.IniFilename = NULL;
 
-    engine->BatchStartTime = ImTimeGetInMicroseconds();
     int ran_tests = 0;
+    engine->BatchStartTime = ImTimeGetInMicroseconds();
     engine->IO.IsRunningTests = true;
     for (int n = 0; n < engine->TestsQueue.Size; n++)
     {
         ImGuiTestRunTask* run_task = &engine->TestsQueue[n];
-        ImGuiTest* test = run_task->Test;
-        IM_ASSERT(test->Status == ImGuiTestStatus_Queued);
-        test->StartTime = ImTimeGetInMicroseconds();
-
-        if (engine->Abort)
-        {
-            test->Status = ImGuiTestStatus_Unknown;
-            test->EndTime = test->StartTime;
-            continue;
-        }
+        IM_ASSERT(run_task->Test->Output.Status == ImGuiTestStatus_Queued);
 
         // FIXME-TESTS: Blind mode not supported
         IM_ASSERT(engine->UiContextTarget != NULL);
         IM_ASSERT(engine->UiContextActive == NULL);
         engine->UiContextActive = engine->UiContextTarget;
-        engine->UiSelectedTest = test;
-        test->Status = ImGuiTestStatus_Running;
-
-        ImGuiCaptureArgs capture_args;
-        ImGuiTestContext ctx;
-        ctx.Test = test;
-        ctx.Engine = engine;
-        ctx.EngineIO = &engine->IO;
-        ctx.Inputs = &engine->Inputs;
-        ctx.UserVars = NULL;
-        ctx.UiContext = engine->UiContextActive;
-        ctx.PerfStressAmount = engine->IO.PerfStressAmount;
-        ctx.RunFlags = run_task->RunFlags;
-#ifdef IMGUI_HAS_DOCK
-        ctx.HasDock = true;
-#else
-        ctx.HasDock = false;
-#endif
-        ctx.CaptureArgs = &capture_args;
-        engine->TestContext = &ctx;
-        ImGuiTestEngine_UpdateHooks(engine);
+        engine->UiSelectedTest = run_task->Test;
         if (track_scrolling)
-            engine->UiSelectAndScrollToTest = test;
+            engine->UiSelectAndScrollToTest = run_task->Test;
 
-        ctx.LogEx(ImGuiTestVerboseLevel_Info, ImGuiTestLogFlags_NoHeader, "----------------------------------------------------------------------");
+        // Run test
+        ImGuiTestEngine_RunTest(engine, NULL, run_task->Test, run_task->RunFlags);
 
-        // Test name is not displayed in UI due to a happy accident - logged test name is cleared in
-        // ImGuiTestEngine_RunTest(). This is a behavior we want.
-        ctx.LogWarning("Test: '%s' '%s'..", test->Category, test->Name);
-        if (test->VarsConstructor != NULL)
-        {
-            if ((engine->UserDataBuffer == NULL) || (engine->UserDataBufferSize < test->VarsSize))
-            {
-                IM_FREE(engine->UserDataBuffer);
-                engine->UserDataBufferSize = test->VarsSize;
-                engine->UserDataBuffer = IM_ALLOC(engine->UserDataBufferSize);
-            }
-
-            // Run test with a custom data type in the stack
-            ctx.UserVars = engine->UserDataBuffer;
-            test->VarsConstructor(engine->UserDataBuffer);
-            if (test->VarsPostConstructor != NULL && test->VarsPostConstructorUserFn != NULL)
-                test->VarsPostConstructor(&ctx, engine->UserDataBuffer, test->VarsPostConstructorUserFn);
-            ImGuiTestEngine_RunTest(engine, &ctx);
-            test->VarsDestructor(engine->UserDataBuffer);
-        }
-        else
-        {
-            // Run test
-            ImGuiTestEngine_RunTest(engine, &ctx);
-        }
-        ran_tests++;
-        test->EndTime = ImTimeGetInMicroseconds();
-
-        IM_ASSERT(engine->TestContext == &ctx);
+        // Cleanup
+        IM_ASSERT(engine->TestContext == NULL);
         IM_ASSERT(engine->UiContextActive == engine->UiContextTarget);
-        engine->TestContext = NULL;
         engine->UiContextActive = NULL;
-        ImGuiTestEngine_UpdateHooks(engine);
 
         // Auto select the first error test
         //if (test->Status == ImGuiTestStatus_Error)
         //    if (engine->UiSelectedTest == NULL || engine->UiSelectedTest->Status != ImGuiTestStatus_Error)
         //        engine->UiSelectedTest = test;
+
+        ran_tests++;
     }
     engine->IO.IsRunningTests = false;
     engine->BatchEndTime = ImTimeGetInMicroseconds();
@@ -1108,11 +1109,13 @@ static void ImGuiTestEngine_ProcessTestQueue(ImGuiTestEngine* engine)
     engine->Abort = false;
     engine->TestsQueue.clear();
 
-    //ImGuiContext& g = *engine->UiTestContext;
-    //if (g.OpenPopupStack.empty())   // Don't refocus Test Engine UI if popups are opened: this is so we can see remaining popups when implementing tests.
-    if (ran_tests && engine->IO.ConfigTakeFocusBackAfterTests)
-        engine->UiFocus = true;
-    io.IniFilename = settings_ini_backup;
+    // Restore UI state (done after all ImGuiTestEngine_RunTest() are done)
+    if (ran_tests)
+    {
+        if (engine->IO.ConfigRestoreFocusAfterTests)
+            ImGui::FocusWindow(backup_nav_window);
+    }
+    io.IniFilename = backup_ini_filename;
 }
 
 bool ImGuiTestEngine_IsTestQueueEmpty(ImGuiTestEngine* engine)
@@ -1139,11 +1142,11 @@ void ImGuiTestEngine_QueueTest(ImGuiTestEngine* engine, ImGuiTest* test, ImGuiTe
     {
         ImGuiTestEngine_AbortCurrentTest(engine);
         IM_ASSERT(0 && "Not receiving signal from core library. Did you call ImGuiTestEngine_CreateContext() with the correct context? Did you compile imgui/ with IMGUI_ENABLE_TEST_ENGINE=1?");
-        test->Status = ImGuiTestStatus_Error;
+        test->Output.Status = ImGuiTestStatus_Error;
         return;
     }
 
-    test->Status = ImGuiTestStatus_Queued;
+    test->Output.Status = ImGuiTestStatus_Queued;
 
     ImGuiTestRunTask run_task;
     run_task.Test = test;
@@ -1328,14 +1331,26 @@ void ImGuiTestEngine_GetResult(ImGuiTestEngine* engine, int& count_tested, int& 
     for (int n = 0; n < engine->TestsAll.Size; n++)
     {
         ImGuiTest* test = engine->TestsAll[n];
-        if (test->Status == ImGuiTestStatus_Unknown)
+        if (test->Output.Status == ImGuiTestStatus_Unknown)
             continue;
-        IM_ASSERT(test->Status != ImGuiTestStatus_Queued);
-        IM_ASSERT(test->Status != ImGuiTestStatus_Running);
+        IM_ASSERT(test->Output.Status != ImGuiTestStatus_Queued);
+        IM_ASSERT(test->Output.Status != ImGuiTestStatus_Running);
         count_tested++;
-        if (test->Status == ImGuiTestStatus_Success)
+        if (test->Output.Status == ImGuiTestStatus_Success)
             count_success++;
     }
+}
+
+// Get a copy of the test list
+void ImGuiTestEngine_GetTestList(ImGuiTestEngine* engine, ImVector<ImGuiTest*>* out_tests)
+{
+    *out_tests = engine->TestsAll;
+}
+
+// Get a copy of the test queue
+void ImGuiTestEngine_GetTestQueue(ImGuiTestEngine* engine, ImVector<ImGuiTestRunTask>* out_tests)
+{
+    *out_tests = engine->TestsQueue;
 }
 
 static void ImGuiTestEngine_UpdateHooks(ImGuiTestEngine* engine)
@@ -1358,31 +1373,166 @@ static void ImGuiTestEngine_UpdateHooks(ImGuiTestEngine* engine)
     ui_ctx->TestEngineHookItems = want_hooking;
 }
 
-static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* ctx)
+struct ImGuiTestContextUiContextBackup
 {
+    ImGuiIO             IO;
+    ImGuiStyle          Style;
+    ImGuiDebugLogFlags  DebugLogFlags;
+    ImGuiKeyChord       ConfigNavWindowingKeyNext;
+    ImGuiKeyChord       ConfigNavWindowingKeyPrev;
+
+    void Backup(ImGuiContext& g)
+    {
+        IO = g.IO;
+        Style = g.Style;
+        DebugLogFlags = g.DebugLogFlags;
+        ConfigNavWindowingKeyNext = g.ConfigNavWindowingKeyNext;
+        ConfigNavWindowingKeyPrev = g.ConfigNavWindowingKeyPrev;
+        memset(IO.MouseDown, 0, sizeof(IO.MouseDown));
+        for (int n = 0; n < IM_ARRAYSIZE(IO.KeysData); n++)
+            IO.KeysData[n].Down = false;
+    }
+    void Restore(ImGuiContext& g)
+    {
+#if IMGUI_VERSION_NUM < 18993
+        IO.MetricsActiveAllocations = g.IO.MetricsActiveAllocations;
+#endif
+        g.IO = IO;
+        g.Style = Style;
+        g.DebugLogFlags = DebugLogFlags;
+        g.ConfigNavWindowingKeyNext = ConfigNavWindowingKeyNext;
+        g.ConfigNavWindowingKeyPrev = ConfigNavWindowingKeyPrev;
+    }
+    void RestoreClipboardFuncs(ImGuiContext& g)
+    {
+        g.IO.GetClipboardTextFn = IO.GetClipboardTextFn;
+        g.IO.SetClipboardTextFn = IO.SetClipboardTextFn;
+        g.IO.ClipboardUserData = IO.ClipboardUserData;
+    }
+};
+
+// FIXME: Work toward simplifying this function?
+void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* parent_ctx, ImGuiTest* test, ImGuiTestRunFlags run_flags)
+{
+    ImGuiTestContext stack_ctx;
+    ImGuiCaptureArgs stack_capture_args;
+    ImGuiTestContext* ctx;
+
+    if (run_flags & ImGuiTestRunFlags_ShareTestContext)
+    {
+        // Reuse existing test context
+        IM_ASSERT(parent_ctx != NULL);
+        ctx = parent_ctx;
+    }
+    else
+    {
+        // Create a test context
+        ctx = &stack_ctx;
+        ctx->Engine = engine;
+        ctx->EngineIO = &engine->IO;
+        ctx->Inputs = &engine->Inputs;
+        ctx->CaptureArgs = &stack_capture_args;
+        ctx->UserVars = NULL;
+        ctx->PerfStressAmount = engine->IO.PerfStressAmount;
+#ifdef IMGUI_HAS_DOCK
+        ctx->HasDock = true;
+#else
+        ctx->HasDock = false;
+#endif
+    }
+
+    ImGuiTestOutput* test_output;
+    if (parent_ctx == NULL)
+    {
+        ctx->Test = test;
+        test_output = ctx->TestOutput = &test->Output;
+        test_output->StartTime = ImTimeGetInMicroseconds();
+    }
+    else
+    {
+        ctx->Test = parent_ctx->Test;
+        test_output = ctx->TestOutput = parent_ctx->TestOutput;
+    }
+
+    if (engine->Abort)
+    {
+        test_output->Status = ImGuiTestStatus_Unknown;
+        if (parent_ctx == NULL)
+            test_output->EndTime = test_output->StartTime;
+        ctx->Test = NULL;
+        ctx->TestOutput = NULL;
+        return;
+    }
+
+    test_output->Status = ImGuiTestStatus_Running;
+
+    ctx->RunFlags = run_flags;
+    ctx->UiContext = engine->UiContextActive;
+
+    engine->TestContext = ctx;
+    ImGuiTestEngine_UpdateHooks(engine);
+
+    void* backup_user_vars = NULL;
+    ImGuiTestGenericVars backup_generic_vars;
+    if (run_flags & ImGuiTestRunFlags_ShareVars)
+    {
+        // Share user vars and generic vars
+        IM_CHECK_SILENT(parent_ctx != NULL);
+        IM_CHECK_SILENT(test->VarsSize == parent_ctx->Test->VarsSize);
+        IM_CHECK_SILENT(test->VarsConstructor == parent_ctx->Test->VarsConstructor);
+        IM_CHECK_SILENT(test->VarsPostConstructor == parent_ctx->Test->VarsPostConstructor);
+        IM_CHECK_SILENT(test->VarsPostConstructorUserFn == parent_ctx->Test->VarsPostConstructorUserFn);
+        IM_CHECK_SILENT(test->VarsDestructor == parent_ctx->Test->VarsDestructor);
+        if ((run_flags & ImGuiTestRunFlags_ShareTestContext) == 0)
+        {
+            ctx->GenericVars = parent_ctx->GenericVars;
+            ctx->UserVars = parent_ctx->UserVars;
+        }
+    }
+    else
+    {
+        // Create user vars
+        if (run_flags & ImGuiTestRunFlags_ShareTestContext)
+        {
+            backup_user_vars = parent_ctx->UserVars;
+            backup_generic_vars = parent_ctx->GenericVars;
+        }
+        ctx->GenericVars.Clear();
+        if (test->VarsConstructor != NULL)
+        {
+            ctx->UserVars = IM_ALLOC(test->VarsSize);
+            test->VarsConstructor(ctx->UserVars);
+            if (test->VarsPostConstructor != NULL && test->VarsPostConstructorUserFn != NULL)
+                test->VarsPostConstructor(ctx, ctx->UserVars, test->VarsPostConstructorUserFn);
+        }
+    }
+
+    // Log header
+    if (parent_ctx == NULL)
+    {
+        ctx->LogEx(ImGuiTestVerboseLevel_Info, ImGuiTestLogFlags_NoHeader, "----------------------------------------------------------------------"); // Intentionally TTY only (just before clear: make it a flag?)
+        test_output->Log.Clear();
+        ctx->LogWarning("Test: '%s' '%s'..", test->Category, test->Name);
+    }
+    else
+    {
+        ctx->LogWarning("Child Test: '%s' '%s'..", test->Category, test->Name);
+        ctx->LogWarning("(ShareVars=%d ShareTestContext=%d)", (run_flags & ImGuiTestRunFlags_ShareVars) ? 1 : 0, (run_flags & ImGuiTestRunFlags_ShareTestContext) ? 1 : 0);
+    }
+
     // Clear ImGui inputs to avoid key/mouse leaks from one test to another
     ImGuiTestEngine_ClearInput(engine);
 
-    ImGuiTest* test = ctx->Test;
-    ctx->FrameCount = 0;
+    ctx->FrameCount = parent_ctx ? parent_ctx->FrameCount : 0;
     ctx->ErrorCounter = 0;
     ctx->SetRef("");
     ctx->SetInputMode(ImGuiInputSource_Mouse);
     ctx->UiContext->NavInputSource = ImGuiInputSource_Keyboard;
     ctx->Clipboard.clear();
-    ctx->GenericVars.Clear();
-    test->TestLog.Clear();
 
-    // Back entire IO and style. Allows tests modifying them and not caring about restoring state.
-    ImGuiIO backup_io = ctx->UiContext->IO;
-    ImGuiStyle backup_style = ctx->UiContext->Style;
-    ImGuiDebugLogFlags backup_debug_log_flags = ctx->UiContext->DebugLogFlags;
-    ImGuiKeyChord backup_nav_windowing_key_next = ctx->UiContext->ConfigNavWindowingKeyNext;
-    ImGuiKeyChord backup_nav_windowing_key_prev = ctx->UiContext->ConfigNavWindowingKeyPrev;
-
-    memset(backup_io.MouseDown, 0, sizeof(backup_io.MouseDown));
-    for (int n = 0; n < IM_ARRAYSIZE(backup_io.KeysData); n++)
-        backup_io.KeysData[n].Down = false;
+    // Backup entire IO and style. Allows tests modifying them and not caring about restoring state.
+    ImGuiTestContextUiContextBackup backup_ui_context;
+    backup_ui_context.Backup(*ctx->UiContext);
 
     // Setup IO: software mouse cursor, viewport support
     ImGuiIO& io = ctx->UiContext->IO;
@@ -1399,21 +1549,24 @@ static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* c
 #endif
 
     // Setup IO: override clipboard
-    io.GetClipboardTextFn = [](void* user_data) -> const char*
+    if ((ctx->RunFlags & ImGuiTestRunFlags_GuiFuncOnly) == 0)
     {
-        ImGuiTestContext* ctx = (ImGuiTestContext*)user_data;
-        return ctx->Clipboard.empty() ? "" : ctx->Clipboard.Data;
-    };
-    io.SetClipboardTextFn = [](void* user_data, const char* text)
-    {
-        ImGuiTestContext* ctx = (ImGuiTestContext*)user_data;
-        ctx->Clipboard.resize((int)strlen(text) + 1);
-        strcpy(ctx->Clipboard.Data, text);
-    };
-    io.ClipboardUserData = ctx;
+        io.GetClipboardTextFn = [](void* user_data) -> const char*
+        {
+            ImGuiTestContext* ctx = (ImGuiTestContext*)user_data;
+            return ctx->Clipboard.empty() ? "" : ctx->Clipboard.Data;
+        };
+        io.SetClipboardTextFn = [](void* user_data, const char* text)
+        {
+            ImGuiTestContext* ctx = (ImGuiTestContext*)user_data;
+            ctx->Clipboard.resize((int)strlen(text) + 1);
+            strcpy(ctx->Clipboard.Data, text);
+        };
+        io.ClipboardUserData = ctx;
+    }
 
     // Mark as currently running the TestFunc (this is the only time when we are allowed to yield)
-    IM_ASSERT(ctx->ActiveFunc == ImGuiTestActiveFunc_None);
+    IM_ASSERT(ctx->ActiveFunc == ImGuiTestActiveFunc_None || ctx->ActiveFunc == ImGuiTestActiveFunc_TestFunc);
     ImGuiTestActiveFunc backup_active_func = ctx->ActiveFunc;
     ctx->ActiveFunc = ImGuiTestActiveFunc_TestFunc;
     ctx->FirstGuiFrame = (test->GuiFunc != NULL) ? true : false;
@@ -1426,7 +1579,7 @@ static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* c
     {
         ctx->FrameCount -= 2;
         ctx->Yield();
-        if (test->Status == ImGuiTestStatus_Running) // To allow GuiFunc calling Finish() in first frame
+        if (test_output->Status == ImGuiTestStatus_Running) // To allow GuiFunc calling Finish() in first frame
             ctx->Yield();
     }
     ctx->FirstTestFrameCount = ctx->FrameCount;
@@ -1435,15 +1588,11 @@ static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* c
     if (ctx->RunFlags & ImGuiTestRunFlags_GuiFuncOnly)
     {
         // No test function
-        while (!engine->Abort && test->Status == ImGuiTestStatus_Running)
+        while (!engine->Abort && test_output->Status == ImGuiTestStatus_Running)
             ctx->Yield();
     }
     else
     {
-        // Sanity check
-        if (test->GuiFunc && !(test->Flags & ImGuiTestFlags_NoGuiWarmUp))
-            IM_ASSERT(test->GuiFuncLastFrame == ctx->UiContext->FrameCount);
-
         if (test->TestFunc)
         {
             // Test function
@@ -1463,7 +1612,7 @@ static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* c
         {
             // No test function
             if (test->Flags & ImGuiTestFlags_NoAutoFinish)
-                while (!engine->Abort && test->Status == ImGuiTestStatus_Running)
+                while (!engine->Abort && test_output->Status == ImGuiTestStatus_Running)
                     ctx->Yield();
         }
 
@@ -1494,9 +1643,7 @@ static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* c
             ctx->UiContext->IO.MousePos = engine->Inputs.MousePosValue;
 
             // Restore backend clipboard functions
-            ctx->UiContext->IO.GetClipboardTextFn = backup_io.GetClipboardTextFn;
-            ctx->UiContext->IO.SetClipboardTextFn = backup_io.SetClipboardTextFn;
-            ctx->UiContext->IO.ClipboardUserData = backup_io.ClipboardUserData;
+            backup_ui_context.RestoreClipboardFuncs(*ctx->UiContext);
 
             // Unhide foreign windows (may be useful sometimes to inspect GuiFunc state... sometimes not)
             //ctx->ForeignWindowsUnhideAll();
@@ -1505,52 +1652,80 @@ static void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* c
         // Keep GuiFunc spinning
         // FIXME-TESTS: after an error, this is not visible in the UI because status is not _Running anymore...
         if (engine->IO.ConfigKeepGuiFunc)
-            if (engine->TestsQueue.Size == 1 || test->Status == ImGuiTestStatus_Error)
+        {
+            if (engine->TestsQueue.Size == 1 || test_output->Status == ImGuiTestStatus_Error)
             {
+#if IMGUI_VERSION_NUM >= 18992
+                ImGui::TeleportMousePos(engine->Inputs.MousePosValue);
+#endif
                 while (engine->IO.ConfigKeepGuiFunc && !engine->Abort)
                 {
                     ctx->RunFlags |= ImGuiTestRunFlags_GuiFuncOnly;
                     ctx->Yield();
                 }
             }
+        }
     }
 
     IM_ASSERT(engine->CaptureCurrentArgs == NULL && "Active capture was not terminated in the test code.");
 
     // Process and display result/status
-    if (test->Status == ImGuiTestStatus_Running)
-        test->Status = ImGuiTestStatus_Success;
+    test_output->EndTime = ImTimeGetInMicroseconds();
+    if (test_output->Status == ImGuiTestStatus_Running)
+        test_output->Status = ImGuiTestStatus_Success;
+    if (engine->Abort && test_output->Status != ImGuiTestStatus_Error)
+        test_output->Status = ImGuiTestStatus_Unknown;
 
-    if (engine->Abort && test->Status != ImGuiTestStatus_Error)
-        test->Status = ImGuiTestStatus_Unknown;
-
-    if (test->Status == ImGuiTestStatus_Success)
+    // Log result
+    if (test_output->Status == ImGuiTestStatus_Success)
     {
         if ((ctx->RunFlags & ImGuiTestRunFlags_NoSuccessMsg) == 0)
             ctx->LogInfo("Success.");
     }
     else if (engine->Abort)
         ctx->LogWarning("Aborted.");
-    else if (test->Status == ImGuiTestStatus_Error)
+    else if (test_output->Status == ImGuiTestStatus_Error)
         ctx->LogError("%s test failed.", test->Name);
     else
         ctx->LogWarning("Unknown status.");
 
     // Additional yields to avoid consecutive tests who may share identifiers from missing their window/item activation.
-    ctx->SetGuiFuncEnabled(false);
-    ctx->Yield();
-    ctx->Yield();
+    ctx->RunFlags |= ImGuiTestRunFlags_GuiFuncDisable;
+    ctx->Yield(2);
 
     // Restore active func
     ctx->ActiveFunc = backup_active_func;
+    if (parent_ctx)
+        parent_ctx->FrameCount = ctx->FrameCount;
 
     // Restore backed up IO and style
-    backup_io.MetricsActiveAllocations = ctx->UiContext->IO.MetricsActiveAllocations;
-    ctx->UiContext->IO = backup_io;
-    ctx->UiContext->Style = backup_style;
-    ctx->UiContext->DebugLogFlags = backup_debug_log_flags;
-    ctx->UiContext->ConfigNavWindowingKeyNext = backup_nav_windowing_key_next;
-    ctx->UiContext->ConfigNavWindowingKeyPrev = backup_nav_windowing_key_prev;
+    backup_ui_context.Restore(*ctx->UiContext);
+
+    if (run_flags & ImGuiTestRunFlags_ShareVars)
+    {
+        // Share generic vars?
+        if ((run_flags & ImGuiTestRunFlags_ShareTestContext) == 0)
+            parent_ctx->GenericVars = ctx->GenericVars;
+    }
+    else
+    {
+        // Destruct user vars
+        if (test->VarsConstructor != NULL)
+        {
+            test->VarsDestructor(ctx->UserVars);
+            if (ctx->UserVars)
+                IM_FREE(ctx->UserVars);
+            ctx->UserVars = NULL;
+        }
+        if (run_flags & ImGuiTestRunFlags_ShareTestContext)
+        {
+            parent_ctx->UserVars = backup_user_vars;
+            parent_ctx->GenericVars = backup_generic_vars;
+        }
+    }
+
+    IM_ASSERT(engine->TestContext == ctx);
+    engine->TestContext = parent_ctx;
 }
 
 //-------------------------------------------------------------------------
@@ -1574,13 +1749,14 @@ void ImGuiTestEngine_CrashHandler()
     engine->BatchEndTime = ImTimeGetInMicroseconds();
     for (int i = 0; i < engine->TestsAll.Size; i++)
     {
-        ImGuiTest* test = engine->TestsAll[i];
-        if (test->Status == ImGuiTestStatus_Running)
-        {
-            test->Status = ImGuiTestStatus_Error;
-            test->EndTime = engine->BatchEndTime;
-            break;
-        }
+        if (engine->TestContext)
+            if (ImGuiTest* test = engine->TestContext->Test)
+                if (test->Output.Status == ImGuiTestStatus_Running)
+                {
+                    test->Output.Status = ImGuiTestStatus_Error;
+                    test->Output.EndTime = engine->BatchEndTime;
+                    break;
+                }
     }
 
     // Export test run results.
@@ -1889,10 +2065,19 @@ void ImGuiTestEngine_AssertLog(const char* expr, const char* file, const char* f
     }
 }
 
+// Used by IM_CHECK_OP() macros
+ImGuiTextBuffer* ImGuiTestEngine_GetTempStringBuilder()
+{
+    static ImGuiTextBuffer builder;
+    builder.Buf.resize(1);
+    builder.Buf[0] = 0;
+    return &builder;
+}
+
+// Out of convenience for main library we allow this to be called before TestEngine is initialized.
 const char* ImGuiTestEngine_FindItemDebugLabel(ImGuiContext* ui_ctx, ImGuiID id)
 {
-    IM_ASSERT(ui_ctx->TestEngine != NULL);
-    if (id == 0)
+    if (ui_ctx->TestEngine == NULL || id == 0)
         return NULL;
     if (ImGuiTestItemInfo* id_info = ImGuiTestEngine_FindItemInfo((ImGuiTestEngine*)ui_ctx->TestEngine, id, ""))
         return id_info->DebugLabel;
@@ -1922,7 +2107,7 @@ bool ImGuiTestEngine_Check(const char* file, const char* func, int line, ImGuiTe
         if (!result)
         {
             if (!(ctx->RunFlags & ImGuiTestRunFlags_GuiFuncOnly))
-                test->Status = ImGuiTestStatus_Error;
+                test->Output.Status = ImGuiTestStatus_Error;
 
             if (file)
                 ctx->LogError("Error %s:%d '%s'", file_without_path, line, expr);

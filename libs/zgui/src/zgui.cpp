@@ -71,11 +71,11 @@ ZGUI_API void zguiEnd(void) {
     ImGui::End();
 }
 
-ZGUI_API bool zguiBeginChild(const char* str_id, float w, float h, bool border, ImGuiWindowFlags flags) {
+ZGUI_API bool zguiBeginChild(const char* str_id, float w, float h, bool border, ImGuiChildFlags flags) {
     return ImGui::BeginChild(str_id, { w, h }, border, flags);
 }
 
-ZGUI_API bool zguiBeginChildId(ImGuiID id, float w, float h, bool border, ImGuiWindowFlags flags) {
+ZGUI_API bool zguiBeginChildId(ImGuiID id, float w, float h, bool border, ImGuiChildFlags flags) {
     return ImGui::BeginChild(id, { w, h }, border, flags);
 }
 

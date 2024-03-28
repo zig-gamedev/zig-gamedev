@@ -61,13 +61,6 @@ struct ImGuiTestFindByLabelTask
     ImGuiID                 OutItemId = 0;                  // Result item ID
 };
 
-// Processed by test queue
-struct ImGuiTestRunTask
-{
-    ImGuiTest*              Test = NULL;
-    ImGuiTestRunFlags       RunFlags = ImGuiTestRunFlags_None;
-};
-
 enum ImGuiTestInputType
 {
     ImGuiTestInputType_None,
@@ -149,8 +142,6 @@ struct ImGuiTestEngine
     ImVector<ImGuiTestInfoTask*>InfoTasks;
     ImGuiTestGatherTask         GatherTask;
     ImGuiTestFindByLabelTask    FindByLabelTask;
-    void*                       UserDataBuffer = NULL;
-    size_t                      UserDataBufferSize = 0;
     ImGuiTestCoroutineHandle    TestQueueCoroutine = NULL;      // Coroutine to run the test queue
     bool                        TestQueueCoroutineShouldExit = false; // Flag to indicate that we are shutting down and the test queue coroutine should stop
 
@@ -159,7 +150,6 @@ struct ImGuiTestEngine
 
     // UI support
     bool                        Abort = false;
-    bool                        UiFocus = false;
     ImGuiTest*                  UiSelectAndScrollToTest = NULL;
     ImGuiTest*                  UiSelectedTest = NULL;
     Str*                        UiFilterTests;
@@ -205,6 +195,7 @@ void                ImGuiTestEngine_Yield(ImGuiTestEngine* engine);
 void                ImGuiTestEngine_SetDeltaTime(ImGuiTestEngine* engine, float delta_time);
 int                 ImGuiTestEngine_GetFrameCount(ImGuiTestEngine* engine);
 bool                ImGuiTestEngine_PassFilter(ImGuiTest* test, const char* filter);
+void                ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* ctx, ImGuiTest* test, ImGuiTestRunFlags run_flags);
 
 void                ImGuiTestEngine_RebootUiContext(ImGuiTestEngine* engine);
 ImGuiPerfTool*      ImGuiTestEngine_GetPerfTool(ImGuiTestEngine* engine);
@@ -215,6 +206,7 @@ bool                ImGuiTestEngine_CaptureBeginVideo(ImGuiTestEngine* engine, I
 bool                ImGuiTestEngine_CaptureEndVideo(ImGuiTestEngine* engine, ImGuiCaptureArgs* args);
 
 // Helper functions
+const char*         ImGuiTestEngine_GetStatusName(ImGuiTestStatus v);
 const char*         ImGuiTestEngine_GetRunSpeedName(ImGuiTestRunSpeed v);
 const char*         ImGuiTestEngine_GetVerboseLevelName(ImGuiTestVerboseLevel v);
 

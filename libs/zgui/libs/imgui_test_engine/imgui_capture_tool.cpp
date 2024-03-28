@@ -146,15 +146,14 @@ static void HideOtherWindows(const ImGuiCaptureArgs* args)
 
 #ifdef IMGUI_HAS_DOCK
         bool should_hide_window = true;
-        if ((window->Flags & ImGuiWindowFlags_DockNodeHost))
-            for (ImGuiWindow* capture_window : args->InCaptureWindows)
+        for (ImGuiWindow* capture_window : args->InCaptureWindows)
+        {
+            if (capture_window->DockNode != NULL && capture_window->DockNode->HostWindow->RootWindow == window)
             {
-                if (capture_window->DockNode != NULL && capture_window->DockNode->HostWindow == window)
-                {
-                    should_hide_window = false;
-                    break;
-                }
+                should_hide_window = false;
+                break;
             }
+        }
         if (!should_hide_window)
             continue;
 #endif  // IMGUI_HAS_DOCK
@@ -204,6 +203,31 @@ void ImGuiCaptureContext::PostRender()
 {
     ImGuiContext& g = *GImGui;
     g.IO.MouseDrawCursor = _BackupMouseDrawCursor;
+}
+
+void ImGuiCaptureContext::RestoreBackedUpData()
+{
+    // Restore window positions unconditionally. We may have moved them ourselves during capture.
+    ImGuiContext& g = *GImGui;
+    for (int n = 0; n < _WindowsData.Size; n++)
+    {
+        ImGuiWindow* window = _WindowsData[n].Window;
+        if (window->Hidden)
+            continue;
+        ImGui::SetWindowPos(window, _WindowsData[n].BackupRect.Min, ImGuiCond_Always);
+        ImGui::SetWindowSize(window, _WindowsData[n].BackupRect.GetSize(), ImGuiCond_Always);
+    }
+    g.Style.DisplayWindowPadding = _BackupDisplayWindowPadding;
+    g.Style.DisplaySafeAreaPadding = _BackupDisplaySafeAreaPadding;
+}
+
+void ImGuiCaptureContext::ClearState()
+{
+    _FrameNo = _ChunkNo = 0;
+    _VideoLastFrameTime = 0;
+    _MouseRelativeToWindowPos = ImVec2(-FLT_MAX, -FLT_MAX);
+    _HoveredWindow = NULL;
+    _CaptureArgs = NULL;
 }
 
 // Returns true when capture is in progress.
@@ -290,8 +314,7 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
         _CaptureArgs = args;
         _ChunkNo = 0;
         _CaptureRect = _CapturedWindowRect = ImRect(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
-        _BackupWindows.clear();
-        _BackupWindowsRect.clear();
+        _WindowsData.clear();
         _BackupDisplayWindowPadding = g.Style.DisplayWindowPadding;
         _BackupDisplaySafeAreaPadding = g.Style.DisplaySafeAreaPadding;
         g.Style.DisplayWindowPadding = ImVec2(0, 0);    // Allow windows to be positioned fully outside of visible viewport.
@@ -321,8 +344,10 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
         for (ImGuiWindow* window : args->InCaptureWindows)
         {
             _CapturedWindowRect.Add(window->Rect());
-            _BackupWindows.push_back(window);
-            _BackupWindowsRect.push_back(window->Rect());
+            ImGuiCaptureWindowData window_data;
+            window_data.BackupRect = window->Rect();
+            window_data.Window = window;
+            _WindowsData.push_back(window_data);
         }
 
         if (args->InFlags & ImGuiCaptureFlags_StitchAll)
@@ -371,8 +396,13 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
         if (args->InFlags & ImGuiCaptureFlags_StitchAll)
         {
             ImVec2 move_offset = ImVec2(args->InPadding, args->InPadding) - _CapturedWindowRect.Min + viewport_rect.Min;
-            for (ImGuiWindow* window : args->InCaptureWindows) // FIXME: Technically with ImGuiCaptureFlags_StitchAll we are dealing with a single window, so loop is misleading
-                ImGui::SetWindowPos(window, window->Pos + move_offset);
+            IM_ASSERT(args->InCaptureWindows.Size == _WindowsData.Size);
+            for (int n = 0; n < _WindowsData.Size; n++)
+            {
+                ImGuiWindow* window = _WindowsData[n].Window;
+                _WindowsData[n].PosDuringCapture = window->Pos + move_offset;
+                ImGui::SetWindowPos(window, _WindowsData[n].PosDuringCapture);
+            }
         }
 
         // Determine capture rectangle if not provided by user
@@ -425,18 +455,29 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
     //-----------------------------------------------------------------
     // Frame 4+N*4: Capture a frame
     //-----------------------------------------------------------------
+
+    const ImRect clip_rect = viewport_rect;
+    ImRect capture_rect = _CaptureRect;
+    capture_rect.ClipWith(clip_rect);
+    const int capture_height = ImMin((int)io.DisplaySize.y, (int)_CaptureRect.GetHeight());
+    const int x1 = (int)(capture_rect.Min.x - clip_rect.Min.x);
+    const int y1 = (int)(capture_rect.Min.y - clip_rect.Min.y);
+    const int w = (int)capture_rect.GetWidth();
+    const int h = (int)ImMin(output->Height - _ChunkNo * capture_height, capture_height);
+
+    // Position windows
+    if ((_FrameNo > 2) && (args->InFlags & ImGuiCaptureFlags_StitchAll))
+    {
+        // Unlike SetNextWindowPos(), SetWindowPos() will still perform viewport clamping, affecting support for io.ConfigWindowsMoveFromTitleBarOnly.
+        IM_ASSERT(args->InCaptureWindows.Size == _WindowsData.Size);
+        for (int n = 0; n < _WindowsData.Size; n++)
+            ImGui::SetWindowPos(_WindowsData[n].Window, _WindowsData[n].PosDuringCapture - ImVec2(0, (float)capture_height * _ChunkNo));
+    }
+
     if (((_FrameNo > 2) && (_FrameNo % 4) == 0) || (is_recording_video && _FrameNo > 2) || instant_capture)
     {
         // FIXME: Implement capture of regions wider than viewport.
         // Capture a portion of image. Capturing of windows wider than viewport is not implemented yet.
-        const ImRect clip_rect = viewport_rect;
-        ImRect capture_rect = _CaptureRect;
-        capture_rect.ClipWith(clip_rect);
-        const int capture_height = ImMin((int)io.DisplaySize.y, (int)_CaptureRect.GetHeight());
-        const int x1 = (int)(capture_rect.Min.x - clip_rect.Min.x);
-        const int y1 = (int)(capture_rect.Min.y - clip_rect.Min.y);
-        const int w = (int)capture_rect.GetWidth();
-        const int h = (int)ImMin(output->Height - _ChunkNo * capture_height, capture_height);
         if (h > 0)
         {
             IM_ASSERT(w == output->Width);
@@ -445,20 +486,28 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
             else
                 IM_ASSERT(h == output->Height);
 
-            const ImGuiID viewport_id = 0;
+            ImGuiID viewport_id = 0;
+#ifdef IMGUI_HAS_VIEWPORT
+            if (args->InFlags & ImGuiCaptureFlags_StitchAll)
+                viewport_id = _WindowsData[0].Window->ViewportId;
+            else
+                viewport_id = ImGui::GetMainViewport()->ID;
+#endif
+
+            //printf("ScreenCaptureFunc x1: %d, y1: %d, w: %d, h: %d\n", x1, y1, w, h);
             if (!ScreenCaptureFunc(viewport_id, x1, y1, w, h, &output->Data[_ChunkNo * w * capture_height], ScreenCaptureUserData))
             {
                 fprintf(stderr, "Screen capture function failed.\n");
+                RestoreBackedUpData();
+                ClearState();
                 return ImGuiCaptureStatus_Error;
             }
 
             if (args->InFlags & ImGuiCaptureFlags_StitchAll)
             {
                 // Window moves up in order to expose it's lower part.
-                for (ImGuiWindow* window : args->InCaptureWindows)
-                    ImGui::SetWindowPos(window, window->Pos - ImVec2(0, (float)h));
-                _CaptureRect.TranslateY(-(float)h);
                 _ChunkNo++;
+                _CaptureRect.TranslateY(-(float)h);
             }
 
             if (is_recording_video && (args->InFlags & ImGuiCaptureFlags_NoSave) == 0)
@@ -525,24 +574,8 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
                 output->Clear();
             }
 
-            // Restore window positions unconditionally. We may have moved them ourselves during capture.
-            for (int i = 0; i < _BackupWindows.Size; i++)
-            {
-                ImGuiWindow* window = _BackupWindows[i];
-                if (window->Hidden)
-                    continue;
-                ImGui::SetWindowPos(window, _BackupWindowsRect[i].Min, ImGuiCond_Always);
-                ImGui::SetWindowSize(window, _BackupWindowsRect[i].GetSize(), ImGuiCond_Always);
-            }
-            g.Style.DisplayWindowPadding = _BackupDisplayWindowPadding;
-            g.Style.DisplaySafeAreaPadding = _BackupDisplaySafeAreaPadding;
-
-            _FrameNo = _ChunkNo = 0;
-            _VideoLastFrameTime = 0;
-            _MouseRelativeToWindowPos = ImVec2(-FLT_MAX, -FLT_MAX);
-            _HoveredWindow = NULL;
-            _CaptureArgs = NULL;
-
+            RestoreBackedUpData();
+            ClearState();
             return ImGuiCaptureStatus_Done;
         }
     }

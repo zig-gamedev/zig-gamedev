@@ -175,6 +175,7 @@ struct IMGUI_API ImGuiTestGenericVars
     int                     Step;
     int                     Count;
     ImGuiID                 DockId;
+    ImGuiID                 OwnerId;
     ImGuiWindowFlags        WindowFlags;
     ImGuiTableFlags         TableFlags;
     ImGuiPopupFlags         PopupFlags;
@@ -208,13 +209,14 @@ struct IMGUI_API ImGuiTestGenericVars
 struct IMGUI_API ImGuiTestContext
 {
     // User variables
-    ImGuiTestGenericVars    GenericVars;
+    ImGuiTestGenericVars    GenericVars;                            // Generic variables holder for convenience.
     void*                   UserVars = NULL;                        // Access using ctx->GetVars<Type>(). Setup with test->SetVarsDataType<>().
 
     // Public fields
     ImGuiContext*           UiContext = NULL;                       // UI context
     ImGuiTestEngineIO*      EngineIO = NULL;                        // Test Engine IO/settings
     ImGuiTest*              Test = NULL;                            // Test currently running
+    ImGuiTestOutput*        TestOutput = NULL;                      // Test output (generally == &Test->Output)
     ImGuiTestOpFlags        OpFlags = ImGuiTestOpFlags_None;        // Flags affecting all operation (supported: ImGuiTestOpFlags_NoAutoUncollapse)
     int                     PerfStressAmount = 0;                   // Convenience copy of engine->IO.PerfStressAmount
     int                     FrameCount = 0;                         // Test frame count (restarts from zero every time)
@@ -252,20 +254,20 @@ struct IMGUI_API ImGuiTestContext
     //-------------------------------------------------------------------------
 
     // Main control
-    void        Finish();
-    void        RecoverFromUiContextErrors();
-    template <typename T> T& GetVars()      { IM_ASSERT(UserVars != NULL); return *(T*)(UserVars); } // Campanion to using t->SetVarsDataType<>(). FIXME: Assert to compare sizes
+    void            RecoverFromUiContextErrors();
+    void            Finish(ImGuiTestStatus status = ImGuiTestStatus_Success);                       // Set test status and stop running. Usually called when running test logic from GuiFunc() only.
+    ImGuiTestStatus RunChildTest(const char* test_name, ImGuiTestRunFlags flags = 0);               // [Experimental] Run another test from the current test.
+    template <typename T> T& GetVars()      { IM_ASSERT(UserVars != NULL); return *(T*)(UserVars); }// Campanion to using t->SetVarsDataType<>(). FIXME: Assert to compare sizes
 
     // Main status queries
-    bool        IsError() const             { return Test->Status == ImGuiTestStatus_Error || Abort; }
+    bool        IsError() const             { return TestOutput->Status == ImGuiTestStatus_Error || Abort; }
     bool        IsWarmUpGuiFrame() const    { return FrameCount < FirstTestFrameCount; }    // Unless test->Flags has ImGuiTestFlags_NoGuiWarmUp, we run GuiFunc() twice before running TestFunc(). Those frames are called "WarmUp" frames.
     bool        IsFirstGuiFrame() const     { return FirstGuiFrame; }
     bool        IsFirstTestFrame() const    { return FrameCount == FirstTestFrameCount; }   // First frame where TestFunc is running (after warm-up frame).
     bool        IsGuiFuncOnly() const       { return (RunFlags & ImGuiTestRunFlags_GuiFuncOnly) != 0; }
-    void        SetGuiFuncEnabled(bool v) { if (v) RunFlags &= ~ImGuiTestRunFlags_GuiFuncDisable; else RunFlags |= ImGuiTestRunFlags_GuiFuncDisable; }
 
-    // Debug Control Flow
-    bool        SuspendTestFunc(const char* file, int line);
+    // Debugging
+    bool        SuspendTestFunc(const char* file = NULL, int line = 0);             // [DEBUG] Generally called via IM_SUSPEND_TESTFUNC
 
     // Logging
     void        LogEx(ImGuiTestVerboseLevel level, ImGuiTestLogFlags flags, const char* fmt, ...) IM_FMTARGS(4);
@@ -293,7 +295,8 @@ struct IMGUI_API ImGuiTestContext
     // - SetRef("Window"), ItemClick("/Button")    --> click "Window/Button"
     // - SetRef("Window"), ItemClick("//Button")   --> click "/Button"
     // - SetRef("//$FOCUSED"), ItemClick("Button") --> click "Button" in focused window.
-    // Takes multiple frames to complete if specified ref is an item id.
+    // See https://github.com/ocornut/imgui_test_engine/wiki/Named-References about using ImGuiTestRef in all ImGuiTestContext functions.
+    // Note: SetRef() may take multiple frames to complete if specified ref is an item id.
     void        SetRef(ImGuiTestRef ref);
     void        SetRef(ImGuiWindow* window); // Shortcut to SetRef(window->Name) which works for ChildWindow (see code)
     ImGuiTestRef GetRef();
@@ -319,7 +322,7 @@ struct IMGUI_API ImGuiTestContext
     ImGuiID     GetID(ImGuiTestRef ref);
     ImGuiID     GetID(ImGuiTestRef ref, ImGuiTestRef seed_ref);
 
-    // Misc
+    // Miscellaneous helpers
     ImVec2      GetPosOnVoid(ImGuiViewport* viewport);                              // Find a point that has no windows // FIXME: This needs error return and flag to enable/disable forcefully finding void.
     ImVec2      GetWindowTitlebarPoint(ImGuiTestRef window_ref);                    // Return a clickable point on window title-bar (window tab for docked windows).
     ImVec2      GetMainMonitorWorkPos();                                            // Work pos and size of main viewport when viewports are disabled, or work pos and size of monitor containing main viewport when viewports are enabled.
@@ -364,6 +367,7 @@ struct IMGUI_API ImGuiTestContext
     void        KeyUp(ImGuiKeyChord key_chord);
     void        KeyPress(ImGuiKeyChord key_chord, int count = 1);
     void        KeyHold(ImGuiKeyChord key_chord, float time);
+    void        KeySetEx(ImGuiKeyChord key_chord, bool is_down, float time);
     void        KeyChars(const char* chars);                // Input characters
     void        KeyCharsAppend(const char* chars);          // Input characters at end of field
     void        KeyCharsAppendEnter(const char* chars);     // Input characters at end of field, press Enter
@@ -394,7 +398,8 @@ struct IMGUI_API ImGuiTestContext
     void        ScrollVerifyScrollMax(ImGuiTestRef ref);
 
     // Low-level queries
-    // Since 2022/06/25 to faciliate test code and reduce crashes: ItemInfo queries never return a NULL pointer, instead they return an empty instance (info->IsEmpty(), info->ID == 0).
+    // - ItemInfo queries never returns a NULL pointer, instead they return an empty instance (info->IsEmpty(), info->ID == 0) and set contexted as errored.
+    // - You can use ImGuiTestOpFlags_NoError to do a query without marking context as errored. This is what ItemExists() does.
     ImGuiTestItemInfo*  ItemInfo(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
     ImGuiTestItemInfo*  ItemInfoOpenFullPath(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
     ImGuiID             ItemInfoHandleWildcardSearch(const char* wildcard_prefix_start, const char* wildcard_prefix_end, const char* wildcard_suffix_start);
@@ -430,7 +435,7 @@ struct IMGUI_API ImGuiTestContext
     void        ItemDragAndDrop(ImGuiTestRef ref_src, ImGuiTestRef ref_dst, ImGuiMouseButton button = 0);
     void        ItemDragWithDelta(ImGuiTestRef ref_src, ImVec2 pos_delta);
 
-    // Helpers for Item/Widget state query
+    // Item/Widgets: Status query
     bool        ItemExists(ImGuiTestRef ref);
     bool        ItemIsChecked(ImGuiTestRef ref);
     bool        ItemIsOpened(ImGuiTestRef ref);
@@ -440,7 +445,8 @@ struct IMGUI_API ImGuiTestContext
     void        TabClose(ImGuiTestRef ref);
     bool        TabBarCompareOrder(ImGuiTabBar* tab_bar, const char** tab_order);
 
-    // Helpers for Menus widgets
+    // Helpers for MenuBar and Menus widgets
+    // - e.g. MenuCheck("File/Options/Enable grid");
     void        MenuAction(ImGuiTestAction action, ImGuiTestRef ref);
     void        MenuActionAll(ImGuiTestAction action, ImGuiTestRef ref_parent);
     void        MenuClick(ImGuiTestRef ref)                 { MenuAction(ImGuiTestAction_Click, ref); }
@@ -481,7 +487,7 @@ struct IMGUI_API ImGuiTestContext
     void        DockNodeHideTabBar(ImGuiDockNode* node, bool hidden);
 #endif
 
-    // Performances
+    // Performances Measurement (use along with Dear ImGui Perf Tool)
     void        PerfCalcRef();
     void        PerfCapture(const char* category = NULL, const char* test_name = NULL, const char* csv_file = NULL);
 
@@ -515,61 +521,62 @@ struct IMGUI_API ImGuiTestContext
 // [SECTION] Testing/Checking macros: IM_CHECK(), IM_ERRORF() etc.
 //-------------------------------------------------------------------------
 
+// Helpers used by IM_CHECK_OP() macros.
+// ImGuiTestEngine_GetTempStringBuilder() returns a shared instance of ImGuiTextBuffer to recycle memory allocations
+template<typename T> void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, T v) { buf->append("???"); IM_UNUSED(v); } // FIXME-TESTS: Could improve with some template magic
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, const char* v) { buf->appendf("\"%s\"", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, bool v)        { buf->append(v ? "true" : "false"); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImS8 v)        { buf->appendf("%d", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImU8 v)        { buf->appendf("%u", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImS16 v)       { buf->appendf("%hd", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImU16 v)       { buf->appendf("%hu", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImS32 v)       { buf->appendf("%d", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImU32 v)       { buf->appendf("0x%08X", v); } // Assuming ImGuiID
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImS64 v)       { buf->appendf("%lld", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImU64 v)       { buf->appendf("%llu", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, float v)       { buf->appendf("%.3f", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, double v)      { buf->appendf("%f", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImVec2 v)      { buf->appendf("(%.3f, %.3f)", v.x, v.y); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, const void* v) { buf->appendf("%p", v); }
+template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, ImGuiWindow* v){ if (v) buf->appendf("\"%s\"", v->Name); else buf->append("NULL"); }
+
 // We embed every macro in a do {} while(0) statement as a trick to allow using them as regular single statement, e.g. if (XXX) IM_CHECK(A); else IM_CHECK(B)
 // We leave the IM_DEBUG_BREAK() outside of the check function to step out faster when using a debugger. It also has the benefit of being lighter than an IM_ASSERT().
-#define IM_CHECK_NO_RET(_EXPR)              do { bool res = (bool)(_EXPR); if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, res, #_EXPR))          { IM_DEBUG_BREAK(); } } while (0)
 #define IM_CHECK(_EXPR)                     do { bool res = (bool)(_EXPR); if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, res, #_EXPR))          { IM_DEBUG_BREAK(); } if (!res) return; } while (0)
+#define IM_CHECK_NO_RET(_EXPR)              do { bool res = (bool)(_EXPR); if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, res, #_EXPR))          { IM_DEBUG_BREAK(); } } while (0)
 #define IM_CHECK_SILENT(_EXPR)              do { bool res = (bool)(_EXPR); if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_SilentSuccess, res, #_EXPR)) { IM_DEBUG_BREAK(); } if (!res) return; } while (0)
 #define IM_CHECK_RETV(_EXPR,_RETV)          do { bool res = (bool)(_EXPR); if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, res, #_EXPR))          { IM_DEBUG_BREAK(); } if (!res) return _RETV; } while (0)
 #define IM_CHECK_SILENT_RETV(_EXPR,_RETV)   do { bool res = (bool)(_EXPR); if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_SilentSuccess, res, #_EXPR)) { IM_DEBUG_BREAK(); } if (!res) return _RETV; } while (0)
 #define IM_ERRORF(_FMT,...)                 do { if (ImGuiTestEngine_Error(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, _FMT, __VA_ARGS__))                              { IM_DEBUG_BREAK(); } } while (0)
 #define IM_ERRORF_NOHDR(_FMT,...)           do { if (ImGuiTestEngine_Error(NULL, NULL, 0, ImGuiTestCheckFlags_None, _FMT, __VA_ARGS__))                                             { IM_DEBUG_BREAK(); } } while (0)
 
-template<typename T> void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, T value)         { buf.appendf("???"); IM_UNUSED(value); } // FIXME-TESTS: Could improve with some template magic
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, const char* value)  { buf.appendf("\"%s\"", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, bool value)         { buf.append(value ? "true" : "false"); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImS8 value)         { buf.appendf("%d", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImU8 value)         { buf.appendf("%u", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImS16 value)        { buf.appendf("%hd", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImU16 value)        { buf.appendf("%hu", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImS32 value)        { buf.appendf("%d", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImU32 value)        { buf.appendf("0x%08X", value); } // Assuming ImGuiID
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImS64 value)        { buf.appendf("%lld", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImU64 value)        { buf.appendf("%llu", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, float value)        { buf.appendf("%.3f", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, double value)       { buf.appendf("%f", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImVec2 value)       { buf.appendf("(%.3f, %.3f)", value.x, value.y); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, const void* value)  { buf.appendf("%p", value); }
-template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, ImGuiWindow* w)     { if (w) buf.appendf("\"%s\"", w->Name); else buf.append("NULL"); }
-
-// Those macros allow us to print out the values of both lhs and rhs expressions involved in a check.
-// FIXME: Could we move some more of that into a function?
-#define IM_CHECK_OP(_LHS, _RHS, _OP, _RETURN)                       \
-    do                                                              \
-    {                                                               \
-        auto __lhs = _LHS;  /* Cache to avoid side effects */       \
-        auto __rhs = _RHS;                                          \
-        bool __res = __lhs _OP __rhs;                               \
-        ImGuiTextBuffer expr_buf;                                   \
-        expr_buf.appendf("%s [", #_LHS);                            \
-        ImGuiTestEngineUtil_AppendStrValue(expr_buf, __lhs);        \
-        expr_buf.appendf("] " #_OP " %s [", #_RHS);                 \
-        ImGuiTestEngineUtil_AppendStrValue(expr_buf, __rhs);        \
-        expr_buf.append("]");                                       \
-        if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, __res, expr_buf.c_str())) \
-            IM_ASSERT(__res);                                       \
-        if (_RETURN && !__res)                                      \
-            return;                                                 \
+// Those macros allow us to print out the values of both LHS and RHS expressions involved in a check.
+#define IM_CHECK_OP(_LHS, _RHS, _OP, _RETURN)                   \
+    do                                                          \
+    {                                                           \
+        auto __lhs = _LHS;  /* Cache to avoid side effects */   \
+        auto __rhs = _RHS;                                      \
+        bool __res = __lhs _OP __rhs;                           \
+        ImGuiTextBuffer* expr_buf = ImGuiTestEngine_GetTempStringBuilder(); \
+        expr_buf->append(#_LHS " [");                           \
+        ImGuiTestEngineUtil_appendf_auto(expr_buf, __lhs);      \
+        expr_buf->append("] " #_OP " " #_RHS " [");             \
+        ImGuiTestEngineUtil_appendf_auto(expr_buf, __rhs);      \
+        expr_buf->append("]");                                  \
+        if (ImGuiTestEngine_Check(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, __res, expr_buf->c_str())) \
+            IM_ASSERT(__res);                                   \
+        if (_RETURN && !__res)                                  \
+            return;                                             \
     } while (0)
 
-#define IM_CHECK_STR_OP(_LHS, _RHS, _OP, _RETURN, _FLAGS)           \
-    do                                                              \
-    {                                                               \
-        bool __res;                                                 \
+#define IM_CHECK_STR_OP(_LHS, _RHS, _OP, _RETURN, _FLAGS)       \
+    do                                                          \
+    {                                                           \
+        bool __res;                                             \
         if (ImGuiTestEngine_CheckStrOp(__FILE__, __func__, __LINE__, _FLAGS, #_OP, #_LHS, _LHS, #_RHS, _RHS, &__res)) \
-            IM_ASSERT(__res);                                       \
-        if (_RETURN && !__res)                                      \
-            return;                                                 \
+            IM_ASSERT(__res);                                   \
+        if (_RETURN && !__res)                                  \
+            return;                                             \
     } while (0)
 
 // Scalar compares
