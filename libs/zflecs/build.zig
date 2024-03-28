@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    b.installArtifact(flecs);
     flecs.linkLibC();
     flecs.addIncludePath(.{ .path = "libs/flecs" });
     flecs.addCSourceFile(.{
