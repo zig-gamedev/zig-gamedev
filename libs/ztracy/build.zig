@@ -24,12 +24,13 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    _ = b.addModule("root", .{
+    const ztracy = b.addModule("root", .{
         .root_source_file = .{ .path = "src/ztracy.zig" },
         .imports = &.{
             .{ .name = "ztracy_options", .module = options_module },
         },
     });
+    ztracy.addIncludePath(.{ .path = "libs/tracy/tracy" });
 
     const tracy = b.addStaticLibrary(.{
         .name = "tracy",
