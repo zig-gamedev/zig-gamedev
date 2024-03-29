@@ -816,9 +816,8 @@ pub const Window = opaque {
     pub const swapBuffers = glfwSwapBuffers;
     extern fn glfwSwapBuffers(window: *Window) void;
 
-    pub fn setMonitor (window: *Window, monitor: ?*Monitor, xpos: i32, ypos: i32, width: i32, height: i32, refreshRate: i32) void
-    {
-        glfwSetWindowMonitor (window, monitor, xpos, ypos, width, height, refreshRate);
+    pub fn setMonitor(window: *Window, monitor: ?*Monitor, xpos: i32, ypos: i32, width: i32, height: i32, refreshRate: i32) void {
+        glfwSetWindowMonitor(window, monitor, xpos, ypos, width, height, refreshRate);
     }
     extern fn glfwSetWindowMonitor(window: *Window, monitor: ?*Monitor, xpos: i32, ypos: i32, width: i32, height: i32, refreshRate: i32) void;
 
