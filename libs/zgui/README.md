@@ -1,4 +1,4 @@
-# zgui v0.1.0 - dear imgui bindings
+# zgui v0.2.0 - dear imgui bindings
 
 Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. [Here](https://github.com/michal-z/zig-gamedev/tree/main/samples/minimal_zgpu_zgui) is a simple sample application, and [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu) is a full one.
 
@@ -9,6 +9,12 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 * [DrawList API](#drawlist-api) for vector graphics, text rendering and custom widgets
 * [Plot API](#plot-api) for advanced data visualizations
 * [Test engine API](#test-engine-api) for automatic testing
+
+## Versions
+
+* [ImGui](https://github.com/ocornut/imgui/tree/v1.90.4-docking) `1.90.4-docking`
+* [ImGui test engine](https://github.com/ocornut/imgui_test_engine/tree/v1.90.4)  `1.90.4`
+* [ImPlot](https://github.com/epezent/implot) `O.17`
 
 ## Getting started
 

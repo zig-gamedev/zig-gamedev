@@ -116,6 +116,7 @@ pub fn build(b: *std.Build) void {
 
         imgui.defineCMacro("IMGUI_ENABLE_TEST_ENGINE", null);
         imgui.defineCMacro("IMGUI_TEST_ENGINE_ENABLE_COROUTINE_STDTHREAD_IMPL", "1");
+        imgui.defineCMacro("IMGUI_HAS_DOCK", "1");
 
         imgui.addIncludePath(.{ .path = "libs/imgui_test_engine/" });
 

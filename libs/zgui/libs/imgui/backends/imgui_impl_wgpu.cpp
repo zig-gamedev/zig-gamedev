@@ -5,6 +5,8 @@
 // Implemented features:
 //  [X] Renderer: User texture binding. Use 'WGPUTextureView' as ImTextureID. Read the FAQ about ImTextureID!
 //  [X] Renderer: Large meshes support (64k+ vertices) with 16-bit indices.
+// Missing features:
+//  [ ] Renderer: Multi-viewport support (multiple windows). Not meaningful on the web.
 
 // You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
 // Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
@@ -37,7 +39,10 @@
 
 #include "imgui.h"
 #ifndef IMGUI_DISABLE
+
+// FIX(zig-gamedev):
 //#include "imgui_impl_wgpu.h"
+
 #include <limits.h>
 #include <webgpu/webgpu.h>
 

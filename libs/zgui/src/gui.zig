@@ -137,7 +137,13 @@ pub const ConfigFlags = packed struct(c_int) {
     nav_no_capture_keyboard: bool = false,
     no_mouse: bool = false,
     no_mouse_cursor_change: bool = false,
-    user_storage: u14 = 0,
+    dock_enable: bool = false,
+    _pading0: u3 = 0,
+    viewport_enable: bool = false,
+    _pading1: u3 = 0,
+    dpi_enable_scale_viewport: bool = false,
+    dpi_enable_scale_fonts: bool = false,
+    user_storage: u4 = 0,
     is_srgb: bool = false,
     is_touch_screen: bool = false,
     _padding: u10 = 0,
@@ -531,12 +537,11 @@ pub const WindowFlags = packed struct(c_int) {
     no_bring_to_front_on_focus: bool = false,
     always_vertical_scrollbar: bool = false,
     always_horizontal_scrollbar: bool = false,
-    //always_use_window_padding: bool = false,
-    //_removed: u1 = 0,
     no_nav_inputs: bool = false,
     no_nav_focus: bool = false,
     unsaved_document: bool = false,
-    _padding: u13 = 0,
+    no_docking: bool = false,
+    _padding: u12 = 0,
 
     pub const no_nav = WindowFlags{ .no_nav_inputs = true, .no_nav_focus = true };
     pub const no_decoration = WindowFlags{
@@ -695,19 +700,19 @@ extern fn zguiEnd() void;
 const BeginChild = struct {
     w: f32 = 0.0,
     h: f32 = 0.0,
-    border: bool = false,
-    flags: ChildFlags = .{},
+    child_flags: ChildFlags = .{},
+    window_flags: WindowFlags = .{},
 };
 pub fn beginChild(str_id: [:0]const u8, args: BeginChild) bool {
-    return zguiBeginChild(str_id, args.w, args.h, args.border, args.flags);
+    return zguiBeginChild(str_id, args.w, args.h, args.child_flags, args.window_flags);
 }
 pub fn beginChildId(id: Ident, args: BeginChild) bool {
-    return zguiBeginChildId(id, args.w, args.h, args.border, args.flags);
+    return zguiBeginChildId(id, args.w, args.h, args.child_flags, args.window_flags);
 }
 /// `pub fn endChild() void`
 pub const endChild = zguiEndChild;
-extern fn zguiBeginChild(str_id: [*:0]const u8, w: f32, h: f32, border: bool, flags: ChildFlags) bool;
-extern fn zguiBeginChildId(id: Ident, w: f32, h: f32, border: bool, flags: ChildFlags) bool;
+extern fn zguiBeginChild(str_id: [*:0]const u8, w: f32, h: f32, flags: ChildFlags, window_flags: WindowFlags) bool;
+extern fn zguiBeginChildId(id: Ident, w: f32, h: f32, flags: ChildFlags, window_flags: WindowFlags) bool;
 extern fn zguiEndChild() void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn zguiGetScrollX() f32`
@@ -764,7 +769,8 @@ pub const FocusedFlags = packed struct(c_int) {
     root_window: bool = false,
     any_window: bool = false,
     no_popup_hierarchy: bool = false,
-    _padding: u28 = 0,
+    dock_hierarchy: bool = false,
+    _padding: u27 = 0,
 
     pub const root_and_child_windows = FocusedFlags{ .root_window = true, .child_windows = true };
 };
@@ -774,7 +780,7 @@ pub const HoveredFlags = packed struct(c_int) {
     root_window: bool = false,
     any_window: bool = false,
     no_popup_hierarchy: bool = false,
-    _reserved0: bool = false,
+    dock_hierarchy: bool = false,
     allow_when_blocked_by_popup: bool = false,
     _reserved1: bool = false,
     allow_when_blocked_by_active_item: bool = false,
@@ -863,6 +869,32 @@ extern fn zguiGetWindowContentRegionMin(size: *[2]f32) void;
 extern fn zguiGetWindowContentRegionMax(size: *[2]f32) void;
 //--------------------------------------------------------------------------------------------------
 //
+// Docking
+//
+//--------------------------------------------------------------------------------------------------
+pub const DockNodeFlags = packed struct(c_int) {
+    keep_alive_only: bool = false,
+    _reserved: u1 = 0,
+    no_docking_over_central_node: bool = false,
+    passthru_central_node: bool = false,
+    no_docking_split: bool = false,
+    no_resize: bool = false,
+    auto_hide_tab_bar: bool = false,
+    no_undocking: bool = false,
+    _padding: u24 = 0,
+};
+extern fn zguiDockSpace(str_id: [*:0]const u8, size: *const [2]f32, flags: DockNodeFlags) Ident;
+
+pub fn DockSpace(str_id: [:0]const u8, size: [2]f32, flags: DockNodeFlags) Ident {
+    return zguiDockSpace(str_id.ptr, &size, flags);
+}
+extern fn zguiDockSpaceOverViewport(viewport: Viewport, flags: DockNodeFlags) Ident;
+pub const DockSpaceOverViewport = zguiDockSpaceOverViewport;
+
+//--------------------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------------
+//
 // Style
 //
 //--------------------------------------------------------------------------------------------------
@@ -906,6 +938,7 @@ pub const Style = extern struct {
     separator_text_padding: [2]f32,
     display_window_padding: [2]f32,
     display_safe_area_padding: [2]f32,
+    docking_separator_size: f32,
     mouse_cursor_scale: f32,
     anti_aliased_lines: bool,
     anti_aliased_lines_use_tex: bool,
@@ -980,6 +1013,8 @@ pub const StyleCol = enum(c_int) {
     tab_active,
     tab_unfocused,
     tab_unfocused_active,
+    docking_preview,
+    docking_empty_bg,
     plot_lines,
     plot_lines_hovered,
     plot_histogram,
@@ -1060,6 +1095,7 @@ pub const StyleVar = enum(c_int) {
     separator_text_border_size, // 1f
     separator_text_align, // 2f
     separator_text_padding, // 2f
+    docking_separator_size, // 1f
 };
 
 pub fn pushStyleVar1f(args: struct {
