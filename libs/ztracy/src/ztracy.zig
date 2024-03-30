@@ -326,7 +326,7 @@ const tracy_full = struct {
             // https://github.com/ziglang/zig/issues/18816
             comptime {
                 // https://github.com/ziglang/zig/issues/19274
-                _ = @sizeOf (@TypeOf (src));
+                _ = @sizeOf(@TypeOf(src));
             }
         };
         static.loc = .{
