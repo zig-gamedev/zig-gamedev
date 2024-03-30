@@ -840,9 +840,15 @@ bool ImBuildFindGitBranchName(const char* git_repo_path, Str* branch_name)
         strtok(git_head, "\r\n");                       // Trim new line
         if (head_size > prefix_length && strncmp(git_head, prefix, prefix_length) == 0)
         {
-            strcpy(branch_name->c_str(), git_head + prefix_length);
-            result = true;
+            // "ref: refs/heads/master" -> "master"
+            branch_name->set(git_head + prefix_length);
         }
+        else
+        {
+            // Should be git hash, keep first 8 characters (see #42)
+            branch_name->setf("%.8s", git_head);
+        }
+        result = true;
         IM_FREE(git_head);
     }
     return result;
@@ -1201,6 +1207,22 @@ void TableDiscardInstanceAndSettings(ImGuiID table_id)
         ImGui::TableRemove(table);
     // FIXME-TABLE: We should be able to use TableResetSettings() instead of TableRemove()! Maybe less of a clean slate but would be good to check that it does the job
     //ImGui::TableResetSettings(table);
+}
+
+// Helper to verify ImDrawData integrity of buffer count (broke before e.g. #6716)
+void DrawDataVerifyMatchingBufferCount(ImDrawData* draw_data)
+{
+    int total_vtx_count = 0;
+    int total_idx_count = 0;
+    for (ImDrawList* draw_list : draw_data->CmdLists)
+    {
+        total_vtx_count += draw_list->VtxBuffer.Size;
+        total_idx_count += draw_list->IdxBuffer.Size;
+    }
+    IM_UNUSED(total_vtx_count);
+    IM_UNUSED(total_idx_count);
+    IM_ASSERT(total_vtx_count == draw_data->TotalVtxCount);
+    IM_ASSERT(total_idx_count == draw_data->TotalIdxCount);
 }
 
 //-----------------------------------------------------------------------------

@@ -95,19 +95,19 @@ struct ImGuiPerfToolColumnInfo
 // Update _ShowEntriesTable() and SaveHtmlReport() when adding new entries.
 static const ImGuiPerfToolColumnInfo PerfToolColumnInfo[] =
 {
-    { /* 00 */ "Date",        IM_OFFSETOF(ImGuiPerfToolEntry, Timestamp),        ImGuiDataType_U64,    true,  ImGuiTableColumnFlags_DefaultHide },
-    { /* 01 */ "Test Name",   IM_OFFSETOF(ImGuiPerfToolEntry, TestName),         ImGuiDataType_COUNT,  true,  0 },
-    { /* 02 */ "Branch",      IM_OFFSETOF(ImGuiPerfToolEntry, GitBranchName),    ImGuiDataType_COUNT,  true,  0 },
-    { /* 03 */ "Compiler",    IM_OFFSETOF(ImGuiPerfToolEntry, Compiler),         ImGuiDataType_COUNT,  true,  0 },
-    { /* 04 */ "OS",          IM_OFFSETOF(ImGuiPerfToolEntry, OS),               ImGuiDataType_COUNT,  true,  0 },
-    { /* 05 */ "CPU",         IM_OFFSETOF(ImGuiPerfToolEntry, Cpu),              ImGuiDataType_COUNT,  true,  0 },
-    { /* 06 */ "Build",       IM_OFFSETOF(ImGuiPerfToolEntry, BuildType),        ImGuiDataType_COUNT,  true,  0 },
-    { /* 07 */ "Stress",      IM_OFFSETOF(ImGuiPerfToolEntry, PerfStressAmount), ImGuiDataType_S32,    true,  0 },
-    { /* 08 */ "Avg ms",      IM_OFFSETOF(ImGuiPerfToolEntry, DtDeltaMs),        ImGuiDataType_Double, true,  0 },
-    { /* 09 */ "Min ms",      IM_OFFSETOF(ImGuiPerfToolEntry, DtDeltaMsMin),     ImGuiDataType_Double, false, 0 },
-    { /* 00 */ "Max ms",      IM_OFFSETOF(ImGuiPerfToolEntry, DtDeltaMsMax),     ImGuiDataType_Double, false, 0 },
-    { /* 11 */ "Samples",     IM_OFFSETOF(ImGuiPerfToolEntry, NumSamples),       ImGuiDataType_S32,    false, 0 },
-    { /* 12 */ "VS Baseline", IM_OFFSETOF(ImGuiPerfToolEntry, VsBaseline),       ImGuiDataType_Float,  true,  0 },
+    { /* 00 */ "Date",        offsetof(ImGuiPerfToolEntry, Timestamp),        ImGuiDataType_U64,    true,  ImGuiTableColumnFlags_DefaultHide },
+    { /* 01 */ "Test Name",   offsetof(ImGuiPerfToolEntry, TestName),         ImGuiDataType_COUNT,  true,  0 },
+    { /* 02 */ "Branch",      offsetof(ImGuiPerfToolEntry, GitBranchName),    ImGuiDataType_COUNT,  true,  0 },
+    { /* 03 */ "Compiler",    offsetof(ImGuiPerfToolEntry, Compiler),         ImGuiDataType_COUNT,  true,  0 },
+    { /* 04 */ "OS",          offsetof(ImGuiPerfToolEntry, OS),               ImGuiDataType_COUNT,  true,  0 },
+    { /* 05 */ "CPU",         offsetof(ImGuiPerfToolEntry, Cpu),              ImGuiDataType_COUNT,  true,  0 },
+    { /* 06 */ "Build",       offsetof(ImGuiPerfToolEntry, BuildType),        ImGuiDataType_COUNT,  true,  0 },
+    { /* 07 */ "Stress",      offsetof(ImGuiPerfToolEntry, PerfStressAmount), ImGuiDataType_S32,    true,  0 },
+    { /* 08 */ "Avg ms",      offsetof(ImGuiPerfToolEntry, DtDeltaMs),        ImGuiDataType_Double, true,  0 },
+    { /* 09 */ "Min ms",      offsetof(ImGuiPerfToolEntry, DtDeltaMsMin),     ImGuiDataType_Double, false, 0 },
+    { /* 00 */ "Max ms",      offsetof(ImGuiPerfToolEntry, DtDeltaMsMax),     ImGuiDataType_Double, false, 0 },
+    { /* 11 */ "Samples",     offsetof(ImGuiPerfToolEntry, NumSamples),       ImGuiDataType_S32,    false, 0 },
+    { /* 12 */ "VS Baseline", offsetof(ImGuiPerfToolEntry, VsBaseline),       ImGuiDataType_Float,  true,  0 },
 };
 
 static const char* PerfToolReportDefaultOutputPath = "./output/capture_perf_report.html";
@@ -1198,12 +1198,13 @@ void ImGuiPerfTool::ShowPerfToolWindow(ImGuiTestEngine* engine, bool* p_open)
                 }
             }
 
-            int property_offsets[] = {
-                IM_OFFSETOF(ImGuiPerfToolEntry, GitBranchName),
-                IM_OFFSETOF(ImGuiPerfToolEntry, BuildType),
-                IM_OFFSETOF(ImGuiPerfToolEntry, Cpu),
-                IM_OFFSETOF(ImGuiPerfToolEntry, OS),
-                IM_OFFSETOF(ImGuiPerfToolEntry, Compiler),
+            int property_offsets[] =
+            {
+                offsetof(ImGuiPerfToolEntry, GitBranchName),
+                offsetof(ImGuiPerfToolEntry, BuildType),
+                offsetof(ImGuiPerfToolEntry, Cpu),
+                offsetof(ImGuiPerfToolEntry, OS),
+                offsetof(ImGuiPerfToolEntry, Compiler),
             };
 
             ImGui::TableNextRow();
@@ -1842,7 +1843,7 @@ void RegisterTests_TestEnginePerfTool(ImGuiTestEngine* e)
         ctx->WindowMove("", ImVec2(50, 50));
         ctx->WindowResize("", ImVec2(1400, 900));
 #if IMGUI_TEST_ENGINE_ENABLE_IMPLOT
-        ImGuiWindow* plot_child = ctx->WindowInfo("plot/PerfTool")->Window;
+        ImGuiWindow* plot_child = ctx->WindowInfo("plot")->Window;  // "plot/PerfTool" prior to implot 2023/08/21
         IM_CHECK(plot_child != NULL);
 
         // Move legend to right side.
@@ -1909,7 +1910,7 @@ void RegisterTests_TestEnginePerfTool(ImGuiTestEngine* e)
 #if IMGUI_TEST_ENGINE_ENABLE_IMPLOT
         ctx->ItemDoubleClick("splitter");   // Hide info table
 
-        ImGuiWindow* plot_child = ctx->WindowInfo("plot/PerfTool")->Window;
+        ImGuiWindow* plot_child = ctx->WindowInfo("plot")->Window;  // "plot/PerfTool" prior to implot 2023/08/21
         IM_CHECK(plot_child != NULL);
 
         // Move legend to right side.

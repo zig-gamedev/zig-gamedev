@@ -14,8 +14,11 @@
 
 // You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
 // Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
+// Learn about Dear ImGui:
+// - FAQ                  https://dearimgui.com/faq
+// - Getting Started      https://dearimgui.com/getting-started
+// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
+// - Introduction, links and more at the top of imgui.cpp
 
 // About GLSL version:
 //  The 'glsl_version' initialization parameter should be nullptr (default) or a "#version XXX" string.
@@ -26,20 +29,19 @@
 #include "imgui.h"      // IMGUI_IMPL_API
 #ifndef IMGUI_DISABLE
 
+// FIX(zig-gamedev)
 extern "C" {
+    // Backend API
+    IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_Init(const char* glsl_version = nullptr);
+    IMGUI_IMPL_API void     ImGui_ImplOpenGL3_Shutdown();
+    IMGUI_IMPL_API void     ImGui_ImplOpenGL3_NewFrame();
+    IMGUI_IMPL_API void     ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data);
 
-// Backend API
-IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_Init(const char* glsl_version = nullptr);
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_Shutdown();
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_NewFrame();
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data);
-
-// (Optional) Called by Init/NewFrame/Shutdown
-IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateFontsTexture();
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyFontsTexture();
-IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateDeviceObjects();
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyDeviceObjects();
-
+    // (Optional) Called by Init/NewFrame/Shutdown
+    IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateFontsTexture();
+    IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyFontsTexture();
+    IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateDeviceObjects();
+    IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyDeviceObjects();
 }
 
 // Specific OpenGL ES versions

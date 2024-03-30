@@ -35,7 +35,7 @@ void ImGuiTestEngine_PrintResultSummary(ImGuiTestEngine* engine)
     {
         printf("\nFailing tests:\n");
         for (ImGuiTest* test : engine->TestsAll)
-            if (test->Status == ImGuiTestStatus_Error)
+            if (test->Output.Status == ImGuiTestStatus_Error)
                 printf("- %s\n", test->Name);
     }
 
@@ -55,9 +55,9 @@ static void ImGuiTestEngine_ExportResultSummary(ImGuiTestEngine* engine, FILE* f
     {
         if (test->Group != group)
             continue;
-        if (test->Status != ImGuiTestStatus_Unknown)
+        if (test->Output.Status != ImGuiTestStatus_Unknown)
             count_tested++;
-        if (test->Status == ImGuiTestStatus_Success)
+        if (test->Output.Status == ImGuiTestStatus_Success)
             count_success++;
     }
 
@@ -74,7 +74,7 @@ static void ImGuiTestEngine_ExportResultSummary(ImGuiTestEngine* engine, FILE* f
         {
             if (test->Group != group)
                 continue;
-            if (test->Status == ImGuiTestStatus_Error)
+            if (test->Output.Status == ImGuiTestStatus_Error)
                 fprintf(fp, "%s- %s\n", indent, test->Name);
         }
         fprintf(fp, "\n");
@@ -158,9 +158,9 @@ void ImGuiTestEngine_ExportJUnitXml(ImGuiTestEngine* engine, const char* output_
         ImGuiTest* test = engine->TestsAll[n];
         auto* stats = &testsuites[test->Group];
         stats->Tests += 1;
-        if (test->Status == ImGuiTestStatus_Error)
+        if (test->Output.Status == ImGuiTestStatus_Error)
             stats->Failures += 1;
-        else if (test->Status == ImGuiTestStatus_Unknown)
+        else if (test->Output.Status == ImGuiTestStatus_Unknown)
             stats->Disabled += 1;
     }
 
@@ -182,7 +182,6 @@ void ImGuiTestEngine_ExportJUnitXml(ImGuiTestEngine* engine, const char* output_
         "<testsuites disabled=\"%d\" errors=\"0\" failures=\"%d\" name=\"%s\" tests=\"%d\" time=\"%.3f\">\n",
         testsuites_disabled, testsuites_failures, testsuites_name, testsuites_tests, testsuites_time);
 
-    const char* teststatus_names[] = { "skipped", "success", "queued", "running", "error", "suspended" };
     for (int testsuite_id = ImGuiTestGroup_Tests; testsuite_id < ImGuiTestGroup_COUNT; testsuite_id++)
     {
         // Attributes for <testsuite> tag.
@@ -199,27 +198,30 @@ void ImGuiTestEngine_ExportJUnitXml(ImGuiTestEngine* engine, const char* output_
             if (test->Group != testsuite_id)
                 continue;
 
+            ImGuiTestOutput* test_output = &test->Output;
+            ImGuiTestLog* test_log = &test_output->Log;
+
             // Attributes for <testcase> tag.
             const char* testcase_name = test->Name;
             const char* testcase_classname = test->Category;
-            const char* testcase_status = teststatus_names[test->Status + 1];   // +1 because _Unknown status is -1.
-            float testcase_time = (float)((double)(test->EndTime - test->StartTime) / 1000000.0);
+            const char* testcase_status = ImGuiTestEngine_GetStatusName(test_output->Status);
+            const float testcase_time = (float)((double)(test_output->EndTime - test_output->StartTime) / 1000000.0);
 
             fprintf(fp, "    <testcase name=\"%s\" assertions=\"0\" classname=\"%s\" status=\"%s\" time=\"%.3f\">\n",
                 testcase_name, testcase_classname, testcase_status, testcase_time);
 
-            if (test->Status == ImGuiTestStatus_Error)
+            if (test_output->Status == ImGuiTestStatus_Error)
             {
                 // Skip last error message because it is generic information that test failed.
                 Str128 log_line;
-                for (int i = test->TestLog.LineInfo.Size - 2; i >= 0; i--)
+                for (int i = test_log->LineInfo.Size - 2; i >= 0; i--)
                 {
-                    ImGuiTestLogLineInfo* line_info = &test->TestLog.LineInfo[i];
+                    ImGuiTestLogLineInfo* line_info = &test_log->LineInfo[i];
                     if (line_info->Level > engine->IO.ConfigVerboseLevelOnError)
                         continue;
                     if (line_info->Level == ImGuiTestVerboseLevel_Error)
                     {
-                        const char* line_start = test->TestLog.Buffer.c_str() + line_info->LineOffset;
+                        const char* line_start = test_log->Buffer.c_str() + line_info->LineOffset;
                         const char* line_end = strstr(line_start, "\n");
                         log_line.set(line_start, line_end);
                         ImStrXmlEscape(&log_line);
@@ -229,29 +231,29 @@ void ImGuiTestEngine_ExportJUnitXml(ImGuiTestEngine* engine, const char* output_
 
                 // Failing tests save their "on error" log output in text element of <failure> tag.
                 fprintf(fp, "      <failure message=\"%s\" type=\"error\">\n", log_line.c_str());
-                ImGuiTestEngine_PrintLogLines(fp, &test->TestLog, 8, engine->IO.ConfigVerboseLevelOnError);
+                ImGuiTestEngine_PrintLogLines(fp, test_log, 8, engine->IO.ConfigVerboseLevelOnError);
                 fprintf(fp, "      </failure>\n");
             }
 
-            if (test->Status == ImGuiTestStatus_Unknown)
+            if (test_output->Status == ImGuiTestStatus_Unknown)
             {
                 fprintf(fp, "      <skipped message=\"Skipped\" />\n");
             }
             else
             {
-                // Succeeding tests save their defaiult log output output as "stdout".
-                if (ImGuiTestEngine_HasAnyLogLines(&test->TestLog, engine->IO.ConfigVerboseLevel))
+                // Succeeding tests save their default log output output as "stdout".
+                if (ImGuiTestEngine_HasAnyLogLines(test_log, engine->IO.ConfigVerboseLevel))
                 {
                     fprintf(fp, "      <system-out>\n");
-                    ImGuiTestEngine_PrintLogLines(fp, &test->TestLog, 8, engine->IO.ConfigVerboseLevel);
+                    ImGuiTestEngine_PrintLogLines(fp, test_log, 8, engine->IO.ConfigVerboseLevel);
                     fprintf(fp, "      </system-out>\n");
                 }
 
                 // Save error messages as "stderr".
-                if (ImGuiTestEngine_HasAnyLogLines(&test->TestLog, ImGuiTestVerboseLevel_Error))
+                if (ImGuiTestEngine_HasAnyLogLines(test_log, ImGuiTestVerboseLevel_Error))
                 {
                     fprintf(fp, "      <system-err>\n");
-                    ImGuiTestEngine_PrintLogLines(fp, &test->TestLog, 8, ImGuiTestVerboseLevel_Error);
+                    ImGuiTestEngine_PrintLogLines(fp, test_log, 8, ImGuiTestVerboseLevel_Error);
                     fprintf(fp, "      </system-err>\n");
                 }
             }
@@ -265,13 +267,14 @@ void ImGuiTestEngine_ExportJUnitXml(ImGuiTestEngine* engine, const char* output_
             for (int n = 0; n < engine->TestsAll.Size; n++)
             {
                 ImGuiTest* test = engine->TestsAll[n];
+                ImGuiTestOutput* test_output = &test->Output;
                 if (test->Group != testsuite_id)
                     continue;
-                if (test->Status == ImGuiTestStatus_Unknown)
+                if (test_output->Status == ImGuiTestStatus_Unknown)
                     continue;
                 fprintf(fp, "      [0000] Test: '%s' '%s'..\n", test->Category, test->Name);
-                ImGuiTestVerboseLevel level = test->Status == ImGuiTestStatus_Error ? engine->IO.ConfigVerboseLevelOnError : engine->IO.ConfigVerboseLevel;
-                ImGuiTestEngine_PrintLogLines(fp, &test->TestLog, 6, level);
+                ImGuiTestVerboseLevel level = test_output->Status == ImGuiTestStatus_Error ? engine->IO.ConfigVerboseLevelOnError : engine->IO.ConfigVerboseLevel;
+                ImGuiTestEngine_PrintLogLines(fp, &test_output->Log, 6, level);
             }
             ImGuiTestEngine_ExportResultSummary(engine, fp, 6, (ImGuiTestGroup)testsuite_id);
             fprintf(fp, "    </system-out>\n");
@@ -281,12 +284,13 @@ void ImGuiTestEngine_ExportJUnitXml(ImGuiTestEngine* engine, const char* output_
             for (int n = 0; n < engine->TestsAll.Size; n++)
             {
                 ImGuiTest* test = engine->TestsAll[n];
+                ImGuiTestOutput* test_output = &test->Output;
                 if (test->Group != testsuite_id)
                     continue;
-                if (test->Status == ImGuiTestStatus_Unknown)
+                if (test_output->Status == ImGuiTestStatus_Unknown)
                     continue;
                 fprintf(fp, "      [0000] Test: '%s' '%s'..\n", test->Category, test->Name);
-                ImGuiTestEngine_PrintLogLines(fp, &test->TestLog, 6, ImGuiTestVerboseLevel_Warning);
+                ImGuiTestEngine_PrintLogLines(fp, &test_output->Log, 6, ImGuiTestVerboseLevel_Warning);
             }
             ImGuiTestEngine_ExportResultSummary(engine, fp, 6, (ImGuiTestGroup)testsuite_id);
             fprintf(fp, "    </system-err>\n");

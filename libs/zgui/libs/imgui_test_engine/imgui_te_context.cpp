@@ -103,7 +103,7 @@ void    ImGuiTestContext::LogEx(ImGuiTestVerboseLevel level, ImGuiTestLogFlags f
 void    ImGuiTestContext::LogExV(ImGuiTestVerboseLevel level, ImGuiTestLogFlags flags, const char* fmt, va_list args)
 {
     ImGuiTestContext* ctx = this;
-    ImGuiTest* test = ctx->Test;
+    //ImGuiTest* test = ctx->Test;
 
     IM_ASSERT(level > ImGuiTestVerboseLevel_Silent && level < ImGuiTestVerboseLevel_COUNT);
 
@@ -114,7 +114,7 @@ void    ImGuiTestContext::LogExV(ImGuiTestVerboseLevel level, ImGuiTestLogFlags 
     if (EngineIO->ConfigVerboseLevelOnError < level)
         return;
 
-    ImGuiTestLog* log = &test->TestLog;
+    ImGuiTestLog* log = &ctx->TestOutput->Log;
     const int prev_size = log->Buffer.size();
 
     //const char verbose_level_char = ImGuiTestEngine_GetVerboseLevelName(level)[0];
@@ -175,10 +175,10 @@ void    ImGuiTestContext::LogToTTY(ImGuiTestVerboseLevel level, const char* mess
         return;
 
     ImGuiTestContext* ctx = this;
-    ImGuiTest* test = ctx->Test;
-    ImGuiTestLog* log = &test->TestLog;
+    ImGuiTestOutput* test_output = ctx->TestOutput;
+    ImGuiTestLog* log = &test_output->Log;
 
-    if (test->Status == ImGuiTestStatus_Error)
+    if (test_output->Status == ImGuiTestStatus_Error)
     {
         // Current test failed.
         if (!CachedLinesPrintedToTTY)
@@ -278,13 +278,22 @@ void    ImGuiTestContext::LogItemList(ImGuiTestItemList* items)
         LogDebug("- 0x%08X: depth %d: '%s' in window '%s'\n", info.ID, info.Depth, info.DebugLabel, info.Window->Name);
 }
 
-void    ImGuiTestContext::Finish()
+void    ImGuiTestContext::Finish(ImGuiTestStatus status)
 {
-    if (RunFlags & ImGuiTestRunFlags_GuiFuncOnly)
-        return;
-    ImGuiTest* test = Test;
-    if (test->Status == ImGuiTestStatus_Running)
-        test->Status = ImGuiTestStatus_Success;
+    if (ActiveFunc == ImGuiTestActiveFunc_GuiFunc)
+    {
+        IM_ASSERT(status == ImGuiTestStatus_Success || status == ImGuiTestStatus_Unknown);
+        if (RunFlags & ImGuiTestRunFlags_GuiFuncOnly)
+            return;
+        if (TestOutput->Status == ImGuiTestStatus_Running)
+            TestOutput->Status = status;
+    }
+    else if (ActiveFunc == ImGuiTestActiveFunc_TestFunc)
+    {
+        IM_ASSERT(status == ImGuiTestStatus_Unknown); // To set Success from a TestFunc() you can 'return' from it.
+        if (TestOutput->Status == ImGuiTestStatus_Running)
+            TestOutput->Status = status;
+    }
 }
 
 static void LogWarningFunc(void* user_data, const char* fmt, ...)
@@ -310,7 +319,7 @@ void    ImGuiTestContext::RecoverFromUiContextErrors()
     IM_ASSERT(Test != NULL);
 
     // If we are _already_ in a test error state, recovering is normal so we'll hide the log.
-    const bool verbose = (Test->Status != ImGuiTestStatus_Error) || (EngineIO->ConfigVerboseLevel >= ImGuiTestVerboseLevel_Debug);
+    const bool verbose = (TestOutput->Status != ImGuiTestStatus_Error) || (EngineIO->ConfigVerboseLevel >= ImGuiTestVerboseLevel_Debug);
     if (verbose && (Test->Flags & ImGuiTestFlags_NoRecoveryWarnings) == 0)
         ImGui::ErrorCheckEndFrameRecover(LogWarningFunc, this);
     else
@@ -333,6 +342,37 @@ void    ImGuiTestContext::YieldUntil(int frame_count)
         ImGuiTestEngine_Yield(Engine);
 }
 
+// Supported values for ImGuiTestRunFlags:
+// - ImGuiTestRunFlags_NoError: if child test fails, return false and do not mark parent test as failed.
+// - ImGuiTestRunFlags_ShareVars: share generic vars and custom vars between child and parent tests.
+// - ImGuiTestRunFlags_ShareTestContext
+ImGuiTestStatus ImGuiTestContext::RunChildTest(const char* child_test_name, ImGuiTestRunFlags run_flags)
+{
+    if (IsError())
+        return ImGuiTestStatus_Error;
+
+    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this);
+    LogDebug("RunChildTest %s", child_test_name);
+
+    ImGuiTest* child_test = ImGuiTestEngine_FindTestByName(Engine, NULL, child_test_name);
+    IM_CHECK_SILENT_RETV(child_test != NULL, ImGuiTestStatus_Error);
+    IM_CHECK_SILENT_RETV(child_test != Test, ImGuiTestStatus_Error); // Can't recursively run same test.
+
+    ImGuiTestStatus parent_status = TestOutput->Status;
+    TestOutput->Status = ImGuiTestStatus_Running;
+    ImGuiTestEngine_RunTest(Engine, this, child_test, run_flags);
+    ImGuiTestStatus child_status = TestOutput->Status;
+
+    // Restore parent status
+    TestOutput->Status = parent_status;
+    if (child_status == ImGuiTestStatus_Error && (run_flags & ImGuiTestRunFlags_NoError) == 0)
+        TestOutput->Status = ImGuiTestStatus_Error;
+
+    // Return child status
+    LogWarning("(returning to parent test)");
+    return child_status;
+}
+
 // Return true to request aborting TestFunc
 // Called via IM_SUSPEND_TESTFUNC()
 bool    ImGuiTestContext::SuspendTestFunc(const char* file, int line)
@@ -341,18 +381,24 @@ bool    ImGuiTestContext::SuspendTestFunc(const char* file, int line)
         return false;
 
     file = ImPathFindFilename(file);
-    LogError("DebugHaltTestFunc at %s:%d", file, line);
+    if (file != NULL)
+        LogError("SuspendTestFunc() at %s:%d", file, line);
+    else
+        LogError("SuspendTestFunc()");
 
     // Save relevant state.
     // FIXME-TESTS: Saving/restoring window z-order could be desirable.
     ImVec2 mouse_pos = Inputs->MousePosValue;
     ImGuiTestRunFlags run_flags = RunFlags;
+#if IMGUI_VERSION_NUM >= 18992
+    ImGui::TeleportMousePos(mouse_pos);
+#endif
 
     RunFlags |= ImGuiTestRunFlags_GuiFuncOnly;
-    Test->Status = ImGuiTestStatus_Suspended;
-    while (Test->Status == ImGuiTestStatus_Suspended && !Abort)
+    TestOutput->Status = ImGuiTestStatus_Suspended;
+    while (TestOutput->Status == ImGuiTestStatus_Suspended && !Abort)
         Yield();
-    Test->Status = ImGuiTestStatus_Running;
+    TestOutput->Status = ImGuiTestStatus_Running;
 
     // Restore relevant state.
     RunFlags = run_flags;
@@ -541,6 +587,7 @@ ImGuiID ImGuiTestContext::GetID(ImGuiTestRef ref)
 // - Meaning of leading "/" .................. "/node" : move to root of window pointed by SetRef() when SetRef() uses a path
 // - Meaning of $$xxxx literal encoding ...... "list/$$1" : hash of "list" + hash if (int)1, equivalent of PushID("hello"); PushID(1);
 //// - Meaning of leading "../" .............. "../node" : move back 1 level from SetRef path() when SetRef() uses a path // Unimplemented
+// FIXME: "//$FOCUSED/.." is currently not usable.
 ImGuiID ImGuiTestContext::GetID(ImGuiTestRef ref, ImGuiTestRef seed_ref)
 {
     ImGuiContext& g = *UiContext;
@@ -680,14 +727,26 @@ bool ImGuiTestContext::CaptureScreenshot(int capture_flags)
     CaptureInitAutoFilename(this, ".png");
 
 #if IMGUI_TEST_ENGINE_ENABLE_CAPTURE
+    // Way capture tool is implemented doesn't prevent ClampWindowPos() from running,
+    // so we disable that feature at the moment. (imgui_test_engine/#33)
+    ImGuiIO& io = ImGui::GetIO();
+    bool backup_io_config_move_window_from_title_bar_only = io.ConfigWindowsMoveFromTitleBarOnly;
+    if (capture_flags & ImGuiCaptureFlags_StitchAll)
+        io.ConfigWindowsMoveFromTitleBarOnly = false;
+
     bool can_capture = ImGuiTestContext_CanCaptureScreenshot(this);
     if (!can_capture)
         args->InFlags |= ImGuiCaptureFlags_NoSave;
+
     bool ret = ImGuiTestEngine_CaptureScreenshot(Engine, args);
     if (can_capture)
         LogInfo("Saved '%s' (%d*%d pixels)", args->InOutputFile, (int)args->OutImageSize.x, (int)args->OutImageSize.y);
     else
         LogWarning("Skipped saving '%s' (%d*%d pixels) (enable in 'Misc->Options')", args->InOutputFile, (int)args->OutImageSize.x, (int)args->OutImageSize.y);
+
+    if (capture_flags & ImGuiCaptureFlags_StitchAll)
+        io.ConfigWindowsMoveFromTitleBarOnly = backup_io_config_move_window_from_title_bar_only;
+
     return ret;
 #else
     IM_UNUSED(args);
@@ -1091,9 +1150,19 @@ ImGuiTestItemInfo* ImGuiTestContext::WindowInfo(ImGuiTestRef ref, ImGuiTestOpFla
                 ImGuiWindow* child_window = NULL;
                 {
                     // Child: Attempt 1: Try to BeginChild(const char*) variant and mimic its logic.
-                    ImGuiID child_item_id = GetID(part_name.c_str(), window_idstack_back);
-                    Str128f child_window_full_name("%s/%s_%08X", window->Name, part_name.c_str(), child_item_id);
-                    child_window_id = ImHashStr(child_window_full_name.c_str());
+                    Str128 child_window_full_name;
+#if (IMGUI_VERSION_NUM >= 18996) && (IMGUI_VERSION_NUM < 18999)
+                    if (window_idstack_back == window->ID)
+                    {
+                        child_window_full_name.setf("%s/%s", window->Name, part_name.c_str());
+                    }
+                    else
+#endif
+                    {
+                        ImGuiID child_item_id = GetID(part_name.c_str(), window_idstack_back);
+                        child_window_full_name.setf("%s/%s_%08X", window->Name, part_name.c_str(), child_item_id);
+                    }
+                    child_window_id = ImHashStr(child_window_full_name.c_str()); // We do NOT use ImHashDecoratedPath()
                     child_window = GetWindowByRef(child_window_id);
                 }
                 if (child_window == NULL)
@@ -1103,7 +1172,7 @@ ImGuiTestItemInfo* ImGuiTestContext::WindowInfo(ImGuiTestRef ref, ImGuiTestOpFla
                     // We could support $$xxxx syntax to encode ID in parameter?
                     ImGuiID child_item_id = GetID(part_name.c_str(), window_idstack_back);
                     Str128f child_window_full_name("%s/%08X", window->Name, child_item_id);
-                    child_window_id = ImHashStr(child_window_full_name.c_str());
+                    child_window_id = ImHashStr(child_window_full_name.c_str()); // We do NOT use ImHashDecoratedPath()
                     child_window = GetWindowByRef(child_window_id);
                 }
                 if (child_window == NULL)
@@ -1224,6 +1293,10 @@ static ImVec2 GetWindowScrollbarMousePositionForScroll(ImGuiWindow* window, ImGu
     return position;
 }
 
+#if IMGUI_VERSION_NUM < 18993
+#define ImTrunc ImFloor
+#endif
+
 // Supported values for ImGuiTestOpFlags:
 // - ImGuiTestOpFlags_NoFocusWindow
 void    ImGuiTestContext::ScrollTo(ImGuiTestRef ref, ImGuiAxis axis, float scroll_target, ImGuiTestOpFlags flags)
@@ -1255,7 +1328,7 @@ void    ImGuiTestContext::ScrollTo(ImGuiTestRef ref, ImGuiAxis axis, float scrol
 
         const ImRect scrollbar_rect = ImGui::GetWindowScrollbarRect(window, axis);
         const float scrollbar_size_v = scrollbar_rect.Max[axis] - scrollbar_rect.Min[axis];
-        const float window_resize_grip_size = IM_FLOOR(ImMax(g.FontSize * 1.35f, window->WindowRounding + 1.0f + g.FontSize * 0.2f));
+        const float window_resize_grip_size = ImTrunc(ImMax(g.FontSize * 1.35f, window->WindowRounding + 1.0f + g.FontSize * 0.2f));
 
         // In case of a very small window, directly use SetScrollX/Y function to prevent resizing it
         // FIXME-TESTS: GetWindowScrollbarMousePositionForScroll doesn't return the exact value when scrollbar grip is too small
@@ -2297,8 +2370,12 @@ void    ImGuiTestContext::KeyDown(ImGuiKeyChord key_chord)
         return;
 
     IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this);
+#if IMGUI_VERSION_NUM >= 19012
+    const char* chord_desc = ImGui::GetKeyChordName(key_chord);
+#else
     char chord_desc[32];
     ImGui::GetKeyChordName(key_chord, chord_desc, IM_ARRAYSIZE(chord_desc));
+#endif
     LogDebug("KeyDown(%s)", chord_desc);
     if (EngineIO->ConfigRunSpeed == ImGuiTestRunSpeed_Cinematic)
         SleepShort();
@@ -2314,8 +2391,12 @@ void    ImGuiTestContext::KeyUp(ImGuiKeyChord key_chord)
         return;
 
     IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this);
+#if IMGUI_VERSION_NUM >= 19012
+    const char* chord_desc = ImGui::GetKeyChordName(key_chord);
+#else
     char chord_desc[32];
     ImGui::GetKeyChordName(key_chord, chord_desc, IM_ARRAYSIZE(chord_desc));
+#endif
     LogDebug("KeyUp(%s)", chord_desc);
     if (EngineIO->ConfigRunSpeed == ImGuiTestRunSpeed_Cinematic)
         SleepShort();
@@ -2331,8 +2412,12 @@ void    ImGuiTestContext::KeyPress(ImGuiKeyChord key_chord, int count)
         return;
 
     IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this);
+#if IMGUI_VERSION_NUM >= 19012
+    const char* chord_desc = ImGui::GetKeyChordName(key_chord);
+#else
     char chord_desc[32];
     ImGui::GetKeyChordName(key_chord, chord_desc, IM_ARRAYSIZE(chord_desc));
+#endif
     LogDebug("KeyPress(%s, %d)", chord_desc, count);
     if (EngineIO->ConfigRunSpeed == ImGuiTestRunSpeed_Cinematic)
         SleepShort();
@@ -2359,8 +2444,12 @@ void    ImGuiTestContext::KeyHold(ImGuiKeyChord key_chord, float time)
         return;
 
     IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this);
+#if IMGUI_VERSION_NUM >= 19012
+    const char* chord_desc = ImGui::GetKeyChordName(key_chord);
+#else
     char chord_desc[32];
     ImGui::GetKeyChordName(key_chord, chord_desc, IM_ARRAYSIZE(chord_desc));
+#endif
     LogDebug("KeyHold(%s, %.2f sec)", chord_desc, time);
     if (EngineIO->ConfigRunSpeed == ImGuiTestRunSpeed_Cinematic)
         SleepStandard();
@@ -2369,6 +2458,25 @@ void    ImGuiTestContext::KeyHold(ImGuiKeyChord key_chord, float time)
     SleepNoSkip(time, 1 / 100.0f);
     Inputs->Queue.push_back(ImGuiTestInput::ForKeyChord(key_chord, false));
     Yield(); // Give a frame for items to react
+}
+
+// No extra yield
+void    ImGuiTestContext::KeySetEx(ImGuiKeyChord key_chord, bool is_down, float time)
+{
+    if (IsError())
+        return;
+
+    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this);
+#if IMGUI_VERSION_NUM >= 19012
+    const char* chord_desc = ImGui::GetKeyChordName(key_chord);
+#else
+    char chord_desc[32];
+    ImGui::GetKeyChordName(key_chord, chord_desc, IM_ARRAYSIZE(chord_desc));
+#endif
+    LogDebug("KeySetEx(%s, is_down=%d, time=%.f)", chord_desc, is_down, time);
+    Inputs->Queue.push_back(ImGuiTestInput::ForKeyChord(key_chord, is_down));
+    if (time > 0.0f)
+        SleepNoSkip(time, 1.0f / 100.0f);
 }
 
 void    ImGuiTestContext::KeyChars(const char* chars)
@@ -3144,8 +3252,13 @@ void    ImGuiTestContext::MenuActionAll(ImGuiTestAction action, ImGuiTestRef ref
         MenuAction(ImGuiTestAction_Open, ref_parent); // We assume that every interaction will close the menu again
 
         if (action == ImGuiTestAction_Check || action == ImGuiTestAction_Uncheck)
-            if ((ItemInfo(item.ID)->StatusFlags & ImGuiItemStatusFlags_Checkable) == 0)
+        {
+            ImGuiTestItemInfo* info2 = ItemInfo(item.ID); // refresh info
+            if ((info2->InFlags & ImGuiItemFlags_Disabled) != 0) // FIXME: Report disabled state in log? Make that optional?
                 continue;
+            if ((info2->StatusFlags & ImGuiItemStatusFlags_Checkable) == 0)
+                continue;
+        }
 
         ItemAction(action, item.ID);
     }
@@ -3467,13 +3580,21 @@ void    ImGuiTestContext::WindowResize(ImGuiTestRef ref, ImVec2 size)
 
     ImGuiID id = ImGui::GetWindowResizeCornerID(window, 0);
     MouseMove(id, ImGuiTestOpFlags_IsSecondAttempt);
-    MouseDown(0);
 
-    ImVec2 delta = size - window->Size;
-    MouseMoveToPos(Inputs->MousePosValue + delta);
-    Yield(); // At this point we don't guarantee the final size!
-
-    MouseUp();
+    if (size.x <= 0.0f || size.y <= 0.0f)
+    {
+        IM_ASSERT(size.x <= 0.0f && size.y <= 0.0f);
+        MouseDoubleClick(0);
+        Yield();
+    }
+    else
+    {
+        MouseDown(0);
+        ImVec2 delta = size - window->Size;
+        MouseMoveToPos(Inputs->MousePosValue + delta);
+        Yield(); // At this point we don't guarantee the final size!
+        MouseUp();
+    }
     MouseSetViewport(window); // Update in case window has changed viewport
 }
 
@@ -3559,6 +3680,7 @@ void    ImGuiTestContext::DockInto(ImGuiTestRef src_id, ImGuiTestRef dst_id, ImG
     IM_CHECK_SILENT((window_src != NULL) != (node_src != NULL)); // Src must be either a window either a node
     IM_CHECK_SILENT((window_dst != NULL) != (node_dst != NULL)); // Dst must be either a window either a node
 
+    // Infer node from window. Not the opposite as docking a node would imply docking all of it.
     if (node_src)
         window_src = node_src->HostWindow;
     if (node_dst)
@@ -3769,7 +3891,7 @@ void    ImGuiTestContext::UndockWindow(const char* window_name)
 void    ImGuiTestContext::PerfCalcRef()
 {
     LogDebug("Measuring ref dt...");
-    SetGuiFuncEnabled(false);
+    RunFlags |= ImGuiTestRunFlags_GuiFuncDisable;
 
     ImMovingAverage<double> delta_times;
     delta_times.Init(PerfIterations);
@@ -3780,7 +3902,7 @@ void    ImGuiTestContext::PerfCalcRef()
     }
 
     PerfRefDt = delta_times.GetAverage();
-    SetGuiFuncEnabled(true);
+    RunFlags &= ~ImGuiTestRunFlags_GuiFuncDisable;
 }
 
 void    ImGuiTestContext::PerfCapture(const char* category, const char* test_name, const char* csv_file)

@@ -79,6 +79,13 @@ enum ImGuiCaptureStatus
     ImGuiCaptureStatus_Error
 };
 
+struct ImGuiCaptureWindowData
+{
+    ImGuiWindow*            Window;
+    ImRect                  BackupRect;
+    ImVec2                  PosDuringCapture;
+};
+
 // Implements functionality for capturing images
 struct IMGUI_API ImGuiCaptureContext
 {
@@ -101,16 +108,15 @@ struct IMGUI_API ImGuiCaptureContext
     ImGuiWindow*            _HoveredWindow = NULL;          // Window which was hovered at capture start.
     ImGuiCaptureImageBuf    _CaptureBuf;                    // Output image buffer.
     const ImGuiCaptureArgs* _CaptureArgs = NULL;            // Current capture args. Set only if capture is in progress.
+    ImVector<ImGuiCaptureWindowData> _WindowsData;          // Backup windows that will have their rect modified and restored. args->InCaptureWindows can not be used because popups may get closed during capture and no longer appear in that list.
 
     // [Internal] Video recording
     bool                    _VideoRecording = false;        // Flag indicating that video recording is in progress.
     double                  _VideoLastFrameTime = 0;        // Time when last video frame was recorded.
-    FILE*                   _VideoEncoderPipe = NULL;        // File writing to stdin of video encoder process.
+    FILE*                   _VideoEncoderPipe = NULL;       // File writing to stdin of video encoder process.
 
     // [Internal] Backups
     bool                    _BackupMouseDrawCursor = false; // Initial value of g.IO.MouseDrawCursor
-    ImVector<ImGuiWindow*>  _BackupWindows;                 // Backup windows that will have their rect modified and restored. args->InCaptureWindows can not be used because popups may get closed during capture and no longer appear in that list.
-    ImVector<ImRect>        _BackupWindowsRect;             // Backup window state that will be restored when screen capturing is done. Size and order matches windows of ImGuiCaptureArgs::InCaptureWindows.
     ImVec2                  _BackupDisplayWindowPadding;    // Backup padding. We set it to {0, 0} during capture.
     ImVec2                  _BackupDisplaySafeAreaPadding;  // Backup padding. We set it to {0, 0} during capture.
 
@@ -128,6 +134,8 @@ struct IMGUI_API ImGuiCaptureContext
 
     // Update capturing. If this function returns true then it should be called again with same arguments on the next frame.
     ImGuiCaptureStatus      CaptureUpdate(ImGuiCaptureArgs* args);
+    void                    RestoreBackedUpData();
+    void                    ClearState();
 
     // Begin video capture. Call CaptureUpdate() every frame afterwards until it returns false.
     void                    BeginVideoCapture(ImGuiCaptureArgs* args);

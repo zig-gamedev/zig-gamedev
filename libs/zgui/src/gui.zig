@@ -137,7 +137,13 @@ pub const ConfigFlags = packed struct(c_int) {
     nav_no_capture_keyboard: bool = false,
     no_mouse: bool = false,
     no_mouse_cursor_change: bool = false,
-    user_storage: u14 = 0,
+    dock_enable: bool = false,
+    _pading0: u3 = 0,
+    viewport_enable: bool = false,
+    _pading1: u3 = 0,
+    dpi_enable_scale_viewport: bool = false,
+    dpi_enable_scale_fonts: bool = false,
+    user_storage: u4 = 0,
     is_srgb: bool = false,
     is_touch_screen: bool = false,
     _padding: u10 = 0,
@@ -160,6 +166,7 @@ pub const FontConfig = extern struct {
     merge_mode: bool,
     font_builder_flags: c_uint,
     rasterizer_multiply: f32,
+    rasterizer_density: f32,
     ellipsis_char: Wchar,
     name: [40]u8,
     dst_font: *Font,
@@ -422,6 +429,18 @@ pub const Key = enum(c_int) {
     f10,
     f11,
     f12,
+    f13,
+    f14,
+    f15,
+    f16,
+    f17,
+    f18,
+    f19,
+    f20,
+    f21,
+    f22,
+    f23,
+    f24,
     apostrophe,
     comma,
     minus,
@@ -455,6 +474,9 @@ pub const Key = enum(c_int) {
     keypad_add,
     keypad_enter,
     keypad_equal,
+
+    app_back,
+    app_forward,
 
     gamepad_start,
     gamepad_back,
@@ -496,6 +518,7 @@ pub const Key = enum(c_int) {
     mod_super = 1 << 15,
     mod_mask_ = 0xf000,
 };
+
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct(c_int) {
     no_title_bar: bool = false,
@@ -514,12 +537,11 @@ pub const WindowFlags = packed struct(c_int) {
     no_bring_to_front_on_focus: bool = false,
     always_vertical_scrollbar: bool = false,
     always_horizontal_scrollbar: bool = false,
-    always_use_window_padding: bool = false,
-    _removed: u1 = 0,
     no_nav_inputs: bool = false,
     no_nav_focus: bool = false,
     unsaved_document: bool = false,
-    _padding: u11 = 0,
+    no_docking: bool = false,
+    _padding: u12 = 0,
 
     pub const no_nav = WindowFlags{ .no_nav_inputs = true, .no_nav_focus = true };
     pub const no_decoration = WindowFlags{
@@ -534,6 +556,20 @@ pub const WindowFlags = packed struct(c_int) {
         .no_nav_focus = true,
     };
 };
+
+pub const ChildFlags = packed struct(c_int) {
+    border: bool = false,
+    no_move: bool = false,
+    always_use_window_padding: bool = false,
+    resize_x: bool = false,
+    resize_y: bool = false,
+    auto_resize_x: bool = false,
+    auto_resize_y: bool = false,
+    always_auto_resize: bool = false,
+    frame_style: bool = false,
+    _padding: u23 = 0,
+};
+
 //--------------------------------------------------------------------------------------------------
 pub const SliderFlags = packed struct(c_int) {
     _reserved0: bool = false,
@@ -664,19 +700,19 @@ extern fn zguiEnd() void;
 const BeginChild = struct {
     w: f32 = 0.0,
     h: f32 = 0.0,
-    border: bool = false,
-    flags: WindowFlags = .{},
+    child_flags: ChildFlags = .{},
+    window_flags: WindowFlags = .{},
 };
 pub fn beginChild(str_id: [:0]const u8, args: BeginChild) bool {
-    return zguiBeginChild(str_id, args.w, args.h, args.border, args.flags);
+    return zguiBeginChild(str_id, args.w, args.h, args.child_flags, args.window_flags);
 }
 pub fn beginChildId(id: Ident, args: BeginChild) bool {
-    return zguiBeginChildId(id, args.w, args.h, args.border, args.flags);
+    return zguiBeginChildId(id, args.w, args.h, args.child_flags, args.window_flags);
 }
 /// `pub fn endChild() void`
 pub const endChild = zguiEndChild;
-extern fn zguiBeginChild(str_id: [*:0]const u8, w: f32, h: f32, border: bool, flags: WindowFlags) bool;
-extern fn zguiBeginChildId(id: Ident, w: f32, h: f32, border: bool, flags: WindowFlags) bool;
+extern fn zguiBeginChild(str_id: [*:0]const u8, w: f32, h: f32, flags: ChildFlags, window_flags: WindowFlags) bool;
+extern fn zguiBeginChildId(id: Ident, w: f32, h: f32, flags: ChildFlags, window_flags: WindowFlags) bool;
 extern fn zguiEndChild() void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn zguiGetScrollX() f32`
@@ -733,7 +769,8 @@ pub const FocusedFlags = packed struct(c_int) {
     root_window: bool = false,
     any_window: bool = false,
     no_popup_hierarchy: bool = false,
-    _padding: u28 = 0,
+    dock_hierarchy: bool = false,
+    _padding: u27 = 0,
 
     pub const root_and_child_windows = FocusedFlags{ .root_window = true, .child_windows = true };
 };
@@ -743,22 +780,27 @@ pub const HoveredFlags = packed struct(c_int) {
     root_window: bool = false,
     any_window: bool = false,
     no_popup_hierarchy: bool = false,
-    _reserved0: bool = false,
+    dock_hierarchy: bool = false,
     allow_when_blocked_by_popup: bool = false,
     _reserved1: bool = false,
     allow_when_blocked_by_active_item: bool = false,
-    allow_when_overlapped: bool = false,
+    allow_when_overlapped_by_item: bool = false,
+    allow_when_overlapped_by_window: bool = false,
     allow_when_disabled: bool = false,
     no_nav_override: bool = false,
+    for_tooltip: bool = false,
+    stationary: bool = false,
+    delay_none: bool = false,
     delay_normal: bool = false,
     delay_short: bool = false,
     no_shared_delay: bool = false,
-    _padding: u18 = 0,
+    _padding: u14 = 0,
 
     pub const rect_only = HoveredFlags{
         .allow_when_blocked_by_popup = true,
         .allow_when_blocked_by_active_item = true,
-        .allow_when_overlapped = true,
+        .allow_when_overlapped_by_item = true,
+        .allow_when_overlapped_by_window = true,
     };
     pub const root_and_child_windows = HoveredFlags{ .root_window = true, .child_windows = true };
 };
@@ -827,6 +869,32 @@ extern fn zguiGetWindowContentRegionMin(size: *[2]f32) void;
 extern fn zguiGetWindowContentRegionMax(size: *[2]f32) void;
 //--------------------------------------------------------------------------------------------------
 //
+// Docking
+//
+//--------------------------------------------------------------------------------------------------
+pub const DockNodeFlags = packed struct(c_int) {
+    keep_alive_only: bool = false,
+    _reserved: u1 = 0,
+    no_docking_over_central_node: bool = false,
+    passthru_central_node: bool = false,
+    no_docking_split: bool = false,
+    no_resize: bool = false,
+    auto_hide_tab_bar: bool = false,
+    no_undocking: bool = false,
+    _padding: u24 = 0,
+};
+extern fn zguiDockSpace(str_id: [*:0]const u8, size: *const [2]f32, flags: DockNodeFlags) Ident;
+
+pub fn DockSpace(str_id: [:0]const u8, size: [2]f32, flags: DockNodeFlags) Ident {
+    return zguiDockSpace(str_id.ptr, &size, flags);
+}
+extern fn zguiDockSpaceOverViewport(viewport: Viewport, flags: DockNodeFlags) Ident;
+pub const DockSpaceOverViewport = zguiDockSpaceOverViewport;
+
+//--------------------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------------
+//
 // Style
 //
 //--------------------------------------------------------------------------------------------------
@@ -860,6 +928,8 @@ pub const Style = extern struct {
     tab_rounding: f32,
     tab_border_size: f32,
     tab_min_width_for_close_button: f32,
+    tab_bar_border_size: f32,
+    table_angled_header_angle: f32,
     color_button_position: Direction,
     button_text_align: [2]f32,
     selectable_text_align: [2]f32,
@@ -868,6 +938,7 @@ pub const Style = extern struct {
     separator_text_padding: [2]f32,
     display_window_padding: [2]f32,
     display_safe_area_padding: [2]f32,
+    docking_separator_size: f32,
     mouse_cursor_scale: f32,
     anti_aliased_lines: bool,
     anti_aliased_lines_use_tex: bool,
@@ -876,6 +947,13 @@ pub const Style = extern struct {
     circle_tessellation_max_error: f32,
 
     colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
+
+    hover_stationary_delay: f32,
+    hover_delay_short: f32,
+    hover_delay_normal: f32,
+
+    hover_flags_for_tooltip_mouse: HoveredFlags,
+    hover_flags_for_tooltip_nav: HoveredFlags,
 
     /// `pub fn init() Style`
     pub const init = zguiStyle_Init;
@@ -935,6 +1013,8 @@ pub const StyleCol = enum(c_int) {
     tab_active,
     tab_unfocused,
     tab_unfocused_active,
+    docking_preview,
+    docking_empty_bg,
     plot_lines,
     plot_lines_hovered,
     plot_histogram,
@@ -1009,11 +1089,13 @@ pub const StyleVar = enum(c_int) {
     grab_min_size, // 1f
     grab_rounding, // 1f
     tab_rounding, // 1f
+    tab_bar_border_size, // 1f
     button_text_align, // 2f
     selectable_text_align, // 2f
     separator_text_border_size, // 1f
     separator_text_align, // 2f
     separator_text_padding, // 2f
+    docking_separator_size, // 1f
 };
 
 pub fn pushStyleVar1f(args: struct {
@@ -1560,7 +1642,8 @@ pub const ComboFlags = packed struct(c_int) {
     height_largest: bool = false,
     no_arrow_button: bool = false,
     no_preview: bool = false,
-    _padding: u25 = 0,
+    width_fit_preview: bool = false,
+    _padding: u24 = 0,
 };
 //--------------------------------------------------------------------------------------------------
 const BeginCombo = struct {
@@ -2635,7 +2718,7 @@ extern fn zguiColorButton(
 pub const TreeNodeFlags = packed struct(c_int) {
     selected: bool = false,
     framed: bool = false,
-    allow_item_overlap: bool = false,
+    allow_overlap: bool = false,
     no_tree_push_on_open: bool = false,
     no_auto_open_on_log: bool = false,
     default_open: bool = false,
@@ -2646,8 +2729,9 @@ pub const TreeNodeFlags = packed struct(c_int) {
     frame_padding: bool = false,
     span_avail_width: bool = false,
     span_full_width: bool = false,
+    span_all_columns: bool = false,
     nav_left_jumps_back_here: bool = false,
-    _padding: u18 = 0,
+    _padding: u17 = 0,
 
     pub const collapsing_header = TreeNodeFlags{
         .framed = true,
@@ -2747,7 +2831,7 @@ pub const SelectableFlags = packed struct(c_int) {
     span_all_columns: bool = false,
     allow_double_click: bool = false,
     disabled: bool = false,
-    allow_item_overlap: bool = false,
+    allow_overlap: bool = false,
     _padding: u27 = 0,
 };
 //--------------------------------------------------------------------------------------------------
@@ -3260,11 +3344,13 @@ pub const PopupFlags = packed struct(c_int) {
     _reserved0: bool = false,
     _reserved1: bool = false,
 
+    no_reopen: bool = false,
+    _reserved2: bool = false,
     no_open_over_existing_popup: bool = false,
     no_open_over_items: bool = false,
     any_popup_id: bool = false,
     any_popup_level: bool = false,
-    _padding: u23 = 0,
+    _padding: u21 = 0,
 
     pub const any_popup = PopupFlags{ .any_popup_id = true, .any_popup_level = true };
 };
@@ -3312,7 +3398,8 @@ pub const TabItemFlags = packed struct(c_int) {
     no_reorder: bool = false,
     leading: bool = false,
     trailing: bool = false,
-    _padding: u24 = 0,
+    no_assumed_closure: bool = false,
+    _padding: u23 = 0,
 };
 pub fn beginTabBar(label: [:0]const u8, flags: TabBarFlags) bool {
     return zguiBeginTabBar(label, flags);

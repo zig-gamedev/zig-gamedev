@@ -71,12 +71,12 @@ ZGUI_API void zguiEnd(void) {
     ImGui::End();
 }
 
-ZGUI_API bool zguiBeginChild(const char* str_id, float w, float h, bool border, ImGuiWindowFlags flags) {
-    return ImGui::BeginChild(str_id, { w, h }, border, flags);
+ZGUI_API bool zguiBeginChild(const char* str_id, float w, float h, ImGuiChildFlags child_flags, ImGuiWindowFlags window_flags) {
+    return ImGui::BeginChild(str_id, { w, h }, child_flags, window_flags);
 }
 
-ZGUI_API bool zguiBeginChildId(ImGuiID id, float w, float h, bool border, ImGuiWindowFlags flags) {
-    return ImGui::BeginChild(id, { w, h }, border, flags);
+ZGUI_API bool zguiBeginChildId(ImGuiID id, float w, float h, ImGuiChildFlags child_flags, ImGuiWindowFlags window_flags) {
+    return ImGui::BeginChild(id, { w, h }, child_flags, window_flags);
 }
 
 ZGUI_API void zguiEndChild(void) {
@@ -2215,6 +2215,20 @@ ZGUI_API void zguiViewport_GetWorkSize(ImGuiViewport* viewport, float p[2]) {
     p[0] = sz.x;
     p[1] = sz.y;
 }
+
+//--------------------------------------------------------------------------------------------------
+//
+// Docking
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API ImGuiID zguiDockSpace(const char* str_id, float size[2], ImGuiDockNodeFlags flags) {
+    return ImGui::DockSpace(ImGui::GetID(str_id), {size[0], size[1]}, flags);
+}
+
+ZGUI_API ImGuiID zguiDockSpaceOverViewport(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags) {
+    return ImGui::DockSpaceOverViewport(viewport, dockspace_flags);
+}
+
 
 #if ZGUI_IMPLOT
 //--------------------------------------------------------------------------------------------------
