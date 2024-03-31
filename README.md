@@ -9,7 +9,7 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * DirectX 12 [sample applications](#sample-applications-directx-12)
 
 ### Vision
-* Very modular "toolbox of libraries", user can use only the components she needs
+* Very modular "toolbox of libraries", users can use only the components they need
 * Just [Zig](https://ziglang.org) is required to build on Windows, macOS and Linux - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as `zig build`
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings for carefully selected C/C++ libraries
