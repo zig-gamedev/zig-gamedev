@@ -141,7 +141,7 @@ pub const REVERB_DEFAULT_DISABLE_LATE_FIELD = FALSE;
 pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
     var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = w32.LoadLibraryA("d3d12/xaudio2_9redist.dll");
+        xaudio2_dll = w32.LoadLibraryA("xaudio2_9redist.dll");
     }
 
     var createAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
@@ -156,7 +156,7 @@ pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
 pub fn createReverb(apo: *?*IUnknown, _: UINT32) HRESULT {
     var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = w32.LoadLibraryA("d3d12/xaudio2_9redist.dll");
+        xaudio2_dll = w32.LoadLibraryA("xaudio2_9redist.dll");
     }
 
     var createAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;

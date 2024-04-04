@@ -35,7 +35,7 @@ pub fn install_xaudio2(
                 &.{ source_path_prefix, "bin/x64/xaudio2_9redist.dll" },
             ) },
             install_dir,
-            "bin/xaudio2_9redist.dll",
+            "xaudio2_9redist.dll",
         ).step,
     );
 }
