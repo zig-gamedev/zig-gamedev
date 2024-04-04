@@ -18,6 +18,9 @@ const DemoState = struct {
     font_normal: zgui.Font,
     font_large: zgui.Font,
     draw_list: zgui.DrawList,
+    alloced_input_text_buf: [:0]u8,
+    alloced_input_text_multiline_buf: [:0]u8,
+    alloced_input_text_with_hint_buf: [:0]u8,
 };
 var _te: *zgui.te.TestEngine = undefined;
 
@@ -105,7 +108,6 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     const style = zgui.getStyle();
 
     style.window_min_size = .{ 320.0, 240.0 };
-    style.window_border_size = 8.0;
     style.scrollbar_size = 6.0;
     {
         var color = style.getColor(.scrollbar_grab);
@@ -133,7 +135,13 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .font_normal = font_normal,
         .font_large = font_large,
         .draw_list = draw_list,
+        .alloced_input_text_buf = try allocator.allocSentinel(u8, 128, 0),
+        .alloced_input_text_multiline_buf = try allocator.allocSentinel(u8, 128, 0),
+        .alloced_input_text_with_hint_buf = try allocator.allocSentinel(u8, 128, 0),
     };
+    demo.alloced_input_text_buf[0] = 0;
+    demo.alloced_input_text_multiline_buf[0] = 0;
+    demo.alloced_input_text_with_hint_buf[0] = 0;
 
     return demo;
 }
@@ -144,6 +152,9 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     zgui.destroyDrawList(demo.draw_list);
     zgui.deinit();
     demo.gctx.destroy(allocator);
+    allocator.free(demo.alloced_input_text_buf);
+    allocator.free(demo.alloced_input_text_multiline_buf);
+    allocator.free(demo.alloced_input_text_with_hint_buf);
     allocator.destroy(demo);
 }
 
@@ -463,9 +474,9 @@ fn update(demo: *DemoState) !void {
 
         if (zgui.collapsingHeader("Widgets: Input with Keyboard", .{})) {
             const static = struct {
-                var buf: [128]u8 = undefined;
-                var buf1: [128]u8 = undefined;
-                var buf2: [128]u8 = undefined;
+                var input_text_buf = [_:0]u8{0} ** 128;
+                var input_text_multiline_buf = [_:0]u8{0} ** 128;
+                var input_text_with_hint_buf = [_:0]u8{0} ** 128;
                 var v1: f32 = 0;
                 var v2: [2]f32 = .{ 0, 0 };
                 var v3: [3]f32 = .{ 0, 0, 0 };
@@ -478,12 +489,30 @@ fn update(demo: *DemoState) !void {
                 var si8: i8 = 0;
                 var v3u8: [3]u8 = .{ 0, 0, 0 };
             };
-            _ = zgui.inputText("Input text", .{ .buf = static.buf[0..] });
-            _ = zgui.inputTextMultiline("Input text multiline", .{ .buf = static.buf1[0..] });
-            _ = zgui.inputTextWithHint(
-                "Input text with hint",
-                .{ .hint = "Enter your name", .buf = static.buf2[0..] },
-            );
+            zgui.separatorText("static input text");
+            _ = zgui.inputText("Input text", .{ .buf = static.input_text_buf[0..] });
+            _ = zgui.text("length of Input text {}", .{std.mem.len(@as([*:0]u8, static.input_text_buf[0..]))});
+
+            _ = zgui.inputTextMultiline("Input text multiline", .{ .buf = static.input_text_multiline_buf[0..] });
+            _ = zgui.text("length of Input text multiline {}", .{std.mem.len(@as([*:0]u8, static.input_text_multiline_buf[0..]))});
+            _ = zgui.inputTextWithHint("Input text with hint", .{
+                .hint = "Enter your name",
+                .buf = static.input_text_with_hint_buf[0..],
+            });
+            _ = zgui.text("length of Input text with hint {}", .{std.mem.len(@as([*:0]u8, static.input_text_with_hint_buf[0..]))});
+
+            zgui.separatorText("alloced input text");
+            _ = zgui.inputText("Input text alloced", .{ .buf = demo.alloced_input_text_buf });
+            _ = zgui.text("length of Input text alloced {}", .{std.mem.len(demo.alloced_input_text_buf.ptr)});
+            _ = zgui.inputTextMultiline("Input text multiline alloced", .{ .buf = demo.alloced_input_text_multiline_buf });
+            _ = zgui.text("length of Input text multiline {}", .{std.mem.len(demo.alloced_input_text_multiline_buf.ptr)});
+            _ = zgui.inputTextWithHint("Input text with hint alloced", .{
+                .hint = "Enter your name",
+                .buf = demo.alloced_input_text_with_hint_buf,
+            });
+            _ = zgui.text("length of Input text with hint alloced {}", .{std.mem.len(demo.alloced_input_text_with_hint_buf.ptr)});
+
+            zgui.separatorText("input numeric");
             _ = zgui.inputFloat("Input float 1", .{ .v = &static.v1 });
             _ = zgui.inputFloat2("Input float 2", .{ .v = &static.v2 });
             _ = zgui.inputFloat3("Input float 3", .{ .v = &static.v3 });
