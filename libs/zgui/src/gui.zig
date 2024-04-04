@@ -2333,7 +2333,7 @@ pub const InputTextCallbackData = extern struct {
 pub const InputTextCallback = *const fn (data: *InputTextCallbackData) i32;
 //--------------------------------------------------------------------------------------------------
 pub fn inputText(label: [:0]const u8, args: struct {
-    buf: []u8,
+    buf: [:0]u8,
     flags: InputTextFlags = .{},
     callback: ?InputTextCallback = null,
     user_data: ?*anyopaque = null,
@@ -2357,7 +2357,7 @@ extern fn zguiInputText(
 ) bool;
 //--------------------------------------------------------------------------------------------------
 pub fn inputTextMultiline(label: [:0]const u8, args: struct {
-    buf: []u8,
+    buf: [:0]u8,
     w: f32 = 0.0,
     h: f32 = 0.0,
     flags: InputTextFlags = .{},
@@ -2388,7 +2388,7 @@ extern fn zguiInputTextMultiline(
 //--------------------------------------------------------------------------------------------------
 pub fn inputTextWithHint(label: [:0]const u8, args: struct {
     hint: [:0]const u8,
-    buf: []u8,
+    buf: [:0]u8,
     flags: InputTextFlags = .{},
     callback: ?InputTextCallback = null,
     user_data: ?*anyopaque = null,
