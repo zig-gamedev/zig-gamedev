@@ -182,6 +182,9 @@ struct ImGui_ImplGlfw_Data
     bool                    InstalledCallbacks;
     bool                    CallbacksChainForAllWindows;
     bool                    WantUpdateMonitors;
+    
+    ImVec2                  DpiScale; // fix(zig-gamedev)
+
 #ifdef __EMSCRIPTEN__
     const char*             CanvasSelector;
 #endif
@@ -469,7 +472,7 @@ void ImGui_ImplGlfw_CursorPosCallback(GLFWwindow* window, double x, double y)
 {
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
     if (bd->PrevUserCallbackCursorPos != nullptr && ImGui_ImplGlfw_ShouldChainCallback(window))
-        bd->PrevUserCallbackCursorPos(window, x, y);
+        bd->PrevUserCallbackCursorPos(window, x * bd->DpiScale.x, y * bd->DpiScale.y); // fix(zig-gamedev)
 
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -479,8 +482,8 @@ void ImGui_ImplGlfw_CursorPosCallback(GLFWwindow* window, double x, double y)
         x += window_x;
         y += window_y;
     }
-    io.AddMousePosEvent((float)x, (float)y);
-    bd->LastValidMousePos = ImVec2((float)x, (float)y);
+    io.AddMousePosEvent((float)x * bd->DpiScale.x, (float)y * bd->DpiScale.y); // fix(zig-gamedev)
+    bd->LastValidMousePos = ImVec2((float)x * bd->DpiScale.x, (float)y * bd->DpiScale.y); // fix(zig-gamedev)
 }
 
 // Workaround: X11 seems to send spurious Leave/Enter events which would make us lose our position,
@@ -617,6 +620,8 @@ static bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, Glfw
     bd->Window = window;
     bd->Time = 0.0;
     bd->WantUpdateMonitors = true;
+
+    bd->DpiScale = ImVec2{ 1.0, 1.0 }; // fix(zig-gamedev)
 
     io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
@@ -770,8 +775,9 @@ static void ImGui_ImplGlfw_UpdateMouseData()
                     mouse_x += window_x;
                     mouse_y += window_y;
                 }
-                bd->LastValidMousePos = ImVec2((float)mouse_x, (float)mouse_y);
-                io.AddMousePosEvent((float)mouse_x, (float)mouse_y);
+                
+                bd->LastValidMousePos = ImVec2((float)mouse_x * bd->DpiScale.x, (float)mouse_y * bd->DpiScale.y); // fix(zig-gamedev)
+                io.AddMousePosEvent((float)mouse_x * bd->DpiScale.x, (float)mouse_y * bd->DpiScale.y); // fix(zig-gamedev)
             }
         }
 
@@ -938,6 +944,11 @@ void ImGui_ImplGlfw_NewFrame()
     io.DisplaySize = ImVec2((float)w, (float)h);
     if (w > 0 && h > 0)
         io.DisplayFramebufferScale = ImVec2((float)display_w / (float)w, (float)display_h / (float)h);
+    
+    // fix(zig-gamedev)
+    bd->DpiScale.x = ceil(io.DisplayFramebufferScale.x);
+    bd->DpiScale.y = ceil(io.DisplayFramebufferScale.y);
+
     if (bd->WantUpdateMonitors)
         ImGui_ImplGlfw_UpdateMonitors();
 
