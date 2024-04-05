@@ -14,30 +14,29 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
 
     @import("system_sdk").addLibraryPathsTo(exe);
 
-    const common = b.dependency("common", .{
+    const zpix = b.dependency("zpix", .{
         .target = options.target,
-        .zd3d12_debug_layer = options.zd3d12_enable_debug_layer,
-        .zd3d12_gbv = options.zd3d12_enable_gbv,
     });
-    exe.root_module.addImport("common", common.module("root"));
-    exe.linkLibrary(common.artifact("common"));
+    exe.root_module.addImport("zpix", zpix.module("root"));
 
     const zwin32 = b.dependency("zwin32", .{
         .target = options.target,
     });
-    exe.root_module.addImport("zwin32", zwin32.module("root"));
+    const zwin32_module = zwin32.module("root");
+    exe.root_module.addImport("zwin32", zwin32_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
         .target = options.target,
         .debug_layer = options.zd3d12_enable_debug_layer,
         .gbv = options.zd3d12_enable_gbv,
     });
-    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
+    const zd3d12_module = zd3d12.module("root");
+    exe.root_module.addImport("zd3d12", zd3d12_module);
 
-    const zpix = b.dependency("zpix", .{
-        .target = options.target,
+    @import("../common/build.zig").link(exe, .{
+        .zwin32 = zwin32_module,
+        .zd3d12 = zd3d12_module,
     });
-    exe.root_module.addImport("zpix", zpix.module("root"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
@@ -71,7 +70,7 @@ fn buildShaders(b: *std.Build) *std.Build.Step {
     makeDxcCmd(
         b,
         dxc_step,
-        "../../libs/common/src/hlsl/common.hlsl",
+        "../common/src/hlsl/common.hlsl",
         "vsImGui",
         "imgui.vs.cso",
         "vs",
@@ -80,7 +79,7 @@ fn buildShaders(b: *std.Build) *std.Build.Step {
     makeDxcCmd(
         b,
         dxc_step,
-        "../../libs/common/src/hlsl/common.hlsl",
+        "../common/src/hlsl/common.hlsl",
         "psImGui",
         "imgui.ps.cso",
         "ps",
@@ -89,7 +88,7 @@ fn buildShaders(b: *std.Build) *std.Build.Step {
     makeDxcCmd(
         b,
         dxc_step,
-        "../../libs/common/src/hlsl/common.hlsl",
+        "../common/src/hlsl/common.hlsl",
         "csGenerateMipmaps",
         "generate_mipmaps.cs.cso",
         "cs",
