@@ -15,8 +15,7 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
     const zpix = b.dependency("zpix", .{
-        .use_double_precision = false,
-        .enable_cross_platform_determinism = true,
+        .enable = true,
     });
     exe.root_module.addImport("zpix", zpix.module("root"));
 }
