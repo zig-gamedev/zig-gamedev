@@ -26,8 +26,8 @@ pub fn init(
 }
 
 pub fn deinit() void {
-    ImGui_ImplGlfw_Shutdown();
     ImGui_ImplDX12_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
 }
 
 pub fn newFrame(fb_width: u32, fb_height: u32) void {
