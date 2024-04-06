@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) void {
             bool,
             "enable_asserts",
             "Enable assertions",
-        ) orelse false,
+        ) orelse (optimize == .Debug),
         .enable_cross_platform_determinism = b.option(
             bool,
             "enable_cross_platform_determinism",
@@ -197,7 +197,7 @@ pub fn build(b: *std.Build) void {
             if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
             if (options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
-            if (options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+            if (options.enable_asserts) "-DJPH_ENABLE_ASSERTS" else "",
             "-fno-access-control",
             "-fno-sanitize=undefined",
         },
@@ -225,7 +225,7 @@ pub fn build(b: *std.Build) void {
             if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
             if (options.enable_debug_renderer) "-DJPH_DEBUG_RENDERER" else "",
             if (options.use_double_precision) "-DJPH_DOUBLE_PRECISION" else "",
-            if (options.enable_asserts or optimize == .Debug) "-DJPH_ENABLE_ASSERTS" else "",
+            if (options.enable_asserts) "-DJPH_ENABLE_ASSERTS" else "",
             "-fno-sanitize=undefined",
         },
     });
