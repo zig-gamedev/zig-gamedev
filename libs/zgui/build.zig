@@ -29,6 +29,11 @@ pub fn build(b: *std.Build) void {
             "with_te",
             "Build with bundled test engine support",
         ) orelse false,
+        .use_wchar32 = b.option(
+            bool,
+            "use_wchar32",
+            "Extended unicode support",
+        ) orelse false,
     };
 
     const options_step = b.addOptions();
@@ -109,6 +114,10 @@ pub fn build(b: *std.Build) void {
         });
     } else {
         imgui.defineCMacro("ZGUI_IMPLOT", "0");
+    }
+
+    if (options.use_wchar32) {
+        imgui.defineCMacro("IMGUI_USE_WCHAR32", "1");
     }
 
     if (options.with_te) {
