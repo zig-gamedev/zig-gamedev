@@ -954,7 +954,7 @@ test "enum" {
                     @field(c, c_field_name),
                     @intFromEnum(@field(ZigType, field_name)),
                 ) catch |err| {
-                    std.log.err("{s}.{s} != {s}", .{ decl.name, field_name, c_field_name });
+                    std.log.err(decl.name ++ "." ++ field_name ++ " != " ++ c_field_name, .{});
                     return err;
                 };
             }
