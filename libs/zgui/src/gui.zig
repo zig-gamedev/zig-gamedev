@@ -2389,7 +2389,7 @@ pub fn inputText(label: [:0]const u8, args: struct {
     return zguiInputText(
         label,
         args.buf.ptr,
-        args.buf.len,
+        args.buf.len + 1, // + 1 for sentinel
         args.flags,
         if (args.callback) |cb| cb else null,
         args.user_data,
@@ -2415,7 +2415,7 @@ pub fn inputTextMultiline(label: [:0]const u8, args: struct {
     return zguiInputTextMultiline(
         label,
         args.buf.ptr,
-        args.buf.len,
+        args.buf.len + 1, // + 1 for sentinel
         args.w,
         args.h,
         args.flags,
@@ -2445,7 +2445,7 @@ pub fn inputTextWithHint(label: [:0]const u8, args: struct {
         label,
         args.hint,
         args.buf.ptr,
-        args.buf.len,
+        args.buf.len + 1, // + 1 for sentinel
         args.flags,
         if (args.callback) |cb| cb else null,
         args.user_data,
