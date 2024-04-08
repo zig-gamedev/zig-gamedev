@@ -892,6 +892,37 @@ extern fn zguiDockSpaceOverViewport(viewport: Viewport, flags: DockNodeFlags) Id
 pub const DockSpaceOverViewport = zguiDockSpaceOverViewport;
 
 //--------------------------------------------------------------------------------------------------
+//
+// DockBuilder (Unstable internal imgui API, subject to change, use at own risk)
+//
+//--------------------------------------------------------------------------------------------------
+pub fn dockBuilderDockWindow(window_name: [:0]const u8, node_id: Ident) void {
+    zguiDockBuilderDockWindow(window_name.ptr, node_id);
+}
+pub const dockBuilderAddNode = zguiDockBuilderAddNode;
+pub const dockBuilderRemoveNode = zguiDockBuilderRemoveNode;
+pub fn dockBuilderSetNodePos(node_id: Ident, pos: [2]f32) void {
+    zguiDockBuilderSetNodePos(node_id, &pos);
+}
+pub fn dockBuilderSetNodeSize(node_id: Ident, size: [2]f32) void {
+    zguiDockBuilderSetNodeSize(node_id, &size);
+}
+pub const dockBuilderSplitNode = zguiDockBuilderSplitNode;
+pub const dockBuilderFinish = zguiDockBuilderFinish;
+
+extern fn zguiDockBuilderDockWindow(window_name: [*:0]const u8, node_id: Ident) void;
+extern fn zguiDockBuilderAddNode(node_id: Ident, flags: DockNodeFlags) Ident;
+extern fn zguiDockBuilderRemoveNode(node_id: Ident) void;
+extern fn zguiDockBuilderSetNodePos(node_id: Ident, pos: *const [2]f32) void;
+extern fn zguiDockBuilderSetNodeSize(node_id: Ident, size: *const [2]f32) void;
+extern fn zguiDockBuilderSplitNode(
+    node_id: Ident,
+    split_dir: Direction,
+    size_ratio_for_node_at_dir: f32,
+    out_id_at_dir: ?*Ident,
+    out_id_at_opposite_dir: ?*Ident
+) Ident;
+extern fn zguiDockBuilderFinish(node_id: Ident) void;
 
 //--------------------------------------------------------------------------------------------------
 //
