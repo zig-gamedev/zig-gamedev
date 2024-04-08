@@ -6,6 +6,7 @@ pub const Backend = enum {
     glfw_opengl3,
     glfw_dx12,
     win32_dx12,
+    glfw,
 };
 
 pub fn build(b: *std.Build) void {
@@ -230,6 +231,16 @@ pub fn build(b: *std.Build) void {
             });
             imgui.linkSystemLibrary("d3dcompiler_47");
             imgui.linkSystemLibrary("dwmapi");
+        },
+        .glfw => {
+            const zglfw = b.dependency("zglfw", .{});
+            imgui.addIncludePath(.{ .path = zglfw.path("libs/glfw/include").getPath(b) });
+            imgui.addCSourceFiles(.{
+                .files = &.{
+                    "libs/imgui/backends/imgui_impl_glfw.cpp",
+                },
+                .flags = cflags,
+            });
         },
         .no_backend => {},
     }
