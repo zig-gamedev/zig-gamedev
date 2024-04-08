@@ -915,13 +915,7 @@ extern fn zguiDockBuilderAddNode(node_id: Ident, flags: DockNodeFlags) Ident;
 extern fn zguiDockBuilderRemoveNode(node_id: Ident) void;
 extern fn zguiDockBuilderSetNodePos(node_id: Ident, pos: *const [2]f32) void;
 extern fn zguiDockBuilderSetNodeSize(node_id: Ident, size: *const [2]f32) void;
-extern fn zguiDockBuilderSplitNode(
-    node_id: Ident,
-    split_dir: Direction,
-    size_ratio_for_node_at_dir: f32,
-    out_id_at_dir: ?*Ident,
-    out_id_at_opposite_dir: ?*Ident
-) Ident;
+extern fn zguiDockBuilderSplitNode(node_id: Ident, split_dir: Direction, size_ratio_for_node_at_dir: f32, out_id_at_dir: ?*Ident, out_id_at_opposite_dir: ?*Ident) Ident;
 extern fn zguiDockBuilderFinish(node_id: Ident) void;
 
 //--------------------------------------------------------------------------------------------------
