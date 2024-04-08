@@ -12,6 +12,8 @@
 #include "imgui_te_exporters.h"
 #endif
 
+#include "imgui_internal.h"
+
 #ifndef ZGUI_API
 #define ZGUI_API
 #endif
@@ -2227,6 +2229,52 @@ ZGUI_API ImGuiID zguiDockSpace(const char* str_id, float size[2], ImGuiDockNodeF
 
 ZGUI_API ImGuiID zguiDockSpaceOverViewport(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags) {
     return ImGui::DockSpaceOverViewport(viewport, dockspace_flags);
+}
+
+
+//--------------------------------------------------------------------------------------------------
+//
+// DockBuilder (Unstable internal imgui API, subject to change, use at own risk)
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API void zguiDockBuilderDockWindow(const char* window_name, ImGuiID node_id) {
+    ImGui::DockBuilderDockWindow(window_name, node_id);
+}
+
+ZGUI_API ImGuiID zguiDockBuilderAddNode(ImGuiID node_id, ImGuiDockNodeFlags flags) {
+    return ImGui::DockBuilderAddNode(node_id, flags);
+}
+
+ZGUI_API void zguiDockBuilderRemoveNode(ImGuiID node_id) {
+    ImGui::DockBuilderRemoveNode(node_id);
+}
+
+ZGUI_API void zguiDockBuilderSetNodePos(ImGuiID node_id, float pos[2]) {
+    ImGui::DockBuilderSetNodePos(node_id, {pos[0], pos[1]});
+}
+
+ZGUI_API void zguiDockBuilderSetNodeSize(ImGuiID node_id, float size[2]) {
+    ImGui::DockBuilderSetNodeSize(node_id, {size[0], size[1]});
+}
+
+ZGUI_API ImGuiID zguiDockBuilderSplitNode(
+    ImGuiID node_id,
+    ImGuiDir split_dir,
+    float size_ratio_for_node_at_dir,
+    ImGuiID* out_id_at_dir,
+    ImGuiID* out_id_at_opposite_dir
+) {
+    return ImGui::DockBuilderSplitNode(
+        node_id,
+        split_dir,
+        size_ratio_for_node_at_dir,
+        out_id_at_dir,
+        out_id_at_opposite_dir
+    );
+}
+
+ZGUI_API void zguiDockBuilderFinish(ImGuiID node_id) {
+    ImGui::DockBuilderFinish(node_id);
 }
 
 

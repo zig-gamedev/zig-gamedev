@@ -881,7 +881,23 @@ pub const DockNodeFlags = packed struct(c_int) {
     no_resize: bool = false,
     auto_hide_tab_bar: bool = false,
     no_undocking: bool = false,
-    _padding: u24 = 0,
+    _padding_0: u2 = 0,
+
+    // Extended enum entries from imgui_internal (unstable, subject to change, use at own risk)
+    dock_space: bool = false,
+    central_node: bool = false,
+    no_tab_bar: bool = false,
+    hidden_tab_bar: bool = false,
+    no_window_menu_button: bool = false,
+    no_close_button: bool = false,
+    no_resize_x: bool = false,
+    no_resize_y: bool = false,
+    docked_windows_in_focus_route: bool = false,
+    no_docking_split_other: bool = false,
+    no_docking_over_me: bool = false,
+    no_docking_over_other: bool = false,
+    no_docking_over_empty: bool = false,
+    _padding_1: u9 = 0,
 };
 extern fn zguiDockSpace(str_id: [*:0]const u8, size: *const [2]f32, flags: DockNodeFlags) Ident;
 
@@ -892,6 +908,31 @@ extern fn zguiDockSpaceOverViewport(viewport: Viewport, flags: DockNodeFlags) Id
 pub const DockSpaceOverViewport = zguiDockSpaceOverViewport;
 
 //--------------------------------------------------------------------------------------------------
+//
+// DockBuilder (Unstable internal imgui API, subject to change, use at own risk)
+//
+//--------------------------------------------------------------------------------------------------
+pub fn dockBuilderDockWindow(window_name: [:0]const u8, node_id: Ident) void {
+    zguiDockBuilderDockWindow(window_name.ptr, node_id);
+}
+pub const dockBuilderAddNode = zguiDockBuilderAddNode;
+pub const dockBuilderRemoveNode = zguiDockBuilderRemoveNode;
+pub fn dockBuilderSetNodePos(node_id: Ident, pos: [2]f32) void {
+    zguiDockBuilderSetNodePos(node_id, &pos);
+}
+pub fn dockBuilderSetNodeSize(node_id: Ident, size: [2]f32) void {
+    zguiDockBuilderSetNodeSize(node_id, &size);
+}
+pub const dockBuilderSplitNode = zguiDockBuilderSplitNode;
+pub const dockBuilderFinish = zguiDockBuilderFinish;
+
+extern fn zguiDockBuilderDockWindow(window_name: [*:0]const u8, node_id: Ident) void;
+extern fn zguiDockBuilderAddNode(node_id: Ident, flags: DockNodeFlags) Ident;
+extern fn zguiDockBuilderRemoveNode(node_id: Ident) void;
+extern fn zguiDockBuilderSetNodePos(node_id: Ident, pos: *const [2]f32) void;
+extern fn zguiDockBuilderSetNodeSize(node_id: Ident, size: *const [2]f32) void;
+extern fn zguiDockBuilderSplitNode(node_id: Ident, split_dir: Direction, size_ratio_for_node_at_dir: f32, out_id_at_dir: ?*Ident, out_id_at_opposite_dir: ?*Ident) Ident;
+extern fn zguiDockBuilderFinish(node_id: Ident) void;
 
 //--------------------------------------------------------------------------------------------------
 //
