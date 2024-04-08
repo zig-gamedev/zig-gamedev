@@ -135,9 +135,9 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .font_normal = font_normal,
         .font_large = font_large,
         .draw_list = draw_list,
-        .alloced_input_text_buf = try allocator.allocSentinel(u8, 128, 0),
-        .alloced_input_text_multiline_buf = try allocator.allocSentinel(u8, 128, 0),
-        .alloced_input_text_with_hint_buf = try allocator.allocSentinel(u8, 128, 0),
+        .alloced_input_text_buf = try allocator.allocSentinel(u8, 4, 0),
+        .alloced_input_text_multiline_buf = try allocator.allocSentinel(u8, 4, 0),
+        .alloced_input_text_with_hint_buf = try allocator.allocSentinel(u8, 4, 0),
     };
     demo.alloced_input_text_buf[0] = 0;
     demo.alloced_input_text_multiline_buf[0] = 0;
@@ -474,9 +474,9 @@ fn update(demo: *DemoState) !void {
 
         if (zgui.collapsingHeader("Widgets: Input with Keyboard", .{})) {
             const static = struct {
-                var input_text_buf = [_:0]u8{0} ** 128;
-                var input_text_multiline_buf = [_:0]u8{0} ** 128;
-                var input_text_with_hint_buf = [_:0]u8{0} ** 128;
+                var input_text_buf = [_:0]u8{0} ** 4;
+                var input_text_multiline_buf = [_:0]u8{0} ** 4;
+                var input_text_with_hint_buf = [_:0]u8{0} ** 4;
                 var v1: f32 = 0;
                 var v2: [2]f32 = .{ 0, 0 };
                 var v3: [3]f32 = .{ 0, 0, 0 };
