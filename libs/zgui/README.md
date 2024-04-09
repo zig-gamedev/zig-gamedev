@@ -44,11 +44,11 @@ pub fn build(b: *std.Build) void {
         exe.linkLibrary(zglfw.artifact("glfw"));
 
         const zpool = b.dependency("zpool", .{});
-        exe.root_module.addImport("zpool", zglfw.module("root"));
+        exe.root_module.addImport("zpool", zpool.module("root"));
 
         const zgpu = b.dependency("zgpu", .{});
-        exe.root_module.addImport("zgpu", zglfw.module("root"));
-        exe.linkLibrary(zglfw.artifact("wgpu"));
+        exe.root_module.addImport("zgpu", zgpu.module("root"));
+        exe.linkLibrary(zgpu.artifact("zdawn"));
     }
 }
 ```
