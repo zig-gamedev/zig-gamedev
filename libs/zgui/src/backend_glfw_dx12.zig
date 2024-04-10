@@ -1,4 +1,5 @@
 const gui = @import("gui.zig");
+const backend_glfw = @import("backend_glfw.zig");
 
 pub fn init(
     window: *const anyopaque, // zglfw.Window
@@ -9,9 +10,7 @@ pub fn init(
     font_srv_cpu_desc_handle: D3D12_CPU_DESCRIPTOR_HANDLE,
     font_srv_gpu_desc_handle: D3D12_GPU_DESCRIPTOR_HANDLE,
 ) void {
-    if (!ImGui_ImplGlfw_InitForOther(window, true)) {
-        @panic("failed to init glfw for imgui");
-    }
+    backend_glfw.init(window);
 
     if (!ImGui_ImplDX12_Init(
         device,
@@ -27,11 +26,11 @@ pub fn init(
 
 pub fn deinit() void {
     ImGui_ImplDX12_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    backend_glfw.deinit();
 }
 
 pub fn newFrame(fb_width: u32, fb_height: u32) void {
-    ImGui_ImplGlfw_NewFrame();
+    backend_glfw.newFrame();
     ImGui_ImplDX12_NewFrame();
 
     gui.io.setDisplaySize(@as(f32, @floatFromInt(fb_width)), @as(f32, @floatFromInt(fb_height)));
@@ -55,9 +54,8 @@ pub const D3D12_GPU_DESCRIPTOR_HANDLE = extern struct {
     ptr: c_ulonglong,
 };
 
-extern fn ImGui_ImplGlfw_InitForOther(window: *const anyopaque, install_callbacks: bool) bool;
-extern fn ImGui_ImplGlfw_NewFrame() void;
-extern fn ImGui_ImplGlfw_Shutdown() void;
+// Those functions are defined in 'imgui_impl_dx12.cpp`
+// (they include few custom changes).
 extern fn ImGui_ImplDX12_Init(
     device: *const anyopaque, // ID3D12Device
     num_frames_in_flight: u32,
