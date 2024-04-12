@@ -11,9 +11,11 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                compile_step.addLibraryPath(.{
-                    .path = system_sdk.path("windows/lib/x86_64-windows-gnu").getPath(b),
-                });
+                if (target.abi.isGnu() or target.abi.isMusl()) {
+                    compile_step.addLibraryPath(.{
+                        .path = system_sdk.path("windows/lib/x86_64-windows-gnu").getPath(b),
+                    });
+                }
             }
         },
         .macos => {
