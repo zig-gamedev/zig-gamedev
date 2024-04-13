@@ -1322,8 +1322,14 @@ pub fn getItemRectMin() [2]f32 {
     zguiGetItemRectMin(&rect);
     return rect;
 }
+pub fn getItemRectSize() [2]f32 {
+    var rect: [2]f32 = undefined;
+    zguiGetItemRectSize(&rect);
+    return rect;
+}
 extern fn zguiGetItemRectMax(rect: *[2]f32) void;
 extern fn zguiGetItemRectMin(rect: *[2]f32) void;
+extern fn zguiGetItemRectSize(rect: *[2]f32) void;
 //--------------------------------------------------------------------------------------------------
 //
 // ID stack/scopes
