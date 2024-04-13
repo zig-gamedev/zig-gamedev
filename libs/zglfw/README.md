@@ -1,4 +1,4 @@
-# zglfw v0.9.0 - GLFW 3.4 build system & bindings
+# zglfw v0.9.0 - Zig build package and bindings for [GLFW 3.4](https://github.com/glfw/glfw/releases/tag/3.4)
 
 ## Getting started
 
@@ -22,11 +22,28 @@ pub fn build(b: *std.Build) void {
     @import("system_sdk").addLibraryPathsTo(exe);
 }
 ```
+
 Now in your code you may import and use `zglfw`:
 ```zig
 const zglfw = @import("zglfw");
 
 pub fn main() !void {
-    ...
+    try glfw.init();
+    defer glfw.terminate();
+
+    const window = try glfw.Window.create(600, 600, "zig-gamedev: minimal_glfw_gl", null);
+    defer window.destroy();
+
+    // setup your graphics context here
+
+    while (!window.shouldClose()) {
+        glfw.pollEvents();
+
+        // render your things here
+        
+        window.swapBuffers();
+    }
 }
 ```
+
+See [zig-gamedev samples](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples) for more complete usage examples.
