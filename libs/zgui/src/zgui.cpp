@@ -223,6 +223,12 @@ ZGUI_API void zguiGetItemRectMin(float rect[2]) {
     rect[1] = r.y;
 }
 
+ZGUI_API void zguiGetItemRectSize(float rect[2]) {
+    const ImVec2 r = ImGui::GetItemRectSize();
+    rect[0] = r.x;
+    rect[1] = r.y;
+}
+
 ZGUI_API void zguiGetCursorPos(float pos[2]) {
     const ImVec2 p = ImGui::GetCursorPos();
     pos[0] = p.x;
