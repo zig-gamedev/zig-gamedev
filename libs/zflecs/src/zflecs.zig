@@ -2308,6 +2308,13 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
         .type = .{
             .alignment = @alignOf(T),
             .size = @sizeOf(T),
+            .hooks = .{
+                .dtor = if (@hasDecl(T, "deinit")) struct {
+                    pub fn dtor(ptr: *anyopaque, _: i32, _: *const type_info_t) callconv(.C) void {
+                        T.deinit(@as(*T, @alignCast(@ptrCast(ptr))).*);
+                    }
+                }.dtor else null,
+            },
         },
     });
 }
