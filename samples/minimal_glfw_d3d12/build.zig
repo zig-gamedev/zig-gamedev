@@ -25,14 +25,21 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const zwin32 = b.dependency("zwin32", .{
         .target = options.target,
     });
-    exe.root_module.addImport("zwin32", zwin32.module("root"));
+    const zwin32_module = zwin32.module("root");
+    exe.root_module.addImport("zwin32", zwin32_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
         .target = options.target,
         .debug_layer = options.zd3d12_enable_debug_layer,
         .gbv = options.zd3d12_enable_gbv,
     });
-    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
+    const zd3d12_module = zd3d12.module("root");
+    exe.root_module.addImport("zd3d12", zd3d12_module);
+
+    @import("../common/build.zig").link(exe, .{
+        .zwin32 = zwin32_module,
+        .zd3d12 = zd3d12_module,
+    });
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
         const dxc_step = buildShaders(b);

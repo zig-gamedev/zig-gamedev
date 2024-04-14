@@ -119,13 +119,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.RasterizerState.CullMode = .NONE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.vs.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/draw_mesh.vs.cso",
-            null,
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const record_pixels_pso = blk: {
@@ -146,13 +142,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.RasterizerState.CullMode = .NONE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/record_pixels.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/record_pixels.ps.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/record_pixels.vs.cso",
-            content_dir ++ "shaders/record_pixels.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const draw_mesh_pso = blk: {
@@ -175,30 +168,23 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         pso_desc.RasterizerState.AntialiasedLineEnable = w32.TRUE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.ps.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/draw_mesh.vs.cso",
-            content_dir ++ "shaders/draw_mesh.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const draw_pixels_pso = draw_pixels_pso: {
         var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
+        desc.CS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_pixels.cs.cso", null));
         break :draw_pixels_pso gctx.createComputeShaderPipeline(
-            arena_allocator,
             &desc,
-            content_dir ++ "shaders/draw_pixels.cs.cso",
         );
     };
     const clear_pixels_pso = clear_pixels_pso: {
         var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
-        break :clear_pixels_pso gctx.createComputeShaderPipeline(
-            arena_allocator,
-            &desc,
-            content_dir ++ "shaders/clear_pixels.cs.cso",
-        );
+        desc.CS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/clear_pixels.cs.cso", null));
+        break :clear_pixels_pso gctx.createComputeShaderPipeline(&desc);
     };
 
     zmesh.init(arena_allocator);
@@ -363,7 +349,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Generate mipmaps.
     {
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
+        const mipmapgen_bytecode = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_mipmaps.cs.cso", null));
+        var mipgen = zd3d12.MipmapGenerator.init(&gctx, .R8G8B8A8_UNORM, mipmapgen_bytecode);
         defer mipgen.deinit(&gctx);
         for (mesh_textures) |texture| {
             mipgen.generateMipmaps(&gctx, texture);

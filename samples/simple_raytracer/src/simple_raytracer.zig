@@ -481,13 +481,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/rast_static_mesh.vs.cso"));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/rast_static_mesh.ps.cso"));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/rast_static_mesh.vs.cso",
-            content_dir ++ "shaders/rast_static_mesh.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const z_pre_pass_pso = blk: {
@@ -497,13 +494,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0x0;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/z_pre_pass.vs.cso"));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/z_pre_pass.ps.cso"));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/z_pre_pass.vs.cso",
-            content_dir ++ "shaders/z_pre_pass.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const gen_shadow_rays_pso = blk: {
@@ -515,13 +509,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/gen_shadow_rays.vs.cso"));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/gen_shadow_rays.ps.cso"));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/gen_shadow_rays.vs.cso",
-            content_dir ++ "shaders/gen_shadow_rays.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     // Create 'trace shadow rays' RT state object.

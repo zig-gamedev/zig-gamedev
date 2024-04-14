@@ -68,13 +68,10 @@ const DemoState = struct {
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
+            pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/textured_quad.vs.cso", null));
+            pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/textured_quad.ps.cso", null));
 
-            break :blk gctx.createGraphicsShaderPipeline(
-                arena_allocator,
-                &pso_desc,
-                content_dir ++ "shaders/textured_quad.vs.cso",
-                content_dir ++ "shaders/textured_quad.ps.cso",
-            );
+            break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
         };
 
         const vertex_buffer = gctx.createCommittedResource(
@@ -93,7 +90,8 @@ const DemoState = struct {
             null,
         ) catch |err| hrPanic(err);
 
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
+        const mipmapgen_bytecode = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_mipmaps.cs.cso", null));
+        var mipgen = zd3d12.MipmapGenerator.init(&gctx, .R8G8B8A8_UNORM, mipmapgen_bytecode);
 
         gctx.beginFrame();
 

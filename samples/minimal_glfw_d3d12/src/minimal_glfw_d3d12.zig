@@ -4,6 +4,7 @@ const zwin32 = @import("zwin32");
 const zd3d12 = @import("zd3d12");
 const w32 = zwin32.w32;
 const d3d12 = zwin32.d3d12;
+const common = @import("common");
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -39,13 +40,10 @@ pub fn main() !void {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "minimal_glfw_d3d12.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "minimal_glfw_d3d12.ps.cso", null));
 
-        break :pipeline gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "minimal_glfw_d3d12.vs.cso",
-            content_dir ++ "minimal_glfw_d3d12.ps.cso",
-        );
+        break :pipeline gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     var frac: f32 = 0.0;

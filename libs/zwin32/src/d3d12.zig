@@ -805,6 +805,13 @@ pub const SHADER_BYTECODE = extern struct {
     pub inline fn initZero() SHADER_BYTECODE {
         return std.mem.zeroes(@This());
     }
+
+    pub inline fn init(bytecode: []const u8) SHADER_BYTECODE {
+        return .{
+            .pShaderBytecode = bytecode.ptr,
+            .BytecodeLength = bytecode.len,
+        };
+    }
 };
 
 pub const SO_DECLARATION_ENTRY = extern struct {
