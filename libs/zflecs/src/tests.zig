@@ -401,7 +401,7 @@ test "zflecs.struct-dtor-hook" {
             };
         }
 
-        pub fn deinit(self: @This()) void {
+        pub fn dtor(self: @This()) void {
             self.messages.deinit();
         }
     };

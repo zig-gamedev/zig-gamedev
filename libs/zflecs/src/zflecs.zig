@@ -2310,9 +2310,9 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
             .size = @sizeOf(T),
             .hooks = .{
                 .dtor = switch (@typeInfo(T)) {
-                    .Struct => if (@hasDecl(T, "deinit")) struct {
+                    .Struct => if (@hasDecl(T, "dtor")) struct {
                         pub fn dtor(ptr: *anyopaque, _: i32, _: *const type_info_t) callconv(.C) void {
-                            T.deinit(@as(*T, @alignCast(@ptrCast(ptr))).*);
+                            T.dtor(@as(*T, @alignCast(@ptrCast(ptr))).*);
                         }
                     }.dtor else null,
                     else => null,
