@@ -10,7 +10,7 @@ pub fn init(
     wgpu_swap_chain_format: u32, // wgpu.TextureFormat
     wgpu_depth_format: u32, // wgpu.TextureFormat
 ) void {
-    backend_glfw.initOpenGL(window);
+    backend_glfw.init(window);
 
     var info = ImGui_ImplWGPU_InitInfo{
         .device = wgpu_device,
