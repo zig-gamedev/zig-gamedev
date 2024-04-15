@@ -100,7 +100,6 @@ const samples_windows = struct {
 const samples_windows_linux = struct {
     pub const bindless = @import("samples/bindless/build.zig");
     pub const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
-    pub const minimal_d3d12 = @import("samples/minimal_d3d12/build.zig");
     pub const minimal_glfw_d3d12 = @import("samples/minimal_glfw_d3d12/build.zig");
     pub const minimal_zgui_glfw_d3d12 = @import("samples/minimal_zgui_glfw_d3d12/build.zig");
     pub const rasterization = @import("samples/rasterization/build.zig");
