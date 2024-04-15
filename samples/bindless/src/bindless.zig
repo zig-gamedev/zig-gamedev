@@ -330,13 +330,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/mesh_pbr.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/mesh_pbr.ps.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/mesh_pbr.vs.cso",
-            content_dir ++ "shaders/mesh_pbr.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const sample_env_texture_pso = blk: {
@@ -359,13 +356,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/sample_env_texture.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/sample_env_texture.ps.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/sample_env_texture.vs.cso",
-            content_dir ++ "shaders/sample_env_texture.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const temp_pipelines = blk: {
@@ -387,30 +381,25 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.RasterizerState.CullMode = .FRONT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
-        const generate_env_texture_pso = gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/generate_env_texture.vs.cso",
-            content_dir ++ "shaders/generate_env_texture.ps.cso",
-        );
-        const generate_irradiance_texture_pso = gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/generate_irradiance_texture.vs.cso",
-            content_dir ++ "shaders/generate_irradiance_texture.ps.cso",
-        );
-        const generate_prefiltered_env_texture_pso = gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/generate_prefiltered_env_texture.vs.cso",
-            content_dir ++ "shaders/generate_prefiltered_env_texture.ps.cso",
-        );
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_env_texture.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_env_texture.ps.cso", null));
+        pso_desc.pRootSignature = null;
+        const generate_env_texture_pso = gctx.createGraphicsShaderPipeline(&pso_desc);
+
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_irradiance_texture.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_irradiance_texture.ps.cso", null));
+        pso_desc.pRootSignature = null;
+        const generate_irradiance_texture_pso = gctx.createGraphicsShaderPipeline(&pso_desc);
+
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_prefiltered_env_texture.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_prefiltered_env_texture.ps.cso", null));
+        pso_desc.pRootSignature = null;
+        const generate_prefiltered_env_texture_pso = gctx.createGraphicsShaderPipeline(&pso_desc);
+
         var compute_desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
-        const generate_brdf_integration_texture_pso = gctx.createComputeShaderPipeline(
-            arena_allocator,
-            &compute_desc,
-            content_dir ++ "shaders/generate_brdf_integration_texture.cs.cso",
-        );
+        compute_desc.CS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_brdf_integration_texture.cs.cso", null));
+        const generate_brdf_integration_texture_pso = gctx.createComputeShaderPipeline(&compute_desc);
+
         break :blk .{
             .generate_env_texture_pso = generate_env_texture_pso,
             .generate_irradiance_texture_pso = generate_irradiance_texture_pso,
@@ -456,8 +445,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         depth_texture.view,
     );
 
-    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
-    var mipgen_rgba16f = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R16G16B16A16_FLOAT, content_dir);
+    const mipmapgen_bytecode = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/generate_mipmaps.cs.cso", null));
+    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(&gctx, .R8G8B8A8_UNORM, mipmapgen_bytecode);
+    var mipgen_rgba16f = zd3d12.MipmapGenerator.init(&gctx, .R16G16B16A16_FLOAT, mipmapgen_bytecode);
 
     gctx.beginFrame();
 

@@ -270,13 +270,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.PrimitiveTopologyType = .LINE;
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
         pso_desc.RasterizerState.AntialiasedLineEnable = w32.TRUE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/lines.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/lines.ps.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/lines.vs.cso",
-            content_dir ++ "shaders/lines.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const image_pso = blk: {
@@ -286,13 +283,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/image.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/image.ps.cso", null));
 
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            content_dir ++ "shaders/image.vs.cso",
-            content_dir ++ "shaders/image.ps.cso",
-        );
+        break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
     const lines_buffer = gctx.createCommittedResource(

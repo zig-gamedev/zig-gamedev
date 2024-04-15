@@ -464,6 +464,16 @@ pub fn drawText(
     );
 }
 
+pub fn readContentDirFileAlloc(arena_allocator: std.mem.Allocator, content_dir: []const u8, relpath: []const u8, max_bytes: ?usize) ![]u8 {
+    const self_exe_dir_path = try std.fs.selfExeDirPathAlloc(arena_allocator);
+
+    const content_dir_path = try std.fs.path.join(arena_allocator, &.{ self_exe_dir_path, content_dir });
+
+    const self_exe_dir = try std.fs.openDirAbsolute(content_dir_path, .{});
+
+    return self_exe_dir.readFileAlloc(arena_allocator, relpath, max_bytes orelse 256 * 1024);
+}
+
 pub fn init() void {
     _ = w32.CoInitializeEx(null, w32.COINIT_APARTMENTTHREADED | w32.COINIT_DISABLE_OLE1DDE);
     _ = w32.SetProcessDPIAware();
