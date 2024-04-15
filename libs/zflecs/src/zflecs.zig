@@ -2308,6 +2308,16 @@ pub fn COMPONENT(world: *world_t, comptime T: type) void {
         .type = .{
             .alignment = @alignOf(T),
             .size = @sizeOf(T),
+            .hooks = .{
+                .dtor = switch (@typeInfo(T)) {
+                    .Struct => if (@hasDecl(T, "dtor")) struct {
+                        pub fn dtor(ptr: *anyopaque, _: i32, _: *const type_info_t) callconv(.C) void {
+                            T.dtor(@as(*T, @alignCast(@ptrCast(ptr))).*);
+                        }
+                    }.dtor else null,
+                    else => null,
+                },
+            },
         },
     });
 }
