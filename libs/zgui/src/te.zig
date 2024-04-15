@@ -4,36 +4,54 @@ const te_enabled = @import("zgui_options").with_te;
 
 pub const Actions = enum(c_int) {
     unknown = 0,
-    hover, // Move mouse
-    click, // Move mouse and click
-    double_click, // Move mouse and double-click
-    check, // Check item if unchecked (Checkbox, MenuItem or any widget reporting ImGuiItemStatusFlags_Checkable)
-    uncheck, // Uncheck item if checked
-    open, // Open item if closed (TreeNode, BeginMenu or any widget reporting ImGuiItemStatusFlags_Openable)
-    close, // Close item if opened
-    input, // Start text inputing into a field (e.g. CTRL+Click on Drags/Slider, click on InputText etc.)
-    nav_activate, // Activate item with navigation
+    /// Move mouse
+    hover,
+    /// Move mouse and click
+    click,
+    /// Move mouse and double-click
+    double_click,
+    /// Check item if unchecked (Checkbox, MenuItem or any widget reporting ImGuiItemStatusFlags_Checkable)
+    check,
+    /// Uncheck item if checked
+    uncheck,
+    /// Open item if closed (TreeNode, BeginMenu or any widget reporting ImGuiItemStatusFlags_Openable)
+    open,
+    /// Close item if opened
+    close,
+    /// Start text inputing into a field (e.g. CTRL+Click on Drags/Slider, click on InputText etc.)
+    input,
+    /// Activate item with navigation
+    nav_activate,
 };
 
 pub const TestRunFlags = packed struct(c_int) {
-    gui_func_disable: bool = false, // Used internally to temporarily disable the GUI func (at the end of a test, etc)
-    gui_func_only: bool = false, // Set when user selects "Run GUI func"
+    /// Used internally to temporarily disable the GUI func (at the end of a test, etc)
+    gui_func_disable: bool = false,
+    /// Set when user selects "Run GUI func"
+    gui_func_only: bool = false,
     no_success_mgs: bool = false,
     no_stop_on_error: bool = false,
-    no_break_on_errror: bool = false,
-    enable_raw_inputs: bool = false, // Disable input submission to let test submission raw input event (in order to test e.g. IO queue)
+    no_break_on_error: bool = false,
+    /// Disable input submission to let test submission raw input event (in order to test e.g. IO queue)
+    enable_raw_inputs: bool = false,
     manual_run: bool = false,
     command_line: bool = false,
     _padding: u24 = 0,
 };
 
 pub const TestOpFlags = packed struct(c_int) {
-    no_check_hovered_id: bool = false, // Don't check for HoveredId after aiming for a widget. A few situations may want this: while e.g. dragging or another items prevents hovering, or for items that don't use ItemHoverable()
-    no_error: bool = false, // Don't abort/error e.g. if the item cannot be found or the operation doesn't succeed.
-    no_focus_window: bool = false, // Don't focus window when aiming at an item
-    no_auto_uncollapse: bool = false, // Disable automatically uncollapsing windows (useful when specifically testing Collapsing behaviors)
-    no_auto_open_full_path: bool = false, // Disable automatically opening intermediaries (e.g. ItemClick("Hello/OK") will automatically first open "Hello" if "OK" isn't found. Only works if ref is a string path.
-    is_second_attempt: bool = false, // Used by recursing functions to indicate a second attempt
+    // Don't check for HoveredId after aiming for a widget. A few situations may want this: while e.g. dragging or another items prevents hovering, or for items that don't use ItemHoverable()
+    no_check_hovered_id: bool = false,
+    /// Don't abort/error e.g. if the item cannot be found or the operation doesn't succeed.
+    no_error: bool = false,
+    /// Don't focus window when aiming at an item
+    no_focus_window: bool = false,
+    /// Disable automatically uncollapsing windows (useful when specifically testing Collapsing behaviors)
+    no_auto_uncollapse: bool = false,
+    /// Disable automatically opening intermediaries (e.g. ItemClick("Hello/OK") will automatically first open "Hello" if "OK" isn't found. Only works if ref is a string path.
+    no_auto_open_full_path: bool = false,
+    /// Used by recursing functions to indicate a second attempt
+    is_second_attempt: bool = false,
     move_to_edge_l: bool = false, // Simple Dumb aiming helpers to test widget that care about clicking position. May need to replace will better functionalities.
     move_to_edge_r: bool = false,
     move_to_edge_u: bool = false,
@@ -47,9 +65,12 @@ pub const CheckFlags = packed struct(c_int) {
 };
 
 pub const RunSpeed = enum(c_int) {
-    fast = 0, // Run tests as fast as possible (teleport mouse, skip delays, etc.)
-    normal = 1, // Run tests at human watchable speed (for debugging)
-    cinematic = 2, // Run tests with pauses between actions (for e.g. tutorials)
+    /// Run tests as fast as possible (teleport mouse, skip delays, etc.)
+    fast = 0,
+    /// Run tests at human watchable speed (for debugging)
+    normal = 1,
+    /// Run tests with pauses between actions (for e.g. tutorials)
+    cinematic = 2,
 };
 
 pub const TestGroup = enum(c_int) {
