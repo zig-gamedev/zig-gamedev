@@ -97,7 +97,7 @@ Option to download packages using Zig Package Manager **coming soon!**
 | **[zjobs](libs/zjobs)**       | Generic job queue implementation                                                                                                           |
 | **[zmath](libs/zmath)**       | SIMD math library for game developers                                                                                                      |
 | **[zmesh](libs/zmesh)**       | Loading, generating, processing and optimizing triangle meshes                                                                             |
-| **[znoise](libs/znoise)**     | Build pacakge & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                      |
+| **[znoise](libs/znoise)**     | Build package & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                      |
 | **[zopengl](libs/zopengl)**   | OpenGL loader (supports 4.2 Core Profile and ES 2.0 Profile)                                                                               |
 | **[zphysics](libs/zphysics)** | Build package, [C API](libs/zphysics/libs/JoltC) and bindings for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                    |
 | **[zpix](libs/zpix)**         | Support for GPU profiling with PIX for Windows                                                           |
