@@ -77,6 +77,7 @@
 
 #include "imgui.h"
 #ifndef IMGUI_DISABLE
+// FIX(zig-gamedev):
 //#include "imgui_impl_glfw.h"
 
 // Clang warnings with -Weverything
@@ -135,7 +136,7 @@
 #define GLFW_HAS_GETERROR               (GLFW_VERSION_COMBINED >= 3300) // 3.3+ glfwGetError()
 #include <math.h>
 
-// fix(zig-gamedev)
+// FIX(zig-gamedev):
 extern "C" {
 
 bool     ImGui_ImplGlfw_InitForOpenGL(GLFWwindow* window, bool install_callbacks);
