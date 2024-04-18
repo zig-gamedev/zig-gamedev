@@ -1092,6 +1092,13 @@ pub const INPUT_LAYOUT_DESC = extern struct {
     pub inline fn initZero() INPUT_LAYOUT_DESC {
         return std.mem.zeroes(@This());
     }
+
+    pub inline fn init(elements: []const INPUT_ELEMENT_DESC) INPUT_LAYOUT_DESC {
+        return .{
+            .pInputElementDescs = elements.ptr,
+            .NumElements = @intCast(elements.len),
+        };
+    }
 };
 
 pub const INPUT_CLASSIFICATION = enum(UINT) {

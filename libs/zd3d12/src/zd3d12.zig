@@ -918,6 +918,82 @@ pub const GraphicsContext = struct {
         return gctx.resource_pool.addResource(resource, initial_state);
     }
 
+    pub fn uploadVertices(
+        gctx: *GraphicsContext,
+        comptime T: type,
+        vertices: []const T,
+    ) HResultError!struct { resource: ResourceHandle, view: d3d12.VERTEX_BUFFER_VIEW } {
+        const buffer_length: w32.UINT = @intCast(vertices.len * @sizeOf(T));
+        const resource_handle = try gctx.createCommittedResource(
+            .UPLOAD,
+            .{},
+            &d3d12.RESOURCE_DESC.initBuffer(buffer_length),
+            d3d12.RESOURCE_STATES.GENERIC_READ,
+            null,
+        );
+        const resource = gctx.lookupResource(resource_handle).?;
+        {
+            var mapped_buffer: [*]u8 = undefined;
+            try hrErrorOnFail(resource.Map(
+                0,
+                &.{ .Begin = 0, .End = 0 },
+                @ptrCast(&mapped_buffer),
+            ));
+            defer resource.Unmap(0, null);
+            const mapped_slice = std.mem.bytesAsSlice(T, mapped_buffer[0..buffer_length]);
+            @memcpy(mapped_slice, vertices);
+        }
+
+        return .{
+            .resource = resource_handle,
+            .view = .{
+                .BufferLocation = resource.GetGPUVirtualAddress(),
+                .StrideInBytes = @sizeOf(T),
+                .SizeInBytes = buffer_length,
+            },
+        };
+    }
+
+    pub fn uploadVertexIndices(
+        gctx: *GraphicsContext,
+        comptime T: type,
+        vertex_indices: []const T,
+    ) HResultError!struct { resource: ResourceHandle, view: d3d12.INDEX_BUFFER_VIEW } {
+        const buffer_length: w32.UINT = @intCast(vertex_indices.len * @sizeOf(T));
+        const resource_handle = try gctx.createCommittedResource(
+            .UPLOAD,
+            .{},
+            &d3d12.RESOURCE_DESC.initBuffer(buffer_length),
+            d3d12.RESOURCE_STATES.GENERIC_READ,
+            null,
+        );
+        const resource = gctx.lookupResource(resource_handle).?;
+        {
+            var mapped_buffer: [*]u8 = undefined;
+            try hrErrorOnFail(resource.Map(
+                0,
+                &.{ .Begin = 0, .End = 0 },
+                @ptrCast(&mapped_buffer),
+            ));
+            defer resource.Unmap(0, null);
+            const mapped_slice = std.mem.bytesAsSlice(T, mapped_buffer[0..buffer_length]);
+            @memcpy(mapped_slice, vertex_indices);
+        }
+
+        return .{
+            .resource = resource_handle,
+            .view = .{
+                .BufferLocation = resource.GetGPUVirtualAddress(),
+                .Format = switch (T) {
+                    u16 => .R16_UINT,
+                    u32 => .R32_UINT,
+                    else => @compileError("the type " ++ @typeName(T) ++ " is not a supported vertex index format"),
+                },
+                .SizeInBytes = buffer_length,
+            },
+        };
+    }
+
     pub fn destroyResource(gctx: GraphicsContext, handle: ResourceHandle) void {
         gctx.resource_pool.destroyResource(handle);
     }

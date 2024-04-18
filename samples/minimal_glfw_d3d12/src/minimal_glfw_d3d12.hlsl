@@ -1,12 +1,11 @@
-#define root_signature "RootFlags(0)"
+#define root_signature "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)"
 
 [RootSignature(root_signature)]
 void vsMain(
-    uint vertex_id : SV_VertexID,
+    float2 position : POSITION,
     out float4 out_position : SV_Position
 ) {
-    const float2 verts[] = { float2(-0.9, -0.9), float2(0.0, 0.9), float2(0.9, -0.9) };
-    out_position = float4(verts[vertex_id], 0.0, 1.0);
+    out_position = float4(position, 0.0, 1.0);
 }
 
 [RootSignature(root_signature)]
