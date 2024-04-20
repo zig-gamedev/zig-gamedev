@@ -535,7 +535,7 @@ pub fn init() void {
     // Change directory to where an executable is located.
     //var exe_path_buffer: [1024]u8 = undefined;
     //const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
-    //std.os.chdir(exe_path) catch {};
+    //std.posix.chdir(exe_path) catch {};
 }
 
 pub fn deinit() void {
