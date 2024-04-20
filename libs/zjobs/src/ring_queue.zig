@@ -19,7 +19,7 @@ pub fn RingQueue(comptime T: type, comptime _capacity: u16) type {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub inline fn len(self: *const Self) usize {
-            return @atomicLoad(usize, &self._len, .Monotonic);
+            return @atomicLoad(usize, &self._len, .monotonic);
         }
 
         pub inline fn isEmpty(self: *const Self) bool {
