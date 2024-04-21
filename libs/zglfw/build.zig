@@ -230,6 +230,11 @@ pub fn build(b: *std.Build) void {
             tests.addSystemIncludePath(.{
                 .path = system_sdk.path("linux/include").getPath(b),
             });
+            if (options.enable_wayland) {
+                glfw.addSystemIncludePath(.{
+                    .path = system_sdk.path("linux/include/wayland").getPath(b),
+                });
+            }
         },
         else => {},
     }
