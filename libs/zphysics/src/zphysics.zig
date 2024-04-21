@@ -3194,6 +3194,54 @@ pub const Shape = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// ConvexHullShape (-> Shape)
+//
+//--------------------------------------------------------------------------------------------------
+pub const ConvexHullShape = opaque {
+    pub usingnamespace Shape.Methods(@This());
+
+    pub fn asConvexHullShape(shape: *const Shape) *const ConvexHullShape {
+        assert(shape.getSubType() == .convex_hull);
+        return @as(*const ConvexHullShape, @ptrCast(shape));
+    }
+    pub fn asConvexHullShapeMut(shape: *Shape) *ConvexHullShape {
+        assert(shape.getSubType() == .convex_hull);
+        return @as(*ConvexHullShape, @ptrCast(shape));
+    }
+
+    pub fn getNumPoints(shape: *const ConvexHullShape) u32 {
+        return c.JPC_ConvexHullShape_GetNumPoints(@as(*const c.JPC_ConvexHullShape, @ptrCast(shape)));
+    }
+    pub fn getPoint(shape: *const ConvexHullShape, in_point_index: u32) [3]f32 {
+        var point: [3]f32 = undefined;
+        c.JPC_ConvexHullShape_GetPoint(@as(*const c.JPC_ConvexHullShape, @ptrCast(shape)), in_point_index, &point);
+        return point;
+    }
+
+    pub fn getNumFaces(shape: *const ConvexHullShape) u32 {
+        return c.JPC_ConvexHullShape_GetNumFaces(@as(*const c.JPC_ConvexHullShape, @ptrCast(shape)));
+    }
+    pub fn getNumVerticesInFace(shape: *const ConvexHullShape, in_face_index: u32) u32 {
+        return c.JPC_ConvexHullShape_GetNumVerticesInFace(
+            @as(*const c.JPC_ConvexHullShape, @ptrCast(shape)),
+            in_face_index,
+        );
+    }
+
+    /// out_vertex_buffer points to memory owned by the caller.
+    /// If out_vertex_buffer.len is less than getNumVerticesInFace(in_face_index), not all vertices are returned.
+    /// The return value gives the number of vertices in the face, identical to getNumVerticesInFace(in_face_index).
+    pub fn getFaceVertices(shape: *const ConvexHullShape, in_face_index: u32, out_vertex_buffer: []u32) u32 {
+        return c.JPC_ConvexHullShape_GetFaceVertices(
+            @as(*const c.JPC_ConvexHullShape, @ptrCast(shape)),
+            in_face_index,
+            @as(u32, @intCast(out_vertex_buffer.len)),
+            out_vertex_buffer.ptr,
+        );
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // ConstraintSettings
 //
 //--------------------------------------------------------------------------------------------------

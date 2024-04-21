@@ -303,7 +303,9 @@ typedef struct JPC_FixedConstraintSettings   JPC_FixedConstraintSettings;
 typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
 
-typedef struct JPC_Shape            JPC_Shape;
+typedef struct JPC_Shape           JPC_Shape;
+typedef struct JPC_ConvexHullShape JPC_ConvexHullShape;
+
 typedef struct JPC_Constraint       JPC_Constraint;
 typedef struct JPC_PhysicsMaterial  JPC_PhysicsMaterial;
 typedef struct JPC_GroupFilter      JPC_GroupFilter;
@@ -1581,6 +1583,28 @@ JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data);
 
 JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_ConvexHullShape
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_ConvexHullShape_GetNumPoints(const JPC_ConvexHullShape *in_shape);
+
+JPC_API void
+JPC_ConvexHullShape_GetPoint(const JPC_ConvexHullShape *in_shape, uint32_t in_point_index, float out_point[3]);
+
+JPC_API uint32_t
+JPC_ConvexHullShape_GetNumFaces(const JPC_ConvexHullShape *in_shape);
+
+JPC_API uint32_t
+JPC_ConvexHullShape_GetNumVerticesInFace(const JPC_ConvexHullShape *in_shape, uint32_t in_face_index);
+
+JPC_API uint32_t
+JPC_ConvexHullShape_GetFaceVertices(const JPC_ConvexHullShape *in_shape,
+                                    uint32_t in_face_index,
+                                    uint32_t in_max_vertices,
+                                    uint32_t *out_vertices);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_ConstraintSettings

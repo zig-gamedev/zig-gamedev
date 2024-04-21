@@ -221,6 +221,11 @@ FN(toJph)(JPC_CompoundShapeSettings *in) {
     return reinterpret_cast<JPH::CompoundShapeSettings *>(in);
 }
 
+FN(toJph)(JPC_ConvexHullShape *in) { assert(in); return reinterpret_cast<JPH::ConvexHullShape *>(in); }
+FN(toJph)(const JPC_ConvexHullShape *in) { assert(in); return reinterpret_cast<const JPH::ConvexHullShape *>(in); }
+FN(toJpc)(JPH::ConvexHullShape *in) { assert(in); return reinterpret_cast<JPC_ConvexHullShape *>(in); }
+FN(toJpc)(const JPH::ConvexHullShape *in) { assert(in); return reinterpret_cast<const JPC_ConvexHullShape *>(in); }
+
 FN(toJph)(const JPC_ConstraintSettings *in) {
     ENSURE_TYPE(in, JPH::ConstraintSettings);
     return reinterpret_cast<const JPH::ConstraintSettings *>(in);
@@ -1837,6 +1842,43 @@ JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3])
 {
     storeRVec3(out_position, toJph(in_shape)->GetCenterOfMass());
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPC_ConvexHullShape
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_ConvexHullShape_GetNumPoints(const JPC_ConvexHullShape *in_shape)
+{
+    return toJph(in_shape)->GetNumPoints();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_ConvexHullShape_GetPoint(const JPC_ConvexHullShape *in_shape, uint32_t in_point_index, float out_point[3])
+{
+    storeVec3(out_point, toJph(in_shape)->GetPoint(in_point_index));
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_ConvexHullShape_GetNumFaces(const JPC_ConvexHullShape *in_shape)
+{
+    return toJph(in_shape)->GetNumFaces();
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_ConvexHullShape_GetNumVerticesInFace(const JPC_ConvexHullShape *in_shape, uint32_t in_face_index)
+{
+    return toJph(in_shape)->GetNumVerticesInFace(in_face_index);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API uint32_t
+JPC_ConvexHullShape_GetFaceVertices(const JPC_ConvexHullShape *in_shape,
+                                    uint32_t in_face_index,
+                                    uint32_t in_max_vertices,
+                                    uint32_t *out_vertices)
+{
+    return toJph(in_shape)->GetFaceVertices(in_face_index, in_max_vertices, out_vertices);
 }
 //--------------------------------------------------------------------------------------------------
 //
