@@ -23,6 +23,8 @@ pub const WindowProvider = struct {
     fn_getWin32Window: *const fn (window: *const anyopaque) ?*anyopaque = undefined,
     fn_getX11Display: *const fn () ?*anyopaque = undefined,
     fn_getX11Window: *const fn (window: *const anyopaque) u32 = undefined,
+    fn_getWaylandDisplay: ?*const fn () ?*anyopaque = null,
+    fn_getWaylandSurface: ?*const fn (window: *const anyopaque) ?*anyopaque = null,
     fn_getCocoaWindow: *const fn (window: *const anyopaque) ?*anyopaque = undefined,
 
     fn getTime(self: WindowProvider) f64 {
@@ -43,6 +45,22 @@ pub const WindowProvider = struct {
 
     fn getX11Window(self: WindowProvider) u32 {
         return self.fn_getX11Window(self.window);
+    }
+
+    fn getWaylandDisplay(self: WindowProvider) ?*anyopaque {
+        if (self.fn_getWaylandDisplay) |f| {
+            return f();
+        } else {
+            return @as(?*anyopaque, null);
+        }
+    }
+
+    fn getWaylandSurface(self: WindowProvider) ?*anyopaque {
+        if (self.fn_getWaylandSurface) |f| {
+            return f(self.window);
+        } else {
+            return @as(?*anyopaque, null);
+        }
     }
 
     fn getCocoaWindow(self: WindowProvider) ?*anyopaque {
@@ -1521,6 +1539,7 @@ const SurfaceDescriptorTag = enum {
     metal_layer,
     windows_hwnd,
     xlib,
+    wayland,
 };
 
 const SurfaceDescriptor = union(SurfaceDescriptorTag) {
@@ -1537,6 +1556,11 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
         label: ?[*:0]const u8 = null,
         display: *anyopaque,
         window: u32,
+    },
+    wayland: struct {
+        label: ?[*:0]const u8 = null,
+        display: *anyopaque,
+        surface: *anyopaque,
     },
 };
 
@@ -1555,39 +1579,55 @@ fn isLinuxDesktopLike(tag: std.Target.Os.Tag) bool {
 fn createSurfaceForWindow(instance: wgpu.Instance, window_provider: WindowProvider) wgpu.Surface {
     const os_tag = @import("builtin").target.os.tag;
 
-    const descriptor = if (os_tag == .windows) SurfaceDescriptor{
-        .windows_hwnd = .{
-            .label = "basic surface",
-            .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
-            .hwnd = window_provider.getWin32Window().?,
-        },
-    } else if (isLinuxDesktopLike(os_tag)) SurfaceDescriptor{
-        .xlib = .{
-            .label = "basic surface",
-            .display = window_provider.getX11Display().?,
-            .window = window_provider.getX11Window(),
-        },
-    } else if (os_tag == .macos) blk: {
-        const ns_window = window_provider.getCocoaWindow().?;
-        const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
-
-        // Create a CAMetalLayer that covers the whole window that will be passed to CreateSurface.
-        msgSend(ns_view, "setWantsLayer:", .{true}, void); // [view setWantsLayer:YES]
-        const layer = msgSend(objc.objc_getClass("CAMetalLayer"), "layer", .{}, ?*anyopaque); // [CAMetalLayer layer]
-        if (layer == null) @panic("failed to create Metal layer");
-        msgSend(ns_view, "setLayer:", .{layer.?}, void); // [view setLayer:layer]
-
-        // Use retina if the window was created with retina support.
-        const scale_factor = msgSend(ns_window, "backingScaleFactor", .{}, f64); // [ns_window backingScaleFactor]
-        msgSend(layer.?, "setContentsScale:", .{scale_factor}, void); // [layer setContentsScale:scale_factor]
-
-        break :blk SurfaceDescriptor{
-            .metal_layer = .{
+    const descriptor = switch (os_tag) {
+        .windows => SurfaceDescriptor{
+            .windows_hwnd = .{
                 .label = "basic surface",
-                .layer = layer.?,
+                .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
+                .hwnd = window_provider.getWin32Window().?,
             },
-        };
-    } else unreachable;
+        },
+        .macos => macos: {
+            const ns_window = window_provider.getCocoaWindow().?;
+            const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
+
+            // Create a CAMetalLayer that covers the whole window that will be passed to CreateSurface.
+            msgSend(ns_view, "setWantsLayer:", .{true}, void); // [view setWantsLayer:YES]
+            const layer = msgSend(objc.objc_getClass("CAMetalLayer"), "layer", .{}, ?*anyopaque); // [CAMetalLayer layer]
+            if (layer == null) @panic("failed to create Metal layer");
+            msgSend(ns_view, "setLayer:", .{layer.?}, void); // [view setLayer:layer]
+
+            // Use retina if the window was created with retina support.
+            const scale_factor = msgSend(ns_window, "backingScaleFactor", .{}, f64); // [ns_window backingScaleFactor]
+            msgSend(layer.?, "setContentsScale:", .{scale_factor}, void); // [layer setContentsScale:scale_factor]
+
+            break :macos SurfaceDescriptor{
+                .metal_layer = .{
+                    .label = "basic surface",
+                    .layer = layer.?,
+                },
+            };
+        },
+        else => if (isLinuxDesktopLike(os_tag)) linux: {
+            if (window_provider.getWaylandDisplay()) |wl_display| {
+                break :linux SurfaceDescriptor{
+                    .wayland = .{
+                        .label = "basic surface",
+                        .display = wl_display,
+                        .surface = window_provider.getWaylandSurface().?,
+                    },
+                };
+            } else {
+                break :linux SurfaceDescriptor{
+                    .xlib = .{
+                        .label = "basic surface",
+                        .display = window_provider.getX11Display().?,
+                        .window = window_provider.getX11Window(),
+                    },
+                };
+            }
+        } else unreachable,
+    };
 
     return switch (descriptor) {
         .metal_layer => |src| blk: {
@@ -1617,6 +1657,17 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window_provider: WindowProvid
             desc.chain.struct_type = .surface_descriptor_from_xlib_window;
             desc.display = src.display;
             desc.window = src.window;
+            break :blk instance.createSurface(.{
+                .next_in_chain = @ptrCast(&desc),
+                .label = if (src.label) |l| l else null,
+            });
+        },
+        .wayland => |src| blk: {
+            var desc: wgpu.SurfaceDescriptorFromWaylandSurface = undefined;
+            desc.chain.next = null;
+            desc.chain.struct_type = .surface_descriptor_from_wayland_surface;
+            desc.display = src.display;
+            desc.surface = src.surface;
             break :blk instance.createSurface(.{
                 .next_in_chain = @ptrCast(&desc),
                 .label = if (src.label) |l| l else null,

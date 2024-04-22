@@ -312,6 +312,12 @@ pub const SurfaceDescriptorFromMetalLayer = extern struct {
     layer: *anyopaque,
 };
 
+pub const SurfaceDescriptorFromWaylandSurface = extern struct {
+    chain: ChainedStruct,
+    display: *anyopaque,
+    surface: *anyopaque,
+};
+
 pub const SurfaceDescriptorFromWindowsHWND = extern struct {
     chain: ChainedStruct,
     hinstance: *anyopaque,

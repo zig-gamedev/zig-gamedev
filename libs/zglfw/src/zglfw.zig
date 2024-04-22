@@ -1,5 +1,8 @@
 const builtin = @import("builtin");
 const std = @import("std");
+
+const options = @import("zglfw_options");
+
 //--------------------------------------------------------------------------------------------------
 //
 // Misc
@@ -1006,22 +1009,34 @@ fn _getWin32Window(_: *Window) ?std.os.windows.HWND {
     return null;
 }
 
-pub const getX11Adapter = if (_isLinuxDesktopLike()) glfwGetX11Adapter else _getX11Adapter;
+pub const getX11Adapter = if (_isLinuxDesktopLike() and options.enable_x11) glfwGetX11Adapter else _getX11Adapter;
 extern fn glfwGetX11Adapter(*Monitor) u32;
 fn _getX11Adapter(_: *Monitor) u32 {
     return 0;
 }
 
-pub const getX11Display = if (_isLinuxDesktopLike()) glfwGetX11Display else _getX11Display;
+pub const getX11Display = if (_isLinuxDesktopLike() and options.enable_x11) glfwGetX11Display else _getX11Display;
 extern fn glfwGetX11Display() ?*anyopaque;
 fn _getX11Display() ?*anyopaque {
     return null;
 }
 
-pub const getX11Window = if (_isLinuxDesktopLike()) glfwGetX11Window else _getX11Window;
+pub const getX11Window = if (_isLinuxDesktopLike() and options.enable_x11) glfwGetX11Window else _getX11Window;
 extern fn glfwGetX11Window(window: *Window) u32;
 fn _getX11Window(_: *Window) u32 {
     return 0;
+}
+
+pub const getWaylandDisplay = if (_isLinuxDesktopLike() and options.enable_wayland) glfwGetWaylandDisplay else _getWaylandDisplay;
+extern fn glfwGetWaylandDisplay() ?*anyopaque;
+fn _getWaylandDisplay() ?*anyopaque {
+    return null;
+}
+
+pub const getWaylandWindow = if (_isLinuxDesktopLike() and options.enable_wayland) glfwGetWaylandWindow else _getWaylandWindow;
+extern fn glfwGetWaylandWindow(window: *Window) ?*anyopaque;
+fn _getWaylandWindow(_: *Window) ?*anyopaque {
+    return null;
 }
 
 pub const getCocoaWindow = if (builtin.target.os.tag == .macos) glfwGetCocoaWindow else _getCocoaWindow;

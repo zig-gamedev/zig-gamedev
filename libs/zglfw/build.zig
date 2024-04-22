@@ -7,7 +7,21 @@ pub fn build(b: *std.Build) void {
     const system_sdk = b.dependency("system_sdk", .{});
 
     const options = .{
-        .shared = b.option(bool, "shared", "Build GLFW as shared lib") orelse false,
+        .shared = b.option(
+            bool,
+            "shared",
+            "Build GLFW as shared lib",
+        ) orelse false,
+        .enable_x11 = b.option(
+            bool,
+            "x11",
+            "Whether to build with X11 support (default: true)",
+        ) orelse true,
+        .enable_wayland = b.option(
+            bool,
+            "wayland",
+            "Whether to build with Wayland support (default: true)",
+        ) orelse true,
     };
 
     const options_step = b.addOptions();
@@ -15,8 +29,13 @@ pub fn build(b: *std.Build) void {
         options_step.addOption(field.type, field.name, @field(options, field.name));
     }
 
+    const options_module = options_step.createModule();
+
     _ = b.addModule("root", .{
         .root_source_file = .{ .path = "src/zglfw.zig" },
+        .imports = &.{
+            .{ .name = "zglfw_options", .module = options_module },
+        },
     });
 
     const glfw = if (options.shared) blk: {
@@ -120,6 +139,11 @@ pub fn build(b: *std.Build) void {
             glfw.addSystemIncludePath(.{
                 .path = system_sdk.path("linux/include").getPath(b),
             });
+            glfw.addSystemIncludePath(.{
+                .path = system_sdk.path("linux/include/wayland").getPath(b),
+            });
+            glfw.addIncludePath(.{ .path = src_dir ++ "wayland" });
+
             if (target.result.cpu.arch.isX86()) {
                 glfw.addLibraryPath(.{
                     .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b),
@@ -129,7 +153,6 @@ pub fn build(b: *std.Build) void {
                     .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b),
                 });
             }
-            glfw.linkSystemLibrary("X11");
             glfw.addCSourceFiles(.{
                 .files = &.{
                     src_dir ++ "platform.c",
@@ -148,17 +171,44 @@ pub fn build(b: *std.Build) void {
                     src_dir ++ "posix_time.c",
                     src_dir ++ "posix_thread.c",
                     src_dir ++ "posix_module.c",
-                    src_dir ++ "posix_poll.c",
                     src_dir ++ "egl_context.c",
-                    src_dir ++ "glx_context.c",
-                    src_dir ++ "linux_joystick.c",
-                    src_dir ++ "xkb_unicode.c",
-                    src_dir ++ "x11_init.c",
-                    src_dir ++ "x11_window.c",
-                    src_dir ++ "x11_monitor.c",
                 },
-                .flags = &.{"-D_GLFW_X11"},
+                .flags = &.{},
             });
+            if (options.enable_x11 or options.enable_wayland) {
+                glfw.addCSourceFiles(.{
+                    .files = &.{
+                        src_dir ++ "xkb_unicode.c",
+                        src_dir ++ "linux_joystick.c",
+                        src_dir ++ "posix_poll.c",
+                    },
+                    .flags = &.{},
+                });
+            }
+            if (options.enable_x11) {
+                glfw.addCSourceFiles(.{
+                    .files = &.{
+                        src_dir ++ "x11_init.c",
+                        src_dir ++ "x11_monitor.c",
+                        src_dir ++ "x11_window.c",
+                        src_dir ++ "glx_context.c",
+                    },
+                    .flags = &.{},
+                });
+                glfw.defineCMacro("_GLFW_X11", "1");
+                glfw.linkSystemLibrary("X11");
+            }
+            if (options.enable_wayland) {
+                glfw.addCSourceFiles(.{
+                    .files = &.{
+                        src_dir ++ "wl_init.c",
+                        src_dir ++ "wl_monitor.c",
+                        src_dir ++ "wl_window.c",
+                    },
+                    .flags = &.{},
+                });
+                glfw.defineCMacro("_GLFW_WAYLAND", "1");
+            }
         },
         else => {},
     }
@@ -171,6 +221,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    tests.root_module.addImport("zglfw_options", options_module);
     b.installArtifact(tests);
 
     tests.addIncludePath(.{ .path = "libs/glfw/include" });
@@ -179,6 +230,11 @@ pub fn build(b: *std.Build) void {
             tests.addSystemIncludePath(.{
                 .path = system_sdk.path("linux/include").getPath(b),
             });
+            if (options.enable_wayland) {
+                glfw.addSystemIncludePath(.{
+                    .path = system_sdk.path("linux/include/wayland").getPath(b),
+                });
+            }
         },
         else => {},
     }
