@@ -924,7 +924,7 @@ pub const GraphicsContext = struct {
     ) HResultError!struct { resource: ResourceHandle, view_handle: d3d12.CPU_DESCRIPTOR_HANDLE, ptr: *T } {
         switch (@typeInfo(T)) {
             .Struct => |s| {
-                if (s.layout != .Extern) {
+                if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
             },
@@ -969,7 +969,7 @@ pub const GraphicsContext = struct {
     ) HResultError!struct { resource: ResourceHandle, view: d3d12.VERTEX_BUFFER_VIEW } {
         switch (@typeInfo(T)) {
             .Struct => |s| {
-                if (s.layout != .Extern) {
+                if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
             },
