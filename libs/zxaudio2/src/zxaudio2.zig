@@ -445,13 +445,13 @@ const SourceReaderCallback = extern struct {
 
     fn _addRef(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @as(*SourceReaderCallback, @ptrCast(iself));
-        const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic);
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .monotonic);
         return prev_refcount + 1;
     }
 
     fn _release(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @as(*SourceReaderCallback, @ptrCast(iself));
-        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .monotonic);
         assert(prev_refcount > 0);
         return prev_refcount - 1;
     }
@@ -687,12 +687,12 @@ const SimpleAudioProcessor = extern struct {
 
     fn _addRef(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @as(*SimpleAudioProcessor, @ptrCast(iself));
-        return @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic) + 1;
+        return @atomicRmw(u32, &self.refcount, .Add, 1, .monotonic) + 1;
     }
 
     fn _release(iself: *IUnknown) callconv(WINAPI) ULONG {
         const self = @as(*SimpleAudioProcessor, @ptrCast(iself));
-        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .monotonic);
         if (prev_refcount == 1) {
             w32.CoTaskMemFree(self);
         }
