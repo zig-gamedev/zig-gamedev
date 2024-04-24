@@ -931,11 +931,8 @@ pub const GraphicsContext = struct {
             else => {},
         }
         const buffer_length = buffer_length: {
-            var buffer_length: w32.UINT = @sizeOf(T);
-            if (buffer_length < d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT) {
-                buffer_length = d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
-            }
-            break :buffer_length buffer_length;
+            const buffer_length: w32.UINT = @sizeOf(T);
+            break :buffer_length buffer_length + d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - @mod(buffer_length, d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
         };
         const resource_handle = try gctx.createCommittedResource(
             .UPLOAD,
