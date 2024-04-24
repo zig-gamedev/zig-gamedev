@@ -2466,7 +2466,6 @@ pub fn ADD_SYSTEM_WITH_FILTERS(
     SYSTEM(world, name, phase, &desc);
 }
 
-
 pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
     return entity_init(world, &.{ .name = name });
 }
