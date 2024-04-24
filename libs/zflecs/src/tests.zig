@@ -292,7 +292,7 @@ test "zflecs.helloworld" {
 }
 
 fn move_system(positions: []Position, velocities: []const Velocity) void {
-    for (positions, velocities) |*p, *v| {
+    for (positions, velocities) |*p, v| {
         p.x += v.x;
         p.y += v.y;
     }
@@ -304,7 +304,7 @@ fn move_system_with_it(it: *ecs.iter_t, positions: []Position, velocities: []con
     print("Move entities with [{s}]\n", .{type_str});
     defer ecs.os.free(type_str);
 
-    for (positions, velocities) |*p, *v| {
+    for (positions, velocities) |*p, v| {
         p.x += v.x;
         p.y += v.y;
     }
