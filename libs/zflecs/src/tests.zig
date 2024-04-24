@@ -292,6 +292,39 @@ test "zflecs.helloworld" {
     print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
 }
 
+fn move_system(positions: []Position, velocities: []const Velocity) void {
+    for (positions, velocities) |*p, *v| {
+        p.x += v.x;
+        p.y += v.y;
+    }
+}
+
+test "zflecs.helloworld_systemcomptime" {
+    print("\n", .{});
+
+    const world = ecs.init();
+    defer _ = ecs.fini(world);
+
+    ecs.COMPONENT(world, Position);
+    ecs.COMPONENT(world, Velocity);
+
+    ecs.TAG(world, Eats);
+    ecs.TAG(world, Apples);
+
+    ecs.ADD_SYSTEM(world, "move system", ecs.OnUpdate, move_system);
+
+    const bob = ecs.new_entity(world, "Bob");
+    _ = ecs.set(world, bob, Position, .{ .x = 0, .y = 0 });
+    _ = ecs.set(world, bob, Velocity, .{ .x = 1, .y = 2 });
+    ecs.add_pair(world, bob, ecs.id(Eats), ecs.id(Apples));
+
+    _ = ecs.progress(world, 0);
+    _ = ecs.progress(world, 0);
+
+    const p = ecs.get(world, bob, Position).?;
+    print("Bob's position is ({d}, {d})\n", .{ p.x, p.y });
+}
+
 test "zflecs.try_different_alignments" {
     const world = ecs.init();
     defer _ = ecs.fini(world);
