@@ -49,7 +49,7 @@ pub fn main() !void {
         break :pipeline gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
-    const Vertex = struct {
+    const Vertex = extern struct {
         position: [2]f32,
     };
     const gpu_vertices = try gctx.uploadVertices(Vertex, &[_]Vertex{
@@ -58,6 +58,11 @@ pub fn main() !void {
         .{ .position = [_]f32{ 0.9, -0.9 } },
     });
     const gpu_vertex_indices = try gctx.uploadVertexIndices(u16, &[_]u16{ 0, 1, 2 });
+
+    const Input = extern struct {
+        mouse_position: [2]f32,
+    };
+    var input = try gctx.createConstantBuffer(Input);
 
     var frac: f32 = 0.0;
     var frac_delta: f32 = 0.0001;
@@ -104,6 +109,18 @@ pub fn main() !void {
             );
 
             gctx.setCurrentPipeline(pipeline);
+
+            {
+                const cursor_pos = glfw_window.getCursorPos();
+                input.ptr.mouse_position = [_]f32{
+                    @floatCast(cursor_pos[0]),
+                    @floatCast(cursor_pos[1]),
+                };
+
+                const resource = gctx.lookupResource(input.resource).?;
+                gctx.cmdlist.SetGraphicsRootConstantBufferView(0, resource.GetGPUVirtualAddress());
+            }
+
             gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
             gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{gpu_vertices.view});
             gctx.cmdlist.IASetIndexBuffer(&gpu_vertex_indices.view);

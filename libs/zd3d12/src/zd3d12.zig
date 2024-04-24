@@ -918,11 +918,63 @@ pub const GraphicsContext = struct {
         return gctx.resource_pool.addResource(resource, initial_state);
     }
 
+    pub fn createConstantBuffer(
+        gctx: *GraphicsContext,
+        comptime T: type,
+    ) HResultError!struct { resource: ResourceHandle, view_handle: d3d12.CPU_DESCRIPTOR_HANDLE, ptr: *T } {
+        switch (@typeInfo(T)) {
+            .Struct => |s| {
+                if (s.layout != .Extern) {
+                    @compileError(@typeName(T) ++ " must be extern");
+                }
+            },
+            else => {},
+        }
+        const buffer_length = buffer_length: {
+            const buffer_length: w32.UINT = @sizeOf(T);
+            break :buffer_length buffer_length + d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - @mod(buffer_length, d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+        };
+        const resource_handle = try gctx.createCommittedResource(
+            .UPLOAD,
+            .{},
+            &d3d12.RESOURCE_DESC.initBuffer(buffer_length),
+            d3d12.RESOURCE_STATES.GENERIC_READ,
+            null,
+        );
+        const resource = gctx.lookupResource(resource_handle).?;
+
+        var buffer: [*]u8 = undefined;
+        try hrErrorOnFail(resource.Map(
+            0,
+            &.{ .Begin = 0, .End = 0 },
+            @ptrCast(&buffer),
+        ));
+
+        const view_handle = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        gctx.device.CreateConstantBufferView(&.{
+            .BufferLocation = resource.GetGPUVirtualAddress(),
+            .SizeInBytes = buffer_length,
+        }, view_handle);
+        return .{
+            .resource = resource_handle,
+            .view_handle = view_handle,
+            .ptr = @ptrCast(@alignCast(buffer)),
+        };
+    }
+
     pub fn uploadVertices(
         gctx: *GraphicsContext,
         comptime T: type,
         vertices: []const T,
     ) HResultError!struct { resource: ResourceHandle, view: d3d12.VERTEX_BUFFER_VIEW } {
+        switch (@typeInfo(T)) {
+            .Struct => |s| {
+                if (s.layout != .Extern) {
+                    @compileError(@typeName(T) ++ " must be extern");
+                }
+            },
+            else => {},
+        }
         const buffer_length: w32.UINT = @intCast(vertices.len * @sizeOf(T));
         const resource_handle = try gctx.createCommittedResource(
             .UPLOAD,
@@ -959,6 +1011,10 @@ pub const GraphicsContext = struct {
         comptime T: type,
         vertex_indices: []const T,
     ) HResultError!struct { resource: ResourceHandle, view: d3d12.INDEX_BUFFER_VIEW } {
+        switch (T) {
+            u16, u32 => {},
+            else => @compileError(@typeName(T) ++ " is not a supported vertex index format"),
+        }
         const buffer_length: w32.UINT = @intCast(vertex_indices.len * @sizeOf(T));
         const resource_handle = try gctx.createCommittedResource(
             .UPLOAD,
@@ -987,7 +1043,7 @@ pub const GraphicsContext = struct {
                 .Format = switch (T) {
                     u16 => .R16_UINT,
                     u32 => .R32_UINT,
-                    else => @compileError("the type " ++ @typeName(T) ++ " is not a supported vertex index format"),
+                    else => unreachable,
                 },
                 .SizeInBytes = buffer_length,
             },
