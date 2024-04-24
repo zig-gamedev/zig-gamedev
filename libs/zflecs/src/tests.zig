@@ -273,8 +273,7 @@ test "zflecs.helloworld" {
     ecs.TAG(world, Apples);
 
     {
-        var system_desc = ecs.system_desc_t{};
-        system_desc.callback = move;
+        var system_desc = ecs.SYSTEM_DESC(move);
         system_desc.query.filter.terms[0] = .{ .id = ecs.id(Position) };
         system_desc.query.filter.terms[1] = .{ .id = ecs.id(Velocity) };
         ecs.SYSTEM(world, "move system", ecs.OnUpdate, &system_desc);
@@ -299,6 +298,18 @@ fn move_system(positions: []Position, velocities: []const Velocity) void {
     }
 }
 
+//Optionally, systems can receive the components iterator (usually not necessary)
+fn move_system_with_it(it: *ecs.iter_t, positions: []Position, velocities: []const Velocity) void {
+    const type_str = ecs.table_str(it.world, it.table).?;
+    print("Move entities with [{s}]\n", .{type_str});
+    defer ecs.os.free(type_str);
+
+    for (positions, velocities) |*p, *v| {
+        p.x += v.x;
+        p.y += v.y;
+    }
+}
+
 test "zflecs.helloworld_systemcomptime" {
     print("\n", .{});
 
@@ -312,6 +323,7 @@ test "zflecs.helloworld_systemcomptime" {
     ecs.TAG(world, Apples);
 
     ecs.ADD_SYSTEM(world, "move system", ecs.OnUpdate, move_system);
+    ecs.ADD_SYSTEM(world, "move system with iterator", ecs.OnUpdate, move_system_with_it);
 
     const bob = ecs.new_entity(world, "Bob");
     _ = ecs.set(world, bob, Position, .{ .x = 0, .y = 0 });

@@ -2379,13 +2379,30 @@ pub fn OBSERVER(
 ///     move_system(c1, c2);//probably inlined
 // }
 fn SystemImpl(comptime fn_system: anytype) type {
+    const fn_type = @typeInfo(@TypeOf(fn_system));
+    if (fn_type.Fn.params.len == 0){
+        @compileError("System need at least one parameter");
+    }
+
     return struct {
+        const self = @This();
+        //If user wants to include the iterator param, it must be the first
+        //in the parameter list
+        const has_it_param = fn_type.Fn.params[0].type == *iter_t;
+
         fn exec(it: *iter_t) callconv(.C) void {
-            const fn_type = @typeInfo(@TypeOf(fn_system));
             const ArgsTupleType = std.meta.ArgsTuple(@TypeOf(fn_system));
             var args_tuple: ArgsTupleType = undefined;
-            inline for (fn_type.Fn.params, 0..) |p, i| {
-                args_tuple[i] = field(it, @typeInfo(p.type.?).Pointer.child, i + 1).?;
+
+            if (self.has_it_param){
+                args_tuple[0] = it;
+            }
+
+            const start_index = if (self.has_it_param) 1 else 0;
+
+            inline for (start_index..fn_type.Fn.params.len) |i| {
+                const p = fn_type.Fn.params[i];
+                args_tuple[i] = field(it, @typeInfo(p.type.?).Pointer.child, i + 1 - start_index).?;
             }
 
             //NOTE: .always_inline seems ok, but unsure. Replace to .auto if it breaks
@@ -2402,10 +2419,12 @@ pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
     system_desc.callback = system_struct.exec;
 
     const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
-    inline for (fn_type.params, 0..) |p, i| {
+    const start_index = if (system_struct.has_it_param) 1 else 0;
+    inline for (start_index..fn_type.params.len) |i| {
+        const p = fn_type.params[i];
         const param_type_info = @typeInfo(p.type.?).Pointer;
         const inout = if (param_type_info.is_const) .In else .InOut;
-        system_desc.query.filter.terms[i] = .{ .id = id(param_type_info.child), .inout = inout };
+        system_desc.query.filter.terms[i - start_index] = .{ .id = id(param_type_info.child), .inout = inout };
     }
 
     return system_desc;
