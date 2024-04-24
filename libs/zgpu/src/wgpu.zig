@@ -1242,32 +1242,32 @@ pub const CompilationInfoCallback = *const fn (
 ) callconv(.C) void;
 
 pub const Adapter = *opaque {
-    pub inline fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
+    pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
         return wgpuAdapterCreateDevice(adapter, &descriptor);
     }
     extern fn wgpuAdapterCreateDevice(adapter: Adapter, descriptor: *const DeviceDescriptor) Device;
 
-    pub inline fn enumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize {
+    pub fn enumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize {
         return wgpuAdapterEnumerateFeatures(adapter, features);
     }
     extern fn wgpuAdapterEnumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize;
 
-    pub inline fn getLimits(adapter: Adapter, limits: *SupportedLimits) bool {
+    pub fn getLimits(adapter: Adapter, limits: *SupportedLimits) bool {
         return wgpuAdapterGetLimits(adapter, limits);
     }
     extern fn wgpuAdapterGetLimits(adapter: Adapter, limits: *SupportedLimits) bool;
 
-    pub inline fn getProperties(adapter: Adapter, properties: *AdapterProperties) void {
+    pub fn getProperties(adapter: Adapter, properties: *AdapterProperties) void {
         wgpuAdapterGetProperties(adapter, properties);
     }
     extern fn wgpuAdapterGetProperties(adapter: Adapter, properties: *AdapterProperties) void;
 
-    pub inline fn hasFeature(adapter: Adapter, feature: FeatureName) bool {
+    pub fn hasFeature(adapter: Adapter, feature: FeatureName) bool {
         return wgpuAdapterHasFeature(adapter, feature);
     }
     extern fn wgpuAdapterHasFeature(adapter: Adapter, feature: FeatureName) bool;
 
-    pub inline fn requestDevice(
+    pub fn requestDevice(
         adapter: Adapter,
         descriptor: DeviceDescriptor,
         callback: RequestDeviceCallback,
@@ -1282,60 +1282,60 @@ pub const Adapter = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn reference(adapter: Adapter) void {
+    pub fn reference(adapter: Adapter) void {
         wgpuAdapterReference(adapter);
     }
     extern fn wgpuAdapterReference(adapter: Adapter) void;
 
-    pub inline fn release(adapter: Adapter) void {
+    pub fn release(adapter: Adapter) void {
         wgpuAdapterRelease(adapter);
     }
     extern fn wgpuAdapterRelease(adapter: Adapter) void;
 };
 
 pub const BindGroup = *opaque {
-    pub inline fn setLabel(bind_group: BindGroup, label: ?[*:0]const u8) void {
+    pub fn setLabel(bind_group: BindGroup, label: ?[*:0]const u8) void {
         wgpuBindGroupSetLabel(bind_group, label);
     }
     extern fn wgpuBindGroupSetLabel(bind_group: BindGroup, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(bind_group: BindGroup) void {
+    pub fn reference(bind_group: BindGroup) void {
         wgpuBindGroupReference(bind_group);
     }
     extern fn wgpuBindGroupReference(bind_group: BindGroup) void;
 
-    pub inline fn release(bind_group: BindGroup) void {
+    pub fn release(bind_group: BindGroup) void {
         wgpuBindGroupRelease(bind_group);
     }
     extern fn wgpuBindGroupRelease(bind_group: BindGroup) void;
 };
 
 pub const BindGroupLayout = *opaque {
-    pub inline fn setLabel(bind_group_layout: BindGroupLayout, label: ?[*:0]const u8) void {
+    pub fn setLabel(bind_group_layout: BindGroupLayout, label: ?[*:0]const u8) void {
         wgpuBindGroupLayoutSetLabel(bind_group_layout, label);
     }
     extern fn wgpuBindGroupLayoutSetLabel(bind_group_layout: BindGroupLayout, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(bind_group_layout: BindGroupLayout) void {
+    pub fn reference(bind_group_layout: BindGroupLayout) void {
         wgpuBindGroupLayoutReference(bind_group_layout);
     }
     extern fn wgpuBindGroupLayoutReference(bind_group_layout: BindGroupLayout) void;
 
-    pub inline fn release(bind_group_layout: BindGroupLayout) void {
+    pub fn release(bind_group_layout: BindGroupLayout) void {
         wgpuBindGroupLayoutRelease(bind_group_layout);
     }
     extern fn wgpuBindGroupLayoutRelease(bind_group_layout: BindGroupLayout) void;
 };
 
 pub const Buffer = *opaque {
-    pub inline fn destroy(buffer: Buffer) void {
+    pub fn destroy(buffer: Buffer) void {
         wgpuBufferDestroy(buffer);
     }
     extern fn wgpuBufferDestroy(buffer: Buffer) void;
 
     // `offset` has to be a multiple of 8 (otherwise `null` will be returned).
     // `@sizeOf(T) * len` has to be a multiple of 4 (otherwise `null` will be returned).
-    pub inline fn getConstMappedRange(buffer: Buffer, comptime T: type, offset: usize, len: usize) ?[]const T {
+    pub fn getConstMappedRange(buffer: Buffer, comptime T: type, offset: usize, len: usize) ?[]const T {
         if (len == 0) return null;
         const ptr = wgpuBufferGetConstMappedRange(buffer, offset, @sizeOf(T) * len);
         if (ptr == null) return null;
@@ -1345,7 +1345,7 @@ pub const Buffer = *opaque {
 
     // `offset` has to be a multiple of 8 (otherwise `null` will be returned).
     // `@sizeOf(T) * len` has to be a multiple of 4 (otherwise `null` will be returned).
-    pub inline fn getMappedRange(buffer: Buffer, comptime T: type, offset: usize, len: usize) ?[]T {
+    pub fn getMappedRange(buffer: Buffer, comptime T: type, offset: usize, len: usize) ?[]T {
         if (len == 0) return null;
         const ptr = wgpuBufferGetMappedRange(buffer, offset, @sizeOf(T) * len);
         if (ptr == null) return null;
@@ -1356,7 +1356,7 @@ pub const Buffer = *opaque {
     // `offset` has to be a multiple of 8 (Dawn's validation layer will warn).
     // `size` has to be a multiple of 4 (Dawn's validation layer will warn).
     // `size == 0` will map entire range (from 'offset' to the end of the buffer).
-    pub inline fn mapAsync(
+    pub fn mapAsync(
         buffer: Buffer,
         mode: MapMode,
         offset: usize,
@@ -1375,46 +1375,46 @@ pub const Buffer = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn setLabel(buffer: Buffer, label: ?[*:0]const u8) void {
+    pub fn setLabel(buffer: Buffer, label: ?[*:0]const u8) void {
         wgpuBufferSetLabel(buffer, label);
     }
     extern fn wgpuBufferSetLabel(buffer: Buffer, label: ?[*:0]const u8) void;
 
-    pub inline fn unmap(buffer: Buffer) void {
+    pub fn unmap(buffer: Buffer) void {
         wgpuBufferUnmap(buffer);
     }
     extern fn wgpuBufferUnmap(buffer: Buffer) void;
 
-    pub inline fn reference(buffer: Buffer) void {
+    pub fn reference(buffer: Buffer) void {
         wgpuBufferReference(buffer);
     }
     extern fn wgpuBufferReference(buffer: Buffer) void;
 
-    pub inline fn release(buffer: Buffer) void {
+    pub fn release(buffer: Buffer) void {
         wgpuBufferRelease(buffer);
     }
     extern fn wgpuBufferRelease(buffer: Buffer) void;
 };
 
 pub const CommandBuffer = *opaque {
-    pub inline fn setLabel(command_buffer: CommandBuffer, label: ?[*:0]const u8) void {
+    pub fn setLabel(command_buffer: CommandBuffer, label: ?[*:0]const u8) void {
         wgpuCommandBufferSetLabel(command_buffer, label);
     }
     extern fn wgpuCommandBufferSetLabel(command_buffer: CommandBuffer, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(command_buffer: CommandBuffer) void {
+    pub fn reference(command_buffer: CommandBuffer) void {
         wgpuCommandBufferReference(command_buffer);
     }
     extern fn wgpuCommandBufferReference(command_buffer: CommandBuffer) void;
 
-    pub inline fn release(command_buffer: CommandBuffer) void {
+    pub fn release(command_buffer: CommandBuffer) void {
         wgpuCommandBufferRelease(command_buffer);
     }
     extern fn wgpuCommandBufferRelease(command_buffer: CommandBuffer) void;
 };
 
 pub const CommandEncoder = *opaque {
-    pub inline fn beginComputePass(
+    pub fn beginComputePass(
         command_encoder: CommandEncoder,
         descriptor: ?ComputePassDescriptor,
     ) ComputePassEncoder {
@@ -1425,7 +1425,7 @@ pub const CommandEncoder = *opaque {
         descriptor: ?*const ComputePassDescriptor,
     ) ComputePassEncoder;
 
-    pub inline fn beginRenderPass(
+    pub fn beginRenderPass(
         command_encoder: CommandEncoder,
         descriptor: RenderPassDescriptor,
     ) RenderPassEncoder {
@@ -1436,7 +1436,7 @@ pub const CommandEncoder = *opaque {
         descriptor: *const RenderPassDescriptor,
     ) RenderPassEncoder;
 
-    pub inline fn clearBuffer(command_encoder: CommandEncoder, buffer: Buffer, offset: usize, size: usize) void {
+    pub fn clearBuffer(command_encoder: CommandEncoder, buffer: Buffer, offset: usize, size: usize) void {
         wgpuCommandEncoderClearBuffer(command_encoder, buffer, offset, size);
     }
     extern fn wgpuCommandEncoderClearBuffer(
@@ -1446,7 +1446,7 @@ pub const CommandEncoder = *opaque {
         size: usize,
     ) void;
 
-    pub inline fn copyBufferToBuffer(
+    pub fn copyBufferToBuffer(
         command_encoder: CommandEncoder,
         source: Buffer,
         source_offset: usize,
@@ -1472,7 +1472,7 @@ pub const CommandEncoder = *opaque {
         size: usize,
     ) void;
 
-    pub inline fn copyBufferToTexture(
+    pub fn copyBufferToTexture(
         command_encoder: CommandEncoder,
         source: ImageCopyBuffer,
         destination: ImageCopyTexture,
@@ -1487,7 +1487,7 @@ pub const CommandEncoder = *opaque {
         copy_size: *const Extent3D,
     ) void;
 
-    pub inline fn copyTextureToBuffer(
+    pub fn copyTextureToBuffer(
         command_encoder: CommandEncoder,
         source: ImageCopyTexture,
         destination: ImageCopyBuffer,
@@ -1502,7 +1502,7 @@ pub const CommandEncoder = *opaque {
         copy_size: *const Extent3D,
     ) void;
 
-    pub inline fn copyTextureToTexture(
+    pub fn copyTextureToTexture(
         command_encoder: CommandEncoder,
         source: ImageCopyTexture,
         destination: ImageCopyTexture,
@@ -1517,7 +1517,7 @@ pub const CommandEncoder = *opaque {
         copy_size: *const Extent3D,
     ) void;
 
-    pub inline fn finish(command_encoder: CommandEncoder, descriptor: ?CommandBufferDescriptor) CommandBuffer {
+    pub fn finish(command_encoder: CommandEncoder, descriptor: ?CommandBufferDescriptor) CommandBuffer {
         return wgpuCommandEncoderFinish(command_encoder, if (descriptor) |d| &d else null);
     }
     extern fn wgpuCommandEncoderFinish(
@@ -1525,27 +1525,27 @@ pub const CommandEncoder = *opaque {
         descriptor: ?*const CommandBufferDescriptor,
     ) CommandBuffer;
 
-    pub inline fn injectValidationError(command_encoder: CommandEncoder, message: [*:0]const u8) void {
+    pub fn injectValidationError(command_encoder: CommandEncoder, message: [*:0]const u8) void {
         wgpuCommandEncoderInjectValidationError(command_encoder, message);
     }
     extern fn wgpuCommandEncoderInjectValidationError(command_encoder: CommandEncoder, message: [*:0]const u8) void;
 
-    pub inline fn insertDebugMarker(command_encoder: CommandEncoder, marker_label: [*:0]const u8) void {
+    pub fn insertDebugMarker(command_encoder: CommandEncoder, marker_label: [*:0]const u8) void {
         wgpuCommandEncoderInsertDebugMarker(command_encoder, marker_label);
     }
     extern fn wgpuCommandEncoderInsertDebugMarker(command_encoder: CommandEncoder, marker_label: [*:0]const u8) void;
 
-    pub inline fn popDebugGroup(command_encoder: CommandEncoder) void {
+    pub fn popDebugGroup(command_encoder: CommandEncoder) void {
         wgpuCommandEncoderPopDebugGroup(command_encoder);
     }
     extern fn wgpuCommandEncoderPopDebugGroup(command_encoder: CommandEncoder) void;
 
-    pub inline fn pushDebugGroup(command_encoder: CommandEncoder, group_label: [*:0]const u8) void {
+    pub fn pushDebugGroup(command_encoder: CommandEncoder, group_label: [*:0]const u8) void {
         wgpuCommandEncoderPushDebugGroup(command_encoder, group_label);
     }
     extern fn wgpuCommandEncoderPushDebugGroup(command_encoder: CommandEncoder, group_label: [*:0]const u8) void;
 
-    pub inline fn resolveQuerySet(
+    pub fn resolveQuerySet(
         command_encoder: CommandEncoder,
         query_set: QuerySet,
         first_query: u32,
@@ -1571,12 +1571,12 @@ pub const CommandEncoder = *opaque {
         destination_offset: u64,
     ) void;
 
-    pub inline fn setLabel(command_encoder: CommandEncoder, label: ?[*:0]const u8) void {
+    pub fn setLabel(command_encoder: CommandEncoder, label: ?[*:0]const u8) void {
         wgpuCommandEncoderSetLabel(command_encoder, label);
     }
     extern fn wgpuCommandEncoderSetLabel(command_encoder: CommandEncoder, label: ?[*:0]const u8) void;
 
-    pub inline fn writeBuffer(
+    pub fn writeBuffer(
         command_encoder: CommandEncoder,
         buffer: Buffer,
         buffer_offset: u64,
@@ -1599,7 +1599,7 @@ pub const CommandEncoder = *opaque {
         size: u64,
     ) void;
 
-    pub inline fn writeTimestamp(command_encoder: CommandEncoder, query_set: QuerySet, query_index: u32) void {
+    pub fn writeTimestamp(command_encoder: CommandEncoder, query_set: QuerySet, query_index: u32) void {
         wgpuCommandEncoderWriteTimestamp(command_encoder, query_set, query_index);
     }
     extern fn wgpuCommandEncoderWriteTimestamp(
@@ -1608,19 +1608,19 @@ pub const CommandEncoder = *opaque {
         query_index: u32,
     ) void;
 
-    pub inline fn reference(command_encoder: CommandEncoder) void {
+    pub fn reference(command_encoder: CommandEncoder) void {
         wgpuCommandEncoderReference(command_encoder);
     }
     extern fn wgpuCommandEncoderReference(command_encoder: CommandEncoder) void;
 
-    pub inline fn release(command_encoder: CommandEncoder) void {
+    pub fn release(command_encoder: CommandEncoder) void {
         wgpuCommandEncoderRelease(command_encoder);
     }
     extern fn wgpuCommandEncoderRelease(command_encoder: CommandEncoder) void;
 };
 
 pub const ComputePassEncoder = *opaque {
-    pub inline fn dispatchWorkgroups(
+    pub fn dispatchWorkgroups(
         compute_pass_encoder: ComputePassEncoder,
         workgroup_count_x: u32,
         workgroup_count_y: u32,
@@ -1640,7 +1640,7 @@ pub const ComputePassEncoder = *opaque {
         workgroup_count_z: u32,
     ) void;
 
-    pub inline fn dispatchWorkgroupsIndirect(
+    pub fn dispatchWorkgroupsIndirect(
         compute_pass_encoder: ComputePassEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
@@ -1653,12 +1653,12 @@ pub const ComputePassEncoder = *opaque {
         indirect_offset: u64,
     ) void;
 
-    pub inline fn end(compute_pass_encoder: ComputePassEncoder) void {
+    pub fn end(compute_pass_encoder: ComputePassEncoder) void {
         wgpuComputePassEncoderEnd(compute_pass_encoder);
     }
     extern fn wgpuComputePassEncoderEnd(compute_pass_encoder: ComputePassEncoder) void;
 
-    pub inline fn insertDebugMarker(compute_pass_encoder: ComputePassEncoder, marker_label: [*:0]const u8) void {
+    pub fn insertDebugMarker(compute_pass_encoder: ComputePassEncoder, marker_label: [*:0]const u8) void {
         wgpuComputePassEncoderInsertDebugMarker(compute_pass_encoder, marker_label);
     }
     extern fn wgpuComputePassEncoderInsertDebugMarker(
@@ -1666,12 +1666,12 @@ pub const ComputePassEncoder = *opaque {
         marker_label: [*:0]const u8,
     ) void;
 
-    pub inline fn popDebugGroup(compute_pass_encoder: ComputePassEncoder) void {
+    pub fn popDebugGroup(compute_pass_encoder: ComputePassEncoder) void {
         wgpuComputePassEncoderPopDebugGroup(compute_pass_encoder);
     }
     extern fn wgpuComputePassEncoderPopDebugGroup(compute_pass_encoder: ComputePassEncoder) void;
 
-    pub inline fn pushDebugGroup(compute_pass_encoder: ComputePassEncoder, group_label: [*:0]const u8) void {
+    pub fn pushDebugGroup(compute_pass_encoder: ComputePassEncoder, group_label: [*:0]const u8) void {
         wgpuComputePassEncoderPushDebugGroup(compute_pass_encoder, group_label);
     }
     extern fn wgpuComputePassEncoderPushDebugGroup(
@@ -1679,7 +1679,7 @@ pub const ComputePassEncoder = *opaque {
         group_label: [*:0]const u8,
     ) void;
 
-    pub inline fn setBindGroup(
+    pub fn setBindGroup(
         compute_pass_encoder: ComputePassEncoder,
         group_index: u32,
         bind_group: BindGroup,
@@ -1701,12 +1701,12 @@ pub const ComputePassEncoder = *opaque {
         dynamic_offsets: ?[*]const u32,
     ) void;
 
-    pub inline fn setLabel(compute_pass_encoder: ComputePassEncoder, label: ?[*:0]const u8) void {
+    pub fn setLabel(compute_pass_encoder: ComputePassEncoder, label: ?[*:0]const u8) void {
         wgpuComputePassEncoderSetLabel(compute_pass_encoder, label);
     }
     extern fn wgpuComputePassEncoderSetLabel(compute_pass_encoder: ComputePassEncoder, label: ?[*:0]const u8) void;
 
-    pub inline fn setPipeline(compute_pass_encoder: ComputePassEncoder, pipeline: ComputePipeline) void {
+    pub fn setPipeline(compute_pass_encoder: ComputePassEncoder, pipeline: ComputePipeline) void {
         wgpuComputePassEncoderSetPipeline(compute_pass_encoder, pipeline);
     }
     extern fn wgpuComputePassEncoderSetPipeline(
@@ -1714,7 +1714,7 @@ pub const ComputePassEncoder = *opaque {
         pipeline: ComputePipeline,
     ) void;
 
-    pub inline fn writeTimestamp(
+    pub fn writeTimestamp(
         compute_pass_encoder: ComputePassEncoder,
         query_set: QuerySet,
         query_index: u32,
@@ -1727,19 +1727,19 @@ pub const ComputePassEncoder = *opaque {
         query_index: u32,
     ) void;
 
-    pub inline fn reference(compute_pass_encoder: ComputePassEncoder) void {
+    pub fn reference(compute_pass_encoder: ComputePassEncoder) void {
         wgpuComputePassEncoderReference(compute_pass_encoder);
     }
     extern fn wgpuComputePassEncoderReference(compute_pass_encoder: ComputePassEncoder) void;
 
-    pub inline fn release(compute_pass_encoder: ComputePassEncoder) void {
+    pub fn release(compute_pass_encoder: ComputePassEncoder) void {
         wgpuComputePassEncoderRelease(compute_pass_encoder);
     }
     extern fn wgpuComputePassEncoderRelease(compute_pass_encoder: ComputePassEncoder) void;
 };
 
 pub const ComputePipeline = *opaque {
-    pub inline fn getBindGroupLayout(compute_pipeline: ComputePipeline, group_index: u32) BindGroupLayout {
+    pub fn getBindGroupLayout(compute_pipeline: ComputePipeline, group_index: u32) BindGroupLayout {
         return wgpuComputePipelineGetBindGroupLayout(compute_pipeline, group_index);
     }
     extern fn wgpuComputePipelineGetBindGroupLayout(
@@ -1747,29 +1747,29 @@ pub const ComputePipeline = *opaque {
         group_index: u32,
     ) BindGroupLayout;
 
-    pub inline fn setLabel(compute_pipeline: ComputePipeline, label: ?[*:0]const u8) void {
+    pub fn setLabel(compute_pipeline: ComputePipeline, label: ?[*:0]const u8) void {
         wgpuComputePipelineSetLabel(compute_pipeline, label);
     }
     extern fn wgpuComputePipelineSetLabel(compute_pipeline: ComputePipeline, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(compute_pipeline: ComputePipeline) void {
+    pub fn reference(compute_pipeline: ComputePipeline) void {
         wgpuComputePipelineReference(compute_pipeline);
     }
     extern fn wgpuComputePipelineReference(compute_pipeline: ComputePipeline) void;
 
-    pub inline fn release(compute_pipeline: ComputePipeline) void {
+    pub fn release(compute_pipeline: ComputePipeline) void {
         wgpuComputePipelineRelease(compute_pipeline);
     }
     extern fn wgpuComputePipelineRelease(compute_pipeline: ComputePipeline) void;
 };
 
 pub const Device = *opaque {
-    pub inline fn createBindGroup(device: Device, descriptor: BindGroupDescriptor) BindGroup {
+    pub fn createBindGroup(device: Device, descriptor: BindGroupDescriptor) BindGroup {
         return wgpuDeviceCreateBindGroup(device, &descriptor);
     }
     extern fn wgpuDeviceCreateBindGroup(device: Device, descriptor: *const BindGroupDescriptor) BindGroup;
 
-    pub inline fn createBindGroupLayout(device: Device, descriptor: BindGroupLayoutDescriptor) BindGroupLayout {
+    pub fn createBindGroupLayout(device: Device, descriptor: BindGroupLayoutDescriptor) BindGroupLayout {
         return wgpuDeviceCreateBindGroupLayout(device, &descriptor);
     }
     extern fn wgpuDeviceCreateBindGroupLayout(
@@ -1777,12 +1777,12 @@ pub const Device = *opaque {
         descriptor: *const BindGroupLayoutDescriptor,
     ) BindGroupLayout;
 
-    pub inline fn createBuffer(device: Device, descriptor: BufferDescriptor) Buffer {
+    pub fn createBuffer(device: Device, descriptor: BufferDescriptor) Buffer {
         return wgpuDeviceCreateBuffer(device, &descriptor);
     }
     extern fn wgpuDeviceCreateBuffer(device: Device, descriptor: *const BufferDescriptor) Buffer;
 
-    pub inline fn createCommandEncoder(device: Device, descriptor: ?CommandEncoderDescriptor) CommandEncoder {
+    pub fn createCommandEncoder(device: Device, descriptor: ?CommandEncoderDescriptor) CommandEncoder {
         return wgpuDeviceCreateCommandEncoder(device, if (descriptor) |d| &d else null);
     }
     extern fn wgpuDeviceCreateCommandEncoder(
@@ -1790,7 +1790,7 @@ pub const Device = *opaque {
         descriptor: ?*const CommandEncoderDescriptor,
     ) CommandEncoder;
 
-    pub inline fn createComputePipeline(device: Device, descriptor: ComputePipelineDescriptor) ComputePipeline {
+    pub fn createComputePipeline(device: Device, descriptor: ComputePipelineDescriptor) ComputePipeline {
         return wgpuDeviceCreateComputePipeline(device, &descriptor);
     }
     extern fn wgpuDeviceCreateComputePipeline(
@@ -1798,7 +1798,7 @@ pub const Device = *opaque {
         descriptor: *const ComputePipelineDescriptor,
     ) ComputePipeline;
 
-    pub inline fn createComputePipelineAsync(
+    pub fn createComputePipelineAsync(
         device: Device,
         descriptor: ComputePipelineDescriptor,
         callback: CreateComputePipelineAsyncCallback,
@@ -1813,12 +1813,12 @@ pub const Device = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn createErrorBuffer(device: Device) Buffer {
+    pub fn createErrorBuffer(device: Device) Buffer {
         return wgpuDeviceCreateErrorBuffer(device);
     }
     extern fn wgpuDeviceCreateErrorBuffer(device: Device) Buffer;
 
-    pub inline fn createExternalTexture(device: Device, descriptor: ExternalTextureDescriptor) ExternalTexture {
+    pub fn createExternalTexture(device: Device, descriptor: ExternalTextureDescriptor) ExternalTexture {
         return wgpuDeviceCreateExternalTexture(device, &descriptor);
     }
     extern fn wgpuDeviceCreateExternalTexture(
@@ -1826,7 +1826,7 @@ pub const Device = *opaque {
         descriptor: *const ExternalTextureDescriptor,
     ) ExternalTexture;
 
-    pub inline fn createPipelineLayout(device: Device, descriptor: PipelineLayoutDescriptor) PipelineLayout {
+    pub fn createPipelineLayout(device: Device, descriptor: PipelineLayoutDescriptor) PipelineLayout {
         return wgpuDeviceCreatePipelineLayout(device, &descriptor);
     }
     extern fn wgpuDeviceCreatePipelineLayout(
@@ -1834,12 +1834,12 @@ pub const Device = *opaque {
         descriptor: *const PipelineLayoutDescriptor,
     ) PipelineLayout;
 
-    pub inline fn createQuerySet(device: Device, descriptor: QuerySetDescriptor) QuerySet {
+    pub fn createQuerySet(device: Device, descriptor: QuerySetDescriptor) QuerySet {
         return wgpuDeviceCreateQuerySet(device, &descriptor);
     }
     extern fn wgpuDeviceCreateQuerySet(device: Device, descriptor: *const QuerySetDescriptor) QuerySet;
 
-    pub inline fn createRenderBundleEncoder(
+    pub fn createRenderBundleEncoder(
         device: Device,
         descriptor: RenderBundleEncoderDescriptor,
     ) RenderBundleEncoder {
@@ -1850,7 +1850,7 @@ pub const Device = *opaque {
         descriptor: *const RenderBundleEncoderDescriptor,
     ) RenderBundleEncoder;
 
-    pub inline fn createRenderPipeline(device: Device, descriptor: RenderPipelineDescriptor) RenderPipeline {
+    pub fn createRenderPipeline(device: Device, descriptor: RenderPipelineDescriptor) RenderPipeline {
         return wgpuDeviceCreateRenderPipeline(device, &descriptor);
     }
     extern fn wgpuDeviceCreateRenderPipeline(
@@ -1858,7 +1858,7 @@ pub const Device = *opaque {
         descriptor: *const RenderPipelineDescriptor,
     ) RenderPipeline;
 
-    pub inline fn createRenderPipelineAsync(
+    pub fn createRenderPipelineAsync(
         device: Device,
         descriptor: RenderPipelineDescriptor,
         callback: CreateRenderPipelineAsyncCallback,
@@ -1873,17 +1873,17 @@ pub const Device = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn createSampler(device: Device, descriptor: SamplerDescriptor) Sampler {
+    pub fn createSampler(device: Device, descriptor: SamplerDescriptor) Sampler {
         return wgpuDeviceCreateSampler(device, &descriptor);
     }
     extern fn wgpuDeviceCreateSampler(device: Device, descriptor: *const SamplerDescriptor) Sampler;
 
-    pub inline fn createShaderModule(device: Device, descriptor: ShaderModuleDescriptor) ShaderModule {
+    pub fn createShaderModule(device: Device, descriptor: ShaderModuleDescriptor) ShaderModule {
         return wgpuDeviceCreateShaderModule(device, &descriptor);
     }
     extern fn wgpuDeviceCreateShaderModule(device: Device, descriptor: *const ShaderModuleDescriptor) ShaderModule;
 
-    pub inline fn createSwapChain(device: Device, surface: ?Surface, descriptor: SwapChainDescriptor) SwapChain {
+    pub fn createSwapChain(device: Device, surface: ?Surface, descriptor: SwapChainDescriptor) SwapChain {
         return wgpuDeviceCreateSwapChain(device, surface, &descriptor);
     }
     extern fn wgpuDeviceCreateSwapChain(
@@ -1892,62 +1892,62 @@ pub const Device = *opaque {
         descriptor: *const SwapChainDescriptor,
     ) SwapChain;
 
-    pub inline fn createTexture(device: Device, descriptor: TextureDescriptor) Texture {
+    pub fn createTexture(device: Device, descriptor: TextureDescriptor) Texture {
         return wgpuDeviceCreateTexture(device, &descriptor);
     }
     extern fn wgpuDeviceCreateTexture(device: Device, descriptor: *const TextureDescriptor) Texture;
 
-    pub inline fn destroy(device: Device) void {
+    pub fn destroy(device: Device) void {
         wgpuDeviceDestroy(device);
     }
     extern fn wgpuDeviceDestroy(device: Device) void;
 
-    pub inline fn enumerateFeatures(device: Device, features: ?[*]FeatureName) usize {
+    pub fn enumerateFeatures(device: Device, features: ?[*]FeatureName) usize {
         return wgpuDeviceEnumerateFeatures(device, features);
     }
     extern fn wgpuDeviceEnumerateFeatures(device: Device, features: ?[*]FeatureName) usize;
 
-    pub inline fn getLimits(device: Device, limits: *SupportedLimits) bool {
+    pub fn getLimits(device: Device, limits: *SupportedLimits) bool {
         return wgpuDeviceGetLimits(device, limits);
     }
     extern fn wgpuDeviceGetLimits(device: Device, limits: *SupportedLimits) bool;
 
-    pub inline fn getQueue(device: Device) Queue {
+    pub fn getQueue(device: Device) Queue {
         return wgpuDeviceGetQueue(device);
     }
     extern fn wgpuDeviceGetQueue(device: Device) Queue;
 
-    pub inline fn hasFeature(device: Device, feature: FeatureName) bool {
+    pub fn hasFeature(device: Device, feature: FeatureName) bool {
         return wgpuDeviceHasFeature(device, feature);
     }
     extern fn wgpuDeviceHasFeature(device: Device, feature: FeatureName) bool;
 
-    pub inline fn injectError(device: Device, err_type: ErrorType, message: ?[*:0]const u8) void {
+    pub fn injectError(device: Device, err_type: ErrorType, message: ?[*:0]const u8) void {
         wgpuDeviceInjectError(device, err_type, message);
     }
     extern fn wgpuDeviceInjectError(device: Device, err_type: ErrorType, message: ?[*:0]const u8) void;
 
-    pub inline fn forceLoss(device: Device, reason: DeviceLostReason, message: ?[*:0]const u8) void {
+    pub fn forceLoss(device: Device, reason: DeviceLostReason, message: ?[*:0]const u8) void {
         wgpuDeviceForceLoss(device, reason, message);
     }
     extern fn wgpuDeviceForceLoss(device: Device, reason: DeviceLostReason, message: ?[*:0]const u8) void;
 
-    pub inline fn getAdapter(device: Device) Adapter {
+    pub fn getAdapter(device: Device) Adapter {
         return wgpuDeviceGetAdapter(device);
     }
     extern fn wgpuDeviceGetAdapter(device: Device) Adapter;
 
-    pub inline fn popErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool {
+    pub fn popErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool {
         return wgpuDevicePopErrorScope(device, callback, userdata);
     }
     extern fn wgpuDevicePopErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool;
 
-    pub inline fn pushErrorScope(device: Device, filter: ErrorFilter) void {
+    pub fn pushErrorScope(device: Device, filter: ErrorFilter) void {
         wgpuDevicePushErrorScope(device, filter);
     }
     extern fn wgpuDevicePushErrorScope(device: Device, filter: ErrorFilter) void;
 
-    pub inline fn setDeviceLostCallback(
+    pub fn setDeviceLostCallback(
         device: Device,
         callback: DeviceLostCallback,
         userdata: ?*anyopaque,
@@ -1960,17 +1960,17 @@ pub const Device = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn setLabel(device: Device, label: ?[*:0]const u8) void {
+    pub fn setLabel(device: Device, label: ?[*:0]const u8) void {
         wgpuDeviceSetLabel(device, label);
     }
     extern fn wgpuDeviceSetLabel(device: Device, label: ?[*:0]const u8) void;
 
-    pub inline fn setLoggingCallback(device: Device, callback: LoggingCallback, userdata: ?*anyopaque) void {
+    pub fn setLoggingCallback(device: Device, callback: LoggingCallback, userdata: ?*anyopaque) void {
         wgpuDeviceSetLoggingCallback(device, callback, userdata);
     }
     extern fn wgpuDeviceSetLoggingCallback(device: Device, callback: LoggingCallback, userdata: ?*anyopaque) void;
 
-    pub inline fn setUncapturedErrorCallback(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) void {
+    pub fn setUncapturedErrorCallback(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) void {
         wgpuDeviceSetUncapturedErrorCallback(device, callback, userdata);
     }
     extern fn wgpuDeviceSetUncapturedErrorCallback(
@@ -1979,51 +1979,51 @@ pub const Device = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn tick(device: Device) void {
+    pub fn tick(device: Device) void {
         wgpuDeviceTick(device);
     }
     extern fn wgpuDeviceTick(device: Device) void;
 
-    pub inline fn reference(device: Device) void {
+    pub fn reference(device: Device) void {
         wgpuDeviceReference(device);
     }
     extern fn wgpuDeviceReference(device: Device) void;
 
-    pub inline fn release(device: Device) void {
+    pub fn release(device: Device) void {
         wgpuDeviceRelease(device);
     }
     extern fn wgpuDeviceRelease(device: Device) void;
 };
 
 pub const ExternalTexture = *opaque {
-    pub inline fn destroy(external_texture: ExternalTexture) void {
+    pub fn destroy(external_texture: ExternalTexture) void {
         wgpuExternalTextureDestroy(external_texture);
     }
     extern fn wgpuExternalTextureDestroy(external_texture: ExternalTexture) void;
 
-    pub inline fn setLabel(external_texture: ExternalTexture, label: ?[*:0]const u8) void {
+    pub fn setLabel(external_texture: ExternalTexture, label: ?[*:0]const u8) void {
         wgpuExternalTextureSetLabel(external_texture, label);
     }
     extern fn wgpuExternalTextureSetLabel(external_texture: ExternalTexture, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(external_texture: ExternalTexture) void {
+    pub fn reference(external_texture: ExternalTexture) void {
         wgpuExternalTextureReference(external_texture);
     }
     extern fn wgpuExternalTextureReference(external_texture: ExternalTexture) void;
 
-    pub inline fn release(external_texture: ExternalTexture) void {
+    pub fn release(external_texture: ExternalTexture) void {
         wgpuExternalTextureRelease(external_texture);
     }
     extern fn wgpuExternalTextureRelease(external_texture: ExternalTexture) void;
 };
 
 pub const Instance = *opaque {
-    pub inline fn createSurface(instance: Instance, descriptor: SurfaceDescriptor) Surface {
+    pub fn createSurface(instance: Instance, descriptor: SurfaceDescriptor) Surface {
         return wgpuInstanceCreateSurface(instance, &descriptor);
     }
     extern fn wgpuInstanceCreateSurface(instance: Instance, descriptor: *const SurfaceDescriptor) Surface;
 
-    pub inline fn requestAdapter(
+    pub fn requestAdapter(
         instance: Instance,
         options: RequestAdapterOptions,
         callback: RequestAdapterCallback,
@@ -2038,58 +2038,58 @@ pub const Instance = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn reference(instance: Instance) void {
+    pub fn reference(instance: Instance) void {
         wgpuInstanceReference(instance);
     }
     extern fn wgpuInstanceReference(instance: Instance) void;
 
-    pub inline fn release(instance: Instance) void {
+    pub fn release(instance: Instance) void {
         wgpuInstanceRelease(instance);
     }
     extern fn wgpuInstanceRelease(instance: Instance) void;
 };
 
 pub const PipelineLayout = *opaque {
-    pub inline fn setLabel(pipeline_layout: PipelineLayout, label: ?[*:0]const u8) void {
+    pub fn setLabel(pipeline_layout: PipelineLayout, label: ?[*:0]const u8) void {
         wgpuPipelineLayoutSetLabel(pipeline_layout, label);
     }
     extern fn wgpuPipelineLayoutSetLabel(pipeline_layout: PipelineLayout, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(pipeline_layout: PipelineLayout) void {
+    pub fn reference(pipeline_layout: PipelineLayout) void {
         wgpuPipelineLayoutReference(pipeline_layout);
     }
     extern fn wgpuPipelineLayoutReference(pipeline_layout: PipelineLayout) void;
 
-    pub inline fn release(pipeline_layout: PipelineLayout) void {
+    pub fn release(pipeline_layout: PipelineLayout) void {
         wgpuPipelineLayoutRelease(pipeline_layout);
     }
     extern fn wgpuPipelineLayoutRelease(pipeline_layout: PipelineLayout) void;
 };
 
 pub const QuerySet = *opaque {
-    pub inline fn destroy(query_set: QuerySet) void {
+    pub fn destroy(query_set: QuerySet) void {
         wgpuQuerySetDestroy(query_set);
     }
     extern fn wgpuQuerySetDestroy(query_set: QuerySet) void;
 
-    pub inline fn setLabel(query_set: QuerySet, label: ?[*:0]const u8) void {
+    pub fn setLabel(query_set: QuerySet, label: ?[*:0]const u8) void {
         wgpuQuerySetSetLabel(query_set, label);
     }
     extern fn wgpuQuerySetSetLabel(query_set: QuerySet, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(query_set: QuerySet) void {
+    pub fn reference(query_set: QuerySet) void {
         wgpuQuerySetReference(query_set);
     }
     extern fn wgpuQuerySetReference(query_set: QuerySet) void;
 
-    pub inline fn release(query_set: QuerySet) void {
+    pub fn release(query_set: QuerySet) void {
         wgpuQuerySetRelease(query_set);
     }
     extern fn wgpuQuerySetRelease(query_set: QuerySet) void;
 };
 
 pub const Queue = *opaque {
-    pub inline fn copyExternalTextureForBrowser(
+    pub fn copyExternalTextureForBrowser(
         queue: Queue,
         source: ImageCopyExternalTexture,
         destination: ImageCopyTexture,
@@ -2106,7 +2106,7 @@ pub const Queue = *opaque {
         options: *const CopyTextureForBrowserOptions,
     ) void;
 
-    pub inline fn copyTextureForBrowser(
+    pub fn copyTextureForBrowser(
         queue: Queue,
         source: ImageCopyTexture,
         destination: ImageCopyTexture,
@@ -2123,7 +2123,7 @@ pub const Queue = *opaque {
         options: *const CopyTextureForBrowserOptions,
     ) void;
 
-    pub inline fn onSubmittedWorkDone(
+    pub fn onSubmittedWorkDone(
         queue: Queue,
         signal_value: u64,
         callback: QueueWorkDoneCallback,
@@ -2138,17 +2138,17 @@ pub const Queue = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn setLabel(queue: Queue, label: ?[*:0]const u8) void {
+    pub fn setLabel(queue: Queue, label: ?[*:0]const u8) void {
         wgpuQueueSetLabel(queue, label);
     }
     extern fn wgpuQueueSetLabel(queue: Queue, label: ?[*:0]const u8) void;
 
-    pub inline fn submit(queue: Queue, commands: []const CommandBuffer) void {
+    pub fn submit(queue: Queue, commands: []const CommandBuffer) void {
         wgpuQueueSubmit(queue, @as(u32, @intCast(commands.len)), commands.ptr);
     }
     extern fn wgpuQueueSubmit(queue: Queue, command_count: u32, commands: [*]const CommandBuffer) void;
 
-    pub inline fn writeBuffer(
+    pub fn writeBuffer(
         queue: Queue,
         buffer: Buffer,
         buffer_offset: u64,
@@ -2171,7 +2171,7 @@ pub const Queue = *opaque {
         size: u64,
     ) void;
 
-    pub inline fn writeTexture(
+    pub fn writeTexture(
         queue: Queue,
         destination: ImageCopyTexture,
         data_layout: TextureDataLayout,
@@ -2197,31 +2197,31 @@ pub const Queue = *opaque {
         write_size: *const Extent3D,
     ) void;
 
-    pub inline fn reference(queue: Queue) void {
+    pub fn reference(queue: Queue) void {
         wgpuQueueReference(queue);
     }
     extern fn wgpuQueueReference(queue: Queue) void;
 
-    pub inline fn release(queue: Queue) void {
+    pub fn release(queue: Queue) void {
         wgpuQueueRelease(queue);
     }
     extern fn wgpuQueueRelease(queue: Queue) void;
 };
 
 pub const RenderBundle = *opaque {
-    pub inline fn reference(render_bundle: RenderBundle) void {
+    pub fn reference(render_bundle: RenderBundle) void {
         wgpuRenderBundleReference(render_bundle);
     }
     extern fn wgpuRenderBundleReference(render_bundle: RenderBundle) void;
 
-    pub inline fn release(render_bundle: RenderBundle) void {
+    pub fn release(render_bundle: RenderBundle) void {
         wgpuRenderBundleRelease(render_bundle);
     }
     extern fn wgpuRenderBundleRelease(render_bundle: RenderBundle) void;
 };
 
 pub const RenderBundleEncoder = *opaque {
-    pub inline fn draw(
+    pub fn draw(
         render_bundle_encoder: RenderBundleEncoder,
         vertex_count: u32,
         instance_count: u32,
@@ -2244,7 +2244,7 @@ pub const RenderBundleEncoder = *opaque {
         first_instance: u32,
     ) void;
 
-    pub inline fn drawIndexed(
+    pub fn drawIndexed(
         render_bundle_encoder: RenderBundleEncoder,
         index_count: u32,
         instance_count: u32,
@@ -2270,7 +2270,7 @@ pub const RenderBundleEncoder = *opaque {
         first_instance: u32,
     ) void;
 
-    pub inline fn drawIndexedIndirect(
+    pub fn drawIndexedIndirect(
         render_bundle_encoder: RenderBundleEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
@@ -2283,7 +2283,7 @@ pub const RenderBundleEncoder = *opaque {
         indirect_offset: u64,
     ) void;
 
-    pub inline fn drawIndirect(
+    pub fn drawIndirect(
         render_bundle_encoder: RenderBundleEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
@@ -2296,7 +2296,7 @@ pub const RenderBundleEncoder = *opaque {
         indirect_offset: u64,
     ) void;
 
-    pub inline fn finish(
+    pub fn finish(
         render_bundle_encoder: RenderBundleEncoder,
         descriptor: RenderBundleDescriptor,
     ) RenderBundle {
@@ -2307,7 +2307,7 @@ pub const RenderBundleEncoder = *opaque {
         descriptor: *const RenderBundleDescriptor,
     ) RenderBundle;
 
-    pub inline fn insertDebugMarker(
+    pub fn insertDebugMarker(
         render_bundle_encoder: RenderBundleEncoder,
         marker_label: [*:0]const u8,
     ) void {
@@ -2318,12 +2318,12 @@ pub const RenderBundleEncoder = *opaque {
         marker_label: [*:0]const u8,
     ) void;
 
-    pub inline fn popDebugGroup(render_bundle_encoder: RenderBundleEncoder) void {
+    pub fn popDebugGroup(render_bundle_encoder: RenderBundleEncoder) void {
         wgpuRenderBundleEncoderPopDebugGroup(render_bundle_encoder);
     }
     extern fn wgpuRenderBundleEncoderPopDebugGroup(render_bundle_encoder: RenderBundleEncoder) void;
 
-    pub inline fn pushDebugGroup(render_bundle_encoder: RenderBundleEncoder, group_label: [*:0]const u8) void {
+    pub fn pushDebugGroup(render_bundle_encoder: RenderBundleEncoder, group_label: [*:0]const u8) void {
         wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder, group_label);
     }
     extern fn wgpuRenderBundleEncoderPushDebugGroup(
@@ -2331,7 +2331,7 @@ pub const RenderBundleEncoder = *opaque {
         group_label: [*:0]const u8,
     ) void;
 
-    pub inline fn setBindGroup(
+    pub fn setBindGroup(
         render_bundle_encoder: RenderBundleEncoder,
         group_index: u32,
         group: BindGroup,
@@ -2353,7 +2353,7 @@ pub const RenderBundleEncoder = *opaque {
         dynamic_offsets: ?[*]const u32,
     ) void;
 
-    pub inline fn setIndexBuffer(
+    pub fn setIndexBuffer(
         render_bundle_encoder: RenderBundleEncoder,
         buffer: Buffer,
         format: IndexFormat,
@@ -2370,7 +2370,7 @@ pub const RenderBundleEncoder = *opaque {
         size: u64,
     ) void;
 
-    pub inline fn setLabel(render_bundle_encoder: RenderBundleEncoder, label: ?[*:0]const u8) void {
+    pub fn setLabel(render_bundle_encoder: RenderBundleEncoder, label: ?[*:0]const u8) void {
         wgpuRenderBundleEncoderSetLabel(render_bundle_encoder, label);
     }
     extern fn wgpuRenderBundleEncoderSetLabel(
@@ -2378,7 +2378,7 @@ pub const RenderBundleEncoder = *opaque {
         label: ?[*:0]const u8,
     ) void;
 
-    pub inline fn setPipeline(render_bundle_encoder: RenderBundleEncoder, pipeline: RenderPipeline) void {
+    pub fn setPipeline(render_bundle_encoder: RenderBundleEncoder, pipeline: RenderPipeline) void {
         wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder, pipeline);
     }
     extern fn wgpuRenderBundleEncoderSetPipeline(
@@ -2386,7 +2386,7 @@ pub const RenderBundleEncoder = *opaque {
         pipeline: RenderPipeline,
     ) void;
 
-    pub inline fn setVertexBuffer(
+    pub fn setVertexBuffer(
         render_bundle_encoder: RenderBundleEncoder,
         slot: u32,
         buffer: Buffer,
@@ -2403,19 +2403,19 @@ pub const RenderBundleEncoder = *opaque {
         size: u64,
     ) void;
 
-    pub inline fn reference(render_bundle_encoder: RenderBundleEncoder) void {
+    pub fn reference(render_bundle_encoder: RenderBundleEncoder) void {
         wgpuRenderBundleEncoderReference(render_bundle_encoder);
     }
     extern fn wgpuRenderBundleEncoderReference(render_bundle_encoder: RenderBundleEncoder) void;
 
-    pub inline fn release(render_bundle_encoder: RenderBundleEncoder) void {
+    pub fn release(render_bundle_encoder: RenderBundleEncoder) void {
         wgpuRenderBundleEncoderRelease(render_bundle_encoder);
     }
     extern fn wgpuRenderBundleEncoderRelease(render_bundle_encoder: RenderBundleEncoder) void;
 };
 
 pub const RenderPassEncoder = *opaque {
-    pub inline fn beginOcclusionQuery(render_pass_encoder: RenderPassEncoder, query_index: u32) void {
+    pub fn beginOcclusionQuery(render_pass_encoder: RenderPassEncoder, query_index: u32) void {
         wgpuRenderPassEncoderBeginOcclusionQuery(render_pass_encoder, query_index);
     }
     extern fn wgpuRenderPassEncoderBeginOcclusionQuery(
@@ -2423,7 +2423,7 @@ pub const RenderPassEncoder = *opaque {
         query_index: u32,
     ) void;
 
-    pub inline fn draw(
+    pub fn draw(
         render_pass_encoder: RenderPassEncoder,
         vertex_count: u32,
         instance_count: u32,
@@ -2440,7 +2440,7 @@ pub const RenderPassEncoder = *opaque {
         first_instance: u32,
     ) void;
 
-    pub inline fn drawIndexed(
+    pub fn drawIndexed(
         render_pass_encoder: RenderPassEncoder,
         index_count: u32,
         instance_count: u32,
@@ -2466,7 +2466,7 @@ pub const RenderPassEncoder = *opaque {
         first_instance: u32,
     ) void;
 
-    pub inline fn drawIndexedIndirect(
+    pub fn drawIndexedIndirect(
         render_pass_encoder: RenderPassEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
@@ -2479,7 +2479,7 @@ pub const RenderPassEncoder = *opaque {
         indirect_offset: u64,
     ) void;
 
-    pub inline fn drawIndirect(
+    pub fn drawIndirect(
         render_pass_encoder: RenderPassEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
@@ -2492,17 +2492,17 @@ pub const RenderPassEncoder = *opaque {
         indirect_offset: u64,
     ) void;
 
-    pub inline fn end(render_pass_encoder: RenderPassEncoder) void {
+    pub fn end(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderEnd(render_pass_encoder);
     }
     extern fn wgpuRenderPassEncoderEnd(render_pass_encoder: RenderPassEncoder) void;
 
-    pub inline fn endOcclusionQuery(render_pass_encoder: RenderPassEncoder) void {
+    pub fn endOcclusionQuery(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderEndOcclusionQuery(render_pass_encoder);
     }
     extern fn wgpuRenderPassEncoderEndOcclusionQuery(render_pass_encoder: RenderPassEncoder) void;
 
-    pub inline fn executeBundles(
+    pub fn executeBundles(
         render_pass_encoder: RenderPassEncoder,
         bundle_count: u32,
         bundles: [*]const RenderBundle,
@@ -2515,7 +2515,7 @@ pub const RenderPassEncoder = *opaque {
         bundles: [*]const RenderBundle,
     ) void;
 
-    pub inline fn insertDebugMarker(render_pass_encoder: RenderPassEncoder, marker_label: [*:0]const u8) void {
+    pub fn insertDebugMarker(render_pass_encoder: RenderPassEncoder, marker_label: [*:0]const u8) void {
         wgpuRenderPassEncoderInsertDebugMarker(render_pass_encoder, marker_label);
     }
     extern fn wgpuRenderPassEncoderInsertDebugMarker(
@@ -2523,12 +2523,12 @@ pub const RenderPassEncoder = *opaque {
         marker_label: [*:0]const u8,
     ) void;
 
-    pub inline fn popDebugGroup(render_pass_encoder: RenderPassEncoder) void {
+    pub fn popDebugGroup(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderPopDebugGroup(render_pass_encoder);
     }
     extern fn wgpuRenderPassEncoderPopDebugGroup(render_pass_encoder: RenderPassEncoder) void;
 
-    pub inline fn pushDebugGroup(render_pass_encoder: RenderPassEncoder, group_label: [*:0]const u8) void {
+    pub fn pushDebugGroup(render_pass_encoder: RenderPassEncoder, group_label: [*:0]const u8) void {
         wgpuRenderPassEncoderPushDebugGroup(render_pass_encoder, group_label);
     }
     extern fn wgpuRenderPassEncoderPushDebugGroup(
@@ -2536,7 +2536,7 @@ pub const RenderPassEncoder = *opaque {
         group_label: [*:0]const u8,
     ) void;
 
-    pub inline fn setBindGroup(
+    pub fn setBindGroup(
         render_pass_encoder: RenderPassEncoder,
         group_index: u32,
         group: BindGroup,
@@ -2558,7 +2558,7 @@ pub const RenderPassEncoder = *opaque {
         dynamic_offsets: ?[*]const u32,
     ) void;
 
-    pub inline fn setBlendConstant(render_pass_encoder: RenderPassEncoder, color: Color) void {
+    pub fn setBlendConstant(render_pass_encoder: RenderPassEncoder, color: Color) void {
         wgpuRenderPassEncoderSetBlendConstant(render_pass_encoder, &color);
     }
     extern fn wgpuRenderPassEncoderSetBlendConstant(
@@ -2566,7 +2566,7 @@ pub const RenderPassEncoder = *opaque {
         color: *const Color,
     ) void;
 
-    pub inline fn setIndexBuffer(
+    pub fn setIndexBuffer(
         render_pass_encoder: RenderPassEncoder,
         buffer: Buffer,
         format: IndexFormat,
@@ -2583,12 +2583,12 @@ pub const RenderPassEncoder = *opaque {
         size: u64,
     ) void;
 
-    pub inline fn setLabel(render_pass_encoder: RenderPassEncoder, label: ?[*:0]const u8) void {
+    pub fn setLabel(render_pass_encoder: RenderPassEncoder, label: ?[*:0]const u8) void {
         wgpuRenderPassEncoderSetLabel(render_pass_encoder, label);
     }
     extern fn wgpuRenderPassEncoderSetLabel(render_pass_encoder: RenderPassEncoder, label: ?[*:0]const u8) void;
 
-    pub inline fn setPipeline(render_pass_encoder: RenderPassEncoder, pipeline: RenderPipeline) void {
+    pub fn setPipeline(render_pass_encoder: RenderPassEncoder, pipeline: RenderPipeline) void {
         wgpuRenderPassEncoderSetPipeline(render_pass_encoder, pipeline);
     }
     extern fn wgpuRenderPassEncoderSetPipeline(
@@ -2596,7 +2596,7 @@ pub const RenderPassEncoder = *opaque {
         pipeline: RenderPipeline,
     ) void;
 
-    pub inline fn setScissorRect(
+    pub fn setScissorRect(
         render_pass_encoder: RenderPassEncoder,
         x: u32,
         y: u32,
@@ -2613,12 +2613,12 @@ pub const RenderPassEncoder = *opaque {
         height: u32,
     ) void;
 
-    pub inline fn setStencilReference(render_pass_encoder: RenderPassEncoder, ref: u32) void {
+    pub fn setStencilReference(render_pass_encoder: RenderPassEncoder, ref: u32) void {
         wgpuRenderPassEncoderSetStencilReference(render_pass_encoder, ref);
     }
     extern fn wgpuRenderPassEncoderSetStencilReference(render_pass_encoder: RenderPassEncoder, ref: u32) void;
 
-    pub inline fn setVertexBuffer(
+    pub fn setVertexBuffer(
         render_pass_encoder: RenderPassEncoder,
         slot: u32,
         buffer: Buffer,
@@ -2635,7 +2635,7 @@ pub const RenderPassEncoder = *opaque {
         size: u64,
     ) void;
 
-    pub inline fn setViewport(
+    pub fn setViewport(
         render_pass_encoder: RenderPassEncoder,
         x: f32,
         y: f32,
@@ -2656,7 +2656,7 @@ pub const RenderPassEncoder = *opaque {
         max_depth: f32,
     ) void;
 
-    pub inline fn writeTimestamp(
+    pub fn writeTimestamp(
         render_pass_encoder: RenderPassEncoder,
         query_set: QuerySet,
         query_index: u32,
@@ -2669,19 +2669,19 @@ pub const RenderPassEncoder = *opaque {
         query_index: u32,
     ) void;
 
-    pub inline fn reference(render_pass_encoder: RenderPassEncoder) void {
+    pub fn reference(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderReference(render_pass_encoder);
     }
     extern fn wgpuRenderPassEncoderReference(render_pass_encoder: RenderPassEncoder) void;
 
-    pub inline fn release(render_pass_encoder: RenderPassEncoder) void {
+    pub fn release(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderRelease(render_pass_encoder);
     }
     extern fn wgpuRenderPassEncoderRelease(render_pass_encoder: RenderPassEncoder) void;
 };
 
 pub const RenderPipeline = *opaque {
-    pub inline fn getBindGroupLayout(render_pipeline: RenderPipeline, group_index: u32) BindGroupLayout {
+    pub fn getBindGroupLayout(render_pipeline: RenderPipeline, group_index: u32) BindGroupLayout {
         return wgpuRenderPipelineGetBindGroupLayout(render_pipeline, group_index);
     }
     extern fn wgpuRenderPipelineGetBindGroupLayout(
@@ -2689,41 +2689,41 @@ pub const RenderPipeline = *opaque {
         group_index: u32,
     ) BindGroupLayout;
 
-    pub inline fn setLabel(render_pipeline: RenderPipeline, label: ?[*:0]const u8) void {
+    pub fn setLabel(render_pipeline: RenderPipeline, label: ?[*:0]const u8) void {
         wgpuRenderPipelineSetLabel(render_pipeline, label);
     }
     extern fn wgpuRenderPipelineSetLabel(render_pipeline: RenderPipeline, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(render_pipeline: RenderPipeline) void {
+    pub fn reference(render_pipeline: RenderPipeline) void {
         wgpuRenderPipelineReference(render_pipeline);
     }
     extern fn wgpuRenderPipelineReference(render_pipeline: RenderPipeline) void;
 
-    pub inline fn release(render_pipeline: RenderPipeline) void {
+    pub fn release(render_pipeline: RenderPipeline) void {
         wgpuRenderPipelineRelease(render_pipeline);
     }
     extern fn wgpuRenderPipelineRelease(render_pipeline: RenderPipeline) void;
 };
 
 pub const Sampler = *opaque {
-    pub inline fn setLabel(sampler: Sampler, label: ?[*:0]const u8) void {
+    pub fn setLabel(sampler: Sampler, label: ?[*:0]const u8) void {
         wgpuSamplerSetLabel(sampler, label);
     }
     extern fn wgpuSamplerSetLabel(sampler: Sampler, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(sampler: Sampler) void {
+    pub fn reference(sampler: Sampler) void {
         wgpuSamplerReference(sampler);
     }
     extern fn wgpuSamplerReference(sampler: Sampler) void;
 
-    pub inline fn release(sampler: Sampler) void {
+    pub fn release(sampler: Sampler) void {
         wgpuSamplerRelease(sampler);
     }
     extern fn wgpuSamplerRelease(sampler: Sampler) void;
 };
 
 pub const ShaderModule = *opaque {
-    pub inline fn getCompilationInfo(
+    pub fn getCompilationInfo(
         shader_module: ShaderModule,
         callback: CompilationInfoCallback,
         userdata: ?*anyopaque,
@@ -2736,36 +2736,36 @@ pub const ShaderModule = *opaque {
         userdata: ?*anyopaque,
     ) void;
 
-    pub inline fn setLabel(shader_module: ShaderModule, label: ?[*:0]const u8) void {
+    pub fn setLabel(shader_module: ShaderModule, label: ?[*:0]const u8) void {
         wgpuShaderModuleSetLabel(shader_module, label);
     }
     extern fn wgpuShaderModuleSetLabel(shader_module: ShaderModule, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(shader_module: ShaderModule) void {
+    pub fn reference(shader_module: ShaderModule) void {
         wgpuShaderModuleReference(shader_module);
     }
     extern fn wgpuShaderModuleReference(shader_module: ShaderModule) void;
 
-    pub inline fn release(shader_module: ShaderModule) void {
+    pub fn release(shader_module: ShaderModule) void {
         wgpuShaderModuleRelease(shader_module);
     }
     extern fn wgpuShaderModuleRelease(shader_module: ShaderModule) void;
 };
 
 pub const Surface = *opaque {
-    pub inline fn reference(surface: Surface) void {
+    pub fn reference(surface: Surface) void {
         wgpuSurfaceReference(surface);
     }
     extern fn wgpuSurfaceReference(surface: Surface) void;
 
-    pub inline fn release(surface: Surface) void {
+    pub fn release(surface: Surface) void {
         wgpuSurfaceRelease(surface);
     }
     extern fn wgpuSurfaceRelease(surface: Surface) void;
 };
 
 pub const SwapChain = *opaque {
-    pub inline fn configure(
+    pub fn configure(
         swap_chain: SwapChain,
         format: TextureFormat,
         allowed_usage: TextureUsage,
@@ -2782,66 +2782,66 @@ pub const SwapChain = *opaque {
         height: u32,
     ) void;
 
-    pub inline fn getCurrentTextureView(swap_chain: SwapChain) TextureView {
+    pub fn getCurrentTextureView(swap_chain: SwapChain) TextureView {
         return wgpuSwapChainGetCurrentTextureView(swap_chain);
     }
     extern fn wgpuSwapChainGetCurrentTextureView(swap_chain: SwapChain) TextureView;
 
-    pub inline fn present(swap_chain: SwapChain) void {
+    pub fn present(swap_chain: SwapChain) void {
         wgpuSwapChainPresent(swap_chain);
     }
     extern fn wgpuSwapChainPresent(swap_chain: SwapChain) void;
 
-    pub inline fn reference(swap_chain: SwapChain) void {
+    pub fn reference(swap_chain: SwapChain) void {
         wgpuSwapChainReference(swap_chain);
     }
     extern fn wgpuSwapChainReference(swap_chain: SwapChain) void;
 
-    pub inline fn release(swap_chain: SwapChain) void {
+    pub fn release(swap_chain: SwapChain) void {
         wgpuSwapChainRelease(swap_chain);
     }
     extern fn wgpuSwapChainRelease(swap_chain: SwapChain) void;
 };
 
 pub const Texture = *opaque {
-    pub inline fn createView(texture: Texture, descriptor: TextureViewDescriptor) TextureView {
+    pub fn createView(texture: Texture, descriptor: TextureViewDescriptor) TextureView {
         return wgpuTextureCreateView(texture, &descriptor);
     }
     extern fn wgpuTextureCreateView(texture: Texture, descriptor: *const TextureViewDescriptor) TextureView;
 
-    pub inline fn destroy(texture: Texture) void {
+    pub fn destroy(texture: Texture) void {
         wgpuTextureDestroy(texture);
     }
     extern fn wgpuTextureDestroy(texture: Texture) void;
 
-    pub inline fn setLabel(texture: Texture, label: ?[*:0]const u8) void {
+    pub fn setLabel(texture: Texture, label: ?[*:0]const u8) void {
         wgpuTextureSetLabel(texture, label);
     }
     extern fn wgpuTextureSetLabel(texture: Texture, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(texture: Texture) void {
+    pub fn reference(texture: Texture) void {
         wgpuTextureReference(texture);
     }
     extern fn wgpuTextureReference(texture: Texture) void;
 
-    pub inline fn release(texture: Texture) void {
+    pub fn release(texture: Texture) void {
         wgpuTextureRelease(texture);
     }
     extern fn wgpuTextureRelease(texture: Texture) void;
 };
 
 pub const TextureView = *opaque {
-    pub inline fn setLabel(texture_view: TextureView, label: ?[*:0]const u8) void {
+    pub fn setLabel(texture_view: TextureView, label: ?[*:0]const u8) void {
         wgpuTextureViewSetLabel(texture_view, label);
     }
     extern fn wgpuTextureViewSetLabel(texture_view: TextureView, label: ?[*:0]const u8) void;
 
-    pub inline fn reference(texture_view: TextureView) void {
+    pub fn reference(texture_view: TextureView) void {
         wgpuTextureViewReference(texture_view);
     }
     extern fn wgpuTextureViewReference(texture_view: TextureView) void;
 
-    pub inline fn release(texture_view: TextureView) void {
+    pub fn release(texture_view: TextureView) void {
         wgpuTextureViewRelease(texture_view);
     }
     extern fn wgpuTextureViewRelease(texture_view: TextureView) void;
