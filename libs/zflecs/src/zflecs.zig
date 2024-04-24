@@ -2364,6 +2364,20 @@ pub fn OBSERVER(
     _ = observer_init(world, observer_desc);
 }
 
+/// Implements a flecs system from function parameters.
+/// For instance, the function below
+/// fn move_system(positions: []Position, velocities: []const Velocity) void {
+///     for (positions, velocities) |*p, *v| {
+///         p.x += v.x;
+///         p.y += v.y;
+///     }
+/// }
+/// Would return the following implementation
+/// fn exec(it: *ecs.iter_t) callconv(.C) void {
+///     const c1 = ecs.field(it, Position, 1).?;
+///     const c2 = ecs.field(it, Velocity, 2).?;
+///     move_system(c1, c2);//probably inlined
+// }
 fn SystemImpl(comptime fn_system: anytype) type {
     return struct {
         fn exec(it: *iter_t) callconv(.C) void {
@@ -2380,6 +2394,7 @@ fn SystemImpl(comptime fn_system: anytype) type {
     };
 }
 
+/// Creates system_desc_t from function parameters
 pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
     const system_struct = SystemImpl(fn_system);
 
@@ -2396,6 +2411,7 @@ pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
     return system_desc;
 }
 
+/// Creates a system description and adds it to the world, from function parameters
 pub fn ADD_SYSTEM(
     world: *world_t,
     name: [*:0]const u8,
