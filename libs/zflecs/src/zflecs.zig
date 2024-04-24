@@ -2364,6 +2364,48 @@ pub fn OBSERVER(
     _ = observer_init(world, observer_desc);
 }
 
+fn SystemImpl(comptime fn_system: anytype) type {
+    return struct {
+        fn exec(it: *iter_t) callconv(.C) void {
+            const fn_type = @typeInfo(@TypeOf(fn_system));
+            const ArgsTupleType = std.meta.ArgsTuple(@TypeOf(fn_system));
+            var args_tuple: ArgsTupleType = undefined;
+            inline for (fn_type.Fn.params, 0..) |p, i| {
+                args_tuple[i] = field(it, @typeInfo(p.type.?).Pointer.child, i + 1).?;
+            }
+
+            //NOTE: .always_inline seems ok, but unsure. Replace to .auto if it breaks
+            _ = @call(.always_inline, fn_system, args_tuple);
+        }
+    };
+}
+
+pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
+    const system_struct = SystemImpl(fn_system);
+
+    var system_desc = system_desc_t{};
+    system_desc.callback = system_struct.exec;
+
+    const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
+    inline for (fn_type.params, 0..) |p, i| {
+        const param_type_info = @typeInfo(p.type.?).Pointer;
+        const inout = if (param_type_info.is_const) .In else .InOut;
+        system_desc.query.filter.terms[i] = .{ .id = id(param_type_info.child), .inout = inout };
+    }
+
+    return system_desc;
+}
+
+pub fn ADD_SYSTEM(
+    world: *world_t,
+    name: [*:0]const u8,
+    phase: entity_t,
+    comptime fn_system: anytype,
+) void {
+    var desc = SYSTEM_DESC(fn_system);
+    SYSTEM(world, name, phase, &desc);
+}
+
 pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
     return entity_init(world, &.{ .name = name });
 }
