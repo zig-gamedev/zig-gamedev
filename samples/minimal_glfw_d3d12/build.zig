@@ -41,10 +41,17 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .zd3d12 = zd3d12_module,
     });
 
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
         const dxc_step = buildShaders(b);
-        exe.step.dependOn(dxc_step);
+        install_content_step.step.dependOn(dxc_step);
     }
+    exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
@@ -56,13 +63,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-
-    const install_content_step = b.addInstallDirectory(.{
-        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
-        .install_dir = .{ .custom = "" },
-        .install_subdir = "bin/" ++ content_dir,
-    });
-    exe.step.dependOn(&install_content_step.step);
 
     return exe;
 }
