@@ -273,10 +273,10 @@ test "zflecs.helloworld" {
     ecs.TAG(world, Apples);
 
     {
-        var system_desc = ecs.SYSTEM_DESC(move);
-        system_desc.query.filter.terms[0] = .{ .id = ecs.id(Position) };
-        system_desc.query.filter.terms[1] = .{ .id = ecs.id(Velocity) };
-        ecs.SYSTEM(world, "move system", ecs.OnUpdate, &system_desc);
+        ecs.ADD_SYSTEM_WITH_FILTERS(world, "move system", ecs.OnUpdate, move, &.{
+            .{ .id = ecs.id(Position) },
+            .{ .id = ecs.id(Velocity) },
+        });
     }
 
     const bob = ecs.new_entity(world, "Bob");

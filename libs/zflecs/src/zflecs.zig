@@ -2380,25 +2380,21 @@ pub fn OBSERVER(
 // }
 fn SystemImpl(comptime fn_system: anytype) type {
     const fn_type = @typeInfo(@TypeOf(fn_system));
-    if (fn_type.Fn.params.len == 0){
+    if (fn_type.Fn.params.len == 0) {
         @compileError("System need at least one parameter");
     }
 
     return struct {
-        const self = @This();
-        //If user wants to include the iterator param, it must be the first
-        //in the parameter list
-        const has_it_param = fn_type.Fn.params[0].type == *iter_t;
-
         fn exec(it: *iter_t) callconv(.C) void {
             const ArgsTupleType = std.meta.ArgsTuple(@TypeOf(fn_system));
             var args_tuple: ArgsTupleType = undefined;
 
-            if (self.has_it_param){
+            const has_it_param = fn_type.Fn.params[0].type == *iter_t;
+            if (has_it_param) {
                 args_tuple[0] = it;
             }
 
-            const start_index = if (self.has_it_param) 1 else 0;
+            const start_index = if (has_it_param) 1 else 0;
 
             inline for (start_index..fn_type.Fn.params.len) |i| {
                 const p = fn_type.Fn.params[i];
@@ -2419,12 +2415,28 @@ pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
     system_desc.callback = system_struct.exec;
 
     const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
-    const start_index = if (system_struct.has_it_param) 1 else 0;
+    const has_it_param = fn_type.params[0].type == *iter_t;
+    const start_index = if (has_it_param) 1 else 0;
     inline for (start_index..fn_type.params.len) |i| {
         const p = fn_type.params[i];
         const param_type_info = @typeInfo(p.type.?).Pointer;
         const inout = if (param_type_info.is_const) .In else .InOut;
         system_desc.query.filter.terms[i - start_index] = .{ .id = id(param_type_info.child), .inout = inout };
+    }
+
+    return system_desc;
+}
+
+/// Creates system_desc_t from function parameters.
+/// Accepts aditional filter terms
+pub fn SYSTEM_DESC_WITH_FILTERS(comptime fn_system: anytype, filters: []const term_t) system_desc_t {
+    const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
+    var system_desc = SYSTEM_DESC(fn_system);
+
+    const has_it_param = fn_type.params[0].type == *iter_t;
+    const start_index = if (has_it_param) 1 else 0;
+    for (filters, 0..) |t, i| {
+        system_desc.query.filter.terms[i + fn_type.params.len - start_index] = t;
     }
 
     return system_desc;
@@ -2440,6 +2452,20 @@ pub fn ADD_SYSTEM(
     var desc = SYSTEM_DESC(fn_system);
     SYSTEM(world, name, phase, &desc);
 }
+
+/// Creates a system description and adds it to the world, from function parameters
+/// Accepts aditional filter terms
+pub fn ADD_SYSTEM_WITH_FILTERS(
+    world: *world_t,
+    name: [*:0]const u8,
+    phase: entity_t,
+    comptime fn_system: anytype,
+    filters: []const term_t,
+) void {
+    var desc = SYSTEM_DESC_WITH_FILTERS(fn_system, filters);
+    SYSTEM(world, name, phase, &desc);
+}
+
 
 pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
     return entity_init(world, &.{ .name = name });
