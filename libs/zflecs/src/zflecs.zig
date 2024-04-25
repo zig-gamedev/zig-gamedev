@@ -2364,6 +2364,108 @@ pub fn OBSERVER(
     _ = observer_init(world, observer_desc);
 }
 
+/// Implements a flecs system from function parameters.
+/// For instance, the function below
+/// fn move_system(positions: []Position, velocities: []const Velocity) void {
+///     for (positions, velocities) |*p, *v| {
+///         p.x += v.x;
+///         p.y += v.y;
+///     }
+/// }
+/// Would return the following implementation
+/// fn exec(it: *ecs.iter_t) callconv(.C) void {
+///     const c1 = ecs.field(it, Position, 1).?;
+///     const c2 = ecs.field(it, Velocity, 2).?;
+///     move_system(c1, c2);//probably inlined
+// }
+fn SystemImpl(comptime fn_system: anytype) type {
+    const fn_type = @typeInfo(@TypeOf(fn_system));
+    if (fn_type.Fn.params.len == 0) {
+        @compileError("System need at least one parameter");
+    }
+
+    return struct {
+        fn exec(it: *iter_t) callconv(.C) void {
+            const ArgsTupleType = std.meta.ArgsTuple(@TypeOf(fn_system));
+            var args_tuple: ArgsTupleType = undefined;
+
+            const has_it_param = fn_type.Fn.params[0].type == *iter_t;
+            if (has_it_param) {
+                args_tuple[0] = it;
+            }
+
+            const start_index = if (has_it_param) 1 else 0;
+
+            inline for (start_index..fn_type.Fn.params.len) |i| {
+                const p = fn_type.Fn.params[i];
+                args_tuple[i] = field(it, @typeInfo(p.type.?).Pointer.child, i + 1 - start_index).?;
+            }
+
+            //NOTE: .always_inline seems ok, but unsure. Replace to .auto if it breaks
+            _ = @call(.always_inline, fn_system, args_tuple);
+        }
+    };
+}
+
+/// Creates system_desc_t from function parameters
+pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
+    const system_struct = SystemImpl(fn_system);
+
+    var system_desc = system_desc_t{};
+    system_desc.callback = system_struct.exec;
+
+    const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
+    const has_it_param = fn_type.params[0].type == *iter_t;
+    const start_index = if (has_it_param) 1 else 0;
+    inline for (start_index..fn_type.params.len) |i| {
+        const p = fn_type.params[i];
+        const param_type_info = @typeInfo(p.type.?).Pointer;
+        const inout = if (param_type_info.is_const) .In else .InOut;
+        system_desc.query.filter.terms[i - start_index] = .{ .id = id(param_type_info.child), .inout = inout };
+    }
+
+    return system_desc;
+}
+
+/// Creates system_desc_t from function parameters.
+/// Accepts aditional filter terms
+pub fn SYSTEM_DESC_WITH_FILTERS(comptime fn_system: anytype, filters: []const term_t) system_desc_t {
+    const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
+    var system_desc = SYSTEM_DESC(fn_system);
+
+    const has_it_param = fn_type.params[0].type == *iter_t;
+    const start_index = if (has_it_param) 1 else 0;
+    for (filters, 0..) |t, i| {
+        system_desc.query.filter.terms[i + fn_type.params.len - start_index] = t;
+    }
+
+    return system_desc;
+}
+
+/// Creates a system description and adds it to the world, from function parameters
+pub fn ADD_SYSTEM(
+    world: *world_t,
+    name: [*:0]const u8,
+    phase: entity_t,
+    comptime fn_system: anytype,
+) void {
+    var desc = SYSTEM_DESC(fn_system);
+    SYSTEM(world, name, phase, &desc);
+}
+
+/// Creates a system description and adds it to the world, from function parameters
+/// Accepts aditional filter terms
+pub fn ADD_SYSTEM_WITH_FILTERS(
+    world: *world_t,
+    name: [*:0]const u8,
+    phase: entity_t,
+    comptime fn_system: anytype,
+    filters: []const term_t,
+) void {
+    var desc = SYSTEM_DESC_WITH_FILTERS(fn_system, filters);
+    SYSTEM(world, name, phase, &desc);
+}
+
 pub fn new_entity(world: *world_t, name: [*:0]const u8) entity_t {
     return entity_init(world, &.{ .name = name });
 }
