@@ -84,7 +84,6 @@ pub fn init(
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(common.readContentDirFileAlloc(arena, content_dir, "shaders/imgui.vs.cso", null) catch unreachable);

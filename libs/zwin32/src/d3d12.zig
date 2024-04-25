@@ -904,7 +904,7 @@ pub const RENDER_TARGET_BLEND_DESC = extern struct {
     DestBlendAlpha: BLEND,
     BlendOpAlpha: BLEND_OP,
     LogicOp: LOGIC_OP,
-    RenderTargetWriteMask: UINT8,
+    RenderTargetWriteMask: COLOR_WRITE_ENABLE,
 
     pub fn initDefault() RENDER_TARGET_BLEND_DESC {
         var v = std.mem.zeroes(@This());
@@ -918,7 +918,7 @@ pub const RENDER_TARGET_BLEND_DESC = extern struct {
             .DestBlendAlpha = .ZERO,
             .BlendOpAlpha = .ADD,
             .LogicOp = .NOOP,
-            .RenderTargetWriteMask = 0x0,
+            .RenderTargetWriteMask = COLOR_WRITE_ENABLE.ALL,
         };
         return v;
     }

@@ -104,7 +104,6 @@ pub fn main() !void {
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.VS = .{ .pShaderBytecode = vs_cso, .BytecodeLength = vs_cso.len };
         pso_desc.PS = .{ .pShaderBytecode = ps_cso, .BytecodeLength = ps_cso.len };
