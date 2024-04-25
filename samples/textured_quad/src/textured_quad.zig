@@ -60,7 +60,6 @@ const DemoState = struct {
             var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
             pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
             pso_desc.NumRenderTargets = 1;
-            pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
             pso_desc.RasterizerState.CullMode = .NONE;
             pso_desc.DepthStencilState.DepthEnable = w32.FALSE;

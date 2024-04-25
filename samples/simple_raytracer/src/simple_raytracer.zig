@@ -477,7 +477,6 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
@@ -491,7 +490,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .UNKNOWN;
         pso_desc.NumRenderTargets = 0;
-        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0x0;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = .{};
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/z_pre_pass.vs.cso"));
@@ -504,7 +503,6 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R32G32B32A32_FLOAT;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
