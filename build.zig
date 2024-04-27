@@ -116,7 +116,7 @@ const samples_cross_platform = struct {
     pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
     pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
 
-    usingnamespace struct { // WebGPU samples
+    pub usingnamespace struct { // WebGPU samples
         pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
         pub const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
         pub const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");
