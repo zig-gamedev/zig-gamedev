@@ -650,8 +650,8 @@ pub const iter_t = extern struct {
     interrupted_by: entity_t,
     priv: iter_private_t,
     next: iter_next_action_t,
-    callback: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
-    set_var: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
+    callback: iter_action_t,
+    set_var: iter_action_t,
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
 
