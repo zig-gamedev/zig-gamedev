@@ -1791,7 +1791,7 @@ pub const MipmapGenerator = struct {
             cpu_handle.ptr += gctx.cbv_srv_uav_cpu_heap.descriptor_size;
         }
 
-        var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
+        var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC{};
         desc.CS = generate_mipmap_bytecode;
         const pipeline = gctx.createComputeShaderPipeline(&desc);
 
