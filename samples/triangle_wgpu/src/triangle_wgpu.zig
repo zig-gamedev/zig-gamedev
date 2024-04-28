@@ -80,7 +80,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
     const pipeline_layout = gctx.createPipelineLayout(&.{bind_group_layout});
     defer gctx.releaseResource(pipeline_layout);
 
-    const pipeline = pipline: {
+    const pipeline = pipeline: {
         const vs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
         defer vs_module.release();
 
@@ -125,7 +125,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
                 .targets = &color_targets,
             },
         };
-        break :pipline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
+        break :pipeline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
     };
 
     const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
