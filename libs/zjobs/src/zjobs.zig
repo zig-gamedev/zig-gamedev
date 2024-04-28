@@ -136,7 +136,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             index: usize,
             prereq: JobId,
         ) JobId {
-            const old_cycle: u16 = self.cycle.load(.Acquire);
+            const old_cycle: u16 = self.cycle.load(.acquire);
             assert(isFreeCycle(old_cycle));
 
             const new_cycle: u16 = old_cycle +% 1;
@@ -149,8 +149,8 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
                 const acquired: bool = null == self.cycle.cmpxchgStrong(
                     old_cycle,
                     new_cycle,
-                    .Monotonic,
-                    .Monotonic,
+                    .monotonic,
+                    .monotonic,
                 );
                 assert(acquired);
             }
@@ -170,7 +170,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
         }
 
         fn executeJob(self: *Self, id: JobId) void {
-            const old_id = @atomicLoad(JobId, &self.id, .Monotonic);
+            const old_id = @atomicLoad(JobId, &self.id, .monotonic);
             assert(old_id == id);
 
             const old_cycle: u16 = old_id.cycle();
@@ -187,8 +187,8 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
                 const released: bool = null == self.cycle.cmpxchgStrong(
                     old_cycle,
                     new_cycle,
-                    .Monotonic,
-                    .Monotonic,
+                    .monotonic,
+                    .monotonic,
                 );
                 assert(released);
 
@@ -277,7 +277,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
                 self._free_queue.enqueueAssumeNotFull(free_index);
             }
 
-            self._initialized.store(true, .Monotonic);
+            self._initialized.store(true, .monotonic);
 
             return self;
         }
@@ -297,19 +297,19 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             defer self.unlock("start");
 
             const this_thread = Thread.getCurrentId();
-            const prev_thread = self._main_thread.swap(this_thread, .Monotonic);
+            const prev_thread = self._main_thread.swap(this_thread, .monotonic);
             assert(prev_thread == 0);
 
-            const was_initialized = self._initialized.load(.Monotonic);
+            const was_initialized = self._initialized.load(.monotonic);
             assert(was_initialized == true);
 
-            const was_started = self._started.swap(true, .Monotonic);
+            const was_started = self._started.swap(true, .monotonic);
             assert(was_started == false);
 
-            const was_running = self._running.swap(true, .Monotonic);
+            const was_running = self._running.swap(true, .monotonic);
             assert(was_running == false);
 
-            const was_stopping = self._stopping.load(.Monotonic);
+            const was_stopping = self._stopping.load(.monotonic);
             assert(was_stopping == false);
 
             // spawn up to (num_cpus - 1) threads
@@ -344,11 +344,11 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             if (!self.isRunning()) return;
 
             // signal threads to stop running
-            const was_running = self._running.swap(false, .Monotonic);
+            const was_running = self._running.swap(false, .monotonic);
             assert(was_running == true);
 
             // prevent scheduling more jobs
-            const was_stopping = self._stopping.swap(true, .Monotonic);
+            const was_stopping = self._stopping.swap(true, .monotonic);
             assert(was_stopping == false);
 
             self._idle_event.set();
@@ -384,25 +384,25 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
         /// Returns `true` if `init()` has been called, and `join()` has not
         /// yet run to completion.
         pub fn isInitialized(self: *const Self) bool {
-            return self._initialized.load(.Monotonic);
+            return self._initialized.load(.monotonic);
         }
 
         /// Returns `true` if `start()` has been called, and `join()` has not
         /// yet run to completion.
         pub fn isStarted(self: *const Self) bool {
-            return self._started.load(.Monotonic);
+            return self._started.load(.monotonic);
         }
 
         /// Returns `true` if `start()` has been called, and `stop()` has not
         /// yet been called.
         pub fn isRunning(self: *const Self) bool {
-            return self._running.load(.Monotonic);
+            return self._running.load(.monotonic);
         }
 
         /// Returns `true` if `stop()` has been called, and `join()` has not
         /// yet run to completion.
         pub fn isStopping(self: *const Self) bool {
-            return self._stopping.load(.Monotonic);
+            return self._stopping.load(.monotonic);
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -420,7 +420,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             assert(isLiveCycle(_id.cycle));
 
             const slot: *const Slot = &self._slots[_id.index];
-            const slot_cycle = slot.cycle.load(.Monotonic);
+            const slot_cycle = slot.cycle.load(.monotonic);
             return slot_cycle != _id.cycle;
         }
 
@@ -438,7 +438,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             assert(isLiveCycle(_id.cycle));
 
             const slot: *const Slot = &self._slots[_id.index];
-            const slot_cycle = slot.cycle.load(.Monotonic);
+            const slot_cycle = slot.cycle.load(.monotonic);
             return slot_cycle == _id.cycle;
         }
 
@@ -526,7 +526,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             {
                 slot.idle_mutex.lock();
                 defer slot.idle_mutex.unlock();
-                const slot_cycle = slot.cycle.load(.Monotonic);
+                const slot_cycle = slot.cycle.load(.monotonic);
 
                 if (slot_cycle == _id.cycle) {
                     slot.idle_condition.wait(&slot.idle_mutex);
@@ -689,7 +689,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
             // so we don't need to be locked to read/write here
             const slot: *Slot = &self._slots[_id.index];
             assert(slot.id == id);
-            assert(slot.cycle.load(.Monotonic) == _id.cycle);
+            assert(slot.cycle.load(.monotonic) == _id.cycle);
             assert(slot.prereq != id);
 
             {
@@ -794,17 +794,17 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
 
         inline fn lock(self: *Self, comptime site: []const u8) void {
             const this_thread = Thread.getCurrentId();
-            const lock_thread = self._lock_thread.load(.Acquire);
+            const lock_thread = self._lock_thread.load(.acquire);
             assert(this_thread != lock_thread);
             assert(site.len > 0);
 
             self._mutex.lock();
-            self._lock_thread.store(this_thread, .Release);
+            self._lock_thread.store(this_thread, .release);
         }
 
         inline fn unlock(self: *Self, comptime site: []const u8) void {
             const this_thread = Thread.getCurrentId();
-            const lock_thread = self._lock_thread.swap(0, .Monotonic);
+            const lock_thread = self._lock_thread.swap(0, .monotonic);
             assert(this_thread == lock_thread);
             assert(site.len > 0);
 
@@ -815,13 +815,13 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
 
         inline fn isLockedThread(self: *const Self) bool {
             const this_thread = Thread.getCurrentId();
-            const lock_thread = self._lock_thread.load(.Acquire);
+            const lock_thread = self._lock_thread.load(.acquire);
             return lock_thread == this_thread;
         }
 
         inline fn isUnlockedThread(self: *const Self) bool {
             const this_thread = Thread.getCurrentId();
-            const lock_thread = self._lock_thread.load(.Acquire);
+            const lock_thread = self._lock_thread.load(.acquire);
             return lock_thread != this_thread;
         }
 
@@ -829,14 +829,14 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
 
         inline fn isMainThread(self: *const Self) bool {
             const this_thread = Thread.getCurrentId();
-            const main_thread = self._main_thread.load(.Monotonic);
+            const main_thread = self._main_thread.load(.monotonic);
             assert(main_thread != 0);
             return main_thread == this_thread;
         }
 
         inline fn notMainThread(self: *const Self) bool {
             const this_thread = Thread.getCurrentId();
-            const main_thread = self._main_thread.load(.Monotonic);
+            const main_thread = self._main_thread.load(.monotonic);
             assert(main_thread != 0);
             return main_thread != this_thread;
         }
@@ -1188,7 +1188,7 @@ test "combine jobs respect prereq" {
         counter: *Counter,
 
         pub fn exec(self: *@This()) void {
-            _ = self.counter.fetchAdd(1, .Monotonic);
+            _ = self.counter.fetchAdd(1, .monotonic);
         }
     };
 
@@ -1196,8 +1196,8 @@ test "combine jobs respect prereq" {
         counter: *Counter,
 
         pub fn exec(self: *@This()) void {
-            const count = self.counter.load(.Monotonic);
-            self.counter.store(count * 100, .Monotonic);
+            const count = self.counter.load(.monotonic);
+            self.counter.store(count * 100, .monotonic);
         }
     };
 
@@ -1225,8 +1225,8 @@ test "combine jobs respect prereq" {
         const final_job = try jobs.schedule(combined_prereq, final);
 
         jobs.wait(final_job);
-        try std.testing.expectEqual(@as(u32, prereq_count * 100), counter.load(.Monotonic));
-        counter.store(0, .Monotonic);
+        try std.testing.expectEqual(@as(u32, prereq_count * 100), counter.load(.monotonic));
+        counter.store(0, .monotonic);
     }
 
     jobs.deinit();

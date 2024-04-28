@@ -55,8 +55,8 @@ const DemoState = struct {
 };
 
 fn fillAudioBuffer(audio: *AudioContex) void {
-    while (@cmpxchgWeak(bool, &audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
-    defer @atomicStore(bool, &audio.is_locked, false, .Release);
+    while (@cmpxchgWeak(bool, &audio.is_locked, false, true, .acquire, .monotonic) != null) {}
+    defer @atomicStore(bool, &audio.is_locked, false, .release);
 
     var buffer_padding_in_frames: w32.UINT = 0;
     hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
@@ -335,7 +335,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
 
-    while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
+    while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .acquire, .monotonic) != null) {}
     _ = w32.TerminateThread(demo.audio.thread_handle.?, 0);
     _ = w32.CloseHandle(demo.audio.buffer_ready_event);
     _ = w32.CloseHandle(demo.audio.thread_handle.?);
@@ -366,8 +366,8 @@ fn draw(demo: *DemoState) void {
     gctx.flushResourceBarriers();
 
     {
-        while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
-        defer @atomicStore(bool, &demo.audio.is_locked, false, .Release);
+        while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .acquire, .monotonic) != null) {}
+        defer @atomicStore(bool, &demo.audio.is_locked, false, .release);
 
         const frame = demo.audio.current_frame_index;
 
@@ -457,7 +457,7 @@ pub fn main() !void {
         null,
     ).?;
     hrPanicOnFail(demo.audio.client.Start());
-    @atomicStore(bool, &demo.audio.is_locked, false, .Release);
+    @atomicStore(bool, &demo.audio.is_locked, false, .release);
 
     while (common.handleWindowEvents()) {
         update(&demo);

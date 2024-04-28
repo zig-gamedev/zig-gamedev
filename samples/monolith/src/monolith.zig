@@ -441,7 +441,7 @@ const DebugRenderer = struct {
         zgui.end();
     }
 
-    pub fn shouldBodyDraw(body: *const zphy.Body) align(zphy.DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
+    pub fn shouldBodyDraw(body: *const zphy.Body) callconv(.C) bool {
         if (body.object_layer == object_layers.non_moving) return false;
         return true;
     }
@@ -836,7 +836,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         var i: u32 = 0;
         while (i < 9) : (i += 1) {
             const fi = @as(f32, @floatFromInt(i));
-            const angle: f32 = std.math.degreesToRadians(f32, fi * 40.0);
+            const angle: f32 = std.math.degreesToRadians(fi * 40.0);
             demo.physics_objects[i] = try body_interface.createAndAddBody(.{
                 .position = .{ 24.0 * std.math.cos(angle), 8.0 + std.math.sin(angle), 16.0 * std.math.sin(angle), 1 },
                 .shape = sphere_shape,
@@ -1277,7 +1277,7 @@ pub fn main() !void {
     { // Change current working directory to where the executable is located.
         var buffer: [1024]u8 = undefined;
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.os.chdir(path) catch {};
+        std.posix.chdir(path) catch {};
     }
 
     zglfw.windowHintTyped(.client_api, .no_api);

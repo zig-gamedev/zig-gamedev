@@ -9,7 +9,7 @@ test "extern struct ABI compatibility" {
             continue;
         }
         if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
-            @typeInfo(ZigType).Struct.layout == .Extern)
+            @typeInfo(ZigType).Struct.layout == .@"extern")
         {
             const wgpu_name = "WGPU" ++ decl.name;
             const CType = @field(wgpu, wgpu_name);

@@ -1167,8 +1167,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else ext
     };
     // zig fmt: on
 
-    pub const BodyDrawFilterFuncAlignment = @alignOf(c.JPC_BodyDrawFilterFunc);
-    pub const BodyDrawFilterFunc = *const fn (*const Body) align(BodyDrawFilterFuncAlignment) callconv(.C) bool;
+    pub const BodyDrawFilterFunc = *const fn (*const Body) callconv(.C) bool;
     pub const BodyDrawFilter = opaque {};
 
     pub const TriangleBatch = opaque {};

@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 12, .patch = 0, .pre = "dev.2063" };
+pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 13, .patch = 0, .pre = "" };
 
 pub fn build(b: *std.Build) !void {
     ensureZigVersion() catch return;
@@ -116,7 +116,7 @@ const samples_cross_platform = struct {
     pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
     pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
 
-    usingnamespace struct { // WebGPU samples
+    pub usingnamespace struct { // WebGPU samples
         pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
         pub const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
         pub const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");

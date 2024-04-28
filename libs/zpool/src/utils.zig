@@ -88,7 +88,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
     }
 
     return @Type(.{ .Struct = .{
-        .layout = std.builtin.Type.ContainerLayout.Auto,
+        .layout = .auto,
         .fields = struct_of_slices_fields,
         .decls = &.{},
         .is_tuple = false,
