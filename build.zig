@@ -260,6 +260,18 @@ fn tests(
 
     // TODO(hazeycode): SDL3 tests
 
+    const zopenvr = b.dependency("zopenvr", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const openvr_tests = b.addRunArtifact(zopenvr.artifact("openvr-tests"));
+    if (target.result.os.tag == .windows) {
+        openvr_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
+    }
+    test_step.dependOn(&openvr_tests.step);
+    try @import("zopenvr").installOpenVR(&openvr_tests.step, target.result, .bin, "libs/zopenvr");
+
     const zjobs = b.dependency("zjobs", .{
         .target = target,
         .optimize = optimize,
