@@ -44,6 +44,7 @@ pub const PWSTR = [*:0]WCHAR;
 pub const PCWSTR = [*:0]const WCHAR;
 pub const SIZE_T = usize;
 pub const UINT = c_uint;
+pub const UINT_MAX: UINT = 4294967295;
 pub const ULONG_PTR = usize;
 pub const LONG_PTR = isize;
 pub const DWORD_PTR = ULONG_PTR;
