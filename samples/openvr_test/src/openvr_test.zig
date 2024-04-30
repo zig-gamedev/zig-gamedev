@@ -589,7 +589,7 @@ const ChaperoneWindow = struct {
 const CompositorWindow = struct {
     wait_render_poses_count: usize = 1,
     wait_game_poses_count: usize = 1,
-    waited_poses: ?(OpenVR.Compositor.CompositorError || error{OutOfMemory})!OpenVR.Compositor.Poses = null,
+    waited_poses: ?(OpenVR.CompositorError || error{OutOfMemory})!OpenVR.CompositorPoses = null,
 
     last_render_poses_count: usize = 1,
     last_game_poses_count: usize = 1,
@@ -605,6 +605,25 @@ const CompositorWindow = struct {
     tracking_space_origin: OpenVR.TrackingUniverseOrigin = .seated,
     force_interleaved_reprojection_override_on: bool = false,
     suspend_rendering: bool = false,
+    explicit_timing_mode: OpenVR.TimingMode = .implicit,
+    submit_explicit_timing_data_result: ?OpenVR.CompositorError!void = null,
+
+    stage_override_async_render_model_path: [256:0]u8 = std.mem.zeroes([256:0]u8),
+    stage_override_async_transform: OpenVR.Matrix34 = std.mem.zeroes(OpenVR.Matrix34),
+    stage_override_async_stage_render_settings: OpenVR.StageRenderSettings = .{
+        .primary_color = std.mem.zeroes(OpenVR.Color),
+        .secondary_color = std.mem.zeroes(OpenVR.Color),
+        .vignette_inner_radius = 0,
+        .vignette_outer_radius = 0,
+        .fresnel_strength = 0,
+        .backface_culling = false,
+        .greyscale = false,
+        .wireframe = false,
+    },
+    stage_override_async_result: ?OpenVR.CompositorError!void = null,
+
+    poses_for_frame_pose_prediction_id: u32 = 0,
+    poses_for_frame_pose_count: u32 = 0,
 
     pub fn deinit(self: CompositorWindow, allocator: std.mem.Allocator) void {
         if (self.waited_poses) |poses| {
@@ -650,9 +669,12 @@ const CompositorWindow = struct {
             try ui.getter(OpenVR.Compositor, "getLastPoseForTrackedDeviceIndex", compositor, .{
                 .device_index = &self.last_pose_device_index,
             }, null);
-            {
-                zgui.separatorText("Submit");
-            }
+
+            // try ui.setter(OpenVR.Compositor, "submit", compositor, ...
+            // try ui.setter(OpenVR.Compositor, "submitWithArrayIndex", compositor, ...
+            try ui.setter(OpenVR.Compositor, "clearLastSubmittedFrame", compositor, .{}, null);
+            try ui.setter(OpenVR.Compositor, "postPresentHandoff", compositor, .{}, null);
+
             try ui.getter(OpenVR.Compositor, "getFrameTiming", compositor, .{
                 .frames_ago = &self.frame_timing_frames_ago,
             }, null);
@@ -661,17 +683,20 @@ const CompositorWindow = struct {
             }, null);
             try ui.getter(OpenVR.Compositor, "getFrameTimeRemaining", compositor, .{}, null);
             try ui.getter(OpenVR.Compositor, "getCumulativeStats", compositor, .{}, null);
-            try ui.getter(OpenVR.Compositor, "getCurrentFadeColor", compositor, .{ .background = &self.current_fade_color_background }, null);
             try ui.setter(OpenVR.Compositor, "fadeToColor", compositor, .{
                 .seconds = &self.fade_color_seconds,
                 .color = &self.fade_color,
                 .background = &self.fade_color_background,
             }, null);
-            try ui.getter(OpenVR.Compositor, "getCurrentGridAlpha", compositor, .{}, null);
+            try ui.getter(OpenVR.Compositor, "getCurrentFadeColor", compositor, .{ .background = &self.current_fade_color_background }, null);
             try ui.setter(OpenVR.Compositor, "fadeGrid", compositor, .{
                 .seconds = &self.fade_grid_seconds,
                 .background = &self.fade_grid_background,
             }, null);
+            try ui.getter(OpenVR.Compositor, "getCurrentGridAlpha", compositor, .{}, null);
+
+            // try ui.setter(OpenVR.Compositor, "setSkyboxOverride", compositor, ...
+            try ui.setter(OpenVR.Compositor, "clearSkyboxOverride", compositor, .{}, null);
 
             try ui.setter(OpenVR.Compositor, "compositorBringToFront", compositor, .{}, null);
             try ui.setter(OpenVR.Compositor, "compositorGoToBack", compositor, .{}, null);
@@ -682,6 +707,10 @@ const CompositorWindow = struct {
             try ui.getter(OpenVR.Compositor, "getLastFrameRenderer", compositor, .{}, null);
             try ui.getter(OpenVR.Compositor, "canRenderScene", compositor, .{}, null);
 
+            try ui.setter(OpenVR.Compositor, "showMirrorWindow", compositor, .{}, null);
+            try ui.setter(OpenVR.Compositor, "hideMirrorWindow", compositor, .{}, null);
+            try ui.getter(OpenVR.Compositor, "isMirrorWindowVisible", compositor, .{}, null);
+
             try ui.setter(OpenVR.Compositor, "compositorDumpImages", compositor, .{}, null);
 
             try ui.getter(OpenVR.Compositor, "shouldAppRenderWithLowResources", compositor, .{}, null);
@@ -690,10 +719,31 @@ const CompositorWindow = struct {
                 .override = &self.force_interleaved_reprojection_override_on,
             }, null);
             try ui.setter(OpenVR.Compositor, "forceReconnectProcess", compositor, .{}, null);
-            try ui.setter(OpenVR.Compositor, "suspendRendering", compositor, .{ .suspend_rendering = &self.suspend_rendering }, null);
+            try ui.setter(OpenVR.Compositor, "suspendRendering", compositor, .{
+                .suspend_rendering = &self.suspend_rendering,
+            }, null);
+
+            try ui.setter(OpenVR.Compositor, "setExplicitTimingMode", compositor, .{
+                .explicit_timing_mode = &self.explicit_timing_mode,
+            }, null);
+            try ui.persistedSetter(OpenVR.Compositor, "submitExplicitTimingData", compositor, .{}, &self.submit_explicit_timing_data_result, null);
 
             try ui.getter(OpenVR.Compositor, "isMotionSmoothingEnabled", compositor, .{}, null);
             try ui.getter(OpenVR.Compositor, "isMotionSmoothingSupported", compositor, .{}, null);
+            try ui.getter(OpenVR.Compositor, "isCurrentSceneFocusAppLoading", compositor, .{}, null);
+
+            try ui.persistedSetter(OpenVR.Compositor, "setStageOverrideAsync", compositor, .{
+                .render_model_path = &self.stage_override_async_render_model_path,
+                .transform = &self.stage_override_async_transform,
+                .stage_render_settings = &self.stage_override_async_stage_render_settings,
+            }, &self.stage_override_async_result, null);
+            try ui.setter(OpenVR.Compositor, "clearStageOverride", compositor, .{}, null);
+            try ui.getter(OpenVR.Compositor, "getCompositorBenchmarkResults", compositor, .{}, null);
+            try ui.getter(OpenVR.Compositor, "getLastPosePredictionIDs", compositor, .{}, null);
+            try ui.allocGetter(allocator, OpenVR.Compositor, "allocPosesForFrame", compositor, .{
+                .pose_prediction_id = &self.poses_for_frame_pose_prediction_id,
+                .pose_count = &self.poses_for_frame_pose_count,
+            }, null);
         }
     }
 };

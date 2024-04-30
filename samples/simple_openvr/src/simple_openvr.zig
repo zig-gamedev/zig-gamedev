@@ -1032,6 +1032,8 @@ pub fn main() !void {
             gctx.beginFrame();
             defer gctx.endFrame();
 
+            app.compositor.setExplicitTimingMode(.explicit_application_performs_post_present_handoff);
+
             // render stereo targets
             gctx.cmdlist.RSSetViewports(1, @ptrCast(&d3d12.VIEWPORT{
                 .TopLeftX = 0.0,
@@ -1174,7 +1176,7 @@ pub fn main() !void {
             gctx.cmdlist.DrawIndexedInstanced(companion.vertex_index_count / 2, 1, companion.vertex_index_count / 2, 0, 0);
 
             for (eye_descs) |eye_desc| {
-                const dx12_texture = OpenVR.Compositor.D3D12TextureData{
+                const dx12_texture = OpenVR.D3D12TextureData{
                     .resource = gctx.lookupResource(eye_desc.texture).?,
                     .command_queue = gctx.cmdqueue,
                     .node_mask = 0,
@@ -1195,7 +1197,10 @@ pub fn main() !void {
             }
             gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
             gctx.flushResourceBarriers();
+
+            try app.compositor.submitExplicitTimingData();
         }
+        app.compositor.postPresentHandoff();
     }
 
     gctx.finishGpuCommands();

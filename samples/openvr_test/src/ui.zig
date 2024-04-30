@@ -101,7 +101,7 @@ fn readOnlyTrackedDevicePose(pose: OpenVR.TrackedDevicePose) void {
     }
 }
 
-fn readOnlyFrameTiming(frame_timing: OpenVR.Compositor.FrameTiming) void {
+fn readOnlyFrameTiming(frame_timing: OpenVR.FrameTiming) void {
     readOnlyScalar("size", u32, frame_timing.size);
     readOnlyScalar("frame_index", u32, frame_timing.frame_index);
     readOnlyScalar("num_frame_presents", u32, frame_timing.num_frame_presents);
@@ -672,6 +672,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                 OpenVR.Input.SkeletalMotionRange,
                 OpenVR.Input.SummaryType,
                 OpenVR.RenderModels.RenderModelErrorCode,
+                OpenVR.TimingMode,
                 => {
                     _ = zgui.comboFromEnum(arg_name, arg_ptr);
                 },
@@ -716,6 +717,19 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                     zgui.indent(.{ .indent_w = 30 });
                     defer zgui.unindent(.{ .indent_w = 30 });
                     _ = zgui.checkbox("scroll_wheel_visible", .{ .v = &arg_ptr.scroll_wheel_visible });
+                },
+                OpenVR.StageRenderSettings => {
+                    zgui.text(arg_name, .{});
+                    zgui.indent(.{ .indent_w = 30 });
+                    defer zgui.unindent(.{ .indent_w = 30 });
+                    _ = zgui.colorEdit4("primary_color", .{ .col = @ptrCast(&arg_ptr.primary_color), .flags = .{ .float = true } });
+                    _ = zgui.colorEdit4("secondary_color", .{ .col = @ptrCast(&arg_ptr.secondary_color), .flags = .{ .float = true } });
+                    _ = zgui.inputFloat("vignette_inner_radius", .{ .v = @ptrCast(&arg_ptr.vignette_inner_radius) });
+                    _ = zgui.inputFloat("vignette_outer_radius", .{ .v = @ptrCast(&arg_ptr.vignette_outer_radius) });
+                    _ = zgui.inputFloat("fresnel_strength", .{ .v = @ptrCast(&arg_ptr.fresnel_strength) });
+                    _ = zgui.checkbox("backface_culling", .{ .v = @ptrCast(&arg_ptr.backface_culling) });
+                    _ = zgui.checkbox("greyscale", .{ .v = @ptrCast(&arg_ptr.greyscale) });
+                    _ = zgui.checkbox("wireframe", .{ .v = @ptrCast(&arg_ptr.wireframe) });
                 },
                 else => switch (arg_ptr_info.type) {
                     *std.ArrayList(OpenVR.AppOverrideKeys) => {
@@ -878,7 +892,7 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
                     }
                 },
                 OpenVR.BoundsColor,
-                OpenVR.Compositor.Poses,
+                OpenVR.CompositorPoses,
                 OpenVR.System.FilePaths,
                 OpenVR.AppKeys,
                 => r.deinit(allocator),
@@ -890,7 +904,7 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
                 []OpenVR.Vector4,
                 []OpenVR.Matrix34,
                 []OpenVR.TrackedDevicePose,
-                []OpenVR.Compositor.FrameTiming,
+                []OpenVR.FrameTiming,
                 []OpenVR.Input.BoneTransform,
                 []OpenVR.Input.InputBindingInfo,
                 => allocator.free(r),
@@ -997,7 +1011,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             @as(OpenVR.System.RenderTargetSize, result).width,
             @as(OpenVR.System.RenderTargetSize, result).height,
         }),
-        OpenVR.Compositor.FrameTiming => readOnlyFrameTiming(result),
+        OpenVR.FrameTiming => readOnlyFrameTiming(result),
         [:0]u8,
         [:0]const u8,
         => readOnlyText("##", result),
@@ -1027,7 +1041,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             readOnlyFloat3("corners[2]", result.corners[2].v);
             readOnlyFloat3("corners[3]", result.corners[3].v);
         },
-        OpenVR.Compositor.CumulativeStats => {
+        OpenVR.CumulativeStats => {
             readOnlyScalar("pid", u32, result.pid);
             readOnlyScalar("num_frame_presents", u32, result.num_frame_presents);
             readOnlyScalar("num_dropped_frames", u32, result.num_dropped_frames);
@@ -1051,7 +1065,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             readOnlyScalar("sum_application_gpu_time_ms", f64, result.sum_application_gpu_time_ms);
             readOnlyScalar("num_frames_with_depth", u32, result.num_frames_with_depth);
         },
-        OpenVR.Compositor.Pose => {
+        OpenVR.CompositorPose => {
             {
                 zgui.text("render_pose", .{});
                 zgui.indent(.{ .indent_w = 30 });
@@ -1067,7 +1081,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 readOnlyTrackedDevicePose(result.game_pose);
             }
         },
-        OpenVR.Compositor.Poses => {
+        OpenVR.CompositorPoses => {
             {
                 zgui.text("render_poses", .{});
                 zgui.indent(.{ .indent_w = 30 });
@@ -1305,6 +1319,14 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             readOnlyText("texture_map_data", "(binary)");
             readOnlyText("format", @tagName(result.format));
             readOnlyScalar("mip_levels", u16, result.mip_levels);
+        },
+        OpenVR.BenchmarkResults => {
+            readOnlyFloat("mega_pixels_per_second", result.mega_pixels_per_second);
+            readOnlyFloat("hmd_recommended_mega_pixels_per_second", result.hmd_recommended_mega_pixels_per_second);
+        },
+        OpenVR.CompositorPosePredictionIDs => {
+            readOnlyScalar("render_pose_prediction_id", u32, result.render_pose_prediction_id);
+            readOnlyScalar("game_pose_prediction_id", u32, result.game_pose_prediction_id);
         },
         else => @compileError(@typeName(Return) ++ " not implemented"),
     }
