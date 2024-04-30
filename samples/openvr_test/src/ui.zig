@@ -667,10 +667,10 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                 OpenVR.ApplicationProperty.Bool,
                 OpenVR.ApplicationProperty.U64,
                 OpenVR.SceneApplicationState,
-                OpenVR.Input.SkeletalTransformSpace,
-                OpenVR.Input.SkeletalReferencePose,
-                OpenVR.Input.SkeletalMotionRange,
-                OpenVR.Input.SummaryType,
+                OpenVR.SkeletalTransformSpace,
+                OpenVR.SkeletalReferencePose,
+                OpenVR.SkeletalMotionRange,
+                OpenVR.SummaryType,
                 OpenVR.RenderModels.RenderModelErrorCode,
                 OpenVR.TimingMode,
                 => {
@@ -800,13 +800,13 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                             zgui.text("(empty)", .{});
                         }
                     },
-                    *std.ArrayList(OpenVR.Input.ActiveActionSet) => {
+                    *std.ArrayList(OpenVR.ActiveActionSet) => {
                         zgui.pushStrId(arg_name);
                         defer zgui.popId();
                         zgui.text("{s}", .{arg_name});
                         zgui.sameLine(.{});
                         if (zgui.button("Add", .{})) {
-                            try arg_ptr.append(std.mem.zeroes(OpenVR.Input.ActiveActionSet));
+                            try arg_ptr.append(std.mem.zeroes(OpenVR.ActiveActionSet));
                         }
                         zgui.indent(.{ .indent_w = 30 });
                         defer zgui.unindent(.{ .indent_w = 30 });
@@ -832,13 +832,13 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                             zgui.text("(empty)", .{});
                         }
                     },
-                    *std.ArrayList(OpenVR.Input.InputBindingInfo) => {
+                    *std.ArrayList(OpenVR.InputBindingInfo) => {
                         zgui.pushStrId(arg_name);
                         defer zgui.popId();
                         zgui.text("{s}", .{arg_name});
                         zgui.sameLine(.{});
                         if (zgui.button("Add", .{})) {
-                            try arg_ptr.append(std.mem.zeroes(OpenVR.Input.InputBindingInfo));
+                            try arg_ptr.append(std.mem.zeroes(OpenVR.InputBindingInfo));
                         }
                         zgui.indent(.{ .indent_w = 30 });
                         defer zgui.unindent(.{ .indent_w = 30 });
@@ -905,8 +905,8 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
                 []OpenVR.Matrix34,
                 []OpenVR.TrackedDevicePose,
                 []OpenVR.FrameTiming,
-                []OpenVR.Input.BoneTransform,
-                []OpenVR.Input.InputBindingInfo,
+                []OpenVR.BoneTransform,
+                []OpenVR.InputBindingInfo,
                 => allocator.free(r),
                 ?[:0]u8 => {
                     if (r) |payload| {
@@ -1029,7 +1029,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
         OpenVR.System.DeviceActivityLevel,
         OpenVR.CalibrationState,
         OpenVR.SceneApplicationState,
-        OpenVR.Input.SkeletalTrackingLevel,
+        OpenVR.SkeletalTrackingLevel,
         => readOnlyText("##", @tagName(result)),
         OpenVR.PlayAreaSize => {
             readOnlyFloat("x", result.x);
@@ -1217,14 +1217,14 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 @panic("allocator required for " ++ @typeName(Return));
             }
         },
-        OpenVR.Input.InputDigitalActionData => {
+        OpenVR.InputDigitalActionData => {
             readOnlyCheckbox("active", result.active);
             readOnlyScalar("active_origin", u64, result.active_origin);
             readOnlyCheckbox("state", result.state);
             readOnlyCheckbox("changed", result.changed);
             readOnlyFloat("update_time", result.update_time);
         },
-        OpenVR.Input.InputAnalogActionData => {
+        OpenVR.InputAnalogActionData => {
             readOnlyCheckbox("active", result.active);
             readOnlyScalar("active_origin", u64, result.active_origin);
             readOnlyFloat("x", result.x);
@@ -1235,7 +1235,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             readOnlyFloat("delta_z", result.delta_z);
             readOnlyFloat("update_time", result.update_time);
         },
-        OpenVR.Input.InputPoseActionData => {
+        OpenVR.InputPoseActionData => {
             readOnlyCheckbox("active", result.active);
             readOnlyScalar("active_origin", u64, result.active_origin);
             {
@@ -1246,11 +1246,11 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 readOnlyTrackedDevicePose(result.pose);
             }
         },
-        OpenVR.Input.InputSkeletalActionData => {
+        OpenVR.InputSkeletalActionData => {
             readOnlyCheckbox("active", result.active);
             readOnlyScalar("active_origin", u64, result.active_origin);
         },
-        OpenVR.Input.BoneTransform => {
+        OpenVR.BoneTransform => {
             readOnlyFloat4("position.v", result.position.v);
             {
                 zgui.text("orientation", .{});
@@ -1262,16 +1262,16 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 readOnlyFloat("z", result.orientation.z);
             }
         },
-        OpenVR.Input.SkeletalSummaryData => {
+        OpenVR.SkeletalSummaryData => {
             readOnlyFloat5("finger_curl", result.finger_curl);
             readOnlyFloat4("finger_splay", result.finger_splay);
         },
-        OpenVR.Input.InputOriginInfo => {
+        OpenVR.InputOriginInfo => {
             readOnlyScalar("device_path", u64, result.device_path);
             readOnlyScalar("tracked_device_index", u32, result.tracked_device_index);
             readOnlyText("render_model_component_name", std.mem.sliceTo(&result.render_model_component_name, 0));
         },
-        OpenVR.Input.InputBindingInfo => {
+        OpenVR.InputBindingInfo => {
             readOnlyText("device_path_name", std.mem.sliceTo(&result.device_path_name, 0));
             readOnlyText("input_path_name", std.mem.sliceTo(&result.input_path_name, 0));
             readOnlyText("mode_name", std.mem.sliceTo(&result.mode_name, 0));
@@ -1367,8 +1367,8 @@ fn fillArgs(comptime arg_ptrs_info: std.builtin.Type.Struct, arg_ptrs: anytype, 
                     else => switch (field.type) {
                         *std.ArrayList(OpenVR.AppOverrideKeys),
                         *std.ArrayList(OpenVR.TrackedDeviceIndex),
-                        *std.ArrayList(OpenVR.Input.ActiveActionSet),
-                        *std.ArrayList(OpenVR.Input.InputBindingInfo),
+                        *std.ArrayList(OpenVR.ActiveActionSet),
+                        *std.ArrayList(OpenVR.InputBindingInfo),
                         => arg_ptr.items,
                         *?OpenVR.RenderModels.RenderModelError!OpenVR.RenderModels.RenderModel => arg_ptr.*.? catch @panic("render model required"),
                         *?OpenVR.RenderModels.RenderModelError!*OpenVR.RenderModels.RenderModel.TextureMap => arg_ptr.*.? catch @panic("texture map required"),

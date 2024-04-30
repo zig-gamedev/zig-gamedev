@@ -1219,3 +1219,171 @@ pub const CompositorPosePredictionIDs = struct {
     render_pose_prediction_id: u32,
     game_pose_prediction_id: u32,
 };
+
+pub const InputError = error{
+    NameNotFound,
+    WrongType,
+    InvalidHandle,
+    InvalidParam,
+    NoSteam,
+    MaxCapacityReached,
+    IPCError,
+    NoActiveActionSet,
+    InvalidDevice,
+    InvalidSkeleton,
+    InvalidBoneCount,
+    InvalidCompressedData,
+    NoData,
+    BufferTooSmall,
+    MismatchedActionManifest,
+    MissingSkeletonData,
+    InvalidBoneIndex,
+    InvalidPriority,
+    PermissionDenied,
+    InvalidRenderModel,
+};
+
+pub const InputErrorCode = enum(i32) {
+    none = 0,
+    name_not_found = 1,
+    wrong_type = 2,
+    invalid_handle = 3,
+    invalid_param = 4,
+    no_steam = 5,
+    max_capacity_reached = 6,
+    ipc_error = 7,
+    no_active_action_set = 8,
+    invalid_device = 9,
+    invalid_skeleton = 10,
+    invalid_bone_count = 11,
+    invalid_compressed_data = 12,
+    no_data = 13,
+    buffer_too_small = 14,
+    mismatched_action_manifest = 15,
+    missing_skeleton_data = 16,
+    invalid_bone_index = 17,
+    invalid_priority = 18,
+    permission_denied = 19,
+    invalid_render_model = 20,
+
+    pub fn maybe(error_code: InputErrorCode) InputError!void {
+        return switch (error_code) {
+            .none => {},
+            .name_not_found => InputError.NameNotFound,
+            .wrong_type => InputError.WrongType,
+            .invalid_handle => InputError.InvalidHandle,
+            .invalid_param => InputError.InvalidParam,
+            .no_steam => InputError.NoSteam,
+            .max_capacity_reached => InputError.MaxCapacityReached,
+            .ipc_error => InputError.IPCError,
+            .no_active_action_set => InputError.NoActiveActionSet,
+            .invalid_device => InputError.InvalidDevice,
+            .invalid_skeleton => InputError.InvalidSkeleton,
+            .invalid_bone_count => InputError.InvalidBoneCount,
+            .invalid_compressed_data => InputError.InvalidCompressedData,
+            .no_data => InputError.NoData,
+            .buffer_too_small => InputError.BufferTooSmall,
+            .mismatched_action_manifest => InputError.MismatchedActionManifest,
+            .missing_skeleton_data => InputError.MissingSkeletonData,
+            .invalid_bone_index => InputError.InvalidBoneIndex,
+            .invalid_priority => InputError.InvalidPriority,
+            .permission_denied => InputError.PermissionDenied,
+            .invalid_render_model => InputError.InvalidRenderModel,
+        };
+    }
+};
+
+pub const ActionHandle = u64;
+pub const ActionSetHandle = u64;
+
+pub const ActiveActionSet = extern struct {
+    action_set: ActionSetHandle,
+    restricted_to_device: InputValueHandle,
+    secondary_action_set: ActionSetHandle,
+    padding: u32,
+    priority: i32,
+};
+
+pub const InputDigitalActionData = extern struct {
+    active: bool,
+    active_origin: InputValueHandle,
+    state: bool,
+    changed: bool,
+    update_time: f32,
+};
+pub const InputAnalogActionData = extern struct {
+    active: bool,
+    active_origin: InputValueHandle,
+    x: f32,
+    y: f32,
+    z: f32,
+    delta_x: f32,
+    delta_y: f32,
+    delta_z: f32,
+    update_time: f32,
+};
+
+pub const InputPoseActionData = extern struct {
+    active: bool,
+    active_origin: InputValueHandle,
+    pose: TrackedDevicePose,
+};
+pub const InputSkeletalActionData = extern struct {
+    active: bool,
+    active_origin: InputValueHandle,
+};
+pub const BoneIndex = i32;
+pub const SkeletalTransformSpace = enum(i32) {
+    model = 0,
+    parent = 1,
+};
+pub const SkeletalReferencePose = enum(i32) {
+    bind_pose = 0,
+    open_hand = 1,
+    fist = 2,
+    grip_limit = 3,
+};
+
+pub const BoneTransform = extern struct {
+    position: Vector4,
+    orientation: Quaternionf,
+};
+
+pub const SkeletalTrackingLevel = enum(i32) {
+    estimated = 0,
+    partial = 1,
+    full = 2,
+
+    const count = @typeInfo(SkeletalTrackingLevel).Enum.fields.len;
+    const max = SkeletalTrackingLevel.full;
+};
+
+pub const SkeletalMotionRange = enum(i32) {
+    with_controller = 0,
+    without_controller = 1,
+};
+
+pub const SummaryType = enum(i32) {
+    from_animation = 0,
+    from_device = 1,
+};
+
+pub const SkeletalSummaryData = extern struct {
+    finger_curl: [5]f32,
+    finger_splay: [4]f32,
+};
+
+pub const InputOriginInfo = extern struct {
+    device_path: InputValueHandle,
+    tracked_device_index: TrackedDeviceIndex,
+    render_model_component_name: [127:0]u8,
+};
+
+pub const InputBindingInfo = extern struct {
+    device_path_name: [127:0]u8,
+    input_path_name: [127:0]u8,
+    mode_name: [127:0]u8,
+    slot_name: [127:0]u8,
+    input_source_type: [31:0]u8,
+};
+pub const max_bone_name_length: usize = 32;
