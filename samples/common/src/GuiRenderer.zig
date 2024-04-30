@@ -59,8 +59,7 @@ pub fn init(
     gctx.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
     gctx.addTransitionBarrier(font, .{ .PIXEL_SHADER_RESOURCE = true });
 
-    const font_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    gctx.device.CreateShaderResourceView(gctx.lookupResource(font).?, null, font_srv);
+    const font_srv = gctx.allocShaderResourceView(font, null);
 
     const pipeline = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{

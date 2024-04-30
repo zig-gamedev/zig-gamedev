@@ -103,9 +103,8 @@ const DemoState = struct {
 
         mipgen.generateMipmaps(&gctx, texture);
 
-        const texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(
-            gctx.lookupResource(texture).?,
+        const texture_srv = gctx.allocShaderResourceView(
+            texture,
             &d3d12.SHADER_RESOURCE_VIEW_DESC{
                 .Format = .UNKNOWN,
                 .ViewDimension = .TEXTURE2D,
@@ -119,7 +118,6 @@ const DemoState = struct {
                     },
                 },
             },
-            texture_srv,
         );
 
         // Fill vertex buffer.

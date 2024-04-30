@@ -355,19 +355,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const vertex_buffer_srv = blk: {
-        const srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(
-            gctx.lookupResource(vertex_buffer).?,
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
-                0,
-                @as(u32, @intCast(all_vertices.items.len)),
-                @sizeOf(Vertex),
-            ),
-            srv,
-        );
-        break :blk srv;
-    };
+    const vertex_buffer_srv = gctx.allocShaderResourceView(
+        vertex_buffer,
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
+            0,
+            @as(u32, @intCast(all_vertices.items.len)),
+            @sizeOf(Vertex),
+        ),
+    );
 
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
@@ -377,15 +372,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const index_buffer_srv = blk: {
-        const srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(
-            gctx.lookupResource(index_buffer).?,
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @as(u32, @intCast(all_indices.items.len))),
-            srv,
-        );
-        break :blk srv;
-    };
+    const index_buffer_srv = gctx.allocShaderResourceView(
+        index_buffer,
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @as(u32, @intCast(all_indices.items.len))),
+    );
 
     const meshlet_buffer = gctx.createCommittedResource(
         .DEFAULT,
@@ -395,19 +385,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const meshlet_buffer_srv = blk: {
-        const srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(
-            gctx.lookupResource(meshlet_buffer).?,
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
-                0,
-                @as(u32, @intCast(all_meshlets.items.len)),
-                @sizeOf(Meshlet),
-            ),
-            srv,
-        );
-        break :blk srv;
-    };
+    const meshlet_buffer_srv = gctx.allocShaderResourceView(
+        meshlet_buffer,
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
+            0,
+            @as(u32, @intCast(all_meshlets.items.len)),
+            @sizeOf(Meshlet),
+        ),
+    );
 
     const meshlet_data_buffer = gctx.createCommittedResource(
         .DEFAULT,
@@ -417,19 +402,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const meshlet_data_buffer_srv = blk: {
-        const srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(
-            gctx.lookupResource(meshlet_data_buffer).?,
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(
-                .R32_UINT,
-                0,
-                @as(u32, @intCast(all_meshlets_data.items.len)),
-            ),
-            srv,
-        );
-        break :blk srv;
-    };
+    const meshlet_data_buffer_srv = gctx.allocShaderResourceView(
+        meshlet_data_buffer,
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(
+            .R32_UINT,
+            0,
+            @as(u32, @intCast(all_meshlets_data.items.len)),
+        ),
+    );
 
     const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
@@ -729,22 +709,20 @@ fn draw(demo: *DemoState) void {
             gctx.setCurrentPipeline(demo.mesh_shader_pso);
 
             // Bind global buffers that contain data for *all meshes* and *all meshlets*.
-            gctx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
-                const table = gctx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
-                _ = gctx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
-                _ = gctx.copyDescriptorsToGpuHeap(1, demo.meshlet_buffer_srv);
-                _ = gctx.copyDescriptorsToGpuHeap(1, demo.meshlet_data_buffer_srv);
-                break :blk table;
+            gctx.setGraphicsRootDescriptorTable(2, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+                demo.vertex_buffer_srv,
+                demo.index_buffer_srv,
+                demo.meshlet_buffer_srv,
+                demo.meshlet_data_buffer_srv,
             });
         },
         .vertex_shader => {
             gctx.setCurrentPipeline(demo.vertex_shader_pso);
 
             // Bind global buffers that contain data for *all meshes*.
-            gctx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
-                const table = gctx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
-                _ = gctx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
-                break :blk table;
+            gctx.setGraphicsRootDescriptorTable(2, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+                demo.vertex_buffer_srv,
+                demo.index_buffer_srv,
             });
         },
         .vertex_shader_fixed => {
