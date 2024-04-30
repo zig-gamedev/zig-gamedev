@@ -662,11 +662,11 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                 OpenVR.System.TrackedPropertyErrorCode,
                 OpenVR.System.ButtonId,
                 OpenVR.System.ControllerAxisType,
-                OpenVR.Applications.ApplicationErrorCode,
-                OpenVR.Applications.ApplicationProperty.String,
-                OpenVR.Applications.ApplicationProperty.Bool,
-                OpenVR.Applications.ApplicationProperty.U64,
-                OpenVR.Applications.SceneApplicationState,
+                OpenVR.ApplicationErrorCode,
+                OpenVR.ApplicationProperty.String,
+                OpenVR.ApplicationProperty.Bool,
+                OpenVR.ApplicationProperty.U64,
+                OpenVR.SceneApplicationState,
                 OpenVR.Input.SkeletalTransformSpace,
                 OpenVR.Input.SkeletalReferencePose,
                 OpenVR.Input.SkeletalMotionRange,
@@ -718,7 +718,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                     _ = zgui.checkbox("scroll_wheel_visible", .{ .v = &arg_ptr.scroll_wheel_visible });
                 },
                 else => switch (arg_ptr_info.type) {
-                    *std.ArrayList(OpenVR.Applications.AppOverrideKeys) => {
+                    *std.ArrayList(OpenVR.AppOverrideKeys) => {
                         if (allocator) |alloc| {
                             zgui.pushStrId(arg_name);
                             defer zgui.popId();
@@ -872,7 +872,7 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
             },
             else => switch (Return) {
                 void => {},
-                ?OpenVR.Applications.MimeTypes => {
+                ?OpenVR.MimeTypes => {
                     if (r) |payload| {
                         payload.deinit(allocator);
                     }
@@ -880,7 +880,7 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
                 OpenVR.Chaperone.BoundsColor,
                 OpenVR.Compositor.Poses,
                 OpenVR.System.FilePaths,
-                OpenVR.Applications.AppKeys,
+                OpenVR.AppKeys,
                 => r.deinit(allocator),
                 []u8,
                 [:0]u8,
@@ -1014,7 +1014,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
         OpenVR.System.TrackedDeviceClass,
         OpenVR.System.DeviceActivityLevel,
         OpenVR.Chaperone.CalibrationState,
-        OpenVR.Applications.SceneApplicationState,
+        OpenVR.SceneApplicationState,
         OpenVR.Input.SkeletalTrackingLevel,
         => readOnlyText("##", @tagName(result)),
         OpenVR.Chaperone.PlayAreaSize => {
@@ -1165,7 +1165,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 @panic("allocator required for " ++ @typeName(Return));
             }
         },
-        OpenVR.Applications.MimeTypes => {
+        OpenVR.MimeTypes => {
             if (allocator) |alloc| {
                 const mime_types = try result.allocTypes(alloc);
                 defer alloc.free(mime_types);
@@ -1184,7 +1184,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 @panic("allocator required for " ++ @typeName(Return));
             }
         },
-        OpenVR.Applications.AppKeys => {
+        OpenVR.AppKeys => {
             if (allocator) |alloc| {
                 const app_keys = try result.allocKeys(alloc);
                 defer alloc.free(app_keys);
@@ -1343,7 +1343,7 @@ fn fillArgs(comptime arg_ptrs_info: std.builtin.Type.Struct, arg_ptrs: anytype, 
                 .One => switch (@typeInfo(pointer.child)) {
                     .Array => std.mem.sliceTo(arg_ptr, 0),
                     else => switch (field.type) {
-                        *std.ArrayList(OpenVR.Applications.AppOverrideKeys),
+                        *std.ArrayList(OpenVR.AppOverrideKeys),
                         *std.ArrayList(OpenVR.TrackedDeviceIndex),
                         *std.ArrayList(OpenVR.Input.ActiveActionSet),
                         *std.ArrayList(OpenVR.Input.InputBindingInfo),

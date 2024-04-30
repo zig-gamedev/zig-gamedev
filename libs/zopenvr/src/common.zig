@@ -793,3 +793,189 @@ pub const ControllerState = extern struct {
     button_touched: u64,
     axis: [5]ControllerAxis,
 };
+
+pub const ApplicationError = error{
+    AppKeyAlreadyExists,
+    NoManifest,
+    NoApplication,
+    InvalidIndex,
+    UnknownApplication,
+    IPCFailed,
+    ApplicationAlreadyRunning,
+    InvalidManifest,
+    InvalidApplication,
+    LaunchFailed,
+    ApplicationAlreadyStarting,
+    LaunchInProgress,
+    OldApplicationQuitting,
+    TransitionAborted,
+    IsTemplate,
+    SteamVRIsExiting,
+    BufferTooSmall,
+    PropertyNotSet,
+    UnknownProperty,
+    InvalidParameter,
+    NotImplemented,
+};
+pub const ApplicationErrorCode = enum(i32) {
+    none = 0,
+
+    app_key_already_exists = 100, // Only one application can use any given key
+    no_manifest = 101, // the running application does not have a manifest
+    no_application = 102, // No application is running
+    invalid_index = 103,
+    unknown_application = 104, // the application could not be found
+    ipc_failed = 105, // An IPC failure caused the request to fail
+    application_already_running = 106,
+    invalid_manifest = 107,
+    invalid_application = 108,
+    launch_failed = 109, // the process didn't start
+    application_already_starting = 110, // the system was already starting the same application
+    launch_in_progress = 111, // The system was already starting a different application
+    old_application_quitting = 112,
+    transition_aborted = 113,
+    is_template = 114, // error when you try to call LaunchApplication() on a template type app (use LaunchTemplateApplication)
+    steam_vr_is_exiting = 115,
+
+    buffer_too_small = 200, // The provided buffer was too small to fit the requested data
+    property_not_set = 201, // The requested property was not set
+    unknown_property = 202,
+    invalid_parameter = 203,
+
+    not_implemented = 300, // Fcn is not implemented in current interface
+
+    pub fn maybe(error_code: ApplicationErrorCode) ApplicationError!void {
+        return switch (error_code) {
+            .none => {},
+            .app_key_already_exists => ApplicationError.AppKeyAlreadyExists,
+            .no_manifest => ApplicationError.NoManifest,
+            .no_application => ApplicationError.NoApplication,
+            .invalid_index => ApplicationError.InvalidIndex,
+            .unknown_application => ApplicationError.UnknownApplication,
+            .ipc_failed => ApplicationError.IPCFailed,
+            .application_already_running => ApplicationError.ApplicationAlreadyRunning,
+            .invalid_manifest => ApplicationError.InvalidManifest,
+            .invalid_application => ApplicationError.InvalidApplication,
+            .launch_failed => ApplicationError.LaunchFailed,
+            .application_already_starting => ApplicationError.ApplicationAlreadyStarting,
+            .launch_in_progress => ApplicationError.LaunchInProgress,
+            .old_application_quitting => ApplicationError.OldApplicationQuitting,
+            .transition_aborted => ApplicationError.TransitionAborted,
+            .is_template => ApplicationError.IsTemplate,
+            .steam_vr_is_exiting => ApplicationError.SteamVRIsExiting,
+            .buffer_too_small => ApplicationError.BufferTooSmall,
+            .property_not_set => ApplicationError.PropertyNotSet,
+            .unknown_property => ApplicationError.UnknownProperty,
+            .invalid_parameter => ApplicationError.InvalidParameter,
+            .not_implemented => ApplicationError.NotImplemented,
+        };
+    }
+};
+pub const max_application_key_length = 128;
+
+pub const AppOverrideKeys = struct {
+    key: [:0]u8,
+    value: [:0]u8,
+};
+
+pub const AppKeys = struct {
+    buffer: []u8,
+
+    pub fn deinit(self: AppKeys, allocator: std.mem.Allocator) void {
+        allocator.free(self.buffer);
+    }
+
+    pub fn allocKeys(self: AppKeys, allocator: std.mem.Allocator) ![][]const u8 {
+        var keys = std.ArrayList([]const u8).init(allocator);
+        var it = std.mem.splitScalar(u8, self.buffer, ',');
+        while (it.next()) |key| {
+            try keys.append(key);
+        }
+        return keys.toOwnedSlice();
+    }
+};
+pub const SceneApplicationState = enum(i32) {
+    none = 0,
+    starting = 1,
+    quitting = 2,
+    running = 3,
+    waiting = 4,
+};
+
+pub const ApplicationProperty = enum(i32) {
+    name = 0,
+
+    launch_type = 11,
+    working_directory = 12,
+    binary_path = 13,
+    arguments = 14,
+    url = 15,
+
+    description = 50,
+    news_url = 51,
+    image_path = 52,
+    source = 53,
+    action_manifest_url = 54,
+
+    is_dashboard_overlay = 60,
+    is_template = 61,
+    is_instanced = 62,
+    is_internal = 63,
+    wants_compositor_pause_in_standby = 64,
+    is_hidden = 65,
+
+    last_launch_time = 70,
+
+    pub fn fromType(comptime T: type) type {
+        return switch (T) {
+            bool => ApplicationProperty.Bool,
+            u64 => ApplicationProperty.U64,
+            else => @compileError("T must be one of bool, u64"),
+        };
+    }
+
+    pub const String = enum(i32) {
+        name = @intFromEnum(ApplicationProperty.name),
+        launch_type = @intFromEnum(ApplicationProperty.launch_type),
+        working_directory = @intFromEnum(ApplicationProperty.working_directory),
+        binary_path = @intFromEnum(ApplicationProperty.binary_path),
+        arguments = @intFromEnum(ApplicationProperty.arguments),
+        url = @intFromEnum(ApplicationProperty.url),
+        description = @intFromEnum(ApplicationProperty.description),
+        news_url = @intFromEnum(ApplicationProperty.news_url),
+        image_path = @intFromEnum(ApplicationProperty.image_path),
+        source = @intFromEnum(ApplicationProperty.source),
+        action_manifest_url = @intFromEnum(ApplicationProperty.action_manifest_url),
+    };
+
+    pub const Bool = enum(i32) {
+        is_dashboard_overlay = @intFromEnum(ApplicationProperty.is_dashboard_overlay),
+        is_template = @intFromEnum(ApplicationProperty.is_template),
+        is_instanced = @intFromEnum(ApplicationProperty.is_instanced),
+        is_internal = @intFromEnum(ApplicationProperty.is_internal),
+        wants_compositor_pause_in_standby = @intFromEnum(ApplicationProperty.wants_compositor_pause_in_standby),
+        is_hidden = @intFromEnum(ApplicationProperty.is_hidden),
+    };
+
+    pub const U64 = enum(i32) {
+        last_launch_time = @intFromEnum(ApplicationProperty.last_launch_time),
+    };
+};
+
+
+pub const MimeTypes = struct {
+    buffer: []u8,
+
+    pub fn deinit(self: MimeTypes, allocator: std.mem.Allocator) void {
+        allocator.free(self.buffer);
+    }
+
+    pub fn allocTypes(self: MimeTypes, allocator: std.mem.Allocator) ![][]const u8 {
+        var types = std.ArrayList([]const u8).init(allocator);
+        var it = std.mem.splitScalar(u8, self.buffer, ',');
+        while (it.next()) |t| {
+            try types.append(t);
+        }
+        return types.toOwnedSlice();
+    }
+};

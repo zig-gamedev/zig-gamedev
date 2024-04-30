@@ -352,64 +352,64 @@ const SystemWindow = struct {
 const ApplicationsWindow = struct {
     add_application_manifest_full_path: [256:0]u8 = std.mem.zeroes([256:0]u8),
     add_application_manifest_temporary: bool = false,
-    add_application_manifest_result: ?OpenVR.Applications.ApplicationError!void = null,
+    add_application_manifest_result: ?OpenVR.ApplicationError!void = null,
 
     remove_application_manifest_full_path: [256:0]u8 = std.mem.zeroes([256:0]u8),
-    remove_application_manifest_result: ?OpenVR.Applications.ApplicationError!void = null,
+    remove_application_manifest_result: ?OpenVR.ApplicationError!void = null,
 
-    is_application_installed_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    is_application_installed_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
 
     application_key_by_index: u32 = 0,
     application_key_by_process_id: u32 = 0,
 
-    launch_application_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    launch_application_result: ?OpenVR.Applications.ApplicationError!void = null,
+    launch_application_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    launch_application_result: ?OpenVR.ApplicationError!void = null,
 
-    launch_template_application_template_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    launch_template_application_new_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    launch_template_application_keys: std.ArrayList(OpenVR.Applications.AppOverrideKeys),
-    launch_template_application_result: ?OpenVR.Applications.ApplicationError!void = null,
+    launch_template_application_template_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    launch_template_application_new_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    launch_template_application_keys: std.ArrayList(OpenVR.AppOverrideKeys),
+    launch_template_application_result: ?OpenVR.ApplicationError!void = null,
 
     launch_application_from_mime_type: [256:0]u8 = std.mem.zeroes([256:0]u8),
     launch_application_from_mime_type_args: [256:0]u8 = std.mem.zeroes([256:0]u8),
-    launch_application_from_mime_type_result: ?OpenVR.Applications.ApplicationError!void = null,
+    launch_application_from_mime_type_result: ?OpenVR.ApplicationError!void = null,
 
-    launch_dashboard_overlay_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    launch_dashboard_overlay_result: ?OpenVR.Applications.ApplicationError!void = null,
+    launch_dashboard_overlay_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    launch_dashboard_overlay_result: ?OpenVR.ApplicationError!void = null,
 
-    cancel_application_launch_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    cancel_application_launch_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     cancel_application_launch_result: ?bool = null,
 
     identify_application_process_id: u32 = 0,
-    identify_application_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    identify_application_result: ?OpenVR.Applications.ApplicationError!void = null,
+    identify_application_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    identify_application_result: ?OpenVR.ApplicationError!void = null,
 
-    application_process_id_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    application_process_id_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
 
-    application_error_name_enum: OpenVR.Applications.ApplicationErrorCode = .none,
+    application_error_name_enum: OpenVR.ApplicationErrorCode = .none,
 
-    application_property_string_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    application_property_string: OpenVR.Applications.ApplicationProperty.String = .name,
+    application_property_string_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    application_property_string: OpenVR.ApplicationProperty.String = .name,
 
-    application_property_bool_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    application_property_bool: OpenVR.Applications.ApplicationProperty.Bool = .is_dashboard_overlay,
+    application_property_bool_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    application_property_bool: OpenVR.ApplicationProperty.Bool = .is_dashboard_overlay,
 
-    application_property_u64_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    application_property_u64: OpenVR.Applications.ApplicationProperty.U64 = .last_launch_time,
+    application_property_u64_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    application_property_u64: OpenVR.ApplicationProperty.U64 = .last_launch_time,
 
-    set_application_auto_launch_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    set_application_auto_launch_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     set_application_auto_launch: bool = false,
-    set_application_auto_launch_result: ?OpenVR.Applications.ApplicationError!void = null,
+    set_application_auto_launch_result: ?OpenVR.ApplicationError!void = null,
 
-    application_auto_launch_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    application_auto_launch_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
 
-    set_default_application_for_mime_type_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    set_default_application_for_mime_type_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     set_default_application_for_mime_type: [256:0]u8 = std.mem.zeroes([256:0]u8),
-    set_default_application_for_mime_type_result: ?OpenVR.Applications.ApplicationError!void = null,
+    set_default_application_for_mime_type_result: ?OpenVR.ApplicationError!void = null,
 
     default_application_for_mime_type: [256:0]u8 = std.mem.zeroes([256:0]u8),
 
-    application_supported_mime_types_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    application_supported_mime_types_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     application_supported_mime_types_buffer_length: u32 = 0,
 
     applications_that_support_mime_type: [256:0]u8 = std.mem.zeroes([256:0]u8),
@@ -417,19 +417,19 @@ const ApplicationsWindow = struct {
     application_launch_arguments_handle: u32 = 0,
     application_launch_arguments_result: ?error{OutOfMemory}![:0]u8 = null,
 
-    perform_application_prelaunch_check_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
-    perform_application_prelaunch_check_result: ?OpenVR.Applications.ApplicationError!void = null,
+    perform_application_prelaunch_check_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
+    perform_application_prelaunch_check_result: ?OpenVR.ApplicationError!void = null,
 
-    scene_application_state_name_enum: OpenVR.Applications.SceneApplicationState = .none,
+    scene_application_state_name_enum: OpenVR.SceneApplicationState = .none,
 
     launch_internal_process_binary_path: [256:0]u8 = std.mem.zeroes([256:0]u8),
     launch_internal_process_arguments: [256:0]u8 = std.mem.zeroes([256:0]u8),
     launch_internal_process_working_directory: [256:0]u8 = std.mem.zeroes([256:0]u8),
-    launch_internal_process_result: ?OpenVR.Applications.ApplicationError!void = null,
+    launch_internal_process_result: ?OpenVR.ApplicationError!void = null,
 
     pub fn init(allocator: std.mem.Allocator) ApplicationsWindow {
         return .{
-            .launch_template_application_keys = std.ArrayList(OpenVR.Applications.AppOverrideKeys).init(allocator),
+            .launch_template_application_keys = std.ArrayList(OpenVR.AppOverrideKeys).init(allocator),
         };
     }
 
@@ -770,7 +770,7 @@ const InputWindow = struct {
     component_state_for_binding_render_model_name: [256:0]u8 = std.mem.zeroes([256:0]u8),
     component_state_for_binding_component_name: [256:0]u8 = std.mem.zeroes([256:0]u8),
     component_state_for_binding_origin_info: std.ArrayList(OpenVR.Input.InputBindingInfo),
-    open_binding_ui_app_key: [OpenVR.Applications.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.Applications.max_application_key_length:0]u8),
+    open_binding_ui_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     open_binding_ui_action_set_handle: OpenVR.Input.ActionSetHandle = 0,
     open_binding_ui_device_handle: OpenVR.InputValueHandle = 0,
     open_binding_ui_show_on_desktop: bool = false,
