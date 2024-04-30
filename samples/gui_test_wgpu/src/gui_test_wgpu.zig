@@ -228,11 +228,16 @@ const SimpleEnum = enum {
     second,
     third,
 };
-
 const SparseEnum = enum(i32) {
     first = 10,
     second = 100,
     third = 1000,
+};
+const NonExhaustiveEnum = enum(i32) {
+    first = 10,
+    second = 100,
+    third = 1000,
+    _,
 };
 
 fn update(demo: *DemoState) !void {
@@ -355,6 +360,7 @@ fn update(demo: *DemoState) !void {
                 var current_item: i32 = 0;
                 var simple_enum_value: SimpleEnum = .first;
                 var sparse_enum_value: SparseEnum = .first;
+                var non_exhaustive_enum_value: NonExhaustiveEnum = .first;
             };
 
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
@@ -374,6 +380,7 @@ fn update(demo: *DemoState) !void {
 
             _ = zgui.comboFromEnum("simple enum", &static.simple_enum_value);
             _ = zgui.comboFromEnum("sparse enum", &static.sparse_enum_value);
+            _ = zgui.comboFromEnum("non-exhaustive enum", &static.non_exhaustive_enum_value);
         }
 
         if (zgui.collapsingHeader("Widgets: Drag Sliders", .{})) {
