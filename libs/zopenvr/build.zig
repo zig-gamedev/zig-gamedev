@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) !void {
                 .optimize = optimize,
             });
             try addLibraryPathsTo(tests, "");
+            try addRPathsTo(tests, "");
             linkOpenVR(tests);
             b.installArtifact(tests);
 
@@ -60,6 +61,33 @@ pub fn addLibraryPathsTo(
                 compile_step.addLibraryPath(.{ .path = try std.fs.path.join(
                     b.allocator,
                     &.{ source_path_prefix, "libs/openvr/lib/linux64" },
+                ) });
+            }
+        },
+        else => {},
+    }
+}
+
+pub fn addRPathsTo(
+    compile_step: *std.Build.Step.Compile,
+    source_path_prefix: []const u8,
+) !void {
+    const b = compile_step.step.owner;
+    const target = compile_step.rootModuleTarget();
+    switch (target.os.tag) {
+        .windows => {
+            if (target.cpu.arch.isX86()) {
+                compile_step.addRPath(.{ .path = try std.fs.path.join(
+                    b.allocator,
+                    &.{ source_path_prefix, "libs/openvr/bin/win64" },
+                ) });
+            }
+        },
+        .linux => {
+            if (target.cpu.arch.isX86()) {
+                compile_step.addRPath(.{ .path = try std.fs.path.join(
+                    b.allocator,
+                    &.{ source_path_prefix, "libs/openvr/bin/linux64" },
                 ) });
             }
         },
