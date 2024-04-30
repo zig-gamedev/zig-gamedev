@@ -464,14 +464,16 @@ pub fn drawText(
     );
 }
 
-pub fn readContentDirFileAlloc(arena_allocator: std.mem.Allocator, content_dir: []const u8, relpath: []const u8, max_bytes: ?usize) ![]u8 {
-    const self_exe_dir_path = try std.fs.selfExeDirPathAlloc(arena_allocator);
+pub fn readContentDirFileAlloc(allocator: std.mem.Allocator, content_dir: []const u8, relpath: []const u8, max_bytes: ?usize) ![]u8 {
+    const self_exe_dir_path = try std.fs.selfExeDirPathAlloc(allocator);
+    defer allocator.free(self_exe_dir_path);
 
-    const content_dir_path = try std.fs.path.join(arena_allocator, &.{ self_exe_dir_path, content_dir });
+    const content_dir_path = try std.fs.path.join(allocator, &.{ self_exe_dir_path, content_dir });
+    defer allocator.free(content_dir_path);
 
     const self_exe_dir = try std.fs.openDirAbsolute(content_dir_path, .{});
 
-    return self_exe_dir.readFileAlloc(arena_allocator, relpath, max_bytes orelse 256 * 1024);
+    return self_exe_dir.readFileAlloc(allocator, relpath, max_bytes orelse 256 * 1024);
 }
 
 pub fn init() void {
