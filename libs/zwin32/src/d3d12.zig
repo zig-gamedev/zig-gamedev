@@ -895,80 +895,47 @@ pub const LOGIC_OP = enum(UINT) {
 };
 
 pub const RENDER_TARGET_BLEND_DESC = extern struct {
-    BlendEnable: BOOL,
-    LogicOpEnable: BOOL,
-    SrcBlend: BLEND,
-    DestBlend: BLEND,
-    BlendOp: BLEND_OP,
-    SrcBlendAlpha: BLEND,
-    DestBlendAlpha: BLEND,
-    BlendOpAlpha: BLEND_OP,
-    LogicOp: LOGIC_OP,
-    RenderTargetWriteMask: COLOR_WRITE_ENABLE,
+    BlendEnable: BOOL = FALSE,
+    LogicOpEnable: BOOL = FALSE,
+    SrcBlend: BLEND = .ONE,
+    DestBlend: BLEND = .ZERO,
+    BlendOp: BLEND_OP = .ADD,
+    SrcBlendAlpha: BLEND = .ONE,
+    DestBlendAlpha: BLEND = .ZERO,
+    BlendOpAlpha: BLEND_OP = .ADD,
+    LogicOp: LOGIC_OP = .NOOP,
+    RenderTargetWriteMask: COLOR_WRITE_ENABLE = COLOR_WRITE_ENABLE.ALL,
 
     pub fn initDefault() RENDER_TARGET_BLEND_DESC {
-        var v = std.mem.zeroes(@This());
-        v = .{
-            .BlendEnable = FALSE,
-            .LogicOpEnable = FALSE,
-            .SrcBlend = .ONE,
-            .DestBlend = .ZERO,
-            .BlendOp = .ADD,
-            .SrcBlendAlpha = .ONE,
-            .DestBlendAlpha = .ZERO,
-            .BlendOpAlpha = .ADD,
-            .LogicOp = .NOOP,
-            .RenderTargetWriteMask = COLOR_WRITE_ENABLE.ALL,
-        };
-        return v;
+        return .{};
     }
 };
 
 pub const BLEND_DESC = extern struct {
-    AlphaToCoverageEnable: BOOL,
-    IndependentBlendEnable: BOOL,
-    RenderTarget: [8]RENDER_TARGET_BLEND_DESC,
+    AlphaToCoverageEnable: BOOL = FALSE,
+    IndependentBlendEnable: BOOL = FALSE,
+    RenderTarget: [8]RENDER_TARGET_BLEND_DESC = [_]RENDER_TARGET_BLEND_DESC{.{}} ** 8,
 
     pub fn initDefault() BLEND_DESC {
-        var v = std.mem.zeroes(@This());
-        v = .{
-            .AlphaToCoverageEnable = FALSE,
-            .IndependentBlendEnable = FALSE,
-            .RenderTarget = [_]RENDER_TARGET_BLEND_DESC{RENDER_TARGET_BLEND_DESC.initDefault()} ** 8,
-        };
-        return v;
+        return .{};
     }
 };
 
 pub const RASTERIZER_DESC = extern struct {
-    FillMode: FILL_MODE,
-    CullMode: CULL_MODE,
-    FrontCounterClockwise: BOOL,
-    DepthBias: INT,
-    DepthBiasClamp: FLOAT,
-    SlopeScaledDepthBias: FLOAT,
-    DepthClipEnable: BOOL,
-    MultisampleEnable: BOOL,
-    AntialiasedLineEnable: BOOL,
-    ForcedSampleCount: UINT,
-    ConservativeRaster: CONSERVATIVE_RASTERIZATION_MODE,
+    FillMode: FILL_MODE = .SOLID,
+    CullMode: CULL_MODE = .BACK,
+    FrontCounterClockwise: BOOL = FALSE,
+    DepthBias: INT = 0,
+    DepthBiasClamp: FLOAT = 0.0,
+    SlopeScaledDepthBias: FLOAT = 0.0,
+    DepthClipEnable: BOOL = TRUE,
+    MultisampleEnable: BOOL = FALSE,
+    AntialiasedLineEnable: BOOL = FALSE,
+    ForcedSampleCount: UINT = 0,
+    ConservativeRaster: CONSERVATIVE_RASTERIZATION_MODE = .OFF,
 
     pub fn initDefault() RASTERIZER_DESC {
-        var v = std.mem.zeroes(@This());
-        v = .{
-            .FillMode = .SOLID,
-            .CullMode = .BACK,
-            .FrontCounterClockwise = FALSE,
-            .DepthBias = 0,
-            .DepthBiasClamp = 0.0,
-            .SlopeScaledDepthBias = 0.0,
-            .DepthClipEnable = TRUE,
-            .MultisampleEnable = FALSE,
-            .AntialiasedLineEnable = FALSE,
-            .ForcedSampleCount = 0,
-            .ConservativeRaster = .OFF,
-        };
-        return v;
+        return .{};
     }
 };
 
@@ -1016,74 +983,44 @@ pub const STENCIL_OP = enum(UINT) {
 };
 
 pub const DEPTH_STENCILOP_DESC = extern struct {
-    StencilFailOp: STENCIL_OP,
-    StencilDepthFailOp: STENCIL_OP,
-    StencilPassOp: STENCIL_OP,
-    StencilFunc: COMPARISON_FUNC,
+    StencilFailOp: STENCIL_OP = .KEEP,
+    StencilDepthFailOp: STENCIL_OP = .KEEP,
+    StencilPassOp: STENCIL_OP = .KEEP,
+    StencilFunc: COMPARISON_FUNC = .ALWAYS,
 
     pub fn initDefault() DEPTH_STENCILOP_DESC {
-        var v = std.mem.zeroes(@This());
-        v = .{
-            .StencilFailOp = .KEEP,
-            .StencilDepthFailOp = .KEEP,
-            .StencilPassOp = .KEEP,
-            .StencilFunc = .ALWAYS,
-        };
-        return v;
+        return .{};
     }
 };
 
 pub const DEPTH_STENCIL_DESC = extern struct {
-    DepthEnable: BOOL,
-    DepthWriteMask: DEPTH_WRITE_MASK,
-    DepthFunc: COMPARISON_FUNC,
-    StencilEnable: BOOL,
-    StencilReadMask: UINT8,
-    StencilWriteMask: UINT8,
-    FrontFace: DEPTH_STENCILOP_DESC,
-    BackFace: DEPTH_STENCILOP_DESC,
+    DepthEnable: BOOL = TRUE,
+    DepthWriteMask: DEPTH_WRITE_MASK = .ALL,
+    DepthFunc: COMPARISON_FUNC = .LESS,
+    StencilEnable: BOOL = FALSE,
+    StencilReadMask: UINT8 = 0xff,
+    StencilWriteMask: UINT8 = 0xff,
+    FrontFace: DEPTH_STENCILOP_DESC = .{},
+    BackFace: DEPTH_STENCILOP_DESC = .{},
 
     pub fn initDefault() DEPTH_STENCIL_DESC {
-        var desc = std.mem.zeroes(@This());
-        desc = .{
-            .DepthEnable = TRUE,
-            .DepthWriteMask = .ALL,
-            .DepthFunc = .LESS,
-            .StencilEnable = FALSE,
-            .StencilReadMask = 0xff,
-            .StencilWriteMask = 0xff,
-            .FrontFace = DEPTH_STENCILOP_DESC.initDefault(),
-            .BackFace = DEPTH_STENCILOP_DESC.initDefault(),
-        };
-        return desc;
+        return .{};
     }
 };
 
 pub const DEPTH_STENCIL_DESC1 = extern struct {
-    DepthEnable: BOOL,
-    DepthWriteMask: DEPTH_WRITE_MASK,
-    DepthFunc: COMPARISON_FUNC,
-    StencilEnable: BOOL,
-    StencilReadMask: UINT8,
-    StencilWriteMask: UINT8,
-    FrontFace: DEPTH_STENCILOP_DESC,
-    BackFace: DEPTH_STENCILOP_DESC,
-    DepthBoundsTestEnable: BOOL,
+    DepthEnable: BOOL = TRUE,
+    DepthWriteMask: DEPTH_WRITE_MASK = .ALL,
+    DepthFunc: COMPARISON_FUNC = .LESS,
+    StencilEnable: BOOL = FALSE,
+    StencilReadMask: UINT8 = 0xff,
+    StencilWriteMask: UINT8 = 0xff,
+    FrontFace: DEPTH_STENCILOP_DESC = .{},
+    BackFace: DEPTH_STENCILOP_DESC = .{},
+    DepthBoundsTestEnable: BOOL = FALSE,
 
     pub fn initDefault() DEPTH_STENCIL_DESC1 {
-        var desc = std.mem.zeroes(@This());
-        desc = .{
-            .DepthEnable = TRUE,
-            .DepthWriteMask = .ALL,
-            .DepthFunc = .LESS,
-            .StencilEnable = FALSE,
-            .StencilReadMask = 0xff,
-            .StencilWriteMask = 0xff,
-            .FrontFace = DEPTH_STENCILOP_DESC.initDefault(),
-            .BackFace = DEPTH_STENCILOP_DESC.initDefault(),
-            .DepthBoundsTestEnable = FALSE,
-        };
-        return desc;
+        return .{};
     }
 };
 
@@ -1158,74 +1095,42 @@ pub const PIPELINE_STATE_FLAGS = packed struct(UINT) {
 };
 
 pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
-    pRootSignature: ?*IRootSignature,
-    VS: SHADER_BYTECODE,
-    PS: SHADER_BYTECODE,
-    DS: SHADER_BYTECODE,
-    HS: SHADER_BYTECODE,
-    GS: SHADER_BYTECODE,
-    StreamOutput: STREAM_OUTPUT_DESC,
-    BlendState: BLEND_DESC,
-    SampleMask: UINT,
-    RasterizerState: RASTERIZER_DESC,
-    DepthStencilState: DEPTH_STENCIL_DESC,
-    InputLayout: INPUT_LAYOUT_DESC,
-    IBStripCutValue: INDEX_BUFFER_STRIP_CUT_VALUE,
-    PrimitiveTopologyType: PRIMITIVE_TOPOLOGY_TYPE,
-    NumRenderTargets: UINT,
-    RTVFormats: [8]dxgi.FORMAT,
-    DSVFormat: dxgi.FORMAT,
-    SampleDesc: dxgi.SAMPLE_DESC,
-    NodeMask: UINT,
-    CachedPSO: CACHED_PIPELINE_STATE,
-    Flags: PIPELINE_STATE_FLAGS,
+    pRootSignature: ?*IRootSignature = null,
+    VS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    PS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    DS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    HS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    GS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    StreamOutput: STREAM_OUTPUT_DESC = STREAM_OUTPUT_DESC.initZero(),
+    BlendState: BLEND_DESC = .{},
+    SampleMask: UINT = 0xffff_ffff,
+    RasterizerState: RASTERIZER_DESC = .{},
+    DepthStencilState: DEPTH_STENCIL_DESC = .{},
+    InputLayout: INPUT_LAYOUT_DESC = INPUT_LAYOUT_DESC.initZero(),
+    IBStripCutValue: INDEX_BUFFER_STRIP_CUT_VALUE = .DISABLED,
+    PrimitiveTopologyType: PRIMITIVE_TOPOLOGY_TYPE = .UNDEFINED,
+    NumRenderTargets: UINT = 0,
+    RTVFormats: [8]dxgi.FORMAT = [_]dxgi.FORMAT{.UNKNOWN} ** 8,
+    DSVFormat: dxgi.FORMAT = .UNKNOWN,
+    SampleDesc: dxgi.SAMPLE_DESC = .{ .Count = 1, .Quality = 0 },
+    NodeMask: UINT = 0,
+    CachedPSO: CACHED_PIPELINE_STATE = CACHED_PIPELINE_STATE.initZero(),
+    Flags: PIPELINE_STATE_FLAGS = .{},
 
     pub fn initDefault() GRAPHICS_PIPELINE_STATE_DESC {
-        var v = std.mem.zeroes(@This());
-        v = GRAPHICS_PIPELINE_STATE_DESC{
-            .pRootSignature = null,
-            .VS = SHADER_BYTECODE.initZero(),
-            .PS = SHADER_BYTECODE.initZero(),
-            .DS = SHADER_BYTECODE.initZero(),
-            .HS = SHADER_BYTECODE.initZero(),
-            .GS = SHADER_BYTECODE.initZero(),
-            .StreamOutput = STREAM_OUTPUT_DESC.initZero(),
-            .BlendState = BLEND_DESC.initDefault(),
-            .SampleMask = 0xffff_ffff,
-            .RasterizerState = RASTERIZER_DESC.initDefault(),
-            .DepthStencilState = DEPTH_STENCIL_DESC.initDefault(),
-            .InputLayout = INPUT_LAYOUT_DESC.initZero(),
-            .IBStripCutValue = .DISABLED,
-            .PrimitiveTopologyType = .UNDEFINED,
-            .NumRenderTargets = 0,
-            .RTVFormats = [_]dxgi.FORMAT{.UNKNOWN} ** 8,
-            .DSVFormat = .UNKNOWN,
-            .SampleDesc = .{ .Count = 1, .Quality = 0 },
-            .NodeMask = 0,
-            .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
-            .Flags = .{},
-        };
-        return v;
+        return .{};
     }
 };
 
 pub const COMPUTE_PIPELINE_STATE_DESC = extern struct {
-    pRootSignature: ?*IRootSignature,
-    CS: SHADER_BYTECODE,
-    NodeMask: UINT,
-    CachedPSO: CACHED_PIPELINE_STATE,
-    Flags: PIPELINE_STATE_FLAGS,
+    pRootSignature: ?*IRootSignature = null,
+    CS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    NodeMask: UINT = 0,
+    CachedPSO: CACHED_PIPELINE_STATE = CACHED_PIPELINE_STATE.initZero(),
+    Flags: PIPELINE_STATE_FLAGS = .{},
 
     pub fn initDefault() COMPUTE_PIPELINE_STATE_DESC {
-        var v = std.mem.zeroes(@This());
-        v = COMPUTE_PIPELINE_STATE_DESC{
-            .pRootSignature = null,
-            .CS = SHADER_BYTECODE.initZero(),
-            .NodeMask = 0,
-            .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
-            .Flags = .{},
-        };
-        return v;
+        return .{};
     }
 };
 
@@ -4931,44 +4836,25 @@ pub const PIPELINE_STATE_STREAM_DESC = extern struct {
 
 // NOTE(mziulek): Helper structures for defining Mesh Shaders.
 pub const MESH_SHADER_PIPELINE_STATE_DESC = extern struct {
-    pRootSignature: ?*IRootSignature,
-    AS: SHADER_BYTECODE,
-    MS: SHADER_BYTECODE,
-    PS: SHADER_BYTECODE,
-    BlendState: BLEND_DESC,
-    SampleMask: UINT,
-    RasterizerState: RASTERIZER_DESC,
-    DepthStencilState: DEPTH_STENCIL_DESC1,
-    PrimitiveTopologyType: PRIMITIVE_TOPOLOGY_TYPE,
-    NumRenderTargets: UINT,
-    RTVFormats: [8]dxgi.FORMAT,
-    DSVFormat: dxgi.FORMAT,
-    SampleDesc: dxgi.SAMPLE_DESC,
-    NodeMask: UINT,
-    CachedPSO: CACHED_PIPELINE_STATE,
-    Flags: PIPELINE_STATE_FLAGS,
+    pRootSignature: ?*IRootSignature = null,
+    AS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    MS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    PS: SHADER_BYTECODE = SHADER_BYTECODE.initZero(),
+    BlendState: BLEND_DESC = .{},
+    SampleMask: UINT = 0xffff_ffff,
+    RasterizerState: RASTERIZER_DESC = .{},
+    DepthStencilState: DEPTH_STENCIL_DESC1 = .{},
+    PrimitiveTopologyType: PRIMITIVE_TOPOLOGY_TYPE = .UNDEFINED,
+    NumRenderTargets: UINT = 0,
+    RTVFormats: [8]dxgi.FORMAT = [_]dxgi.FORMAT{.UNKNOWN} ** 8,
+    DSVFormat: dxgi.FORMAT = .UNKNOWN,
+    SampleDesc: dxgi.SAMPLE_DESC = .{ .Count = 1, .Quality = 0 },
+    NodeMask: UINT = 0,
+    CachedPSO: CACHED_PIPELINE_STATE = CACHED_PIPELINE_STATE.initZero(),
+    Flags: PIPELINE_STATE_FLAGS = .{},
 
     pub fn initDefault() MESH_SHADER_PIPELINE_STATE_DESC {
-        var v = std.mem.zeroes(@This());
-        v = .{
-            .pRootSignature = null,
-            .AS = SHADER_BYTECODE.initZero(),
-            .MS = SHADER_BYTECODE.initZero(),
-            .PS = SHADER_BYTECODE.initZero(),
-            .BlendState = BLEND_DESC.initDefault(),
-            .SampleMask = 0xffff_ffff,
-            .RasterizerState = RASTERIZER_DESC.initDefault(),
-            .DepthStencilState = DEPTH_STENCIL_DESC1.initDefault(),
-            .PrimitiveTopologyType = .UNDEFINED,
-            .NumRenderTargets = 0,
-            .RTVFormats = [_]dxgi.FORMAT{.UNKNOWN} ** 8,
-            .DSVFormat = .UNKNOWN,
-            .SampleDesc = .{ .Count = 1, .Quality = 0 },
-            .NodeMask = 0,
-            .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
-            .Flags = .{},
-        };
-        return v;
+        return .{};
     }
 };
 
