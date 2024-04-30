@@ -962,7 +962,6 @@ pub const ApplicationProperty = enum(i32) {
     };
 };
 
-
 pub const MimeTypes = struct {
     buffer: []u8,
 
@@ -977,5 +976,32 @@ pub const MimeTypes = struct {
             try types.append(t);
         }
         return types.toOwnedSlice();
+    }
+};
+
+pub const CalibrationState = enum(i32) {
+    ok = 1,
+    warning = 100,
+    warning_base_station_may_have_moved = 101,
+    warning_base_station_removed = 102,
+    warning_seated_bounds_invalid = 103,
+    @"error" = 200,
+    error_base_station_uninitialized = 201,
+    error_base_station_conflict = 202,
+    error_play_area_invalid = 203,
+    error_collision_bounds_invalid = 204,
+};
+
+pub const PlayAreaSize = struct {
+    x: f32,
+    z: f32,
+};
+
+pub const BoundsColor = struct {
+    bound_colors: []Color,
+    camera_color: Color,
+
+    pub fn deinit(self: BoundsColor, allocator: std.mem.Allocator) void {
+        allocator.free(self.bound_colors);
     }
 };

@@ -877,7 +877,7 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
                         payload.deinit(allocator);
                     }
                 },
-                OpenVR.Chaperone.BoundsColor,
+                OpenVR.BoundsColor,
                 OpenVR.Compositor.Poses,
                 OpenVR.System.FilePaths,
                 OpenVR.AppKeys,
@@ -1013,11 +1013,11 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
         OpenVR.TrackedControllerRole,
         OpenVR.System.TrackedDeviceClass,
         OpenVR.System.DeviceActivityLevel,
-        OpenVR.Chaperone.CalibrationState,
+        OpenVR.CalibrationState,
         OpenVR.SceneApplicationState,
         OpenVR.Input.SkeletalTrackingLevel,
         => readOnlyText("##", @tagName(result)),
-        OpenVR.Chaperone.PlayAreaSize => {
+        OpenVR.PlayAreaSize => {
             readOnlyFloat("x", result.x);
             readOnlyFloat("z", result.z);
         },
@@ -1083,7 +1083,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             }
         },
         OpenVR.Color => readOnlyColor4("##", @bitCast(result)),
-        OpenVR.Chaperone.BoundsColor => {
+        OpenVR.BoundsColor => {
             if (result.bound_colors.len > 0) {
                 for (result.bound_colors, 0..) |bound_color, i| {
                     zgui.pushIntId(@intCast(i));

@@ -13,29 +13,12 @@ pub fn init() common.InitError!Self {
     };
 }
 
-pub const CalibrationState = enum(i32) {
-    ok = 1,
-    warning = 100,
-    warning_base_station_may_have_moved = 101,
-    warning_base_station_removed = 102,
-    warning_seated_bounds_invalid = 103,
-    @"error" = 200,
-    error_base_station_uninitialized = 201,
-    error_base_station_conflict = 202,
-    error_play_area_invalid = 203,
-    error_collision_bounds_invalid = 204,
-};
-
-pub fn getCalibrationState(self: Self) CalibrationState {
+pub fn getCalibrationState(self: Self) common.CalibrationState {
     return self.function_table.GetCalibrationState();
 }
 
-pub const PlayAreaSize = struct {
-    x: f32,
-    z: f32,
-};
-pub fn getPlayAreaSize(self: Self) ?PlayAreaSize {
-    var play_area: PlayAreaSize = undefined;
+pub fn getPlayAreaSize(self: Self) ?common.PlayAreaSize {
+    var play_area: common.PlayAreaSize = undefined;
     if (self.function_table.GetPlayAreaSize(&play_area.x, &play_area.z)) {
         return play_area;
     } else {
@@ -60,16 +43,8 @@ pub fn setSceneColor(self: Self, scene_color: common.Color) void {
     self.function_table.SetSceneColor(scene_color);
 }
 
-pub const BoundsColor = struct {
-    bound_colors: []common.Color,
-    camera_color: common.Color,
-
-    pub fn deinit(self: BoundsColor, allocator: std.mem.Allocator) void {
-        allocator.free(self.bound_colors);
-    }
-};
-pub fn allocBoundsColor(self: Self, allocator: std.mem.Allocator, collision_bounds_fade_distance: f32, bound_colors_count: usize) !BoundsColor {
-    var bounds_color: BoundsColor = undefined;
+pub fn allocBoundsColor(self: Self, allocator: std.mem.Allocator, collision_bounds_fade_distance: f32, bound_colors_count: usize) !common.BoundsColor {
+    var bounds_color: common.BoundsColor = undefined;
     bounds_color.bound_colors = try allocator.alloc(common.Color, bound_colors_count);
     self.function_table.GetBoundsColor(bounds_color.bound_colors.ptr, @intCast(bounds_color.bound_colors.len), collision_bounds_fade_distance, &bounds_color.camera_color);
     return bounds_color;
@@ -87,8 +62,8 @@ pub fn resetZeroPose(self: Self, origin: common.TrackingUniverseOrigin) void {
     self.function_table.ResetZeroPose(origin);
 }
 
-pub const FunctionTable = extern struct {
-    GetCalibrationState: *const fn () callconv(.C) CalibrationState,
+const FunctionTable = extern struct {
+    GetCalibrationState: *const fn () callconv(.C) common.CalibrationState,
     GetPlayAreaSize: *const fn (*f32, *f32) callconv(.C) bool,
     GetPlayAreaRect: *const fn (*common.Quad) callconv(.C) bool,
     ReloadInfo: *const fn () callconv(.C) void,
