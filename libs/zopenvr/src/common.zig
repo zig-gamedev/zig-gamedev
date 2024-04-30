@@ -1387,3 +1387,112 @@ pub const InputBindingInfo = extern struct {
     input_source_type: [31:0]u8,
 };
 pub const max_bone_name_length: usize = 32;
+
+pub const RenderModelError = error{
+    Loading,
+    NotSupported,
+    InvalidArg,
+    InvalidModel,
+    NoShapes,
+    MultipleShapes,
+    TooManyVertices,
+    MultipleTextures,
+    BufferTooSmall,
+    NotEnoughNormals,
+    NotEnoughTexCoords,
+    InvalidTexture,
+};
+pub const RenderModelErrorCode = enum(i32) {
+    none = 0,
+    loading = 100,
+    not_supported = 200,
+    invalid_arg = 300,
+    invalid_model = 301,
+    no_shapes = 302,
+    multiple_shapes = 303,
+    too_many_vertices = 304,
+    multiple_textures = 305,
+    buffer_too_small = 306,
+    not_enough_normals = 307,
+    not_enough_tex_coords = 308,
+    invalid_texture = 400,
+
+    pub fn maybe(error_code: RenderModelErrorCode) RenderModelError!void {
+        return switch (error_code) {
+            .none => {},
+            .loading => RenderModelError.Loading,
+            .not_supported => RenderModelError.NotSupported,
+            .invalid_arg => RenderModelError.InvalidArg,
+            .invalid_model => RenderModelError.InvalidModel,
+            .no_shapes => RenderModelError.NoShapes,
+            .multiple_shapes => RenderModelError.MultipleShapes,
+            .too_many_vertices => RenderModelError.TooManyVertices,
+            .multiple_textures => RenderModelError.MultipleTextures,
+            .buffer_too_small => RenderModelError.BufferTooSmall,
+            .not_enough_normals => RenderModelError.NotEnoughNormals,
+            .not_enough_tex_coords => RenderModelError.NotEnoughTexCoords,
+            .invalid_texture => RenderModelError.InvalidTexture,
+        };
+    }
+};
+
+pub const TextureID = i32;
+pub const ComponentProperties = u32;
+pub const ExternRenderModel = extern struct {
+    vertex_data: [*c]RenderModel.Vertex,
+    vertex_count: u32,
+    index_data: [*c]u16,
+    triangle_count: u32,
+    diffuse_texture_id: TextureID,
+};
+pub const RenderModel = struct {
+    extern_ptr: *ExternRenderModel,
+
+    vertex_data: []Vertex,
+    index_data: []u16,
+    triangle_count: u32,
+    diffuse_texture_id: TextureID,
+
+    pub fn init(extern_ptr: *ExternRenderModel) RenderModel {
+        return .{
+            .extern_ptr = extern_ptr,
+            .vertex_data = extern_ptr.vertex_data[0..extern_ptr.vertex_count],
+            .index_data = extern_ptr.index_data[0 .. extern_ptr.triangle_count * 3],
+            .triangle_count = extern_ptr.triangle_count,
+            .diffuse_texture_id = extern_ptr.diffuse_texture_id,
+        };
+    }
+
+    pub const Vertex = extern struct {
+        position: Vector3,
+        normal: Vector3,
+        texture_coord: [2]f32,
+    };
+
+    pub const TextureMap = extern struct {
+        width: u16,
+        height: u16,
+        texture_map_data: [*c]u8,
+        format: TextureFormat,
+        mip_levels: u16,
+    };
+
+    pub const TextureFormat = enum(i32) {
+        rgba8_srgb = 0,
+        bc2 = 1,
+        bc4 = 2,
+        bc7 = 3,
+        bc7_srgb = 4,
+        rgba16_float = 5,
+    };
+
+    pub const ControllerModeState = extern struct {
+        scroll_wheel_visible: bool,
+    };
+
+    pub const ComponentState = extern struct {
+        tracking_to_component_render_model: Matrix34,
+        tracking_to_component_local: Matrix34,
+        properties: ComponentProperties,
+    };
+};

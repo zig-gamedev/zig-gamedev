@@ -671,7 +671,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                 OpenVR.SkeletalReferencePose,
                 OpenVR.SkeletalMotionRange,
                 OpenVR.SummaryType,
-                OpenVR.RenderModels.RenderModelErrorCode,
+                OpenVR.RenderModelErrorCode,
                 OpenVR.TimingMode,
                 => {
                     _ = zgui.comboFromEnum(arg_name, arg_ptr);
@@ -706,13 +706,13 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                     _ = zgui.checkbox("pose_is_valid", .{ .v = &arg_ptr.pose_is_valid });
                     _ = zgui.checkbox("device_is_connected", .{ .v = &arg_ptr.device_is_connected });
                 },
-                OpenVR.RenderModels.RenderModel => {
+                OpenVR.RenderModel => {
                     readOnlyText(arg_name, "use loadRenderModelAsync");
                 },
-                *OpenVR.RenderModels.RenderModel.TextureMap => {
+                *OpenVR.RenderModel.TextureMap => {
                     readOnlyText(arg_name, "use loadTextureAsync");
                 },
-                OpenVR.RenderModels.RenderModel.ControllerModeState => {
+                OpenVR.RenderModel.ControllerModeState => {
                     zgui.text(arg_name, .{});
                     zgui.indent(.{ .indent_w = 30 });
                     defer zgui.unindent(.{ .indent_w = 30 });
@@ -1278,7 +1278,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             readOnlyText("slot_name", std.mem.sliceTo(&result.slot_name, 0));
             readOnlyText("input_source_type", std.mem.sliceTo(&result.input_source_type, 0));
         },
-        OpenVR.RenderModels.RenderModel.ComponentState => {
+        OpenVR.RenderModel.ComponentState => {
             {
                 zgui.text("tracking_to_component_render_model", .{});
                 zgui.indent(.{ .indent_w = 30 });
@@ -1293,7 +1293,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             }
             readOnlyScalar("properties", u32, result.properties);
         },
-        OpenVR.RenderModels.RenderModel => {
+        OpenVR.RenderModel => {
             {
                 zgui.text("vertex_data", .{});
                 zgui.indent(.{ .indent_w = 30 });
@@ -1308,12 +1308,12 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             }
             readOnlyInt("diffuse_texture_id", result.diffuse_texture_id);
         },
-        OpenVR.RenderModels.RenderModel.Vertex => {
+        OpenVR.RenderModel.Vertex => {
             readOnlyFloat3("position.v", result.position.v);
             readOnlyFloat3("normal.v", result.normal.v);
             readOnlyFloat2("texture_coord", result.texture_coord);
         },
-        *OpenVR.RenderModels.RenderModel.TextureMap => {
+        *OpenVR.RenderModel.TextureMap => {
             readOnlyScalar("width", u16, result.width);
             readOnlyScalar("height", u16, result.height);
             readOnlyText("texture_map_data", "(binary)");
@@ -1370,8 +1370,8 @@ fn fillArgs(comptime arg_ptrs_info: std.builtin.Type.Struct, arg_ptrs: anytype, 
                         *std.ArrayList(OpenVR.ActiveActionSet),
                         *std.ArrayList(OpenVR.InputBindingInfo),
                         => arg_ptr.items,
-                        *?OpenVR.RenderModels.RenderModelError!OpenVR.RenderModels.RenderModel => arg_ptr.*.? catch @panic("render model required"),
-                        *?OpenVR.RenderModels.RenderModelError!*OpenVR.RenderModels.RenderModel.TextureMap => arg_ptr.*.? catch @panic("texture map required"),
+                        *?OpenVR.RenderModelError!OpenVR.RenderModel => arg_ptr.*.? catch @panic("render model required"),
+                        *?OpenVR.RenderModelError!*OpenVR.RenderModel.TextureMap => arg_ptr.*.? catch @panic("texture map required"),
                         else => arg_ptr.*,
                     },
                 },

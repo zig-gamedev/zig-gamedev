@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const common = @import("common.zig");
-const RenderModel = @import("render_models.zig").RenderModel;
 
 function_table: *FunctionTable,
 
@@ -421,8 +420,8 @@ pub fn getComponentStateForBinding(
     render_model_name: [:0]const u8,
     component_name: [:0]const u8,
     origin_info: []const common.InputBindingInfo,
-) common.InputError!RenderModel.ComponentState {
-    var result: RenderModel.ComponentState = undefined;
+) common.InputError!common.RenderModel.ComponentState {
+    var result: common.RenderModel.ComponentState = undefined;
     const error_code = self.function_table.GetComponentStateForBinding(
         @constCast(render_model_name.ptr),
         @constCast(component_name.ptr),
@@ -506,7 +505,7 @@ const FunctionTable = extern struct {
     GetActionBindingInfo: *const fn (common.ActionHandle, [*c]common.InputBindingInfo, u32, u32, [*c]u32) callconv(.C) common.InputErrorCode,
     ShowActionOrigins: *const fn (common.ActionSetHandle, common.ActionHandle) callconv(.C) common.InputErrorCode,
     ShowBindingsForActionSet: *const fn ([*c]common.ActiveActionSet, u32, u32, common.InputValueHandle) callconv(.C) common.InputErrorCode,
-    GetComponentStateForBinding: *const fn ([*c]u8, [*c]u8, [*c]common.InputBindingInfo, u32, u32, *RenderModel.ComponentState) callconv(.C) common.InputErrorCode,
+    GetComponentStateForBinding: *const fn ([*c]u8, [*c]u8, [*c]common.InputBindingInfo, u32, u32, *common.RenderModel.ComponentState) callconv(.C) common.InputErrorCode,
     IsUsingLegacyInput: *const fn () callconv(.C) bool,
     OpenBindingUI: *const fn ([*c]u8, common.ActionSetHandle, common.InputValueHandle, bool) callconv(.C) common.InputErrorCode,
     GetBindingVariant: *const fn (common.InputValueHandle, [*c]u8, u32) callconv(.C) common.InputErrorCode,

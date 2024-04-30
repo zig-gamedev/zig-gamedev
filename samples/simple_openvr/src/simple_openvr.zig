@@ -68,7 +68,7 @@ const App = struct {
         defer self.render_models.freeTexture(render_model_texture);
         std.debug.assert(render_model_texture.format == .rgba8_srgb);
 
-        const vertices = try gctx.uploadVertices(OpenVR.RenderModels.RenderModel.Vertex, render_model.vertex_data);
+        const vertices = try gctx.uploadVertices(OpenVR.RenderModel.Vertex, render_model.vertex_data);
         const vertex_indices = try gctx.uploadVertexIndices(u16, render_model.index_data);
 
         var mipmap_genenerator = zd3d12.MipmapGenerator.init(gctx, .R8G8B8A8_UNORM, self.mipmapgen_bytecode);

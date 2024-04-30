@@ -972,9 +972,9 @@ const InputWindow = struct {
 
 const RenderModelsWindow = struct {
     load_render_model_async_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
-    load_render_model_async_result: ?OpenVR.RenderModels.RenderModelError!OpenVR.RenderModels.RenderModel = null,
-    load_texture_async_texture_id: OpenVR.RenderModels.TextureID = 0,
-    load_texture_async_result: ?OpenVR.RenderModels.RenderModelError!*OpenVR.RenderModels.RenderModel.TextureMap = null,
+    load_render_model_async_result: ?OpenVR.RenderModelError!OpenVR.RenderModel = null,
+    load_texture_async_texture_id: OpenVR.TextureID = 0,
+    load_texture_async_result: ?OpenVR.RenderModelError!*OpenVR.RenderModel.TextureMap = null,
     render_model_name_render_model_index: u32 = 0,
     component_count_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
     component_name_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
@@ -986,14 +986,14 @@ const RenderModelsWindow = struct {
     component_state_for_device_path_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
     component_state_for_device_path_component_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
     component_state_for_device_path: OpenVR.InputValueHandle = 0,
-    component_state_for_device_path_state: OpenVR.RenderModels.RenderModel.ControllerModeState = .{
+    component_state_for_device_path_state: OpenVR.RenderModel.ControllerModeState = .{
         .scroll_wheel_visible = false,
     },
     render_model_has_component_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
     render_model_has_component_component_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
     render_model_thumbnail_url_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
     render_model_original_path_render_model_name: [255:0]u8 = std.mem.zeroes([255:0]u8),
-    render_model_error_name_from_enum: OpenVR.RenderModels.RenderModelErrorCode = .none,
+    render_model_error_name_from_enum: OpenVR.RenderModelErrorCode = .none,
 
     pub fn init() RenderModelsWindow {
         return .{};
