@@ -9,6 +9,10 @@ const d3d12 = zwin32.d3d12;
 const dxgi = zwin32.dxgi;
 const zgui = @import("zgui");
 
+// We need to export below symbols for DirectX 12 Agility SDK.
+pub export const D3D12SDKVersion: u32 = 610;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: openvr test";
 

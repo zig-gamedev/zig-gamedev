@@ -12,6 +12,10 @@ const zd3d12 = @import("zd3d12");
 
 const common = @import("common");
 
+// We need to export below symbols for DirectX 12 Agility SDK.
+pub export const D3D12SDKVersion: u32 = 610;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
 const content_dir = @import("build_options").content_dir;
 
 pub const std_options = .{
