@@ -248,7 +248,7 @@ const EyeFramebuffer = struct {
     constant: zd3d12.ConstantBufferHandle(ConstantBuffer),
 };
 
-fn createEye(gctx: *zd3d12.GraphicsContext, eye: OpenVR.Eye, msaa_sample_count: u32, render_target_size: OpenVR.System.RenderTargetSize) !EyeFramebuffer {
+fn createEye(gctx: *zd3d12.GraphicsContext, eye: OpenVR.Eye, msaa_sample_count: u32, render_target_size: OpenVR.RenderTargetSize) !EyeFramebuffer {
     var eye_framebuffer: EyeFramebuffer = undefined;
     eye_framebuffer.eye = eye;
     const texture_desc = d3d12.RESOURCE_DESC.initFrameBuffer(

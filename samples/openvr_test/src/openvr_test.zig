@@ -99,7 +99,7 @@ const SystemWindow = struct {
     device_to_absolute_tracking_pose_predicted_seconds_to_photons_from_now: f32 = 0,
     device_to_absolute_tracking_pose_count: usize = 0,
 
-    sorted_tracked_device_indices_of_class_tracked_device_class: OpenVR.System.TrackedDeviceClass = .invalid,
+    sorted_tracked_device_indices_of_class_tracked_device_class: OpenVR.TrackedDeviceClass = .invalid,
     sorted_tracked_device_indices_of_class_tracked_device_indices: std.ArrayList(OpenVR.TrackedDeviceIndex),
     sorted_tracked_device_indices_of_class_relative_to_tracked_device_index: OpenVR.TrackedDeviceIndex = 0,
 
@@ -122,45 +122,45 @@ const SystemWindow = struct {
     is_tracked_device_connected_device_index: OpenVR.TrackedDeviceIndex = 0,
 
     tracked_device_property_bool_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_bool: OpenVR.System.TrackedDeviceProperty.Bool = .will_drift_in_yaw,
+    tracked_device_property_bool: OpenVR.TrackedDeviceProperty.Bool = .will_drift_in_yaw,
 
     tracked_device_property_f32_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_f32: OpenVR.System.TrackedDeviceProperty.F32 = .device_battery_percentage,
+    tracked_device_property_f32: OpenVR.TrackedDeviceProperty.F32 = .device_battery_percentage,
 
     tracked_device_property_i32_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_i32: OpenVR.System.TrackedDeviceProperty.I32 = .device_class,
+    tracked_device_property_i32: OpenVR.TrackedDeviceProperty.I32 = .device_class,
 
     tracked_device_property_u64_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_u64: OpenVR.System.TrackedDeviceProperty.U64 = .hardware_revision,
+    tracked_device_property_u64: OpenVR.TrackedDeviceProperty.U64 = .hardware_revision,
 
     tracked_device_property_matrix34_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_matrix34: OpenVR.System.TrackedDeviceProperty.Matrix34 = .status_display_transform,
+    tracked_device_property_matrix34: OpenVR.TrackedDeviceProperty.Matrix34 = .status_display_transform,
 
     tracked_device_property_array_f32_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_array_f32: OpenVR.System.TrackedDeviceProperty.Array.F32 = .camera_distortion_coefficients,
+    tracked_device_property_array_f32: OpenVR.TrackedDeviceProperty.Array.F32 = .camera_distortion_coefficients,
 
     tracked_device_property_array_i32_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_array_i32: OpenVR.System.TrackedDeviceProperty.Array.I32 = .camera_distortion_function,
+    tracked_device_property_array_i32: OpenVR.TrackedDeviceProperty.Array.I32 = .camera_distortion_function,
 
     tracked_device_property_array_vector4_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_array_vector4: OpenVR.System.TrackedDeviceProperty.Array.Vector4 = .camera_white_balance,
+    tracked_device_property_array_vector4: OpenVR.TrackedDeviceProperty.Array.Vector4 = .camera_white_balance,
 
     tracked_device_property_array_matrix34_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_array_matrix34: OpenVR.System.TrackedDeviceProperty.Array.Matrix34 = .camera_to_head_transforms,
+    tracked_device_property_array_matrix34: OpenVR.TrackedDeviceProperty.Array.Matrix34 = .camera_to_head_transforms,
 
     tracked_device_property_string_device_index: OpenVR.TrackedDeviceIndex = 0,
-    tracked_device_property_string: OpenVR.System.TrackedDeviceProperty.String = .tracking_system_name,
+    tracked_device_property_string: OpenVR.TrackedDeviceProperty.String = .tracking_system_name,
 
-    prop_error_name_enum: OpenVR.System.TrackedPropertyErrorCode = .success,
+    prop_error_name_enum: OpenVR.TrackedPropertyErrorCode = .success,
 
-    next_event: ??OpenVR.System.Event = null,
+    next_event: ??OpenVR.Event = null,
 
     poll_next_event_with_pose_origin: OpenVR.TrackingUniverseOrigin = .seated,
-    next_event_with_pose: ??OpenVR.System.EventWithPose = null,
-    event_type_name_enum: OpenVR.System.EventType = .none,
+    next_event_with_pose: ??OpenVR.EventWithPose = null,
+    event_type_name_enum: OpenVR.EventType = .none,
 
     hidden_area_mesh_eye: OpenVR.Eye = .left,
-    hidden_area_mesh_type: OpenVR.System.HiddenAreaMeshType = .standard,
+    hidden_area_mesh_type: OpenVR.HiddenAreaMeshType = .standard,
 
     trigger_haptic_pulse_device_index: OpenVR.TrackedDeviceIndex = 0,
     trigger_haptic_pulse_axis_id: u32 = 0,
@@ -172,12 +172,12 @@ const SystemWindow = struct {
     corigin: OpenVR.TrackedDeviceIndex = 0,
     controller_state_with_pose_device_index: OpenVR.TrackedDeviceIndex = 0,
 
-    button_name_enum: OpenVR.System.ButtonId = .system,
+    button_name_enum: OpenVR.ButtonId = .system,
 
-    controller_axis_type_name_enum: OpenVR.System.ControllerAxisType = .none,
+    controller_axis_type_name_enum: OpenVR.ControllerAxisType = .none,
 
     perform_fireware_update_device_index: OpenVR.TrackedDeviceIndex = 0,
-    perform_firmware_update_result: ?OpenVR.System.FirmwareError!void = null,
+    perform_firmware_update_result: ?OpenVR.FirmwareError!void = null,
 
     pub fn init(allocator: std.mem.Allocator) SystemWindow {
         return .{

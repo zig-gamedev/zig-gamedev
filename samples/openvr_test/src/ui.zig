@@ -135,7 +135,7 @@ fn readOnlyFrameTiming(frame_timing: OpenVR.FrameTiming) void {
     readOnlyScalar("num_v_syncs_to_first_view", u32, frame_timing.num_v_syncs_to_first_view);
 }
 
-fn readOnlyEvent(event: OpenVR.System.Event) void {
+fn readOnlyEvent(event: OpenVR.Event) void {
     readOnlyText("event_type", @tagName(event.event_type));
     readOnlyScalar("tracked_device_index", u32, event.tracked_device_index);
     readOnlyFloat("event_age_seconds", event.event_age_seconds);
@@ -646,22 +646,22 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                 OpenVR.TrackingUniverseOrigin,
                 OpenVR.Eye,
                 OpenVR.TrackedControllerRole,
-                OpenVR.System.TrackedDeviceClass,
-                OpenVR.System.EventType,
-                OpenVR.System.HiddenAreaMeshType,
-                OpenVR.System.TrackedDeviceProperty.Bool,
-                OpenVR.System.TrackedDeviceProperty.F32,
-                OpenVR.System.TrackedDeviceProperty.I32,
-                OpenVR.System.TrackedDeviceProperty.U64,
-                OpenVR.System.TrackedDeviceProperty.Matrix34,
-                OpenVR.System.TrackedDeviceProperty.Array.F32,
-                OpenVR.System.TrackedDeviceProperty.Array.I32,
-                OpenVR.System.TrackedDeviceProperty.Array.Vector4,
-                OpenVR.System.TrackedDeviceProperty.Array.Matrix34,
-                OpenVR.System.TrackedDeviceProperty.String,
-                OpenVR.System.TrackedPropertyErrorCode,
-                OpenVR.System.ButtonId,
-                OpenVR.System.ControllerAxisType,
+                OpenVR.TrackedDeviceClass,
+                OpenVR.EventType,
+                OpenVR.HiddenAreaMeshType,
+                OpenVR.TrackedDeviceProperty.Bool,
+                OpenVR.TrackedDeviceProperty.F32,
+                OpenVR.TrackedDeviceProperty.I32,
+                OpenVR.TrackedDeviceProperty.U64,
+                OpenVR.TrackedDeviceProperty.Matrix34,
+                OpenVR.TrackedDeviceProperty.Array.F32,
+                OpenVR.TrackedDeviceProperty.Array.I32,
+                OpenVR.TrackedDeviceProperty.Array.Vector4,
+                OpenVR.TrackedDeviceProperty.Array.Matrix34,
+                OpenVR.TrackedDeviceProperty.String,
+                OpenVR.TrackedPropertyErrorCode,
+                OpenVR.ButtonId,
+                OpenVR.ControllerAxisType,
                 OpenVR.ApplicationErrorCode,
                 OpenVR.ApplicationProperty.String,
                 OpenVR.ApplicationProperty.Bool,
@@ -893,7 +893,7 @@ fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Re
                 },
                 OpenVR.BoundsColor,
                 OpenVR.CompositorPoses,
-                OpenVR.System.FilePaths,
+                OpenVR.FilePaths,
                 OpenVR.AppKeys,
                 => r.deinit(allocator),
                 []u8,
@@ -1003,13 +1003,13 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
         u64 => readOnlyScalar("##", u64, result),
         f32 => readOnlyFloat("##", result),
         OpenVR.TrackedDevicePose => readOnlyTrackedDevicePose(result),
-        OpenVR.System.VSyncTiming => {
+        OpenVR.VSyncTiming => {
             readOnlyFloat("seconds_since_last_vsync", result.seconds_since_last_vsync);
             readOnlyScalar("frame_counter", u64, result.frame_counter);
         },
-        OpenVR.System.RenderTargetSize => readOnlyScalarN("##", [2]u32, .{
-            @as(OpenVR.System.RenderTargetSize, result).width,
-            @as(OpenVR.System.RenderTargetSize, result).height,
+        OpenVR.RenderTargetSize => readOnlyScalarN("##", [2]u32, .{
+            @as(OpenVR.RenderTargetSize, result).width,
+            @as(OpenVR.RenderTargetSize, result).height,
         }),
         OpenVR.FrameTiming => readOnlyFrameTiming(result),
         [:0]u8,
@@ -1025,8 +1025,8 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
         },
         OpenVR.TrackingUniverseOrigin,
         OpenVR.TrackedControllerRole,
-        OpenVR.System.TrackedDeviceClass,
-        OpenVR.System.DeviceActivityLevel,
+        OpenVR.TrackedDeviceClass,
+        OpenVR.DeviceActivityLevel,
         OpenVR.CalibrationState,
         OpenVR.SceneApplicationState,
         OpenVR.SkeletalTrackingLevel,
@@ -1111,23 +1111,23 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             }
             readOnlyColor4("camera_color", @bitCast(result.camera_color));
         },
-        OpenVR.System.Vector2 => readOnlyFloat2("##", result.v),
+        OpenVR.Vector2 => readOnlyFloat2("##", result.v),
         OpenVR.Vector4 => readOnlyFloat4("##", result.v),
         OpenVR.Matrix34 => readOnlyMatrix34(result),
         OpenVR.Matrix44 => readOnlyMatrix44(result),
-        OpenVR.System.RawProjection => {
+        OpenVR.RawProjection => {
             readOnlyFloat("left", result.left);
             readOnlyFloat("right", result.right);
             readOnlyFloat("top", result.top);
             readOnlyFloat("bottom", result.bottom);
         },
-        OpenVR.System.DistortionCoordinates => {
+        OpenVR.DistortionCoordinates => {
             readOnlyFloat2("red", result.red);
             readOnlyFloat2("green", result.green);
             readOnlyFloat2("blue", result.blue);
         },
-        OpenVR.System.Event => readOnlyEvent(result),
-        OpenVR.System.EventWithPose => {
+        OpenVR.Event => readOnlyEvent(result),
+        OpenVR.EventWithPose => {
             {
                 zgui.text("event", .{});
                 zgui.indent(.{ .indent_w = 30 });
@@ -1144,7 +1144,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             }
         },
         OpenVR.ControllerState => readOnlyControllerState(result),
-        OpenVR.System.ControllerStateWithPose => {
+        OpenVR.ControllerStateWithPose => {
             {
                 zgui.text("controller_state", .{});
                 zgui.indent(.{ .indent_w = 30 });
@@ -1160,7 +1160,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 readOnlyTrackedDevicePose(result.pose);
             }
         },
-        OpenVR.System.FilePaths => {
+        OpenVR.FilePaths => {
             if (allocator) |alloc| {
                 const paths = try result.allocPaths(alloc);
                 defer alloc.free(paths);
