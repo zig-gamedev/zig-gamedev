@@ -841,6 +841,11 @@ pub const Window = opaque {
         monitor: ?*Monitor,
         share: ?*Window,
     ) ?*Window;
+
+    pub fn show(window: *Window) void {
+        glfwShowWindow(window);
+    }
+    extern fn glfwShowWindow(window: *Window) void;
 };
 
 pub const WindowHint = enum(i32) {
@@ -1225,6 +1230,7 @@ test "zglfw.basic" {
     _ = content_scale[0];
     _ = content_scale[1];
     pollEvents();
+    window.show();
     try maybeError();
 }
 //--------------------------------------------------------------------------------------------------
