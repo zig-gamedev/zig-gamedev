@@ -1,4 +1,7 @@
-# zopenvr v0.0.1 - bindings for OpenVR (wip)
+# zopenvr v0.0.1
+
+(WIP)
+Bindings for [OpenVR](https://github.com/ValveSoftware/openvr) v2.2.3
 
 ## Getting started
 
