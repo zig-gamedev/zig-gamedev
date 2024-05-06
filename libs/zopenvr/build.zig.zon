@@ -1,0 +1,14 @@
+.{
+    .name = "zopenvr",
+    .version = "0.0.1",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "libs",
+        "src",
+        "README.md",
+    },
+    .dependencies = .{
+        .zwin32 = .{ .path = "../zwin32" },
+    },
+}

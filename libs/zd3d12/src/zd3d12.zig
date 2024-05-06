@@ -51,6 +51,22 @@ const D2dState = struct {
     dwrite_factory: *dwrite.IFactory,
 };
 
+pub fn ConstantBufferHandle(comptime T: type) type {
+    return struct {
+        resource: ResourceHandle,
+        view_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
+        ptr: *T,
+    };
+}
+pub const VerticesHandle = struct {
+    resource: ResourceHandle,
+    view: d3d12.VERTEX_BUFFER_VIEW,
+};
+pub const VertexIndicesHandle = struct {
+    resource: ResourceHandle,
+    view: d3d12.INDEX_BUFFER_VIEW,
+};
+
 pub const GraphicsContext = struct {
     pub const max_num_buffered_frames = 2;
     const num_rtv_descriptors = 128;
@@ -921,7 +937,7 @@ pub const GraphicsContext = struct {
     pub fn createConstantBuffer(
         gctx: *GraphicsContext,
         comptime T: type,
-    ) HResultError!struct { resource: ResourceHandle, view_handle: d3d12.CPU_DESCRIPTOR_HANDLE, ptr: *T } {
+    ) HResultError!ConstantBufferHandle(T) {
         switch (@typeInfo(T)) {
             .Struct => |s| {
                 if (s.layout != .@"extern") {
@@ -966,7 +982,7 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         comptime T: type,
         vertices: []const T,
-    ) HResultError!struct { resource: ResourceHandle, view: d3d12.VERTEX_BUFFER_VIEW } {
+    ) HResultError!VerticesHandle {
         switch (@typeInfo(T)) {
             .Struct => |s| {
                 if (s.layout != .@"extern") {
@@ -1010,7 +1026,7 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         comptime T: type,
         vertex_indices: []const T,
-    ) HResultError!struct { resource: ResourceHandle, view: d3d12.INDEX_BUFFER_VIEW } {
+    ) HResultError!VertexIndicesHandle {
         switch (T) {
             u16, u32 => {},
             else => @compileError(@typeName(T) ++ " is not a supported vertex index format"),
@@ -1498,6 +1514,46 @@ pub const GraphicsContext = struct {
             .Type = .PLACED_FOOTPRINT,
             .u = .{ .PlacedFootprint = layout[0] },
         }, null);
+    }
+
+    pub fn createAndUploadTex2d(
+        gctx: *GraphicsContext,
+        width: u32,
+        height: u32,
+        num_components: u8,
+        data: []const u8,
+    ) HResultError!ResourceHandle {
+        const dxgi_format = if (num_components == 1) dxgi.FORMAT.R8_UNORM else dxgi.FORMAT.R8G8B8A8_UNORM;
+
+        const desc = d3d12.RESOURCE_DESC.initTex2d(dxgi_format, width, height, 0);
+        const texture = try gctx.createCommittedResource(
+            .DEFAULT,
+            .{},
+            &desc,
+            .{ .COPY_DEST = true },
+            null,
+        );
+
+        var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
+        var required_size: u64 = undefined;
+        gctx.device.GetCopyableFootprints(&desc, 0, 1, 0, &layout, null, null, &required_size);
+
+        const upload = gctx.allocateUploadBufferRegion(u8, @as(u32, @intCast(required_size)));
+        layout[0].Offset = upload.buffer_offset;
+
+        @memcpy(upload.cpu_slice, data);
+
+        gctx.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
+            .pResource = gctx.lookupResource(texture).?,
+            .Type = .SUBRESOURCE_INDEX,
+            .u = .{ .SubresourceIndex = 0 },
+        }, 0, 0, 0, &d3d12.TEXTURE_COPY_LOCATION{
+            .pResource = upload.buffer,
+            .Type = .PLACED_FOOTPRINT,
+            .u = .{ .PlacedFootprint = layout[0] },
+        }, null);
+
+        return texture;
     }
 
     pub fn createAndUploadTex2dFromFile(

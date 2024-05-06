@@ -254,6 +254,23 @@ pub const RESOURCE_DESC = extern struct {
         };
         return v;
     }
+
+    pub fn initFrameBuffer(format: dxgi.FORMAT, width: UINT64, height: UINT, sample_count: u32) RESOURCE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .Dimension = .TEXTURE2D,
+            .Alignment = 0,
+            .Width = width,
+            .Height = height,
+            .DepthOrArraySize = 1,
+            .MipLevels = 1,
+            .Format = format,
+            .SampleDesc = .{ .Count = sample_count, .Quality = 0 },
+            .Layout = .UNKNOWN,
+            .Flags = .{ .ALLOW_RENDER_TARGET = true },
+        };
+        return v;
+    }
 };
 
 pub const FENCE_FLAGS = packed struct(UINT) {
@@ -409,6 +426,8 @@ pub const DESCRIPTOR_RANGE_FLAGS = packed struct(UINT) {
     __unused: u15 = 0,
 };
 
+pub const DESCRIPTOR_RANGE_OFFSET_APPEND = 0xffffffff; // defined as -1
+
 pub const DESCRIPTOR_RANGE1 = extern struct {
     RangeType: DESCRIPTOR_RANGE_TYPE,
     NumDescriptors: UINT,
@@ -433,8 +452,8 @@ pub const ROOT_DESCRIPTOR_FLAGS = packed struct(UINT) {
 
 pub const ROOT_DESCRIPTOR1 = extern struct {
     ShaderRegister: UINT,
-    RegisterSpace: UINT,
-    Flags: ROOT_DESCRIPTOR_FLAGS,
+    RegisterSpace: UINT = 0,
+    Flags: ROOT_DESCRIPTOR_FLAGS = .{},
 };
 
 pub const ROOT_PARAMETER1 = extern struct {
@@ -1240,6 +1259,10 @@ pub const FEATURE_DATA_D3D12_OPTIONS = extern struct {
 
 pub const FEATURE_DATA_SHADER_MODEL = extern struct {
     HighestShaderModel: SHADER_MODEL,
+};
+
+pub const FEATURE_DATA_ROOT_SIGNATURE = extern struct {
+    HighestVersion: ROOT_SIGNATURE_VERSION,
 };
 
 pub const FEATURE_DATA_FORMAT_INFO = extern struct {
