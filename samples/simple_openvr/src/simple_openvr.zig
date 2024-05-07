@@ -113,14 +113,14 @@ const SceneVertex = extern struct {
     tex_coord: [2]f32,
 };
 fn addCubeToScene(mat: zmath.Mat, vert_data: *std.ArrayList(SceneVertex)) !void {
-    const A: zmath.Vec = zmath.mul(zmath.Vec{ 0, 0, 0, 1 }, mat);
-    const B: zmath.Vec = zmath.mul(zmath.Vec{ 1, 0, 0, 1 }, mat);
-    const C: zmath.Vec = zmath.mul(zmath.Vec{ 1, 1, 0, 1 }, mat);
-    const D: zmath.Vec = zmath.mul(zmath.Vec{ 0, 1, 0, 1 }, mat);
-    const E: zmath.Vec = zmath.mul(zmath.Vec{ 0, 0, 1, 1 }, mat);
-    const F: zmath.Vec = zmath.mul(zmath.Vec{ 1, 0, 1, 1 }, mat);
-    const G: zmath.Vec = zmath.mul(zmath.Vec{ 1, 1, 1, 1 }, mat);
-    const H: zmath.Vec = zmath.mul(zmath.Vec{ 0, 1, 1, 1 }, mat);
+    const A = zmath.mul(zmath.Vec{ 0, 0, 0, 1 }, mat);
+    const B = zmath.mul(zmath.Vec{ 1, 0, 0, 1 }, mat);
+    const C = zmath.mul(zmath.Vec{ 1, 1, 0, 1 }, mat);
+    const D = zmath.mul(zmath.Vec{ 0, 1, 0, 1 }, mat);
+    const E = zmath.mul(zmath.Vec{ 0, 0, 1, 1 }, mat);
+    const F = zmath.mul(zmath.Vec{ 1, 0, 1, 1 }, mat);
+    const G = zmath.mul(zmath.Vec{ 1, 1, 1, 1 }, mat);
+    const H = zmath.mul(zmath.Vec{ 0, 1, 1, 1 }, mat);
 
     const vertices = [_]SceneVertex{
         // Front
@@ -181,7 +181,7 @@ const AxesVertex = extern struct {
 };
 
 fn matFromMatrix34(mat: OpenVR.Matrix34) zmath.Mat {
-    return zmath.matFromArr([_]f32{
+    return zmath.matFromArr(.{
         mat.m[0][0], mat.m[1][0], mat.m[2][0], 0,
         mat.m[0][1], mat.m[1][1], mat.m[2][1], 0,
         mat.m[0][2], mat.m[1][2], mat.m[2][2], 0,
@@ -189,20 +189,12 @@ fn matFromMatrix34(mat: OpenVR.Matrix34) zmath.Mat {
     });
 }
 fn matFromMatrix44(mat: OpenVR.Matrix44) zmath.Mat {
-    return zmath.matFromArr([_]f32{
+    return zmath.matFromArr(.{
         mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0],
         mat.m[0][1], mat.m[1][1], mat.m[2][1], mat.m[3][1],
         mat.m[0][2], mat.m[1][2], mat.m[2][2], mat.m[3][2],
         mat.m[0][3], mat.m[1][3], mat.m[2][3], mat.m[3][3],
     });
-}
-fn float4x4FromMat(mat: zmath.Mat) Float4x4 {
-    return [_]Float4{
-        mat[0],
-        mat[1],
-        mat[2],
-        mat[3],
-    };
 }
 const RTVIndex = enum(i32) {
     left_eye = 0,
@@ -260,25 +252,16 @@ fn createEye(gctx: *zd3d12.GraphicsContext, eye: OpenVR.Eye, msaa_sample_count: 
         msaa_sample_count,
     );
 
-    // // Create color target
-    {
-        const clear_color = [_]f32{ 0, 0, 0, 1 };
-        eye_framebuffer.texture = try gctx.createCommittedResource(
-            .DEFAULT,
-            .{},
-            &texture_desc,
-            .{ .PIXEL_SHADER_RESOURCE = true },
-            &d3d12.CLEAR_VALUE.initColor(.R8G8B8A8_UNORM_SRGB, &clear_color),
-        );
-    }
+    // Create color target
+    eye_framebuffer.texture = try gctx.createCommittedResource(
+        .DEFAULT,
+        .{},
+        &texture_desc,
+        .{ .PIXEL_SHADER_RESOURCE = true },
+        &d3d12.CLEAR_VALUE.initColor(.R8G8B8A8_UNORM_SRGB, &.{ 0, 0, 0, 1 }),
+    );
 
-    const texture_resource = gctx.lookupResource(eye_framebuffer.texture).?;
-    {
-        const rtv_handle = gctx.allocateCpuDescriptors(.RTV, 1);
-        gctx.device.CreateRenderTargetView(texture_resource, null, rtv_handle);
-        eye_framebuffer.render_target_view_handle = rtv_handle;
-    }
-
+    eye_framebuffer.render_target_view_handle = gctx.allocRenderTargetView(eye_framebuffer.texture, null);
     eye_framebuffer.shader_resource_view_handle = gctx.allocShaderResourceView(eye_framebuffer.texture, null);
 
     // Create depth
@@ -295,12 +278,7 @@ fn createEye(gctx: *zd3d12.GraphicsContext, eye: OpenVR.Eye, msaa_sample_count: 
         );
     }
 
-    {
-        const depth_stencil_resource = gctx.lookupResource(eye_framebuffer.depth_stencil).?;
-        const dsv_handle = gctx.allocateCpuDescriptors(.DSV, 1);
-        gctx.device.CreateDepthStencilView(depth_stencil_resource, null, dsv_handle);
-        eye_framebuffer.depth_stencil_view_handle = dsv_handle;
-    }
+    eye_framebuffer.depth_stencil_view_handle = gctx.allocDepthStencilView(eye_framebuffer.depth_stencil, null);
 
     eye_framebuffer.constant = try gctx.createConstantBuffer(ConstantBuffer);
 
@@ -339,7 +317,7 @@ pub fn main() !void {
     try zglfw.init();
     defer zglfw.terminate();
 
-    var framebuffer_size = [_]i32{ 640, 320 };
+    const framebuffer_size = [_]i32{ 640, 320 };
 
     zglfw.windowHintTyped(.position_x, 700);
     zglfw.windowHintTyped(.position_y, 100);
@@ -348,8 +326,6 @@ pub fn main() !void {
     const window = try zglfw.Window.create(framebuffer_size[0], framebuffer_size[1], "", null);
     defer window.destroy();
 
-    // unused as zd3d12.GraphicsContext.init finds a suitable adapter
-    // const adapter_index = system.getDXGIOutputInfo() orelse 0;
     var gctx = zd3d12.GraphicsContext.init(allocator, zglfw.getWin32Window(window) orelse @panic("failed to get win32 handle to window"));
     defer gctx.deinit(allocator);
 
@@ -374,97 +350,70 @@ pub fn main() !void {
 
     // create all shaders
     const root_signature = root_signature: {
-        {
-            var feature_data: d3d12.FEATURE_DATA_ROOT_SIGNATURE = .{ .HighestVersion = .VERSION_1_1 };
-            if (gctx.device.CheckFeatureSupport(.ROOT_SIGNATURE, &feature_data, @sizeOf(d3d12.FEATURE_DATA_ROOT_SIGNATURE)) != w32.S_OK) {
-                @panic("feature data root signature version 1.1 required");
-            }
-        }
+        try gctx.checkFeatureSupport(.ROOT_SIGNATURE, d3d12.FEATURE_DATA_ROOT_SIGNATURE{
+            .HighestVersion = .VERSION_1_1,
+        });
 
-        const root_parameters = [_]d3d12.ROOT_PARAMETER1{
-            .{
-                .ParameterType = .CBV,
-                .u = .{
-                    .Descriptor = .{
-                        .ShaderRegister = 0,
-                    },
-                },
-                .ShaderVisibility = .VERTEX,
-            },
-            .{
-                .ParameterType = .DESCRIPTOR_TABLE,
-                .u = .{
-                    .DescriptorTable = d3d12.ROOT_DESCRIPTOR_TABLE1{
-                        .NumDescriptorRanges = 1,
-                        .pDescriptorRanges = &.{
-                            .{
-                                .RangeType = .SRV,
-                                .NumDescriptors = 1,
-                                .BaseShaderRegister = 0,
-                                .RegisterSpace = 0,
-                                .Flags = .{},
-                                .OffsetInDescriptorsFromTableStart = d3d12.DESCRIPTOR_RANGE_OFFSET_APPEND,
+        const root_signature_desc = d3d12.VERSIONED_ROOT_SIGNATURE_DESC.initVersion1_1(
+            d3d12.ROOT_SIGNATURE_DESC1.init(
+                &.{
+                    .{
+                        .ParameterType = .CBV,
+                        .u = .{
+                            .Descriptor = .{
+                                .ShaderRegister = 0,
                             },
                         },
+                        .ShaderVisibility = .VERTEX,
+                    },
+                    .{
+                        .ParameterType = .DESCRIPTOR_TABLE,
+                        .u = .{
+                            .DescriptorTable = d3d12.ROOT_DESCRIPTOR_TABLE1{
+                                .NumDescriptorRanges = 1,
+                                .pDescriptorRanges = &.{
+                                    .{
+                                        .RangeType = .SRV,
+                                        .NumDescriptors = 1,
+                                        .BaseShaderRegister = 0,
+                                        .RegisterSpace = 0,
+                                        .Flags = .{},
+                                        .OffsetInDescriptorsFromTableStart = d3d12.DESCRIPTOR_RANGE_OFFSET_APPEND,
+                                    },
+                                },
+                            },
+                        },
+                        .ShaderVisibility = .PIXEL,
                     },
                 },
-                .ShaderVisibility = .PIXEL,
-            },
-        };
-
-        const root_signature_flags = d3d12.ROOT_SIGNATURE_FLAGS{
-            .ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT = true,
-            .DENY_HULL_SHADER_ROOT_ACCESS = true,
-            .DENY_DOMAIN_SHADER_ROOT_ACCESS = true,
-            .DENY_GEOMETRY_SHADER_ROOT_ACCESS = true,
-        };
-        const samplers = [_]d3d12.STATIC_SAMPLER_DESC{
-            .{
-                .Filter = .MIN_MAG_MIP_POINT,
-                .AddressU = .CLAMP,
-                .AddressV = .CLAMP,
-                .AddressW = .CLAMP,
-                .MipLODBias = 0.0,
-                .MaxAnisotropy = 0,
-                .ComparisonFunc = .NEVER,
-                .BorderColor = .TRANSPARENT_BLACK,
-                .MinLOD = 0.0,
-                .MaxLOD = 340282350000000000000000000000000000000.0,
-                .ShaderRegister = 0,
-                .RegisterSpace = 0,
-                .ShaderVisibility = .ALL,
-            },
-        };
-        const root_signature_desc: d3d12.VERSIONED_ROOT_SIGNATURE_DESC = .{
-            .Version = .VERSION_1_1,
-            .u = .{
-                .Desc_1_1 = d3d12.ROOT_SIGNATURE_DESC1{
-                    .NumParamenters = root_parameters.len,
-                    .pParameters = &root_parameters,
-                    .NumStaticSamplers = samplers.len,
-                    .pStaticSamplers = &samplers,
-                    .Flags = root_signature_flags,
+                &.{
+                    .{
+                        .Filter = .MIN_MAG_MIP_POINT,
+                        .AddressU = .CLAMP,
+                        .AddressV = .CLAMP,
+                        .AddressW = .CLAMP,
+                        .MipLODBias = 0.0,
+                        .MaxAnisotropy = 0,
+                        .ComparisonFunc = .NEVER,
+                        .BorderColor = .TRANSPARENT_BLACK,
+                        .MinLOD = 0.0,
+                        .MaxLOD = 340282350000000000000000000000000000000.0,
+                        .ShaderRegister = 0,
+                        .RegisterSpace = 0,
+                        .ShaderVisibility = .ALL,
+                    },
                 },
-            },
-        };
-        var signature: ?*d3d.IBlob = undefined;
-        var err: ?*d3d.IBlob = undefined;
-        if (d3d12.SerializeVersionedRootSignature(&root_signature_desc, &signature, &err) != w32.S_OK) {
-            const error_message: [*:0]u8 = @ptrCast(err.?.GetBufferPointer());
-            @panic(try std.fmt.allocPrint(allocator, "failed to seralize versioned root signature: {s}", .{error_message}));
-        }
+                .{
+                    .ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT = true,
+                    .DENY_HULL_SHADER_ROOT_ACCESS = true,
+                    .DENY_DOMAIN_SHADER_ROOT_ACCESS = true,
+                    .DENY_GEOMETRY_SHADER_ROOT_ACCESS = true,
+                },
+            ),
+        );
+        const signature: *d3d.IBlob = try zd3d12.serializeVersionedRootSignature(&root_signature_desc);
 
-        var root_signature: *d3d12.IRootSignature = undefined;
-        if (gctx.device.CreateRootSignature(
-            0,
-            signature.?.GetBufferPointer(),
-            signature.?.GetBufferSize(),
-            &d3d12.IID_IRootSignature,
-            @ptrCast(&root_signature),
-        ) != w32.S_OK) {
-            @panic("failed to create root signature");
-        }
-        break :root_signature root_signature;
+        break :root_signature try gctx.createRootSignature(0, signature);
     };
 
     const scene = scene: {
@@ -472,8 +421,10 @@ pub fn main() !void {
         defer arena_allocator_state.deinit();
         const arena_allocator = arena_allocator_state.allocator();
 
+        // Describe and create the graphics pipeline state object (PSO).
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         // Define the vertex input layout.
-        const inputElementDescs = [_]d3d12.INPUT_ELEMENT_DESC{
+        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             .{
                 .SemanticName = "POSITION",
                 .SemanticIndex = 0,
@@ -492,21 +443,16 @@ pub fn main() !void {
                 .InputSlotClass = .PER_VERTEX_DATA,
                 .InstanceDataStepRate = 0,
             },
-        };
-
-        // Describe and create the graphics pipeline state object (PSO).
-        const rasterizer_state = rasterizer_state: {
+        });
+        pso_desc.pRootSignature = root_signature;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/scene.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/scene.ps.cso", null));
+        pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
             rasterizer_state.MultisampleEnable = w32.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&inputElementDescs);
-        pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/scene.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/scene.ps.cso", null));
-        pso_desc.RasterizerState = rasterizer_state;
         pso_desc.SampleMask = w32.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
@@ -527,37 +473,42 @@ pub fn main() !void {
         };
 
         const pipeline = gctx.createGraphicsShaderPipeline(&pso_desc);
+
         // setup scene
+        const vertices, const vertex_count = vertices: {
+            const scale = 0.3;
+            const scale_spacing = 4.0;
 
-        const scale = 0.3;
-        const scale_spacing = 4.0;
+            const scene_volume_init = 20;
 
-        const scene_volume_init = 20;
+            const scene_volume_width = scene_volume_init;
+            const scene_volume_height = scene_volume_init;
+            const scene_volume_depth = scene_volume_init;
 
-        const scene_volume_width = scene_volume_init;
-        const scene_volume_height = scene_volume_init;
-        const scene_volume_depth = scene_volume_init;
-
-        var vert_data_array = std.ArrayList(SceneVertex).init(arena_allocator);
-        const mat_scale = zmath.scaling(scale, scale, scale);
-        const mat_transform = zmath.translation(
-            -(scene_volume_width * scale_spacing) / 2,
-            -(scene_volume_height * scale_spacing) / 2,
-            -(scene_volume_depth * scale_spacing) / 2,
-        );
-        var mat = zmath.mul(mat_transform, mat_scale);
-        for (0..scene_volume_depth) |_| {
-            for (0..scene_volume_height) |_| {
-                for (0..scene_volume_width) |_| {
-                    try addCubeToScene(mat, &vert_data_array);
-                    mat = zmath.mul(zmath.translation(scale_spacing, 0, 0), mat);
+            var vert_data_array = std.ArrayList(SceneVertex).init(arena_allocator);
+            const mat_scale = zmath.scaling(scale, scale, scale);
+            const mat_transform = zmath.translation(
+                -(scene_volume_width * scale_spacing) / 2,
+                -(scene_volume_height * scale_spacing) / 2,
+                -(scene_volume_depth * scale_spacing) / 2,
+            );
+            var mat = zmath.mul(mat_transform, mat_scale);
+            for (0..scene_volume_depth) |_| {
+                for (0..scene_volume_height) |_| {
+                    for (0..scene_volume_width) |_| {
+                        try addCubeToScene(mat, &vert_data_array);
+                        mat = zmath.mul(zmath.translation(scale_spacing, 0, 0), mat);
+                    }
+                    mat = zmath.mul(zmath.translation(-scene_volume_width * scale_spacing, scale_spacing, 0), mat);
                 }
-                mat = zmath.mul(zmath.translation(-scene_volume_width * scale_spacing, scale_spacing, 0), mat);
+                mat = zmath.mul(zmath.translation(0, -scene_volume_height * scale_spacing, scale_spacing), mat);
             }
-            mat = zmath.mul(zmath.translation(0, -scene_volume_height * scale_spacing, scale_spacing), mat);
-        }
 
-        const vertices = try gctx.uploadVertices(SceneVertex, vert_data_array.items);
+            break :vertices .{
+                try gctx.uploadVertices(SceneVertex, vert_data_array.items),
+                vert_data_array.items.len,
+            };
+        };
 
         // setup texture maps
         const texture = texture: {
@@ -585,7 +536,7 @@ pub fn main() !void {
         break :scene .{
             .pipeline = pipeline,
             .vertices = vertices,
-            .vertex_count = vert_data_array.items.len,
+            .vertex_count = vertex_count,
             .texture = texture,
         };
     };
@@ -595,8 +546,10 @@ pub fn main() !void {
         defer arena_allocator_state.deinit();
         const arena_allocator = arena_allocator_state.allocator();
 
+        // Describe and create the graphics pipeline state object (PSO).
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         // Define the vertex input layout.
-        const inputElementDescs = [_]d3d12.INPUT_ELEMENT_DESC{
+        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             .{
                 .SemanticName = "POSITION",
                 .SemanticIndex = 0,
@@ -615,27 +568,21 @@ pub fn main() !void {
                 .InputSlotClass = .PER_VERTEX_DATA,
                 .InstanceDataStepRate = 0,
             },
-        };
-
-        // Describe and create the graphics pipeline state object (PSO).
-        const rasterizer_state = rasterizer_state: {
+        });
+        pso_desc.pRootSignature = root_signature;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/companion.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/companion.ps.cso", null));
+        pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        const depth_stencil_state = depth_stencil_state: {
+        pso_desc.DepthStencilState = depth_stencil_state: {
             var depth_stencil_state = d3d12.DEPTH_STENCIL_DESC.initDefault();
             depth_stencil_state.DepthEnable = w32.FALSE;
             depth_stencil_state.StencilEnable = w32.FALSE;
             break :depth_stencil_state depth_stencil_state;
         };
-        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&inputElementDescs);
-        pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/companion.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/companion.ps.cso", null));
-        pso_desc.RasterizerState = rasterizer_state;
-        pso_desc.DepthStencilState = depth_stencil_state;
         pso_desc.SampleMask = w32.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
@@ -675,19 +622,24 @@ pub fn main() !void {
             .{ .position = [2]f32{ 1, 1 }, .tex_coord = [2]f32{ 1, 0 } },
         });
 
-        const indices: []const u16 = &.{
-            0, 1, 3,
-            0, 3, 2,
-            4, 5, 7,
-            4, 7, 6,
+        const vertex_indices, const vertex_index_count = vertex_indices: {
+            const indices: []const u16 = &.{
+                0, 1, 3,
+                0, 3, 2,
+                4, 5, 7,
+                4, 7, 6,
+            };
+            break :vertex_indices .{
+                try gctx.uploadVertexIndices(u16, indices),
+                indices.len,
+            };
         };
-        const vertex_indices = try gctx.uploadVertexIndices(u16, indices);
 
         break :companion .{
             .pipeline = pipeline,
             .vertices = vertices,
             .vertex_indices = vertex_indices,
-            .vertex_index_count = indices.len,
+            .vertex_index_count = vertex_index_count,
         };
     };
 
@@ -696,8 +648,10 @@ pub fn main() !void {
         defer arena_allocator_state.deinit();
         const arena_allocator = arena_allocator_state.allocator();
 
+        // Describe and create the graphics pipeline state object (PSO).
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         // Define the vertex input layout.
-        const inputElementDescs = [_]d3d12.INPUT_ELEMENT_DESC{
+        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             .{
                 .SemanticName = "POSITION",
                 .SemanticIndex = 0,
@@ -716,21 +670,16 @@ pub fn main() !void {
                 .InputSlotClass = .PER_VERTEX_DATA,
                 .InstanceDataStepRate = 0,
             },
-        };
-
-        // Describe and create the graphics pipeline state object (PSO).
-        const rasterizer_state = rasterizer_state: {
+        });
+        pso_desc.pRootSignature = root_signature;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/axes.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/axes.ps.cso", null));
+        pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
             rasterizer_state.MultisampleEnable = w32.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&inputElementDescs);
-        pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/axes.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/axes.ps.cso", null));
-        pso_desc.RasterizerState = rasterizer_state;
         pso_desc.SampleMask = w32.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .LINE;
         pso_desc.NumRenderTargets = 1;
@@ -756,6 +705,7 @@ pub fn main() !void {
         const vertices_array = std.mem.zeroes([OpenVR.max_tracked_device_count * vertices_per_device]AxesVertex);
         const vertices = try gctx.uploadVertices(AxesVertex, &vertices_array);
 
+        // workaround https://github.com/ziglang/zig/issues/17101
         const AxesComponent = struct {
             pipeline: zd3d12.PipelineHandle,
             vertices: zd3d12.VerticesHandle,
@@ -775,8 +725,11 @@ pub fn main() !void {
         defer arena_allocator_state.deinit();
         const arena_allocator = arena_allocator_state.allocator();
 
+        // Describe and create the graphics pipeline state object (PSO).
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+
         // Define the vertex input layout.
-        const inputElementDescs = [_]d3d12.INPUT_ELEMENT_DESC{
+        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             .{
                 .SemanticName = "POSITION",
                 .SemanticIndex = 0,
@@ -804,22 +757,16 @@ pub fn main() !void {
                 .InputSlotClass = .PER_VERTEX_DATA,
                 .InstanceDataStepRate = 0,
             },
-        };
-
-        // Describe and create the graphics pipeline state object (PSO).
-        const rasterizer_state = rasterizer_state: {
+        });
+        pso_desc.pRootSignature = root_signature;
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/render_model.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/render_model.ps.cso", null));
+        pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
             rasterizer_state.MultisampleEnable = w32.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-
-        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&inputElementDescs);
-        pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/render_model.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/render_model.ps.cso", null));
-        pso_desc.RasterizerState = rasterizer_state;
         pso_desc.SampleMask = w32.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
@@ -847,29 +794,34 @@ pub fn main() !void {
     };
 
     // setup cameras
-    const near_clip = 0.1;
-    const far_clip = 30.0;
 
-    const eye_matrix = std.EnumArray(OpenVR.Eye, zmath.Mat).init(.{
-        .left = zmath.mul(
-            zmath.inverse(matFromMatrix34(app.system.getEyeToHeadTransform(.left))),
-            matFromMatrix44(app.system.getProjectionMatrix(.left, near_clip, far_clip)),
-        ),
-        .right = zmath.mul(
-            zmath.inverse(matFromMatrix34(app.system.getEyeToHeadTransform(.right))),
-            matFromMatrix44(app.system.getProjectionMatrix(.right, near_clip, far_clip)),
-        ),
-    });
+    const eye_matrix = eye_matrix: {
+        const near_clip = 0.1;
+        const far_clip = 30.0;
+        break :eye_matrix std.EnumArray(OpenVR.Eye, zmath.Mat).init(.{
+            .left = zmath.mul(
+                zmath.inverse(matFromMatrix34(app.system.getEyeToHeadTransform(.left))),
+                matFromMatrix44(app.system.getProjectionMatrix(.left, near_clip, far_clip)),
+            ),
+            .right = zmath.mul(
+                zmath.inverse(matFromMatrix34(app.system.getEyeToHeadTransform(.right))),
+                matFromMatrix44(app.system.getProjectionMatrix(.right, near_clip, far_clip)),
+            ),
+        });
+    };
 
     var hmd_pose = zmath.identity();
     var device_pose_by_index = DevicePoseByIndex.init(allocator);
     defer device_pose_by_index.deinit();
 
     // setup stereo render targets
-    const super_sample_scale = 1.0;
-    var render_target_size = app.system.getRecommendedRenderTargetSize();
-    render_target_size.width = @intFromFloat(super_sample_scale * @as(f32, @floatFromInt(render_target_size.width)));
-    render_target_size.height = @intFromFloat(super_sample_scale * @as(f32, @floatFromInt(render_target_size.height)));
+    const render_target_size = render_target_size: {
+        const super_sample_scale = 1.0;
+        var render_target_size = app.system.getRecommendedRenderTargetSize();
+        render_target_size.width = @intFromFloat(super_sample_scale * @as(f32, @floatFromInt(render_target_size.width)));
+        render_target_size.height = @intFromFloat(super_sample_scale * @as(f32, @floatFromInt(render_target_size.height)));
+        break :render_target_size render_target_size;
+    };
 
     const eye_descs = [_]EyeFramebuffer{
         try createEye(&gctx, .left, msaa_sample_count, render_target_size),
@@ -887,14 +839,6 @@ pub fn main() !void {
     _ = window.setKeyCallback(toggle_show_cubes);
 
     main: while (!window.shouldClose() and window.getKey(.escape) != .press) {
-        {
-            const next_framebuffer_size = window.getFramebufferSize();
-            if (!std.meta.eql(framebuffer_size, next_framebuffer_size)) {
-                gctx.resize(@intCast(next_framebuffer_size[0]), @intCast(next_framebuffer_size[1]));
-                framebuffer_size = next_framebuffer_size;
-            }
-        }
-
         {
             // spin loop for frame limiter
             const ns_in_s = 1_000_000_000;
@@ -1009,19 +953,11 @@ pub fn main() !void {
                 }
             }
 
-            if (axes.vertex_count > 0) {
-                const resource = gctx.lookupResource(axes.vertices.resource).?;
-                var mapped_buffer: [*]u8 = undefined;
-                try zwin32.hrErrorOnFail(resource.Map(
-                    0,
-                    &.{ .Begin = 0, .End = 0 },
-                    @ptrCast(&mapped_buffer),
-                ));
-                defer resource.Unmap(0, null);
-                const byte_length = axes.vertex_count * @sizeOf(AxesVertex);
-                const mapped_slice = std.mem.bytesAsSlice(AxesVertex, mapped_buffer[0..byte_length]);
-                @memcpy(mapped_slice, axes.vertices_array[0..axes.vertex_count]);
-            }
+            try gctx.writeResource(
+                AxesVertex,
+                axes.vertices.resource,
+                axes.vertices_array[0..axes.vertex_count],
+            );
         }
 
         {
@@ -1031,28 +967,31 @@ pub fn main() !void {
             app.compositor.setExplicitTimingMode(.explicit_application_performs_post_present_handoff);
 
             // render stereo targets
-            gctx.cmdlist.RSSetViewports(1, @ptrCast(&d3d12.VIEWPORT{
-                .TopLeftX = 0.0,
-                .TopLeftY = 0.0,
-                .Width = @floatFromInt(render_target_size.width),
-                .Height = @floatFromInt(render_target_size.height),
-                .MinDepth = 0.0,
-                .MaxDepth = 1.0,
-            }));
-            gctx.cmdlist.RSSetScissorRects(1, @ptrCast(&d3d12.RECT{
-                .left = 0,
-                .top = 0,
-                .right = @intCast(render_target_size.width),
-                .bottom = @intCast(render_target_size.height),
-            }));
+            gctx.rsSetViewports(&.{
+                .{
+                    .TopLeftX = 0.0,
+                    .TopLeftY = 0.0,
+                    .Width = @floatFromInt(render_target_size.width),
+                    .Height = @floatFromInt(render_target_size.height),
+                    .MinDepth = 0.0,
+                    .MaxDepth = 1.0,
+                },
+            });
+            gctx.rsSetScissorRects(&.{
+                .{
+                    .left = 0,
+                    .top = 0,
+                    .right = @intCast(render_target_size.width),
+                    .bottom = @intCast(render_target_size.height),
+                },
+            });
             for (eye_descs) |eye_desc| {
                 gctx.addTransitionBarrier(eye_desc.texture, .{ .RENDER_TARGET = true });
                 gctx.flushResourceBarriers();
 
-                gctx.cmdlist.OMSetRenderTargets(
-                    1,
+                gctx.omSetRenderTargets(
                     &.{eye_desc.render_target_view_handle},
-                    w32.FALSE,
+                    false,
                     &eye_desc.depth_stencil_view_handle,
                 );
                 gctx.cmdlist.ClearRenderTargetView(eye_desc.render_target_view_handle, &.{ 0.0, 0.0, 0.0, 1.0 }, 0, null);
@@ -1065,15 +1004,12 @@ pub fn main() !void {
                     // draw scene
                     gctx.setCurrentPipeline(scene.pipeline);
 
-                    {
-                        const resource = gctx.lookupResource(eye_desc.constant.resource).?;
-                        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, resource.GetGPUVirtualAddress());
-                    }
+                    gctx.setGraphicsRootConstantBufferView(0, eye_desc.constant.resource);
 
                     gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, scene.texture.shader_resource_view_handle));
 
                     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-                    gctx.cmdlist.IASetVertexBuffers(0, 1, @ptrCast(&scene.vertices.view));
+                    gctx.iaSetVertexBuffers(0, &.{scene.vertices.view});
                     gctx.cmdlist.DrawInstanced(@intCast(scene.vertex_count), 1, 0, 0);
                 }
 
@@ -1081,13 +1017,10 @@ pub fn main() !void {
                 {
                     gctx.setCurrentPipeline(axes.pipeline);
 
-                    {
-                        const resource = gctx.lookupResource(eye_desc.constant.resource).?;
-                        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, resource.GetGPUVirtualAddress());
-                    }
+                    gctx.setGraphicsRootConstantBufferView(0, eye_desc.constant.resource);
 
                     gctx.cmdlist.IASetPrimitiveTopology(.LINELIST);
-                    gctx.cmdlist.IASetVertexBuffers(0, 1, @ptrCast(&axes.vertices.view));
+                    gctx.iaSetVertexBuffers(0, &.{axes.vertices.view});
                     gctx.cmdlist.DrawInstanced(@intCast(axes.vertex_count), 1, 0, 0);
                 }
 
@@ -1107,15 +1040,14 @@ pub fn main() !void {
                                 constant.ptr.model_view_projection = model_view_projection;
 
                                 // Bind the CB
-                                const resource = gctx.lookupResource(constant.resource).?;
-                                gctx.cmdlist.SetGraphicsRootConstantBufferView(0, resource.GetGPUVirtualAddress());
+                                gctx.setGraphicsRootConstantBufferView(0, constant.resource);
                             }
 
                             // Bind the texture
                             gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, tracked_device.texture_shader_resource_view));
 
                             gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-                            gctx.cmdlist.IASetVertexBuffers(0, 1, @ptrCast(&tracked_device.vertices.view));
+                            gctx.iaSetVertexBuffers(0, &.{tracked_device.vertices.view});
                             gctx.cmdlist.IASetIndexBuffer(&tracked_device.vertex_indices.view);
                             gctx.cmdlist.DrawIndexedInstanced(@intCast(tracked_device.vertex_count), 1, 0, 0, 0);
                         }
@@ -1133,30 +1065,35 @@ pub fn main() !void {
             gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
             gctx.flushResourceBarriers();
 
-            gctx.cmdlist.OMSetRenderTargets(
-                1,
+            gctx.omSetRenderTargets(
                 &.{back_buffer.descriptor_handle},
-                w32.TRUE,
+                true,
                 null,
             );
 
-            gctx.cmdlist.RSSetViewports(1, @ptrCast(&d3d12.VIEWPORT{
-                .TopLeftX = 0.0,
-                .TopLeftY = 0.0,
-                .Width = @floatFromInt(framebuffer_size[0]),
-                .Height = @floatFromInt(framebuffer_size[1]),
-                .MinDepth = 0.0,
-                .MaxDepth = 1.0,
-            }));
-            gctx.cmdlist.RSSetScissorRects(1, @ptrCast(&d3d12.RECT{
-                .left = 0,
-                .top = 0,
-                .right = framebuffer_size[0],
-                .bottom = framebuffer_size[1],
-            }));
+            gctx.rsSetViewports(&.{
+                .{
+                    .TopLeftX = 0.0,
+                    .TopLeftY = 0.0,
+                    .Width = @floatFromInt(framebuffer_size[0]),
+                    .Height = @floatFromInt(framebuffer_size[1]),
+                    .MinDepth = 0.0,
+                    .MaxDepth = 1.0,
+                },
+            });
+            gctx.rsSetScissorRects(&.{
+                .{
+                    .left = 0,
+                    .top = 0,
+                    .right = framebuffer_size[0],
+                    .bottom = framebuffer_size[1],
+                },
+            });
 
             gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-            gctx.cmdlist.IASetVertexBuffers(0, 1, @ptrCast(&companion.vertices.view));
+            gctx.iaSetVertexBuffers(0, &.{
+                companion.vertices.view,
+            });
             gctx.cmdlist.IASetIndexBuffer(&companion.vertex_indices.view);
 
             gctx.cmdlist.SetGraphicsRootDescriptorTable(

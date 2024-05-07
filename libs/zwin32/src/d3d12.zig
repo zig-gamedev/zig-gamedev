@@ -398,7 +398,7 @@ pub const ROOT_SIGNATURE_FLAGS = packed struct(UINT) {
 };
 
 pub const ROOT_SIGNATURE_DESC = extern struct {
-    NumParamenters: UINT,
+    NumParameters: UINT,
     pParameters: ?[*]const ROOT_PARAMETER,
     NumStaticSamplers: UINT,
     pStaticSamplers: ?[*]const STATIC_SAMPLER_DESC,
@@ -467,11 +467,21 @@ pub const ROOT_PARAMETER1 = extern struct {
 };
 
 pub const ROOT_SIGNATURE_DESC1 = extern struct {
-    NumParamenters: UINT,
+    NumParameters: UINT,
     pParameters: ?[*]const ROOT_PARAMETER1,
     NumStaticSamplers: UINT,
     pStaticSamplers: ?[*]const STATIC_SAMPLER_DESC,
     Flags: ROOT_SIGNATURE_FLAGS,
+
+    pub fn init(parameters: []const ROOT_PARAMETER1, static_samplers: []const STATIC_SAMPLER_DESC, flags: ROOT_SIGNATURE_FLAGS) ROOT_SIGNATURE_DESC1 {
+        return .{
+            .NumParameters = @intCast(parameters.len),
+            .pParameters = if (parameters.len > 0) parameters.ptr else null,
+            .NumStaticSamplers = @intCast(static_samplers.len),
+            .pStaticSamplers = if (static_samplers.len > 0) static_samplers.ptr else null,
+            .Flags = flags,
+        };
+    }
 };
 
 pub const ROOT_SIGNATURE_VERSION = enum(UINT) {
@@ -485,6 +495,24 @@ pub const VERSIONED_ROOT_SIGNATURE_DESC = extern struct {
         Desc_1_0: ROOT_SIGNATURE_DESC,
         Desc_1_1: ROOT_SIGNATURE_DESC1,
     },
+
+    pub fn initVersion1_0(desc: ROOT_SIGNATURE_DESC) VERSIONED_ROOT_SIGNATURE_DESC {
+        return .{
+            .Version = .VERSION_1_0,
+            .u = .{
+                .Desc_1_0 = desc,
+            },
+        };
+    }
+
+    pub fn initVersion1_1(desc: ROOT_SIGNATURE_DESC1) VERSIONED_ROOT_SIGNATURE_DESC {
+        return .{
+            .Version = .VERSION_1_1,
+            .u = .{
+                .Desc_1_1 = desc,
+            },
+        };
+    }
 };
 
 pub const COMMAND_LIST_TYPE = enum(UINT) {
@@ -1185,6 +1213,20 @@ pub const FEATURE = enum(UINT) {
     OPTIONS9 = 37,
     OPTIONS10 = 39,
     OPTIONS11 = 40,
+
+    pub fn Data(self: FEATURE) type {
+        // enum to type https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_feature#constants
+        return switch (self) {
+            .OPTIONS => FEATURE_DATA_D3D12_OPTIONS,
+            .FORMAT_INFO => FEATURE_DATA_FORMAT_INFO,
+            .SHADER_MODEL => FEATURE_DATA_SHADER_MODEL,
+            .ROOT_SIGNATURE => FEATURE_DATA_ROOT_SIGNATURE,
+            .OPTIONS3 => FEATURE_DATA_D3D12_OPTIONS3,
+            .OPTIONS5 => FEATURE_DATA_D3D12_OPTIONS5,
+            .OPTIONS7 => FEATURE_DATA_D3D12_OPTIONS7,
+            else => @compileError("not implemented"),
+        };
+    }
 };
 
 pub const SHADER_MODEL = enum(UINT) {
