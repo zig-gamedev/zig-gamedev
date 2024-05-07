@@ -553,7 +553,7 @@ pub const GraphicsContext = struct {
                 .{ .DEBUG = enable_debug_layer, .BGRA_SUPPORT = true },
                 null,
                 0,
-                &[_]*w32.IUnknown{@as(*w32.IUnknown, @ptrCast(gctx.cmdqueue))},
+                &.{@as(*w32.IUnknown, @ptrCast(gctx.cmdqueue))},
                 1,
                 0,
                 @as(*?*d3d11.IDevice, @ptrCast(&device11)),
@@ -716,22 +716,26 @@ pub const GraphicsContext = struct {
         gctx.is_cmdlist_opened = true;
         gctx.cmdlist.SetDescriptorHeaps(
             1,
-            &[_]*d3d12.IDescriptorHeap{gctx.cbv_srv_uav_gpu_heaps[0].heap.?},
+            &.{gctx.cbv_srv_uav_gpu_heaps[0].heap.?},
         );
-        gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-            .TopLeftX = 0.0,
-            .TopLeftY = 0.0,
-            .Width = @as(f32, @floatFromInt(gctx.viewport_width)),
-            .Height = @as(f32, @floatFromInt(gctx.viewport_height)),
-            .MinDepth = 0.0,
-            .MaxDepth = 1.0,
-        }});
-        gctx.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
-            .left = 0,
-            .top = 0,
-            .right = @as(c_long, @intCast(gctx.viewport_width)),
-            .bottom = @as(c_long, @intCast(gctx.viewport_height)),
-        }});
+        gctx.cmdlist.RSSetViewports(1, &.{
+            .{
+                .TopLeftX = 0.0,
+                .TopLeftY = 0.0,
+                .Width = @as(f32, @floatFromInt(gctx.viewport_width)),
+                .Height = @as(f32, @floatFromInt(gctx.viewport_height)),
+                .MinDepth = 0.0,
+                .MaxDepth = 1.0,
+            },
+        });
+        gctx.cmdlist.RSSetScissorRects(1, &.{
+            .{
+                .left = 0,
+                .top = 0,
+                .right = @as(c_long, @intCast(gctx.viewport_width)),
+                .bottom = @as(c_long, @intCast(gctx.viewport_height)),
+            },
+        });
         gctx.current_pipeline = .{};
     }
 
@@ -766,7 +770,7 @@ pub const GraphicsContext = struct {
         gctx.flushGpuCommands();
 
         gctx.d2d.?.device11on12.AcquireWrappedResources(
-            &[_]*d3d11.IResource{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
+            &.{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
             1,
         );
         gctx.d2d.?.context.SetTarget(@as(*d2d1.IImage, @ptrCast(gctx.d2d.?.targets[gctx.back_buffer_index])));
@@ -818,7 +822,7 @@ pub const GraphicsContext = struct {
         hrPanicOnFail(gctx.d2d.?.context.EndDraw(null, null));
 
         gctx.d2d.?.device11on12.ReleaseWrappedResources(
-            &[_]*d3d11.IResource{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
+            &.{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
             1,
         );
         gctx.d2d.?.context11.Flush();
@@ -845,7 +849,7 @@ pub const GraphicsContext = struct {
             gctx.is_cmdlist_opened = false;
             gctx.cmdqueue.ExecuteCommandLists(
                 1,
-                &[_]*d3d12.ICommandList{@as(*d3d12.ICommandList, @ptrCast(gctx.cmdlist))},
+                &.{@as(*d3d12.ICommandList, @ptrCast(gctx.cmdlist))},
             );
         }
     }

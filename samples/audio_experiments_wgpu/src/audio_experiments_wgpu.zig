@@ -251,12 +251,14 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     });
     defer gctx.releaseResource(uniform_bgl);
 
-    const uniform_bg = gctx.createBindGroup(uniform_bgl, &[_]zgpu.BindGroupEntryInfo{.{
-        .binding = 0,
-        .buffer_handle = gctx.uniforms.buffer,
-        .offset = 0,
-        .size = safe_uniform_size,
-    }});
+    const uniform_bg = gctx.createBindGroup(uniform_bgl, &.{
+        .{
+            .binding = 0,
+            .buffer_handle = gctx.uniforms.buffer,
+            .offset = 0,
+            .size = safe_uniform_size,
+        },
+    });
 
     const depth = createDepthTexture(gctx);
 

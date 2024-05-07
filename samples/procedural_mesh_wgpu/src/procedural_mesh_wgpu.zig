@@ -385,12 +385,14 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         break :pipeline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
     };
 
-    const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{.{
-        .binding = 0,
-        .buffer_handle = gctx.uniforms.buffer,
-        .offset = 0,
-        .size = @max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
-    }});
+    const bind_group = gctx.createBindGroup(bind_group_layout, &.{
+        .{
+            .binding = 0,
+            .buffer_handle = gctx.uniforms.buffer,
+            .offset = 0,
+            .size = @max(@sizeOf(FrameUniforms), @sizeOf(DrawUniforms)),
+        },
+    });
 
     var drawables = std.ArrayList(Drawable).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);

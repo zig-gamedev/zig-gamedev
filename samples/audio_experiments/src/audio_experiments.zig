@@ -424,7 +424,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &.{back_buffer.descriptor_handle},
         w32.TRUE,
         &demo.depth_texture_dsv,
     );
@@ -488,11 +488,13 @@ fn draw(demo: *DemoState) void {
                 };
             }
 
-            gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-                .BufferLocation = mem.gpu_base,
-                .SizeInBytes = num_vertices * @sizeOf(Pso_Vertex),
-                .StrideInBytes = @sizeOf(Pso_Vertex),
-            }});
+            gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+                .{
+                    .BufferLocation = mem.gpu_base,
+                    .SizeInBytes = num_vertices * @sizeOf(Pso_Vertex),
+                    .StrideInBytes = @sizeOf(Pso_Vertex),
+                },
+            });
             gctx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
         }
     }

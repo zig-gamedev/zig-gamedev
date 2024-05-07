@@ -70,7 +70,7 @@ pub const WindowProvider = struct {
 
 pub const GraphicsContextOptions = struct {
     present_mode: wgpu.PresentMode = .fifo,
-    required_features: []const wgpu.FeatureName = &[_]wgpu.FeatureName{},
+    required_features: []const wgpu.FeatureName = &.{},
 };
 
 pub const GraphicsContext = struct {
@@ -986,7 +986,7 @@ pub const GraphicsContext = struct {
             });
             defer gctx.releaseResource(texture_view);
 
-            const bind_group = gctx.createBindGroup(mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
+            const bind_group = gctx.createBindGroup(mipgen.bind_group_layout, &.{
                 .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 8 },
                 .{ .binding = 1, .texture_view_handle = texture_view },
                 .{ .binding = 2, .texture_view_handle = mipgen.scratch_texture_views[0] },

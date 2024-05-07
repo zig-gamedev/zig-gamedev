@@ -2,20 +2,21 @@
 
 ## Features
 
-* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
-* Basic DirectX 12 resource management (handle-based resources and pipelines)
-* Basic resource barriers management with simple state-tracking
-* Transient and persistent descriptor allocation
-* Fast image loading using WIC (Windows Imaging Component)
-* Helpers for uploading data to the GPU
-* Fast mipmap generator running on the GPU
-* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
+- Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
+- Basic DirectX 12 resource management (handle-based resources and pipelines)
+- Basic resource barriers management with simple state-tracking
+- Transient and persistent descriptor allocation
+- Fast image loading using WIC (Windows Imaging Component)
+- Helpers for uploading data to the GPU
+- Fast mipmap generator running on the GPU
+- Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
 Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
 
 ## Getting started
 
 Copy `zd3d12` and `zwin32` to a subdirectory of your project and and add the following to your `build.zig.zon` .dependencies:
+
 ```zig
     .zd3d12 = .{ .path = "libs/zd3d12" },
     .zwin32 = .{ .path = "libs/zwin32" },
@@ -61,7 +62,7 @@ pub fn main() !void {
 
         gctx.cmdlist.OMSetRenderTargets(
             1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+            &.{back_buffer.descriptor_handle},
             w32.TRUE,
             null,
         );

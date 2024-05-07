@@ -396,7 +396,7 @@ pub fn main() !void {
                 .u = .{
                     .DescriptorTable = d3d12.ROOT_DESCRIPTOR_TABLE1{
                         .NumDescriptorRanges = 1,
-                        .pDescriptorRanges = &[_]d3d12.DESCRIPTOR_RANGE1{
+                        .pDescriptorRanges = &.{
                             .{
                                 .RangeType = .SRV,
                                 .NumDescriptors = 1,
@@ -661,7 +661,7 @@ pub fn main() !void {
             position: [2]f32,
             tex_coord: [2]f32,
         };
-        const vertices = try gctx.uploadVertices(Vertex, &[_]Vertex{
+        const vertices = try gctx.uploadVertices(Vertex, &.{
             // left eye verts
             .{ .position = [2]f32{ -1, -1 }, .tex_coord = [2]f32{ 0, 1 } },
             .{ .position = [2]f32{ 0, -1 }, .tex_coord = [2]f32{ 1, 1 } },
@@ -675,7 +675,7 @@ pub fn main() !void {
             .{ .position = [2]f32{ 1, 1 }, .tex_coord = [2]f32{ 1, 0 } },
         });
 
-        const indices = &[_]u16{
+        const indices: []const u16 = &.{
             0, 1, 3,
             0, 3, 2,
             4, 5, 7,
@@ -1051,11 +1051,11 @@ pub fn main() !void {
 
                 gctx.cmdlist.OMSetRenderTargets(
                     1,
-                    &[_]d3d12.CPU_DESCRIPTOR_HANDLE{eye_desc.render_target_view_handle},
+                    &.{eye_desc.render_target_view_handle},
                     w32.FALSE,
                     &eye_desc.depth_stencil_view_handle,
                 );
-                gctx.cmdlist.ClearRenderTargetView(eye_desc.render_target_view_handle, &[_]f32{ 0.0, 0.0, 0.0, 1.0 }, 0, null);
+                gctx.cmdlist.ClearRenderTargetView(eye_desc.render_target_view_handle, &.{ 0.0, 0.0, 0.0, 1.0 }, 0, null);
                 gctx.cmdlist.ClearDepthStencilView(eye_desc.depth_stencil_view_handle, .{ .DEPTH = true }, 1.0, 0, 0, null);
 
                 const current_view_projection = zmath.mul(hmd_pose, eye_matrix.get(eye_desc.eye));
@@ -1135,7 +1135,7 @@ pub fn main() !void {
 
             gctx.cmdlist.OMSetRenderTargets(
                 1,
-                &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+                &.{back_buffer.descriptor_handle},
                 w32.TRUE,
                 null,
             );

@@ -193,20 +193,24 @@ pub fn main() !void {
         hrPanicOnFail(command_allocator.Reset());
         hrPanicOnFail(dx12.command_list.Reset(command_allocator, null));
 
-        dx12.command_list.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-            .TopLeftX = 0.0,
-            .TopLeftY = 0.0,
-            .Width = @floatFromInt(window_rect.right),
-            .Height = @floatFromInt(window_rect.bottom),
-            .MinDepth = 0.0,
-            .MaxDepth = 1.0,
-        }});
-        dx12.command_list.RSSetScissorRects(1, &[_]d3d12.RECT{.{
-            .left = 0,
-            .top = 0,
-            .right = @intCast(window_rect.right),
-            .bottom = @intCast(window_rect.bottom),
-        }});
+        dx12.command_list.RSSetViewports(1, &.{
+            .{
+                .TopLeftX = 0.0,
+                .TopLeftY = 0.0,
+                .Width = @floatFromInt(window_rect.right),
+                .Height = @floatFromInt(window_rect.bottom),
+                .MinDepth = 0.0,
+                .MaxDepth = 1.0,
+            },
+        });
+        dx12.command_list.RSSetScissorRects(1, &.{
+            .{
+                .left = 0,
+                .top = 0,
+                .right = @intCast(window_rect.right),
+                .bottom = @intCast(window_rect.bottom),
+            },
+        });
 
         const back_buffer_index = dx12.swap_chain.GetCurrentBackBufferIndex();
         const back_buffer_descriptor = d3d12.CPU_DESCRIPTOR_HANDLE{
@@ -214,22 +218,24 @@ pub fn main() !void {
                 back_buffer_index * dx12.device.GetDescriptorHandleIncrementSize(.RTV),
         };
 
-        dx12.command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
-            .Type = .TRANSITION,
-            .Flags = .{},
-            .u = .{
-                .Transition = .{
-                    .pResource = dx12.swap_chain_textures[back_buffer_index],
-                    .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                    .StateBefore = d3d12.RESOURCE_STATES.PRESENT,
-                    .StateAfter = .{ .RENDER_TARGET = true },
+        dx12.command_list.ResourceBarrier(1, &.{
+            .{
+                .Type = .TRANSITION,
+                .Flags = .{},
+                .u = .{
+                    .Transition = .{
+                        .pResource = dx12.swap_chain_textures[back_buffer_index],
+                        .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                        .StateBefore = d3d12.RESOURCE_STATES.PRESENT,
+                        .StateAfter = .{ .RENDER_TARGET = true },
+                    },
                 },
             },
-        }});
+        });
 
         dx12.command_list.OMSetRenderTargets(
             1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer_descriptor},
+            &.{back_buffer_descriptor},
             w32.TRUE,
             null,
         );
@@ -240,21 +246,23 @@ pub fn main() !void {
         dx12.command_list.SetGraphicsRootSignature(root_signature);
         dx12.command_list.DrawInstanced(3, 1, 0, 0);
 
-        dx12.command_list.ResourceBarrier(1, &[_]d3d12.RESOURCE_BARRIER{.{
-            .Type = .TRANSITION,
-            .Flags = .{},
-            .u = .{
-                .Transition = .{
-                    .pResource = dx12.swap_chain_textures[back_buffer_index],
-                    .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                    .StateBefore = .{ .RENDER_TARGET = true },
-                    .StateAfter = d3d12.RESOURCE_STATES.PRESENT,
+        dx12.command_list.ResourceBarrier(1, &.{
+            .{
+                .Type = .TRANSITION,
+                .Flags = .{},
+                .u = .{
+                    .Transition = .{
+                        .pResource = dx12.swap_chain_textures[back_buffer_index],
+                        .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                        .StateBefore = .{ .RENDER_TARGET = true },
+                        .StateAfter = d3d12.RESOURCE_STATES.PRESENT,
+                    },
                 },
             },
-        }});
+        });
         hrPanicOnFail(dx12.command_list.Close());
 
-        dx12.command_queue.ExecuteCommandLists(1, &[_]*d3d12.ICommandList{@ptrCast(dx12.command_list)});
+        dx12.command_queue.ExecuteCommandLists(1, &.{@ptrCast(dx12.command_list)});
 
         dx12.present();
 

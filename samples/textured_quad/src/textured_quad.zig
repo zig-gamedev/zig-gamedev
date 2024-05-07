@@ -232,7 +232,7 @@ const DemoState = struct {
 
         gctx.cmdlist.OMSetRenderTargets(
             1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+            &.{back_buffer.descriptor_handle},
             w32.TRUE,
             null,
         );
@@ -244,11 +244,13 @@ const DemoState = struct {
         );
         gctx.setCurrentPipeline(demo.pipeline);
         gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
-        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-            .SizeInBytes = num_mipmaps * 4 * @sizeOf(Vertex),
-            .StrideInBytes = @sizeOf(Vertex),
-        }});
+        gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+            .{
+                .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+                .SizeInBytes = num_mipmaps * 4 * @sizeOf(Vertex),
+                .StrideInBytes = @sizeOf(Vertex),
+            },
+        });
         gctx.cmdlist.IASetIndexBuffer(&.{
             .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = 4 * @sizeOf(u32),
