@@ -95,6 +95,7 @@ const samples_windows = struct {
     pub const audio_playback_test = @import("samples/audio_playback_test/build.zig");
     pub const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
     pub const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
+    pub const live_editing = @import("samples/live_editing/build.zig");
 };
 
 const samples_windows_linux = struct {

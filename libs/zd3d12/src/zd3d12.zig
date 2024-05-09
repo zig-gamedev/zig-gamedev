@@ -57,15 +57,26 @@ pub fn ConstantBufferHandle(comptime T: type) type {
         resource: ResourceHandle,
         view_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
         ptr: *T,
+        pub fn deinit(self: @This(), gctx: GraphicsContext) void {
+            gctx.destroyResource(self.resource);
+        }
     };
 }
 pub const VerticesHandle = struct {
     resource: ResourceHandle,
     view: d3d12.VERTEX_BUFFER_VIEW,
+
+    pub fn deinit(self: VerticesHandle, gctx: GraphicsContext) void {
+        gctx.destroyResource(self.resource);
+    }
 };
 pub const VertexIndicesHandle = struct {
     resource: ResourceHandle,
     view: d3d12.INDEX_BUFFER_VIEW,
+
+    pub fn deinit(self: VertexIndicesHandle, gctx: GraphicsContext) void {
+        gctx.destroyResource(self.resource);
+    }
 };
 
 pub const GraphicsContext = struct {
