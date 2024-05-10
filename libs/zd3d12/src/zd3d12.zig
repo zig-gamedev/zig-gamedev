@@ -1066,6 +1066,48 @@ pub const GraphicsContext = struct {
         };
     }
 
+    pub fn allocShaderResourceView(
+        gctx: *GraphicsContext,
+        handle: ResourceHandle,
+        desc: ?*const d3d12.SHADER_RESOURCE_VIEW_DESC,
+    ) d3d12.CPU_DESCRIPTOR_HANDLE {
+        const resource = gctx.lookupResource(handle).?;
+        const cpu_handle = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+
+        gctx.device.CreateShaderResourceView(resource, desc, cpu_handle);
+
+        return cpu_handle;
+    }
+
+    pub fn allocUnorderedAccessView(
+        gctx: *GraphicsContext,
+        handle: ResourceHandle,
+        counter_handle: ?ResourceHandle,
+        desc: ?*const d3d12.UNORDERED_ACCESS_VIEW_DESC,
+    ) d3d12.CPU_DESCRIPTOR_HANDLE {
+        const resource = gctx.lookupResource(handle).?;
+        const counter_resource = if (counter_handle) |ch| gctx.lookupResource(ch).? else null;
+        const cpu_handle = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+
+        gctx.device.CreateUnorderedAccessView(resource, counter_resource, desc, cpu_handle);
+
+        return cpu_handle;
+    }
+
+    pub fn setGraphicsRootDescriptorTable(gctx: *GraphicsContext, root_index: w32.UINT, cpu_handles: []const d3d12.CPU_DESCRIPTOR_HANDLE) void {
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(root_index, gctx.copyDescriptorsToGpuHeap(1, cpu_handles[0]));
+        for (cpu_handles[1..]) |cpu_handle| {
+            _ = gctx.copyDescriptorsToGpuHeap(1, cpu_handle);
+        }
+    }
+
+    pub fn setComputeRootDescriptorTable(gctx: *GraphicsContext, root_index: w32.UINT, cpu_handles: []const d3d12.CPU_DESCRIPTOR_HANDLE) void {
+        gctx.cmdlist.SetComputeRootDescriptorTable(root_index, gctx.copyDescriptorsToGpuHeap(1, cpu_handles[0]));
+        for (cpu_handles[1..]) |cpu_handle| {
+            _ = gctx.copyDescriptorsToGpuHeap(1, cpu_handle);
+        }
+    }
+
     pub fn destroyResource(gctx: GraphicsContext, handle: ResourceHandle) void {
         gctx.resource_pool.destroyResource(handle);
     }

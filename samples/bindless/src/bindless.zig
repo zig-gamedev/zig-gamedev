@@ -513,21 +513,20 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             zstbi.setFlipVerticallyOnLoad(false);
         }
 
-        const equirect_texture = .{
-            .resource = gctx.createCommittedResource(
+        const equirect_texture = equirect_texture: {
+            const resource = try gctx.createCommittedResource(
                 .DEFAULT,
                 .{},
                 &d3d12.RESOURCE_DESC.initTex2d(.R16G16B16A16_FLOAT, image.width, image.height, 1),
                 .{ .COPY_DEST = true },
                 null,
-            ) catch |err| hrPanic(err),
-            .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+            );
+
+            break :equirect_texture .{
+                .resource = resource,
+                .view = gctx.allocShaderResourceView(resource, null),
+            };
         };
-        gctx.device.CreateShaderResourceView(
-            gctx.lookupResource(equirect_texture.resource).?,
-            null,
-            equirect_texture.view,
-        );
 
         gctx.updateTex2dSubresource(
             equirect_texture.resource,
@@ -640,8 +639,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         };
     }
 
-    const env_texture = .{
-        .resource = gctx.createCommittedResource(
+    const env_texture = env_texture: {
+        const resource = try gctx.createCommittedResource(
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC{
@@ -658,28 +657,30 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             },
             .{ .COPY_DEST = true },
             null,
-        ) catch |err| hrPanic(err),
-        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
-    };
-    gctx.device.CreateShaderResourceView(
-        gctx.lookupResource(env_texture.resource).?,
-        &d3d12.SHADER_RESOURCE_VIEW_DESC{
-            .Format = .UNKNOWN,
-            .ViewDimension = .TEXTURECUBE,
-            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
-            .u = .{
-                .TextureCube = .{
-                    .MipLevels = 0xffff_ffff,
-                    .MostDetailedMip = 0,
-                    .ResourceMinLODClamp = 0.0,
-                },
-            },
-        },
-        env_texture.view,
-    );
+        );
 
-    const irradiance_texture = .{
-        .resource = gctx.createCommittedResource(
+        break :env_texture .{
+            .resource = resource,
+            .view = gctx.allocShaderResourceView(
+                resource,
+                &d3d12.SHADER_RESOURCE_VIEW_DESC{
+                    .Format = .UNKNOWN,
+                    .ViewDimension = .TEXTURECUBE,
+                    .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                    .u = .{
+                        .TextureCube = .{
+                            .MipLevels = 0xffff_ffff,
+                            .MostDetailedMip = 0,
+                            .ResourceMinLODClamp = 0.0,
+                        },
+                    },
+                },
+            ),
+        };
+    };
+
+    const irradiance_texture = irradiance_texture: {
+        const resource = try gctx.createCommittedResource(
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC{
@@ -696,28 +697,29 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             },
             .{ .COPY_DEST = true },
             null,
-        ) catch |err| hrPanic(err),
-        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
-    };
-    gctx.device.CreateShaderResourceView(
-        gctx.lookupResource(irradiance_texture.resource).?,
-        &d3d12.SHADER_RESOURCE_VIEW_DESC{
-            .Format = .UNKNOWN,
-            .ViewDimension = .TEXTURECUBE,
-            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
-            .u = .{
-                .TextureCube = .{
-                    .MipLevels = 0xffff_ffff,
-                    .MostDetailedMip = 0,
-                    .ResourceMinLODClamp = 0.0,
+        );
+        break :irradiance_texture .{
+            .resource = resource,
+            .view = gctx.allocShaderResourceView(
+                resource,
+                &d3d12.SHADER_RESOURCE_VIEW_DESC{
+                    .Format = .UNKNOWN,
+                    .ViewDimension = .TEXTURECUBE,
+                    .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                    .u = .{
+                        .TextureCube = .{
+                            .MipLevels = 0xffff_ffff,
+                            .MostDetailedMip = 0,
+                            .ResourceMinLODClamp = 0.0,
+                        },
+                    },
                 },
-            },
-        },
-        irradiance_texture.view,
-    );
+            ),
+        };
+    };
 
-    const prefiltered_env_texture = .{
-        .resource = gctx.createCommittedResource(
+    const prefiltered_env_texture = prefiltered_env_texture: {
+        const resource = try gctx.createCommittedResource(
             .DEFAULT,
             .{},
             &d3d12.RESOURCE_DESC{
@@ -734,28 +736,30 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             },
             .{ .COPY_DEST = true },
             null,
-        ) catch |err| hrPanic(err),
-        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
-    };
-    gctx.device.CreateShaderResourceView(
-        gctx.lookupResource(prefiltered_env_texture.resource).?,
-        &d3d12.SHADER_RESOURCE_VIEW_DESC{
-            .Format = .UNKNOWN,
-            .ViewDimension = .TEXTURECUBE,
-            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
-            .u = .{
-                .TextureCube = .{
-                    .MipLevels = prefiltered_env_texture_num_mip_levels,
-                    .MostDetailedMip = 0,
-                    .ResourceMinLODClamp = 0.0,
-                },
-            },
-        },
-        prefiltered_env_texture.view,
-    );
+        );
+        break :prefiltered_env_texture .{
+            .resource = resource,
 
-    const brdf_integration_texture = .{
-        .resource = gctx.createCommittedResource(
+            .view = gctx.allocShaderResourceView(
+                resource,
+                &d3d12.SHADER_RESOURCE_VIEW_DESC{
+                    .Format = .UNKNOWN,
+                    .ViewDimension = .TEXTURECUBE,
+                    .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                    .u = .{
+                        .TextureCube = .{
+                            .MipLevels = prefiltered_env_texture_num_mip_levels,
+                            .MostDetailedMip = 0,
+                            .ResourceMinLODClamp = 0.0,
+                        },
+                    },
+                },
+            ),
+        };
+    };
+
+    const brdf_integration_texture = brdf_integration_texture: {
+        const resource = try gctx.createCommittedResource(
             .DEFAULT,
             .{},
             &blk: {
@@ -770,14 +774,16 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             },
             .{ .UNORDERED_ACCESS = true },
             null,
-        ) catch |err| hrPanic(err),
-        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        );
+        break :brdf_integration_texture .{
+            .resource = resource,
+
+            .view = gctx.allocShaderResourceView(
+                resource,
+                null,
+            ),
+        };
     };
-    gctx.device.CreateShaderResourceView(
-        gctx.lookupResource(brdf_integration_texture.resource).?,
-        null,
-        brdf_integration_texture.view,
-    );
 
     gctx.flushResourceBarriers();
 
@@ -1045,11 +1051,10 @@ fn draw(demo: *DemoState) void {
 
         gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
 
-        gctx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
-            const table = gctx.copyDescriptorsToGpuHeap(1, demo.irradiance_texture.view);
-            _ = gctx.copyDescriptorsToGpuHeap(1, demo.prefiltered_env_texture.view);
-            _ = gctx.copyDescriptorsToGpuHeap(1, demo.brdf_integration_texture.view);
-            break :blk table;
+        gctx.setGraphicsRootDescriptorTable(2, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+            demo.irradiance_texture.view,
+            demo.prefiltered_env_texture.view,
+            demo.brdf_integration_texture.view,
         });
 
         gctx.cmdlist.DrawIndexedInstanced(

@@ -303,8 +303,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         content_dir ++ "genart_008b.png",
         .{ .num_mip_levels = 1 },
     ) catch |err| hrPanic(err);
-    const image_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    gctx.device.CreateShaderResourceView(gctx.lookupResource(image).?, null, image_srv);
+    const image_srv = gctx.allocShaderResourceView(image, null);
     gctx.addTransitionBarrier(image, .{ .PIXEL_SHADER_RESOURCE = true });
 
     gctx.endFrame();

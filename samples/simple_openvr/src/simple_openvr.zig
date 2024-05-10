@@ -87,9 +87,7 @@ const App = struct {
         const texture = try gctx.createAndUploadTex2d(render_model_texture.width, render_model_texture.height, number_of_components, render_model_texture.texture_map_data[0..texture_map_data_length]);
         mipmap_genenerator.generateMipmaps(gctx, texture);
 
-        const texture_resource = gctx.lookupResource(texture).?;
-        const texture_shader_resource_view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(texture_resource, null, texture_shader_resource_view);
+        const texture_shader_resource_view = gctx.allocShaderResourceView(texture, null);
 
         gctx.addTransitionBarrier(texture, .{ .PIXEL_SHADER_RESOURCE = true });
         gctx.flushResourceBarriers();
@@ -281,11 +279,7 @@ fn createEye(gctx: *zd3d12.GraphicsContext, eye: OpenVR.Eye, msaa_sample_count: 
         eye_framebuffer.render_target_view_handle = rtv_handle;
     }
 
-    {
-        const srv_handle = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        gctx.device.CreateShaderResourceView(texture_resource, null, srv_handle);
-        eye_framebuffer.shader_resource_view_handle = srv_handle;
-    }
+    eye_framebuffer.shader_resource_view_handle = gctx.allocShaderResourceView(eye_framebuffer.texture, null);
 
     // Create depth
     {
@@ -577,16 +571,14 @@ pub fn main() !void {
             const texture = try gctx.createAndUploadTex2dFromFile(content_dir ++ "cube_texture.png", .{});
             mipmap_genenerator.generateMipmaps(&gctx, texture);
 
-            const texture_resource = gctx.lookupResource(texture).?;
-            const srv_handle = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-            gctx.device.CreateShaderResourceView(texture_resource, null, srv_handle);
+            const shader_resource_view_handle = gctx.allocShaderResourceView(texture, null);
 
             gctx.addTransitionBarrier(texture, .{ .PIXEL_SHADER_RESOURCE = true });
             gctx.flushResourceBarriers();
 
             break :texture .{
                 .resource = texture,
-                .shader_resource_view_handle = srv_handle,
+                .shader_resource_view_handle = shader_resource_view_handle,
             };
         };
 
