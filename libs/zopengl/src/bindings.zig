@@ -2749,7 +2749,7 @@ pub var drawElementsInstancedBaseVertexBaseInstance: *const fn (
     basevertex: Int,
     baseinstance: Uint,
 ) callconv(.C) void = undefined;
-pub var getInternalFormativ: *const fn (
+pub var getInternalformativ: *const fn (
     target: Enum,
     internalformat: Enum,
     pname: Enum,

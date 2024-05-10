@@ -608,7 +608,7 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glDrawArraysInstancedBaseInstance", .{&bindings.drawArraysInstancedBaseInstance});
         try load("glDrawElementsInstancedBaseInstance", .{&bindings.drawElementsInstancedBaseInstance});
         try load("glDrawElementsInstancedBaseVertexBaseInstance", .{&bindings.drawElementsInstancedBaseVertexBaseInstance});
-        try load("glGetInternalFormativ", .{&bindings.getInternalFormativ});
+        try load("glGetInternalformativ", .{&bindings.getInternalformativ});
         try load("glGetActiveAtomicCounterBufferiv", .{&bindings.getActiveAtomicCounterBufferiv});
         try load("glBindImageTexture", .{&bindings.bindImageTexture});
         try load("glMemoryBarrier", .{&bindings.memoryBarrier});
@@ -1572,7 +1572,7 @@ comptime {
     @export(bindings.drawArraysInstancedBaseInstance, .{ .name = "glDrawArraysInstancedBaseInstance", .linkage = linkage });
     @export(bindings.drawElementsInstancedBaseInstance, .{ .name = "glDrawElementsInstancedBaseInstance", .linkage = linkage });
     @export(bindings.drawElementsInstancedBaseVertexBaseInstance, .{ .name = "glDrawElementsInstancedBaseVertexBaseInstance", .linkage = linkage });
-    @export(bindings.getInternalFormativ, .{ .name = "glGetInternalFormativ", .linkage = linkage });
+    @export(bindings.getInternalformativ, .{ .name = "glGetInternalformativ", .linkage = linkage });
     @export(bindings.getActiveAtomicCounterBufferiv, .{ .name = "glGetActiveAtomicCounterBufferiv", .linkage = linkage });
     @export(bindings.bindImageTexture, .{ .name = "glBindImageTexture", .linkage = linkage });
     @export(bindings.memoryBarrier, .{ .name = "glMemoryBarrier", .linkage = linkage });
