@@ -106,7 +106,7 @@ pub fn build(b: *std.Build) void {
 Create a `GraphicsContext` using a `WindowProvider`. For example, using [zglfw](https://github.com/zig-gamedev):
 ```zig
 const gctx = try zgpu.GraphicsContext.create(
-    alloctor,
+    allocator,
     .{
         .window = window,
         .fn_getTime = @ptrCast(&zglfw.getTime),
