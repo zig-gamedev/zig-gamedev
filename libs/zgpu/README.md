@@ -35,7 +35,7 @@ Copy `zgpu`, `zpool` and `system-sdk` to a subdirectory of your project and add 
     },
     .dawn_aarch64_macos = .{
         .url = "https://github.com/michal-z/webgpu_dawn-aarch64-macos/archive/d2360cdfff0cf4a780cb77aa47c57aca03cc6dfe.tar.gz",
-        .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa"
+        .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa",
     },
     .dawn_x86_64_macos = .{
         .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
