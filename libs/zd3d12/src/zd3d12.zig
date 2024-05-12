@@ -1900,7 +1900,39 @@ pub const GraphicsContext = struct {
         @memcpy(mapped_slice, source);
     }
 
-    pub fn omSetRenderTargets(
+    pub inline fn clearRenderTargetView(
+        gctx: *GraphicsContext,
+        rt_view: d3d12.CPU_DESCRIPTOR_HANDLE,
+        rgba: *const [4]w32.FLOAT,
+        rects: []const w32.RECT,
+    ) void {
+        gctx.cmdlist.ClearRenderTargetView(
+            rt_view,
+            rgba,
+            rects.len,
+            if (rects.len == 0) null else rects.ptr,
+        );
+    }
+
+    pub inline fn clearDepthStencilView(
+        gctx: *GraphicsContext,
+        ds_view: d3d12.CPU_DESCRIPTOR_HANDLE,
+        clear_flags: d3d12.CLEAR_FLAGS,
+        depth: w32.FLOAT,
+        stencil: w32.UINT8,
+        rects: []const w32.RECT,
+    ) void {
+        gctx.cmdlist.ClearDepthStencilView(
+            ds_view,
+            clear_flags,
+            depth,
+            stencil,
+            rects.len,
+            if (rects.len == 0) null else rects.ptr,
+        );
+    }
+
+    pub inline fn omSetRenderTargets(
         gctx: *GraphicsContext,
         render_target_descriptors: []const d3d12.CPU_DESCRIPTOR_HANDLE,
         single_handle: bool,
@@ -1913,18 +1945,56 @@ pub const GraphicsContext = struct {
             ds_descriptors,
         );
     }
-    pub fn rsSetViewports(gctx: *GraphicsContext, viewports: []const d3d12.VIEWPORT) void {
+    pub inline fn rsSetViewports(gctx: *GraphicsContext, viewports: []const d3d12.VIEWPORT) void {
         gctx.cmdlist.RSSetViewports(@intCast(viewports.len), viewports.ptr);
     }
-    pub fn rsSetScissorRects(gctx: *GraphicsContext, rects: []const d3d12.RECT) void {
+    pub inline fn rsSetScissorRects(gctx: *GraphicsContext, rects: []const d3d12.RECT) void {
         gctx.cmdlist.RSSetScissorRects(@intCast(rects.len), rects.ptr);
     }
-    pub fn iaSetVertexBuffers(gctx: *GraphicsContext, start_slot: w32.UINT, views: []const d3d12.VERTEX_BUFFER_VIEW) void {
+    pub inline fn iaSetPrimitiveTopology(gctx: *GraphicsContext, topology: d3d12.PRIMITIVE_TOPOLOGY) void {
+        gctx.cmdlist.IASetPrimitiveTopology(topology);
+    }
+
+    pub inline fn iaSetVertexBuffers(gctx: *GraphicsContext, start_slot: w32.UINT, views: []const d3d12.VERTEX_BUFFER_VIEW) void {
         gctx.cmdlist.IASetVertexBuffers(start_slot, @intCast(views.len), views.ptr);
     }
-    pub fn setGraphicsRootConstantBufferView(gctx: *GraphicsContext, index: w32.UINT, handle: ResourceHandle) void {
+    pub inline fn iaSetIndexBuffer(gctx: *GraphicsContext, view: ?*const d3d12.INDEX_BUFFER_VIEW) void {
+        gctx.cmdlist.IASetIndexBuffer(view);
+    }
+    pub inline fn setGraphicsRootConstantBufferView(gctx: *GraphicsContext, index: w32.UINT, handle: ResourceHandle) void {
         const resource = gctx.lookupResource(handle).?;
         gctx.cmdlist.SetGraphicsRootConstantBufferView(index, resource.GetGPUVirtualAddress());
+    }
+
+    pub inline fn drawInstanced(
+        gctx: *GraphicsContext,
+        vertex_count_per_instance: w32.UINT,
+        instance_count: w32.UINT,
+        start_vertex_location: w32.UINT,
+        start_instance_location: w32.UINT,
+    ) void {
+        gctx.cmdlist.DrawInstanced(
+            vertex_count_per_instance,
+            instance_count,
+            start_vertex_location,
+            start_instance_location,
+        );
+    }
+    pub inline fn drawIndexedInstanced(
+        gctx: *GraphicsContext,
+        index_count_per_instance: w32.UINT,
+        instance_count: w32.UINT,
+        start_index_location: w32.UINT,
+        base_vertex_location: w32.INT,
+        start_instance_location: w32.UINT,
+    ) void {
+        gctx.cmdlist.DrawIndexedInstanced(
+            index_count_per_instance,
+            instance_count,
+            start_index_location,
+            base_vertex_location,
+            start_instance_location,
+        );
     }
 };
 

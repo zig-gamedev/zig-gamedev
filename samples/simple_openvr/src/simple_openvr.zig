@@ -994,8 +994,8 @@ pub fn main() !void {
                     false,
                     &eye_desc.depth_stencil_view_handle,
                 );
-                gctx.cmdlist.ClearRenderTargetView(eye_desc.render_target_view_handle, &.{ 0.0, 0.0, 0.0, 1.0 }, 0, null);
-                gctx.cmdlist.ClearDepthStencilView(eye_desc.depth_stencil_view_handle, .{ .DEPTH = true }, 1.0, 0, 0, null);
+                gctx.clearRenderTargetView(eye_desc.render_target_view_handle, &.{ 0.0, 0.0, 0.0, 1.0 }, &.{});
+                gctx.clearDepthStencilView(eye_desc.depth_stencil_view_handle, .{ .DEPTH = true }, 1.0, 0, &.{});
 
                 const current_view_projection = zmath.mul(hmd_pose, eye_matrix.get(eye_desc.eye));
                 eye_desc.constant.ptr.model_view_projection = current_view_projection;
@@ -1006,11 +1006,13 @@ pub fn main() !void {
 
                     gctx.setGraphicsRootConstantBufferView(0, eye_desc.constant.resource);
 
-                    gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, scene.texture.shader_resource_view_handle));
+                    gctx.setGraphicsRootDescriptorTable(1, &.{
+                        scene.texture.shader_resource_view_handle,
+                    });
 
-                    gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+                    gctx.iaSetPrimitiveTopology(.TRIANGLELIST);
                     gctx.iaSetVertexBuffers(0, &.{scene.vertices.view});
-                    gctx.cmdlist.DrawInstanced(@intCast(scene.vertex_count), 1, 0, 0);
+                    gctx.drawInstanced(@intCast(scene.vertex_count), 1, 0, 0);
                 }
 
                 // draw the controller axis lines
@@ -1019,9 +1021,9 @@ pub fn main() !void {
 
                     gctx.setGraphicsRootConstantBufferView(0, eye_desc.constant.resource);
 
-                    gctx.cmdlist.IASetPrimitiveTopology(.LINELIST);
+                    gctx.iaSetPrimitiveTopology(.LINELIST);
                     gctx.iaSetVertexBuffers(0, &.{axes.vertices.view});
-                    gctx.cmdlist.DrawInstanced(@intCast(axes.vertex_count), 1, 0, 0);
+                    gctx.drawInstanced(@intCast(axes.vertex_count), 1, 0, 0);
                 }
 
                 // render model rendering
@@ -1044,12 +1046,14 @@ pub fn main() !void {
                             }
 
                             // Bind the texture
-                            gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, tracked_device.texture_shader_resource_view));
+                            gctx.setGraphicsRootDescriptorTable(1, &.{
+                                tracked_device.texture_shader_resource_view,
+                            });
 
-                            gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+                            gctx.iaSetPrimitiveTopology(.TRIANGLELIST);
                             gctx.iaSetVertexBuffers(0, &.{tracked_device.vertices.view});
-                            gctx.cmdlist.IASetIndexBuffer(&tracked_device.vertex_indices.view);
-                            gctx.cmdlist.DrawIndexedInstanced(@intCast(tracked_device.vertex_count), 1, 0, 0, 0);
+                            gctx.iaSetIndexBuffer(&tracked_device.vertex_indices.view);
+                            gctx.drawIndexedInstanced(@intCast(tracked_device.vertex_count), 1, 0, 0, 0);
                         }
                     }
                 }
@@ -1090,23 +1094,21 @@ pub fn main() !void {
                 },
             });
 
-            gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+            gctx.iaSetPrimitiveTopology(.TRIANGLELIST);
             gctx.iaSetVertexBuffers(0, &.{
                 companion.vertices.view,
             });
-            gctx.cmdlist.IASetIndexBuffer(&companion.vertex_indices.view);
+            gctx.iaSetIndexBuffer(&companion.vertex_indices.view);
 
-            gctx.cmdlist.SetGraphicsRootDescriptorTable(
-                1,
-                gctx.copyDescriptorsToGpuHeap(1, eye_descs[0].shader_resource_view_handle),
-            );
-            gctx.cmdlist.DrawIndexedInstanced(companion.vertex_index_count / 2, 1, 0, 0, 0);
+            gctx.setGraphicsRootDescriptorTable(1, &.{
+                eye_descs[0].shader_resource_view_handle,
+            });
+            gctx.drawIndexedInstanced(companion.vertex_index_count / 2, 1, 0, 0, 0);
 
-            gctx.cmdlist.SetGraphicsRootDescriptorTable(
-                1,
-                gctx.copyDescriptorsToGpuHeap(1, eye_descs[1].shader_resource_view_handle),
-            );
-            gctx.cmdlist.DrawIndexedInstanced(companion.vertex_index_count / 2, 1, companion.vertex_index_count / 2, 0, 0);
+            gctx.setGraphicsRootDescriptorTable(1, &.{
+                eye_descs[1].shader_resource_view_handle,
+            });
+            gctx.drawIndexedInstanced(companion.vertex_index_count / 2, 1, companion.vertex_index_count / 2, 0, 0);
 
             for (eye_descs) |eye_desc| {
                 const dx12_texture = OpenVR.D3D12TextureData{
