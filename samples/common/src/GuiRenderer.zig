@@ -196,14 +196,16 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
     const display_y = draw_data.?.*.DisplayPos.y;
     const display_w = draw_data.?.*.DisplaySize.x;
     const display_h = draw_data.?.*.DisplaySize.y;
-    gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-        .TopLeftX = 0.0,
-        .TopLeftY = 0.0,
-        .Width = display_w,
-        .Height = display_h,
-        .MinDepth = 0.0,
-        .MaxDepth = 1.0,
-    }});
+    gctx.cmdlist.RSSetViewports(1, &.{
+        .{
+            .TopLeftX = 0.0,
+            .TopLeftY = 0.0,
+            .Width = display_w,
+            .Height = display_h,
+            .MinDepth = 0.0,
+            .MaxDepth = 1.0,
+        },
+    });
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.setCurrentPipeline(gui.pipeline);
     {
@@ -222,11 +224,13 @@ pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
         gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
     }
     gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, gui.font_srv));
-    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.lookupResource(vb).?.GetGPUVirtualAddress(),
-        .SizeInBytes = num_vertices * @sizeOf(c.ImDrawVert),
-        .StrideInBytes = @sizeOf(c.ImDrawVert),
-    }});
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+        .{
+            .BufferLocation = gctx.lookupResource(vb).?.GetGPUVirtualAddress(),
+            .SizeInBytes = num_vertices * @sizeOf(c.ImDrawVert),
+            .StrideInBytes = @sizeOf(c.ImDrawVert),
+        },
+    });
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.lookupResource(ib).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_indices * @sizeOf(c.ImDrawIdx),

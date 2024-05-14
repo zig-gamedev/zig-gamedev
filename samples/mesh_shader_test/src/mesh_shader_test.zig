@@ -688,7 +688,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &.{back_buffer.descriptor_handle},
         w32.TRUE,
         &demo.depth_texture_dsv,
     );
@@ -709,7 +709,7 @@ fn draw(demo: *DemoState) void {
             gctx.setCurrentPipeline(demo.mesh_shader_pso);
 
             // Bind global buffers that contain data for *all meshes* and *all meshlets*.
-            gctx.setGraphicsRootDescriptorTable(2, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+            gctx.setGraphicsRootDescriptorTable(2, &.{
                 demo.vertex_buffer_srv,
                 demo.index_buffer_srv,
                 demo.meshlet_buffer_srv,
@@ -720,7 +720,7 @@ fn draw(demo: *DemoState) void {
             gctx.setCurrentPipeline(demo.vertex_shader_pso);
 
             // Bind global buffers that contain data for *all meshes*.
-            gctx.setGraphicsRootDescriptorTable(2, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+            gctx.setGraphicsRootDescriptorTable(2, &.{
                 demo.vertex_buffer_srv,
                 demo.index_buffer_srv,
             });
@@ -728,11 +728,13 @@ fn draw(demo: *DemoState) void {
         .vertex_shader_fixed => {
             gctx.setCurrentPipeline(demo.vertex_shader_fixed_pso);
 
-            gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-                .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-                .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.vertex_buffer))),
-                .StrideInBytes = @sizeOf(Vertex),
-            }});
+            gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+                .{
+                    .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+                    .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.vertex_buffer))),
+                    .StrideInBytes = @sizeOf(Vertex),
+                },
+            });
             gctx.cmdlist.IASetIndexBuffer(&.{
                 .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
                 .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.index_buffer))),
@@ -758,7 +760,7 @@ fn draw(demo: *DemoState) void {
         switch (demo.draw_mode) {
             .mesh_shader => {
                 // Select a mesh to draw by specifying offsets in global buffers.
-                gctx.cmdlist.SetGraphicsRoot32BitConstants(1, 2, &[_]u32{
+                gctx.cmdlist.SetGraphicsRoot32BitConstants(1, 2, &.{
                     mesh.vertex_offset,
                     mesh.meshlet_offset,
                 }, 0);
@@ -766,7 +768,7 @@ fn draw(demo: *DemoState) void {
             },
             .vertex_shader => {
                 // Select a mesh to draw by specifying offsets in global buffers.
-                gctx.cmdlist.SetGraphicsRoot32BitConstants(1, 2, &[_]u32{
+                gctx.cmdlist.SetGraphicsRoot32BitConstants(1, 2, &.{
                     mesh.vertex_offset,
                     mesh.index_offset,
                 }, 0);

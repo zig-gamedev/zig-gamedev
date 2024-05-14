@@ -557,11 +557,13 @@ fn draw(demo: *DemoState) void {
 
     // Set input assembler (IA) state.
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Pso_Vertex),
-        .StrideInBytes = @sizeOf(Pso_Vertex),
-    }});
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+        .{
+            .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+            .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Pso_Vertex),
+            .StrideInBytes = @sizeOf(Pso_Vertex),
+        },
+    });
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = demo.mesh_num_indices * @sizeOf(u32),
@@ -601,7 +603,7 @@ fn draw(demo: *DemoState) void {
 
         gctx.cmdlist.OMSetRenderTargets(
             1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.pixel_texture_rtv},
+            &.{demo.pixel_texture_rtv},
             w32.TRUE,
             &demo.depth_texture_dsv,
         );
@@ -655,7 +657,7 @@ fn draw(demo: *DemoState) void {
             gctx.cmdlist.Dispatch(gctx.viewport_width * gctx.viewport_height / compute_group_size, 1, 1);
             gctx.cmdlist.ResourceBarrier(
                 1,
-                &[_]d3d12.RESOURCE_BARRIER{
+                &.{
                     d3d12.RESOURCE_BARRIER.initUav(gctx.lookupResource(demo.pixel_buffer).?),
                 },
             );
@@ -724,7 +726,7 @@ fn draw(demo: *DemoState) void {
         // Draw pixels to the pixel texture.
         //
         gctx.setCurrentPipeline(demo.draw_pixels_pso);
-        gctx.setComputeRootDescriptorTable(0, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+        gctx.setComputeRootDescriptorTable(0, &.{
             demo.pixel_buffer_srv,
             demo.pixel_texture_uav,
         });
@@ -750,7 +752,7 @@ fn draw(demo: *DemoState) void {
     // Set back buffer as a render target (for UI and Direct2D).
     gctx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &.{back_buffer.descriptor_handle},
         w32.TRUE,
         null,
     );

@@ -231,7 +231,7 @@ pub fn getEventTypeNameFromEnum(self: Self, event_type: common.EventType) [:0]co
 pub fn getHiddenAreaMesh(self: Self, eye: common.Eye, mesh_type: common.HiddenAreaMeshType) []const common.Vector2 {
     const mesh = self.function_table.GetHiddenAreaMesh(eye, mesh_type);
     return if (mesh.triangle_count == 0)
-        &[_]common.Vector2{}
+        &.{}
     else
         mesh.vertex_data[0..mesh.triangle_count];
 }

@@ -180,11 +180,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             const cp2 = d2d1.POINT_2F{ .x = p1.x + 40.0, .y = p1.y - 140.0 };
             ink_points.append(cp1) catch unreachable;
             ink_points.append(cp2) catch unreachable;
-            hrPanicOnFail(ink.AddSegments(&[_]d2d1.INK_BEZIER_SEGMENT{.{
-                .point1 = .{ .x = cp1.x, .y = cp1.y, .radius = 12.5 },
-                .point2 = .{ .x = cp2.x, .y = cp2.y, .radius = 12.5 },
-                .point3 = .{ .x = p1.x, .y = p1.y, .radius = 9.0 },
-            }}, 1));
+            hrPanicOnFail(ink.AddSegments(&.{
+                .{
+                    .point1 = .{ .x = cp1.x, .y = cp1.y, .radius = 12.5 },
+                    .point2 = .{ .x = cp2.x, .y = cp2.y, .radius = 12.5 },
+                    .point3 = .{ .x = p1.x, .y = p1.y, .radius = 9.0 },
+                },
+            }, 1));
             ink_points.append(p1) catch unreachable;
         }
 
@@ -195,11 +197,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             const cp2 = d2d1.POINT_2F{ .x = p1.x + 40.0, .y = p1.y - 140.0 };
             ink_points.append(cp1) catch unreachable;
             ink_points.append(cp2) catch unreachable;
-            hrPanicOnFail(ink.AddSegments(&[_]d2d1.INK_BEZIER_SEGMENT{.{
-                .point1 = .{ .x = cp1.x, .y = cp1.y, .radius = 6.25 },
-                .point2 = .{ .x = cp2.x, .y = cp2.y, .radius = 6.25 },
-                .point3 = .{ .x = p1.x, .y = p1.y, .radius = 1.0 },
-            }}, 1));
+            hrPanicOnFail(ink.AddSegments(&.{
+                .{
+                    .point1 = .{ .x = cp1.x, .y = cp1.y, .radius = 6.25 },
+                    .point2 = .{ .x = cp2.x, .y = cp2.y, .radius = 6.25 },
+                    .point3 = .{ .x = p1.x, .y = p1.y, .radius = 1.0 },
+                },
+            }, 1));
             ink_points.append(p1) catch unreachable;
         }
 
@@ -636,7 +640,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &.{back_buffer.descriptor_handle},
         w32.TRUE,
         null,
     );

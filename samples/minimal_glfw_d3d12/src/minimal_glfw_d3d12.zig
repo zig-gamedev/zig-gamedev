@@ -36,7 +36,7 @@ pub fn main() !void {
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
-        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&[_]d3d12.INPUT_ELEMENT_DESC{
+        pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         });
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
@@ -51,12 +51,12 @@ pub fn main() !void {
     const Vertex = extern struct {
         position: [2]f32,
     };
-    const gpu_vertices = try gctx.uploadVertices(Vertex, &[_]Vertex{
+    const gpu_vertices = try gctx.uploadVertices(Vertex, &.{
         .{ .position = [_]f32{ -0.9, -0.9 } },
         .{ .position = [_]f32{ 0.0, 0.9 } },
         .{ .position = [_]f32{ 0.9, -0.9 } },
     });
-    const gpu_vertex_indices = try gctx.uploadVertexIndices(u16, &[_]u16{ 0, 1, 2 });
+    const gpu_vertex_indices = try gctx.uploadVertexIndices(u16, &.{ 0, 1, 2 });
 
     const Input = extern struct {
         mouse_position: [2]f32,
@@ -96,7 +96,7 @@ pub fn main() !void {
 
             gctx.cmdlist.OMSetRenderTargets(
                 1,
-                &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+                &.{back_buffer.descriptor_handle},
                 w32.TRUE,
                 null,
             );
@@ -121,7 +121,7 @@ pub fn main() !void {
             }
 
             gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-            gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{gpu_vertices.view});
+            gctx.cmdlist.IASetVertexBuffers(0, 1, &.{gpu_vertices.view});
             gctx.cmdlist.IASetIndexBuffer(&gpu_vertex_indices.view);
             gctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 

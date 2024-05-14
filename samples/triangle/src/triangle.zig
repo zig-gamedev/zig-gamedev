@@ -138,7 +138,7 @@ pub fn main() !void {
 
         gctx.cmdlist.OMSetRenderTargets(
             1,
-            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+            &.{back_buffer.descriptor_handle},
             w32.TRUE,
             null,
         );
@@ -150,11 +150,13 @@ pub fn main() !void {
         );
         gctx.setCurrentPipeline(pipeline);
         gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = gctx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
-            .SizeInBytes = 3 * @sizeOf(vm.Vec3),
-            .StrideInBytes = @sizeOf(vm.Vec3),
-        }});
+        gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+            .{
+                .BufferLocation = gctx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
+                .SizeInBytes = 3 * @sizeOf(vm.Vec3),
+                .StrideInBytes = @sizeOf(vm.Vec3),
+            },
+        });
         gctx.cmdlist.IASetIndexBuffer(&.{
             .BufferLocation = gctx.lookupResource(index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = 3 * @sizeOf(u32),

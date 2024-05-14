@@ -6,17 +6,18 @@ Supports Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan).
 
 ## Features:
 
-* Zero-overhead wgpu API bindings ([source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgpu/src/wgpu.zig))
-* Uniform buffer pool for fast CPU->GPU transfers
-* Resource pools and handle-based GPU resources
-* Async shader compilation
-* GPU mipmap generator
+- Zero-overhead wgpu API bindings ([source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgpu/src/wgpu.zig))
+- Uniform buffer pool for fast CPU->GPU transfers
+- Resource pools and handle-based GPU resources
+- Async shader compilation
+- GPU mipmap generator
 
 For more details please see below.
 
 ## Getting started
 
 Copy `zgpu`, `zpool` and `system-sdk` to a subdirectory of your project and add the following to your `build.zig.zon` dependencies:
+
 ```zig
 .{
     .zgpu = .{ .path = libs/zgpu" },
@@ -45,6 +46,7 @@ Copy `zgpu`, `zpool` and `system-sdk` to a subdirectory of your project and add 
 ```
 
 then in your `build.zig`:
+
 ```zig
 pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
@@ -59,15 +61,16 @@ pub fn build(b: *std.Build) void {
 }
 ```
 
---------------
+---
+
 ## Sample applications
 
-* [gui test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu)
-* [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu)
-* [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
-* [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu)
-* [textured quad (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/textured_quad_wgpu)
-* [triangle (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu)
+- [gui test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu)
+- [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu)
+- [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
+- [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu)
+- [textured quad (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/textured_quad_wgpu)
+- [triangle (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu)
 
 ## Library overview
 
@@ -76,6 +79,7 @@ Below you can find an overview of main `zgpu` features.
 ### Compile-time options
 
 You can override default options in your `build.zig`:
+
 ```zig
 pub fn build(b: *std.Build) void {
     ...
@@ -103,7 +107,9 @@ pub fn build(b: *std.Build) void {
 ```
 
 ### Graphics Context
+
 Create a `GraphicsContext` using a `WindowProvider`. For example, using [zglfw](https://github.com/zig-gamedev):
+
 ```zig
 const gctx = try zgpu.GraphicsContext.create(
     allocator,
@@ -126,9 +132,9 @@ const gctx = try zgpu.GraphicsContext.create(
 
 ### Uniforms
 
-* Implemented as a uniform buffer pool
-* Easy to use
-* Efficient - only one copy operation per frame
+- Implemented as a uniform buffer pool
+- Easy to use
+- Efficient - only one copy operation per frame
 
 ```zig
 struct DrawUniforms = extern struct {
@@ -146,13 +152,13 @@ gctx.submit(...); // Injects *one* copy operation to transfer *all* allocated un
 
 ### Resource pools
 
-* Every GPU resource is identified by 32-bit integer handle
-* All resources are stored in one system
-* We keep basic info about each resource (size of the buffer, format of the texture, etc.)
-* You can always check if resource is valid (very useful for async operations)
-* System keeps basic info about resource dependencies, for example, `TextureViewHandle` knows about its
-parent texture and becomes invalid when parent texture becomes invalid; `BindGroupHandle` knows
-about all resources it binds so it becomes invalid if any of those resources become invalid
+- Every GPU resource is identified by 32-bit integer handle
+- All resources are stored in one system
+- We keep basic info about each resource (size of the buffer, format of the texture, etc.)
+- You can always check if resource is valid (very useful for async operations)
+- System keeps basic info about resource dependencies, for example, `TextureViewHandle` knows about its
+  parent texture and becomes invalid when parent texture becomes invalid; `BindGroupHandle` knows
+  about all resources it binds so it becomes invalid if any of those resources become invalid
 
 ```zig
 const buffer_handle = gctx.createBuffer(...);
@@ -168,9 +174,10 @@ if (gctx.isResourceValid(buffer_handle)) {
 gctx.destroyResource(buffer_handle);
 
 ```
+
 ### Async shader compilation
 
-* Thanks to resource pools and resources identified by handles we can easily async compile all our shaders
+- Thanks to resource pools and resources identified by handles we can easily async compile all our shaders
 
 ```zig
 const DemoState = struct {
@@ -195,12 +202,12 @@ pass: {
 
 ### Mipmap generation on the GPU
 
-* wgpu API does not provide mipmap generator
-* zgpu provides decent mipmap generator implemented in a compute shader
-* It supports 2D textures, array textures and cubemap textures of any format
-(`rgba8_unorm`, `rg16_float`, `rgba32_float`, etc.)
-* Currently it requires that: `texture_width == texture_height and isPowerOfTwo(texture_width)`
-* It takes ~260 microsec to generate all mips for 1024x1024 `rgba8_unorm` texture on GTX 1660
+- wgpu API does not provide mipmap generator
+- zgpu provides decent mipmap generator implemented in a compute shader
+- It supports 2D textures, array textures and cubemap textures of any format
+  (`rgba8_unorm`, `rg16_float`, `rgba32_float`, etc.)
+- Currently it requires that: `texture_width == texture_height and isPowerOfTwo(texture_width)`
+- It takes ~260 microsec to generate all mips for 1024x1024 `rgba8_unorm` texture on GTX 1660
 
 ```zig
 // Usage:

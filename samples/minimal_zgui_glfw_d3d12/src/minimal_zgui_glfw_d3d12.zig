@@ -96,7 +96,7 @@ pub fn main() !void {
 
             gctx.cmdlist.OMSetRenderTargets(
                 1,
-                &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+                &.{back_buffer.descriptor_handle},
                 w32.TRUE,
                 null,
             );

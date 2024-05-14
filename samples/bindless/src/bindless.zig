@@ -237,20 +237,24 @@ fn drawToCubeTexture(
     const texture_height = desc.Height >> @as(u5, @intCast(dest_mip_level));
     assert(texture_width == texture_height);
 
-    gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-        .TopLeftX = 0.0,
-        .TopLeftY = 0.0,
-        .Width = @as(f32, @floatFromInt(texture_width)),
-        .Height = @as(f32, @floatFromInt(texture_height)),
-        .MinDepth = 0.0,
-        .MaxDepth = 1.0,
-    }});
-    gctx.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
-        .left = 0,
-        .top = 0,
-        .right = @as(c_long, @intCast(texture_width)),
-        .bottom = @as(c_long, @intCast(texture_height)),
-    }});
+    gctx.cmdlist.RSSetViewports(1, &.{
+        .{
+            .TopLeftX = 0.0,
+            .TopLeftY = 0.0,
+            .Width = @as(f32, @floatFromInt(texture_width)),
+            .Height = @as(f32, @floatFromInt(texture_height)),
+            .MinDepth = 0.0,
+            .MaxDepth = 1.0,
+        },
+    });
+    gctx.cmdlist.RSSetScissorRects(1, &.{
+        .{
+            .left = 0,
+            .top = 0,
+            .right = @as(c_long, @intCast(texture_width)),
+            .bottom = @as(c_long, @intCast(texture_height)),
+        },
+    });
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
 
     const zero = Vec3.initZero();
@@ -286,7 +290,7 @@ fn drawToCubeTexture(
 
         gctx.addTransitionBarrier(dest_texture, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
-        gctx.cmdlist.OMSetRenderTargets(1, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{cube_face_rtv}, w32.TRUE, null);
+        gctx.cmdlist.OMSetRenderTargets(1, &.{cube_face_rtv}, w32.TRUE, null);
         gctx.deallocateAllTempCpuDescriptors(.RTV);
 
         const mem = gctx.allocateUploadMemory(Mat4, 1);
@@ -787,11 +791,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     gctx.flushResourceBarriers();
 
-    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(vertex_buffer))),
-        .StrideInBytes = @sizeOf(Vertex),
-    }});
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+        .{
+            .BufferLocation = gctx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
+            .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(vertex_buffer))),
+            .StrideInBytes = @sizeOf(Vertex),
+        },
+    });
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.lookupResource(index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(index_buffer))),
@@ -999,7 +1005,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &.{back_buffer.descriptor_handle},
         w32.TRUE,
         &demo.depth_texture.view,
     );
@@ -1012,11 +1018,13 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, .{ .DEPTH = true }, 1.0, 0, 0, null);
 
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-        .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.vertex_buffer))),
-        .StrideInBytes = @sizeOf(Vertex),
-    }});
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &.{
+        .{
+            .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+            .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.vertex_buffer))),
+            .StrideInBytes = @sizeOf(Vertex),
+        },
+    });
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = @as(u32, @intCast(gctx.getResourceSize(demo.index_buffer))),
@@ -1051,7 +1059,7 @@ fn draw(demo: *DemoState) void {
 
         gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
 
-        gctx.setGraphicsRootDescriptorTable(2, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{
+        gctx.setGraphicsRootDescriptorTable(2, &.{
             demo.irradiance_texture.view,
             demo.prefiltered_env_texture.view,
             demo.brdf_integration_texture.view,

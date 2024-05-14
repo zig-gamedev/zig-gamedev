@@ -7,6 +7,7 @@ const dxgi = zwin32.dxgi;
 const d3d11 = zwin32.d3d11;
 const d3d12 = zwin32.d3d12;
 const d3d12d = zwin32.d3d12d;
+const d3d = zwin32.d3d;
 const d2d1 = zwin32.d2d1;
 const d3d11on12 = zwin32.d3d11on12;
 const dds_loader = zwin32.dds_loader;
@@ -553,7 +554,7 @@ pub const GraphicsContext = struct {
                 .{ .DEBUG = enable_debug_layer, .BGRA_SUPPORT = true },
                 null,
                 0,
-                &[_]*w32.IUnknown{@as(*w32.IUnknown, @ptrCast(gctx.cmdqueue))},
+                &.{@as(*w32.IUnknown, @ptrCast(gctx.cmdqueue))},
                 1,
                 0,
                 @as(*?*d3d11.IDevice, @ptrCast(&device11)),
@@ -716,22 +717,26 @@ pub const GraphicsContext = struct {
         gctx.is_cmdlist_opened = true;
         gctx.cmdlist.SetDescriptorHeaps(
             1,
-            &[_]*d3d12.IDescriptorHeap{gctx.cbv_srv_uav_gpu_heaps[0].heap.?},
+            &.{gctx.cbv_srv_uav_gpu_heaps[0].heap.?},
         );
-        gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
-            .TopLeftX = 0.0,
-            .TopLeftY = 0.0,
-            .Width = @as(f32, @floatFromInt(gctx.viewport_width)),
-            .Height = @as(f32, @floatFromInt(gctx.viewport_height)),
-            .MinDepth = 0.0,
-            .MaxDepth = 1.0,
-        }});
-        gctx.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
-            .left = 0,
-            .top = 0,
-            .right = @as(c_long, @intCast(gctx.viewport_width)),
-            .bottom = @as(c_long, @intCast(gctx.viewport_height)),
-        }});
+        gctx.cmdlist.RSSetViewports(1, &.{
+            .{
+                .TopLeftX = 0.0,
+                .TopLeftY = 0.0,
+                .Width = @as(f32, @floatFromInt(gctx.viewport_width)),
+                .Height = @as(f32, @floatFromInt(gctx.viewport_height)),
+                .MinDepth = 0.0,
+                .MaxDepth = 1.0,
+            },
+        });
+        gctx.cmdlist.RSSetScissorRects(1, &.{
+            .{
+                .left = 0,
+                .top = 0,
+                .right = @as(c_long, @intCast(gctx.viewport_width)),
+                .bottom = @as(c_long, @intCast(gctx.viewport_height)),
+            },
+        });
         gctx.current_pipeline = .{};
     }
 
@@ -766,7 +771,7 @@ pub const GraphicsContext = struct {
         gctx.flushGpuCommands();
 
         gctx.d2d.?.device11on12.AcquireWrappedResources(
-            &[_]*d3d11.IResource{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
+            &.{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
             1,
         );
         gctx.d2d.?.context.SetTarget(@as(*d2d1.IImage, @ptrCast(gctx.d2d.?.targets[gctx.back_buffer_index])));
@@ -818,7 +823,7 @@ pub const GraphicsContext = struct {
         hrPanicOnFail(gctx.d2d.?.context.EndDraw(null, null));
 
         gctx.d2d.?.device11on12.ReleaseWrappedResources(
-            &[_]*d3d11.IResource{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
+            &.{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
             1,
         );
         gctx.d2d.?.context11.Flush();
@@ -845,7 +850,7 @@ pub const GraphicsContext = struct {
             gctx.is_cmdlist_opened = false;
             gctx.cmdqueue.ExecuteCommandLists(
                 1,
-                &[_]*d3d12.ICommandList{@as(*d3d12.ICommandList, @ptrCast(gctx.cmdlist))},
+                &.{@as(*d3d12.ICommandList, @ptrCast(gctx.cmdlist))},
             );
         }
     }
@@ -908,6 +913,15 @@ pub const GraphicsContext = struct {
             return d3d12.RESOURCE_DESC.initBuffer(0);
 
         return resource.?.desc;
+    }
+
+    pub fn checkFeatureSupport(gctx: *GraphicsContext, comptime feature: d3d12.FEATURE, data: anytype) HResultError!void {
+        const Data = @TypeOf(data);
+        const FeatureData = feature.Data();
+        if (Data != FeatureData) {
+            @compileError("expected " ++ @typeName(FeatureData) ++ " but was " ++ @typeName(Data));
+        }
+        try hrErrorOnFail(gctx.device.CheckFeatureSupport(feature, @constCast(@ptrCast(&data)), @sizeOf(FeatureData)));
     }
 
     pub fn createCommittedResource(
@@ -999,23 +1013,13 @@ pub const GraphicsContext = struct {
             d3d12.RESOURCE_STATES.GENERIC_READ,
             null,
         );
-        const resource = gctx.lookupResource(resource_handle).?;
-        {
-            var mapped_buffer: [*]u8 = undefined;
-            try hrErrorOnFail(resource.Map(
-                0,
-                &.{ .Begin = 0, .End = 0 },
-                @ptrCast(&mapped_buffer),
-            ));
-            defer resource.Unmap(0, null);
-            const mapped_slice = std.mem.bytesAsSlice(T, mapped_buffer[0..buffer_length]);
-            @memcpy(mapped_slice, vertices);
-        }
+
+        try gctx.writeResource(T, resource_handle, vertices);
 
         return .{
             .resource = resource_handle,
             .view = .{
-                .BufferLocation = resource.GetGPUVirtualAddress(),
+                .BufferLocation = gctx.lookupResource(resource_handle).?.GetGPUVirtualAddress(),
                 .StrideInBytes = @sizeOf(T),
                 .SizeInBytes = buffer_length,
             },
@@ -1039,23 +1043,13 @@ pub const GraphicsContext = struct {
             d3d12.RESOURCE_STATES.GENERIC_READ,
             null,
         );
-        const resource = gctx.lookupResource(resource_handle).?;
-        {
-            var mapped_buffer: [*]u8 = undefined;
-            try hrErrorOnFail(resource.Map(
-                0,
-                &.{ .Begin = 0, .End = 0 },
-                @ptrCast(&mapped_buffer),
-            ));
-            defer resource.Unmap(0, null);
-            const mapped_slice = std.mem.bytesAsSlice(T, mapped_buffer[0..buffer_length]);
-            @memcpy(mapped_slice, vertex_indices);
-        }
+
+        try gctx.writeResource(T, resource_handle, vertex_indices);
 
         return .{
             .resource = resource_handle,
             .view = .{
-                .BufferLocation = resource.GetGPUVirtualAddress(),
+                .BufferLocation = gctx.lookupResource(resource_handle).?.GetGPUVirtualAddress(),
                 .Format = switch (T) {
                     u16 => .R16_UINT,
                     u32 => .R32_UINT,
@@ -1090,6 +1084,31 @@ pub const GraphicsContext = struct {
         const cpu_handle = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
         gctx.device.CreateUnorderedAccessView(resource, counter_resource, desc, cpu_handle);
+
+        return cpu_handle;
+    }
+
+    pub fn allocRenderTargetView(
+        gctx: *GraphicsContext,
+        handle: ResourceHandle,
+        desc: ?*const d3d12.RENDER_TARGET_VIEW_DESC,
+    ) d3d12.CPU_DESCRIPTOR_HANDLE {
+        const resource = gctx.lookupResource(handle).?;
+        const cpu_handle = gctx.allocateCpuDescriptors(.RTV, 1);
+
+        gctx.device.CreateRenderTargetView(resource, desc, cpu_handle);
+
+        return cpu_handle;
+    }
+    pub fn allocDepthStencilView(
+        gctx: *GraphicsContext,
+        handle: ResourceHandle,
+        desc: ?*const d3d12.DEPTH_STENCIL_VIEW_DESC,
+    ) d3d12.CPU_DESCRIPTOR_HANDLE {
+        const resource = gctx.lookupResource(handle).?;
+        const cpu_handle = gctx.allocateCpuDescriptors(.DSV, 1);
+
+        gctx.device.CreateDepthStencilView(resource, desc, cpu_handle);
 
         return cpu_handle;
     }
@@ -1842,6 +1861,141 @@ pub const GraphicsContext = struct {
 
         return texture;
     }
+
+    pub fn createRootSignature(
+        gctx: *GraphicsContext,
+        node_mask: w32.UINT,
+        signature: *d3d.IBlob,
+    ) HResultError!*d3d12.IRootSignature {
+        var root_signature: *d3d12.IRootSignature = undefined;
+        try hrErrorOnFail(gctx.device.CreateRootSignature(
+            node_mask,
+            signature.GetBufferPointer(),
+            signature.GetBufferSize(),
+            &d3d12.IID_IRootSignature,
+            @ptrCast(&root_signature),
+        ));
+        return root_signature;
+    }
+
+    pub fn writeResource(
+        gctx: *GraphicsContext,
+        comptime T: type,
+        destination: ResourceHandle,
+        source: []const T,
+    ) HResultError!void {
+        if (source.len == 0) {
+            return;
+        }
+        const resource = gctx.lookupResource(destination).?;
+        var mapped_buffer: [*]u8 = undefined;
+        try zwin32.hrErrorOnFail(resource.Map(
+            0,
+            &.{ .Begin = 0, .End = 0 },
+            @ptrCast(&mapped_buffer),
+        ));
+        defer resource.Unmap(0, null);
+        const byte_length = source.len * @sizeOf(T);
+        const mapped_slice = std.mem.bytesAsSlice(T, mapped_buffer[0..byte_length]);
+        @memcpy(mapped_slice, source);
+    }
+
+    pub inline fn clearRenderTargetView(
+        gctx: *GraphicsContext,
+        rt_view: d3d12.CPU_DESCRIPTOR_HANDLE,
+        rgba: *const [4]w32.FLOAT,
+        rects: []const w32.RECT,
+    ) void {
+        gctx.cmdlist.ClearRenderTargetView(
+            rt_view,
+            rgba,
+            rects.len,
+            if (rects.len == 0) null else rects.ptr,
+        );
+    }
+
+    pub inline fn clearDepthStencilView(
+        gctx: *GraphicsContext,
+        ds_view: d3d12.CPU_DESCRIPTOR_HANDLE,
+        clear_flags: d3d12.CLEAR_FLAGS,
+        depth: w32.FLOAT,
+        stencil: w32.UINT8,
+        rects: []const w32.RECT,
+    ) void {
+        gctx.cmdlist.ClearDepthStencilView(
+            ds_view,
+            clear_flags,
+            depth,
+            stencil,
+            rects.len,
+            if (rects.len == 0) null else rects.ptr,
+        );
+    }
+
+    pub inline fn omSetRenderTargets(
+        gctx: *GraphicsContext,
+        render_target_descriptors: []const d3d12.CPU_DESCRIPTOR_HANDLE,
+        single_handle: bool,
+        ds_descriptors: ?*const d3d12.CPU_DESCRIPTOR_HANDLE,
+    ) void {
+        gctx.cmdlist.OMSetRenderTargets(
+            @intCast(render_target_descriptors.len),
+            render_target_descriptors.ptr,
+            if (single_handle) w32.TRUE else w32.FALSE,
+            ds_descriptors,
+        );
+    }
+    pub inline fn rsSetViewports(gctx: *GraphicsContext, viewports: []const d3d12.VIEWPORT) void {
+        gctx.cmdlist.RSSetViewports(@intCast(viewports.len), viewports.ptr);
+    }
+    pub inline fn rsSetScissorRects(gctx: *GraphicsContext, rects: []const d3d12.RECT) void {
+        gctx.cmdlist.RSSetScissorRects(@intCast(rects.len), rects.ptr);
+    }
+    pub inline fn iaSetPrimitiveTopology(gctx: *GraphicsContext, topology: d3d12.PRIMITIVE_TOPOLOGY) void {
+        gctx.cmdlist.IASetPrimitiveTopology(topology);
+    }
+
+    pub inline fn iaSetVertexBuffers(gctx: *GraphicsContext, start_slot: w32.UINT, views: []const d3d12.VERTEX_BUFFER_VIEW) void {
+        gctx.cmdlist.IASetVertexBuffers(start_slot, @intCast(views.len), views.ptr);
+    }
+    pub inline fn iaSetIndexBuffer(gctx: *GraphicsContext, view: ?*const d3d12.INDEX_BUFFER_VIEW) void {
+        gctx.cmdlist.IASetIndexBuffer(view);
+    }
+    pub inline fn setGraphicsRootConstantBufferView(gctx: *GraphicsContext, index: w32.UINT, handle: ResourceHandle) void {
+        const resource = gctx.lookupResource(handle).?;
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(index, resource.GetGPUVirtualAddress());
+    }
+
+    pub inline fn drawInstanced(
+        gctx: *GraphicsContext,
+        vertex_count_per_instance: w32.UINT,
+        instance_count: w32.UINT,
+        start_vertex_location: w32.UINT,
+        start_instance_location: w32.UINT,
+    ) void {
+        gctx.cmdlist.DrawInstanced(
+            vertex_count_per_instance,
+            instance_count,
+            start_vertex_location,
+            start_instance_location,
+        );
+    }
+    pub inline fn drawIndexedInstanced(
+        gctx: *GraphicsContext,
+        index_count_per_instance: w32.UINT,
+        instance_count: w32.UINT,
+        start_index_location: w32.UINT,
+        base_vertex_location: w32.INT,
+        start_instance_location: w32.UINT,
+    ) void {
+        gctx.cmdlist.DrawIndexedInstanced(
+            index_count_per_instance,
+            instance_count,
+            start_index_location,
+            base_vertex_location,
+            start_instance_location,
+        );
+    }
 };
 
 pub const MipmapGenerator = struct {
@@ -2405,3 +2559,9 @@ const GpuMemoryHeap = struct {
         return .{ .cpu_slice = cpu_slice, .gpu_base = gpu_base };
     }
 };
+
+pub fn serializeVersionedRootSignature(root_signature_desc: *const d3d12.VERSIONED_ROOT_SIGNATURE_DESC) HResultError!*d3d.IBlob {
+    var signature: ?*d3d.IBlob = undefined;
+    try hrErrorOnFail(d3d12.SerializeVersionedRootSignature(root_signature_desc, &signature, null));
+    return signature.?;
+}

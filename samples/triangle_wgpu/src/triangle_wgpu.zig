@@ -128,7 +128,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         break :pipeline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
     };
 
-    const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
+    const bind_group = gctx.createBindGroup(bind_group_layout, &.{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
     });
 

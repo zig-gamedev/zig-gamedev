@@ -386,7 +386,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     //
     // Create bind groups.
     //
-    const mesh_bg = gctx.createBindGroup(mesh_bgl, &[_]zgpu.BindGroupEntryInfo{
+    const mesh_bg = gctx.createBindGroup(mesh_bgl, &.{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(MeshUniforms) },
         .{ .binding = 1, .texture_view_handle = mesh_texv[0] },
         .{ .binding = 2, .texture_view_handle = mesh_texv[1] },
@@ -398,7 +398,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .{ .binding = 8, .sampler_handle = aniso_sam },
     });
 
-    const env_bg = gctx.createBindGroup(uniform_texcube_sam_bgl, &[_]zgpu.BindGroupEntryInfo{
+    const env_bg = gctx.createBindGroup(uniform_texcube_sam_bgl, &.{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
         .{ .binding = 1, .texture_view_handle = env_cube_texv },
         .{ .binding = 2, .sampler_handle = trilinear_sam },
@@ -935,7 +935,7 @@ fn precomputeImageLighting(
     // Step 4.
     //
     {
-        const bg = gctx.createBindGroup(demo.texstorage2d_bgl, &[_]zgpu.BindGroupEntryInfo{
+        const bg = gctx.createBindGroup(demo.texstorage2d_bgl, &.{
             .{ .binding = 0, .texture_view_handle = demo.brdf_integration_texv },
         });
         defer gctx.releaseResource(bg);
@@ -987,7 +987,7 @@ fn drawToCubeTexture(
         roughness: f32,
     };
 
-    const bg = gctx.createBindGroup(pipe_bgl, &[_]zgpu.BindGroupEntryInfo{
+    const bg = gctx.createBindGroup(pipe_bgl, &.{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(Uniforms) },
         .{ .binding = 1, .texture_view_handle = source_texv },
         .{ .binding = 2, .sampler_handle = sam },

@@ -268,12 +268,14 @@ const DemoState = struct {
             break :pipline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
         };
 
-        const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{.{
-            .binding = 0,
-            .buffer_handle = gctx.uniforms.buffer,
-            .offset = 0,
-            .size = @sizeOf(zm.Mat),
-        }});
+        const bind_group = gctx.createBindGroup(bind_group_layout, &.{
+            .{
+                .binding = 0,
+                .buffer_handle = gctx.uniforms.buffer,
+                .offset = 0,
+                .size = @sizeOf(zm.Mat),
+            },
+        });
 
         // Create a depth texture and its 'view'.
         const depth = createDepthTexture(gctx);
