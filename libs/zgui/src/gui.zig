@@ -347,7 +347,7 @@ pub const DrawData = *extern struct {
     cmd_lists_count: c_int,
     total_idx_count: c_int,
     total_vtx_count: c_int,
-    cmd_lists: [*]DrawList,
+    cmd_lists: Vector(DrawList),
     display_pos: [2]f32,
     display_size: [2]f32,
     framebuffer_scale: [2]f32,
@@ -4537,6 +4537,14 @@ pub const DrawList = *opaque {
     }
     extern fn zguiDrawList_AddResetRenderStateCallback(draw_list: DrawList) void;
 };
+
+fn Vector(comptime T: type) type {
+    return extern struct {
+        len: c_int,
+        capacity: c_int,
+        items: [*]T,
+    };
+}
 
 test {
     const testing = std.testing;
