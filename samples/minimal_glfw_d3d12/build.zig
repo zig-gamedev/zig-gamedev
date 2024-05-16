@@ -36,11 +36,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const zd3d12_module = zd3d12.module("root");
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
-    @import("../common/build.zig").link(exe, .{
-        .zwin32 = zwin32_module,
-        .zd3d12 = zd3d12_module,
-    });
-
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
         .install_dir = .{ .custom = "" },
