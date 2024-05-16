@@ -50,11 +50,6 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     @import("zopenvr").linkOpenVR(exe);
     @import("zopenvr").installOpenVR(&exe.step, options.target.result, .bin, zopenvr_path) catch unreachable;
 
-    @import("../common/build.zig").link(exe, .{
-        .zwin32 = zwin32_module,
-        .zd3d12 = zd3d12_module,
-    });
-
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);

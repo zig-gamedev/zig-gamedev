@@ -10,8 +10,6 @@ const d3d = zwin32.d3d;
 const dxgi = zwin32.dxgi;
 const zd3d12 = @import("zd3d12");
 
-const common = @import("common");
-
 // We need to export below symbols for DirectX 12 Agility SDK.
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -330,7 +328,7 @@ pub fn main() !void {
     defer gctx.deinit(allocator);
 
     const msaa_sample_count = 4;
-    const mipmapgen_bytecode_slice = try common.readContentDirFileAlloc(allocator, content_dir, "shaders/generate_mipmaps.cs.cso", null);
+    const mipmapgen_bytecode_slice = try std.fs.cwd().readFileAlloc(allocator, content_dir ++ "/shaders/generate_mipmaps.cs.cso", 256 * 1024);
     defer allocator.free(mipmapgen_bytecode_slice);
     const mipmapgen_bytecode = d3d12.SHADER_BYTECODE.init(mipmapgen_bytecode_slice);
 
@@ -445,8 +443,8 @@ pub fn main() !void {
             },
         });
         pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/scene.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/scene.ps.cso", null));
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/scene.vs.cso", 256 * 1024));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/scene.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
@@ -570,8 +568,8 @@ pub fn main() !void {
             },
         });
         pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/companion.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/companion.ps.cso", null));
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/companion.vs.cso", 256 * 1024));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/companion.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
@@ -672,8 +670,8 @@ pub fn main() !void {
             },
         });
         pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/axes.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/axes.ps.cso", null));
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/axes.vs.cso", 256 * 1024));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/axes.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
@@ -759,8 +757,8 @@ pub fn main() !void {
             },
         });
         pso_desc.pRootSignature = root_signature;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/render_model.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/render_model.ps.cso", null));
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/render_model.vs.cso", 256 * 1024));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/render_model.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
             rasterizer_state.FrontCounterClockwise = w32.TRUE;
