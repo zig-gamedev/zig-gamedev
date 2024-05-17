@@ -53,7 +53,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .install_subdir = b.pathJoin(&.{ "bin", content_dir }),
     });
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const compile_shaders = @import("zwin32").addCompileShaders(b, demo_name);
+        const compile_shaders = @import("zwin32").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
         const root_path = pathResolve(b, &.{ @src().file, "..", "..", ".." });
         const shaders_path = b.pathJoin(&.{ root_path, content_path, "shaders" });
 

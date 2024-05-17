@@ -99,7 +99,7 @@ pub fn install_directml(
 
 pub const CompileShaders = struct {
     step: *std.Build.Step,
-    shader_ver: []const u8 = "6_0",
+    shader_ver: []const u8,
 
     pub fn addVsShader(
         self: CompileShaders,
@@ -128,6 +128,22 @@ pub const CompileShaders = struct {
             entry_point,
             output_filename,
             "ps",
+            define,
+        );
+    }
+
+    pub fn addCsShader(
+        self: CompileShaders,
+        input_path: []const u8,
+        entry_point: []const u8,
+        output_filename: []const u8,
+        define: []const u8,
+    ) void {
+        self.addShader(
+            input_path,
+            entry_point,
+            output_filename,
+            "cs",
             define,
         );
     }
@@ -172,8 +188,9 @@ pub const CompileShaders = struct {
     }
 };
 
-pub fn addCompileShaders(b: *std.Build, comptime demo_name: []const u8) CompileShaders {
+pub fn addCompileShaders(b: *std.Build, comptime demo_name: []const u8, options: struct { shader_ver: []const u8 }) CompileShaders {
     return .{
         .step = b.step(demo_name ++ "-dxc", "Build shaders for '" ++ demo_name ++ "' demo"),
+        .shader_ver = options.shader_ver,
     };
 }
