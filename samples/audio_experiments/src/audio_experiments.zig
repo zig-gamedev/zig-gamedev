@@ -211,8 +211,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.PrimitiveTopologyType = .LINE;
-        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/lines.vs.cso", null));
-        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/lines.ps.cso", null));
+        pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/audio_experiments.vs.cso", null));
+        pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/audio_experiments.ps.cso", null));
 
         break :blk gctx.createGraphicsShaderPipeline(&pso_desc);
     };
