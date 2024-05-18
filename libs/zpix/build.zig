@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
     const zwin32_module = zwin32.module("root");
 
     _ = b.createModule(.{
-        .root_source_file = .{ .path = "src/zpix.zig" },
+        .root_source_file = b.path("src/zpix.zig"),
         .imports = &.{
             .{ .name = "zpix_options", .module = options_module },
             .{ .name = "zwin32", .module = zwin32_module },
@@ -32,7 +32,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zpix-tests",
-        .root_source_file = .{ .path = "src/zpix.zig" },
+        .root_source_file = b.path("src/zpix.zig"),
         .target = target,
         .optimize = optimize,
     });

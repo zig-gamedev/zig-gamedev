@@ -51,11 +51,9 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     });
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
-    const zopenvr_path = zopenvr.path("").getPath(b);
-
-    @import("zopenvr").addLibraryPathsTo(exe, zopenvr_path) catch unreachable;
+    @import("zopenvr").addLibraryPathsTo(exe);
     @import("zopenvr").linkOpenVR(exe);
-    @import("zopenvr").installOpenVR(&exe.step, options.target.result, .bin, zopenvr_path) catch unreachable;
+    @import("zopenvr").installOpenVR(&exe.step, options.target.result, .bin);
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
@@ -102,7 +100,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin, "libs/zwin32") catch unreachable;
+    @import("zwin32").install_d3d12(&exe.step, .bin);
 
     return exe;
 }

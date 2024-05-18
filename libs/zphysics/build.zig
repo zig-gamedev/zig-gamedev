@@ -35,12 +35,12 @@ pub fn build(b: *std.Build) void {
     const options_module = options_step.createModule();
 
     const zjolt = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zphysics.zig" },
+        .root_source_file = b.path("src/zphysics.zig"),
         .imports = &.{
             .{ .name = "zphysics_options", .module = options_module },
         },
     });
-    zjolt.addIncludePath(.{ .path = "libs/JoltC" });
+    zjolt.addIncludePath(b.path("libs/JoltC"));
 
     const joltc = b.addStaticLibrary(.{
         .name = "joltc",
@@ -49,8 +49,8 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(joltc);
 
-    joltc.addIncludePath(.{ .path = "libs" });
-    joltc.addIncludePath(.{ .path = "libs/JoltC" });
+    joltc.addIncludePath(b.path("libs"));
+    joltc.addIncludePath(b.path("libs/JoltC"));
     joltc.linkLibC();
     if (target.result.abi != .msvc)
         joltc.linkLibCpp();
@@ -207,7 +207,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zphysics-tests",
-        .root_source_file = .{ .path = "src/zphysics.zig" },
+        .root_source_file = b.path("src/zphysics.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -219,7 +219,7 @@ pub fn build(b: *std.Build) void {
     }
 
     tests.addCSourceFile(.{
-        .file = .{ .path = "libs/JoltC/JoltPhysicsC_Tests.c" },
+        .file = b.path("libs/JoltC/JoltPhysicsC_Tests.c"),
         .flags = &.{
             if (@import("builtin").abi != .msvc) "-DJPH_COMPILER_MINGW" else "",
             if (options.enable_cross_platform_determinism) "-DJPH_CROSS_PLATFORM_DETERMINISTIC" else "",
@@ -231,7 +231,7 @@ pub fn build(b: *std.Build) void {
     });
 
     tests.root_module.addImport("zphysics_options", options_module);
-    tests.addIncludePath(.{ .path = "libs/JoltC" });
+    tests.addIncludePath(b.path("libs/JoltC"));
     tests.linkLibrary(joltc);
 
     test_step.dependOn(&b.addRunArtifact(tests).step);

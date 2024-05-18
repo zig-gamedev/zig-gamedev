@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
     const options_module = options_step.createModule();
 
     const zmath = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .imports = &.{
             .{ .name = "zmath_options", .module = options_module },
         },
@@ -36,7 +36,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zmath-tests",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = options.optimize,
     });
@@ -50,7 +50,7 @@ pub fn build(b: *std.Build) void {
 
     const benchmarks = b.addExecutable(.{
         .name = "zmath-benchmarks",
-        .root_source_file = .{ .path = "src/benchmark.zig" },
+        .root_source_file = b.path("src/benchmark.zig"),
         .target = target,
         .optimize = options.optimize,
     });

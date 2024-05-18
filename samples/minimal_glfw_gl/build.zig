@@ -2,10 +2,14 @@ const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 
+const demo_name = "minimal_glfw_gl";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
+    const cwd_path = b.pathJoin(&.{ "samples", demo_name });
+    const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{
-        .name = "minimal_glfw_gl",
-        .root_source_file = .{ .path = thisDir() ++ "/src/minimal_glfw_gl.zig" },
+        .name = demo_name,
+        .root_source_file = b.path(b.pathJoin(&.{ src_path, demo_name ++ ".zig" })),
         .target = options.target,
         .optimize = options.optimize,
     });
@@ -24,8 +28,4 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     exe.root_module.addImport("zopengl", zopengl.module("root"));
 
     return exe;
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

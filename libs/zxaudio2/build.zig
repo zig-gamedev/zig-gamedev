@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) !void {
     });
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zxaudio2.zig" },
+        .root_source_file = b.path("src/zxaudio2.zig"),
         .imports = &.{
             .{ .name = "zxaudio2_options", .module = options_module },
             .{ .name = "zwin32", .module = zwin32.module("root") },
@@ -31,7 +31,7 @@ pub fn build(b: *std.Build) !void {
 
     const tests = b.addTest(.{
         .name = "zxaudio2-tests",
-        .root_source_file = .{ .path = "src/zxaudio2.zig" },
+        .root_source_file = b.path("src/zxaudio2.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -41,5 +41,5 @@ pub fn build(b: *std.Build) !void {
 
     test_step.dependOn(&b.addRunArtifact(tests).step);
 
-    try @import("zwin32").install_xaudio2(&tests.step, .bin, zwin32.path("").getPath(b));
+    @import("zwin32").install_xaudio2(&tests.step, .bin);
 }

@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zstbi.zig" },
+        .root_source_file = b.path("src/zstbi.zig"),
     });
 
     const zstbi_lib = b.addStaticLibrary(.{
@@ -13,11 +13,11 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    zstbi_lib.addIncludePath(.{ .path = "libs/stbi" });
+    zstbi_lib.addIncludePath(b.path("libs/stbi"));
     if (optimize == .Debug) {
         // TODO: Workaround for Zig bug.
         zstbi_lib.addCSourceFile(.{
-            .file = .{ .path = "src/zstbi.c" },
+            .file = b.path("src/zstbi.c"),
             .flags = &.{
                 "-std=c99",
                 "-fno-sanitize=undefined",
@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) void {
         });
     } else {
         zstbi_lib.addCSourceFile(.{
-            .file = .{ .path = "src/zstbi.c" },
+            .file = b.path("src/zstbi.c"),
             .flags = &.{
                 "-std=c99",
                 "-fno-sanitize=undefined",
@@ -41,7 +41,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zstbi-tests",
-        .root_source_file = .{ .path = "src/zstbi.zig" },
+        .root_source_file = b.path("src/zstbi.zig"),
         .target = target,
         .optimize = optimize,
     });

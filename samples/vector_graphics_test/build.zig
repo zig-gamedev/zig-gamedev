@@ -2,10 +2,14 @@ const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
 
+const demo_name = "vector_graphics_test";
+
 pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
+    const cwd_path = b.pathJoin(&.{ "samples", demo_name });
+    const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{
-        .name = "vector_graphics_test",
-        .root_source_file = .{ .path = thisDir() ++ "/src/vector_graphics_test.zig" },
+        .name = demo_name,
+        .root_source_file = b.path(b.pathJoin(&.{ src_path, demo_name ++ ".zig" })),
         .target = options.target,
         .optimize = options.optimize,
     });
@@ -37,11 +41,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin, "libs/zwin32") catch unreachable;
+    @import("zwin32").install_d3d12(&exe.step, .bin);
 
     return exe;
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
