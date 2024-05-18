@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
     const options_module = options_step.createModule();
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .imports = &.{
             .{ .name = "zmesh_options", .module = options_module },
         },
@@ -61,9 +61,9 @@ pub fn build(b: *std.Build) void {
     else
         "-DPAR_SHAPES_T=uint16_t";
 
-    zmesh_lib.addIncludePath(.{ .path = "libs/par_shapes" });
+    zmesh_lib.addIncludePath(b.path("libs/par_shapes"));
     zmesh_lib.addCSourceFile(.{
-        .file = .{ .path = "libs/par_shapes/par_shapes.c" },
+        .file = b.path("libs/par_shapes/par_shapes.c"),
         .flags = &.{ "-std=c99", "-fno-sanitize=undefined", par_shapes_t },
     });
 
@@ -82,9 +82,9 @@ pub fn build(b: *std.Build) void {
         },
         .flags = &.{""},
     });
-    zmesh_lib.addIncludePath(.{ .path = "libs/cgltf" });
+    zmesh_lib.addIncludePath(b.path("libs/cgltf"));
     zmesh_lib.addCSourceFile(.{
-        .file = .{ .path = "libs/cgltf/cgltf.c" },
+        .file = b.path("libs/cgltf/cgltf.c"),
         .flags = &.{"-std=c99"},
     });
 
@@ -92,14 +92,14 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zmesh-tests",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
     b.installArtifact(tests);
 
     tests.linkLibrary(zmesh_lib);
-    tests.addIncludePath(.{ .path = "libs/cgltf" });
+    tests.addIncludePath(b.path("libs/cgltf"));
 
     test_step.dependOn(&b.addRunArtifact(tests).step);
 }
