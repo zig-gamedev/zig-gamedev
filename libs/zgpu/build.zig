@@ -85,7 +85,7 @@ pub fn build(b: *std.Build) void {
     const options_module = options_step.createModule();
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zgpu.zig" },
+        .root_source_file = b.path("src/zgpu.zig"),
         .imports = &.{
             .{ .name = "zgpu_options", .module = options_module },
             .{ .name = "zpool", .module = b.dependency("zpool", .{}).module("root") },
@@ -108,15 +108,15 @@ pub fn build(b: *std.Build) void {
     zdawn.linkLibC();
     zdawn.linkLibCpp();
 
-    zdawn.addIncludePath(.{ .path = "libs/dawn/include" });
-    zdawn.addIncludePath(.{ .path = "src" });
+    zdawn.addIncludePath(b.path("libs/dawn/include"));
+    zdawn.addIncludePath(b.path("src"));
 
     zdawn.addCSourceFile(.{
-        .file = .{ .path = "src/dawn.cpp" },
+        .file = b.path("src/dawn.cpp"),
         .flags = &.{ "-std=c++17", "-fno-sanitize=undefined" },
     });
     zdawn.addCSourceFile(.{
-        .file = .{ .path = "src/dawn_proc.c" },
+        .file = b.path("src/dawn_proc.c"),
         .flags = &.{"-fno-sanitize=undefined"},
     });
 
@@ -124,12 +124,12 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zgpu-tests",
-        .root_source_file = .{ .path = "src/zgpu.zig" },
+        .root_source_file = b.path("src/zgpu.zig"),
         .target = target,
         .optimize = optimize,
     });
     @import("system_sdk").addLibraryPathsTo(tests);
-    tests.addIncludePath(.{ .path = "libs/dawn/include" });
+    tests.addIncludePath(b.path("libs/dawn/include"));
     tests.linkLibrary(zdawn);
     addLibraryPathsTo(tests);
     linkSystemDeps(tests);
@@ -162,16 +162,13 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     switch (target.os.tag) {
         .windows => {
-            const path = b.dependency("dawn_x86_64_windows_gnu", .{}).path("").getPath(b);
-            compile_step.addLibraryPath(.{ .path = path });
+            compile_step.addLibraryPath(b.dependency("dawn_x86_64_windows_gnu", .{}).path(""));
         },
         .linux => {
-            const path = b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).path("").getPath(b);
-            compile_step.addLibraryPath(.{ .path = path });
+            compile_step.addLibraryPath(b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).path(""));
         },
         .macos => {
-            const path = b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).path("").getPath(b);
-            compile_step.addLibraryPath(.{ .path = path });
+            compile_step.addLibraryPath(b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).path(""));
         },
         else => {},
     }
