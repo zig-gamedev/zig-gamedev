@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zbullet.zig" },
+        .root_source_file = b.path("src/zbullet.zig"),
     });
 
     const cbullet = b.addStaticLibrary(.{
@@ -15,8 +15,8 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(cbullet);
 
-    cbullet.addIncludePath(.{ .path = "libs/cbullet" });
-    cbullet.addIncludePath(.{ .path = "libs/bullet" });
+    cbullet.addIncludePath(b.path("libs/cbullet"));
+    cbullet.addIncludePath(b.path("libs/bullet"));
     cbullet.linkLibC();
     cbullet.linkLibCpp();
 
@@ -43,7 +43,7 @@ pub fn build(b: *std.Build) void {
 
     var tests = b.addTest(.{
         .name = "zbullet-tests",
-        .root_source_file = .{ .path = "src/zbullet.zig" },
+        .root_source_file = b.path("src/zbullet.zig"),
         .target = target,
         .optimize = optimize,
     });
