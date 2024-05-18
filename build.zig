@@ -3,7 +3,7 @@ const std = @import("std");
 
 pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 13, .patch = 0, .pre = "" };
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *std.Build) void {
     ensureZigVersion() catch return;
 
     if (checkGitLfsContent() == false) {
@@ -65,7 +65,7 @@ pub fn build(b: *std.Build) !void {
     // Tests
     //
     const test_step = b.step("test", "Run all tests");
-    try tests(b, target, optimize, test_step);
+    tests(b, target, optimize, test_step);
     if (builtin.os.tag == .windows) {
         testsWindows(b, target, optimize, test_step);
     }
@@ -164,7 +164,7 @@ fn tests(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
-) !void {
+) void {
     // TODO: Renable randomly failing sdl2_ttf test on windows
     if (target.result.os.tag != .windows) {
         const zaudio = b.dependency("zaudio", .{
@@ -248,7 +248,7 @@ fn tests(
         sdl2_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
     }
     test_step.dependOn(&sdl2_tests.step);
-    try @import("zsdl").install_sdl2(&sdl2_tests.step, target.result, .bin, "libs/zsdl");
+    @import("zsdl").install_sdl2(&sdl2_tests.step, target.result, .bin);
 
     // TODO: Renable randomly failing sdl2_ttf test on windows
     if (target.result.os.tag != .windows) {
@@ -257,7 +257,7 @@ fn tests(
             sdl2_ttf_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
         }
         test_step.dependOn(&sdl2_ttf_tests.step);
-        try @import("zsdl").install_sdl2_ttf(&sdl2_tests.step, target.result, .bin, "libs/zsdl");
+        @import("zsdl").install_sdl2_ttf(&sdl2_tests.step, target.result, .bin);
     }
 
     // TODO(hazeycode): SDL3 tests

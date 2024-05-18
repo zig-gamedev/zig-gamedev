@@ -17,14 +17,12 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const zsdl = b.dependency("zsdl", .{
         .target = options.target,
     });
-    const zsdl_path = zsdl.path("").getPath(b);
-
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
 
-    @import("zsdl").addLibraryPathsTo(exe, zsdl_path) catch unreachable;
+    @import("zsdl").addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
 
-    @import("zsdl").install_sdl2(&exe.step, options.target.result, .bin, zsdl_path) catch unreachable;
+    @import("zsdl").install_sdl2(&exe.step, options.target.result, .bin);
 
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));
