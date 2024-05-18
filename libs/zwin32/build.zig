@@ -204,9 +204,9 @@ pub const CompileShaders = struct {
     }
 };
 
-pub fn addCompileShaders(b: *std.Build, comptime demo_name: []const u8, options: struct { shader_ver: []const u8 }) CompileShaders {
+pub fn addCompileShaders(b: *std.Build, comptime name: []const u8, options: struct { shader_ver: []const u8 }) CompileShaders {
     return .{
-        .step = b.step(demo_name ++ "-dxc", "Build shaders for '" ++ demo_name ++ "' demo"),
+        .step = b.step(name ++ "-dxc", "Build shaders for '" ++ name ++ "'"),
         .shader_ver = options.shader_ver,
     };
 }
