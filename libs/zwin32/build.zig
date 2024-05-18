@@ -148,6 +148,22 @@ pub const CompileShaders = struct {
         );
     }
 
+    pub fn addMsShader(
+        self: CompileShaders,
+        input_path: []const u8,
+        entry_point: []const u8,
+        output_filename: []const u8,
+        define: []const u8,
+    ) void {
+        self.addShader(
+            input_path,
+            entry_point,
+            output_filename,
+            "ms",
+            define,
+        );
+    }
+
     pub fn addShader(
         self: CompileShaders,
         input_path: []const u8,
