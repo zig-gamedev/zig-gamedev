@@ -45,8 +45,10 @@ fn install(
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
     const desc_size = comptime std.mem.indexOf(u8, &desc_name, "\x00").?;
 
+    const cwd_path = b.pathJoin(&.{ "experiments", "genart" });
+    const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const xcommon = b.createModule(.{
-        .root_source_file = .{ .path = thisDir() ++ "/src/xcommon.zig" },
+        .root_source_file = b.path(b.pathJoin(&.{ src_path, "xcommon.zig" })),
         .imports = &.{
             .{ .name = "zsdl2", .module = zsdl2_module },
             .{ .name = "zopengl", .module = zopengl_module },
@@ -54,7 +56,7 @@ fn install(
         },
     });
     const ximpl = b.createModule(.{
-        .root_source_file = .{ .path = thisDir() ++ "/src/" ++ name ++ ".zig" },
+        .root_source_file = b.path(b.pathJoin(&.{ src_path, name ++ ".zig" })),
         .imports = &.{
             .{ .name = "zsdl2", .module = zsdl2_module },
             .{ .name = "zopengl", .module = zopengl_module },
@@ -63,9 +65,10 @@ fn install(
             .{ .name = "xcommon", .module = xcommon },
         },
     });
+
     const exe = b.addExecutable(.{
         .name = name,
-        .root_source_file = .{ .path = thisDir() ++ "/src/genart.zig" },
+        .root_source_file = b.path(b.pathJoin(&.{ src_path, "genart.zig" })),
         .target = target,
         .optimize = optimize,
     });
@@ -80,22 +83,16 @@ fn install(
     switch (target.result.os.tag) {
         .windows => {
             if (target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(.{
-                    .path = zsdl.path("libs/x86_64-windows-gnu/lib").getPath(b),
-                });
+                exe.addLibraryPath(zsdl.path("libs/x86_64-windows-gnu/lib"));
             }
         },
         .linux => {
             if (target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(.{
-                    .path = zsdl.path("libs/x86_64-linux-gnu/lib").getPath(b),
-                });
+                exe.addLibraryPath(zsdl.path("libs/x86_64-linux-gnu/lib"));
             }
         },
         .macos => {
-            exe.addFrameworkPath(.{
-                .path = zsdl.path("libs/macos/Frameworks").getPath(b),
-            });
+            exe.addFrameworkPath(zsdl.path("libs/macos/Frameworks"));
         },
         else => {},
     }
@@ -119,8 +116,4 @@ fn install(
     run_step.dependOn(&run_cmd.step);
 
     b.getInstallStep().dependOn(install_step);
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
