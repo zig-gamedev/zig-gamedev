@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zflecs.zig" },
+        .root_source_file = b.path("src/zflecs.zig"),
     });
 
     const flecs = b.addStaticLibrary(.{
@@ -14,9 +14,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     flecs.linkLibC();
-    flecs.addIncludePath(.{ .path = "libs/flecs" });
+    flecs.addIncludePath(b.path("libs/flecs"));
     flecs.addCSourceFile(.{
-        .file = .{ .path = "libs/flecs/flecs.c" },
+        .file = b.path("libs/flecs/flecs.c"),
         .flags = &.{
             "-fno-sanitize=undefined",
             "-DFLECS_NO_CPP",
@@ -34,7 +34,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zflecs-tests",
-        .root_source_file = .{ .path = "src/zflecs.zig" },
+        .root_source_file = b.path("src/zflecs.zig"),
         .target = target,
         .optimize = optimize,
     });
