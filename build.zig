@@ -245,7 +245,7 @@ fn tests(
 
     const sdl2_tests = b.addRunArtifact(zsdl.artifact("sdl2-tests"));
     if (target.result.os.tag == .windows) {
-        sdl2_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
+        sdl2_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
     }
     test_step.dependOn(&sdl2_tests.step);
     try @import("zsdl").install_sdl2(&sdl2_tests.step, target.result, .bin, "libs/zsdl");
@@ -254,7 +254,7 @@ fn tests(
     if (target.result.os.tag != .windows) {
         const sdl2_ttf_tests = b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests"));
         if (target.result.os.tag == .windows) {
-            sdl2_ttf_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
+            sdl2_ttf_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
         }
         test_step.dependOn(&sdl2_ttf_tests.step);
         try @import("zsdl").install_sdl2_ttf(&sdl2_tests.step, target.result, .bin, "libs/zsdl");
@@ -316,7 +316,7 @@ fn testsWindows(
         .optimize = optimize,
     });
     const openvr_tests = b.addRunArtifact(zopenvr.artifact("openvr-tests"));
-    openvr_tests.setCwd(.{ .path = b.getInstallPath(.bin, "") });
+    openvr_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
 
     test_step.dependOn(&openvr_tests.step);
     try @import("zopenvr").installOpenVR(&openvr_tests.step, target.result, .bin, "libs/zopenvr");
@@ -372,7 +372,6 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
     const result = std.ChildProcess.run(.{
         .allocator = allocator,
         .argv = argv,
-        .cwd = thisDir(),
     }) catch { // e.g. FileNotFound
         printErrorMsg();
         return error.GitNotFound;
@@ -406,7 +405,6 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
     const result = std.ChildProcess.run(.{
         .allocator = allocator,
         .argv = argv,
-        .cwd = thisDir(),
     }) catch { // e.g. FileNotFound
         printNoGitLfs();
         return error.GitLfsNotFound;
@@ -422,21 +420,13 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
 }
 
 fn checkGitLfsContent() bool {
-    const file = std.fs.openFileAbsolute(thisDir() ++ "/.lfs-content-token", .{}) catch {
-        return false;
-    };
-    defer file.close();
     const expected_contents =
         \\DO NOT EDIT OR DELETE
         \\This file is used to check if Git LFS content has been downloaded
     ;
     var buf: [expected_contents.len]u8 = undefined;
-    _ = file.readAll(&buf) catch {
+    _ = std.fs.cwd().readFile(".lfs-content-token", &buf) catch {
         return false;
     };
     return std.mem.eql(u8, expected_contents, &buf);
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
