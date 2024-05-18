@@ -6,10 +6,17 @@ const Options = @import("../../build.zig").Options;
 const demo_name = "simple_openvr";
 const content_dir = demo_name ++ "_content/";
 
+// in future zig version e342433
+pub fn pathResolve(b: *std.Build, paths: []const []const u8) []u8 {
+    return std.fs.path.resolve(b.allocator, paths) catch @panic("OOM");
+}
+
 pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
+    const cwd_path = b.pathJoin(&.{ "samples", demo_name });
+    const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{
         .name = demo_name,
-        .root_source_file = .{ .path = thisDir() ++ "/src/" ++ demo_name ++ ".zig" },
+        .root_source_file = b.path(b.pathJoin(&.{ src_path, demo_name ++ ".zig" })),
         .target = options.target,
         .optimize = options.optimize,
     });
@@ -54,15 +61,39 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
+    const content_path = b.pathJoin(&.{ cwd_path, content_dir });
     const install_content_step = b.addInstallDirectory(.{
-        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
+        .source_dir = b.path(content_path),
         .install_dir = .{ .custom = "" },
-        .install_subdir = "bin/" ++ content_dir,
+        .install_subdir = b.pathJoin(&.{ "bin", content_dir }),
     });
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const dxc_step = buildShaders(b);
-        exe.step.dependOn(dxc_step);
-        install_content_step.step.dependOn(dxc_step);
+        const compile_shaders = @import("zwin32").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
+        const root_path = pathResolve(b, &.{ @src().file, "..", "..", ".." });
+        const shaders_path = b.pathJoin(&.{ root_path, content_path, "shaders" });
+
+        const common_hlsl_path = b.pathJoin(&.{ root_path, "samples", "common/src/hlsl/common.hlsl" });
+        compile_shaders.addVsShader(common_hlsl_path, "vsImGui", b.pathJoin(&.{ shaders_path, "imgui.vs.cso" }), "PSO__IMGUI");
+        compile_shaders.addPsShader(common_hlsl_path, "psImGui", b.pathJoin(&.{ shaders_path, "imgui.ps.cso" }), "PSO__IMGUI");
+        compile_shaders.addCsShader(common_hlsl_path, "csGenerateMipmaps", b.pathJoin(&.{ shaders_path, "generate_mipmaps.ps.cso" }), "PSO__GENERATE_MIPMAPS");
+
+        const axes_hlsl_path = b.pathJoin(&.{ root_path, src_path, "axes.hlsl" });
+        compile_shaders.addVsShader(axes_hlsl_path, "VSMain", b.pathJoin(&.{ shaders_path, "axes.vs.cso" }), "PSO__AXES");
+        compile_shaders.addPsShader(axes_hlsl_path, "PSMain", b.pathJoin(&.{ shaders_path, "axes.ps.cso" }), "PSO__AXES");
+
+        const companion_hlsl_path = b.pathJoin(&.{ root_path, src_path, "companion.hlsl" });
+        compile_shaders.addVsShader(companion_hlsl_path, "VSMain", b.pathJoin(&.{ shaders_path, "companion.vs.cso" }), "PSO__COMPANION");
+        compile_shaders.addPsShader(companion_hlsl_path, "PSMain", b.pathJoin(&.{ shaders_path, "companion.ps.cso" }), "PSO__COMPANION");
+
+        const render_model_hlsl_path = b.pathJoin(&.{ root_path, src_path, "render_model.hlsl" });
+        compile_shaders.addVsShader(render_model_hlsl_path, "VSMain", b.pathJoin(&.{ shaders_path, "render_model.vs.cso" }), "PSO__RENDER_MODEL");
+        compile_shaders.addPsShader(render_model_hlsl_path, "PSMain", b.pathJoin(&.{ shaders_path, "render_model.ps.cso" }), "PSO__RENDER_MODEL");
+
+        const scene_hlsl_path = b.pathJoin(&.{ root_path, src_path, "scene.hlsl" });
+        compile_shaders.addVsShader(scene_hlsl_path, "VSMain", b.pathJoin(&.{ shaders_path, "scene.vs.cso" }), "PSO__SCENE");
+        compile_shaders.addPsShader(scene_hlsl_path, "PSMain", b.pathJoin(&.{ shaders_path, "scene.ps.cso" }), "PSO__SCENE");
+
+        install_content_step.step.dependOn(compile_shaders.step);
     }
     exe.step.dependOn(&install_content_step.step);
 
@@ -74,128 +105,4 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     @import("zwin32").install_d3d12(&exe.step, .bin, "libs/zwin32") catch unreachable;
 
     return exe;
-}
-
-fn buildShaders(b: *std.Build) *std.Build.Step {
-    const dxc_step = b.step("simple_openvr-dxc", "Build shaders for 'simple openvr' demo");
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "../common/src/hlsl/common.hlsl",
-        "csGenerateMipmaps",
-        "generate_mipmaps.cs.cso",
-        "cs",
-        "PSO__GENERATE_MIPMAPS",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/axes.hlsl",
-        "VSMain",
-        "axes.vs.cso",
-        "vs",
-        "PSO__AXES",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/axes.hlsl",
-        "PSMain",
-        "axes.ps.cso",
-        "ps",
-        "PSO__AXES",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/companion.hlsl",
-        "VSMain",
-        "companion.vs.cso",
-        "vs",
-        "PSO__COMPANION",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/companion.hlsl",
-        "PSMain",
-        "companion.ps.cso",
-        "ps",
-        "PSO__COMPANION",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/render_model.hlsl",
-        "VSMain",
-        "render_model.vs.cso",
-        "vs",
-        "PSO__RENDER_MODEL",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/render_model.hlsl",
-        "PSMain",
-        "render_model.ps.cso",
-        "ps",
-        "PSO__RENDER_MODEL",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/scene.hlsl",
-        "VSMain",
-        "scene.vs.cso",
-        "vs",
-        "PSO__SCENE",
-    );
-    makeDxcCmd(
-        b,
-        dxc_step,
-        "./src/scene.hlsl",
-        "PSMain",
-        "scene.ps.cso",
-        "ps",
-        "PSO__SCENE",
-    );
-
-    return dxc_step;
-}
-
-fn makeDxcCmd(
-    b: *std.Build,
-    dxc_step: *std.Build.Step,
-    comptime input_path: []const u8,
-    comptime entry_point: []const u8,
-    comptime output_filename: []const u8,
-    comptime profile: []const u8,
-    comptime define: []const u8,
-) void {
-    const shader_ver = "6_6";
-    const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
-
-    const dxc_command = [9][]const u8{
-        if (builtin.target.os.tag == .windows)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
-        else if (builtin.target.os.tag == .linux)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
-        thisDir() ++ "/" ++ input_path,
-        if (entry_point.len == 0) "" else "/E " ++ entry_point,
-        "/Fo " ++ shader_dir ++ output_filename,
-        "/T " ++ profile ++ "_" ++ shader_ver,
-        if (define.len == 0) "" else "/D " ++ define,
-        "/WX",
-        "/Ges",
-        "/O3",
-    };
-
-    const cmd_step = b.addSystemCommand(&dxc_command);
-    if (builtin.target.os.tag == .linux)
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
-    dxc_step.dependOn(&cmd_step.step);
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
