@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/znoise.zig" },
+        .root_source_file = b.path("src/znoise.zig"),
     });
 
     const fnl = b.addStaticLibrary(.{
@@ -14,9 +14,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     fnl.linkLibC();
-    fnl.addIncludePath(.{ .path = "libs/FastNoiseLite" });
+    fnl.addIncludePath(b.path("libs/FastNoiseLite"));
     fnl.addCSourceFile(.{
-        .file = .{ .path = "libs/FastNoiseLite/FastNoiseLite.c" },
+        .file = b.path("libs/FastNoiseLite/FastNoiseLite.c"),
         .flags = &.{ "-std=c99", "-fno-sanitize=undefined" },
     });
     b.installArtifact(fnl);
@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "znoise-tests",
-        .root_source_file = .{ .path = "src/znoise.zig" },
+        .root_source_file = b.path("src/znoise.zig"),
         .target = target,
         .optimize = optimize,
     });
