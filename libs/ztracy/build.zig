@@ -30,12 +30,12 @@ pub fn build(b: *std.Build) void {
     const options_module = options_step.createModule();
 
     const ztracy = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/ztracy.zig" },
+        .root_source_file = b.path("src/ztracy.zig"),
         .imports = &.{
             .{ .name = "ztracy_options", .module = options_module },
         },
     });
-    ztracy.addIncludePath(.{ .path = "libs/tracy/tracy" });
+    ztracy.addIncludePath(b.path("libs/tracy/tracy"));
 
     const tracy = b.addStaticLibrary(.{
         .name = "tracy",
@@ -43,9 +43,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    tracy.addIncludePath(.{ .path = "libs/tracy/tracy" });
+    tracy.addIncludePath(b.path("libs/tracy/tracy"));
     tracy.addCSourceFile(.{
-        .file = .{ .path = "libs/tracy/TracyClient.cpp" },
+        .file = b.path("libs/tracy/TracyClient.cpp"),
         .flags = &.{
             "-DTRACY_ENABLE",
             if (options.enable_fibers) "-DTRACY_FIBERS" else "",
@@ -69,9 +69,7 @@ pub fn build(b: *std.Build) void {
         },
         .macos => {
             const system_sdk = b.dependency("system_sdk", .{});
-            tracy.addFrameworkPath(
-                .{ .path = system_sdk.path("System/Library/Frameworks").getPath(b) },
-            );
+            tracy.addFrameworkPath(system_sdk.path("System/Library/Frameworks"));
         },
         else => {},
     }
@@ -82,7 +80,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "ztracy-tests",
-        .root_source_file = .{ .path = "src/ztracy.zig" },
+        .root_source_file = b.path("src/ztracy.zig"),
         .target = target,
         .optimize = optimize,
     });
