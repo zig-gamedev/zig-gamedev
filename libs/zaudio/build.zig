@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     _ = b.addModule("root", .{
-        .root_source_file = .{ .path = "src/zaudio.zig" },
+        .root_source_file = b.path("src/zaudio.zig"),
     });
 
     const miniaudio = b.addStaticLibrary(.{
@@ -16,15 +16,15 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(miniaudio);
 
-    miniaudio.addIncludePath(.{ .path = "libs/miniaudio" });
+    miniaudio.addIncludePath(b.path("libs/miniaudio"));
     miniaudio.linkLibC();
 
     const system_sdk = b.dependency("system_sdk", .{});
 
     if (target.result.os.tag == .macos) {
-        miniaudio.addFrameworkPath(.{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) });
-        miniaudio.addSystemIncludePath(.{ .path = system_sdk.path("macos12/usr/include").getPath(b) });
-        miniaudio.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
+        miniaudio.addFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        miniaudio.addSystemIncludePath(system_sdk.path("macos12/usr/include"));
+        miniaudio.addLibraryPath(system_sdk.path("macos12/usr/lib"));
         miniaudio.linkFramework("CoreAudio");
         miniaudio.linkFramework("CoreFoundation");
         miniaudio.linkFramework("AudioUnit");
@@ -36,11 +36,11 @@ pub fn build(b: *std.Build) void {
     }
 
     miniaudio.addCSourceFile(.{
-        .file = .{ .path = "src/zaudio.c" },
+        .file = b.path("src/zaudio.c"),
         .flags = &.{"-std=c99"},
     });
     miniaudio.addCSourceFile(.{
-        .file = .{ .path = "libs/miniaudio/miniaudio.c" },
+        .file = b.path("libs/miniaudio/miniaudio.c"),
         .flags = &.{
             "-DMA_NO_WEBAUDIO",
             "-DMA_NO_ENCODING",
@@ -58,7 +58,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{
         .name = "zaudio-tests",
-        .root_source_file = .{ .path = "src/zaudio.zig" },
+        .root_source_file = b.path("src/zaudio.zig"),
         .target = target,
         .optimize = optimize,
     });
