@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
@@ -41,5 +41,5 @@ pub fn build(b: *std.Build) !void {
 
     test_step.dependOn(&b.addRunArtifact(tests).step);
 
-    try @import("zwin32").install_xaudio2(&tests.step, .bin, zwin32.path("").getPath(b));
+    @import("zwin32").install_xaudio2(&tests.step, .bin);
 }

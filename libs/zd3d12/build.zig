@@ -2,7 +2,7 @@ const std = @import("std");
 
 const default_upload_heap_capacity: u32 = 32 * 1024 * 1024;
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
@@ -59,5 +59,5 @@ pub fn build(b: *std.Build) !void {
 
     test_step.dependOn(&b.addRunArtifact(tests).step);
 
-    try @import("zwin32").install_d3d12(&tests.step, .bin, zwin32.path("").getPath(b));
+    @import("zwin32").install_d3d12(&tests.step, .bin);
 }
