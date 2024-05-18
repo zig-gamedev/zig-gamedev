@@ -51,7 +51,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     });
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const compile_shaders = @import("zwin32").addCompileShaders(b, demo_name, .{ .shader_ver = "6_0" });
+        const compile_shaders = @import("zwin32").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
         const root_path = pathResolve(b, &.{ @src().file, "..", "..", ".." });
 
         const hlsl_path = b.pathJoin(&.{ root_path, src_path, demo_name ++ ".hlsl" });
