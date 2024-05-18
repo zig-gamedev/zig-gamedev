@@ -67,7 +67,7 @@ pub fn build(b: *std.Build) !void {
     const test_step = b.step("test", "Run all tests");
     try tests(b, target, optimize, test_step);
     if (builtin.os.tag == .windows) {
-        try testsWindows(b, target, optimize, test_step);
+        testsWindows(b, target, optimize, test_step);
     }
 
     //
@@ -286,7 +286,7 @@ fn testsWindows(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
-) !void {
+) void {
     const zd3d12 = b.dependency("zd3d12", .{
         .target = target,
         .optimize = optimize,
@@ -319,7 +319,7 @@ fn testsWindows(
     openvr_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
 
     test_step.dependOn(&openvr_tests.step);
-    try @import("zopenvr").installOpenVR(&openvr_tests.step, target.result, .bin, "libs/zopenvr");
+    @import("zopenvr").installOpenVR(&openvr_tests.step, target.result, .bin);
 }
 
 pub const Options = struct {

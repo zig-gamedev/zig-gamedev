@@ -45,11 +45,9 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     });
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
-    const zopenvr_path = zopenvr.path("").getPath(b);
-
-    @import("zopenvr").addLibraryPathsTo(exe, zopenvr_path) catch unreachable;
+    @import("zopenvr").addLibraryPathsTo(exe);
     @import("zopenvr").linkOpenVR(exe);
-    @import("zopenvr").installOpenVR(&exe.step, options.target.result, .bin, zopenvr_path) catch unreachable;
+    @import("zopenvr").installOpenVR(&exe.step, options.target.result, .bin);
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
