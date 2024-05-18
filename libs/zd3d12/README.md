@@ -11,7 +11,14 @@
 - Fast mipmap generator running on the GPU
 - Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
-Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
+## Example applications
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/triangle
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/textured_quad
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/vector_graphics_test
+- https://github.com/zig-gamedev/zig-gamedev/blob/main/samples/rasterization
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/bindless
+- https://github.com/zig-gamedev/zig-gamedev/blob/main/samples/mesh_shader_test
+- https://github.com/zig-gamedev/zig-gamedev/blob/main/samples/directml_convolution_test
 
 ## Getting started
 
