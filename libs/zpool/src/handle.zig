@@ -45,6 +45,7 @@ pub fn Handle(
     comptime index_bits: u8,
     comptime cycle_bits: u8,
     comptime TResource: type,
+    comptime THandleMethods: type,
 ) type {
     if (index_bits == 0) @compileError("index_bits must be greater than 0");
     if (cycle_bits == 0) @compileError("cycle_bits must be greater than 0");
@@ -69,6 +70,8 @@ pub fn Handle(
 
     return extern struct {
         const Self = @This();
+
+        pub usingnamespace THandleMethods;
 
         const HandleType = Self;
         const IndexType = UInt(index_bits);
@@ -163,7 +166,7 @@ test "Handle sizes and alignments" {
     const expectEqual = std.testing.expectEqual;
 
     {
-        const H = Handle(4, 4, void);
+        const H = Handle(4, 4, void, struct {});
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
         try expectEqual(4, @bitSizeOf(H.IndexType));
@@ -177,7 +180,7 @@ test "Handle sizes and alignments" {
     }
 
     {
-        const H = Handle(6, 2, void);
+        const H = Handle(6, 2, void, struct {});
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
         try expectEqual(6, @bitSizeOf(H.IndexType));
@@ -191,7 +194,7 @@ test "Handle sizes and alignments" {
     }
 
     {
-        const H = Handle(8, 8, void);
+        const H = Handle(8, 8, void, struct {});
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
         try expectEqual(8, @bitSizeOf(H.IndexType));
@@ -205,7 +208,7 @@ test "Handle sizes and alignments" {
     }
 
     {
-        const H = Handle(12, 4, void);
+        const H = Handle(12, 4, void, struct {});
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
         try expectEqual(12, @bitSizeOf(H.IndexType));
@@ -219,7 +222,7 @@ test "Handle sizes and alignments" {
     }
 
     {
-        const H = Handle(16, 16, void);
+        const H = Handle(16, 16, void, struct {});
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
         try expectEqual(16, @bitSizeOf(H.IndexType));
@@ -233,7 +236,7 @@ test "Handle sizes and alignments" {
     }
 
     {
-        const H = Handle(22, 10, void);
+        const H = Handle(22, 10, void, struct {});
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
         try expectEqual(22, @bitSizeOf(H.IndexType));
@@ -252,7 +255,7 @@ test "Handle sizes and alignments" {
 test "Handle sort order" {
     const expect = std.testing.expect;
 
-    const handle = Handle(4, 4, void).init;
+    const handle = Handle(4, 4, void, struct {}).init;
     const a = handle(0, 3);
     const b = handle(1, 1);
 
@@ -269,7 +272,7 @@ test "Handle.format()" {
     const expectEqualStrings = std.testing.expectEqualStrings;
 
     const Foo = struct {};
-    const H = Handle(12, 4, Foo);
+    const H = Handle(12, 4, Foo, struct {});
     const h = H.init(0, 1);
 
     var buffer = [_]u8{0} ** 128;

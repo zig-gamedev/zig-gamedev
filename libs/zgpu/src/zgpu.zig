@@ -1392,7 +1392,7 @@ const PipelineLayoutPool = ResourcePool(PipelineLayoutInfo, wgpu.PipelineLayout)
 
 fn ResourcePool(comptime Info: type, comptime Resource: type) type {
     const zpool = @import("zpool");
-    const Pool = zpool.Pool(16, 16, Resource, struct { info: Info });
+    const Pool = zpool.Pool(16, 16, Resource, struct { info: Info }, struct {});
 
     return struct {
         const Self = @This();

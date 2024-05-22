@@ -19,16 +19,23 @@ pub const HandleError = error{
 /// `TResource` identifies type of resource referenced by a handle, and
 /// provides a type-safe distinction between two otherwise equivalently
 /// configured `Handle` types, such as:
-/// * `const BufferHandle  = Handle(16, 16, Buffer);`
-/// * `const TextureHandle = Handle(16, 16, Texture);`
+/// * `const BufferHandle  = Handle(16, 16, Buffer, struct {});`
+/// * `const TextureHandle = Handle(16, 16, Texture, struct {});`
 ///
 /// `TColumns` is a struct that defines the column names, and the element types
 /// of the column arrays.
 ///
+/// `THandleMethods` is a struct that defines additional custom methods to the `Handle` type.
+///
 /// ```zig
 /// const Texture = gpu.Texture;
 ///
-/// const TexturePool = Pool(16, 16, Texture, struct { obj:Texture, desc:Texture.Descriptor });
+/// const TexturePool = Pool(16, 16, Texture, struct {
+///     obj: Texture,
+///     desc: Texture.Descriptor,
+/// }, struct {
+///     pub fn release(self: Handle) void { ... }
+/// });
 /// const TextureHandle = TexturePool.Handle;
 ///
 /// const GPA = std.heap.GeneralPurposeAllocator;
@@ -47,6 +54,9 @@ pub const HandleError = error{
 ///
 /// // ...
 ///
+/// // use the custom defined handle methods.
+/// handle.release();
+///
 /// // once the texture is no longer needed, release it.
 /// _ = pool.removeIfLive(handle);
 /// ```
@@ -55,6 +65,7 @@ pub fn Pool(
     comptime cycle_bits: u8,
     comptime TResource: type,
     comptime TColumns: type,
+    comptime THandleMethods: type,
 ) type {
     // Handle performs compile time checks on index_bits & cycle_bits
     const ring_queue = @import("embedded_ring_queue.zig");
@@ -78,7 +89,7 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub const Resource = TResource;
-        pub const Handle = handles.Handle(index_bits, cycle_bits, TResource);
+        pub const Handle = handles.Handle(index_bits, cycle_bits, TResource, THandleMethods);
 
         pub const AddressableHandle = Handle.AddressableHandle;
         pub const AddressableIndex = Handle.AddressableIndex;
@@ -699,13 +710,13 @@ const DeinitCounter = struct {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.init()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
     var pool = TestPool.init(std.testing.allocator);
     defer pool.deinit();
 }
 
 test "Pool with no columns" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
     try expectEqual(@as(usize, 0), TestPool.column_count);
     try expectEqual(@as(usize, 0), @sizeOf(TestPool.ColumnSlices));
 
@@ -723,7 +734,7 @@ test "Pool with no columns" {
 }
 
 test "Pool with one column" {
-    const TestPool = Pool(8, 8, void, struct { a: u32 });
+    const TestPool = Pool(8, 8, void, struct { a: u32 }, struct {});
     try expectEqual(@as(usize, 1), TestPool.column_count);
     try expectEqual(@sizeOf([]u32), @sizeOf(TestPool.ColumnSlices));
 
@@ -745,7 +756,7 @@ test "Pool with one column" {
 }
 
 test "Pool with two columns" {
-    const TestPool = Pool(8, 8, void, struct { a: u32, b: u64 });
+    const TestPool = Pool(8, 8, void, struct { a: u32, b: u64 }, struct {});
     try expectEqual(@as(usize, 2), TestPool.column_count);
     try expectEqual(@sizeOf([]u32) * 2, @sizeOf(TestPool.ColumnSlices));
 
@@ -773,7 +784,7 @@ test "Pool with two columns" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.liveHandleCount()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -802,7 +813,7 @@ test "Pool.liveHandleCount()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.isLiveHandle()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -825,7 +836,7 @@ test "Pool.isLiveHandle()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.requireLiveHandle()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
     try expectEqual(@as(usize, 0), TestPool.column_count);
     try expectEqual(@as(usize, 0), @sizeOf(TestPool.ColumnSlices));
 
@@ -850,7 +861,7 @@ test "Pool.requireLiveHandle()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.liveIndices()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -873,7 +884,7 @@ test "Pool.liveIndices() when full" {
     // Test that iterator's internal index doesn't overflow when pool is full.
     // (8,8 is the smallest size we can easily test because AddressableIndex is
     // at least a u8)
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -899,7 +910,7 @@ test "Pool.liveIndices() when full" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.liveHandles()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -921,7 +932,7 @@ test "Pool.liveHandles()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.clear()" {
-    const TestPool = Pool(8, 8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -944,7 +955,7 @@ test "Pool.clear()" {
 }
 
 test "Pool.clear() calls Columns.deinit()" {
-    const TestPool = Pool(2, 6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -957,7 +968,7 @@ test "Pool.clear() calls Columns.deinit()" {
 }
 
 test "Pool.clear() calls ColumnType.deinit()" {
-    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -975,7 +986,7 @@ test "Pool.clear() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.add()" {
-    const TestPool = Pool(2, 6, void, struct {});
+    const TestPool = Pool(2, 6, void, struct {}, struct {});
     try expectEqual(@sizeOf(u8), @sizeOf(TestPool.Handle));
     try expectEqual(@as(usize, 4), TestPool.max_capacity);
 
@@ -999,7 +1010,7 @@ test "Pool.add()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.remove()" {
-    const TestPool = Pool(2, 6, void, struct {});
+    const TestPool = Pool(2, 6, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1021,7 +1032,7 @@ test "Pool.remove()" {
 }
 
 test "Pool.remove() calls Columns.deinit()" {
-    const TestPool = Pool(2, 6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1034,7 +1045,7 @@ test "Pool.remove() calls Columns.deinit()" {
 }
 
 test "Pool.remove() calls ColumnType.deinit()" {
-    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1052,7 +1063,7 @@ test "Pool.remove() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.removeIfLive()" {
-    const TestPool = Pool(2, 6, void, struct {});
+    const TestPool = Pool(2, 6, void, struct {}, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1085,7 +1096,7 @@ test "Pool.removeIfLive()" {
 }
 
 test "Pool.removeIfLive() calls Columns.deinit()" {
-    const TestPool = Pool(2, 6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1098,7 +1109,7 @@ test "Pool.removeIfLive() calls Columns.deinit()" {
 }
 
 test "Pool.removeIfLive() calls ColumnType.deinit()" {
-    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1116,7 +1127,7 @@ test "Pool.removeIfLive() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.getColumnPtr*()" {
-    const TestPool = Pool(2, 6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1162,7 +1173,7 @@ test "Pool.getColumnPtr*()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.getColumn*()" {
-    const TestPool = Pool(2, 6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1204,7 +1215,7 @@ test "Pool.getColumn*()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.setColumn*()" {
-    const TestPool = Pool(2, 6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1272,7 +1283,7 @@ test "Pool.setColumn*()" {
 }
 
 test "Pool.setColumn*() calls ColumnType.deinit()" {
-    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1303,7 +1314,7 @@ test "Pool.setColumn*() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.setColumns*()" {
-    const TestPool = Pool(2, 6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1371,7 +1382,7 @@ test "Pool.setColumns*()" {
 }
 
 test "Pool.setColumns() calls Columns.deinit()" {
-    const TestPool = Pool(2, 6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1391,7 +1402,7 @@ test "Pool.setColumns() calls Columns.deinit()" {
 }
 
 test "Pool.setColumns() calls ColumnType.deinit()" {
-    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter }, struct {});
 
     var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
@@ -1420,6 +1431,121 @@ test "Pool.setColumns() calls ColumnType.deinit()" {
         .b = DeinitCounter.init(&deinit_count),
     });
     try expectEqual(@as(u32, 6), deinit_count);
+}
+
+test "Pool with custom handle methods" {
+    const Texture = struct {
+        name: []const u8,
+        // ...
+
+        // pub fn init() !Texture { ... }
+
+        // pub fn deinit() void { ... }
+    };
+    const TextureSystem = struct {
+        pub const TestPool = Pool(8, 8, void, struct {
+            texture: Texture,
+            reference_count: u32,
+        }, struct {
+            pub fn acquire(self: Handle) !void {
+                try pool.requireLiveHandle(self);
+
+                const reference_count = pool.getColumnPtrAssumeLive(self, .reference_count);
+
+                reference_count.* +|= 1;
+            }
+
+            pub fn release(self: Handle) !void {
+                try pool.requireLiveHandle(self);
+
+                const reference_count = pool.getColumnPtrAssumeLive(self, .reference_count);
+
+                reference_count.* -|= 1;
+
+                if (reference_count.* == 0) {
+                    // NOTE: this calls texture.deinit()
+                    try pool.remove(self);
+                }
+            }
+
+            pub inline fn exists(self: Handle) bool {
+                return pool.isLiveHandle(self);
+            }
+
+            pub inline fn getPtr(self: Handle) !*Texture {
+                return pool.getColumnPtr(self, .texture);
+            }
+
+            pub inline fn getPtrIfExists(self: Handle) ?*Texture {
+                return pool.getColumnPtrIfLive(self, .texture);
+            }
+        });
+        pub const Handle = TestPool.Handle;
+
+        var pool: TestPool = undefined;
+
+        pub fn init() !void {
+            pool = try TestPool.initMaxCapacity(std.testing.allocator);
+        }
+
+        pub fn deinit() void {
+            pool.deinit();
+        }
+
+        pub fn acquireByName(name: []const u8) !Handle {
+            // TODO: maybe keep a name-to-handle lookup
+            // and first check if a texture with the same name is already in the pool
+
+            const texture = Texture{
+                .name = name,
+                // ...
+            };
+
+            const handle = try pool.add(.{
+                .texture = texture,
+                .reference_count = 1,
+            });
+
+            return handle;
+        }
+    };
+
+    try TextureSystem.init();
+    defer TextureSystem.deinit();
+
+    {
+        const handle = try TextureSystem.acquireByName("Texture_1");
+
+        try expect(handle.exists());
+
+        if (handle.getPtrIfExists()) |texture_1| {
+            try expect(std.mem.eql(u8, texture_1.name, "Texture_1"));
+        }
+
+        try handle.acquire();
+
+        try handle.release();
+
+        try expect(handle.exists());
+
+        try handle.release();
+
+        try expect(!handle.exists());
+    }
+
+    {
+        const handle = try TextureSystem.acquireByName("Texture_2");
+
+        try expect(handle.exists());
+
+        const texture_2 = try handle.getPtr();
+
+        try expect(std.mem.eql(u8, texture_2.name, "Texture_2"));
+
+        try handle.release();
+
+        try expect(!handle.exists());
+    }
 }
 
 //------------------------------------------------------------------------------
