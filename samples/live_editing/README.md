@@ -14,3 +14,5 @@ Then change one of the following files:
 
 1. `samples/live_editing/src/entry.zig`
 2. `samples/live_editing/src/live_editing.hlsl`
+
+https://github.com/Pyrolistical/zig-gamedev/assets/463642/96d637c9-b6b7-4fe2-bcdc-461d48eab1d8
