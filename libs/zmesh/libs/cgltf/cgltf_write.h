@@ -35,12 +35,16 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifndef CGLTF_API
+#define CGLTF_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-cgltf_result cgltf_write_file(const cgltf_options* options, const char* path, const cgltf_data* data);
-cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size size, const cgltf_data* data);
+CGLTF_API cgltf_result cgltf_write_file(const cgltf_options* options, const char* path, const cgltf_data* data);
+CGLTF_API cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size size, const cgltf_data* data);
 
 #ifdef __cplusplus
 }

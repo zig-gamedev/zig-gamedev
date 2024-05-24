@@ -92,6 +92,10 @@
 #include <stddef.h>
 #include <stdint.h> /* For uint8_t, uint32_t */
 
+#ifndef CGLTF_API
+#define CGLTF_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -811,49 +815,49 @@ typedef struct cgltf_data
 	cgltf_file_options file;
 } cgltf_data;
 
-cgltf_result cgltf_parse(
+CGLTF_API cgltf_result cgltf_parse(
 		const cgltf_options* options,
 		const void* data,
 		cgltf_size size,
 		cgltf_data** out_data);
 
-cgltf_result cgltf_parse_file(
+CGLTF_API cgltf_result cgltf_parse_file(
 		const cgltf_options* options,
 		const char* path,
 		cgltf_data** out_data);
 
-cgltf_result cgltf_load_buffers(
+CGLTF_API cgltf_result cgltf_load_buffers(
 		const cgltf_options* options,
 		cgltf_data* data,
 		const char* gltf_path);
 
-cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data);
+CGLTF_API cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data);
 
-cgltf_size cgltf_decode_string(char* string);
-cgltf_size cgltf_decode_uri(char* uri);
+CGLTF_API cgltf_size cgltf_decode_string(char* string);
+CGLTF_API cgltf_size cgltf_decode_uri(char* uri);
 
-cgltf_result cgltf_validate(cgltf_data* data);
+CGLTF_API cgltf_result cgltf_validate(cgltf_data* data);
 
-void cgltf_free(cgltf_data* data);
+CGLTF_API void cgltf_free(cgltf_data* data);
 
-void cgltf_node_transform_local(const cgltf_node* node, cgltf_float* out_matrix);
-void cgltf_node_transform_world(const cgltf_node* node, cgltf_float* out_matrix);
+CGLTF_API void cgltf_node_transform_local(const cgltf_node* node, cgltf_float* out_matrix);
+CGLTF_API void cgltf_node_transform_world(const cgltf_node* node, cgltf_float* out_matrix);
 
-const uint8_t* cgltf_buffer_view_data(const cgltf_buffer_view* view);
+CGLTF_API const uint8_t* cgltf_buffer_view_data(const cgltf_buffer_view* view);
 
-cgltf_bool cgltf_accessor_read_float(const cgltf_accessor* accessor, cgltf_size index, cgltf_float* out, cgltf_size element_size);
-cgltf_bool cgltf_accessor_read_uint(const cgltf_accessor* accessor, cgltf_size index, cgltf_uint* out, cgltf_size element_size);
-cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size index);
+CGLTF_API cgltf_bool cgltf_accessor_read_float(const cgltf_accessor* accessor, cgltf_size index, cgltf_float* out, cgltf_size element_size);
+CGLTF_API cgltf_bool cgltf_accessor_read_uint(const cgltf_accessor* accessor, cgltf_size index, cgltf_uint* out, cgltf_size element_size);
+CGLTF_API cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size index);
 
 cgltf_size cgltf_num_components(cgltf_type type);
 cgltf_size cgltf_component_size(cgltf_component_type component_type);
 cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type component_type);
 
-cgltf_size cgltf_accessor_unpack_floats(const cgltf_accessor* accessor, cgltf_float* out, cgltf_size float_count);
-cgltf_size cgltf_accessor_unpack_indices(const cgltf_accessor* accessor, cgltf_uint* out, cgltf_size index_count);
+CGLTF_API cgltf_size cgltf_accessor_unpack_floats(const cgltf_accessor* accessor, cgltf_float* out, cgltf_size float_count);
+CGLTF_API cgltf_size cgltf_accessor_unpack_indices(const cgltf_accessor* accessor, cgltf_uint* out, cgltf_size index_count);
 
 /* this function is deprecated and will be removed in the future; use cgltf_extras::data instead */
-cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* extras, char* dest, cgltf_size* dest_size);
+CGLTF_API cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* extras, char* dest, cgltf_size* dest_size);
 
 cgltf_size cgltf_mesh_index(const cgltf_data* data, const cgltf_mesh* object);
 cgltf_size cgltf_material_index(const cgltf_data* data, const cgltf_material* object);
