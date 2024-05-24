@@ -679,7 +679,12 @@ pub fn setNextWindowBgAlpha(args: SetNextWindowBgAlpha) void {
     zguiSetNextWindowBgAlpha(args.alpha);
 }
 extern fn zguiSetNextWindowBgAlpha(alpha: f32) void;
-
+//--------------------------------------------------------------------------------------------------
+pub fn setWindowFocus(name: ?[:0]const u8) void {
+    zguiSetWindowFocus(name orelse null);
+}
+extern fn zguiSetWindowFocus(name: ?[*:0]const u8) void;
+//-------------------------------------------------------------------------------------------------
 pub fn setKeyboardFocusHere(offset: i32) void {
     zguiSetKeyboardFocusHere(offset);
 }
