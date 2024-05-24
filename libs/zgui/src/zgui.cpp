@@ -61,6 +61,10 @@ ZGUI_API void zguiSetNextWindowBgAlpha(float alpha) {
     ImGui::SetNextWindowBgAlpha(alpha);
 }
 
+ZGUI_API void zguiSetWindowFocus(const char* name) {
+    ImGui::SetWindowFocus(name);
+}
+
 ZGUI_API void zguiSetKeyboardFocusHere(int offset) {
     ImGui::SetKeyboardFocusHere(offset);
 }

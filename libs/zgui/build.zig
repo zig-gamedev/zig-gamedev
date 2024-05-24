@@ -60,7 +60,6 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        b.installArtifact(lib);
         if (target.result.os.tag == .windows) {
             lib.defineCMacro("IMGUI_API", "__declspec(dllexport)");
             lib.defineCMacro("IMPLOT_API", "__declspec(dllexport)");
