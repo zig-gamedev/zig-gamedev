@@ -71,7 +71,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         const common_hlsl_path = b.pathJoin(&.{ root_path, "samples", "common/src/hlsl/common.hlsl" });
         compile_shaders.addVsShader(common_hlsl_path, "vsImGui", b.pathJoin(&.{ shaders_path, "imgui.vs.cso" }), "PSO__IMGUI");
         compile_shaders.addPsShader(common_hlsl_path, "psImGui", b.pathJoin(&.{ shaders_path, "imgui.ps.cso" }), "PSO__IMGUI");
-        compile_shaders.addCsShader(common_hlsl_path, "csGenerateMipmaps", b.pathJoin(&.{ shaders_path, "generate_mipmaps.ps.cso" }), "PSO__GENERATE_MIPMAPS");
+        compile_shaders.addCsShader(common_hlsl_path, "csGenerateMipmaps", b.pathJoin(&.{ shaders_path, "generate_mipmaps.cs.cso" }), "PSO__GENERATE_MIPMAPS");
 
         const hlsl_path = b.pathJoin(&.{ root_path, src_path, demo_name ++ ".hlsl" });
         compile_shaders.addVsShader(hlsl_path, "vsRecordPixels", b.pathJoin(&.{ shaders_path, "record_pixels.vs.cso" }), "PSO__RECORD_PIXELS");
