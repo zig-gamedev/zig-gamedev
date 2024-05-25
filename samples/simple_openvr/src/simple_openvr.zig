@@ -567,6 +567,7 @@ pub fn main() !void {
                 .InstanceDataStepRate = 0,
             },
         });
+        _ = root_signature.AddRef();
         pso_desc.pRootSignature = root_signature;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/companion.vs.cso", 256 * 1024));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/companion.ps.cso", 256 * 1024));
@@ -669,6 +670,7 @@ pub fn main() !void {
                 .InstanceDataStepRate = 0,
             },
         });
+        _ = root_signature.AddRef();
         pso_desc.pRootSignature = root_signature;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/axes.vs.cso", 256 * 1024));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/axes.ps.cso", 256 * 1024));
@@ -756,6 +758,7 @@ pub fn main() !void {
                 .InstanceDataStepRate = 0,
             },
         });
+        _ = root_signature.AddRef();
         pso_desc.pRootSignature = root_signature;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/render_model.vs.cso", 256 * 1024));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/render_model.ps.cso", 256 * 1024));
