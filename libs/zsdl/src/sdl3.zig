@@ -1239,8 +1239,10 @@ pub const WindowEvent = extern struct {
 
 pub const KeyboardEvent = extern struct {
     type: EventType,
+    reserved: u32,
     timestamp: u64,
     window_id: WindowId,
+    which: KeyboardID,
     state: ReleasedOrPressed,
     repeat: u8,
     padding2: u8,
@@ -1383,6 +1385,8 @@ extern fn SDL_PushEvent(event: *Event) c_int;
 pub const Scancode = @import("keyboard.zig").Scancode;
 
 pub const Keycode = @import("keyboard.zig").Keycode;
+
+pub const KeyboardID = u32;
 
 pub const Keysym = extern struct {
     scancode: Scancode,
