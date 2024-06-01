@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) !void {
     @import("zsdl").addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
 
-    @import("zsdl").install_sdl2(&exe.step, options.target.result, .bin);
+    @import("zsdl").install_sdl2(&exe.step, target.result, .bin);
 }
 ```
 
