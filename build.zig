@@ -1,7 +1,12 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 13, .patch = 0, .pre = "" };
+pub const min_zig_version = std.SemanticVersion{
+    .major = 0,
+    .minor = 13,
+    .patch = 0,
+    .pre = "dev.351",
+};
 
 pub fn build(b: *std.Build) void {
     ensureZigVersion() catch return;
@@ -332,6 +337,7 @@ pub const Options = struct {
     zpix_enable: bool,
 };
 
+// TODO: Delete this once Zig checks minimum_zig_version in build.zig.zon
 fn ensureZigVersion() !void {
     var installed_ver = builtin.zig_version;
     installed_ver.build = null;
