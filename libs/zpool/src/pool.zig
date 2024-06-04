@@ -451,16 +451,19 @@ pub fn Pool(
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        fn getColumnPtrUnchecked(self: Self, handle: AddressableHandle, comptime column: Column) *ColumnType(column) {
+        /// Gets a column pointer. In most cases, `getColumnPtrAssumeLive` should be used instead.
+        pub fn getColumnPtrUnchecked(self: Self, handle: AddressableHandle, comptime column: Column) *ColumnType(column) {
             const column_field = meta.fieldInfo(Columns, column);
             return &@field(self.columns, column_field.name)[handle.index];
         }
 
-        fn getColumnUnchecked(self: Self, handle: AddressableHandle, comptime column: Column) ColumnType(column) {
+        /// Gets a column value. In most cases, `getColumnAssumeLive` should be used instead.
+        pub fn getColumnUnchecked(self: Self, handle: AddressableHandle, comptime column: Column) ColumnType(column) {
             return self.getColumnPtrUnchecked(handle, column).*;
         }
 
-        fn getColumnsUnchecked(self: Self, handle: AddressableHandle) Columns {
+        /// Gets column values. In most cases, `getColumnsAssumeLive` should be used instead.
+        pub fn getColumnsUnchecked(self: Self, handle: AddressableHandle) Columns {
             var values: Columns = undefined;
             inline for (column_fields) |column_field| {
                 @field(values, column_field.name) =
@@ -469,13 +472,15 @@ pub fn Pool(
             return values;
         }
 
-        fn setColumnUnchecked(self: Self, handle: AddressableHandle, comptime column: Column, value: ColumnType(column)) void {
+        /// Sets a column value. In most cases, `setColumnAssumeLive` should be used instead.
+        pub fn setColumnUnchecked(self: Self, handle: AddressableHandle, comptime column: Column, value: ColumnType(column)) void {
             const column_field = meta.fieldInfo(Columns, column);
             self.deinitColumnAt(handle.index, column_field);
             @field(self.columns, column_field.name)[handle.index] = value;
         }
 
-        fn setColumnsUnchecked(self: Self, handle: AddressableHandle, values: Columns) void {
+        /// Sets column values. In most cases, `setColumnsAssumeLive` should be used instead.
+        pub fn setColumnsUnchecked(self: Self, handle: AddressableHandle, values: Columns) void {
             self.deinitColumnsAt(handle.index);
             self.initColumnsAt(handle.index, values);
         }
