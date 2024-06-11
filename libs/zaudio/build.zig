@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
     miniaudio.addIncludePath(b.path("libs/miniaudio"));
     miniaudio.linkLibC();
 
-    const system_sdk = b.dependency("system_sdk", .{});
+    const system_sdk = b.dependency("system-sdk", .{});
 
     if (target.result.os.tag == .macos) {
         miniaudio.addFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
