@@ -38,7 +38,10 @@ Provided structs:
 
 Copy `zaudio` and `system-sdk` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
-    .system_sdk = .{ .path = "local/path/to/system-sdk" },
+    .@"system-sdk" = .{
+          .url = "https://github.com/zig-gamedev/system-sdk/archive/refs/heads/main.tar.gz",
+          .hash = "122035336d7535f655fe0ece31cea0fbf8ad2f1e42f64b073995050a425ca8f8fbdc",
+      },
     .zaudio = .{ .path = "local/path/to/zaudio" },
 ```
 

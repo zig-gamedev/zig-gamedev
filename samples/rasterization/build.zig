@@ -21,7 +21,7 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    @import("system_sdk").addLibraryPathsTo(exe);
+    @import("system-sdk").addLibraryPathsTo(exe);
 
     const zmath = b.dependency("zmath", .{
         .target = options.target,

@@ -7,7 +7,10 @@ Copy `zglfw` and `system-sdk` to a subdirectory of your project and add the foll
     .zglfw = .{ .path = "libs/zglfw" },
     
     // Required for building glfw
-    .system_sdk = .{ .path = "libs/system-sdk" },
+    .@"system-sdk" = .{
+        .url = "https://github.com/zig-gamedev/system-sdk/archive/refs/heads/main.tar.gz",
+        .hash = "122035336d7535f655fe0ece31cea0fbf8ad2f1e42f64b073995050a425ca8f8fbdc",
+    },
 ```
 
 Then in your `build.zig` add:
@@ -19,7 +22,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("zglfw", zglfw.module("root"));
     exe.linkLibrary(zglfw.artifact("glfw"));
 
-    @import("system_sdk").addLibraryPathsTo(exe);
+    @import("system-sdk").addLibraryPathsTo(exe);
 }
 ```
 

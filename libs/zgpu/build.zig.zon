@@ -9,7 +9,10 @@
         "README.md",
     },
     .dependencies = .{
-        .system_sdk = .{ .path = "../system-sdk" },
+        .@"system-sdk" = .{
+            .url = "https://github.com/zig-gamedev/system-sdk/archive/refs/heads/main.tar.gz",
+            .hash = "122035336d7535f655fe0ece31cea0fbf8ad2f1e42f64b073995050a425ca8f8fbdc",
+        },
         .zpool = .{ .path = "../zpool" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
