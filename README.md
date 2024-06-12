@@ -63,7 +63,7 @@ Copy each library to a subdirectory in your project and add them as local packag
          .zglfw = .{ .path = "libs/zglfw" },
          .system_sdk = .{ .path = "libs/system-sdk" },
      },
-     .paths = "",
+     .paths = .{""},
  }
  ```
 
