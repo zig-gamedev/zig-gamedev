@@ -842,9 +842,8 @@ pub fn main() !void {
     main: while (!window.shouldClose() and window.getKey(.escape) != .press) {
         {
             // spin loop for frame limiter
-            const ns_in_s = 1_000_000_000;
             const frame_rate_target: u64 = 100;
-            const target_ns = @divTrunc(ns_in_s, frame_rate_target);
+            const target_ns = @divTrunc(std.time.ns_per_s, frame_rate_target);
             while (frame_timer.read() < target_ns) {
                 std.atomic.spinLoopHint();
             }

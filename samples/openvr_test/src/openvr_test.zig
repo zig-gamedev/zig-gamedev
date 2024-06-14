@@ -1258,9 +1258,8 @@ pub fn main() !void {
 
         {
             // spin loop for frame limiter
-            const ns_in_s = 1_000_000_000;
             const frame_rate_target: u64 = 60;
-            const target_ns = @divTrunc(ns_in_s, frame_rate_target);
+            const target_ns = @divTrunc(std.time.ns_per_s, frame_rate_target);
             while (frame_timer.read() < target_ns) {
                 std.atomic.spinLoopHint();
             }

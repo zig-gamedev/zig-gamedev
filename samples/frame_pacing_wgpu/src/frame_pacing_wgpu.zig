@@ -233,14 +233,12 @@ pub fn main() !void {
 
         {
             // spin loop for frame limiter
-            const ns_in_ms = 1_000_000;
-            const ns_in_s = 1_000_000_000;
             var target_ns: ?u64 = null;
             if (frame_target_option == .frame_rate) {
-                target_ns = @divTrunc(ns_in_s, @as(u64, @intCast(frame_rate_target)));
+                target_ns = @divTrunc(std.time.ns_per_s, @as(u64, @intCast(frame_rate_target)));
             }
             if (frame_target_option == .frame_time) {
-                target_ns = @as(u64, @intFromFloat(ns_in_ms * frame_time_target));
+                target_ns = @as(u64, @intFromFloat(std.time.ns_per_ms * frame_time_target));
             }
             if (target_ns) |t| {
                 while (frame_timer.read() < t) {

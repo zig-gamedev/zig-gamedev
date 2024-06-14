@@ -445,9 +445,11 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     allocator.destroy(demo);
 }
 
+const frame_rate_target = 60.0;
+
 fn update(demo: *DemoState) void {
     zgui.backend.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
-    demo.physics_system.update(1.0 / 60.0, .{}) catch unreachable;
+    demo.physics_system.update(1.0 / frame_rate_target, .{}) catch unreachable;
 
     const window = demo.window;
 
@@ -692,7 +694,18 @@ pub fn main() !void {
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 
+    var frame_timer = try std.time.Timer.start();
+
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
+        {
+            // spin loop for frame limiter
+            const target_ns = @divTrunc(std.time.ns_per_s, frame_rate_target);
+            while (frame_timer.read() < target_ns) {
+                std.atomic.spinLoopHint();
+            }
+            frame_timer.reset();
+        }
+
         zglfw.pollEvents();
 
         update(demo);
