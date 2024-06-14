@@ -33,6 +33,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const zpix_enable = b.option(
+        bool,
+        "zpix-enable",
+        "Enable PIX for Windows profiler",
+    ) orelse false;
     const options = Options{
         .optimize = optimize,
         .target = target,
@@ -46,11 +51,12 @@ pub fn build(b: *std.Build) void {
             "zd3d12-enable-gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
-        .zpix_enable = b.option(
-            bool,
-            "zpix-enable",
-            "Enable PIX for Windows profiler",
-        ) orelse false,
+        .zpix_enable = zpix_enable,
+        .zpix_path = b.option(
+            []const u8,
+            "zpix-path",
+            "Installed PIX path",
+        ) orelse if (zpix_enable) @panic("PIX path is required when enabled") else "",
     };
 
     //
@@ -335,6 +341,7 @@ pub const Options = struct {
     zd3d12_enable_gbv: bool,
 
     zpix_enable: bool,
+    zpix_path: []const u8,
 };
 
 // TODO: Delete this once Zig checks minimum_zig_version in build.zig.zon

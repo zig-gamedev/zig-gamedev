@@ -4,8 +4,10 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    const enable = b.option(bool, "enable", "enable zpix") orelse false;
     const options = .{
-        .enable = b.option(bool, "enable", "enable zpix") orelse false,
+        .enable = enable,
+        .path = b.option([]const u8, "path", "installed pix path") orelse if (enable) @panic("PIX path is required when enabled") else "",
     };
 
     const options_step = b.addOptions();
@@ -20,7 +22,7 @@ pub fn build(b: *std.Build) void {
     });
     const zwin32_module = zwin32.module("root");
 
-    _ = b.createModule(.{
+    _ = b.addModule("root", .{
         .root_source_file = b.path("src/zpix.zig"),
         .imports = &.{
             .{ .name = "zpix_options", .module = options_module },

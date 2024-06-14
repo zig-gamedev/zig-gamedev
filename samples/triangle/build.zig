@@ -37,6 +37,12 @@ pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const zd3d12_module = zd3d12.module("root");
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
+    const zpix = b.dependency("zpix", .{
+        .enable = options.zpix_enable,
+        .path = options.zpix_path,
+    });
+    exe.root_module.addImport("zpix", zpix.module("root"));
+
     @import("../common/build.zig").link(exe, .{
         .zwin32 = zwin32_module,
         .zd3d12 = zd3d12_module,

@@ -5,6 +5,7 @@ const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
+const zpix = @import("zpix");
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
@@ -20,6 +21,9 @@ const window_width = 900;
 const window_height = 900;
 
 pub fn main() !void {
+    const pix_library = try zpix.loadGpuCapturerLibrary();
+    defer pix_library.deinit();
+
     common.init();
     defer common.deinit();
 
