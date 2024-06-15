@@ -20,8 +20,8 @@ Copy `zgpu`, `zpool` and `system-sdk` to a subdirectory of your project and add 
 
 ```zig
 .{
-    .zgpu = .{ .path = libs/zgpu" },
-    .zpool = .{ .path = libs/zpool" },
+    .zgpu = .{ .path = "libs/zgpu" },
+    .zpool = .{ .path = "libs/zpool" },
     .dawn_x86_64_windows_gnu = .{
         .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
         .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
