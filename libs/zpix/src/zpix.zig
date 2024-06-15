@@ -146,62 +146,38 @@ fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shor
     return mask0 | mask1 | mask2 | mask3;
 }
 
+const PixLibrary = if (enable) struct {
+    module: HMODULE,
+
+    pub fn deinit(self: PixLibrary) void {
+        std.os.windows.FreeLibrary(self.module);
+    }
+} else struct {
+    pub fn deinit(_: PixLibrary) void {}
+};
+
 const impl = struct {
-    fn loadGpuCapturerLibrary() ?HMODULE {
-        const module = w32.GetModuleHandleA("WinPixGpuCapturer.dll");
-        if (module != null) {
-            return module;
+    fn loadGpuCapturerLibrary() !PixLibrary {
+        const dll_path = dll_path: {
+            var buffer: [2048]u8 = undefined;
+            var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+            const allocator = fba.allocator();
+
+            break :dll_path try std.fs.path.joinZ(
+                allocator,
+                &.{ options.path, "WinPixGpuCapturer.dll" },
+            );
+        };
+
+        if (w32.LoadLibraryA(dll_path.ptr)) |m| {
+            return .{ .module = m };
+        } else {
+            // unable to reuse same allocator for dll_path due to https://github.com/ziglang/zig/issues/15850
+            var buffer: [2048]u8 = undefined;
+            var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
+            const allocator = fba.allocator();
+            @panic(try std.fmt.allocPrint(allocator, "failed to load library: {s}\n", .{dll_path}));
         }
-
-        var program_files_path_ptr: LPWSTR = undefined;
-        if (w32.SHGetKnownFolderPath(
-            &w32.FOLDERID_ProgramFiles,
-            w32.KF_FLAG_DEFAULT,
-            null,
-            &program_files_path_ptr,
-        ) != w32.S_OK) {
-            return null;
-        }
-        defer w32.CoTaskMemFree(program_files_path_ptr);
-
-        var alloc_buffer: [2048]u8 = undefined;
-        var alloc_state = std.heap.FixedBufferAllocator.init(alloc_buffer[0..]);
-        const alloc = alloc_state.allocator();
-
-        const program_files_path = std.unicode.utf16leToUtf8AllocZ(
-            alloc,
-            std.mem.span(program_files_path_ptr),
-        ) catch unreachable;
-        const pix_path = std.fs.path.joinZ(
-            alloc,
-            &[_][]const u8{ program_files_path, "Microsoft PIX" },
-        ) catch unreachable;
-
-        const pix_dir = std.fs.openIterableDirAbsoluteZ(pix_path, .{}) catch return null;
-        var newest_ver: f64 = 0.0;
-        var newest_ver_name: [w32.MAX_PATH:0]u8 = undefined;
-
-        var pix_dir_it = pix_dir.iterate();
-        while (pix_dir_it.next() catch return null) |entry| {
-            if (entry.kind == .Directory) {
-                const ver = std.fmt.parseFloat(f64, entry.name) catch continue;
-                if (ver > newest_ver) {
-                    newest_ver = ver;
-                    std.mem.copy(u8, newest_ver_name[0..], entry.name);
-                    newest_ver_name[entry.name.len] = 0;
-                }
-            }
-        }
-        if (newest_ver == 0.0) {
-            return null;
-        }
-
-        const dll_path = std.fs.path.joinZ(
-            alloc,
-            &[_][]const u8{ pix_path, std.mem.sliceTo(&newest_ver_name, 0), "WinPixGpuCapturer.dll" },
-        ) catch unreachable;
-
-        return if (w32.LoadLibraryA(dll_path.ptr)) |lib| lib else null;
     }
 
     fn beginCapture(flags: CAPTURE_FLAGS, params: ?*const CaptureParameters) HRESULT {
@@ -329,8 +305,8 @@ const impl = struct {
 };
 
 const empty = struct {
-    fn loadGpuCapturerLibrary() ?HMODULE {
-        return null;
+    fn loadGpuCapturerLibrary() !PixLibrary {
+        return .{};
     }
     fn beginCapture(flags: CAPTURE_FLAGS, params: ?*const CaptureParameters) HRESULT {
         _ = flags;
