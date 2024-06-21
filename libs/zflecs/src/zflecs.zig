@@ -2,10 +2,11 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.7";
+pub const flecs_version = "3.2.8";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
+const flecs_is_sanitize = flecs_is_debug;
 
 pub const ftime_t = f32;
 pub const size_t = i32;
@@ -671,7 +672,7 @@ pub const vec_t = extern struct {
     array: ?*anyopaque,
     count: i32,
     size: i32,
-    elem_size: size_t,
+    elem_size: if (flecs_is_sanitize) size_t else void,
 };
 
 pub const sparse_t = extern struct {
@@ -782,6 +783,15 @@ pub const entity_desc_t = extern struct {
     use_low_id: bool = false,
     add: [FLECS_ID_DESC_MAX]id_t = [_]id_t{0} ** FLECS_ID_DESC_MAX,
     add_expr: ?[*:0]const u8 = null,
+};
+
+pub const bulk_desc_t = extern struct {
+    _canary: i32 = 0,
+    entities: ?[*]entity_t,
+    count: i32,
+    ids: [FLECS_ID_DESC_MAX]id_t,
+    data: [*]?*anyopaque,
+    table: ?*table_t,
 };
 
 pub const FLECS_TERM_DESC_MAX = 16;
