@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.8";
+pub const flecs_version = "3.2.9";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -326,12 +326,13 @@ pub const Up = 1 << 2;
 pub const Down = 1 << 3;
 pub const TraverseAll = 1 << 4;
 pub const Cascade = 1 << 5;
-pub const Parent = 1 << 6;
-pub const IsVariable = 1 << 7;
-pub const IsEntity = 1 << 8;
-pub const IsName = 1 << 9;
-pub const Filter = 1 << 10;
-pub const TraverseFlags = Up | Down | TraverseAll | Self | Cascade | Parent;
+pub const Desc = 1 << 6;
+pub const Parent = 1 << 7;
+pub const IsVariable = 1 << 8;
+pub const IsEntity = 1 << 9;
+pub const IsName = 1 << 10;
+pub const Filter = 1 << 11;
+pub const TraverseFlags = Up | Down | TraverseAll | Self | Cascade | Desc | Parent;
 
 pub const TermMatchAny = 1 << 0;
 pub const TermMatchAnySrc = 1 << 1;
@@ -835,7 +836,8 @@ pub const event_desc_t = extern struct {
     offset: i32 = 0,
     count: i32 = 0,
     entity: entity_t = 0,
-    param: ?*const anyopaque = null,
+    param: ?*anyopaque = null,
+    const_param: ?*const anyopaque = null,
     observable: ?*poly_t = null,
     flags: flags32_t = 0,
 };
@@ -1935,6 +1937,10 @@ extern fn ecs_query_get_binding_ctx(query: *const query_t) ?*anyopaque;
 /// `pub fn emit(world: *world_t, desc: *event_desc_t) void`
 pub const emit = ecs_emit;
 extern fn ecs_emit(world: *world_t, desc: *event_desc_t) void;
+
+/// `pub fn enqueue(world: *world_t, desc: *event_desc_t) void`
+pub const enqueue = ecs_enqueue;
+extern fn ecs_enqueue(world: *world_t, desc: *event_desc_t) void;
 
 /// `pub fn observer_init(world: *world_t, desc: *const observer_desc_t) entity_t`
 pub const observer_init = ecs_observer_init;
