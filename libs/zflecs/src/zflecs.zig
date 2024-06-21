@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.9";
+pub const flecs_version = "3.2.10";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -26,6 +26,54 @@ fn make_error() error{FlecsError} {
 
 pub const ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
 pub const COMPONENT_MASK: u64 = ~ID_FLAGS_MASK;
+
+// World flags
+pub const WorldQuitWorkers = 1 << 0;
+pub const WorldReadonly = 1 << 1;
+pub const WorldInit = 1 << 2;
+pub const WorldQuit = 1 << 3;
+pub const WorldFini = 1 << 4;
+pub const WorldMeasureFrameTime = 1 << 5;
+pub const WorldMeasureSystemTime = 1 << 6;
+pub const WorldMultiThreaded = 1 << 7;
+
+// Iterator flags
+pub const EcsIterIsValid = 1 << 0;
+pub const EcsIterNoData = 1 << 1;
+pub const EcsIterIsInstanced = 1 << 2;
+pub const EcsIterHasShared = 1 << 3;
+pub const EcsIterTableOnly = 1 << 4;
+pub const EcsIterEntityOptional = 1 << 5;
+pub const EcsIterNoResults = 1 << 6;
+pub const EcsIterIgnoreThis = 1 << 7;
+pub const EcsIterMatchVar = 1 << 8;
+//  missing in flecs
+pub const EcsIterHasCondSet = 1 << 10;
+pub const EcsIterProfile = 1 << 11;
+pub const EcsIterTrivialSearch = 1 << 12;
+pub const EcsIterTrivialSearchNoData = 1 << 13;
+pub const EcsIterTrivialTest = 1 << 14;
+pub const EcsIterTrivialSearchWildcard = 1 << 15;
+
+// Filter flags
+pub const EcsFilterMatchThis = 1 << 1;
+pub const EcsFilterMatchOnlyThis = 1 << 2;
+pub const EcsFilterMatchPrefab = 1 << 3;
+pub const EcsFilterMatchDisabled = 1 << 4;
+pub const EcsFilterMatchEmptyTables = 1 << 5;
+pub const EcsFilterMatchAnything = 1 << 6;
+pub const EcsFilterNoData = 1 << 7;
+pub const EcsFilterIsInstanced = 1 << 8;
+pub const EcsFilterPopulate = 1 << 9;
+pub const EcsFilterHasCondSet = 1 << 10;
+pub const EcsFilterUnresolvedByName = 1 << 11;
+pub const EcsFilterHasPred = 1 << 12;
+pub const EcsFilterHasScopes = 1 << 13;
+pub const EcsFilterIsTrivial = 1 << 14;
+pub const EcsFilterMatchOnlySelf = 1 << 15;
+pub const EcsFilterHasWildcards = 1 << 16;
+pub const EcsFilterOwnsStorage = 1 << 17;
+pub const EcsFilterOwnsTermsStorage = 1 << 18;
 
 extern const EcsWildcard: entity_t;
 extern const EcsAny: entity_t;
@@ -341,6 +389,8 @@ pub const TermSrcSecondEq = 1 << 3;
 pub const TermTransitive = 1 << 4;
 pub const TermReflexive = 1 << 5;
 pub const TermIdInherited = 1 << 6;
+pub const EcsTermIsTrivial = 1 << 7;
+pub const EcsTermNoData = 1 << 8;
 
 pub const TermMatchDisabled = 1 << 7;
 pub const TermMatchPrefab = 1 << 8;
@@ -380,15 +430,12 @@ pub fn array(comptime T: type, comptime len: comptime_int) [len]T {
 pub const filter_t = extern struct {
     hdr: header_t = .{ .magic = filter_t_magic },
 
-    terms: ?[*]term_t = null,
-    term_count: i32 = 0,
-    field_count: i32 = 0,
-
-    owned: bool = false,
-    terms_owned: bool = false,
-
+    term_count: i8 = 0,
+    field_count: i8 = 0,
     flags: flags32_t = 0,
+    data_fields: flags64_t = 0,
 
+    terms: ?[*]term_t = null,
     variable_names: ?[*][*:0]u8 = null, // TODO: Only `variable_names[0]` is valid?
     sizes: ?[*]i32 = null,
 
@@ -586,10 +633,10 @@ pub const rule_iter_t = extern struct {
     ops: ?*rule_op_t,
     op_ctx: ?*rule_op_ctx_t,
     written: *u64,
+    source_set: flags32_t,
 
     profile: if (flecs_is_debug) rule_op_profile_t else void,
 
-    redo: bool,
     op: i16,
     sp: i16,
 };
@@ -846,6 +893,7 @@ pub const world_info_t = extern struct {
     last_component_id: entity_t,
     min_id: entity_t,
     max_id: entity_t,
+
     delta_time_raw: f32,
     delta_time: f32,
     time_scale: f32,
@@ -857,9 +905,11 @@ pub const world_info_t = extern struct {
     world_time_total: f32,
     world_time_total_raw: f32,
     rematch_time_total: f32,
+
     frame_count_total: i64,
     merge_count_total: i64,
     rematch_count_total: i64,
+
     id_create_total: i64,
     id_delete_total: i64,
     table_create_total: i64,
@@ -867,17 +917,14 @@ pub const world_info_t = extern struct {
     pipeline_build_count_total: i64,
     systems_ran_frame: i64,
     observers_ran_frame: i64,
-    id_count: i32,
+
     tag_id_count: i32,
     component_id_count: i32,
     pair_id_count: i32,
-    wildcard_id_count: i32,
+
     table_count: i32,
-    tag_table_count: i32,
-    trivial_table_count: i32,
     empty_table_count: i32,
-    table_record_count: i32,
-    table_storage_count: i32,
+
     cmd: extern struct {
         add_count: i64,
         remove_count: i64,
@@ -891,6 +938,7 @@ pub const world_info_t = extern struct {
         batched_entity_count: i64,
         batched_command_count: i64,
     },
+
     name_prefix: [*:0]const u8,
 };
 
