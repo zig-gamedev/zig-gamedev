@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.10";
+pub const flecs_version = "3.2.11";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
@@ -438,6 +438,7 @@ pub const filter_t = extern struct {
     terms: ?[*]term_t = null,
     variable_names: ?[*][*:0]u8 = null, // TODO: Only `variable_names[0]` is valid?
     sizes: ?[*]i32 = null,
+    ids: [*]id_t,
 
     entity: entity_t = 0,
     iterable: iterable_t = .{},
@@ -532,6 +533,7 @@ pub const record_t = extern struct {
 pub const ref_t = extern struct {
     entity: entity_t,
     id: entity_t,
+    table_id: u64,
     tr: *table_record_t,
     record: *record_t,
 };
@@ -664,6 +666,7 @@ pub const iter_private_t = extern struct {
 pub const iter_t = extern struct {
     world: *world_t,
     real_world: *world_t,
+
     entities_: [*]entity_t,
     ptrs: ?[*]*anyopaque,
     sizes: ?[*]size_t,
@@ -678,9 +681,13 @@ pub const iter_t = extern struct {
     constrained_vars: flags64_t,
     group_id: u64,
     field_count: i32,
+
     system: entity_t,
     event: entity_t,
     event_id: id_t,
+    event_cur: i32,
+
+    query: *const filter_t,
     terms: ?[*]term_t,
     table_count: i32,
     term_index: i32,
@@ -1471,7 +1478,7 @@ extern fn ecs_record_get_entity(record: *const record_t) entity_t;
 
 /// `pub fn record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque`
 pub const record_get_id = ecs_record_get_id;
-extern fn ecs_record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque;
+extern fn ecs_record_get_id(world: *const world_t, record: *const record_t, id: id_t) ?*const anyopaque;
 
 /// `pub fn record_get_mut_id(world: *world_t, record: *record_t, id: id_t) ?*anyopaque`
 pub const record_get_mut_id = ecs_record_get_mut_id;
@@ -2837,6 +2844,7 @@ pub const os = struct {
         log_last_error_: i32,
         log_last_timestamp_: i64,
         flags_: flags32_t,
+        log_out_: *anyopaque, // *FILE
     };
 
     extern var ecs_os_api: api_t;
