@@ -4,6 +4,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    // todo move to options so that it wont require if not requested
     const zwin32 = b.dependency("zwin32", .{
         .target = target,
     });
@@ -23,6 +24,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
             });
+            tests.linkLibC();
             addLibraryPathsTo(tests);
             addRPathsTo(tests);
             linkOpenVR(tests);
@@ -39,11 +41,6 @@ pub fn build(b: *std.Build) void {
 
         installOpenVR(unit_tests, target.result, .bin);
     }
-}
-
-// in future zig version e342433
-pub fn pathResolve(b: *std.Build, paths: []const []const u8) []u8 {
-    return std.fs.path.resolve(b.allocator, paths) catch @panic("OOM");
 }
 
 pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {

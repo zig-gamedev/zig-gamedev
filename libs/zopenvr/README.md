@@ -18,15 +18,15 @@ pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{ ... });
 
     const zopenvr = b.dependency("zopenvr", .{});
-    const zopenvr_path = zopenvr.path("").getPath(b);
-
     exe.root_module.addImport("zopenvr", zopenvr.module("zopenvr"));
 
-    try @import("zopenvr").addLibraryPathsTo(exe, zopenvr_path);
+    exe.linkLibC();
+    @import("zopenvr").addLibraryPathsTo(exe);
     @import("zopenvr").linkOpenvr(exe);
-    try @import("zopenvr").installOpenvr(&exe.step, options.target.result, .bin, zopenvr_path);
+    @import("zopenvr").installOpenvr(&exe.step, exe.rootModuleTarget(), .bin);
 }
 ```
+<!-- @import("zopenvr").addRPathsTo(exe); -->
 
 Now in your code you may import and use `zopenvr`:
 
@@ -42,7 +42,7 @@ pub fn main() !void {
 
     const system = try openvr.system();
 
-    const name = try app.system.allocTrackedDevicePropertyString(allocator, OpenVR.hmd, .tracking_system_name);
+    const name = try system.allocTrackedDevicePropertyString(allocator, OpenVR.hmd, .tracking_system_name);
     defer allocator.free(name);
 
     ...
@@ -76,3 +76,6 @@ pub fn main() !void {
 | SpatialAnchors  |                     |
 | System          |         ✅          |
 | TrackedCamera   |                     |
+
+## todo
+generate bindings from original json
