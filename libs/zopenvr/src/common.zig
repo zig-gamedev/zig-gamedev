@@ -672,8 +672,9 @@ pub const InitErrorCode = enum(i32) {
     }
 };
 
-extern fn VR_GetVRInitErrorAsSymbol(InitErrorCode) callconv(.C) [*c]u8;
-extern fn VR_GetVRInitErrorAsEnglishDescription(InitErrorCode) callconv(.C) [*c]u8;
+extern "openvr_api" fn VR_GetVRInitErrorAsSymbol(InitErrorCode) callconv(.C) [*c]const u8;
+extern "openvr_api" fn VR_GetVRInitErrorAsEnglishDescription(InitErrorCode) callconv(.C) [*c]const u8;
+extern "openvr_api" fn VR_GetGenericInterface([*c]const u8, *InitErrorCode) callconv(.C) ?*isize;
 
 test "init error have english descriptions" {
     try std.testing.expectEqualStrings("No Error (0)", InitErrorCode.none.asEnglishDescription());
@@ -683,12 +684,10 @@ pub fn getFunctionTable(comptime T: type, comptime version: []const u8) InitErro
     const interface_name: [*c]const u8 = "FnTable:" ++ version;
 
     var init_error: InitErrorCode = .none;
-    const function_table: *T = @ptrCast(VR_GetGenericInterface(interface_name, &init_error));
+    const function_table_ptr = VR_GetGenericInterface(interface_name, &init_error);
     try init_error.maybe();
-    return function_table;
+    return @ptrCast(function_table_ptr.?);
 }
-
-extern fn VR_GetGenericInterface([*c]const u8, *InitErrorCode) callconv(.C) *isize;
 
 pub const Quad = extern struct {
     corners: [4]Vector3,

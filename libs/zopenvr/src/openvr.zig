@@ -6,8 +6,8 @@ const Self = @This();
 
 pub fn init(application_type: ApplicationType) common.InitError!Self {
     var init_error: common.InitErrorCode = .none;
-    _ = VR_InitInternal(&init_error, application_type);
-    try init_error.maybe();
+    _ = VR_InitInternal(&init_error, application_type) orelse
+        try init_error.maybe();
     return .{};
 }
 
@@ -28,18 +28,18 @@ pub const ApplicationType = enum(i32) {
     room_view = 13,
     max = 14,
 };
-extern fn VR_InitInternal(*common.InitErrorCode, ApplicationType) callconv(.C) *isize;
+
+extern "openvr_api" fn VR_InitInternal(*common.InitErrorCode, ApplicationType) callconv(.C) ?*isize;
+extern "openvr_api" fn VR_ShutdownInternal() callconv(.C) void;
+extern "openvr_api" fn VR_IsHmdPresent() callconv(.C) bool;
+extern "openvr_api" fn VR_IsRuntimeInstalled() callconv(.C) bool;
 
 pub fn deinit(_: Self) void {
     VR_ShutdownInternal();
 }
-extern fn VR_ShutdownInternal() callconv(.C) void;
 
 pub const isHmdPresent = VR_IsHmdPresent;
-extern fn VR_IsHmdPresent() callconv(.C) bool;
-
 pub const isRuntimeInstalled = VR_IsRuntimeInstalled;
-extern fn VR_IsRuntimeInstalled() callconv(.C) bool;
 
 pub fn system(_: Self) common.InitError!System {
     return try System.init();
