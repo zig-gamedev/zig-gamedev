@@ -20,10 +20,9 @@ pub fn build(b: *std.Build) !void {
     const zopenvr = b.dependency("zopenvr", .{});
     exe.root_module.addImport("zopenvr", zopenvr.module("zopenvr"));
 
-    exe.linkLibC();
     @import("zopenvr").addLibraryPathsTo(exe);
-    @import("zopenvr").linkOpenvr(exe);
-    @import("zopenvr").installOpenvr(&exe.step, exe.rootModuleTarget(), .bin);
+    @import("zopenvr").linkOpenVR(exe);
+    @import("zopenvr").installOpenVR(&exe.step, exe.rootModuleTarget(), .bin);
 }
 ```
 <!-- @import("zopenvr").addRPathsTo(exe); -->
