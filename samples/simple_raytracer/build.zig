@@ -1,10 +1,9 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
 const content_dir = "simple_raytracer_content/";
 
-pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
+pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "simple_raytracer",
         .root_source_file = .{ .path = thisDir() ++ "/src/simple_raytracer.zig" },

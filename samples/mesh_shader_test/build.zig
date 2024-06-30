@@ -1,8 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
-
 const demo_name = "mesh_shader_test";
 const content_dir = demo_name ++ "_content/";
 
@@ -11,7 +9,7 @@ pub fn pathResolve(b: *std.Build, paths: []const []const u8) []u8 {
     return std.fs.path.resolve(b.allocator, paths) catch @panic("OOM");
 }
 
-pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
+pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{
