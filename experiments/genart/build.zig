@@ -1,7 +1,6 @@
 const std = @import("std");
-const Options = @import("../../build.zig").Options;
 
-pub fn build(b: *std.Build, options: Options) void {
+pub fn build(b: *std.Build, options: anytype) void {
     const latest_experiment = 31;
     inline for (1..latest_experiment + 1) |i| {
         if (i == 6 or i == 7 or i == 30) continue;
