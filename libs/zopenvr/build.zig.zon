@@ -9,6 +9,9 @@
         "README.md",
     },
     .dependencies = .{
-        .zwin32 = .{ .path = "../zwin32" },
+        .zwin32 = .{
+            .path = "../zwin32",
+            .lazy = true,
+        },
     },
 }

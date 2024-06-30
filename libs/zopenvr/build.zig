@@ -4,36 +4,32 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    // todo move to options so that it wont require if not requested
-    const zwin32 = b.dependency("zwin32", .{
-        .target = target,
-    });
     const mod = b.addModule("root", .{
         .root_source_file = b.path("src/openvr.zig"),
-        .imports = &.{
-            .{ .name = "zwin32", .module = zwin32.module("root") },
-        },
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
     });
 
-    // if (!target.result.cpu.arch.isX86()) @panic("unsupported target architecture");
+    var backends = struct {
+        d3d12: bool = false,
+        // valken: bool = false,
+        // opengl: bool = false,
+    }{};
 
-    mod.link_libc = true;
-    // mod.addLibraryPath(b.path(switch (target.result.os.tag) {
-    //     .windows => "libs/openvr/lib/win64",
-    //     .linux => "libs/openvr/lib/linux64",
-    //     else => @panic("unsupported target os"),
-    // }));
+    // b.systemIntegrationOption("d3d12", .{})
+    if (b.option(bool, "d3d12", "Enable Direct3D 12 backend") orelse false) {
+        backends.d3d12 = true;
+        if (b.lazyDependency("zwin32", .{ .target = target })) |zwin32| {
+            mod.addImport("zwin32", zwin32.module("root"));
+        }
+    }
 
-    // mod.addIncludePath(b.path("libs/openvr/headers"));
-    // mod.addRPath(b.path(switch (target.result.os.tag) {
-    //     .windows => "libs/openvr/bin/win64",
-    //     .linux => "libs/openvr/bin/linux64",
-    //     else => @panic("unsupported target os"),
-    // }));
-
-    // mod.linkSystemLibrary("openvr_api", .{ .needed = true });
+    const options = b.addOptions();
+    inline for (@typeInfo(@TypeOf(backends)).Struct.fields) |field| {
+        options.addOption(field.type, field.name, @field(backends, field.name));
+    }
+    mod.addOptions("rendermodesConfig", options);
 
     {
         const unit_tests = b.step("test", "Run zopenvr tests");
@@ -68,7 +64,7 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
 
-    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    if (target.cpu.arch != .x86_64) @panic("unsupported target architecture");
     compile_step.addLibraryPath(.{
         .cwd_relative = b.pathJoin(&.{
             source_path_prefix,
@@ -86,7 +82,7 @@ pub fn addRPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
 
-    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    if (target.cpu.arch != .x86_64) @panic("unsupported target architecture");
     compile_step.addRPath(.{
         .cwd_relative = b.pathJoin(&.{
             source_path_prefix, switch (target.os.tag) {
@@ -114,7 +110,7 @@ pub fn installOpenVR(
     target: std.Target,
     install_dir: std.Build.InstallDir,
 ) void {
-    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    if (target.cpu.arch != .x86_64) @panic("unsupported target architecture");
 
     const b = step.owner;
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";

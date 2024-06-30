@@ -48,6 +48,13 @@ pub fn main() !void {
 }
 ```
 
+For better types on render structs enable the corrosponding options when importing the dependancy and make sure that the lib is present in the libs folder
+```zig
+    const zopenvr = b.dependency("zopenvr", .{
+        .d3d12 = true,    // requires zwin32
+    });
+```
+
 ## Implementation progress
 
 | Interface       |       Status        |
@@ -75,6 +82,17 @@ pub fn main() !void {
 | SpatialAnchors  |                     |
 | System          |         ✅          |
 | TrackedCamera   |                     |
+
+### Compositor supported renderers
+| Renderer           | Handle type           | Zig handle name                 | Support |
+|--------------------|-----------------------|---------------------------------|:-------:|
+| DirectX 11 (d3d11) | ID3D11Texture2D       | zwin32.d3d11.ITexture2D         |         |
+| OpenGL             |                       |                                 |         |
+| Vulkan             | VRVulkanTextureData_t |                                 |         |
+| IOSurface          |                       |                                 |         |
+| DirectX 12 (d3d12) | D3D12TextureData_t    | zopenvr.common.D3D12TextureData |    ✅   |
+| DXGI               |                       |                                 |         |
+| Metal              |                       |                                 |         |
 
 ## todo
 generate bindings from original json

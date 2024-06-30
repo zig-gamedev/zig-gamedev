@@ -1,6 +1,10 @@
 const std = @import("std");
-const zwin32 = @import("zwin32");
-const d3d12 = zwin32.d3d12;
+const config = @import("rendermodesConfig");
+
+const d3d12 = if (config.d3d12) @import("zwin32").d3d12 else struct {
+    ICommandQueue: type = anyopaque,
+    IResource: type = anyopaque,
+}{};
 
 const root = @This();
 
