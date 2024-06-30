@@ -2,9 +2,9 @@ const std = @import("std");
 const config = @import("rendermodesConfig");
 
 const d3d12 = if (config.d3d12) @import("zwin32").d3d12 else struct {
-    ICommandQueue: type = anyopaque,
-    IResource: type = anyopaque,
-}{};
+    pub const ICommandQueue = anyopaque;
+    pub const IResource = anyopaque;
+};
 
 const root = @This();
 

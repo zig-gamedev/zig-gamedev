@@ -18,7 +18,7 @@ pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{ ... });
 
     const zopenvr = b.dependency("zopenvr", .{});
-    exe.root_module.addImport("zopenvr", zopenvr.module("zopenvr"));
+    exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
     @import("zopenvr").addLibraryPathsTo(exe);
     @import("zopenvr").linkOpenVR(exe);
@@ -48,7 +48,7 @@ pub fn main() !void {
 }
 ```
 
-For better types on render structs enable the corrosponding options when importing the dependancy and make sure that the lib is present in the libs folder
+For better types on render structs, enable the corresponding options when importing the dependency and ensure that the lib is present in the libs folder.
 ```zig
     const zopenvr = b.dependency("zopenvr", .{
         .d3d12 = true,    // requires zwin32
