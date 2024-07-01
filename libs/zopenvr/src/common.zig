@@ -724,6 +724,8 @@ pub const TrackingUniverseOrigin = enum(i32) {
     raw_and_uncalibrated = 2,
 };
 
+pub const max_tracked_device_count: usize = 64;
+
 pub const TrackingResult = enum(i32) {
     uninitialized = 1,
     calibrating_in_progress = 100,
@@ -735,9 +737,10 @@ pub const TrackingResult = enum(i32) {
 
 pub const TrackedDeviceIndex = u32;
 pub const hmd: TrackedDeviceIndex = 0;
-pub const max_tracked_device_count: usize = 64;
-pub const other_tracked_device_index: TrackedDeviceIndex = 0xFFFFFFFE;
-pub const invalid_tracked_device_index: TrackedDeviceIndex = 0xFFFFFFFF;
+
+pub const tracked_device_index_hmd: TrackedDeviceIndex = hmd; // a copy that is more similar to the capi
+pub const tracked_device_index_other: TrackedDeviceIndex = 0xFFFFFFFE;
+pub const tracked_device_index_invalid: TrackedDeviceIndex = 0xFFFFFFFF;
 
 pub const TrackedDevicePose = extern struct {
     device_to_absolute_tracking: Matrix34,

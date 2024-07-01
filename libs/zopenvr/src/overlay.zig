@@ -132,8 +132,8 @@ pub fn getOverlayTextureColorSpace(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTextureBounds(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTextureBounds(self: Self, overlay_handle: common.OverlayHandle, overlay_texture_bounds: common.TextureBounds) common.OverlayError!void {
+    try self.function_table.SetOverlayTextureBounds(overlay_handle, &overlay_texture_bounds).maybe();
 }
 
 pub fn getOverlayTextureBounds(_: Self) void {
@@ -152,8 +152,8 @@ pub fn getOverlayTransformAbsolute(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformTrackedDeviceRelative(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTransformTrackedDeviceRelative(self: Self, overlay_handle: common.OverlayHandle, tracked_device: common.TrackedDeviceIndex, tracked_device_to_overlay_transform: common.Matrix34) common.OverlayError!void {
+    try self.function_table.SetOverlayTransformTrackedDeviceRelative(overlay_handle, tracked_device, &tracked_device_to_overlay_transform).maybe();
 }
 
 pub fn getOverlayTransformTrackedDeviceRelative(_: Self) void {
@@ -180,8 +180,8 @@ pub fn setOverlayTransformProjection(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn showOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn showOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
+    try self.function_table.ShowOverlay(overlay_handle).maybe();
 }
 
 pub fn hideOverlay(_: Self) void {
@@ -200,8 +200,12 @@ pub fn waitFrameSync(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn pollNextOverlayEvent(_: Self) void {
-    @compileError("not implemented");
+pub fn pollNextOverlayEvent(self: Self, overlay_handle: common.OverlayHandle) ?common.Event {
+    var event: common.Event = undefined;
+    if (self.function_table.PollNextOverlayEvent(overlay_handle, &event, @sizeOf(common.Event))) {
+        return event;
+    }
+    return null;
 }
 
 pub fn getOverlayInputMethod(_: Self) void {
@@ -256,8 +260,9 @@ pub fn clearOverlayTexture(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayRaw(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayRaw(self: Self, comptime T: type, overlay_handle: common.OverlayHandle, buffer: [*]T, width: u32, height: u32, bytes_per_pixel: u32) common.OverlayError!void {
+    std.debug.assert(@typeInfo(T) == .Int);
+    try self.function_table.SetOverlayRaw(overlay_handle, buffer, width, height, bytes_per_pixel).maybe();
 }
 
 pub fn setOverlayFromFile(_: Self) void {
