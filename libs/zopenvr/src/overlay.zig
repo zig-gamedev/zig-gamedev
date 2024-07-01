@@ -28,7 +28,7 @@ pub fn createOverlay(self: Self, overlay_key: [:0]const u8, overlay_name: [:0]co
 }
 
 pub fn destroyOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
-    try self.function_table.DestroyOverlay(overlay_handle).maybe();
+    return self.function_table.DestroyOverlay(overlay_handle).maybe();
 }
 
 pub fn getOverlayKey(self: Self, allocator: std.mem.Allocator, overlay_handle: common.OverlayHandle) (common.OverlayError || error{OutOfMemory})![:0]u8 {
@@ -72,7 +72,7 @@ pub fn getOverlayName(self: Self, allocator: std.mem.Allocator, overlay_handle: 
 }
 
 pub fn setOverlayName(self: Self, overlay_handle: common.OverlayHandle, name: [:0]const u8) common.OverlayError!void {
-    try self.function_table.SetOverlayName(overlay_handle, name.ptr).maybe();
+    return self.function_table.SetOverlayName(overlay_handle, name.ptr).maybe();
 }
 
 pub fn getOverlayImageData(_: Self) void {
@@ -83,12 +83,12 @@ pub fn getOverlayErrorNameFromEnum(self: Self, overlay_error: common.OverlayErro
     return std.mem.span(self.function_table.GetOverlayErrorNameFromEnum(overlay_error));
 }
 
-pub fn setOverlayRenderingPid(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayRenderingPid(self: Self, overlay_handle: common.OverlayHandle, pid: u32) common.OverlayError!void {
+    return self.function_table.SetOverlayRenderingPid(overlay_handle, pid).maybe();
 }
 
-pub fn getOverlayRenderingPid(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayRenderingPid(self: Self, overlay_handle: common.OverlayHandle) u32 {
+    return self.function_table.GetOverlayRenderingPid(overlay_handle);
 }
 
 pub fn setOverlayFlag(_: Self) void {
@@ -104,7 +104,7 @@ pub fn getOverlayFlags(_: Self) void {
 }
 
 pub fn setOverlayColor(self: Self, overlay_handle: common.OverlayHandle, red: f32, green: f32, blue: f32) common.OverlayError!void {
-    try self.function_table.SetOverlayColor(overlay_handle, red, green, blue).maybe();
+    return self.function_table.SetOverlayColor(overlay_handle, red, green, blue).maybe();
 }
 
 pub fn getOverlayColor(_: Self) void {
@@ -136,7 +136,7 @@ pub fn getOverlaySortOrder(_: Self) void {
 }
 
 pub fn setOverlayWidthInMeters(self: Self, overlay_handle: common.OverlayHandle, width_in_meters: f32) common.OverlayError!void {
-    try self.function_table.SetOverlayWidthInMeters(overlay_handle, width_in_meters).maybe();
+    return self.function_table.SetOverlayWidthInMeters(overlay_handle, width_in_meters).maybe();
 }
 
 pub fn getOverlayWidthInMeters(_: Self) void {
@@ -168,7 +168,7 @@ pub fn getOverlayTextureColorSpace(_: Self) void {
 }
 
 pub fn setOverlayTextureBounds(self: Self, overlay_handle: common.OverlayHandle, overlay_texture_bounds: common.TextureBounds) common.OverlayError!void {
-    try self.function_table.SetOverlayTextureBounds(overlay_handle, &overlay_texture_bounds).maybe();
+    return self.function_table.SetOverlayTextureBounds(overlay_handle, &overlay_texture_bounds).maybe();
 }
 
 pub fn getOverlayTextureBounds(_: Self) void {
@@ -193,7 +193,12 @@ pub fn setOverlayTransformTrackedDeviceRelative(
     tracked_device: common.TrackedDeviceIndex,
     tracked_device_to_overlay_transform: common.Matrix34,
 ) common.OverlayError!void {
-    try self.function_table.SetOverlayTransformTrackedDeviceRelative(overlay_handle, tracked_device, &tracked_device_to_overlay_transform).maybe();
+    const err = self.function_table.SetOverlayTransformTrackedDeviceRelative(
+        overlay_handle,
+        tracked_device,
+        &tracked_device_to_overlay_transform,
+    );
+    return err.maybe();
 }
 
 pub fn getOverlayTransformTrackedDeviceRelative(_: Self) void {
@@ -221,11 +226,11 @@ pub fn setOverlayTransformProjection(_: Self) void {
 }
 
 pub fn showOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
-    try self.function_table.ShowOverlay(overlay_handle).maybe();
+    return self.function_table.ShowOverlay(overlay_handle).maybe();
 }
 
 pub fn hideOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
-    try self.function_table.HideOverlay(overlay_handle).maybe();
+    return self.function_table.HideOverlay(overlay_handle).maybe();
 }
 
 pub fn isOverlayVisible(_: Self) void {
@@ -254,8 +259,12 @@ pub fn getOverlayInputMethod(self: Self, overlay_handle: common.OverlayHandle) c
     return input_method;
 }
 
-pub fn setOverlayInputMethod(self: Self, overlay_handle: common.OverlayHandle, input_method: common.OverlayInputMethod) common.OverlayError!void {
-    try self.function_table.SetOverlayInputMethod(overlay_handle, input_method).maybe();
+pub fn setOverlayInputMethod(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    input_method: common.OverlayInputMethod,
+) common.OverlayError!void {
+    return self.function_table.SetOverlayInputMethod(overlay_handle, input_method).maybe();
 }
 
 pub fn getOverlayMouseScale(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.Vector2 {
@@ -265,10 +274,14 @@ pub fn getOverlayMouseScale(self: Self, overlay_handle: common.OverlayHandle) co
 }
 
 pub fn setOverlayMouseScale(self: Self, overlay_handle: common.OverlayHandle, mouse_scale: common.Vector2) common.OverlayError!void {
-    try self.function_table.SetOverlayMouseScale(overlay_handle, &mouse_scale).maybe();
+    return self.function_table.SetOverlayMouseScale(overlay_handle, &mouse_scale).maybe();
 }
 
-pub fn computeOverlayIntersection(self: Self, overlay_handle: common.OverlayHandle, params: common.OverlayIntersectionParams) ?common.OverlayIntersectionResults {
+pub fn computeOverlayIntersection(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    params: common.OverlayIntersectionParams,
+) ?common.OverlayIntersectionResults {
     var results: common.OverlayIntersectionResults = undefined;
     if (self.function_table.ComputeOverlayIntersection(overlay_handle, &params, &results)) {
         return results;
@@ -280,38 +293,48 @@ pub fn isHoverTargetOverlay(self: Self, overlay_handle: common.OverlayHandle) bo
     return self.function_table.IsHoverTargetOverlay(overlay_handle);
 }
 
-pub fn setOverlayIntersectionMask(self: Self, overlay_handle: common.OverlayHandle, mask_primitives: []common.OverlayIntersectionMaskPrimitive) common.OverlayError!void {
+pub fn setOverlayIntersectionMask(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    mask_primitives: []common.OverlayIntersectionMaskPrimitive,
+) common.OverlayError!void {
     const err = self.function_table.SetOverlayIntersectionMask(
         overlay_handle,
         mask_primitives.ptr,
         mask_primitives.len,
         @sizeOf(common.OverlayIntersectionMaskPrimitive),
     );
-    try err.maybe();
+    return err.maybe();
 }
 
-pub fn triggerLaserMouseHapticVibration(self: Self, overlay_handle: common.OverlayError, duration_seconds: f32, frequency: f32, amplitude: f32) common.OverlayError!void {
-    try self.function_table.TriggerLaserMouseHapticVibration(overlay_handle, duration_seconds, frequency, amplitude).maybe();
+pub fn triggerLaserMouseHapticVibration(
+    self: Self,
+    overlay_handle: common.OverlayError,
+    duration_seconds: f32,
+    frequency: f32,
+    amplitude: f32,
+) common.OverlayError!void {
+    return self.function_table.TriggerLaserMouseHapticVibration(overlay_handle, duration_seconds, frequency, amplitude).maybe();
 }
 
 pub fn setOverlayCursor(self: Self, overlay_handle: common.OverlayHandle, cursor_handle: common.OverlayHandle) common.OverlayError!void {
-    try self.function_table.SetOverlayCursor(overlay_handle, cursor_handle).maybe();
+    return self.function_table.SetOverlayCursor(overlay_handle, cursor_handle).maybe();
 }
 
 pub fn setOverlayCursorPositionOverride(self: Self, overlay_handle: common.OverlayHandle, cursor: common.Vector2) common.OverlayError!void {
-    try self.function_table.SetOverlayCursorPositionOverride(overlay_handle, cursor.ptr).maybe();
+    return self.function_table.SetOverlayCursorPositionOverride(overlay_handle, cursor.ptr).maybe();
 }
 
 pub fn clearOverlayCursorPositionOverride(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
-    try self.function_table.ClearOverlayCursorPositionOverride(overlay_handle).maybe();
+    return self.function_table.ClearOverlayCursorPositionOverride(overlay_handle).maybe();
 }
 
 pub fn setOverlayTexture(self: Self, overlay_handle: common.OverlayHandle, texture: common.Texture) common.OverlayError!void {
-    try self.function_table.SetOverlayTexture(overlay_handle, texture.ptr).maybe();
+    return self.function_table.SetOverlayTexture(overlay_handle, texture.ptr).maybe();
 }
 
 pub fn clearOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
-    try self.function_table.ClearOverlayTexture(overlay_handle).maybe();
+    return self.function_table.ClearOverlayTexture(overlay_handle).maybe();
 }
 
 pub fn setOverlayRaw(
@@ -340,11 +363,11 @@ pub fn setOverlayRaw(
             @compileError("type '" ++ @typeName(T) ++ "' is not allowed here");
         }
     }
-    try self.function_table.SetOverlayRaw(overlay_handle, buffer, width, height, bytes_per_pixel).maybe();
+    return self.function_table.SetOverlayRaw(overlay_handle, buffer, width, height, bytes_per_pixel).maybe();
 }
 
 pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file_path: [:0]const u8) common.OverlayError!void {
-    try self.function_table.SetOverlayFromFile(overlay_handle, file_path.ptr).maybe();
+    return self.function_table.SetOverlayFromFile(overlay_handle, file_path.ptr).maybe();
 }
 
 pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct {} {
@@ -354,7 +377,7 @@ pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) commo
 }
 
 pub fn releaseNativeOverlayHandle(self: Self, overlay_handle: common.OverlayHandle, native_texture_handle: anyopaque) common.OverlayError!void {
-    try self.function_table.ReleaseNativeOverlayHandle(overlay_handle, native_texture_handle).maybe();
+    return self.function_table.ReleaseNativeOverlayHandle(overlay_handle, native_texture_handle).maybe();
 }
 
 pub fn getOverlayTextureSize(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct { width: u32, height: u32 } {
@@ -392,7 +415,7 @@ pub fn isActiveDashboardOverlay(self: Self, overlay_handle: common.OverlayHandle
 }
 
 pub fn setDashboardOverlaySceneProcess(self: Self, overlay_handle: common.OverlayHandle, process_id: u32) common.OverlayError!void {
-    try self.function_table.SetDashboardOverlaySceneProcess(overlay_handle, process_id).maybe();
+    return self.function_table.SetDashboardOverlaySceneProcess(overlay_handle, process_id).maybe();
 }
 
 pub fn getDashboardOverlaySceneProcess(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!u32 {
@@ -428,7 +451,7 @@ pub fn showKeyboard(
         existing_text.ptr,
         user_value,
     );
-    try err.maybe();
+    return err.maybe();
 }
 
 pub fn showKeyboardForOverlay(
@@ -452,7 +475,7 @@ pub fn showKeyboardForOverlay(
         existing_text.ptr,
         user_value,
     );
-    try err.maybe();
+    return err.maybe();
 }
 
 // todo check if max length is the same as max chars from above or one off
