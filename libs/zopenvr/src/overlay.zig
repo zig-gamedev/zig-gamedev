@@ -13,8 +13,11 @@ pub fn init() common.InitError!Self {
     };
 }
 
-pub fn findOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn findOverlay(self: Self, overlay_key: [:0]const u8) common.OverlayError!common.OverlayHandle {
+    var handle: common.OverlayHandle = undefined;
+    const overlay_error = self.function_table.FindOverlay(overlay_key.ptr, &handle);
+    try overlay_error.maybe();
+    return handle;
 }
 
 pub fn createOverlay(self: Self, overlay_key: [:0]const u8, overlay_name: [:0]const u8) common.OverlayError!common.OverlayHandle {
@@ -24,28 +27,60 @@ pub fn createOverlay(self: Self, overlay_key: [:0]const u8, overlay_name: [:0]co
     return handle;
 }
 
-pub fn destroyOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn destroyOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
+    try self.function_table.DestroyOverlay(overlay_handle).maybe();
 }
 
-pub fn getOverlayKey(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayKey(self: Self, allocator: std.mem.Allocator, overlay_handle: common.OverlayHandle) (common.OverlayError || error{OutOfMemory})![:0]u8 {
+    var error_code: common.OverlayErrorCode = undefined;
+    const buffer_length = self.function_table.GetOverlayKey(overlay_handle, null, 0, &error_code);
+    try error_code.maybe();
+    if (buffer_length == 0) {
+        return allocator.allocSentinel(u8, 0, 0);
+    }
+
+    const buffer = try allocator.allocSentinel(u8, buffer_length - 1, 0);
+    errdefer allocator.free(buffer);
+
+    if (buffer.len > 0) {
+        error_code = undefined;
+        _ = self.function_table.GetOverlayKey(overlay_handle, buffer.ptr, buffer_length, &error_code);
+        try error_code.maybe();
+    }
+
+    return buffer;
 }
 
-pub fn getOverlayName(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayName(self: Self, allocator: std.mem.Allocator, overlay_handle: common.OverlayHandle) (common.OverlayError || error{OutOfMemory})![:0]u8 {
+    var error_code: common.OverlayErrorCode = undefined;
+    const buffer_length = self.function_table.GetOverlayName(overlay_handle, null, 0, &error_code);
+    try error_code.maybe();
+    if (buffer_length == 0) {
+        return allocator.allocSentinel(u8, 0, 0);
+    }
+
+    const buffer = try allocator.allocSentinel(u8, buffer_length - 1, 0);
+    errdefer allocator.free(buffer);
+
+    if (buffer.len > 0) {
+        error_code = undefined;
+        _ = self.function_table.GetOverlayName(overlay_handle, buffer.ptr, buffer_length, &error_code);
+        try error_code.maybe();
+    }
+
+    return buffer;
 }
 
-pub fn setOverlayName(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayName(self: Self, overlay_handle: common.OverlayHandle, name: [:0]const u8) common.OverlayError!void {
+    try self.function_table.SetOverlayName(overlay_handle, name.ptr).maybe();
 }
 
 pub fn getOverlayImageData(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayErrorNameFromEnum(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayErrorNameFromEnum(self: Self, overlay_error: common.OverlayErrorCode) [:0]const u8 {
+    return std.mem.span(self.function_table.GetOverlayErrorNameFromEnum(overlay_error));
 }
 
 pub fn setOverlayRenderingPid(_: Self) void {
@@ -152,7 +187,12 @@ pub fn getOverlayTransformAbsolute(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformTrackedDeviceRelative(self: Self, overlay_handle: common.OverlayHandle, tracked_device: common.TrackedDeviceIndex, tracked_device_to_overlay_transform: common.Matrix34) common.OverlayError!void {
+pub fn setOverlayTransformTrackedDeviceRelative(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    tracked_device: common.TrackedDeviceIndex,
+    tracked_device_to_overlay_transform: common.Matrix34,
+) common.OverlayError!void {
     try self.function_table.SetOverlayTransformTrackedDeviceRelative(overlay_handle, tracked_device, &tracked_device_to_overlay_transform).maybe();
 }
 
@@ -184,8 +224,8 @@ pub fn showOverlay(self: Self, overlay_handle: common.OverlayHandle) common.Over
     try self.function_table.ShowOverlay(overlay_handle).maybe();
 }
 
-pub fn hideOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn hideOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
+    try self.function_table.HideOverlay(overlay_handle).maybe();
 }
 
 pub fn isOverlayVisible(_: Self) void {
@@ -208,145 +248,263 @@ pub fn pollNextOverlayEvent(self: Self, overlay_handle: common.OverlayHandle) ?c
     return null;
 }
 
-pub fn getOverlayInputMethod(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayInputMethod(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.OverlayInputMethod {
+    var input_method: common.OverlayInputMethod = undefined;
+    try self.function_table.GetOverlayInputMethod(overlay_handle, &input_method).maybe();
+    return input_method;
 }
 
-pub fn setOverlayInputMethod(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayInputMethod(self: Self, overlay_handle: common.OverlayHandle, input_method: common.OverlayInputMethod) common.OverlayError!void {
+    try self.function_table.SetOverlayInputMethod(overlay_handle, input_method).maybe();
 }
 
-pub fn getOverlayMouseScale(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayMouseScale(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.Vector2 {
+    var mouse_scale: common.Vector2 = undefined;
+    try self.function_table.GetOverlayMouseScale(overlay_handle, &mouse_scale).maybe();
+    return mouse_scale;
 }
 
-pub fn setOverlayMouseScale(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayMouseScale(self: Self, overlay_handle: common.OverlayHandle, mouse_scale: common.Vector2) common.OverlayError!void {
+    try self.function_table.SetOverlayMouseScale(overlay_handle, &mouse_scale).maybe();
 }
 
-pub fn computeOverlayIntersection(_: Self) void {
-    @compileError("not implemented");
+pub fn computeOverlayIntersection(self: Self, overlay_handle: common.OverlayHandle, params: common.OverlayIntersectionParams) ?common.OverlayIntersectionResults {
+    var results: common.OverlayIntersectionResults = undefined;
+    if (self.function_table.ComputeOverlayIntersection(overlay_handle, &params, &results)) {
+        return results;
+    }
+    return null;
 }
 
-pub fn isHoverTargetOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn isHoverTargetOverlay(self: Self, overlay_handle: common.OverlayHandle) bool {
+    return self.function_table.IsHoverTargetOverlay(overlay_handle);
 }
 
-pub fn setOverlayIntersectionMask(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayIntersectionMask(self: Self, overlay_handle: common.OverlayHandle, mask_primitives: []common.OverlayIntersectionMaskPrimitive) common.OverlayError!void {
+    const err = self.function_table.SetOverlayIntersectionMask(
+        overlay_handle,
+        mask_primitives.ptr,
+        mask_primitives.len,
+        @sizeOf(common.OverlayIntersectionMaskPrimitive),
+    );
+    try err.maybe();
 }
 
-pub fn triggerLaserMouseHapticVibration(_: Self) void {
-    @compileError("not implemented");
+pub fn triggerLaserMouseHapticVibration(self: Self, overlay_handle: common.OverlayError, duration_seconds: f32, frequency: f32, amplitude: f32) common.OverlayError!void {
+    try self.function_table.TriggerLaserMouseHapticVibration(overlay_handle, duration_seconds, frequency, amplitude).maybe();
 }
 
-pub fn setOverlayCursor(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayCursor(self: Self, overlay_handle: common.OverlayHandle, cursor_handle: common.OverlayHandle) common.OverlayError!void {
+    try self.function_table.SetOverlayCursor(overlay_handle, cursor_handle).maybe();
 }
 
-pub fn setOverlayCursorPositionOverride(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayCursorPositionOverride(self: Self, overlay_handle: common.OverlayHandle, cursor: common.Vector2) common.OverlayError!void {
+    try self.function_table.SetOverlayCursorPositionOverride(overlay_handle, cursor.ptr).maybe();
 }
 
-pub fn clearOverlayCursorPositionOverride(_: Self) void {
-    @compileError("not implemented");
+pub fn clearOverlayCursorPositionOverride(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
+    try self.function_table.ClearOverlayCursorPositionOverride(overlay_handle).maybe();
 }
 
-pub fn setOverlayTexture(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTexture(self: Self, overlay_handle: common.OverlayHandle, texture: common.Texture) common.OverlayError!void {
+    try self.function_table.SetOverlayTexture(overlay_handle, texture.ptr).maybe();
 }
 
-pub fn clearOverlayTexture(_: Self) void {
-    @compileError("not implemented");
+pub fn clearOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
+    try self.function_table.ClearOverlayTexture(overlay_handle).maybe();
 }
 
-pub fn setOverlayRaw(self: Self, comptime T: type, overlay_handle: common.OverlayHandle, buffer: [*]T, width: u32, height: u32, bytes_per_pixel: u32) common.OverlayError!void {
-    std.debug.assert(@typeInfo(T) == .Int);
+pub fn setOverlayRaw(
+    self: Self,
+    comptime T: type,
+    overlay_handle: common.OverlayHandle,
+    buffer: [*]T,
+    width: u32,
+    height: u32,
+    bytes_per_pixel: u32,
+) common.OverlayError!void {
+    comptime {
+        const type_info = @typeInfo(T);
+        if (type_info == .Int) {
+            if (type_info.Int.bits % 8 != 0) {
+                @compileError("int needs to be a whole number of bytes");
+            }
+        } else if (type_info == .Struct) {
+            if (type_info.Struct.layout != .@"packed") {
+                @compileError("struct needs to be packed");
+            }
+            if (type_info.Struct.backing_integer % 8 != 0) {
+                @compileError("struct needs to be a whole number of bytes big");
+            }
+        } else {
+            @compileError("type '" ++ @typeName(T) ++ "' is not allowed here");
+        }
+    }
     try self.function_table.SetOverlayRaw(overlay_handle, buffer, width, height, bytes_per_pixel).maybe();
 }
 
-pub fn setOverlayFromFile(_: Self) void {
+pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file_path: [:0]const u8) common.OverlayError!void {
+    try self.function_table.SetOverlayFromFile(overlay_handle, file_path.ptr).maybe();
+}
+
+pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct {} {
+    _ = self;
+    _ = overlay_handle;
     @compileError("not implemented");
 }
 
-pub fn getOverlayTexture(_: Self) void {
-    @compileError("not implemented");
+pub fn releaseNativeOverlayHandle(self: Self, overlay_handle: common.OverlayHandle, native_texture_handle: anyopaque) common.OverlayError!void {
+    try self.function_table.ReleaseNativeOverlayHandle(overlay_handle, native_texture_handle).maybe();
 }
 
-pub fn releaseNativeOverlayHandle(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTextureSize(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct { width: u32, height: u32 } {
+    var width: u32 = undefined;
+    var height: u32 = undefined;
+    try self.function_table.GetOverlayTextureSize(overlay_handle, &width, &height).maybe();
+
+    return .{
+        .width = width,
+        .height = height,
+    };
 }
 
-pub fn getOverlayTextureSize(_: Self) void {
-    @compileError("not implemented");
+pub fn createDashboardOverlay(self: Self, overlay_key: [:0]const u8, overlay_friendly_name: [:0]const u8) common.OverlayError!struct {
+    overlay_handle: common.OverlayHandle,
+    thumbail_handle: common.OverlayHandle,
+} {
+    var overlay_handle: common.OverlayHandle = undefined;
+    var thumbail_handle: common.OverlayHandle = undefined;
+    const err = self.function_table.CreateDashboardOverlay(overlay_key.ptr, overlay_friendly_name.ptr, &overlay_handle, &thumbail_handle);
+    try err.maybe();
+
+    return .{
+        .overlay_handle = overlay_handle,
+        .thumbnail_handle = overlay_handle,
+    };
 }
 
-pub fn createDashboardOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn isDashboardVisible(self: Self) bool {
+    return self.function_table.IsDashboardVisible();
 }
 
-pub fn isDashboardVisible(_: Self) void {
-    @compileError("not implemented");
+pub fn isActiveDashboardOverlay(self: Self, overlay_handle: common.OverlayHandle) bool {
+    return self.function_table.IsActiveDashboardOverlay(overlay_handle);
 }
 
-pub fn isActiveDashboardOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn setDashboardOverlaySceneProcess(self: Self, overlay_handle: common.OverlayHandle, process_id: u32) common.OverlayError!void {
+    try self.function_table.SetDashboardOverlaySceneProcess(overlay_handle, process_id).maybe();
 }
 
-pub fn setDashboardOverlaySceneProcess(_: Self) void {
-    @compileError("not implemented");
+pub fn getDashboardOverlaySceneProcess(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!u32 {
+    var process_id: u32 = undefined;
+    try self.function_table.GetDashboardOverlaySceneProcess(overlay_handle, &process_id).maybe();
+    return process_id;
 }
 
-pub fn getDashboardOverlaySceneProcess(_: Self) void {
-    @compileError("not implemented");
+pub fn showDashboard(self: Self, overlay_to_show: [:0]const u8) void {
+    self.function_table.ShowDashboard(overlay_to_show.ptr);
 }
 
-pub fn showDashboard(_: Self) void {
-    @compileError("not implemented");
+pub fn getPrimaryDashboardDevice(self: Self) common.TrackedDeviceIndex {
+    return self.function_table.GetPrimaryDashboardDevice();
 }
 
-pub fn getPrimaryDashboardDevice(_: Self) void {
-    @compileError("not implemented");
+pub fn showKeyboard(
+    self: Self,
+    input_mode: common.GamepadTextInputMode,
+    line_input_more: common.GamepadTextInputLineMode,
+    flags: common.KeyboardFlags,
+    description: [:0]const u8,
+    max_characters: u32,
+    existing_text: [:0]const u8,
+    user_value: u64,
+) common.OverlayError!void {
+    const err = self.function_table.ShowKeyboard(
+        input_mode,
+        line_input_more,
+        flags,
+        description.ptr,
+        max_characters,
+        existing_text.ptr,
+        user_value,
+    );
+    try err.maybe();
 }
 
-pub fn showKeyboard(_: Self) void {
-    @compileError("not implemented");
+pub fn showKeyboardForOverlay(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    input_mode: common.GamepadTextInputMode,
+    line_input_more: common.GamepadTextInputLineMode,
+    flags: common.KeyboardFlags,
+    description: [:0]const u8,
+    max_characters: u32,
+    existing_text: [:0]const u8,
+    user_value: u64,
+) common.OverlayError!void {
+    const err = self.function_table.ShowKeyboardForOverlay(
+        overlay_handle,
+        input_mode,
+        line_input_more,
+        flags,
+        description.ptr,
+        max_characters,
+        existing_text.ptr,
+        user_value,
+    );
+    try err.maybe();
 }
 
-pub fn showKeyboardForOverlay(_: Self) void {
-    @compileError("not implemented");
+// todo check if max length is the same as max chars from above or one off
+pub fn getKeyboardText(self: Self, allocator: std.mem.Allocator, max_length: u32) error{OutOfMemory}![:0]u8 {
+    const buffer = try allocator.allocSentinel(u8, max_length - 1, 0);
+    const size = self.function_table.GetKeyboardText(buffer.ptr, max_length);
+    _ = size;
+
+    return buffer;
 }
 
-pub fn getKeyboardText(_: Self) void {
-    @compileError("not implemented");
+pub fn hideKeyboard(self: Self) void {
+    self.function_table.HideKeyboard();
 }
 
-pub fn hideKeyboard(_: Self) void {
-    @compileError("not implemented");
+pub fn setKeyboardTransformAbsolute(self: Self, tracking_origin: common.TrackingUniverseOrigin, tracking_origin_to_keyboard_transform: common.Matrix34) void {
+    self.function_table.SetKeyboardTransformAbsolute(tracking_origin, &tracking_origin_to_keyboard_transform);
 }
 
-pub fn setKeyboardTransformAbsolute(_: Self) void {
-    @compileError("not implemented");
+pub fn setKeyboardPositionForOverlay(self: Self, overlay_handle: common.OverlayHandle, avoid_rect: common.Rect2) void {
+    self.function_table.SetKeyboardPositionForOverlay(overlay_handle, avoid_rect);
 }
 
-pub fn setKeyboardPositionForOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn showMessageOverlay(
+    self: Self,
+    text: [:0]const u8,
+    caption: [:0]const u8,
+    button0_text: [:0]const u8,
+    button1_text: ?[:0]const u8,
+    button2_text: ?[:0]const u8,
+    button3_text: ?[:0]const u8,
+) common.MessageOverlayResponse {
+    return self.function_table.ShowMessageOverlay(
+        text.ptr,
+        caption.ptr,
+        button0_text.ptr,
+        if (button1_text) |str| str.ptr else null,
+        if (button2_text) |str| str.ptr else null,
+        if (button3_text) |str| str.ptr else null,
+    );
 }
 
-pub fn showMessageOverlay(_: Self) void {
-    @compileError("not implemented");
-}
-
-pub fn closeMessageOverlay(_: Self) void {
-    @compileError("not implemented");
+pub fn closeMessageOverlay(self: Self) void {
+    self.function_table.CloseMessageOverlay();
 }
 
 const FunctionTable = extern struct {
     FindOverlay: *const fn ([*c]const u8, *common.OverlayHandle) callconv(.C) common.OverlayErrorCode,
     CreateOverlay: *const fn ([*c]const u8, [*c]const u8, *common.OverlayHandle) callconv(.C) common.OverlayErrorCode,
     DestroyOverlay: *const fn (common.OverlayHandle) callconv(.C) common.OverlayErrorCode,
-    GetOverlayKey: *const fn (common.OverlayHandle, [*c]const u8, u32, *common.OverlayErrorCode) callconv(.C) u32,
-    GetOverlayName: *const fn (common.OverlayHandle, [*c]const u8, u32, *common.OverlayErrorCode) callconv(.C) u32,
+    GetOverlayKey: *const fn (common.OverlayHandle, [*c]u8, u32, *common.OverlayErrorCode) callconv(.C) u32,
+    GetOverlayName: *const fn (common.OverlayHandle, [*c]u8, u32, *common.OverlayErrorCode) callconv(.C) u32,
     SetOverlayName: *const fn (common.OverlayHandle, [*c]const u8) callconv(.C) common.OverlayErrorCode,
     GetOverlayImageData: *const fn (common.OverlayHandle, ?*anyopaque, u32, *u32, *u32) callconv(.C) common.OverlayErrorCode,
     GetOverlayErrorNameFromEnum: *const fn (common.OverlayErrorCode) callconv(.C) [*c]const u8,
@@ -397,7 +555,7 @@ const FunctionTable = extern struct {
     SetOverlayMouseScale: *const fn (common.OverlayHandle, *const common.Vector2) callconv(.C) common.OverlayErrorCode,
     ComputeOverlayIntersection: *const fn (common.OverlayHandle, *const common.OverlayIntersectionParams, *common.OverlayIntersectionResults) callconv(.C) bool,
     IsHoverTargetOverlay: *const fn (common.OverlayHandle) callconv(.C) bool,
-    SetOverlayIntersectionMask: *const fn (common.OverlayHandle, *common.OverlayIntersectionMaskPrimitive, u32, u32) callconv(.C) common.OverlayErrorCode,
+    SetOverlayIntersectionMask: *const fn (common.OverlayHandle, [*c]common.OverlayIntersectionMaskPrimitive, u32, u32) callconv(.C) common.OverlayErrorCode,
     TriggerLaserMouseHapticVibration: *const fn (common.OverlayHandle, f32, f32, f32) callconv(.C) common.OverlayErrorCode,
     SetOverlayCursor: *const fn (common.OverlayHandle, common.OverlayHandle) callconv(.C) common.OverlayErrorCode,
     SetOverlayCursorPositionOverride: *const fn (common.OverlayHandle, *const common.Vector2) callconv(.C) common.OverlayErrorCode,
@@ -416,16 +574,16 @@ const FunctionTable = extern struct {
     IsActiveDashboardOverlay: *const fn (common.OverlayHandle) callconv(.C) bool,
     SetDashboardOverlaySceneProcess: *const fn (common.OverlayHandle, u32) callconv(.C) common.OverlayErrorCode,
     GetDashboardOverlaySceneProcess: *const fn (common.OverlayHandle, *u32) callconv(.C) common.OverlayErrorCode,
-    ShowDashboard: *const fn ([*c]const u8) callconv(.C) common.OverlayErrorCode,
+    ShowDashboard: *const fn ([*c]const u8) callconv(.C) void,
     GetPrimaryDashboardDevice: *const fn () callconv(.C) common.TrackedDeviceIndex,
 
     ShowKeyboard: *const fn (common.GamepadTextInputMode, common.GamepadTextInputLineMode, common.KeyboardFlags, [*c]const u8, u32, [*c]const u8, u64) callconv(.C) common.OverlayErrorCode,
     ShowKeyboardForOverlay: *const fn (common.OverlayHandle, common.GamepadTextInputMode, common.GamepadTextInputLineMode, common.KeyboardFlags, [*c]const u8, u32, [*c]const u8, u64) callconv(.C) common.OverlayErrorCode,
-    GetKeyboardText: *const fn ([*c]const u8, u32) callconv(.C) u32,
+    GetKeyboardText: *const fn ([*c]u8, u32) callconv(.C) u32,
     HideKeyboard: *const fn () callconv(.C) void,
     SetKeyboardTransformAbsolute: *const fn (common.TrackingUniverseOrigin, *const common.Matrix34) callconv(.C) void,
     SetKeyboardPositionForOverlay: *const fn (common.OverlayHandle, common.Rect2) callconv(.C) void,
 
-    ShowMessageOverlay: *const fn ([*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8) callconv(.C) void,
+    ShowMessageOverlay: *const fn ([*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8) callconv(.C) common.MessageOverlayResponse,
     CloseMessageOverlay: *const fn () callconv(.C) void,
 };
