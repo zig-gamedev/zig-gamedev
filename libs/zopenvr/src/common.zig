@@ -2125,12 +2125,12 @@ pub const EventReserved = extern struct {
     reserved5: u64,
 };
 pub const EventController = extern struct {
-    button: u32,
+    button: ButtonId,
 };
 pub const EventMouse = extern struct {
     x: f32,
     y: f32,
-    button: u32,
+    button: VRMouseButton,
     cursor_index: u32,
 };
 pub const EventScroll = extern struct {
@@ -2151,18 +2151,18 @@ pub const EventNotification = extern struct { // which EventType?
     notification_id: u32,
 };
 pub const EventOverlay = extern struct {
-    overlay_handle: u64, // OverlayHandle
+    overlay_handle: OverlayHandle,
     device_path: u64,
     memory_block_id: u64,
     cursor_index: u32,
 };
-pub const EventStatus = extern struct { // which EventType?
-    status_state: u32,
+pub const EventStatus = extern struct {
+    status_state: VRState,
 };
 pub const EventKeyboard = extern struct {
-    new_input: [8]u8,
-    user_value: u64,
-    overlay_handle: u64, // OverlayHandle
+    new_input: [8]u8, // 7 bytes of utf8 + null
+    user_value: u64, // caller specified opaque token
+    overlay_handle: OverlayHandle,
 };
 pub const EventIpd = extern struct {
     ipd_meters: f32,
@@ -2200,11 +2200,11 @@ pub const EventApplicationLaunch = extern struct { // which EventType?
 };
 
 pub const EventEditingCameraSurface = extern struct {
-    overlay_handle: u64, // OverlayHandle
+    overlay_handle: OverlayHandle,
     visual_mode: u32,
 };
 pub const EventMessageOverlay = extern struct { // which EventType?
-    response: u32,
+    response: MessageOverlayResponse,
 };
 pub const PropertyContainerHandle = u64;
 pub const EventProperty = extern struct {
@@ -2367,6 +2367,18 @@ pub const FirmwareErrorCode = enum(i32) {
             .fail => FirmwareError.Fail,
         };
     }
+};
+
+pub const VRState = enum(u32) {
+    undefined = -1,
+    off = 0,
+    searching = 1,
+    searching_alert = 2,
+    ready = 3,
+    ready_alert = 4,
+    not_ready = 5,
+    standby = 6,
+    ready_alert_low = 7,
 };
 
 pub const EventType = enum(i32) {
@@ -2783,8 +2795,6 @@ pub const OverlayFlags = packed struct(u32) {
         Reserved = @bitCast(OverlayFlags{ .reserved = true }),
         EnableClickStabilization = @bitCast(OverlayFlags{ .enable_click_stabilization = true }),
         MultiCursor = @bitCast(OverlayFlags{ .multi_cursor = true }),
-
-        _,
     };
 };
 
@@ -2883,4 +2893,22 @@ pub const GamepadTextInputMode = enum(i32) {
 pub const GamepadTextInputLineMode = enum(i32) {
     single_line = 0,
     multiple_lines = 1,
+};
+
+pub const MessageOverlayResponse = enum(u32) {
+    button_press_0 = 0,
+    button_press_1 = 1,
+    button_press_2 = 2,
+    button_press_3 = 3,
+    couldnt_find_system_overlay = 4,
+    couldnt_find_or_create_client_overlay = 5,
+    application_quit = 6,
+};
+
+pub const VRMouseButton = packed struct(u32) {
+    Left: bool = false,
+    Right: bool = false,
+    Middle: bool = false,
+
+    _padding: u29 = 0,
 };
