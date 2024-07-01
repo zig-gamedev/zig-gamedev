@@ -2785,7 +2785,7 @@ pub const OverlayFlags = packed struct(u32) {
     };
 };
 
-test "make sure bits are in the correct place" {
+test "overlay flag bits are in the correct place" {
     const expect = std.testing.expect;
     try expect(@as(u32, @bitCast(OverlayFlags{ .no_dashboard_tab = true })) == 1 << 3);
     try expect(@as(u32, @bitCast(OverlayFlags{ .multi_cursor = true })) == 1 << 28);
@@ -2838,14 +2838,14 @@ pub const OverlayIntersectionMaskPrimitiveType = enum(i32) {
     circle,
 };
 
-pub const IntersectionMaskRectangle = struct {
+pub const IntersectionMaskRectangle = extern struct {
     top_left_x: f32,
     top_left_y: f32,
     width: f32,
     height: f32,
 };
 
-pub const IntersectionMaskCircle = struct {
+pub const IntersectionMaskCircle = extern struct {
     center_x: f32,
     center_y: f32,
     radius: f32,
@@ -2868,7 +2868,7 @@ pub const KeyboardFlags = packed struct(u32) {
     // clicked. Hide only sends the Closed event.
     HideDoneKey: bool = false,
 
-    // _padding: u28 = 0,
+    _padding: u28 = 0,
 };
 
 pub const GamepadTextInputMode = enum(i32) {

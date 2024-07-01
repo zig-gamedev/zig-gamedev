@@ -13,323 +13,326 @@ pub fn init() common.InitError!Self {
     };
 }
 
-pub fn findOverlay() void {
+pub fn findOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn createOverlay() void {
-    @compileError("not implemented");
+pub fn createOverlay(self: Self, overlay_key: [:0]const u8, overlay_name: [:0]const u8) common.OverlayError!common.OverlayHandle {
+    var handle: common.OverlayHandle = undefined;
+    const overlay_error = self.function_table.CreateOverlay(overlay_key.ptr, overlay_name.ptr, &handle);
+    try overlay_error.maybe();
+    return handle;
 }
 
-pub fn destroyOverlay() void {
+pub fn destroyOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayKey() void {
+pub fn getOverlayKey(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayName() void {
+pub fn getOverlayName(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayName() void {
+pub fn setOverlayName(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayImageData() void {
+pub fn getOverlayImageData(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayErrorNameFromEnum() void {
+pub fn getOverlayErrorNameFromEnum(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayRenderingPid() void {
+pub fn setOverlayRenderingPid(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayRenderingPid() void {
+pub fn getOverlayRenderingPid(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayFlag() void {
+pub fn setOverlayFlag(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayFlag() void {
+pub fn getOverlayFlag(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayFlags() void {
+pub fn getOverlayFlags(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayColor() void {
-    @compileError("not implemented");
+pub fn setOverlayColor(self: Self, overlay_handle: common.OverlayHandle, red: f32, green: f32, blue: f32) common.OverlayError!void {
+    try self.function_table.SetOverlayColor(overlay_handle, red, green, blue).maybe();
 }
 
-pub fn getOverlayColor() void {
+pub fn getOverlayColor(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayAlpha() void {
+pub fn setOverlayAlpha(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayAlpha() void {
+pub fn getOverlayAlpha(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTexelAspect() void {
+pub fn setOverlayTexelAspect(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTexelAspect() void {
+pub fn getOverlayTexelAspect(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlaySortOrder() void {
+pub fn setOverlaySortOrder(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlaySortOrder() void {
+pub fn getOverlaySortOrder(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayWidthInMeters() void {
-    @compileError("not implemented");
+pub fn setOverlayWidthInMeters(self: Self, overlay_handle: common.OverlayHandle, width_in_meters: f32) common.OverlayError!void {
+    try self.function_table.SetOverlayWidthInMeters(overlay_handle, width_in_meters).maybe();
 }
 
-pub fn getOverlayWidthInMeters() void {
+pub fn getOverlayWidthInMeters(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayCurvature() void {
+pub fn setOverlayCurvature(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayCurvature() void {
+pub fn getOverlayCurvature(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayPreCurvePitch() void {
+pub fn setOverlayPreCurvePitch(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayPreCurvePitch() void {
+pub fn getOverlayPreCurvePitch(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTextureColorSpace() void {
+pub fn setOverlayTextureColorSpace(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTextureColorSpace() void {
+pub fn getOverlayTextureColorSpace(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTextureBounds() void {
+pub fn setOverlayTextureBounds(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTextureBounds() void {
+pub fn getOverlayTextureBounds(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTransformType() void {
+pub fn getOverlayTransformType(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformAbsolute() void {
+pub fn setOverlayTransformAbsolute(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTransformAbsolute() void {
+pub fn getOverlayTransformAbsolute(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformTrackedDeviceRelative() void {
+pub fn setOverlayTransformTrackedDeviceRelative(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTransformTrackedDeviceRelative() void {
+pub fn getOverlayTransformTrackedDeviceRelative(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformTrackedDeviceComponent() void {
+pub fn setOverlayTransformTrackedDeviceComponent(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTransformTrackedDeviceComponent() void {
+pub fn getOverlayTransformTrackedDeviceComponent(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformCursor() void {
+pub fn setOverlayTransformCursor(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTransformCursor() void {
+pub fn getOverlayTransformCursor(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformProjection() void {
+pub fn setOverlayTransformProjection(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn showOverlay() void {
+pub fn showOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn hideOverlay() void {
+pub fn hideOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn isOverlayVisible() void {
+pub fn isOverlayVisible(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getTransformForOverlayCoordinates() void {
+pub fn getTransformForOverlayCoordinates(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn waitFrameSync() void {
+pub fn waitFrameSync(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn pollNextOverlayEvent() void {
+pub fn pollNextOverlayEvent(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayInputMethod() void {
+pub fn getOverlayInputMethod(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayInputMethod() void {
+pub fn setOverlayInputMethod(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayMouseScale() void {
+pub fn getOverlayMouseScale(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayMouseScale() void {
+pub fn setOverlayMouseScale(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn computeOverlayIntersection() void {
+pub fn computeOverlayIntersection(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn isHoverTargetOverlay() void {
+pub fn isHoverTargetOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayIntersectionMask() void {
+pub fn setOverlayIntersectionMask(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn triggerLaserMouseHapticVibration() void {
+pub fn triggerLaserMouseHapticVibration(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayCursor() void {
+pub fn setOverlayCursor(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayCursorPositionOverride() void {
+pub fn setOverlayCursorPositionOverride(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn clearOverlayCursorPositionOverride() void {
+pub fn clearOverlayCursorPositionOverride(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTexture() void {
+pub fn setOverlayTexture(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn clearOverlayTexture() void {
+pub fn clearOverlayTexture(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayRaw() void {
+pub fn setOverlayRaw(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayFromFile() void {
+pub fn setOverlayFromFile(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTexture() void {
+pub fn getOverlayTexture(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn releaseNativeOverlayHandle() void {
+pub fn releaseNativeOverlayHandle(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getOverlayTextureSize() void {
+pub fn getOverlayTextureSize(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn createDashboardOverlay() void {
+pub fn createDashboardOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn isDashboardVisible() void {
+pub fn isDashboardVisible(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn isActiveDashboardOverlay() void {
+pub fn isActiveDashboardOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setDashboardOverlaySceneProcess() void {
+pub fn setDashboardOverlaySceneProcess(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getDashboardOverlaySceneProcess() void {
+pub fn getDashboardOverlaySceneProcess(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn showDashboard() void {
+pub fn showDashboard(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getPrimaryDashboardDevice() void {
+pub fn getPrimaryDashboardDevice(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn showKeyboard() void {
+pub fn showKeyboard(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn showKeyboardForOverlay() void {
+pub fn showKeyboardForOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn getKeyboardText() void {
+pub fn getKeyboardText(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn hideKeyboard() void {
+pub fn hideKeyboard(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setKeyboardTransformAbsolute() void {
+pub fn setKeyboardTransformAbsolute(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setKeyboardPositionForOverlay() void {
+pub fn setKeyboardPositionForOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn showMessageOverlay() void {
+pub fn showMessageOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn closeMessageOverlay() void {
+pub fn closeMessageOverlay(_: Self) void {
     @compileError("not implemented");
 }
 
@@ -340,7 +343,7 @@ const FunctionTable = extern struct {
     GetOverlayKey: *const fn (common.OverlayHandle, [*c]const u8, u32, *common.OverlayErrorCode) callconv(.C) u32,
     GetOverlayName: *const fn (common.OverlayHandle, [*c]const u8, u32, *common.OverlayErrorCode) callconv(.C) u32,
     SetOverlayName: *const fn (common.OverlayHandle, [*c]const u8) callconv(.C) common.OverlayErrorCode,
-    GetOverlayImageData: *const fn (common.OverlayHandle, anyopaque, u32, *u32, *u32) callconv(.C) common.OverlayErrorCode,
+    GetOverlayImageData: *const fn (common.OverlayHandle, ?*anyopaque, u32, *u32, *u32) callconv(.C) common.OverlayErrorCode,
     GetOverlayErrorNameFromEnum: *const fn (common.OverlayErrorCode) callconv(.C) [*c]const u8,
 
     SetOverlayRenderingPid: *const fn (common.OverlayHandle, u32) callconv(.C) common.OverlayErrorCode,
@@ -397,10 +400,10 @@ const FunctionTable = extern struct {
 
     SetOverlayTexture: *const fn (common.OverlayHandle, *const common.Texture) callconv(.C) common.OverlayErrorCode,
     ClearOverlayTexture: *const fn (common.OverlayHandle) callconv(.C) common.OverlayErrorCode,
-    SetOverlayRaw: *const fn (common.OverlayHandle, anyopaque, u32, u32, u32) callconv(.C) common.OverlayErrorCode,
+    SetOverlayRaw: *const fn (common.OverlayHandle, ?*anyopaque, u32, u32, u32) callconv(.C) common.OverlayErrorCode,
     SetOverlayFromFile: *const fn (common.OverlayHandle, [*c]const u8) callconv(.C) common.OverlayErrorCode,
-    GetOverlayTexture: *const fn (common.OverlayHandle, *anyopaque, anyopaque, *u32, *u32, *u32, *common.TextureType, *common.ColorSpace, *common.TextureBounds) callconv(.C) common.OverlayErrorCode,
-    ReleaseNativeOverlayHandle: *const fn (common.OverlayHandle, anyopaque) callconv(.C) common.OverlayErrorCode,
+    GetOverlayTexture: *const fn (common.OverlayHandle, *?*anyopaque, ?*anyopaque, *u32, *u32, *u32, *common.TextureType, *common.ColorSpace, *common.TextureBounds) callconv(.C) common.OverlayErrorCode,
+    ReleaseNativeOverlayHandle: *const fn (common.OverlayHandle, ?*anyopaque) callconv(.C) common.OverlayErrorCode,
     GetOverlayTextureSize: *const fn (common.OverlayHandle, *u32, *u32) callconv(.C) common.OverlayErrorCode,
 
     CreateDashboardOverlay: *const fn ([*c]const u8, [*c]const u8, *common.OverlayHandle, *common.OverlayHandle) callconv(.C) common.OverlayErrorCode,
@@ -418,6 +421,6 @@ const FunctionTable = extern struct {
     SetKeyboardTransformAbsolute: *const fn (common.TrackingUniverseOrigin, *const common.Matrix34) callconv(.C) void,
     SetKeyboardPositionForOverlay: *const fn (common.OverlayHandle, common.Rect2) callconv(.C) void,
 
-    ShowMessageOverlay: *const fn ([*c]const u8, [*c]const u8, [*c]const u8, ?[*c]const u8, ?[*c]const u8, ?[*c]const u8) callconv(.C) void,
+    ShowMessageOverlay: *const fn ([*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8, [*c]const u8) callconv(.C) void,
     CloseMessageOverlay: *const fn () callconv(.C) void,
 };
