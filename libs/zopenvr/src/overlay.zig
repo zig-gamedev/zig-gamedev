@@ -91,100 +91,159 @@ pub fn getOverlayRenderingPid(self: Self, overlay_handle: common.OverlayHandle) 
     return self.function_table.GetOverlayRenderingPid(overlay_handle);
 }
 
-pub fn setOverlayFlag(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayFlag(self: Self, overlay_handle: common.OverlayHandle, flag: common.OverlayFlags.Enum, enabled: bool) common.OverlayError!void {
+    return self.function_table.SetOverlayFlag(overlay_handle, flag, enabled).maybe();
 }
 
-pub fn getOverlayFlag(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayFlag(self: Self, overlay_handle: common.OverlayHandle, flag: common.OverlayFlags.Enum) common.OverlayError!bool {
+    var enabled: bool = undefined;
+    try self.function_table.GetOverlayFlag(overlay_handle, flag, &enabled).maybe();
+    return enabled;
 }
 
-pub fn getOverlayFlags(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayFlags(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.OverlayFlags {
+    var flags: common.OverlayFlags = undefined;
+    try self.function_table.GetOverlayFlags(overlay_handle, &flags).maybe();
+    return flags;
 }
 
 pub fn setOverlayColor(self: Self, overlay_handle: common.OverlayHandle, red: f32, green: f32, blue: f32) common.OverlayError!void {
     return self.function_table.SetOverlayColor(overlay_handle, red, green, blue).maybe();
 }
 
-pub fn getOverlayColor(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayColor(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct { red: f32, green: f32, blue: f32 } {
+    var red: f32 = undefined;
+    var green: f32 = undefined;
+    var blue: f32 = undefined;
+    try self.function_table.GetOverlayColor(overlay_handle, &red, &green, &blue).maybe();
+
+    return .{
+        .red = red,
+        .green = green,
+        .blue = blue,
+    };
 }
 
-pub fn setOverlayAlpha(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayAlpha(self: Self, overlay_handle: common.OverlayHandle, alpha: f32) common.OverlayError!void {
+    return self.function_table.SetOverlayAlpha(overlay_handle, alpha).maybe();
 }
 
-pub fn getOverlayAlpha(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayAlpha(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
+    var alpha: f32 = undefined;
+    try self.function_table.GetOverlayAlpha(overlay_handle, &alpha);
+    return alpha;
 }
 
-pub fn setOverlayTexelAspect(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTexelAspect(self: Self, overlay_handle: common.OverlayHandle, texel_aspect: f32) common.OverlayError!void {
+    return self.function_table.SetOverlayTexelAspect(overlay_handle, texel_aspect).maybe();
 }
 
-pub fn getOverlayTexelAspect(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTexelAspect(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
+    var texel_aspect: f32 = undefined;
+    try self.function_table.GetOverlayTexelAspect(overlay_handle, &texel_aspect).maybe();
+    return texel_aspect;
 }
 
-pub fn setOverlaySortOrder(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlaySortOrder(self: Self, overlay_handle: common.OverlayHandle, sort_order: u32) common.OverlayError!void {
+    return self.function_table.SetOverlaySortOrder(overlay_handle, sort_order).maybe();
 }
 
-pub fn getOverlaySortOrder(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlaySortOrder(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!u32 {
+    var sort_order: u32 = undefined;
+    try self.function_table.GetOverlaySortOrder(overlay_handle, &sort_order);
+    return sort_order;
 }
 
 pub fn setOverlayWidthInMeters(self: Self, overlay_handle: common.OverlayHandle, width_in_meters: f32) common.OverlayError!void {
     return self.function_table.SetOverlayWidthInMeters(overlay_handle, width_in_meters).maybe();
 }
 
-pub fn getOverlayWidthInMeters(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayWidthInMeters(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
+    var width_in_meters: f32 = undefined;
+    try self.function_table.GetOverlayWidthInMeters(overlay_handle, &width_in_meters).maybe();
+    return width_in_meters;
 }
 
-pub fn setOverlayCurvature(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayCurvature(self: Self, overlay_handle: common.OverlayHandle, curvature: f32) common.OverlayError!void {
+    return self.function_table.SetOverlayCurvature(overlay_handle, curvature).maybe();
 }
 
-pub fn getOverlayCurvature(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayCurvatureRadius(self: Self, overlay_handle: common.OverlayHandle, radius: f32) common.OverlayError!void {
+    const width = try self.getOverlayWidthInMeters(overlay_handle);
+    const curvature = width / (2 * std.math.pi * radius);
+    return self.setOverlayCurvature(overlay_handle, curvature);
 }
 
-pub fn setOverlayPreCurvePitch(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayCurvature(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
+    var curvature: f32 = undefined;
+    try self.function_table.GetOverlayCurvature(overlay_handle, &curvature).maybe();
+    return curvature;
 }
 
-pub fn getOverlayPreCurvePitch(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayCurvatureRadius(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
+    const width = try self.getOverlayWidthInMeters(overlay_handle);
+    const curvature = try self.getOverlayCurvature(overlay_handle);
+    const radius = width / (2 * std.math.pi * curvature);
+    return radius;
 }
 
-pub fn setOverlayTextureColorSpace(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayPreCurvePitch(self: Self, overlay_handle: common.OverlayHandle, radians: f32) common.OverlayError!void {
+    return self.function_table.SetOverlayPreCurvePitch(overlay_handle, radians).maybe();
 }
 
-pub fn getOverlayTextureColorSpace(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayPreCurvePitch(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
+    var radians: f32 = undefined;
+    try self.function_table.GetOverlayPreCurvePitch(overlay_handle, &radians).maybe();
+    return radians;
+}
+
+pub fn setOverlayTextureColorSpace(self: Self, overlay_handle: common.OverlayHandle, texture_color_space: common.ColorSpace) common.OverlayError!void {
+    return self.function_table.SetOverlayTextureColorSpace(overlay_handle, texture_color_space).maybe();
+}
+
+pub fn getOverlayTextureColorSpace(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.ColorSpace {
+    var texture_color_space: common.ColorSpace = undefined;
+    try self.function_table.GetOverlayTextureColorSpace(overlay_handle, &texture_color_space).maybe();
+    return texture_color_space;
 }
 
 pub fn setOverlayTextureBounds(self: Self, overlay_handle: common.OverlayHandle, overlay_texture_bounds: common.TextureBounds) common.OverlayError!void {
     return self.function_table.SetOverlayTextureBounds(overlay_handle, &overlay_texture_bounds).maybe();
 }
 
-pub fn getOverlayTextureBounds(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTextureBounds(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.TextureBounds {
+    var overlay_texture_bounds: common.TextureBounds = undefined;
+    try self.function_table.GetOverlayTextureBounds(overlay_handle, &overlay_texture_bounds).maybe();
+    return overlay_texture_bounds;
 }
 
-pub fn getOverlayTransformType(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTransformType(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.OverlayTransformType {
+    var transform_type: common.OverlayTransformType = undefined;
+    try self.function_table.GetOverlayTransformType(overlay_handle, &transform_type).maybe();
+    return transform_type;
 }
 
-pub fn setOverlayTransformAbsolute(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTransformAbsolute(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    tracking_origin: common.TrackingUniverseOrigin,
+    tracking_origin_to_overlay_transform: common.Matrix34,
+) common.OverlayError!void {
+    return self.function_table.SetOverlayTransformAbsolute(overlay_handle, tracking_origin, tracking_origin_to_overlay_transform).maybe();
 }
 
-pub fn getOverlayTransformAbsolute(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTransformAbsolute(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct {
+    tracking_origin: common.TrackingUniverseOrigin,
+    tracking_origin_to_overlay_transform: common.Matrix34,
+} {
+    var tracking_origin: common.TrackingUniverseOrigin = undefined;
+    var tracking_origin_to_overlay_transform: common.Matrix34 = undefined;
+    try self.function_table.GetOverlayTransformAbsolute(overlay_handle, &tracking_origin, &tracking_origin_to_overlay_transform).maybe();
+
+    return .{
+        .tracking_origin = tracking_origin,
+        .tracking_origin_to_overlay_transform = tracking_origin_to_overlay_transform,
+    };
 }
 
 pub fn setOverlayTransformTrackedDeviceRelative(
@@ -201,28 +260,59 @@ pub fn setOverlayTransformTrackedDeviceRelative(
     return err.maybe();
 }
 
-pub fn getOverlayTransformTrackedDeviceRelative(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTransformTrackedDeviceRelative(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct {
+    tracked_device: common.TrackedDeviceIndex,
+    tracked_device_to_overlay_transform: common.Matrix34,
+} {
+    var tracked_device: common.TrackedDeviceIndex = undefined;
+    var tracked_device_to_overlay_transform: common.Matrix34 = undefined;
+    const err = self.function_table.GetOverlayTransformTrackedDeviceRelative(overlay_handle, &tracked_device, &tracked_device_to_overlay_transform);
+    try err.maybe();
+
+    return .{
+        .tracked_device = tracked_device,
+        .tracked_device_to_overlay_transform = tracked_device_to_overlay_transform,
+    };
 }
 
-pub fn setOverlayTransformTrackedDeviceComponent(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTransformTrackedDeviceComponent(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    device_index: common.TrackedDeviceIndex,
+    component_name: [:0]const u8,
+) common.OverlayError!void {
+    return self.function_table.SetOverlayTransformTrackedDeviceComponent(overlay_handle, device_index, component_name.ptr);
 }
 
 pub fn getOverlayTransformTrackedDeviceComponent(_: Self) void {
     @compileError("not implemented");
 }
 
-pub fn setOverlayTransformCursor(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTransformCursor(self: Self, overlay_handle: common.OverlayHandle, hotspot: common.Vector2) common.OverlayError!void {
+    return self.function_table.SetOverlayTransformCursor(overlay_handle, &hotspot).maybe();
 }
 
-pub fn getOverlayTransformCursor(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTransformCursor(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!common.Vector2 {
+    var hotspot: common.Vector2 = undefined;
+    try self.function_table.GetOverlayTransformCursor(overlay_handle, &hotspot).maybe();
+    return hotspot;
 }
 
-pub fn setOverlayTransformProjection(_: Self) void {
-    @compileError("not implemented");
+pub fn setOverlayTransformProjection(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    tracking_origin: common.TrackingUniverseOrigin,
+    tracking_origin_to_overlay_transform: common.Matrix34,
+    projection: common.OverlayProjection,
+    eye: common.Eye,
+) common.OverlayError!void {
+    return self.function_table.SetOverlayTransformProjection(
+        overlay_handle,
+        tracking_origin,
+        &tracking_origin_to_overlay_transform,
+        &projection,
+        eye,
+    ).maybe();
 }
 
 pub fn showOverlay(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
@@ -233,16 +323,23 @@ pub fn hideOverlay(self: Self, overlay_handle: common.OverlayHandle) common.Over
     return self.function_table.HideOverlay(overlay_handle).maybe();
 }
 
-pub fn isOverlayVisible(_: Self) void {
-    @compileError("not implemented");
+pub fn isOverlayVisible(self: Self, overlay_handle: common.OverlayHandle) bool {
+    return self.function_table.IsOverlayVisible(overlay_handle);
 }
 
-pub fn getTransformForOverlayCoordinates(_: Self) void {
-    @compileError("not implemented");
+pub fn getTransformForOverlayCoordinates(
+    self: Self,
+    overlay_handle: common.OverlayHandle,
+    tracking_origin: common.TrackingUniverseOrigin,
+    coordinates_in_overlay: common.Vector2,
+) common.OverlayError!common.Matrix34 {
+    var transform: common.Matrix34 = undefined;
+    try self.function_table.GetTransformForOverlayCoordinates(overlay_handle, tracking_origin, coordinates_in_overlay, &transform).maybe();
+    return transform;
 }
 
-pub fn waitFrameSync(_: Self) void {
-    @compileError("not implemented");
+pub fn waitFrameSync(self: Self, timeout_ms: u32) common.OverlayError!void {
+    return self.function_table.WaitFrameSync(timeout_ms).maybe();
 }
 
 pub fn pollNextOverlayEvent(self: Self, overlay_handle: common.OverlayHandle) ?common.Event {
