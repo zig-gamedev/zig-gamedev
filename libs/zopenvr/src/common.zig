@@ -713,13 +713,16 @@ pub const Matrix44 = extern struct {
     m: [4][4]f32,
 };
 
+pub const Rect2 = extern struct {
+    top_left: Vector2,
+    bottom_right: Vector2,
+};
+
 pub const TrackingUniverseOrigin = enum(i32) {
     seated = 0,
     standing = 1,
     raw_and_uncalibrated = 2,
 };
-
-pub const max_tracked_device_count: usize = 64;
 
 pub const TrackingResult = enum(i32) {
     uninitialized = 1,
@@ -732,6 +735,9 @@ pub const TrackingResult = enum(i32) {
 
 pub const TrackedDeviceIndex = u32;
 pub const hmd: TrackedDeviceIndex = 0;
+pub const max_tracked_device_count: usize = 64;
+pub const other_tracked_device_index: TrackedDeviceIndex = 0xFFFFFFFE;
+pub const invalid_tracked_device_index: TrackedDeviceIndex = 0xFFFFFFFF;
 
 pub const TrackedDevicePose = extern struct {
     device_to_absolute_tracking: Matrix34,
@@ -2142,7 +2148,7 @@ pub const EventNotification = extern struct { // which EventType?
     notification_id: u32,
 };
 pub const EventOverlay = extern struct {
-    overlay_handle: u64,
+    overlay_handle: u64, // OverlayHandle
     device_path: u64,
     memory_block_id: u64,
     cursor_index: u32,
@@ -2153,7 +2159,7 @@ pub const EventStatus = extern struct { // which EventType?
 pub const EventKeyboard = extern struct {
     new_input: [8]u8,
     user_value: u64,
-    overlay_handle: u64,
+    overlay_handle: u64, // OverlayHandle
 };
 pub const EventIpd = extern struct {
     ipd_meters: f32,
@@ -2191,7 +2197,7 @@ pub const EventApplicationLaunch = extern struct { // which EventType?
 };
 
 pub const EventEditingCameraSurface = extern struct {
-    overlay_handle: u64,
+    overlay_handle: u64, // OverlayHandle
     visual_mode: u32,
 };
 pub const EventMessageOverlay = extern struct { // which EventType?
@@ -2626,4 +2632,252 @@ pub const FilePaths = struct {
         }
         return paths.toOwnedSlice();
     }
+};
+
+pub const OverlayHandle = u64;
+pub const overlay_handle_invalid: OverlayHandle = 0;
+
+pub const OverlayError = error{
+    UnknownOverlay,
+    InvalidHandle,
+    PermissionDenied,
+    OverlayLimitExceeded,
+    WrongVisibilityType,
+    KeyTooLong,
+    NameTooLong,
+    KeyInUse,
+    WrongTransformType,
+    InvalidTrackedDevice,
+    InvalidParameter,
+    ThumbnailCantBeDestroyed,
+    ArrayTooSmall,
+    RequestFailed,
+    InvalidTexture,
+    UnableToLoadFile,
+    KeyboardAlreadyInUse,
+    NoNeighbor,
+    TooManyMaskPrimitives,
+    BadMaskPrimitive,
+    TextureAlreadyLocked,
+    TextureLockCapacityReached,
+    TextureNotLocked,
+    TimedOut,
+};
+
+pub const OverlayErrorCode = enum(i32) {
+    none = 0,
+    unknown_overlay = 10,
+    invalid_handle = 11,
+    permission_denied = 12,
+    overlay_limit_exceeded = 13,
+    wrong_visibility_type = 14,
+    key_too_long = 15,
+    name_too_long = 16,
+    key_in_use = 17,
+    wrong_transform_type = 18,
+    invalid_tracked_device = 19,
+    invalid_parameter = 20,
+    thumbnail_cant_be_destroyed = 21,
+    array_too_small = 22,
+    request_failed = 23,
+    invalid_texture = 24,
+    unable_to_load_file = 25,
+    keyboard_already_in_use = 26,
+    no_neighbor = 27,
+    too_many_mask_primitives = 29,
+    bad_mask_primitive = 30,
+    texture_already_locked = 31,
+    texture_lock_capacity_reached = 32,
+    texture_not_locked = 33,
+    timed_out = 34,
+
+    pub fn maybe(overlay_error: OverlayErrorCode) OverlayError!void {
+        return switch (overlay_error) {
+            .none => {},
+            .unknown_overlay => OverlayError.UnknownOverlay,
+            .invalid_handle => OverlayError.InvalidHandle,
+            .permission_denied => OverlayError.PermissionDenied,
+            .overlay_limit_exceeded => OverlayError.OverlayLimitExceeded,
+            .wrong_visibility_type => OverlayError.WrongVisibilityType,
+            .key_too_long => OverlayError.KeyTooLong,
+            .name_too_long => OverlayError.NameTooLong,
+            .key_in_use => OverlayError.KeyInUse,
+            .wrong_transform_type => OverlayError.WrongTransformType,
+            .invalid_tracked_device => OverlayError.InvalidTrackedDevice,
+            .invalid_parameter => OverlayError.InvalidParameter,
+            .thumbnail_cant_be_destroyed => OverlayError.ThumbnailCantBeDestroyed,
+            .array_too_small => OverlayError.ArrayTooSmall,
+            .request_failed => OverlayError.RequestFailed,
+            .invalid_texture => OverlayError.InvalidTexture,
+            .unable_to_load_file => OverlayError.UnableToLoadFile,
+            .keyboard_already_in_use => OverlayError.KeyboardAlreadyInUse,
+            .no_neighbor => OverlayError.NoNeighbor,
+            .too_many_mask_primitives => OverlayError.TooManyMaskPrimitives,
+            .bad_mask_primitive => OverlayError.BadMaskPrimitive,
+            .texture_already_locked => OverlayError.TextureAlreadyLocked,
+            .texture_lock_capacity_reached => OverlayError.TextureLockCapacityReached,
+            .texture_not_locked => OverlayError.TextureNotLocked,
+            .timed_out => OverlayError.TimedOut,
+        };
+    }
+};
+
+pub const OverlayFlags = packed struct(u32) {
+    _padding: u3 = 0,
+    no_dashboard_tab: bool = false,
+    __padding: u2 = 0,
+
+    send_vr_discrete_scroll_events: bool = false,
+    send_vr_touchpad_events: bool = false,
+    show_touch_pad_scroll_wheel: bool = false,
+    transfer_ownership_to_internal_process: bool = false,
+
+    side_by_side_parallel: bool = false, // Texture is left/right
+    side_by_side_crossed: bool = false, // Texture is crossed and right/left
+
+    panorama: bool = false, // Texture is a panorama
+    stereo_panorama: bool = false, // Texture is a stereo panorama
+
+    sort_with_non_scene_overlays: bool = false,
+    visible_in_dashboard: bool = false,
+    make_overlays_interactive_if_visible: bool = false,
+    send_vr_smooth_scroll_events: bool = false,
+    protected_content: bool = false,
+    hide_laser_intersection: bool = false,
+    wants_modal_behavior: bool = false,
+    is_premultiplied: bool = false,
+    ignore_texture_alpha: bool = false,
+    enable_control_bar: bool = false,
+    enable_control_bar_keyboard: bool = false,
+    enable_control_bar_close: bool = false,
+    reserved: bool = false,
+    enable_click_stabilization: bool = false,
+    multi_cursor: bool = false,
+    ___padding: u3 = 0,
+
+    pub const Enum = enum(u32) {
+        NoDashboardTab = @bitCast(OverlayFlags{ .no_dashboard_tab = true }),
+        SendVRDiscreteScrollEvents = @bitCast(OverlayFlags{ .send_vr_discrete_scroll_events = true }),
+        SendVRTouchpadEvents = @bitCast(OverlayFlags{ .send_vr_touchpad_events = true }),
+        ShowTouchPadScrollWheel = @bitCast(OverlayFlags{ .show_touch_pad_scroll_wheel = true }),
+        TransferOwnershipToInternalProcess = @bitCast(OverlayFlags{ .transfer_ownership_to_internal_process = true }),
+        SideBySide_Parallel = @bitCast(OverlayFlags{ .side_by_side_parallel = true }),
+        SideBySide_Crossed = @bitCast(OverlayFlags{ .side_by_side_crossed = true }),
+        Panorama = @bitCast(OverlayFlags{ .panorama = true }),
+        StereoPanorama = @bitCast(OverlayFlags{ .stereo_panorama = true }),
+        SortWithNonSceneOverlays = @bitCast(OverlayFlags{ .sort_with_non_scene_overlays = true }),
+        VisibleInDashboard = @bitCast(OverlayFlags{ .visible_in_dashboard = true }),
+        MakeOverlaysInteractiveIfVisible = @bitCast(OverlayFlags{ .make_overlays_interactive_if_visible = true }),
+        SendVRSmoothScrollEvents = @bitCast(OverlayFlags{ .send_vr_smooth_scroll_events = true }),
+        ProtectedContent = @bitCast(OverlayFlags{ .protected_content = true }),
+        HideLaserIntersection = @bitCast(OverlayFlags{ .hide_laser_intersection = true }),
+        WantsModalBehavior = @bitCast(OverlayFlags{ .wants_modal_behavior = true }),
+        IsPremultiplied = @bitCast(OverlayFlags{ .is_premultiplied = true }),
+        IgnoreTextureAlpha = @bitCast(OverlayFlags{ .ignore_texture_alpha = true }),
+        EnableControlBar = @bitCast(OverlayFlags{ .enable_control_bar = true }),
+        EnableControlBarKeyboard = @bitCast(OverlayFlags{ .enable_control_bar_keyboard = true }),
+        EnableControlBarClose = @bitCast(OverlayFlags{ .enable_control_bar_close = true }),
+        Reserved = @bitCast(OverlayFlags{ .reserved = true }),
+        EnableClickStabilization = @bitCast(OverlayFlags{ .enable_click_stabilization = true }),
+        MultiCursor = @bitCast(OverlayFlags{ .multi_cursor = true }),
+
+        _,
+    };
+};
+
+test "make sure bits are in the correct place" {
+    const expect = std.testing.expect;
+    try expect(@as(u32, @bitCast(OverlayFlags{ .no_dashboard_tab = true })) == 1 << 3);
+    try expect(@as(u32, @bitCast(OverlayFlags{ .multi_cursor = true })) == 1 << 28);
+    try expect(@as(u32, @bitCast(OverlayFlags{ .protected_content = true })) == 1 << 18);
+    try expect(@as(u32, @bitCast(OverlayFlags{ .send_vr_discrete_scroll_events = true })) == 1 << 6);
+}
+
+pub const OverlayTransformType = enum(i32) {
+    Invalid = -1,
+    Absolute = 0,
+    TrackedDeviceRelative = 1,
+    //SystemOverlay = 2, // Deleted from the SDK.
+    TrackedComponent = 3,
+    Cursor = 4,
+    DashboardTab = 5,
+    DashboardThumb = 6,
+    Mountable = 7,
+    Projection = 8,
+    Subview = 9,
+};
+
+pub const OverlayProjection = RawProjection; // order is left right top bottom
+
+pub const OverlayInputMethod = enum(i32) {
+    None = 0, // No input events will be generated automatically for this overlay
+    Mouse = 1, // Tracked controllers will get mouse events automatically
+    // DualAnalog = 2, // No longer supported
+};
+
+pub const OverlayIntersectionParams = extern struct {
+    source: Vector3,
+    direction: Vector3,
+    origin: TrackingUniverseOrigin,
+};
+
+pub const OverlayIntersectionResults = extern struct {
+    point: Vector3,
+    normal: Vector3,
+    uvs: Vector2,
+    distance: f32,
+};
+
+pub const OverlayIntersectionMaskPrimitive_Data = extern union {
+    rectangle: IntersectionMaskRectangle,
+    circle: IntersectionMaskCircle,
+};
+
+pub const OverlayIntersectionMaskPrimitiveType = enum(i32) {
+    rectangle,
+    circle,
+};
+
+pub const IntersectionMaskRectangle = struct {
+    top_left_x: f32,
+    top_left_y: f32,
+    width: f32,
+    height: f32,
+};
+
+pub const IntersectionMaskCircle = struct {
+    center_x: f32,
+    center_y: f32,
+    radius: f32,
+};
+
+pub const OverlayIntersectionMaskPrimitive = extern struct {
+    primitive_type: OverlayIntersectionMaskPrimitiveType,
+    primitive: OverlayIntersectionMaskPrimitive_Data,
+};
+
+pub const KeyboardFlags = packed struct(u32) {
+    // Makes the keyboard send key events immediately instead of accumulating a buffer */
+    Minimal: bool = false,
+    // Makes the keyboard take all focus and dismiss when clicking off the panel */
+    Modal: bool = false,
+    // Shows arrow keys on the keyboard when in minimal mode. Buffered (non-minimal) mode always has them. In minimal
+    // mode, when arrow keys are pressed, they send ANSI escape sequences (e.g. "\x1b[D" for left arrow).
+    ShowArrowKeys: bool = false,
+    // Shows the hide keyboard button instead of a Done button. The Done key sends a VREvent_KeyboardDone when
+    // clicked. Hide only sends the Closed event.
+    HideDoneKey: bool = false,
+
+    // _padding: u28 = 0,
+};
+
+pub const GamepadTextInputMode = enum(i32) {
+    normal = 0,
+    password = 1,
+    submit = 2,
+};
+
+pub const GamepadTextInputLineMode = enum(i32) {
+    single_line = 0,
+    multiple_lines = 1,
 };

@@ -65,6 +65,10 @@ pub fn renderModels(_: Self) common.InitError!RenderModels {
     return try RenderModels.init();
 }
 
+pub fn overlay(_: Self) common.InitError!Overlay {
+    return try Overlay.init();
+}
+
 pub usingnamespace @import("common.zig");
 pub const System = @import("system.zig");
 pub const Chaperone = @import("chaperone.zig");
@@ -72,3 +76,4 @@ pub const Compositor = @import("compositor.zig");
 pub const Applications = @import("applications.zig");
 pub const Input = @import("input.zig");
 pub const RenderModels = @import("render_models.zig");
+pub const Overlay = @import("overlay.zig");
