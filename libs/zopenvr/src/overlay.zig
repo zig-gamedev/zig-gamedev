@@ -102,13 +102,14 @@ pub fn RawImage(comptime T: type, comptime bytes_per_pixel: u32) type {
         height: u32,
         bytes_per_pixel: u32,
 
-        data: ?[]T = null,
+        data: []T,
 
         pub fn init(allocator: std.mem.Allocator) !Sself {
             var image = Sself{
                 .width = 0,
                 .height = 0,
                 .bytes_per_pixel = bytes_per_pixel,
+                .data = undefined,
 
                 .allocator = allocator,
             };
@@ -117,7 +118,7 @@ pub fn RawImage(comptime T: type, comptime bytes_per_pixel: u32) type {
         }
         pub fn deinit(self: Sself) void {
             if (self.data == null) return;
-            self.allocator.free(self.data.?);
+            self.allocator.free(self.data);
         }
         pub fn makeData(self: Sself) !void {
             std.debug.assert(self.bytes_per_pixel > 0);
@@ -127,9 +128,6 @@ pub fn RawImage(comptime T: type, comptime bytes_per_pixel: u32) type {
 
             self.deinit();
             self.data = try self.allocator.alloc(T, self.width * self.height * self.bytes_per_pixel);
-        }
-        pub fn getData(self: Sself) []T {
-            return self.data.?;
         }
     };
 }
@@ -147,11 +145,11 @@ pub fn getOverlayImageData(
     try image.makeData();
     errdefer image.deinit();
 
-    if (image.getData().len > 0) {
+    if (image.data.len > 0) {
         err = self.function_table.GetOverlayImageData(
             overlay_handle,
-            image.getData().ptr,
-            @sizeOf(ArrayT) * image.getData().len,
+            image.data.ptr,
+            @sizeOf(ArrayT) * image.data.len,
             &image.width,
             &image.height,
         );
@@ -546,7 +544,7 @@ pub fn setOverlayRawFromRawImage(
     overlay_handle: common.OverlayHandle,
     image: RawImage(T, bytes_per_pixel),
 ) common.OverlayError!void {
-    self.setOverlayRaw(T, overlay_handle, image.getData(), image.width, image.height, image.bytes_per_pixel);
+    self.setOverlayRaw(T, overlay_handle, image.data, image.width, image.height, image.bytes_per_pixel);
 }
 
 pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file_path: [:0]const u8) common.OverlayError!void {

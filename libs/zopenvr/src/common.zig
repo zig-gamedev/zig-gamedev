@@ -2369,7 +2369,7 @@ pub const FirmwareErrorCode = enum(i32) {
     }
 };
 
-pub const VRState = enum(u32) {
+pub const VRState = enum(i32) {
     undefined = -1,
     off = 0,
     searching = 1,
