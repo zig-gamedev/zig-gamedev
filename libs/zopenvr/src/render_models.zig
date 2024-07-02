@@ -164,6 +164,9 @@ pub fn allocRenderModelOriginalPath(self: Self, allocator: std.mem.Allocator, re
 pub fn getRenderModelErrorNameFromEnum(self: Self, error_code: common.RenderModelErrorCode) [:0]const u8 {
     return std.mem.span(self.function_table.GetRenderModelErrorNameFromEnum(error_code));
 }
+pub fn getRenderModelErrorNameFromError(self: Self, render_model_error: common.RenderModelErrorCode) [:0]const u8 {
+    return self.getRenderModelErrorNameFromEnum(common.RenderModelErrorCode.fromError(render_model_error));
+}
 
 const FunctionTable = extern struct {
     LoadRenderModel_Async: *const fn ([*c]u8, **common.ExternRenderModel) callconv(.C) common.RenderModelErrorCode,

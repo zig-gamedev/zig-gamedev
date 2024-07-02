@@ -162,6 +162,9 @@ pub fn getOverlayImageData(
 pub fn getOverlayErrorNameFromEnum(self: Self, overlay_error: common.OverlayErrorCode) [:0]const u8 {
     return std.mem.span(self.function_table.GetOverlayErrorNameFromEnum(overlay_error));
 }
+pub fn getOverlayErrorNameFromError(self: Self, overlay_error: common.OverlayError) [:0]const u8 {
+    return self.getOverlayErrorNameFromEnum(common.OverlayErrorCode.fromError(overlay_error));
+}
 
 pub fn setOverlayRenderingPid(self: Self, overlay_handle: common.OverlayHandle, pid: u32) common.OverlayError!void {
     return self.function_table.SetOverlayRenderingPid(overlay_handle, pid).maybe();

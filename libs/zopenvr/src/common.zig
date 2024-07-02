@@ -446,6 +446,14 @@ pub const InitErrorCode = enum(i32) {
     steam_installation_not_found = 2000,
     last_error = 2001,
 
+    pub fn fromError(err: InitError) InitErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(InitErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
+
     pub fn maybe(init_error: InitErrorCode) InitError!void {
         return switch (init_error) {
             .none => {},
@@ -676,6 +684,13 @@ pub const InitErrorCode = enum(i32) {
     }
 };
 
+pub fn initErrorAsSymbol(init_error: InitError) [:0]const u8 {
+    return InitErrorCode.fromError(init_error).asSymbol();
+}
+pub fn initErrorAsEnglishDescription(init_error: InitError) [:0]const u8 {
+    return InitErrorCode.fromError(init_error).asEnglishDescription();
+}
+
 extern "openvr_api" fn VR_GetVRInitErrorAsSymbol(InitErrorCode) callconv(.C) [*c]const u8;
 extern "openvr_api" fn VR_GetVRInitErrorAsEnglishDescription(InitErrorCode) callconv(.C) [*c]const u8;
 extern "openvr_api" fn VR_GetGenericInterface([*c]const u8, *InitErrorCode) callconv(.C) ?*isize;
@@ -859,6 +874,14 @@ pub const ApplicationErrorCode = enum(i32) {
     invalid_parameter = 203,
 
     not_implemented = 300, // Fcn is not implemented in current interface
+
+    pub fn fromError(err: ApplicationError) ApplicationErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(ApplicationErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
 
     pub fn maybe(error_code: ApplicationErrorCode) ApplicationError!void {
         return switch (error_code) {
@@ -1050,6 +1073,14 @@ pub const CompositorErrorCode = enum(i32) {
     already_submitted = 108,
     invalid_bounds = 109,
     already_set = 110,
+
+    pub fn fromError(err: CompositorError) CompositorErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(CompositorErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
 
     pub fn maybe(compositor_error: CompositorErrorCode) CompositorError!void {
         return switch (compositor_error) {
@@ -1280,6 +1311,14 @@ pub const InputErrorCode = enum(i32) {
     permission_denied = 19,
     invalid_render_model = 20,
 
+    pub fn fromError(err: InputError) InputErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(InputErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
+
     pub fn maybe(error_code: InputErrorCode) InputError!void {
         return switch (error_code) {
             .none => {},
@@ -1430,6 +1469,14 @@ pub const RenderModelErrorCode = enum(i32) {
     not_enough_normals = 307,
     not_enough_tex_coords = 308,
     invalid_texture = 400,
+
+    pub fn fromError(err: RenderModelError) RenderModelErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(RenderModelErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
 
     pub fn maybe(error_code: RenderModelErrorCode) RenderModelError!void {
         return switch (error_code) {
@@ -2085,6 +2132,14 @@ pub const TrackedPropertyErrorCode = enum(i32) {
     out_of_memory = 14,
     invalid_container = 15,
 
+    pub fn fromError(err: TrackedPropertyError) TrackedPropertyErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(TrackedPropertyErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
+
     pub fn maybe(property_error: TrackedPropertyErrorCode) TrackedPropertyError!void {
         return switch (property_error) {
             .success => {},
@@ -2360,6 +2415,14 @@ pub const FirmwareErrorCode = enum(i32) {
     none = 0,
     success = 1,
     fail = 2,
+
+    pub fn fromError(err: FirmwareError) FirmwareErrorCode {
+        return switch (err) {
+            FirmwareError.None => FirmwareErrorCode.none,
+            FirmwareError.Success => FirmwareErrorCode.success,
+            FirmwareError.Fail => FirmwareErrorCode.fail,
+        };
+    }
 
     pub fn maybe(firmware_error: FirmwareErrorCode) FirmwareError!void {
         return switch (firmware_error) {
@@ -2706,6 +2769,14 @@ pub const OverlayErrorCode = enum(i32) {
     texture_not_locked = 33,
     timed_out = 34,
 
+    pub fn fromError(err: OverlayError) OverlayErrorCode {
+        return switch (err) {
+            inline else => |e| comptime for (std.meta.tags(OverlayErrorCode)) |tag| {
+                if (tag.maybe() == e) break tag;
+            } else unreachable,
+        };
+    }
+
     pub fn maybe(overlay_error: OverlayErrorCode) OverlayError!void {
         return switch (overlay_error) {
             .none => {},
@@ -2736,6 +2807,13 @@ pub const OverlayErrorCode = enum(i32) {
         };
     }
 };
+
+test "back to error code" {
+    const expectEqual = std.testing.expectEqual;
+    const code = OverlayErrorCode.array_too_small;
+    _ = code.maybe() catch |err|
+        try expectEqual(code, OverlayErrorCode.fromError(err));
+}
 
 pub const OverlayFlags = packed struct(u32) {
     _padding: u3 = 0,

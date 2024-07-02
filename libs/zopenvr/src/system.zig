@@ -201,6 +201,9 @@ pub fn allocTrackedDevicePropertyString(self: Self, allocator: std.mem.Allocator
 pub fn getPropErrorNameFromEnum(self: Self, property_error: common.TrackedPropertyErrorCode) [:0]const u8 {
     return std.mem.span(self.function_table.GetPropErrorNameFromEnum(property_error));
 }
+pub fn getPropErrorNameFromError(self: Self, property_error: common.TrackedPropertyError) [:0]const u8 {
+    return self.getPropErrorNameFromEnum(common.TrackedPropertyErrorCode.fromError(property_error));
+}
 
 pub fn pollNextEvent(self: Self) ?common.Event {
     var event: common.Event = undefined;

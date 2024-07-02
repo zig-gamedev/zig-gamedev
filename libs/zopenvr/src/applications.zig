@@ -102,6 +102,9 @@ pub fn getApplicationProcessId(self: Self, app_key: [:0]const u8) common.Applica
 pub fn getApplicationsErrorNameFromEnum(self: Self, error_code: common.ApplicationErrorCode) [:0]const u8 {
     return std.mem.span(self.function_table.GetApplicationsErrorNameFromEnum(error_code));
 }
+pub fn getApplicationsErrorNameFromError(self: Self, application_error: common.ApplicationError) [:0]const u8 {
+    return self.getApplicationsErrorNameFromEnum(common.ApplicationErrorCode.fromError(application_error));
+}
 
 pub fn getApplicationProperty(self: Self, comptime T: type, app_key: [:0]const u8, property: common.ApplicationProperty.fromType(T)) common.ApplicationError!T {
     var error_code: common.ApplicationErrorCode = undefined;
