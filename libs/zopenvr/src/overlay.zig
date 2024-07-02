@@ -76,70 +76,13 @@ pub fn setOverlayName(self: Self, overlay_handle: common.OverlayHandle, name: [:
     return self.function_table.SetOverlayName(overlay_handle, name.ptr).maybe();
 }
 
-pub fn RawImage(comptime T: type, comptime bytes_per_pixel: u32) type {
-    comptime {
-        switch (@typeInfo(T)) {
-            .Int => |Int| if (Int.bits % 8 != 0) @compileError("type needs to be a whole number of bytes"),
-            .Struct => |Struct| {
-                if (Struct.layout != .@"packed") @compileError("struct needs to be packed");
-                if (@typeInfo(Struct.backing_integer.?).Int.bits != 8 * bytes_per_pixel)
-                    @compileError("struct has to be 1 pixel big (u" ++ 8 * bytes_per_pixel ++ ")");
-            },
-            else => @compileError("type '" ++ @typeName(T) ++ "' is not allowed here"),
-        }
-    }
-    const is_struct = comptime @typeInfo(T) == .Struct;
-    const type_bytes: u16 = comptime switch (@typeInfo(T)) {
-        .Struct => |Struct| @typeInfo(Struct.backing_integer.?).Int.bits / 8,
-        .Int => |Int| Int.bits / 8,
-        else => unreachable,
-    };
-
-    return struct {
-        const Sself = @This();
-        allocator: std.mem.Allocator,
-
-        width: u32,
-        height: u32,
-        bytes_per_pixel: u32,
-
-        data: []T,
-
-        pub fn init(allocator: std.mem.Allocator) !Sself {
-            var image = Sself{
-                .width = 0,
-                .height = 0,
-                .bytes_per_pixel = bytes_per_pixel,
-                .data = undefined,
-
-                .allocator = allocator,
-            };
-            try image.makeData();
-            return image;
-        }
-        pub fn deinit(self: Sself) void {
-            if (self.data == null) return;
-            self.allocator.free(self.data);
-        }
-        pub fn makeData(self: Sself) !void {
-            std.debug.assert(self.bytes_per_pixel > 0);
-            std.debug.assert(self.bytes_per_pixel >= type_bytes);
-            if (is_struct) std.debug.assert(self.bytes_per_pixel == bytes_per_pixel);
-            std.debug.assert(self.bytes_per_pixel % type_bytes == 0);
-
-            self.deinit();
-            self.data = try self.allocator.alloc(T, self.width * self.height * self.bytes_per_pixel);
-        }
-    };
-}
-
 pub fn getOverlayImageData(
     self: Self,
     allocator: std.mem.Allocator,
     comptime ArrayT: type,
     overlay_handle: common.OverlayHandle,
-) common.OverlayError!RawImage(ArrayT, 4) {
-    var image = try RawImage(ArrayT, 4).init(allocator);
+) common.OverlayError!common.RawImage(ArrayT, 4) {
+    var image = try common.RawImage(ArrayT, 4).init(allocator);
     var err = self.function_table.GetOverlayImageData(overlay_handle, null, 0, &image.width, &image.height).maybe();
     if (err != common.OverlayError.ArrayTooSmall) return err;
 
@@ -546,11 +489,11 @@ pub fn setOverlayRawFromRawImage(
     comptime T: type,
     comptime bytes_per_pixel: u32,
     overlay_handle: common.OverlayHandle,
-    image: RawImage(T, bytes_per_pixel),
+    image: common.RawImage(T, bytes_per_pixel),
 ) common.OverlayError!void {
     self.setOverlayRaw(T, overlay_handle, image.data, image.width, image.height, image.bytes_per_pixel);
 }
-pub fn setOverlayRawFromRawImageU8(self: Self, overlay_handle: common.OverlayHandle, image: RawImage(u8, 4)) common.OverlayError!void {
+pub fn setOverlayRawFromRawImageU8(self: Self, overlay_handle: common.OverlayHandle, image: common.RawImage(u8, 4)) common.OverlayError!void {
     return self.setOverlayRawFromRawImage(u8, 4, overlay_handle, image);
 }
 
