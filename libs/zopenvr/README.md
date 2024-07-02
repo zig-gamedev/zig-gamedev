@@ -63,7 +63,7 @@ For better types on render structs, enable the corresponding options when import
 | BlockQueue      |                     |
 | Chaperone       |         ✅          |
 | ChaperoneSetup  |                     |
-| Compositor      | ✅<br/>(d3d12 only) |
+| Compositor      | ✅<br/>(see bellow) |
 | Debug           |                     |
 | DriverManager   |                     |
 | ExtendedDisplay |                     |
@@ -71,7 +71,7 @@ For better types on render structs, enable the corresponding options when import
 | Input           |         ✅          |
 | IOBuffer        |                     |
 | Notifications   |                     |
-| Overlay         |                     |
+| Overlay         |         ✅          |
 | OverlayView     |                     |
 | Paths           |                     |
 | Properties      |                     |
@@ -86,7 +86,7 @@ For better types on render structs, enable the corresponding options when import
 ### Compositor supported renderers
 | Renderer           | Handle type           | Zig handle name                 | Support |
 |--------------------|-----------------------|---------------------------------|:-------:|
-| DirectX 11 (d3d11) | ID3D11Texture2D       | zwin32.d3d11.ITexture2D         |         |
+| DirectX 11 (d3d11) | ID3D11Texture2D       | zwin32.d3d11.ITexture2D         |    ✅   |
 | OpenGL             |                       |                                 |         |
 | Vulkan             | VRVulkanTextureData_t |                                 |         |
 | IOSurface          |                       |                                 |         |

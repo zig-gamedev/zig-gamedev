@@ -1,6 +1,9 @@
 const std = @import("std");
 
 const common = @import("common.zig");
+const renderers = @import("renderers.zig");
+
+const d3d11 = renderers.d3d11;
 
 function_table: *FunctionTable,
 
@@ -168,16 +171,29 @@ pub fn getRenderModelErrorNameFromError(self: Self, render_model_error: common.R
     return self.getRenderModelErrorNameFromEnum(common.RenderModelErrorCode.fromError(render_model_error));
 }
 
+pub fn loadTextureD3D11_Async(self: Self, texture_id: common.TextureID, device: *d3d11.IDevice) common.RenderModelError!*d3d11.ITexture2D {
+    var texture2d: ?*d3d11.ITexture2D = undefined;
+    try self.function_table.LoadTextureD3D11_Async(texture_id, device, &texture2d).maybe();
+    return texture2d.?;
+}
+
+pub fn loadIntoTextureD3D11_Async(self: Self, texture_id: common.TextureID, destination_texture: *d3d11.ITexture2D) common.RenderModelError!void {
+    try self.function_table.LoadIntoTextureD3D11_Async(texture_id, destination_texture).maybe();
+}
+
+pub fn freeTextureD3D11(self: Self, texture2d: *d3d11.ITexture2D) void {
+    self.function_table.FreeTextureD3D11(texture2d);
+}
+
 const FunctionTable = extern struct {
     LoadRenderModel_Async: *const fn ([*c]u8, **common.ExternRenderModel) callconv(.C) common.RenderModelErrorCode,
     FreeRenderModel: *const fn (*common.ExternRenderModel) callconv(.C) void,
     LoadTexture_Async: *const fn (common.TextureID, **common.RenderModel.TextureMap) callconv(.C) common.RenderModelErrorCode,
     FreeTexture: *const fn (*common.RenderModel.TextureMap) callconv(.C) void,
 
-    // skip d3d11
-    LoadTextureD3D11_Async: *const fn (common.TextureID, ?*anyopaque, [*c]?*anyopaque) callconv(.C) common.RenderModelErrorCode,
-    LoadIntoTextureD3D11_Async: *const fn (common.TextureID, ?*anyopaque) callconv(.C) common.RenderModelErrorCode,
-    FreeTextureD3D11: *const fn (?*anyopaque) callconv(.C) void,
+    LoadTextureD3D11_Async: *const fn (common.TextureID, ?*d3d11.IDevice, *?*d3d11.ITexture2D) callconv(.C) common.RenderModelErrorCode,
+    LoadIntoTextureD3D11_Async: *const fn (common.TextureID, ?*d3d11.ITexture2D) callconv(.C) common.RenderModelErrorCode,
+    FreeTextureD3D11: *const fn (?*d3d11.ITexture2D) callconv(.C) void,
 
     GetRenderModelName: *const fn (u32, [*c]u8, u32) callconv(.C) u32,
     GetRenderModelCount: *const fn () callconv(.C) u32,

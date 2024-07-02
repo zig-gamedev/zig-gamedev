@@ -1,6 +1,9 @@
 const std = @import("std");
 
 const common = @import("common.zig");
+const renderers = @import("renderers.zig");
+
+const d3d11 = renderers.d3d11;
 
 function_table: *FunctionTable,
 
@@ -254,6 +257,17 @@ pub fn allocPosesForFrame(self: Self, allocator: std.mem.Allocator, pose_predict
     return poses;
 }
 
+pub fn getMirrorTextureD3D11(self: Self, eye: common.Eye, d3d11_resource_or_device: *d3d11.IResource) common.CompositorError!*d3d11.IShaderResourceView {
+    var d3d11_shader_resource_view: ?*d3d11.IShaderResourceView = undefined;
+    const err = self.function_table.GetMirrorTextureD3D11(eye, d3d11_resource_or_device, &d3d11_shader_resource_view);
+    try err.maybe();
+    return d3d11_shader_resource_view.?;
+}
+
+pub fn releaseMirrorTextureD3D11(self: Self, d3d11_shader_resource_view: *d3d11.IShaderResourceView) void {
+    self.function_table.ReleaseMirrorTextureD3D11(d3d11_shader_resource_view);
+}
+
 const FunctionTable = extern struct {
     SetTrackingSpace: *const fn (common.TrackingUniverseOrigin) callconv(.C) void,
     GetTrackingSpace: *const fn () callconv(.C) common.TrackingUniverseOrigin,
@@ -290,9 +304,8 @@ const FunctionTable = extern struct {
     ForceReconnectProcess: *const fn () callconv(.C) void,
     SuspendRendering: *const fn (bool) callconv(.C) void,
 
-    // skip over d3d11
-    GetMirrorTextureD3D11: usize,
-    ReleaseMirrorTextureD3D11: usize,
+    GetMirrorTextureD3D11: *const fn (common.Eye, ?*anyopaque, *?*d3d11.IShaderResourceView) callconv(.C) common.CompositorErrorCode,
+    ReleaseMirrorTextureD3D11: *const fn (?*d3d11.IShaderResourceView) callconv(.C) void,
 
     // skip over opengl
     GetMirrorTextureGL: usize,
