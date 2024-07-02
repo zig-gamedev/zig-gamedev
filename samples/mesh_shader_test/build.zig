@@ -19,7 +19,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    @import("system_sdk").addLibraryPathsTo(exe);
+    @import("system-sdk").addLibraryPathsTo(exe);
 
     const zmesh = b.dependency("zmesh", .{
         .target = options.target,

@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const system_sdk = b.dependency("system_sdk", .{});
+    const system_sdk = b.dependency("system-sdk", .{});
 
     const options = .{
         .shared = b.option(

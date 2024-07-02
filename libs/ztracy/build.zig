@@ -65,7 +65,7 @@ pub fn build(b: *std.Build) void {
             tracy.linkSystemLibrary("dbghelp");
         },
         .macos => {
-            const system_sdk = b.dependency("system_sdk", .{});
+            const system_sdk = b.dependency("system-sdk", .{});
             tracy.addFrameworkPath(system_sdk.path("System/Library/Frameworks"));
         },
         else => {},

@@ -9,6 +9,9 @@
         "README.md",
     },
     .dependencies = .{
-        .system_sdk = .{ .path = "../system-sdk" },
+        .@"system-sdk" = .{
+            .url = "https://github.com/zig-gamedev/system-sdk/archive/refs/heads/main.tar.gz",
+            .hash = "122035336d7535f655fe0ece31cea0fbf8ad2f1e42f64b073995050a425ca8f8fbdc",
+        },
     },
 }
