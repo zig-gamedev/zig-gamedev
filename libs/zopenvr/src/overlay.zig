@@ -75,8 +75,90 @@ pub fn setOverlayName(self: Self, overlay_handle: common.OverlayHandle, name: [:
     return self.function_table.SetOverlayName(overlay_handle, name.ptr).maybe();
 }
 
-pub fn getOverlayImageData(_: Self) void {
-    @compileError("not implemented");
+pub fn RawImage(comptime T: type, comptime bytes_per_pixel: u32) type {
+    comptime {
+        switch (@typeInfo(T)) {
+            .Int => |Int| if (Int.bits % 8 != 0) @compileError("type needs to be a whole number of bytes"),
+            .Struct => |Struct| {
+                if (Struct.layout != .@"packed") @compileError("struct needs to be packed");
+                if (@typeInfo(Struct.backing_integer.?).Int.bits != 8 * bytes_per_pixel)
+                    @compileError("struct has to be 1 pixel big (u" ++ 8 * bytes_per_pixel ++ ")");
+            },
+            else => @compileError("type '" ++ @typeName(T) ++ "' is not allowed here"),
+        }
+    }
+    const is_struct = comptime @typeInfo(T) == .Struct;
+    const type_bytes: u16 = comptime switch (@typeInfo(T)) {
+        .Struct => |Struct| @typeInfo(Struct.backing_integer.?).Int.bits / 8,
+        .Int => |Int| Int.bits / 8,
+        else => unreachable,
+    };
+
+    return struct {
+        const Sself = @This();
+        allocator: std.mem.Allocator,
+
+        width: u32,
+        height: u32,
+        bytes_per_pixel: u32,
+
+        data: ?[]T = null,
+
+        pub fn init(allocator: std.mem.Allocator) !Sself {
+            var image = Sself{
+                .width = 0,
+                .height = 0,
+                .bytes_per_pixel = bytes_per_pixel,
+
+                .allocator = allocator,
+            };
+            try image.makeData();
+            return image;
+        }
+        pub fn deinit(self: Sself) void {
+            if (self.data == null) return;
+            self.allocator.free(self.data.?);
+        }
+        pub fn makeData(self: Sself) !void {
+            std.debug.assert(self.bytes_per_pixel > 0);
+            std.debug.assert(self.bytes_per_pixel >= type_bytes);
+            if (is_struct) std.debug.assert(self.bytes_per_pixel == bytes_per_pixel);
+            std.debug.assert(self.bytes_per_pixel % type_bytes == 0);
+
+            self.deinit();
+            self.data = try self.allocator.alloc(T, self.width * self.height * self.bytes_per_pixel);
+        }
+        pub fn getData(self: Sself) []T {
+            return self.data.?;
+        }
+    };
+}
+
+pub fn getOverlayImageData(
+    self: Self,
+    allocator: std.mem.Allocator,
+    comptime ArrayT: type,
+    overlay_handle: common.OverlayHandle,
+) common.OverlayError!RawImage(ArrayT, 4) {
+    var image = try RawImage(ArrayT, 4).init(allocator);
+    var err = self.function_table.GetOverlayImageData(overlay_handle, null, 0, &image.width, &image.height).maybe();
+    if (err != common.OverlayError.ArrayTooSmall) return err;
+
+    try image.makeData();
+    errdefer image.deinit();
+
+    if (image.getData().len > 0) {
+        err = self.function_table.GetOverlayImageData(
+            overlay_handle,
+            image.getData().ptr,
+            @sizeOf(ArrayT) * image.getData().len,
+            &image.width,
+            &image.height,
+        );
+        try err.maybe();
+    }
+
+    return image;
 }
 
 pub fn getOverlayErrorNameFromEnum(self: Self, overlay_error: common.OverlayErrorCode) [:0]const u8 {
@@ -284,8 +366,10 @@ pub fn setOverlayTransformTrackedDeviceComponent(
     return self.function_table.SetOverlayTransformTrackedDeviceComponent(overlay_handle, device_index, component_name.ptr);
 }
 
-pub fn getOverlayTransformTrackedDeviceComponent(_: Self) void {
-    @compileError("not implemented");
+pub fn getOverlayTransformTrackedDeviceComponent(self: Self, overlay_handle: common.OverlayHandle, out_component_name_buffer: [:0]u8) common.OverlayError!common.TrackedDeviceIndex {
+    var tracked_device: common.TrackedDeviceIndex = undefined;
+    try self.function_table.GetOverlayTransformTrackedDeviceComponent(overlay_handle, &tracked_device, out_component_name_buffer.ptr, out_component_name_buffer.len);
+    return tracked_device;
 }
 
 pub fn setOverlayTransformCursor(self: Self, overlay_handle: common.OverlayHandle, hotspot: common.Vector2) common.OverlayError!void {
@@ -446,21 +530,23 @@ pub fn setOverlayRaw(
     comptime {
         const type_info = @typeInfo(T);
         if (type_info == .Int) {
-            if (type_info.Int.bits % 8 != 0) {
-                @compileError("int needs to be a whole number of bytes");
-            }
+            if (type_info.Int.bits % 8 != 0) @compileError("int needs to be a whole number of bytes");
         } else if (type_info == .Struct) {
-            if (type_info.Struct.layout != .@"packed") {
-                @compileError("struct needs to be packed");
-            }
-            if (type_info.Struct.backing_integer % 8 != 0) {
-                @compileError("struct needs to be a whole number of bytes big");
-            }
-        } else {
-            @compileError("type '" ++ @typeName(T) ++ "' is not allowed here");
-        }
+            if (type_info.Struct.layout != .@"packed") @compileError("struct needs to be packed");
+            if (@typeInfo(type_info.Struct.backing_integer.?).Int.bits % 8 != 0) @compileError("struct needs to be a whole number of bytes big");
+        } else @compileError("type '" ++ @typeName(T) ++ "' is not allowed here");
     }
     return self.function_table.SetOverlayRaw(overlay_handle, buffer, width, height, bytes_per_pixel).maybe();
+}
+
+pub fn setOverlayRawFromRawImage(
+    self: Self,
+    comptime T: type,
+    comptime bytes_per_pixel: u32,
+    overlay_handle: common.OverlayHandle,
+    image: RawImage(T, bytes_per_pixel),
+) common.OverlayError!void {
+    self.setOverlayRaw(T, overlay_handle, image.getData(), image.width, image.height, image.bytes_per_pixel);
 }
 
 pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file_path: [:0]const u8) common.OverlayError!void {
@@ -658,7 +744,7 @@ const FunctionTable = extern struct {
     SetOverlayTransformTrackedDeviceRelative: *const fn (common.OverlayHandle, common.TrackedDeviceIndex, *const common.Matrix34) callconv(.C) common.OverlayErrorCode,
     GetOverlayTransformTrackedDeviceRelative: *const fn (common.OverlayHandle, *common.TrackedDeviceIndex, *common.Matrix34) callconv(.C) common.OverlayErrorCode,
     SetOverlayTransformTrackedDeviceComponent: *const fn (common.OverlayHandle, common.TrackedDeviceIndex, [*c]const u8) callconv(.C) common.OverlayErrorCode,
-    GetOverlayTransformTrackedDeviceComponent: *const fn (common.OverlayHandle, *common.TrackedDeviceIndex, [*c]const u8, u32) callconv(.C) common.OverlayErrorCode,
+    GetOverlayTransformTrackedDeviceComponent: *const fn (common.OverlayHandle, *common.TrackedDeviceIndex, [*c]u8, u32) callconv(.C) common.OverlayErrorCode,
     SetOverlayTransformCursor: *const fn (common.OverlayHandle, *const common.Vector2) callconv(.C) common.OverlayErrorCode,
     GetOverlayTransformCursor: *const fn (common.OverlayHandle, *common.Vector2) callconv(.C) common.OverlayErrorCode,
     SetOverlayTransformProjection: *const fn (common.OverlayHandle, common.TrackingUniverseOrigin, *const common.Matrix34, *const common.OverlayProjection, common.Eye) callconv(.C) common.OverlayErrorCode,
