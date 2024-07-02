@@ -16,7 +16,7 @@ pub fn init() common.InitError!Self {
 }
 
 pub fn loadRenderModel(self: Self, render_model_name: [:0]const u8) common.RenderModelError!common.RenderModel {
-    while (true) : (std.time.sleep(10_000_000)) {
+    while (true) : (std.time.sleep(10 * std.time.ns_per_ms)) {
         return self.loadRenderModelAsync(render_model_name) catch |err| switch (err) {
             error.Loading => continue,
             else => return err,
@@ -38,7 +38,7 @@ pub fn freeRenderModel(self: Self, render_model: common.RenderModel) void {
 }
 
 pub fn loadTexture(self: Self, texture_id: common.TextureID) common.RenderModelError!*common.RenderModel.TextureMap {
-    while (true) : (std.time.sleep(10_000_000)) {
+    while (true) : (std.time.sleep(10 * std.time.ns_per_ms)) {
         return self.loadTextureAsync(texture_id) catch |err| switch (err) {
             error.Loading => continue,
             else => return err,
