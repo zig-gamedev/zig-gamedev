@@ -554,9 +554,18 @@ pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file
     return self.function_table.SetOverlayFromFile(overlay_handle, file_path.ptr).maybe();
 }
 
-pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!struct {} {
+pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle, native_texture_ref: anyopaque) common.OverlayError!struct {
+    native_texture_handle: anyopaque,
+    width: u32,
+    height: u32,
+    native_format: u32,
+    api_type: common.TextureType,
+    color_space: common.ColorSpace,
+    texture_bounds: common.TextureBounds,
+} {
     _ = self;
     _ = overlay_handle;
+    _ = native_texture_ref;
     @compileError("not implemented");
 }
 
