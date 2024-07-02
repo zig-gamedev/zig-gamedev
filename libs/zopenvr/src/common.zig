@@ -449,6 +449,7 @@ pub const InitErrorCode = enum(i32) {
     pub fn fromError(err: InitError) InitErrorCode {
         return switch (err) {
             inline else => |e| comptime for (std.meta.tags(InitErrorCode)) |tag| {
+                @setEvalBranchQuota(50000);
                 if (tag.maybe() == e) break tag;
             } else unreachable,
         };
@@ -689,6 +690,13 @@ pub fn initErrorAsSymbol(init_error: InitError) [:0]const u8 {
 }
 pub fn initErrorAsEnglishDescription(init_error: InitError) [:0]const u8 {
     return InitErrorCode.fromError(init_error).asEnglishDescription();
+}
+
+test "depth error" {
+    const err = InitError.InitHmdNotFound;
+    const sym = initErrorAsSymbol(err);
+    try std.testing.expect(sym.len > 0);
+    // std.debug.print("{s}\n", .{sym});
 }
 
 extern "openvr_api" fn VR_GetVRInitErrorAsSymbol(InitErrorCode) callconv(.C) [*c]const u8;
