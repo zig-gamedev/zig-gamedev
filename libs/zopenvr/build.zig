@@ -12,14 +12,22 @@ pub fn build(b: *std.Build) void {
     });
 
     var backends = struct {
+        d3d11: bool = false,
         d3d12: bool = false,
         // valken: bool = false,
         // opengl: bool = false,
     }{};
 
-    // b.systemIntegrationOption("d3d12", .{})
+    var need_zwin32 = false;
     if (b.option(bool, "d3d12", "Enable Direct3D 12 backend") orelse false) {
         backends.d3d12 = true;
+        need_zwin32 = true;
+    }
+    if (b.option(bool, "d3d11", "Enable Direct3D 11 backend") orelse false) {
+        backends.d3d11 = true;
+        need_zwin32 = true;
+    }
+    if (need_zwin32) {
         if (b.lazyDependency("zwin32", .{ .target = target })) |zwin32| {
             mod.addImport("zwin32", zwin32.module("root"));
         }

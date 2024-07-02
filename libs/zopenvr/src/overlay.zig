@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const common = @import("common.zig");
+const d3d11 = @import("renderers.zig").d3d11;
 
 function_table: *FunctionTable,
 
@@ -549,13 +550,17 @@ pub fn setOverlayRawFromRawImage(
 ) common.OverlayError!void {
     self.setOverlayRaw(T, overlay_handle, image.data, image.width, image.height, image.bytes_per_pixel);
 }
+pub fn setOverlayRawFromRawImageU8(self: Self, overlay_handle: common.OverlayHandle, image: RawImage(u8, 4)) common.OverlayError!void {
+    return self.setOverlayRawFromRawImage(u8, 4, overlay_handle, image);
+}
 
 pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file_path: [:0]const u8) common.OverlayError!void {
     return self.function_table.SetOverlayFromFile(overlay_handle, file_path.ptr).maybe();
 }
 
-pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle, native_texture_ref: anyopaque) common.OverlayError!struct {
-    native_texture_handle: anyopaque,
+// todo make typeing accomedate more engines rather then just what was in the docs
+pub fn getOverlayTextureD3D11(self: Self, overlay_handle: common.OverlayHandle, native_texture_ref: *d3d11.IResource) common.OverlayError!struct {
+    native_texture_handle: *d3d11.IShaderResourceView,
     width: u32,
     height: u32,
     native_format: u32,
@@ -563,13 +568,41 @@ pub fn getOverlayTexture(self: Self, overlay_handle: common.OverlayHandle, nativ
     color_space: common.ColorSpace,
     texture_bounds: common.TextureBounds,
 } {
-    _ = self;
-    _ = overlay_handle;
-    _ = native_texture_ref;
-    @compileError("not implemented");
+    comptime if (@import("builtin").os.tag != .windows) @compileError("can't guarantee it works, so disabling");
+
+    var native_texture_handle: *d3d11.IShaderResourceView = undefined;
+    var width: u32 = undefined;
+    var height: u32 = undefined;
+    var native_format: u32 = undefined;
+    var api_type: common.TextureType = undefined;
+    var color_space: common.ColorSpace = undefined;
+    var texture_bounds: common.TextureBounds = undefined;
+
+    const err = self.function_table.GetOverlayTexture(
+        overlay_handle,
+        &native_texture_handle,
+        native_texture_ref,
+        &width,
+        &height,
+        &native_format,
+        &api_type,
+        &color_space,
+        &texture_bounds,
+    );
+
+    try err.maybe();
+    return .{
+        .native_texture_handle = native_texture_handle.?,
+        .width = width,
+        .height = height,
+        .native_format = native_format,
+        .api_type = api_type,
+        .color_space = color_space,
+        .texture_bounds = texture_bounds,
+    };
 }
 
-pub fn releaseNativeOverlayHandle(self: Self, overlay_handle: common.OverlayHandle, native_texture_handle: anyopaque) common.OverlayError!void {
+pub fn releaseNativeOverlayHandleD3D11(self: Self, overlay_handle: common.OverlayHandle, native_texture_handle: *d3d11.IShaderResourceView) common.OverlayError!void {
     return self.function_table.ReleaseNativeOverlayHandle(overlay_handle, native_texture_handle).maybe();
 }
 
