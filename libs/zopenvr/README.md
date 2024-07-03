@@ -51,6 +51,7 @@ pub fn main() !void {
 For better types on render structs, enable the corresponding options when importing the dependency and ensure that the lib is present in the libs folder.
 ```zig
     const zopenvr = b.dependency("zopenvr", .{
+        .d3d11 = true,    // requires zwin32
         .d3d12 = true,    // requires zwin32
     });
 ```
