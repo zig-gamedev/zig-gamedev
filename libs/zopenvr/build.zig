@@ -72,16 +72,25 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
 
-    if (target.cpu.arch != .x86_64) @panic("unsupported target architecture");
+    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    const arch = target.cpu.arch;
+    const path: []const u8 = switch (target.os.tag) {
+        .windows => switch (arch) {
+            .x86_64 => "libs/openvr/lib/win64",
+            .x86 => "libs/openvr/lib/win32",
+            else => unreachable,
+        },
+        .linux => switch (arch) {
+            .x86_64 => "libs/openvr/lib/linux64",
+            .x86 => "libs/openvr/lib/linux32",
+            else => unreachable,
+        },
+        else => null,
+    } orelse @panic("unsupported target os");
+    // compile_step.step.fail() todo
+
     compile_step.addLibraryPath(.{
-        .cwd_relative = b.pathJoin(&.{
-            source_path_prefix,
-            switch (target.os.tag) {
-                .windows => "libs/openvr/lib/win64",
-                .linux => "libs/openvr/lib/linux64",
-                else => @panic("unsupported target os"),
-            },
-        }),
+        .cwd_relative = b.pathJoin(&.{ source_path_prefix, path }),
     });
 }
 
@@ -90,15 +99,24 @@ pub fn addRPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
 
-    if (target.cpu.arch != .x86_64) @panic("unsupported target architecture");
+    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    const arch = target.cpu.arch;
+    const path: []const u8 = switch (target.os.tag) {
+        .windows => switch (arch) {
+            .x86_64 => "libs/openvr/bin/win64",
+            .x86 => "libs/openvr/bin/win32",
+            else => unreachable,
+        },
+        .linux => switch (arch) {
+            .x86_64 => "libs/openvr/bin/linux64",
+            .x86 => "libs/openvr/bin/linux32",
+            else => unreachable,
+        },
+        else => null,
+    } orelse @panic("unsupported target os");
+
     compile_step.addRPath(.{
-        .cwd_relative = b.pathJoin(&.{
-            source_path_prefix, switch (target.os.tag) {
-                .windows => "libs/openvr/bin/win64",
-                .linux => "libs/openvr/bin/linux64",
-                else => @panic("unsupported target os"),
-            },
-        }),
+        .cwd_relative = b.pathJoin(&.{ source_path_prefix, path }),
     });
 }
 
@@ -118,25 +136,37 @@ pub fn installOpenVR(
     target: std.Target,
     install_dir: std.Build.InstallDir,
 ) void {
-    if (target.cpu.arch != .x86_64) @panic("unsupported target architecture");
+    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
 
     const b = step.owner;
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
+
+    const arch = target.cpu.arch;
+    const path: []const u8 = switch (target.os.tag) {
+        .windows => switch (arch) {
+            .x86_64 => "libs/openvr/bin/win64/openvr_api.dll",
+            .x86 => "libs/openvr/bin/win32/openvr_api.dll",
+            else => unreachable,
+        },
+        .linux => switch (arch) {
+            .x86_64 => "libs/openvr/bin/linux64/libopenvr_api.so",
+            .x86 => "libs/openvr/bin/linux32/libopenvr_api.so",
+            else => unreachable,
+        },
+        else => null,
+    } orelse @panic("unsupported target os");
+
     step.dependOn(switch (target.os.tag) {
         .windows => &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(&.{ source_path_prefix, "libs/openvr/bin/win64/openvr_api.dll" }),
-            },
+            .{ .cwd_relative = b.pathJoin(&.{ source_path_prefix, path }) },
             install_dir,
             "openvr_api.dll",
         ).step,
         .linux => &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(&.{ source_path_prefix, "libs/openvr/bin/linux64/libopenvr_api.so" }),
-            },
+            .{ .cwd_relative = b.pathJoin(&.{ source_path_prefix, path }) },
             install_dir,
             "libopenvr_api.so",
         ).step,
-        else => @panic("unsupported target os"),
+        else => unreachable,
     });
 }
