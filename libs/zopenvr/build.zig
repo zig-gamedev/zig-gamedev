@@ -44,7 +44,7 @@ pub fn build(b: *std.Build) void {
         {
             const tests = b.addTest(.{
                 .name = "openvr-tests",
-                .root_source_file = b.path("src/openvr.zig"),
+                .root_source_file = b.path("src/tests.zig"),
                 .target = target,
                 .optimize = optimize,
             });
