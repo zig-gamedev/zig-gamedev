@@ -725,12 +725,21 @@ pub const Vector4 = extern struct {
     v: [4]f32,
 };
 
+/// right-handed system
+/// +y is up
+/// +x is to the right
+/// -z is forward
+/// Distance unit is in meters
 pub const Matrix34 = extern struct {
     m: [3][4]f32,
 };
 
 pub const Matrix44 = extern struct {
     m: [4][4]f32,
+};
+
+pub const Matrix33 = extern struct {
+    m: [3][3]f32,
 };
 
 pub const Rect2 = extern struct {
