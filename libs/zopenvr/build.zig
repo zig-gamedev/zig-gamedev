@@ -67,12 +67,33 @@ pub fn build(b: *std.Build) void {
     }
 }
 
+fn testSuportedTarget(step: *std.Build.Step, target: std.Target) error{ OutOfMemory, MakeFailed }!void {
+    const supportedArch = switch (target.cpu.arch) {
+        .x86, .x86_64 => true,
+        else => false,
+    };
+    const supportedOs = switch (target.os.tag) {
+        .windows, .linux => true,
+        else => false,
+    };
+    if (supportedOs and supportedArch) return;
+
+    return step.fail("zopenvr does not support building for {s}{s}{s}{s}{s}", .{
+        if (!supportedArch and supportedOs) "the " else "",
+        if (!supportedArch) @tagName(target.cpu.arch) else "",
+        if (!supportedArch and supportedOs) " platform" else "",
+        if (!supportedArch and !supportedOs) " " else "",
+        if (!supportedOs) @tagName(target.os.tag) else "",
+    });
+}
+
 pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const b = compile_step.step.owner;
     const target = compile_step.rootModuleTarget();
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
 
-    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    testSuportedTarget(&compile_step.step, target) catch return;
+
     const arch = target.cpu.arch;
     const path: []const u8 = switch (target.os.tag) {
         .windows => switch (arch) {
@@ -85,9 +106,8 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
             .x86 => "libs/openvr/lib/linux32",
             else => unreachable,
         },
-        else => null,
-    } orelse @panic("unsupported target os");
-    // compile_step.step.fail() todo
+        else => unreachable,
+    };
 
     compile_step.addLibraryPath(.{
         .cwd_relative = b.pathJoin(&.{ source_path_prefix, path }),
@@ -99,7 +119,8 @@ pub fn addRPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
 
-    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    testSuportedTarget(&compile_step.step, target) catch return;
+
     const arch = target.cpu.arch;
     const path: []const u8 = switch (target.os.tag) {
         .windows => switch (arch) {
@@ -112,8 +133,8 @@ pub fn addRPathsTo(compile_step: *std.Build.Step.Compile) void {
             .x86 => "libs/openvr/bin/linux32",
             else => unreachable,
         },
-        else => null,
-    } orelse @panic("unsupported target os");
+        else => unreachable,
+    };
 
     compile_step.addRPath(.{
         .cwd_relative = b.pathJoin(&.{ source_path_prefix, path }),
@@ -121,13 +142,15 @@ pub fn addRPathsTo(compile_step: *std.Build.Step.Compile) void {
 }
 
 pub fn linkOpenVR(compile_step: *std.Build.Step.Compile) void {
+    testSuportedTarget(&compile_step.step, compile_step.rootModuleTarget()) catch return;
+
     switch (compile_step.rootModuleTarget().os.tag) {
         .windows => compile_step.linkSystemLibrary("openvr_api"),
         .linux => {
             compile_step.root_module.linkSystemLibrary("openvr_api", .{ .needed = true });
             compile_step.root_module.addRPathSpecial("$ORIGIN");
         },
-        else => {},
+        else => unreachable,
     }
 }
 
@@ -136,7 +159,7 @@ pub fn installOpenVR(
     target: std.Target,
     install_dir: std.Build.InstallDir,
 ) void {
-    if (!target.cpu.arch.isX86()) @panic("unsupported target architecture");
+    testSuportedTarget(step, target) catch return;
 
     const b = step.owner;
     const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
@@ -153,8 +176,8 @@ pub fn installOpenVR(
             .x86 => "libs/openvr/bin/linux32/libopenvr_api.so",
             else => unreachable,
         },
-        else => null,
-    } orelse @panic("unsupported target os");
+        else => unreachable,
+    };
 
     step.dependOn(switch (target.os.tag) {
         .windows => &b.addInstallFileWithDir(
