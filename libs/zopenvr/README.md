@@ -96,4 +96,5 @@ For better types on render structs, enable the corresponding options when import
 | Metal              |                       |                                 |         |
 
 ## todo
-generate bindings from original json
+- generate bindings from original json
+- maybe get doc comments from openvr.h

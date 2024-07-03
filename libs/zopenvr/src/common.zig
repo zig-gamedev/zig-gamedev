@@ -856,29 +856,41 @@ pub const ApplicationError = error{
 pub const ApplicationErrorCode = enum(i32) {
     none = 0,
 
-    app_key_already_exists = 100, // Only one application can use any given key
-    no_manifest = 101, // the running application does not have a manifest
-    no_application = 102, // No application is running
+    /// Only one application can use any given key
+    app_key_already_exists = 100,
+    /// the running application does not have a manifest
+    no_manifest = 101,
+    /// No application is running
+    no_application = 102,
     invalid_index = 103,
-    unknown_application = 104, // the application could not be found
-    ipc_failed = 105, // An IPC failure caused the request to fail
+    /// the application could not be found
+    unknown_application = 104,
+    /// An IPC failure caused the request to fail
+    ipc_failed = 105,
     application_already_running = 106,
     invalid_manifest = 107,
     invalid_application = 108,
-    launch_failed = 109, // the process didn't start
-    application_already_starting = 110, // the system was already starting the same application
-    launch_in_progress = 111, // The system was already starting a different application
+    /// the process didn't start
+    launch_failed = 109,
+    /// the system was already starting the same application
+    application_already_starting = 110,
+    /// The system was already starting a different application
+    launch_in_progress = 111,
     old_application_quitting = 112,
     transition_aborted = 113,
-    is_template = 114, // error when you try to call LaunchApplication() on a template type app (use LaunchTemplateApplication)
+    /// error when you try to call LaunchApplication() on a template type app (use LaunchTemplateApplication)
+    is_template = 114,
     steam_vr_is_exiting = 115,
 
-    buffer_too_small = 200, // The provided buffer was too small to fit the requested data
-    property_not_set = 201, // The requested property was not set
+    /// The provided buffer was too small to fit the requested data
+    buffer_too_small = 200,
+    /// The requested property was not set
+    property_not_set = 201,
     unknown_property = 202,
     invalid_parameter = 203,
 
-    not_implemented = 300, // Fcn is not implemented in current interface
+    /// Fcn is not implemented in current interface
+    not_implemented = 300,
 
     pub fn fromError(err: ApplicationError) ApplicationErrorCode {
         return switch (err) {
@@ -2220,8 +2232,10 @@ pub const EventStatus = extern struct {
     status_state: VRState,
 };
 pub const EventKeyboard = extern struct {
-    new_input: [8]u8, // 7 bytes of utf8 + null
-    user_value: u64, // caller specified opaque token
+    /// 7 bytes of utf8 + null
+    new_input: [8]u8,
+    /// caller specified opaque token
+    user_value: u64,
     overlay_handle: OverlayHandle,
 };
 pub const EventIpd = extern struct {
@@ -2830,11 +2844,15 @@ pub const OverlayFlags = packed struct(u32) {
     show_touch_pad_scroll_wheel: bool = false,
     transfer_ownership_to_internal_process: bool = false,
 
-    side_by_side_parallel: bool = false, // Texture is left/right
-    side_by_side_crossed: bool = false, // Texture is crossed and right/left
+    /// Texture is left/right
+    side_by_side_parallel: bool = false,
+    /// Texture is crossed and right/left
+    side_by_side_crossed: bool = false,
 
-    panorama: bool = false, // Texture is a panorama
-    stereo_panorama: bool = false, // Texture is a stereo panorama
+    /// Texture is a panorama
+    panorama: bool = false,
+    /// Texture is a stereo panorama
+    stereo_panorama: bool = false,
 
     sort_with_non_scene_overlays: bool = false,
     visible_in_dashboard: bool = false,
@@ -2906,8 +2924,10 @@ pub const OverlayTransformType = enum(i32) {
 pub const OverlayProjection = RawProjection; // order is left right top bottom
 
 pub const OverlayInputMethod = enum(i32) {
-    None = 0, // No input events will be generated automatically for this overlay
-    Mouse = 1, // Tracked controllers will get mouse events automatically
+    /// No input events will be generated automatically for this overlay
+    None = 0,
+    /// Tracked controllers will get mouse events automatically
+    Mouse = 1,
     // DualAnalog = 2, // No longer supported
 };
 
@@ -2953,16 +2973,16 @@ pub const OverlayIntersectionMaskPrimitive = extern struct {
 };
 
 pub const KeyboardFlags = packed struct(u32) {
-    // Makes the keyboard send key events immediately instead of accumulating a buffer */
-    Minimal: bool = false,
-    // Makes the keyboard take all focus and dismiss when clicking off the panel */
-    Modal: bool = false,
-    // Shows arrow keys on the keyboard when in minimal mode. Buffered (non-minimal) mode always has them. In minimal
-    // mode, when arrow keys are pressed, they send ANSI escape sequences (e.g. "\x1b[D" for left arrow).
-    ShowArrowKeys: bool = false,
-    // Shows the hide keyboard button instead of a Done button. The Done key sends a VREvent_KeyboardDone when
-    // clicked. Hide only sends the Closed event.
-    HideDoneKey: bool = false,
+    /// Makes the keyboard send key events immediately instead of accumulating a buffer
+    minimal: bool = false,
+    /// Makes the keyboard take all focus and dismiss when clicking off the panel
+    modal: bool = false,
+    /// Shows arrow keys on the keyboard when in minimal mode. Buffered (non-minimal) mode always has them. In minimal
+    /// mode, when arrow keys are pressed, they send ANSI escape sequences (e.g. "\x1b[D" for left arrow).
+    show_arrow_keys: bool = false,
+    /// Shows the hide keyboard button instead of a Done button. The Done key sends a Event.keyboard_done when
+    /// clicked. Hide only sends the Closed event.
+    hide_done_key: bool = false,
 
     _padding: u28 = 0,
 };
