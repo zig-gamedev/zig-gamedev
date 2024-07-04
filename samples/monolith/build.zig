@@ -1,11 +1,9 @@
 const std = @import("std");
 
-const Options = @import("../../build.zig").Options;
-
 const demo_name = "monolith";
 const content_dir = "monolith_content/";
 
-pub fn build(b: *std.Build, options: Options) *std.Build.Step.Compile {
+pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{

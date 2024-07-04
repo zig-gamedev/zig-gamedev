@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) void {
         "zpix-enable",
         "Enable PIX for Windows profiler",
     ) orelse false;
-    const options = Options{
+    const options = .{
         .optimize = optimize,
         .target = target,
         .zd3d12_enable_debug_layer = b.option(
@@ -147,7 +147,7 @@ const samples_cross_platform = struct {
     };
 };
 
-fn buildAndInstallSamples(b: *std.Build, options: Options, comptime samples: type) void {
+fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: type) void {
     inline for (comptime std.meta.declarations(samples)) |d| {
         const exe = @field(samples, d.name).build(b, options);
 
@@ -332,17 +332,6 @@ fn testsWindows(
     test_step.dependOn(&openvr_tests.step);
     @import("zopenvr").installOpenVR(&openvr_tests.step, target.result, .bin);
 }
-
-pub const Options = struct {
-    optimize: std.builtin.Mode,
-    target: std.Build.ResolvedTarget,
-
-    zd3d12_enable_debug_layer: bool,
-    zd3d12_enable_gbv: bool,
-
-    zpix_enable: bool,
-    zpix_path: []const u8,
-};
 
 // TODO: Delete this once Zig checks minimum_zig_version in build.zig.zon
 fn ensureZigVersion() !void {
