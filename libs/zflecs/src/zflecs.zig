@@ -2,10 +2,11 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.7";
+pub const flecs_version = "3.2.11";
 
 // TODO: Ensure synced with flecs build flags.
 const flecs_is_debug = builtin.mode == .Debug;
+const flecs_is_sanitize = flecs_is_debug;
 
 pub const ftime_t = f32;
 pub const size_t = i32;
@@ -25,6 +26,54 @@ fn make_error() error{FlecsError} {
 
 pub const ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
 pub const COMPONENT_MASK: u64 = ~ID_FLAGS_MASK;
+
+// World flags
+pub const WorldQuitWorkers = 1 << 0;
+pub const WorldReadonly = 1 << 1;
+pub const WorldInit = 1 << 2;
+pub const WorldQuit = 1 << 3;
+pub const WorldFini = 1 << 4;
+pub const WorldMeasureFrameTime = 1 << 5;
+pub const WorldMeasureSystemTime = 1 << 6;
+pub const WorldMultiThreaded = 1 << 7;
+
+// Iterator flags
+pub const EcsIterIsValid = 1 << 0;
+pub const EcsIterNoData = 1 << 1;
+pub const EcsIterIsInstanced = 1 << 2;
+pub const EcsIterHasShared = 1 << 3;
+pub const EcsIterTableOnly = 1 << 4;
+pub const EcsIterEntityOptional = 1 << 5;
+pub const EcsIterNoResults = 1 << 6;
+pub const EcsIterIgnoreThis = 1 << 7;
+pub const EcsIterMatchVar = 1 << 8;
+//  missing in flecs
+pub const EcsIterHasCondSet = 1 << 10;
+pub const EcsIterProfile = 1 << 11;
+pub const EcsIterTrivialSearch = 1 << 12;
+pub const EcsIterTrivialSearchNoData = 1 << 13;
+pub const EcsIterTrivialTest = 1 << 14;
+pub const EcsIterTrivialSearchWildcard = 1 << 15;
+
+// Filter flags
+pub const EcsFilterMatchThis = 1 << 1;
+pub const EcsFilterMatchOnlyThis = 1 << 2;
+pub const EcsFilterMatchPrefab = 1 << 3;
+pub const EcsFilterMatchDisabled = 1 << 4;
+pub const EcsFilterMatchEmptyTables = 1 << 5;
+pub const EcsFilterMatchAnything = 1 << 6;
+pub const EcsFilterNoData = 1 << 7;
+pub const EcsFilterIsInstanced = 1 << 8;
+pub const EcsFilterPopulate = 1 << 9;
+pub const EcsFilterHasCondSet = 1 << 10;
+pub const EcsFilterUnresolvedByName = 1 << 11;
+pub const EcsFilterHasPred = 1 << 12;
+pub const EcsFilterHasScopes = 1 << 13;
+pub const EcsFilterIsTrivial = 1 << 14;
+pub const EcsFilterMatchOnlySelf = 1 << 15;
+pub const EcsFilterHasWildcards = 1 << 16;
+pub const EcsFilterOwnsStorage = 1 << 17;
+pub const EcsFilterOwnsTermsStorage = 1 << 18;
 
 extern const EcsWildcard: entity_t;
 extern const EcsAny: entity_t;
@@ -325,12 +374,13 @@ pub const Up = 1 << 2;
 pub const Down = 1 << 3;
 pub const TraverseAll = 1 << 4;
 pub const Cascade = 1 << 5;
-pub const Parent = 1 << 6;
-pub const IsVariable = 1 << 7;
-pub const IsEntity = 1 << 8;
-pub const IsName = 1 << 9;
-pub const Filter = 1 << 10;
-pub const TraverseFlags = Up | Down | TraverseAll | Self | Cascade | Parent;
+pub const Desc = 1 << 6;
+pub const Parent = 1 << 7;
+pub const IsVariable = 1 << 8;
+pub const IsEntity = 1 << 9;
+pub const IsName = 1 << 10;
+pub const Filter = 1 << 11;
+pub const TraverseFlags = Up | Down | TraverseAll | Self | Cascade | Desc | Parent;
 
 pub const TermMatchAny = 1 << 0;
 pub const TermMatchAnySrc = 1 << 1;
@@ -339,6 +389,8 @@ pub const TermSrcSecondEq = 1 << 3;
 pub const TermTransitive = 1 << 4;
 pub const TermReflexive = 1 << 5;
 pub const TermIdInherited = 1 << 6;
+pub const EcsTermIsTrivial = 1 << 7;
+pub const EcsTermNoData = 1 << 8;
 
 pub const TermMatchDisabled = 1 << 7;
 pub const TermMatchPrefab = 1 << 8;
@@ -378,17 +430,15 @@ pub fn array(comptime T: type, comptime len: comptime_int) [len]T {
 pub const filter_t = extern struct {
     hdr: header_t = .{ .magic = filter_t_magic },
 
-    terms: ?[*]term_t = null,
-    term_count: i32 = 0,
-    field_count: i32 = 0,
-
-    owned: bool = false,
-    terms_owned: bool = false,
-
+    term_count: i8 = 0,
+    field_count: i8 = 0,
     flags: flags32_t = 0,
+    data_fields: flags64_t = 0,
 
+    terms: ?[*]term_t = null,
     variable_names: ?[*][*:0]u8 = null, // TODO: Only `variable_names[0]` is valid?
     sizes: ?[*]i32 = null,
+    ids: [*]id_t,
 
     entity: entity_t = 0,
     iterable: iterable_t = .{},
@@ -483,6 +533,7 @@ pub const record_t = extern struct {
 pub const ref_t = extern struct {
     entity: entity_t,
     id: entity_t,
+    table_id: u64,
     tr: *table_record_t,
     record: *record_t,
 };
@@ -584,10 +635,10 @@ pub const rule_iter_t = extern struct {
     ops: ?*rule_op_t,
     op_ctx: ?*rule_op_ctx_t,
     written: *u64,
+    source_set: flags32_t,
 
     profile: if (flecs_is_debug) rule_op_profile_t else void,
 
-    redo: bool,
     op: i16,
     sp: i16,
 };
@@ -615,6 +666,7 @@ pub const iter_private_t = extern struct {
 pub const iter_t = extern struct {
     world: *world_t,
     real_world: *world_t,
+
     entities_: [*]entity_t,
     ptrs: ?[*]*anyopaque,
     sizes: ?[*]size_t,
@@ -629,9 +681,13 @@ pub const iter_t = extern struct {
     constrained_vars: flags64_t,
     group_id: u64,
     field_count: i32,
+
     system: entity_t,
     event: entity_t,
     event_id: id_t,
+    event_cur: i32,
+
+    query: *const filter_t,
     terms: ?[*]term_t,
     table_count: i32,
     term_index: i32,
@@ -671,7 +727,7 @@ pub const vec_t = extern struct {
     array: ?*anyopaque,
     count: i32,
     size: i32,
-    elem_size: size_t,
+    elem_size: if (flecs_is_sanitize) size_t else void,
 };
 
 pub const sparse_t = extern struct {
@@ -784,6 +840,15 @@ pub const entity_desc_t = extern struct {
     add_expr: ?[*:0]const u8 = null,
 };
 
+pub const bulk_desc_t = extern struct {
+    _canary: i32 = 0,
+    entities: ?[*]entity_t,
+    count: i32,
+    ids: [FLECS_ID_DESC_MAX]id_t,
+    data: [*]?*anyopaque,
+    table: ?*table_t,
+};
+
 pub const FLECS_TERM_DESC_MAX = 16;
 
 pub const filter_desc_t = extern struct {
@@ -825,7 +890,8 @@ pub const event_desc_t = extern struct {
     offset: i32 = 0,
     count: i32 = 0,
     entity: entity_t = 0,
-    param: ?*const anyopaque = null,
+    param: ?*anyopaque = null,
+    const_param: ?*const anyopaque = null,
     observable: ?*poly_t = null,
     flags: flags32_t = 0,
 };
@@ -834,6 +900,7 @@ pub const world_info_t = extern struct {
     last_component_id: entity_t,
     min_id: entity_t,
     max_id: entity_t,
+
     delta_time_raw: f32,
     delta_time: f32,
     time_scale: f32,
@@ -845,9 +912,11 @@ pub const world_info_t = extern struct {
     world_time_total: f32,
     world_time_total_raw: f32,
     rematch_time_total: f32,
+
     frame_count_total: i64,
     merge_count_total: i64,
     rematch_count_total: i64,
+
     id_create_total: i64,
     id_delete_total: i64,
     table_create_total: i64,
@@ -855,17 +924,14 @@ pub const world_info_t = extern struct {
     pipeline_build_count_total: i64,
     systems_ran_frame: i64,
     observers_ran_frame: i64,
-    id_count: i32,
+
     tag_id_count: i32,
     component_id_count: i32,
     pair_id_count: i32,
-    wildcard_id_count: i32,
+
     table_count: i32,
-    tag_table_count: i32,
-    trivial_table_count: i32,
     empty_table_count: i32,
-    table_record_count: i32,
-    table_storage_count: i32,
+
     cmd: extern struct {
         add_count: i64,
         remove_count: i64,
@@ -879,6 +945,7 @@ pub const world_info_t = extern struct {
         batched_entity_count: i64,
         batched_command_count: i64,
     },
+
     name_prefix: [*:0]const u8,
 };
 
@@ -1411,7 +1478,7 @@ extern fn ecs_record_get_entity(record: *const record_t) entity_t;
 
 /// `pub fn record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque`
 pub const record_get_id = ecs_record_get_id;
-extern fn ecs_record_get_id(world: *world_t, record: *const record_t, id: id_t) ?*const anyopaque;
+extern fn ecs_record_get_id(world: *const world_t, record: *const record_t, id: id_t) ?*const anyopaque;
 
 /// `pub fn record_get_mut_id(world: *world_t, record: *record_t, id: id_t) ?*anyopaque`
 pub const record_get_mut_id = ecs_record_get_mut_id;
@@ -1925,6 +1992,10 @@ extern fn ecs_query_get_binding_ctx(query: *const query_t) ?*anyopaque;
 /// `pub fn emit(world: *world_t, desc: *event_desc_t) void`
 pub const emit = ecs_emit;
 extern fn ecs_emit(world: *world_t, desc: *event_desc_t) void;
+
+/// `pub fn enqueue(world: *world_t, desc: *event_desc_t) void`
+pub const enqueue = ecs_enqueue;
+extern fn ecs_enqueue(world: *world_t, desc: *event_desc_t) void;
 
 /// `pub fn observer_init(world: *world_t, desc: *const observer_desc_t) entity_t`
 pub const observer_init = ecs_observer_init;
@@ -2773,6 +2844,7 @@ pub const os = struct {
         log_last_error_: i32,
         log_last_timestamp_: i64,
         flags_: flags32_t,
+        log_out_: *anyopaque, // *FILE
     };
 
     extern var ecs_os_api: api_t;
