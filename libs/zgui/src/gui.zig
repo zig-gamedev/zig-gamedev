@@ -4556,6 +4556,7 @@ test {
     const testing = std.testing;
 
     testing.refAllDeclsRecursive(@This());
+    if (@import("zgui_options").with_gizmo) testing.refAllDeclsRecursive(gizmo);
 
     init(testing.allocator);
     defer deinit();
