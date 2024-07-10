@@ -477,6 +477,9 @@ const DebugRenderer = struct {
         if (changed) {
             self.demo.monolith.transform = zm.transpose(zm.matFromArr(matrix));
             self.demo.monolith.recalculateFromTransform();
+            const body_interface = self.demo.physics_system.getBodyInterfaceMut();
+            body_interface.setPosition(self.demo.monolith.body, zm.vecToArr3(self.demo.monolith.center), .activate);
+            body_interface.setRotation(self.demo.monolith.body, zm.quatFromMat(self.demo.monolith.rotate_t), .activate);
         }
     }
 
@@ -586,7 +589,7 @@ const DemoState = struct {
     contact_listener: *ContactListener,
     physics_system: *zphy.PhysicsSystem,
 
-    physics_objects: [9]zphy.BodyId = .{0} ** 9,
+    wisp_bodies: [9]zphy.BodyId = .{0} ** 9,
     physics_debug_renderer: DebugRenderer,
     physics_debug_enabled: bool = false,
     gizmo_enabled: bool = false,
@@ -608,6 +611,7 @@ const DemoState = struct {
         captured: bool = false,
     } = .{},
     monolith: struct {
+        body: zphy.BodyId = 0,
         center: zm.Vec = monolith_default_center,
         translate: zm.Mat = monolith_default_translate,
         transform: zm.Mat = monolith_default_transform,
@@ -841,7 +845,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         defer monolith_shape_settings.release();
         const monolith_shape = try monolith_shape_settings.createShape();
         defer monolith_shape.release();
-        _ = try body_interface.createAndAddBody(.{
+        demo.monolith.body = try body_interface.createAndAddBody(.{
             .position = demo.monolith.center,
             .rotation = zm.quatFromMat(demo.monolith.rotate_t),
             .shape = monolith_shape,
@@ -902,7 +906,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         while (i < 9) : (i += 1) {
             const fi = @as(f32, @floatFromInt(i));
             const angle: f32 = std.math.degreesToRadians(fi * 40.0);
-            demo.physics_objects[i] = try body_interface.createAndAddBody(.{
+            demo.wisp_bodies[i] = try body_interface.createAndAddBody(.{
                 .position = .{ 24.0 * std.math.cos(angle), 8.0 + std.math.sin(angle), 16.0 * std.math.sin(angle), 1 },
                 .shape = sphere_shape,
                 .motion_type = .dynamic,
