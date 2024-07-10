@@ -465,9 +465,13 @@ const DebugRenderer = struct {
         zgui.gizmo.setOrthographic(false);
         zgui.gizmo.setRect(0, 0, @floatFromInt(fb_width), @floatFromInt(fb_height));
 
-        const gizmo_op = zgui.gizmo.Operation {
-            .translate_x = true, .translate_y = true, .translate_z = true,
-            .rotate_x = true, .rotate_y = true, .rotate_z = true,
+        const gizmo_op = zgui.gizmo.Operation{
+            .translate_x = true,
+            .translate_y = true,
+            .translate_z = true,
+            .rotate_x = true,
+            .rotate_y = true,
+            .rotate_z = true,
         };
         var gizmo_mode: u32 = @intFromEnum(zgui.gizmo.Mode.local);
         if (self.demo.gizmo_world_space) gizmo_mode = @intFromEnum(zgui.gizmo.Mode.world);
@@ -619,9 +623,9 @@ const DemoState = struct {
 
         pub fn recalculateFromTransform(self: *@This()) void {
             const gizmo_xform = zm.matToArr(zm.transpose(self.transform));
-            var gizmo_center = zgui.gizmo.Vector { 0, 0, 0 };
-            var gizmo_rot = zgui.gizmo.Vector { 0, 0, 0 };
-            var gizmo_scale = zgui.gizmo.Vector { 0, 0, 0 };
+            var gizmo_center = zgui.gizmo.Vector{ 0, 0, 0 };
+            var gizmo_rot = zgui.gizmo.Vector{ 0, 0, 0 };
+            var gizmo_scale = zgui.gizmo.Vector{ 0, 0, 0 };
             zgui.gizmo.decomposeMatrixToComponents(&gizmo_xform, &gizmo_center, &gizmo_rot, &gizmo_scale);
             self.center = zm.f32x4(gizmo_center[0], gizmo_center[1], gizmo_center[2], 1);
             self.translate = zm.transpose(zm.translationV(self.center));
