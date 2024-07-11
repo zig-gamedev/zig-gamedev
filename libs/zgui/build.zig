@@ -25,6 +25,11 @@ pub fn build(b: *std.Build) void {
             "with_implot",
             "Build with bundled implot source",
         ) orelse true,
+        .with_gizmo = b.option(
+            bool,
+            "with_gizmo",
+            "Build with bundled ImGuizmo tool",
+        ) orelse true,
         .with_te = b.option(
             bool,
             "with_te",
@@ -118,6 +123,18 @@ pub fn build(b: *std.Build) void {
 
     if (options.use_wchar32) {
         imgui.defineCMacro("IMGUI_USE_WCHAR32", "1");
+    }
+
+    if (options.with_gizmo) {
+        imgui.defineCMacro("ZGUI_GIZMO", "1");
+        imgui.addCSourceFiles(.{
+            .files = &.{
+                "libs/imgui/ImGuizmo.cpp",
+            },
+            .flags = cflags,
+        });
+    } else {
+        imgui.defineCMacro("ZGUI_GIZMO", "0");
     }
 
     if (options.with_te) {

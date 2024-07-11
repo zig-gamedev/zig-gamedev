@@ -5,6 +5,7 @@
 //
 //--------------------------------------------------------------------------------------------------
 pub const plot = @import("plot.zig");
+pub const gizmo = @import("gizmo.zig");
 pub const te = @import("te.zig");
 pub const backend = switch (@import("zgui_options").backend) {
     .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
@@ -4555,6 +4556,7 @@ test {
     const testing = std.testing;
 
     testing.refAllDeclsRecursive(@This());
+    if (@import("zgui_options").with_gizmo) testing.refAllDeclsRecursive(gizmo);
 
     init(testing.allocator);
     defer deinit();
