@@ -3,7 +3,9 @@ const DrawList = gui.DrawList;
 
 pub const Matrix = [16]f32;
 pub const Vector = [3]f32;
-pub const Bounds = [6]f32; // positive and negative bound for each axis: -x, -y, -z, x, y, z
+
+/// [-x, -y, -z, x, y, z]
+pub const Bounds = [6]f32;
 
 pub const Operation = packed struct(u32) {
     translate_x: bool = false,
@@ -174,9 +176,9 @@ pub fn manipulate(
     );
 }
 
-// Please note that this cubeview is patented by Autodesk : https://patents.google.com/patent/US7782319B2/en
-// It seems to be a defensive patent in the US. I don't think it will bring troubles using it as
-// other software are using the same mechanics. But just in case, you are now warned!
+/// Please note that this cubeview is patented by Autodesk : https://patents.google.com/patent/US7782319B2/en
+/// It seems to be a defensive patent in the US. I don't think it will bring troubles using it as
+/// other software are using the same mechanics. But just in case, you are now warned!
 pub fn viewManipulate(
     view: *Matrix,
     length: f32,
@@ -186,7 +188,8 @@ pub fn viewManipulate(
 ) void {
     zguiGizmo_ViewManipulate(&view[0], length, position, size, background_color);
 }
-// use this version if you did not call Manipulate before and you are just using ViewManipulate
+
+/// Use this version if you did not call `manipulate` before and you are just using `viewManipulate`
 pub fn viewManipulateIndependent(
     view: *Matrix,
     projection: *const Matrix,
