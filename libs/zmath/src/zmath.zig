@@ -340,10 +340,9 @@ pub inline fn splatInt(comptime T: type, value: u32) T {
 }
 
 pub fn load(mem: []const f32, comptime T: type, comptime len: u32) T {
-    var v = splat(T, 0.0);
+    var v: T = @splat(0);
     const loop_len = if (len == 0) veclen(T) else len;
-    comptime var i: u32 = 0;
-    inline while (i < loop_len) : (i += 1) {
+    inline for (0..loop_len) |i| {
         v[i] = mem[i];
     }
     return v;
@@ -474,12 +473,28 @@ pub fn all(vb: anytype, comptime len: u32) bool {
     if (len > veclen(T)) {
         @compileError("zmath.all(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    const loop_len = if (len == 0) veclen(T) else len;
-    const ab: [veclen(T)]bool = vb;
+    const lenOrVecLen = comptime if (len == 0) veclen(T) else len;
+    // Handle int and bool types that can use @reduce.
+    const childType = @typeInfo(T).Vector.child;
+    if (childType == bool or childType == std.builtin.Type.Int) {
+        if (lenOrVecLen == veclen(T)) {
+            return @reduce(.And, vb);
+        }
+        const resizeMask = comptime blk: {
+            var mask: [len]i32 = undefined;
+            for (0..len) |i| {
+                mask[i] = i;
+            }
+            break :blk mask;
+        };
+        const resized = @shuffle(childType, vb, undefined, resizeMask);
+        return @reduce(.And, resized);
+    }
+    // Float vectors don't support '.And', so manually loop.
     comptime var i: u32 = 0;
     var result = true;
-    inline while (i < loop_len) : (i += 1) {
-        result = result and ab[i];
+    inline while (i < lenOrVecLen) : (i += 1) {
+        result = result and (vb[i] != 0);
     }
     return result;
 }
@@ -488,12 +503,19 @@ test "zmath.all" {
     try expect(all(boolx8(true, true, true, true, true, false, true, false), 6) == false);
     try expect(all(boolx8(true, true, true, true, false, false, false, false), 4) == true);
     try expect(all(boolx4(true, true, true, false), 3) == true);
+    try expect(all(boolx4(true, true, true, true), 4) == true);
+    try expect(all(boolx4(true, true, false, true), 4) == false);
     try expect(all(boolx4(true, true, true, false), 1) == true);
     try expect(all(boolx4(true, false, false, false), 1) == true);
     try expect(all(boolx4(false, true, false, false), 1) == false);
     try expect(all(boolx8(true, true, true, true, true, false, true, false), 0) == false);
     try expect(all(boolx4(false, true, false, false), 0) == false);
     try expect(all(boolx4(true, true, true, true), 0) == true);
+    try expect(all(f32x4(1, 1, 1, 1), 0) == true);
+    try expect(all(f32x4(0, 0, 1, 0), 0) == false);
+    try expect(all(f32x4(0, 0, 0, 0), 0) == false);
+    try expect(all(f32x4(0, 0, 0, 1), 1) == false);
+    try expect(all(f32x4(1, 0, 0, 0), 1) == true);
 }
 
 pub fn any(vb: anytype, comptime len: u32) bool {
@@ -501,12 +523,26 @@ pub fn any(vb: anytype, comptime len: u32) bool {
     if (len > veclen(T)) {
         @compileError("zmath.any(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    const loop_len = if (len == 0) veclen(T) else len;
-    const ab: [veclen(T)]bool = vb;
+    const lenOrVecLen = comptime if (len == 0) veclen(T) else len;
+    const childType = @typeInfo(T).Vector.child;
+    if (childType == bool or childType == std.builtin.Type.Int) {
+        if (lenOrVecLen == veclen(T)) {
+            return @reduce(.Or, vb);
+        }
+        const resizeMask = comptime blk: {
+            var mask: [len]i32 = undefined;
+            for (0..len) |i| {
+                mask[i] = i;
+            }
+            break :blk mask;
+        };
+        const resized = @shuffle(childType, vb, undefined, resizeMask);
+        return @reduce(.Or, resized);
+    }
     comptime var i: u32 = 0;
     var result = false;
-    inline while (i < loop_len) : (i += 1) {
-        result = result or ab[i];
+    inline while (i < lenOrVecLen) : (i += 1) {
+        result = result or (vb[i] != 0);
     }
     return result;
 }
@@ -514,6 +550,10 @@ test "zmath.any" {
     try expect(any(boolx8(true, true, true, true, true, false, true, false), 0) == true);
     try expect(any(boolx8(false, false, false, true, true, false, true, false), 3) == false);
     try expect(any(boolx8(false, false, false, false, false, true, false, false), 4) == false);
+    try expect(any(f32x4(1, 1, 1, 1), 0) == true);
+    try expect(any(f32x4(0, 0, 0, 0), 0) == false);
+    try expect(any(f32x4(1, 0, 0, 1), 1) == true);
+    try expect(any(f32x4(0, 0, 0, 1), 1) == false);
 }
 
 pub inline fn isNearEqual(
@@ -1911,10 +1951,8 @@ test "zmath.atan2" {
 //
 // ------------------------------------------------------------------------------
 pub inline fn dot2(v0: Vec, v1: Vec) F32x4 {
-    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    const xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
-    xmm0 = f32x4(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
-    return swizzle(xmm0, .x, .x, .x, .x);
+    const xmm0 = v0 * v1;
+    return @splat(xmm0[0] + xmm0[1]);
 }
 test "zmath.dot2" {
     const v0 = f32x4(-1.0, 2.0, 300.0, -2.0);
@@ -1935,12 +1973,8 @@ test "zmath.dot3" {
 }
 
 pub inline fn dot4(v0: Vec, v1: Vec) F32x4 {
-    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = swizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
-    xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = swizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
-    xmm0 = f32x4(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
-    return swizzle(xmm0, .x, .x, .x, .x);
+    const xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
+    return @splat(xmm0[0] + xmm0[1] + xmm0[2] + xmm0[3]);
 }
 test "zmath.dot4" {
     const v0 = f32x4(-1.0, 2.0, 3.0, -2.0);
@@ -1950,11 +1984,11 @@ test "zmath.dot4" {
 }
 
 pub inline fn cross3(v0: Vec, v1: Vec) Vec {
-    var xmm0 = swizzle(v0, .y, .z, .x, .w);
-    var xmm1 = swizzle(v1, .z, .x, .y, .w);
+    var xmm0 = @shuffle(f32, v0, undefined, [4]i32{ 1, 2, 0, 2 });
+    var xmm1 = @shuffle(f32, v1, undefined, [4]i32{ 2, 0, 1, 3 });
     var result = xmm0 * xmm1;
-    xmm0 = swizzle(xmm0, .y, .z, .x, .w);
-    xmm1 = swizzle(xmm1, .z, .x, .y, .w);
+    xmm0 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 2, 0, 3 });
+    xmm1 = @shuffle(f32, xmm1, undefined, [4]i32{ 2, 0, 1, 3 });
     result = result - xmm0 * xmm1;
     return andInt(result, f32x4_mask3);
 }
@@ -2153,10 +2187,10 @@ fn mulMat(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
     comptime var row: u32 = 0;
     inline while (row < 4) : (row += 1) {
-        const vx = swizzle(m0[row], .x, .x, .x, .x);
-        const vy = swizzle(m0[row], .y, .y, .y, .y);
-        const vz = swizzle(m0[row], .z, .z, .z, .z);
-        const vw = swizzle(m0[row], .w, .w, .w, .w);
+        const vx = @shuffle(f32, m0[row], undefined, [4]i32{ 0, 0, 0, 0 });
+        const vy = @shuffle(f32, m0[row], undefined, [4]i32{ 1, 1, 1, 1 });
+        const vz = @shuffle(f32, m0[row], undefined, [4]i32{ 2, 2, 2, 2 });
+        const vw = @shuffle(f32, m0[row], undefined, [4]i32{ 3, 3, 3, 3 });
         result[row] = mulAdd(vx, m1[0], vz * m1[2]) + mulAdd(vy, m1[1], vw * m1[3]);
     }
     return result;
