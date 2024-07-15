@@ -480,13 +480,7 @@ pub fn all(vb: anytype, comptime len: u32) bool {
         if (lenOrVecLen == veclen(T)) {
             return @reduce(.And, vb);
         }
-        const resizeMask = comptime blk: {
-            var mask: [len]i32 = undefined;
-            for (0..len) |i| {
-                mask[i] = i;
-            }
-            break :blk mask;
-        };
+        const resizeMask = std.simd.iota(i32, lenOrVecLen);
         const resized = @shuffle(childType, vb, undefined, resizeMask);
         return @reduce(.And, resized);
     }
@@ -529,13 +523,7 @@ pub fn any(vb: anytype, comptime len: u32) bool {
         if (lenOrVecLen == veclen(T)) {
             return @reduce(.Or, vb);
         }
-        const resizeMask = comptime blk: {
-            var mask: [len]i32 = undefined;
-            for (0..len) |i| {
-                mask[i] = i;
-            }
-            break :blk mask;
-        };
+        const resizeMask = std.simd.iota(i32, lenOrVecLen);
         const resized = @shuffle(childType, vb, undefined, resizeMask);
         return @reduce(.Or, resized);
     }
