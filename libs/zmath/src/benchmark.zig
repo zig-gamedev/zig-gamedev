@@ -22,7 +22,7 @@
 //                      wave benchmark (SOA) - scalar version: 3.6598s, zmath version: 0.4231s
 //
 // -------------------------------------------------------------------------------------------------
-// 'Apple M1 Max', macOS Version 12.5, Zig 0.13.0, ReleaseFast
+// 'Apple M1 Pro', macOS Version 12.5, Zig 0.13.0, ReleaseFast
 // -------------------------------------------------------------------------------------------------
 //                 matrix mul benchmark (AOS) - scalar version: 1.0012s, zmath version: 0.9848s
 //        cross3, scale, bias benchmark (AOS) - scalar version: 0.6222s, zmath version: 0.6437s
