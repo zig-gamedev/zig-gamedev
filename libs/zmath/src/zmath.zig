@@ -2509,31 +2509,31 @@ pub fn orthographicOffCenterRhGl(left: f32, right: f32, top: f32, bottom: f32, n
 }
 
 pub fn determinant(m: Mat) F32x4 {
-    var v0 = swizzle(m[2], .y, .x, .x, .x);
-    var v1 = swizzle(m[3], .z, .z, .y, .y);
-    var v2 = swizzle(m[2], .y, .x, .x, .x);
-    var v3 = swizzle(m[3], .w, .w, .w, .z);
-    var v4 = swizzle(m[2], .z, .z, .y, .y);
-    var v5 = swizzle(m[3], .w, .w, .w, .z);
+    var v0 = @shuffle(f32, m[2], undefined, [4]i32{ 1, 0, 0, 0 });
+    var v1 = @shuffle(f32, m[3], undefined, [4]i32{ 2, 2, 1, 1 });
+    var v2 = @shuffle(f32, m[2], undefined, [4]i32{ 1, 0, 0, 0 });
+    var v3 = @shuffle(f32, m[3], undefined, [4]i32{ 3, 3, 3, 2 });
+    var v4 = @shuffle(f32, m[2], undefined, [4]i32{ 2, 2, 1, 1 });
+    var v5 = @shuffle(f32, m[3], undefined, [4]i32{ 3, 3, 3, 2 });
 
     var p0 = v0 * v1;
     var p1 = v2 * v3;
     var p2 = v4 * v5;
 
-    v0 = swizzle(m[2], .z, .z, .y, .y);
-    v1 = swizzle(m[3], .y, .x, .x, .x);
-    v2 = swizzle(m[2], .w, .w, .w, .z);
-    v3 = swizzle(m[3], .y, .x, .x, .x);
-    v4 = swizzle(m[2], .w, .w, .w, .z);
-    v5 = swizzle(m[3], .z, .z, .y, .y);
+    v0 = @shuffle(f32, m[2], undefined, [4]i32{ 2, 2, 1, 1 });
+    v1 = @shuffle(f32, m[3], undefined, [4]i32{ 1, 0, 0, 0 });
+    v2 = @shuffle(f32, m[2], undefined, [4]i32{ 3, 3, 3, 2 });
+    v3 = @shuffle(f32, m[3], undefined, [4]i32{ 1, 0, 0, 0 });
+    v4 = @shuffle(f32, m[2], undefined, [4]i32{ 3, 3, 3, 2 });
+    v5 = @shuffle(f32, m[3], undefined, [4]i32{ 2, 2, 1, 1 });
 
     p0 = mulAdd(-v0, v1, p0);
     p1 = mulAdd(-v2, v3, p1);
     p2 = mulAdd(-v4, v5, p2);
 
-    v0 = swizzle(m[1], .w, .w, .w, .z);
-    v1 = swizzle(m[1], .z, .z, .y, .y);
-    v2 = swizzle(m[1], .y, .x, .x, .x);
+    v0 = @shuffle(f32, m[1], undefined, [4]i32{ 3, 3, 3, 2 });
+    v1 = @shuffle(f32, m[1], undefined, [4]i32{ 2, 2, 1, 1 });
+    v2 = @shuffle(f32, m[1], undefined, [4]i32{ 1, 0, 0, 0 });
 
     const s = m[0] * f32x4(1.0, -1.0, 1.0, -1.0);
     var r = v0 * p0;
@@ -2569,10 +2569,10 @@ pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
     var v0: [4]F32x4 = undefined;
     var v1: [4]F32x4 = undefined;
 
-    v0[0] = swizzle(mt[2], .x, .x, .y, .y);
-    v1[0] = swizzle(mt[3], .z, .w, .z, .w);
-    v0[1] = swizzle(mt[0], .x, .x, .y, .y);
-    v1[1] = swizzle(mt[1], .z, .w, .z, .w);
+    v0[0] = @shuffle(f32, mt[2], undefined, [4]i32{ 0, 0, 1, 1 });
+    v1[0] = @shuffle(f32, mt[3], undefined, [4]i32{ 2, 3, 2, 3 });
+    v0[1] = @shuffle(f32, mt[0], undefined, [4]i32{ 0, 0, 1, 1 });
+    v1[1] = @shuffle(f32, mt[1], undefined, [4]i32{ 2, 3, 2, 3 });
     v0[2] = @shuffle(f32, mt[2], mt[0], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
     v1[2] = @shuffle(f32, mt[3], mt[1], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
 
@@ -2580,10 +2580,10 @@ pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
     var d1 = v0[1] * v1[1];
     var d2 = v0[2] * v1[2];
 
-    v0[0] = swizzle(mt[2], .z, .w, .z, .w);
-    v1[0] = swizzle(mt[3], .x, .x, .y, .y);
-    v0[1] = swizzle(mt[0], .z, .w, .z, .w);
-    v1[1] = swizzle(mt[1], .x, .x, .y, .y);
+    v0[0] = @shuffle(f32, mt[2], undefined, [4]i32{ 2, 3, 2, 3 });
+    v1[0] = @shuffle(f32, mt[3], undefined, [4]i32{ 0, 0, 1, 1 });
+    v0[1] = @shuffle(f32, mt[0], undefined, [4]i32{ 2, 3, 2, 3 });
+    v1[1] = @shuffle(f32, mt[1], undefined, [4]i32{ 0, 0, 1, 1 });
     v0[2] = @shuffle(f32, mt[2], mt[0], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
     v1[2] = @shuffle(f32, mt[3], mt[1], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
 
@@ -2591,13 +2591,13 @@ pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
     d1 = mulAdd(-v0[1], v1[1], d1);
     d2 = mulAdd(-v0[2], v1[2], d2);
 
-    v0[0] = swizzle(mt[1], .y, .z, .x, .y);
+    v0[0] = @shuffle(f32, mt[1], undefined, [4]i32{ 1, 2, 0, 1 });
     v1[0] = @shuffle(f32, d0, d2, [4]i32{ ~@as(i32, 1), 1, 3, 0 });
-    v0[1] = swizzle(mt[0], .z, .x, .y, .x);
+    v0[1] = @shuffle(f32, mt[0], undefined, [4]i32{ 2, 0, 1, 0 });
     v1[1] = @shuffle(f32, d0, d2, [4]i32{ 3, ~@as(i32, 1), 1, 2 });
-    v0[2] = swizzle(mt[3], .y, .z, .x, .y);
+    v0[2] = @shuffle(f32, mt[3], undefined, [4]i32{ 1, 2, 0, 1 });
     v1[2] = @shuffle(f32, d1, d2, [4]i32{ ~@as(i32, 3), 1, 3, 0 });
-    v0[3] = swizzle(mt[2], .z, .x, .y, .x);
+    v0[3] = @shuffle(f32, mt[2], undefined, [4]i32{ 2, 0, 1, 0 });
     v1[3] = @shuffle(f32, d1, d2, [4]i32{ 3, ~@as(i32, 3), 1, 2 });
 
     var c0 = v0[0] * v1[0];
@@ -2605,13 +2605,13 @@ pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
     var c4 = v0[2] * v1[2];
     var c6 = v0[3] * v1[3];
 
-    v0[0] = swizzle(mt[1], .z, .w, .y, .z);
+    v0[0] = @shuffle(f32, mt[1], undefined, [4]i32{ 2, 3, 1, 2 });
     v1[0] = @shuffle(f32, d0, d2, [4]i32{ 3, 0, 1, ~@as(i32, 0) });
-    v0[1] = swizzle(mt[0], .w, .z, .w, .y);
+    v0[1] = @shuffle(f32, mt[0], undefined, [4]i32{ 3, 2, 3, 1 });
     v1[1] = @shuffle(f32, d0, d2, [4]i32{ 2, 1, ~@as(i32, 0), 0 });
-    v0[2] = swizzle(mt[3], .z, .w, .y, .z);
+    v0[2] = @shuffle(f32, mt[3], undefined, [4]i32{ 2, 3, 1, 2 });
     v1[2] = @shuffle(f32, d1, d2, [4]i32{ 3, 0, 1, ~@as(i32, 2) });
-    v0[3] = swizzle(mt[2], .w, .z, .w, .y);
+    v0[3] = @shuffle(f32, mt[2], undefined, [4]i32{ 3, 2, 3, 1 });
     v1[3] = @shuffle(f32, d1, d2, [4]i32{ 2, 1, ~@as(i32, 2), 0 });
 
     c0 = mulAdd(-v0[0], v1[0], c0);
@@ -2619,13 +2619,13 @@ pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
     c4 = mulAdd(-v0[2], v1[2], c4);
     c6 = mulAdd(-v0[3], v1[3], c6);
 
-    v0[0] = swizzle(mt[1], .w, .x, .w, .x);
+    v0[0] = @shuffle(f32, mt[1], undefined, [4]i32{ 3, 0, 3, 0 });
     v1[0] = @shuffle(f32, d0, d2, [4]i32{ 2, ~@as(i32, 1), ~@as(i32, 0), 2 });
-    v0[1] = swizzle(mt[0], .y, .w, .x, .z);
+    v0[1] = @shuffle(f32, mt[0], undefined, [4]i32{ 1, 3, 0, 2 });
     v1[1] = @shuffle(f32, d0, d2, [4]i32{ ~@as(i32, 1), 0, 3, ~@as(i32, 0) });
-    v0[2] = swizzle(mt[3], .w, .x, .w, .x);
+    v0[2] = @shuffle(f32, mt[3], undefined, [4]i32{ 3, 0, 3, 0 });
     v1[2] = @shuffle(f32, d1, d2, [4]i32{ 2, ~@as(i32, 3), ~@as(i32, 2), 2 });
-    v0[3] = swizzle(mt[2], .y, .w, .x, .z);
+    v0[3] = @shuffle(f32, mt[2], undefined, [4]i32{ 1, 3, 0, 2 });
     v1[3] = @shuffle(f32, d1, d2, [4]i32{ ~@as(i32, 3), 0, 3, ~@as(i32, 2) });
 
     const c1 = mulAdd(-v0[0], v1[0], c0);
@@ -2690,8 +2690,8 @@ pub fn matFromNormAxisAngle(axis: Vec, angle: f32) Mat {
     const c1 = splat(F32x4, sincos_angle[1]);
     const c0 = splat(F32x4, sincos_angle[0]);
 
-    const n0 = swizzle(axis, .y, .z, .x, .w);
-    const n1 = swizzle(axis, .z, .x, .y, .w);
+    const n0 = @shuffle(f32, axis, undefined, [4]i32{ 1, 2, 0, 3 });
+    const n1 = @shuffle(f32, axis, undefined, [4]i32{ 2, 0, 1, 3 });
 
     var v0 = c2 * n0 * n1;
     const r0 = c2 * axis * axis + c1;
@@ -2701,19 +2701,19 @@ pub fn matFromNormAxisAngle(axis: Vec, angle: f32) Mat {
     v0 = andInt(r0, f32x4_mask3);
 
     var v1 = @shuffle(f32, r1, r2, [4]i32{ 0, 2, ~@as(i32, 1), ~@as(i32, 2) });
-    v1 = swizzle(v1, .y, .z, .w, .x);
+    v1 = @shuffle(f32, v1, undefined, [4]i32{ 1, 2, 3, 0 });
 
     var v2 = @shuffle(f32, r1, r2, [4]i32{ 1, 1, ~@as(i32, 0), ~@as(i32, 0) });
-    v2 = swizzle(v2, .x, .z, .x, .z);
+    v2 = @shuffle(f32, v2, undefined, [4]i32{ 0, 2, 0, 2 });
 
     r2 = @shuffle(f32, v0, v1, [4]i32{ 0, 3, ~@as(i32, 0), ~@as(i32, 1) });
-    r2 = swizzle(r2, .x, .z, .w, .y);
+    r2 = @shuffle(f32, r2, undefined, [4]i32{ 0, 2, 3, 1 });
 
     var m: Mat = undefined;
     m[0] = r2;
 
     r2 = @shuffle(f32, v0, v1, [4]i32{ 1, 3, ~@as(i32, 2), ~@as(i32, 3) });
-    r2 = swizzle(r2, .z, .x, .w, .y);
+    r2 = @shuffle(f32, r2, undefined, [4]i32{ 2, 0, 3, 1 });
     m[1] = r2;
 
     v2 = @shuffle(f32, v2, v0, [4]i32{ 0, 1, ~@as(i32, 2), ~@as(i32, 3) });
@@ -2758,38 +2758,38 @@ pub fn matFromQuat(quat: Quat) Mat {
     const q0 = quat + quat;
     var q1 = quat * q0;
 
-    var v0 = swizzle(q1, .y, .x, .x, .w);
+    var v0 = @shuffle(f32, q1, undefined, [4]i32{ 1, 0, 0, 3 });
     v0 = andInt(v0, f32x4_mask3);
 
-    var v1 = swizzle(q1, .z, .z, .y, .w);
+    var v1 = @shuffle(f32, q1, undefined, [4]i32{ 2, 2, 1, 3 });
     v1 = andInt(v1, f32x4_mask3);
 
     const r0 = (f32x4(1.0, 1.0, 1.0, 0.0) - v0) - v1;
 
-    v0 = swizzle(quat, .x, .x, .y, .w);
-    v1 = swizzle(q0, .z, .y, .z, .w);
+    v0 = @shuffle(f32, quat, undefined, [4]i32{ 0, 0, 1, 3 });
+    v1 = @shuffle(f32, q0, undefined, [4]i32{ 2, 1, 2, 3 });
     v0 = v0 * v1;
 
-    v1 = swizzle(quat, .w, .w, .w, .w);
-    const v2 = swizzle(q0, .y, .z, .x, .w);
+    v1 = @shuffle(f32, quat, undefined, [4]i32{ 3, 3, 3, 3 });
+    const v2 = @shuffle(f32, q0, undefined, [4]i32{ 1, 2, 0, 3 });
     v1 = v1 * v2;
 
     const r1 = v0 + v1;
     const r2 = v0 - v1;
 
     v0 = @shuffle(f32, r1, r2, [4]i32{ 1, 2, ~@as(i32, 0), ~@as(i32, 1) });
-    v0 = swizzle(v0, .x, .z, .w, .y);
+    v0 = @shuffle(f32, v0, undefined, [4]i32{ 0, 2, 3, 1 });
     v1 = @shuffle(f32, r1, r2, [4]i32{ 0, 0, ~@as(i32, 2), ~@as(i32, 2) });
-    v1 = swizzle(v1, .x, .z, .x, .z);
+    v1 = @shuffle(f32, v1, undefined, [4]i32{ 0, 2, 0, 2 });
 
     q1 = @shuffle(f32, r0, v0, [4]i32{ 0, 3, ~@as(i32, 0), ~@as(i32, 1) });
-    q1 = swizzle(q1, .x, .z, .w, .y);
+    q1 = @shuffle(f32, q1, undefined, [4]i32{ 0, 2, 3, 1 });
 
     var m: Mat = undefined;
     m[0] = q1;
 
     q1 = @shuffle(f32, r0, v0, [4]i32{ 1, 3, ~@as(i32, 2), ~@as(i32, 3) });
-    q1 = swizzle(q1, .z, .x, .w, .y);
+    q1 = @shuffle(f32, q1, undefined, [4]i32{ 2, 0, 3, 1 });
     m[1] = q1;
 
     q1 = @shuffle(f32, v1, r0, [4]i32{ 0, 1, ~@as(i32, 2), ~@as(i32, 3) });
@@ -2902,17 +2902,17 @@ pub inline fn matToArr34(m: Mat) [12]f32 {
 //
 // ------------------------------------------------------------------------------
 pub fn qmul(q0: Quat, q1: Quat) Quat {
-    var result = swizzle(q1, .w, .w, .w, .w);
-    var q1x = swizzle(q1, .x, .x, .x, .x);
-    var q1y = swizzle(q1, .y, .y, .y, .y);
-    var q1z = swizzle(q1, .z, .z, .z, .z);
+    var result = @shuffle(f32, q1, undefined, [4]i32{ 3, 3, 3, 3 });
+    var q1x = @shuffle(f32, q1, undefined, [4]i32{ 0, 0, 0, 0 });
+    var q1y = @shuffle(f32, q1, undefined, [4]i32{ 1, 1, 1, 1 });
+    var q1z = @shuffle(f32, q1, undefined, [4]i32{ 2, 2, 2, 2 });
     result = result * q0;
-    var q0_shuf = swizzle(q0, .w, .z, .y, .x);
+    var q0_shuf = @shuffle(f32, q0, undefined, [4]i32{ 3, 2, 1, 0 });
     q1x = q1x * q0_shuf;
-    q0_shuf = swizzle(q0_shuf, .y, .x, .w, .z);
+    q0_shuf = @shuffle(f32, q0_shuf, undefined, [4]i32{ 1, 0, 3, 2 });
     result = mulAdd(q1x, f32x4(1.0, -1.0, 1.0, -1.0), result);
     q1y = q1y * q0_shuf;
-    q0_shuf = swizzle(q0_shuf, .w, .z, .y, .x);
+    q0_shuf = @shuffle(f32, q0_shuf, undefined, [4]i32{ 3, 2, 1, 0 });
     q1y = q1y * f32x4(1.0, 1.0, -1.0, -1.0);
     q1z = q1z * q0_shuf;
     q1y = mulAdd(q1z, f32x4(-1.0, 1.0, 1.0, -1.0), q1y);
@@ -2951,9 +2951,9 @@ pub fn quatFromMat(m: Mat) Quat {
     const r0 = m[0];
     const r1 = m[1];
     const r2 = m[2];
-    const r00 = swizzle(r0, .x, .x, .x, .x);
-    const r11 = swizzle(r1, .y, .y, .y, .y);
-    const r22 = swizzle(r2, .z, .z, .z, .z);
+    const r00 = @shuffle(f32, r0, undefined, [4]i32{ 0, 0, 0, 0 });
+    const r11 = @shuffle(f32, r1, undefined, [4]i32{ 1, 1, 1, 1 });
+    const r22 = @shuffle(f32, r2, undefined, [4]i32{ 2, 2, 2, 2 });
 
     const x2gey2 = (r11 - r00) <= splat(F32x4, 0.0);
     const z2gew2 = (r11 + r00) <= splat(F32x4, 0.0);
@@ -2966,12 +2966,12 @@ pub fn quatFromMat(m: Mat) Quat {
 
     t0 = @shuffle(f32, r0, r1, [4]i32{ 1, 2, ~@as(i32, 2), ~@as(i32, 1) });
     t1 = @shuffle(f32, r1, r2, [4]i32{ 0, 0, ~@as(i32, 0), ~@as(i32, 1) });
-    t1 = swizzle(t1, .x, .z, .w, .y);
+    t1 = @shuffle(f32, t1, undefined, [4]i32{ 0, 2, 3, 1 });
     const xyxzyz = t0 + t1;
 
     t0 = @shuffle(f32, r2, r1, [4]i32{ 1, 0, ~@as(i32, 0), ~@as(i32, 0) });
     t1 = @shuffle(f32, r1, r0, [4]i32{ 2, 2, ~@as(i32, 2), ~@as(i32, 1) });
-    t1 = swizzle(t1, .x, .z, .w, .y);
+    t1 = @shuffle(f32, t1, undefined, [4]i32{ 0, 2, 3, 1 });
     const xwywzw = (t0 - t1) * f32x4(-1.0, 1.0, -1.0, 1.0);
 
     t0 = @shuffle(f32, x2y2z2w2, xyxzyz, [4]i32{ 0, 1, ~@as(i32, 0), ~@as(i32, 0) });
@@ -3100,8 +3100,8 @@ pub fn slerpV(q0: Quat, q1: Quat, t: F32x4) Quat {
     var s0 = sin(v01 * omega) / sin_omega;
     s0 = select(cos_omega < splat(F32x4, 1.0 - 0.00001), s0, v01);
 
-    const s1 = swizzle(s0, .y, .y, .y, .y);
-    s0 = swizzle(s0, .x, .x, .x, .x);
+    const s1 = @shuffle(f32, s0, undefined, [4]i32{ 1, 1, 1, 1 });
+    s0 = @shuffle(f32, s0, undefined, [4]i32{ 0, 0, 0, 0 });
 
     return q0 * s0 + sign * q1 * s1;
 }
@@ -3117,7 +3117,7 @@ test "zmath.quaternion.slerp" {
 pub fn quatToRollPitchYaw(q: Quat) [3]f32 {
     var angles: [3]f32 = undefined;
 
-    const p = swizzle(q, .w, .y, .x, .z);
+    const p = @shuffle(f32, q, undefined, [4]i32{ 3, 1, 0, 2 });
     const sign = -1.0;
 
     const singularity = p[0] * p[2] + sign * p[1] * p[3];
@@ -3231,9 +3231,9 @@ pub fn adjustContrast(color: F32x4, contrast: f32) F32x4 {
 }
 
 pub fn rgbToHsl(rgb: F32x4) F32x4 {
-    const r = swizzle(rgb, .x, .x, .x, .x);
-    const g = swizzle(rgb, .y, .y, .y, .y);
-    const b = swizzle(rgb, .z, .z, .z, .z);
+    const r = @shuffle(f32, rgb, undefined, [4]i32{ 0, 0, 0, 0 });
+    const g = @shuffle(f32, rgb, undefined, [4]i32{ 1, 1, 1, 1 });
+    const b = @shuffle(f32, rgb, undefined, [4]i32{ 2, 2, 2, 2 });
 
     const minv = min(r, min(g, b));
     const maxv = max(r, max(g, b));
@@ -3305,13 +3305,13 @@ fn hueToClr(p: F32x4, q: F32x4, h: F32x4) F32x4 {
 }
 
 pub fn hslToRgb(hsl: F32x4) F32x4 {
-    const s = swizzle(hsl, .y, .y, .y, .y);
-    const l = swizzle(hsl, .z, .z, .z, .z);
+    const s = @shuffle(f32, hsl, undefined, [4]i32{ 1, 1, 1, 1 });
+    const l = @shuffle(f32, hsl, undefined, [4]i32{ 2, 2, 2, 2 });
 
     if (all(isNearEqual(s, f32x4s(0.0), f32x4s(math.floatEps(f32))), 3)) {
         return select(boolx4(true, true, true, false), l, hsl);
     } else {
-        const h = swizzle(hsl, .x, .x, .x, .x);
+        const h = @shuffle(f32, hsl, undefined, [4]i32{ 0, 0, 0, 0 });
         var q: F32x4 = undefined;
         if (all(l < f32x4s(0.5), 3)) {
             q = l * (f32x4s(1.0) + s);
@@ -3361,9 +3361,9 @@ test "zmath.color.hslToRgb" {
 }
 
 pub fn rgbToHsv(rgb: F32x4) F32x4 {
-    const r = swizzle(rgb, .x, .x, .x, .x);
-    const g = swizzle(rgb, .y, .y, .y, .y);
-    const b = swizzle(rgb, .z, .z, .z, .z);
+    const r = @shuffle(f32, rgb, undefined, [4]i32{ 0, 0, 0, 0 });
+    const g = @shuffle(f32, rgb, undefined, [4]i32{ 1, 1, 1, 1 });
+    const b = @shuffle(f32, rgb, undefined, [4]i32{ 2, 2, 2, 2 });
 
     const minv = min(r, min(g, b));
     const v = max(r, max(g, b));
@@ -3404,9 +3404,9 @@ test "zmath.color.rgbToHsv" {
 }
 
 pub fn hsvToRgb(hsv: F32x4) F32x4 {
-    const h = swizzle(hsv, .x, .x, .x, .x);
-    const s = swizzle(hsv, .y, .y, .y, .y);
-    const v = swizzle(hsv, .z, .z, .z, .z);
+    const h = @shuffle(f32, hsv, undefined, [4]i32{ 0, 0, 0, 0 });
+    const s = @shuffle(f32, hsv, undefined, [4]i32{ 1, 1, 1, 1 });
+    const v = @shuffle(f32, hsv, undefined, [4]i32{ 2, 2, 2, 2 });
 
     const h6 = h * f32x4s(6.0);
     const i = floor(h6);
@@ -3790,21 +3790,21 @@ pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeO
 //
 // ------------------------------------------------------------------------------
 fn fftButterflyDit4_1(re0: *F32x4, im0: *F32x4) void {
-    const re0l = swizzle(re0.*, .x, .x, .y, .y);
-    const re0h = swizzle(re0.*, .z, .z, .w, .w);
+    const re0l = @shuffle(f32, re0.*, undefined, [4]i32{ 0, 0, 1, 1 });
+    const re0h = @shuffle(f32, re0.*, undefined, [4]i32{ 2, 2, 3, 3 });
 
-    const im0l = swizzle(im0.*, .x, .x, .y, .y);
-    const im0h = swizzle(im0.*, .z, .z, .w, .w);
+    const im0l = @shuffle(f32, im0.*, undefined, [4]i32{ 0, 0, 1, 1 });
+    const im0h = @shuffle(f32, im0.*, undefined, [4]i32{ 2, 2, 3, 3 });
 
     const re_temp = mulAdd(re0h, f32x4(1.0, -1.0, 1.0, -1.0), re0l);
     const im_temp = mulAdd(im0h, f32x4(1.0, -1.0, 1.0, -1.0), im0l);
 
     const re_shuf0 = @shuffle(f32, re_temp, im_temp, [4]i32{ 2, 3, ~@as(i32, 2), ~@as(i32, 3) });
-    const re_shuf = swizzle(re_shuf0, .x, .w, .x, .w);
-    const im_shuf = swizzle(re_shuf0, .z, .y, .z, .y);
+    const re_shuf = @shuffle(f32, re_shuf0, undefined, [4]i32{ 0, 3, 0, 3 });
+    const im_shuf = @shuffle(f32, re_shuf0, undefined, [4]i32{ 2, 1, 2, 1 });
 
-    const re_templ = swizzle(re_temp, .x, .y, .x, .y);
-    const im_templ = swizzle(im_temp, .x, .y, .x, .y);
+    const re_templ = @shuffle(f32, re_temp, undefined, [4]i32{ 0, 1, 0, 1 });
+    const im_templ = @shuffle(f32, im_temp, undefined, [4]i32{ 0, 1, 0, 1 });
 
     re0.* = mulAdd(re_shuf, f32x4(1.0, 1.0, -1.0, -1.0), re_templ);
     im0.* = mulAdd(im_shuf, f32x4(1.0, -1.0, -1.0, 1.0), im_templ);
