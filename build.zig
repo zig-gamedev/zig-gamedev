@@ -59,45 +59,49 @@ pub fn build(b: *std.Build) void {
         ) orelse if (zpix_enable) @panic("PIX path is required when enabled") else "",
     };
 
-    //
-    // Build and install sample applications
-    //
-    buildAndInstallSamples(b, options, samples_cross_platform);
-    if (target.result.os.tag == .windows) {
-        if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-            buildAndInstallSamples(b, options, samples_windows_linux);
-            if (builtin.os.tag == .windows) {
-                buildAndInstallSamples(b, options, samples_windows);
+    if (target.result.os.tag == .emscripten) {
+        // If user has not specified a sysroot for emsdk, set to zemscripten's emsdk path.
+        if (b.sysroot == null) {
+            b.sysroot = @import("zemscripten").getEmsdkSysroot(b);
+            std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
+
+            b.default_step.dependOn(@import("zemscripten").activateEmsdkStep(b));
+        }
+        buildAndInstallSamplesWeb(b, .{
+            .optimize = optimize,
+            .target = target,
+        });
+    } else {
+        buildAndInstallSamples(b, options, samples_cross_platform);
+        if (target.result.os.tag == .windows) {
+            if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
+                buildAndInstallSamples(b, options, samples_windows_linux);
+                if (builtin.os.tag == .windows) {
+                    buildAndInstallSamples(b, options, samples_windows);
+                }
             }
         }
-    }
 
-    //
-    // Tests
-    //
-    const test_step = b.step("test", "Run all tests");
-    tests(b, target, optimize, test_step);
-    if (builtin.os.tag == .windows) {
-        testsWindows(b, target, optimize, test_step);
-    }
+        { // Tests
+            const test_step = b.step("test", "Run all tests");
+            tests(b, target, optimize, test_step);
+            if (builtin.os.tag == .windows) {
+                testsWindows(b, target, optimize, test_step);
+            }
+        }
 
-    //
-    // Benchmarks
-    //
-    {
-        const benchmark_step = b.step("benchmark", "Run all benchmarks");
+        { // Benchmarks
+            const benchmark_step = b.step("benchmark", "Run all benchmarks");
+            const zmath = b.dependency("zmath", .{
+                .optimize = .ReleaseFast,
+            });
+            benchmark_step.dependOn(&b.addRunArtifact(zmath.artifact("zmath-benchmarks")).step);
+        }
 
-        const zmath = b.dependency("zmath", .{
-            .optimize = .ReleaseFast,
-        });
-        benchmark_step.dependOn(&b.addRunArtifact(zmath.artifact("zmath-benchmarks")).step);
-    }
-
-    //
-    // Experiments
-    //
-    if (b.option(bool, "experiments", "Build our prototypes and experimental programs") orelse false) {
-        @import("experiments/build.zig").build(b, options);
+        // Experiments
+        if (b.option(bool, "experiments", "Build our prototypes and experimental programs") orelse false) {
+            @import("experiments/build.zig").build(b, options);
+        }
     }
 }
 
@@ -125,10 +129,11 @@ const samples_windows_linux = struct {
 };
 
 const samples_cross_platform = struct {
-    pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
-    pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
-    pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
-
+    pub usingnamespace struct { // OpenGL samples
+        pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
+        pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
+        pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
+    };
     pub usingnamespace struct { // WebGPU samples
         pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
         pub const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
@@ -147,7 +152,33 @@ const samples_cross_platform = struct {
     };
 };
 
-fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: type) void {
+const samples_web = struct {
+    pub usingnamespace struct { // WebGL samples
+        // TODO
+        // pub const minimal_glfw_gl = samples_cross_platform.minimal_glfw_gl;
+        // pub const minimal_sdl_gl = samples_cross_platform.minimal_sdl_gl;
+        // pub const minimal_zgui_glfw_gl = samples_cross_platform.minimal_zgui_glfw_gl;
+    };
+
+    pub usingnamespace struct { // WebGPU samples
+        // TODO
+        // pub const audio_experiments_wgpu = samples_cross_platform.audio_experiments_wgpu;
+        // pub const bullet_physics_test_wgpu = samples_cross_platform.bullet_physics_test_wgpu;
+        // pub const gamepad_wgpu = samples_cross_platform.gamepad_wgpu;
+        // pub const gui_test_wgpu = samples_cross_platform.gui_test_wgpu;
+        // pub const instanced_pills_wgpu = samples_cross_platform.instanced_pills_wgpu;
+        // pub const layers_wgpu = samples_cross_platform.layers_wgpu;
+        // pub const minimal_zgpu_zgui = samples_cross_platform.minimal_zgpu_zgui;
+        // pub const monolith = samples_cross_platform.monolith;
+        // pub const physically_based_rendering_wgpu = samples_cross_platform.physically_based_rendering_wgpu;
+        // pub const physics_test_wgpu = samples_cross_platform.physics_test_wgpu;
+        // pub const procedural_mesh_wgpu = samples_cross_platform.procedural_mesh_wgpu;
+        // pub const textured_quad_wgpu = samples_cross_platform.textured_quad_wgpu;
+        // pub const triangle_wgpu = samples_cross_platform.triangle_wgpu;
+    };
+};
+
+fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: anytype) void {
     inline for (comptime std.meta.declarations(samples)) |d| {
         const exe = @field(samples, d.name).build(b, options);
 
@@ -156,7 +187,7 @@ fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: typ
             exe.want_lto = false;
         }
 
-        if (exe.root_module.optimize == .ReleaseFast) {
+        if (exe.root_module.optimize != .Debug) {
             exe.root_module.strip = true;
         }
 
@@ -167,6 +198,18 @@ fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: typ
         const run_cmd = b.addRunArtifact(exe);
         run_cmd.step.dependOn(&install_exe.step);
         b.step(d.name ++ "-run", "Run '" ++ d.name ++ "' demo").dependOn(&run_cmd.step);
+    }
+}
+
+fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
+    inline for (comptime std.meta.declarations(samples_web)) |d| {
+        const web_install_step = @field(samples_web, d.name).buildWeb(b, options);
+
+        b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(web_install_step);
+
+        const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, d.name ++ ".html"));
+        emrun_step.dependOn(web_install_step);
+        b.step(d.name ++ "-emrun", "Build and serve '" ++ d.name ++ "' demo over local http using emrun.").dependOn(emrun_step);
     }
 }
 
