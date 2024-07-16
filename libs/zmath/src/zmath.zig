@@ -925,11 +925,11 @@ test "zmath.round" {
     }
     {
         const v = round(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
-        try expect(approxEqAbs(
+        try expectVecApproxEqAbs(
             v,
             f32x16(1.0, -1.0, -2.0, 2.0, 2.0, 3.0, 3.0, 4.0, 6.0, 6.0, 8.0, 9.0, 10.0, 11.0, 13.0, 13.0),
             0.0,
-        ));
+        );
     }
     var v = round(f32x4(1.1, -1.1, -1.5, 1.5));
     try expectVecEqual(v, f32x4(1.0, -1.0, -2.0, 2.0));
@@ -1019,11 +1019,11 @@ test "zmath.trunc" {
     }
     {
         const v = trunc(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
-        try expect(approxEqAbs(
+        try expectVecApproxEqAbs(
             v,
             f32x16(1.0, -1.0, -1.0, 1.0, 2.0, 2.0, 2.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 11.0, 12.0, 13.0),
             0.0,
-        ));
+        );
     }
     var v = trunc(f32x4(1.1, -1.1, -1.5, 1.5));
     try expectVecEqual(v, f32x4(1.0, -1.0, -1.0, 1.0));
@@ -1111,11 +1111,11 @@ test "zmath.floor" {
     }
     {
         const v = floor(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
-        try expect(approxEqAbs(
+        try expectVecApproxEqAbs(
             v,
             f32x16(1.0, -2.0, -2.0, 1.0, 2.0, 2.0, 2.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 11.0, 12.0, 13.0),
             0.0,
-        ));
+        );
     }
     var v = floor(f32x4(1.5, -1.5, -1.7, -2.1));
     try expectVecEqual(v, f32x4(1.0, -2.0, -2.0, -3.0));
@@ -1203,11 +1203,11 @@ test "zmath.ceil" {
     }
     {
         const v = ceil(f32x16(1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1));
-        try expect(approxEqAbs(
+        try expectVecApproxEqAbs(
             v,
             f32x16(2.0, -1.0, -1.0, 2.0, 3.0, 3.0, 3.0, 5.0, 6.0, 7.0, 8.0, 9.0, 11.0, 12.0, 13.0, 14.0),
             0.0,
-        ));
+        );
     }
     var v = ceil(f32x4(1.5, -1.5, -1.7, -2.1));
     try expectVecEqual(v, f32x4(2.0, -1.0, -1.0, -2.0));
@@ -1837,51 +1837,51 @@ test "zmath.atan2" {
     try expectVecApproxEqAbs(atan2(splat(F32x4, -0.0), splat(F32x4, -1.0)), splat(F32x4, -math.pi), epsilon);
     try expectVecApproxEqAbs(atan2(splat(F32x4, 1.0), splat(F32x4, 0.0)), splat(F32x4, 0.5 * math.pi), epsilon);
     try expectVecApproxEqAbs(atan2(splat(F32x4, -1.0), splat(F32x4, 0.0)), splat(F32x4, -0.5 * math.pi), epsilon);
-    try expect(approxEqAbs(
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, 1.0), splat(F32x4, -1.0)),
         splat(F32x4, math.atan(@as(f32, -1.0)) + math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, -10.0), splat(F32x4, -2.0)),
         splat(F32x4, math.atan(@as(f32, 5.0)) - math.pi),
         epsilon,
-    ));
+    );
     try expectVecApproxEqAbs(atan2(splat(F32x4, 1.0), splat(F32x4, -math.inf(f32))), splat(F32x4, math.pi), epsilon);
     try expectVecApproxEqAbs(atan2(splat(F32x4, -1.0), splat(F32x4, -math.inf(f32))), splat(F32x4, -math.pi), epsilon);
     try expectVecApproxEqAbs(atan2(splat(F32x4, 1.0), splat(F32x4, math.inf(f32))), splat(F32x4, 0.0), epsilon);
     try expectVecApproxEqAbs(atan2(splat(F32x4, -1.0), splat(F32x4, math.inf(f32))), splat(F32x4, -0.0), epsilon);
-    try expect(approxEqAbs(
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, math.inf(f32)), splat(F32x4, 2.0)),
         splat(F32x4, 0.5 * math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, -math.inf(f32)), splat(F32x4, 2.0)),
         splat(F32x4, -0.5 * math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, math.inf(f32)), splat(F32x4, -math.inf(f32))),
         splat(F32x4, 0.75 * math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, -math.inf(f32)), splat(F32x4, -math.inf(f32))),
         splat(F32x4, -0.75 * math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, math.inf(f32)), splat(F32x4, math.inf(f32))),
         splat(F32x4, 0.25 * math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(splat(F32x4, -math.inf(f32)), splat(F32x4, math.inf(f32))),
         splat(F32x4, -0.25 * math.pi),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         atan2(
             f32x8(0.0, -math.inf(f32), -0.0, 2.0, math.inf(f32), math.inf(f32), 1.0, -math.inf(f32)),
             f32x8(-2.0, math.inf(f32), 1.0, 0.0, 10.0, -math.inf(f32), 1.0, -math.inf(f32)),
@@ -1897,7 +1897,7 @@ test "zmath.atan2" {
             -0.75 * math.pi,
         ),
         epsilon,
-    ));
+    );
     try expectVecApproxEqAbs(atan2(splat(F32x4, 0.0), splat(F32x4, 0.0)), splat(F32x4, 0.0), epsilon);
     try expectVecApproxEqAbs(atan2(splat(F32x4, -0.0), splat(F32x4, 0.0)), splat(F32x4, 0.0), epsilon);
     try expect(all(isNan(atan2(splat(F32x4, 1.0), splat(F32x4, math.nan(f32)))), 0) == true);
@@ -3021,11 +3021,11 @@ fn inverseQuat(quat: Quat) Quat {
     return select(l <= splat(F32x4, math.floatEps(f32)), splat(F32x4, 0.0), conj / l);
 }
 test "zmath.quaternion.inverseQuat" {
-    try expect(approxEqAbs(
+    try expectVecApproxEqAbs(
         inverse(f32x4(2.0, 3.0, 4.0, 1.0)),
         f32x4(-1.0 / 15.0, -1.0 / 10.0, -2.0 / 15.0, 1.0 / 30.0),
         0.0001,
-    ));
+    );
     try expectVecApproxEqAbs(inverse(qidentity()), qidentity(), 0.0001);
 }
 
@@ -3304,26 +3304,26 @@ test "zmath.color.hslToRgb" {
     try expectVecApproxEqAbs(f32x4(0.0, 0.0, 0.0, 1.0), hslToRgb(f32x4(0.0, 0.0, 0.0, 1.0)), 0.0001);
     try expectVecApproxEqAbs(f32x4(1.0, 1.0, 1.0, 1.0), hslToRgb(f32x4(0.0, 0.0, 1.0, 1.0)), 0.0001);
     try expectVecApproxEqAbs(hslToRgb(rgbToHsl(f32x4(1.0, 1.0, 1.0, 1.0))), f32x4(1.0, 1.0, 1.0, 1.0), 0.0005);
-    try expect(approxEqAbs(
+    try expectVecApproxEqAbs(
         hslToRgb(rgbToHsl(f32x4(0.82198, 0.1839, 0.632, 1.0))),
         f32x4(0.82198, 0.1839, 0.632, 1.0),
         0.0005,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         rgbToHsl(hslToRgb(f32x4(0.82198, 0.1839, 0.632, 1.0))),
         f32x4(0.82198, 0.1839, 0.632, 1.0),
         0.0005,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         rgbToHsl(hslToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
         f32x4(0.1839, 0.82198, 0.632, 1.0),
         0.0005,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         hslToRgb(rgbToHsl(f32x4(0.1839, 0.632, 0.82198, 1.0))),
         f32x4(0.1839, 0.632, 0.82198, 1.0),
         0.0005,
-    ));
+    );
 }
 
 pub fn rgbToHsv(rgb: F32x4) F32x4 {
@@ -3422,26 +3422,26 @@ test "zmath.color.hsvToRgb" {
     try expectVecApproxEqAbs(f32x4(0.0, 0.0, 1.0, 1.0), hsvToRgb(f32x4(0.6666, 1.0, 1.0, 1.0)), epsilon);
     try expectVecApproxEqAbs(f32x4(0.0, 0.0, 0.0, 1.0), hsvToRgb(f32x4(0.0, 0.0, 0.0, 1.0)), epsilon);
     try expectVecApproxEqAbs(f32x4(1.0, 1.0, 1.0, 1.0), hsvToRgb(f32x4(0.0, 0.0, 1.0, 1.0)), epsilon);
-    try expect(approxEqAbs(
+    try expectVecApproxEqAbs(
         hsvToRgb(rgbToHsv(f32x4(0.1839, 0.632, 0.82198, 1.0))),
         f32x4(0.1839, 0.632, 0.82198, 1.0),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         hsvToRgb(rgbToHsv(f32x4(0.82198, 0.1839, 0.632, 1.0))),
         f32x4(0.82198, 0.1839, 0.632, 1.0),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         rgbToHsv(hsvToRgb(f32x4(0.82198, 0.1839, 0.632, 1.0))),
         f32x4(0.82198, 0.1839, 0.632, 1.0),
         epsilon,
-    ));
-    try expect(approxEqAbs(
+    );
+    try expectVecApproxEqAbs(
         rgbToHsv(hsvToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
         f32x4(0.1839, 0.82198, 0.632, 1.0),
         epsilon,
-    ));
+    );
 }
 
 pub fn rgbToSrgb(rgb: F32x4) F32x4 {
@@ -3491,11 +3491,11 @@ pub fn srgbToRgb(srgb: F32x4) F32x4 {
 test "zmath.color.srgbToRgb" {
     const epsilon = 0.0007;
     try expectVecApproxEqAbs(f32x4(0.2, 0.4, 0.8, 1.0), srgbToRgb(f32x4(0.484, 0.665, 0.906, 1.0)), epsilon);
-    try expect(approxEqAbs(
+    try expectVecApproxEqAbs(
         rgbToSrgb(srgbToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
         f32x4(0.1839, 0.82198, 0.632, 1.0),
         epsilon,
-    ));
+    );
 }
 // ------------------------------------------------------------------------------
 //
@@ -4424,7 +4424,7 @@ test "zmath.ifft" {
 
         for (re, 0..) |v, i| {
             const f = @as(f32, @floatFromInt(i * 4));
-            try expect(!approxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
+            try expect(!vecApproxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
         }
 
         ifft(re[0..], im[0..], unity_table[0..512]);
@@ -4516,7 +4516,7 @@ pub fn expectVecApproxEqAbs(expected: anytype, actual: anytype, eps: f32) !void 
     }
 }
 
-pub fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
+pub fn vecApproxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
     const T = @TypeOf(v0, v1);
     comptime var i: comptime_int = 0;
     inline while (i < veclen(T)) : (i += 1) {

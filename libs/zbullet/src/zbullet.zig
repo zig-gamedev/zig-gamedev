@@ -1270,10 +1270,10 @@ test "zbullet.shape.compound" {
     cshape.getChildTransform(1, &transform);
 
     const m = zm.loadMat43(transform[0..]);
-    try expect(zm.approxEqAbs(m[0], zm.f32x4(1.0, 0.0, 0.0, 0.0), 0.0001));
-    try expect(zm.approxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001));
-    try expect(zm.approxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
-    try expect(zm.approxEqAbs(m[3], zm.f32x4(-1.0, -2.0, -3.0, 1.0), 0.0001));
+    try zm.expectVecApproxEqAbs(m[0], zm.f32x4(1.0, 0.0, 0.0, 0.0), 0.0001);
+    try zm.expectVecApproxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001);
+    try zm.expectVecApproxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001);
+    try zm.expectVecApproxEqAbs(m[3], zm.f32x4(-1.0, -2.0, -3.0, 1.0), 0.0001);
 
     cshape.removeChild(sphere.asShape());
     try expect(cshape.getNumChilds() == 1);
@@ -1369,10 +1369,10 @@ test "zbullet.body.basic" {
         body.getGraphicsWorldTransform(&transform);
 
         const m = zm.loadMat43(transform[0..]);
-        try expect(zm.approxEqAbs(m[0], zm.f32x4(1.0, 0.0, 0.0, 0.0), 0.0001));
-        try expect(zm.approxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001));
-        try expect(zm.approxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
-        try expect(zm.approxEqAbs(m[3], zm.f32x4(2.0, 3.0, 4.0, 1.0), 0.0001));
+        try zm.expectVecApproxEqAbs(m[0], zm.f32x4(1.0, 0.0, 0.0, 0.0), 0.0001);
+        try zm.expectVecApproxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001);
+        try zm.expectVecApproxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001);
+        try zm.expectVecApproxEqAbs(m[3], zm.f32x4(2.0, 3.0, 4.0, 1.0), 0.0001);
     }
 }
 
