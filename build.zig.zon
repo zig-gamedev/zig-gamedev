@@ -18,7 +18,6 @@
         .zd3d12 = .{ .path = "libs/zd3d12" },
         .zflecs = .{ .path = "libs/zflecs" },
         .zglfw = .{ .path = "libs/zglfw" },
-        .zgpu = .{ .path = "libs/zgpu" },
         .zgui = .{ .path = "libs/zgui" },
         .zjobs = .{ .path = "libs/zjobs" },
         .zmath = .{ .path = "libs/zmath" },
@@ -35,7 +34,13 @@
         .zwin32 = .{ .path = "libs/zwin32" },
         .zxaudio2 = .{ .path = "libs/zxaudio2" },
 
-        // zgpu dependencies
+        .zemscripten = .{ .path = "libs/zemscripten" },
+        .emsdk = .{
+            .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.52.tar.gz",
+            .hash = "12202192726bf983ec243c7eea956d6107baf6f49d50b62f6a91f5d7471bc6daf53b",
+        },
+
+        .zgpu = .{ .path = "libs/zgpu" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
             .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
