@@ -4424,7 +4424,7 @@ test "zmath.ifft" {
 
         for (re, 0..) |v, i| {
             const f = @as(f32, @floatFromInt(i * 4));
-            try expect(!vecApproxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
+            try expect(!approxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
         }
 
         ifft(re[0..], im[0..], unity_table[0..512]);
@@ -4516,7 +4516,7 @@ pub fn expectVecApproxEqAbs(expected: anytype, actual: anytype, eps: f32) !void 
     }
 }
 
-pub fn vecApproxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
+pub fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
     const T = @TypeOf(v0, v1);
     comptime var i: comptime_int = 0;
     inline while (i < veclen(T)) : (i += 1) {
