@@ -465,7 +465,8 @@ pub inline fn vecToArr4(v: Vec) [4]f32 {
 }
 // ------------------------------------------------------------------------------
 //
-// 2. Functions that work on all vector components (F32xN = F32x4 or F32x8 or F32x16)
+// 2. Functions that work on all float vector components (F32xN = F32x4 or F32x8
+//    or F32x16), as well as boolxN and integer vectors.
 //
 // ------------------------------------------------------------------------------
 pub fn all(vb: anytype, comptime len: u32) bool {
@@ -476,13 +477,24 @@ pub fn all(vb: anytype, comptime len: u32) bool {
     const lenOrVecLen = comptime if (len == 0) veclen(T) else len;
     // Handle int and bool types that can use @reduce.
     const childType = @typeInfo(T).Vector.child;
-    if (childType == bool or childType == std.builtin.Type.Int) {
-        if (lenOrVecLen == veclen(T)) {
-            return @reduce(.And, vb);
-        }
-        const resizeMask = std.simd.iota(i32, lenOrVecLen);
-        const resized = @shuffle(childType, vb, undefined, resizeMask);
-        return @reduce(.And, resized);
+    switch (@typeInfo(childType)) {
+        .Int => {
+            if (lenOrVecLen == veclen(T)) {
+                return @reduce(.And, vb) != 0;
+            }
+            const resizeMask = std.simd.iota(i32, lenOrVecLen);
+            const resized = @shuffle(childType, vb, undefined, resizeMask);
+            return @reduce(.And, resized) != 0;
+        },
+        .Bool => {
+            if (lenOrVecLen == veclen(T)) {
+                return @reduce(.And, vb);
+            }
+            const resizeMask = std.simd.iota(i32, lenOrVecLen);
+            const resized = @shuffle(childType, vb, undefined, resizeMask);
+            return @reduce(.And, resized);
+        },
+        else => {},
     }
     // Float vectors don't support '.And', so manually loop.
     comptime var i: u32 = 0;
@@ -510,6 +522,9 @@ test "zmath.all" {
     try expect(all(f32x4(0, 0, 0, 0), 0) == false);
     try expect(all(f32x4(0, 0, 0, 1), 1) == false);
     try expect(all(f32x4(1, 0, 0, 0), 1) == true);
+    try expect(all(@Vector(4, i32){ 0, 0, 0, 1 }, 1) == false);
+    try expect(all(@Vector(4, i32){ 1, 1, 0, 1 }, 1) == true);
+    try expect(all(@Vector(4, i32){ 1, 1, 0, 1 }, 0) == false);
 }
 
 pub fn any(vb: anytype, comptime len: u32) bool {
@@ -519,13 +534,24 @@ pub fn any(vb: anytype, comptime len: u32) bool {
     }
     const lenOrVecLen = comptime if (len == 0) veclen(T) else len;
     const childType = @typeInfo(T).Vector.child;
-    if (childType == bool or childType == std.builtin.Type.Int) {
-        if (lenOrVecLen == veclen(T)) {
-            return @reduce(.Or, vb);
-        }
-        const resizeMask = std.simd.iota(i32, lenOrVecLen);
-        const resized = @shuffle(childType, vb, undefined, resizeMask);
-        return @reduce(.Or, resized);
+    switch (@typeInfo(childType)) {
+        .Int => {
+            if (lenOrVecLen == veclen(T)) {
+                return @reduce(.Or, vb) != 0;
+            }
+            const resizeMask = std.simd.iota(i32, lenOrVecLen);
+            const resized = @shuffle(childType, vb, undefined, resizeMask);
+            return @reduce(.Or, resized) != 0;
+        },
+        .Bool => {
+            if (lenOrVecLen == veclen(T)) {
+                return @reduce(.Or, vb);
+            }
+            const resizeMask = std.simd.iota(i32, lenOrVecLen);
+            const resized = @shuffle(childType, vb, undefined, resizeMask);
+            return @reduce(.Or, resized);
+        },
+        else => {},
     }
     comptime var i: u32 = 0;
     var result = false;
@@ -542,6 +568,9 @@ test "zmath.any" {
     try expect(any(f32x4(0, 0, 0, 0), 0) == false);
     try expect(any(f32x4(1, 0, 0, 1), 1) == true);
     try expect(any(f32x4(0, 0, 0, 1), 1) == false);
+    try expect(any(@Vector(4, i32){ 1, 0, 0, 1 }, 1) == false);
+    try expect(any(@Vector(4, i32){ 0, 1, 0, 1 }, 1) == false);
+    try expect(all(@Vector(4, i32){ 0, 1, 0, 1 }, 0) == true);
 }
 
 pub inline fn isNearEqual(
@@ -1939,8 +1968,10 @@ test "zmath.atan2" {
 //
 // ------------------------------------------------------------------------------
 pub inline fn dot2(v0: Vec, v1: Vec) F32x4 {
-    const xmm0 = v0 * v1;
-    return @splat(xmm0[0] + xmm0[1]);
+    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
+    const xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
+    xmm0 = f32x4(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
+    return swizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot2" {
     const v0 = f32x4(-1.0, 2.0, 300.0, -2.0);
@@ -1961,8 +1992,11 @@ test "zmath.dot3" {
 }
 
 pub inline fn dot4(v0: Vec, v1: Vec) F32x4 {
-    const xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    return @splat(xmm0[0] + xmm0[1] + xmm0[2] + xmm0[3]);
+    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
+    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 3, 2 }); // | y0*y1 | -- | w0*w1 | -- |
+    xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | x0*x1 + y0*y1 | z0*z1 + w0*w1 | z0*z1 + w0*w1 |
+    xmm0 = @shuffle(f32, xmm1, undefined, [4]i32{ 3, 2, 1, 0 }); // | z0*z1 + w0*w1 | z0*z1 + w0*w1 | x0*x1 + y0*y1 | x0*x1 + y0*y1 |
+    xmm0 = xmm0 + xmm1;
 }
 test "zmath.dot4" {
     const v0 = f32x4(-1.0, 2.0, 3.0, -2.0);

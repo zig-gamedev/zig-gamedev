@@ -24,11 +24,11 @@
 // -------------------------------------------------------------------------------------------------
 // 'Apple M1 Pro', macOS Version 12.5, Zig 0.13.0, ReleaseFast
 // -------------------------------------------------------------------------------------------------
-//                 matrix mul benchmark (AOS) - scalar version: 1.0012s, zmath version: 0.9848s
-//        cross3, scale, bias benchmark (AOS) - scalar version: 0.6222s, zmath version: 0.6437s
-//  cross3, dot3, scale, bias benchmark (AOS) - scalar version: 0.9776s, zmath version: 0.9504s
-//             quaternion mul benchmark (AOS) - scalar version: 0.9808s, zmath version: 0.7998s
-//                       wave benchmark (SOA) - scalar version: 3.3917s, zmath version: 1.0295
+//                 matrix mul benchmark (AOS) - scalar version: 0.9970s, zmath version: 0.9777s
+//        cross3, scale, bias benchmark (AOS) - scalar version: 0.6250s, zmath version: 0.6423s
+//  cross3, dot3, scale, bias benchmark (AOS) - scalar version: 0.9822s, zmath version: 0.9717s
+//             quaternion mul benchmark (AOS) - scalar version: 0.9872s, zmath version: 0.7767s
+//                       wave benchmark (SOA) - scalar version: 3.3965s, zmath version: 1.0280s
 //
 // -------------------------------------------------------------------------------------------------
 // '11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f, ReleaseFast
