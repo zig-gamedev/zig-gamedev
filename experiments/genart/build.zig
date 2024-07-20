@@ -79,24 +79,9 @@ fn install(
     exe.linkLibrary(zstbi.artifact("zstbi"));
 
     exe.root_module.addImport("zsdl2", zsdl2_module);
-    switch (target.result.os.tag) {
-        .windows => {
-            if (target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(zsdl.path("libs/x86_64-windows-gnu/lib"));
-            }
-        },
-        .linux => {
-            if (target.result.cpu.arch.isX86()) {
-                exe.addLibraryPath(zsdl.path("libs/x86_64-linux-gnu/lib"));
-            }
-        },
-        .macos => {
-            exe.addFrameworkPath(zsdl.path("libs/macos/Frameworks"));
-        },
-        else => {},
-    }
-
+    @import("zsdl").addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
+    @import("zsdl").addRPathsTo(exe);
 
     exe.root_module.addImport("zopengl", zopengl_module);
 
@@ -105,6 +90,8 @@ fn install(
         "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment",
     );
     install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
+
+    @import("zsdl").install_sdl2_ttf(install_step, target.result, .bin);
 
     const run_step = b.step(
         name ++ "-run",

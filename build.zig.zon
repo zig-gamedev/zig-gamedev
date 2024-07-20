@@ -28,7 +28,6 @@
         .zphysics = .{ .path = "libs/zphysics" },
         .zpix = .{ .path = "libs/zpix" },
         .zpool = .{ .path = "libs/zpool" },
-        .zsdl = .{ .path = "libs/zsdl" },
         .zstbi = .{ .path = "libs/zstbi" },
         .ztracy = .{ .path = "libs/ztracy" },
         .zwin32 = .{ .path = "libs/zwin32" },
@@ -60,6 +59,12 @@
         .dawn_x86_64_macos = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
             .hash = "1220b1f02f2f7edd98a078c64e3100907d90311d94880a3cc5927e1ac009d002667a",
+        },
+
+        .zsdl = .{ .path = "libs/zsdl" },
+        .sdl2_prebuilt = .{
+            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/49b2267a0fedee9d594733617255dd979da51813.tar.gz",
+            .hash = "1220930ce0d568bd606112d38c3f16a38841a5fd9de5c224f627cd953e7febb90bfa",
         },
     },
 }

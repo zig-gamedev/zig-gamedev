@@ -219,7 +219,7 @@ fn tests(
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
-    // TODO: Renable randomly failing sdl2_ttf test on windows
+    // TODO: Renable randomly failing zaudio tests on windows
     if (target.result.os.tag != .windows) {
         const zaudio = b.dependency("zaudio", .{
             .target = target,
