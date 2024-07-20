@@ -27,7 +27,7 @@ jobs:
         with:
           path: ./.zigversion
       - name: Install Zig
-        uses: goto-bus-stop/setup-zig@v2
+        uses: mlugg/setup-zig@v1
         with:
           version: ${{ steps.zigversion.outputs.content }}
       - name: Build and test
