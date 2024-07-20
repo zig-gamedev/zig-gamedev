@@ -114,73 +114,61 @@ pub fn build(b: *std.Build) void {
     }
 }
 
-pub fn addLibraryPathsTo(
-    compile_step: *std.Build.Step.Compile,
-) void {
+pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const b = compile_step.step.owner;
     const target = compile_step.rootModuleTarget();
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                compile_step.addLibraryPath(.{
-                    .cwd_relative = b.pathJoin(
-                        &.{ source_path_prefix, "libs/x86_64-windows-gnu/lib" },
-                    ),
-                });
+                compile_step.addLibraryPath(.{ .dependency = .{
+                    .dependency = b.dependency("sdl2_prebuilt", .{}),
+                    .sub_path = "x86_64-windows-gnu/lib",
+                } });
             }
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
-                compile_step.addLibraryPath(.{
-                    .cwd_relative = b.pathJoin(
-                        &.{ source_path_prefix, "libs/x86_64-linux-gnu/lib" },
-                    ),
-                });
+                compile_step.addLibraryPath(.{ .dependency = .{
+                    .dependency = b.dependency("sdl2_prebuilt", .{}),
+                    .sub_path = "x86_64-linux-gnu/lib",
+                } });
             }
         },
         .macos => {
-            compile_step.addFrameworkPath(.{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "libs/macos/Frameworks" },
-                ),
-            });
+            compile_step.addFrameworkPath(.{ .dependency = .{
+                .dependency = b.dependency("sdl2_prebuilt", .{}),
+                .sub_path = "macos/Frameworks",
+            } });
         },
         else => {},
     }
 }
 
-pub fn addRPathsTo(
-    compile_step: *std.Build.Step.Compile,
-) void {
+pub fn addRPathsTo(compile_step: *std.Build.Step.Compile) void {
     const b = compile_step.step.owner;
     const target = compile_step.rootModuleTarget();
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                compile_step.addRPath(.{
-                    .cwd_relative = b.pathJoin(
-                        &.{ source_path_prefix, "libs/x86_64-windows-gnu/bin" },
-                    ),
-                });
+                compile_step.addRPath(.{ .dependency = .{
+                    .dependency = b.dependency("sdl2_prebuilt", .{}),
+                    .sub_path = "x86_64-windows-gnu/bin",
+                } });
             }
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
-                compile_step.addRPath(.{
-                    .cwd_relative = b.pathJoin(
-                        &.{ source_path_prefix, "libs/x86_64-linux-gnu/lib" },
-                    ),
-                });
+                compile_step.addRPath(.{ .dependency = .{
+                    .dependency = b.dependency("sdl2_prebuilt", .{}),
+                    .sub_path = "x86_64-linux-gnu/lib",
+                } });
             }
         },
         .macos => {
-            compile_step.addRPath(.{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "libs/macos/Frameworks" },
-                ),
-            });
+            compile_step.addRPath(.{ .dependency = .{
+                .dependency = b.dependency("sdl2_prebuilt", .{}),
+                .sub_path = "macos/Frameworks",
+            } });
         },
         else => {},
     }
@@ -244,50 +232,43 @@ pub fn install_sdl2(
     install_dir: std.Build.InstallDir,
 ) void {
     const b = step.owner;
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{
-                            .cwd_relative = b.pathJoin(
-                                &.{ source_path_prefix, "libs/x86_64-windows-gnu/bin/SDL2.dll" },
-                            ),
-                        },
-                        install_dir,
-                        "SDL2.dll",
-                    ).step,
+                const install_step = b.addInstallFileWithDir(
+                    .{ .dependency = .{
+                        .dependency = b.dependency("sdl2_prebuilt", .{}),
+                        .sub_path = "x86_64-windows-gnu/bin/SDL2.dll",
+                    } },
+                    install_dir,
+                    "SDL2.dll",
                 );
+                step.dependOn(&install_step.step);
             }
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{
-                            .cwd_relative = b.pathJoin(
-                                &.{ source_path_prefix, "libs/x86_64-linux-gnu/lib/libSDL2.so" },
-                            ),
-                        },
-                        install_dir,
-                        "libSDL2.so",
-                    ).step,
+                const install_step = b.addInstallFileWithDir(
+                    .{ .dependency = .{
+                        .dependency = b.dependency("sdl2_prebuilt", .{}),
+                        .sub_path = "x86_64-linux-gnu/lib/libSDL2.so",
+                    } },
+                    install_dir,
+                    "libSDL2.so",
                 );
+                step.dependOn(&install_step.step);
             }
         },
         .macos => {
-            step.dependOn(
-                &b.addInstallDirectory(.{
-                    .source_dir = .{
-                        .cwd_relative = b.pathJoin(
-                            &.{ source_path_prefix, "libs/macos/Frameworks/SDL2.framework" },
-                        ),
-                    },
-                    .install_dir = install_dir,
-                    .install_subdir = "SDL2.framework",
-                }).step,
-            );
+            const install_step = b.addInstallDirectory(.{
+                .source_dir = .{ .dependency = .{
+                    .dependency = b.dependency("sdl2_prebuilt", .{}),
+                    .sub_path = "macos/Frameworks/SDL2.framework",
+                } },
+                .install_dir = install_dir,
+                .install_subdir = "SDL2.framework",
+            });
+            step.dependOn(&install_step.step);
         },
         else => {},
     }
@@ -299,50 +280,43 @@ pub fn install_sdl2_ttf(
     install_dir: std.Build.InstallDir,
 ) void {
     const b = step.owner;
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     switch (target.os.tag) {
         .windows => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{
-                            .cwd_relative = b.pathJoin(
-                                &.{ source_path_prefix, "libs/x86_64-windows-gnu/bin/SDL2_ttf.dll" },
-                            ),
-                        },
-                        install_dir,
-                        "SDL2_ttf.dll",
-                    ).step,
+                const install_step = b.addInstallFileWithDir(
+                    .{ .dependency = .{
+                        .dependency = b.dependency("sdl2_prebuilt", .{}),
+                        .sub_path = "x86_64-windows-gnu/bin/SDL2_ttf.dll",
+                    } },
+                    install_dir,
+                    "SDL2_ttf.dll",
                 );
+                step.dependOn(&install_step.step);
             }
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
-                step.dependOn(
-                    &b.addInstallFileWithDir(
-                        .{
-                            .cwd_relative = b.pathJoin(
-                                &.{ source_path_prefix, "libs/x86_64-linux-gnu/lib/libSDL2_ttf.so" },
-                            ),
-                        },
-                        install_dir,
-                        "libSDL2_ttf.so",
-                    ).step,
+                const install_step = b.addInstallFileWithDir(
+                    .{ .dependency = .{
+                        .dependency = b.dependency("sdl2_prebuilt", .{}),
+                        .sub_path = "x86_64-linux-gnu/lib/libSDL2_ttf.so",
+                    } },
+                    install_dir,
+                    "libSDL2_ttf.so",
                 );
+                step.dependOn(&install_step.step);
             }
         },
         .macos => {
-            step.dependOn(
-                &b.addInstallDirectory(.{
-                    .source_dir = .{
-                        .cwd_relative = b.pathJoin(
-                            &.{ source_path_prefix, "libs/macos/Frameworks/SDL2_ttf.framework" },
-                        ),
-                    },
-                    .install_dir = install_dir,
-                    .install_subdir = "SDL2_ttf.framework",
-                }).step,
-            );
+            const install_step = b.addInstallDirectory(.{
+                .source_dir = .{ .dependency = .{
+                    .dependency = b.dependency("sdl2_prebuilt", .{}),
+                    .sub_path = "macos/Frameworks/SDL2_ttf.framework",
+                } },
+                .install_dir = install_dir,
+                .install_subdir = "SDL2_ttf.framework",
+            });
+            step.dependOn(&install_step.step);
         },
         else => {},
     }
