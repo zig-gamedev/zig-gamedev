@@ -60,7 +60,7 @@ pub fn build(b: *std.Build) void {
     };
 
     if (target.result.os.tag == .emscripten) {
-        // If user has not specified a sysroot for emsdk, set to zemscripten's emsdk path.
+        // If user did not set --sysroot then default to zemscripten's emsdk path
         if (b.sysroot == null) {
             b.sysroot = @import("zemscripten").getEmsdkSysroot(b);
             std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
