@@ -1,10 +1,12 @@
 # zemscripten
 Zig build package and shims for [Emscripten](https://emscripten.org) emsdk
 
+WORK IN PROGRESS
+
 ## How to use it
 
 Add `zemscripten` and `emsdk` to your build.zig.zon dependencies:
-```
+```zig
         .zemscripten = .{ .path = "libs/zemscripten" },
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.52.tar.gz",
@@ -14,18 +16,70 @@ Add `zemscripten` and `emsdk` to your build.zig.zon dependencies:
 
 zemscripten uses sysroot to locate emsdk. Either specify it when calling `zig build --sysroot /path/to/local/emsdk` or use zemscripten's emsdk. Example build.zig code:
 ```zig
-    const zemscripten = @import("zemscripten");
-
     // If user did not set --sysroot then default to zemscripten's emsdk path
     if (b.sysroot == null) {
-        b.sysroot = zemscripten.getEmsdkSysroot(b);
+        b.sysroot = @import("zemscripten").getEmsdkSysroot(b);
         std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
 
-        const activateEmsdkStep = zemscripten.activateEmsdkStep(b);
+        const activateEmsdkStep = @import("zemscripten").activateEmsdkStep(b);
         b.default_step.dependOn(activateEmsdkStep);
     }
 ```
 
 Note that Emsdk must be activated before it can be used. If using the builtin emask, `activateEmsdkStep` can be used to create a build step that everything else should be dependent on.
 
-TODO...
+Add zemscripten's "root" module to your wasm compile target. Example build.zig code:
+```zig
+    const wasm = b.addStaticLibrary(.{
+        .name = "MyGame",
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const zemscripten = b.dependency("zemscripten", .{});
+    wasm.root_module.addImport("zemscripten", zemscripten.module("root"));
+```
+
+Create an `emcc` build step. We use zemscripten's default flags and settings which can be overridden for your project specific requirements. Refer to the [emcc documentation](https://emscripten.org/docs/tools_reference/emcc.html). Example build.zig code:
+```zig
+    const emcc_flags = @import("zemscripten").defaultEmccFlags(b.allocator, optimize);
+    const emcc_settings = @import("zemscripten").defaultEmccSettings(b.allocator, .{
+        .optimize = optimize,
+    });
+
+    const emcc_step = @import("zemscripten").emccStep(b, wasm, .{
+        .optimize = optimize,
+        .flags = emcc_flags,
+        .settings = emcc_settings,
+    });
+
+    b.getInstallStep().dependOn(&emcc_step.step);
+```
+
+Now you can use the provided Zig panic and log overrides in your code and define the entry point called by the js output of `emcc`. For example:
+```zig
+const std = @import("std");
+
+const zemscripten = @import("zemscripten");
+pub const panic = zemscripten.panic;
+
+pub const std_options = std.Options{
+    .logFn = zemscripten.log,
+};
+
+export fn main() c_int {
+    std.log.info("hello, world.", .{});
+    return 0;
+}
+```
+
+You can also define a run step that invokes `emrun`. This will serve the html locally over HTTP and try to open it using your default browser. Example build.zig code:
+```zig
+    const html_filename = std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name}) catch unreachable;
+    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename));
+    emrun_step.dependOn(&emcc_step.step);
+
+    const run_step = b.step("run", "Serve and run the web app locally");
+    run_step.dependOn(emrun_step);
+```

@@ -37,19 +37,50 @@ pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
     return &emsdk_activate.step;
 }
 
+pub const EmccFlags = std.StringHashMap(void);
+
+pub fn defaultEmccFlags(allocator: std.mem.Allocator, optimize: std.builtin.OptimizeMode) EmccFlags {
+    var args = EmccFlags.init(allocator);
+    if (optimize == .Debug) {
+        args.put("-Og", {}) catch unreachable;
+        args.put("-gsource-map", {}) catch unreachable;
+    }
+    return args;
+}
+
+pub const EmccSettings = std.StringHashMap([]const u8);
+
+pub fn defaultEmccSettings(
+    allocator: std.mem.Allocator,
+    options: struct {
+        optimize: std.builtin.OptimizeMode,
+        emsdk_allocator: enum {
+            none,
+            dlmalloc,
+            emmalloc,
+            @"emmalloc-debug",
+            @"emmalloc-memvalidate",
+            @"emmalloc-verbose",
+            mimalloc,
+        } = .emmalloc,
+        shell_file: ?[]const u8 = null,
+    },
+) EmccSettings {
+    var settings = EmccSettings.init(allocator);
+    settings.put("MALLOC", @tagName(options.emsdk_allocator)) catch unreachable;
+    if (options.optimize == .Debug) {
+        settings.put("SAFE_HEAP", "1") catch unreachable;
+        settings.put("STACK_OVERFLOW_CHECK", "1") catch unreachable;
+        settings.put("ASSERTIONS", "1") catch unreachable;
+    }
+    return settings;
+}
+
 pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
     optimize: std.builtin.OptimizeMode,
-    allocator: enum {
-        none,
-        dlmalloc,
-        emmalloc,
-        @"emmalloc-debug",
-        @"emmalloc-memvalidate",
-        @"emmalloc-verbose",
-        mimalloc,
-    } = .emmalloc,
+    flags: EmccFlags,
+    settings: EmccSettings,
     shell_file_path: ?[]const u8 = null,
-    args: []const []const u8 = &.{},
 }) *std.Build.Step.InstallDir {
     const emscripten_path = b.dependency("emsdk", .{}).path("upstream/emscripten").getPath(b);
     const emcc_path = switch (builtin.target.os.tag) {
@@ -59,30 +90,22 @@ pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
 
     var emcc = b.addSystemCommand(&.{emcc_path});
 
-    switch (options.optimize) {
-        .Debug => emcc.addArgs(&.{
-            "-Og",
-            "-gsource-map",
-            "-sSAFE_HEAP=1",
-            "-sSTACK_OVERFLOW_CHECK=1",
-            "-sASSERTIONS=1",
-        }),
-        .ReleaseSmall => emcc.addArg("-Oz"),
-        else => emcc.addArg("-O3"),
+    var iterFlags = options.flags.iterator();
+    while (iterFlags.next()) |kvp| {
+        emcc.addArg(kvp.key_ptr.*);
     }
 
-    emcc.addArg(std.fmt.allocPrint(
-        b.allocator,
-        "-sMALLOC={s}",
-        .{@tagName(options.allocator)},
-    ) catch unreachable);
+    var iterSettings = options.settings.iterator();
+    while (iterSettings.next()) |kvp| {
+        emcc.addArg(std.fmt.allocPrint(
+            b.allocator,
+            "-s{s}={s}",
+            .{ kvp.key_ptr.*, kvp.value_ptr.* },
+        ) catch unreachable);
+    }
 
     if (options.shell_file_path) |shell_file_path| {
         emcc.addArg(b.fmt("--shell-file={s}", .{shell_file_path}));
-    }
-
-    for (options.args) |arg| {
-        emcc.addArg(arg);
     }
 
     emcc.addArtifactArg(wasm);
