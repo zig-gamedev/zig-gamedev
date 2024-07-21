@@ -1,7 +1,7 @@
 const std = @import("std");
 const sdl = @import("sdl2.zig");
 
-test {
+comptime {
     _ = std.testing.refAllDecls(@This());
 }
 

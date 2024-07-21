@@ -15,9 +15,7 @@ fn install(
     target: std.Build.ResolvedTarget,
     comptime name: []const u8,
 ) void {
-    const zsdl = b.dependency("zsdl", .{
-        .target = target,
-    });
+    const zsdl = b.dependency("zsdl", .{});
     const zsdl2_module = zsdl.module("zsdl2");
 
     const zopengl = b.dependency("zopengl", .{
@@ -79,9 +77,12 @@ fn install(
     exe.linkLibrary(zstbi.artifact("zstbi"));
 
     exe.root_module.addImport("zsdl2", zsdl2_module);
-    @import("zsdl").addLibraryPathsTo(exe);
+
     @import("zsdl").link_SDL2(exe);
-    @import("zsdl").addRPathsTo(exe);
+
+    const sdl2_libs_path = b.dependency("sdl2-prebuilt", .{}).path("").getPath(b);
+    @import("zsdl").addLibraryPathsTo(sdl2_libs_path, exe);
+    @import("zsdl").addRPathsTo(sdl2_libs_path, exe);
 
     exe.root_module.addImport("zopengl", zopengl_module);
 
@@ -91,7 +92,9 @@ fn install(
     );
     install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 
-    @import("zsdl").install_sdl2_ttf(install_step, target.result, .bin);
+    if (@import("zsdl").install_SDL2(b, target.result, sdl2_libs_path, .bin)) |install_sdl2_step| {
+        install_step.dependOn(install_sdl2_step);
+    }
 
     const run_step = b.step(
         name ++ "-run",

@@ -62,7 +62,7 @@
         },
 
         .zsdl = .{ .path = "libs/zsdl" },
-        .sdl2_prebuilt = .{
+        .@"sdl2-prebuilt" = .{
             .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/49b2267a0fedee9d594733617255dd979da51813.tar.gz",
             .hash = "1220930ce0d568bd606112d38c3f16a38841a5fd9de5c224f627cd953e7febb90bfa",
         },

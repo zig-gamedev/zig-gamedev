@@ -2,7 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 
-test {
+comptime {
     _ = std.testing.refAllDecls(@This());
 }
 
