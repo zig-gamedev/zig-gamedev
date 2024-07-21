@@ -24,11 +24,9 @@ pub fn link_SDL2(compile_step: *std.Build.Step.Compile) void {
         },
         .linux => {
             compile_step.linkSystemLibrary("SDL2");
-            compile_step.root_module.addRPathSpecial("$ORIGIN");
         },
         .macos => {
             compile_step.linkFramework("SDL2");
-            compile_step.root_module.addRPathSpecial("@executable_path");
         },
         else => {},
     }
@@ -41,11 +39,9 @@ pub fn link_SDL2_ttf(compile_step: *std.Build.Step.Compile) void {
         },
         .linux => {
             compile_step.linkSystemLibrary("SDL2_ttf");
-            compile_step.root_module.addRPathSpecial("$ORIGIN");
         },
         .macos => {
             compile_step.linkFramework("SDL2_ttf");
-            compile_step.root_module.addRPathSpecial("@executable_path");
         },
         else => {},
     }
@@ -105,6 +101,7 @@ pub fn addRPathsTo(libs_source_path: []const u8, compile_step: *std.Build.Step.C
                     .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-windows-gnu/bin" }),
                 });
             }
+            compile_step.root_module.addRPathSpecial("$ORIGIN");
         },
         .linux => {
             if (target.cpu.arch.isX86()) {
@@ -112,6 +109,7 @@ pub fn addRPathsTo(libs_source_path: []const u8, compile_step: *std.Build.Step.C
                     .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-linux-gnu/lib" }),
                 });
             }
+            compile_step.root_module.addRPathSpecial("@executable_path");
         },
         .macos => {
             compile_step.addRPath(.{
