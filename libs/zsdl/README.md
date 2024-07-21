@@ -4,7 +4,14 @@
 
 Copy `zsdl` folder to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
-    .zsdl = .{ .path = "path/to/local/zsdl" },
+        .zsdl = .{ .path = "path/to/local/zsdl" },
+```
+also add `SDL2-prebuilt` if you want to use our prebuilt libraries instead of system installed
+```zig
+        .sdl2_prebuilt = .{
+            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/49b2267a0fedee9d594733617255dd979da51813.tar.gz",
+            .hash = "1220930ce0d568bd606112d38c3f16a38841a5fd9de5c224f627cd953e7febb90bfa",
+        },
 ```
 
 Then in your `build.zig` add:
@@ -19,6 +26,7 @@ pub fn build(b: *std.Build) !void {
     @import("zsdl").addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
 
+    // Install prebuilt SDL2 lib
     @import("zsdl").install_sdl2(&exe.step, target.result, .bin);
 }
 ```
