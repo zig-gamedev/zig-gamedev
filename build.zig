@@ -304,15 +304,12 @@ fn tests(
     test_step.dependOn(&sdl2_tests.step);
     @import("zsdl").install_sdl2(&sdl2_tests.step, target.result, .bin);
 
-    // TODO: Renable randomly failing sdl2_ttf test on windows
-    if (target.result.os.tag != .windows) {
-        const sdl2_ttf_tests = b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests"));
-        if (target.result.os.tag == .windows) {
-            sdl2_ttf_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
-        }
-        test_step.dependOn(&sdl2_ttf_tests.step);
-        @import("zsdl").install_sdl2_ttf(&sdl2_tests.step, target.result, .bin);
+    const sdl2_ttf_tests = b.addRunArtifact(zsdl.artifact("sdl2_ttf-tests"));
+    if (target.result.os.tag == .windows) {
+        sdl2_ttf_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
     }
+    test_step.dependOn(&sdl2_ttf_tests.step);
+    @import("zsdl").install_sdl2_ttf(&sdl2_tests.step, target.result, .bin);
 
     // TODO(hazeycode): SDL3 tests
 
