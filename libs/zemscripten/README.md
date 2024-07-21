@@ -57,7 +57,7 @@ Create an `emcc` build step. We use zemscripten's default flags and settings whi
     b.getInstallStep().dependOn(&emcc_step.step);
 ```
 
-Now you can use the provided Zig panic and log overrides in your code and define the entry point called by the js output of `emcc`. For example:
+Now you can use the provided Zig panic and log overrides in your wasm's root module and define the entry point that invoked by the js output of `emcc` (by default it looks for a symbol named `main`). For example:
 ```zig
 const std = @import("std");
 
