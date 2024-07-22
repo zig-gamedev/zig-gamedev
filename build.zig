@@ -62,10 +62,8 @@ pub fn build(b: *std.Build) void {
     if (target.result.os.tag == .emscripten) {
         // If user did not set --sysroot then default to zemscripten's emsdk path
         if (b.sysroot == null) {
-            b.sysroot = @import("zemscripten").getEmsdkSysroot(b);
+            b.sysroot = b.dependency("emsdk", .{}).path("upstream/emscripten/cache/sysroot").getPath(b);
             std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
-
-            b.default_step.dependOn(@import("zemscripten").activateEmsdkStep(b));
         }
         buildAndInstallSamplesWeb(b, .{
             .optimize = optimize,
@@ -207,9 +205,12 @@ fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
 
         b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(web_install_step);
 
-        const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, d.name ++ ".html"));
+        const html_filename = std.fmt.allocPrint(b.allocator, "{s}.html", .{d.name}) catch unreachable;
+        const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename));
         emrun_step.dependOn(web_install_step);
-        b.step(d.name ++ "-emrun", "Build and serve '" ++ d.name ++ "' demo over local http using emrun.").dependOn(emrun_step);
+
+        const run_step = b.step("run", "Serve and run the web app locally");
+        run_step.dependOn(emrun_step);
     }
 }
 

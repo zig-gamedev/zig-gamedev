@@ -10,10 +10,6 @@ pub fn build(b: *std.Build) void {
     _ = b.addModule("root", .{ .root_source_file = b.path("src/zemscripten.zig") });
 }
 
-pub fn getEmsdkSysroot(b: *std.Build) []const u8 {
-    return b.dependency("emsdk", .{}).path("upstream/emscripten/cache/sysroot").getPath(b);
-}
-
 pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
     const emsdk_path = b.dependency("emsdk", .{}).path("").getPath(b);
 
@@ -39,7 +35,7 @@ pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
 
 pub const EmccFlags = std.StringHashMap(void);
 
-pub fn defaultEmccFlags(allocator: std.mem.Allocator, optimize: std.builtin.OptimizeMode) EmccFlags {
+pub fn emccDefaultFlags(allocator: std.mem.Allocator, optimize: std.builtin.OptimizeMode) EmccFlags {
     var args = EmccFlags.init(allocator);
     if (optimize == .Debug) {
         args.put("-Og", {}) catch unreachable;
@@ -50,7 +46,7 @@ pub fn defaultEmccFlags(allocator: std.mem.Allocator, optimize: std.builtin.Opti
 
 pub const EmccSettings = std.StringHashMap([]const u8);
 
-pub fn defaultEmccSettings(
+pub fn emccDefaultSettings(
     allocator: std.mem.Allocator,
     options: struct {
         optimize: std.builtin.OptimizeMode,
@@ -67,12 +63,15 @@ pub fn defaultEmccSettings(
     },
 ) EmccSettings {
     var settings = EmccSettings.init(allocator);
-    settings.put("MALLOC", @tagName(options.emsdk_allocator)) catch unreachable;
-    if (options.optimize == .Debug) {
-        settings.put("SAFE_HEAP", "1") catch unreachable;
-        settings.put("STACK_OVERFLOW_CHECK", "1") catch unreachable;
-        settings.put("ASSERTIONS", "1") catch unreachable;
+    switch (options.optimize) {
+        .Debug, .ReleaseSafe => {
+            settings.put("SAFE_HEAP", "1") catch unreachable;
+            settings.put("STACK_OVERFLOW_CHECK", "1") catch unreachable;
+            settings.put("ASSERTIONS", "1") catch unreachable;
+        },
+        else => {},
     }
+    settings.put("MALLOC", @tagName(options.emsdk_allocator)) catch unreachable;
     return settings;
 }
 
@@ -81,7 +80,8 @@ pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
     flags: EmccFlags,
     settings: EmccSettings,
     shell_file_path: ?[]const u8 = null,
-}) *std.Build.Step.InstallDir {
+    install_dir: std.Build.InstallDir,
+}) *std.Build.Step {
     const emscripten_path = b.dependency("emsdk", .{}).path("upstream/emscripten").getPath(b);
     const emcc_path = switch (builtin.target.os.tag) {
         .windows => b.pathJoin(&.{ emscripten_path, "emcc.bat" }),
@@ -133,8 +133,8 @@ pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
 
     const install_step = b.addInstallDirectory(.{
         .source_dir = out_file.dirname(),
-        .install_dir = .prefix,
-        .install_subdir = "web",
+        .install_dir = options.install_dir,
+        .install_subdir = "",
     });
     install_step.step.dependOn(&emcc.step);
 
@@ -147,7 +147,7 @@ pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
         else => {},
     }
 
-    return install_step;
+    return &install_step.step;
 }
 
 pub fn emrunStep(b: *std.Build, html_path: []const u8) *std.Build.Step {

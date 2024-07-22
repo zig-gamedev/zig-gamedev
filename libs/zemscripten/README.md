@@ -1,11 +1,9 @@
 # zemscripten
 Zig build package and shims for [Emscripten](https://emscripten.org) emsdk
 
-WORK IN PROGRESS
-
 ## How to use it
 
-Add `zemscripten` and `emsdk` to your build.zig.zon dependencies:
+Add `zemscripten` and (optionally) `emsdk` to your build.zig.zon dependencies:
 ```zig
         .zemscripten = .{ .path = "libs/zemscripten" },
         .emsdk = .{
@@ -14,21 +12,21 @@ Add `zemscripten` and `emsdk` to your build.zig.zon dependencies:
         },
 ```
 
-zemscripten uses sysroot to locate emsdk. Either specify it when calling `zig build --sysroot /path/to/local/emsdk` or use zemscripten's emsdk. Example build.zig code:
+Set sysroot to one proveded by Emsdk. Either specify it when calling `zig build --sysroot /path/to/local/emsdk` or in your build.zig
 ```zig
-    // If user did not set --sysroot then default to zemscripten's emsdk path
+    // If user did not set --sysroot then default to emsdk package path
     if (b.sysroot == null) {
-        b.sysroot = @import("zemscripten").getEmsdkSysroot(b);
+        b.sysroot = b.dependency("emsdk", .{}).path("upstream/emscripten/cache/sysroot").getPath(b);
         std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
-
-        const activateEmsdkStep = @import("zemscripten").activateEmsdkStep(b);
-        b.default_step.dependOn(activateEmsdkStep);
     }
 ```
 
-Note that Emsdk must be activated before it can be used. If using the builtin emask, `activateEmsdkStep` can be used to create a build step that everything else should be dependent on.
+Note that Emsdk must be activated before it can be used. You can use `activateEmsdkStep` to create a build step that for that:
+```zig
+    const activate_emsdk_step = @import("zemscripten").activateEmsdkStep(b);
+```
 
-Add zemscripten's "root" module to your wasm compile target. Example build.zig code:
+Add zemscripten's "root" module to your wasm compile target., then create an `emcc` build step. We use zemscripten's default flags and settings which can be overridden for your project specific requirements. Refer to the [emcc documentation](https://emscripten.org/docs/tools_reference/emcc.html). Example build.zig code:
 ```zig
     const wasm = b.addStaticLibrary(.{
         .name = "MyGame",
@@ -39,12 +37,9 @@ Add zemscripten's "root" module to your wasm compile target. Example build.zig c
 
     const zemscripten = b.dependency("zemscripten", .{});
     wasm.root_module.addImport("zemscripten", zemscripten.module("root"));
-```
 
-Create an `emcc` build step. We use zemscripten's default flags and settings which can be overridden for your project specific requirements. Refer to the [emcc documentation](https://emscripten.org/docs/tools_reference/emcc.html). Example build.zig code:
-```zig
-    const emcc_flags = @import("zemscripten").defaultEmccFlags(b.allocator, optimize);
-    const emcc_settings = @import("zemscripten").defaultEmccSettings(b.allocator, .{
+    const emcc_flags = @import("zemscripten").emccDefaultFlags(b.allocator, optimize);
+    const emcc_settings = @import("zemscripten").emccDefaultSettings(b.allocator, .{
         .optimize = optimize,
     });
 
@@ -52,9 +47,11 @@ Create an `emcc` build step. We use zemscripten's default flags and settings whi
         .optimize = optimize,
         .flags = emcc_flags,
         .settings = emcc_settings,
+        .install_dir = .{ .custom = "web" },
     });
+    emcc_step.dependOn(activate_emsdk_step);
 
-    b.getInstallStep().dependOn(&emcc_step.step);
+    b.getInstallStep().dependOn(emcc_step);
 ```
 
 Now you can use the provided Zig panic and log overrides in your wasm's root module and define the entry point that invoked by the js output of `emcc` (by default it looks for a symbol named `main`). For example:
@@ -78,7 +75,7 @@ You can also define a run step that invokes `emrun`. This will serve the html lo
 ```zig
     const html_filename = std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name}) catch unreachable;
     const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename));
-    emrun_step.dependOn(&emcc_step.step);
+    emrun_step.dependOn(emcc_step);
 
     const run_step = b.step("run", "Serve and run the web app locally");
     run_step.dependOn(emrun_step);
