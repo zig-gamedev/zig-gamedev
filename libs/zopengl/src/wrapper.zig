@@ -2325,6 +2325,12 @@ pub fn Wrap(comptime bindings: anytype) type {
         }
 
         // pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
+        pub fn deleteBuffer(ptr: *Buffer) void {
+            bindings.deleteBuffers(1, @as([*c]Uint, @ptrCast(ptr)));
+        }
+        pub fn deleteBuffers(buffers: []Buffer) void {
+            bindings.deleteBuffers(@intCast(buffers.len), @as([*c]Uint, @ptrCast(buffers.ptr)));
+        }
 
         // pub var genBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
         pub fn genBuffer(ptr: *Buffer) void {
@@ -2517,6 +2523,10 @@ pub fn Wrap(comptime bindings: anytype) type {
         }
 
         // pub var deleteProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+        pub fn deleteProgram(program: Program) void {
+            assert(@as(Uint, @bitCast(program)) > 0);
+            bindings.deleteProgram(@as(Uint, @bitCast(program)));
+        }
 
         // pub var deleteShader: *const fn (shader: Uint) callconv(.C) void = undefined;
         pub fn deleteShader(shader: Shader) void {
