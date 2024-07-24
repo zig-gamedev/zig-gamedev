@@ -269,12 +269,6 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zmesh.artifact("zmesh-tests")).step);
 
-    const zopengl = b.dependency("zopengl", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zopengl.artifact("zopengl-tests")).step);
-
     const zphysics = b.dependency("zphysics", .{
         .target = target,
         .optimize = optimize,

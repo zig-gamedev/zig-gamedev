@@ -1569,6 +1569,11 @@ pub fn Wrap(comptime bindings: anytype) type {
 
         // pub var clear: *const fn (mask: Bitfield) callconv(.C) void = undefined;
         pub fn clear(mask: packed struct(Bitfield) {
+            comptime {
+                assert(@clz(@bitReverse(@as(Bitfield, DEPTH_BUFFER_BIT))) == @bitOffsetOf(@This(), "depth"));
+                assert(@clz(@bitReverse(@as(Bitfield, STENCIL_BUFFER_BIT))) == @bitOffsetOf(@This(), "stencil"));
+                assert(@clz(@bitReverse(@as(Bitfield, COLOR_BUFFER_BIT))) == @bitOffsetOf(@This(), "color"));
+            }
             __unused1: u8 = 0,
             depth: bool = false,
             __unused2: u1 = 0,
@@ -1576,21 +1581,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             __unused3: u3 = 0,
             color: bool = false,
             __unused4: u17 = 0,
-
-            test {
-                try std.testing.expectEqual(
-                    @clz(@bitReverse(@as(Bitfield, DEPTH_BUFFER_BIT))),
-                    @bitOffsetOf(@This(), "depth"),
-                );
-                try std.testing.expectEqual(
-                    @clz(@bitReverse(@as(Bitfield, STENCIL_BUFFER_BIT))),
-                    @bitOffsetOf(@This(), "stencil"),
-                );
-                try std.testing.expectEqual(
-                    @clz(@bitReverse(@as(Bitfield, COLOR_BUFFER_BIT))),
-                    @bitOffsetOf(@This(), "color"),
-                );
-            }
         }) void {
             bindings.clear(@bitCast(mask));
         }

@@ -21,9 +21,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zglfw", zglfw.module("root"));
     exe.linkLibrary(zglfw.artifact("glfw"));
 
-    const zopengl = b.dependency("zopengl", .{
-        .target = options.target,
-    });
+    const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));
 
     const zgui = b.dependency("zgui", .{

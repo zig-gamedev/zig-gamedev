@@ -1,12 +1,11 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const testing = std.testing;
 
 const options = @import("zopengl_options");
 
-test {
-    @setEvalBranchQuota(100_000);
-    _ = testing.refAllDeclsRecursive(@This());
+comptime {
+    @setEvalBranchQuota(20_000);
+    _ = std.testing.refAllDeclsRecursive(@This());
 }
 
 pub const bindings = @import("bindings.zig");
