@@ -142,10 +142,12 @@ extern fn glfwGetCurrentContext() *Window;
 pub const swapInterval = glfwSwapInterval;
 extern fn glfwSwapInterval(interval: i32) void;
 
-pub const GlProc = *const anyopaque;
+pub const GlProc = *const fn () callconv(if (builtin.os.tag == .windows and builtin.cpu.arch == .x86) .Stdcall else .C) void;
 
-pub fn getProcAddress(procname: [:0]const u8) ?GlProc {
-    return glfwGetProcAddress(procname);
+
+pub fn getProcAddress(proc_name: [*:0]const u8) callconv(.C) ?GlProc {
+    if (glfwGetProcAddress(proc_name)) |proc_address| return proc_address;
+    return null;
 }
 extern fn glfwGetProcAddress(procname: [*:0]const u8) ?GlProc;
 

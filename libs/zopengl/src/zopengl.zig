@@ -12,7 +12,7 @@ test {
 pub const bindings = @import("bindings.zig");
 pub const wrapper = @import("wrapper.zig").Wrap(bindings);
 
-pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
+pub const LoaderFn = *const fn ([*:0]const u8) callconv(.C) ?*const fn () callconv(.C) void;
 
 pub const Extension = enum {
     KHR_debug,
