@@ -244,12 +244,6 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zflecs.artifact("zflecs-tests")).step);
 
-    const zglfw = b.dependency("zglfw", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zglfw.artifact("zglfw-tests")).step);
-
     const zgpu = b.dependency("zgpu", .{
         .target = target,
         .optimize = optimize,
