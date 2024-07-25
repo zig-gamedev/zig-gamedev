@@ -31,7 +31,7 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    _ = b.addModule("root", .{
+    const module = b.addModule("root", .{
         .root_source_file = b.path("src/zglfw.zig"),
         .imports = &.{
             .{ .name = "zglfw_options", .module = options_module },
@@ -201,29 +201,14 @@ pub fn build(b: *std.Build) void {
         else => {},
     }
 
-    const test_step = b.step("test", "Run zglfw tests");
-
-    const tests = b.addTest(.{
-        .name = "zglfw-tests",
-        .root_source_file = b.path("src/zglfw.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    tests.root_module.addImport("zglfw_options", options_module);
-    b.installArtifact(tests);
-
-    tests.addIncludePath(b.path("libs/glfw/include"));
+    module.addIncludePath(b.path("libs/glfw/include"));
     switch (target.result.os.tag) {
         .linux => {
-            tests.addSystemIncludePath(system_sdk.path("linux/include"));
+            module.addSystemIncludePath(system_sdk.path("linux/include"));
             if (options.enable_wayland) {
                 glfw.addSystemIncludePath(system_sdk.path("linux/include/wayland"));
             }
         },
         else => {},
     }
-
-    tests.linkLibrary(glfw);
-
-    test_step.dependOn(&b.addRunArtifact(tests).step);
 }

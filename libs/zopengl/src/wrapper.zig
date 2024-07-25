@@ -1569,6 +1569,11 @@ pub fn Wrap(comptime bindings: anytype) type {
 
         // pub var clear: *const fn (mask: Bitfield) callconv(.C) void = undefined;
         pub fn clear(mask: packed struct(Bitfield) {
+            comptime {
+                assert(@clz(@bitReverse(@as(Bitfield, DEPTH_BUFFER_BIT))) == @bitOffsetOf(@This(), "depth"));
+                assert(@clz(@bitReverse(@as(Bitfield, STENCIL_BUFFER_BIT))) == @bitOffsetOf(@This(), "stencil"));
+                assert(@clz(@bitReverse(@as(Bitfield, COLOR_BUFFER_BIT))) == @bitOffsetOf(@This(), "color"));
+            }
             __unused1: u8 = 0,
             depth: bool = false,
             __unused2: u1 = 0,
@@ -1576,21 +1581,6 @@ pub fn Wrap(comptime bindings: anytype) type {
             __unused3: u3 = 0,
             color: bool = false,
             __unused4: u17 = 0,
-
-            test {
-                try std.testing.expectEqual(
-                    @clz(@bitReverse(@as(Bitfield, DEPTH_BUFFER_BIT))),
-                    @bitOffsetOf(@This(), "depth"),
-                );
-                try std.testing.expectEqual(
-                    @clz(@bitReverse(@as(Bitfield, STENCIL_BUFFER_BIT))),
-                    @bitOffsetOf(@This(), "stencil"),
-                );
-                try std.testing.expectEqual(
-                    @clz(@bitReverse(@as(Bitfield, COLOR_BUFFER_BIT))),
-                    @bitOffsetOf(@This(), "color"),
-                );
-            }
         }) void {
             bindings.clear(@bitCast(mask));
         }
@@ -2325,6 +2315,12 @@ pub fn Wrap(comptime bindings: anytype) type {
         }
 
         // pub var deleteBuffers: *const fn (n: Sizei, buffers: [*c]const Uint) callconv(.C) void = undefined;
+        pub fn deleteBuffer(ptr: *Buffer) void {
+            bindings.deleteBuffers(1, @as([*c]Uint, @ptrCast(ptr)));
+        }
+        pub fn deleteBuffers(buffers: []Buffer) void {
+            bindings.deleteBuffers(@intCast(buffers.len), @as([*c]Uint, @ptrCast(buffers.ptr)));
+        }
 
         // pub var genBuffers: *const fn (n: Sizei, buffers: [*c]Uint) callconv(.C) void = undefined;
         pub fn genBuffer(ptr: *Buffer) void {
@@ -2517,6 +2513,10 @@ pub fn Wrap(comptime bindings: anytype) type {
         }
 
         // pub var deleteProgram: *const fn (program: Uint) callconv(.C) void = undefined;
+        pub fn deleteProgram(program: Program) void {
+            assert(@as(Uint, @bitCast(program)) > 0);
+            bindings.deleteProgram(@as(Uint, @bitCast(program)));
+        }
 
         // pub var deleteShader: *const fn (shader: Uint) callconv(.C) void = undefined;
         pub fn deleteShader(shader: Shader) void {
