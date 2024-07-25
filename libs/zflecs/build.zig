@@ -3,12 +3,14 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
+    const opt_use_shared = b.option(bool, "shared", "Make shared (default: false)") orelse false;
 
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/zflecs.zig"),
     });
 
-    const flecs = b.addStaticLibrary(.{
+    const method = if (opt_use_shared) b.addSharedLibrary else b.addStaticLibrary;
+    const flecs = method(.{
         .name = "flecs",
         .target = target,
         .optimize = optimize,
@@ -22,6 +24,7 @@ pub fn build(b: *std.Build) void {
             "-DFLECS_NO_CPP",
             "-DFLECS_USE_OS_ALLOC",
             if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
+            if (opt_use_shared) "-DFLECS_SHARED" else ""
         },
     });
     b.installArtifact(flecs);
