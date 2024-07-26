@@ -1058,6 +1058,22 @@ pub fn Wrap(comptime bindings: anytype) type {
             // buffer_offset = TEXTURE_BUFFER_OFFSET,
         };
 
+        pub const MipmapTarget = enum(Enum) {
+            //--------------------------------------------------------------------------------------
+            // OpenGL 3.0 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            texture_1d = TEXTURE_1D,
+            texture_2d = TEXTURE_2D,
+            texture_3d = TEXTURE_3D,
+            texture_1d_array = TEXTURE_1D_ARRAY,
+            texture_2d_array = TEXTURE_2D_ARRAY,
+            texture_cube_map = TEXTURE_CUBE_MAP,
+            //--------------------------------------------------------------------------------------
+            // OpenGL 4.0 (Core Profile)
+            //--------------------------------------------------------------------------------------
+            texture_cube_map_array = TEXTURE_CUBE_MAP_ARRAY,
+        };
+
         pub const PixelStoreParameter = meta.mergeEnums(.{
             enum(Enum) {
                 //--------------------------------------------------------------------------------------
@@ -3496,7 +3512,12 @@ pub fn Wrap(comptime bindings: anytype) type {
             );
             return result;
         }
+
         // pub var generateMipmap: *const fn (target: Enum) callconv(.C) void = undefined;
+        pub fn generateMipmap(target: MipmapTarget) void {
+            bindings.generateMipmap(@intFromEnum(target));
+        }
+
         // pub var blitFramebuffer: *const fn (
         //     srcX0: Int,
         //     srcY0: Int,
