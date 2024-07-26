@@ -318,7 +318,7 @@ pub const gl = struct {
     }
     extern fn SDL_GL_SwapWindow(window: *Window) c_int;
 
-    pub fn getProcAddress(proc: [:0]const u8) FunctionPointer {
+    pub fn getProcAddress(proc: [*:0]const u8) FunctionPointer {
         return SDL_GL_GetProcAddress(proc);
     }
     extern fn SDL_GL_GetProcAddress(proc: ?[*:0]const u8) FunctionPointer;

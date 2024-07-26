@@ -11,7 +11,7 @@ comptime {
 pub const bindings = @import("bindings.zig");
 pub const wrapper = @import("wrapper.zig").Wrap(bindings);
 
-pub const LoaderFn = *const fn ([:0]const u8) ?*const anyopaque;
+pub const LoaderFn = *const fn ([*:0]const u8) ?*const anyopaque;
 
 pub const Extension = enum {
     KHR_debug,
