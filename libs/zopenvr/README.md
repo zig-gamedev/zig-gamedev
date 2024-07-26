@@ -58,31 +58,31 @@ For better types on render structs, enable the corresponding options when import
 
 ## Implementation progress
 
-| Interface       |       Status        |
-| --------------- | :-----------------: |
-| Applications    |         ✅          |
-| BlockQueue      |                     |
-| Chaperone       |         ✅          |
-| ChaperoneSetup  |                     |
-| Compositor      | ✅<br/>(see bellow) |
-| Debug           |                     |
-| DriverManager   |                     |
-| ExtendedDisplay |                     |
-| HeadsetView     |                     |
-| Input           |         ✅          |
-| IOBuffer        |                     |
-| Notifications   |                     |
-| Overlay         |         ✅          |
-| OverlayView     |                     |
-| Paths           |                     |
-| Properties      |                     |
-| RenderModels    |         ✅          |
-| Resources       |                     |
-| Screenshots     |                     |
-| Settings        |                     |
-| SpatialAnchors  |                     |
-| System          |         ✅          |
-| TrackedCamera   |                     |
+| Interface       |       Status       |
+| --------------- | :----------------: |
+| Applications    |         ✅         |
+| BlockQueue      |                    |
+| Chaperone       |         ✅         |
+| ChaperoneSetup  |                    |
+| Compositor      | ✅<br/>(see below) |
+| Debug           |                    |
+| DriverManager   |                    |
+| ExtendedDisplay |                    |
+| HeadsetView     |                    |
+| Input           |         ✅         |
+| IOBuffer        |                    |
+| Notifications   |                    |
+| Overlay         |         ✅         |
+| OverlayView     |                    |
+| Paths           |                    |
+| Properties      |                    |
+| RenderModels    |         ✅         |
+| Resources       |                    |
+| Screenshots     |                    |
+| Settings        |                    |
+| SpatialAnchors  |                    |
+| System          |         ✅         |
+| TrackedCamera   |                    |
 
 ### Compositor supported renderers
 | Renderer           | Handle type           | Zig handle name                 | Support |
