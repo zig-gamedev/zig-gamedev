@@ -1,6 +1,6 @@
 .{
     .name = "ztracy",
-    .version = "0.11.0",
+    .version = "0.12.0",
     .paths = .{
         "build.zig",
         "build.zig.zon",
