@@ -158,7 +158,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 ## Others using zig-gamedev
 
 * [Tides of Revival](https://github.com/Srekel/tides-of-revival) - First-person, open-world, fantasy RPG being developed in the open
-* [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
+* [Markets](https://github.com/ckrowland/markets) - Visually simulate markets of basic consumers and producers
 * [krateroid](https://github.com/kussakaa/krateroid) - 3D strategy game
 * [blokens](https://github.com/btipling/blockens) - Voxel game
 * [Delve Framework](https://github.com/Interrupt/delve-framework) - Simple game framework for making games with Lua
