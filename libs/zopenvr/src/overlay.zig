@@ -191,22 +191,28 @@ pub fn getOverlayWidthInMeters(self: Self, overlay_handle: common.OverlayHandle)
     return width_in_meters;
 }
 
+/// Use to draw overlay as a curved surface. Curvature is a percentage from [0..1] where 1 is a fully closed cylinder and 0 is a flat plane.
 pub fn setOverlayCurvature(self: Self, overlay_handle: common.OverlayHandle, curvature: f32) common.OverlayError!void {
+    std.debug.assert(0 <= curvature and curvature <= 1);
     return self.function_table.SetOverlayCurvature(overlay_handle, curvature).maybe();
 }
 
+/// Use to draw overlay as a curved surface. Radius is in meters and is based on the screen width.
 pub fn setOverlayCurvatureRadius(self: Self, overlay_handle: common.OverlayHandle, radius: f32) common.OverlayError!void {
+    std.debug.assert(0 < radius and radius <= 2 * std.math.pi);
     const width = try self.getOverlayWidthInMeters(overlay_handle);
     const curvature = width / (2 * std.math.pi * radius);
     return self.setOverlayCurvature(overlay_handle, curvature);
 }
 
+/// returns overlay curvature. Curvature is a percentage from (0..1] where 1 is a fully closed cylinder.
 pub fn getOverlayCurvature(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
     var curvature: f32 = undefined;
     try self.function_table.GetOverlayCurvature(overlay_handle, &curvature).maybe();
     return curvature;
 }
 
+/// returns overlay curve radius in meters
 pub fn getOverlayCurvatureRadius(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
     const width = try self.getOverlayWidthInMeters(overlay_handle);
     const curvature = try self.getOverlayCurvature(overlay_handle);
@@ -214,10 +220,13 @@ pub fn getOverlayCurvatureRadius(self: Self, overlay_handle: common.OverlayHandl
     return radius;
 }
 
+/// Sets the pitch angle (in radians) of the overlay before curvature is applied -- to form a fan or disk.
 pub fn setOverlayPreCurvePitch(self: Self, overlay_handle: common.OverlayHandle, radians: f32) common.OverlayError!void {
+    std.debug.assert(0 <= radians and radians <= 2 * std.math.pi);
     return self.function_table.SetOverlayPreCurvePitch(overlay_handle, radians).maybe();
 }
 
+/// returns overlay pre-curve angle in radians
 pub fn getOverlayPreCurvePitch(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!f32 {
     var radians: f32 = undefined;
     try self.function_table.GetOverlayPreCurvePitch(overlay_handle, &radians).maybe();
@@ -367,6 +376,10 @@ pub fn getTransformForOverlayCoordinates(
     return transform;
 }
 
+/// This function will block until the top of each frame, and can therefore be used to synchronize with the runtime's update rate.
+///
+/// Note: In non-async mode, some signals may be dropped due to scene app performance, so passing a timeout of 1000/refresh rate
+/// may be useful depending on the overlay app's desired behavior.
 pub fn waitFrameSync(self: Self, timeout_ms: u32) common.OverlayError!void {
     return self.function_table.WaitFrameSync(timeout_ms).maybe();
 }
@@ -501,7 +514,7 @@ pub fn setOverlayFromFile(self: Self, overlay_handle: common.OverlayHandle, file
     return self.function_table.SetOverlayFromFile(overlay_handle, file_path.ptr).maybe();
 }
 
-// todo make typeing accomedate more engines rather then just what was in the docs
+// TODO: make typeing accomedate more engines rather then just what was in the docs
 pub fn getOverlayTextureD3D11(self: Self, overlay_handle: common.OverlayHandle, native_texture_ref: *d3d11.IResource) common.OverlayError!struct {
     native_texture_handle: *d3d11.IShaderResourceView,
     width: u32,
@@ -647,7 +660,7 @@ pub fn showKeyboardForOverlay(
     return err.maybe();
 }
 
-// todo check if max length is the same as max chars from above or one off
+// TODO: check if max length is the same as max chars from above or one off
 pub fn getKeyboardText(self: Self, allocator: std.mem.Allocator, max_length: u32) error{OutOfMemory}![:0]u8 {
     const buffer = try allocator.allocSentinel(u8, max_length - 1, 0);
     const size = self.function_table.GetKeyboardText(buffer.ptr, max_length);
