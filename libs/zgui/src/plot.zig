@@ -313,11 +313,10 @@ pub const Flags = packed struct(u32) {
     no_inputs: bool = false,
     no_menus: bool = false,
     no_box_select: bool = false,
-    no_child: bool = false,
     no_frame: bool = false,
     equal: bool = false,
     crosshairs: bool = false,
-    _padding: u22 = 0,
+    _padding: u23 = 0,
 
     pub const canvas_only = Flags{
         .no_title = true,
