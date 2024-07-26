@@ -18,9 +18,7 @@ fn install(
     const zsdl = b.dependency("zsdl", .{});
     const zsdl2_module = zsdl.module("zsdl2");
 
-    const zopengl = b.dependency("zopengl", .{
-        .target = target,
-    });
+    const zopengl = b.dependency("zopengl", .{});
     const zopengl_module = zopengl.module("root");
 
     const zmath = b.dependency("zmath", .{
