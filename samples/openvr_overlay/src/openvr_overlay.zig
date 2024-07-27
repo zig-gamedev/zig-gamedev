@@ -93,7 +93,7 @@ pub fn main() !void {
             transform.m[1][2] = 1;
             transform.m[2][1] = 1;
 
-            transform.m[2][3] = -0.1;
+            transform.m[2][3] = -0.12;
 
             overlay.setOverlayTransformTrackedDeviceRelative(overlayID, index, transform) catch |err| {
                 std.log.err("Error connecting the overlay to the device: {s}\n", .{overlay.getOverlayErrorNameFromError(err)});
@@ -122,6 +122,9 @@ pub fn main() !void {
 
         // window.swapBuffers();
 
-        try overlay.waitFrameSync(1000 / fps);
+        overlay.waitFrameSync(1000 / fps) catch |err| switch (err) {
+            zopenvr.OverlayError.TimedOut => std.time.sleep(200 * std.time.ns_per_ms),
+            else => return err,
+        };
     }
 }
