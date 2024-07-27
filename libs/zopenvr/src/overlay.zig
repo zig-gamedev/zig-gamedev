@@ -469,7 +469,7 @@ pub fn clearOverlayCursorPositionOverride(self: Self, overlay_handle: common.Ove
 }
 
 pub fn setOverlayTexture(self: Self, overlay_handle: common.OverlayHandle, texture: common.Texture) common.OverlayError!void {
-    return self.function_table.SetOverlayTexture(overlay_handle, texture.ptr).maybe();
+    return self.function_table.SetOverlayTexture(overlay_handle, &texture).maybe();
 }
 
 pub fn clearOverlayTexture(self: Self, overlay_handle: common.OverlayHandle) common.OverlayError!void {
