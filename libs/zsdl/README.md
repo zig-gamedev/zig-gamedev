@@ -31,7 +31,7 @@ pub fn build(b: *std.Build) !void {
     @import("zsdl").addLibraryPathsTo(sdl2_libs_path, exe);
     @import("zsdl").addRPathsTo(sdl2_libs_path, exe);
 
-    if (@import("zsdl").install_SDL2(b, target, sdl2_libs_path, .bin)) |install_sdl2_step| {
+    if (@import("zsdl").install_SDL2(b, target.result, sdl2_libs_path, .bin)) |install_sdl2_step| {
         b.getInstallStep().dependOn(install_sdl2_step);
     }
 }
