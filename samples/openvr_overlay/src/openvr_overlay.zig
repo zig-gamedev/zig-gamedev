@@ -12,10 +12,6 @@ const overlayWidth = 0.25; // meters
 const fps = 10;
 
 pub fn main() !void {
-    // var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    // defer arena.deinit();
-    // const allocator = arena.allocator();
-
     try glfw.init();
     defer glfw.terminate();
 
@@ -36,11 +32,24 @@ pub fn main() !void {
     const gl = zopengl.bindings;
     glfw.swapInterval(1);
 
-    const openvr = zopenvr.init(.overlay) catch |err| {
-        const errDesc = zopenvr.initErrorAsEnglishDescription(err);
-        const errSym = zopenvr.initErrorAsSymbol(err);
-        std.log.err("Could not initialize OpenVR: {s} ({s})\n", .{ errDesc, errSym });
-        std.process.exit(1);
+    const openvr = openvr: {
+        // if wireless headset not connected then retry till its present
+        while (true) {
+            const openvr = zopenvr.init(.overlay) catch |err| {
+                const errDesc = zopenvr.initErrorAsEnglishDescription(err);
+                const errSym = zopenvr.initErrorAsSymbol(err);
+                std.log.err("Could not initialize OpenVR: {s} ({s})\n", .{ errDesc, errSym });
+
+                switch (err) {
+                    zopenvr.InitError.DriverWirelessHmdNotConnected => {
+                        std.time.sleep(2 * std.time.ns_per_s);
+                        continue;
+                    },
+                    else => std.process.exit(1),
+                }
+            };
+            break :openvr openvr;
+        }
     };
     defer openvr.deinit();
 
@@ -67,9 +76,6 @@ pub fn main() !void {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
-        // var junkData = try allocator.alloc(u8, width * height * 4);
-        // defer allocator.free(junkData);
-        // @memset(&junkData, 255);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     }
 
