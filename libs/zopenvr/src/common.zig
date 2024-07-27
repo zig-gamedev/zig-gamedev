@@ -2879,103 +2879,104 @@ test "back to error code" {
         try expectEqual(code, OverlayErrorCode.fromError(err));
 }
 
+///See comments in enum
 pub const OverlayFlags = packed struct(u32) {
     _padding: u3 = 0,
-    ///Set this flag on a dashboard overlay to prevent a tab from showing up for that overlay
     no_dashboard_tab: bool = false,
     __padding: u2 = 0,
 
-    ///When this is set the overlay will receive EventType.scroll_discrete events like a mouse wheel.
-    ///Requires mouse input mode.
     send_vr_discrete_scroll_events: bool = false,
-    ///Indicates that the overlay would like to receive
     send_vr_touchpad_events: bool = false,
 
-    ///If set this will render a vertical scroll wheel on the primary controller,
-    ///only needed if not using OverlayFlags.send_vr_scroll_events (smooth or discrete) but you still want to represent a scroll wheel
     show_touch_pad_scroll_wheel: bool = false,
-    ///If this is set ownership and render access to the overlay are transferred
-    ///to the new scene process on a call to openvr.Applications.launchInternalProcess
     transfer_ownership_to_internal_process: bool = false,
 
-    ///If set, renders 50% of the texture in each eye, side by side
-    ///Texture is left/right
     side_by_side_parallel: bool = false,
-    ///Texture is crossed and right/left
     side_by_side_crossed: bool = false,
 
-    ///Texture is a panorama
     panorama: bool = false,
-    ///Texture is a stereo panorama
     stereo_panorama: bool = false,
 
-    ///If this is set on an overlay owned by the scene application that overlay
-    ///will be sorted with the "Other" overlays on top of all other scene overlays
     sort_with_non_scene_overlays: bool = false,
-    ///If set, the overlay will be shown in the dashboard, otherwise it will be hidden.
     visible_in_dashboard: bool = false,
-    ///If this is set and the overlay's input method is not none, the system-wide laser mouse
-    ///mode will be activated whenever this overlay is visible.
     make_overlays_interactive_if_visible: bool = false,
-    ///If this is set the overlay will receive smooth EventType.scroll_smooth that emulate trackpad scrolling.
-    ///Requires mouse input mode.
     send_vr_smooth_scroll_events: bool = false,
-    ///If this is set, the overlay texture will be protected content, preventing unauthorized reads.
     protected_content: bool = false,
-    ///If this is set, the laser mouse splat will not be drawn over this overlay. The overlay will
-    ///be responsible for drawing its own "cursor".
     hide_laser_intersection: bool = false,
-    ///If this is set, clicking away from the overlay will cause it to receive a EventType.modal_cancel event.
-    ///This is ignored for dashboard overlays.
     wants_modal_behavior: bool = false,
-    ///If this is set, alpha composition assumes the texture is pre-multiplied
     is_premultiplied: bool = false,
-    ///If this is set, the alpha values of the overlay texture will be ignored
     ignore_texture_alpha: bool = false,
-    ///If this is set, this overlay will have a control bar drawn underneath of it in the dashboard.
     enable_control_bar: bool = false,
-    ///If this is set, the overlay control bar will provide a button to toggle the keyboard.
     enable_control_bar_keyboard: bool = false,
-    ///If this is set, the overlay control bar will provide a "close" button which will send a
-    ///EventType.overlay_closed event to the overlay when pressed. Applications that use this flag are responsible
-    ///for responding to the event with something that approximates "closing" behavior, such as destroying their
-    ///overlay and/or shutting down their application.
     enable_control_bar_close: bool = false,
-    ///Do not use
     reserved: bool = false,
-    ///If this is set, click stabilization will be applied to the laser interaction so that clicks more reliably
-    ///trigger on the user's intended target
     enable_click_stabilization: bool = false,
-    ///If this is set, laser mouse pointer events may be sent for the secondary laser. These events will have
-    ///cursorIndex set to 0 for the primary laser and 1 for the secondary.
     multi_cursor: bool = false,
     ___padding: u3 = 0,
 
-    ///See comments on struct
     pub const Enum = enum(u32) {
+        ///Set this flag on a dashboard overlay to prevent a tab from showing up for that overlay
         NoDashboardTab = @bitCast(OverlayFlags{ .no_dashboard_tab = true }),
+        ///When this is set the overlay will receive EventType.scroll_discrete events like a mouse wheel.
+        ///Requires mouse input mode.
         SendVRDiscreteScrollEvents = @bitCast(OverlayFlags{ .send_vr_discrete_scroll_events = true }),
+        ///Indicates that the overlay would like to receive touchpad events (EventData.touch_pad_move).
         SendVRTouchpadEvents = @bitCast(OverlayFlags{ .send_vr_touchpad_events = true }),
+        ///If set this will render a vertical scroll wheel on the primary controller,
+        ///only needed if not using OverlayFlags.send_vr_scroll_events (smooth or discrete) but you still want to represent a scroll wheel
         ShowTouchPadScrollWheel = @bitCast(OverlayFlags{ .show_touch_pad_scroll_wheel = true }),
+        ///If this is set ownership and render access to the overlay are transferred
+        ///to the new scene process on a call to openvr.Applications.launchInternalProcess
         TransferOwnershipToInternalProcess = @bitCast(OverlayFlags{ .transfer_ownership_to_internal_process = true }),
+        ///If set, renders 50% of the texture in each eye, side by side
+        ///Texture is left/right
         SideBySide_Parallel = @bitCast(OverlayFlags{ .side_by_side_parallel = true }),
+        ///If set, renders 50% of the texture in each eye, side by side
+        ///Texture is crossed and right/left
         SideBySide_Crossed = @bitCast(OverlayFlags{ .side_by_side_crossed = true }),
+        ///Texture is a panorama
         Panorama = @bitCast(OverlayFlags{ .panorama = true }),
+        ///Texture is a stereo panorama
         StereoPanorama = @bitCast(OverlayFlags{ .stereo_panorama = true }),
+        ///If this is set on an overlay owned by the scene application that overlay
+        ///will be sorted with the "Other" overlays on top of all other scene overlays
         SortWithNonSceneOverlays = @bitCast(OverlayFlags{ .sort_with_non_scene_overlays = true }),
+        ///If set, the overlay will be shown in the dashboard, otherwise it will be hidden.
         VisibleInDashboard = @bitCast(OverlayFlags{ .visible_in_dashboard = true }),
+        ///If this is set and the overlay's input method is not none, the system-wide laser mouse
+        ///mode will be activated whenever this overlay is visible.
         MakeOverlaysInteractiveIfVisible = @bitCast(OverlayFlags{ .make_overlays_interactive_if_visible = true }),
+        ///If this is set the overlay will receive smooth EventType.scroll_smooth that emulate trackpad scrolling.
+        ///Requires mouse input mode.
         SendVRSmoothScrollEvents = @bitCast(OverlayFlags{ .send_vr_smooth_scroll_events = true }),
+        ///If this is set, the overlay texture will be protected content, preventing unauthorized reads.
         ProtectedContent = @bitCast(OverlayFlags{ .protected_content = true }),
+        ///If this is set, the laser mouse splat will not be drawn over this overlay. The overlay will
+        ///be responsible for drawing its own "cursor".
         HideLaserIntersection = @bitCast(OverlayFlags{ .hide_laser_intersection = true }),
+        ///If this is set, clicking away from the overlay will cause it to receive a EventType.modal_cancel event.
+        ///This is ignored for dashboard overlays.
         WantsModalBehavior = @bitCast(OverlayFlags{ .wants_modal_behavior = true }),
+        ///If this is set, alpha composition assumes the texture is pre-multiplied
         IsPremultiplied = @bitCast(OverlayFlags{ .is_premultiplied = true }),
+        ///If this is set, the alpha values of the overlay texture will be ignored
         IgnoreTextureAlpha = @bitCast(OverlayFlags{ .ignore_texture_alpha = true }),
+        ///If this is set, this overlay will have a control bar drawn underneath of it in the dashboard.
         EnableControlBar = @bitCast(OverlayFlags{ .enable_control_bar = true }),
+        ///If this is set, the overlay control bar will provide a button to toggle the keyboard.
         EnableControlBarKeyboard = @bitCast(OverlayFlags{ .enable_control_bar_keyboard = true }),
+        ///If this is set, the overlay control bar will provide a "close" button which will send a
+        ///EventType.overlay_closed event to the overlay when pressed. Applications that use this flag are responsible
+        ///for responding to the event with something that approximates "closing" behavior, such as destroying their
+        ///overlay and/or shutting down their application.
         EnableControlBarClose = @bitCast(OverlayFlags{ .enable_control_bar_close = true }),
+        ///Do not use
         Reserved = @bitCast(OverlayFlags{ .reserved = true }),
+        ///If this is set, click stabilization will be applied to the laser interaction so that clicks more reliably
+        ///trigger on the user's intended target
         EnableClickStabilization = @bitCast(OverlayFlags{ .enable_click_stabilization = true }),
+        ///If this is set, laser mouse pointer events may be sent for the secondary laser. These events will have
+        ///cursorIndex set to 0 for the primary laser and 1 for the secondary.
         MultiCursor = @bitCast(OverlayFlags{ .multi_cursor = true }),
     };
 };
