@@ -88,7 +88,7 @@ For better types on render structs, enable the corresponding options when import
 | Renderer           | Handle type           | Zig handle name                 | Support |
 |--------------------|-----------------------|---------------------------------|:-------:|
 | DirectX 11 (d3d11) | ID3D11Texture2D       | zwin32.d3d11.ITexture2D         |    ✅   |
-| OpenGL             |                       |                                 |         |
+| OpenGL             | GLUint \| buffer name | zopengl.bindings.Uint           |    ✅   |
 | Vulkan             | VRVulkanTextureData_t |                                 |         |
 | IOSurface          |                       |                                 |         |
 | DirectX 12 (d3d12) | D3D12TextureData_t    | zopenvr.common.D3D12TextureData |    ✅   |

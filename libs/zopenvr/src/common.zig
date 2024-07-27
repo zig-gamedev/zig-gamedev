@@ -781,13 +781,24 @@ pub const TrackedDevicePose = extern struct {
 };
 
 pub const TextureType = enum(i32) {
+    ///Handle has been invalidated
     invalid = -1,
+    ///Handle is an ID3D11Texture
     directx = 0,
+    ///Handle is an OpenGL texture name or an OpenGL render buffer name, depending on submit flags
     opengl = 1,
+    ///Handle is a pointer to a VulkanTextureData structure
     vulkan = 2,
+    ///Handle is a macOS cross-process-sharable IOSurfaceRef, deprecated in favor of TextureType.metal on supported platforms
     iosurface = 3,
+    ///Handle is a pointer to a D3D12TextureData_t structure
     directx12 = 4,
+    ///Handle is a HANDLE DXGI share handle, only supported for Overlay render targets.
+    ///this texture is used directly by our renderer, so only perform atomic (copyresource or resolve) on it
     dxgi_shared_handle = 5,
+    ///Handle is a MTLTexture conforming to the MTLSharedTexture protocol. Textures submitted to zopenvr.compositor.submit which
+    ///are of type MTLTextureType2DArray assume layer 0 is the left eye texture (zopenvr.Eye.left), layer 1 is the right
+    ///eye texture (zopenvr.Eye.right)
     metal = 6,
     reserved = 7,
 };
@@ -3081,3 +3092,22 @@ pub fn RawImage(comptime T: type, comptime bytes_per_pixel: u32) type {
         }
     };
 }
+
+pub const GLSharedTextureHandle = *const anyopaque;
+
+pub const VulkanTextureData = extern struct {
+    image: u64,
+    device: renderers.vulkan.VkDevice,
+    physical_device: renderers.vulkan.VkPhysicalDevice,
+    instance: renderers.vulkan.VkInstance,
+    queue: renderers.vulkan.VkQueue,
+    queue_family_index: u32,
+    width: u32,
+    height: u32,
+    format: u32,
+    sample_count: u32,
+};
+pub const VRVulkanTextureArrayData = extern struct {
+    array_index: u32,
+    array_size: u32,
+};

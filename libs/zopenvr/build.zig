@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) void {
         d3d11: bool = false,
         d3d12: bool = false,
         // valken: bool = false,
-        // opengl: bool = false,
+        opengl: bool = false,
     }{};
 
     var need_zwin32 = false;
@@ -30,6 +30,12 @@ pub fn build(b: *std.Build) void {
     if (need_zwin32) {
         if (b.lazyDependency("zwin32", .{ .target = target })) |zwin32| {
             mod.addImport("zwin32", zwin32.module("root"));
+        }
+    }
+    if (b.option(bool, "opengl", "Enable OpenGL backend") orelse false) {
+        backends.opengl = true;
+        if (b.lazyDependency("zopengl", .{})) |zopengl| {
+            mod.addImport("zopengl", zopengl.module("root"));
         }
     }
 
