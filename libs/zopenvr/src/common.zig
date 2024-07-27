@@ -1178,8 +1178,11 @@ pub const SubmitFlags = packed struct(i32) {
 };
 
 pub const ColorSpace = enum(i32) {
+    ///Assumes 'gamma' for 8-bit per component formats, otherwise 'linear'.  This mirrors the DXGI formats which have _SRGB variants.
     auto = 0,
+    ///Texture data can be displayed directly on the display without any conversion (a.k.a. display native format).
     gamma = 1,
+    ///Same as gamma but has been converted to a linear representation using DXGI's sRGB conversion algorithm.
     linear = 2,
 };
 pub const D3D12TextureData = extern struct {
