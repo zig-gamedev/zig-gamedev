@@ -191,7 +191,7 @@ pub const Window = opaque {
     const pos_undefined_mask: i32 = 0x1fff_0000;
     const pos_centered_mask: i32 = 0x2fff_0000;
 
-    pub fn create(title: [:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) Error!*Window {
+    pub fn create(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) Error!*Window {
         return SDL_CreateWindow(title, x, y, w, h, flags) orelse return makeError();
     }
     extern fn SDL_CreateWindow(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) ?*Window;
@@ -759,6 +759,29 @@ pub const Renderer = opaque {
         pitch: c_int,
     ) c_int;
 };
+
+pub fn createWindowAndRenderer(
+    width: u32,
+    height: u32,
+    window_flags: Window.Flags,
+    window: **Window,
+    renderer: **Renderer,
+) Error!void {
+    if (SDL_CreateWindowAndRenderer(
+        @bitCast(width),
+        @bitCast(height),
+        window_flags,
+        @ptrCast(window),
+        @ptrCast(renderer),
+    ) != 0) return makeError();
+}
+extern fn SDL_CreateWindowAndRenderer(
+    width: c_int,
+    height: c_int,
+    window_flags: Window.Flags,
+    window: ?*?*Window,
+    renderer: ?*?*Renderer,
+) c_int;
 
 //--------------------------------------------------------------------------------------------------
 //

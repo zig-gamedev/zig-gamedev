@@ -184,7 +184,7 @@ pub const Window = opaque {
     const pos_undefined_mask: i32 = 0x1fff_0000;
     const pos_centered_mask: i32 = 0x2fff_0000;
 
-    pub fn create(title: [:0]const u8, w: i32, h: i32, flags: Flags) Error!*Window {
+    pub fn create(title: ?[*:0]const u8, w: i32, h: i32, flags: Flags) Error!*Window {
         return SDL_CreateWindow(title, w, h, flags) orelse return makeError();
     }
     extern fn SDL_CreateWindow(title: ?[*:0]const u8, w: i32, h: i32, flags: Flags) ?*Window;
@@ -458,7 +458,7 @@ pub const Renderer = opaque {
         __unused5: u29 = 0,
     };
 
-    pub fn create(window: *Window, name: ?[:0]const u8, flags: Flags) Error!*Renderer {
+    pub fn create(window: *Window, name: ?[*:0]const u8, flags: Flags) Error!*Renderer {
         return SDL_CreateRenderer(window, @ptrCast(name), flags) orelse makeError();
     }
     extern fn SDL_CreateRenderer(window: *Window, name: ?[*:0]const u8, flags: Flags) ?*Renderer;
@@ -718,6 +718,32 @@ pub const Renderer = opaque {
         pitch: c_int,
     ) c_int;
 };
+
+pub fn createWindowAndRenderer(
+    window_title: ?[*:0]const u8,
+    width: u32,
+    height: u32,
+    window_flags: Window.Flags,
+    window: **Window,
+    renderer: **Renderer,
+) Error!void {
+    if (SDL_CreateWindowAndRenderer(
+        window_title,
+        @bitCast(width),
+        @bitCast(height),
+        window_flags,
+        @ptrCast(window),
+        @ptrCast(renderer),
+    ) != 0) return makeError();
+}
+extern fn SDL_CreateWindowAndRenderer(
+    title: ?[*:0]const u8,
+    width: c_int,
+    height: c_int,
+    window_flags: Window.Flags,
+    window: ?*?*Window,
+    renderer: ?*?*Renderer,
+) c_int;
 
 //--------------------------------------------------------------------------------------------------
 //
