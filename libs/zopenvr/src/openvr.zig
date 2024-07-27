@@ -12,19 +12,35 @@ pub fn init(application_type: ApplicationType) common.InitError!Self {
 }
 
 pub const ApplicationType = enum(i32) {
+    ///Some other kind of application that isn't covered by the other entries
     other = 0,
+    ///Application will submit 3D frames
     scene = 1,
+    ///Application only interacts with overlays
     overlay = 2,
+    ///Application should not start SteamVR if it's not already running, and should not
+    ///keep it running if everything else quits.
     background = 3,
+    ///Init should not try to load any drivers. The application needs access to utility
+    ///interfaces (like openvr.Settings and openvr.Applications) but not hardware.
     utility = 4,
+    ///Reserved for vrmonitor
     vr_monitor = 5,
+    ///Reserved for Steam
     steam_watchdog = 6,
+    ///reserved for vrstartup
     bootstrapper = 7,
+    ///reserved for vrwebhelper
     web_helper = 8,
+    ///reserved for openxr (created instance, but not session yet)
     open_xr_instance = 9,
+    ///reserved for openxr (started session)
     open_xr_scene = 10,
+    ///reserved for openxr (started overlay session)
     open_xr_overlay = 11,
+    ///reserved for the vrprismhost process
     prism = 12,
+    ///reserved for the RoomView process
     room_view = 13,
     max = 14,
 };
