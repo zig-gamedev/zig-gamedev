@@ -84,8 +84,6 @@ pub fn main() !void {
     gl.genTextures(1, &overlayTexture);
     gl.bindTexture(gl.TEXTURE_2D, overlayTexture);
 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
@@ -99,10 +97,9 @@ pub fn main() !void {
                 .mouse_move => zgui.io.addMousePositionEvent(width * event.data.mouse.x, height * event.data.mouse.y),
                 .mouse_button_down, .mouse_button_up => {
                     zgui.io.addMousePositionEvent(width * event.data.mouse.x, height * event.data.mouse.y);
-                    // std.log.debug("mouse x {d} y {d}\n", .{ width * event.data.mouse.x, height * event.data.mouse.y });
-                    zgui.io.addMouseButtonEvent(.left, event.data.mouse.button.Left);
-                    zgui.io.addMouseButtonEvent(.right, event.data.mouse.button.Right);
-                    zgui.io.addMouseButtonEvent(.middle, event.data.mouse.button.Middle);
+                    if (event.data.mouse.button.Left) zgui.io.addMouseButtonEvent(.left, event.event_type == .mouse_button_down);
+                    if (event.data.mouse.button.Middle) zgui.io.addMouseButtonEvent(.middle, event.event_type == .mouse_button_down);
+                    if (event.data.mouse.button.Right) zgui.io.addMouseButtonEvent(.right, event.event_type == .mouse_button_down);
                 },
                 .focus_leave => zgui.io.addFocusEvent(false),
                 .focus_enter => zgui.io.addFocusEvent(true),
