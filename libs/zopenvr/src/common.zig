@@ -979,10 +979,15 @@ pub const AppKeys = struct {
     }
 };
 pub const SceneApplicationState = enum(i32) {
+    ///Scene Application is not running
     none = 0,
+    ///Scene Application is starting
     starting = 1,
+    ///Scene Application is quitting
     quitting = 2,
+    ///Scene Application is running, and submitting frames, a custom skybox, or a visible overlay
     running = 3,
+    ///Scene Application is running, but not drawing anything
     waiting = 4,
 };
 
@@ -2510,6 +2515,7 @@ pub const VRState = enum(i32) {
 
 pub const EventType = enum(i32) {
     none = 0,
+
     tracked_device_activated = 100,
     tracked_device_deactivated = 101,
     tracked_device_updated = 102,
@@ -2526,88 +2532,167 @@ pub const EventType = enum(i32) {
     wireless_reconnect = 113,
     reserved_01 = 114,
     reserved_02 = 115,
+
+    ///data is controller
     button_press = 200,
+    ///data is controller
     button_unpress = 201,
+    ///data is controller
     button_touch = 202,
+    ///data is controller
     button_untouch = 203,
+
+    ///Sent to overlays with the (???)
     modal_cancel = 257,
+
+    ///data is mouse
     mouse_move = 300,
+    ///data is mouse
     mouse_button_down = 301,
+    ///data is mouse
     mouse_button_up = 302,
+    ///data is overlay
     focus_enter = 303,
+    ///data is overlay
     focus_leave = 304,
+    ///data is scroll
     scroll_discrete = 305,
+    ///data is mouse
     touch_pad_move = 306,
+    ///data is overlay, global event
     overlay_focus_changed = 307,
     reload_overlays = 308,
+    ///data is scroll
     scroll_smooth = 309,
+    ///data is mouse
     lock_mouse_position = 310,
+    ///data is mouse
     unlock_mouse_position = 311,
+
+    ///data is process DEPRECATED
     input_focus_captured = 400,
+    ///data is process DEPRECATED
     input_focus_released = 401,
+    ///data is process - The App actually drawing the scene changed (usually to or from the compositor)
     scene_application_changed = 404,
+    ///data is process
     input_focus_changed = 406,
+    ///data is process
     scene_application_using_wrong_graphics_adapter = 408,
+    ///data is process - The App that action binds reloaded for
     action_binding_reloaded = 409,
+
+    ///Sent to the scene application to request hiding render models temporarily
     hide_render_models = 410,
+    ///Sent to the scene application to request restoring render model visibility
     show_render_models = 411,
+
+    ///No data; but query openvr.Applications.getSceneApplicationState();
     scene_application_state_changed = 412,
+
+    ///data is process - Called when the scene app's pipe has been closed.
     scene_app_pipe_disconnected = 413,
+
     console_opened = 420,
     console_closed = 421,
+
+    ///Indicates that an overlay is now visible to someone and should be rendering normally. Reflects openvr.Overlay.isOverlayVisible() becoming true.
     overlay_shown = 500,
+    ///Indicates that an overlay is no longer visible to someone and doesn't need to render frames. Reflects openvr.Overlay.isOverlayVisible() becoming false.
     overlay_hidden = 501,
     dashboard_activated = 502,
     dashboard_deactivated = 503,
+    ///Sent to the overlay manager - data is overlay
     dashboard_requested = 505,
+    ///Send to the overlay manager
     reset_dashboard = 506,
+    ///Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
     image_loaded = 508,
+    ///Sent to keyboard renderer in the dashboard to invoke it
     show_keyboard = 509,
+    ///Sent to keyboard renderer in the dashboard to hide it
     hide_keyboard = 510,
+    ///Sent to an overlay when openvr.Overlay.setFocusOverlay is called on it
     overlay_gamepad_focus_gained = 511,
+    ///Send to an overlay when it previously had focus and openvr.Overlay.setFocusOverlay is called on something else
     overlay_gamepad_focus_lost = 512,
     overlay_shared_texture_changed = 513,
+    ///Screenshot button combo was pressed, Dashboard should request a screenshot
     screenshot_triggered = 516,
+    ///Sent to overlays when a openvr.Overlay.setOverlayRaw or openvr.Overlay.setOverlayfromFile fails to load
     image_failed = 517,
     dashboard_overlay_created = 518,
     switch_gamepad_focus = 519,
+
+    //screenshot api
+    ///Sent by vrclient application to compositor to take a screenshot
     request_screenshot = 520,
+    ///Sent by compositor to the application that the screenshot has been taken
     screenshot_taken = 521,
+    ///Sent by compositor to the application that the screenshot failed to be taken
     screenshot_failed = 522,
+    ///Sent by compositor to the dashboard that a completed screenshot was submitted
     submit_screenshot_to_dashboard = 523,
+    ///Sent by compositor to the dashboard that a completed screenshot was submitted
     screenshot_progress_to_dashboard = 524,
+
     primary_dashboard_device_changed = 525,
+    ///Sent by compositor whenever room-view is enabled
     room_view_shown = 526,
+    ///Sent by compositor whenever room-view is disabled
     room_view_hidden = 527,
+    ///data is showUi
     show_ui = 528,
+    ///data is showDevTools
     show_dev_tools = 529,
     desktop_view_updating = 530,
     desktop_view_ready = 531,
+
     start_dashboard = 532,
     elevate_prism = 533,
+
     overlay_closed = 534,
+
+    ///Sent when a dashboard thumbnail image changes
     dashboard_thumb_changed = 535,
+
+    ///Sent when any known desktop related overlay is visible
     desktop_might_be_visible = 536,
+    ///Sent when all known desktop related overlays are hidden
     desktop_might_be_hidden = 537,
+
     notification_shown = 600,
     notification_hidden = 601,
     notification_begin_interaction = 602,
     notification_destroyed = 603,
+
+    ///data is process
     quit = 700,
+    ///data is process
     process_quit = 701,
+    ///data is process
     quit_acknowledged = 703,
+    ///The driver has requested that SteamVR shut down
     driver_requested_quit = 704,
+    ///A driver or other component wants the user to restart SteamVR
     restart_requested = 705,
     invalidate_swap_texture_sets = 706,
+
+    ///this will never happen with the new chaperone system
     chaperone_data_has_changed = 800,
     chaperone_universe_has_changed = 801,
+    ///this will never happen with the new chaperone system
     chaperone_temp_data_has_changed = 802,
     chaperone_settings_have_changed = 803,
     seated_zero_pose_reset = 804,
+    ///Sent when the process needs to reload any cached data it retrieved from openvr.Chaperone
     chaperone_flush_cache = 805,
+    ///Triggered by openvr.ChaperoneSetup.roomSetupStarting
     chaperone_room_setup_starting = 806,
+    ///Triggered by openvr.ChaperoneSetup.commitWorkingCopy
     chaperone_room_setup_finished = 807,
     standing_zero_pose_reset = 808,
+
     audio_settings_have_changed = 820,
     background_setting_has_changed = 850,
     camera_settings_have_changed = 851,
@@ -2632,24 +2717,36 @@ pub const EventType = enum(i32) {
     windows_mr_section_setting_changed = 870,
     other_section_setting_changed = 871,
     any_driver_settings_changed = 872,
+
     status_update = 900,
+
     web_interface_install_driver_completed = 950,
+
     mc_image_updated = 1000,
+
     firmware_update_started = 1100,
     firmware_update_finished = 1101,
+
+    ///DEPRECATED: Sent only to the overlay it closed for, or globally if it was closed for a scene app
     keyboard_closed = 1200,
     keyboard_char_input = 1201,
+    ///Sent when DONE button clicked on keyboard
     keyboard_done = 1202,
+    ///Sent globally when the keyboard is opened. data.keyboard.overlay_handle is who it was opened for (scene app if openvr.overlay_handle_invalid)
     keyboard_opened_global = 1203,
+    ///Sent globally when the keyboard is opened. data.keyboard.overlay_handle is who it was opened for (scene app if openvr.overlay_handle_invalid)
     keyboard_closed_global = 1204,
+
     application_list_updated = 1303,
     application_mime_type_load = 1304,
     process_connected = 1306,
     process_disconnected = 1307,
+
     compositor_chaperone_bounds_shown = 1410,
     compositor_chaperone_bounds_hidden = 1411,
     compositor_display_disconnected = 1412,
     compositor_display_reconnected = 1413,
+    ///data is hdcpError
     compositor_hdcp_error = 1414,
     compositor_application_not_responding = 1415,
     compositor_application_resumed = 1416,
@@ -2657,36 +2754,59 @@ pub const EventType = enum(i32) {
     compositor_display_mode_not_supported = 1418,
     compositor_stage_override_ready = 1419,
     compositor_request_disconnect_reconnect = 1420,
+
     tracked_camera_start_video_stream = 1500,
     tracked_camera_stop_video_stream = 1501,
     tracked_camera_pause_video_stream = 1502,
     tracked_camera_resume_video_stream = 1503,
     tracked_camera_editing_surface = 1550,
+
     performance_test_enable_capture = 1600,
     performance_test_disable_capture = 1601,
     performance_test_fidelity_level = 1602,
+
     message_overlay_closed = 1650,
     message_overlay_close_requested = 1651,
+
+    ///data is hapticVibration
     input_haptic_vibration = 1700,
+    ///data is inputBinding
     input_binding_load_failed = 1701,
+    ///data is inputBinding
     input_binding_load_successful = 1702,
+    ///no data
     input_action_manifest_reloaded = 1703,
+    ///data is actionManifest
     input_action_manifest_load_failed = 1704,
+    ///data is progressUpdate
     input_progress_update = 1705,
     input_tracker_activated = 1706,
     input_bindings_updated = 1707,
     input_binding_subscription_changed = 1708,
+
+    ///data is spatialAnchor. broadcast
     spatial_anchors_pose_updated = 1800,
+    ///data is spatialAnchor. broadcast
     spatial_anchors_descriptor_updated = 1801,
+    ///data is spatialAnchor. sent to specific driver
     spatial_anchors_request_pose_update = 1802,
+    ///data is spatialAnchor. sent to specific driver
     spatial_anchors_request_descriptor_update = 1803,
+
+    ///user or system initiated generation of a system report. broadcast
     system_report_started = 1900,
+
+    ///data is process
     monitor_show_headset_view = 2000,
+    ///data is process
     monitor_hide_headset_view = 2001,
+
     audio_set_speakers_volume = 2100,
     audio_set_speakers_mute = 2101,
     audio_set_microphone_volume = 2102,
     audio_set_microphone_mute = 2103,
+
+    // vendor spesific area
     vendor_specific_reserved_start = 10000,
     vendor_specific_reserved_end = 19999,
 
