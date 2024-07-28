@@ -14,6 +14,13 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    _ = b.addModule("zsdl2_image", .{
+        .root_source_file = b.path("src/sdl2_image.zig"),
+        .imports = &.{
+            .{ .name = "zsdl2", .module = zsdl2_module },
+        },
+    });
+
     _ = b.addModule("zsdl3", .{
         .root_source_file = b.path("src/sdl3.zig"),
     });
@@ -45,6 +52,21 @@ pub fn link_SDL2_ttf(compile_step: *std.Build.Step.Compile) void {
         },
         .macos => {
             compile_step.linkFramework("SDL2_ttf");
+        },
+        else => {},
+    }
+}
+
+pub fn link_SDL2_image(compile_step: *std.Build.Step.Compile) void {
+    switch (compile_step.rootModuleTarget().os.tag) {
+        .windows => {
+            compile_step.linkSystemLibrary("SDL2_image");
+        },
+        .linux => {
+            compile_step.linkSystemLibrary("SDL2_image");
+        },
+        .macos => {
+            compile_step.linkFramework("SDL2_image");
         },
         else => {},
     }
@@ -190,6 +212,43 @@ pub fn install_SDL2_ttf(
                 .source_dir = .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "macos/Frameworks/SDL2_ttf.framework" }) },
                 .install_dir = install_dir,
                 .install_subdir = "SDL2_ttf.framework",
+            }).step;
+        },
+        else => {},
+    }
+    return null;
+}
+
+pub fn install_SDL2_image(
+    b: *std.Build,
+    target: std.Target,
+    libs_source_path: []const u8,
+    install_dir: std.Build.InstallDir,
+) ?*std.Build.Step {
+    switch (target.os.tag) {
+        .windows => {
+            if (target.cpu.arch.isX86()) {
+                return &b.addInstallFileWithDir(
+                    .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-windows-gnu/bin/SDL2_image.dll" }) },
+                    install_dir,
+                    "SDL2_image.dll",
+                ).step;
+            }
+        },
+        .linux => {
+            if (target.cpu.arch.isX86()) {
+                return &b.addInstallFileWithDir(
+                    .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-linux-gnu/lib/libSDL2_image.so" }) },
+                    install_dir,
+                    "libSDL2_image.so",
+                ).step;
+            }
+        },
+        .macos => {
+            return &b.addInstallDirectory(.{
+                .source_dir = .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "macos/Frameworks/SDL2_image.framework" }) },
+                .install_dir = install_dir,
+                .install_subdir = "SDL2_image.framework",
             }).step;
         },
         else => {},
