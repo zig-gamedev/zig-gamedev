@@ -73,7 +73,7 @@ pub fn build(b: *std.Build) void {
     }
 }
 
-fn testSuportedTarget(step: *std.Build.Step, target: std.Target) error{ OutOfMemory, MakeFailed }!void {
+fn testSuportedTarget(step: *std.Build.Step, target: std.Target) error{MakeFailed}!void {
     const supportedArch = switch (target.cpu.arch) {
         .x86, .x86_64 => true,
         else => false,
@@ -84,13 +84,14 @@ fn testSuportedTarget(step: *std.Build.Step, target: std.Target) error{ OutOfMem
     };
     if (supportedOs and supportedArch) return;
 
-    return step.fail("zopenvr does not support building for {s}{s}{s}{s}{s}", .{
+    if (step.fail("zopenvr does not support building for {s}{s}{s}{s}{s}", .{
         if (!supportedArch and supportedOs) "the " else "",
         if (!supportedArch) @tagName(target.cpu.arch) else "",
         if (!supportedArch and supportedOs) " platform" else "",
         if (!supportedArch and !supportedOs) " " else "",
         if (!supportedOs) @tagName(target.os.tag) else "",
-    });
+    }) == error.OutOfMemory) @panic("OOM");
+    return error.MakeFailed;
 }
 
 pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
@@ -108,8 +109,8 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
             else => unreachable,
         },
         .linux => switch (arch) {
-            .x86_64 => "libs/openvr/lib/linux64",
-            .x86 => "libs/openvr/lib/linux32",
+            .x86_64 => "libs/openvr/bin/linux64",
+            .x86 => "libs/openvr/bin/linux32",
             else => unreachable,
         },
         else => unreachable,
