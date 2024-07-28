@@ -127,53 +127,48 @@ const samples_windows_linux = struct {
 };
 
 const samples_cross_platform = struct {
-    pub usingnamespace struct { // OpenGL samples
-        pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
-        pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
-        pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
-    };
-    pub usingnamespace struct { // WebGPU samples
-        pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
-        pub const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
-        pub const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");
-        pub const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
-        pub const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
-        pub const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
-        pub const layers_wgpu = @import("samples/layers_wgpu/build.zig");
-        pub const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
-        pub const monolith = @import("samples/monolith/build.zig");
-        pub const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
-        pub const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
-        pub const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
-        pub const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
-        pub const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
-    };
+    // OpenGL samples
+    pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
+    pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
+    pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
+
+    // WebGPU samples
+    pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
+    pub const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
+    pub const frame_pacing_wgpu = @import("samples/frame_pacing_wgpu/build.zig");
+    pub const gamepad_wgpu = @import("samples/gamepad_wgpu/build.zig");
+    pub const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+    pub const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
+    pub const layers_wgpu = @import("samples/layers_wgpu/build.zig");
+    pub const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
+    pub const monolith = @import("samples/monolith/build.zig");
+    pub const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
+    pub const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+    pub const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
+    pub const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
+    pub const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 };
 
 const samples_web = struct {
-    pub usingnamespace struct { // WebGL samples
-        // TODO
-        // pub const minimal_glfw_gl = samples_cross_platform.minimal_glfw_gl;
-        // pub const minimal_sdl_gl = samples_cross_platform.minimal_sdl_gl;
-        // pub const minimal_zgui_glfw_gl = samples_cross_platform.minimal_zgui_glfw_gl;
-    };
+    // TODO: WebGL samples
+    // pub const minimal_glfw_gl = samples_cross_platform.minimal_glfw_gl;
+    // pub const minimal_sdl_gl = samples_cross_platform.minimal_sdl_gl;
+    // pub const minimal_zgui_glfw_gl = samples_cross_platform.minimal_zgui_glfw_gl;
 
-    pub usingnamespace struct { // WebGPU samples
-        // TODO
-        // pub const audio_experiments_wgpu = samples_cross_platform.audio_experiments_wgpu;
-        // pub const bullet_physics_test_wgpu = samples_cross_platform.bullet_physics_test_wgpu;
-        // pub const gamepad_wgpu = samples_cross_platform.gamepad_wgpu;
-        // pub const gui_test_wgpu = samples_cross_platform.gui_test_wgpu;
-        // pub const instanced_pills_wgpu = samples_cross_platform.instanced_pills_wgpu;
-        // pub const layers_wgpu = samples_cross_platform.layers_wgpu;
-        // pub const minimal_zgpu_zgui = samples_cross_platform.minimal_zgpu_zgui;
-        // pub const monolith = samples_cross_platform.monolith;
-        // pub const physically_based_rendering_wgpu = samples_cross_platform.physically_based_rendering_wgpu;
-        // pub const physics_test_wgpu = samples_cross_platform.physics_test_wgpu;
-        // pub const procedural_mesh_wgpu = samples_cross_platform.procedural_mesh_wgpu;
-        // pub const textured_quad_wgpu = samples_cross_platform.textured_quad_wgpu;
-        // pub const triangle_wgpu = samples_cross_platform.triangle_wgpu;
-    };
+    // TODO: WebGPU samples
+    // pub const audio_experiments_wgpu = samples_cross_platform.audio_experiments_wgpu;
+    // pub const bullet_physics_test_wgpu = samples_cross_platform.bullet_physics_test_wgpu;
+    // pub const gamepad_wgpu = samples_cross_platform.gamepad_wgpu;
+    // pub const gui_test_wgpu = samples_cross_platform.gui_test_wgpu;
+    // pub const instanced_pills_wgpu = samples_cross_platform.instanced_pills_wgpu;
+    // pub const layers_wgpu = samples_cross_platform.layers_wgpu;
+    // pub const minimal_zgpu_zgui = samples_cross_platform.minimal_zgpu_zgui;
+    // pub const monolith = samples_cross_platform.monolith;
+    // pub const physically_based_rendering_wgpu = samples_cross_platform.physically_based_rendering_wgpu;
+    // pub const physics_test_wgpu = samples_cross_platform.physics_test_wgpu;
+    // pub const procedural_mesh_wgpu = samples_cross_platform.procedural_mesh_wgpu;
+    // pub const textured_quad_wgpu = samples_cross_platform.textured_quad_wgpu;
+    // pub const triangle_wgpu = samples_cross_platform.triangle_wgpu;
 };
 
 fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: anytype) void {
