@@ -6,6 +6,8 @@ comptime {
     _ = std.testing.refAllDecls(@This());
 }
 
+const sdl2 = @This();
+
 //--------------------------------------------------------------------------------------------------
 //
 // Initialzation and Shutdown
@@ -47,6 +49,7 @@ pub const InitFlags = packed struct(u32) {
     };
 };
 
+/// Initialize the SDL library.
 pub fn init(flags: InitFlags) Error!void {
     if (SDL_Init(flags) < 0) return makeError();
 }
@@ -63,6 +66,7 @@ extern fn SDL_Quit() void;
 //--------------------------------------------------------------------------------------------------
 pub const hint_windows_dpi_awareness = "SDL_WINDOWS_DPI_AWARENESS";
 
+/// Set a hint with normal priority.
 pub fn setHint(name: [:0]const u8, value: [:0]const u8) bool {
     return SDL_SetHint(name, value) == True;
 }
@@ -73,6 +77,9 @@ extern fn SDL_SetHint(name: [*:0]const u8, value: [*:0]const u8) Bool;
 // Error Handling
 //
 //--------------------------------------------------------------------------------------------------
+pub const Error = error{SdlError};
+
+/// Get SDL error string
 pub fn getError() ?[:0]const u8 {
     if (SDL_GetError()) |ptr| {
         return std.mem.sliceTo(ptr, 0);
@@ -80,8 +87,6 @@ pub fn getError() ?[:0]const u8 {
     return null;
 }
 extern fn SDL_GetError() ?[*:0]const u8;
-
-pub const Error = error{SdlError};
 
 pub fn makeError() error{SdlError} {
     if (getError()) |str| {
@@ -107,6 +112,7 @@ pub fn makeError() error{SdlError} {
 // Querying SDL Version
 //
 //--------------------------------------------------------------------------------------------------
+/// Information about the version of SDL in use.
 pub const Version = extern struct {
     major: u8,
     minor: u8,
@@ -193,29 +199,10 @@ pub const Window = opaque {
 
     pub const create = createWindow;
     pub const destroy = destroyWindow;
-
-    pub fn getDisplayMode(window: *Window) Error!DisplayMode {
-        var mode: DisplayMode = undefined;
-        if (SDL_GetWindowDisplayMode(window, &mode) < 0) return makeError();
-        return mode;
-    }
-    extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) i32;
-
-    pub fn getPosition(window: *Window, w: ?*i32, h: ?*i32) Error!void {
-        if (SDL_GetWindowPosition(window, w, h) < 0) return makeError();
-    }
-    extern fn SDL_GetWindowPosition(window: *Window, x: ?*i32, y: ?*i32) i32;
-
-    pub fn getSize(window: *Window, w: ?*i32, h: ?*i32) Error!void {
-        if (SDL_GetWindowSize(window, w, h) < 0) return makeError();
-    }
-    extern fn SDL_GetWindowSize(window: *Window, w: ?*i32, h: ?*i32) i32;
-
-    pub fn setTitle(window: *Window, title: [:0]const u8) void {
-        SDL_SetWindowTitle(window, title);
-    }
-    extern fn SDL_SetWindowTitle(window: *Window, title: ?[*:0]const u8) void;
-
+    pub const getDisplayMode = windowGetDisplayMode;
+    pub const getPosition = windowGetPosition;
+    pub const getSize = windowGetSize;
+    pub const setTitle = windowSetTitle;
     pub const getSurface = getWindowSurface;
 };
 
@@ -235,6 +222,33 @@ pub fn getWindowSurface(window: *const Window) *Surface {
 }
 extern fn SDL_GetWindowSurface(*const Window) *Surface;
 
+/// Query the display mode to use when a window is visible at fullscreen.
+pub fn windowGetDisplayMode(window: *Window) Error!DisplayMode {
+    var mode: DisplayMode = undefined;
+    if (SDL_GetWindowDisplayMode(window, &mode) < 0) return makeError();
+    return mode;
+}
+extern fn SDL_GetWindowDisplayMode(window: *Window, mode: *DisplayMode) i32;
+
+/// Get the position of a window.
+pub fn windowGetPosition(window: *Window, w: ?*i32, h: ?*i32) Error!void {
+    if (SDL_GetWindowPosition(window, w, h) < 0) return makeError();
+}
+extern fn SDL_GetWindowPosition(window: *Window, x: ?*i32, y: ?*i32) i32;
+
+/// Get the size of a window's client area.
+pub fn windowGetSize(window: *Window, w: ?*i32, h: ?*i32) Error!void {
+    if (SDL_GetWindowSize(window, w, h) < 0) return makeError();
+}
+extern fn SDL_GetWindowSize(window: *Window, w: ?*i32, h: ?*i32) i32;
+
+/// Set the title of a window.
+pub fn windowSetTitle(window: *Window, title: [:0]const u8) void {
+    SDL_SetWindowTitle(window, title);
+}
+extern fn SDL_SetWindowTitle(window: *Window, title: ?[*:0]const u8) void;
+
+/// Get the number of video drivers compiled into SDL.
 pub fn getNumVideoDrivers() Error!u16 {
     const res = SDL_GetNumVideoDrivers();
     if (res < 1) return makeError();
@@ -242,6 +256,7 @@ pub fn getNumVideoDrivers() Error!u16 {
 }
 extern fn SDL_GetNumVideoDrivers() c_int;
 
+/// Get the name of a built in video driver.
 pub fn getVideoDriver(index: u16) ?[:0]const u8 {
     if (SDL_GetVideoDriver(@intCast(index))) |ptr| {
         return std.mem.sliceTo(ptr, 0);
@@ -373,53 +388,59 @@ pub const TextureAccess = enum(c_int) {
 
 /// An efficient driver-specific representation of pixel data
 pub const Texture = opaque {
+    pub const query = queryTexture;
+    pub const lock = lockTexture;
+    pub const unlock = unlockTexture;
     pub const destroy = destroyTexture;
-
-    pub fn query(
-        texture: *Texture,
-        format: ?*PixelFormatEnum,
-        access: ?*TextureAccess,
-        w: ?*i32,
-        h: ?*i32,
-    ) !void {
-        if (SDL_QueryTexture(texture, format, access, w, h) != 0) {
-            return makeError();
-        }
-    }
-    extern fn SDL_QueryTexture(
-        texture: *Texture,
-        format: ?*PixelFormatEnum,
-        access: ?*TextureAccess,
-        w: ?*c_int,
-        h: ?*c_int,
-    ) c_int;
-
-    pub fn lock(texture: *Texture, rect: ?*Rect) !struct {
-        pixels: [*]u8,
-        pitch: i32,
-    } {
-        var pixels: *anyopaque = undefined;
-        var pitch: i32 = undefined;
-        if (SDL_LockTexture(texture, rect, &pixels, &pitch) != 0) {
-            return makeError();
-        }
-        return .{
-            .pixels = @ptrCast(pixels),
-            .pitch = pitch,
-        };
-    }
-    extern fn SDL_LockTexture(
-        texture: *Texture,
-        rect: ?*Rect,
-        pixels: **anyopaque,
-        pitch: *c_int,
-    ) c_int;
-
-    pub fn unlock(texture: *Texture) void {
-        SDL_UnlockTexture(texture);
-    }
-    extern fn SDL_UnlockTexture(texture: *Texture) void;
 };
+
+/// Query the attributes of a texture.
+pub fn queryTexture(
+    texture: *Texture,
+    format: ?*PixelFormatEnum,
+    access: ?*TextureAccess,
+    w: ?*i32,
+    h: ?*i32,
+) !void {
+    if (SDL_QueryTexture(texture, format, access, w, h) != 0) {
+        return makeError();
+    }
+}
+extern fn SDL_QueryTexture(
+    texture: *Texture,
+    format: ?*PixelFormatEnum,
+    access: ?*TextureAccess,
+    w: ?*c_int,
+    h: ?*c_int,
+) c_int;
+
+/// Lock a portion of the texture for write-only pixel access.
+pub fn lockTexture(texture: *Texture, rect: ?*Rect) !struct {
+    pixels: [*]u8,
+    pitch: i32,
+} {
+    var pixels: *anyopaque = undefined;
+    var pitch: i32 = undefined;
+    if (SDL_LockTexture(texture, rect, &pixels, &pitch) != 0) {
+        return makeError();
+    }
+    return .{
+        .pixels = @ptrCast(pixels),
+        .pitch = pitch,
+    };
+}
+extern fn SDL_LockTexture(
+    texture: *Texture,
+    rect: ?*Rect,
+    pixels: **anyopaque,
+    pitch: *c_int,
+) c_int;
+
+/// Unlock a texture, uploading the changes to video memory, if needed.
+pub fn unlockTexture(texture: *Texture) void {
+    SDL_UnlockTexture(texture);
+}
+extern fn SDL_UnlockTexture(texture: *Texture) void;
 
 /// Destroy the specified texture.
 pub fn destroyTexture(tex: *Texture) void {
@@ -472,304 +493,43 @@ pub const Renderer = opaque {
         target_texture: bool = false,
         __unused5: u28 = 0,
     };
-
     pub const create = createRenderer;
     pub const destroy = destroyRenderer;
-
-    pub fn clear(r: *Renderer) !void {
-        if (SDL_RenderClear(r) < 0) return makeError();
-    }
-    extern fn SDL_RenderClear(r: *Renderer) i32;
-
-    pub const present = SDL_RenderPresent;
-    extern fn SDL_RenderPresent(r: *Renderer) void;
-
-    pub fn copy(
-        r: *Renderer,
-        tex: *Texture,
-        src: ?*const Rect,
-        dst: ?*const Rect,
-    ) Error!void {
-        if (SDL_RenderCopy(r, tex, src, dst) < 0) return makeError();
-    }
-    extern fn SDL_RenderCopy(
-        r: *Renderer,
-        t: *Texture,
-        srcrect: ?*const Rect,
-        dstrect: ?*const Rect,
-    ) c_int;
-
-    pub fn copyF(
-        r: *Renderer,
-        tex: *Texture,
-        src: ?*const Rect,
-        dst: ?*const FRect,
-    ) Error!void {
-        if (SDL_RenderCopyF(r, tex, src, dst) < 0) return makeError();
-    }
-    extern fn SDL_RenderCopyF(
-        r: *Renderer,
-        t: *Texture,
-        srcrect: ?*const Rect,
-        dstrect: ?*const FRect,
-    ) c_int;
-
-    pub fn copyEx(
-        r: *Renderer,
-        tex: *Texture,
-        src: ?*const Rect,
-        dst: ?*const Rect,
-        angle: f64,
-        center: ?*const Point,
-        flip: RendererFlip,
-    ) Error!void {
-        if (SDL_RenderCopyEx(r, tex, src, dst, angle, center, flip) < 0) return makeError();
-    }
-    extern fn SDL_RenderCopyEx(
-        r: *Renderer,
-        t: *Texture,
-        srcrect: ?*const Rect,
-        dstrect: ?*const Rect,
-        angle: f64,
-        center: ?*const Point,
-        flip: RendererFlip,
-    ) c_int;
-
-    pub fn copyExF(
-        r: *Renderer,
-        tex: *Texture,
-        src: ?*const Rect,
-        dst: ?*const FRect,
-        angle: f64,
-        center: ?*const FPoint,
-        flip: RendererFlip,
-    ) Error!void {
-        if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, flip) < 0) {
-            return makeError();
-        }
-    }
-    extern fn SDL_RenderCopyExF(
-        r: *Renderer,
-        t: *Texture,
-        srcrect: ?*const Rect,
-        dstrect: ?*const FRect,
-        angle: f64,
-        center: ?*const FPoint,
-        flip: RendererFlip,
-    ) c_int;
-
-    pub fn setScale(r: *Renderer, x: f32, y: f32) Error!void {
-        if (SDL_RenderSetScale(r, x, y) > 0) return makeError();
-    }
-    extern fn SDL_RenderSetScale(renderer: *Renderer, scaleX: f32, scaleY: f32) c_int;
-
-    pub fn drawLine(r: *Renderer, x0: i32, y0: i32, x1: i32, y1: i32) Error!void {
-        if (SDL_RenderDrawLine(r, x0, y0, x1, y1) < 0) return makeError();
-    }
-    extern fn SDL_RenderDrawLine(renderer: *Renderer, x1: i32, y1: i32, x2: i32, y2: i32) c_int;
-
-    pub fn drawLineF(r: *Renderer, x0: f32, y0: f32, x1: f32, y1: f32) Error!void {
-        if (SDL_RenderDrawLineF(r, x0, y0, x1, y1) < 0) return makeError();
-    }
-    extern fn SDL_RenderDrawLineF(renderer: *Renderer, x1: f32, y1: f32, x2: f32, y2: f32) c_int;
-
-    pub fn drawPoint(r: *Renderer, x: i32, y: i32) Error!void {
-        if (SDL_RenderDrawPoint(r, x, y) < 0) return makeError();
-    }
-    extern fn SDL_RenderDrawPoint(renderer: *Renderer, x: c_int, y: c_int) c_int;
-
-    pub fn drawPointF(r: *Renderer, x: f32, y: f32) Error!void {
-        if (SDL_RenderDrawPointF(r, x, y) < 0) return makeError();
-    }
-    extern fn SDL_RenderDrawPointF(renderer: *Renderer, x: f32, y: f32) c_int;
-
-    pub fn fillRect(r: *Renderer, rect: Rect) Error!void {
-        if (SDL_RenderFillRect(r, &rect) < 0) return makeError();
-    }
-    extern fn SDL_RenderFillRect(renderer: ?*Renderer, rect: *const Rect) c_int;
-
-    pub fn fillFRect(r: *Renderer, rect: FRect) Error!void {
-        if (SDL_RenderFillRectF(r, &rect) < 0) return makeError();
-    }
-    extern fn SDL_RenderFillRectF(renderer: *Renderer, rect: *const FRect) c_int;
-
-    pub fn drawRect(r: *Renderer, rect: Rect) Error!void {
-        if (SDL_RenderDrawRect(r, &rect) < 0) return makeError();
-    }
-    extern fn SDL_RenderDrawRect(renderer: *Renderer, rect: *const Rect) c_int;
-
-    pub fn drawFRect(r: *Renderer, rect: FRect) Error!void {
-        if (SDL_RenderDrawRectF(r, &rect) < 0) return makeError();
-    }
-    extern fn SDL_RenderDrawRectF(renderer: *Renderer, rect: *const FRect) c_int;
-
-    pub fn drawGeometry(
-        r: *Renderer,
-        tex: ?*const Texture,
-        vertices: []const Vertex,
-        indices: ?[]const u32,
-    ) Error!void {
-        if (SDL_RenderGeometry(
-            r,
-            tex,
-            vertices.ptr,
-            @as(i32, @intCast(vertices.len)),
-            if (indices) |idx| @as([*]const i32, @ptrCast(idx.ptr)) else null,
-            if (indices) |idx| @as(i32, @intCast(idx.len)) else 0,
-        ) < 0)
-            return makeError();
-    }
-    extern fn SDL_RenderGeometry(
-        renderer: *Renderer,
-        texture: ?*const Texture,
-        vertices: [*c]const Vertex,
-        num_vertices: i32,
-        indices: [*c]const i32,
-        num_indices: i32,
-    ) c_int;
-
-    pub fn setDrawColor(renderer: *Renderer, color: Color) Error!void {
-        if (SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a) < 0) {
-            return makeError();
-        }
-    }
-    pub fn setDrawColorRGB(renderer: *Renderer, r: u8, g: u8, b: u8) Error!void {
-        if (SDL_SetRenderDrawColor(renderer, r, g, b, 255) < 0) return makeError();
-    }
-    pub fn setDrawColorRGBA(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) Error!void {
-        if (SDL_SetRenderDrawColor(renderer, r, g, b, a) < 0) return makeError();
-    }
-    extern fn SDL_SetRenderDrawColor(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) c_int;
-
-    pub fn getDrawColor(renderer: *const Renderer) Error!Color {
-        var color: Color = undefined;
-        if (SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a) < 0) {
-            return makeError();
-        }
-        return color;
-    }
-    extern fn SDL_GetRenderDrawColor(renderer: *const Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
-
-    pub fn getDrawBlendMode(r: *const Renderer) Error!BlendMode {
-        var blend_mode: BlendMode = undefined;
-        if (SDL_GetRenderDrawBlendMode(r, &blend_mode) < 0) return makeError();
-        return blend_mode;
-    }
-    extern fn SDL_GetRenderDrawBlendMode(renderer: *const Renderer, blendMode: *BlendMode) c_int;
-
-    pub fn setDrawBlendMode(r: *Renderer, blend_mode: BlendMode) Error!void {
-        if (SDL_SetRenderDrawBlendMode(r, blend_mode) < 0) return makeError();
-    }
-    extern fn SDL_SetRenderDrawBlendMode(renderer: *Renderer, blendMode: BlendMode) c_int;
-
-    pub fn getOutputSize(renderer: *const Renderer) Error!struct { w: i32, h: i32 } {
-        var w: i32 = undefined;
-        var h: i32 = undefined;
-        if (SDL_GetRendererOutputSize(renderer, &w, &h) < 0) return makeError();
-        return .{ .w = w, .h = h };
-    }
-    extern fn SDL_GetRendererOutputSize(renderer: *const Renderer, w: *i32, h: *i32) c_int;
-
-    pub fn createTexture(
-        renderer: *Renderer,
-        format: PixelFormatEnum,
-        access: TextureAccess,
-        width: i32,
-        height: i32,
-    ) Error!*Texture {
-        return SDL_CreateTexture(renderer, format, access, width, height) orelse makeError();
-    }
-    extern fn SDL_CreateTexture(
-        renderer: *Renderer,
-        format: PixelFormatEnum,
-        access: TextureAccess,
-        w: c_int,
-        h: c_int,
-    ) ?*Texture;
-
-    /// Create a texture from an existing surface.
-    pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*Texture {
-        return SDL_CreateTextureFromSurface(renderer, surface) orelse makeError();
-    }
-    extern fn SDL_CreateTextureFromSurface(renderer: *Renderer, surface: *Surface) ?*Texture;
-
-    pub fn getInfo(r: *const Renderer) Error!RendererInfo {
-        var result: RendererInfo = undefined;
-        if (SDL_GetRendererInfo(r, &result) < 0) return makeError();
-        return result;
-    }
-    extern fn SDL_GetRendererInfo(renderer: *const Renderer, info: *RendererInfo) c_int;
-
-    pub fn isClipEnabled(renderer: *const Renderer) bool {
-        return SDL_RenderIsClipEnabled(renderer) == True;
-    }
-    pub extern fn SDL_RenderIsClipEnabled(renderer: *const Renderer) Bool;
-
-    pub fn setClipRect(r: *Renderer, clip_rect: ?*const Rect) Error!void {
-        if (SDL_RenderSetClipRect(r, clip_rect) < 0) return makeError();
-    }
-    extern fn SDL_RenderSetClipRect(renderer: *Renderer, rect: ?*const Rect) c_int;
-
-    pub fn getClipRect(r: *const Renderer) Rect {
-        var clip_rect: Rect = undefined;
-        SDL_RenderGetClipRect(r, &clip_rect);
-        return clip_rect;
-    }
-    extern fn SDL_RenderGetClipRect(renderer: *const Renderer, rect: ?*Rect) void;
-
-    pub fn getLogicalSize(r: *const Renderer) struct { width: i32, height: i32 } {
-        var width: i32 = undefined;
-        var height: i32 = undefined;
-        SDL_RenderGetLogicalSize(r, &width, &height);
-        return .{
-            .width = width,
-            .height = height,
-        };
-    }
-    extern fn SDL_RenderGetLogicalSize(renderer: *const Renderer, w: *i32, h: *i32) void;
-
-    pub fn setLogicalSize(r: *Renderer, width: i32, height: i32) Error!void {
-        if (SDL_RenderSetLogicalSize(r, width, height) < 0) return makeError();
-    }
-    extern fn SDL_RenderSetLogicalSize(renderer: *Renderer, w: i32, h: i32) c_int;
-
-    pub fn getViewport(r: *const Renderer) Rect {
-        var result: Rect = undefined;
-        SDL_RenderGetViewport(r, &result);
-        return result;
-    }
-    extern fn SDL_RenderGetViewport(renderer: *const Renderer, rect: *Rect) void;
-
-    pub fn setViewport(renderer: *Renderer, maybe_rect: ?*const Rect) Error!void {
-        if (SDL_RenderSetViewport(renderer, maybe_rect) != 0) {
-            return makeError();
-        }
-    }
-    extern fn SDL_RenderSetViewport(renderer: *Renderer, rect: ?*const Rect) c_int;
-
-    pub fn setTarget(r: *Renderer, tex: ?*const Texture) Error!void {
-        if (SDL_SetRenderTarget(r, tex) < 0) return makeError();
-    }
-    extern fn SDL_SetRenderTarget(renderer: *Renderer, texture: ?*const Texture) c_int;
-
-    pub fn readPixels(
-        renderer: *const Renderer,
-        rect: ?*const Rect,
-        format: PixelFormatEnum,
-        pixels: [*]u8,
-        pitch: i32,
-    ) Error!void {
-        if (SDL_RenderReadPixels(renderer, rect, format, pixels, pitch) < 0) {
-            return makeError();
-        }
-    }
-    extern fn SDL_RenderReadPixels(
-        renderer: *const Renderer,
-        rect: ?*const Rect,
-        format: PixelFormatEnum,
-        pixels: ?*anyopaque,
-        pitch: c_int,
-    ) c_int;
+    pub const clear = renderClear;
+    pub const present = renderPresent;
+    pub const copy = renderCopy;
+    pub const copyF = renderCopyF;
+    pub const copyEx = renderCopyEx;
+    pub const copyExF = renderCopyExF;
+    pub const setScale = renderSetScale;
+    pub const drawLine = renderDrawLine;
+    pub const drawLineF = renderDrawLineF;
+    pub const drawPoint = renderDrawPoint;
+    pub const drawPointF = renderDrawPointF;
+    pub const fillRect = renderFillRect;
+    pub const fillRectF = renderFillRectF;
+    pub const drawRect = renderDrawRect;
+    pub const drawRectF = renderDrawRectF;
+    pub const renderGeometry = sdl2.renderGeometry;
+    pub const getDrawColor = getRenderDrawColor;
+    pub const setDrawColor = setRenderDrawColor;
+    pub const setDrawColorRGB = setRenderDrawColorRGB;
+    pub const setDrawColorRGBA = setRenderDrawColorRGBA;
+    pub const getDrawBlendMode = getRenderDrawBlendMode;
+    pub const setDrawBlendMode = setRenderDrawBlendMode;
+    pub const getOutputSize = getRendererOutputSize;
+    pub const createTexture = sdl2.createTexture;
+    pub const createTextureFromSurface = sdl2.createTextureFromSurface;
+    pub const getInfo = getRendererInfo;
+    pub const isClipEnabled = renderIsClipEnabled;
+    pub const getClipRect = renderGetClipRect;
+    pub const setClipRect = renderSetClipRect;
+    pub const getLogicalSize = renderGetLogicalSize;
+    pub const setLogicalSize = renderSetLogicalSize;
+    pub const getViewport = renderGetViewport;
+    pub const setViewport = renderSetViewport;
+    pub const setTarget = setRenderTarget;
+    pub const readPixels = renderReadPixels;
 };
 
 /// Create a 2D rendering context for a window.
@@ -781,6 +541,337 @@ extern fn SDL_CreateRenderer(window: *Window, index: i32, flags: Renderer.Flags)
 /// Destroy the rendering context for a window and free associated textures.
 pub const destroyRenderer = SDL_DestroyRenderer;
 extern fn SDL_DestroyRenderer(r: *Renderer) void;
+
+/// Clear the current rendering target with the drawing color.
+pub fn renderClear(r: *Renderer) !void {
+    if (SDL_RenderClear(r) < 0) return makeError();
+}
+extern fn SDL_RenderClear(r: *Renderer) i32;
+
+/// Update the screen with any rendering performed since the previous call.
+pub const renderPresent = SDL_RenderPresent;
+extern fn SDL_RenderPresent(r: *Renderer) void;
+
+/// Copy a portion of the texture to the current rendering target.
+pub fn renderCopy(
+    r: *Renderer,
+    tex: *Texture,
+    src: ?*const Rect,
+    dst: ?*const Rect,
+) Error!void {
+    if (SDL_RenderCopy(r, tex, src, dst) < 0) return makeError();
+}
+extern fn SDL_RenderCopy(
+    r: *Renderer,
+    t: *Texture,
+    srcrect: ?*const Rect,
+    dstrect: ?*const Rect,
+) c_int;
+
+/// Copy a portion of the texture to the current rendering target at subpixel precision.
+pub fn renderCopyF(
+    r: *Renderer,
+    tex: *Texture,
+    src: ?*const Rect,
+    dst: ?*const FRect,
+) Error!void {
+    if (SDL_RenderCopyF(r, tex, src, dst) < 0) return makeError();
+}
+extern fn SDL_RenderCopyF(
+    r: *Renderer,
+    t: *Texture,
+    srcrect: ?*const Rect,
+    dstrect: ?*const FRect,
+) c_int;
+
+/// Copy a portion of the texture to the current rendering, with optional rotation and flipping.
+pub fn renderCopyEx(
+    r: *Renderer,
+    tex: *Texture,
+    src: ?*const Rect,
+    dst: ?*const Rect,
+    angle: f64,
+    center: ?*const Point,
+    flip: RendererFlip,
+) Error!void {
+    if (SDL_RenderCopyEx(r, tex, src, dst, angle, center, flip) < 0) return makeError();
+}
+extern fn SDL_RenderCopyEx(
+    r: *Renderer,
+    t: *Texture,
+    srcrect: ?*const Rect,
+    dstrect: ?*const Rect,
+    angle: f64,
+    center: ?*const Point,
+    flip: RendererFlip,
+) c_int;
+
+/// Copy a portion of the source texture to the current rendering target, with rotation and flipping, at subpixel precision.
+pub fn renderCopyExF(
+    r: *Renderer,
+    tex: *Texture,
+    src: ?*const Rect,
+    dst: ?*const FRect,
+    angle: f64,
+    center: ?*const FPoint,
+    flip: RendererFlip,
+) Error!void {
+    if (SDL_RenderCopyExF(r, tex, src, dst, angle, center, flip) < 0) {
+        return makeError();
+    }
+}
+extern fn SDL_RenderCopyExF(
+    r: *Renderer,
+    t: *Texture,
+    srcrect: ?*const Rect,
+    dstrect: ?*const FRect,
+    angle: f64,
+    center: ?*const FPoint,
+    flip: RendererFlip,
+) c_int;
+
+/// Set the drawing scale for rendering on the current target.
+pub fn renderSetScale(r: *Renderer, x: f32, y: f32) Error!void {
+    if (SDL_RenderSetScale(r, x, y) > 0) return makeError();
+}
+extern fn SDL_RenderSetScale(renderer: *Renderer, scaleX: f32, scaleY: f32) c_int;
+
+/// Draw a line on the current rendering target.
+pub fn renderDrawLine(r: *Renderer, x0: i32, y0: i32, x1: i32, y1: i32) Error!void {
+    if (SDL_RenderDrawLine(r, x0, y0, x1, y1) < 0) return makeError();
+}
+extern fn SDL_RenderDrawLine(renderer: *Renderer, x1: i32, y1: i32, x2: i32, y2: i32) c_int;
+
+/// Draw a line on the current rendering target.
+pub fn renderDrawLineF(r: *Renderer, x0: f32, y0: f32, x1: f32, y1: f32) Error!void {
+    if (SDL_RenderDrawLineF(r, x0, y0, x1, y1) < 0) return makeError();
+}
+extern fn SDL_RenderDrawLineF(renderer: *Renderer, x1: f32, y1: f32, x2: f32, y2: f32) c_int;
+
+/// Draw a point on the current rendering target.
+pub fn renderDrawPoint(r: *Renderer, x: i32, y: i32) Error!void {
+    if (SDL_RenderDrawPoint(r, x, y) < 0) return makeError();
+}
+extern fn SDL_RenderDrawPoint(renderer: *Renderer, x: c_int, y: c_int) c_int;
+
+/// Draw a point on the current rendering target at subpixel precision.
+pub fn renderDrawPointF(r: *Renderer, x: f32, y: f32) Error!void {
+    if (SDL_RenderDrawPointF(r, x, y) < 0) return makeError();
+}
+extern fn SDL_RenderDrawPointF(renderer: *Renderer, x: f32, y: f32) c_int;
+
+/// Fill a rectangle on the current rendering target with the drawing color.
+pub fn renderFillRect(r: *Renderer, rect: Rect) Error!void {
+    if (SDL_RenderFillRect(r, &rect) < 0) return makeError();
+}
+extern fn SDL_RenderFillRect(renderer: ?*Renderer, rect: *const Rect) c_int;
+
+/// Fill a rectangle on the current rendering target with the drawing color at subpixel precision.
+pub fn renderFillRectF(r: *Renderer, rect: FRect) Error!void {
+    if (SDL_RenderFillRectF(r, &rect) < 0) return makeError();
+}
+extern fn SDL_RenderFillRectF(renderer: *Renderer, rect: *const FRect) c_int;
+
+/// Draw a rectangle on the current rendering target.
+pub fn renderDrawRect(r: *Renderer, rect: Rect) Error!void {
+    if (SDL_RenderDrawRect(r, &rect) < 0) return makeError();
+}
+extern fn SDL_RenderDrawRect(renderer: *Renderer, rect: *const Rect) c_int;
+
+/// Draw a rectangle on the current rendering target at subpixel precision.
+pub fn renderDrawRectF(r: *Renderer, rect: FRect) Error!void {
+    if (SDL_RenderDrawRectF(r, &rect) < 0) return makeError();
+}
+extern fn SDL_RenderDrawRectF(renderer: *Renderer, rect: *const FRect) c_int;
+
+/// Render a list of triangles, optionally using a texture and indices into the vertex array Color and alpha modulation is done per vertex (SDL_SetTextureColorMod and SDL_SetTextureAlphaMod are ignored).
+pub fn renderGeometry(
+    r: *Renderer,
+    tex: ?*const Texture,
+    vertices: []const Vertex,
+    indices: ?[]const u32,
+) Error!void {
+    if (SDL_RenderGeometry(
+        r,
+        tex,
+        vertices.ptr,
+        @as(i32, @intCast(vertices.len)),
+        if (indices) |idx| @as([*]const i32, @ptrCast(idx.ptr)) else null,
+        if (indices) |idx| @as(i32, @intCast(idx.len)) else 0,
+    ) < 0)
+        return makeError();
+}
+extern fn SDL_RenderGeometry(
+    renderer: *Renderer,
+    texture: ?*const Texture,
+    vertices: [*c]const Vertex,
+    num_vertices: i32,
+    indices: [*c]const i32,
+    num_indices: i32,
+) c_int;
+
+/// Get the color used for drawing operations (Rect, Line and Clear).
+pub fn getRenderDrawColor(renderer: *const Renderer) Error!Color {
+    var color: Color = undefined;
+    if (SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a) < 0) {
+        return makeError();
+    }
+    return color;
+}
+extern fn SDL_GetRenderDrawColor(renderer: *const Renderer, r: *u8, g: *u8, b: *u8, a: *u8) c_int;
+
+/// Set the color used for drawing operations (Rect, Line and Clear).
+pub fn setRenderDrawColor(renderer: *Renderer, color: Color) Error!void {
+    if (SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a) < 0) {
+        return makeError();
+    }
+}
+
+/// Set the color used for drawing operations (Rect, Line and Clear).
+pub fn setRenderDrawColorRGB(renderer: *Renderer, r: u8, g: u8, b: u8) Error!void {
+    if (SDL_SetRenderDrawColor(renderer, r, g, b, 255) < 0) return makeError();
+}
+
+/// Set the color used for drawing operations (Rect, Line and Clear).
+pub fn setRenderDrawColorRGBA(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) Error!void {
+    if (SDL_SetRenderDrawColor(renderer, r, g, b, a) < 0) return makeError();
+}
+extern fn SDL_SetRenderDrawColor(renderer: *Renderer, r: u8, g: u8, b: u8, a: u8) c_int;
+
+/// Get the blend mode used for drawing operations.
+pub fn getRenderDrawBlendMode(r: *const Renderer) Error!BlendMode {
+    var blend_mode: BlendMode = undefined;
+    if (SDL_GetRenderDrawBlendMode(r, &blend_mode) < 0) return makeError();
+    return blend_mode;
+}
+extern fn SDL_GetRenderDrawBlendMode(renderer: *const Renderer, blendMode: *BlendMode) c_int;
+
+/// Set the blend mode used for drawing operations (Fill and Line).
+pub fn setRenderDrawBlendMode(r: *Renderer, blend_mode: BlendMode) Error!void {
+    if (SDL_SetRenderDrawBlendMode(r, blend_mode) < 0) return makeError();
+}
+extern fn SDL_SetRenderDrawBlendMode(renderer: *Renderer, blendMode: BlendMode) c_int;
+
+/// Get the output size in pixels of a rendering context.
+pub fn getRendererOutputSize(renderer: *const Renderer) Error!struct { w: i32, h: i32 } {
+    var w: i32 = undefined;
+    var h: i32 = undefined;
+    if (SDL_GetRendererOutputSize(renderer, &w, &h) < 0) return makeError();
+    return .{ .w = w, .h = h };
+}
+extern fn SDL_GetRendererOutputSize(renderer: *const Renderer, w: *i32, h: *i32) c_int;
+
+/// Create a texture for a rendering context.
+pub fn createTexture(
+    renderer: *Renderer,
+    format: PixelFormatEnum,
+    access: TextureAccess,
+    width: i32,
+    height: i32,
+) Error!*Texture {
+    return SDL_CreateTexture(renderer, format, access, width, height) orelse makeError();
+}
+extern fn SDL_CreateTexture(
+    renderer: *Renderer,
+    format: PixelFormatEnum,
+    access: TextureAccess,
+    w: c_int,
+    h: c_int,
+) ?*Texture;
+
+/// Create a texture from an existing surface.
+pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*Texture {
+    return SDL_CreateTextureFromSurface(renderer, surface) orelse makeError();
+}
+extern fn SDL_CreateTextureFromSurface(renderer: *Renderer, surface: *Surface) ?*Texture;
+
+/// Get information about a rendering context.
+pub fn getRendererInfo(r: *const Renderer) Error!RendererInfo {
+    var result: RendererInfo = undefined;
+    if (SDL_GetRendererInfo(r, &result) < 0) return makeError();
+    return result;
+}
+extern fn SDL_GetRendererInfo(renderer: *const Renderer, info: *RendererInfo) c_int;
+
+/// Get whether clipping is enabled on the given renderer.
+pub fn renderIsClipEnabled(renderer: *const Renderer) bool {
+    return SDL_RenderIsClipEnabled(renderer) == True;
+}
+pub extern fn SDL_RenderIsClipEnabled(renderer: *const Renderer) Bool;
+
+/// Get the clip rectangle for the current target.
+pub fn renderGetClipRect(r: *const Renderer) Rect {
+    var clip_rect: Rect = undefined;
+    SDL_RenderGetClipRect(r, &clip_rect);
+    return clip_rect;
+}
+extern fn SDL_RenderGetClipRect(renderer: *const Renderer, rect: ?*Rect) void;
+
+/// Set the clip rectangle for rendering on the specified target.
+pub fn renderSetClipRect(r: *Renderer, clip_rect: ?*const Rect) Error!void {
+    if (SDL_RenderSetClipRect(r, clip_rect) < 0) return makeError();
+}
+extern fn SDL_RenderSetClipRect(renderer: *Renderer, rect: ?*const Rect) c_int;
+
+/// Set a device independent resolution for rendering.
+pub fn renderGetLogicalSize(r: *const Renderer) struct { width: i32, height: i32 } {
+    var width: i32 = undefined;
+    var height: i32 = undefined;
+    SDL_RenderGetLogicalSize(r, &width, &height);
+    return .{
+        .width = width,
+        .height = height,
+    };
+}
+extern fn SDL_RenderGetLogicalSize(renderer: *const Renderer, w: *i32, h: *i32) void;
+
+/// Set a device independent resolution for rendering.
+pub fn renderSetLogicalSize(r: *Renderer, width: i32, height: i32) Error!void {
+    if (SDL_RenderSetLogicalSize(r, width, height) < 0) return makeError();
+}
+extern fn SDL_RenderSetLogicalSize(renderer: *Renderer, w: i32, h: i32) c_int;
+
+/// Get the drawing area for the current target.
+pub fn renderGetViewport(r: *const Renderer) Rect {
+    var result: Rect = undefined;
+    SDL_RenderGetViewport(r, &result);
+    return result;
+}
+extern fn SDL_RenderGetViewport(renderer: *const Renderer, rect: *Rect) void;
+
+/// Set the drawing area for rendering on the current target.
+pub fn renderSetViewport(renderer: *Renderer, maybe_rect: ?*const Rect) Error!void {
+    if (SDL_RenderSetViewport(renderer, maybe_rect) != 0) {
+        return makeError();
+    }
+}
+extern fn SDL_RenderSetViewport(renderer: *Renderer, rect: ?*const Rect) c_int;
+
+/// Set a texture as the current rendering target.
+pub fn setRenderTarget(r: *Renderer, tex: ?*const Texture) Error!void {
+    if (SDL_SetRenderTarget(r, tex) < 0) return makeError();
+}
+extern fn SDL_SetRenderTarget(renderer: *Renderer, texture: ?*const Texture) c_int;
+
+/// Read pixels from the current rendering target to an array of pixels.
+pub fn renderReadPixels(
+    renderer: *const Renderer,
+    rect: ?*const Rect,
+    format: PixelFormatEnum,
+    pixels: [*]u8,
+    pitch: i32,
+) Error!void {
+    if (SDL_RenderReadPixels(renderer, rect, format, pixels, pitch) < 0) {
+        return makeError();
+    }
+}
+extern fn SDL_RenderReadPixels(
+    renderer: *const Renderer,
+    rect: ?*const Rect,
+    format: PixelFormatEnum,
+    pixels: ?*anyopaque,
+    pitch: c_int,
+) c_int;
 
 /// Create a window and default renderer.
 pub fn createWindowAndRenderer(
@@ -934,44 +1025,56 @@ pub const Rect = extern struct {
     y: i32,
     w: i32,
     h: i32,
-
-    pub fn hasIntersection(a: *const Rect, b: *const Rect) bool {
-        return SDL_HasIntersection(a, b) == True;
-    }
-    extern fn SDL_HasIntersection(a: *const Rect, b: *const Rect) Bool;
-
-    pub fn intersectRect(a: *const Rect, b: *const Rect, result: *Rect) bool {
-        return SDL_IntersectRect(a, b, result) == True;
-    }
-    extern fn SDL_IntersectRect(a: *const Rect, b: *const Rect, result: *Rect) Bool;
-
-    pub fn intersectRectAndLine(rect: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) bool {
-        return SDL_IntersectRectAndLine(rect, x1, y1, x2, y2) == True;
-    }
-    extern fn SDL_IntersectRectAndLine(r: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) Bool;
+    pub const hasIntersection = sdl2.hasIntersection;
+    pub const intersectRect = sdl2.intersectRect;
+    pub const intersectRectAndLine = sdl2.intersectRectAndLine;
 };
+
+/// Determine whether two rectangles intersect.
+pub fn hasIntersection(a: *const Rect, b: *const Rect) bool {
+    return SDL_HasIntersection(a, b) == True;
+}
+extern fn SDL_HasIntersection(a: *const Rect, b: *const Rect) Bool;
+
+/// Calculate the intersection of a rectangle and line segment.
+pub fn intersectRect(a: *const Rect, b: *const Rect, result: *Rect) bool {
+    return SDL_IntersectRect(a, b, result) == True;
+}
+extern fn SDL_IntersectRect(a: *const Rect, b: *const Rect, result: *Rect) Bool;
+
+/// Calculate the intersection of a rectangle and line segment.
+pub fn intersectRectAndLine(rect: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) bool {
+    return SDL_IntersectRectAndLine(rect, x1, y1, x2, y2) == True;
+}
+extern fn SDL_IntersectRectAndLine(r: *const Rect, x1: *i32, y1: *i32, x2: *i32, y2: *i32) Bool;
 
 pub const FRect = extern struct {
     x: f32,
     y: f32,
     w: f32,
     h: f32,
-
-    pub fn hasIntersection(a: *const FRect, b: *const FRect) bool {
-        return SDL_HasIntersectionF(a, b) == True;
-    }
-    extern fn SDL_HasIntersectionF(a: *const FRect, b: *const FRect) Bool;
-
-    pub fn intersectRect(a: *const FRect, b: *const FRect, result: *FRect) bool {
-        return SDL_IntersectFRect(a, b, result) == True;
-    }
-    extern fn SDL_IntersectFRect(a: *const FRect, b: *const FRect, result: *FRect) Bool;
-
-    pub fn intersectLine(rect: *const FRect, x1: *f32, y1: *f32, x2: *f32, y2: *f32) bool {
-        return SDL_IntersectFRectAndLine(rect, x1, y1, x2, y2) == True;
-    }
-    extern fn SDL_IntersectFRectAndLine(r: *const FRect, x1: *f32, y1: *f32, x2: *f32, y2: *f32) Bool;
+    pub const hasIntersection = hasIntersectionF;
+    pub const intersectRect = intersectFRect;
+    pub const intersectRectAndLine = intersectFRectAndLine;
 };
+
+/// Determine whether two rectangles intersect with float precision.
+pub fn hasIntersectionF(a: *const FRect, b: *const FRect) bool {
+    return SDL_HasIntersectionF(a, b) == True;
+}
+extern fn SDL_HasIntersectionF(a: *const FRect, b: *const FRect) Bool;
+
+/// Calculate the intersection of two rectangles.
+pub fn intersectFRect(a: *const FRect, b: *const FRect, result: *FRect) bool {
+    return SDL_IntersectFRect(a, b, result) == True;
+}
+extern fn SDL_IntersectFRect(a: *const FRect, b: *const FRect, result: *FRect) Bool;
+
+/// Calculate the intersection of a rectangle and line segment with float precision.
+pub fn intersectFRectAndLine(rect: *const FRect, x1: *f32, y1: *f32, x2: *f32, y2: *f32) bool {
+    return SDL_IntersectFRectAndLine(rect, x1, y1, x2, y2) == True;
+}
+extern fn SDL_IntersectFRectAndLine(r: *const FRect, x1: *f32, y1: *f32, x2: *f32, y2: *f32) Bool;
 
 pub const Point = extern struct {
     x: i32,
@@ -1509,27 +1612,35 @@ pub const GameController = opaque {
         paddle4,
         touchpad,
     };
-
-    pub fn open(joystick_index: i32) ?*GameController {
-        return SDL_GameControllerOpen(joystick_index);
-    }
-    extern fn SDL_GameControllerOpen(joystick_index: i32) ?*GameController;
-
-    pub fn close(controller: *GameController) void {
-        SDL_GameControllerClose(controller);
-    }
-    extern fn SDL_GameControllerClose(joystick: *GameController) void;
-
-    pub fn getAxis(controller: *GameController, axis: Axis) i16 {
-        return SDL_GameControllerGetAxis(controller, @intFromEnum(axis));
-    }
-    extern fn SDL_GameControllerGetAxis(*GameController, axis: c_int) i16;
-
-    pub fn getButton(controller: *GameController, button: Button) bool {
-        return (SDL_GameControllerGetButton(controller, @intFromEnum(button)) != 0);
-    }
-    extern fn SDL_GameControllerGetButton(controller: *GameController, button: c_int) u8;
+    pub const open = gameControllerOpen;
+    pub const close = gameControllerClose;
+    pub const getAxis = gameControllerGetAxis;
+    pub const getButton = gameControllerGetButton;
 };
+
+/// Open a game controller for use.
+pub fn gameControllerOpen(joystick_index: i32) ?*GameController {
+    return SDL_GameControllerOpen(joystick_index);
+}
+extern fn SDL_GameControllerOpen(joystick_index: i32) ?*GameController;
+
+/// Close a game controller previously opened with SDL_GameControllerOpen().
+pub fn gameControllerClose(controller: *GameController) void {
+    SDL_GameControllerClose(controller);
+}
+extern fn SDL_GameControllerClose(joystick: *GameController) void;
+
+/// Get the current state of an axis control on a game controller.
+pub fn gameControllerGetAxis(controller: *GameController, axis: GameController.Axis) i16 {
+    return SDL_GameControllerGetAxis(controller, @intFromEnum(axis));
+}
+extern fn SDL_GameControllerGetAxis(*GameController, axis: c_int) i16;
+
+/// Get the current state of a button on a game controller.
+pub fn gameControllerGetButton(controller: *GameController, button: GameController.Button) bool {
+    return (SDL_GameControllerGetButton(controller, @intFromEnum(button)) != 0);
+}
+extern fn SDL_GameControllerGetButton(controller: *GameController, button: c_int) u8;
 
 //--------------------------------------------------------------------------------------------------
 //
