@@ -1,4 +1,5 @@
-# zsdl v0.1.0 - bindings for SDL2 and SDL3 (wip)
+# zsdl v0.2.0
+Bindings for SDL2, SDL2_ttf, SDL2_image and SDL3 (WIP)
 
 ## Getting started
 
