@@ -3,12 +3,15 @@ const std = @import("std");
 const assert = std.debug.assert;
 
 pub fn build(b: *std.Build) void {
-    _ = b.addModule("zsdl2", .{
+    const zsdl2_module = b.addModule("zsdl2", .{
         .root_source_file = b.path("src/sdl2.zig"),
     });
 
     _ = b.addModule("zsdl2_ttf", .{
-        .root_source_file = b.path("src/sdl2.zig"),
+        .root_source_file = b.path("src/sdl2_ttf.zig"),
+        .imports = &.{
+            .{ .name = "zsdl2", .module = zsdl2_module },
+        },
     });
 
     _ = b.addModule("zsdl3", .{
@@ -167,7 +170,7 @@ pub fn install_SDL2_ttf(
         .windows => {
             if (target.cpu.arch.isX86()) {
                 return &b.addInstallFileWithDir(
-                    .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-windows-gnu/bin/SDL2_ttf.dll" }) catch unreachable },
+                    .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-windows-gnu/bin/SDL2_ttf.dll" }) },
                     install_dir,
                     "SDL2_ttf.dll",
                 ).step;
@@ -176,7 +179,7 @@ pub fn install_SDL2_ttf(
         .linux => {
             if (target.cpu.arch.isX86()) {
                 return &b.addInstallFileWithDir(
-                    .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-linux-gnu/lib/libSDL2_ttf.so" }) catch unreachable },
+                    .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "x86_64-linux-gnu/lib/libSDL2_ttf.so" }) },
                     install_dir,
                     "libSDL2_ttf.so",
                 ).step;
@@ -184,7 +187,7 @@ pub fn install_SDL2_ttf(
         },
         .macos => {
             return &b.addInstallDirectory(.{
-                .source_dir = .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "macos/Frameworks/SDL2_ttf.framework" }) catch unreachable },
+                .source_dir = .{ .cwd_relative = b.pathJoin(&.{ libs_source_path, "macos/Frameworks/SDL2_ttf.framework" }) },
                 .install_dir = install_dir,
                 .install_subdir = "SDL2_ttf.framework",
             }).step;

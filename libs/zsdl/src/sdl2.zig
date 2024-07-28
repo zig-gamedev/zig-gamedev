@@ -191,14 +191,8 @@ pub const Window = opaque {
     const pos_undefined_mask: i32 = 0x1fff_0000;
     const pos_centered_mask: i32 = 0x2fff_0000;
 
-    pub fn create(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) Error!*Window {
-        return SDL_CreateWindow(title, x, y, w, h, flags) orelse return makeError();
-    }
-    extern fn SDL_CreateWindow(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Flags) ?*Window;
-
-    /// `pub fn destroy(window: *Window) void`
-    pub const destroy = SDL_DestroyWindow;
-    extern fn SDL_DestroyWindow(window: *Window) void;
+    pub const create = createWindow;
+    pub const destroy = destroyWindow;
 
     pub fn getDisplayMode(window: *Window) Error!DisplayMode {
         var mode: DisplayMode = undefined;
@@ -221,7 +215,25 @@ pub const Window = opaque {
         SDL_SetWindowTitle(window, title);
     }
     extern fn SDL_SetWindowTitle(window: *Window, title: ?[*:0]const u8) void;
+
+    pub const getSurface = getWindowSurface;
 };
+
+/// Create a window with the specified position, dimensions, and flags.
+pub fn createWindow(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Window.Flags) Error!*Window {
+    return SDL_CreateWindow(title, x, y, w, h, flags) orelse return makeError();
+}
+extern fn SDL_CreateWindow(title: ?[*:0]const u8, x: i32, y: i32, w: i32, h: i32, flags: Window.Flags) ?*Window;
+
+/// Destroy a window.
+pub const destroyWindow = SDL_DestroyWindow;
+extern fn SDL_DestroyWindow(window: *Window) void;
+
+/// Get the SDL surface associated with the window.
+pub fn getWindowSurface(window: *const Window) *Surface {
+    return SDL_GetWindowSurface(window);
+}
+extern fn SDL_GetWindowSurface(*const Window) *Surface;
 
 pub fn getNumVideoDrivers() Error!u16 {
     const res = SDL_GetNumVideoDrivers();
@@ -359,11 +371,9 @@ pub const TextureAccess = enum(c_int) {
     target,
 };
 
+/// An efficient driver-specific representation of pixel data
 pub const Texture = opaque {
-    pub fn destroy(tex: *Texture) void {
-        SDL_DestroyTexture(tex);
-    }
-    extern fn SDL_DestroyTexture(texture: ?*Texture) void;
+    pub const destroy = destroyTexture;
 
     pub fn query(
         texture: *Texture,
@@ -411,6 +421,12 @@ pub const Texture = opaque {
     extern fn SDL_UnlockTexture(texture: *Texture) void;
 };
 
+/// Destroy the specified texture.
+pub fn destroyTexture(tex: *Texture) void {
+    SDL_DestroyTexture(tex);
+}
+extern fn SDL_DestroyTexture(texture: ?*Texture) void;
+
 pub const Vertex = extern struct {
     position: FPoint,
     color: Color,
@@ -457,13 +473,8 @@ pub const Renderer = opaque {
         __unused5: u28 = 0,
     };
 
-    pub fn create(window: *Window, index: ?i32, flags: Flags) Error!*Renderer {
-        return SDL_CreateRenderer(window, index orelse -1, flags) orelse makeError();
-    }
-    extern fn SDL_CreateRenderer(window: *Window, index: i32, flags: Flags) ?*Renderer;
-
-    pub const destroy = SDL_DestroyRenderer;
-    extern fn SDL_DestroyRenderer(r: *Renderer) void;
+    pub const create = createRenderer;
+    pub const destroy = destroyRenderer;
 
     pub fn clear(r: *Renderer) !void {
         if (SDL_RenderClear(r) < 0) return makeError();
@@ -676,6 +687,7 @@ pub const Renderer = opaque {
         h: c_int,
     ) ?*Texture;
 
+    /// Create a texture from an existing surface.
     pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*Texture {
         return SDL_CreateTextureFromSurface(renderer, surface) orelse makeError();
     }
@@ -760,6 +772,17 @@ pub const Renderer = opaque {
     ) c_int;
 };
 
+/// Create a 2D rendering context for a window.
+pub fn createRenderer(window: *Window, index: ?i32, flags: Renderer.Flags) Error!*Renderer {
+    return SDL_CreateRenderer(window, index orelse -1, flags) orelse makeError();
+}
+extern fn SDL_CreateRenderer(window: *Window, index: i32, flags: Renderer.Flags) ?*Renderer;
+
+/// Destroy the rendering context for a window and free associated textures.
+pub const destroyRenderer = SDL_DestroyRenderer;
+extern fn SDL_DestroyRenderer(r: *Renderer) void;
+
+/// Create a window and default renderer.
 pub fn createWindowAndRenderer(
     width: u32,
     height: u32,
@@ -966,11 +989,37 @@ pub const FPoint = extern struct {
 //
 //--------------------------------------------------------------------------------------------------
 pub const Surface = opaque {
-    pub fn free(surface: *Surface) void {
-        SDL_FreeSurface(surface);
-    }
-    extern fn SDL_FreeSurface(surface: *Surface) void;
+    pub const free = freeSurface;
+    pub const blit = blitSurface;
 };
+
+/// Free an RGB surface.
+pub fn freeSurface(surface: *Surface) void {
+    SDL_FreeSurface(surface);
+}
+extern fn SDL_FreeSurface(*Surface) void;
+
+/// Performs a fast blit from the source surface to the destination surface.
+pub fn blitSurface(
+    src_surface: *Surface,
+    src_rect: ?*const Rect,
+    dest_surface: *Surface,
+    dest_rect: ?*const Rect,
+) !void {
+    if (SDL_BlitSurface(
+        src_surface,
+        src_rect,
+        dest_surface,
+        dest_rect,
+    ) != 0) return makeError();
+}
+const SDL_BlitSurface = SDL_UpperBlit;
+extern fn SDL_UpperBlit(
+    src_surface: *Surface,
+    src_rect: ?*const Rect,
+    dest_surface: *Surface,
+    dest_rect: ?*const Rect,
+) c_int;
 
 //--------------------------------------------------------------------------------------------------
 //

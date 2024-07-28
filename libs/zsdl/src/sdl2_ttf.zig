@@ -1,5 +1,5 @@
 const std = @import("std");
-const sdl = @import("sdl2.zig");
+const sdl = @import("zsdl2");
 
 comptime {
     _ = std.testing.refAllDecls(@This());
