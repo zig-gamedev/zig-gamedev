@@ -85,6 +85,10 @@ pub fn overlay(_: Self) common.InitError!Overlay {
     return try Overlay.init();
 }
 
+pub fn overlayView(_: Self) common.InitError!Overlay {
+    return try OverlayView.init();
+}
+
 pub usingnamespace @import("common.zig");
 pub const System = @import("system.zig");
 pub const Chaperone = @import("chaperone.zig");
@@ -93,3 +97,4 @@ pub const Applications = @import("applications.zig");
 pub const Input = @import("input.zig");
 pub const RenderModels = @import("render_models.zig");
 pub const Overlay = @import("overlay.zig");
+pub const OverlayView = @import("overlay_view.zig");

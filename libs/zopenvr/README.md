@@ -73,7 +73,7 @@ For better types on render structs, enable the corresponding options when import
 | IOBuffer        |                    |
 | Notifications   |                    |
 | Overlay         |         ✅         |
-| OverlayView     |                    |
+| OverlayView     |         ✅         |
 | Paths           |                    |
 | Properties      |                    |
 | RenderModels    |         ✅         |

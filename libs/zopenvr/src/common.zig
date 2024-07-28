@@ -2,6 +2,7 @@ const std = @import("std");
 
 const renderers = @import("renderers.zig");
 const d3d12 = renderers.d3d12;
+const vulkan = renderers.vulkan;
 
 const root = @This();
 
@@ -2931,6 +2932,7 @@ pub const OverlayErrorCode = enum(i32) {
     unknown_overlay = 10,
     invalid_handle = 11,
     permission_denied = 12,
+    ///No more overlays could be created because the maximum number already exist
     overlay_limit_exceeded = 13,
     wrong_visibility_type = 14,
     key_too_long = 15,
@@ -3292,4 +3294,34 @@ pub const VulkanTextureData = extern struct {
 pub const VRVulkanTextureArrayData = extern struct {
     array_index: u32,
     array_size: u32,
+};
+
+// can't call it OverlayView since the name will conflict in openvr.zig
+pub const VROverlayView = extern struct {
+    overlay_handle: OverlayHandle,
+    texture: Texture,
+    texture_bounds: TextureBounds,
+};
+
+pub const DeviceType = enum(i32) {
+    ///Invalid handle
+    invalid = -1,
+    ///Handle is an ID3D11Device
+    directX11 = 0,
+    ///Handle is a pointer to a openvr.VulkanDevice structure
+    vulkan = 1,
+};
+
+pub const VulkanDevice = extern struct {
+    instance: vulkan.VkInstance,
+    device: vulkan.VkDevice,
+    physical_device: vulkan.VkPhysicalDevice,
+    queue: vulkan.VkQueue,
+    queue_family_index: u32,
+};
+
+pub const NativeDevice = extern struct {
+    ///See DeviceType definition
+    handle: *const anyopaque,
+    type: DeviceType,
 };
