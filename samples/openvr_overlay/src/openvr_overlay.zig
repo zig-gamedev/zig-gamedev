@@ -94,15 +94,15 @@ pub fn main() !void {
         glfw.pollEvents();
         if (overlay_associated) {
             while (overlay.pollNextOverlayEvent(overlayID)) |event| switch (event.event_type) {
-                .mouse_move => zgui.io.addMousePositionEvent(width * event.data.mouse.x, height * event.data.mouse.y),
-                .mouse_button_down, .mouse_button_up => {
-                    zgui.io.addMousePositionEvent(width * event.data.mouse.x, height * event.data.mouse.y);
-                    if (event.data.mouse.button.Left) zgui.io.addMouseButtonEvent(.left, event.event_type == .mouse_button_down);
-                    if (event.data.mouse.button.Middle) zgui.io.addMouseButtonEvent(.middle, event.event_type == .mouse_button_down);
-                    if (event.data.mouse.button.Right) zgui.io.addMouseButtonEvent(.right, event.event_type == .mouse_button_down);
+                .mouse_move, .mouse_button_down, .mouse_button_up => {
+                    const mouse = event.data.mouse;
+                    zgui.io.addMousePositionEvent(width * mouse.x, height * mouse.y);
+                    if (mouse.button.Left) zgui.io.addMouseButtonEvent(.left, event.event_type == .mouse_button_down);
+                    if (mouse.button.Middle) zgui.io.addMouseButtonEvent(.middle, event.event_type == .mouse_button_down);
+                    if (mouse.button.Right) zgui.io.addMouseButtonEvent(.right, event.event_type == .mouse_button_down);
                 },
-                .focus_leave => zgui.io.addFocusEvent(false),
-                .focus_enter => zgui.io.addFocusEvent(true),
+                .focus_leave => if (event.data.overlay.overlay_handle == overlayID) zgui.io.addFocusEvent(false),
+                .focus_enter => if (event.data.overlay.overlay_handle == overlayID) zgui.io.addFocusEvent(true),
                 else => {},
             };
         }
@@ -115,12 +115,48 @@ pub fn main() !void {
         zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .first_use_ever });
         zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .first_use_ever });
 
-        if (zgui.begin("My window", .{})) {
+        if (zgui.begin("Overlay window", .{})) {
             if (zgui.button("Press me!", .{ .w = 200.0 })) {
                 std.debug.print("Button pressed\n", .{});
             }
         }
         zgui.end();
+
+        {
+            const draw_list = zgui.getBackgroundDrawList();
+            draw_list.pushClipRect(.{ .pmin = .{ 0, 0 }, .pmax = .{ width, height } });
+
+            // house with a continus line
+            {
+                const color: u32 = 0xD4FFE9FF; //zgui.colorConvertFloat3ToU32([_]f32{ 0.8, 1, 0.9 });
+                var cord: [2]f32 = .{ 20, height - 20 };
+                var next_cord: [2]f32 = .{ width - 20, height - 20 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ width - 20, 150 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ 20, height - 20 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ 20, 150 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ @divFloor(width, 2), 20 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ width - 20, 150 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ 20, 150 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+                cord = next_cord;
+                next_cord = .{ width - 20, height - 20 };
+                draw_list.addLine(.{ .p1 = cord, .p2 = next_cord, .col = color, .thickness = 5.0 });
+            }
+
+            draw_list.popClipRect();
+        }
 
         zgui.backend.draw();
 
