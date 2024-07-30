@@ -1224,13 +1224,24 @@ const SizeAndAlignment = packed struct(u64) {
     size: u48,
     alignment: u16,
 };
-var mem_allocator: ?std.mem.Allocator = null;
-var mem_allocations: ?std.AutoHashMap(usize, SizeAndAlignment) = null;
-var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
+pub const GlobalState = struct {
+    mem_allocator: std.mem.Allocator,
+    mem_allocations: std.AutoHashMap(usize, SizeAndAlignment),
+    mem_mutex: std.Thread.Mutex = .{},
 
-var temp_allocator: ?*TempAllocator = null;
-var job_system: ?*JobSystem = null;
+    temp_allocator: *TempAllocator,
+    job_system: *JobSystem,
+};
+var state: ?GlobalState = null;
+
+pub const TraceFunc = *const fn (fmt: ?[*:0]const u8, ...) callconv(.C) void;
+pub const AssertFailedFunc = *const fn (
+    expression: ?[*:0]const u8,
+    message: ?[*:0]const u8,
+    file: ?[*:0]const u8,
+    line: u32,
+) callconv(.C) bool;
 
 pub fn init(allocator: std.mem.Allocator, args: struct {
     temp_allocator_size: u32 = 16 * 1024 * 1024,
@@ -1238,32 +1249,57 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
     max_barriers: u32 = max_physics_barriers,
     num_threads: i32 = -1,
 }) !void {
-    std.debug.assert(mem_allocator == null and mem_allocations == null);
+    std.debug.assert(state == null);
 
-    mem_allocator = allocator;
-    mem_allocations = std.AutoHashMap(usize, SizeAndAlignment).init(allocator);
-    mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
+    state = .{
+        .mem_allocator = allocator,
+        .mem_allocations = std.AutoHashMap(usize, SizeAndAlignment).init(allocator),
+        .temp_allocator = undefined,
+        .job_system = undefined,
+    };
+
+    state.?.mem_allocations.ensureTotalCapacity(32) catch unreachable;
 
     c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
 
     c.JPC_CreateFactory();
     c.JPC_RegisterTypes();
 
-    assert(temp_allocator == null and job_system == null);
-    temp_allocator = @as(*TempAllocator, @ptrCast(c.JPC_TempAllocator_Create(args.temp_allocator_size)));
-    job_system = @as(*JobSystem, @ptrCast(c.JPC_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads)));
+    state.?.temp_allocator = @as(*TempAllocator, @ptrCast(c.JPC_TempAllocator_Create(args.temp_allocator_size)));
+    state.?.job_system = @as(*JobSystem, @ptrCast(c.JPC_JobSystem_Create(args.max_jobs, args.max_barriers, args.num_threads)));
+}
+
+pub fn preReload() GlobalState {
+    const tmp = state.?;
+    state = null;
+    return tmp;
+}
+
+pub fn postReload(allocator: std.mem.Allocator, prev_state: GlobalState) void {
+    std.debug.assert(state == null);
+
+    state = prev_state;
+    state.?.mem_allocator = allocator;
+    state.?.mem_allocations.allocator = allocator;
+
+    c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
 }
 
 pub fn deinit() void {
-    c.JPC_JobSystem_Destroy(@as(*c.JPC_JobSystem, @ptrCast(job_system)));
-    job_system = null;
-    c.JPC_TempAllocator_Destroy(@as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)));
-    temp_allocator = null;
+    c.JPC_JobSystem_Destroy(@as(*c.JPC_JobSystem, @ptrCast(state.?.job_system)));
+    c.JPC_TempAllocator_Destroy(@as(*c.JPC_TempAllocator, @ptrCast(state.?.temp_allocator)));
     c.JPC_DestroyFactory();
 
-    mem_allocations.?.deinit();
-    mem_allocations = null;
-    mem_allocator = null;
+    state.?.mem_allocations.deinit();
+    state = null;
+}
+
+pub fn registerTrace(trace: ?TraceFunc) void {
+    c.JPC_RegisterTrace(trace);
+}
+
+pub fn registerAssertFailed(assert_failed: ?AssertFailedFunc) void {
+    c.JPC_RegisterAssertFailed(assert_failed);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -1412,8 +1448,8 @@ pub const PhysicsSystem = opaque {
             delta_time,
             args.collision_steps,
             args.integration_sub_steps,
-            @as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)),
-            @as(*c.JPC_JobSystem, @ptrCast(job_system)),
+            @as(*c.JPC_TempAllocator, @ptrCast(state.?.temp_allocator)),
+            @as(*c.JPC_JobSystem, @ptrCast(state.?.job_system)),
         );
 
         switch (res) {
@@ -2314,7 +2350,7 @@ pub const CharacterVirtual = opaque {
             args.object_layer_filter,
             args.body_filter,
             args.shape_filter,
-            @as(*c.JPC_TempAllocator, @ptrCast(temp_allocator)),
+            @as(*c.JPC_TempAllocator, @ptrCast(state.?.temp_allocator)),
         );
     }
 
@@ -3420,17 +3456,17 @@ pub const Constraint = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
-    mem_mutex.lock();
-    defer mem_mutex.unlock();
+    state.?.mem_mutex.lock();
+    defer state.?.mem_mutex.unlock();
 
-    const ptr = mem_allocator.?.rawAlloc(
+    const ptr = state.?.mem_allocator.rawAlloc(
         size,
         std.math.log2_int(u29, @as(u29, @intCast(mem_alignment))),
         @returnAddress(),
     );
     if (ptr == null) @panic("zphysics: out of memory");
 
-    mem_allocations.?.put(
+    state.?.mem_allocations.put(
         @intFromPtr(ptr),
         .{ .size = @as(u48, @intCast(size)), .alignment = mem_alignment },
     ) catch @panic("zphysics: out of memory");
@@ -3439,17 +3475,17 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
 }
 
 fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
-    mem_mutex.lock();
-    defer mem_mutex.unlock();
+    state.?.mem_mutex.lock();
+    defer state.?.mem_mutex.unlock();
 
-    const ptr = mem_allocator.?.rawAlloc(
+    const ptr = state.?.mem_allocator.rawAlloc(
         size,
         std.math.log2_int(u29, @as(u29, @intCast(alignment))),
         @returnAddress(),
     );
     if (ptr == null) @panic("zphysics: out of memory");
 
-    mem_allocations.?.put(
+    state.?.mem_allocations.put(
         @intFromPtr(ptr),
         .{ .size = @as(u32, @intCast(size)), .alignment = @as(u16, @intCast(alignment)) },
     ) catch @panic("zphysics: out of memory");
@@ -3459,14 +3495,14 @@ fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque 
 
 fn zphysicsFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
-        mem_mutex.lock();
-        defer mem_mutex.unlock();
+        state.?.mem_mutex.lock();
+        defer state.?.mem_mutex.unlock();
 
-        const info = mem_allocations.?.fetchRemove(@intFromPtr(ptr)).?.value;
+        const info = state.?.mem_allocations.fetchRemove(@intFromPtr(ptr)).?.value;
 
         const mem = @as([*]u8, @ptrCast(ptr))[0..info.size];
 
-        mem_allocator.?.rawFree(
+        state.?.mem_allocator.rawFree(
             mem,
             std.math.log2_int(u29, @as(u29, @intCast(info.alignment))),
             @returnAddress(),

@@ -25,6 +25,11 @@ pub fn build(b: *std.Build) void {
             "enable_debug_renderer",
             "Enable debug renderer",
         ) orelse false,
+        .shared = b.option(
+            bool,
+            "shared",
+            "Build JoltC as shared lib",
+        ) orelse false,
     };
 
     const options_step = b.addOptions();
@@ -42,7 +47,17 @@ pub fn build(b: *std.Build) void {
     });
     zjolt.addIncludePath(b.path("libs/JoltC"));
 
-    const joltc = b.addStaticLibrary(.{
+    const joltc = if (options.shared) blk: {
+        const lib = b.addSharedLibrary(.{
+            .name = "joltc",
+            .target = target,
+            .optimize = optimize,
+        });
+        if (target.result.os.tag == .windows) {
+            lib.defineCMacro("JPC_API", "extern __declspec(dllexport)");
+        }
+        break :blk lib;
+    } else b.addStaticLibrary(.{
         .name = "joltc",
         .target = target,
         .optimize = optimize,

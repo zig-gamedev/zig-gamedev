@@ -106,3 +106,20 @@ pub fn main() !void {
     }
 }
 ```
+
+## Usage in a shared library
+
+The `joltc` artifact can be built as a shared library by specifying the `shared` build option:
+
+```
+    const zphysics = b.dependency("zphysics", .{
+        .shared = true,
+    });
+```
+
+If your zig module uses `zphysics` and is itself part of a shared library that is reloaded at runtime, then some additional steps are required:
+
+- Before unloading the shared library, call `preUnload` to export the internal global state
+- After reloading the shared library, call `postReload` to import the internal state and update allocator vtables
+
+If you use `registerTrace` or `registerAssertFailed`, these must also be called again to update their function pointers.

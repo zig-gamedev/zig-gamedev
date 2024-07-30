@@ -11,7 +11,9 @@
 // Const
 //
 //--------------------------------------------------------------------------------------------------
-#define JPC_API // TODO: Define this properly
+#ifndef JPC_API
+#define JPC_API
+#endif
 
 // Always turn on asserts in Debug mode
 #if defined(_DEBUG) || defined(JPH_ENABLE_ASSERTS)
@@ -270,6 +272,13 @@ typedef void (*JPC_FreeFunction)(void *in_block);
 
 typedef void *(*JPC_AlignedAllocateFunction)(size_t in_size, size_t in_alignment);
 typedef void (*JPC_AlignedFreeFunction)(void *in_block);
+
+typedef void (*JPC_TraceFunction)(const char *inFMT, ...);
+typedef bool (*JPC_AssertFailedFunction)(
+    const char* in_expression,
+    const char* in_message,
+    const char* in_file,
+    uint32_t in_line);
 //--------------------------------------------------------------------------------------------------
 //
 // Opaque Types
@@ -906,6 +915,13 @@ JPC_RegisterCustomAllocator(JPC_AllocateFunction in_alloc,
                             JPC_FreeFunction in_free,
                             JPC_AlignedAllocateFunction in_aligned_alloc,
                             JPC_AlignedFreeFunction in_aligned_free);
+
+JPC_API void
+JPC_RegisterTrace(JPC_TraceFunction in_trace);
+
+JPC_API void
+JPC_RegisterAssertFailed(JPC_AssertFailedFunction in_assert_failed);
+
 JPC_API void
 JPC_CreateFactory(void);
 
