@@ -949,6 +949,38 @@ extern fn zguiDockBuilderFinish(node_id: Ident) void;
 
 //--------------------------------------------------------------------------------------------------
 //
+// ListClipper
+//
+//--------------------------------------------------------------------------------------------------
+pub const ListClipper = extern struct {
+    Ctx: *Context,
+    DisplayStart: c_int,
+    DisplayEnd: c_int,
+    ItemsCount: c_int,
+    ItemsHeight: f32,
+    StartPosY: f32,
+    TempData: *anyopaque,
+
+    pub const init = zguiListClipper_Init;
+    extern fn zguiListClipper_Init() ListClipper;
+
+    pub fn begin(self: *ListClipper, items_count: ?i32, items_height: ?f32) void {
+        zguiListClipper_Begin(self, items_count orelse std.math.maxInt(i32), items_height orelse -1.0);
+    }
+    extern fn zguiListClipper_Begin(self: *ListClipper, items_count: i32, items_height: f32) void;
+
+    pub const end = zguiListClipper_End;
+    extern fn zguiListClipper_End(self: *ListClipper) void;
+
+    pub const includeItemsByIndex = zguiListClipper_IncludeItemsByIndex;
+    extern fn zguiListClipper_IncludeItemsByIndex(self: *ListClipper, item_begin: i32, item_end: i32) void;
+
+    pub const step = zguiListClipper_Step;
+    extern fn zguiListClipper_Step(self: *ListClipper) bool;
+};
+
+//--------------------------------------------------------------------------------------------------
+//
 // Style
 //
 //--------------------------------------------------------------------------------------------------

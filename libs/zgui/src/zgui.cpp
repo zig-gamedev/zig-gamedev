@@ -1078,6 +1078,26 @@ ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
 }
 
+ZGUI_API ImGuiListClipper zguiListClipper_Init() {
+    return ImGuiListClipper();
+}
+
+ZGUI_API void zguiListClipper_Begin(ImGuiListClipper *clipper, int items_count, float items_height) {
+    clipper->Begin(items_count, items_height);
+}
+
+ZGUI_API void zguiListClipper_End(ImGuiListClipper *clipper) {
+    clipper->End();
+}
+
+ZGUI_API void zguiListClipper_IncludeItemsByIndex(ImGuiListClipper *clipper, int item_begin, int item_end) {
+    clipper->IncludeItemsByIndex(item_begin, item_end);
+}
+
+ZGUI_API bool zguiListClipper_Step(ImGuiListClipper *clipper) {
+    return clipper->Step();
+}
+
 ZGUI_API ImGuiStyle* zguiGetStyle(void) {
     return &ImGui::GetStyle();
 }
