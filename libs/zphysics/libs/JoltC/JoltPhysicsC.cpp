@@ -450,17 +450,10 @@ static inline void storeMat44(float out[16], JPH::Mat44Arg in) {
     in.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out));
 }
 
+static JPH::TraceFunction default_trace = nullptr;
+
 #ifdef JPH_ENABLE_ASSERTS
-
-static bool
-AssertFailedImpl(const char *in_expression,
-                 const char *in_message,
-                 const char *in_file,
-                 uint32_t in_line)
-{
-	return true;
-}
-
+static JPH::AssertFailedFunction default_assert_failed = nullptr;
 #endif
 //--------------------------------------------------------------------------------------------------
 JPC_API void
@@ -480,6 +473,30 @@ JPC_RegisterCustomAllocator(JPC_AllocateFunction in_alloc,
     JPH::Free = in_free;
     JPH::AlignedAllocate = in_aligned_alloc;
     JPH::AlignedFree = in_aligned_free;
+#endif
+}
+
+JPC_API void
+JPC_RegisterTrace(JPC_TraceFunction in_trace)
+{
+    if (default_trace == nullptr)
+    {
+        default_trace = JPH::Trace;
+    }
+
+    JPH::Trace = in_trace ? in_trace : default_trace;
+}
+
+JPC_API void
+JPC_RegisterAssertFailed(JPC_AssertFailedFunction in_assert_failed)
+{
+#ifdef JPH_ENABLE_ASSERTS
+    if (default_assert_failed == nullptr)
+    {
+        default_assert_failed = JPH::AssertFailed;
+    }
+
+    JPH::AssertFailed = in_assert_failed ? in_assert_failed : default_assert_failed;
 #endif
 }
 //--------------------------------------------------------------------------------------------------
