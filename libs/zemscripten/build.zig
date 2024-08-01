@@ -71,6 +71,7 @@ pub fn emccDefaultSettings(
         },
         else => {},
     }
+    settings.put("USE_OFFSET_CONVERTER", "1") catch unreachable;
     settings.put("MALLOC", @tagName(options.emsdk_allocator)) catch unreachable;
     return settings;
 }
