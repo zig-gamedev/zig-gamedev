@@ -15,7 +15,10 @@ pub const flags16_t = u16;
 pub const flags32_t = u32;
 pub const flags64_t = u64;
 
-pub const termset_t = u32; // TODO comptime size
+pub fn flagsn_t(comptime bits: u16) type {
+    return std.meta.Int(.unsigned, bits);
+}
+pub const termset_t = flagsn_t(FLECS_TERM_COUNT_MAX);
 
 pub const error_t = error{FlecsError};
 fn make_error() error{FlecsError} {
@@ -316,13 +319,6 @@ pub const run_action_t = *const fn (it: *iter_t) callconv(.C) void;
 
 pub const iter_action_t = *const fn (it: *iter_t) callconv(.C) void;
 
-pub const iter_init_action_t = *const fn (
-    world: *const world_t,
-    iterable: *const poly_t,
-    it: *iter_t,
-    filter: ?*term_t,
-) callconv(.C) void;
-
 pub const iter_next_action_t = *const fn (it: *iter_t) callconv(.C) bool;
 
 pub const iter_fini_action_t = *const fn (it: *iter_t) callconv(.C) void;
@@ -404,30 +400,25 @@ pub const system_desc_t = extern struct {
     _canary: i32 = 0,
     entity: entity_t = 0,
     query: query_desc_t = .{},
-    run: ?run_action_t = null,
     callback: ?iter_action_t = null,
+    run: ?run_action_t = null,
     ctx: ?*anyopaque = null,
-    binding_ctx: ?*anyopaque = null,
     ctx_free: ?ctx_free_t = null,
-    binding_ctx_free: ?ctx_free_t = null,
+    callback_ctx: ?*anyopaque = null,
+    callback_ctx_free: ?ctx_free_t = null,
+    run_ctx: ?*anyopaque = null,
+    run_ctx_free: ?ctx_free_t = null,
     interval: ftime_t = 0.0,
     rate: i32 = 0,
     tick_source: entity_t = 0,
     multi_threaded: bool = false,
-    no_readonly: bool = false,
+    immediate: bool = false,
 };
 
 /// `pub fn system_init(world: *world_t, desc: *const system_desc_t) entity_t`
 pub const system_init = ecs_system_init;
 extern fn ecs_system_init(world: *world_t, desc: *const system_desc_t) entity_t;
-//--------------------------------------------------------------------------------------------------
-//
-// Mixin types for poly mechanism.
-//
-//--------------------------------------------------------------------------------------------------
-pub const iterable_t = extern struct {
-    init: ?iter_init_action_t = null,
-};
+
 //--------------------------------------------------------------------------------------------------
 //
 // Query descriptor types.
@@ -670,18 +661,18 @@ pub const query_op_ctx_t = opaque {};
 pub const query_op_profile_t = extern struct { count: [2]i32 };
 
 pub const query_iter_t = extern struct {
-    query: ?*query_t,
-    vars: ?*var_t,
-    query_vars: ?*const query_var_t,
-    ops: ?*const query_op_t,
-    op_ctx: ?*query_op_ctx_t,
-    node: ?*query_cache_table_match_t,
-    prev: ?*query_cache_table_match_t,
-    last: ?*query_cache_table_match_t,
-    written: ?*i64,
+    query: ?*query_t = null,
+    vars: ?*var_t = null,
+    query_vars: ?*const query_var_t = null,
+    ops: ?*const query_op_t = null,
+    op_ctx: ?*query_op_ctx_t = null,
+    node: ?*query_cache_table_match_t = null,
+    prev: ?*query_cache_table_match_t = null,
+    last: ?*query_cache_table_match_t = null,
+    written: ?*i64 = null,
     skip_count: i32,
 
-    profile: ?*query_op_profile_t,
+    profile: ?*query_op_profile_t = null,
 
     op: i16,
     sp: i16,
@@ -822,8 +813,8 @@ pub const entity_desc_t = extern struct {
     root_sep: ?[*:0]const u8 = null,
     symbol: ?[*:0]const u8 = null,
     use_low_id: bool = false,
-    add: [FLECS_ID_DESC_MAX]id_t = [_]id_t{0} ** FLECS_ID_DESC_MAX,
-    set: ?*value_t = null,
+    add: ?[*]const id_t = null,
+    set: ?[*]const value_t = null,
     add_expr: ?[*:0]const u8 = null,
 };
 
@@ -910,9 +901,8 @@ pub const query_desc_t = extern struct {
     terms: [FLECS_TERM_COUNT_MAX]term_t = [_]term_t{.{}} ** FLECS_TERM_COUNT_MAX,
     expr: ?[*:0]const u8 = null,
 
-    cache_kind: query_cache_kind_t = .QueryCacheDefault,
+    cache_kind: query_cache_kind_t = .QueryCacheNone,
 
-    // storage: ?*filter_t = null,
     flags: flags32_t = 0,
 
     order_by_callback: ?order_by_action_t = null,
@@ -1875,7 +1865,7 @@ pub const id_str = ecs_id_str;
 extern fn ecs_id_str(world: *const world_t, id: id_t) ?[*:0]u8;
 //--------------------------------------------------------------------------------------------------
 //
-// Functions for working with `term_t` and `filter_t`.
+// Functions for working with `term_t` and `query_t`.
 //
 //--------------------------------------------------------------------------------------------------
 /// `pub fn term_iter(world: *const world_t, term: *term_t) iter_t`
@@ -1922,10 +1912,6 @@ extern fn ecs_term_finalize(world: *const world_t, term: *term_t) i32;
 pub const term_str = ecs_term_str;
 extern fn ecs_term_str(world: *const world_t, term: *const term_t) ?[*:0]u8;
 
-/// `pub fn filter_next_instanced(it: *iter_t) bool`
-pub const filter_next_instanced = ecs_filter_next_instanced;
-extern fn ecs_filter_next_instanced(it: *iter_t) bool;
-
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `query_t`.
@@ -1940,9 +1926,9 @@ extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) ?*query_t;
 pub const query_fini = ecs_query_fini;
 extern fn ecs_query_fini(query: *query_t) void;
 
-/// `pub fn query_iter(world: *const world_t: query: *query_t) iter_t`
+/// `pub fn query_iter(world: *const world_t: query: *const query_t) iter_t`
 pub const query_iter = ecs_query_iter;
-extern fn ecs_query_iter(world: *const world_t, query: *query_t) iter_t;
+extern fn ecs_query_iter(world: *const world_t, query: *const query_t) iter_t;
 
 /// `pub fn query_next(iter: *iter_t) bool`
 pub const query_next = ecs_query_next;
@@ -2047,9 +2033,14 @@ extern fn ecs_observer_get_binding_ctx(world: *const world_t, observer: entity_t
 // Functions for working with `iter_t`.
 //
 //--------------------------------------------------------------------------------------------------
+pub const entities_t = extern struct {
+    entities: ?[*]entity_t,
+    count: i32,
+    alive_count: i32,
+};
 /// `pub fn iter_poly(world: *const world_t, poly: *const poly_t, iter: [*]iter_t, filter: ?*term_t) void`
 pub const get_entities = ecs_get_entities;
-extern fn ecs_get_entities(world: *const world_t, poly: *const poly_t, iter: [*]iter_t, filter: ?*term_t) void;
+extern fn ecs_get_entities(world: *const world_t) entities_t;
 
 /// `pub fn iter_next(it: *iter_t) bool`
 pub const iter_next = ecs_iter_next;
@@ -2445,8 +2436,9 @@ pub fn SYSTEM(
     var entity_desc = entity_desc_t{};
     entity_desc.id = new_id(world);
     entity_desc.name = name;
-    entity_desc.add[0] = if (phase != 0) pair(EcsDependsOn, phase) else 0;
-    entity_desc.add[1] = phase;
+    const first = if (phase != 0) pair(EcsDependsOn, phase) else 0;
+    const second = phase;
+    entity_desc.add = &.{ first, second };
 
     system_desc.entity = entity_init(world, &entity_desc);
     _ = system_init(world, system_desc);
@@ -2529,7 +2521,7 @@ pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
 }
 
 /// Creates system_desc_t from function parameters.
-/// Accepts aditional filter terms
+/// Accepts additional query terms
 pub fn SYSTEM_DESC_WITH_FILTERS(comptime fn_system: anytype, filters: []const term_t) system_desc_t {
     const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
     var system_desc = SYSTEM_DESC(fn_system);
@@ -2890,7 +2882,6 @@ test {
 comptime {
     _ = @import("tests.zig");
     _ = run_action_t;
-    _ = iter_init_action_t;
     _ = iter_fini_action_t;
     _ = iter_action_t;
     _ = iter_next_action_t;
