@@ -4103,7 +4103,7 @@ pub const DrawList = *opaque {
             &args.p,
             args.r,
             args.col,
-            args.num_segments,
+            @intCast(args.num_segments),
             args.thickness,
         );
     }
@@ -4122,7 +4122,7 @@ pub const DrawList = *opaque {
         col: u32,
         num_segments: u32,
     }) void {
-        zguiDrawList_AddNgonFilled(draw_list, &args.p, args.r, args.col, args.num_segments);
+        zguiDrawList_AddNgonFilled(draw_list, &args.p, args.r, args.col, @intCast(args.num_segments));
     }
     extern fn zguiDrawList_AddNgonFilled(
         draw_list: DrawList,
@@ -4206,7 +4206,7 @@ pub const DrawList = *opaque {
             &args.p4,
             args.col,
             args.thickness,
-            args.num_segments,
+            @intCast(args.num_segments),
         );
     }
     extern fn zguiDrawList_AddBezierCubic(
@@ -4235,7 +4235,7 @@ pub const DrawList = *opaque {
             &args.p3,
             args.col,
             args.thickness,
-            args.num_segments,
+            @intCast(args.num_segments),
         );
     }
     extern fn zguiDrawList_AddBezierQuadratic(
