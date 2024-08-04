@@ -131,6 +131,8 @@ const samples_cross_platform = struct {
     pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
     pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
     pub const minimal_zgui_glfw_gl = @import("samples/minimal_zgui_glfw_gl/build.zig");
+    pub const openvr_mango = @import("samples/openvr_mango/build.zig");
+    pub const openvr_overlay = @import("samples/openvr_overlay/build.zig");
 
     // WebGPU samples
     pub const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");

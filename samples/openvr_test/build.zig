@@ -40,6 +40,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     const zopenvr = b.dependency("zopenvr", .{
         .target = options.target,
+        .d3d12 = false, // -- optional, the d3d12 parts are unused here
     });
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
