@@ -768,9 +768,8 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         bind_group_layouts: []const BindGroupLayoutHandle,
     ) PipelineLayoutHandle {
-        assert(bind_group_layouts.len > 0);
-
         var info: PipelineLayoutInfo = .{ .num_bind_group_layouts = @as(u32, @intCast(bind_group_layouts.len)) };
+
         var gpu_bind_group_layouts: [max_num_bind_groups_per_pipeline]wgpu.BindGroupLayout = undefined;
 
         for (bind_group_layouts, 0..) |bgl, i| {
@@ -778,9 +777,9 @@ pub const GraphicsContext = struct {
             gpu_bind_group_layouts[i] = gctx.lookupResource(bgl).?;
         }
 
-        info.gpuobj = gctx.device.createPipelineLayout(.{
+        info.gpuobj = gctx.createPipelineLayout(.{
             .bind_group_layout_count = info.num_bind_group_layouts,
-            .bind_group_layouts = &gpu_bind_group_layouts,
+            .bind_group_layouts = if (bind_group_layouts.len > 0) &gpu_bind_group_layouts else null,
         });
 
         return gctx.pipeline_layout_pool.addResource(gctx.*, info);
