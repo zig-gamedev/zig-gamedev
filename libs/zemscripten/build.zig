@@ -151,15 +151,22 @@ pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
     return &install_step.step;
 }
 
-pub fn emrunStep(b: *std.Build, html_path: []const u8) *std.Build.Step {
-    const emscripten_path = b.dependency("emsdk", .{}).path("upstream/emscripten").getPath(b);
+pub fn emrunStep(
+    b: *std.Build,
+    html_path: []const u8,
+    extra_args: []const []const u8,
+) *std.Build.Step {
+    const emsdk = b.dependency("emsdk", .{});
+    const emscripten_path = emsdk.path("upstream/emscripten").getPath(b);
     const emrun_path = switch (builtin.target.os.tag) {
         .windows => b.pathJoin(&.{ emscripten_path, "emrun.bat" }),
         else => b.pathJoin(&.{ emscripten_path, "emrun" }),
     };
 
     var emrun = b.addSystemCommand(&.{emrun_path});
-    emrun.addArgs(&.{html_path});
+    emrun.addArgs(extra_args);
+    emrun.addArg(html_path);
+    // emrun.addArg("--");
 
     switch (builtin.target.os.tag) {
         .linux, .macos => {

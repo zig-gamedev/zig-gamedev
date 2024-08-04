@@ -200,8 +200,19 @@ fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
 
         b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(web_install_step);
 
-        const html_filename = std.fmt.allocPrint(b.allocator, "{s}.html", .{d.name}) catch unreachable;
-        const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename));
+        const html_filename = std.fmt.allocPrint(
+            b.allocator,
+            "{s}.html",
+            .{d.name},
+        ) catch unreachable;
+
+        const emrun_args = .{};
+        const emrun_step = @import("zemscripten").emrunStep(
+            b,
+            b.getInstallPath(.{ .custom = "web" }, html_filename),
+            &emrun_args,
+        );
+
         emrun_step.dependOn(web_install_step);
 
         const run_step = b.step("run", "Serve and run the web app locally");

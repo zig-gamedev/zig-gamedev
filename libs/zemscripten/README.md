@@ -74,9 +74,13 @@ export fn main() c_int {
 You can also define a run step that invokes `emrun`. This will serve the html locally over HTTP and try to open it using your default browser. Example build.zig code:
 ```zig
     const html_filename = std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name}) catch unreachable;
-    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename));
+
+    const emrun_args = .{};
+    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename, &emrun_args));
+
     emrun_step.dependOn(emcc_step);
 
     const run_step = b.step("run", "Serve and run the web app locally");
     run_step.dependOn(emrun_step);
 ```
+See the [emrun documentation](https://emscripten.org/docs/compiling/Running-html-files-with-emrun.html) for the difference args that can be used.

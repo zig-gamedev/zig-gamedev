@@ -1,5 +1,11 @@
 //! Zig bindings and glue for Emscripten
 
+const std = @import("std");
+
+comptime {
+    _ = std.testing.refAllDeclsRecursive(@This());
+}
+
 extern fn emscripten_err([*c]const u8) void;
 extern fn emscripten_console_error([*c]const u8) void;
 extern fn emscripten_console_warn([*c]const u8) void;
@@ -14,8 +20,6 @@ pub fn setMainLoop(cb: MainLoopCallback, maybe_fps: ?i16, simulate_infinite_loop
 pub const AnimationFrameCallback = *const fn (f64, ?*anyopaque) callconv(.C) c_int;
 extern fn emscripten_request_animation_frame_loop(AnimationFrameCallback, ?*anyopaque) void;
 pub const requestAnimationFrameLoop = emscripten_request_animation_frame_loop;
-
-const std = @import("std");
 
 /// std.panic impl
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, ret_addr: ?usize) noreturn {
