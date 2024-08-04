@@ -30,6 +30,11 @@ pub fn build(b: *std.Build) void {
             "with_gizmo",
             "Build with bundled ImGuizmo tool",
         ) orelse true,
+        .with_node_editor = b.option(
+            bool,
+            "with_node_editor",
+            "Build with bundled ImGui node editor",
+        ) orelse true,
         .with_te = b.option(
             bool,
             "with_te",
@@ -135,6 +140,16 @@ pub fn build(b: *std.Build) void {
         });
     } else {
         imgui.defineCMacro("ZGUI_GIZMO", "0");
+    }
+
+    if (options.with_node_editor) {
+        imgui.defineCMacro("ZGUI_NODE_EDITOR", "1");
+        imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/crude_json.cpp"), .flags = cflags });
+        imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/imgui_canvas.cpp"), .flags = cflags });
+        imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/imgui_node_editor_api.cpp"), .flags = cflags });
+        imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/imgui_node_editor.cpp"), .flags = cflags });
+    } else {
+        imgui.defineCMacro("ZGUI_NODE_EDITOR", "0");
     }
 
     if (options.with_te) {

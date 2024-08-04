@@ -6,7 +6,9 @@
 //--------------------------------------------------------------------------------------------------
 pub const plot = @import("plot.zig");
 pub const gizmo = @import("gizmo.zig");
+pub const node_editor = @import("node_editor.zig");
 pub const te = @import("te.zig");
+
 pub const backend = switch (@import("zgui_options").backend) {
     .glfw_wgpu => @import("backend_glfw_wgpu.zig"),
     .glfw_opengl3 => @import("backend_glfw_opengl.zig"),
