@@ -196,9 +196,11 @@ fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: any
 
 fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
     inline for (comptime std.meta.declarations(samples_web)) |d| {
-        const web_install_step = @field(samples_web, d.name).buildWeb(b, options);
+        const build_web_app_step = @field(samples_web, d.name).buildWeb(b, options);
+        build_web_app_step.dependOn(@import("zemscripten").activateEmsdkStep(b));
+        b.getInstallStep().dependOn(build_web_app_step);
 
-        b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(web_install_step);
+        b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(build_web_app_step);
 
         const html_filename = std.fmt.allocPrint(
             b.allocator,
@@ -213,9 +215,9 @@ fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
             &emrun_args,
         );
 
-        emrun_step.dependOn(web_install_step);
+        emrun_step.dependOn(build_web_app_step);
 
-        const run_step = b.step("run", "Serve and run the web app locally");
+        const run_step = b.step(d.name ++ "-run", "Serve and run the web app locally");
         run_step.dependOn(emrun_step);
     }
 }
