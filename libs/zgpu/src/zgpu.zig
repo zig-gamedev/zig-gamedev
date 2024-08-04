@@ -777,7 +777,7 @@ pub const GraphicsContext = struct {
             gpu_bind_group_layouts[i] = gctx.lookupResource(bgl).?;
         }
 
-        info.gpuobj = gctx.createPipelineLayout(.{
+        info.gpuobj = gctx.device.createPipelineLayout(.{
             .bind_group_layout_count = info.num_bind_group_layouts,
             .bind_group_layouts = if (bind_group_layouts.len > 0) &gpu_bind_group_layouts else null,
         });
