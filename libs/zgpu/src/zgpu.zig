@@ -71,6 +71,7 @@ pub const WindowProvider = struct {
 pub const GraphicsContextOptions = struct {
     present_mode: wgpu.PresentMode = .fifo,
     required_features: []const wgpu.FeatureName = &.{},
+    required_limits: ?wgpu.RequiredLimits = null,
 };
 
 pub const GraphicsContext = struct {
@@ -203,6 +204,7 @@ pub const GraphicsContext = struct {
                         null,
                     .required_features_count = options.required_features.len,
                     .required_features = options.required_features.ptr,
+                    .required_limits = if (options.required_limits != null) @ptrCast(&options.required_limits) else null,
                 },
                 callback,
                 @ptrCast(&response),
