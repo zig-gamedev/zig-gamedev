@@ -21,6 +21,7 @@ const DemoState = struct {
     alloced_input_text_buf: [:0]u8,
     alloced_input_text_multiline_buf: [:0]u8,
     alloced_input_text_with_hint_buf: [:0]u8,
+    node_editor: *zgui.node_editor.EditorContext,
 };
 var _te: *zgui.te.TestEngine = undefined;
 
@@ -140,6 +141,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .alloced_input_text_buf = try allocator.allocSentinel(u8, 4, 0),
         .alloced_input_text_multiline_buf = try allocator.allocSentinel(u8, 4, 0),
         .alloced_input_text_with_hint_buf = try allocator.allocSentinel(u8, 4, 0),
+        .node_editor = zgui.node_editor.EditorContext.create(.{ .enable_smooth_zoom = true }),
     };
     demo.alloced_input_text_buf[0] = 0;
     demo.alloced_input_text_multiline_buf[0] = 0;
@@ -685,6 +687,43 @@ fn update(demo: *DemoState) !void {
         .col = zgui.colorConvertFloat3ToU32([_]f32{ 1, 1, 0 }),
         .thickness = 15 + 15 * @as(f32, @floatCast(@sin(demo.gctx.stats.time))),
     });
+
+    node_editor_window(demo);
+}
+
+fn node_editor_window(demo: *DemoState) void {
+    defer zgui.end();
+
+    if (zgui.begin("Node editor", .{ .flags = .{ .no_saved_settings = true } })) {
+        zgui.node_editor.setCurrentEditor(demo.node_editor);
+        defer zgui.node_editor.setCurrentEditor(null);
+
+        {
+            zgui.node_editor.begin("NodeEditor", .{ 0, 0 });
+            defer zgui.node_editor.end();
+
+            zgui.node_editor.beginNode(1);
+            {
+                defer zgui.node_editor.endNode();
+
+                zgui.textUnformatted("Node A");
+
+                zgui.node_editor.beginPin(1, .input);
+                {
+                    defer zgui.node_editor.endPin();
+                    zgui.textUnformatted("-> In");
+                }
+
+                zgui.sameLine(.{});
+
+                zgui.node_editor.beginPin(2, .output);
+                {
+                    defer zgui.node_editor.endPin();
+                    zgui.textUnformatted("Out ->");
+                }
+            }
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
