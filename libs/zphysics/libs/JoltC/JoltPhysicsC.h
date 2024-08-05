@@ -595,8 +595,8 @@ typedef struct JPC_RayCastSettings
 // NOTE: Needs to be kept in sync with JPH::AABox
 typedef struct JPC_AABox
 {
-    float min[3];
-    float max[3];
+    float min[4];
+    float max[4];
 } JPC_AABox;
 
 // NOTE: Needs to be kept in sync with JPH::Color

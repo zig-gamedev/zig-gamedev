@@ -1135,8 +1135,8 @@ pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else ext
     };
 
     pub const AABox = extern struct {
-        min: [3]f32,
-        max: [3]f32,
+        min: [4]f32,
+        max: [4]f32,
     };
 
     pub const LOD = extern struct {
