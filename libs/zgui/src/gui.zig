@@ -3462,6 +3462,8 @@ pub const beginPopup = zguiBeginPopup;
 pub const endPopup = zguiEndPopup;
 /// `pub fn closeCurrentPopup() void`
 pub const closeCurrentPopup = zguiCloseCurrentPopup;
+/// `pub fn isPopupOpen(str_id: [:0]const u8, flags: PopupFlags) bool`
+pub const isPopupOpen = zguiIsPopupOpen;
 extern fn zguiBeginPopupContextWindow() bool;
 extern fn zguiBeginPopupContextItem() bool;
 extern fn zguiBeginPopupModal(name: [*:0]const u8, popen: ?*bool, flags: WindowFlags) bool;
@@ -3469,6 +3471,8 @@ extern fn zguiBeginPopup(str_id: [*:0]const u8, flags: WindowFlags) bool;
 extern fn zguiEndPopup() void;
 extern fn zguiOpenPopup(str_id: [*:0]const u8, flags: PopupFlags) void;
 extern fn zguiCloseCurrentPopup() void;
+extern fn zguiIsPopupOpen(str_id: [*:0]const u8, flags: PopupFlags) bool;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Tabs
