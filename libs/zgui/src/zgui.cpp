@@ -1812,6 +1812,10 @@ extern "C"
         ImGui::OpenPopup(str_id, popup_flags);
     }
 
+    ZGUI_API void zguiIsPopupOpen(const char* str_id, ImGuiPopupFlags popup_flags) {
+        ImGui::IsPopupOpen(str_id, popup_flags);
+    }
+
     ZGUI_API void zguiCloseCurrentPopup(void)
     {
         ImGui::CloseCurrentPopup();
