@@ -98,7 +98,7 @@ test "zmath.util.mat.scale" {
 }
 
 test "zmath.util.mat.rotation" {
-    const rotate_origin = zm.matFromRollPitchYaw(0.1, 1.2, 2.3);
+    const rotate_origin = zm.matFromAngles(0.1, 1.2, 2.3);
     const mat = zm.mul(zm.mul(rotate_origin, zm.scaling(3, 4, 5)), zm.translation(6, 7, 8));
     const rotate_get = getRotationQuat(mat);
     const v0 = zm.mul(zm.f32x4s(1), rotate_origin);
