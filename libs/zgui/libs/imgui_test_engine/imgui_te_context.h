@@ -90,7 +90,8 @@ struct IMGUI_API ImGuiTestRefDesc
     char            Buf[80];
 
     const char* c_str()             { return Buf; }
-    ImGuiTestRefDesc(const ImGuiTestRef& ref, const ImGuiTestItemInfo* item);
+    ImGuiTestRefDesc(const ImGuiTestRef& ref);
+    ImGuiTestRefDesc(const ImGuiTestRef& ref, const ImGuiTestItemInfo& item);
 };
 
 //-------------------------------------------------------------------------
@@ -114,6 +115,7 @@ enum ImGuiTestAction
 };
 
 // Generic flags for many ImGuiTestContext functions
+// Some flags are only supported by a handful of functions. Check function headers for list of supported flags.
 enum ImGuiTestOpFlags_
 {
     ImGuiTestOpFlags_None               = 0,
@@ -122,11 +124,12 @@ enum ImGuiTestOpFlags_
     ImGuiTestOpFlags_NoFocusWindow      = 1 << 3,   // Don't focus window when aiming at an item
     ImGuiTestOpFlags_NoAutoUncollapse   = 1 << 4,   // Disable automatically uncollapsing windows (useful when specifically testing Collapsing behaviors)
     ImGuiTestOpFlags_NoAutoOpenFullPath = 1 << 5,   // Disable automatically opening intermediaries (e.g. ItemClick("Hello/OK") will automatically first open "Hello" if "OK" isn't found. Only works if ref is a string path.
-    ImGuiTestOpFlags_IsSecondAttempt    = 1 << 6,   // Used by recursing functions to indicate a second attempt
-    ImGuiTestOpFlags_MoveToEdgeL        = 1 << 7,   // Simple Dumb aiming helpers to test widget that care about clicking position. May need to replace will better functionalities.
-    ImGuiTestOpFlags_MoveToEdgeR        = 1 << 8,
-    ImGuiTestOpFlags_MoveToEdgeU        = 1 << 9,
-    ImGuiTestOpFlags_MoveToEdgeD        = 1 << 10,
+    ImGuiTestOpFlags_NoYield            = 1 << 6,   // Don't yield (only supported by a few functions), in case you need to manage rigorous per-frame timing.
+    ImGuiTestOpFlags_IsSecondAttempt    = 1 << 7,   // Used by recursing functions to indicate a second attempt
+    ImGuiTestOpFlags_MoveToEdgeL        = 1 << 8,   // Simple Dumb aiming helpers to test widget that care about clicking position. May need to replace will better functionalities.
+    ImGuiTestOpFlags_MoveToEdgeR        = 1 << 9,
+    ImGuiTestOpFlags_MoveToEdgeU        = 1 << 10,
+    ImGuiTestOpFlags_MoveToEdgeD        = 1 << 11,
 };
 
 // Advanced filtering for ItemActionAll()
@@ -176,6 +179,7 @@ struct IMGUI_API ImGuiTestGenericVars
     int                     Count;
     ImGuiID                 DockId;
     ImGuiID                 OwnerId;
+    ImVec2                  WindowSize;
     ImGuiWindowFlags        WindowFlags;
     ImGuiTableFlags         TableFlags;
     ImGuiPopupFlags         PopupFlags;
@@ -185,8 +189,8 @@ struct IMGUI_API ImGuiTestGenericVars
     bool                    UseViewports;
     float                   Width;
     ImVec2                  Pos;
-    ImVec2                  Size;
     ImVec2                  Pivot;
+    ImVec2                  ItemSize;
     ImVec4                  Color1, Color2;
 
     // Generic unnamed storage
@@ -283,7 +287,6 @@ struct IMGUI_API ImGuiTestContext
 
     // Yield, Timing
     void        Yield(int count = 1);
-    void        YieldUntil(int frame_count);
     void        Sleep(float time_in_second);            // Sleep for a given simulation time, unless in Fast mode
     void        SleepShort();                           // Standard short delay of io.ActionDelayShort (~0.15f), unless in Fast mode.
     void        SleepStandard();                        // Standard regular delay of io.ActionDelayStandard (~0.40f), unless in Fast mode.
@@ -297,12 +300,15 @@ struct IMGUI_API ImGuiTestContext
     // - SetRef("//$FOCUSED"), ItemClick("Button") --> click "Button" in focused window.
     // See https://github.com/ocornut/imgui_test_engine/wiki/Named-References about using ImGuiTestRef in all ImGuiTestContext functions.
     // Note: SetRef() may take multiple frames to complete if specified ref is an item id.
+    // Note: SetRef() ignores current reference, so they are always absolute path.
     void        SetRef(ImGuiTestRef ref);
     void        SetRef(ImGuiWindow* window); // Shortcut to SetRef(window->Name) which works for ChildWindow (see code)
     ImGuiTestRef GetRef();
 
     // Windows
-    ImGuiTestItemInfo* WindowInfo(ImGuiTestRef window_ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
+    // - Use WindowInfo() to access path to child windows, since the paths are internally mangled.
+    // - SetRef(WindowInfo("Parent/Child")->Window) --> set ref to child window.
+    ImGuiTestItemInfo WindowInfo(ImGuiTestRef window_ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
     void        WindowClose(ImGuiTestRef window_ref);
     void        WindowCollapse(ImGuiTestRef window_ref, bool collapsed);
     void        WindowFocus(ImGuiTestRef window_ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
@@ -340,7 +346,7 @@ struct IMGUI_API ImGuiTestContext
     // Mouse inputs
     void        MouseMove(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
     void        MouseMoveToPos(ImVec2 pos);
-    void        MouseTeleportToPos(ImVec2 pos);
+    void        MouseTeleportToPos(ImVec2 pos, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
     void        MouseClick(ImGuiMouseButton button = 0);
     void        MouseClickMulti(ImGuiMouseButton button, int count);
     void        MouseDoubleClick(ImGuiMouseButton button = 0);
@@ -400,10 +406,10 @@ struct IMGUI_API ImGuiTestContext
     // Low-level queries
     // - ItemInfo queries never returns a NULL pointer, instead they return an empty instance (info->IsEmpty(), info->ID == 0) and set contexted as errored.
     // - You can use ImGuiTestOpFlags_NoError to do a query without marking context as errored. This is what ItemExists() does.
-    ImGuiTestItemInfo*  ItemInfo(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
-    ImGuiTestItemInfo*  ItemInfoOpenFullPath(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
+    ImGuiTestItemInfo   ItemInfo(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
+    ImGuiTestItemInfo   ItemInfoOpenFullPath(ImGuiTestRef ref, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
     ImGuiID             ItemInfoHandleWildcardSearch(const char* wildcard_prefix_start, const char* wildcard_prefix_end, const char* wildcard_suffix_start);
-    ImGuiTestItemInfo*  ItemInfoNull();
+    ImGuiTestItemInfo   ItemInfoNull() { return ImGuiTestItemInfo(); }
     void                GatherItems(ImGuiTestItemList* out_list, ImGuiTestRef parent, int depth = -1);
 
     // Item/Widgets manipulation
@@ -428,18 +434,25 @@ struct IMGUI_API ImGuiTestContext
     void        ItemInputValue(ImGuiTestRef ref, float f);
     void        ItemInputValue(ImGuiTestRef ref, const char* str);
 
-    // Item/Widgets: Drag and Mouse operations
-    void        ItemHold(ImGuiTestRef ref, float time);
-    void        ItemHoldForFrames(ImGuiTestRef ref, int frames);
-    void        ItemDragOverAndHold(ImGuiTestRef ref_src, ImGuiTestRef ref_dst);
-    void        ItemDragAndDrop(ImGuiTestRef ref_src, ImGuiTestRef ref_dst, ImGuiMouseButton button = 0);
-    void        ItemDragWithDelta(ImGuiTestRef ref_src, ImVec2 pos_delta);
+    // Item/Widgets: Helpers to easily read a value by selecting Slider/Drag/Input text, copying into clipboard and parsing it.
+    // - This requires the item to be selectable (we will later provide helpers that works in more general manner)
+    // - Original clipboard value is restored afterward.
+    bool        ItemSelectAndReadValue(ImGuiTestRef ref, ImGuiDataType data_type, void* out_data, ImGuiTestOpFlags flags = ImGuiTestOpFlags_None);
+    void        ItemSelectAndReadValue(ImGuiTestRef ref, int* out_v);
+    void        ItemSelectAndReadValue(ImGuiTestRef ref, float* out_v);
 
     // Item/Widgets: Status query
     bool        ItemExists(ImGuiTestRef ref);
     bool        ItemIsChecked(ImGuiTestRef ref);
     bool        ItemIsOpened(ImGuiTestRef ref);
     void        ItemVerifyCheckedIfAlive(ImGuiTestRef ref, bool checked);
+
+    // Item/Widgets: Drag and Mouse operations
+    void        ItemHold(ImGuiTestRef ref, float time);
+    void        ItemHoldForFrames(ImGuiTestRef ref, int frames);
+    void        ItemDragOverAndHold(ImGuiTestRef ref_src, ImGuiTestRef ref_dst);
+    void        ItemDragAndDrop(ImGuiTestRef ref_src, ImGuiTestRef ref_dst, ImGuiMouseButton button = 0);
+    void        ItemDragWithDelta(ImGuiTestRef ref_src, ImVec2 pos_delta);
 
     // Helpers for Tab Bars widgets
     void        TabClose(ImGuiTestRef ref);
@@ -493,15 +506,17 @@ struct IMGUI_API ImGuiTestContext
 
     // Obsolete functions
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    // Obsoleted 2024/05/21
+    void        YieldUntil(int frame_count)     { while (FrameCount < frame_count) { Yield(); } }
     // Obsoleted 2022/10/11
     ImGuiID     GetIDByInt(int n);                                      // Prefer using "$$123"
     ImGuiID     GetIDByInt(int n, ImGuiTestRef seed_ref);
     ImGuiID     GetIDByPtr(void* p);                                    // Prefer using "$$(ptr)0xFFFFFFFF"
     ImGuiID     GetIDByPtr(void* p, ImGuiTestRef seed_ref);
     // Obsoleted 2022/09/26
-    void        KeyModDown(ImGuiModFlags mods)  { KeyDown(mods); }
-    void        KeyModUp(ImGuiModFlags mods)    { KeyUp(mods); }
-    void        KeyModPress(ImGuiModFlags mods) { KeyPress(mods); }
+    //void      KeyModDown(ImGuiModFlags mods)  { KeyDown(mods); }
+    //void      KeyModUp(ImGuiModFlags mods)    { KeyUp(mods); }
+    //void      KeyModPress(ImGuiModFlags mods) { KeyPress(mods); }
 #endif
 
     // [Internal]
@@ -604,6 +619,7 @@ template<> inline void ImGuiTestEngineUtil_appendf_auto(ImGuiTextBuffer* buf, Im
 
 // Floating point compares
 #define IM_CHECK_FLOAT_EQ_EPS(_LHS, _RHS)           IM_CHECK_LE(ImFabs(_LHS - (_RHS)), FLT_EPSILON)   // Float Equal
+#define IM_CHECK_FLOAT_NE_EPS(_LHS, _RHS)           IM_CHECK_GT(ImFabs(_LHS - (_RHS)), FLT_EPSILON)   // Float Not Equal
 #define IM_CHECK_FLOAT_NEAR(_LHS, _RHS, _EPS)       IM_CHECK_LE(ImFabs(_LHS - (_RHS)), _EPS)
 #define IM_CHECK_FLOAT_NEAR_NO_RET(_LHS, _RHS, _E)  IM_CHECK_LE_NO_RET(ImFabs(_LHS - (_RHS)), _E)
 

@@ -7,7 +7,28 @@
 
 #include "imgui.h"
 #include "imgui_internal.h"         // ImPool<>, ImRect, ImGuiItemStatusFlags, ImFormatString
-#include "imgui_te_utils.h"         // ImFuncPtr
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"                  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
+#endif
+#ifdef Status // X11 headers
+#undef Status
+#endif
+
+//-----------------------------------------------------------------------------
+// Function Pointers
+//-----------------------------------------------------------------------------
+
+#if IMGUI_TEST_ENGINE_ENABLE_STD_FUNCTION
+#include <functional>
+#define ImFuncPtr(FUNC_TYPE)        std::function<FUNC_TYPE>
+#else
+#define ImFuncPtr(FUNC_TYPE)        FUNC_TYPE*
+#endif
+
 #include "imgui_capture_tool.h"     // ImGuiScreenCaptureFunc
 
 //-------------------------------------------------------------------------
@@ -70,12 +91,12 @@ enum ImGuiTestVerboseLevel : int
 // Test status (stored in ImGuiTest)
 enum ImGuiTestStatus : int
 {
-    ImGuiTestStatus_Unknown     = -1,
-    ImGuiTestStatus_Success     = 0,
-    ImGuiTestStatus_Queued      = 1,
-    ImGuiTestStatus_Running     = 2,
-    ImGuiTestStatus_Error       = 3,
-    ImGuiTestStatus_Suspended   = 4,
+    ImGuiTestStatus_Unknown     = 0,
+    ImGuiTestStatus_Success     = 1,
+    ImGuiTestStatus_Queued      = 2,
+    ImGuiTestStatus_Running     = 3,
+    ImGuiTestStatus_Error       = 4,
+    ImGuiTestStatus_Suspended   = 5,
     ImGuiTestStatus_COUNT
 };
 
@@ -168,6 +189,7 @@ IMGUI_API ImGuiTestEngineIO&  ImGuiTestEngine_GetIO(ImGuiTestEngine* engine);
 // Macros: Register Test
 #define IM_REGISTER_TEST(_ENGINE, _CATEGORY, _NAME)  ImGuiTestEngine_RegisterTest(_ENGINE, _CATEGORY, _NAME, __FILE__, __LINE__)
 IMGUI_API ImGuiTest*          ImGuiTestEngine_RegisterTest(ImGuiTestEngine* engine, const char* category, const char* name, const char* src_file = NULL, int src_line = 0); // Prefer calling IM_REGISTER_TEST()
+IMGUI_API void                ImGuiTestEngine_UnregisterTest(ImGuiTestEngine* engine, ImGuiTest* test);
 
 // Functions: Main
 IMGUI_API void                ImGuiTestEngine_QueueTest(ImGuiTestEngine* engine, ImGuiTest* test, ImGuiTestRunFlags run_flags = 0);
@@ -275,22 +297,20 @@ struct IMGUI_API ImGuiTestEngineIO
 // Information about a given item or window, result of an ItemInfo() or WindowInfo() query
 struct ImGuiTestItemInfo
 {
-    int                         RefCount : 8;               // User can increment this if they want to hold on the result pointer across frames, otherwise the task will be GC-ed.
+    ImGuiID                     ID = 0;                     // Item ID
+    char                        DebugLabel[32] = {};        // Shortened/truncated label for debugging and convenience purpose
+    ImGuiWindow*                Window = NULL;              // Item Window
     unsigned int                NavLayer : 1;               // Nav layer of the item (ImGuiNavLayer)
     int                         Depth : 16;                 // Depth from requested parent id. 0 == ID is immediate child of requested parent id.
-    int                         TimestampMain = -1;         // Timestamp of main result (all fields)
-    int                         TimestampStatus = -1;       // Timestamp of StatusFlags
-    ImGuiID                     ID = 0;                     // Item ID
+    int                         TimestampMain;              // Timestamp of main result (all fields)
+    int                         TimestampStatus;            // Timestamp of StatusFlags
     ImGuiID                     ParentID = 0;               // Item Parent ID (value at top of the ID stack)
-    ImGuiWindow*                Window = NULL;              // Item Window
     ImRect                      RectFull = ImRect();        // Item Rectangle
     ImRect                      RectClipped = ImRect();     // Item Rectangle (clipped with window->ClipRect at time of item submission)
     ImGuiItemFlags              InFlags = 0;                // Item flags
     ImGuiItemStatusFlags        StatusFlags = 0;            // Item Status flags (fully updated for some items only, compare TimestampStatus to FrameCount)
-    char                        DebugLabel[32] = {};        // Shortened label for debugging purpose
 
-    ImGuiTestItemInfo()         { RefCount = 0; NavLayer = 0; Depth = 0; }
-    bool                        IsEmpty() const         { return ID == 0; }
+    ImGuiTestItemInfo()         { memset(this, 0, sizeof(*this)); }
 };
 
 // Result of an GatherItems() query
@@ -427,3 +447,9 @@ struct IMGUI_API ImGuiTestRunTask
 };
 
 //-------------------------------------------------------------------------
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

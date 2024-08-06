@@ -30,6 +30,7 @@ Index of this file:
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "imgui_te_engine.h"
 #include "imgui_capture_tool.h"
 #include "imgui_te_utils.h"         // ImPathFindFilename, ImPathFindExtension, ImPathFixSeparatorsForCurrentOS, ImFileCreateDirectoryChain, ImOsOpenInShell
 #include "thirdparty/Str/Str.h"
@@ -50,7 +51,10 @@ Index of this file:
 #pragma warning (push)
 #pragma warning (disable: 4456)                             // declaration of 'xx' hides previous local declaration
 #pragma warning (disable: 4457)                             // declaration of 'xx' hides function parameter
-#else
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"// warning: 'sprintf' has been explicitly marked deprecated here
+#elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
@@ -76,7 +80,9 @@ using namespace IMGUI_STB_NAMESPACE;
 
 #ifdef _MSC_VER
 #pragma warning (pop)
-#else
+#elif defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -365,7 +371,7 @@ ImGuiCaptureStatus ImGuiCaptureContext::CaptureUpdate(ImGuiCaptureArgs* args)
             // FIXME-CAPTURE: Window width change may affect vertical content size if window contains text that wraps. To accurately position mouse cursor for capture we avoid horizontal resize.
             // Instead window width should be set manually before capture, as it is simple to do and most of the time we already have a window of desired width.
             //full_size.x = ImMax(window->SizeFull.x, window->ContentSize.x + (window->WindowPadding.x + window->WindowBorderSize) * 2);
-            full_size.y = ImMax(window->SizeFull.y, window->ContentSize.y + (window->WindowPadding.y + window->WindowBorderSize) * 2 + window->TitleBarHeight() + window->MenuBarHeight());
+            full_size.y = ImMax(window->SizeFull.y, window->ContentSize.y + (window->WindowPadding.y + window->WindowBorderSize) * 2 + window->DecoOuterSizeY1);
             ImGui::SetWindowSize(window, full_size);
             _HoveredWindow = g.HoveredWindow;
         }
@@ -732,11 +738,10 @@ void ImGuiCaptureToolUI::_CaptureWindowsSelector(ImGuiCaptureContext* context, I
         if (!allow_capture)
             ImGui::BeginDisabled();
         bool do_capture = ImGui::Button(label, button_sz);
-        do_capture |= io.KeyAlt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_C));
+        do_capture |= io.KeyAlt && ImGui::IsKeyPressed(ImGuiKey_C);
         if (!allow_capture)
             ImGui::EndDisabled();
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Alternatively press Alt+C to capture selection.");
+        ImGui::SetItemTooltip("Alternatively press Alt+C to capture selection.");
         if (do_capture && _InitializeOutputFile())
             _StateIsCapturing = true;
     }
@@ -889,8 +894,8 @@ void ImGuiCaptureToolUI::ShowCaptureToolWindow(ImGuiCaptureContext* context, boo
                 ImOsOpenInShell(OutputLastFilename);
             if (!has_last_file_name)
                 ImGui::EndDisabled();
-            if (has_last_file_name && ImGui::IsItemHovered())
-                ImGui::SetTooltip("Open %s", OutputLastFilename);
+            if (has_last_file_name)
+                ImGui::SetItemTooltip("Open %s", OutputLastFilename);
             ImGui::SameLine(0.0f, style.ItemInnerSpacing.x);
         }
 
@@ -908,8 +913,7 @@ void ImGuiCaptureToolUI::ShowCaptureToolWindow(ImGuiCaptureContext* context, boo
                 ImPathFixSeparatorsForCurrentOS(output_dir);
                 ImOsOpenInShell(output_dir);
             }
-            if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Open %s/", output_dir);
+            ImGui::SetItemTooltip("Open %s/", output_dir);
         }
 
         const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
@@ -917,18 +921,16 @@ void ImGuiCaptureToolUI::ShowCaptureToolWindow(ImGuiCaptureContext* context, boo
 
         ImGui::PushItemWidth(BUTTON_WIDTH);
         ImGui::InputText("Output template", _OutputFileTemplate, IM_ARRAYSIZE(_OutputFileTemplate));
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Output template should contain one %%d (or variation of it) format variable. "
-                              "Multiple captures will be saved with an increasing number to avoid overwriting same file.");
+        ImGui::SetItemTooltip(
+            "Output template should contain one %%d (or variation of it) format variable. "
+            "Multiple captures will be saved with an increasing number to avoid overwriting same file.");
 
         _ShowEncoderConfigFields(context);
 
         ImGui::DragFloat("Padding", &_CaptureArgs.InPadding, 0.1f, 0, 32, "%.0f");
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Extra padding around captured area.");
+        ImGui::SetItemTooltip("Extra padding around captured area.");
         ImGui::DragInt("Video FPS", &_CaptureArgs.InRecordFPSTarget, 0.1f, 10, 100, "%d fps");
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Target FPS for video captures.");
+        ImGui::SetItemTooltip("Target FPS for video captures.");
 
         if (ImGui::Button("Snap Windows To Grid", ImVec2(BUTTON_WIDTH, 0)))
             _SnapWindowsToGrid(SnapGridSize);
@@ -945,13 +947,12 @@ void ImGuiCaptureToolUI::ShowCaptureToolWindow(ImGuiCaptureContext* context, boo
         ImGui::BeginDisabled(!content_stitching_available);
         ImGui::CheckboxFlags("Stitch full contents height", &_CaptureArgs.InFlags, ImGuiCaptureFlags_StitchAll);
         ImGui::EndDisabled();
-        if (!content_stitching_available && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Content stitching is not possible when using viewports.");
+        if (!content_stitching_available)
+            ImGui::SetItemTooltip("Content stitching is not possible when using viewports.");
 
         ImGui::CheckboxFlags("Include other windows", &_CaptureArgs.InFlags, ImGuiCaptureFlags_IncludeOtherWindows);
         ImGui::CheckboxFlags("Include tooltips & popups", &_CaptureArgs.InFlags, ImGuiCaptureFlags_IncludeTooltipsAndPopups);
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Capture area will be expanded to include visible tooltips.");
+        ImGui::SetItemTooltip("Capture area will be expanded to include visible tooltips.");
 
         ImGui::PopItemWidth();
         ImGui::TreePop();
@@ -1024,8 +1025,7 @@ bool ImGuiCaptureToolUI::_ShowEncoderConfigFields(ImGuiCaptureContext* context)
         const bool encoder_exe_missing = !ImFileExist(context->VideoCaptureEncoderPath);
         if (encoder_exe_missing)
             ImGui::ItemErrorFrame(IM_COL32(255, 0, 0, 255));
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Absolute or relative path to video encoder executable (e.g. \"path/to/ffmpeg.exe\"). Required for video recording.%s", encoder_exe_missing ? "\nFile does not exist!" : "");
+        ImGui::SetItemTooltip("Absolute or relative path to video encoder executable (e.g. \"path/to/ffmpeg.exe\"). Required for video recording.%s", encoder_exe_missing ? "\nFile does not exist!" : "");
     }
 
     struct CmdLineParamsInfo
@@ -1105,8 +1105,7 @@ bool ImGuiCaptureToolUI::_ShowEncoderConfigFields(ImGuiCaptureContext* context)
                 }
             ImGui::EndCombo();
         }
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("File extension for captured video file.");
+        ImGui::SetItemTooltip("File extension for captured video file.");
     }
     return modified;
 }

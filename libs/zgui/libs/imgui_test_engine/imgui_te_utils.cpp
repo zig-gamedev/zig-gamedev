@@ -26,6 +26,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>   // stat()
 #endif
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#endif
 
 #if defined(__linux) || defined(__linux__) || defined(__MACH__) || defined(__MSL__) || defined(__MINGW32__)
 #include <pthread.h>    // pthread_setname_np()
@@ -280,7 +283,7 @@ bool ImFileCreateDirectoryChain(const char* path, const char* path_end)
     path_local[path_len] = 0;
 
 #if defined(_WIN32)
-    ImVector<ImWchar> buf;
+    ImVector<wchar_t> buf;
 #endif
     // Modification of passed file_name allows us to avoid extra temporary memory allocation.
     // strtok() pokes \0 into places where slashes are, we create a directory using directory_name and restore slash.
@@ -291,10 +294,11 @@ bool ImFileCreateDirectoryChain(const char* path, const char* path_end)
             *(token - 1) = IM_DIR_SEPARATOR;
 
 #if defined(_WIN32)
-        // Use ::CreateDirectoryW() because ::CreateDirectoryA() treat filenames in the local code-page instead of UTF-8.
-        const int filename_wsize = ImTextCountCharsFromUtf8(path_local, NULL) + 1;
+        // Use ::CreateDirectoryW() because ::CreateDirectoryA() treat filenames in the local code-page instead of UTF-8
+        // We cannot use ImWchar, which can be 32bits if IMGUI_USE_WCHAR32 (and CreateDirectoryW require 16bits wchar)
+        int filename_wsize = MultiByteToWideChar(CP_UTF8, 0, path_local, -1, NULL, 0);
         buf.resize(filename_wsize);
-        ImTextStrFromUtf8(&buf[0], filename_wsize, path_local, NULL);
+        MultiByteToWideChar(CP_UTF8, 0, path_local, -1, &buf[0], filename_wsize);
         if (!::CreateDirectoryW((wchar_t*)&buf[0], NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
 #else
         if (mkdir(path_local, S_IRWXU) != 0 && errno != EEXIST)
@@ -785,10 +789,11 @@ const ImBuildInfo* ImBuildGetCompilationInfo()
         // CPU
 #if defined(_M_X86) || defined(_M_IX86) || defined(__i386) || defined(__i386__) || defined(_X86_) || defined(_M_AMD64) || defined(_AMD64_) || defined(__x86_64__)
         build_info.Cpu = (sizeof(size_t) == 4) ? "X86" : "X64";
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) || (defined(_M_ARM64) && defined(_WIN64))
         build_info.Cpu = "ARM64";
+#elif defined(__EMSCRIPTEN__)
+        build_info.Cpu = "WebAsm";
 #else
-#error
         build_info.Cpu = (sizeof(size_t) == 4) ? "Unknown32" : "Unknown64";
 #endif
 
@@ -1000,6 +1005,27 @@ bool    ImOsIsDebuggerPresent()
         debugger_pid = atoi(tracer_pid);
     }
     return debugger_pid != 0;
+#elif defined(__APPLE__)
+    // https://stackoverflow.com/questions/2200277/detecting-debugger-on-mac-os-x
+    int                 junk;
+    int                 mib[4];
+    struct kinfo_proc   info;
+    size_t              size;
+
+    // Initialize mib, which tells sysctl the info we want, in this case
+    // we're looking for information about a specific process ID.
+    info.kp_proc.p_flag = 0;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = getpid();
+
+    size = sizeof(info);
+    junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
+    IM_ASSERT(junk == 0);
+
+    // We're being debugged if the P_TRACED flag is set.
+    return (info.kp_proc.p_flag & P_TRACED) != 0;
 #else
     // FIXME
     return false;
@@ -1212,6 +1238,7 @@ void TableDiscardInstanceAndSettings(ImGuiID table_id)
 // Helper to verify ImDrawData integrity of buffer count (broke before e.g. #6716)
 void DrawDataVerifyMatchingBufferCount(ImDrawData* draw_data)
 {
+#if IMGUI_VERSION_NUM >= 18973
     int total_vtx_count = 0;
     int total_idx_count = 0;
     for (ImDrawList* draw_list : draw_data->CmdLists)
@@ -1223,6 +1250,9 @@ void DrawDataVerifyMatchingBufferCount(ImDrawData* draw_data)
     IM_UNUSED(total_idx_count);
     IM_ASSERT(total_vtx_count == draw_data->TotalVtxCount);
     IM_ASSERT(total_idx_count == draw_data->TotalIdxCount);
+#else
+    IM_UNUSED(draw_data);
+#endif
 }
 
 //-----------------------------------------------------------------------------

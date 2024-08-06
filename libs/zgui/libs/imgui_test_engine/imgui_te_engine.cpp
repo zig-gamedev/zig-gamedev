@@ -592,17 +592,34 @@ void ImGuiTestEngine_ApplyInputToImGuiContext(ImGuiTestEngine* engine)
             case ImGuiTestInputType_Key:
             {
                 ImGuiKeyChord key_chord = input.KeyChord;
-#if IMGUI_VERSION_NUM >= 19016
+#if IMGUI_VERSION_NUM >= 19016 && IMGUI_VERSION_NUM < 19063
                 key_chord = ImGui::FixupKeyChord(&g, key_chord); // This will add ImGuiMod_Alt when pressing ImGuiKey_LeftAlt or ImGuiKey_LeftRight
+#endif
+#if IMGUI_VERSION_NUM >= 19063
+                key_chord = ImGui::FixupKeyChord(key_chord);     // This will add ImGuiMod_Alt when pressing ImGuiKey_LeftAlt or ImGuiKey_LeftRight
 #endif
                 ImGuiKey key = (ImGuiKey)(key_chord & ~ImGuiMod_Mask_);
                 ImGuiKeyChord mods = (key_chord & ImGuiMod_Mask_);
                 if (mods != 0x00)
                 {
                     // OSX conversion
-#if IMGUI_VERSION_NUM >= 18912
+#if IMGUI_VERSION_NUM >= 18912 && IMGUI_VERSION_NUM < 19063
                     if (mods & ImGuiMod_Shortcut)
                         mods = (mods & ~ImGuiMod_Shortcut) | (g.IO.ConfigMacOSXBehaviors ? ImGuiMod_Super : ImGuiMod_Ctrl);
+#endif
+#if IMGUI_VERSION_NUM >= 19063
+                    // MacOS: swap Cmd(Super) and Ctrl WILL BE SWAPPED BACK BY io.AddKeyEvent()
+                    if (g.IO.ConfigMacOSXBehaviors)
+                    {
+                        if ((mods & (ImGuiMod_Ctrl | ImGuiMod_Super)) == ImGuiMod_Super)
+                            mods = (mods & ~ImGuiMod_Super) | ImGuiMod_Ctrl;
+                        else if ((mods & (ImGuiMod_Ctrl | ImGuiMod_Super)) == ImGuiMod_Ctrl)
+                            mods = (mods & ~ImGuiMod_Ctrl) | ImGuiMod_Super;
+                        if (key == ImGuiKey_LeftSuper)      { key = ImGuiKey_LeftCtrl; }
+                        else if (key == ImGuiKey_LeftSuper) { key = ImGuiKey_RightCtrl; }
+                        else if (key == ImGuiKey_LeftCtrl)  { key = ImGuiKey_LeftSuper; }
+                        else if (key == ImGuiKey_LeftCtrl)  { key = ImGuiKey_RightSuper; }
+                    }
 #endif
                     // Submitting a ImGuiMod_XXX without associated key needs to add at least one of the key.
                     if (mods & ImGuiMod_Ctrl)
@@ -805,7 +822,7 @@ static void ImGuiTestEngine_PostNewFrame(ImGuiTestEngine* engine, ImGuiContext* 
     for (int task_n = 0; task_n < engine->InfoTasks.Size; task_n++)
     {
         ImGuiTestInfoTask* task = engine->InfoTasks[task_n];
-        if (task->FrameCount < engine->FrameCount - LOCATION_TASK_ELAPSE_FRAMES && task->Result.RefCount == 0)
+        if (task->FrameCount < engine->FrameCount - LOCATION_TASK_ELAPSE_FRAMES)
         {
             IM_DELETE(task);
             engine->InfoTasks.erase(engine->InfoTasks.Data + task_n);
@@ -950,7 +967,7 @@ int ImGuiTestEngine_GetFrameCount(ImGuiTestEngine* engine)
 
 const char* ImGuiTestEngine_GetStatusName(ImGuiTestStatus v)
 {
-    static const char* names[ImGuiTestStatus_COUNT] = { "Success", "Queued", "Running", "Error", "Suspended" };
+    static const char* names[ImGuiTestStatus_COUNT] = { "Unknown", "Success", "Queued", "Running", "Error", "Suspended" };
     IM_STATIC_ASSERT(IM_ARRAYSIZE(names) == ImGuiTestStatus_COUNT);
     if (v >= 0 && v < IM_ARRAYSIZE(names))
         return names[v];
@@ -1172,6 +1189,32 @@ ImGuiTest* ImGuiTestEngine_RegisterTest(ImGuiTestEngine* engine, const char* cat
     return t;
 }
 
+void ImGuiTestEngine_UnregisterTest(ImGuiTestEngine* engine, ImGuiTest* test)
+{
+    // Cannot unregister a running test. Please contact us if you need this.
+    if (engine->TestContext != NULL)
+        IM_ASSERT(engine->TestContext->Test != test);
+
+    // Remove from lists
+    bool found = engine->TestsAll.find_erase(test);
+    IM_ASSERT(found); // Calling ImGuiTestEngine_UnregisterTest() on an unknown test.
+    for (int n = 0; n < engine->TestsQueue.Size; n++)
+    {
+        ImGuiTestRunTask& task = engine->TestsQueue[n];
+        if (task.Test == test)
+        {
+            engine->TestsQueue.erase(&task);
+            n--;
+        }
+    }
+    if (engine->UiSelectAndScrollToTest == test)
+        engine->UiSelectAndScrollToTest = NULL;
+    if (engine->UiSelectedTest == test)
+        engine->UiSelectedTest = NULL;
+
+    IM_DELETE(test);
+}
+
 ImGuiPerfTool* ImGuiTestEngine_GetPerfTool(ImGuiTestEngine* engine)
 {
     return engine->PerfTool;
@@ -1297,8 +1340,9 @@ void ImGuiTestEngine_QueueTests(ImGuiTestEngine* engine, ImGuiTestGroup group, c
         if (group != ImGuiTestGroup_Unknown && test->Group != group)
             continue;
 
-        if (!ImGuiTestEngine_PassFilter(test, filter_str))
-            continue;
+        if (filter_str != NULL)
+            if (!ImGuiTestEngine_PassFilter(test, filter_str))
+                continue;
 
         ImGuiTestEngine_QueueTest(engine, test, run_flags);
     }
@@ -1386,8 +1430,10 @@ struct ImGuiTestContextUiContextBackup
         IO = g.IO;
         Style = g.Style;
         DebugLogFlags = g.DebugLogFlags;
+#if IMGUI_VERSION_NUM >= 18837
         ConfigNavWindowingKeyNext = g.ConfigNavWindowingKeyNext;
         ConfigNavWindowingKeyPrev = g.ConfigNavWindowingKeyPrev;
+#endif
         memset(IO.MouseDown, 0, sizeof(IO.MouseDown));
         for (int n = 0; n < IM_ARRAYSIZE(IO.KeysData); n++)
             IO.KeysData[n].Down = false;
@@ -1400,8 +1446,10 @@ struct ImGuiTestContextUiContextBackup
         g.IO = IO;
         g.Style = Style;
         g.DebugLogFlags = DebugLogFlags;
+#if IMGUI_VERSION_NUM >= 18837
         g.ConfigNavWindowingKeyNext = ConfigNavWindowingKeyNext;
         g.ConfigNavWindowingKeyPrev = ConfigNavWindowingKeyPrev;
+#endif
     }
     void RestoreClipboardFuncs(ImGuiContext& g)
     {
@@ -1517,18 +1565,11 @@ void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* parent_c
     else
     {
         ctx->LogWarning("Child Test: '%s' '%s'..", test->Category, test->Name);
-        ctx->LogWarning("(ShareVars=%d ShareTestContext=%d)", (run_flags & ImGuiTestRunFlags_ShareVars) ? 1 : 0, (run_flags & ImGuiTestRunFlags_ShareTestContext) ? 1 : 0);
+        ctx->LogDebug("(ShareVars=%d ShareTestContext=%d)", (run_flags & ImGuiTestRunFlags_ShareVars) ? 1 : 0, (run_flags & ImGuiTestRunFlags_ShareTestContext) ? 1 : 0);
     }
 
     // Clear ImGui inputs to avoid key/mouse leaks from one test to another
     ImGuiTestEngine_ClearInput(engine);
-
-    ctx->FrameCount = parent_ctx ? parent_ctx->FrameCount : 0;
-    ctx->ErrorCounter = 0;
-    ctx->SetRef("");
-    ctx->SetInputMode(ImGuiInputSource_Mouse);
-    ctx->UiContext->NavInputSource = ImGuiInputSource_Keyboard;
-    ctx->Clipboard.clear();
 
     // Backup entire IO and style. Allows tests modifying them and not caring about restoring state.
     ImGuiTestContextUiContextBackup backup_ui_context;
@@ -1570,6 +1611,12 @@ void ImGuiTestEngine_RunTest(ImGuiTestEngine* engine, ImGuiTestContext* parent_c
     ImGuiTestActiveFunc backup_active_func = ctx->ActiveFunc;
     ctx->ActiveFunc = ImGuiTestActiveFunc_TestFunc;
     ctx->FirstGuiFrame = (test->GuiFunc != NULL) ? true : false;
+    ctx->FrameCount = parent_ctx ? parent_ctx->FrameCount : 0;
+    ctx->ErrorCounter = 0;
+    ctx->SetRef("");
+    ctx->SetInputMode(ImGuiInputSource_Mouse);
+    ctx->UiContext->NavInputSource = ImGuiInputSource_Keyboard;
+    ctx->Clipboard.clear();
 
     // Warm up GUI
     // - We need one mandatory frame running GuiFunc before running TestFunc
@@ -2055,14 +2102,14 @@ void ImGuiTestEngineHook_Log(ImGuiContext* ui_ctx, const char* fmt, ...)
 // Your custom assert code may optionally want to call this.
 void ImGuiTestEngine_AssertLog(const char* expr, const char* file, const char* function, int line)
 {
-    ImGuiTestEngine* engine = GImGuiTestEngine;
-    if (ImGuiTestContext* ctx = engine->TestContext)
-    {
-        ctx->LogError("Assert: '%s'", expr);
-        ctx->LogWarning("In %s:%d, function %s()", file, line, function);
-        if (ImGuiTest* test = ctx->Test)
-            ctx->LogWarning("While running test: %s %s", test->Category, test->Name);
-    }
+    if (ImGuiTestEngine* engine = GImGuiTestEngine)
+        if (ImGuiTestContext* ctx = engine->TestContext)
+        {
+            ctx->LogError("Assert: '%s'", expr);
+            ctx->LogWarning("In %s:%d, function %s()", file, line, function);
+            if (ImGuiTest* test = ctx->Test)
+                ctx->LogWarning("While running test: %s %s", test->Category, test->Name);
+        }
 }
 
 // Used by IM_CHECK_OP() macros

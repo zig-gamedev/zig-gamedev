@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "imgui_te_utils.h"             // ImFuncPtr
+// Need "imgui_te_engine.h" included for ImFuncPtr
 
 //-----------------------------------------------------------------------------
 // Forward declarations

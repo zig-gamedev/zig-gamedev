@@ -177,7 +177,11 @@ static void DrawTestLog(ImGuiTestEngine* e, ImGuiTest* test)
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
                 break;
             }
+#if IMGUI_VERSION_NUM >= 19072
+            ImGui::DebugTextUnformattedWithLocateItem(line_start, line_end);
+#else
             ImGui::TextUnformatted(line_start, line_end);
+#endif
             ImGui::PopStyleColor();
 
             ImGui::PushID(line_no);
@@ -277,13 +281,16 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetFrameHeight() + style.ItemInnerSpacing.x);
 
     //ImGui::Text("TESTS (%d)", engine->TestsAll.Size);
-#if IMGUI_VERSION_NUM >= 18837
+#if IMGUI_VERSION_NUM >= 19066
+    ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_R, ImGuiInputFlags_Tooltip | ImGuiInputFlags_RouteFromRootWindow);
+    bool run = ImGui::Button("Run");
+#elif IMGUI_VERSION_NUM >= 18837
     bool run = ImGui::Button("Run") || ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_R);
-#else
-    bool = ImGui::Button("Run");
-#endif
 #if IMGUI_VERSION_NUM > 18963
     ImGui::SetItemTooltip("Ctrl+R");
+#endif
+#else
+    bool run = ImGui::Button("Run");
 #endif
     if (run)
     {
@@ -320,7 +327,7 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
 
     ImGui::SameLine();
     const char* perflog_label = "Perf Tool";
-    float filter_width = ImGui::GetWindowContentRegionMax().x - ImGui::GetCursorPos().x;
+    float filter_width = ImGui::GetContentRegionAvail().x;
     float perf_stress_factor_width = (30 * dpi_scale);
     if (group == ImGuiTestGroup_Perfs)
     {
@@ -329,6 +336,9 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
     }
     filter_width -= ImGui::CalcTextSize("(?)").x + style.ItemSpacing.x;
     ImGui::SetNextItemWidth(ImMax(20.0f, filter_width));
+#if IMGUI_VERSION_NUM >= 19066
+    ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip | ImGuiInputFlags_RouteFromRootWindow);
+#endif
     ImGui::InputText("##filter", filter);
     ImGui::SameLine();
     ImGui::TextDisabled("(?)");
@@ -354,6 +364,7 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
     int tests_completed = 0;
     int tests_succeeded = 0;
     int tests_failed = 0;
+    ImVector<ImGuiTest*> tests_to_remove;
     if (ImGui::BeginTable("Tests", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_SizingFixedFit))
     {
         ImGui::TableSetupScrollFreeze(0, 1);
@@ -515,6 +526,11 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
                 if (ImGui::MenuItem("Clear log", NULL, false, !test_log->IsEmpty()))
                     test_log->Clear();
 
+                // [DEBUG] Simple way to exercise ImGuiTestEngine_UnregisterTest()
+                //ImGui::Separator();
+                //if (ImGui::MenuItem("Remove test"))
+                //    tests_to_remove.push_back(test);
+
                 ImGui::EndPopup();
             }
 
@@ -570,6 +586,10 @@ static void ShowTestGroup(ImGuiTestEngine* e, ImGuiTestGroup group, Str* filter)
         ImGui::PopStyleVar(2);
         ImGui::EndTable();
     }
+
+    // Process removal
+    for (ImGuiTest* test : tests_to_remove)
+        ImGuiTestEngine_UnregisterTest(e, test);
 
     // Display test status recap (colors match per-test run button colors defined above)
     {
@@ -750,22 +770,34 @@ static void ImGuiTestEngine_ShowTestTool(ImGuiTestEngine* engine, bool* p_open)
         "- Cinematic: Run tests with pauses between actions (for e.g. tutorials)."
     );
     ImGui::SameLine();
-    //ImGui::Checkbox("Fast", &engine->IO.ConfigRunFast);
-    //ImGui::SameLine();
+    ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+    ImGui::SameLine();
+
+    // (Would be good if we exposed horizontal layout mode..)
     ImGui::Checkbox("Stop", &engine->IO.ConfigStopOnError);
-    ImGui::SetItemTooltip("Stop running tests when hitting an error.");
+    ImGui::SetItemTooltip("When hitting an error:\n- Stop running other tests.");
     ImGui::SameLine();
     ImGui::Checkbox("DbgBrk", &engine->IO.ConfigBreakOnError);
-    ImGui::SetItemTooltip("Break in debugger when hitting an error.");
+    ImGui::SetItemTooltip("When hitting an error:\n- Break in debugger.");
     ImGui::SameLine();
-    ImGui::Checkbox("KeepGUI", &engine->IO.ConfigKeepGuiFunc);
-    ImGui::SetItemTooltip("Keep GUI function running after a test fails, or when a single queued test is finished.\nHold ESC to abort a running GUI function.");
-    ImGui::SameLine();
-    ImGui::Checkbox("Refocus", &engine->IO.ConfigRestoreFocusAfterTests);
-    ImGui::SetItemTooltip("Restore focus back after running tests.");
+    ImGui::Checkbox("Capture", &engine->IO.ConfigCaptureOnError);
+    ImGui::SetItemTooltip("When hitting an error:\n- Capture screen to PNG. Right-click filename in Test Log to open.");
     ImGui::SameLine();
     ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
     ImGui::SameLine();
+
+    ImGui::Checkbox("KeepGUI", &engine->IO.ConfigKeepGuiFunc);
+    ImGui::SetItemTooltip("After running single test or hitting an error:\n- Keep GUI function visible and interactive.\n- Hold ESC to abort a running GUI function.");
+    ImGui::SameLine();
+    bool keep_focus = !engine->IO.ConfigRestoreFocusAfterTests;
+    if (ImGui::Checkbox("KeepFocus", &keep_focus))
+        engine->IO.ConfigRestoreFocusAfterTests = !keep_focus;
+    ImGui::SetItemTooltip("After running tests:\n- Keep GUI current focus, instead of restoring focus to this window.");
+
+    ImGui::SameLine();
+    ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+    ImGui::SameLine();
+
     ImGui::SetNextItemWidth(70 * dpi_scale);
     if (ImGui::BeginCombo("##Verbose", ImGuiTestEngine_GetVerboseLevelName(engine->IO.ConfigVerboseLevel), ImGuiComboFlags_None))
     {
@@ -775,6 +807,7 @@ static void ImGuiTestEngine_ShowTestTool(ImGuiTestEngine* engine, bool* p_open)
         ImGui::EndCombo();
     }
     ImGui::SetItemTooltip("Verbose level.");
+
     //ImGui::PopStyleVar();
     ImGui::Separator();
 
