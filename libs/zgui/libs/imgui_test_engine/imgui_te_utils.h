@@ -14,17 +14,6 @@
 class Str;          // Str<> from thirdparty/Str/Str.h
 
 //-----------------------------------------------------------------------------
-// Function Pointers
-//-----------------------------------------------------------------------------
-
-#if IMGUI_TEST_ENGINE_ENABLE_STD_FUNCTION
-#include <functional>
-#define ImFuncPtr(FUNC_TYPE)        std::function<FUNC_TYPE>
-#else
-#define ImFuncPtr(FUNC_TYPE)        FUNC_TYPE*
-#endif
-
-//-----------------------------------------------------------------------------
 // Hashing Helpers
 //-----------------------------------------------------------------------------
 

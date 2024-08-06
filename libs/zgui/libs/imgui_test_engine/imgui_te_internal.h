@@ -138,7 +138,7 @@ struct ImGuiTestEngine
     float                       OverrideDeltaTime = -1.0f;      // Inject custom delta time into imgui context to simulate clock passing faster than wall clock time.
     ImVector<ImGuiTest*>        TestsAll;
     ImVector<ImGuiTestRunTask>  TestsQueue;
-    ImGuiTestContext*           TestContext = NULL;
+    ImGuiTestContext*           TestContext = NULL;             // Running test context
     ImVector<ImGuiTestInfoTask*>InfoTasks;
     ImGuiTestGatherTask         GatherTask;
     ImGuiTestFindByLabelTask    FindByLabelTask;

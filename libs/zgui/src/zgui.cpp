@@ -2540,9 +2540,9 @@ extern "C"
         return ImGui::DockSpace(ImGui::GetID(str_id), {size[0], size[1]}, flags);
     }
 
-    ZGUI_API ImGuiID zguiDockSpaceOverViewport(const ImGuiViewport *viewport, ImGuiDockNodeFlags dockspace_flags)
+    ZGUI_API ImGuiID zguiDockSpaceOverViewport(ImGuiID dockspace_id, const ImGuiViewport *viewport, ImGuiDockNodeFlags dockspace_flags)
     {
-        return ImGui::DockSpaceOverViewport(viewport, dockspace_flags);
+        return ImGui::DockSpaceOverViewport(dockspace_id, viewport, dockspace_flags);
     }
 
     //--------------------------------------------------------------------------------------------------

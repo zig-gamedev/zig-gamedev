@@ -435,8 +435,13 @@ static bool RenderMultiSelectFilter(ImGuiPerfTool* perf, const char* filter_hint
         ImGui::SetTooltip("Hold CTRL to invert other items.\nHold SHIFT to close popup instantly.");
 
     // Keep popup open for multiple actions if SHIFT is pressed.
+#if IMGUI_VERSION_NUM >= 19094
+    if (!io.KeyShift)
+        ImGui::PushItemFlag(ImGuiItemFlags_AutoClosePopups, false);
+#else
     if (!io.KeyShift)
         ImGui::PushItemFlag(ImGuiItemFlags_SelectableDontClosePopup, true);
+#endif
 
     if (ImGui::MenuItem("Show All"))
     {
@@ -1050,8 +1055,6 @@ void ImGuiPerfTool::ShowPerfToolWindow(ImGuiTestEngine* engine, bool* p_open)
     if (ImGui::IsWindowAppearing() && Empty())
         LoadCSV();
 
-    ImGuiStyle& style = ImGui::GetStyle();
-
     // -----------------------------------------------------------------------------------------------------------------
     // Render utility buttons
     // -----------------------------------------------------------------------------------------------------------------
@@ -1157,10 +1160,7 @@ void ImGuiPerfTool::ShowPerfToolWindow(ImGuiTestEngine* engine, bool* p_open)
         ImGui::SetTooltip("Generate a report and open it in the browser.");
 
     // Align help button to the right.
-    float help_pos = ImGui::GetWindowContentRegionMax().x - style.FramePadding.x * 2 - ImGui::CalcTextSize("(?)").x;
-    if (help_pos > ImGui::GetCursorPosX())
-        ImGui::SetCursorPosX(help_pos);
-
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImMax(0.0f, ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("(?)").x));
     ImGui::TextDisabled("(?)");
     if (ImGui::IsItemHovered())
     {
@@ -1263,6 +1263,7 @@ void ImGuiPerfTool::ShowPerfToolWindow(ImGuiTestEngine* engine, bool* p_open)
     {
 #if IMGUI_TEST_ENGINE_ENABLE_IMPLOT
         // Splitter between two following child windows is rendered first.
+        ImGuiStyle& style = ImGui::GetStyle();
         float plot_height = 0.0f;
         float& table_height = _InfoTableHeight;
         ImGui::Splitter("splitter", &plot_height, &table_height, ImGuiAxis_Y, +1);
@@ -1843,7 +1844,7 @@ void RegisterTests_TestEnginePerfTool(ImGuiTestEngine* e)
         ctx->WindowMove("", ImVec2(50, 50));
         ctx->WindowResize("", ImVec2(1400, 900));
 #if IMGUI_TEST_ENGINE_ENABLE_IMPLOT
-        ImGuiWindow* plot_child = ctx->WindowInfo("plot")->Window;  // "plot/PerfTool" prior to implot 2023/08/21
+        ImGuiWindow* plot_child = ctx->WindowInfo("plot").Window;  // "plot/PerfTool" prior to implot 2023/08/21
         IM_CHECK(plot_child != NULL);
 
         // Move legend to right side.
@@ -1910,7 +1911,7 @@ void RegisterTests_TestEnginePerfTool(ImGuiTestEngine* e)
 #if IMGUI_TEST_ENGINE_ENABLE_IMPLOT
         ctx->ItemDoubleClick("splitter");   // Hide info table
 
-        ImGuiWindow* plot_child = ctx->WindowInfo("plot")->Window;  // "plot/PerfTool" prior to implot 2023/08/21
+        ImGuiWindow* plot_child = ctx->WindowInfo("plot").Window;  // "plot/PerfTool" prior to implot 2023/08/21
         IM_CHECK(plot_child != NULL);
 
         // Move legend to right side.
@@ -1928,7 +1929,7 @@ void RegisterTests_TestEnginePerfTool(ImGuiTestEngine* e)
         // Take a screenshot.
         ImGuiCaptureArgs* args = ctx->CaptureArgs;
         args->InCaptureRect = plot_child->Rect();
-        ctx->CaptureAddWindow(window->Name);
+        ctx->CaptureAddWindow(window->ID);
         ctx->CaptureScreenshot(ImGuiCaptureFlags_HideMouseCursor);
         ctx->ItemDragWithDelta("splitter", ImVec2(0, -180));        // Show info table
         perf_report_image = args->InOutputFile;
