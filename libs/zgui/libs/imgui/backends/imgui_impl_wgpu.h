@@ -34,11 +34,12 @@ struct ImGui_ImplWGPU_InitInfo
     ImGui_ImplWGPU_InitInfo()
     {
         PipelineMultisampleState.count = 1;
-        PipelineMultisampleState.mask = -1u;
+        PipelineMultisampleState.mask = UINT32_MAX;
         PipelineMultisampleState.alphaToCoverageEnabled = false;
     }
 };
 
+// Follow "Getting Started" link and check examples/ folder to learn about using backends!
 IMGUI_IMPL_API bool ImGui_ImplWGPU_Init(ImGui_ImplWGPU_InitInfo* init_info);
 IMGUI_IMPL_API void ImGui_ImplWGPU_Shutdown();
 IMGUI_IMPL_API void ImGui_ImplWGPU_NewFrame();

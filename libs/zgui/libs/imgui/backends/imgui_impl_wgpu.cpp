@@ -760,6 +760,7 @@ void ImGui_ImplWGPU_InvalidateDeviceObjects()
 bool ImGui_ImplWGPU_Init(ImGui_ImplWGPU_InitInfo* init_info)
 {
     ImGuiIO& io = ImGui::GetIO();
+    IMGUI_CHECKVERSION();
     IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
 
     // Setup backend capabilities flags
@@ -787,7 +788,7 @@ bool ImGui_ImplWGPU_Init(ImGui_ImplWGPU_InitInfo* init_info)
 
     // Create buffers with a default size (they will later be grown as needed)
     bd->pFrameResources = new FrameResources[bd->numFramesInFlight];
-    for (int i = 0; i < bd->numFramesInFlight; i++)
+    for (unsigned int i = 0; i < bd->numFramesInFlight; i++)
     {
         FrameResources* fr = &bd->pFrameResources[i];
         fr->IndexBuffer = nullptr;
