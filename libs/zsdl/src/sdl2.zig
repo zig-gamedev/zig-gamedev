@@ -1091,7 +1091,43 @@ pub const FPoint = extern struct {
 // Surface Creation and Simple Drawing
 //
 //--------------------------------------------------------------------------------------------------
-pub const Surface = opaque {
+pub const Surface = extern struct {
+    /// Read-only
+    flags: u32,
+
+    /// Read-only
+    format: ?*PixelFormatEnum,
+
+    /// Read-only
+    w: c_int,
+
+    /// Read-only
+    h: c_int,
+
+    /// Read-only
+    pitch: c_int,
+
+    /// Read-write
+    pixels: ?*anyopaque,
+
+    /// Application data associated with the surface (Read-write)
+    userdate: ?*anyopaque,
+
+    /// information needed for surfaces requiring locks (Read-only)
+    locked: c_int,
+
+    /// list of BlitMap that hold a reference to this surface (Private)
+    list_blitmap: ?*anyopaque,
+
+    /// clipping information (Read-only)
+    clip_rect: Rect,
+
+    /// info for fast blit mapping to other surfaces (Private)
+    map: ?*anyopaque,
+
+    /// Reference count -- used when freeing surface (Read-mostly)
+    refcount: c_int,
+
     pub const free = freeSurface;
     pub const blit = blitSurface;
 };
