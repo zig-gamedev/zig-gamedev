@@ -1,4 +1,4 @@
-# zgui v0.3.0 - dear imgui bindings
+# zgui v0.4.0 - dear imgui bindings
 
 Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. [Here](https://github.com/michal-z/zig-gamedev/tree/main/samples/minimal_zgpu_zgui) is a simple sample application, and [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu) is a full one.
 
@@ -13,10 +13,10 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 
 ## Versions
 
-* [ImGui](https://github.com/ocornut/imgui/tree/v1.90.4-docking) `1.90.4-docking`
-* [ImGui test engine](https://github.com/ocornut/imgui_test_engine/tree/v1.90.4)  `1.90.4`
+* [ImGui](https://github.com/ocornut/imgui/tree/v1.91.0-docking) `1.91.0-docking`
+* [ImGui test engine](https://github.com/ocornut/imgui_test_engine/tree/v1.91.0)  `1.91.0`
 * [ImPlot](https://github.com/epezent/implot) `O.17`
-* [ImNodeEditor](https://github.com/thedmd/imgui-node-editor/tree/v0.9.3) `O.9.3`
+* [ImGuiNodeEditor](https://github.com/thedmd/imgui-node-editor/tree/v0.9.3) `O.9.3`
 
 ## Getting started
 
@@ -205,7 +205,7 @@ fn registerTests() void {
 
 ### Node editor API
 
-Zig wraper for [ImGUI Node Editor](https://github.com/thedmd/imgui-node-editor).
+Zig wraper for [ImGuiNodeEditor](https://github.com/thedmd/imgui-node-editor).
 
 ```zig
 var node_editor = zgui.node_editor.EditorContext.create(.{ .enable_smooth_zoom = true }),

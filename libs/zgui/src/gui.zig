@@ -585,7 +585,7 @@ pub const SliderFlags = packed struct(c_int) {
     logarithmic: bool = false,
     no_round_to_format: bool = false,
     no_input: bool = false,
-    wrap_around: bool  = false,
+    wrap_around: bool = false,
     _padding: u23 = 0,
 };
 //--------------------------------------------------------------------------------------------------
@@ -1119,7 +1119,7 @@ pub const StyleCol = enum(c_int) {
     table_border_light,
     table_row_bg,
     table_row_bg_alt,
-    text_link,  
+    text_link,
     text_selected_bg,
     drag_drop_target,
     nav_highlight,
@@ -1185,12 +1185,12 @@ pub const StyleVar = enum(c_int) {
     grab_min_size, // 1f
     grab_rounding, // 1f
     tab_rounding, // 1f
-    tab_border_size,            // 1f
-    tab_bar_border_size,         // 1f
-    tab_bar_overline_size,       // 1f
-    table_angled_headers_angle,  // 1f
-    table_angled_headers_text_align,// 2f
-    button_text_align,  // 2f
+    tab_border_size, // 1f
+    tab_bar_border_size, // 1f
+    tab_bar_overline_size, // 1f
+    table_angled_headers_angle, // 1f
+    table_angled_headers_text_align, // 2f
+    button_text_align, // 2f
     selectable_text_align, // 2f
     separator_text_border_size, // 1f
     separator_text_align, // 2f
@@ -3622,9 +3622,9 @@ pub const DragDropFlags = packed struct(c_int) {
     source_no_hold_open_to_others: bool = false,
     source_allow_null_id: bool = false,
     source_extern: bool = false,
-    payload_auto_expire : bool = false,
+    payload_auto_expire: bool = false,
     payload_no_cross_context: bool = false,
-    payload_no_cross_process : bool = false,
+    payload_no_cross_process: bool = false,
 
     _padding0: u2 = 0,
 
