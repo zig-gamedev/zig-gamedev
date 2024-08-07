@@ -112,48 +112,61 @@ pub fn build(b: *std.Build) void {
         .flags = cflags,
     });
 
-    if (options.with_implot) {
-        imgui.defineCMacro("ZGUI_IMPLOT", "1");
-        imgui.addCSourceFiles(.{
-            .files = &.{
-                "libs/imgui/implot_demo.cpp",
-                "libs/imgui/implot.cpp",
-                "libs/imgui/implot_items.cpp",
-            },
-            .flags = cflags,
-        });
-    } else {
-        imgui.defineCMacro("ZGUI_IMPLOT", "0");
-    }
-
     if (options.use_wchar32) {
         imgui.defineCMacro("IMGUI_USE_WCHAR32", "1");
     }
 
-    if (options.with_gizmo) {
-        imgui.defineCMacro("ZGUI_GIZMO", "1");
+    if (options.with_implot) {
+        imgui.addIncludePath(b.path("libs/implot"));
+
+        imgui.addCSourceFile(.{
+            .file = b.path("src/zplot.cpp"),
+            .flags = cflags,
+        });
+
         imgui.addCSourceFiles(.{
             .files = &.{
-                "libs/imgui/ImGuizmo.cpp",
+                "libs/implot/implot_demo.cpp",
+                "libs/implot/implot.cpp",
+                "libs/implot/implot_items.cpp",
             },
             .flags = cflags,
         });
-    } else {
-        imgui.defineCMacro("ZGUI_GIZMO", "0");
+    }
+
+    if (options.with_gizmo) {
+        imgui.addIncludePath(b.path("libs/imguizmo/"));
+
+        imgui.addCSourceFile(.{
+            .file = b.path("src/zgizmo.cpp"),
+            .flags = cflags,
+        });
+
+        imgui.addCSourceFiles(.{
+            .files = &.{
+                "libs/imguizmo/ImGuizmo.cpp",
+            },
+            .flags = cflags,
+        });
     }
 
     if (options.with_node_editor) {
-        imgui.defineCMacro("ZGUI_NODE_EDITOR", "1");
+        imgui.addCSourceFile(.{
+            .file = b.path("src/znode_editor.cpp"),
+            .flags = cflags,
+        });
+
         imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/crude_json.cpp"), .flags = cflags });
         imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/imgui_canvas.cpp"), .flags = cflags });
         imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/imgui_node_editor_api.cpp"), .flags = cflags });
         imgui.addCSourceFile(.{ .file = b.path("libs/node_editor/imgui_node_editor.cpp"), .flags = cflags });
-    } else {
-        imgui.defineCMacro("ZGUI_NODE_EDITOR", "0");
     }
 
     if (options.with_te) {
-        imgui.defineCMacro("ZGUI_TE", "1");
+        imgui.addCSourceFile(.{
+            .file = b.path("src/zte.cpp"),
+            .flags = cflags,
+        });
 
         imgui.defineCMacro("IMGUI_ENABLE_TEST_ENGINE", null);
         imgui.defineCMacro("IMGUI_TEST_ENGINE_ENABLE_COROUTINE_STDTHREAD_IMPL", "1");
@@ -211,8 +224,6 @@ pub fn build(b: *std.Build) void {
             imgui.linkLibrary(winpthreads);
             imgui.addSystemIncludePath(b.path("libs/winpthreads/include"));
         }
-    } else {
-        imgui.defineCMacro("ZGUI_TE", "0");
     }
 
     switch (options.backend) {

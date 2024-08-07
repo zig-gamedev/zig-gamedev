@@ -94,7 +94,7 @@ Option to download packages using Zig Package Manager **coming soon!**
 | **[zemscripten](libs/zemscripten)**  | Build package and shims for [Emscripten](https://emscripten.org) emsdk |
 | **[zglfw](libs/zglfw)**       | Build package & bindings for [GLFW](https://github.com/glfw/glfw)                                                                          |
 | **[zgpu](libs/zgpu)**         | Small helper library built on top of [Dawn](https://github.com/zig-gamedev/dawn) native WebGPU implementation                              |
-| **[zgui](libs/zgui)**         | Build package and bindings for [Dear Imgui](https://github.com/ocornut/imgui) (includes [ImPlot](https://github.com/epezent/implot))       |
+| **[zgui](libs/zgui)**         | Build package and bindings for [Dear Imgui](https://github.com/ocornut/imgui) (includes `Test engine`, `ImPlot`, `ImGuizmo`, `ImGuiNodeEditor`)       |
 | **[zjobs](libs/zjobs)**       | Generic job queue implementation                                                                                                           |
 | **[zmath](libs/zmath)**       | SIMD math library for game developers                                                                                                      |
 | **[zmesh](libs/zmesh)**       | Loading, generating, processing and optimizing triangle meshes                                                                             |
