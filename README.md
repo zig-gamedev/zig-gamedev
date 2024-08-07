@@ -49,42 +49,9 @@ To get a list of all available build steps:
 zig build -l
 ```
 
-### Using the [Libraries](#Libraries)
-
-Copy each library to a subdirectory in your project and add them as local package dependencies. For example:
-
-`build.zig.zon`
-
- ```zig
- .{
-     .name = "MyGame",
-     .version = "0.0.0",
-     .dependencies = .{
-         .zglfw = .{ .path = "libs/zglfw" },
-         .system_sdk = .{ .path = "libs/system-sdk" },
-     },
-     .paths = .{""},
- }
- ```
-
-`build.zig`
-
- ```zig
- pub fn build(b: *std.Build) void {
-    const exe = b.addExecutable(.{ ... });
-
-    const zglfw = b.dependency("zglfw", .{});
-    exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
-}
- ```
-
-Refer to each lib's README.md for further usage intructions.
-
-Option to download packages using Zig Package Manager **coming soon!**
-
-
 ## Libraries
+Note: Libs are being migrated from [libs/](libs/) folder in this repo to each their own repository under the [zig-gamedev GitHub organisation](https://github.com/zig-gamedev)
+
 | Library                       | Description                                                                                                                |
 |-------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | **[zaudio](libs/zaudio)**     | Cross-platform audio using [miniaudio](https://github.com/mackron/miniaudio)                                                                         |
@@ -108,7 +75,7 @@ Option to download packages using Zig Package Manager **coming soon!**
 | **[zstbi](libs/zstbi)**       | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                |
 | **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                   |
 | **[zwin32](libs/zwin32)**     | Bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                                                  |
-| **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                               |                                              
+| **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                               |                                      
 
 ## Sample applications (native wgpu)
 
