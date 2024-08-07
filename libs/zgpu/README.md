@@ -51,7 +51,7 @@ then in your `build.zig`:
 pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
-    @import("system_sdk").addLibraryPathsTo(exe);
+    @import("system-sdk").addLibraryPathsTo(exe);
 
     @import("zgpu").addLibraryPathsTo(exe);
 

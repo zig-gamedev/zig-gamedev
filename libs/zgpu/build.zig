@@ -99,7 +99,7 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(zdawn);
 
-    @import("system_sdk").addLibraryPathsTo(zdawn);
+    @import("system-sdk").addLibraryPathsTo(zdawn);
 
     addLibraryPathsTo(zdawn);
     linkSystemDeps(zdawn);
@@ -128,7 +128,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    @import("system_sdk").addLibraryPathsTo(tests);
+    @import("system-sdk").addLibraryPathsTo(tests);
     tests.addIncludePath(b.path("libs/dawn/include"));
     tests.linkLibrary(zdawn);
     addLibraryPathsTo(tests);

@@ -1,5 +1,0 @@
-framework module ColorSync [extern_c] [system] {
-  umbrella header "ColorSync.h"
-  export *
-  module * { export * }
-}

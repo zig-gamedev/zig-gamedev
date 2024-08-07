@@ -12,7 +12,6 @@
         "LICENSE",
     },
     .dependencies = .{
-        .system_sdk = .{ .path = "libs/system-sdk" },
         .zaudio = .{ .path = "libs/zaudio" },
         .zbullet = .{ .path = "libs/zbullet" },
         .zd3d12 = .{ .path = "libs/zd3d12" },
@@ -65,6 +64,11 @@
         .@"sdl2-prebuilt" = .{
             .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/9ee84ec9ab63cf2bf2659525b4c30ad9ad7339b2.tar.gz",
             .hash = "1220375998747e24c922eeb791de1dcd0a670571a75d4cd22a5129663b53ba7be7d2",
+        },
+
+        .@"system-sdk" = .{
+            .url = "https://github.com/zig-gamedev/system-sdk/archive/refs/heads/main.tar.gz",
+            .hash = "122035336d7535f655fe0ece31cea0fbf8ad2f1e42f64b073995050a425ca8f8fbdc",
         },
     },
 }

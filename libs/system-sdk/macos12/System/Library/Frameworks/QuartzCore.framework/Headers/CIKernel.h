@@ -1,1 +1,0 @@
-#include <CoreImage/CIKernel.h>

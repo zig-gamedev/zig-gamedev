@@ -61,7 +61,10 @@ Copy each library to a subdirectory in your project and add them as local packag
      .version = "0.0.0",
      .dependencies = .{
          .zglfw = .{ .path = "libs/zglfw" },
-         .system_sdk = .{ .path = "libs/system-sdk" },
+         .@"system-sdk" = .{
+            .url = "https://github.com/zig-gamedev/system-sdk/archive/refs/heads/main.tar.gz",
+            .hash = "122035336d7535f655fe0ece31cea0fbf8ad2f1e42f64b073995050a425ca8f8fbdc",
+        },
      },
      .paths = .{""},
  }
