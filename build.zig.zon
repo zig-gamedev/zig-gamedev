@@ -28,7 +28,6 @@
         .zphysics = .{ .path = "libs/zphysics" },
         .zpix = .{ .path = "libs/zpix" },
         .zpool = .{ .path = "libs/zpool" },
-        .zstbi = .{ .path = "libs/zstbi" },
         .ztracy = .{ .path = "libs/ztracy" },
         .zwin32 = .{ .path = "libs/zwin32" },
         .zxaudio2 = .{ .path = "libs/zxaudio2" },
@@ -65,6 +64,11 @@
         .@"sdl2-prebuilt" = .{
             .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/9ee84ec9ab63cf2bf2659525b4c30ad9ad7339b2.tar.gz",
             .hash = "1220375998747e24c922eeb791de1dcd0a670571a75d4cd22a5129663b53ba7be7d2",
+        },
+
+        .zstbi = .{
+            .url = "https://github.com/zig-gamedev/zstbi/archive/3809262fe582e5128f8ec95eb94235783e185a26.tar.gz",
+            .hash = "122009ea2ff8496071dbe447731a62e6c7c731b6aca5ac3a01992a8d3330d4482a88",
         },
     },
 }
