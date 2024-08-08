@@ -295,12 +295,6 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zjobs.artifact("zjobs-tests")).step);
 
-    const zstbi = b.dependency("zstbi", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zstbi.artifact("zstbi-tests")).step);
-
     const ztracy = b.dependency("ztracy", .{
         .target = target,
         .optimize = optimize,
