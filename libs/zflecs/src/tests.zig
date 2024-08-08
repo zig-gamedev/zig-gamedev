@@ -47,8 +47,8 @@ test "zflecs.entities.basics" {
 
     {
         var term = ecs.term_t{ .id = ecs.id(Position) };
-        var it = ecs.term_iter(world, &term);
-        while (ecs.term_next(&it)) {
+        var it = ecs.each(world, &term);
+        while (ecs.each_next(&it)) {
             if (ecs.field(&it, Position, 1)) |positions| {
                 for (positions, it.entities()) |p, e| {
                     print(
@@ -61,23 +61,23 @@ test "zflecs.entities.basics" {
     }
 
     {
-        var desc = ecs.filter_desc_t{};
+        var desc = ecs.query_desc_t{};
         desc.terms[0].id = ecs.id(Position);
-        const filter = try ecs.filter_init(world, &desc);
-        defer ecs.filter_fini(filter);
+        const query = try ecs.query_init(world, &desc);
+        defer ecs.query_fini(query);
     }
 
     {
-        const filter = try ecs.filter_init(world, &.{
+        const query = try ecs.query_init(world, &.{
             .terms = [_]ecs.term_t{
                 .{ .id = ecs.id(Position) },
                 .{ .id = ecs.id(Walking) },
-            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
+            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_COUNT_MAX - 2),
         });
-        defer ecs.filter_fini(filter);
+        defer ecs.query_fini(query);
 
-        var it = ecs.filter_iter(world, filter);
-        while (ecs.filter_next(&it)) {
+        var it = ecs.query_iter(world, query);
+        while (ecs.query_next(&it)) {
             for (it.entities()) |e| {
                 print("Filter loop: {s}\n", .{ecs.get_name(world, e).?});
             }
@@ -87,8 +87,8 @@ test "zflecs.entities.basics" {
     {
         const query = _: {
             var desc = ecs.query_desc_t{};
-            desc.filter.terms[0].id = ecs.id(Position);
-            desc.filter.terms[1].id = ecs.id(Walking);
+            desc.terms[0].id = ecs.id(Position);
+            desc.terms[1].id = ecs.id(Walking);
             break :_ try ecs.query_init(world, &desc);
         };
         defer ecs.query_fini(query);
@@ -96,12 +96,10 @@ test "zflecs.entities.basics" {
 
     {
         const query = try ecs.query_init(world, &.{
-            .filter = .{
-                .terms = [_]ecs.term_t{
-                    .{ .id = ecs.id(Position) },
-                    .{ .id = ecs.id(Walking) },
-                } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
-            },
+            .terms = [_]ecs.term_t{
+                .{ .id = ecs.id(Position) },
+                .{ .id = ecs.id(Walking) },
+            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_COUNT_MAX - 2),
         });
         defer ecs.query_fini(query);
     }
@@ -462,7 +460,7 @@ test "zflecs.struct-dtor-hook" {
                 }
             }
         }.chatSystem;
-        system_desc.query.filter.terms[0] = .{ .id = ecs.id(Chat) };
+        system_desc.query.terms[0] = .{ .id = ecs.id(Chat) };
         ecs.SYSTEM(world, "Chat system", ecs.OnUpdate, &system_desc);
     }
 
