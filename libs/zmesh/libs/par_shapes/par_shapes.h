@@ -26,6 +26,10 @@
 #ifndef PAR_SHAPES_H
 #define PAR_SHAPES_H
 
+#ifndef PAR_SHAPES_API
+#define PAR_SHAPES_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,7 +60,7 @@ typedef struct par_shapes_mesh_s {
     float* tcoords;          // Optional list of 2-tuples (U V U V U V...)
 } par_shapes_mesh;
 
-void par_shapes_free_mesh(par_shapes_mesh*);
+PAR_SHAPES_API void par_shapes_free_mesh(par_shapes_mesh*);
 
 // Generators ------------------------------------------------------------------
 
@@ -64,126 +68,126 @@ void par_shapes_free_mesh(par_shapes_mesh*);
 // levels across the UV domain.  Think of "slices" like a number of pizza
 // slices, and "stacks" like a number of stacked rings.  Height and radius are
 // both 1.0, but they can easily be changed with par_shapes_scale.
-par_shapes_mesh* par_shapes_create_cylinder(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_cylinder(int slices, int stacks);
 
 // Cone is similar to cylinder but the radius diminishes to zero as Z increases.
 // Again, height and radius are 1.0, but can be changed with par_shapes_scale.
-par_shapes_mesh* par_shapes_create_cone(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_cone(int slices, int stacks);
 
 // Create a disk of radius 1.0 with texture coordinates and normals by squashing
 // a cone flat on the Z=0 plane.
-par_shapes_mesh* par_shapes_create_parametric_disk(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_parametric_disk(int slices, int stacks);
 
 // Create a donut that sits on the Z=0 plane with the specified inner radius.
 // The outer radius can be controlled with par_shapes_scale.
-par_shapes_mesh* par_shapes_create_torus(int slices, int stacks, float radius);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_torus(int slices, int stacks, float radius);
 
 // Create a sphere with texture coordinates and small triangles near the poles.
-par_shapes_mesh* par_shapes_create_parametric_sphere(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_parametric_sphere(int slices, int stacks);
 
 // Approximate a sphere with a subdivided icosahedron, which produces a nice
 // distribution of triangles, but no texture coordinates.  Each subdivision
 // level scales the number of triangles by four, so use a very low number.
-par_shapes_mesh* par_shapes_create_subdivided_sphere(int nsubdivisions);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_subdivided_sphere(int nsubdivisions);
 
 // More parametric surfaces.
-par_shapes_mesh* par_shapes_create_klein_bottle(int slices, int stacks);
-par_shapes_mesh* par_shapes_create_trefoil_knot(int slices, int stacks,
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_klein_bottle(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_trefoil_knot(int slices, int stacks,
     float radius);
-par_shapes_mesh* par_shapes_create_hemisphere(int slices, int stacks);
-par_shapes_mesh* par_shapes_create_plane(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_hemisphere(int slices, int stacks);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_plane(int slices, int stacks);
 
 // Create a parametric surface from a callback function that consumes a 2D
 // point in [0,1] and produces a 3D point.
 typedef void (*par_shapes_fn)(float const*, float*, void*);
-par_shapes_mesh* par_shapes_create_parametric(par_shapes_fn, int slices,
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_parametric(par_shapes_fn, int slices,
     int stacks, void* userdata);
 
 // Generate points for a 20-sided polyhedron that fits in the unit sphere.
 // Texture coordinates and normals are not generated.
-par_shapes_mesh* par_shapes_create_icosahedron();
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_icosahedron();
 
 // Generate points for a 12-sided polyhedron that fits in the unit sphere.
 // Again, texture coordinates and normals are not generated.
-par_shapes_mesh* par_shapes_create_dodecahedron();
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_dodecahedron();
 
 // More platonic solids.
-par_shapes_mesh* par_shapes_create_octahedron();
-par_shapes_mesh* par_shapes_create_tetrahedron();
-par_shapes_mesh* par_shapes_create_cube();
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_octahedron();
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_tetrahedron();
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_cube();
 
 // Generate an orientable disk shape in 3-space.  Does not include normals or
 // texture coordinates.
-par_shapes_mesh* par_shapes_create_disk(float radius, int slices,
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_disk(float radius, int slices,
     float const* center, float const* normal);
 
 // Create an empty shape.  Useful for building scenes with merge_and_free.
-par_shapes_mesh* par_shapes_create_empty();
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_empty();
 
 // Generate a rock shape that sits on the Y=0 plane, and sinks into it a bit.
 // This includes smooth normals but no texture coordinates.  Each subdivision
 // level scales the number of triangles by four, so use a very low number.
-par_shapes_mesh* par_shapes_create_rock(int seed, int nsubdivisions);
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_rock(int seed, int nsubdivisions);
 
 // Create trees or vegetation by executing a recursive turtle graphics program.
 // The program is a list of command-argument pairs.  See the unit test for
 // an example.  Texture coordinates and normals are not generated.
-par_shapes_mesh* par_shapes_create_lsystem(char const* program, int slices,
+PAR_SHAPES_API par_shapes_mesh* par_shapes_create_lsystem(char const* program, int slices,
     int maxdepth);
 
 // Queries ---------------------------------------------------------------------
 
 // Dump out a text file conforming to the venerable OBJ format.
-void par_shapes_export(par_shapes_mesh const*, char const* objfile);
+PAR_SHAPES_API void par_shapes_export(par_shapes_mesh const*, char const* objfile);
 
 // Take a pointer to 6 floats and set them to min xyz, max xyz.
-void par_shapes_compute_aabb(par_shapes_mesh const* mesh, float* aabb);
+PAR_SHAPES_API void par_shapes_compute_aabb(par_shapes_mesh const* mesh, float* aabb);
 
 // Make a deep copy of a mesh.  To make a brand new copy, pass null to "target".
 // To avoid memory churn, pass an existing mesh to "target".
-par_shapes_mesh* par_shapes_clone(par_shapes_mesh const* mesh,
+PAR_SHAPES_API par_shapes_mesh* par_shapes_clone(par_shapes_mesh const* mesh,
     par_shapes_mesh* target);
 
 // Transformations -------------------------------------------------------------
 
-void par_shapes_merge(par_shapes_mesh* dst, par_shapes_mesh const* src);
-void par_shapes_translate(par_shapes_mesh*, float x, float y, float z);
-void par_shapes_rotate(par_shapes_mesh*, float radians, float const* axis);
-void par_shapes_scale(par_shapes_mesh*, float x, float y, float z);
-void par_shapes_merge_and_free(par_shapes_mesh* dst, par_shapes_mesh* src);
+PAR_SHAPES_API void par_shapes_merge(par_shapes_mesh* dst, par_shapes_mesh const* src);
+PAR_SHAPES_API void par_shapes_translate(par_shapes_mesh*, float x, float y, float z);
+PAR_SHAPES_API void par_shapes_rotate(par_shapes_mesh*, float radians, float const* axis);
+PAR_SHAPES_API void par_shapes_scale(par_shapes_mesh*, float x, float y, float z);
+PAR_SHAPES_API void par_shapes_merge_and_free(par_shapes_mesh* dst, par_shapes_mesh* src);
 
 // Reverse the winding of a run of faces.  Useful when drawing the inside of
 // a Cornell Box.  Pass 0 for nfaces to reverse every face in the mesh.
-void par_shapes_invert(par_shapes_mesh*, int startface, int nfaces);
+PAR_SHAPES_API void par_shapes_invert(par_shapes_mesh*, int startface, int nfaces);
 
 // Remove all triangles whose area is less than minarea.
-void par_shapes_remove_degenerate(par_shapes_mesh*, float minarea);
+PAR_SHAPES_API void par_shapes_remove_degenerate(par_shapes_mesh*, float minarea);
 
 // Dereference the entire index buffer and replace the point list.
 // This creates an inefficient structure, but is useful for drawing facets.
 // If create_indices is true, a trivial "0 1 2 3..." index buffer is generated.
-void par_shapes_unweld(par_shapes_mesh* mesh, bool create_indices);
+PAR_SHAPES_API void par_shapes_unweld(par_shapes_mesh* mesh, bool create_indices);
 
 // Merge colocated verts, build a new index buffer, and return the
 // optimized mesh.  Epsilon is the maximum distance to consider when
 // welding vertices. The mapping argument can be null, or a pointer to
 // npoints integers, which gets filled with the mapping from old vertex
 // indices to new indices.
-par_shapes_mesh* par_shapes_weld(par_shapes_mesh const*, float epsilon,
+PAR_SHAPES_API par_shapes_mesh* par_shapes_weld(par_shapes_mesh const*, float epsilon,
     PAR_SHAPES_T* mapping);
 
 // Compute smooth normals by averaging adjacent facet normals.
-void par_shapes_compute_normals(par_shapes_mesh* m);
+PAR_SHAPES_API void par_shapes_compute_normals(par_shapes_mesh* m);
 
 // Global Config ---------------------------------------------------------------
 
-void par_shapes_set_epsilon_welded_normals(float epsilon);
-void par_shapes_set_epsilon_degenerate_sphere(float epsilon);
+PAR_SHAPES_API void par_shapes_set_epsilon_welded_normals(float epsilon);
+PAR_SHAPES_API void par_shapes_set_epsilon_degenerate_sphere(float epsilon);
 
 // Advanced --------------------------------------------------------------------
 
-void par_shapes__compute_welded_normals(par_shapes_mesh* m);
-void par_shapes__connect(par_shapes_mesh* scene, par_shapes_mesh* cylinder,
+PAR_SHAPES_API void par_shapes__compute_welded_normals(par_shapes_mesh* m);
+PAR_SHAPES_API void par_shapes__connect(par_shapes_mesh* scene, par_shapes_mesh* cylinder,
     int slices);
 
 #ifndef PAR_PI

@@ -39,6 +39,7 @@ pub fn build(b: *std.Build) void {
         });
 
         if (target.result.os.tag == .windows) {
+            lib.defineCMacro("PAR_SHAPES_API", "__declspec(dllexport)");
             lib.defineCMacro("CGLTF_API", "__declspec(dllexport)");
             lib.defineCMacro("MESHOPTIMIZER_API", "__declspec(dllexport)");
             lib.defineCMacro("ZMESH_API", "__declspec(dllexport)");
