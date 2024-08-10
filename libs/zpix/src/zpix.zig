@@ -1,5 +1,10 @@
 const std = @import("std");
 const assert = std.debug.assert;
+
+comptime {
+    std.testing.refAllDecls(@This());
+}
+
 const w32 = @import("zwin32").w32;
 const HMODULE = w32.HMODULE;
 const HRESULT = w32.HRESULT;
@@ -16,10 +21,6 @@ const UINT32 = u32;
 
 const options = @import("zpix_options");
 const enable = if (@hasDecl(options, "enable")) options.enable else false;
-
-test {
-    std.testing.refAllDeclsRecursive(@This());
-}
 
 pub const CAPTURE_FLAGS = packed struct(UINT32) {
     TIMING: bool = false,

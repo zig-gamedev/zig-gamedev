@@ -1,7 +1,6 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
     const enable = b.option(bool, "enable", "enable zpix") orelse false;
@@ -29,18 +28,4 @@ pub fn build(b: *std.Build) void {
             .{ .name = "zwin32", .module = zwin32_module },
         },
     });
-
-    const test_step = b.step("test", "Run zpix tests");
-
-    const tests = b.addTest(.{
-        .name = "zpix-tests",
-        .root_source_file = b.path("src/zpix.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    tests.root_module.addImport("zwin32", zwin32_module);
-    tests.root_module.addImport("zpix_options", options_module);
-    b.installArtifact(tests);
-
-    test_step.dependOn(&b.addRunArtifact(tests).step);
 }

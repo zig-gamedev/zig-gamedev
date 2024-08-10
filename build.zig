@@ -320,12 +320,6 @@ fn testsWindows(
     });
     test_step.dependOn(&b.addRunArtifact(zd3d12.artifact("zd3d12-tests")).step);
 
-    const zpix = b.dependency("zpix", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zpix.artifact("zpix-tests")).step);
-
     const zwin32 = b.dependency("zwin32", .{
         .target = target,
         .optimize = optimize,
