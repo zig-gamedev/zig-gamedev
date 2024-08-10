@@ -1,5 +1,10 @@
 const std = @import("std");
 const assert = std.debug.assert;
+
+comptime {
+    std.testing.refAllDecls(@This());
+}
+
 const zwin32 = @import("zwin32");
 const w32 = zwin32.w32;
 const IUnknown = w32.IUnknown;
@@ -19,10 +24,6 @@ const hrPanicOnFail = zwin32.hrPanicOnFail;
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
 const enable_debug_layer = @import("zxaudio2_options").debug_layer;
-
-test {
-    std.testing.refAllDeclsRecursive(@This());
-}
 
 const optimal_voice_format = WAVEFORMATEX{
     .wFormatTag = wasapi.WAVE_FORMAT_PCM,

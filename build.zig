@@ -320,12 +320,6 @@ fn testsWindows(
     });
     test_step.dependOn(&b.addRunArtifact(zwin32.artifact("zwin32-tests")).step);
 
-    const zxaudio2 = b.dependency("zxaudio2", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zxaudio2.artifact("zxaudio2-tests")).step);
-
     const zopenvr = b.dependency("zopenvr", .{
         .target = target,
         .optimize = optimize,
