@@ -1,5 +1,10 @@
 const std = @import("std");
 const assert = std.debug.assert;
+
+comptime {
+    std.testing.refAllDecls(@This());
+}
+
 const zwin32 = @import("zwin32");
 const w32 = zwin32.w32;
 const dwrite = zwin32.dwrite;
@@ -21,10 +26,6 @@ const enable_debug_layer = @import("zd3d12_options").debug_layer;
 const enable_gbv = @import("zd3d12_options").gbv;
 const enable_d2d = @import("zd3d12_options").d2d;
 const upload_heap_capacity = @import("zd3d12_options").upload_heap_capacity;
-
-test {
-    std.testing.refAllDeclsRecursive(@This());
-}
 
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {

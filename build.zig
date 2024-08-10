@@ -314,12 +314,6 @@ fn testsWindows(
     optimize: std.builtin.OptimizeMode,
     test_step: *std.Build.Step,
 ) void {
-    const zd3d12 = b.dependency("zd3d12", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zd3d12.artifact("zd3d12-tests")).step);
-
     const zwin32 = b.dependency("zwin32", .{
         .target = target,
         .optimize = optimize,
