@@ -1162,6 +1162,10 @@ extern "C"
         ImGui::ShowDemoWindow(p_open);
     }
 
+    ZGUI_API void zguiShowMetricsWindow(bool* p_open) {
+        ImGui::ShowMetricsWindow(p_open);
+    }
+
     ZGUI_API void zguiBeginDisabled(bool disabled)
     {
         ImGui::BeginDisabled(disabled);
@@ -1499,6 +1503,10 @@ extern "C"
     ZGUI_API bool zguiIoGetWantTextInput(void)
     {
         return ImGui::GetIO().WantTextInput;
+    }
+
+    ZGUI_API float zguiIoFramerate() {
+        return ImGui::GetIO().Framerate;
     }
 
     ZGUI_API void zguiIoSetIniFilename(const char *filename)

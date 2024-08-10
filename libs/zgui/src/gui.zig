@@ -278,6 +278,9 @@ pub const io = struct {
     pub const getWantTextInput = zguiIoGetWantTextInput;
     extern fn zguiIoGetWantTextInput() bool;
 
+    pub const getFramerate = zguiIoFramerate;
+    extern fn zguiIoFramerate() f32;
+
     pub fn setIniFilename(filename: ?[*:0]const u8) void {
         zguiIoSetIniFilename(filename);
     }
@@ -637,6 +640,9 @@ extern fn zguiGetDrawData() DrawData;
 /// `pub fn showDemoWindow(popen: ?*bool) void`
 pub const showDemoWindow = zguiShowDemoWindow;
 extern fn zguiShowDemoWindow(popen: ?*bool) void;
+
+pub const showMetricsWindow = zguiShowMetricsWindow;
+extern fn zguiShowMetricsWindow(popen: ?*bool) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Windows
@@ -3073,7 +3079,10 @@ pub const TableFlags = packed struct(c_int) {
     sort_multi: bool = false,
     sort_tristate: bool = false,
 
-    _padding: u4 = 0,
+    // Miscellaneous
+    highlight_hovered_column: bool = false,
+
+    _padding: u3 = 0,
 };
 
 pub const TableRowFlags = packed struct(c_int) {
