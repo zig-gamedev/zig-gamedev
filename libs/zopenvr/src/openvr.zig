@@ -1,5 +1,9 @@
 const std = @import("std");
 
+comptime {
+    std.testing.refAllDeclsRecursive(@This());
+}
+
 const common = @import("common.zig");
 
 const Self = @This();

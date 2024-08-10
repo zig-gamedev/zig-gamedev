@@ -319,16 +319,6 @@ fn testsWindows(
         .optimize = optimize,
     });
     test_step.dependOn(&b.addRunArtifact(zwin32.artifact("zwin32-tests")).step);
-
-    const zopenvr = b.dependency("zopenvr", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const openvr_tests = b.addRunArtifact(zopenvr.artifact("openvr-tests"));
-    openvr_tests.setCwd(.{ .cwd_relative = b.getInstallPath(.bin, "") });
-
-    test_step.dependOn(&openvr_tests.step);
-    @import("zopenvr").installOpenVR(&openvr_tests.step, target.result, .bin);
 }
 
 // TODO: Delete this once Zig checks minimum_zig_version in build.zig.zon

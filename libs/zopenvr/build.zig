@@ -1,7 +1,6 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
     const zwin32 = b.dependency("zwin32", .{
@@ -13,32 +12,6 @@ pub fn build(b: *std.Build) void {
             .{ .name = "zwin32", .module = zwin32.module("root") },
         },
     });
-
-    {
-        const unit_tests = b.step("test", "Run zopenvr tests");
-        {
-            const tests = b.addTest(.{
-                .name = "openvr-tests",
-                .root_source_file = b.path("src/openvr.zig"),
-                .target = target,
-                .optimize = optimize,
-            });
-            addLibraryPathsTo(tests);
-            addRPathsTo(tests);
-            linkOpenVR(tests);
-            b.installArtifact(tests);
-
-            const tests_exe = b.addRunArtifact(tests);
-            if (target.result.os.tag == .windows) {
-                tests_exe.setCwd(.{
-                    .cwd_relative = b.getInstallPath(.bin, ""),
-                });
-            }
-            unit_tests.dependOn(&tests_exe.step);
-        }
-
-        installOpenVR(unit_tests, target.result, .bin);
-    }
 }
 
 // in future zig version e342433

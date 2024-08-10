@@ -36,6 +36,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
     const zpix = b.dependency("zpix", .{
+        .target = options.target,
         .enable = options.zpix_enable,
         .path = options.zpix_path,
     });
