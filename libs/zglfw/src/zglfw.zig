@@ -717,6 +717,14 @@ pub const Window = opaque {
         ypos: i32,
     ) callconv(.C) void;
 
+    /// `pub const setFocusCallback(window: *Window, callback: ?WindowFocusFn) ?WindowFocusFn`
+    pub const setFocusCallback = glfwSetWindowFocusCallback;
+    extern fn glfwSetWindowFocusCallback(window: *Window, callback: ?WindowFocusFn) ?WindowFocusFn;
+    pub const WindowFocusFn = *const fn (
+        window: *Window,
+        focused: i32,
+    ) callconv(.C) void;
+
     /// `pub const setContentScaleCallback(window: *Window, callback: ?WindowContentScaleFn) ?WindowContentScaleFn`
     pub const setContentScaleCallback = glfwSetWindowContentScaleCallback;
     extern fn glfwSetWindowContentScaleCallback(window: *Window, callback: ?WindowContentScaleFn) ?WindowContentScaleFn;
