@@ -2,11 +2,11 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "3.2.11";
+pub const flecs_version = "4.0.0";
 
-// TODO: Ensure synced with flecs build flags.
-const flecs_is_debug = builtin.mode == .Debug;
-const flecs_is_sanitize = flecs_is_debug;
+// TODO: flecs_is_sanitize should come from flecs build flags.
+const flecs_is_sanitize = builtin.mode == .Debug;
+const flecs_is_debug = flecs_is_sanitize or builtin.mode == .Debug;
 
 pub const ftime_t = f32;
 pub const size_t = i32;
@@ -15,14 +15,20 @@ pub const flags16_t = u16;
 pub const flags32_t = u32;
 pub const flags64_t = u64;
 
-pub const mixins_t = opaque {};
-
-pub const filter_t_magic = 0x65637366;
+pub fn flagsn_t(comptime bits: u16) type {
+    return std.meta.Int(.unsigned, bits);
+}
+pub const termset_t = flagsn_t(FLECS_TERM_COUNT_MAX);
 
 pub const error_t = error{FlecsError};
 fn make_error() error{FlecsError} {
     return error.FlecsError;
 }
+
+pub const world_t_magic = 0x65637377;
+pub const stage_t_magic = 0x65637373;
+pub const query_t_magic = 0x65637375;
+pub const observer_t_magic = 0x65637362;
 
 pub const ID_FLAGS_MASK: u64 = @as(u64, 0xFF) << 60;
 pub const COMPONENT_MASK: u64 = ~ID_FLAGS_MASK;
@@ -41,40 +47,115 @@ pub const WorldMultiThreaded = 1 << 7;
 pub const EcsIterIsValid = 1 << 0;
 pub const EcsIterNoData = 1 << 1;
 pub const EcsIterIsInstanced = 1 << 2;
-pub const EcsIterHasShared = 1 << 3;
-pub const EcsIterTableOnly = 1 << 4;
-pub const EcsIterEntityOptional = 1 << 5;
-pub const EcsIterNoResults = 1 << 6;
-pub const EcsIterIgnoreThis = 1 << 7;
-pub const EcsIterMatchVar = 1 << 8;
-//  missing in flecs
-pub const EcsIterHasCondSet = 1 << 10;
-pub const EcsIterProfile = 1 << 11;
-pub const EcsIterTrivialSearch = 1 << 12;
-pub const EcsIterTrivialSearchNoData = 1 << 13;
-pub const EcsIterTrivialTest = 1 << 14;
-pub const EcsIterTrivialSearchWildcard = 1 << 15;
+pub const EcsIterNoResult = 1 << 3;
+pub const EcsIterIgnoreThis = 1 << 4;
+// 5 missing in flecs
+pub const EcsIterHasCondSet = 1 << 6;
+pub const EcsIterProfile = 1 << 7;
+pub const EcsIterTrivialSearch = 1 << 8;
+pub const EcsIterTrivialSearchNoData = 1 << 9;
+pub const EcsIterTrivialTest = 1 << 10;
+pub const EcsIterTrivialTestWildcard = 1 << 11;
+pub const EcsIterTrivialSearchWildcard = 1 << 12;
+pub const EcsIterCacheSearch = 1 << 13;
+pub const EcsIterFixedInChangeComputed = 1 << 14;
+pub const EcsIterFixedInChanged = 1 << 15;
+pub const EcsIterSkip = 1 << 16;
+pub const EcsIterCppEach = 1 << 17;
 
-// Filter flags
-pub const EcsFilterMatchThis = 1 << 1;
-pub const EcsFilterMatchOnlyThis = 1 << 2;
-pub const EcsFilterMatchPrefab = 1 << 3;
-pub const EcsFilterMatchDisabled = 1 << 4;
-pub const EcsFilterMatchEmptyTables = 1 << 5;
-pub const EcsFilterMatchAnything = 1 << 6;
-pub const EcsFilterNoData = 1 << 7;
-pub const EcsFilterIsInstanced = 1 << 8;
-pub const EcsFilterPopulate = 1 << 9;
-pub const EcsFilterHasCondSet = 1 << 10;
-pub const EcsFilterUnresolvedByName = 1 << 11;
-pub const EcsFilterHasPred = 1 << 12;
-pub const EcsFilterHasScopes = 1 << 13;
-pub const EcsFilterIsTrivial = 1 << 14;
-pub const EcsFilterMatchOnlySelf = 1 << 15;
-pub const EcsFilterHasWildcards = 1 << 16;
-pub const EcsFilterOwnsStorage = 1 << 17;
-pub const EcsFilterOwnsTermsStorage = 1 << 18;
+pub const EcsIterTableOnly = 1 << 18; // same as event flag
+pub const EcsEventTableOnly = 1 << 18;
+pub const EcsEventNoOnSet = 1 << 16;
 
+// Query flags
+pub const EcsQueryMatchThis = 1 << 11;
+pub const EcsQueryMatchOnlyThis = 1 << 12;
+pub const EcsQueryMatchOnlySelf = 1 << 13;
+pub const EcsQueryMatchWildcards = 1 << 14;
+pub const EcsQueryHasCondSet = 1 << 15;
+pub const EcsQueryHasPred = 1 << 16;
+pub const EcsQueryHasScopes = 1 << 17;
+pub const EcsQueryHasRefs = 1 << 18;
+pub const EcsQueryHasOutTerms = 1 << 19;
+pub const EcsQueryHasNonThisOutTerms = 1 << 20;
+pub const EcsQueryHasMonitor = 1 << 21;
+pub const EcsQueryIsTrivial = 1 << 22;
+pub const EcsQueryHasCacheable = 1 << 23;
+pub const EcsQueryIsCacheable = 1 << 24;
+pub const EcsQueryHasTableThisVar = 1 << 25;
+pub const EcsQueryHasSparseThis = 1 << 26;
+pub const EcsQueryCacheYieldEmptyTables = 1 << 27;
+
+// Term flags
+pub const EcsTermMatchAny = 1 << 0;
+pub const EcsTermMatchAnySrc = 1 << 1;
+pub const EcsTermTransitive = 1 << 2;
+pub const EcsTermReflexive = 1 << 3;
+pub const EcsTermIdInherited = 1 << 4;
+pub const EcsTermIsTrivial = 1 << 5;
+pub const EcsTermNoData = 1 << 6;
+pub const EcsTermIsCacheable = 1 << 7;
+pub const EcsTermIsScope = 1 << 8;
+pub const EcsTermIsMember = 1 << 9;
+pub const EcsTermIsToggle = 1 << 10;
+pub const EcsTermKeepAlive = 1 << 11;
+pub const EcsTermIsSparse = 1 << 12;
+pub const EcsTermIsUnion = 1 << 13;
+pub const EcsTermIsOr = 1 << 14;
+
+// Observer flags
+
+pub const EcsObserverIsMulti = 1 << 1;
+pub const EcsObserverIsMonitor = 1 << 2;
+pub const EcsObserverIsDisabled = 1 << 3;
+pub const EcsObserverIsParentDisabled = 1 << 4;
+pub const EcsObserverBypassQuery = 1 << 5;
+
+// Table flags (used by ecs_table_t::flags)
+
+pub const EcsTableHasBuiltins = 1 << 1;
+pub const EcsTableIsPrefab = 1 << 2;
+pub const EcsTableHasIsA = 1 << 3;
+pub const EcsTableHasChildOf = 1 << 4;
+pub const EcsTableHasName = 1 << 5;
+pub const EcsTableHasPairs = 1 << 6;
+pub const EcsTableHasModule = 1 << 7;
+pub const EcsTableIsDisabled = 1 << 8;
+pub const EcsTableNotQueryable = 1 << 9;
+pub const EcsTableHasCtors = 1 << 10;
+pub const EcsTableHasDtors = 1 << 11;
+pub const EcsTableHasCopy = 1 << 12;
+pub const EcsTableHasMove = 1 << 13;
+pub const EcsTableHasToggle = 1 << 14;
+pub const EcsTableHasOverrides = 1 << 15;
+
+pub const EcsTableHasOnAdd = 1 << 16;
+pub const EcsTableHasOnRemove = 1 << 17;
+pub const EcsTableHasOnSet = 1 << 18;
+// 19 missing in flecs
+pub const EcsTableHasOnTableFill = 1 << 20;
+pub const EcsTableHasOnTableEmpty = 1 << 21;
+pub const EcsTableHasOnTableCreate = 1 << 22;
+pub const EcsTableHasOnTableDelete = 1 << 23;
+pub const EcsTableHasSparse = 1 << 24;
+pub const EcsTableHasUnion = 1 << 25;
+
+pub const EcsTableHasTraversable = 1 << 26;
+pub const EcsTableMarkedForDelete = 1 << 30;
+
+// Composite table flags
+pub const EcsTableHasLifecycle = EcsTableHasCtors | EcsTableHasDtors;
+pub const EcsTableIsComplex = EcsTableHasLifecycle | EcsTableHasToggle | EcsTableHasSparse;
+pub const EcsTableHasAddActions = EcsTableHasIsA | EcsTableHasCtors | EcsTableHasOnAdd | EcsTableHasOnSet;
+pub const EcsTableHasRemoveActions = EcsTableHasIsA | EcsTableHasDtors | EcsTableHasOnRemove;
+
+// Aperiodic action flags (used by ecs_run_aperiodic)
+
+pub const EcsAperiodicEmptyTables = 1 << 1;
+pub const EcsAperiodicComponentMonitors = 1 << 2;
+pub const EcsAperiodicEmptyQueries = 1 << 4;
+
+// Extern declarations
 extern const EcsWildcard: entity_t;
 extern const EcsAny: entity_t;
 extern const EcsTransitive: entity_t;
@@ -88,7 +169,7 @@ extern const EcsAcyclic: entity_t;
 extern const EcsTraversable: entity_t;
 extern const EcsWith: entity_t;
 extern const EcsOneOf: entity_t;
-extern const EcsTag: entity_t;
+extern const EcsPairIsTag: entity_t;
 extern const EcsUnion: entity_t;
 extern const EcsAlias: entity_t;
 extern const EcsChildOf: entity_t;
@@ -112,7 +193,6 @@ extern const EcsPhase: entity_t;
 extern const EcsOnAdd: entity_t;
 extern const EcsOnRemove: entity_t;
 extern const EcsOnSet: entity_t;
-extern const EcsUnSet: entity_t;
 extern const EcsMonitor: entity_t;
 extern const EcsOnTableCreate: entity_t;
 extern const EcsOnTableDelete: entity_t;
@@ -126,7 +206,10 @@ extern const EcsDelete: entity_t;
 extern const EcsPanic: entity_t;
 
 extern const EcsFlatten: entity_t;
-extern const EcsDefaultChildComponent: entity_t;
+
+pub const EcsDefaultChildComponent = extern struct {
+    component: id_t,
+};
 
 extern const EcsPredEq: entity_t;
 extern const EcsPredMatch: entity_t;
@@ -141,7 +224,7 @@ pub var Transitive: entity_t = undefined;
 pub var Reflexive: entity_t = undefined;
 pub var Final: entity_t = undefined;
 pub var DontInherit: entity_t = undefined;
-pub var Tag: entity_t = undefined;
+pub var PairIsTag: entity_t = undefined;
 pub var Union: entity_t = undefined;
 pub var Exclusive: entity_t = undefined;
 pub var Acyclic: entity_t = undefined;
@@ -189,7 +272,7 @@ pub var Remove: entity_t = undefined;
 pub var Delete: entity_t = undefined;
 pub var Panic: entity_t = undefined;
 
-pub var DefaultChildComponent: entity_t = undefined;
+pub var DefaultChildComponent: EcsDefaultChildComponent = undefined;
 
 pub var PredEq: entity_t = undefined;
 pub var PredMatch: entity_t = undefined;
@@ -209,20 +292,23 @@ pub const type_t = extern struct {
 };
 
 pub const world_t = opaque {};
+pub const stage_t = opaque {};
 pub const table_t = opaque {};
 
-pub const query_t = opaque {};
+pub const query_cache_table_match_t = opaque {};
+pub const data_t = opaque {};
 
 pub const table_record_t = opaque {};
 pub const id_record_t = opaque {};
-pub const query_table_match_t = opaque {};
-pub const rule_t = opaque {};
 
 pub const poly_t = anyopaque;
+
+pub const mixins_t = opaque {};
 
 pub const header_t = extern struct {
     magic: i32,
     type: i32 = 0,
+    refcount: i32 = 0,
     mixins: ?*mixins_t = null,
 };
 //--------------------------------------------------------------------------------------------------
@@ -233,13 +319,6 @@ pub const header_t = extern struct {
 pub const run_action_t = *const fn (it: *iter_t) callconv(.C) void;
 
 pub const iter_action_t = *const fn (it: *iter_t) callconv(.C) void;
-
-pub const iter_init_action_t = *const fn (
-    world: *const world_t,
-    iterable: *const poly_t,
-    it: *iter_t,
-    filter: ?*term_t,
-) callconv(.C) void;
 
 pub const iter_next_action_t = *const fn (it: *iter_t) callconv(.C) bool;
 
@@ -322,44 +401,40 @@ pub const system_desc_t = extern struct {
     _canary: i32 = 0,
     entity: entity_t = 0,
     query: query_desc_t = .{},
-    run: ?run_action_t = null,
     callback: ?iter_action_t = null,
+    run: ?run_action_t = null,
     ctx: ?*anyopaque = null,
-    binding_ctx: ?*anyopaque = null,
     ctx_free: ?ctx_free_t = null,
-    binding_ctx_free: ?ctx_free_t = null,
+    callback_ctx: ?*anyopaque = null,
+    callback_ctx_free: ?ctx_free_t = null,
+    run_ctx: ?*anyopaque = null,
+    run_ctx_free: ?ctx_free_t = null,
     interval: ftime_t = 0.0,
     rate: i32 = 0,
     tick_source: entity_t = 0,
     multi_threaded: bool = false,
-    no_readonly: bool = false,
+    immediate: bool = false,
 };
 
 /// `pub fn system_init(world: *world_t, desc: *const system_desc_t) entity_t`
 pub const system_init = ecs_system_init;
 extern fn ecs_system_init(world: *world_t, desc: *const system_desc_t) entity_t;
-//--------------------------------------------------------------------------------------------------
-//
-// Mixin types for poly mechanism.
-//
-//--------------------------------------------------------------------------------------------------
-pub const iterable_t = extern struct {
-    init: ?iter_init_action_t = null,
-};
+
 //--------------------------------------------------------------------------------------------------
 //
 // Query descriptor types.
 //
 //--------------------------------------------------------------------------------------------------
-pub const inout_kind_t = enum(i32) {
+pub const inout_kind_t = enum(i16) {
     InOutDefault,
     InOutNone,
+    EcsInOutFilter,
     InOut,
     In,
     Out,
 };
 
-pub const oper_kind_t = enum(i32) {
+pub const oper_kind_t = enum(i16) {
     And,
     Or,
     Not,
@@ -369,102 +444,106 @@ pub const oper_kind_t = enum(i32) {
     NotFrom,
 };
 
-pub const Self = 1 << 1;
-pub const Up = 1 << 2;
-pub const Down = 1 << 3;
-pub const TraverseAll = 1 << 4;
-pub const Cascade = 1 << 5;
-pub const Desc = 1 << 6;
-pub const Parent = 1 << 7;
-pub const IsVariable = 1 << 8;
-pub const IsEntity = 1 << 9;
-pub const IsName = 1 << 10;
-pub const Filter = 1 << 11;
-pub const TraverseFlags = Up | Down | TraverseAll | Self | Cascade | Desc | Parent;
+pub const query_cache_kind_t = enum(i32) {
+    QueryCacheDefault,
+    QueryCacheAuto,
+    QueryCacheAll,
+    QueryCacheNone,
+};
 
-pub const TermMatchAny = 1 << 0;
-pub const TermMatchAnySrc = 1 << 1;
-pub const TermSrcFirstEq = 1 << 2;
-pub const TermSrcSecondEq = 1 << 3;
-pub const TermTransitive = 1 << 4;
-pub const TermReflexive = 1 << 5;
-pub const TermIdInherited = 1 << 6;
-pub const EcsTermIsTrivial = 1 << 7;
-pub const EcsTermNoData = 1 << 8;
+pub const Self = 1 << 63;
+pub const Up = 1 << 62;
+pub const Trav = 1 << 61;
+pub const Cascade = 1 << 60;
+pub const Desc = 1 << 59;
+pub const IsVariable = 1 << 58;
+pub const IsEntity = 1 << 57;
+pub const IsName = 1 << 56;
+pub const TraverseFlags = Self | Up | Trav | Cascade | Desc;
+pub const TermRefFlags = TraverseFlags | IsVariable | IsEntity | IsName;
 
-pub const TermMatchDisabled = 1 << 7;
-pub const TermMatchPrefab = 1 << 8;
-
-pub const term_id_t = extern struct {
+pub const term_ref_t = extern struct {
     id: entity_t = 0,
     name: ?[*:0]const u8 = null,
-    trav: entity_t = 0,
-    flags: flags32_t = 0,
 };
 
 pub const term_t = extern struct {
     id: id_t = 0,
 
-    src: term_id_t = .{},
-    first: term_id_t = .{},
-    second: term_id_t = .{},
+    src: term_ref_t = .{},
+    first: term_ref_t = .{},
+    second: term_ref_t = .{},
+
+    trav: entity_t = 0,
 
     inout: inout_kind_t = .InOutDefault,
     oper: oper_kind_t = .And,
 
-    id_flags: id_t = 0,
-    name: ?[*:0]u8 = null,
+    field_index: i16 = 0,
+    flags_: flags16_t = 0,
+};
 
-    field_index: i32 = 0,
-    idr: ?*id_record_t = null,
+pub const query_t = extern struct {
+    hdr: header_t = .{},
 
-    flags: flags16_t = 0,
+    terms: [FLECS_TERM_COUNT_MAX]term_t = .{},
+    sizes: [FLECS_TERM_COUNT_MAX]size_t = .{},
+    ids: [FLECS_TERM_COUNT_MAX]id_t = .{},
 
-    move: bool = true,
+    flags: flags32_t = 0,
+    var_count: i16 = 0,
+    term_count: i8 = 0,
+    field_count: i8 = 0,
+
+    // /* Bitmasks for quick field information lookups */
+    fixed_fields: termset_t = 0,
+    static_id_fields: termset_t = 0,
+    data_fields: termset_t = 0,
+    write_fields: termset_t = 0,
+    read_fields: termset_t = 0,
+    shared_readonly_fields: termset_t = 0,
+    set_fields: termset_t = 0,
+
+    cache_kind: query_cache_kind_t = .QueryCacheDefault,
+
+    vars: ?[*][*:0]u8 = null,
+    ctx: ?*anyopaque = null,
+    binding_ctx: ?*anyopaque = null,
+
+    entity: entity_t = 0,
+    real_world: ?*world_t = null,
+    world: ?*world_t = null,
+
+    eval_count: i32 = 0,
 };
 
 pub fn array(comptime T: type, comptime len: comptime_int) [len]T {
     return [_]T{.{}} ** len;
 }
 
-pub const filter_t = extern struct {
-    hdr: header_t = .{ .magic = filter_t_magic },
-
-    term_count: i8 = 0,
-    field_count: i8 = 0,
-    flags: flags32_t = 0,
-    data_fields: flags64_t = 0,
-
-    terms: ?[*]term_t = null,
-    variable_names: ?[*][*:0]u8 = null, // TODO: Only `variable_names[0]` is valid?
-    sizes: ?[*]i32 = null,
-    ids: [*]id_t,
-
-    entity: entity_t = 0,
-    iterable: iterable_t = .{},
-    dtor: ?poly_dtor_t = null,
-    world: ?*world_t = null,
-};
-
 pub const observer_t = extern struct {
     hdr: header_t,
-    filter: filter_t,
+
+    query: ?*query_t,
+
     events: [FLECS_EVENT_DESC_MAX]entity_t,
     event_count: i32,
+
     callback: iter_action_t,
     run: run_action_t,
+
     ctx: ?*anyopaque,
-    binding_ctx: ?*anyopaque,
-    ctx_free: ctx_free_t,
-    binding_ctx_free: ctx_free_t,
+    callback_ctx: ?*anyopaque,
+    run_ctx: ?*anyopaque,
+
+    ctx_free: ?ctx_free_t,
+    callback_ctx_free: ?ctx_free_t,
+    run_ctx_free: ?ctx_free_t,
+
     observable: [*c]observable_t,
-    last_event_id: [*c]i32,
-    last_event_id_storage: i32,
-    register_id: id_t,
-    term_index: i32,
-    is_monitor: bool,
-    is_multi: bool,
-    dtor: poly_dtor_t,
+
+    world: ?*world_t,
+    entity: entity_t = 0,
 };
 //--------------------------------------------------------------------------------------------------
 pub const type_hooks_t = extern struct {
@@ -507,7 +586,6 @@ pub const observable_t = extern struct {
     on_add: event_record_t,
     on_remove: event_record_t,
     on_set: event_record_t,
-    un_set: event_record_t,
     on_wildcard: event_record_t,
     events: sparse_t,
 };
@@ -568,159 +646,61 @@ pub const table_cache_iter_t = extern struct {
     next_list: ?*table_cache_hdr_t,
 };
 
+pub const each_iter_t = extern struct {
+    it: table_cache_iter_t,
+
+    ids: id_t,
+    sources: entity_t,
+    sizes: size_t,
+    columns: i32,
+    ptrs: ?[*]*anyopaque,
+};
+
+pub const query_var_t = opaque {};
+pub const query_op_t = opaque {};
+pub const query_op_ctx_t = opaque {};
+pub const query_op_profile_t = extern struct {
+    count: [2]i32,
+};
+
+pub const query_iter_t = extern struct {
+    query: ?*const query_t = null,
+    vars: ?*var_t = null,
+    query_vars: ?*const query_var_t = null,
+    ops: ?*const query_op_t = null,
+    op_ctx: ?*query_op_ctx_t = null,
+    node: ?*query_cache_table_match_t = null,
+    prev: ?*query_cache_table_match_t = null,
+    last: ?*query_cache_table_match_t = null,
+    written: ?*i64 = null,
+    skip_count: i32,
+
+    profile: ?*query_op_profile_t = null,
+
+    op: i16,
+    sp: i16,
+};
+
 pub const iter_cache_t = extern struct {
     stack_cursor: ?*stack_cursor_t,
     used: flags8_t,
     allocated: flags8_t,
 };
 
-pub const term_iter_t = extern struct {
-    term: term_t,
-    self_index: ?*id_record_t,
-    set_index: ?*id_record_t,
-    cur: ?*id_record_t,
-    it: table_cache_iter_t,
-    index: i32,
-    observed_table_count: i32,
-    table: ?*table_t,
-    cur_match: i32,
-    match_count: i32,
-    last_column: i32,
-    empty_tables: bool,
-    id: id_t,
-    column: i32,
-    subject: entity_t,
-    size: size_t,
-    ptr: ?*anyopaque,
-};
-
-pub const iter_kind_t = enum(i32) {
-    EvalCondition,
-    EvalTables,
-    EvalChain,
-    EvalNone,
-};
-
-pub const filter_iter_t = extern struct {
-    filter: [*c]const filter_t,
-    kind: iter_kind_t,
-    term_iter: term_iter_t,
-    matches_left: i32,
-    pivot_term: i32,
-};
-
-pub const query_iter_t = extern struct {
-    query: ?*query_t,
-    node: ?*query_table_match_t,
-    prev: ?*query_table_match_t,
-    last: ?*query_table_match_t,
-    sparse_smallest: i32,
-    sparse_first: i32,
-    bitset_first: i32,
-    skip_count: i32,
-};
-
-pub const rule_var_t = opaque {};
-pub const rule_op_t = opaque {};
-pub const rule_op_ctx_t = opaque {};
-
-pub const rule_op_profile_t = extern struct {
-    count: [2]i32,
-};
-
-pub const rule_iter_t = extern struct {
-    rule: ?*const rule_t,
-    vars: [*c]var_t,
-    rule_vars: ?*rule_var_t,
-    ops: ?*rule_op_t,
-    op_ctx: ?*rule_op_ctx_t,
-    written: *u64,
-    source_set: flags32_t,
-
-    profile: if (flecs_is_debug) rule_op_profile_t else void,
-
-    op: i16,
-    sp: i16,
-};
-
-pub const snapshot_iter_t = extern struct {
-    filter: filter_t,
-    tables: vec_t,
-    index: i32,
-};
-
 pub const iter_private_t = extern struct {
     iter: extern union {
-        term: term_iter_t,
-        filter: filter_iter_t,
         query: query_iter_t,
-        rule: rule_iter_t,
-        snapshot: snapshot_iter_t,
         page: page_iter_t,
         worker: worker_iter_t,
+        each: each_iter_t,
     },
     entity_iter: ?*anyopaque,
     cache: iter_cache_t,
 };
 
-pub const iter_t = extern struct {
-    world: *world_t,
-    real_world: *world_t,
-
-    entities_: [*]entity_t,
-    ptrs: ?[*]*anyopaque,
-    sizes: ?[*]size_t,
-    table: *table_t,
-    other_table: ?*table_t,
-    ids: ?[*]id_t,
-    variables: ?[*]var_t,
-    columns: ?[*]i32,
-    sources: ?[*]entity_t,
-    match_indices: ?[*]i32,
-    references: ?[*]ref_t,
-    constrained_vars: flags64_t,
-    group_id: u64,
-    field_count: i32,
-
-    system: entity_t,
-    event: entity_t,
-    event_id: id_t,
-    event_cur: i32,
-
-    query: *const filter_t,
-    terms: ?[*]term_t,
-    table_count: i32,
-    term_index: i32,
-    variable_count: i32,
-    variable_names: ?[*][*:0]u8,
-    param: ?*anyopaque,
-    ctx: ?*anyopaque,
-    binding_ctx: ?*anyopaque,
-    delta_time: f32,
-    delta_system_time: f32,
-    frame_offset: i32,
-    offset: i32,
-    count_: i32,
-    instance_count: i32,
-    flags: flags32_t,
-    interrupted_by: entity_t,
-    priv: iter_private_t,
-    next: iter_next_action_t,
-    callback: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
-    set_var: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
-    fini: iter_fini_action_t,
-    chain_it: ?*iter_t,
-
-    pub fn entities(iter: iter_t) []entity_t {
-        return iter.entities_[0..@as(usize, @intCast(iter.count_))];
-    }
-    pub fn count(iter: iter_t) usize {
-        return @as(usize, @intCast(iter.count_));
-    }
-};
 //--------------------------------------------------------------------------------------------------
 //
-// allocator_t, vec_t, map_t
+// allocator_t, vec_t, map_t, switch_node
 //
 //--------------------------------------------------------------------------------------------------
 pub const vec_t = extern struct {
@@ -800,43 +780,50 @@ pub const map_params_t = extern struct {
     allocator: [*c]allocator_t,
     entry_allocator: block_allocator_t,
 };
+
+pub const switch_node_t = extern struct {
+    next: u32,
+    prev: u32,
+};
+
+pub const switch_page_t = extern struct {
+    nodes: vec_t,
+    values: vec_t,
+};
+
+pub const switch_t = extern struct {
+    hdrs: map_t,
+    pages: vec_t,
+};
+
 //--------------------------------------------------------------------------------------------------
-pub const query_desc_t = extern struct {
-    _canary: i32 = 0,
-    filter: filter_desc_t = .{},
-    order_by_component: entity_t = 0,
-    order_by: ?order_by_action_t = null,
-    sort_table: ?sort_table_action_t = null,
-    group_by_id: id_t = 0,
-    group_by: ?group_by_action_t = null,
-    on_group_create: ?group_create_action_t = null,
-    on_group_delete: ?group_delete_action_t = null,
-    group_by_ctx: ?*anyopaque = null,
-    group_by_ctx_free: ?ctx_free_t = null,
-    parent: ?*query_t = null,
-    ctx: ?*anyopaque = null,
-    binding_ctx: ?*anyopaque = null,
-    ctx_free: ?ctx_free_t = null,
-    binding_ctx_free: ?ctx_free_t = null,
+
+pub const value_t = extern struct {
+    type: entity_t = 0,
+    ptr: ?*anyopaque = null,
 };
 
-pub const component_desc_t = extern struct {
-    _canary: i32 = 0,
-    entity: entity_t,
-    type: type_info_t,
-};
-
+pub const FLECS_HI_COMPONENT_ID = 256;
+pub const FLECS_HI_ID_RECORD_ID = 1024;
 pub const FLECS_ID_DESC_MAX = 32;
+pub const FLECS_EVENT_DESC_MAX = 8;
+pub const FLECS_VARIABLE_COUNT_MAX = 64;
+pub const FLECS_TERM_COUNT_MAX = 32;
+pub const FLECS_TERM_ARG_COUNT_MAX = 16;
+pub const FLECS_QUERY_VARIABLE_COUNT_MAX = 64;
+pub const FLECS_QUERY_SCOPE_NESTING_MAX = 8;
 
 pub const entity_desc_t = extern struct {
     _canary: i32 = 0,
     id: entity_t = 0,
+    parent: entity_t = 0,
     name: ?[*:0]const u8 = null,
     sep: ?[*:0]const u8 = null,
     root_sep: ?[*:0]const u8 = null,
     symbol: ?[*:0]const u8 = null,
     use_low_id: bool = false,
-    add: [FLECS_ID_DESC_MAX]id_t = [_]id_t{0} ** FLECS_ID_DESC_MAX,
+    add: ?[*:0]const id_t = null,
+    set: ?[*:.{}]const value_t = null,
     add_expr: ?[*:0]const u8 = null,
 };
 
@@ -849,37 +836,125 @@ pub const bulk_desc_t = extern struct {
     table: ?*table_t,
 };
 
-pub const FLECS_TERM_DESC_MAX = 16;
-
-pub const filter_desc_t = extern struct {
+pub const component_desc_t = extern struct {
     _canary: i32 = 0,
-    terms: [FLECS_TERM_DESC_MAX]term_t = [_]term_t{.{}} ** FLECS_TERM_DESC_MAX,
-    terms_buffer: ?[*]term_t = null,
-    terms_buffer_count: i32 = 0,
-    storage: ?*filter_t = null,
-    instanced: bool = false,
-    flags: flags32_t = 0,
-    expr: ?[*:0]const u8 = null,
-    entity: entity_t = 0,
+    entity: entity_t,
+    type: type_info_t,
 };
 
-pub const FLECS_EVENT_DESC_MAX = 8;
+pub const iter_t = extern struct {
+    world: *world_t,
+    real_world: *world_t,
 
-pub const observer_desc_t = extern struct {
+    entities_: [*]entity_t,
+    ptrs: ?[*]*anyopaque,
+    sizes: ?[*]size_t,
+    table: *table_t,
+    other_table: ?*table_t,
+    ids: ?[*]id_t,
+    variables: ?[*]var_t,
+    columns: ?[*]i32,
+    sources: ?[*]entity_t,
+    constrained_vars: flags64_t,
+    group_id: u64,
+    field_count: i32,
+    set_fields: termset_t,
+    shared_fields: termset_t,
+    up_fields: termset_t,
+
+    system: entity_t,
+    event: entity_t,
+    event_id: id_t,
+    event_cur: i32,
+
+    query: *const query_t,
+    term_index: i32,
+
+    variable_count: i32,
+    variable_names: ?[*][*:0]u8,
+
+    param: ?*anyopaque,
+    ctx: ?*anyopaque,
+    binding_ctx: ?*anyopaque,
+    callback_ctx: ?*anyopaque,
+    run_ctx: ?*anyopaque,
+
+    delta_time: f32,
+    delta_system_time: f32,
+
+    frame_offset: i32,
+    offset: i32,
+    count_: i32,
+    instance_count: i32,
+
+    flags: flags32_t,
+    interrupted_by: entity_t,
+    priv_: iter_private_t,
+
+    next: iter_next_action_t,
+    callback: *const fn (it: *iter_t) callconv(.C) void, // TODO: Compiler bug. Should be `iter_action_t`.
+    fini: iter_fini_action_t,
+    chain_it: ?*iter_t,
+
+    pub fn entities(iter: iter_t) []entity_t {
+        return iter.entities_[0..@as(usize, @intCast(iter.count_))];
+    }
+    pub fn count(iter: iter_t) usize {
+        return @as(usize, @intCast(iter.count_));
+    }
+};
+
+pub const query_desc_t = extern struct {
     _canary: i32 = 0,
-    entity: entity_t = 0,
-    filter: filter_desc_t = .{},
-    events: [FLECS_EVENT_DESC_MAX]entity_t = [_]entity_t{0} ** FLECS_EVENT_DESC_MAX,
-    yield_existing: bool = false,
-    callback: iter_action_t,
-    run: ?run_action_t = null,
+
+    terms: [FLECS_TERM_COUNT_MAX]term_t = [_]term_t{.{}} ** FLECS_TERM_COUNT_MAX,
+    expr: ?[*:0]const u8 = null,
+
+    cache_kind: query_cache_kind_t = .QueryCacheNone,
+
+    flags: flags32_t = 0,
+
+    order_by_callback: ?order_by_action_t = null,
+    order_by_table_callback: ?sort_table_action_t = null,
+    order_by: entity_t = 0,
+
+    group_by: id_t = 0,
+    group_by_callback: ?group_by_action_t = null,
+    on_group_create: ?group_create_action_t = null,
+    on_group_delete: ?group_delete_action_t = null,
+    group_by_ctx: ?*anyopaque = null,
+    group_by_ctx_free: ?ctx_free_t = null,
     ctx: ?*anyopaque = null,
     binding_ctx: ?*anyopaque = null,
     ctx_free: ?ctx_free_t = null,
     binding_ctx_free: ?ctx_free_t = null,
+
+    entity: entity_t = 0,
+};
+
+pub const observer_desc_t = extern struct {
+    _canary: i32 = 0,
+    entity: entity_t = 0,
+
+    query: query_desc_t = .{},
+
+    events: [FLECS_EVENT_DESC_MAX]entity_t = [_]entity_t{0} ** FLECS_EVENT_DESC_MAX,
+
+    yield_existing: bool = false,
+    callback: iter_action_t,
+    run: ?run_action_t = null,
+    ctx: ?*anyopaque = null,
+    ctx_free: ?ctx_free_t = null,
+    callback_ctx: ?*anyopaque = null,
+    callback_ctx_free: ?ctx_free_t = null,
+
+    run_ctx: ?*anyopaque = null,
+    run_ctx_free: ?ctx_free_t = null,
     observable: ?*poly_t = null,
     last_event_id: ?*i32 = null,
-    term_index: i32 = 0,
+
+    term_index_: i32 = 0,
+    flags_: flags32_t = 0,
 };
 
 pub const event_desc_t = extern struct {
@@ -896,22 +971,34 @@ pub const event_desc_t = extern struct {
     flags: flags32_t = 0,
 };
 
+pub const build_info_t = extern struct {
+    compiler: ?[*:0]const u8 = null,
+    addons: ?*const [*:0]const u8 = null,
+    version: ?[*:0]const u8 = null,
+    version_major: i16 = 0,
+    version_minor: i16 = 0,
+    version_patch: i16 = 0,
+    debug: bool,
+    sanitize: bool,
+    perf_trace: bool,
+};
+
 pub const world_info_t = extern struct {
     last_component_id: entity_t,
     min_id: entity_t,
     max_id: entity_t,
 
-    delta_time_raw: f32,
-    delta_time: f32,
-    time_scale: f32,
-    target_fps: f32,
-    frame_time_total: f32,
-    system_time_total: f32,
-    emit_time_total: f32,
-    merge_time_total: f32,
-    world_time_total: f32,
-    world_time_total_raw: f32,
-    rematch_time_total: f32,
+    delta_time_raw: ftime_t,
+    delta_time: ftime_t,
+    time_scale: ftime_t,
+    target_fps: ftime_t,
+    frame_time_total: ftime_t,
+    system_time_total: ftime_t,
+    emit_time_total: ftime_t,
+    merge_time_total: ftime_t,
+    rematch_time_total: ftime_t,
+    world_time_total: f64,
+    world_time_total_raw: f64,
 
     frame_count_total: i64,
     merge_count_total: i64,
@@ -938,15 +1025,22 @@ pub const world_info_t = extern struct {
         delete_count: i64,
         clear_count: i64,
         set_count: i64,
-        get_mut_count: i64,
+        ensure_count: i64,
         modified_count: i64,
-        other_count: i64,
         discard_count: i64,
+        event_count: i64,
+        other_count: i64,
         batched_entity_count: i64,
         batched_command_count: i64,
     },
 
     name_prefix: [*:0]const u8,
+};
+
+pub const query_group_info = extern struct {
+    match_count: i32,
+    table_count: i32,
+    ctx: ?*anyopaque,
 };
 
 const EcsAllocator = struct {
@@ -1088,13 +1182,13 @@ pub fn init() *world_t {
     Delete = EcsDelete;
     Panic = EcsPanic;
 
-    DefaultChildComponent = EcsDefaultChildComponent;
+    // TODO DefaultChildComponent = EcsDefaultChildComponent;
 
     PredEq = EcsPredEq;
     PredMatch = EcsPredMatch;
     PredLookup = EcsPredLookup;
 
-    Tag = EcsTag;
+    PairIsTag = EcsPairIsTag;
     Union = EcsUnion;
     Alias = EcsAlias;
     Prefab = EcsPrefab;
@@ -1114,7 +1208,6 @@ pub fn init() *world_t {
     OnAdd = EcsOnAdd;
     OnRemove = EcsOnRemove;
     OnSet = EcsOnSet;
-    UnSet = EcsUnSet;
     Monitor = EcsMonitor;
     OnTableCreate = EcsOnTableCreate;
     OnTableDelete = EcsOnTableDelete;
@@ -1228,10 +1321,6 @@ extern fn ecs_defer_suspend(world: *world_t) void;
 pub const defer_resume = ecs_defer_resume;
 extern fn ecs_defer_resume(world: *world_t) void;
 
-/// `pub fn set_automerge(world: *world_t, automerge: bool) void`
-pub const set_automerge = ecs_set_automerge;
-extern fn ecs_set_automerge(world: *world_t, automerge: bool) void;
-
 /// `pub fn set_stage_count(world: *world_t, stages: i32) void`
 pub const set_stage_count = ecs_set_stage_count;
 extern fn ecs_set_stage_count(world: *world_t, stages: i32) void;
@@ -1253,8 +1342,8 @@ pub const stage_is_readonly = ecs_stage_is_readonly;
 extern fn ecs_stage_is_readonly(world: *const world_t) bool;
 
 /// `pub fn async_stage_new(world: *world_t) *world_t`
-pub const async_stage_new = ecs_async_stage_new;
-extern fn ecs_async_stage_new(world: *world_t) *world_t;
+pub const async_stage_new = ecs_stage_new;
+extern fn ecs_stage_new(world: *world_t) *world_t;
 
 /// `pub fn async_stage_free(world: *world_t) *world_t`
 pub const async_stage_free = ecs_async_stage_free;
@@ -1345,8 +1434,8 @@ pub fn pair_second(pair_id: entity_t) entity_t {
 //
 //--------------------------------------------------------------------------------------------------
 /// `pub fn new_id(world: *world_t) entity_t`
-pub const new_id = ecs_new_id;
-extern fn ecs_new_id(world: *world_t) entity_t;
+pub const new_id = ecs_new;
+extern fn ecs_new(world: *world_t) entity_t;
 
 /// `pub fn new_low_id(world: *world_t) entity_t`
 pub const new_low_id = ecs_new_low_id;
@@ -1517,8 +1606,8 @@ pub const strip_generation = ecs_strip_generation;
 extern fn ecs_strip_generation(entity: entity_t) id_t;
 
 /// `pub fn set_entity_generation(world: *world_t, entity: entity_t) void`
-pub const set_entity_generation = ecs_set_entity_generation;
-extern fn ecs_set_entity_generation(world: *world_t, entity: entity_t) void;
+pub const set_entity_generation = ecs_set_version;
+extern fn ecs_set_version(world: *world_t, entity: entity_t) void;
 
 /// `pub fn get_alive(world: *const world_t, entity: entity_t) entity_t`
 pub const get_alive = ecs_get_alive;
@@ -1714,7 +1803,7 @@ extern fn ecs_set_name_prefix(world: *world_t, prefix: ?[*:0]const u8) ?[*:0]con
 
 /// `pub fn set_lookup_path(world: *world_t, lookup_path: ?[*]const entity_t) ?[*]entity_t`
 pub const set_lookup_path = ecs_set_lookup_path;
-extern fn ecs_set_lookup_path(world: *world_t, lookup_path: ?[*]const entity_t) ?[*]entity_t;
+extern fn ecs_set_lookup_path(world: *world_t, lookup_path: ?[*:0]const entity_t) ?[*]entity_t;
 
 /// `pub fn get_lookup_path(world: *const world_t) ?[*]entity_t`
 pub const get_lookup_path = ecs_get_lookup_path;
@@ -1785,20 +1874,20 @@ pub const id_str = ecs_id_str;
 extern fn ecs_id_str(world: *const world_t, id: id_t) ?[*:0]u8;
 //--------------------------------------------------------------------------------------------------
 //
-// Functions for working with `term_t` and `filter_t`.
+// Functions for working with `term_t` and `query_t`.
 //
 //--------------------------------------------------------------------------------------------------
 /// `pub fn term_iter(world: *const world_t, term: *term_t) iter_t`
-pub const term_iter = ecs_term_iter;
-extern fn ecs_term_iter(world: *const world_t, term: *term_t) iter_t;
+pub const each = ecs_each_id;
+extern fn ecs_each_id(world: *const world_t, term: *term_t) iter_t;
 
 /// `pub fn term_chain_iter(world: *const world_t, term: *term_t) iter_t`
 pub const term_chain_iter = ecs_term_chain_iter;
 extern fn ecs_term_chain_iter(world: *const world_t, term: *term_t) iter_t;
 
 /// `pub fn term_next(it: *iter_t) bool`
-pub const term_next = ecs_term_next;
-extern fn ecs_term_next(it: *iter_t) bool;
+pub const each_next = ecs_each_next;
+extern fn ecs_each_next(it: *iter_t) bool;
 
 /// `pub fn children(world: *const world_t, parent: entity_t) iter_t`
 pub const children = ecs_children;
@@ -1810,7 +1899,7 @@ extern fn ecs_children_next(it: *iter_t) bool;
 
 /// `pub fn term_id_is_set(id: *term_id_t) bool`
 pub const term_id_is_set = ecs_term_id_is_set;
-extern fn ecs_term_id_is_set(id: *term_id_t) bool;
+extern fn ecs_term_id_is_set(id: *term_ref_t) bool;
 
 /// `pub fn term_is_initialized(term: *const term_t) bool`
 pub const term_is_initialized = ecs_term_is_initialized;
@@ -1828,70 +1917,10 @@ extern fn ecs_term_match_0(term: *const term_t) bool;
 pub const term_finalize = ecs_term_finalize;
 extern fn ecs_term_finalize(world: *const world_t, term: *term_t) i32;
 
-/// `pub fn term_copy(src: *const term_t) term_t`
-pub const term_copy = ecs_term_copy;
-extern fn ecs_term_copy(src: *const term_t) term_t;
-
-/// `pub fn term_move(src: *term_t) term_t`
-pub const term_move = ecs_term_move;
-extern fn ecs_term_move(src: *term_t) term_t;
-
-/// `pub fn term_fini(term: *term_t) void`
-pub const term_fini = ecs_term_fini;
-extern fn ecs_term_fini(term: *term_t) void;
-
-pub fn filter_init(world: *world_t, desc: *const filter_desc_t) error_t!*filter_t {
-    return ecs_filter_init(world, desc) orelse return make_error();
-}
-extern fn ecs_filter_init(world: *world_t, desc: *const filter_desc_t) ?*filter_t;
-
-/// `pub fn filter_fini(filter: *filter_t) void`
-pub const filter_fini = ecs_filter_fini;
-extern fn ecs_filter_fini(filter: *filter_t) void;
-
-/// `pub fn filter_finalize(world: *const world_t, filter: *filter_t) i32`
-pub const filter_finalize = ecs_filter_finalize;
-extern fn ecs_filter_finalize(world: *const world_t, filter: *filter_t) i32;
-
-/// `pub fn filter_find_this_var(filter: *const filter_t) i32`
-pub const filter_find_this_var = ecs_filter_find_this_var;
-extern fn ecs_filter_find_this_var(filter: *const filter_t) i32;
-
 /// `pub fn term_str(world: *const world_t, term: *const term_t) ?[*:0]u8`
 pub const term_str = ecs_term_str;
 extern fn ecs_term_str(world: *const world_t, term: *const term_t) ?[*:0]u8;
 
-/// `pub fn filter_str(world: *const world_t, filter: *const filter_t) ?[*:0]u8`
-pub const filter_str = ecs_filter_str;
-extern fn ecs_filter_str(world: *const world_t, filter: *const filter_t) ?[*:0]u8;
-
-/// `pub fn filter_iter(world: *const world_t, filter: *const filter_t) iter_t;`
-pub const filter_iter = ecs_filter_iter;
-extern fn ecs_filter_iter(world: *const world_t, filter: *const filter_t) iter_t;
-
-/// `pub fn filter_chain_iter(world: *const world_t, filter: *const filter_t) iter_t`
-pub const filter_chain_iter = ecs_filter_chain_iter;
-extern fn ecs_filter_chain_iter(world: *const world_t, filter: *const filter_t) iter_t;
-
-/// `pub fn filter_pivot_term(world: *const world_t, filter: *const filter_t) i32;`
-pub const filter_pivot_term = ecs_filter_pivot_term;
-extern fn ecs_filter_pivot_term(world: *const world_t, filter: *const filter_t) i32;
-
-/// `pub fn filter_next(it: *iter_t) bool`
-pub const filter_next = ecs_filter_next;
-extern fn ecs_filter_next(it: *iter_t) bool;
-
-/// `pub fn filter_next_instanced(it: *iter_t) bool`
-pub const filter_next_instanced = ecs_filter_next_instanced;
-extern fn ecs_filter_next_instanced(it: *iter_t) bool;
-
-/// `pub fn filter_move(dst: *filter_t, src: *filter_t) void`
-pub const filter_move = ecs_filter_move;
-extern fn ecs_filter_move(dst: *filter_t, src: *filter_t) void;
-
-/// `pub fn filter_copy(dst: *filter_t, src: *const filter_t) void`
-pub const filter_copy = ecs_filter_copy;
-extern fn ecs_filter_copy(dst: *filter_t, src: *const filter_t) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `query_t`.
@@ -1906,13 +1935,9 @@ extern fn ecs_query_init(world: *world_t, desc: *const query_desc_t) ?*query_t;
 pub const query_fini = ecs_query_fini;
 extern fn ecs_query_fini(query: *query_t) void;
 
-/// `pub fn query_get_filter(query: *const query_t) *const filter_t`
-pub const query_get_filter = ecs_query_get_filter;
-extern fn ecs_query_get_filter(query: *const query_t) *const filter_t;
-
-/// `pub fn query_iter(world: *const world_t: query: *query_t) iter_t`
+/// `pub fn query_iter(world: *const world_t: query: *const query_t) iter_t`
 pub const query_iter = ecs_query_iter;
-extern fn ecs_query_iter(world: *const world_t, query: *query_t) iter_t;
+extern fn ecs_query_iter(world: *const world_t, query: *const query_t) iter_t;
 
 /// `pub fn query_next(iter: *iter_t) bool`
 pub const query_next = ecs_query_next;
@@ -1930,17 +1955,17 @@ extern fn ecs_query_next_table(iter: *iter_t) bool;
 pub const query_populate = ecs_query_populate;
 extern fn ecs_query_populate(iter: *iter_t, when_changed: bool) c_int;
 
-/// `pub fn query_changed(query: *query_t, iter: *const iter_t) bool`
+/// `pub fn query_changed(query: *query_t) bool`
 pub const query_changed = ecs_query_changed;
-extern fn ecs_query_changed(query: *query_t, iter: *const iter_t) bool;
+extern fn ecs_query_changed(query: *query_t) bool;
 
-/// `pub fn query_skip(iter: *iter_t) void`
-pub const query_skip = ecs_query_skip;
-extern fn ecs_query_skip(iter: *iter_t) void;
+/// `pub fn iter_skip(iter: *iter_t) void`
+pub const iter_skip = ecs_iter_skip;
+extern fn ecs_iter_skip(iter: *iter_t) void;
 
 /// `pub fn query_set_group(iter: *iter_t, group_id: u64) void`
-pub const query_set_group = ecs_query_set_group;
-extern fn ecs_query_set_group(iter: *iter_t, group_id: u64) void;
+pub const iter_set_group = ecs_iter_set_group;
+extern fn ecs_iter_set_group(iter: *iter_t, group_id: u64) void;
 
 /// `pub fn query_get_group_ctx(query: *const query_t, group_id: u64) ?*anyopaque`
 pub const query_get_group_ctx = ecs_query_get_group_ctx;
@@ -2017,9 +2042,14 @@ extern fn ecs_observer_get_binding_ctx(world: *const world_t, observer: entity_t
 // Functions for working with `iter_t`.
 //
 //--------------------------------------------------------------------------------------------------
+pub const entities_t = extern struct {
+    entities: ?[*]const entity_t,
+    count: i32,
+    alive_count: i32,
+};
 /// `pub fn iter_poly(world: *const world_t, poly: *const poly_t, iter: [*]iter_t, filter: ?*term_t) void`
-pub const iter_poly = ecs_iter_poly;
-extern fn ecs_iter_poly(world: *const world_t, poly: *const poly_t, iter: [*]iter_t, filter: ?*term_t) void;
+pub const get_entities = ecs_get_entities;
+extern fn ecs_get_entities(world: *const world_t) entities_t;
 
 /// `pub fn iter_next(it: *iter_t) bool`
 pub const iter_next = ecs_iter_next;
@@ -2415,8 +2445,9 @@ pub fn SYSTEM(
     var entity_desc = entity_desc_t{};
     entity_desc.id = new_id(world);
     entity_desc.name = name;
-    entity_desc.add[0] = if (phase != 0) pair(EcsDependsOn, phase) else 0;
-    entity_desc.add[1] = phase;
+    const first = if (phase != 0) pair(EcsDependsOn, phase) else 0;
+    const second = phase;
+    entity_desc.add = &.{ first, second, 0 };
 
     system_desc.entity = entity_init(world, &entity_desc);
     _ = system_init(world, system_desc);
@@ -2445,8 +2476,8 @@ pub fn OBSERVER(
 /// }
 /// Would return the following implementation
 /// fn exec(it: *ecs.iter_t) callconv(.C) void {
-///     const c1 = ecs.field(it, Position, 1).?;
-///     const c2 = ecs.field(it, Velocity, 2).?;
+///     const c1 = ecs.field(it, Position, 0).?;
+///     const c2 = ecs.field(it, Velocity, 1).?;
 ///     move_system(c1, c2);//probably inlined
 // }
 fn SystemImpl(comptime fn_system: anytype) type {
@@ -2469,7 +2500,7 @@ fn SystemImpl(comptime fn_system: anytype) type {
 
             inline for (start_index..fn_type.Fn.params.len) |i| {
                 const p = fn_type.Fn.params[i];
-                args_tuple[i] = field(it, @typeInfo(p.type.?).Pointer.child, i + 1 - start_index).?;
+                args_tuple[i] = field(it, @typeInfo(p.type.?).Pointer.child, i - start_index).?;
             }
 
             //NOTE: .always_inline seems ok, but unsure. Replace to .auto if it breaks
@@ -2492,14 +2523,14 @@ pub fn SYSTEM_DESC(comptime fn_system: anytype) system_desc_t {
         const p = fn_type.params[i];
         const param_type_info = @typeInfo(p.type.?).Pointer;
         const inout = if (param_type_info.is_const) .In else .InOut;
-        system_desc.query.filter.terms[i - start_index] = .{ .id = id(param_type_info.child), .inout = inout };
+        system_desc.query.terms[i - start_index] = .{ .id = id(param_type_info.child), .inout = inout };
     }
 
     return system_desc;
 }
 
 /// Creates system_desc_t from function parameters.
-/// Accepts aditional filter terms
+/// Accepts additional query terms
 pub fn SYSTEM_DESC_WITH_FILTERS(comptime fn_system: anytype, filters: []const term_t) system_desc_t {
     const fn_type = @typeInfo(@TypeOf(fn_system)).Fn;
     var system_desc = SYSTEM_DESC(fn_system);
@@ -2507,7 +2538,7 @@ pub fn SYSTEM_DESC_WITH_FILTERS(comptime fn_system: anytype, filters: []const te
     const has_it_param = fn_type.params[0].type == *iter_t;
     const start_index = if (has_it_param) 1 else 0;
     for (filters, 0..) |t, i| {
-        system_desc.query.filter.terms[i + fn_type.params.len - start_index] = t;
+        system_desc.query.terms[i + fn_type.params.len - start_index] = t;
     }
 
     return system_desc;
@@ -2534,6 +2565,8 @@ pub fn ADD_SYSTEM_WITH_FILTERS(
     filters: []const term_t,
 ) void {
     var desc = SYSTEM_DESC_WITH_FILTERS(fn_system, filters);
+    // std.json.stringify(desc, .{}, std.io.getStdOut().writer()) catch unreachable;
+    std.debug.print("lol234 {any}", .{desc});
     SYSTEM(world, name, phase, &desc);
 }
 
@@ -2860,7 +2893,6 @@ test {
 comptime {
     _ = @import("tests.zig");
     _ = run_action_t;
-    _ = iter_init_action_t;
     _ = iter_fini_action_t;
     _ = iter_action_t;
     _ = iter_next_action_t;
