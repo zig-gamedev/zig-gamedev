@@ -2565,8 +2565,6 @@ pub fn ADD_SYSTEM_WITH_FILTERS(
     filters: []const term_t,
 ) void {
     var desc = SYSTEM_DESC_WITH_FILTERS(fn_system, filters);
-    // std.json.stringify(desc, .{}, std.io.getStdOut().writer()) catch unreachable;
-    std.debug.print("lol234 {any}", .{desc});
     SYSTEM(world, name, phase, &desc);
 }
 
