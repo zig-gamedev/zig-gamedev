@@ -6,7 +6,6 @@ const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 
 const print = std.log.info;
-//const print = std.debug.print;
 
 const Position = struct { x: f32, y: f32 };
 const Velocity = struct { x: f32, y: f32 };
@@ -26,21 +25,6 @@ test "extern struct ABI compatibility" {
         @cInclude("flecs.h");
     });
     inline for (comptime std.meta.declarations(@This())) |decl| {
-        // this is to ignore a dep loop incorrectly found by Zig
-        // see https://github.com/ziglang/zig/issues/12325
-        if (comptime std.mem.eql(u8, decl.name, "xtor_t") or
-            std.mem.eql(u8, decl.name, "copy_t") or
-            std.mem.eql(u8, decl.name, "move_t") or
-            std.mem.eql(u8, decl.name, "iter_action_t") or
-            std.mem.eql(u8, decl.name, "system_desc_t") or
-            std.mem.eql(u8, decl.name, "observer_t") or
-            std.mem.eql(u8, decl.name, "type_hooks_t") or
-            std.mem.eql(u8, decl.name, "type_info_t") or
-            std.mem.eql(u8, decl.name, "component_desc_t") or
-            false)
-        {
-            continue;
-        }
         const ZigType = @field(@This(), decl.name);
         if (@TypeOf(ZigType) != type) {
             continue;
@@ -49,7 +33,6 @@ test "extern struct ABI compatibility" {
             @typeInfo(ZigType).Struct.layout == .@"extern")
         {
             const flecs_name = if (comptime std.mem.startsWith(u8, decl.name, "Ecs")) decl.name else "ecs_" ++ decl.name;
-            // const flecs_name = "ecs_" ++ decl.name;
 
             const CType = @field(flecs_c, flecs_name);
             std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType)) catch |err| {
