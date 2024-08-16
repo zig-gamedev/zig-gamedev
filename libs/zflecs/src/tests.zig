@@ -1,11 +1,11 @@
 const std = @import("std");
 const ecs = @import("zflecs.zig");
+const builtin = @import("builtin");
 
 const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 
 const print = std.log.info;
-//const print = std.debug.print;
 
 const Position = struct { x: f32, y: f32 };
 const Velocity = struct { x: f32, y: f32 };
@@ -14,6 +14,47 @@ const Direction = enum { north, south, east, west };
 
 test {
     std.testing.refAllDeclsRecursive(@This());
+}
+
+test "extern struct ABI compatibility" {
+    @setEvalBranchQuota(50_000);
+    const flecs_c = @cImport({
+        @cDefine("FLECS_SANITIZE", if (builtin.mode == .Debug) "1" else {});
+        @cDefine("FLECS_USE_OS_ALLOC", "1");
+        @cDefine("FLECS_NO_CPP", "1");
+        @cInclude("flecs.h");
+    });
+    inline for (comptime std.meta.declarations(@This())) |decl| {
+        const ZigType = @field(@This(), decl.name);
+        if (@TypeOf(ZigType) != type) {
+            continue;
+        }
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
+            @typeInfo(ZigType).Struct.layout == .@"extern")
+        {
+            const flecs_name = if (comptime std.mem.startsWith(u8, decl.name, "Ecs")) decl.name else "ecs_" ++ decl.name;
+
+            const CType = @field(flecs_c, flecs_name);
+            std.testing.expectEqual(@sizeOf(CType), @sizeOf(ZigType)) catch |err| {
+                std.log.err("@sizeOf({s}) != @sizeOf({s})", .{ flecs_name, decl.name });
+                return err;
+            };
+            comptime var i: usize = 0;
+            inline for (comptime std.meta.fieldNames(CType)) |c_field_name| {
+                std.testing.expectEqual(
+                    @offsetOf(CType, c_field_name),
+                    @offsetOf(ZigType, std.meta.fieldNames(ZigType)[i]),
+                ) catch |err| {
+                    std.log.err(
+                        "@offsetOf({s}, {s}) != @offsetOf({s}, {s})",
+                        .{ flecs_name, c_field_name, decl.name, std.meta.fieldNames(ZigType)[i] },
+                    );
+                    return err;
+                };
+                i += 1;
+            }
+        }
+    }
 }
 
 test "zflecs.entities.basics" {
@@ -47,9 +88,9 @@ test "zflecs.entities.basics" {
 
     {
         var term = ecs.term_t{ .id = ecs.id(Position) };
-        var it = ecs.term_iter(world, &term);
-        while (ecs.term_next(&it)) {
-            if (ecs.field(&it, Position, 1)) |positions| {
+        var it = ecs.each(world, &term);
+        while (ecs.each_next(&it)) {
+            if (ecs.field(&it, Position, 0)) |positions| {
                 for (positions, it.entities()) |p, e| {
                     print(
                         "Term loop: {s}: ({d}, {d})\n",
@@ -61,23 +102,23 @@ test "zflecs.entities.basics" {
     }
 
     {
-        var desc = ecs.filter_desc_t{};
+        var desc = ecs.query_desc_t{};
         desc.terms[0].id = ecs.id(Position);
-        const filter = try ecs.filter_init(world, &desc);
-        defer ecs.filter_fini(filter);
+        const query = try ecs.query_init(world, &desc);
+        defer ecs.query_fini(query);
     }
 
     {
-        const filter = try ecs.filter_init(world, &.{
+        const query = try ecs.query_init(world, &.{
             .terms = [_]ecs.term_t{
                 .{ .id = ecs.id(Position) },
                 .{ .id = ecs.id(Walking) },
-            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
+            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_COUNT_MAX - 2),
         });
-        defer ecs.filter_fini(filter);
+        defer ecs.query_fini(query);
 
-        var it = ecs.filter_iter(world, filter);
-        while (ecs.filter_next(&it)) {
+        var it = ecs.query_iter(world, query);
+        while (ecs.query_next(&it)) {
             for (it.entities()) |e| {
                 print("Filter loop: {s}\n", .{ecs.get_name(world, e).?});
             }
@@ -87,8 +128,8 @@ test "zflecs.entities.basics" {
     {
         const query = _: {
             var desc = ecs.query_desc_t{};
-            desc.filter.terms[0].id = ecs.id(Position);
-            desc.filter.terms[1].id = ecs.id(Walking);
+            desc.terms[0].id = ecs.id(Position);
+            desc.terms[1].id = ecs.id(Walking);
             break :_ try ecs.query_init(world, &desc);
         };
         defer ecs.query_fini(query);
@@ -96,12 +137,10 @@ test "zflecs.entities.basics" {
 
     {
         const query = try ecs.query_init(world, &.{
-            .filter = .{
-                .terms = [_]ecs.term_t{
-                    .{ .id = ecs.id(Position) },
-                    .{ .id = ecs.id(Walking) },
-                } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_DESC_MAX - 2),
-            },
+            .terms = [_]ecs.term_t{
+                .{ .id = ecs.id(Position) },
+                .{ .id = ecs.id(Walking) },
+            } ++ ecs.array(ecs.term_t, ecs.FLECS_TERM_COUNT_MAX - 2),
         });
         defer ecs.query_fini(query);
     }
@@ -247,8 +286,8 @@ const Eats = struct {};
 const Apples = struct {};
 
 fn move(it: *ecs.iter_t) callconv(.C) void {
-    const p = ecs.field(it, Position, 1).?;
-    const v = ecs.field(it, Velocity, 2).?;
+    const p = ecs.field(it, Position, 0).?;
+    const v = ecs.field(it, Velocity, 1).?;
 
     const type_str = ecs.table_str(it.world, it.table).?;
     print("Move entities with [{s}]\n", .{type_str});
@@ -456,13 +495,13 @@ test "zflecs.struct-dtor-hook" {
         var system_desc = ecs.system_desc_t{};
         system_desc.callback = struct {
             pub fn chatSystem(it: *ecs.iter_t) callconv(.C) void {
-                const chat_components = ecs.field(it, Chat, 1).?;
+                const chat_components = ecs.field(it, Chat, 0).?;
                 for (0..it.count()) |i| {
                     chat_components[i].messages.append("some words hi") catch @panic("whomp");
                 }
             }
         }.chatSystem;
-        system_desc.query.filter.terms[0] = .{ .id = ecs.id(Chat) };
+        system_desc.query.terms[0] = .{ .id = ecs.id(Chat) };
         ecs.SYSTEM(world, "Chat system", ecs.OnUpdate, &system_desc);
     }
 

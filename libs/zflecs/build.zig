@@ -42,6 +42,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    tests.linkLibC();
+    tests.addIncludePath(b.path("libs/flecs"));
     b.installArtifact(tests);
 
     tests.linkLibrary(flecs);
