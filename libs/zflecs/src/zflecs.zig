@@ -2,10 +2,11 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "4.0.1";
-pub const flecs_version_major = 4;
-pub const flecs_version_minor = 0;
-pub const flecs_version_patch = 1;
+pub const flecs_version = std.SemanticVersion{
+    .major = 4,
+    .minor = 0,
+    .patch = 1,
+};
 
 // TODO: flecs_is_sanitize should come from flecs build flags.
 const flecs_is_sanitize = builtin.mode == .Debug;
