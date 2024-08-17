@@ -378,6 +378,11 @@ FN(toJph)(JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cas
 FN(toJpc)(const JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPC_CharacterVirtualSettings *>(in); }
 FN(toJpc)(JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtualSettings *>(in); }
 
+FN(toJpc)(const JPH::AABox *in) { assert(in); return reinterpret_cast<const JPC_AABox *>(in); }
+FN(toJph)(const JPC_AABox *in) { assert(in); return reinterpret_cast<const JPH::AABox *>(in); }
+FN(toJpc)(JPH::AABox *in) { assert(in); return reinterpret_cast<JPC_AABox *>(in); }
+FN(toJph)(JPC_AABox *in) { assert(in); return reinterpret_cast<JPH::AABox *>(in); }
+
 #if JPC_DEBUG_RENDERER == 1
 FN(toJpc)(const JPH::BodyManager::DrawSettings *in) { assert(in); return reinterpret_cast<const JPC_BodyManager_DrawSettings *>(in); }
 FN(toJph)(const JPC_BodyManager_DrawSettings *in) { assert(in); return reinterpret_cast<const JPH::BodyManager::DrawSettings *>(in); }
@@ -393,11 +398,6 @@ FN(toJpc)(const JPH::ColorArg *in) { assert(in); return reinterpret_cast<const J
 FN(toJph)(const JPC_Color *in) { assert(in); return reinterpret_cast<const JPH::ColorArg *>(in); }
 FN(toJpc)(JPH::ColorArg *in) { assert(in); return reinterpret_cast<JPC_Color *>(in); }
 FN(toJph)(JPC_Color *in) { assert(in); return reinterpret_cast<JPH::ColorArg *>(in); }
-
-FN(toJpc)(const JPH::AABox *in) { assert(in); return reinterpret_cast<const JPC_AABox *>(in); }
-FN(toJph)(const JPC_AABox *in) { assert(in); return reinterpret_cast<const JPH::AABox *>(in); }
-FN(toJpc)(JPH::AABox *in) { assert(in); return reinterpret_cast<JPC_AABox *>(in); }
-FN(toJph)(JPC_AABox *in) { assert(in); return reinterpret_cast<JPH::AABox *>(in); }
 
 FN(toJpc)(const JPH::DebugRenderer::Vertex *in) { assert(in); return reinterpret_cast<const JPC_DebugRenderer_Vertex *>(in); }
 FN(toJph)(const JPC_DebugRenderer_Vertex *in) { assert(in); return reinterpret_cast<const JPH::DebugRenderer::Vertex *>(in); }
