@@ -2,7 +2,11 @@ const std = @import("std");
 const assert = std.debug.assert;
 const builtin = @import("builtin");
 
-pub const flecs_version = "4.0.0";
+pub const flecs_version = std.SemanticVersion{
+    .major = 4,
+    .minor = 0,
+    .patch = 1,
+};
 
 // TODO: flecs_is_sanitize should come from flecs build flags.
 const flecs_is_sanitize = builtin.mode == .Debug;
@@ -53,18 +57,19 @@ pub const EcsIterIgnoreThis = 1 << 4;
 pub const EcsIterHasCondSet = 1 << 6;
 pub const EcsIterProfile = 1 << 7;
 pub const EcsIterTrivialSearch = 1 << 8;
-pub const EcsIterTrivialSearchNoData = 1 << 9;
-pub const EcsIterTrivialTest = 1 << 10;
-pub const EcsIterTrivialTestWildcard = 1 << 11;
-pub const EcsIterTrivialSearchWildcard = 1 << 12;
-pub const EcsIterCacheSearch = 1 << 13;
-pub const EcsIterFixedInChangeComputed = 1 << 14;
-pub const EcsIterFixedInChanged = 1 << 15;
-pub const EcsIterSkip = 1 << 16;
-pub const EcsIterCppEach = 1 << 17;
+// 9, 10 missing in flecs
+pub const EcsIterTrivialTest = 1 << 11;
+pub const EcsIterTrivialCached = 1 << 14;
+pub const EcsIterCacheSearch = 1 << 15;
+pub const EcsIterFixedInChangeComputed = 1 << 16;
+pub const EcsIterFixedInChanged = 1 << 17;
+pub const EcsIterSkip = 1 << 18;
+pub const EcsIterCppEach = 1 << 19;
 
-pub const EcsIterTableOnly = 1 << 18; // same as event flag
-pub const EcsEventTableOnly = 1 << 18;
+pub const EcsIterTableOnly = 1 << 20; // same as event flag
+
+// Event flags
+pub const EcsEventTableOnly = 1 << 20;
 pub const EcsEventNoOnSet = 1 << 16;
 
 // Query flags
@@ -83,7 +88,7 @@ pub const EcsQueryIsTrivial = 1 << 22;
 pub const EcsQueryHasCacheable = 1 << 23;
 pub const EcsQueryIsCacheable = 1 << 24;
 pub const EcsQueryHasTableThisVar = 1 << 25;
-pub const EcsQueryHasSparseThis = 1 << 26;
+// 26 missing in flecs
 pub const EcsQueryCacheYieldEmptyTables = 1 << 27;
 
 // Term flags
@@ -93,7 +98,7 @@ pub const EcsTermTransitive = 1 << 2;
 pub const EcsTermReflexive = 1 << 3;
 pub const EcsTermIdInherited = 1 << 4;
 pub const EcsTermIsTrivial = 1 << 5;
-pub const EcsTermNoData = 1 << 6;
+// 6 missing in flecs
 pub const EcsTermIsCacheable = 1 << 7;
 pub const EcsTermIsScope = 1 << 8;
 pub const EcsTermIsMember = 1 << 9;
@@ -298,7 +303,7 @@ pub const table_t = opaque {};
 pub const query_cache_table_match_t = opaque {};
 pub const data_t = opaque {};
 
-pub const table_record_t = opaque {};
+pub const table_cache_t = opaque {};
 pub const id_record_t = opaque {};
 
 pub const poly_t = anyopaque;
@@ -311,6 +316,28 @@ pub const header_t = extern struct {
     refcount: i32 = 0,
     mixins: ?*mixins_t = null,
 };
+
+pub const record_t = extern struct {
+    idr: *id_record_t,
+    table: *table_t,
+    row: u32,
+    dense: i32,
+};
+
+pub const table_cache_hdr_t = extern struct {
+    cache: *table_cache_t,
+    table: *table_t,
+    prev: *table_cache_hdr_t,
+    empty: bool,
+};
+
+pub const table_record_t = extern struct {
+    hdr: table_cache_hdr_t,
+    index: i16,
+    count: i16,
+    column: i16,
+};
+
 //--------------------------------------------------------------------------------------------------
 //
 // Function types.
@@ -479,7 +506,7 @@ pub const term_t = extern struct {
     inout: inout_kind_t = .InOutDefault,
     oper: oper_kind_t = .And,
 
-    field_index: i16 = 0,
+    field_index: i8 = 0,
     flags_: flags16_t = 0,
 };
 
@@ -491,7 +518,7 @@ pub const query_t = extern struct {
     ids: [FLECS_TERM_COUNT_MAX]id_t = .{},
 
     flags: flags32_t = 0,
-    var_count: i16 = 0,
+    var_count: i8 = 0,
     term_count: i8 = 0,
     field_count: i8 = 0,
 
@@ -501,7 +528,7 @@ pub const query_t = extern struct {
     data_fields: termset_t = 0,
     write_fields: termset_t = 0,
     read_fields: termset_t = 0,
-    shared_readonly_fields: termset_t = 0,
+    row_fields: termset_t = 0,
     set_fields: termset_t = 0,
 
     cache_kind: query_cache_kind_t = .QueryCacheDefault,
@@ -601,13 +628,6 @@ pub const var_t = extern struct {
     entity: entity_t,
 };
 
-pub const record_t = extern struct {
-    idr: *id_record_t,
-    table: *table_t,
-    row: u32,
-    dense: i32,
-};
-
 pub const ref_t = extern struct {
     entity: entity_t,
     id: entity_t,
@@ -638,8 +658,6 @@ pub const worker_iter_t = extern struct {
     count: i32,
 };
 
-pub const table_cache_hdr_t = opaque {};
-
 pub const table_cache_iter_t = extern struct {
     cur: ?*table_cache_hdr_t,
     next: ?*table_cache_hdr_t,
@@ -653,7 +671,7 @@ pub const each_iter_t = extern struct {
     sources: entity_t,
     sizes: size_t,
     columns: i32,
-    ptrs: ?[*]*anyopaque,
+    trs: ?[*]table_record_t,
 };
 
 pub const query_var_t = opaque {};
@@ -846,20 +864,19 @@ pub const iter_t = extern struct {
     world: *world_t,
     real_world: *world_t,
 
-    entities_: [*]entity_t,
-    ptrs: ?[*]*anyopaque,
+    entities_: [*]const entity_t,
     sizes: ?[*]size_t,
     table: *table_t,
     other_table: ?*table_t,
     ids: ?[*]id_t,
     variables: ?[*]var_t,
-    columns: ?[*]i32,
+    trs: ?[*]*table_record_t,
     sources: ?[*]entity_t,
     constrained_vars: flags64_t,
     group_id: u64,
-    field_count: i32,
     set_fields: termset_t,
-    shared_fields: termset_t,
+    ref_fields: termset_t,
+    row_fields: termset_t,
     up_fields: termset_t,
 
     system: entity_t,
@@ -867,10 +884,11 @@ pub const iter_t = extern struct {
     event_id: id_t,
     event_cur: i32,
 
-    query: *const query_t,
-    term_index: i32,
+    field_count: i8,
+    term_index: i8,
 
-    variable_count: i32,
+    variable_count: i8,
+    query: *const query_t,
     variable_names: ?[*][*:0]u8,
 
     param: ?*anyopaque,
@@ -885,7 +903,6 @@ pub const iter_t = extern struct {
     frame_offset: i32,
     offset: i32,
     count_: i32,
-    instance_count: i32,
 
     flags: flags32_t,
     interrupted_by: entity_t,
@@ -896,7 +913,7 @@ pub const iter_t = extern struct {
     fini: iter_fini_action_t,
     chain_it: ?*iter_t,
 
-    pub fn entities(iter: iter_t) []entity_t {
+    pub fn entities(iter: iter_t) []const entity_t {
         return iter.entities_[0..@as(usize, @intCast(iter.count_))];
     }
     pub fn count(iter: iter_t) usize {
@@ -953,7 +970,7 @@ pub const observer_desc_t = extern struct {
     observable: ?*poly_t = null,
     last_event_id: ?*i32 = null,
 
-    term_index_: i32 = 0,
+    term_index_: i8 = 0,
     flags_: flags32_t = 0,
 };
 
@@ -1943,10 +1960,6 @@ extern fn ecs_query_iter(world: *const world_t, query: *const query_t) iter_t;
 pub const query_next = ecs_query_next;
 extern fn ecs_query_next(iter: *iter_t) bool;
 
-/// `pub fn query_next_instanced(iter: *iter_t) bool`
-pub const query_next_instanced = ecs_query_next_instanced;
-extern fn ecs_query_next_instanced(iter: *iter_t) bool;
-
 /// `pub fn query_next_table(iter: *iter_t) bool`
 pub const query_next_table = ecs_query_next_table;
 extern fn ecs_query_next_table(iter: *iter_t) bool;
@@ -2115,41 +2128,45 @@ extern fn ecs_page_next(it: *iter_t) bool;
 pub const worker_iter = ecs_worker_iter;
 extern fn ecs_worker_iter(it: *const iter_t, index: i32, count: i32) iter_t;
 
-/// `pub fn field_w_size(it: *const iter_t, size: usize, index: i32) ?*anyopaque`
+/// `pub fn field_w_size(it: *const iter_t, size: usize, index: i8) ?*anyopaque`
 pub const field_w_size = ecs_field_w_size;
-extern fn ecs_field_w_size(it: *const iter_t, size: usize, index: i32) ?*anyopaque;
+extern fn ecs_field_w_size(it: *const iter_t, size: usize, index: i8) ?*anyopaque;
 
-/// `pub fn field_is_readonly(it: *const iter_t, index: i32) bool`
+/// `pub fn field_w_size(it: *const iter_t, size: usize, index: i8) ?*anyopaque`
+pub const ecs_field_at_w_size = ecs_ecs_field_at_w_size;
+extern fn ecs_ecs_field_at_w_size(it: *const iter_t, size: usize, index: i8, row: i32) ?*anyopaque;
+
+/// `pub fn field_is_readonly(it: *const iter_t, index: i8) bool`
 pub const field_is_readonly = ecs_field_is_readonly;
-extern fn ecs_field_is_readonly(it: *const iter_t, index: i32) bool;
+extern fn ecs_field_is_readonly(it: *const iter_t, index: i8) bool;
 
-/// `pub fn field_is_writeonly(it: *const iter_t, index: i32) bool`
+/// `pub fn field_is_writeonly(it: *const iter_t, index: i8) bool`
 pub const field_is_writeonly = ecs_field_is_writeonly;
-extern fn ecs_field_is_writeonly(it: *const iter_t, index: i32) bool;
+extern fn ecs_field_is_writeonly(it: *const iter_t, index: i8) bool;
 
-/// `pub fn field_is_set(it: *const iter_t, index: i32) bool`
+/// `pub fn field_is_set(it: *const iter_t, index: i8) bool`
 pub const field_is_set = ecs_field_is_set;
-extern fn ecs_field_is_set(it: *const iter_t, index: i32) bool;
+extern fn ecs_field_is_set(it: *const iter_t, index: i8) bool;
 
-/// `pub fn field_id(it: *const iter_t, index: i32) id_t`
+/// `pub fn field_id(it: *const iter_t, index: i8) id_t`
 pub const field_id = ecs_field_id;
-extern fn ecs_field_id(it: *const iter_t, index: i32) id_t;
+extern fn ecs_field_id(it: *const iter_t, index: i8) id_t;
 
-/// `pub fn field_column_index(it: *const iter_t, index: i32) i32`
-pub const field_column_index = ecs_field_column_index;
-extern fn ecs_field_column_index(it: *const iter_t, index: i32) i32;
+/// `pub fn field_column(it: *const iter_t, index: i8) i32`
+pub const field_column = ecs_field_column;
+extern fn ecs_field_column(it: *const iter_t, index: i8) i32;
 
-/// `pub fn field_src(it: *const iter_t, index: i32) entity_t`
+/// `pub fn field_src(it: *const iter_t, index: i8) entity_t`
 pub const field_src = ecs_field_src;
-extern fn ecs_field_src(it: *const iter_t, index: i32) entity_t;
+extern fn ecs_field_src(it: *const iter_t, index: i8) entity_t;
 
-/// `pub fn field_size(it: *const iter_t, index: i32) usize`
+/// `pub fn field_size(it: *const iter_t, index: i8) usize`
 pub const field_size = ecs_field_size;
-extern fn ecs_field_size(it: *const iter_t, index: i32) usize;
+extern fn ecs_field_size(it: *const iter_t, index: i8) usize;
 
-/// `pub fn field_is_self(it: *const iter_t, index: i32) bool`
+/// `pub fn field_is_self(it: *const iter_t, index: i8) bool`
 pub const field_is_self = ecs_field_is_self;
-extern fn ecs_field_is_self(it: *const iter_t, index: i32) bool;
+extern fn ecs_field_is_self(it: *const iter_t, index: i8) bool;
 //--------------------------------------------------------------------------------------------------
 //
 // Functions for working with `table_t`.
@@ -2194,6 +2211,14 @@ extern fn ecs_table_get_column_size(table: *const table_t, index: i32) usize;
 /// `pub fn table_count(table: *const table_t) i32`
 pub const table_count = ecs_table_count;
 extern fn ecs_table_count(table: *const table_t) i32;
+
+/// `pub fn table_count(table: *const table_t) i32`
+pub const table_size = ecs_table_size;
+extern fn ecs_table_size(table: *const table_t) i32;
+
+/// `pub fn table_count(table: *const table_t) i32`
+pub const table_entities = ecs_table_entities;
+extern fn ecs_table_entities(table: *const table_t) [*]entity_t;
 
 /// `pub fn table_has_id(world: *const world_t, table: *const table_t, id: id_t) bool`
 pub const table_has_id = ecs_table_has_id;
@@ -2675,7 +2700,7 @@ pub fn modified(world: *world_t, entity: entity_t, comptime T: type) void {
     ecs_modified_id(world, entity, id(T));
 }
 
-pub fn field(it: *iter_t, comptime T: type, index: i32) ?[]T {
+pub fn field(it: *iter_t, comptime T: type, index: i8) ?[]T {
     if (ecs_field_w_size(it, @sizeOf(T), index)) |anyptr| {
         const ptr = @as([*]T, @ptrCast(@alignCast(anyptr)));
         return ptr[0..it.count()];
