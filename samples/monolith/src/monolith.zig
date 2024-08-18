@@ -542,7 +542,7 @@ const DebugRenderer = struct {
     fn drawGeometry(
         self: *DebugRenderer,
         model_matrix: *const [16]zphy.Real,
-        _: *const zphy.DebugRenderer.AABox,
+        _: *const zphy.AABox,
         _: f32,
         color: zphy.DebugRenderer.Color,
         geometry: *const zphy.DebugRenderer.Geometry,

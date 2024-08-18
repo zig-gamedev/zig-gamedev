@@ -664,6 +664,16 @@ pub const SubShapeIdPair = extern struct {
     }
 };
 
+pub const SubShapeIDCreator = extern struct {
+    id: SubShapeId = @import("std").mem.zeroes(SubShapeId),
+    current_bit: u32 = @import("std").mem.zeroes(u32),
+
+    comptime {
+        assert(@sizeOf(SubShapeIDCreator) == @sizeOf(c.JPC_SubShapeIDCreator));
+        assert(@offsetOf(SubShapeIDCreator, "current_bit") == @offsetOf(c.JPC_SubShapeIDCreator, "current_bit"));
+    }
+};
+
 pub const CollideShapeResult = extern struct {
     shape1_contact_point: [4]f32 align(16), // 4th element is ignored; world space
     shape2_contact_point: [4]f32 align(16), // 4th element is ignored; world space
@@ -931,6 +941,17 @@ pub const RayCastSettings = extern struct {
     }
 };
 
+pub const AABox = extern struct {
+    min: [4]Real align(rvec_align), // 4th element is ignored
+    max: [4]Real align(rvec_align), // 4th element is ignored
+
+    comptime {
+        assert(@sizeOf(AABox) == @sizeOf(c.JPC_AABox));
+        assert(@offsetOf(AABox, "min") == @offsetOf(c.JPC_AABox, "min"));
+        assert(@offsetOf(AABox, "max") == @offsetOf(c.JPC_AABox, "max"));
+    }
+};
+
 pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else extern struct {
     pub fn createSingleton(debug_renderer_impl: *anyopaque) !void {
         switch (@as(DebugRendererResult, @enumFromInt(c.JPC_CreateDebugRendererSingleton(debug_renderer_impl)))) {
@@ -1132,11 +1153,6 @@ pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else ext
         normal: [3]f32,
         uv: [2]f32,
         color: Color,
-    };
-
-    pub const AABox = extern struct {
-        min: [4]f32,
-        max: [4]f32,
     };
 
     pub const LOD = extern struct {
@@ -3224,6 +3240,28 @@ pub const Shape = opaque {
                 c.JPC_Shape_GetCenterOfMass(@as(*const c.JPC_Shape, @ptrCast(shape)), &center);
                 return center;
             }
+
+            pub fn getLocalBounds(shape: *const T) AABox {
+                const aabox = c.JPC_Shape_GetLocalBounds(@as(*const c.JPC_Shape, @ptrCast(shape)));
+                return @as(*AABox, @constCast(@ptrCast(&aabox))).*;
+            }
+
+            pub fn castRay(
+                shape: *const T,
+                ray: RRayCast,
+                args: struct {
+                    sub_shape_id_creator: SubShapeIDCreator = .{},
+                },
+            ) struct { has_hit: bool, hit: RayCastResult } {
+                var hit: RayCastResult = .{};
+                const has_hit = c.JPC_Shape_CastRay(
+                    @as(*const c.JPC_Shape, @ptrCast(shape)),
+                    @as(*const c.JPC_RRayCast, @ptrCast(&ray)),
+                    @as(*const c.JPC_SubShapeIDCreator, @ptrCast(&args.sub_shape_id_creator)),
+                    @as(*c.JPC_RayCastResult, @ptrCast(&hit)),
+                );
+                return .{ .has_hit = has_hit, .hit = hit };
+            }
         };
     }
 };
@@ -4495,7 +4533,7 @@ const test_cb1 = struct {
         fn drawGeometry(
             self: *MyDebugRenderer,
             model_matrix: *const [16]Real,
-            world_space_bound: *const DebugRenderer.AABox,
+            world_space_bound: *const AABox,
             lod_scale_sq: f32,
             color: DebugRenderer.Color,
             geometry: *const DebugRenderer.Geometry,

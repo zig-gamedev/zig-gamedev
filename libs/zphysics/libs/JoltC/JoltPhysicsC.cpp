@@ -264,6 +264,21 @@ FN(toJpc)(JPH::CollisionGroup *in) { assert(in); return reinterpret_cast<JPC_Col
 
 FN(toJph)(const JPC_SubShapeID *in) { assert(in); return reinterpret_cast<const JPH::SubShapeID *>(in); }
 
+FN(toJpc)(const JPH::SubShapeIDCreator *in) { assert(in); return reinterpret_cast<const JPC_SubShapeIDCreator *>(in); }
+FN(toJph)(const JPC_SubShapeIDCreator *in) { assert(in); return reinterpret_cast<const JPH::SubShapeIDCreator *>(in); }
+FN(toJpc)(JPH::SubShapeIDCreator *in) { assert(in); return reinterpret_cast<JPC_SubShapeIDCreator *>(in); }
+FN(toJph)(JPC_SubShapeIDCreator *in) { assert(in); return reinterpret_cast<JPH::SubShapeIDCreator *>(in); }
+
+FN(toJpc)(const JPH::RayCast *in) { assert(in); return reinterpret_cast<const JPC_RRayCast *>(in); }
+FN(toJph)(const JPC_RRayCast *in) { assert(in); return reinterpret_cast<const JPH::RayCast *>(in); }
+FN(toJpc)(JPH::RayCast *in) { assert(in); return reinterpret_cast<JPC_RRayCast *>(in); }
+FN(toJph)(JPC_RRayCast *in) { assert(in); return reinterpret_cast<JPH::RayCast *>(in); }
+
+FN(toJpc)(const JPH::RayCastResult *in) { assert(in); return reinterpret_cast<const JPC_RayCastResult *>(in); }
+FN(toJph)(const JPC_RayCastResult *in) { assert(in); return reinterpret_cast<const JPH::RayCastResult *>(in); }
+FN(toJpc)(JPH::RayCastResult *in) { assert(in); return reinterpret_cast<JPC_RayCastResult *>(in); }
+FN(toJph)(JPC_RayCastResult *in) { assert(in); return reinterpret_cast<JPH::RayCastResult *>(in); }
+
 FN(toJph)(const JPC_BodyLockInterface *in) {
     assert(in); return reinterpret_cast<const JPH::BodyLockInterface *>(in);
 }
@@ -363,6 +378,11 @@ FN(toJph)(JPC_CharacterVirtualSettings *in) { assert(in); return reinterpret_cas
 FN(toJpc)(const JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<const JPC_CharacterVirtualSettings *>(in); }
 FN(toJpc)(JPH::CharacterVirtualSettings *in) { assert(in); return reinterpret_cast<JPC_CharacterVirtualSettings *>(in); }
 
+FN(toJpc)(const JPH::AABox *in) { assert(in); return reinterpret_cast<const JPC_AABox *>(in); }
+FN(toJph)(const JPC_AABox *in) { assert(in); return reinterpret_cast<const JPH::AABox *>(in); }
+FN(toJpc)(JPH::AABox *in) { assert(in); return reinterpret_cast<JPC_AABox *>(in); }
+FN(toJph)(JPC_AABox *in) { assert(in); return reinterpret_cast<JPH::AABox *>(in); }
+
 #if JPC_DEBUG_RENDERER == 1
 FN(toJpc)(const JPH::BodyManager::DrawSettings *in) { assert(in); return reinterpret_cast<const JPC_BodyManager_DrawSettings *>(in); }
 FN(toJph)(const JPC_BodyManager_DrawSettings *in) { assert(in); return reinterpret_cast<const JPH::BodyManager::DrawSettings *>(in); }
@@ -378,11 +398,6 @@ FN(toJpc)(const JPH::ColorArg *in) { assert(in); return reinterpret_cast<const J
 FN(toJph)(const JPC_Color *in) { assert(in); return reinterpret_cast<const JPH::ColorArg *>(in); }
 FN(toJpc)(JPH::ColorArg *in) { assert(in); return reinterpret_cast<JPC_Color *>(in); }
 FN(toJph)(JPC_Color *in) { assert(in); return reinterpret_cast<JPH::ColorArg *>(in); }
-
-FN(toJpc)(const JPH::AABox *in) { assert(in); return reinterpret_cast<const JPC_AABox *>(in); }
-FN(toJph)(const JPC_AABox *in) { assert(in); return reinterpret_cast<const JPH::AABox *>(in); }
-FN(toJpc)(JPH::AABox *in) { assert(in); return reinterpret_cast<JPC_AABox *>(in); }
-FN(toJph)(JPC_AABox *in) { assert(in); return reinterpret_cast<JPH::AABox *>(in); }
 
 FN(toJpc)(const JPH::DebugRenderer::Vertex *in) { assert(in); return reinterpret_cast<const JPC_DebugRenderer_Vertex *>(in); }
 FN(toJph)(const JPC_DebugRenderer_Vertex *in) { assert(in); return reinterpret_cast<const JPH::DebugRenderer::Vertex *>(in); }
@@ -1859,6 +1874,23 @@ JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3])
 {
     storeRVec3(out_position, toJph(in_shape)->GetCenterOfMass());
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API JPC_AABox
+JPC_Shape_GetLocalBounds(const JPC_Shape *in_shape)
+{
+    auto bounds = toJph(in_shape)->GetLocalBounds();
+    return *toJpc(&bounds);
+}
+//--------------------------------------------------------------------------------------------------
+JPC_API bool
+JPC_Shape_CastRay(const JPC_Shape *in_shape,
+                  const JPC_RRayCast *in_ray,
+                  const JPC_SubShapeIDCreator *in_id_creator,
+                  JPC_RayCastResult *io_hit)
+{
+    assert(in_shape && in_ray && in_id_creator && io_hit);
+    return toJph(in_shape)->CastRay(*toJph(in_ray), *toJph(in_id_creator), *toJph(io_hit));
 }
 //--------------------------------------------------------------------------------------------------
 //

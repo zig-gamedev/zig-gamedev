@@ -591,13 +591,14 @@ typedef struct JPC_RayCastSettings
     bool             treat_convex_as_solid;
 } JPC_RayCastSettings;
 
-#if JPC_DEBUG_RENDERER == 1
-// NOTE: Needs to be kept in sync with JPH::AABox
 typedef struct JPC_AABox
 {
-    float min[4];
-    float max[4];
+    JPC_RVEC_ALIGN JPC_Real min[3];
+    JPC_RVEC_ALIGN JPC_Real max[3];
 } JPC_AABox;
+
+#if JPC_DEBUG_RENDERER == 1
+// NOTE: Needs to be kept in sync with JPH::AABox
 
 // NOTE: Needs to be kept in sync with JPH::Color
 typedef union JPC_Color
@@ -1599,6 +1600,15 @@ JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data);
 
 JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
+
+JPC_API JPC_AABox
+JPC_Shape_GetLocalBounds(const JPC_Shape *in_shape);
+
+JPC_API bool
+JPC_Shape_CastRay(const JPC_Shape *in_shape,
+                  const JPC_RRayCast *in_ray,
+                  const JPC_SubShapeIDCreator *in_id_creator,
+                  JPC_RayCastResult *io_hit); // *Must* be default initialized (see JPC_RayCastResult)
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_ConvexHullShape
