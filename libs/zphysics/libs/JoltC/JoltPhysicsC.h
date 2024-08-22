@@ -1604,6 +1604,12 @@ JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
 JPC_API JPC_AABox
 JPC_Shape_GetLocalBounds(const JPC_Shape *in_shape);
 
+JPC_API void
+JPC_Shape_GetSurfaceNormal(const JPC_Shape *in_shape,
+                           JPC_SubShapeID in_sub_shape_id,
+                           const float in_point[3],
+                           float out_normal[3]);
+
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,
                   const JPC_RRayCast *in_ray,

@@ -665,8 +665,8 @@ pub const SubShapeIdPair = extern struct {
 };
 
 pub const SubShapeIDCreator = extern struct {
-    id: SubShapeId = @import("std").mem.zeroes(SubShapeId),
-    current_bit: u32 = @import("std").mem.zeroes(u32),
+    id: SubShapeId = sub_shape_id_empty,
+    current_bit: u32 = 0,
 
     comptime {
         assert(@sizeOf(SubShapeIDCreator) == @sizeOf(c.JPC_SubShapeIDCreator));
@@ -3244,6 +3244,17 @@ pub const Shape = opaque {
             pub fn getLocalBounds(shape: *const T) AABox {
                 const aabox = c.JPC_Shape_GetLocalBounds(@as(*const c.JPC_Shape, @ptrCast(shape)));
                 return @as(*AABox, @constCast(@ptrCast(&aabox))).*;
+            }
+
+            pub fn getSurfaceNormal(shape: *const T, sub_shape_id: SubShapeId, local_pos: [3]f32) [3]f32 {
+                var normal: [3]f32 = undefined;
+                c.JPC_Shape_GetSurfaceNormal(
+                    @as(*const c.JPC_Shape, @ptrCast(shape)),
+                    sub_shape_id,
+                    &local_pos,
+                    &normal,
+                );
+                return normal;
             }
 
             pub fn castRay(

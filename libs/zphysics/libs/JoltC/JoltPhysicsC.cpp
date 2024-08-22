@@ -1883,6 +1883,16 @@ JPC_Shape_GetLocalBounds(const JPC_Shape *in_shape)
     return *toJpc(&bounds);
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_Shape_GetSurfaceNormal(const JPC_Shape *in_shape,
+                           JPC_SubShapeID in_sub_shape_id,
+                           const float in_point[3],
+                           float out_normal[3])
+{
+    auto subShapeId = *toJph(&in_sub_shape_id);
+    storeVec3(out_normal, toJph(in_shape)->GetSurfaceNormal(*toJph(&in_sub_shape_id), loadVec3(in_point)));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,
                   const JPC_RRayCast *in_ray,
@@ -3138,3 +3148,4 @@ JPC_CharacterVirtual_SetLinearVelocity(JPC_CharacterVirtual *in_character, const
 {
     toJph(in_character)->SetLinearVelocity(loadVec3(in_linear_velocity));
 }
+//--------------------------------------------------------------------------------------------------
