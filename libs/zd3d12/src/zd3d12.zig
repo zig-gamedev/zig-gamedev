@@ -63,6 +63,35 @@ pub fn ConstantBufferHandle(comptime T: type) type {
 pub const VerticesHandle = struct {
     resource: ResourceHandle,
     view: d3d12.VERTEX_BUFFER_VIEW,
+
+    fn init(comptime T: type, gctx: *GraphicsContext, vertices_length: usize) !VerticesHandle {
+        switch (@typeInfo(T)) {
+            .Struct => |s| {
+                if (s.layout != .@"extern") {
+                    @compileError(@typeName(T) ++ " must be extern");
+                }
+            },
+            else => {},
+        }
+
+        const buffer_length: w32.UINT = @intCast(vertices_length * @sizeOf(T));
+        const resource_handle = try gctx.createCommittedResource(
+            .UPLOAD,
+            .{},
+            &d3d12.RESOURCE_DESC.initBuffer(buffer_length),
+            d3d12.RESOURCE_STATES.GENERIC_READ,
+            null,
+        );
+
+        return .{
+            .resource = resource_handle,
+            .view = .{
+                .BufferLocation = gctx.lookupResource(resource_handle).?.GetGPUVirtualAddress(),
+                .StrideInBytes = @sizeOf(T),
+                .SizeInBytes = buffer_length,
+            },
+        };
+    }
 };
 pub const VertexIndicesHandle = struct {
     resource: ResourceHandle,
@@ -998,33 +1027,11 @@ pub const GraphicsContext = struct {
         comptime T: type,
         vertices: []const T,
     ) HResultError!VerticesHandle {
-        switch (@typeInfo(T)) {
-            .Struct => |s| {
-                if (s.layout != .@"extern") {
-                    @compileError(@typeName(T) ++ " must be extern");
-                }
-            },
-            else => {},
-        }
-        const buffer_length: w32.UINT = @intCast(vertices.len * @sizeOf(T));
-        const resource_handle = try gctx.createCommittedResource(
-            .UPLOAD,
-            .{},
-            &d3d12.RESOURCE_DESC.initBuffer(buffer_length),
-            d3d12.RESOURCE_STATES.GENERIC_READ,
-            null,
-        );
+        const handle = try VerticesHandle.init(T, gctx, vertices.len);
 
-        try gctx.writeResource(T, resource_handle, vertices);
+        try gctx.writeVertices(T, handle, vertices);
 
-        return .{
-            .resource = resource_handle,
-            .view = .{
-                .BufferLocation = gctx.lookupResource(resource_handle).?.GetGPUVirtualAddress(),
-                .StrideInBytes = @sizeOf(T),
-                .SizeInBytes = buffer_length,
-            },
-        };
+        return handle;
     }
 
     pub fn uploadVertexIndices(
@@ -1059,6 +1066,23 @@ pub const GraphicsContext = struct {
                 .SizeInBytes = buffer_length,
             },
         };
+    }
+
+    pub fn createWritableVertices(
+        gctx: *GraphicsContext,
+        comptime T: type,
+        vertices_length: usize,
+    ) HResultError!VerticesHandle {
+        switch (@typeInfo(T)) {
+            .Struct => |s| {
+                if (s.layout != .@"extern") {
+                    @compileError(@typeName(T) ++ " must be extern");
+                }
+            },
+            else => {},
+        }
+
+        return try VerticesHandle.init(T, gctx, vertices_length);
     }
 
     pub fn allocShaderResourceView(
@@ -1899,6 +1923,15 @@ pub const GraphicsContext = struct {
         const byte_length = source.len * @sizeOf(T);
         const mapped_slice = std.mem.bytesAsSlice(T, mapped_buffer[0..byte_length]);
         @memcpy(mapped_slice, source);
+    }
+
+    pub fn writeVertices(
+        gctx: *GraphicsContext,
+        comptime T: type,
+        destination: VerticesHandle,
+        vertices: []const T,
+    ) HResultError!void {
+        try gctx.writeResource(T, destination.resource, vertices);
     }
 
     pub inline fn clearRenderTargetView(
