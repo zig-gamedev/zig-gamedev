@@ -221,6 +221,11 @@ FN(toJph)(JPC_CompoundShapeSettings *in) {
     return reinterpret_cast<JPH::CompoundShapeSettings *>(in);
 }
 
+FN(toJph)(JPC_BoxShape *in) { assert(in); return reinterpret_cast<JPH::BoxShape *>(in); }
+FN(toJph)(const JPC_BoxShape *in) { assert(in); return reinterpret_cast<const JPH::BoxShape *>(in); }
+FN(toJpc)(JPH::BoxShape *in) { assert(in); return reinterpret_cast<JPC_BoxShape *>(in); }
+FN(toJpc)(const JPH::BoxShape *in) { assert(in); return reinterpret_cast<const JPC_BoxShape *>(in); }
+
 FN(toJph)(JPC_ConvexHullShape *in) { assert(in); return reinterpret_cast<JPH::ConvexHullShape *>(in); }
 FN(toJph)(const JPC_ConvexHullShape *in) { assert(in); return reinterpret_cast<const JPH::ConvexHullShape *>(in); }
 FN(toJpc)(JPH::ConvexHullShape *in) { assert(in); return reinterpret_cast<JPC_ConvexHullShape *>(in); }
@@ -1920,6 +1925,16 @@ JPC_Shape_CastRay(const JPC_Shape *in_shape,
 }
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_BoxShape
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BoxShape_GetHalfExtent(const JPC_BoxShape *in_shape, float out_half_extent[3])
+{
+    storeVec3(out_half_extent, toJph(in_shape)->GetHalfExtent());
+}
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_ConvexHullShape
 //
 //--------------------------------------------------------------------------------------------------
@@ -2333,7 +2348,7 @@ JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_b
     toJph(in_iface)->AddAngularImpulse(toJph(in_body_id), loadVec3(in_impulse));
 }
 //--------------------------------------------------------------------------------------------------
-JPC_API JPC_MotionType 
+JPC_API JPC_MotionType
 JPC_BodyInterface_GetMotionType(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id)
 {
     return toJpc(toJph(in_iface)->GetMotionType(toJph(in_body_id)));

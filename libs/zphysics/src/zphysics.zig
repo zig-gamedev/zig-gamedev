@@ -3303,6 +3303,31 @@ pub const Shape = opaque {
         };
     }
 };
+
+//--------------------------------------------------------------------------------------------------
+//
+// BoxShape (-> Shape)
+//
+//--------------------------------------------------------------------------------------------------
+pub const BoxShape = opaque {
+    pub usingnamespace Shape.Methods(@This());
+
+    pub fn asBoxShape(shape: *const Shape) *const BoxShape {
+        assert(shape.getSubType() == .box);
+        return @as(*const BoxShape, @ptrCast(shape));
+    }
+    pub fn asBoxShapeMut(shape: *Shape) *BoxShape {
+        assert(shape.getSubType() == .box);
+        return @as(*BoxShape, @ptrCast(shape));
+    }
+
+    pub fn getHalfExtent(shape: *const BoxShape) [3]f32 {
+        var half_extent: [3]f32 = undefined;
+        c.JPC_BoxShape_GetHalfExtent(@as(*const c.JPC_BoxShape, @ptrCast(shape)), &half_extent);
+        return half_extent;
+    }
+};
+
 //--------------------------------------------------------------------------------------------------
 //
 // ConvexHullShape (-> Shape)
