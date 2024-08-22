@@ -121,6 +121,7 @@ const samples_windows_linux = struct {
     //pub const simple_raytracer = @import("samples/simple_raytracer/build.zig");
     pub const textured_quad = @import("samples/textured_quad/build.zig");
     pub const triangle = @import("samples/triangle/build.zig");
+    pub const zphysics_instanced_cubes_d3d12 = @import("samples/zphysics_instanced_cubes_d3d12/build.zig");
 };
 
 const samples_cross_platform = struct {
