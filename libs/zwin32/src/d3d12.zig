@@ -238,6 +238,23 @@ pub const RESOURCE_DESC = extern struct {
         return v;
     }
 
+    pub fn initDepthBuffer(format: dxgi.FORMAT, width: UINT64, height: UINT) RESOURCE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .Dimension = .TEXTURE2D,
+            .Alignment = 0,
+            .Width = width,
+            .Height = height,
+            .DepthOrArraySize = 1,
+            .MipLevels = 1,
+            .Format = format,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .Layout = .UNKNOWN,
+            .Flags = .{ .ALLOW_DEPTH_STENCIL = true, .DENY_SHADER_RESOURCE = true },
+        };
+        return v;
+    }
+
     pub fn initTexCube(format: dxgi.FORMAT, width: UINT64, height: UINT, mip_levels: u32) RESOURCE_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
@@ -1091,6 +1108,8 @@ pub const INPUT_CLASSIFICATION = enum(UINT) {
     PER_VERTEX_DATA = 0,
     PER_INSTANCE_DATA = 1,
 };
+
+pub const APPEND_ALIGNED_ELEMENT = 0xffffffff;
 
 pub const INPUT_ELEMENT_DESC = extern struct {
     SemanticName: LPCSTR,
