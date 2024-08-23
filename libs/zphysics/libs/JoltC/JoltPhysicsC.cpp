@@ -1893,6 +1893,22 @@ JPC_Shape_GetSurfaceNormal(const JPC_Shape *in_shape,
     storeVec3(out_normal, toJph(in_shape)->GetSurfaceNormal(*toJph(&in_sub_shape_id), loadVec3(in_point)));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API JPC_Shape_SupportingFace
+JPC_Shape_GetSupportingFace(const JPC_Shape *in_shape,
+                            JPC_SubShapeID in_sub_shape_id,
+                            const float in_direction[3],
+                            const float in_scale[3],
+                            const float in_transform[16])
+{
+    auto face = JPH::Shape::SupportingFace();
+    toJph(in_shape)->GetSupportingFace(*toJph(&in_sub_shape_id),
+                                       loadVec3(in_direction),
+                                       loadVec3(in_scale),
+                                       loadMat44(in_transform),
+                                       face);
+    return *reinterpret_cast<JPC_Shape_SupportingFace*>(&face);
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,
                   const JPC_RRayCast *in_ray,
