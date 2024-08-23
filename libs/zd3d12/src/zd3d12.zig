@@ -1085,6 +1085,19 @@ pub const GraphicsContext = struct {
         return try VerticesHandle.init(T, gctx, vertices_length);
     }
 
+    pub fn createDepthStencilView(
+        gctx: *GraphicsContext,
+        handle: ResourceHandle,
+        desc: ?*const d3d12.DEPTH_STENCIL_VIEW_DESC,
+        view: d3d12.CPU_DESCRIPTOR_HANDLE,
+    ) void {
+        gctx.device.CreateDepthStencilView(
+            gctx.lookupResource(handle).?,
+            desc,
+            view,
+        );
+    }
+
     pub fn allocShaderResourceView(
         gctx: *GraphicsContext,
         handle: ResourceHandle,

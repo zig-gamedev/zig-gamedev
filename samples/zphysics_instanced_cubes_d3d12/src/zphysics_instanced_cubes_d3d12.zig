@@ -155,25 +155,8 @@ pub fn main() !void {
         break :cube_pipeline gctx.createGraphicsShaderPipeline(&pso_desc);
     };
 
-    const depth_texture = depth_texture: {
-        const resource = try gctx.createCommittedResource(
-            .DEFAULT,
-            .{},
-            &d3d12.RESOURCE_DESC.initDepthBuffer(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height),
-            .{ .DEPTH_WRITE = true },
-            &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
-        );
-        const view = gctx.allocateCpuDescriptors(.DSV, 1);
-        gctx.device.CreateDepthStencilView(
-            gctx.lookupResource(resource).?,
-            null,
-            view,
-        );
-        break :depth_texture .{
-            .resource = resource,
-            .view = view,
-        };
-    };
+    const depth_texture_view = gctx.allocateCpuDescriptors(.DSV, 1);
+    var depth_texture_resource: ?zd3d12.ResourceHandle = null;
 
     try zphysics.init(allocator, .{});
     defer zphysics.deinit();
@@ -297,19 +280,6 @@ pub fn main() !void {
     };
     const constant = try gctx.createConstantBuffer(ConstantBuffer);
 
-    const camera_transform = zmath.lookAtLh(
-        .{ 2, 5, -10, 0 },
-        .{ 0, 2, 0, 0 },
-        .{ 0, 1, 0, 0 },
-    );
-    const perspective_transform = zmath.perspectiveFovLh(
-        0.25 * std.math.pi,
-        800.0 / 600.0,
-        0.01,
-        100.0,
-    );
-    constant.ptr.model_view_projection = zmath.mul(camera_transform, perspective_transform);
-
     const scale_factor = scale_factor: {
         const scale = glfw_window.getContentScale();
         break :scale_factor @max(scale[0], scale[1]);
@@ -335,7 +305,7 @@ pub fn main() !void {
     }
     defer zgui.backend.deinit();
 
-    var framebuffer_size = glfw_window.getFramebufferSize();
+    var framebuffer_size: [2]i32 = .{ 0, 0 };
 
     var frame_timer = try std.time.Timer.start();
     const frame_rate_target: u64 = 60;
@@ -396,6 +366,33 @@ pub fn main() !void {
             const next_framebuffer_size = glfw_window.getFramebufferSize();
             if (!std.meta.eql(framebuffer_size, next_framebuffer_size)) {
                 gctx.resize(@intCast(next_framebuffer_size[0]), @intCast(next_framebuffer_size[1]));
+                if (depth_texture_resource) |resource| {
+                    gctx.destroyResource(resource);
+                }
+                depth_texture_resource = try gctx.createCommittedResource(
+                    .DEFAULT,
+                    .{},
+                    &d3d12.RESOURCE_DESC.initDepthBuffer(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height),
+                    .{ .DEPTH_WRITE = true },
+                    &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+                );
+                gctx.createDepthStencilView(
+                    depth_texture_resource.?,
+                    null,
+                    depth_texture_view,
+                );
+                const camera_transform = zmath.lookAtLh(
+                    .{ 2, 5, -10, 0 },
+                    .{ 0, 2, 0, 0 },
+                    .{ 0, 1, 0, 0 },
+                );
+                const perspective_transform = zmath.perspectiveFovLh(
+                    0.25 * std.math.pi,
+                    @as(f32, @floatFromInt(gctx.viewport_width)) / @as(f32, @floatFromInt(gctx.viewport_height)),
+                    0.01,
+                    100.0,
+                );
+                constant.ptr.model_view_projection = zmath.mul(camera_transform, perspective_transform);
             }
             framebuffer_size = next_framebuffer_size;
         }
@@ -467,14 +464,14 @@ pub fn main() !void {
             gctx.omSetRenderTargets(
                 &.{back_buffer.descriptor_handle},
                 true,
-                &depth_texture.view,
+                &depth_texture_view,
             );
             gctx.clearRenderTargetView(
                 back_buffer.descriptor_handle,
                 &.{ 0.0, 0.0, 0.0, 1.0 },
                 &.{},
             );
-            gctx.clearDepthStencilView(depth_texture.view, .{ .DEPTH = true }, 1.0, 0, &.{});
+            gctx.clearDepthStencilView(depth_texture_view, .{ .DEPTH = true }, 1.0, 0, &.{});
 
             {
                 gctx.setCurrentPipeline(cube_pipeline);
