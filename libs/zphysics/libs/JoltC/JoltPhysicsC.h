@@ -597,6 +597,12 @@ typedef struct JPC_AABox
     JPC_RVEC_ALIGN JPC_Real max[3];
 } JPC_AABox;
 
+typedef struct JPC_Shape_SupportingFace
+{
+    alignas(16) uint32_t num_points;
+    alignas(16) float    points[32][4]; // 4th element is ignored; world space
+} JPC_Shape_SupportingFace;
+
 #if JPC_DEBUG_RENDERER == 1
 // NOTE: Needs to be kept in sync with JPH::AABox
 
@@ -1603,6 +1609,19 @@ JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
 
 JPC_API JPC_AABox
 JPC_Shape_GetLocalBounds(const JPC_Shape *in_shape);
+
+JPC_API void
+JPC_Shape_GetSurfaceNormal(const JPC_Shape *in_shape,
+                           JPC_SubShapeID in_sub_shape_id,
+                           const float in_point[3],
+                           float out_normal[3]);
+
+JPC_API JPC_Shape_SupportingFace
+JPC_Shape_GetSupportingFace(const JPC_Shape *in_shape,
+                            JPC_SubShapeID in_sub_shape_id,
+                            const float in_direction[3],
+                            const float in_scale[3],
+                            const float in_transform[16]);
 
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,

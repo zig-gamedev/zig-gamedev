@@ -665,8 +665,8 @@ pub const SubShapeIdPair = extern struct {
 };
 
 pub const SubShapeIDCreator = extern struct {
-    id: SubShapeId = @import("std").mem.zeroes(SubShapeId),
-    current_bit: u32 = @import("std").mem.zeroes(u32),
+    id: SubShapeId = sub_shape_id_empty,
+    current_bit: u32 = 0,
 
     comptime {
         assert(@sizeOf(SubShapeIDCreator) == @sizeOf(c.JPC_SubShapeIDCreator));
@@ -3196,6 +3196,16 @@ pub const Shape = opaque {
         user_convex8 = c.JPC_SHAPE_SUB_TYPE_USER_CONVEX8,
     };
 
+    pub const SupportingFace = extern struct {
+        num_points: u32 align(16),
+        points: [32][4]f32 align(16), // 4th element is ignored; world space
+
+        comptime {
+            assert(@sizeOf(SupportingFace) == @sizeOf(c.JPC_Shape_SupportingFace));
+            assert(@offsetOf(SupportingFace, "points") == @offsetOf(c.JPC_Shape_SupportingFace, "points"));
+        }
+    };
+
     fn Methods(comptime T: type) type {
         return struct {
             pub fn asShape(shape: *const T) *const Shape {
@@ -3244,6 +3254,34 @@ pub const Shape = opaque {
             pub fn getLocalBounds(shape: *const T) AABox {
                 const aabox = c.JPC_Shape_GetLocalBounds(@as(*const c.JPC_Shape, @ptrCast(shape)));
                 return @as(*AABox, @constCast(@ptrCast(&aabox))).*;
+            }
+
+            pub fn getSurfaceNormal(shape: *const T, sub_shape_id: SubShapeId, local_pos: [3]f32) [3]f32 {
+                var normal: [3]f32 = undefined;
+                c.JPC_Shape_GetSurfaceNormal(
+                    @as(*const c.JPC_Shape, @ptrCast(shape)),
+                    sub_shape_id,
+                    &local_pos,
+                    &normal,
+                );
+                return normal;
+            }
+
+            pub fn getSupportingFace(
+                shape: *const T,
+                sub_shape_id: SubShapeId,
+                direction: [3]f32,
+                shape_scale: [3]f32,
+                com_transform: [16]f32,
+            ) SupportingFace {
+                const c_face = c.JPC_Shape_GetSupportingFace(
+                    @as(*const c.JPC_Shape, @ptrCast(shape)),
+                    sub_shape_id,
+                    &direction,
+                    &shape_scale,
+                    &com_transform,
+                );
+                return @as(*const SupportingFace, @ptrCast(&c_face)).*;
             }
 
             pub fn castRay(
