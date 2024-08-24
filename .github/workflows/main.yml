@@ -30,7 +30,14 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: ${{ steps.zigversion.outputs.content }}
-      - name: Build and test
-        run: zig fmt --check . && zig build -Dexperiments && zig build test
-
+      - name: Check format
+        run: zig fmt --check .
+      - name: Build all
+        run: zig build -Dexperiments
+      - name: Build and run tests
+        run: zig build test
+      - name: Cross compile
+        if: runner.os == 'Linux'
+        run: zig build -Dtarget=x86_64-windows-gnu
+        
 
