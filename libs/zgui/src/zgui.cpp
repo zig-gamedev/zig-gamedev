@@ -1621,6 +1621,11 @@ extern "C"
         return ImGui::IsItemVisible();
     }
 
+    ZGUI_API bool zguiIsRectVisible(float pos[2])
+    {
+        return ImGui::IsRectVisible(ImVec2(pos[0], pos[1]));
+    }
+
     ZGUI_API bool zguiIsItemEdited(void)
     {
         return ImGui::IsItemEdited();

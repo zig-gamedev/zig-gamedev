@@ -3304,6 +3304,9 @@ extern fn zguiIsItemToggledOpen() bool;
 extern fn zguiIsAnyItemHovered() bool;
 extern fn zguiIsAnyItemActive() bool;
 extern fn zguiIsAnyItemFocused() bool;
+
+pub const isRectVisible = zguiIsRectVisible;
+extern fn zguiIsRectVisible(pos: *[2]f32) bool;
 //--------------------------------------------------------------------------------------------------
 //
 // Color Utilities
