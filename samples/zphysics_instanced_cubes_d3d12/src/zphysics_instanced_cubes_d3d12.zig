@@ -4,7 +4,6 @@ const glfw = @import("zglfw");
 const zwin32 = @import("zwin32");
 const zd3d12 = @import("zd3d12");
 const zmath = @import("zmath");
-const zpix = @import("zpix");
 const zphysics = @import("zphysics");
 
 const w32 = zwin32.w32;
@@ -107,9 +106,6 @@ pub fn main() !void {
         const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
         std.posix.chdir(path) catch {};
     }
-
-    const pix_library = try zpix.loadGpuCapturerLibrary();
-    defer pix_library.deinit();
 
     var rng = std.rand.DefaultPrng.init(42);
 

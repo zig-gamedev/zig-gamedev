@@ -55,12 +55,6 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zphysics", zphysics.module("root"));
     exe.linkLibrary(zphysics.artifact("joltc"));
 
-    const zpix = b.dependency("zpix", .{
-        .enable = options.zpix_enable,
-        .path = options.zpix_path,
-    });
-    exe.root_module.addImport("zpix", zpix.module("root"));
-
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
