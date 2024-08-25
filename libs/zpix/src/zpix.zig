@@ -5,7 +5,7 @@ comptime {
     std.testing.refAllDecls(@This());
 }
 
-const w32 = @import("zwin32").w32;
+const w32 = std.os.windows;
 const HMODULE = w32.HMODULE;
 const HRESULT = w32.HRESULT;
 const GUID = w32.GUID;
@@ -151,7 +151,7 @@ const PixLibrary = if (enable) struct {
     module: HMODULE,
 
     pub fn deinit(self: PixLibrary) void {
-        std.os.windows.FreeLibrary(self.module);
+        w32.FreeLibrary(self.module);
     }
 } else struct {
     pub fn deinit(_: PixLibrary) void {}

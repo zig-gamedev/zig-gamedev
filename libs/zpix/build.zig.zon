@@ -7,7 +7,4 @@
         "src",
         "README.md",
     },
-    .dependencies = .{
-        .zwin32 = .{ .path = "../zwin32" },
-    },
 }
