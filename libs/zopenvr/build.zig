@@ -1,11 +1,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-
-    const zwin32 = b.dependency("zwin32", .{
-        .target = target,
-    });
+    const zwin32 = b.dependency("zwin32", .{});
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/openvr.zig"),
         .imports = &.{

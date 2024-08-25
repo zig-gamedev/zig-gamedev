@@ -19,7 +19,7 @@ pub const xinput = @import("xinput.zig");
 pub const dds_loader = @import("dds_loader.zig");
 pub const d3dcompiler = @import("d3dcompiler.zig");
 
-test {
+comptime {
     std.testing.refAllDeclsRecursive(@This());
 }
 

@@ -20,9 +20,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     @import("system_sdk").addLibraryPathsTo(exe);
 
-    const zwin32 = b.dependency("zwin32", .{
-        .target = options.target,
-    });
+    const zwin32 = b.dependency("zwin32", .{});
     exe.root_module.addImport("zwin32", zwin32.module("root"));
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {

@@ -30,23 +30,18 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zglfw", zglfw.module("root"));
     exe.linkLibrary(zglfw.artifact("glfw"));
 
-    const zwin32 = b.dependency("zwin32", .{
-        .target = options.target,
-    });
+    const zwin32 = b.dependency("zwin32", .{});
     const zwin32_module = zwin32.module("root");
     exe.root_module.addImport("zwin32", zwin32_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
-        .target = options.target,
         .debug_layer = options.zd3d12_enable_debug_layer,
         .gbv = options.zd3d12_enable_gbv,
     });
     const zd3d12_module = zd3d12.module("root");
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
-    const zopenvr = b.dependency("zopenvr", .{
-        .target = options.target,
-    });
+    const zopenvr = b.dependency("zopenvr", .{});
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
     @import("zopenvr").addLibraryPathsTo(exe);

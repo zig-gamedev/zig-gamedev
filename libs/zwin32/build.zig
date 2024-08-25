@@ -2,25 +2,9 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) !void {
-    const optimize = b.standardOptimizeOption(.{});
-    const target = b.standardTargetOptions(.{});
-
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/zwin32.zig"),
     });
-
-    const test_step = b.step("test", "Run zwin32 tests");
-
-    const tests = b.addTest(.{
-        .name = "zwin32-tests",
-        .root_source_file = b.path("src/zwin32.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    b.installArtifact(tests);
-
-    test_step.dependOn(&b.addRunArtifact(tests).step);
 }
 
 pub fn install_xaudio2(

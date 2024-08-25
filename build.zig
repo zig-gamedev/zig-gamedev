@@ -83,9 +83,6 @@ pub fn build(b: *std.Build) void {
         { // Tests
             const test_step = b.step("test", "Run all tests");
             tests(b, target, optimize, test_step);
-            if (builtin.os.tag == .windows) {
-                testsWindows(b, target, optimize, test_step);
-            }
         }
 
         { // Benchmarks
@@ -306,19 +303,6 @@ fn tests(
         .optimize = optimize,
     });
     test_step.dependOn(&b.addRunArtifact(ztracy.artifact("ztracy-tests")).step);
-}
-
-fn testsWindows(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    test_step: *std.Build.Step,
-) void {
-    const zwin32 = b.dependency("zwin32", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zwin32.artifact("zwin32-tests")).step);
 }
 
 // TODO: Delete this once Zig checks minimum_zig_version in build.zig.zon

@@ -28,13 +28,10 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
 
-    const zwin32 = b.dependency("zwin32", .{
-        .target = options.target,
-    });
+    const zwin32 = b.dependency("zwin32", .{});
     exe.root_module.addImport("zwin32", zwin32.module("root"));
 
     const zd3d12 = b.dependency("zd3d12", .{
-        .target = options.target,
         .debug_layer = options.zd3d12_enable_debug_layer,
         .gbv = options.zd3d12_enable_gbv,
     });

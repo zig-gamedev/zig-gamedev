@@ -1,8 +1,6 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-
     const options = .{
         .debug_layer = b.option(bool, "debug_layer", "Enables debug layer") orelse false,
     };
@@ -14,9 +12,7 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    const zwin32 = b.dependency("zwin32", .{
-        .target = target,
-    });
+    const zwin32 = b.dependency("zwin32", .{});
 
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/zxaudio2.zig"),

@@ -3,8 +3,6 @@ const std = @import("std");
 const default_upload_heap_capacity: u32 = 32 * 1024 * 1024;
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-
     const options = .{
         .debug_layer = b.option(
             bool,
@@ -31,9 +29,7 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    const zwin32 = b.dependency("zwin32", .{
-        .target = target,
-    });
+    const zwin32 = b.dependency("zwin32", .{});
     const zwin32_module = zwin32.module("root");
 
     _ = b.addModule("root", .{
