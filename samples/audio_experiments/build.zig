@@ -27,7 +27,6 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zmath", zmath.module("root"));
 
     const zxaudio2 = b.dependency("zxaudio2", .{
-        .target = options.target,
         .debug_layer = false,
     });
     exe.root_module.addImport("zxaudio2", zxaudio2.module("root"));
