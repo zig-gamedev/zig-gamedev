@@ -1,11 +1,12 @@
-# zpix v0.10.0 - performance markers for PIX
+# zpix
+
+Performance markers for [Microsoft's PIX profiler](https://devblogs.microsoft.com/pix/documentation/)
 
 ## Getting started
 
-Copy `zpix` and `zwin32` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zpix` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zpix = .{ .path = "libs/zpix" },
-    .zwin32 = .{ .path = "libs/zwin32" },
 ```
 
 Then in your `build.zig` add:
