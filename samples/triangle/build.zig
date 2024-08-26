@@ -61,6 +61,12 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         const common_hlsl_path = b.pathJoin(&.{ root_path, "samples", "common/src/hlsl/common.hlsl" });
         compile_shaders.addVsShader(common_hlsl_path, "vsImGui", b.pathJoin(&.{ shaders_path, "imgui.vs.cso" }), "PSO__IMGUI");
         compile_shaders.addPsShader(common_hlsl_path, "psImGui", b.pathJoin(&.{ shaders_path, "imgui.ps.cso" }), "PSO__IMGUI");
+
+        const hlsl_path = b.pathJoin(&.{ root_path, src_path, demo_name ++ ".hlsl" });
+        compile_shaders.addVsShader(hlsl_path, "vsTriangle", b.pathJoin(&.{ shaders_path, demo_name ++ ".vs.cso" }), "");
+        compile_shaders.addPsShader(hlsl_path, "psTriangle", b.pathJoin(&.{ shaders_path, demo_name ++ ".ps.cso" }), "");
+
+        install_content_step.step.dependOn(compile_shaders.step);
     }
     exe.step.dependOn(&install_content_step.step);
 
