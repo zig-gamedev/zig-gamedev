@@ -1,10 +1,10 @@
-const w32 = @import("w32.zig");
-const IUnknown = w32.IUnknown;
-const HRESULT = w32.HRESULT;
-const WINAPI = w32.WINAPI;
-const GUID = w32.GUID;
-const UINT = w32.UINT;
-const BOOL = w32.BOOL;
+const windows = @import("windows.zig");
+const IUnknown = windows.IUnknown;
+const HRESULT = windows.HRESULT;
+const WINAPI = windows.WINAPI;
+const GUID = windows.GUID;
+const UINT = windows.UINT;
+const BOOL = windows.BOOL;
 
 pub const GPU_BASED_VALIDATION_FLAGS = packed struct(UINT) {
     DISABLE_STATE_TRACKING: bool = false,

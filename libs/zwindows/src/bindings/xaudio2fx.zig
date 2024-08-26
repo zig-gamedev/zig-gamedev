@@ -1,12 +1,12 @@
 const std = @import("std");
-const w32 = @import("w32.zig");
-const IUnknown = w32.IUnknown;
-const BYTE = w32.BYTE;
-const HRESULT = w32.HRESULT;
-const WINAPI = w32.WINAPI;
-const UINT32 = w32.UINT32;
-const BOOL = w32.BOOL;
-const FALSE = w32.FALSE;
+const windows = @import("windows.zig");
+const IUnknown = windows.IUnknown;
+const BYTE = windows.BYTE;
+const HRESULT = windows.HRESULT;
+const WINAPI = windows.WINAPI;
+const UINT32 = windows.UINT32;
+const BOOL = windows.BOOL;
+const FALSE = windows.FALSE;
 
 pub const VOLUMEMETER_LEVELS = extern struct {
     pPeakLevels: ?[*]f32 align(1),
@@ -139,30 +139,30 @@ pub const REVERB_DEFAULT_ROOM_SIZE = 100.0;
 pub const REVERB_DEFAULT_DISABLE_LATE_FIELD = FALSE;
 
 pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
-    var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
+    var xaudio2_dll = windows.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = w32.LoadLibraryA("xaudio2_9redist.dll");
+        xaudio2_dll = windows.LoadLibraryA("xaudio2_9redist.dll");
     }
 
     var createAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
     createAudioVolumeMeter = @as(
         @TypeOf(createAudioVolumeMeter),
-        @ptrCast(w32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?),
+        @ptrCast(windows.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?),
     );
 
     return createAudioVolumeMeter(apo);
 }
 
 pub fn createReverb(apo: *?*IUnknown, _: UINT32) HRESULT {
-    var xaudio2_dll = w32.GetModuleHandleA("xaudio2_9redist.dll");
+    var xaudio2_dll = windows.GetModuleHandleA("xaudio2_9redist.dll");
     if (xaudio2_dll == null) {
-        xaudio2_dll = w32.LoadLibraryA("xaudio2_9redist.dll");
+        xaudio2_dll = windows.LoadLibraryA("xaudio2_9redist.dll");
     }
 
     var createAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
     createAudioReverb = @as(
         @TypeOf(createAudioReverb),
-        @ptrCast(w32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?),
+        @ptrCast(windows.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?),
     );
 
     return createAudioReverb(apo);

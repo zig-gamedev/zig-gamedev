@@ -2,7 +2,7 @@
 // https://github.com/microsoft/DirectXTK12/blob/main/Src/DDSTextureLoader.cpp
 const std = @import("std");
 const assert = std.debug.assert;
-const w32 = @import("w32.zig");
+const windows = @import("windows.zig");
 const dxgi = @import("dxgi.zig");
 const d3d12 = @import("d3d12.zig");
 
@@ -808,7 +808,7 @@ fn adjustPlaneResource(format: dxgi.FORMAT, height: u32, slice_plane: u32, resou
 fn getFormatPlaneCount(device: *d3d12.IDevice9, format: dxgi.FORMAT) u8 {
     var data: d3d12.FEATURE_DATA_FORMAT_INFO = .{ .Format = format, .PlaneCount = 0 };
     const hr = device.CheckFeatureSupport(.FORMAT_INFO, &data, @sizeOf(d3d12.FEATURE_DATA_FORMAT_INFO));
-    if (hr != w32.S_OK) {
+    if (hr != windows.S_OK) {
         return 0;
     }
 

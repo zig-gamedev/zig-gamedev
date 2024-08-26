@@ -1,10 +1,10 @@
-const w32 = @import("w32.zig");
-const IUnknown = w32.IUnknown;
-const UINT = w32.UINT;
-const WINAPI = w32.WINAPI;
-const SIZE_T = w32.SIZE_T;
-const LPCSTR = w32.LPCSTR;
-const GUID = w32.GUID;
+const windows = @import("windows.zig");
+const IUnknown = windows.IUnknown;
+const UINT = windows.UINT;
+const WINAPI = windows.WINAPI;
+const SIZE_T = windows.SIZE_T;
+const LPCSTR = windows.LPCSTR;
+const GUID = windows.GUID;
 
 pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
     UNDEFINED = 0,

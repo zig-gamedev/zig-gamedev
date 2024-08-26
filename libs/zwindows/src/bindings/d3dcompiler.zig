@@ -1,11 +1,9 @@
-//! Disclaimer: You should probably precompile your shaders with dxc and not use this!
-
-const w32 = @import("w32.zig");
-const WINAPI = w32.WINAPI;
-const HRESULT = w32.HRESULT;
-const LPCSTR = w32.LPCSTR;
-const UINT = w32.UINT;
-const SIZE_T = w32.SIZE_T;
+const std = @import("std");
+const WINAPI = std.os.windows.WINAPI;
+const HRESULT = std.os.windows.HRESULT;
+const LPCSTR = std.os.windows.LPCSTR;
+const UINT = std.os.windows.UINT;
+const SIZE_T = std.os.windows.SIZE_T;
 
 const d3dcommon = @import("d3dcommon.zig");
 

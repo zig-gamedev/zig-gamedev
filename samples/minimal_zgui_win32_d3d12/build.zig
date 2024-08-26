@@ -15,9 +15,9 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     @import("system_sdk").addLibraryPathsTo(exe);
 
-    const zwin32 = b.dependency("zwin32", .{});
-    const zwin32_module = zwin32.module("root");
-    exe.root_module.addImport("zwin32", zwin32_module);
+    const zwindows = b.dependency("zwindows", .{});
+    const windows_module = zwindows.module("bindings");
+    exe.root_module.addImport("windows", windows_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,
@@ -47,7 +47,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, .bin);
 
     return exe;
 }

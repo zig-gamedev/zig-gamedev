@@ -12,13 +12,13 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    const zwin32 = b.dependency("zwin32", .{});
+    const zwindows = b.dependency("zwindows", .{});
 
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/zxaudio2.zig"),
         .imports = &.{
             .{ .name = "zxaudio2_options", .module = options_module },
-            .{ .name = "zwin32", .module = zwin32.module("root") },
+            .{ .name = "windows", .module = zwindows.module("bindings") },
         },
     });
 }

@@ -30,7 +30,7 @@
         .zpool = .{ .path = "libs/zpool" },
         .zstbi = .{ .path = "libs/zstbi" },
         .ztracy = .{ .path = "libs/ztracy" },
-        .zwin32 = .{ .path = "libs/zwin32" },
+        .zwindows = .{ .path = "libs/zwindows" },
         .zxaudio2 = .{ .path = "libs/zxaudio2" },
 
         .zemscripten = .{ .path = "libs/zemscripten" },

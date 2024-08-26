@@ -2,12 +2,12 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const dml = zwin32.directml;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+const windows = @import("windows");
+
+const d3d12 = windows.d3d12;
+const dml = windows.directml;
+const hrPanic = windows.hrPanic;
+const hrPanicOnFail = windows.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const c = common.c;
@@ -94,7 +94,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_texture.vs.cso", null));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_texture.ps.cso", null));
 
@@ -156,7 +156,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .Sizes = &.{ 1, 1, 3, 3 },
             .Strides = null,
             .TotalTensorSizeInBytes = std.mem.alignForward(
-                w32.UINT64,
+                windows.UINT64,
                 filter_tensor.len * filter_tensor.len * @sizeOf(f16),
                 32,
             ),
@@ -274,7 +274,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
-                std.mem.alignForward(w32.UINT64, filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+                std.mem.alignForward(windows.UINT64, filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
             );
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;
@@ -593,7 +593,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(

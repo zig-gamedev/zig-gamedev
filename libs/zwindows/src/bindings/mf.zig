@@ -1,16 +1,16 @@
-const w32 = @import("w32.zig");
-const IUnknown = w32.IUnknown;
-const UINT = w32.UINT;
-const UINT32 = w32.UINT32;
-const HRESULT = w32.HRESULT;
-const ULONG = w32.ULONG;
-const DWORD = w32.DWORD;
-const WINAPI = w32.WINAPI;
-const GUID = w32.GUID;
-const LPCWSTR = w32.LPCWSTR;
-const BYTE = w32.BYTE;
-const LONGLONG = w32.LONGLONG;
-const PROPVARIANT = w32.PROPVARIANT;
+const windows = @import("windows.zig");
+const IUnknown = windows.IUnknown;
+const UINT = windows.UINT;
+const UINT32 = windows.UINT32;
+const HRESULT = windows.HRESULT;
+const ULONG = windows.ULONG;
+const DWORD = windows.DWORD;
+const WINAPI = windows.WINAPI;
+const GUID = windows.GUID;
+const LPCWSTR = windows.LPCWSTR;
+const BYTE = windows.BYTE;
+const LONGLONG = windows.LONGLONG;
+const PROPVARIANT = windows.PROPVARIANT;
 
 // 0x0002 for Windows 7+
 pub const SDK_VERSION = 0x0002;
@@ -399,10 +399,10 @@ pub const ISourceReaderCallback = extern struct {
     };
 
     fn onFlushDef(_: *ISourceReaderCallback, _: DWORD) callconv(WINAPI) HRESULT {
-        return w32.S_OK;
+        return windows.S_OK;
     }
     fn onEventDef(_: *ISourceReaderCallback, _: DWORD, _: *IMediaEvent) callconv(WINAPI) HRESULT {
-        return w32.S_OK;
+        return windows.S_OK;
     }
 };
 

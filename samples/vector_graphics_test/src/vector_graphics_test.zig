@@ -1,13 +1,13 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const d2d1 = zwin32.d2d1;
-const dwrite = zwin32.dwrite;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+const windows = @import("windows");
+
+const d3d12 = windows.d3d12;
+const d2d1 = windows.d2d1;
+const dwrite = windows.dwrite;
+const hrPanic = windows.hrPanic;
+const hrPanicOnFail = windows.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const c = common.c;
@@ -641,7 +641,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(

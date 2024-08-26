@@ -2,11 +2,11 @@ const std = @import("std");
 const OpenVR = @import("zopenvr");
 
 const zglfw = @import("zglfw");
-const zwin32 = @import("zwin32");
+const windows = @import("windows");
 const zd3d12 = @import("zd3d12");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const dxgi = zwin32.dxgi;
+
+const d3d12 = windows.d3d12;
+const dxgi = windows.dxgi;
 const zgui = @import("zgui");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
@@ -1280,7 +1280,7 @@ pub fn main() !void {
             surface.gctx.cmdlist.OMSetRenderTargets(
                 1,
                 &.{back_buffer.descriptor_handle},
-                w32.TRUE,
+                windows.TRUE,
                 null,
             );
             surface.gctx.cmdlist.ClearRenderTargetView(

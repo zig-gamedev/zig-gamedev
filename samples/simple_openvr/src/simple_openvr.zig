@@ -3,11 +3,11 @@ const OpenVR = @import("zopenvr");
 
 const zmath = @import("zmath");
 const zglfw = @import("zglfw");
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const d3d = zwin32.d3d;
-const dxgi = zwin32.dxgi;
+const windows = @import("windows");
+
+const d3d12 = windows.d3d12;
+const d3d = windows.d3d;
+const dxgi = windows.dxgi;
 const zd3d12 = @import("zd3d12");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
@@ -447,11 +447,11 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/scene.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = w32.TRUE;
-            rasterizer_state.MultisampleEnable = w32.TRUE;
+            rasterizer_state.FrontCounterClockwise = windows.TRUE;
+            rasterizer_state.MultisampleEnable = windows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        pso_desc.SampleMask = w32.UINT_MAX;
+        pso_desc.SampleMask = windows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{
@@ -573,16 +573,16 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/companion.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = w32.TRUE;
+            rasterizer_state.FrontCounterClockwise = windows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
         pso_desc.DepthStencilState = depth_stencil_state: {
             var depth_stencil_state = d3d12.DEPTH_STENCIL_DESC.initDefault();
-            depth_stencil_state.DepthEnable = w32.FALSE;
-            depth_stencil_state.StencilEnable = w32.FALSE;
+            depth_stencil_state.DepthEnable = windows.FALSE;
+            depth_stencil_state.StencilEnable = windows.FALSE;
             break :depth_stencil_state depth_stencil_state;
         };
-        pso_desc.SampleMask = w32.UINT_MAX;
+        pso_desc.SampleMask = windows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{
@@ -676,11 +676,11 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/axes.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = w32.TRUE;
-            rasterizer_state.MultisampleEnable = w32.TRUE;
+            rasterizer_state.FrontCounterClockwise = windows.TRUE;
+            rasterizer_state.MultisampleEnable = windows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        pso_desc.SampleMask = w32.UINT_MAX;
+        pso_desc.SampleMask = windows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .LINE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{
@@ -764,11 +764,11 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/render_model.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = w32.TRUE;
-            rasterizer_state.MultisampleEnable = w32.TRUE;
+            rasterizer_state.FrontCounterClockwise = windows.TRUE;
+            rasterizer_state.MultisampleEnable = windows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        pso_desc.SampleMask = w32.UINT_MAX;
+        pso_desc.SampleMask = windows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{

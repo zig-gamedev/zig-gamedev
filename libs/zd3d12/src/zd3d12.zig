@@ -1,26 +1,26 @@
-const std = @import("std");
-const assert = std.debug.assert;
-
 comptime {
     std.testing.refAllDecls(@This());
 }
 
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const dwrite = zwin32.dwrite;
-const dxgi = zwin32.dxgi;
-const d3d11 = zwin32.d3d11;
-const d3d12 = zwin32.d3d12;
-const d3d12d = zwin32.d3d12d;
-const d3d = zwin32.d3d;
-const d2d1 = zwin32.d2d1;
-const d3d11on12 = zwin32.d3d11on12;
-const dds_loader = zwin32.dds_loader;
-const wic = zwin32.wic;
-const HResultError = zwin32.HResultError;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
-const hrErrorOnFail = zwin32.hrErrorOnFail;
+const std = @import("std");
+const assert = std.debug.assert;
+
+const windows = @import("windows");
+
+const dwrite = windows.dwrite;
+const dxgi = windows.dxgi;
+const d3d11 = windows.d3d11;
+const d3d12 = windows.d3d12;
+const d3d12d = windows.d3d12d;
+const d3d = windows.d3d;
+const d2d1 = windows.d2d1;
+const d3d11on12 = windows.d3d11on12;
+const dds_loader = windows.dds_loader;
+const wic = windows.wic;
+const HResultError = windows.HResultError;
+const hrPanic = windows.hrPanic;
+const hrPanicOnFail = windows.hrPanicOnFail;
+const hrErrorOnFail = windows.hrErrorOnFail;
 
 const enable_debug_layer = @import("zd3d12_options").debug_layer;
 const enable_gbv = @import("zd3d12_options").gbv;
@@ -74,7 +74,7 @@ pub const VerticesHandle = struct {
             else => {},
         }
 
-        const buffer_length: w32.UINT = @intCast(vertices_length * @sizeOf(T));
+        const buffer_length: windows.UINT = @intCast(vertices_length * @sizeOf(T));
         const resource_handle = try gctx.createCommittedResource(
             .UPLOAD,
             .{},
@@ -126,24 +126,24 @@ pub const GraphicsContext = struct {
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *d3d12.IFence,
-    frame_fence_event: w32.HANDLE,
+    frame_fence_event: windows.HANDLE,
     frame_fence_counter: u64,
     frame_index: u32,
     back_buffer_index: u32,
-    window: w32.HWND,
+    window: windows.HWND,
     is_cmdlist_opened: bool,
     d2d: ?D2dState,
     wic_factory: *wic.IImagingFactory,
     present_flags: dxgi.PRESENT_FLAG,
-    present_interval: w32.UINT,
+    present_interval: windows.UINT,
 
-    pub fn init(allocator: std.mem.Allocator, window: w32.HWND) GraphicsContext {
+    pub fn init(allocator: std.mem.Allocator, window: windows.HWND) GraphicsContext {
         const wic_factory = blk: {
             var wic_factory: *wic.IImagingFactory = undefined;
-            hrPanicOnFail(w32.CoCreateInstance(
+            hrPanicOnFail(windows.CoCreateInstance(
                 &wic.CLSID_ImagingFactory,
                 null,
-                w32.CLSCTX_INPROC_SERVER,
+                windows.CLSCTX_INPROC_SERVER,
                 &wic.IID_IImagingFactory,
                 @as(*?*anyopaque, @ptrCast(&wic_factory)),
             ));
@@ -162,16 +162,16 @@ pub const GraphicsContext = struct {
         defer _ = factory.Release();
 
         var present_flags: dxgi.PRESENT_FLAG = .{};
-        const present_interval: w32.UINT = 0;
+        const present_interval: windows.UINT = 0;
         {
-            var allow_tearing: w32.BOOL = w32.FALSE;
+            var allow_tearing: windows.BOOL = windows.FALSE;
             const hr = factory.CheckFeatureSupport(
                 .PRESENT_ALLOW_TEARING,
                 &allow_tearing,
                 @sizeOf(@TypeOf(allow_tearing)),
             );
 
-            if (hr == w32.S_OK and allow_tearing == w32.TRUE) {
+            if (hr == windows.S_OK and allow_tearing == windows.TRUE) {
                 present_flags.ALLOW_TEARING = true;
             }
         }
@@ -182,7 +182,7 @@ pub const GraphicsContext = struct {
             if (maybe_debug) |debug| {
                 debug.EnableDebugLayer();
                 if (enable_gbv) {
-                    debug.SetEnableGPUBasedValidation(w32.TRUE);
+                    debug.SetEnableGPUBasedValidation(windows.TRUE);
                 }
                 _ = debug.Release();
             }
@@ -198,23 +198,23 @@ pub const GraphicsContext = struct {
                 .HIGH_PERFORMANCE,
                 &dxgi.IID_IAdapter3,
                 &optional_adapter3,
-            ) == w32.S_OK) {
+            ) == windows.S_OK) {
                 adapter_index += 1;
                 if (optional_adapter3) |adapter3| {
                     var adapter2_desc: dxgi.ADAPTER_DESC2 = undefined;
-                    if (adapter3.GetDesc2(&adapter2_desc) == w32.S_OK) {
+                    if (adapter3.GetDesc2(&adapter2_desc) == windows.S_OK) {
                         if (adapter2_desc.Flags.SOFTWARE) {
                             // Don't select the Basic Render Driver adapter.
                             continue;
                         }
 
                         const hr = d3d12.CreateDevice(
-                            @as(*w32.IUnknown, @ptrCast(adapter3)),
+                            @as(*windows.IUnknown, @ptrCast(adapter3)),
                             .@"11_1",
                             &d3d12.IID_IDevice9,
                             null,
                         );
-                        if (hr == w32.S_OK or hr == w32.S_FALSE) {
+                        if (hr == windows.S_OK or hr == windows.S_FALSE) {
                             adapter = adapter3;
                             break;
                         }
@@ -227,21 +227,21 @@ pub const GraphicsContext = struct {
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
             const hr = d3d12.CreateDevice(
-                if (suitable_adapter) |adapter| @as(*w32.IUnknown, @ptrCast(adapter)) else null,
+                if (suitable_adapter) |adapter| @as(*windows.IUnknown, @ptrCast(adapter)) else null,
                 .@"11_1",
                 &d3d12.IID_IDevice9,
                 @as(*?*anyopaque, @ptrCast(&device)),
             );
 
-            if (hr != w32.S_OK) {
-                _ = w32.MessageBoxA(
+            if (hr != windows.S_OK) {
+                _ = windows.MessageBoxA(
                     window,
                     "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
                         "with DirectX 12 Feature Level 11.1 support.",
                     "Your graphics card driver may be old",
-                    w32.MB_OK | w32.MB_ICONERROR,
+                    windows.MB_OK | windows.MB_ICONERROR,
                 );
-                w32.ExitProcess(0);
+                windows.ExitProcess(0);
             }
             break :blk device;
         };
@@ -260,15 +260,15 @@ pub const GraphicsContext = struct {
         {
             var data: d3d12.FEATURE_DATA_SHADER_MODEL = .{ .HighestShaderModel = .@"6_7" };
             const hr = device.CheckFeatureSupport(.SHADER_MODEL, &data, @sizeOf(d3d12.FEATURE_DATA_SHADER_MODEL));
-            if (hr != w32.S_OK or @intFromEnum(data.HighestShaderModel) < @intFromEnum(d3d12.SHADER_MODEL.@"6_6")) {
-                _ = w32.MessageBoxA(
+            if (hr != windows.S_OK or @intFromEnum(data.HighestShaderModel) < @intFromEnum(d3d12.SHADER_MODEL.@"6_6")) {
+                _ = windows.MessageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Shader Model 6.6. " ++
                         "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
-                    w32.MB_OK | w32.MB_ICONERROR,
+                    windows.MB_OK | windows.MB_ICONERROR,
                 );
-                w32.ExitProcess(0);
+                windows.ExitProcess(0);
             }
         }
 
@@ -276,17 +276,17 @@ pub const GraphicsContext = struct {
         {
             var data: d3d12.FEATURE_DATA_D3D12_OPTIONS = std.mem.zeroes(d3d12.FEATURE_DATA_D3D12_OPTIONS);
             const hr = device.CheckFeatureSupport(.OPTIONS, &data, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS));
-            if (hr != w32.S_OK or
+            if (hr != windows.S_OK or
                 @intFromEnum(data.ResourceBindingTier) < @intFromEnum(d3d12.RESOURCE_BINDING_TIER.TIER_3))
             {
-                _ = w32.MessageBoxA(
+                _ = windows.MessageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Resource Binding Tier 3. " ++
                         "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
-                    w32.MB_OK | w32.MB_ICONERROR,
+                    windows.MB_OK | windows.MB_ICONERROR,
                 );
-                w32.ExitProcess(0);
+                windows.ExitProcess(0);
             }
         }
 
@@ -301,8 +301,8 @@ pub const GraphicsContext = struct {
             break :blk cmdqueue;
         };
 
-        var rect: w32.RECT = undefined;
-        _ = w32.GetClientRect(window, &rect);
+        var rect: windows.RECT = undefined;
+        _ = windows.GetClientRect(window, &rect);
         const viewport_width = @as(u32, @intCast(rect.right - rect.left));
         const viewport_height = @as(u32, @intCast(rect.bottom - rect.top));
 
@@ -320,13 +320,13 @@ pub const GraphicsContext = struct {
                 .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
                 .BufferCount = num_swapbuffers,
                 .OutputWindow = window,
-                .Windowed = w32.TRUE,
+                .Windowed = windows.TRUE,
                 .SwapEffect = .FLIP_DISCARD,
                 .Flags = .{ .ALLOW_TEARING = present_flags.ALLOW_TEARING },
             };
             var swapchain: *dxgi.ISwapChain = undefined;
             hrPanicOnFail(factory.CreateSwapChain(
-                @as(*w32.IUnknown, @ptrCast(cmdqueue)),
+                @as(*windows.IUnknown, @ptrCast(cmdqueue)),
                 &desc,
                 @as(*?*dxgi.ISwapChain, @ptrCast(&swapchain)),
             ));
@@ -397,11 +397,11 @@ pub const GraphicsContext = struct {
             break :blk frame_fence;
         };
 
-        const frame_fence_event = w32.CreateEventExA(
+        const frame_fence_event = windows.CreateEventExA(
             null,
             "frame_fence_event",
             0,
-            w32.EVENT_ALL_ACCESS,
+            windows.EVENT_ALL_ACCESS,
         ).?;
 
         const cmdallocs = blk: {
@@ -477,7 +477,7 @@ pub const GraphicsContext = struct {
         _ = gctx.adapter.Release();
         gctx.finishGpuCommands();
         gctx.transition_resource_barriers.deinit(allocator);
-        _ = w32.CloseHandle(gctx.frame_fence_event);
+        _ = windows.CloseHandle(gctx.frame_fence_event);
         gctx.resource_pool.deinit(allocator);
         gctx.pipeline_pool.deinit(allocator);
         gctx.rtv_heap.deinit();
@@ -580,11 +580,11 @@ pub const GraphicsContext = struct {
             var device11: *d3d11.IDevice = undefined;
             var device_context11: *d3d11.IDeviceContext = undefined;
             hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
-                @as(*w32.IUnknown, @ptrCast(gctx.device)),
+                @as(*windows.IUnknown, @ptrCast(gctx.device)),
                 .{ .DEBUG = enable_debug_layer, .BGRA_SUPPORT = true },
                 null,
                 0,
-                &.{@as(*w32.IUnknown, @ptrCast(gctx.cmdqueue))},
+                &.{@as(*windows.IUnknown, @ptrCast(gctx.cmdqueue))},
                 1,
                 0,
                 @as(*?*d3d11.IDevice, @ptrCast(&device11)),
@@ -672,7 +672,7 @@ pub const GraphicsContext = struct {
             for (swapbuffers11, 0..) |_, buffer_index| {
                 hrPanicOnFail(gctx.d2d.?.device11on12.CreateWrappedResource(
                     @as(
-                        *w32.IUnknown,
+                        *windows.IUnknown,
                         @ptrCast(gctx.resource_pool.lookupResource(gctx.swapchain_buffers[buffer_index].resource).?.raw.?),
                     ),
                     &d3d11on12.RESOURCE_FLAGS{
@@ -786,7 +786,7 @@ pub const GraphicsContext = struct {
         const gpu_frame_counter = gctx.frame_fence.GetCompletedValue();
         if ((gctx.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
             hrPanicOnFail(gctx.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gctx.frame_fence_event));
-            w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE) catch {};
+            windows.WaitForSingleObject(gctx.frame_fence_event, windows.INFINITE) catch {};
         }
 
         gctx.frame_index = (gctx.frame_index + 1) % max_num_buffered_frames;
@@ -820,7 +820,7 @@ pub const GraphicsContext = struct {
             ));
 
             if (mute_d2d_completely) {
-                info_queue.SetMuteDebugOutput(w32.TRUE);
+                info_queue.SetMuteDebugOutput(windows.TRUE);
             } else {
                 var filter: d3d12.INFO_QUEUE_FILTER = std.mem.zeroes(d3d12.INFO_QUEUE_FILTER);
                 hrPanicOnFail(info_queue.PushStorageFilter(&filter));
@@ -860,7 +860,7 @@ pub const GraphicsContext = struct {
 
         if (enable_debug_layer) {
             if (mute_d2d_completely) {
-                info_queue.SetMuteDebugOutput(w32.FALSE);
+                info_queue.SetMuteDebugOutput(windows.FALSE);
             } else {
                 info_queue.PopStorageFilter();
             }
@@ -893,7 +893,7 @@ pub const GraphicsContext = struct {
 
         hrPanicOnFail(gctx.cmdqueue.Signal(gctx.frame_fence, gctx.frame_fence_counter));
         hrPanicOnFail(gctx.frame_fence.SetEventOnCompletion(gctx.frame_fence_counter, gctx.frame_fence_event));
-        w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE) catch {};
+        windows.WaitForSingleObject(gctx.frame_fence_event, windows.INFINITE) catch {};
 
         // Reset current non-persistent heap (+1 because heap 0 is persistent)
         gctx.cbv_srv_uav_gpu_heaps[gctx.frame_index + 1].size = 0;
@@ -991,7 +991,7 @@ pub const GraphicsContext = struct {
             else => {},
         }
         const buffer_length = buffer_length: {
-            const buffer_length: w32.UINT = @sizeOf(T);
+            const buffer_length: windows.UINT = @sizeOf(T);
             break :buffer_length buffer_length + d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - @mod(buffer_length, d3d12.CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
         };
         const resource_handle = try gctx.createCommittedResource(
@@ -1043,7 +1043,7 @@ pub const GraphicsContext = struct {
             u16, u32 => {},
             else => @compileError(@typeName(T) ++ " is not a supported vertex index format"),
         }
-        const buffer_length: w32.UINT = @intCast(vertex_indices.len * @sizeOf(T));
+        const buffer_length: windows.UINT = @intCast(vertex_indices.len * @sizeOf(T));
         const resource_handle = try gctx.createCommittedResource(
             .UPLOAD,
             .{},
@@ -1151,14 +1151,14 @@ pub const GraphicsContext = struct {
         return cpu_handle;
     }
 
-    pub fn setGraphicsRootDescriptorTable(gctx: *GraphicsContext, root_index: w32.UINT, cpu_handles: []const d3d12.CPU_DESCRIPTOR_HANDLE) void {
+    pub fn setGraphicsRootDescriptorTable(gctx: *GraphicsContext, root_index: windows.UINT, cpu_handles: []const d3d12.CPU_DESCRIPTOR_HANDLE) void {
         gctx.cmdlist.SetGraphicsRootDescriptorTable(root_index, gctx.copyDescriptorsToGpuHeap(1, cpu_handles[0]));
         for (cpu_handles[1..]) |cpu_handle| {
             _ = gctx.copyDescriptorsToGpuHeap(1, cpu_handle);
         }
     }
 
-    pub fn setComputeRootDescriptorTable(gctx: *GraphicsContext, root_index: w32.UINT, cpu_handles: []const d3d12.CPU_DESCRIPTOR_HANDLE) void {
+    pub fn setComputeRootDescriptorTable(gctx: *GraphicsContext, root_index: windows.UINT, cpu_handles: []const d3d12.CPU_DESCRIPTOR_HANDLE) void {
         gctx.cmdlist.SetComputeRootDescriptorTable(root_index, gctx.copyDescriptorsToGpuHeap(1, cpu_handles[0]));
         for (cpu_handles[1..]) |cpu_handle| {
             _ = gctx.copyDescriptorsToGpuHeap(1, cpu_handle);
@@ -1682,7 +1682,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(gctx.wic_factory.CreateDecoderFromFilename(
                 &abspath_w,
                 null,
-                w32.GENERIC_READ,
+                windows.GENERIC_READ,
                 .MetadataCacheOnDemand,
                 &maybe_bmp_decoder,
             ));
@@ -1698,7 +1698,7 @@ pub const GraphicsContext = struct {
         defer _ = bmp_frame.Release();
 
         const pixel_format = blk: {
-            var pixel_format: w32.GUID = undefined;
+            var pixel_format: windows.GUID = undefined;
             hrPanicOnFail(bmp_frame.GetPixelFormat(&pixel_format));
             break :blk pixel_format;
         };
@@ -1902,7 +1902,7 @@ pub const GraphicsContext = struct {
 
     pub fn createRootSignature(
         gctx: *GraphicsContext,
-        node_mask: w32.UINT,
+        node_mask: windows.UINT,
         signature: *d3d.IBlob,
     ) HResultError!*d3d12.IRootSignature {
         var root_signature: *d3d12.IRootSignature = undefined;
@@ -1927,7 +1927,7 @@ pub const GraphicsContext = struct {
         }
         const resource = gctx.lookupResource(destination).?;
         var mapped_buffer: [*]u8 = undefined;
-        try zwin32.hrErrorOnFail(resource.Map(
+        try windows.hrErrorOnFail(resource.Map(
             0,
             &.{ .Begin = 0, .End = 0 },
             @ptrCast(&mapped_buffer),
@@ -1950,8 +1950,8 @@ pub const GraphicsContext = struct {
     pub inline fn clearRenderTargetView(
         gctx: *GraphicsContext,
         rt_view: d3d12.CPU_DESCRIPTOR_HANDLE,
-        rgba: *const [4]w32.FLOAT,
-        rects: []const w32.RECT,
+        rgba: *const [4]windows.FLOAT,
+        rects: []const windows.RECT,
     ) void {
         gctx.cmdlist.ClearRenderTargetView(
             rt_view,
@@ -1965,9 +1965,9 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         ds_view: d3d12.CPU_DESCRIPTOR_HANDLE,
         clear_flags: d3d12.CLEAR_FLAGS,
-        depth: w32.FLOAT,
-        stencil: w32.UINT8,
-        rects: []const w32.RECT,
+        depth: windows.FLOAT,
+        stencil: windows.UINT8,
+        rects: []const windows.RECT,
     ) void {
         gctx.cmdlist.ClearDepthStencilView(
             ds_view,
@@ -1988,7 +1988,7 @@ pub const GraphicsContext = struct {
         gctx.cmdlist.OMSetRenderTargets(
             @intCast(render_target_descriptors.len),
             render_target_descriptors.ptr,
-            if (single_handle) w32.TRUE else w32.FALSE,
+            if (single_handle) windows.TRUE else windows.FALSE,
             ds_descriptors,
         );
     }
@@ -2002,23 +2002,23 @@ pub const GraphicsContext = struct {
         gctx.cmdlist.IASetPrimitiveTopology(topology);
     }
 
-    pub inline fn iaSetVertexBuffers(gctx: *GraphicsContext, start_slot: w32.UINT, views: []const d3d12.VERTEX_BUFFER_VIEW) void {
+    pub inline fn iaSetVertexBuffers(gctx: *GraphicsContext, start_slot: windows.UINT, views: []const d3d12.VERTEX_BUFFER_VIEW) void {
         gctx.cmdlist.IASetVertexBuffers(start_slot, @intCast(views.len), views.ptr);
     }
     pub inline fn iaSetIndexBuffer(gctx: *GraphicsContext, view: ?*const d3d12.INDEX_BUFFER_VIEW) void {
         gctx.cmdlist.IASetIndexBuffer(view);
     }
-    pub inline fn setGraphicsRootConstantBufferView(gctx: *GraphicsContext, index: w32.UINT, handle: ResourceHandle) void {
+    pub inline fn setGraphicsRootConstantBufferView(gctx: *GraphicsContext, index: windows.UINT, handle: ResourceHandle) void {
         const resource = gctx.lookupResource(handle).?;
         gctx.cmdlist.SetGraphicsRootConstantBufferView(index, resource.GetGPUVirtualAddress());
     }
 
     pub inline fn drawInstanced(
         gctx: *GraphicsContext,
-        vertex_count_per_instance: w32.UINT,
-        instance_count: w32.UINT,
-        start_vertex_location: w32.UINT,
-        start_instance_location: w32.UINT,
+        vertex_count_per_instance: windows.UINT,
+        instance_count: windows.UINT,
+        start_vertex_location: windows.UINT,
+        start_instance_location: windows.UINT,
     ) void {
         gctx.cmdlist.DrawInstanced(
             vertex_count_per_instance,
@@ -2029,11 +2029,11 @@ pub const GraphicsContext = struct {
     }
     pub inline fn drawIndexedInstanced(
         gctx: *GraphicsContext,
-        index_count_per_instance: w32.UINT,
-        instance_count: w32.UINT,
-        start_index_location: w32.UINT,
-        base_vertex_location: w32.INT,
-        start_instance_location: w32.UINT,
+        index_count_per_instance: windows.UINT,
+        instance_count: windows.UINT,
+        start_index_location: windows.UINT,
+        base_vertex_location: windows.INT,
+        start_instance_location: windows.UINT,
     ) void {
         gctx.cmdlist.DrawIndexedInstanced(
             index_count_per_instance,

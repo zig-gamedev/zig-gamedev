@@ -29,14 +29,14 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
-    const zwin32 = b.dependency("zwin32", .{});
-    const zwin32_module = zwin32.module("root");
+    const zwindows = b.dependency("zwindows", .{});
+    const windows_module = zwindows.module("bindings");
 
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/zd3d12.zig"),
         .imports = &.{
             .{ .name = "zd3d12_options", .module = options_module },
-            .{ .name = "zwin32", .module = zwin32_module },
+            .{ .name = "windows", .module = windows_module },
         },
     });
 }

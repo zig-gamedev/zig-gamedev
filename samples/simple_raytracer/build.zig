@@ -18,9 +18,9 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
     exe.root_module.addImport("zpix", zpix.module("root"));
 
-    const zwin32 = b.dependency("zwin32", .{});
-    const zwin32_module = zwin32.module("root");
-    exe.root_module.addImport("zwin32", zwin32_module);
+    const zwindows = b.dependency("zwindows", .{});
+    const windows_module = zwindows.module("bindings");
+    exe.root_module.addImport("windows", windows_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,
@@ -30,7 +30,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
     @import("../common/build.zig").link(exe, .{
-        .zwin32 = zwin32_module,
+        .zwindows = windows_module,
         .zd3d12 = zd3d12_module,
     });
 
@@ -55,7 +55,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, .bin);
 
     return exe;
 }
@@ -171,9 +171,9 @@ fn makeDxcCmd(
 
     const dxc_command = [9][]const u8{
         if (@import("builtin").target.os.tag == .windows)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe"
+            thisDir() ++ "/../../libs/zwindows/bin/x64/dxc.exe"
         else if (@import("builtin").target.os.tag == .linux)
-            thisDir() ++ "/../../libs/zwin32/bin/x64/dxc",
+            thisDir() ++ "/../../libs/zwindows/bin/x64/dxc",
         thisDir() ++ "/" ++ input_path,
         if (entry_point.len == 0) "" else "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
@@ -186,7 +186,7 @@ fn makeDxcCmd(
 
     const cmd_step = b.addSystemCommand(&dxc_command);
     if (@import("builtin").target.os.tag == .linux)
-        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwin32/bin/x64");
+        cmd_step.setEnvironmentVariable("LD_LIBRARY_PATH", thisDir() ++ "/../../libs/zwindows/bin/x64");
     dxc_step.dependOn(&cmd_step.step);
 }
 

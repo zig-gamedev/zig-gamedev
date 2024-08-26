@@ -28,8 +28,8 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
 
-    const zwin32 = b.dependency("zwin32", .{});
-    exe.root_module.addImport("zwin32", zwin32.module("root"));
+    const zwindows = b.dependency("zwindows", .{});
+    exe.root_module.addImport("windows", zwindows.module("bindings"));
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,
@@ -54,7 +54,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, .bin);
 
     return exe;
 }

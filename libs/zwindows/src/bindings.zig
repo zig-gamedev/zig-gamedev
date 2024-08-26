@@ -1,38 +1,112 @@
-pub const w32 = @import("w32.zig");
-pub const dwrite = @import("dwrite.zig");
-pub const dxgi = @import("dxgi.zig");
-pub const d3d11 = @import("d3d11.zig");
-pub const d3d11d = @import("d3d11sdklayers.zig");
-pub const d3d12 = @import("d3d12.zig");
-pub const d3d12d = @import("d3d12sdklayers.zig");
-pub const d3d = @import("d3dcommon.zig");
-pub const d2d1 = @import("d2d1.zig");
-pub const d3d11on12 = @import("d3d11on12.zig");
-pub const wic = @import("wincodec.zig");
-pub const wasapi = @import("wasapi.zig");
-pub const directml = @import("directml.zig");
-pub const mf = @import("mf.zig");
-pub const xaudio2 = @import("xaudio2.zig");
-pub const xaudio2fx = @import("xaudio2fx.zig");
-pub const xapo = @import("xapo.zig");
-pub const xinput = @import("xinput.zig");
-pub const dds_loader = @import("dds_loader.zig");
-pub const d3dcompiler = @import("d3dcompiler.zig");
-
 comptime {
     std.testing.refAllDeclsRecursive(@This());
 }
 
-const HRESULT = w32.HRESULT;
-const S_OK = w32.S_OK;
+const windows = @import("bindings/windows.zig");
+pub usingnamespace windows;
+
+pub const dwrite = @import("bindings/dwrite.zig");
+pub const dxgi = @import("bindings/dxgi.zig");
+pub const d3d11 = @import("bindings/d3d11.zig");
+pub const d3d11d = @import("bindings/d3d11sdklayers.zig");
+pub const d3d12 = @import("bindings/d3d12.zig");
+pub const d3d12d = @import("bindings/d3d12sdklayers.zig");
+pub const d3d = @import("bindings/d3dcommon.zig");
+pub const d2d1 = @import("bindings/d2d1.zig");
+pub const d3d11on12 = @import("bindings/d3d11on12.zig");
+pub const wic = @import("bindings/wincodec.zig");
+pub const wasapi = @import("bindings/wasapi.zig");
+pub const directml = @import("bindings/directml.zig");
+pub const mf = @import("bindings/mf.zig");
+pub const xaudio2 = @import("bindings/xaudio2.zig");
+pub const xaudio2fx = @import("bindings/xaudio2fx.zig");
+pub const xapo = @import("bindings/xapo.zig");
+pub const xinput = @import("bindings/xinput.zig");
+pub const dds_loader = @import("bindings/dds_loader.zig");
+pub const d3dcompiler = @import("bindings/d3dcompiler.zig");
 
 const std = @import("std");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
 
-// TODO: Handle more error codes from https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
+const WINAPI = std.os.windows.WINAPI;
+const S_OK = std.os.windows.S_OK;
+const S_FALSE = std.os.windows.S_FALSE;
+const E_NOTIMPL = std.os.windows.E_NOTIMPL;
+const E_NOINTERFACE = std.os.windows.E_NOINTERFACE;
+const E_POINTER = std.os.windows.E_POINTER;
+const E_ABORT = std.os.windows.E_ABORT;
+const E_FAIL = std.os.windows.E_FAIL;
+const E_UNEXPECTED = std.os.windows.E_UNEXPECTED;
+const E_ACCESSDENIED = std.os.windows.E_ACCESSDENIED;
+const E_HANDLE = std.os.windows.E_HANDLE;
+const E_OUTOFMEMORY = std.os.windows.E_OUTOFMEMORY;
+const E_INVALIDARG = std.os.windows.E_INVALIDARG;
+const GENERIC_READ = std.os.windows.GENERIC_READ;
+const GENERIC_WRITE = std.os.windows.GENERIC_WRITE;
+const GENERIC_EXECUTE = std.os.windows.GENERIC_EXECUTE;
+const GENERIC_ALL = std.os.windows.GENERIC_ALL;
+const EVENT_ALL_ACCESS = std.os.windows.EVENT_ALL_ACCESS;
+const TRUE = std.os.windows.TRUE;
+const FALSE = std.os.windows.FALSE;
+const BOOL = std.os.windows.BOOL;
+const BOOLEAN = std.os.windows.BOOLEAN;
+const BYTE = std.os.windows.BYTE;
+const CHAR = std.os.windows.CHAR;
+const UCHAR = std.os.windows.UCHAR;
+const WCHAR = std.os.windows.WCHAR;
+const FLOAT = std.os.windows.FLOAT;
+const HCRYPTPROV = std.os.windows.HCRYPTPROV;
+const ATOM = std.os.windows.ATOM;
+const WPARAM = std.os.windows.WPARAM;
+const LPARAM = std.os.windows.LPARAM;
+const LRESULT = std.os.windows.LRESULT;
+const HRESULT = std.os.windows.HRESULT;
+const HBRUSH = std.os.windows.HBRUSH;
+const HCURSOR = std.os.windows.HCURSOR;
+const HICON = std.os.windows.HICON;
+const HINSTANCE = std.os.windows.HINSTANCE;
+const HMENU = std.os.windows.HMENU;
+const HMODULE = std.os.windows.HMODULE;
+const HWND = std.os.windows.HWND;
+const HDC = std.os.windows.HDC;
+const HGLRC = std.os.windows.HGLRC;
+const FARPROC = std.os.windows.FARPROC;
+const INT = std.os.windows.INT;
+const SIZE_T = std.os.windows.SIZE_T;
+const UINT = std.os.windows.UINT;
+const USHORT = std.os.windows.USHORT;
+const SHORT = std.os.windows.SHORT;
+const ULONG = std.os.windows.ULONG;
+const LONG = std.os.windows.LONG;
+const WORD = std.os.windows.WORD;
+const DWORD = std.os.windows.DWORD;
+const ULONGLONG = std.os.windows.ULONGLONG;
+const LONGLONG = std.os.windows.LONGLONG;
+const LARGE_INTEGER = std.os.windows.LARGE_INTEGER;
+const ULARGE_INTEGER = std.os.windows.ULARGE_INTEGER;
+const LPCSTR = std.os.windows.LPCSTR;
+const LPCVOID = std.os.windows.LPCVOID;
+const LPSTR = std.os.windows.LPSTR;
+const LPVOID = std.os.windows.LPVOID;
+const LPWSTR = std.os.windows.LPWSTR;
+const LPCWSTR = std.os.windows.LPCSWTR;
+const PVOID = std.os.windows.PVOID;
+const PWSTR = std.os.windows.PWSTR;
+const PCWSTR = std.os.windows.PCWSTR;
+const HANDLE = std.os.windows.HANDLE;
+const GUID = std.os.windows.GUID;
+const NTSTATUS = std.os.windows.NTSTATUS;
+const CRITICAL_SECTION = std.os.windows.CRITICAL_SECTION;
+const SECURITY_ATTRIBUTES = std.os.windows.SECURITY_ATTRIBUTES;
+const RECT = std.os.windows.RECT;
+const POINT = std.os.windows.POINT;
+
+/// https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
+///
+/// [DEPRECATED]: Use proc specific errors as in std.os.windows
 pub const HResultError =
-    w32.MiscError || w32.Error || dxgi.Error || d3d12.Error || d3d11.Error ||
+    windows.MiscError || windows.Error || dxgi.Error || d3d12.Error || d3d11.Error ||
     wasapi.Error || dwrite.Error || xapo.Error || xinput.Error;
 
 pub fn hrPanic(err: HResultError) noreturn {
@@ -48,25 +122,27 @@ pub inline fn hrPanicOnFail(hr: HRESULT) void {
     }
 }
 
+/// [DEPRECATED]: Use proc specific errors as in std.os.windows
 pub inline fn hrErrorOnFail(hr: HRESULT) HResultError!void {
     if (hr != S_OK) {
         return hrToError(hr);
     }
 }
 
+/// [DEPRECATED]: Use proc specific errors as in std.os.windows
 pub fn hrToError(hr: HRESULT) HResultError {
     assert(hr != S_OK);
     return switch (hr) {
         //
-        w32.E_UNEXPECTED => w32.Error.UNEXPECTED,
-        w32.E_NOTIMPL => w32.Error.NOTIMPL,
-        w32.E_OUTOFMEMORY => w32.Error.OUTOFMEMORY,
-        w32.E_INVALIDARG => w32.Error.INVALIDARG,
-        w32.E_POINTER => w32.Error.POINTER,
-        w32.E_HANDLE => w32.Error.HANDLE,
-        w32.E_ABORT => w32.Error.ABORT,
-        w32.E_FAIL => w32.Error.FAIL,
-        w32.E_ACCESSDENIED => w32.Error.ACCESSDENIED,
+        windows.E_UNEXPECTED => windows.Error.UNEXPECTED,
+        windows.E_NOTIMPL => windows.Error.NOTIMPL,
+        windows.E_OUTOFMEMORY => windows.Error.OUTOFMEMORY,
+        windows.E_INVALIDARG => windows.Error.INVALIDARG,
+        windows.E_POINTER => windows.Error.POINTER,
+        windows.E_HANDLE => windows.Error.HANDLE,
+        windows.E_ABORT => windows.Error.ABORT,
+        windows.E_FAIL => windows.Error.FAIL,
+        windows.E_ACCESSDENIED => windows.Error.ACCESSDENIED,
         //
         dxgi.ERROR_ACCESS_DENIED => dxgi.Error.ACCESS_DENIED,
         dxgi.ERROR_ACCESS_LOST => dxgi.Error.ACCESS_LOST,
@@ -134,27 +210,27 @@ pub fn hrToError(hr: HRESULT) HResultError {
         xinput.ERROR_EMPTY => xinput.Error.EMPTY,
         xinput.ERROR_DEVICE_NOT_CONNECTED => xinput.Error.DEVICE_NOT_CONNECTED,
         //
-        w32.E_FILE_NOT_FOUND => w32.MiscError.E_FILE_NOT_FOUND,
-        w32.S_FALSE => w32.MiscError.S_FALSE,
+        windows.E_FILE_NOT_FOUND => windows.MiscError.E_FILE_NOT_FOUND,
+        windows.S_FALSE => windows.MiscError.S_FALSE,
         // treat unknown error return codes as E_FAIL
         else => blk: {
             std.log.debug("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@as(c_ulong, @bitCast(hr))});
-            break :blk w32.Error.FAIL;
+            break :blk windows.Error.FAIL;
         },
     };
 }
 
 pub fn errorToHRESULT(err: HResultError) HRESULT {
     return switch (err) {
-        w32.Error.UNEXPECTED => w32.E_UNEXPECTED,
-        w32.Error.NOTIMPL => w32.E_NOTIMPL,
-        w32.Error.OUTOFMEMORY => w32.E_OUTOFMEMORY,
-        w32.Error.INVALIDARG => w32.E_INVALIDARG,
-        w32.Error.POINTER => w32.E_POINTER,
-        w32.Error.HANDLE => w32.E_HANDLE,
-        w32.Error.ABORT => w32.E_ABORT,
-        w32.Error.FAIL => w32.E_FAIL,
-        w32.Error.ACCESSDENIED => w32.E_ACCESSDENIED,
+        windows.Error.UNEXPECTED => E_UNEXPECTED,
+        windows.Error.NOTIMPL => E_NOTIMPL,
+        windows.Error.OUTOFMEMORY => E_OUTOFMEMORY,
+        windows.Error.INVALIDARG => E_INVALIDARG,
+        windows.Error.POINTER => E_POINTER,
+        windows.Error.HANDLE => E_HANDLE,
+        windows.Error.ABORT => E_ABORT,
+        windows.Error.FAIL => E_FAIL,
+        windows.Error.ACCESSDENIED => E_ACCESSDENIED,
         //
         dxgi.Error.ACCESS_DENIED => dxgi.ERROR_ACCESS_DENIED,
         dxgi.Error.ACCESS_LOST => dxgi.ERROR_ACCESS_LOST,
@@ -221,7 +297,7 @@ pub fn errorToHRESULT(err: HResultError) HRESULT {
         xinput.Error.EMPTY => xinput.ERROR_EMPTY,
         xinput.Error.DEVICE_NOT_CONNECTED => xinput.ERROR_DEVICE_NOT_CONNECTED,
         //
-        w32.MiscError.E_FILE_NOT_FOUND => w32.E_FILE_NOT_FOUND,
-        w32.MiscError.S_FALSE => w32.S_FALSE,
+        windows.MiscError.E_FILE_NOT_FOUND => windows.E_FILE_NOT_FOUND,
+        windows.MiscError.S_FALSE => windows.S_FALSE,
     };
 }

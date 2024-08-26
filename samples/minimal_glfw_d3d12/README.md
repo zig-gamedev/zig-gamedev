@@ -1,6 +1,6 @@
 ## minimal glfw d3d12
 
-This sample application shows how to draw a triangle using D3D12 API with [zglfw](https://github.com/michal-z/zig-gamedev/tree/main/libs/zglfw) instead of [zwin32](https://github.com/michal-z/zig-gamedev/tree/main/libs/zwin32).
+This sample application shows how to draw a triangle using D3D12 API with [zglfw](https://github.com/michal-z/zig-gamedev/tree/main/libs/zglfw) instead of [zwindows](https://github.com/michal-z/zig-gamedev/tree/main/libs/zwindows).
 
 You can build and run it on **Windows** and **Linux**.
 

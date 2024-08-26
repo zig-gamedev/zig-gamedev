@@ -22,11 +22,11 @@
 
 ## Getting started
 
-Copy `zd3d12` and `zwin32` to a subdirectory of your project and and add the following to your `build.zig.zon` .dependencies:
+Copy `zd3d12` and `zwindows` to a subdirectory of your project and and add the following to your `build.zig.zon` .dependencies:
 
 ```zig
     .zd3d12 = .{ .path = "libs/zd3d12" },
-    .zwin32 = .{ .path = "libs/zwin32" },
+    .zwindows = .{ .path = "libs/zwindows" },
 ```
 
 Then in your `build.zig` add:
@@ -36,7 +36,7 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
     // Optionally install d3d12 libs to zig-out/bin (or somewhere else)
-    try @import("zwin32").install_d3d12(&tests.step, .bin, zwin32.path("").getPath(b));
+    try @import("zwindows").install_d3d12(&tests.step, .bin, windows.path("").getPath(b));
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = false,
@@ -70,7 +70,7 @@ pub fn main() !void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            w32.TRUE,
+            TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(back_buffer.descriptor_handle, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);

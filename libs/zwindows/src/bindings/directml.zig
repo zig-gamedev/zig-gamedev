@@ -1,16 +1,16 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const w32 = @import("w32.zig");
-const UINT = w32.UINT;
-const UINT64 = w32.UINT64;
-const FLOAT = w32.FLOAT;
-const IUnknown = w32.IUnknown;
-const HRESULT = w32.HRESULT;
-const WINAPI = w32.WINAPI;
-const GUID = w32.GUID;
-const LPCWSTR = w32.LPCWSTR;
-const LPCSTR = w32.LPCSTR;
-const BOOL = w32.BOOL;
+const windows = @import("windows.zig");
+const UINT = windows.UINT;
+const UINT64 = windows.UINT64;
+const FLOAT = windows.FLOAT;
+const IUnknown = windows.IUnknown;
+const HRESULT = windows.HRESULT;
+const WINAPI = windows.WINAPI;
+const GUID = windows.GUID;
+const LPCWSTR = windows.LPCWSTR;
+const LPCSTR = windows.LPCSTR;
+const BOOL = windows.BOOL;
 const d3d12 = @import("d3d12.zig");
 
 //
@@ -940,9 +940,9 @@ pub fn createDevice(
     guid: *const GUID,
     ppv: ?*?*anyopaque,
 ) HRESULT {
-    var directml_dll = w32.GetModuleHandleA("DirectML.dll");
+    var directml_dll = windows.GetModuleHandleA("DirectML.dll");
     if (directml_dll == null) {
-        directml_dll = w32.LoadLibraryA("DirectML.dll");
+        directml_dll = windows.LoadLibraryA("DirectML.dll");
     }
 
     var dmlCreateDevice1: *const fn (
@@ -955,7 +955,7 @@ pub fn createDevice(
 
     dmlCreateDevice1 = @as(
         @TypeOf(dmlCreateDevice1),
-        @ptrCast(w32.GetProcAddress(directml_dll.?, "DMLCreateDevice1").?),
+        @ptrCast(windows.GetProcAddress(directml_dll.?, "DMLCreateDevice1").?),
     );
 
     return dmlCreateDevice1(d3d12_device, flags, min_feature_level, guid, ppv);

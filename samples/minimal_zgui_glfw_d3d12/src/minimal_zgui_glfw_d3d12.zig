@@ -1,11 +1,11 @@
 const std = @import("std");
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
-const zwin32 = @import("zwin32");
+const windows = @import("windows");
 const zd3d12 = @import("zd3d12");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const dxgi = zwin32.dxgi;
+
+const d3d12 = windows.d3d12;
+const dxgi = windows.dxgi;
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -97,7 +97,7 @@ pub fn main() !void {
             gctx.cmdlist.OMSetRenderTargets(
                 1,
                 &.{back_buffer.descriptor_handle},
-                w32.TRUE,
+                windows.TRUE,
                 null,
             );
             gctx.cmdlist.ClearRenderTargetView(

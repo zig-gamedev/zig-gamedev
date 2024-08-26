@@ -1,7 +1,4 @@
-//! Deprecated in favour of std.os.windows
-
-const builtin = @import("builtin");
-const native_arch = builtin.cpu.arch;
+//! Extends std.os.windows
 
 const std = @import("std");
 
@@ -102,6 +99,7 @@ pub const LANGID = c_ushort;
 
 pub const MAX_PATH = 260;
 
+/// [DEPRECATED]: Use proc specific errors as in std.os.windows
 pub const Error = error{
     UNEXPECTED,
     NOTIMPL,
@@ -114,6 +112,7 @@ pub const Error = error{
     ACCESSDENIED,
 };
 
+/// [DEPRECATED]: Use proc specific errors as in std.os.windows
 pub const MiscError = error{
     E_FILE_NOT_FOUND,
     S_FALSE,

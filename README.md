@@ -74,8 +74,8 @@ Note: Libs are being migrated from [libs/](libs/) folder in this repo to each th
 | **[zsdl](libs/zsdl)**         | Bindings for SDL2 and SDL3                                                                               |
 | **[zstbi](libs/zstbi)**       | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                |
 | **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                   |
-| **[zwin32](libs/zwin32)**     | Bindings for Win32 API (d3d12, d3d11, xaudio2, directml, wasapi and more)                                                                  |
-| **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                               |                                      
+| **[zwindows](libs/zwindows)** | Windows development SDK for Zig game developers        |
+| **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                                  |                                      
 
 ## Sample applications (native wgpu)
 

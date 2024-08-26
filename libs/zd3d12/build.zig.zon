@@ -8,6 +8,6 @@
         "README.md",
     },
     .dependencies = .{
-        .zwin32 = .{ .path = "../zwin32" },
+        .zwindows = .{ .path = "../zwindows" },
     },
 }

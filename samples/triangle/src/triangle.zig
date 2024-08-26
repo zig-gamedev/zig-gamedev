@@ -1,9 +1,9 @@
 const std = @import("std");
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+const windows = @import("windows");
+
+const d3d12 = windows.d3d12;
+const hrPanic = windows.hrPanic;
+const hrPanicOnFail = windows.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const zpix = @import("zpix");
 const common = @import("common");
@@ -47,7 +47,7 @@ pub fn main() !void {
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         };
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.InputLayout = .{
             .pInputElementDescs = &input_layout_desc,
             .NumElements = input_layout_desc.len,
@@ -143,7 +143,7 @@ pub fn main() !void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            w32.TRUE,
+            windows.TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(

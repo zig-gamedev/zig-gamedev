@@ -1,15 +1,15 @@
 const std = @import("std");
-const w32 = @import("w32.zig");
-const BYTE = w32.BYTE;
-const WCHAR = w32.WCHAR;
-const SHORT = w32.SHORT;
-const WORD = w32.WORD;
-const DWORD = w32.DWORD;
-const UINT = w32.UINT;
-const BOOL = w32.BOOL;
-const LPWSTR = w32.LPWSTR;
-const GUID = w32.GUID;
-const WINAPI = w32.WINAPI;
+const windows = @import("windows.zig");
+const BYTE = windows.BYTE;
+const WCHAR = windows.WCHAR;
+const SHORT = windows.SHORT;
+const WORD = windows.WORD;
+const DWORD = windows.DWORD;
+const UINT = windows.UINT;
+const BOOL = windows.BOOL;
+const LPWSTR = windows.LPWSTR;
+const GUID = windows.GUID;
+const WINAPI = windows.WINAPI;
 
 pub const DEVTYPE_GAMEPAD = 0x01;
 
@@ -189,9 +189,9 @@ pub extern "xinput1_4" fn XInputGetState(dwUserIndex: DWORD, pState: *STATE) cal
 
 pub extern "xinput1_4" fn XInputSetState(dwUserIndex: DWORD, pVibration: *VIBRATION) callconv(WINAPI) DWORD;
 
-pub const ERROR_SUCCESS = w32.ERROR_SUCCESS;
-pub const ERROR_EMPTY = w32.ERROR_EMPTY;
-pub const ERROR_DEVICE_NOT_CONNECTED = w32.ERROR_DEVICE_NOT_CONNECTED;
+pub const ERROR_SUCCESS = windows.ERROR_SUCCESS;
+pub const ERROR_EMPTY = windows.ERROR_EMPTY;
+pub const ERROR_DEVICE_NOT_CONNECTED = windows.ERROR_DEVICE_NOT_CONNECTED;
 
 // error set corresponding to the above return codes
 pub const Error = error{

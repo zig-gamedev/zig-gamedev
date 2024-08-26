@@ -2,10 +2,10 @@
 
 ## Getting started
 
-Copy `zxaudio2` and `zwin32` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
+Copy `zxaudio2` and `zwindows` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zxaudio2 = .{ .path = "libs/zxaudio2" },
-    .zwin32 = .{ .path = "libs/zwin32" },
+    .zwindows = .{ .path = "libs/zwindows" },
 ```
 
 Then in your `build.zig` add:
@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ ... });
 
     // Optionally install xaudio2 libs to zig-out/bin (or somewhere else)
-    try @import("zwin32").install_xaudio2(&tests.step, .bin, zwin32.path("").getPath(b));
+    try @import("zwindows").install_xaudio2(&tests.step, .bin, windows.path("").getPath(b));
 
     const zxaudio2 = b.dependency("zxaudio2", .{});
     exe.root_module.addImport("zxaudio2", zxaudio2.module("root"));

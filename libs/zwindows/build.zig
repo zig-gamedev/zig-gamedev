@@ -2,8 +2,8 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) !void {
-    _ = b.addModule("root", .{
-        .root_source_file = b.path("src/zwin32.zig"),
+    _ = b.addModule("bindings", .{
+        .root_source_file = b.path("src/bindings.zig"),
     });
 }
 
@@ -163,10 +163,10 @@ pub const CompileShaders = struct {
     ) void {
         const b = self.step.owner;
 
-        const zwin32_path = comptime std.fs.path.dirname(@src().file) orelse ".";
+        const zwindows_path = comptime std.fs.path.dirname(@src().file) orelse ".";
         const dxc_path = switch (builtin.target.os.tag) {
-            .windows => zwin32_path ++ "/bin/x64/dxc.exe",
-            .linux => zwin32_path ++ "/bin/x64/dxc",
+            .windows => zwindows_path ++ "/bin/x64/dxc.exe",
+            .linux => zwindows_path ++ "/bin/x64/dxc",
             else => @panic("Unsupported target"),
         };
 
@@ -186,7 +186,7 @@ pub const CompileShaders = struct {
         if (builtin.target.os.tag == .linux) {
             cmd_step.setEnvironmentVariable(
                 "LD_LIBRARY_PATH",
-                zwin32_path ++ "/bin/x64",
+                zwindows_path ++ "/bin/x64",
             );
         }
         self.step.dependOn(&cmd_step.step);

@@ -1,30 +1,32 @@
 const std = @import("std");
-const w32 = @import("w32.zig");
+
+const windows = @import("windows.zig");
+const UINT = windows.UINT;
+const IUnknown = windows.IUnknown;
+const HRESULT = windows.HRESULT;
+const GUID = windows.GUID;
+const LUID = windows.LUID;
+const WINAPI = windows.WINAPI;
+const FLOAT = windows.FLOAT;
+const LPCWSTR = windows.LPCWSTR;
+const LPCSTR = windows.LPCSTR;
+const UINT8 = windows.UINT8;
+const UINT16 = windows.UINT16;
+const UINT32 = windows.UINT32;
+const UINT64 = windows.UINT64;
+const INT = windows.INT;
+const INT8 = windows.INT8;
+const BYTE = windows.BYTE;
+const DWORD = windows.DWORD;
+const SIZE_T = windows.SIZE_T;
+const HANDLE = windows.HANDLE;
+const SECURITY_ATTRIBUTES = windows.SECURITY_ATTRIBUTES;
+const BOOL = windows.BOOL;
+const FALSE = windows.FALSE;
+const TRUE = windows.TRUE;
+
 const dxgi = @import("dxgi.zig");
 const d3d = @import("d3dcommon.zig");
-const UINT = w32.UINT;
-const IUnknown = w32.IUnknown;
-const HRESULT = w32.HRESULT;
-const GUID = w32.GUID;
-const LUID = w32.LUID;
-const WINAPI = w32.WINAPI;
-const FLOAT = w32.FLOAT;
-const LPCWSTR = w32.LPCWSTR;
-const LPCSTR = w32.LPCSTR;
-const UINT8 = w32.UINT8;
-const UINT16 = w32.UINT16;
-const UINT32 = w32.UINT32;
-const UINT64 = w32.UINT64;
-const INT = w32.INT;
-const INT8 = w32.INT8;
-const BYTE = w32.BYTE;
-const DWORD = w32.DWORD;
-const SIZE_T = w32.SIZE_T;
-const HANDLE = w32.HANDLE;
-const SECURITY_ATTRIBUTES = w32.SECURITY_ATTRIBUTES;
-const BOOL = w32.BOOL;
-const FALSE = w32.FALSE;
-const TRUE = w32.TRUE;
 
 pub const req_blend_object_count_per_device: u32 = 4096;
 pub const req_buffer_resource_texel_count_2_to_exp: u32 = 27;
@@ -681,7 +683,7 @@ pub const VIEWPORT = extern struct {
     MaxDepth: FLOAT,
 };
 
-pub const RECT = w32.RECT;
+pub const RECT = windows.RECT;
 
 pub const RESOURCE_STATES = packed struct(UINT) {
     VERTEX_AND_CONSTANT_BUFFER: bool = false, // 0x1
