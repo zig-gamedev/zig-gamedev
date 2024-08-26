@@ -1,6 +1,86 @@
+//! Deprecated in favour of std.os.windows
+
 const builtin = @import("builtin");
 const native_arch = builtin.cpu.arch;
+
 const std = @import("std");
+
+pub usingnamespace std.os.windows;
+
+const WINAPI = std.os.windows.WINAPI;
+const S_OK = std.os.windows.S_OK;
+const S_FALSE = std.os.windows.S_FALSE;
+const E_NOTIMPL = std.os.windows.E_NOTIMPL;
+const E_NOINTERFACE = std.os.windows.E_NOINTERFACE;
+const E_POINTER = std.os.windows.E_POINTER;
+const E_ABORT = std.os.windows.E_ABORT;
+const E_FAIL = std.os.windows.E_FAIL;
+const E_UNEXPECTED = std.os.windows.E_UNEXPECTED;
+const E_ACCESSDENIED = std.os.windows.E_ACCESSDENIED;
+const E_HANDLE = std.os.windows.E_HANDLE;
+const E_OUTOFMEMORY = std.os.windows.E_OUTOFMEMORY;
+const E_INVALIDARG = std.os.windows.E_INVALIDARG;
+const GENERIC_READ = std.os.windows.GENERIC_READ;
+const GENERIC_WRITE = std.os.windows.GENERIC_WRITE;
+const GENERIC_EXECUTE = std.os.windows.GENERIC_EXECUTE;
+const GENERIC_ALL = std.os.windows.GENERIC_ALL;
+const EVENT_ALL_ACCESS = std.os.windows.EVENT_ALL_ACCESS;
+const TRUE = std.os.windows.TRUE;
+const FALSE = std.os.windows.FALSE;
+const BOOL = std.os.windows.BOOL;
+const BOOLEAN = std.os.windows.BOOLEAN;
+const BYTE = std.os.windows.BYTE;
+const CHAR = std.os.windows.CHAR;
+const UCHAR = std.os.windows.UCHAR;
+const WCHAR = std.os.windows.WCHAR;
+const FLOAT = std.os.windows.FLOAT;
+const HCRYPTPROV = std.os.windows.HCRYPTPROV;
+const ATOM = std.os.windows.ATOM;
+const WPARAM = std.os.windows.WPARAM;
+const LPARAM = std.os.windows.LPARAM;
+const LRESULT = std.os.windows.LRESULT;
+const HRESULT = std.os.windows.HRESULT;
+const HBRUSH = std.os.windows.HBRUSH;
+const HCURSOR = std.os.windows.HCURSOR;
+const HICON = std.os.windows.HICON;
+const HINSTANCE = std.os.windows.HINSTANCE;
+const HMENU = std.os.windows.HMENU;
+const HMODULE = std.os.windows.HMODULE;
+const HWND = std.os.windows.HWND;
+const HDC = std.os.windows.HDC;
+const HGLRC = std.os.windows.HGLRC;
+const FARPROC = std.os.windows.FARPROC;
+const INT = std.os.windows.INT;
+const SIZE_T = std.os.windows.SIZE_T;
+const UINT = std.os.windows.UINT;
+const USHORT = std.os.windows.USHORT;
+const SHORT = std.os.windows.SHORT;
+const ULONG = std.os.windows.ULONG;
+const LONG = std.os.windows.LONG;
+const WORD = std.os.windows.WORD;
+const DWORD = std.os.windows.DWORD;
+const ULONGLONG = std.os.windows.ULONGLONG;
+const LONGLONG = std.os.windows.LONGLONG;
+const LARGE_INTEGER = std.os.windows.LARGE_INTEGER;
+const ULARGE_INTEGER = std.os.windows.ULARGE_INTEGER;
+const LPCSTR = std.os.windows.LPCSTR;
+const LPCVOID = std.os.windows.LPCVOID;
+const LPSTR = std.os.windows.LPSTR;
+const LPVOID = std.os.windows.LPVOID;
+const LPWSTR = std.os.windows.LPWSTR;
+const LPCWSTR = std.os.windows.LPCSWTR;
+const PVOID = std.os.windows.PVOID;
+const PWSTR = std.os.windows.PWSTR;
+const PCWSTR = std.os.windows.PCWSTR;
+const HANDLE = std.os.windows.HANDLE;
+const GUID = std.os.windows.GUID;
+const NTSTATUS = std.os.windows.NTSTATUS;
+const CRITICAL_SECTION = std.os.windows.CRITICAL_SECTION;
+const SECURITY_ATTRIBUTES = std.os.windows.SECURITY_ATTRIBUTES;
+const RECT = std.os.windows.RECT;
+const POINT = std.os.windows.POINT;
+
+pub const E_FILE_NOT_FOUND = @as(HRESULT, @bitCast(@as(c_ulong, 0x80070002)));
 
 pub extern "ole32" fn CoInitializeEx(pvReserved: ?LPVOID, dwCoInit: DWORD) callconv(WINAPI) HRESULT;
 pub extern "ole32" fn CoUninitialize() callconv(WINAPI) void;
@@ -11,85 +91,16 @@ pub const COINIT_APARTMENTTHREADED = 0x2;
 pub const COINIT_MULTITHREADED = 0x3;
 pub const COINIT_DISABLE_OLE1DDE = 0x4;
 pub const COINIT_SPEED_OVER_MEMORY = 0x8;
-
-pub const WINAPI: std.builtin.CallingConvention = if (native_arch == .x86) .Stdcall else .C;
-pub const BOOL = c_int;
-pub const BOOLEAN = BYTE;
-pub const BYTE = u8;
-pub const CHAR = u8;
-pub const UCHAR = u8;
-pub const FLOAT = f32;
-pub const HANDLE = *anyopaque;
-pub const HCRYPTPROV = ULONG_PTR;
-pub const ATOM = u16;
-pub const HBRUSH = *opaque {};
-pub const HCURSOR = *opaque {};
-pub const HICON = *opaque {};
-pub const HINSTANCE = *opaque {};
-pub const HMENU = *opaque {};
-pub const HMODULE = std.os.windows.HMODULE;
-pub const HWND = std.os.windows.HWND;
-pub const HDC = *opaque {};
-pub const HGLRC = *opaque {};
-pub const FARPROC = *opaque {};
-pub const INT = c_int;
-pub const LPCSTR = [*:0]const CHAR;
-pub const LPCVOID = *const anyopaque;
-pub const LPSTR = [*:0]CHAR;
-pub const LPVOID = *anyopaque;
-pub const LPWSTR = [*:0]WCHAR;
-pub const LPCWSTR = [*:0]const WCHAR;
-pub const PVOID = *anyopaque;
-pub const PWSTR = [*:0]WCHAR;
-pub const PCWSTR = [*:0]const WCHAR;
-pub const SIZE_T = usize;
-pub const UINT = c_uint;
 pub const UINT_MAX: UINT = 4294967295;
 pub const ULONG_PTR = usize;
 pub const LONG_PTR = isize;
 pub const DWORD_PTR = ULONG_PTR;
-pub const WCHAR = u16;
-pub const WORD = u16;
-pub const DWORD = u32;
 pub const DWORD64 = u64;
-pub const LARGE_INTEGER = i64;
-pub const ULARGE_INTEGER = u64;
-pub const USHORT = u16;
-pub const SHORT = i16;
-pub const ULONG = u32;
-pub const LONG = i32;
 pub const ULONG64 = u64;
-pub const ULONGLONG = u64;
-pub const LONGLONG = i64;
 pub const HLOCAL = HANDLE;
 pub const LANGID = c_ushort;
-pub const HRESULT = c_long;
-pub const GUID = std.os.windows.GUID;
-pub const NTSTATUS = std.os.windows.NTSTATUS;
-pub const CRITICAL_SECTION = std.os.windows.CRITICAL_SECTION;
-
-pub const WPARAM = usize;
-pub const LPARAM = LONG_PTR;
-pub const LRESULT = LONG_PTR;
-
-pub const TRUE = 1;
-pub const FALSE = 0;
 
 pub const MAX_PATH = 260;
-
-pub const S_OK = 0;
-pub const S_FALSE = @as(HRESULT, @bitCast(@as(c_ulong, 0x00000001)));
-pub const E_NOTIMPL = @as(c_long, @bitCast(@as(c_ulong, 0x80004001)));
-pub const E_NOINTERFACE = @as(c_long, @bitCast(@as(c_ulong, 0x80004002)));
-pub const E_POINTER = @as(c_long, @bitCast(@as(c_ulong, 0x80004003)));
-pub const E_ABORT = @as(c_long, @bitCast(@as(c_ulong, 0x80004004)));
-pub const E_FAIL = @as(c_long, @bitCast(@as(c_ulong, 0x80004005)));
-pub const E_UNEXPECTED = @as(c_long, @bitCast(@as(c_ulong, 0x8000FFFF)));
-pub const E_ACCESSDENIED = @as(c_long, @bitCast(@as(c_ulong, 0x80070005)));
-pub const E_HANDLE = @as(c_long, @bitCast(@as(c_ulong, 0x80070006)));
-pub const E_OUTOFMEMORY = @as(c_long, @bitCast(@as(c_ulong, 0x8007000E)));
-pub const E_INVALIDARG = @as(c_long, @bitCast(@as(c_ulong, 0x80070057)));
-pub const E_FILE_NOT_FOUND = @as(HRESULT, @bitCast(@as(c_ulong, 0x80070002)));
 
 pub const Error = error{
     UNEXPECTED,
@@ -119,24 +130,7 @@ pub fn MAKE_HRESULT(severity: LONG, facility: LONG, value: LONG) HRESULT {
     return @as(HRESULT, (severity << 31) | (facility << 16) | value);
 }
 
-pub const GENERIC_READ = 0x80000000;
-pub const GENERIC_WRITE = 0x40000000;
-pub const GENERIC_EXECUTE = 0x20000000;
-pub const GENERIC_ALL = 0x10000000;
-
 pub const CW_USEDEFAULT = @as(i32, @bitCast(@as(u32, 0x80000000)));
-
-pub const RECT = extern struct {
-    left: LONG,
-    top: LONG,
-    right: LONG,
-    bottom: LONG,
-};
-
-pub const POINT = extern struct {
-    x: LONG,
-    y: LONG,
-};
 
 pub const MINMAXINFO = extern struct {
     ptReserved: POINT,
@@ -315,12 +309,6 @@ pub const WM_CLOSE = 0x0010;
 pub const WM_QUIT = 0x0012;
 pub const WM_GETMINMAXINFO = 0x0024;
 
-pub const SECURITY_ATTRIBUTES = extern struct {
-    nLength: DWORD,
-    lpSecurityDescriptor: ?*anyopaque,
-    bInheritHandle: BOOL,
-};
-
 pub extern "kernel32" fn GetModuleHandleA(lpModuleName: ?LPCSTR) callconv(WINAPI) ?HMODULE;
 
 pub extern "kernel32" fn LoadLibraryA(lpLibFileName: LPCSTR) callconv(WINAPI) ?HMODULE;
@@ -330,8 +318,6 @@ pub extern "kernel32" fn GetProcAddress(hModule: HMODULE, lpProcName: LPCSTR) ca
 pub extern "kernel32" fn FreeLibrary(hModule: HMODULE) callconv(WINAPI) BOOL;
 
 pub extern "kernel32" fn ExitProcess(exit_code: UINT) callconv(WINAPI) noreturn;
-
-pub extern "kernel32" fn CloseHandle(hObject: HANDLE) callconv(WINAPI) BOOL;
 
 pub const PTHREAD_START_ROUTINE = *const fn (LPVOID) callconv(.C) DWORD;
 pub const LPTHREAD_START_ROUTINE = PTHREAD_START_ROUTINE;
@@ -345,18 +331,12 @@ pub extern "kernel32" fn CreateThread(
     lpThreadId: ?*DWORD,
 ) callconv(WINAPI) ?HANDLE;
 
-pub const EVENT_ALL_ACCESS = 0x1F0003;
-
 pub extern "kernel32" fn CreateEventExA(
     lpEventAttributes: ?*SECURITY_ATTRIBUTES,
     lpName: LPCSTR,
     dwFlags: DWORD,
     dwDesiredAccess: DWORD,
 ) callconv(WINAPI) ?HANDLE;
-
-pub const INFINITE = 4294967295;
-
-pub extern "kernel32" fn WaitForSingleObject(hHandle: HANDLE, dwMilliseconds: DWORD) callconv(WINAPI) DWORD;
 
 pub extern "kernel32" fn InitializeCriticalSection(lpCriticalSection: *CRITICAL_SECTION) callconv(WINAPI) void;
 pub extern "kernel32" fn EnterCriticalSection(lpCriticalSection: *CRITICAL_SECTION) callconv(WINAPI) void;

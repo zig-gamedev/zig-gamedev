@@ -85,7 +85,7 @@ fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
 
     fillAudioBuffer(audio);
     while (true) {
-        _ = w32.WaitForSingleObject(audio.buffer_ready_event, w32.INFINITE);
+        w32.WaitForSingleObject(audio.buffer_ready_event, w32.INFINITE) catch {};
         fillAudioBuffer(audio);
     }
 

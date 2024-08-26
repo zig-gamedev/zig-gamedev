@@ -1,4 +1,4 @@
-# zwin32 v0.10.0 - Zig bindings for Win32 API
+# zwin32 - Zig Windows development SDK for game developers
 
 Can be used on Windows and Linux. Contains partial bindings for:
 * Win32 API

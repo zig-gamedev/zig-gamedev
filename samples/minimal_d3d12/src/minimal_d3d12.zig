@@ -496,7 +496,7 @@ const Dx12State = struct {
         const gpu_frame_counter = dx12.frame_fence.GetCompletedValue();
         if ((dx12.frame_fence_counter - gpu_frame_counter) >= num_frames) {
             hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, dx12.frame_fence_event));
-            _ = w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE);
+            w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE) catch {};
         }
 
         dx12.frame_index = (dx12.frame_index + 1) % num_frames;
@@ -508,6 +508,6 @@ const Dx12State = struct {
         hrPanicOnFail(dx12.command_queue.Signal(dx12.frame_fence, dx12.frame_fence_counter));
         hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(dx12.frame_fence_counter, dx12.frame_fence_event));
 
-        _ = w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE);
+        w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE) catch {};
     }
 };

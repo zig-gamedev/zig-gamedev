@@ -757,7 +757,7 @@ pub const GraphicsContext = struct {
         const gpu_frame_counter = gctx.frame_fence.GetCompletedValue();
         if ((gctx.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
             hrPanicOnFail(gctx.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gctx.frame_fence_event));
-            _ = w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE);
+            w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE) catch {};
         }
 
         gctx.frame_index = (gctx.frame_index + 1) % max_num_buffered_frames;
@@ -864,7 +864,7 @@ pub const GraphicsContext = struct {
 
         hrPanicOnFail(gctx.cmdqueue.Signal(gctx.frame_fence, gctx.frame_fence_counter));
         hrPanicOnFail(gctx.frame_fence.SetEventOnCompletion(gctx.frame_fence_counter, gctx.frame_fence_event));
-        _ = w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE);
+        w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE) catch {};
 
         // Reset current non-persistent heap (+1 because heap 0 is persistent)
         gctx.cbv_srv_uav_gpu_heaps[gctx.frame_index + 1].size = 0;
