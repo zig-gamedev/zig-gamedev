@@ -28,7 +28,7 @@ Load GPU capture library before making any D3D12 calls:
 const zpix = @import("zpix");
 
 pub fn main() !void {
-    const pix_library = zpix.loadGpuCapturerLibrary();
+    const pix_library = try zpix.loadGpuCapturerLibrary();
     defer pix_library.deinit();
     ...
 }

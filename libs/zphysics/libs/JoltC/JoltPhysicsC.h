@@ -313,6 +313,7 @@ typedef struct JPC_PhysicsSystem JPC_PhysicsSystem;
 typedef struct JPC_SharedMutex   JPC_SharedMutex;
 
 typedef struct JPC_Shape           JPC_Shape;
+typedef struct JPC_BoxShape        JPC_BoxShape;
 typedef struct JPC_ConvexHullShape JPC_ConvexHullShape;
 
 typedef struct JPC_Constraint       JPC_Constraint;
@@ -1630,6 +1631,14 @@ JPC_Shape_CastRay(const JPC_Shape *in_shape,
                   JPC_RayCastResult *io_hit); // *Must* be default initialized (see JPC_RayCastResult)
 //--------------------------------------------------------------------------------------------------
 //
+// JPC_BoxShape
+//
+//--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_BoxShape_GetHalfExtent(const JPC_BoxShape *in_shape, float out_half_extent[3]);
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+//
 // JPC_ConvexHullShape
 //
 //--------------------------------------------------------------------------------------------------
@@ -1850,7 +1859,7 @@ JPC_BodyInterface_AddImpulseAtPosition(JPC_BodyInterface *in_iface,
 JPC_API void
 JPC_BodyInterface_AddAngularImpulse(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id, const float in_impulse[3]);
 
-JPC_API JPC_MotionType 
+JPC_API JPC_MotionType
 JPC_BodyInterface_GetMotionType(const JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
 
 JPC_API void
