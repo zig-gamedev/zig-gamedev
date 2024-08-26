@@ -14,6 +14,7 @@
     * WASAPI
     * Media Foundation
     * DirectWrite
+- Optional XAudio2 helper library (zxaudio2)
 
 ## Getting started
 
@@ -28,16 +29,23 @@ Then in your `build.zig` add:
 pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{ ... });
 
-    const zwindows = b.dependency("zwindows", .{});
-    const zwindows_path = windows.path("").getPath(b);
+    const zwindows_dependency = b.dependency("zwindows", .{
+        .zxaudio2_enable_debug_layers = builtin.mode == .Debug,
+        .zd3d12_enable_debug_layers = builtin.mode == .Debug,
+        .zd3d12_enable_gbv = builtin.mode == .Debug,
+    });
     
-    exe.root_module.addImport("windows", zwindows.module("bindings"));
+    // Import the Windows API bindings
+    exe.root_module.addImport("windows", zwindows_dependency.module("bindings"));
+
+    // Import the optional zxaudio2 helper library
+    exe.root_module.addImport("windows", zwindows_dependency.module("zxaudio2"));
     
-    try @import("zwindows").install_xaudio2(&tests.step, .bin, zwindows_path);
-
-    try @import("zwindows").install_d3d12(&tests.step, .bin, zwindows_path);
-
-    try @import("zwindows").install_directml(&tests.step, .bin, zwindows_path);
+    // Install vendored binaries
+    const zwindows = @import("zwindows");
+    try zwindows.install_xaudio2(&tests.step, .bin);
+    try zwindows.install_d3d12(&tests.step, .bin);
+    try zwindows.install_directml(&tests.step, .bin);
 }
 ```
 
@@ -50,6 +58,7 @@ const dxgi = windows.dxgi;
 const d3d12 = windows.d3d12;
 const d3d12d = windows.d3d12d;
 const dml = windows.directml;
+// etc
 
 pub fn main() !void {
     ...

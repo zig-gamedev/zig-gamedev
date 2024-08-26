@@ -26,14 +26,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
     exe.root_module.addImport("zmath", zmath.module("root"));
 
-    const zxaudio2 = b.dependency("zxaudio2", .{
-        .debug_layer = false,
-    });
-    exe.root_module.addImport("zxaudio2", zxaudio2.module("root"));
-
     const zwindows = b.dependency("zwindows", .{});
     const windows_module = zwindows.module("bindings");
+
     exe.root_module.addImport("windows", windows_module);
+    exe.root_module.addImport("zxaudio2", zwindows.module("zxaudio2"));
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,
@@ -50,6 +47,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
+    exe_options.addOption(bool, "xaudio2_enable_debug_layer", options.zxaudio2_enable_debug_layer);
 
     const content_path = b.pathJoin(&.{ cwd_path, content_dir });
     const install_content_step = b.addInstallDirectory(.{

@@ -2,8 +2,39 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) !void {
-    _ = b.addModule("bindings", .{
+    const options = .{
+        .zxaudio2_enable_debug_layer = b.option(
+            bool,
+            "xaudio2-enable-debug-layer",
+            "Enable XAudio2 debug layer",
+        ) orelse false,
+        .zd3d12_enable_debug_layer = b.option(
+            bool,
+            "zd3d12-enable-debug-layer",
+            "Enable DirectX 12 debug layer",
+        ) orelse false,
+        .zd3d12_enable_gbv = b.option(
+            bool,
+            "zd3d12-enable-gbv",
+            "Enable DirectX 12 GPU-Based Validation (GBV)",
+        ) orelse false,
+    };
+
+    const options_step = b.addOptions();
+    inline for (std.meta.fields(@TypeOf(options))) |field| {
+        options_step.addOption(field.type, field.name, @field(options, field.name));
+    }
+
+    const bindings = b.addModule("bindings", .{
         .root_source_file = b.path("src/bindings.zig"),
+    });
+
+    _ = b.addModule("zxaudio2", .{
+        .root_source_file = b.path("src/zxaudio2.zig"),
+        .imports = &.{
+            .{ .name = "options", .module = options_step.createModule() },
+            .{ .name = "windows", .module = bindings },
+        },
     });
 }
 

@@ -75,7 +75,6 @@ Note: Libs are being migrated from [libs/](libs/) folder in this repo to each th
 | **[zstbi](libs/zstbi)**       | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                |
 | **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                   |
 | **[zwindows](libs/zwindows)** | Windows development SDK for Zig game developers        |
-| **[zxaudio2](libs/zxaudio2)** | Helper library for XAudio2                                                                                  |                                      
 
 ## Sample applications (native wgpu)
 

@@ -1,28 +1,33 @@
+// We need to export below symbols for DirectX 12 Agility SDK.
+pub export const D3D12SDKVersion: u32 = 610;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const build_options = @import("build_options");
+const content_dir = build_options.content_dir;
+
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const Mutex = std.Thread.Mutex;
-const windows = @import("windows");
 
+const windows = @import("windows");
 const d3d12 = windows.d3d12;
-const xaudio2 = windows.xaudio2;
 const xaudio2fx = windows.xaudio2fx;
 const xapo = windows.xapo;
 const hrPanic = windows.hrPanic;
 const hrPanicOnFail = windows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
-const zxaudio2 = @import("zxaudio2");
+const xaudio2 = @import("zxaudio2");
+
 const common = @import("common");
 const GuiRenderer = common.GuiRenderer;
 const c = common.c;
+
 const zm = @import("zmath");
+
 const zmesh = @import("zmesh");
-
-pub export const D3D12SDKVersion: u32 = 610;
-pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
-
-const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: audio experiments (WIP)";
 const window_width = 1920;
@@ -73,17 +78,17 @@ const AudioData = struct {
 
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
-    actx: zxaudio2.AudioContext,
+    actx: xaudio2.AudioContext,
     guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
-    music: *zxaudio2.Stream,
+    music: *xaudio2.Stream,
     music_is_playing: bool = true,
     music_has_reverb: bool = false,
 
-    sound1: zxaudio2.SoundHandle,
-    sound2: zxaudio2.SoundHandle,
-    sound3: zxaudio2.SoundHandle,
+    sound1: xaudio2.SoundHandle,
+    sound2: xaudio2.SoundHandle,
+    sound3: xaudio2.SoundHandle,
 
     lines_pso: zd3d12.PipelineHandle,
 
@@ -129,13 +134,13 @@ fn processAudio(samples: [*]f32, num_samples: u32, num_channels: u32, context: ?
 }
 
 fn init(allocator: std.mem.Allocator) !DemoState {
-    var actx = zxaudio2.AudioContext.init(allocator);
+    var actx = xaudio2.AudioContext.init(allocator);
 
     const sound1 = actx.loadSound(content_dir ++ "drum_bass_hard.flac");
     const sound2 = actx.loadSound(content_dir ++ "tabla_tas1.flac");
     const sound3 = actx.loadSound(content_dir ++ "loop_mika.flac");
 
-    var music = zxaudio2.Stream.create(
+    var music = xaudio2.Stream.create(
         allocator,
         actx.device,
         content_dir ++ "Broke For Free - Night Owl.mp3",
@@ -170,7 +175,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     audio_data.* = AudioData.init(allocator);
 
     {
-        const p0 = zxaudio2.createSimpleProcessor(&processAudio, audio_data);
+        const p0 = xaudio2.createSimpleProcessor(&processAudio, audio_data);
         defer _ = p0.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{

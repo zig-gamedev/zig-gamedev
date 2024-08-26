@@ -41,6 +41,11 @@ pub fn build(b: *std.Build) void {
     const options = .{
         .optimize = optimize,
         .target = target,
+        .zxaudio2_enable_debug_layer = b.option(
+            bool,
+            "xaudio2-enable-debug-layer",
+            "Enable XAudio2 debug layer",
+        ) orelse false,
         .zd3d12_enable_debug_layer = b.option(
             bool,
             "zd3d12-enable-debug-layer",
