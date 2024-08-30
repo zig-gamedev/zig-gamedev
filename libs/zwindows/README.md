@@ -23,11 +23,11 @@ Copy `zwindows` to a subdirectory of your project and add the following to your 
     .zwindows = .{ .path = "libs/zwindows" },
 ```
 
-Then in your `build.zig` add:
-
+### Using the zwindows build package
 ```zig
 pub fn build(b: *std.Build) !void {
-    const exe = b.addExecutable(.{ ... });
+
+    ...
 
     const zwindows_dependency = b.dependency("zwindows", .{
         .zxaudio2_enable_debug_layers = builtin.mode == .Debug,
@@ -36,28 +36,28 @@ pub fn build(b: *std.Build) !void {
     });
     
     // Import the Windows API bindings
-    exe.root_module.addImport("windows", zwindows_dependency.module("bindings"));
+    exe.root_module.addImport("zwindows", zwindows_dependency.module("zwindows"));
 
     // Import the optional zxaudio2 helper library
-    exe.root_module.addImport("windows", zwindows_dependency.module("zxaudio2"));
+    exe.root_module.addImport("zxaudio2", zwindows_dependency.module("zxaudio2"));
     
     // Install vendored binaries
     const zwindows = @import("zwindows");
-    try zwindows.install_xaudio2(&tests.step, .bin);
-    try zwindows.install_d3d12(&tests.step, .bin);
-    try zwindows.install_directml(&tests.step, .bin);
+    try zwindows.install_xaudio2(&exe.step, .bin);
+    try zwindows.install_d3d12(&exe.step, .bin);
+    try zwindows.install_directml(&exe.step, .bin);
 }
 ```
 
-Now in your code you may import and use `zwindows`:
-
+### Importing and using the bindings
 ```zig
-const windows = @import("windows");
-const dwrite = windows.dwrite;
-const dxgi = windows.dxgi;
-const d3d12 = windows.d3d12;
-const d3d12d = windows.d3d12d;
-const dml = windows.directml;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dwrite = zwindows.dwrite;
+const dxgi = zwindows.dxgi;
+const d3d12 = zwindows.d3d12;
+const d3d12d = zwindows.d3d12d;
+const dml = zwindows.directml;
 // etc
 
 pub fn main() !void {

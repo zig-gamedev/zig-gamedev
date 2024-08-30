@@ -1,14 +1,17 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const windows = @import("windows");
 
-const d3d12 = windows.d3d12;
-const d2d1 = windows.d2d1;
-const dwrite = windows.dwrite;
-const hrPanic = windows.hrPanic;
-const hrPanicOnFail = windows.hrPanicOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const d2d1 = zwindows.d2d1;
+const dwrite = zwindows.dwrite;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 

@@ -21,7 +21,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     @import("system_sdk").addLibraryPathsTo(exe);
 
     const zwindows = b.dependency("zwindows", .{});
-    exe.root_module.addImport("windows", zwindows.module("bindings"));
+    exe.root_module.addImport("zwindows", zwindows.module("zwindows"));
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
         const compile_shaders = @import("zwindows").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });

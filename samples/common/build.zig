@@ -51,7 +51,7 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
     const module = b.createModule(.{
         .root_source_file = b.path("samples/common/src/common.zig"),
         .imports = &.{
-            .{ .name = "windows", .module = deps.zwindows },
+            .{ .name = "zwindows", .module = deps.zwindows },
             .{ .name = "zd3d12", .module = deps.zd3d12 },
         },
     });

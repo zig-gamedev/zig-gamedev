@@ -2,10 +2,11 @@ const std = @import("std");
 const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
-const windows = @import("windows");
-const d3d12 = windows.d3d12;
-const hrPanicOnFail = windows.hrPanicOnFail;
-const hrPanic = windows.hrPanic;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+const hrPanic = zwindows.hrPanic;
 
 const zd3d12 = @import("zd3d12");
 

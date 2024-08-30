@@ -2,10 +2,11 @@ const std = @import("std");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const windows = @import("windows");
 
-const dwrite = windows.dwrite;
-const d2d1 = windows.d2d1;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dwrite = zwindows.dwrite;
+const d2d1 = zwindows.d2d1;
 
 pub const GuiRenderer = @import("GuiRenderer.zig");
 pub const vectormath = @import("vectormath.zig");

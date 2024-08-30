@@ -5,22 +5,22 @@ comptime {
 const std = @import("std");
 const assert = std.debug.assert;
 
-const windows = @import("windows");
-
-const dwrite = windows.dwrite;
-const dxgi = windows.dxgi;
-const d3d11 = windows.d3d11;
-const d3d12 = windows.d3d12;
-const d3d12d = windows.d3d12d;
-const d3d = windows.d3d;
-const d2d1 = windows.d2d1;
-const d3d11on12 = windows.d3d11on12;
-const dds_loader = windows.dds_loader;
-const wic = windows.wic;
-const HResultError = windows.HResultError;
-const hrPanic = windows.hrPanic;
-const hrPanicOnFail = windows.hrPanicOnFail;
-const hrErrorOnFail = windows.hrErrorOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dwrite = zwindows.dwrite;
+const dxgi = zwindows.dxgi;
+const d3d11 = zwindows.d3d11;
+const d3d12 = zwindows.d3d12;
+const d3d12d = zwindows.d3d12d;
+const d3d = zwindows.d3d;
+const d2d1 = zwindows.d2d1;
+const d3d11on12 = zwindows.d3d11on12;
+const dds_loader = zwindows.dds_loader;
+const wic = zwindows.wic;
+const HResultError = zwindows.HResultError;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+const hrErrorOnFail = zwindows.hrErrorOnFail;
 
 const enable_debug_layer = @import("zd3d12_options").debug_layer;
 const enable_gbv = @import("zd3d12_options").gbv;
@@ -1927,7 +1927,7 @@ pub const GraphicsContext = struct {
         }
         const resource = gctx.lookupResource(destination).?;
         var mapped_buffer: [*]u8 = undefined;
-        try windows.hrErrorOnFail(resource.Map(
+        try hrErrorOnFail(resource.Map(
             0,
             &.{ .Begin = 0, .End = 0 },
             @ptrCast(&mapped_buffer),

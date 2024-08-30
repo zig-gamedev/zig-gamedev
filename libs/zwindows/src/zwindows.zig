@@ -2,9 +2,7 @@ comptime {
     std.testing.refAllDeclsRecursive(@This());
 }
 
-const windows = @import("bindings/windows.zig");
-pub usingnamespace windows;
-
+pub const windows = @import("bindings/windows.zig");
 pub const dwrite = @import("bindings/dwrite.zig");
 pub const dxgi = @import("bindings/dxgi.zig");
 pub const d3d11 = @import("bindings/d3d11.zig");

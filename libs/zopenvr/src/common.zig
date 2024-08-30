@@ -1,6 +1,7 @@
 const std = @import("std");
-const windows = @import("windows");
-const d3d12 = windows.d3d12;
+
+const zwindows = @import("zwindows");
+const d3d12 = zwindows.d3d12;
 
 const root = @This();
 

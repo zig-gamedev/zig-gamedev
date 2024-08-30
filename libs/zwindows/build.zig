@@ -25,15 +25,15 @@ pub fn build(b: *std.Build) !void {
         options_step.addOption(field.type, field.name, @field(options, field.name));
     }
 
-    const bindings = b.addModule("bindings", .{
-        .root_source_file = b.path("src/bindings.zig"),
+    const zwindows = b.addModule("zwindows", .{
+        .root_source_file = b.path("src/zwindows.zig"),
     });
 
     _ = b.addModule("zxaudio2", .{
         .root_source_file = b.path("src/zxaudio2.zig"),
         .imports = &.{
             .{ .name = "options", .module = options_step.createModule() },
-            .{ .name = "windows", .module = bindings },
+            .{ .name = "zwindows", .module = zwindows },
         },
     });
 }

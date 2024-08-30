@@ -1,10 +1,11 @@
 const std = @import("std");
-const windows = @import("windows");
 
-const dxgi = windows.dxgi;
-const d3d12 = windows.d3d12;
-const d3d12d = windows.d3d12d;
-const hrPanicOnFail = windows.hrPanicOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dxgi = zwindows.dxgi;
+const d3d12 = zwindows.d3d12;
+const d3d12d = zwindows.d3d12d;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";

@@ -28,8 +28,8 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.linkLibrary(zglfw.artifact("glfw"));
 
     const zwindows = b.dependency("zwindows", .{});
-    const windows_module = zwindows.module("bindings");
-    exe.root_module.addImport("windows", windows_module);
+    const zwindows_module = zwindows.module("zwindows");
+    exe.root_module.addImport("zwindows", zwindows_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,

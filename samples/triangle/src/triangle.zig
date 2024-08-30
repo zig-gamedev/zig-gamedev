@@ -1,11 +1,14 @@
 const std = @import("std");
-const windows = @import("windows");
 
-const d3d12 = windows.d3d12;
-const hrPanic = windows.hrPanic;
-const hrPanicOnFail = windows.hrPanicOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
 const zpix = @import("zpix");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;

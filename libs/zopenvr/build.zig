@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/openvr.zig"),
         .imports = &.{
-            .{ .name = "windows", .module = zwindows.module("bindings") },
+            .{ .name = "zwindows", .module = zwindows.module("zwindows") },
         },
     });
 }

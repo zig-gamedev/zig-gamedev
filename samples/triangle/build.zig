@@ -22,8 +22,8 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     @import("system_sdk").addLibraryPathsTo(exe);
 
     const zwindows = b.dependency("zwindows", .{});
-    const windows_module = zwindows.module("bindings");
-    exe.root_module.addImport("windows", windows_module);
+    const zwindows_module = zwindows.module("zwindows");
+    exe.root_module.addImport("zwindows", zwindows_module);
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,
@@ -39,7 +39,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zpix", zpix.module("root"));
 
     @import("../common/build.zig").link(exe, .{
-        .zwindows = windows_module,
+        .zwindows = zwindows_module,
         .zd3d12 = zd3d12_module,
     });
 

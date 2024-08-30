@@ -1,14 +1,14 @@
 const std = @import("std");
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
-const windows = @import("windows");
 const zd3d12 = @import("zd3d12");
 const zmath = @import("zmath");
 const zpix = @import("zpix");
 const zphysics = @import("zphysics");
 
-const d3d12 = windows.d3d12;
-const dxgi = windows.dxgi;
+const zwindows = @import("zwindows");
+const d3d12 = zwindows.d3d12;
+const dxgi = zwindows.dxgi;
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";

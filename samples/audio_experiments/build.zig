@@ -27,9 +27,9 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zmath", zmath.module("root"));
 
     const zwindows = b.dependency("zwindows", .{});
-    const windows_module = zwindows.module("bindings");
+    const zwindows_module = zwindows.module("zwindows");
 
-    exe.root_module.addImport("windows", windows_module);
+    exe.root_module.addImport("zwindows", zwindows_module);
     exe.root_module.addImport("zxaudio2", zwindows.module("zxaudio2"));
 
     const zd3d12 = b.dependency("zd3d12", .{
@@ -40,7 +40,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
     @import("../common/build.zig").link(exe, .{
-        .zwindows = windows_module,
+        .zwindows = zwindows_module,
         .zd3d12 = zd3d12_module,
     });
 

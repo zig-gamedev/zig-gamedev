@@ -2,11 +2,14 @@ const std = @import("std");
 const OpenVR = @import("zopenvr");
 
 const zglfw = @import("zglfw");
-const windows = @import("windows");
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const dxgi = zwindows.dxgi;
+
 const zd3d12 = @import("zd3d12");
 
-const d3d12 = windows.d3d12;
-const dxgi = windows.dxgi;
 const zgui = @import("zgui");
 
 // We need to export below symbols for DirectX 12 Agility SDK.

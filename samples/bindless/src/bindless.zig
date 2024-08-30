@@ -2,18 +2,22 @@ const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const windows = @import("windows");
 
-const d3d = windows.d3d;
-const d3d12 = windows.d3d12;
-const wasapi = windows.wasapi;
-const hrPanic = windows.hrPanic;
-const hrPanicOnFail = windows.hrPanicOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d = zwindows.d3d;
+const d3d12 = zwindows.d3d12;
+const wasapi = zwindows.wasapi;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
+
 const zmesh = @import("zmesh");
 const zstbi = @import("zstbi");
 

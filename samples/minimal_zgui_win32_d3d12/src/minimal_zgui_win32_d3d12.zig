@@ -1,10 +1,10 @@
 const std = @import("std");
 
-const windows = @import("windows");
-
-const dxgi = windows.dxgi;
-const d3d12 = windows.d3d12;
-const hrPanicOnFail = windows.hrPanicOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dxgi = zwindows.dxgi;
+const d3d12 = zwindows.d3d12;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
 
 const zgui = @import("zgui");
 

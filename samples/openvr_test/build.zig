@@ -27,7 +27,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.linkLibrary(zgui.artifact("imgui"));
 
     const zwindows = b.dependency("zwindows", .{});
-    exe.root_module.addImport("windows", zwindows.module("bindings"));
+    exe.root_module.addImport("zwindows", zwindows.module("zwindows"));
 
     const zd3d12 = b.dependency("zd3d12", .{
         .debug_layer = options.zd3d12_enable_debug_layer,
