@@ -351,6 +351,18 @@ pub const Cursor = opaque {
     pub const destroy = glfwDestroyCursor;
     extern fn glfwDestroyCursor(cursor: *Cursor) void;
 
+    pub fn create(width: i32, height: i32, pixels: []const u8, xhot: i32, yhot: i32) Error!*Cursor {
+        assert(pixels.len == 4 * width * height);
+        if (glfwCreateCursor(&.{
+            .width = width,
+            .height = height,
+            .pixels = @constCast(pixels.ptr),
+        }, xhot, yhot)) |ptr| return ptr;
+        try maybeError();
+        unreachable;
+    }
+    extern fn glfwCreateCursor(image: *const Image, xhot: c_int, yhot: c_int) ?*Cursor;
+
     pub fn createStandard(shape: Shape) Error!*Cursor {
         if (glfwCreateStandardCursor(shape)) |ptr| return ptr;
         try maybeError();
@@ -565,6 +577,23 @@ pub const VideoMode = extern struct {
     green_bits: c_int,
     blue_bits: c_int,
     refresh_rate: c_int,
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Image
+//
+//--------------------------------------------------------------------------------------------------
+pub const Image = extern struct {
+    comptime {
+        const c = @cImport(@cInclude("GLFW/glfw3.h"));
+        assert(@sizeOf(c.GLFWimage) == @sizeOf(Image));
+        for (std.meta.fieldNames(Image)) |field_name| {
+            assert(@offsetOf(c.GLFWimage, field_name) == @offsetOf(Image, field_name));
+        }
+    }
+    width: c_int,
+    height: c_int,
+    pixels: [*]u8,
 };
 //--------------------------------------------------------------------------------------------------
 //
