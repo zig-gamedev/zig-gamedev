@@ -34,7 +34,10 @@ pub fn main() !void {
     defer glfw_window.destroy();
 
     const window = glfw.getWin32Window(glfw_window) orelse return error.FailedToGetWin32Window;
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     const pipeline = pipeline: {

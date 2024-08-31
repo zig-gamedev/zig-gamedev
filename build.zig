@@ -41,19 +41,19 @@ pub fn build(b: *std.Build) void {
     const options = .{
         .optimize = optimize,
         .target = target,
-        .zxaudio2_enable_debug_layer = b.option(
+        .zxaudio2_debug_layer = b.option(
             bool,
-            "xaudio2-enable-debug-layer",
+            "zxaudio2_debug_layer",
             "Enable XAudio2 debug layer",
         ) orelse false,
-        .zd3d12_enable_debug_layer = b.option(
+        .zd3d12_debug_layer = b.option(
             bool,
-            "zd3d12-enable-debug-layer",
+            "zd3d12_debug_layer",
             "Enable DirectX 12 debug layer",
         ) orelse false,
-        .zd3d12_enable_gbv = b.option(
+        .zd3d12_gbv = b.option(
             bool,
-            "zd3d12-enable-gbv",
+            "zd3d12_gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
         .zpix_enable = zpix_enable,
@@ -119,8 +119,9 @@ const samples_windows_linux = struct {
     pub const minimal_glfw_d3d12 = @import("samples/minimal_glfw_d3d12/build.zig");
     pub const minimal_zgui_glfw_d3d12 = @import("samples/minimal_zgui_glfw_d3d12/build.zig");
     pub const minimal_zgui_win32_d3d12 = @import("samples/minimal_zgui_win32_d3d12/build.zig");
-    pub const openvr_test = @import("samples/openvr_test/build.zig");
-    pub const simple_openvr = @import("samples/simple_openvr/build.zig");
+    // TODO: Put openvr samples back in
+    // pub const openvr_test = @import("samples/openvr_test/build.zig");
+    // pub const simple_openvr = @import("samples/simple_openvr/build.zig");
     pub const rasterization = @import("samples/rasterization/build.zig");
     // TODO: get simple raytracer working again
     //pub const simple_raytracer = @import("samples/simple_raytracer/build.zig");

@@ -14,6 +14,7 @@
     * WASAPI
     * Media Foundation
     * DirectWrite
+- Optional D3D12 helper library (zd3d12)
 - Optional XAudio2 helper library (zxaudio2)
 
 ## Getting started
@@ -30,13 +31,16 @@ pub fn build(b: *std.Build) !void {
     ...
 
     const zwindows_dependency = b.dependency("zwindows", .{
-        .zxaudio2_enable_debug_layers = builtin.mode == .Debug,
-        .zd3d12_enable_debug_layers = builtin.mode == .Debug,
-        .zd3d12_enable_gbv = builtin.mode == .Debug,
+        .zxaudio2_debug_layer = (builtin.mode == .Debug),
+        .zd3d12_debug_layer = (builtin.mode == .Debug),
+        .zd3d12_gbv = b.option("zd3d12_gbv", "Enable GPU-Based Validation") orelse false,
     });
     
     // Import the Windows API bindings
     exe.root_module.addImport("zwindows", zwindows_dependency.module("zwindows"));
+
+    // Import the optional zd3d12 helper library
+    exe.root_module.addImport("zd3d12", zwindows_dependency.module("zd3d12"));
 
     // Import the optional zxaudio2 helper library
     exe.root_module.addImport("zxaudio2", zwindows_dependency.module("zxaudio2"));

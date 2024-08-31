@@ -48,7 +48,10 @@ const DemoState = struct {
 
 fn init(allocator: std.mem.Allocator) !DemoState {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     gctx.present_flags = .{};
     gctx.present_interval = 1;

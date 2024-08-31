@@ -26,18 +26,18 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
     exe.root_module.addImport("zmath", zmath.module("root"));
 
-    const zwindows = b.dependency("zwindows", .{});
+    const zwindows = b.dependency("zwindows", .{
+        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
+        .zd3d12_debug_layer = options.zd3d12_debug_layer,
+        .zd3d12_gbv = options.zd3d12_gbv,
+    });
     const zwindows_module = zwindows.module("zwindows");
+    const zd3d12_module = zwindows.module("zd3d12");
+    const zxaudio2_module = zwindows.module("zxaudio2");
 
     exe.root_module.addImport("zwindows", zwindows_module);
-    exe.root_module.addImport("zxaudio2", zwindows.module("zxaudio2"));
-
-    const zd3d12 = b.dependency("zd3d12", .{
-        .debug_layer = options.zd3d12_enable_debug_layer,
-        .gbv = options.zd3d12_enable_gbv,
-    });
-    const zd3d12_module = zd3d12.module("root");
     exe.root_module.addImport("zd3d12", zd3d12_module);
+    exe.root_module.addImport("zxaudio2", zxaudio2_module);
 
     @import("../common/build.zig").link(exe, .{
         .zwindows = zwindows_module,
@@ -47,7 +47,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "xaudio2_enable_debug_layer", options.zxaudio2_enable_debug_layer);
+    exe_options.addOption(bool, "xaudio2_enable_debug_layer", options.zxaudio2_debug_layer);
 
     const content_path = b.pathJoin(&.{ cwd_path, content_dir });
     const install_content_step = b.addInstallDirectory(.{

@@ -15,7 +15,6 @@
         .system_sdk = .{ .path = "libs/system-sdk" },
         .zaudio = .{ .path = "libs/zaudio" },
         .zbullet = .{ .path = "libs/zbullet" },
-        .zd3d12 = .{ .path = "libs/zd3d12" },
         .zflecs = .{ .path = "libs/zflecs" },
         .zglfw = .{ .path = "libs/zglfw" },
         .zgui = .{ .path = "libs/zgui" },

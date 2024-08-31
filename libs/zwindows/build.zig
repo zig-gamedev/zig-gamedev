@@ -3,19 +3,19 @@ const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) !void {
     const options = .{
-        .zxaudio2_enable_debug_layer = b.option(
+        .zxaudio2_debug_layer = b.option(
             bool,
-            "xaudio2-enable-debug-layer",
+            "zxaudio2_debug_layer",
             "Enable XAudio2 debug layer",
         ) orelse false,
-        .zd3d12_enable_debug_layer = b.option(
+        .zd3d12_debug_layer = b.option(
             bool,
-            "zd3d12-enable-debug-layer",
+            "zd3d12_debug_layer",
             "Enable DirectX 12 debug layer",
         ) orelse false,
-        .zd3d12_enable_gbv = b.option(
+        .zd3d12_gbv = b.option(
             bool,
-            "zd3d12-enable-gbv",
+            "zd3d12_gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
     };
@@ -25,15 +25,25 @@ pub fn build(b: *std.Build) !void {
         options_step.addOption(field.type, field.name, @field(options, field.name));
     }
 
-    const zwindows = b.addModule("zwindows", .{
+    const zwindows_module = b.addModule("zwindows", .{
         .root_source_file = b.path("src/zwindows.zig"),
+    });
+
+    const options_module = options_step.createModule();
+
+    _ = b.addModule("zd3d12", .{
+        .root_source_file = b.path("src/zd3d12.zig"),
+        .imports = &.{
+            .{ .name = "options", .module = options_module },
+            .{ .name = "zwindows", .module = zwindows_module },
+        },
     });
 
     _ = b.addModule("zxaudio2", .{
         .root_source_file = b.path("src/zxaudio2.zig"),
         .imports = &.{
-            .{ .name = "options", .module = options_step.createModule() },
-            .{ .name = "zwindows", .module = zwindows },
+            .{ .name = "options", .module = options_module },
+            .{ .name = "zwindows", .module = zwindows_module },
         },
     });
 }

@@ -49,7 +49,10 @@ const DemoState = struct {
 
     fn init(allocator: std.mem.Allocator) !DemoState {
         const window = try common.initWindow(allocator, window_name, window_width, window_height);
-        var gctx = zd3d12.GraphicsContext.init(allocator, window);
+        var gctx = zd3d12.GraphicsContext.init(.{
+            .allocator = allocator,
+            .window = window,
+        });
 
         var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
         defer arena_allocator_state.deinit();

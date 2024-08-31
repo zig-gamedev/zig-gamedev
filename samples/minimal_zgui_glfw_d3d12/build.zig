@@ -28,14 +28,16 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
 
-    const zwindows = b.dependency("zwindows", .{});
-    exe.root_module.addImport("zwindows", zwindows.module("zwindows"));
-
-    const zd3d12 = b.dependency("zd3d12", .{
-        .debug_layer = options.zd3d12_enable_debug_layer,
-        .gbv = options.zd3d12_enable_gbv,
+    const zwindows = b.dependency("zwindows", .{
+        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
+        .zd3d12_debug_layer = options.zd3d12_debug_layer,
+        .zd3d12_gbv = options.zd3d12_gbv,
     });
-    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
+    const zwindows_module = zwindows.module("zwindows");
+    const zd3d12_module = zwindows.module("zd3d12");
+
+    exe.root_module.addImport("zwindows", zwindows_module);
+    exe.root_module.addImport("zd3d12", zd3d12_module);
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

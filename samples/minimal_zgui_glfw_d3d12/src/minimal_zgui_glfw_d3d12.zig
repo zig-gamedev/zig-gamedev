@@ -40,7 +40,10 @@ pub fn main() !void {
     defer zgui.deinit();
 
     const window = glfw.getWin32Window(glfw_window) orelse return error.FailedToGetWin32Window;
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     const scale_factor = scale_factor: {

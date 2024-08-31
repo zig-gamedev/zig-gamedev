@@ -90,7 +90,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     const draw_texture_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -118,7 +121,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @as(*d3d12.IDevice, @ptrCast(gctx.device)),
-        .{ .DEBUG = build_options.zd3d12_enable_debug_layer },
+        .{ .DEBUG = build_options.zd3d12_debug_layer },
         .@"4_1",
         &dml.IID_IDevice1,
         @as(*?*anyopaque, @ptrCast(&dml_device)),

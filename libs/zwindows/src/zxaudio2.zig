@@ -58,11 +58,11 @@ pub const AudioContext = struct {
     pub fn init(allocator: std.mem.Allocator) AudioContext {
         const device = blk: {
             var device: ?*xaudio2.IXAudio2 = null;
-            hrPanicOnFail(xaudio2.create(&device, .{ .DEBUG_ENGINE = options.zxaudio2_enable_debug_layer }, 0));
+            hrPanicOnFail(xaudio2.create(&device, .{ .DEBUG_ENGINE = options.zxaudio2_debug_layer }, 0));
             break :blk device.?;
         };
 
-        if (options.zxaudio2_enable_debug_layer) {
+        if (options.zxaudio2_debug_layer) {
             device.SetDebugConfiguration(&.{
                 .TraceMask = .{ .ERRORS = true, .WARNINGS = true, .INFO = true },
                 .BreakMask = .{},

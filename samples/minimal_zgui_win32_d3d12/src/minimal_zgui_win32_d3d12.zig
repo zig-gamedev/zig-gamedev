@@ -35,7 +35,10 @@ pub fn main() !void {
 
     const window = createWindow(1600, 1200);
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     zgui.init(allocator);

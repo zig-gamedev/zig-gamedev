@@ -22,10 +22,9 @@ const hrPanic = zwindows.hrPanic;
 const hrPanicOnFail = zwindows.hrPanicOnFail;
 const hrErrorOnFail = zwindows.hrErrorOnFail;
 
-const enable_debug_layer = @import("zd3d12_options").debug_layer;
-const enable_gbv = @import("zd3d12_options").gbv;
-const enable_d2d = @import("zd3d12_options").d2d;
-const upload_heap_capacity = @import("zd3d12_options").upload_heap_capacity;
+const options = @import("options");
+const enable_debug_layer = options.zd3d12_debug_layer;
+const enable_gbv = options.zd3d12_gbv;
 
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
@@ -34,6 +33,7 @@ const TransitionResourceBarrier = struct {
     resource: ResourceHandle,
 };
 
+const default_upload_heap_capacity: u32 = 32 * 1024 * 1024;
 const num_swapbuffers = 4;
 
 const SwapchainBuffer = struct {
@@ -137,7 +137,11 @@ pub const GraphicsContext = struct {
     present_flags: dxgi.PRESENT_FLAG,
     present_interval: windows.UINT,
 
-    pub fn init(allocator: std.mem.Allocator, window: windows.HWND) GraphicsContext {
+    pub fn init(args: struct {
+        allocator: std.mem.Allocator,
+        window: windows.HWND,
+        upload_heap_capacity: u32 = default_upload_heap_capacity,
+    }) GraphicsContext {
         const wic_factory = blk: {
             var wic_factory: *wic.IImagingFactory = undefined;
             hrPanicOnFail(windows.CoCreateInstance(
@@ -235,7 +239,7 @@ pub const GraphicsContext = struct {
 
             if (hr != windows.S_OK) {
                 _ = windows.MessageBoxA(
-                    window,
+                    args.window,
                     "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
                         "with DirectX 12 Feature Level 11.1 support.",
                     "Your graphics card driver may be old",
@@ -262,7 +266,7 @@ pub const GraphicsContext = struct {
             const hr = device.CheckFeatureSupport(.SHADER_MODEL, &data, @sizeOf(d3d12.FEATURE_DATA_SHADER_MODEL));
             if (hr != windows.S_OK or @intFromEnum(data.HighestShaderModel) < @intFromEnum(d3d12.SHADER_MODEL.@"6_6")) {
                 _ = windows.MessageBoxA(
-                    window,
+                    args.window,
                     "This applications requires graphics card driver that supports Shader Model 6.6. " ++
                         "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
@@ -280,7 +284,7 @@ pub const GraphicsContext = struct {
                 @intFromEnum(data.ResourceBindingTier) < @intFromEnum(d3d12.RESOURCE_BINDING_TIER.TIER_3))
             {
                 _ = windows.MessageBoxA(
-                    window,
+                    args.window,
                     "This applications requires graphics card driver that supports Resource Binding Tier 3. " ++
                         "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
@@ -302,7 +306,7 @@ pub const GraphicsContext = struct {
         };
 
         var rect: windows.RECT = undefined;
-        _ = windows.GetClientRect(window, &rect);
+        _ = windows.GetClientRect(args.window, &rect);
         const viewport_width = @as(u32, @intCast(rect.right - rect.left));
         const viewport_height = @as(u32, @intCast(rect.bottom - rect.top));
 
@@ -319,7 +323,7 @@ pub const GraphicsContext = struct {
                 .SampleDesc = .{ .Count = 1, .Quality = 0 },
                 .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
                 .BufferCount = num_swapbuffers,
-                .OutputWindow = window,
+                .OutputWindow = args.window,
                 .Windowed = windows.TRUE,
                 .SwapEffect = .FLIP_DISCARD,
                 .Flags = .{ .ALLOW_TEARING = present_flags.ALLOW_TEARING },
@@ -340,8 +344,8 @@ pub const GraphicsContext = struct {
             break :blk swapchain3;
         };
 
-        const resource_pool = ResourcePool.init(allocator);
-        const pipeline_pool = PipelinePool.init(allocator);
+        const resource_pool = ResourcePool.init(args.allocator);
+        const pipeline_pool = PipelinePool.init(args.allocator);
 
         const rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
         const dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, .{});
@@ -385,11 +389,11 @@ pub const GraphicsContext = struct {
 
         var upload_heaps: [max_num_buffered_frames]GpuMemoryHeap = undefined;
         for (upload_heaps, 0..) |_, heap_index| {
-            upload_heaps[heap_index] = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD);
+            upload_heaps[heap_index] = GpuMemoryHeap.init(device, args.upload_heap_capacity, .UPLOAD);
         }
 
         // Disable ALT + ENTER
-        hrPanicOnFail(factory.MakeWindowAssociation(window, .{ .NO_WINDOW_CHANGES = true }));
+        hrPanicOnFail(factory.MakeWindowAssociation(args.window, .{ .NO_WINDOW_CHANGES = true }));
 
         const frame_fence = blk: {
             var frame_fence: *d3d12.IFence = undefined;
@@ -452,14 +456,14 @@ pub const GraphicsContext = struct {
             .pipeline_pool = pipeline_pool,
             .current_pipeline = .{},
             .transition_resource_barriers = std.ArrayListUnmanaged(TransitionResourceBarrier).initCapacity(
-                allocator,
+                args.allocator,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
             .frame_index = 0,
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
-            .window = window,
+            .window = args.window,
             .is_cmdlist_opened = is_cmdlist_opened,
             .d2d = null,
             .wic_factory = wic_factory,
@@ -572,10 +576,6 @@ pub const GraphicsContext = struct {
     }
 
     fn createD2DResources(gctx: *GraphicsContext) void {
-        if (!enable_d2d) {
-            return;
-        }
-
         const dx11 = blk: {
             var device11: *d3d11.IDevice = undefined;
             var device_context11: *d3d11.IDeviceContext = undefined;
@@ -722,21 +722,19 @@ pub const GraphicsContext = struct {
     }
 
     pub fn destroyD2DResources(gctx: *GraphicsContext) void {
-        if (enable_d2d) {
-            _ = gctx.d2d.?.factory.Release();
-            _ = gctx.d2d.?.device.Release();
-            _ = gctx.d2d.?.context.Release();
-            _ = gctx.d2d.?.device11on12.Release();
-            _ = gctx.d2d.?.device11.Release();
-            _ = gctx.d2d.?.context11.Release();
-            _ = gctx.d2d.?.dwrite_factory.Release();
-            for (gctx.d2d.?.targets) |target|
-                _ = target.Release();
-            for (gctx.d2d.?.swapbuffers11) |swapbuffer11|
-                _ = swapbuffer11.Release();
+        _ = gctx.d2d.?.factory.Release();
+        _ = gctx.d2d.?.device.Release();
+        _ = gctx.d2d.?.context.Release();
+        _ = gctx.d2d.?.device11on12.Release();
+        _ = gctx.d2d.?.device11.Release();
+        _ = gctx.d2d.?.context11.Release();
+        _ = gctx.d2d.?.dwrite_factory.Release();
+        for (gctx.d2d.?.targets) |target|
+            _ = target.Release();
+        for (gctx.d2d.?.swapbuffers11) |swapbuffer11|
+            _ = swapbuffer11.Release();
 
-            gctx.d2d = null;
-        }
+        gctx.d2d = null;
     }
 
     pub fn beginFrame(gctx: *GraphicsContext) void {
