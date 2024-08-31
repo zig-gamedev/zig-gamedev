@@ -1,4 +1,6 @@
-# zwindows - Windows development SDK for Zig game developers
+# zwindows
+
+Windows development SDK for Zig game developers.
 
 - Vendored DirectX Compiler binaries for Windows and Linux
 - Vendored DirectX and DirectML runtime libraries
@@ -17,14 +19,14 @@
 - Optional D3D12 helper library (zd3d12)
 - Optional XAudio2 helper library (zxaudio2)
 
-## Getting started
+## Using the Zig package
 
 Copy `zwindows` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zwindows = .{ .path = "libs/zwindows" },
 ```
 
-### Using the zwindows build package
+Example build.zig
 ```zig
 pub fn build(b: *std.Build) !void {
 
@@ -53,7 +55,7 @@ pub fn build(b: *std.Build) !void {
 }
 ```
 
-### Importing and using the bindings
+### Bindings Usage Example
 ```zig
 const zwindows = @import("zwindows");
 const windows = zwindows.windows;
@@ -80,5 +82,86 @@ pub fn main() !void {
         .hIconSm = null,
     };
     _ = windows.RegisterClassExA(&winclass);
+}
+```
+
+## zd3d12
+zd3d12 is an optional helper library for Direct3d 12 build ontop of the zwindows bindings
+
+### Features
+- Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
+- Basic DirectX 12 resource management (handle-based resources and pipelines)
+- Basic resource barriers management with simple state-tracking
+- Transient and persistent descriptor allocation
+- Fast image loading using WIC (Windows Imaging Component)
+- Helpers for uploading data to the GPU
+- Fast mipmap generator running on the GPU
+- Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
+
+### Example applications
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/triangle
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/textured_quad
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/vector_graphics_test
+- https://github.com/zig-gamedev/zig-gamedev/blob/main/samples/rasterization
+- https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/bindless
+- https://github.com/zig-gamedev/zig-gamedev/blob/main/samples/mesh_shader_test
+- https://github.com/zig-gamedev/zig-gamedev/blob/main/samples/directml_convolution_test
+
+### Usage Example
+```zig
+const zd3d12 = @import("zd3d12");
+
+// We need to export below symbols for DirectX 12 Agility SDK.
+pub export const D3D12SDKVersion: u32 = 610;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+pub fn main() !void {
+    ...
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator, 
+        .window = win32_window,
+    });
+    defer gctx.deinit(allocator);
+
+    while (...) {
+        gctx.beginFrame();
+
+        const back_buffer = gctx.getBackBuffer();
+        gctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
+        gctx.flushResourceBarriers();
+
+        gctx.cmdlist.OMSetRenderTargets(
+            1,
+            &.{back_buffer.descriptor_handle},
+            TRUE,
+            null,
+        );
+        gctx.cmdlist.ClearRenderTargetView(back_buffer.descriptor_handle, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATES.PRESENT);
+        gctx.flushResourceBarriers();
+
+        gctx.endFrame();
+    }
+}
+```
+
+## zxaudio2
+zxaudio2 is an optional helper library for XAudio2 build ontop of the zwindows bindings
+
+### Usage Example
+```zig
+const zxaudio2 = @import("zxaudio2");
+
+pub fn main() !void {
+    ...
+    var actx = zxaudio2.AudioContext.init(allocator);
+
+    const sound_handle = actx.loadSound("content/drum_bass_hard.flac");
+    actx.playSound(sound_handle, .{});
+
+    var music = zxaudio2.Stream.create(allocator, actx.device, "content/Broke For Free - Night Owl.mp3");
+    hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
+    ...
 }
 ```
