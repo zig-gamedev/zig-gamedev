@@ -80,7 +80,7 @@ pub const Style = extern struct {
     plot_default_size: [2]f32,
     plot_min_size: [2]f32,
 
-    colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
+    colors: [@typeInfo(StyleCol).@"enum".fields.len][4]f32,
     colormap: Colormap,
 
     use_local_time: bool,
