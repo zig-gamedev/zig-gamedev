@@ -326,7 +326,11 @@ pub fn main() !void {
     const window = try zglfw.Window.create(framebuffer_size[0], framebuffer_size[1], "", null);
     defer window.destroy();
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, zglfw.getWin32Window(window) orelse @panic("failed to get win32 handle to window"));
+    const win32_window = zglfw.getWin32Window(window) orelse @panic("failed to get win32 handle to window");
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = win32_window,
+    });
     defer gctx.deinit(allocator);
 
     const msaa_sample_count = 4;

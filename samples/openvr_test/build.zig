@@ -37,7 +37,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zwindows", zwindows_module);
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
-    const zopenvr = b.dependency("zopenvr", .{});
+    const zopenvr = b.dependency("zopenvr", .{
+        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
+        .zd3d12_debug_layer = options.zd3d12_debug_layer,
+        .zd3d12_gbv = options.zd3d12_gbv,
+    });
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
     @import("zopenvr").addLibraryPathsTo(exe);

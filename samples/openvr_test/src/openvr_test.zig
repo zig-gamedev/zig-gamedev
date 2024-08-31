@@ -35,7 +35,10 @@ const Surface = struct {
         const window = try zglfw.Window.create(width, height, window_title, null);
 
         const win32_window = zglfw.getWin32Window(window) orelse return error.FailedToGetWin32Window;
-        const gctx = zd3d12.GraphicsContext.init(allocator, win32_window);
+        const gctx = zd3d12.GraphicsContext.init(.{
+            .allocator = allocator,
+            .window = win32_window,
+        });
 
         zgui.init(allocator);
         zgui.plot.init();

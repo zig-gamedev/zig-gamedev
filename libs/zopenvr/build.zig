@@ -1,7 +1,23 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const zwindows = b.dependency("zwindows", .{});
+    const zwindows = b.dependency("zwindows", .{
+        .zxaudio2_debug_layer = b.option(
+            bool,
+            "zxaudio2_debug_layer",
+            "Enable XAudio2 debug layer",
+        ) orelse false,
+        .zd3d12_debug_layer = b.option(
+            bool,
+            "zd3d12_debug_layer",
+            "Enable DirectX 12 debug layer",
+        ) orelse false,
+        .zd3d12_gbv = b.option(
+            bool,
+            "zd3d12_gbv",
+            "Enable DirectX 12 GPU-Based Validation (GBV)",
+        ) orelse false,
+    });
     _ = b.addModule("root", .{
         .root_source_file = b.path("src/openvr.zig"),
         .imports = &.{
