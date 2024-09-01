@@ -842,8 +842,8 @@ pub const Window = opaque {
     pub fn setInputMode(window: *Window, mode: InputMode, value: anytype) void {
         const T = @TypeOf(value);
         const i32_value = switch (@typeInfo(T)) {
-            .Enum, .EnumLiteral => @intFromEnum(@as(Cursor.Mode, value)),
-            .Bool => @intFromBool(value),
+            .@"enum", .enum_literal => @intFromEnum(@as(Cursor.Mode, value)),
+            .bool => @intFromBool(value),
             else => unreachable,
         };
         glfwSetInputMode(window, mode, i32_value);
@@ -991,7 +991,7 @@ pub fn windowHintTyped(
         else => windowHint(window_hint, switch (@typeInfo(ValueType)) {
             .Int => @intCast(value),
             .Enum => @intFromEnum(value),
-            .Bool => @intFromBool(value),
+            .bool => @intFromBool(value),
             else => unreachable,
         }),
         [:0]const u8 => windowHintString(window_hint, value),
