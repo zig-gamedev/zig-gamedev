@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
     const options_module = options_step.createModule();
 
     _ = b.addModule("root", .{
-        .root_source_file = b.path("src/main.zig"),
+        .root_source_file = b.path("src/root.zig"),
         .imports = &.{
             .{ .name = "zmesh_options", .module = options_module },
         },

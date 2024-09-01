@@ -326,83 +326,86 @@ extern fn par_shapes_create_parametric(
 ) ShapeHandle;
 extern fn par_shapes_create_empty() ShapeHandle;
 
-const zmesh = @import("main.zig");
-const save = false;
+const test_enable_write_to_disk = false;
 const expect = std.testing.expect;
 
 test "zmesh.basic" {
+    const zmesh = @import("root.zig");
+
     zmesh.init(std.testing.allocator);
     defer zmesh.deinit();
 
     const cylinder = Shape.initCylinder(10, 10);
     defer cylinder.deinit();
-    if (save) cylinder.saveToObj("zmesh.cylinder.obj");
+    if (test_enable_write_to_disk) cylinder.saveToObj("zmesh.cylinder.obj");
 
     const cone = Shape.initCone(10, 10);
     defer cone.deinit();
-    if (save) cone.saveToObj("zmesh.cone.obj");
+    if (test_enable_write_to_disk) cone.saveToObj("zmesh.cone.obj");
 
     const pdisk = Shape.initParametricDisk(10, 10);
     defer pdisk.deinit();
-    if (save) pdisk.saveToObj("zmesh.pdisk.obj");
+    if (test_enable_write_to_disk) pdisk.saveToObj("zmesh.pdisk.obj");
 
     const torus = Shape.initTorus(10, 10, 0.2);
     defer torus.deinit();
-    if (save) torus.saveToObj("zmesh.torus.obj");
+    if (test_enable_write_to_disk) torus.saveToObj("zmesh.torus.obj");
 
     const psphere = Shape.initParametricSphere(10, 10);
     defer psphere.deinit();
-    if (save) psphere.saveToObj("zmesh.psphere.obj");
+    if (test_enable_write_to_disk) psphere.saveToObj("zmesh.psphere.obj");
 
     const subdsphere = Shape.initSubdividedSphere(3);
     defer subdsphere.deinit();
-    if (save) subdsphere.saveToObj("zmesh.subdsphere.obj");
+    if (test_enable_write_to_disk) subdsphere.saveToObj("zmesh.subdsphere.obj");
 
     const trefoil_knot = Shape.initTrefoilKnot(10, 100, 0.6);
     defer trefoil_knot.deinit();
-    if (save) trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
+    if (test_enable_write_to_disk) trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
 
     const hemisphere = Shape.initHemisphere(10, 10);
     defer hemisphere.deinit();
-    if (save) hemisphere.saveToObj("zmesh.hemisphere.obj");
+    if (test_enable_write_to_disk) hemisphere.saveToObj("zmesh.hemisphere.obj");
     _ = hemisphere.computeAabb();
 
     const plane = Shape.initPlane(10, 10);
     defer plane.deinit();
-    if (save) plane.saveToObj("zmesh.plane.obj");
+    if (test_enable_write_to_disk) plane.saveToObj("zmesh.plane.obj");
 
     const icosahedron = Shape.initIcosahedron();
     defer icosahedron.deinit();
-    if (save) icosahedron.saveToObj("zmesh.icosahedron.obj");
+    if (test_enable_write_to_disk) icosahedron.saveToObj("zmesh.icosahedron.obj");
 
     const dodecahedron = Shape.initDodecahedron();
     defer dodecahedron.deinit();
-    if (save) dodecahedron.saveToObj("zmesh.dodecahedron.obj");
+    if (test_enable_write_to_disk) dodecahedron.saveToObj("zmesh.dodecahedron.obj");
 
     const octahedron = Shape.initOctahedron();
     defer octahedron.deinit();
-    if (save) octahedron.saveToObj("zmesh.octahedron.obj");
+    if (test_enable_write_to_disk) octahedron.saveToObj("zmesh.octahedron.obj");
 
     const tetrahedron = Shape.initTetrahedron();
     defer tetrahedron.deinit();
-    if (save) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
+    if (test_enable_write_to_disk) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
 
     var cube = Shape.initCube();
     defer cube.deinit();
     cube.unweld();
     cube.computeNormals();
-    if (save) cube.saveToObj("zmesh.cube.obj");
+    if (test_enable_write_to_disk) cube.saveToObj("zmesh.cube.obj");
 
     const rock = Shape.initRock(1337, 3);
     defer rock.deinit();
-    if (save) rock.saveToObj("zmesh.rock.obj");
+    if (test_enable_write_to_disk) rock.saveToObj("zmesh.rock.obj");
 
     const disk = Shape.initDisk(3.0, 10, &.{ 1, 2, 3 }, &.{ 0, 1, 0 });
     defer disk.deinit();
-    if (save) disk.saveToObj("zmesh.disk.obj");
+    if (test_enable_write_to_disk) disk.saveToObj("zmesh.disk.obj");
 }
 
 test "zmesh.clone" {
+    const zmesh = @import("root.zig");
+
     zmesh.init(std.testing.allocator);
     defer zmesh.deinit();
 
@@ -416,6 +419,8 @@ test "zmesh.clone" {
 }
 
 test "zmesh.merge" {
+    const zmesh = @import("root.zig");
+
     zmesh.init(std.testing.allocator);
     defer zmesh.deinit();
 
@@ -430,10 +435,12 @@ test "zmesh.merge" {
     cube.translate(0, 2, 0);
     sphere.merge(cube);
 
-    if (save) sphere.saveToObj("zmesh.merge.obj");
+    if (test_enable_write_to_disk) sphere.saveToObj("zmesh.merge.obj");
 }
 
 test "zmesh.invert" {
+    const zmesh = @import("root.zig");
+
     zmesh.init(std.testing.allocator);
     defer zmesh.deinit();
 
@@ -445,10 +452,12 @@ test "zmesh.invert" {
     hemisphere.unweld();
     hemisphere.weld(0.001, null);
 
-    if (save) hemisphere.saveToObj("zmesh.invert.obj");
+    if (test_enable_write_to_disk) hemisphere.saveToObj("zmesh.invert.obj");
 }
 
 test "zmesh.custom" {
+    const zmesh = @import("root.zig");
+
     zmesh.init(std.testing.allocator);
     defer zmesh.deinit();
 
@@ -467,5 +476,5 @@ test "zmesh.custom" {
     var shape = Shape.init(indices, positions, null, null);
     defer shape.deinit();
 
-    if (save) shape.saveToObj("zmesh.custom.obj");
+    if (test_enable_write_to_disk) shape.saveToObj("zmesh.custom.obj");
 }
