@@ -1,7 +1,3 @@
-comptime {
-    std.testing.refAllDeclsRecursive(@This());
-}
-
 const std = @import("std");
 
 pub const Shape = @import("Shape.zig");
@@ -16,4 +12,8 @@ pub fn init(alloc: std.mem.Allocator) void {
 
 pub fn deinit() void {
     mem.deinit();
+}
+
+test {
+    std.testing.refAllDecls(@This());
 }
