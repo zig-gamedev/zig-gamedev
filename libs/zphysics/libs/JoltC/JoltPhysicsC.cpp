@@ -1875,6 +1875,12 @@ JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data)
     return toJph(in_shape)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API float
+JPC_Shape_GetVolume(const JPC_Shape *in_shape)
+{
+    return toJph(in_shape)->GetVolume();
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3])
 {

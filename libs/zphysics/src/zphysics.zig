@@ -3245,6 +3245,10 @@ pub const Shape = opaque {
                 return c.JPC_Shape_SetUserData(@as(*c.JPC_Shape, @ptrCast(shape)), user_data);
             }
 
+            pub fn getVolume(shape: *const T) f32 {
+                return c.JPC_Shape_GetVolume(@as(*const c.JPC_Shape, @ptrCast(shape)));
+            }
+
             pub fn getCenterOfMass(shape: *const T) [3]Real {
                 var center: [3]Real = undefined;
                 c.JPC_Shape_GetCenterOfMass(@as(*const c.JPC_Shape, @ptrCast(shape)), &center);
