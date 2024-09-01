@@ -67,7 +67,7 @@ const time = std.time;
 const Timer = time.Timer;
 const zm = @import("zmath");
 
-var prng = std.rand.DefaultPrng.init(0);
+var prng = std.Random.DefaultPrng.init(0);
 const random = prng.random();
 
 noinline fn mat4MulBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {

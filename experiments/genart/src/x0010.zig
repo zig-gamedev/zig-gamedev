@@ -10,7 +10,7 @@ pub const display_height = 1024 * 1;
 
 var fs_postprocess: gl.Uint = 0;
 var angle: f32 = 0.0;
-var prng = std.rand.DefaultPrng.init(123);
+var prng = std.Random.DefaultPrng.init(123);
 var random = prng.random();
 
 const Particle = struct {

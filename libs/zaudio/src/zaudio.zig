@@ -2867,7 +2867,7 @@ test "zaudio.audio_buffer" {
     var samples = try std.ArrayList(f32).initCapacity(std.testing.allocator, 1000);
     defer samples.deinit();
 
-    var prng = std.rand.DefaultPrng.init(0);
+    var prng = std.Random.DefaultPrng.init(0);
     const rand = prng.random();
 
     samples.expandToCapacity();

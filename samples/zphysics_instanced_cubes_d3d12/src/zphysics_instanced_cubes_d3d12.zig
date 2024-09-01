@@ -111,7 +111,7 @@ pub fn main() !void {
     const pix_library = try zpix.loadGpuCapturerLibrary();
     defer pix_library.deinit();
 
-    var rng = std.rand.DefaultPrng.init(42);
+    var rng = std.Random.DefaultPrng.init(42);
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();

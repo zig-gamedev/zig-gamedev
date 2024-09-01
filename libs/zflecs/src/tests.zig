@@ -29,8 +29,8 @@ test "extern struct ABI compatibility" {
         if (@TypeOf(ZigType) != type) {
             continue;
         }
-        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
-            @typeInfo(ZigType).Struct.layout == .@"extern")
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .@"struct" and
+            @typeInfo(ZigType).@"struct".layout == .@"extern")
         {
             const flecs_name = if (comptime std.mem.startsWith(u8, decl.name, "Ecs")) decl.name else "ecs_" ++ decl.name;
 
