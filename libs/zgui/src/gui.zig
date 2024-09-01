@@ -2026,7 +2026,7 @@ extern fn zguiDragScalar(
 ) bool;
 //--------------------------------------------------------------------------------------------------
 fn DragScalarNGen(comptime T: type) type {
-    const ScalarType = @typeInfo(T).Array.child;
+    const ScalarType = @typeInfo(T).array.child;
     return struct {
         v: *T,
         speed: f32 = 1.0,
@@ -2037,8 +2037,8 @@ fn DragScalarNGen(comptime T: type) type {
     };
 }
 pub fn dragScalarN(label: [:0]const u8, comptime T: type, args: DragScalarNGen(T)) bool {
-    const ScalarType = @typeInfo(T).Array.child;
-    const components = @typeInfo(T).Array.len;
+    const ScalarType = @typeInfo(T).array.child;
+    const components = @typeInfo(T).array.len;
     return zguiDragScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
@@ -2217,7 +2217,7 @@ extern fn zguiSliderScalar(
 
 //--------------------------------------------------------------------------------------------------
 fn SliderScalarNGen(comptime T: type) type {
-    const ScalarType = @typeInfo(T).Array.child;
+    const ScalarType = @typeInfo(T).array.child;
     return struct {
         v: *T,
         min: ScalarType,
@@ -2227,8 +2227,8 @@ fn SliderScalarNGen(comptime T: type) type {
     };
 }
 pub fn sliderScalarN(label: [:0]const u8, comptime T: type, args: SliderScalarNGen(T)) bool {
-    const ScalarType = @typeInfo(T).Array.child;
-    const components = @typeInfo(T).Array.len;
+    const ScalarType = @typeInfo(T).array.child;
+    const components = @typeInfo(T).array.len;
     return zguiSliderScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
@@ -2685,7 +2685,7 @@ extern fn zguiInputScalar(
 ) bool;
 //--------------------------------------------------------------------------------------------------
 fn InputScalarNGen(comptime T: type) type {
-    const ScalarType = @typeInfo(T).Array.child;
+    const ScalarType = @typeInfo(T).array.child;
     return struct {
         v: *T,
         step: ?ScalarType = null,
@@ -2695,8 +2695,8 @@ fn InputScalarNGen(comptime T: type) type {
     };
 }
 pub fn inputScalarN(label: [:0]const u8, comptime T: type, args: InputScalarNGen(T)) bool {
-    const ScalarType = @typeInfo(T).Array.child;
-    const components = @typeInfo(T).Array.len;
+    const ScalarType = @typeInfo(T).array.child;
+    const components = @typeInfo(T).array.len;
     return zguiInputScalarN(
         label,
         typeToDataTypeEnum(ScalarType),

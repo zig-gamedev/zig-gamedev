@@ -1208,10 +1208,10 @@ pub fn loadWebProfile(loader: LoaderFn, webgl2: bool) !void {
 
 //--------------------------------------------------------------------------------------------------
 fn load(proc_name: [:0]const u8, bind_addresses: anytype) !void {
-    const ProcType = @typeInfo(@TypeOf(bind_addresses.@"0")).Pointer.child;
+    const ProcType = @typeInfo(@TypeOf(bind_addresses.@"0")).pointer.child;
     const proc = try getProcAddress(ProcType, proc_name);
     inline for (bind_addresses) |bind_addr| {
-        if (@typeInfo(@TypeOf(bind_addr)).Pointer.child != ProcType) {
+        if (@typeInfo(@TypeOf(bind_addr)).pointer.child != ProcType) {
             @compileError("proc bindings should all be the same type");
         }
         bind_addr.* = proc;

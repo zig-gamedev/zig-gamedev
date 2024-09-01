@@ -989,8 +989,8 @@ pub fn windowHintTyped(
     const ValueType = WindowHint.ValueType(window_hint);
     switch (ValueType) {
         else => windowHint(window_hint, switch (@typeInfo(ValueType)) {
-            .Int => @intCast(value),
-            .Enum => @intFromEnum(value),
+            .int => @intCast(value),
+            .@"enum" => @intFromEnum(value),
             .bool => @intFromBool(value),
             else => unreachable,
         }),
