@@ -1604,6 +1604,9 @@ JPC_Shape_GetUserData(const JPC_Shape *in_shape);
 JPC_API void
 JPC_Shape_SetUserData(JPC_Shape *in_shape, uint64_t in_user_data);
 
+JPC_API float
+JPC_Shape_GetVolume(const JPC_Shape *in_shape);
+
 JPC_API void
 JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
 
