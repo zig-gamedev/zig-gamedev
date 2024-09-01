@@ -1,7 +1,7 @@
 .{
     .name = "zig-gamedev",
     .version = "0.6.0",
-    .minimum_zig_version = "0.13.0-dev.351+64ef45eb0",
+    .minimum_zig_version = "0.14.0-dev.1398+c34cfe486",
     .paths = .{
         "build.zig",
         "build.zig.zon",
