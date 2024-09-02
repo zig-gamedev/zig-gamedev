@@ -1628,7 +1628,7 @@ extern "C"
 
     ZGUI_API bool zguiIsMouseDragging(ImGuiMouseButton button, float lock_threshold)
     {
-        return ImGui::IsMouseDoubleClicked(button);
+        return ImGui::IsMouseDragging(button, lock_threshold);
     }
 
     ZGUI_API bool zguiIsItemVisible(void)
