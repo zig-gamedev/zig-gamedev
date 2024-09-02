@@ -3268,6 +3268,8 @@ pub const isMouseDown = zguiIsMouseDown;
 pub const isMouseClicked = zguiIsMouseClicked;
 /// `pub fn isMouseDoubleClicked(mouse_button: MouseButton) bool`
 pub const isMouseDoubleClicked = zguiIsMouseDoubleClicked;
+/// `pub fn isMouseDragging(mouse_button: MouseButton, lock_threshold: f32) bool`
+pub const isMouseDragging = zguiIsMouseDragging;
 /// `pub fn isItemClicked(mouse_button: MouseButton) bool`
 pub const isItemClicked = zguiIsItemClicked;
 /// `pub fn isItemVisible() bool`
@@ -3291,6 +3293,7 @@ pub const isAnyItemFocused = zguiIsAnyItemFocused;
 extern fn zguiIsMouseDown(mouse_button: MouseButton) bool;
 extern fn zguiIsMouseClicked(mouse_button: MouseButton) bool;
 extern fn zguiIsMouseDoubleClicked(mouse_button: MouseButton) bool;
+extern fn zguiIsMouseDragging(mouse_button: MouseButton, lock_threshold: f32) bool;
 extern fn zguiIsItemHovered(flags: HoveredFlags) bool;
 extern fn zguiIsItemActive() bool;
 extern fn zguiIsItemFocused() bool;
