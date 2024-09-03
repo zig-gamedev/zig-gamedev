@@ -26,6 +26,8 @@ Note: If using Git then you will need [Git LFS](https://git-lfs.github.com/) to 
 
 Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.13.0-dev.351+64ef45eb0**.
 
+Or you can use the **unstable** [zig-0.14.0 branch](https://github.com/zig-gamedev/zig-gamedev/tree/zig-0.14.0).
+
 [zigup](https://github.com/marler8997/zigup) is recommended for managing compiler versions. Alternatively, you can download and install manually using the links below:
 
 | OS/Arch         | Download link               |
@@ -34,8 +36,6 @@ Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is curre
 | Linux x86_64    | [zig-linux-x86_64-0.13.0-dev.351+64ef45eb0.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.13.0-dev.351+64ef45eb0.tar.xz) |
 | macOS x86_64    | [zig-macos-x86_64-0.13.0-dev.351+64ef45eb0.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.13.0-dev.351+64ef45eb0.tar.xz) |
 | macOS aarch64   | [zig-macos-aarch64-0.13.0-dev.351+64ef45eb0.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.13.0-dev.351+64ef45eb0.tar.xz) |
-
-If you need to use a more recent version of Zig, you can try our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
 
 ### Build and run the [Samples](#sample-applications-native-wgpu)
 
