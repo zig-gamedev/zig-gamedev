@@ -1,28 +1,35 @@
+// We need to export below symbols for DirectX 12 Agility SDK.
+pub export const D3D12SDKVersion: u32 = 610;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const build_options = @import("build_options");
+const content_dir = build_options.content_dir;
+
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const Mutex = std.Thread.Mutex;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const xaudio2 = zwin32.xaudio2;
-const xaudio2fx = zwin32.xaudio2fx;
-const xapo = zwin32.xapo;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const xaudio2 = zwindows.xaudio2;
+const xaudio2fx = zwindows.xaudio2fx;
+const xapo = zwindows.xapo;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
 const zxaudio2 = @import("zxaudio2");
+
 const common = @import("common");
 const GuiRenderer = common.GuiRenderer;
 const c = common.c;
+
 const zm = @import("zmath");
+
 const zmesh = @import("zmesh");
-
-pub export const D3D12SDKVersion: u32 = 610;
-pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
-
-const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: audio experiments (WIP)";
 const window_width = 1920;
@@ -143,13 +150,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     hrPanicOnFail(music.voice.Start(.{}, xaudio2.COMMIT_NOW));
 
     {
-        var reverb_apo: ?*w32.IUnknown = null;
+        var reverb_apo: ?*windows.IUnknown = null;
         hrPanicOnFail(xaudio2fx.createReverb(&reverb_apo, 0));
         defer _ = reverb_apo.?.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
             .pEffect = reverb_apo.?,
-            .InitialState = w32.FALSE,
+            .InitialState = windows.FALSE,
             .OutputChannels = 2,
         }};
         const effect_chain = xaudio2.EFFECT_CHAIN{
@@ -175,7 +182,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
             .pEffect = p0,
-            .InitialState = w32.TRUE,
+            .InitialState = windows.TRUE,
             .OutputChannels = 2,
         }};
         const effect_chain = xaudio2.EFFECT_CHAIN{
@@ -192,7 +199,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     gctx.present_flags = .{};
     gctx.present_interval = 1;
 
@@ -353,14 +363,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w32.POINT = undefined;
-        _ = w32.GetCursorPos(&pos);
+        var pos: windows.POINT = undefined;
+        _ = windows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
+        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -384,14 +394,14 @@ fn update(demo: *DemoState) void {
         // Load camera position from memory to SIMD register ('3' means that we want to load three components).
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
-        if (w32.GetAsyncKeyState('W') < 0) {
+        if (windows.GetAsyncKeyState('W') < 0) {
             cpos += forward;
-        } else if (w32.GetAsyncKeyState('S') < 0) {
+        } else if (windows.GetAsyncKeyState('S') < 0) {
             cpos -= forward;
         }
-        if (w32.GetAsyncKeyState('D') < 0) {
+        if (windows.GetAsyncKeyState('D') < 0) {
             cpos += right;
-        } else if (w32.GetAsyncKeyState('A') < 0) {
+        } else if (windows.GetAsyncKeyState('A') < 0) {
             cpos -= right;
         }
 
@@ -425,7 +435,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(

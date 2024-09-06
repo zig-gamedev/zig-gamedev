@@ -15,7 +15,6 @@
         .system_sdk = .{ .path = "libs/system-sdk" },
         .zaudio = .{ .path = "libs/zaudio" },
         .zbullet = .{ .path = "libs/zbullet" },
-        .zd3d12 = .{ .path = "libs/zd3d12" },
         .zflecs = .{ .path = "libs/zflecs" },
         .zglfw = .{ .path = "libs/zglfw" },
         .zgui = .{ .path = "libs/zgui" },
@@ -30,8 +29,7 @@
         .zpool = .{ .path = "libs/zpool" },
         .zstbi = .{ .path = "libs/zstbi" },
         .ztracy = .{ .path = "libs/ztracy" },
-        .zwin32 = .{ .path = "libs/zwin32" },
-        .zxaudio2 = .{ .path = "libs/zxaudio2" },
+        .zwindows = .{ .path = "libs/zwindows" },
 
         .zemscripten = .{ .path = "libs/zemscripten" },
         .emsdk = .{
@@ -63,8 +61,8 @@
 
         .zsdl = .{ .path = "libs/zsdl" },
         .@"sdl2-prebuilt" = .{
-            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/9ee84ec9ab63cf2bf2659525b4c30ad9ad7339b2.tar.gz",
-            .hash = "1220375998747e24c922eeb791de1dcd0a670571a75d4cd22a5129663b53ba7be7d2",
+            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/01ed17a8a2c85943be82fd9638212a1f1ab6f2b9.tar.gz",
+            .hash = "122028412e5d640fdf21044d4d0ac1287e1bc976e87859d2da6a716eb4fe1326f630",
         },
     },
 }

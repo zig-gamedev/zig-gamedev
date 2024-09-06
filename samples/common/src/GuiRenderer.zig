@@ -2,12 +2,15 @@ pub const GuiRenderer = @This();
 
 const std = @import("std");
 const assert = std.debug.assert;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common.zig");
 const c = common.c;
 
@@ -69,8 +72,8 @@ pub fn init(
         };
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RasterizerState.CullMode = .NONE;
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
-        pso_desc.BlendState.RenderTarget[0].BlendEnable = w32.TRUE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
+        pso_desc.BlendState.RenderTarget[0].BlendEnable = windows.TRUE;
         pso_desc.BlendState.RenderTarget[0].SrcBlend = .SRC_ALPHA;
         pso_desc.BlendState.RenderTarget[0].DestBlend = .INV_SRC_ALPHA;
         pso_desc.BlendState.RenderTarget[0].BlendOp = .ADD;

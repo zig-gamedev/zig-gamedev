@@ -1,10 +1,11 @@
 const std = @import("std");
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const dxgi = zwin32.dxgi;
-const d3d12 = zwin32.d3d12;
-const d3d12d = zwin32.d3d12d;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dxgi = zwindows.dxgi;
+const d3d12 = zwindows.d3d12;
+const d3d12d = zwindows.d3d12d;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -12,66 +13,66 @@ pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: minimal d3d12";
 
 fn processWindowMessage(
-    window: w32.HWND,
-    message: w32.UINT,
-    wparam: w32.WPARAM,
-    lparam: w32.LPARAM,
-) callconv(w32.WINAPI) w32.LRESULT {
+    window: windows.HWND,
+    message: windows.UINT,
+    wparam: windows.WPARAM,
+    lparam: windows.LPARAM,
+) callconv(windows.WINAPI) windows.LRESULT {
     switch (message) {
-        w32.WM_KEYDOWN => {
-            if (wparam == w32.VK_ESCAPE) {
-                w32.PostQuitMessage(0);
+        windows.WM_KEYDOWN => {
+            if (wparam == windows.VK_ESCAPE) {
+                windows.PostQuitMessage(0);
                 return 0;
             }
         },
-        w32.WM_GETMINMAXINFO => {
-            var info: *w32.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
+        windows.WM_GETMINMAXINFO => {
+            var info: *windows.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
             info.ptMinTrackSize.x = 400;
             info.ptMinTrackSize.y = 400;
             return 0;
         },
-        w32.WM_DESTROY => {
-            w32.PostQuitMessage(0);
+        windows.WM_DESTROY => {
+            windows.PostQuitMessage(0);
             return 0;
         },
         else => {},
     }
-    return w32.DefWindowProcA(window, message, wparam, lparam);
+    return windows.DefWindowProcA(window, message, wparam, lparam);
 }
 
-fn createWindow(width: u32, height: u32) w32.HWND {
-    const winclass = w32.WNDCLASSEXA{
+fn createWindow(width: u32, height: u32) windows.HWND {
+    const winclass = windows.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(w32.GetModuleHandleA(null)),
+        .hInstance = @ptrCast(windows.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @ptrFromInt(32512)),
+        .hCursor = windows.LoadCursorA(null, @ptrFromInt(32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = window_name,
         .hIconSm = null,
     };
-    _ = w32.RegisterClassExA(&winclass);
+    _ = windows.RegisterClassExA(&winclass);
 
-    const style = w32.WS_OVERLAPPEDWINDOW;
+    const style = windows.WS_OVERLAPPEDWINDOW;
 
-    var rect = w32.RECT{
+    var rect = windows.RECT{
         .left = 0,
         .top = 0,
         .right = @intCast(width),
         .bottom = @intCast(height),
     };
-    _ = w32.AdjustWindowRectEx(&rect, style, w32.FALSE, 0);
+    _ = windows.AdjustWindowRectEx(&rect, style, windows.FALSE, 0);
 
-    const window = w32.CreateWindowExA(
+    const window = windows.CreateWindowExA(
         0,
         window_name,
         window_name,
-        style + w32.WS_VISIBLE,
-        w32.CW_USEDEFAULT,
-        w32.CW_USEDEFAULT,
+        style + windows.WS_VISIBLE,
+        windows.CW_USEDEFAULT,
+        windows.CW_USEDEFAULT,
         rect.right - rect.left,
         rect.bottom - rect.top,
         null,
@@ -86,10 +87,10 @@ fn createWindow(width: u32, height: u32) w32.HWND {
 }
 
 pub fn main() !void {
-    _ = w32.CoInitializeEx(null, w32.COINIT_MULTITHREADED);
-    defer w32.CoUninitialize();
+    _ = windows.CoInitializeEx(null, windows.COINIT_MULTITHREADED);
+    defer windows.CoUninitialize();
 
-    _ = w32.SetProcessDPIAware();
+    _ = windows.SetProcessDPIAware();
 
     const window = createWindow(1600, 1200);
 
@@ -101,7 +102,7 @@ pub fn main() !void {
         const ps_cso = @embedFile("./minimal_d3d12.ps.cso");
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
@@ -132,28 +133,28 @@ pub fn main() !void {
     var frac: f32 = 0.0;
     var frac_delta: f32 = 0.005;
 
-    var window_rect: w32.RECT = undefined;
-    _ = w32.GetClientRect(window, &window_rect);
+    var window_rect: windows.RECT = undefined;
+    _ = windows.GetClientRect(window, &window_rect);
 
     //
     // Main Loop
     //
     main_loop: while (true) {
         {
-            var message = std.mem.zeroes(w32.MSG);
-            while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
-                _ = w32.TranslateMessage(&message);
-                _ = w32.DispatchMessageA(&message);
-                if (message.message == w32.WM_QUIT) {
+            var message = std.mem.zeroes(windows.MSG);
+            while (windows.PeekMessageA(&message, null, 0, 0, windows.PM_REMOVE) == windows.TRUE) {
+                _ = windows.TranslateMessage(&message);
+                _ = windows.DispatchMessageA(&message);
+                if (message.message == windows.WM_QUIT) {
                     break :main_loop;
                 }
             }
 
-            var rect: w32.RECT = undefined;
-            _ = w32.GetClientRect(window, &rect);
+            var rect: windows.RECT = undefined;
+            _ = windows.GetClientRect(window, &rect);
             if (rect.right == 0 and rect.bottom == 0) {
                 // Window is minimized
-                w32.Sleep(10);
+                windows.Sleep(10);
                 continue :main_loop;
             }
 
@@ -236,7 +237,7 @@ pub fn main() !void {
         dx12.command_list.OMSetRenderTargets(
             1,
             &.{back_buffer_descriptor},
-            w32.TRUE,
+            windows.TRUE,
             null,
         );
         dx12.command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, frac, 0.8, 1.0 }, 0, null);
@@ -286,7 +287,7 @@ const Dx12State = struct {
     rtv_heap_start: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     frame_fence: *d3d12.IFence,
-    frame_fence_event: w32.HANDLE,
+    frame_fence_event: windows.HANDLE,
     frame_fence_counter: u64 = 0,
     frame_index: u32 = 0,
 
@@ -296,7 +297,7 @@ const Dx12State = struct {
 
     const num_frames = 2;
 
-    fn init(window: w32.HWND) Dx12State {
+    fn init(window: windows.HWND) Dx12State {
         //
         // DXGI Factory
         //
@@ -323,15 +324,15 @@ const Dx12State = struct {
         // D3D12 Device
         //
         var device: *d3d12.IDevice9 = undefined;
-        if (d3d12.CreateDevice(null, .@"11_0", &d3d12.IID_IDevice9, @ptrCast(&device)) != w32.S_OK) {
-            _ = w32.MessageBoxA(
+        if (d3d12.CreateDevice(null, .@"11_0", &d3d12.IID_IDevice9, @ptrCast(&device)) != windows.S_OK) {
+            _ = windows.MessageBoxA(
                 window,
                 "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
                     "with DirectX 12 Feature Level 11.0 support.",
                 "Your graphics card driver may be old",
-                w32.MB_OK | w32.MB_ICONERROR,
+                windows.MB_OK | windows.MB_ICONERROR,
             );
-            w32.ExitProcess(0);
+            windows.ExitProcess(0);
         }
 
         std.log.info("D3D12 device created", .{});
@@ -352,8 +353,8 @@ const Dx12State = struct {
         //
         // Swap Chain
         //
-        var rect: w32.RECT = undefined;
-        _ = w32.GetClientRect(window, &rect);
+        var rect: windows.RECT = undefined;
+        _ = windows.GetClientRect(window, &rect);
 
         var swap_chain: *dxgi.ISwapChain3 = undefined;
         {
@@ -370,7 +371,7 @@ const Dx12State = struct {
                 .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
                 .BufferCount = num_frames,
                 .OutputWindow = window,
-                .Windowed = w32.TRUE,
+                .Windowed = windows.TRUE,
                 .SwapEffect = .FLIP_DISCARD,
                 .Flags = .{},
             };
@@ -425,7 +426,7 @@ const Dx12State = struct {
         var frame_fence: *d3d12.IFence = undefined;
         hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(&frame_fence)));
 
-        const frame_fence_event = w32.CreateEventExA(null, "frame_fence_event", 0, w32.EVENT_ALL_ACCESS).?;
+        const frame_fence_event = windows.CreateEventExA(null, "frame_fence_event", 0, windows.EVENT_ALL_ACCESS).?;
 
         std.log.info("Frame fence created ", .{});
 
@@ -477,7 +478,7 @@ const Dx12State = struct {
         _ = dx12.command_list.Release();
         for (dx12.command_allocators) |cmdalloc| _ = cmdalloc.Release();
         _ = dx12.frame_fence.Release();
-        _ = w32.CloseHandle(dx12.frame_fence_event);
+        _ = windows.CloseHandle(dx12.frame_fence_event);
         _ = dx12.rtv_heap.Release();
         for (dx12.swap_chain_textures) |texture| _ = texture.Release();
         _ = dx12.swap_chain.Release();
@@ -496,7 +497,7 @@ const Dx12State = struct {
         const gpu_frame_counter = dx12.frame_fence.GetCompletedValue();
         if ((dx12.frame_fence_counter - gpu_frame_counter) >= num_frames) {
             hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, dx12.frame_fence_event));
-            w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE) catch {};
+            windows.WaitForSingleObject(dx12.frame_fence_event, windows.INFINITE) catch {};
         }
 
         dx12.frame_index = (dx12.frame_index + 1) % num_frames;
@@ -508,6 +509,6 @@ const Dx12State = struct {
         hrPanicOnFail(dx12.command_queue.Signal(dx12.frame_fence, dx12.frame_fence_counter));
         hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(dx12.frame_fence_counter, dx12.frame_fence_event));
 
-        w32.WaitForSingleObject(dx12.frame_fence_event, w32.INFINITE) catch {};
+        windows.WaitForSingleObject(dx12.frame_fence_event, windows.INFINITE) catch {};
     }
 };

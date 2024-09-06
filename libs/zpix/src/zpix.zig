@@ -5,18 +5,18 @@ comptime {
     std.testing.refAllDecls(@This());
 }
 
-const w32 = std.os.windows;
-const HMODULE = w32.HMODULE;
-const HRESULT = w32.HRESULT;
-const GUID = w32.GUID;
-const LPCSTR = w32.LPCSTR;
-const LPWSTR = w32.LPWSTR;
-const LPCWSTR = w32.LPCWSTR;
-const FARPROC = w32.FARPROC;
-const HWND = w32.HWND;
-const WINAPI = w32.WINAPI;
-const BOOL = w32.BOOL;
-const DWORD = w32.DWORD;
+const windows = std.os.windows;
+const HMODULE = windows.HMODULE;
+const HRESULT = windows.HRESULT;
+const GUID = windows.GUID;
+const LPCSTR = windows.LPCSTR;
+const LPWSTR = windows.LPWSTR;
+const LPCWSTR = windows.LPCWSTR;
+const FARPROC = windows.FARPROC;
+const HWND = windows.HWND;
+const WINAPI = windows.WINAPI;
+const BOOL = windows.BOOL;
+const DWORD = windows.DWORD;
 const UINT32 = u32;
 
 const options = @import("zpix_options");
@@ -78,12 +78,12 @@ pub const beginEvent = if (enable) impl.beginEvent else empty.beginEvent;
 pub const endEvent = if (enable) impl.endEvent else empty.endEvent;
 
 fn getFunctionPtr(func_name: LPCSTR) ?FARPROC {
-    const module = w32.GetModuleHandleA("WinPixGpuCapturer.dll");
+    const module = windows.GetModuleHandleA("WinPixGpuCapturer.dll");
     if (module == null) {
         return null;
     }
 
-    const func = w32.GetProcAddress(module.?, func_name);
+    const func = windows.GetProcAddress(module.?, func_name);
     if (func == null) {
         return null;
     }
@@ -151,7 +151,7 @@ const PixLibrary = if (enable) struct {
     module: HMODULE,
 
     pub fn deinit(self: PixLibrary) void {
-        w32.FreeLibrary(self.module);
+        windows.FreeLibrary(self.module);
     }
 } else struct {
     pub fn deinit(_: PixLibrary) void {}
@@ -170,7 +170,7 @@ const impl = struct {
             );
         };
 
-        if (w32.LoadLibraryA(dll_path.ptr)) |m| {
+        if (windows.LoadLibraryA(dll_path.ptr)) |m| {
             return .{ .module = m };
         } else {
             // unable to reuse same allocator for dll_path due to https://github.com/ziglang/zig/issues/15850
@@ -188,11 +188,11 @@ const impl = struct {
                 @ptrCast(getFunctionPtr("BeginProgrammaticGpuCapture")),
             );
             if (beginProgrammaticGpuCapture == null) {
-                return w32.E_FAIL;
+                return windows.E_FAIL;
             }
             return beginProgrammaticGpuCapture.?(params);
         } else {
-            return w32.E_NOTIMPL;
+            return windows.E_NOTIMPL;
         }
     }
 
@@ -202,7 +202,7 @@ const impl = struct {
             @ptrCast(getFunctionPtr("EndProgrammaticGpuCapture")),
         );
         if (endProgrammaticGpuCapture == null) {
-            return w32.E_FAIL;
+            return windows.E_FAIL;
         }
         return endProgrammaticGpuCapture.?();
     }
@@ -213,10 +213,10 @@ const impl = struct {
             @ptrCast(getFunctionPtr("SetGlobalTargetWindow")),
         );
         if (setGlobalTargetWindow == null) {
-            return w32.E_FAIL;
+            return windows.E_FAIL;
         }
         setGlobalTargetWindow.?(hwnd);
-        return w32.S_OK;
+        return windows.S_OK;
     }
 
     fn gpuCaptureNextFrames(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
@@ -225,7 +225,7 @@ const impl = struct {
             @ptrCast(getFunctionPtr("CaptureNextFrame")),
         );
         if (captureNextFrame == null) {
-            return w32.E_FAIL;
+            return windows.E_FAIL;
         }
         return captureNextFrame.?(file_name, num_frames);
     }
@@ -312,19 +312,19 @@ const empty = struct {
     fn beginCapture(flags: CAPTURE_FLAGS, params: ?*const CaptureParameters) HRESULT {
         _ = flags;
         _ = params;
-        return w32.S_OK;
+        return windows.S_OK;
     }
     fn endCapture() HRESULT {
-        return w32.S_OK;
+        return windows.S_OK;
     }
     fn setTargetWindow(hwnd: HWND) HRESULT {
         _ = hwnd;
-        return w32.S_OK;
+        return windows.S_OK;
     }
     fn gpuCaptureNextFrames(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
         _ = file_name;
         _ = num_frames;
-        return w32.S_OK;
+        return windows.S_OK;
     }
 
     fn setMarker(target: anytype, name: []const u8) void {

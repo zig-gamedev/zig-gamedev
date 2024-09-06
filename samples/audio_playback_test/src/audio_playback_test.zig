@@ -2,14 +2,17 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const wasapi = zwin32.wasapi;
-const mf = zwin32.mf;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const wasapi = zwindows.wasapi;
+const mf = zwindows.mf;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
@@ -31,9 +34,9 @@ const window_height = 1080;
 const AudioContex = struct {
     client: *wasapi.IAudioClient3,
     render_client: *wasapi.IAudioRenderClient,
-    buffer_ready_event: w32.HANDLE,
+    buffer_ready_event: windows.HANDLE,
     buffer_size_in_frames: u32,
-    thread_handle: ?w32.HANDLE,
+    thread_handle: ?windows.HANDLE,
     samples: std.ArrayList(i16),
     current_frame_index: u32,
     is_locked: bool,
@@ -58,13 +61,13 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     while (@cmpxchgWeak(bool, &audio.is_locked, false, true, .acquire, .monotonic) != null) {}
     defer @atomicStore(bool, &audio.is_locked, false, .release);
 
-    var buffer_padding_in_frames: w32.UINT = 0;
+    var buffer_padding_in_frames: windows.UINT = 0;
     hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
 
     const num_frames = audio.buffer_size_in_frames - buffer_padding_in_frames;
 
     var ptr: [*]f32 = undefined;
-    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @as(*?[*]w32.BYTE, @ptrCast(&ptr))));
+    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @as(*?[*]windows.BYTE, @ptrCast(&ptr))));
 
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
@@ -80,12 +83,12 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
 }
 
-fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
+fn audioThread(ctx: ?*anyopaque) callconv(.C) windows.DWORD {
     const audio = @as(*AudioContex, @ptrCast(@alignCast(ctx)));
 
     fillAudioBuffer(audio);
     while (true) {
-        w32.WaitForSingleObject(audio.buffer_ready_event, w32.INFINITE) catch {};
+        windows.WaitForSingleObject(audio.buffer_ready_event, windows.INFINITE) catch {};
         fillAudioBuffer(audio);
     }
 
@@ -95,7 +98,10 @@ fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
 fn init(allocator: std.mem.Allocator) !DemoState {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     gctx.present_flags = .{};
     gctx.present_interval = 1;
@@ -106,10 +112,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const audio_device_enumerator = blk: {
         var audio_device_enumerator: *wasapi.IMMDeviceEnumerator = undefined;
-        hrPanicOnFail(w32.CoCreateInstance(
+        hrPanicOnFail(windows.CoCreateInstance(
             &wasapi.CLSID_MMDeviceEnumerator,
             null,
-            w32.CLSCTX_INPROC_SERVER,
+            windows.CLSCTX_INPROC_SERVER,
             &wasapi.IID_IMMDeviceEnumerator,
             @as(*?*anyopaque, @ptrCast(&audio_device_enumerator)),
         ));
@@ -132,7 +138,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var audio_client: *wasapi.IAudioClient3 = undefined;
         hrPanicOnFail(audio_device.Activate(
             &wasapi.IID_IAudioClient3,
-            w32.CLSCTX_INPROC_SERVER,
+            windows.CLSCTX_INPROC_SERVER,
             null,
             @as(*?*anyopaque, @ptrCast(&audio_client)),
         ));
@@ -173,16 +179,16 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         break :blk audio_render_client;
     };
 
-    const audio_buffer_ready_event = w32.CreateEventExA(
+    const audio_buffer_ready_event = windows.CreateEventExA(
         null,
         "audio_buffer_ready_event",
         0,
-        w32.EVENT_ALL_ACCESS,
+        windows.EVENT_ALL_ACCESS,
     ).?;
 
     hrPanicOnFail(audio_client.SetEventHandle(audio_buffer_ready_event));
 
-    var audio_buffer_size_in_frames: w32.UINT = 0;
+    var audio_buffer_size_in_frames: windows.UINT = 0;
     hrPanicOnFail(audio_client.GetBufferSize(&audio_buffer_size_in_frames));
 
     const audio_samples = blk: {
@@ -192,7 +198,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var config_attribs: *mf.IAttributes = undefined;
         hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));
         defer _ = config_attribs.Release();
-        hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w32.TRUE));
+        hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, windows.TRUE));
 
         const abspath = std.fs.path.join(arena_allocator, &.{
             std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
@@ -267,8 +273,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
         pso_desc.PrimitiveTopologyType = .LINE;
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
-        pso_desc.RasterizerState.AntialiasedLineEnable = w32.TRUE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
+        pso_desc.RasterizerState.AntialiasedLineEnable = windows.TRUE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/lines.vs.cso", null));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/lines.ps.cso", null));
 
@@ -280,7 +286,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/image.vs.cso", null));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/image.ps.cso", null));
 
@@ -335,9 +341,9 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
 
     while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .acquire, .monotonic) != null) {}
-    _ = w32.TerminateThread(demo.audio.thread_handle.?, 0);
-    _ = w32.CloseHandle(demo.audio.buffer_ready_event);
-    _ = w32.CloseHandle(demo.audio.thread_handle.?);
+    _ = windows.TerminateThread(demo.audio.thread_handle.?, 0);
+    _ = windows.CloseHandle(demo.audio.buffer_ready_event);
+    _ = windows.CloseHandle(demo.audio.thread_handle.?);
     hrPanicOnFail(demo.audio.client.Stop());
     _ = demo.audio.render_client.Release();
     _ = demo.audio.client.Release();
@@ -401,7 +407,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(
@@ -449,7 +455,7 @@ pub fn main() !void {
     var demo = try init(allocator);
     defer deinit(&demo, allocator);
 
-    demo.audio.thread_handle = w32.CreateThread(
+    demo.audio.thread_handle = windows.CreateThread(
         null,
         0,
         audioThread,

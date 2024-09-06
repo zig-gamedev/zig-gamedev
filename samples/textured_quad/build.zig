@@ -21,19 +21,19 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     @import("system_sdk").addLibraryPathsTo(exe);
 
-    const zwin32 = b.dependency("zwin32", .{});
-    const zwin32_module = zwin32.module("root");
-    exe.root_module.addImport("zwin32", zwin32_module);
-
-    const zd3d12 = b.dependency("zd3d12", .{
-        .debug_layer = options.zd3d12_enable_debug_layer,
-        .gbv = options.zd3d12_enable_gbv,
+    const zwindows = b.dependency("zwindows", .{
+        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
+        .zd3d12_debug_layer = options.zd3d12_debug_layer,
+        .zd3d12_gbv = options.zd3d12_gbv,
     });
-    const zd3d12_module = zd3d12.module("root");
+    const zwindows_module = zwindows.module("zwindows");
+    const zd3d12_module = zwindows.module("zd3d12");
+
+    exe.root_module.addImport("zwindows", zwindows_module);
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
     @import("../common/build.zig").link(exe, .{
-        .zwin32 = zwin32_module,
+        .zwindows = zwindows_module,
         .zd3d12 = zd3d12_module,
     });
 
@@ -49,7 +49,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const compile_shaders = @import("zwin32").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
+        const compile_shaders = @import("zwindows").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
         const root_path = pathResolve(b, &.{ @src().file, "..", "..", ".." });
         const shaders_path = b.pathJoin(&.{ root_path, content_path, "shaders" });
 
@@ -71,7 +71,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, .bin);
 
     return exe;
 }

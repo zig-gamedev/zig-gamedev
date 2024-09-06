@@ -2,12 +2,15 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
@@ -459,7 +462,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         &.{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     // Check for DirectX Raytracing (DXR) support.
     const dxr_is_supported = blk: {
@@ -469,7 +475,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             &options5,
             @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS5),
         );
-        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == w32.S_OK;
+        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == windows.S_OK;
     };
     const dxr_draw_mode = @intFromBool(dxr_is_supported);
 
@@ -1069,14 +1075,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w32.POINT = undefined;
-        _ = w32.GetCursorPos(&pos);
+        var pos: windows.POINT = undefined;
+        _ = windows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
+        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -1096,14 +1102,14 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (w32.GetAsyncKeyState('W') < 0) {
+        if (windows.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (w32.GetAsyncKeyState('S') < 0) {
+        } else if (windows.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (w32.GetAsyncKeyState('D') < 0) {
+        if (windows.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (w32.GetAsyncKeyState('A') < 0) {
+        } else if (windows.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
@@ -1136,7 +1142,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(
@@ -1184,7 +1190,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.shadow_rays_texture_rtv},
-            w32.TRUE,
+            windows.TRUE,
             &demo.depth_texture_dsv,
         );
         gctx.cmdlist.ClearRenderTargetView(
@@ -1217,7 +1223,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-            w32.TRUE,
+            windows.TRUE,
             &demo.depth_texture_dsv,
         );
     }

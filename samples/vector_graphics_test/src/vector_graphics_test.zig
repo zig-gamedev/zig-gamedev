@@ -1,14 +1,17 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const d2d1 = zwin32.d2d1;
-const dwrite = zwin32.dwrite;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const d2d1 = zwindows.d2d1;
+const dwrite = zwindows.dwrite;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 
@@ -45,7 +48,10 @@ const DemoState = struct {
 
 fn init(allocator: std.mem.Allocator) !DemoState {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     gctx.present_flags = .{};
     gctx.present_interval = 1;
@@ -641,7 +647,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(

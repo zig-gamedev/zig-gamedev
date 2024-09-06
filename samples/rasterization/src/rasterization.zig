@@ -2,12 +2,15 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const GuiRenderer = common.GuiRenderer;
@@ -100,7 +103,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     // Enable vsync.
     gctx.present_flags = .{};
@@ -166,7 +172,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.RasterizerState.CullMode = .NONE;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
-        pso_desc.RasterizerState.AntialiasedLineEnable = w32.TRUE;
+        pso_desc.RasterizerState.AntialiasedLineEnable = windows.TRUE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.vs.cso", null));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.ps.cso", null));
 
@@ -491,14 +497,14 @@ fn update(demo: *DemoState) void {
     if (demo.draw_wireframe) {
         // Handle camera rotation with mouse.
         {
-            var pos: w32.POINT = undefined;
-            _ = w32.GetCursorPos(&pos);
+            var pos: windows.POINT = undefined;
+            _ = windows.GetCursorPos(&pos);
             const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
             const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
             demo.mouse.cursor_prev_x = pos.x;
             demo.mouse.cursor_prev_y = pos.y;
 
-            if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
+            if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
                 demo.camera.pitch += 0.0025 * delta_y;
                 demo.camera.yaw += 0.0025 * delta_x;
                 demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -521,14 +527,14 @@ fn update(demo: *DemoState) void {
 
             var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
-            if (w32.GetAsyncKeyState('W') < 0) {
+            if (windows.GetAsyncKeyState('W') < 0) {
                 cpos += forward;
-            } else if (w32.GetAsyncKeyState('S') < 0) {
+            } else if (windows.GetAsyncKeyState('S') < 0) {
                 cpos -= forward;
             }
-            if (w32.GetAsyncKeyState('D') < 0) {
+            if (windows.GetAsyncKeyState('D') < 0) {
                 cpos += right;
-            } else if (w32.GetAsyncKeyState('A') < 0) {
+            } else if (windows.GetAsyncKeyState('A') < 0) {
                 cpos -= right;
             }
 
@@ -574,7 +580,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             0,
             null,
-            w32.TRUE,
+            windows.TRUE,
             &demo.depth_texture_dsv,
         );
         gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);
@@ -604,7 +610,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{demo.pixel_texture_rtv},
-            w32.TRUE,
+            windows.TRUE,
             &demo.depth_texture_dsv,
         );
         gctx.cmdlist.ClearRenderTargetView(
@@ -662,7 +668,7 @@ fn draw(demo: *DemoState) void {
                 },
             );
 
-            gctx.cmdlist.OMSetRenderTargets(0, null, w32.TRUE, &demo.depth_texture_dsv);
+            gctx.cmdlist.OMSetRenderTargets(0, null, windows.TRUE, &demo.depth_texture_dsv);
             gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);
 
             //
@@ -753,7 +759,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         null,
     );
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
-    zwin32: *std.Build.Module,
+    zwindows: *std.Build.Module,
     zd3d12: *std.Build.Module,
 }) void {
     const b = compile_step.step.owner;
@@ -51,7 +51,7 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
     const module = b.createModule(.{
         .root_source_file = b.path("samples/common/src/common.zig"),
         .imports = &.{
-            .{ .name = "zwin32", .module = deps.zwin32 },
+            .{ .name = "zwindows", .module = deps.zwindows },
             .{ .name = "zd3d12", .module = deps.zd3d12 },
         },
     });

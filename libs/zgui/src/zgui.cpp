@@ -1616,9 +1616,24 @@ extern "C"
         return ImGui::IsMouseClicked(button);
     }
 
+    ZGUI_API bool zguiIsMouseReleased(ImGuiMouseButton button)
+    {
+        return ImGui::IsMouseReleased(button);
+    }
+
     ZGUI_API bool zguiIsMouseDoubleClicked(ImGuiMouseButton button)
     {
         return ImGui::IsMouseDoubleClicked(button);
+    }
+
+    ZGUI_API int zguiGetMouseClickedCount(ImGuiMouseButton button)
+    {
+        return ImGui::GetMouseClickedCount(button);
+    }
+
+    ZGUI_API bool zguiIsMouseDragging(ImGuiMouseButton button, float lock_threshold)
+    {
+        return ImGui::IsMouseDragging(button, lock_threshold);
     }
 
     ZGUI_API bool zguiIsItemVisible(void)

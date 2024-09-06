@@ -6,8 +6,8 @@
 
     .dependencies = .{
         .@"sdl2-prebuilt" = .{
-            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/49b2267a0fedee9d594733617255dd979da51813.tar.gz",
-            .hash = "1220930ce0d568bd606112d38c3f16a38841a5fd9de5c224f627cd953e7febb90bfa",
+            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/01ed17a8a2c85943be82fd9638212a1f1ab6f2b9.tar.gz",
+            .hash = "122028412e5d640fdf21044d4d0ac1287e1bc976e87859d2da6a716eb4fe1326f630",
             .lazy = true,
         },
     },

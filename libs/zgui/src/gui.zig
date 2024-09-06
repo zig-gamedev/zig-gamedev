@@ -3269,8 +3269,14 @@ pub const MouseButton = enum(u32) {
 pub const isMouseDown = zguiIsMouseDown;
 /// `pub fn isMouseClicked(mouse_button: MouseButton) bool`
 pub const isMouseClicked = zguiIsMouseClicked;
+/// `pub fn isMouseReleased(mouse_button: MouseButton) bool`
+pub const isMouseReleased = zguiIsMouseReleased;
 /// `pub fn isMouseDoubleClicked(mouse_button: MouseButton) bool`
 pub const isMouseDoubleClicked = zguiIsMouseDoubleClicked;
+/// `pub fn getMouseClickedCount(mouse_button: MouseButton) bool`
+pub const getMouseClickedCount = zguiGetMouseClickedCount;
+/// `pub fn isMouseDragging(mouse_button: MouseButton, lock_threshold: f32) bool`
+pub const isMouseDragging = zguiIsMouseDragging;
 /// `pub fn isItemClicked(mouse_button: MouseButton) bool`
 pub const isItemClicked = zguiIsItemClicked;
 /// `pub fn isItemVisible() bool`
@@ -3293,7 +3299,10 @@ pub const isAnyItemActive = zguiIsAnyItemActive;
 pub const isAnyItemFocused = zguiIsAnyItemFocused;
 extern fn zguiIsMouseDown(mouse_button: MouseButton) bool;
 extern fn zguiIsMouseClicked(mouse_button: MouseButton) bool;
+extern fn zguiIsMouseReleased(mouse_button: MouseButton) bool;
 extern fn zguiIsMouseDoubleClicked(mouse_button: MouseButton) bool;
+extern fn zguiGetMouseClickedCount(mouse_button: MouseButton) u32;
+extern fn zguiIsMouseDragging(mouse_button: MouseButton, lock_threshold: f32) bool;
 extern fn zguiIsItemHovered(flags: HoveredFlags) bool;
 extern fn zguiIsItemActive() bool;
 extern fn zguiIsItemFocused() bool;

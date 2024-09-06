@@ -2,10 +2,11 @@ const std = @import("std");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const dwrite = zwin32.dwrite;
-const d2d1 = zwin32.d2d1;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dwrite = zwindows.dwrite;
+const d2d1 = zwindows.d2d1;
 
 pub const GuiRenderer = @import("GuiRenderer.zig");
 pub const vectormath = @import("vectormath.zig");
@@ -41,7 +42,7 @@ pub const FrameStats = struct {
         };
     }
 
-    pub fn update(self: *FrameStats, window: w32.HWND, window_name: []const u8) void {
+    pub fn update(self: *FrameStats, window: windows.HWND, window_name: []const u8) void {
         const now_ns = self.timer.read();
         self.time = @as(f64, @floatFromInt(now_ns)) / std.time.ns_per_s;
         self.delta_time = @as(f32, @floatFromInt(now_ns - self.previous_time_ns)) / std.time.ns_per_s;
@@ -63,155 +64,155 @@ pub const FrameStats = struct {
                 "FPS: {d:.1}  CPU time: {d:.3} ms | {s}",
                 .{ self.fps, self.average_cpu_time, window_name },
             ) catch unreachable;
-            _ = w32.SetWindowTextA(window, @as([*:0]const u8, @ptrCast(text.ptr)));
+            _ = windows.SetWindowTextA(window, @as([*:0]const u8, @ptrCast(text.ptr)));
         }
         self.frame_counter += 1;
     }
 };
 
 fn processWindowMessage(
-    window: w32.HWND,
-    message: w32.UINT,
-    wparam: w32.WPARAM,
-    lparam: w32.LPARAM,
-) callconv(w32.WINAPI) w32.LRESULT {
+    window: windows.HWND,
+    message: windows.UINT,
+    wparam: windows.WPARAM,
+    lparam: windows.LPARAM,
+) callconv(windows.WINAPI) windows.LRESULT {
     assert(c.igGetCurrentContext() != null);
     const ui = c.igGetIO().?;
     const ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
     switch (message) {
-        w32.WM_LBUTTONDOWN,
-        w32.WM_RBUTTONDOWN,
-        w32.WM_MBUTTONDOWN,
-        w32.WM_LBUTTONDBLCLK,
-        w32.WM_RBUTTONDBLCLK,
-        w32.WM_MBUTTONDBLCLK,
+        windows.WM_LBUTTONDOWN,
+        windows.WM_RBUTTONDOWN,
+        windows.WM_MBUTTONDOWN,
+        windows.WM_LBUTTONDBLCLK,
+        windows.WM_RBUTTONDBLCLK,
+        windows.WM_MBUTTONDBLCLK,
         => {
             var button: u32 = 0;
-            if (message == w32.WM_LBUTTONDOWN or message == w32.WM_LBUTTONDBLCLK) button = 0;
-            if (message == w32.WM_RBUTTONDOWN or message == w32.WM_RBUTTONDBLCLK) button = 1;
-            if (message == w32.WM_MBUTTONDOWN or message == w32.WM_MBUTTONDBLCLK) button = 2;
-            if (ui_backend.*.mouse_buttons_down == 0 and w32.GetCapture() == null) {
-                _ = w32.SetCapture(window);
+            if (message == windows.WM_LBUTTONDOWN or message == windows.WM_LBUTTONDBLCLK) button = 0;
+            if (message == windows.WM_RBUTTONDOWN or message == windows.WM_RBUTTONDBLCLK) button = 1;
+            if (message == windows.WM_MBUTTONDOWN or message == windows.WM_MBUTTONDBLCLK) button = 2;
+            if (ui_backend.*.mouse_buttons_down == 0 and windows.GetCapture() == null) {
+                _ = windows.SetCapture(window);
             }
             ui_backend.*.mouse_buttons_down |= @as(u32, 1) << @as(u5, @intCast(button));
             c.ImGuiIO_AddMouseButtonEvent(ui, @as(i32, @intCast(button)), true);
         },
-        w32.WM_LBUTTONUP,
-        w32.WM_RBUTTONUP,
-        w32.WM_MBUTTONUP,
+        windows.WM_LBUTTONUP,
+        windows.WM_RBUTTONUP,
+        windows.WM_MBUTTONUP,
         => {
             var button: u32 = 0;
-            if (message == w32.WM_LBUTTONUP) button = 0;
-            if (message == w32.WM_RBUTTONUP) button = 1;
-            if (message == w32.WM_MBUTTONUP) button = 2;
+            if (message == windows.WM_LBUTTONUP) button = 0;
+            if (message == windows.WM_RBUTTONUP) button = 1;
+            if (message == windows.WM_MBUTTONUP) button = 2;
             ui_backend.*.mouse_buttons_down &= ~(@as(u32, 1) << @as(u5, @intCast(button)));
-            if (ui_backend.*.mouse_buttons_down == 0 and w32.GetCapture() == window) {
-                _ = w32.ReleaseCapture();
+            if (ui_backend.*.mouse_buttons_down == 0 and windows.GetCapture() == window) {
+                _ = windows.ReleaseCapture();
             }
             c.ImGuiIO_AddMouseButtonEvent(ui, @as(i32, @intCast(button)), false);
         },
-        w32.WM_MOUSEWHEEL => {
+        windows.WM_MOUSEWHEEL => {
             c.ImGuiIO_AddMouseWheelEvent(
                 ui,
                 0.0,
-                @as(f32, @floatFromInt(w32.GET_WHEEL_DELTA_WPARAM(wparam))) / @as(f32, @floatFromInt(w32.WHEEL_DELTA)),
+                @as(f32, @floatFromInt(windows.GET_WHEEL_DELTA_WPARAM(wparam))) / @as(f32, @floatFromInt(windows.WHEEL_DELTA)),
             );
         },
-        w32.WM_MOUSEMOVE => {
+        windows.WM_MOUSEMOVE => {
             ui_backend.*.mouse_window = window;
             if (ui_backend.*.mouse_tracked == false) {
-                var tme = w32.TRACKMOUSEEVENT{
-                    .cbSize = @sizeOf(w32.TRACKMOUSEEVENT),
-                    .dwFlags = w32.TME_LEAVE,
+                var tme = windows.TRACKMOUSEEVENT{
+                    .cbSize = @sizeOf(windows.TRACKMOUSEEVENT),
+                    .dwFlags = windows.TME_LEAVE,
                     .hwndTrack = window,
                     .dwHoverTime = 0,
                 };
-                _ = w32.TrackMouseEvent(&tme);
+                _ = windows.TrackMouseEvent(&tme);
                 ui_backend.*.mouse_tracked = true;
             }
             c.ImGuiIO_AddMousePosEvent(
                 ui,
-                @as(f32, @floatFromInt(w32.GET_X_LPARAM(lparam))),
-                @as(f32, @floatFromInt(w32.GET_Y_LPARAM(lparam))),
+                @as(f32, @floatFromInt(windows.GET_X_LPARAM(lparam))),
+                @as(f32, @floatFromInt(windows.GET_Y_LPARAM(lparam))),
             );
         },
-        w32.WM_MOUSELEAVE => {
+        windows.WM_MOUSELEAVE => {
             if (ui_backend.*.mouse_window == window) {
                 ui_backend.*.mouse_window = null;
             }
             ui_backend.*.mouse_tracked = false;
             c.ImGuiIO_AddMousePosEvent(ui, -c.igGET_FLT_MAX(), -c.igGET_FLT_MAX());
         },
-        w32.WM_KEYDOWN,
-        w32.WM_KEYUP,
-        w32.WM_SYSKEYDOWN,
-        w32.WM_SYSKEYUP,
+        windows.WM_KEYDOWN,
+        windows.WM_KEYUP,
+        windows.WM_SYSKEYDOWN,
+        windows.WM_SYSKEYUP,
         => {
-            if (wparam == w32.VK_ESCAPE) {
-                w32.PostQuitMessage(0);
+            if (wparam == windows.VK_ESCAPE) {
+                windows.PostQuitMessage(0);
             }
-            const down = if (message == w32.WM_KEYDOWN or message == w32.WM_SYSKEYDOWN) true else false;
+            const down = if (message == windows.WM_KEYDOWN or message == windows.WM_SYSKEYDOWN) true else false;
             if (wparam < 256) {
-                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModCtrl, isVkKeyDown(w32.VK_CONTROL));
-                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModShift, isVkKeyDown(w32.VK_SHIFT));
-                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModAlt, isVkKeyDown(w32.VK_MENU));
-                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModSuper, isVkKeyDown(w32.VK_APPS));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModCtrl, isVkKeyDown(windows.VK_CONTROL));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModShift, isVkKeyDown(windows.VK_SHIFT));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModAlt, isVkKeyDown(windows.VK_MENU));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModSuper, isVkKeyDown(windows.VK_APPS));
 
                 var vk = @as(i32, @intCast(wparam));
-                if (wparam == w32.VK_RETURN and (((lparam >> 16) & 0xffff) & w32.KF_EXTENDED) != 0) {
-                    vk = w32.IM_VK_KEYPAD_ENTER;
+                if (wparam == windows.VK_RETURN and (((lparam >> 16) & 0xffff) & windows.KF_EXTENDED) != 0) {
+                    vk = windows.IM_VK_KEYPAD_ENTER;
                 }
                 const key = vkKeyToImGuiKey(wparam);
 
                 if (key != c.ImGuiKey_None)
                     c.ImGuiIO_AddKeyEvent(ui, key, down);
 
-                if (vk == w32.VK_SHIFT) {
-                    if (isVkKeyDown(w32.VK_LSHIFT) == down)
+                if (vk == windows.VK_SHIFT) {
+                    if (isVkKeyDown(windows.VK_LSHIFT) == down)
                         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftShift, down);
-                    if (isVkKeyDown(w32.VK_RSHIFT) == down)
+                    if (isVkKeyDown(windows.VK_RSHIFT) == down)
                         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightShift, down);
-                } else if (vk == w32.VK_CONTROL) {
-                    if (isVkKeyDown(w32.VK_LCONTROL) == down)
+                } else if (vk == windows.VK_CONTROL) {
+                    if (isVkKeyDown(windows.VK_LCONTROL) == down)
                         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftCtrl, down);
-                    if (isVkKeyDown(w32.VK_RCONTROL) == down)
+                    if (isVkKeyDown(windows.VK_RCONTROL) == down)
                         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightCtrl, down);
-                } else if (vk == w32.VK_MENU) {
-                    if (isVkKeyDown(w32.VK_LMENU) == down)
+                } else if (vk == windows.VK_MENU) {
+                    if (isVkKeyDown(windows.VK_LMENU) == down)
                         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftAlt, down);
-                    if (isVkKeyDown(w32.VK_RMENU) == down)
+                    if (isVkKeyDown(windows.VK_RMENU) == down)
                         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightAlt, down);
                 }
             }
         },
-        w32.WM_SETFOCUS,
-        w32.WM_KILLFOCUS,
+        windows.WM_SETFOCUS,
+        windows.WM_KILLFOCUS,
         => {
-            c.ImGuiIO_AddFocusEvent(ui, if (message == w32.WM_SETFOCUS) true else false);
+            c.ImGuiIO_AddFocusEvent(ui, if (message == windows.WM_SETFOCUS) true else false);
         },
-        w32.WM_CHAR => {
+        windows.WM_CHAR => {
             if (wparam > 0 and wparam < 0x10000) {
                 c.ImGuiIO_AddInputCharacterUTF16(ui, @as(u16, @intCast(wparam & 0xffff)));
             }
         },
-        w32.WM_DESTROY => {
-            w32.PostQuitMessage(0);
+        windows.WM_DESTROY => {
+            windows.PostQuitMessage(0);
         },
         else => {
-            return w32.DefWindowProcA(window, message, wparam, lparam);
+            return windows.DefWindowProcA(window, message, wparam, lparam);
         },
     }
     return 0;
 }
 
 const GuiBackendState = struct {
-    window: ?w32.HWND,
-    mouse_window: ?w32.HWND,
+    window: ?windows.HWND,
+    mouse_window: ?windows.HWND,
     mouse_tracked: bool,
     mouse_buttons_down: u32,
 };
 
-pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32, height: u32) !w32.HWND {
+pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32, height: u32) !windows.HWND {
     assert(c.igGetCurrentContext() == null);
     _ = c.igCreateContext(null);
 
@@ -230,38 +231,38 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
     ui.*.BackendPlatformUserData = ui_backend;
     ui.*.BackendFlags |= c.ImGuiBackendFlags_RendererHasVtxOffset;
 
-    const winclass = w32.WNDCLASSEXA{
+    const winclass = windows.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @as(w32.HINSTANCE, @ptrCast(w32.GetModuleHandleA(null))),
+        .hInstance = @as(windows.HINSTANCE, @ptrCast(windows.GetModuleHandleA(null))),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @as(w32.LPCSTR, @ptrFromInt(32512))),
+        .hCursor = windows.LoadCursorA(null, @as(windows.LPCSTR, @ptrFromInt(32512))),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = name,
         .hIconSm = null,
     };
-    _ = w32.RegisterClassExA(&winclass);
+    _ = windows.RegisterClassExA(&winclass);
 
-    const style = w32.WS_OVERLAPPED +
-        w32.WS_SYSMENU +
-        w32.WS_CAPTION +
-        w32.WS_MINIMIZEBOX;
+    const style = windows.WS_OVERLAPPED +
+        windows.WS_SYSMENU +
+        windows.WS_CAPTION +
+        windows.WS_MINIMIZEBOX;
 
-    var rect = w32.RECT{ .left = 0, .top = 0, .right = @as(i32, @intCast(width)), .bottom = @as(i32, @intCast(height)) };
+    var rect = windows.RECT{ .left = 0, .top = 0, .right = @as(i32, @intCast(width)), .bottom = @as(i32, @intCast(height)) };
     // HACK(mziulek): For exact FullHD window size it is better to stick to requested total window size
     // (looks better on 1920x1080 displays).
     if (width != 1920 and height != 1080) {
-        _ = w32.AdjustWindowRectEx(&rect, style, w32.FALSE, 0);
+        _ = windows.AdjustWindowRectEx(&rect, style, windows.FALSE, 0);
     }
 
-    const window = w32.CreateWindowExA(
+    const window = windows.CreateWindowExA(
         0,
         name,
         name,
-        style + w32.WS_VISIBLE,
+        style + windows.WS_VISIBLE,
         -1,
         -1,
         rect.right - rect.left,
@@ -286,11 +287,11 @@ pub fn deinitWindow(allocator: std.mem.Allocator) void {
 }
 
 pub fn handleWindowEvents() bool {
-    var message = std.mem.zeroes(w32.MSG);
-    while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
-        _ = w32.TranslateMessage(&message);
-        _ = w32.DispatchMessageA(&message);
-        if (message.message == w32.WM_QUIT) {
+    var message = std.mem.zeroes(windows.MSG);
+    while (windows.PeekMessageA(&message, null, 0, 0, windows.PM_REMOVE) == windows.TRUE) {
+        _ = windows.TranslateMessage(&message);
+        _ = windows.DispatchMessageA(&message);
+        if (message.message == windows.WM_QUIT) {
             return false;
         }
     }
@@ -298,67 +299,67 @@ pub fn handleWindowEvents() bool {
 }
 
 fn isVkKeyDown(vk: c_int) bool {
-    return (@as(u16, @bitCast(w32.GetKeyState(vk))) & 0x8000) != 0;
+    return (@as(u16, @bitCast(windows.GetKeyState(vk))) & 0x8000) != 0;
 }
 
-fn vkKeyToImGuiKey(wparam: w32.WPARAM) c.ImGuiKey {
+fn vkKeyToImGuiKey(wparam: windows.WPARAM) c.ImGuiKey {
     switch (wparam) {
-        w32.VK_TAB => return c.ImGuiKey_Tab,
-        w32.VK_LEFT => return c.ImGuiKey_LeftArrow,
-        w32.VK_RIGHT => return c.ImGuiKey_RightArrow,
-        w32.VK_UP => return c.ImGuiKey_UpArrow,
-        w32.VK_DOWN => return c.ImGuiKey_DownArrow,
-        w32.VK_PRIOR => return c.ImGuiKey_PageUp,
-        w32.VK_NEXT => return c.ImGuiKey_PageDown,
-        w32.VK_HOME => return c.ImGuiKey_Home,
-        w32.VK_END => return c.ImGuiKey_End,
-        w32.VK_INSERT => return c.ImGuiKey_Insert,
-        w32.VK_DELETE => return c.ImGuiKey_Delete,
-        w32.VK_BACK => return c.ImGuiKey_Backspace,
-        w32.VK_SPACE => return c.ImGuiKey_Space,
-        w32.VK_RETURN => return c.ImGuiKey_Enter,
-        w32.VK_ESCAPE => return c.ImGuiKey_Escape,
-        w32.VK_OEM_7 => return c.ImGuiKey_Apostrophe,
-        w32.VK_OEM_COMMA => return c.ImGuiKey_Comma,
-        w32.VK_OEM_MINUS => return c.ImGuiKey_Minus,
-        w32.VK_OEM_PERIOD => return c.ImGuiKey_Period,
-        w32.VK_OEM_2 => return c.ImGuiKey_Slash,
-        w32.VK_OEM_1 => return c.ImGuiKey_Semicolon,
-        w32.VK_OEM_PLUS => return c.ImGuiKey_Equal,
-        w32.VK_OEM_4 => return c.ImGuiKey_LeftBracket,
-        w32.VK_OEM_5 => return c.ImGuiKey_Backslash,
-        w32.VK_OEM_6 => return c.ImGuiKey_RightBracket,
-        w32.VK_OEM_3 => return c.ImGuiKey_GraveAccent,
-        w32.VK_CAPITAL => return c.ImGuiKey_CapsLock,
-        w32.VK_SCROLL => return c.ImGuiKey_ScrollLock,
-        w32.VK_NUMLOCK => return c.ImGuiKey_NumLock,
-        w32.VK_SNAPSHOT => return c.ImGuiKey_PrintScreen,
-        w32.VK_PAUSE => return c.ImGuiKey_Pause,
-        w32.VK_NUMPAD0 => return c.ImGuiKey_Keypad0,
-        w32.VK_NUMPAD1 => return c.ImGuiKey_Keypad1,
-        w32.VK_NUMPAD2 => return c.ImGuiKey_Keypad2,
-        w32.VK_NUMPAD3 => return c.ImGuiKey_Keypad3,
-        w32.VK_NUMPAD4 => return c.ImGuiKey_Keypad4,
-        w32.VK_NUMPAD5 => return c.ImGuiKey_Keypad5,
-        w32.VK_NUMPAD6 => return c.ImGuiKey_Keypad6,
-        w32.VK_NUMPAD7 => return c.ImGuiKey_Keypad7,
-        w32.VK_NUMPAD8 => return c.ImGuiKey_Keypad8,
-        w32.VK_NUMPAD9 => return c.ImGuiKey_Keypad9,
-        w32.VK_DECIMAL => return c.ImGuiKey_KeypadDecimal,
-        w32.VK_DIVIDE => return c.ImGuiKey_KeypadDivide,
-        w32.VK_MULTIPLY => return c.ImGuiKey_KeypadMultiply,
-        w32.VK_SUBTRACT => return c.ImGuiKey_KeypadSubtract,
-        w32.VK_ADD => return c.ImGuiKey_KeypadAdd,
-        w32.IM_VK_KEYPAD_ENTER => return c.ImGuiKey_KeypadEnter,
-        w32.VK_LSHIFT => return c.ImGuiKey_LeftShift,
-        w32.VK_LCONTROL => return c.ImGuiKey_LeftCtrl,
-        w32.VK_LMENU => return c.ImGuiKey_LeftAlt,
-        w32.VK_LWIN => return c.ImGuiKey_LeftSuper,
-        w32.VK_RSHIFT => return c.ImGuiKey_RightShift,
-        w32.VK_RCONTROL => return c.ImGuiKey_RightCtrl,
-        w32.VK_RMENU => return c.ImGuiKey_RightAlt,
-        w32.VK_RWIN => return c.ImGuiKey_RightSuper,
-        w32.VK_APPS => return c.ImGuiKey_Menu,
+        windows.VK_TAB => return c.ImGuiKey_Tab,
+        windows.VK_LEFT => return c.ImGuiKey_LeftArrow,
+        windows.VK_RIGHT => return c.ImGuiKey_RightArrow,
+        windows.VK_UP => return c.ImGuiKey_UpArrow,
+        windows.VK_DOWN => return c.ImGuiKey_DownArrow,
+        windows.VK_PRIOR => return c.ImGuiKey_PageUp,
+        windows.VK_NEXT => return c.ImGuiKey_PageDown,
+        windows.VK_HOME => return c.ImGuiKey_Home,
+        windows.VK_END => return c.ImGuiKey_End,
+        windows.VK_INSERT => return c.ImGuiKey_Insert,
+        windows.VK_DELETE => return c.ImGuiKey_Delete,
+        windows.VK_BACK => return c.ImGuiKey_Backspace,
+        windows.VK_SPACE => return c.ImGuiKey_Space,
+        windows.VK_RETURN => return c.ImGuiKey_Enter,
+        windows.VK_ESCAPE => return c.ImGuiKey_Escape,
+        windows.VK_OEM_7 => return c.ImGuiKey_Apostrophe,
+        windows.VK_OEM_COMMA => return c.ImGuiKey_Comma,
+        windows.VK_OEM_MINUS => return c.ImGuiKey_Minus,
+        windows.VK_OEM_PERIOD => return c.ImGuiKey_Period,
+        windows.VK_OEM_2 => return c.ImGuiKey_Slash,
+        windows.VK_OEM_1 => return c.ImGuiKey_Semicolon,
+        windows.VK_OEM_PLUS => return c.ImGuiKey_Equal,
+        windows.VK_OEM_4 => return c.ImGuiKey_LeftBracket,
+        windows.VK_OEM_5 => return c.ImGuiKey_Backslash,
+        windows.VK_OEM_6 => return c.ImGuiKey_RightBracket,
+        windows.VK_OEM_3 => return c.ImGuiKey_GraveAccent,
+        windows.VK_CAPITAL => return c.ImGuiKey_CapsLock,
+        windows.VK_SCROLL => return c.ImGuiKey_ScrollLock,
+        windows.VK_NUMLOCK => return c.ImGuiKey_NumLock,
+        windows.VK_SNAPSHOT => return c.ImGuiKey_PrintScreen,
+        windows.VK_PAUSE => return c.ImGuiKey_Pause,
+        windows.VK_NUMPAD0 => return c.ImGuiKey_Keypad0,
+        windows.VK_NUMPAD1 => return c.ImGuiKey_Keypad1,
+        windows.VK_NUMPAD2 => return c.ImGuiKey_Keypad2,
+        windows.VK_NUMPAD3 => return c.ImGuiKey_Keypad3,
+        windows.VK_NUMPAD4 => return c.ImGuiKey_Keypad4,
+        windows.VK_NUMPAD5 => return c.ImGuiKey_Keypad5,
+        windows.VK_NUMPAD6 => return c.ImGuiKey_Keypad6,
+        windows.VK_NUMPAD7 => return c.ImGuiKey_Keypad7,
+        windows.VK_NUMPAD8 => return c.ImGuiKey_Keypad8,
+        windows.VK_NUMPAD9 => return c.ImGuiKey_Keypad9,
+        windows.VK_DECIMAL => return c.ImGuiKey_KeypadDecimal,
+        windows.VK_DIVIDE => return c.ImGuiKey_KeypadDivide,
+        windows.VK_MULTIPLY => return c.ImGuiKey_KeypadMultiply,
+        windows.VK_SUBTRACT => return c.ImGuiKey_KeypadSubtract,
+        windows.VK_ADD => return c.ImGuiKey_KeypadAdd,
+        windows.IM_VK_KEYPAD_ENTER => return c.ImGuiKey_KeypadEnter,
+        windows.VK_LSHIFT => return c.ImGuiKey_LeftShift,
+        windows.VK_LCONTROL => return c.ImGuiKey_LeftCtrl,
+        windows.VK_LMENU => return c.ImGuiKey_LeftAlt,
+        windows.VK_LWIN => return c.ImGuiKey_LeftSuper,
+        windows.VK_RSHIFT => return c.ImGuiKey_RightShift,
+        windows.VK_RCONTROL => return c.ImGuiKey_RightCtrl,
+        windows.VK_RMENU => return c.ImGuiKey_RightAlt,
+        windows.VK_RWIN => return c.ImGuiKey_RightSuper,
+        windows.VK_APPS => return c.ImGuiKey_Menu,
         '0' => return c.ImGuiKey_0,
         '1' => return c.ImGuiKey_1,
         '2' => return c.ImGuiKey_2,
@@ -395,18 +396,18 @@ fn vkKeyToImGuiKey(wparam: w32.WPARAM) c.ImGuiKey {
         'X' => return c.ImGuiKey_X,
         'Y' => return c.ImGuiKey_Y,
         'Z' => return c.ImGuiKey_Z,
-        w32.VK_F1 => return c.ImGuiKey_F1,
-        w32.VK_F2 => return c.ImGuiKey_F2,
-        w32.VK_F3 => return c.ImGuiKey_F3,
-        w32.VK_F4 => return c.ImGuiKey_F4,
-        w32.VK_F5 => return c.ImGuiKey_F5,
-        w32.VK_F6 => return c.ImGuiKey_F6,
-        w32.VK_F7 => return c.ImGuiKey_F7,
-        w32.VK_F8 => return c.ImGuiKey_F8,
-        w32.VK_F9 => return c.ImGuiKey_F9,
-        w32.VK_F10 => return c.ImGuiKey_F10,
-        w32.VK_F11 => return c.ImGuiKey_F11,
-        w32.VK_F12 => return c.ImGuiKey_F12,
+        windows.VK_F1 => return c.ImGuiKey_F1,
+        windows.VK_F2 => return c.ImGuiKey_F2,
+        windows.VK_F3 => return c.ImGuiKey_F3,
+        windows.VK_F4 => return c.ImGuiKey_F4,
+        windows.VK_F5 => return c.ImGuiKey_F5,
+        windows.VK_F6 => return c.ImGuiKey_F6,
+        windows.VK_F7 => return c.ImGuiKey_F7,
+        windows.VK_F8 => return c.ImGuiKey_F8,
+        windows.VK_F9 => return c.ImGuiKey_F9,
+        windows.VK_F10 => return c.ImGuiKey_F10,
+        windows.VK_F11 => return c.ImGuiKey_F11,
+        windows.VK_F12 => return c.ImGuiKey_F12,
         else => return c.ImGuiKey_None,
     }
 }
@@ -418,8 +419,8 @@ pub fn newImGuiFrame(delta_time: f32) void {
     const ui_backend = @as(*GuiBackendState, @ptrCast(@alignCast(ui.*.BackendPlatformUserData)));
     assert(ui_backend.*.window != null);
 
-    var rect: w32.RECT = undefined;
-    _ = w32.GetClientRect(ui_backend.*.window.?, &rect);
+    var rect: windows.RECT = undefined;
+    _ = windows.GetClientRect(ui_backend.*.window.?, &rect);
     const viewport_width = @as(f32, @floatFromInt(rect.right - rect.left));
     const viewport_height = @as(f32, @floatFromInt(rect.bottom - rect.top));
 
@@ -427,17 +428,17 @@ pub fn newImGuiFrame(delta_time: f32) void {
     ui.*.DeltaTime = delta_time;
     c.igNewFrame();
 
-    if (c.igIsKeyDown(c.ImGuiKey_LeftShift) and !isVkKeyDown(w32.VK_LSHIFT)) {
+    if (c.igIsKeyDown(c.ImGuiKey_LeftShift) and !isVkKeyDown(windows.VK_LSHIFT)) {
         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftShift, false);
     }
-    if (c.igIsKeyDown(c.ImGuiKey_RightShift) and !isVkKeyDown(w32.VK_RSHIFT)) {
+    if (c.igIsKeyDown(c.ImGuiKey_RightShift) and !isVkKeyDown(windows.VK_RSHIFT)) {
         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightShift, false);
     }
 
-    if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(w32.VK_LWIN)) {
+    if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(windows.VK_LWIN)) {
         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftSuper, false);
     }
-    if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(w32.VK_RWIN)) {
+    if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(windows.VK_RWIN)) {
         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightSuper, false);
     }
 }
@@ -477,13 +478,13 @@ pub fn readContentDirFileAlloc(allocator: std.mem.Allocator, content_dir: []cons
 }
 
 pub fn init() void {
-    _ = w32.CoInitializeEx(null, w32.COINIT_APARTMENTTHREADED | w32.COINIT_DISABLE_OLE1DDE);
-    _ = w32.SetProcessDPIAware();
+    _ = windows.CoInitializeEx(null, windows.COINIT_APARTMENTTHREADED | windows.COINIT_DISABLE_OLE1DDE);
+    _ = windows.SetProcessDPIAware();
 
     if (false and @import("builtin").target.os.tag == .windows) {
         // Check if Windows version is supported.
-        var version: w32.OSVERSIONINFOW = undefined;
-        _ = w32.RtlGetVersion(&version);
+        var version: windows.OSVERSIONINFOW = undefined;
+        _ = windows.RtlGetVersion(&version);
 
         var os_is_supported = false;
         if (version.dwMajorVersion > 10) {
@@ -492,15 +493,15 @@ pub fn init() void {
             os_is_supported = true;
         }
 
-        const d3d12core_dll = w32.LoadLibraryA("D3D12Core.dll");
+        const d3d12core_dll = windows.LoadLibraryA("D3D12Core.dll");
         if (d3d12core_dll == null) {
             os_is_supported = false;
         } else {
-            _ = w32.FreeLibrary(d3d12core_dll.?);
+            _ = windows.FreeLibrary(d3d12core_dll.?);
         }
 
         if (!os_is_supported) {
-            _ = w32.MessageBoxA(
+            _ = windows.MessageBoxA(
                 null,
                 \\This application can't run on currently installed version of Windows.
                 \\Following versions are supported:
@@ -513,28 +514,28 @@ pub fn init() void {
                 \\Please update your Windows version and try again.
             ,
                 "Error",
-                w32.MB_OK | w32.MB_ICONERROR,
+                windows.MB_OK | windows.MB_ICONERROR,
             );
-            w32.ExitProcess(0);
+            windows.ExitProcess(0);
         }
 
         // Check if 'd3d12' folder is present next to an executable.
-        const local_d3d12core_dll = w32.LoadLibraryA("d3d12/D3D12Core.dll");
+        const local_d3d12core_dll = windows.LoadLibraryA("d3d12/D3D12Core.dll");
         if (local_d3d12core_dll == null) {
-            _ = w32.MessageBoxA(
+            _ = windows.MessageBoxA(
                 null,
                 \\Looks like 'd3d12' folder is missing. It has to be distributed together with an application.
             ,
                 "Error",
-                w32.MB_OK | w32.MB_ICONERROR,
+                windows.MB_OK | windows.MB_ICONERROR,
             );
-            w32.ExitProcess(0);
+            windows.ExitProcess(0);
         } else {
-            _ = w32.FreeLibrary(local_d3d12core_dll.?);
+            _ = windows.FreeLibrary(local_d3d12core_dll.?);
         }
     }
 }
 
 pub fn deinit() void {
-    w32.CoUninitialize();
+    windows.CoUninitialize();
 }
