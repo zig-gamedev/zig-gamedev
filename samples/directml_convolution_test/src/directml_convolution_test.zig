@@ -2,13 +2,16 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const dml = zwin32.directml;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const dml = zwindows.directml;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
@@ -87,14 +90,17 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     const draw_texture_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_texture.vs.cso", null));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_texture.ps.cso", null));
 
@@ -115,7 +121,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @as(*d3d12.IDevice, @ptrCast(gctx.device)),
-        .{ .DEBUG = build_options.zd3d12_enable_debug_layer },
+        .{ .DEBUG = build_options.zd3d12_debug_layer },
         .@"4_1",
         &dml.IID_IDevice1,
         @as(*?*anyopaque, @ptrCast(&dml_device)),
@@ -156,7 +162,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .Sizes = &.{ 1, 1, 3, 3 },
             .Strides = null,
             .TotalTensorSizeInBytes = std.mem.alignForward(
-                w32.UINT64,
+                windows.UINT64,
                 filter_tensor.len * filter_tensor.len * @sizeOf(f16),
                 32,
             ),
@@ -274,7 +280,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .{},
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
-                std.mem.alignForward(w32.UINT64, filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+                std.mem.alignForward(windows.UINT64, filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
             );
             desc.Flags = .{ .ALLOW_UNORDERED_ACCESS = true };
             break :blk desc;
@@ -593,7 +599,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(

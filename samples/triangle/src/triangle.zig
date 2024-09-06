@@ -1,11 +1,14 @@
 const std = @import("std");
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
 const zpix = @import("zpix");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
@@ -39,7 +42,10 @@ pub fn main() !void {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
     defer common.deinitWindow(allocator);
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     const pipeline = blk: {
@@ -47,7 +53,7 @@ pub fn main() !void {
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         };
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.InputLayout = .{
             .pInputElementDescs = &input_layout_desc,
             .NumElements = input_layout_desc.len,
@@ -143,7 +149,7 @@ pub fn main() !void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            w32.TRUE,
+            windows.TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(

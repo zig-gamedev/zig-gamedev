@@ -1,9 +1,11 @@
 const std = @import("std");
 const glfw = @import("zglfw");
-const zwin32 = @import("zwin32");
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+
 const zd3d12 = @import("zd3d12");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -32,7 +34,10 @@ pub fn main() !void {
     defer glfw_window.destroy();
 
     const window = glfw.getWin32Window(glfw_window) orelse return error.FailedToGetWin32Window;
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     const pipeline = pipeline: {
@@ -41,7 +46,7 @@ pub fn main() !void {
         const arena_allocator = arena_allocator_state.allocator();
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         });
@@ -103,7 +108,7 @@ pub fn main() !void {
             gctx.cmdlist.OMSetRenderTargets(
                 1,
                 &.{back_buffer.descriptor_handle},
-                w32.TRUE,
+                windows.TRUE,
                 null,
             );
             gctx.cmdlist.ClearRenderTargetView(

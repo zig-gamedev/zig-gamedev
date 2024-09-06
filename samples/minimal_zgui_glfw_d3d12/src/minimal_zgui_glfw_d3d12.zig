@@ -1,11 +1,13 @@
 const std = @import("std");
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
-const zwin32 = @import("zwin32");
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const dxgi = zwindows.dxgi;
+
 const zd3d12 = @import("zd3d12");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const dxgi = zwin32.dxgi;
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -38,7 +40,10 @@ pub fn main() !void {
     defer zgui.deinit();
 
     const window = glfw.getWin32Window(glfw_window) orelse return error.FailedToGetWin32Window;
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     const scale_factor = scale_factor: {
@@ -97,7 +102,7 @@ pub fn main() !void {
             gctx.cmdlist.OMSetRenderTargets(
                 1,
                 &.{back_buffer.descriptor_handle},
-                w32.TRUE,
+                windows.TRUE,
                 null,
             );
             gctx.cmdlist.ClearRenderTargetView(

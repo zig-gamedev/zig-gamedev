@@ -2,18 +2,22 @@ const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d = zwin32.d3d;
-const d3d12 = zwin32.d3d12;
-const wasapi = zwin32.wasapi;
-const hrPanic = zwin32.hrPanic;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d = zwindows.d3d;
+const d3d12 = zwindows.d3d12;
+const wasapi = zwindows.wasapi;
+const hrPanic = zwindows.hrPanic;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
+
 const zmesh = @import("zmesh");
 const zstbi = @import("zstbi");
 
@@ -290,7 +294,7 @@ fn drawToCubeTexture(
 
         gctx.addTransitionBarrier(dest_texture, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
-        gctx.cmdlist.OMSetRenderTargets(1, &.{cube_face_rtv}, w32.TRUE, null);
+        gctx.cmdlist.OMSetRenderTargets(1, &.{cube_face_rtv}, windows.TRUE, null);
         gctx.deallocateAllTempCpuDescriptors(.RTV);
 
         const mem = gctx.allocateUploadMemory(Mat4, 1);
@@ -307,7 +311,10 @@ fn drawToCubeTexture(
 
 fn init(allocator: std.mem.Allocator) !DemoState {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
 
     // V-Sync
     gctx.present_flags = .{};
@@ -378,7 +385,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         };
         pso_desc.RTVFormats[0] = .R16G16B16A16_FLOAT;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
         pso_desc.RasterizerState.CullMode = .FRONT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
@@ -941,14 +948,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w32.POINT = undefined;
-        _ = w32.GetCursorPos(&pos);
+        var pos: windows.POINT = undefined;
+        _ = windows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
+        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -968,14 +975,14 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (w32.GetAsyncKeyState('W') < 0) {
+        if (windows.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (w32.GetAsyncKeyState('S') < 0) {
+        } else if (windows.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (w32.GetAsyncKeyState('D') < 0) {
+        if (windows.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (w32.GetAsyncKeyState('A') < 0) {
+        } else if (windows.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
@@ -1006,7 +1013,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        w32.TRUE,
+        windows.TRUE,
         &demo.depth_texture.view,
     );
     gctx.cmdlist.ClearRenderTargetView(

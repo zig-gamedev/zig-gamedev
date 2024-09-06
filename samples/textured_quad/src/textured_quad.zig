@@ -1,12 +1,15 @@
 const std = @import("std");
 const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const d3d12 = zwin32.d3d12;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
-const hrPanic = zwin32.hrPanic;
+
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const d3d12 = zwindows.d3d12;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
+const hrPanic = zwindows.hrPanic;
+
 const zd3d12 = @import("zd3d12");
+
 const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
@@ -33,7 +36,7 @@ const DemoState = struct {
     const window_width = 1024;
     const window_height = 1024;
 
-    window: w32.HWND,
+    window: windows.HWND,
     gctx: zd3d12.GraphicsContext,
     guir: GuiRenderer,
     frame_stats: common.FrameStats,
@@ -46,7 +49,10 @@ const DemoState = struct {
 
     fn init(allocator: std.mem.Allocator) !DemoState {
         const window = try common.initWindow(allocator, window_name, window_width, window_height);
-        var gctx = zd3d12.GraphicsContext.init(allocator, window);
+        var gctx = zd3d12.GraphicsContext.init(.{
+            .allocator = allocator,
+            .window = window,
+        });
 
         var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
         defer arena_allocator_state.deinit();
@@ -62,7 +68,7 @@ const DemoState = struct {
             pso_desc.NumRenderTargets = 1;
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
             pso_desc.RasterizerState.CullMode = .NONE;
-            pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+            pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
@@ -233,7 +239,7 @@ const DemoState = struct {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            w32.TRUE,
+            windows.TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(

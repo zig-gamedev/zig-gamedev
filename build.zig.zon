@@ -15,7 +15,6 @@
         .system_sdk = .{ .path = "libs/system-sdk" },
         .zaudio = .{ .path = "libs/zaudio" },
         .zbullet = .{ .path = "libs/zbullet" },
-        .zd3d12 = .{ .path = "libs/zd3d12" },
         .zflecs = .{ .path = "libs/zflecs" },
         .zglfw = .{ .path = "libs/zglfw" },
         .zgui = .{ .path = "libs/zgui" },
@@ -30,8 +29,7 @@
         .zpool = .{ .path = "libs/zpool" },
         .zstbi = .{ .path = "libs/zstbi" },
         .ztracy = .{ .path = "libs/ztracy" },
-        .zwin32 = .{ .path = "libs/zwin32" },
-        .zxaudio2 = .{ .path = "libs/zxaudio2" },
+        .zwindows = .{ .path = "libs/zwindows" },
 
         .zemscripten = .{ .path = "libs/zemscripten" },
         .emsdk = .{

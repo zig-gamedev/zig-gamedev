@@ -1,10 +1,10 @@
 const std = @import("std");
 
-const zwin32 = @import("zwin32");
-const w32 = zwin32.w32;
-const dxgi = zwin32.dxgi;
-const d3d12 = zwin32.d3d12;
-const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zwindows = @import("zwindows");
+const windows = zwindows.windows;
+const dxgi = zwindows.dxgi;
+const d3d12 = zwindows.d3d12;
+const hrPanicOnFail = zwindows.hrPanicOnFail;
 
 const zgui = @import("zgui");
 
@@ -24,10 +24,10 @@ pub fn main() !void {
         std.posix.chdir(path) catch {};
     }
 
-    _ = w32.CoInitializeEx(null, w32.COINIT_MULTITHREADED);
-    defer w32.CoUninitialize();
+    _ = windows.CoInitializeEx(null, windows.COINIT_MULTITHREADED);
+    defer windows.CoUninitialize();
 
-    _ = w32.SetProcessDPIAware();
+    _ = windows.SetProcessDPIAware();
 
     var gpa_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa_state.deinit();
@@ -35,7 +35,10 @@ pub fn main() !void {
 
     const window = createWindow(1600, 1200);
 
-    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(.{
+        .allocator = allocator,
+        .window = window,
+    });
     defer gctx.deinit(allocator);
 
     zgui.init(allocator);
@@ -59,11 +62,11 @@ pub fn main() !void {
     defer zgui.backend.deinit();
 
     mainLoop: while (true) {
-        var message = std.mem.zeroes(w32.MSG);
-        while (w32.PeekMessageA(&message, null, 0, 0, w32.PM_REMOVE) == w32.TRUE) {
-            _ = w32.TranslateMessage(&message);
-            _ = w32.DispatchMessageA(&message);
-            if (message.message == w32.WM_QUIT) {
+        var message = std.mem.zeroes(windows.MSG);
+        while (windows.PeekMessageA(&message, null, 0, 0, windows.PM_REMOVE) == windows.TRUE) {
+            _ = windows.TranslateMessage(&message);
+            _ = windows.DispatchMessageA(&message);
+            if (message.message == windows.WM_QUIT) {
                 break :mainLoop;
             }
         }
@@ -77,7 +80,7 @@ pub fn main() !void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            w32.TRUE,
+            windows.TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(back_buffer.descriptor_handle, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
@@ -104,66 +107,66 @@ pub fn main() !void {
 }
 
 fn processWindowMessage(
-    window: w32.HWND,
-    message: w32.UINT,
-    wparam: w32.WPARAM,
-    lparam: w32.LPARAM,
-) callconv(w32.WINAPI) w32.LRESULT {
+    window: windows.HWND,
+    message: windows.UINT,
+    wparam: windows.WPARAM,
+    lparam: windows.LPARAM,
+) callconv(windows.WINAPI) windows.LRESULT {
     switch (message) {
-        w32.WM_KEYDOWN => {
-            if (wparam == w32.VK_ESCAPE) {
-                w32.PostQuitMessage(0);
+        windows.WM_KEYDOWN => {
+            if (wparam == windows.VK_ESCAPE) {
+                windows.PostQuitMessage(0);
                 return 0;
             }
         },
-        w32.WM_GETMINMAXINFO => {
-            var info: *w32.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
+        windows.WM_GETMINMAXINFO => {
+            var info: *windows.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
             info.ptMinTrackSize.x = 400;
             info.ptMinTrackSize.y = 400;
             return 0;
         },
-        w32.WM_DESTROY => {
-            w32.PostQuitMessage(0);
+        windows.WM_DESTROY => {
+            windows.PostQuitMessage(0);
             return 0;
         },
         else => {},
     }
-    return w32.DefWindowProcA(window, message, wparam, lparam);
+    return windows.DefWindowProcA(window, message, wparam, lparam);
 }
 
-fn createWindow(width: u32, height: u32) w32.HWND {
-    const winclass = w32.WNDCLASSEXA{
+fn createWindow(width: u32, height: u32) windows.HWND {
+    const winclass = windows.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(w32.GetModuleHandleA(null)),
+        .hInstance = @ptrCast(windows.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = w32.LoadCursorA(null, @ptrFromInt(32512)),
+        .hCursor = windows.LoadCursorA(null, @ptrFromInt(32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = window_title,
         .hIconSm = null,
     };
-    _ = w32.RegisterClassExA(&winclass);
+    _ = windows.RegisterClassExA(&winclass);
 
-    const style = w32.WS_OVERLAPPEDWINDOW;
+    const style = windows.WS_OVERLAPPEDWINDOW;
 
-    var rect = w32.RECT{
+    var rect = windows.RECT{
         .left = 0,
         .top = 0,
         .right = @intCast(width),
         .bottom = @intCast(height),
     };
-    _ = w32.AdjustWindowRectEx(&rect, style, w32.FALSE, 0);
+    _ = windows.AdjustWindowRectEx(&rect, style, windows.FALSE, 0);
 
-    const window = w32.CreateWindowExA(
+    const window = windows.CreateWindowExA(
         0,
         window_title,
         window_title,
-        style + w32.WS_VISIBLE,
-        w32.CW_USEDEFAULT,
-        w32.CW_USEDEFAULT,
+        style + windows.WS_VISIBLE,
+        windows.CW_USEDEFAULT,
+        windows.CW_USEDEFAULT,
         rect.right - rect.left,
         rect.bottom - rect.top,
         null,

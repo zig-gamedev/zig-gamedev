@@ -41,14 +41,19 @@ pub fn build(b: *std.Build) void {
     const options = .{
         .optimize = optimize,
         .target = target,
-        .zd3d12_enable_debug_layer = b.option(
+        .zxaudio2_debug_layer = b.option(
             bool,
-            "zd3d12-enable-debug-layer",
+            "zxaudio2_debug_layer",
+            "Enable XAudio2 debug layer",
+        ) orelse false,
+        .zd3d12_debug_layer = b.option(
+            bool,
+            "zd3d12_debug_layer",
             "Enable DirectX 12 debug layer",
         ) orelse false,
-        .zd3d12_enable_gbv = b.option(
+        .zd3d12_gbv = b.option(
             bool,
-            "zd3d12-enable-gbv",
+            "zd3d12_gbv",
             "Enable DirectX 12 GPU-Based Validation (GBV)",
         ) orelse false,
         .zpix_enable = zpix_enable,

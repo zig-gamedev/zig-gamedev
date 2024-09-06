@@ -28,14 +28,16 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
 
-    const zwin32 = b.dependency("zwin32", .{});
-    exe.root_module.addImport("zwin32", zwin32.module("root"));
-
-    const zd3d12 = b.dependency("zd3d12", .{
-        .debug_layer = options.zd3d12_enable_debug_layer,
-        .gbv = options.zd3d12_enable_gbv,
+    const zwindows = b.dependency("zwindows", .{
+        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
+        .zd3d12_debug_layer = options.zd3d12_debug_layer,
+        .zd3d12_gbv = options.zd3d12_gbv,
     });
-    exe.root_module.addImport("zd3d12", zd3d12.module("root"));
+    const zwindows_module = zwindows.module("zwindows");
+    const zd3d12_module = zwindows.module("zd3d12");
+
+    exe.root_module.addImport("zwindows", zwindows_module);
+    exe.root_module.addImport("zd3d12", zd3d12_module);
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
@@ -54,7 +56,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwin32").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, .bin);
 
     return exe;
 }
