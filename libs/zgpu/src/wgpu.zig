@@ -1241,6 +1241,7 @@ pub const QueueWorkDoneCallback = *const fn (
 
 pub const CompilationInfoCallback = *const fn (
     status: CompilationInfoRequestStatus,
+    info: *const CompilationInfo,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
