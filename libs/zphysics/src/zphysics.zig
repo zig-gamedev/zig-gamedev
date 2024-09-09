@@ -1806,7 +1806,7 @@ pub const BodyInterface = opaque {
         return rotation;
     }
 
-    pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]Real, in_activation_type: Activation) void {
+    pub fn setRotation(body_iface: *BodyInterface, body_id: BodyId, in_rotation: [4]f32, in_activation_type: Activation) void {
         c.JPC_BodyInterface_SetRotation(@as(*c.JPC_BodyInterface, @ptrCast(body_iface)), body_id, &in_rotation, @intFromEnum(in_activation_type));
     }
 
@@ -3083,8 +3083,8 @@ pub const DecoratedShapeSettings = opaque {
 
     pub fn createRotatedTranslated(
         inner_shape: *const ShapeSettings,
-        rotation: [4]Real,
-        translation: [3]Real,
+        rotation: [4]f32,
+        translation: [3]f32,
     ) !*DecoratedShapeSettings {
         const settings = c.JPC_RotatedTranslatedShapeSettings_Create(
             @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
@@ -3095,7 +3095,7 @@ pub const DecoratedShapeSettings = opaque {
         return @as(*DecoratedShapeSettings, @ptrCast(settings));
     }
 
-    pub fn createScaled(inner_shape: *const ShapeSettings, scale: [3]Real) !*DecoratedShapeSettings {
+    pub fn createScaled(inner_shape: *const ShapeSettings, scale: [3]f32) !*DecoratedShapeSettings {
         const settings = c.JPC_ScaledShapeSettings_Create(
             @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
             &scale,
@@ -3104,7 +3104,7 @@ pub const DecoratedShapeSettings = opaque {
         return @as(*DecoratedShapeSettings, @ptrCast(settings));
     }
 
-    pub fn createOffsetCenterOfMass(inner_shape: *const ShapeSettings, offset: [3]Real) !*DecoratedShapeSettings {
+    pub fn createOffsetCenterOfMass(inner_shape: *const ShapeSettings, offset: [3]f32) !*DecoratedShapeSettings {
         const settings = c.JPC_OffsetCenterOfMassShapeSettings_Create(
             @as(*const c.JPC_ShapeSettings, @ptrCast(inner_shape)),
             &offset,
@@ -3133,7 +3133,7 @@ pub const CompoundShapeSettings = opaque {
         return @as(*CompoundShapeSettings, @ptrCast(settings));
     }
 
-    pub fn addShape(settings: *CompoundShapeSettings, position: [3]Real, rotation: [4]Real, shape: *const ShapeSettings, user_data: u32) void {
+    pub fn addShape(settings: *CompoundShapeSettings, position: [3]f32, rotation: [4]f32, shape: *const ShapeSettings, user_data: u32) void {
         c.JPC_CompoundShapeSettings_AddShape(
             @as(*c.JPC_CompoundShapeSettings, @ptrCast(settings)),
             &position,
@@ -3249,8 +3249,8 @@ pub const Shape = opaque {
                 return c.JPC_Shape_GetVolume(@as(*const c.JPC_Shape, @ptrCast(shape)));
             }
 
-            pub fn getCenterOfMass(shape: *const T) [3]Real {
-                var center: [3]Real = undefined;
+            pub fn getCenterOfMass(shape: *const T) [3]f32 {
+                var center: [3]f32 = undefined;
                 c.JPC_Shape_GetCenterOfMass(@as(*const c.JPC_Shape, @ptrCast(shape)), &center);
                 return center;
             }
