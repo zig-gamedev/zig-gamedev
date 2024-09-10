@@ -123,7 +123,8 @@ pub fn build(b: *std.Build) void {
             .flags = cflags,
         });
         imgui.defineCMacro("IMGUI_ENABLE_FREETYPE", "1");
-        imgui.linkSystemLibrary2("freetype2", .{ .preferred_link_mode = .static });
+        const freetype = b.dependency("freetype", .{});
+        imgui.linkLibrary(freetype.artifact("freetype"));
     }
 
     if (options.use_wchar32) {
