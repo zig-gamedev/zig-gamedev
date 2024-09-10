@@ -29,6 +29,7 @@
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/MutableCompoundShape.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
+#include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Constraints/FixedConstraint.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
@@ -274,10 +275,15 @@ FN(toJph)(const JPC_SubShapeIDCreator *in) { assert(in); return reinterpret_cast
 FN(toJpc)(JPH::SubShapeIDCreator *in) { assert(in); return reinterpret_cast<JPC_SubShapeIDCreator *>(in); }
 FN(toJph)(JPC_SubShapeIDCreator *in) { assert(in); return reinterpret_cast<JPH::SubShapeIDCreator *>(in); }
 
-FN(toJpc)(const JPH::RayCast *in) { assert(in); return reinterpret_cast<const JPC_RRayCast *>(in); }
-FN(toJph)(const JPC_RRayCast *in) { assert(in); return reinterpret_cast<const JPH::RayCast *>(in); }
-FN(toJpc)(JPH::RayCast *in) { assert(in); return reinterpret_cast<JPC_RRayCast *>(in); }
-FN(toJph)(JPC_RRayCast *in) { assert(in); return reinterpret_cast<JPH::RayCast *>(in); }
+FN(toJpc)(const JPH::RayCast *in) { assert(in); return reinterpret_cast<const JPC_RayCast *>(in); }
+FN(toJph)(const JPC_RayCast *in) { assert(in); return reinterpret_cast<const JPH::RayCast *>(in); }
+FN(toJpc)(JPH::RayCast *in) { assert(in); return reinterpret_cast<JPC_RayCast *>(in); }
+FN(toJph)(JPC_RayCast *in) { assert(in); return reinterpret_cast<JPH::RayCast *>(in); }
+
+FN(toJpc)(const JPH::RRayCast *in) { assert(in); return reinterpret_cast<const JPC_RRayCast *>(in); }
+FN(toJph)(const JPC_RRayCast *in) { assert(in); return reinterpret_cast<const JPH::RRayCast *>(in); }
+FN(toJpc)(JPH::RRayCast *in) { assert(in); return reinterpret_cast<JPC_RRayCast *>(in); }
+FN(toJph)(JPC_RRayCast *in) { assert(in); return reinterpret_cast<JPH::RRayCast *>(in); }
 
 FN(toJpc)(const JPH::RayCastResult *in) { assert(in); return reinterpret_cast<const JPC_RayCastResult *>(in); }
 FN(toJph)(const JPC_RayCastResult *in) { assert(in); return reinterpret_cast<const JPH::RayCastResult *>(in); }
@@ -1922,7 +1928,7 @@ JPC_Shape_GetSupportingFace(const JPC_Shape *in_shape,
 //--------------------------------------------------------------------------------------------------
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,
-                  const JPC_RRayCast *in_ray,
+                  const JPC_RayCast *in_ray,
                   const JPC_SubShapeIDCreator *in_id_creator,
                   JPC_RayCastResult *io_hit)
 {

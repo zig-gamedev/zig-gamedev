@@ -890,11 +890,30 @@ pub const CharacterVirtualSettings = extern struct {
     }
 };
 
+pub const RayCast = extern struct {
+    origin: [4]f32 align(16), // 4th element is ignored
+    direction: [4]f32 align(16), // 4th element is ignored
+
+    pub fn getPointOnRay(self: RayCast, fraction: f32) [3]f32 {
+        return .{
+            self.origin[0] + self.direction[0] * fraction,
+            self.origin[1] + self.direction[1] * fraction,
+            self.origin[2] + self.direction[2] * fraction,
+        };
+    }
+
+    comptime {
+        assert(@sizeOf(RayCast) == @sizeOf(c.JPC_RayCast));
+        assert(@offsetOf(RayCast, "origin") == @offsetOf(c.JPC_RayCast, "origin"));
+        assert(@offsetOf(RayCast, "direction") == @offsetOf(c.JPC_RayCast, "direction"));
+    }
+};
+
 pub const RRayCast = extern struct {
     origin: [4]Real align(rvec_align), // 4th element is ignored
     direction: [4]f32 align(16), // 4th element is ignored
 
-    pub fn getPointOnRay(self: RRayCast, fraction: Real) [3]Real {
+    pub fn getPointOnRay(self: RRayCast, fraction: f32) [3]Real {
         return .{
             self.origin[0] + self.direction[0] * fraction,
             self.origin[1] + self.direction[1] * fraction,
@@ -942,8 +961,8 @@ pub const RayCastSettings = extern struct {
 };
 
 pub const AABox = extern struct {
-    min: [4]Real align(rvec_align), // 4th element is ignored
-    max: [4]Real align(rvec_align), // 4th element is ignored
+    min: [4]f32 align(16), // 4th element is ignored
+    max: [4]f32 align(16), // 4th element is ignored
 
     comptime {
         assert(@sizeOf(AABox) == @sizeOf(c.JPC_AABox));
@@ -3290,7 +3309,7 @@ pub const Shape = opaque {
 
             pub fn castRay(
                 shape: *const T,
-                ray: RRayCast,
+                ray: RayCast,
                 args: struct {
                     sub_shape_id_creator: SubShapeIDCreator = .{},
                 },
@@ -3298,7 +3317,7 @@ pub const Shape = opaque {
                 var hit: RayCastResult = .{};
                 const has_hit = c.JPC_Shape_CastRay(
                     @as(*const c.JPC_Shape, @ptrCast(shape)),
-                    @as(*const c.JPC_RRayCast, @ptrCast(&ray)),
+                    @as(*const c.JPC_RayCast, @ptrCast(&ray)),
                     @as(*const c.JPC_SubShapeIDCreator, @ptrCast(&args.sub_shape_id_creator)),
                     @as(*c.JPC_RayCastResult, @ptrCast(&hit)),
                 );
@@ -4123,6 +4142,14 @@ test "zphysics.body.basic" {
 
     const floor_shape = try floor_shape_settings.createShape();
     defer floor_shape.release();
+
+    var shape_ray = RayCast { .origin = .{ 0, 2, 0, 1 }, .direction = .{ 101, -1, 0, 0 } };
+    var shape_result = floor_shape.castRay(shape_ray, .{});
+    try expect(shape_result.has_hit == false);
+
+    shape_ray = RayCast { .origin = .{ 0, 2, 0, 1 }, .direction = .{ 100, -1, 0, 0 } };
+    shape_result = floor_shape.castRay(shape_ray, .{});
+    try expect(shape_result.has_hit == true);
 
     const floor_settings = BodyCreationSettings{
         .position = .{ 0.0, -1.0, 0.0, 1.0 },

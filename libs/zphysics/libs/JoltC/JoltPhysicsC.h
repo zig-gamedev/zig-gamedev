@@ -570,6 +570,13 @@ typedef struct JPC_BodyLockWrite
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
 
+// NOTE: Needs to be kept in sync with JPH::RayCast
+typedef struct JPC_RayCast
+{
+    alignas(16) float origin[4]; // 4th element is ignored
+    alignas(16) float direction[4]; // length of the vector is important; 4th element is ignored
+} JPC_RayCast;
+
 // NOTE: Needs to be kept in sync with JPH::RRayCast
 typedef struct JPC_RRayCast
 {
@@ -594,8 +601,8 @@ typedef struct JPC_RayCastSettings
 
 typedef struct JPC_AABox
 {
-    JPC_RVEC_ALIGN JPC_Real min[3];
-    JPC_RVEC_ALIGN JPC_Real max[3];
+    alignas(16) float min[3];
+    alignas(16) float max[3];
 } JPC_AABox;
 
 typedef struct JPC_Shape_SupportingFace
@@ -1629,7 +1636,7 @@ JPC_Shape_GetSupportingFace(const JPC_Shape *in_shape,
 
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,
-                  const JPC_RRayCast *in_ray,
+                  const JPC_RayCast *in_ray,
                   const JPC_SubShapeIDCreator *in_id_creator,
                   JPC_RayCastResult *io_hit); // *Must* be default initialized (see JPC_RayCastResult)
 //--------------------------------------------------------------------------------------------------
