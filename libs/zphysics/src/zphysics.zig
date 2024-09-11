@@ -4143,11 +4143,11 @@ test "zphysics.body.basic" {
     const floor_shape = try floor_shape_settings.createShape();
     defer floor_shape.release();
 
-    var shape_ray = RayCast { .origin = .{ 0, 2, 0, 1 }, .direction = .{ 101, -1, 0, 0 } };
+    var shape_ray = RayCast{ .origin = .{ 0, 2, 0, 1 }, .direction = .{ 101, -1, 0, 0 } };
     var shape_result = floor_shape.castRay(shape_ray, .{});
     try expect(shape_result.has_hit == false);
 
-    shape_ray = RayCast { .origin = .{ 0, 2, 0, 1 }, .direction = .{ 100, -1, 0, 0 } };
+    shape_ray = RayCast{ .origin = .{ 0, 2, 0, 1 }, .direction = .{ 100, -1, 0, 0 } };
     shape_result = floor_shape.castRay(shape_ray, .{});
     try expect(shape_result.has_hit == true);
 
