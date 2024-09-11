@@ -156,19 +156,20 @@ pub const ConfigFlags = packed struct(c_int) {
 
 pub const FontBuilderFlags = if (@import("zgui_options").with_freetype == false)
     c_uint
-else packed struct(c_uint) {
-    no_hinting: bool = false,
-    no_auto_hint: bool = false,
-    force_auto_hint: bool = false,
-    light_hinting: bool = false,
-    mono_hinting: bool = false,
-    bold: bool = false,
-    oblique: bool = false,
-    monochrome: bool = false,
-    load_color: bool = false,
-    bitmap: bool = false,
-    _padding: u22 = 0,
-};
+else
+    packed struct(c_uint) {
+        no_hinting: bool = false,
+        no_auto_hint: bool = false,
+        force_auto_hint: bool = false,
+        light_hinting: bool = false,
+        mono_hinting: bool = false,
+        bold: bool = false,
+        oblique: bool = false,
+        monochrome: bool = false,
+        load_color: bool = false,
+        bitmap: bool = false,
+        _padding: u22 = 0,
+    };
 
 pub const FontConfig = extern struct {
     font_data: ?*anyopaque,
