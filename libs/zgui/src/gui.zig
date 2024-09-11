@@ -1062,6 +1062,22 @@ pub const Style = extern struct {
     pub const scaleAllSizes = zguiStyle_ScaleAllSizes;
     extern fn zguiStyle_ScaleAllSizes(style: *Style, scale_factor: f32) void;
 
+    pub const DefaultColors = enum {
+        dark,
+        light,
+        classic,
+    };
+    pub fn setDefaultColors(style: *Style, variant: DefaultColors) void {
+        switch (variant) {
+            .dark => zguiStyleColorsDark(style),
+            .light => zguiStyleColorsLight(style),
+            .classic => zguiStyleColorsClassic(style),
+        }
+    }
+    extern fn zguiStyleColorsDark(style: *Style) void;
+    extern fn zguiStyleColorsLight(style: *Style) void;
+    extern fn zguiStyleColorsClassic(style: *Style) void;
+
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
         return style.colors[@intCast(@intFromEnum(idx))];
     }
