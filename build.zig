@@ -280,11 +280,17 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zmesh.artifact("zmesh-tests")).step);
 
-    const zphysics = b.dependency("zphysics", .{
+    test_step.dependOn(&b.addRunArtifact(b.dependency("zphysics", .{
         .target = target,
         .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zphysics.artifact("zphysics-tests")).step);
+        .use_double_precision = false,
+    }).artifact("zphysics-tests")).step);
+
+    test_step.dependOn(&b.addRunArtifact(b.dependency("zphysics", .{
+        .target = target,
+        .optimize = optimize,
+        .use_double_precision = true,
+    }).artifact("zphysics-tests")).step);
 
     const zpool = b.dependency("zpool", .{
         .target = target,
