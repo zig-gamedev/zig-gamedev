@@ -2,11 +2,14 @@ const std = @import("std");
 
 pub fn build(_: *std.Build) void {}
 
+/// Deprecated: This function invites the user to enforce a dependency on system-sdk even when
+/// library paths may not be required for some build environments / target platforms. Instead
+/// of calling this, users should conditionally use lazy dependencies, see README.md for example.
 pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const b = compile_step.step.owner;
     const target = compile_step.rootModuleTarget();
 
-    const system_sdk = b.dependency("system_sdk", .{});
+    const system_sdk = b.lazyDependency("system_sdk", .{}).?;
 
     switch (target.os.tag) {
         .windows => {

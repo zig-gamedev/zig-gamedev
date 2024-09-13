@@ -5,5 +5,29 @@ System libraries and headers for cross-compiling [zig-gamedev libs](https://gith
 ## Usage
 build.zig
 ```zig
-    @import("system_sdk").addLibraryPathsTo(exe);
+    switch (target.os.tag) {
+        .windows => {
+            if (target.cpu.arch.isX86()) {
+                if (target.abi.isGnu() or target.abi.isMusl()) {
+                    const system_sdk = b.lazyDependency("system_sdk", .{}).?;
+                    compile_step.addLibraryPath(system_sdk.path("windows/lib/x86_64-windows-gnu"));
+                }
+            }
+        },
+        .macos => {
+            const system_sdk = b.lazyDependency("system_sdk", .{}).?;
+            compile_step.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            compile_step.addFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        },
+        .linux => {
+            if (target.cpu.arch.isX86()) {
+                const system_sdk = b.lazyDependency("system_sdk", .{}).?;
+                compile_step.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
+            } else if (target.cpu.arch == .aarch64) {
+                const system_sdk = b.lazyDependency("system_sdk", .{}).?;
+                compile_step.addLibraryPath(system_sdk.path("linux/lib/aarch64-linux-gnu"));
+            }
+        },
+        else => {},
+    }
 ```

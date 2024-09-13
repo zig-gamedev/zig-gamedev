@@ -18,8 +18,6 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    @import("system_sdk").addLibraryPathsTo(exe);
-
     const zwindows = b.dependency("zwindows", .{
         .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
         .zd3d12_debug_layer = options.zd3d12_debug_layer,
