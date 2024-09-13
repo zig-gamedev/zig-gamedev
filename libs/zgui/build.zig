@@ -293,9 +293,10 @@ pub fn build(b: *std.Build) void {
     }
 
     if (target.result.os.tag == .macos) {
-        const system_sdk = b.dependency("system_sdk", .{});
-        imgui.addSystemIncludePath(system_sdk.path("macos12/usr/include"));
-        imgui.addFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+            imgui.addSystemIncludePath(system_sdk.path("macos12/usr/include"));
+            imgui.addFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        }
     }
 
     const test_step = b.step("test", "Run zgui tests");

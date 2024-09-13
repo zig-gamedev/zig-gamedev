@@ -162,13 +162,16 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     switch (target.os.tag) {
         .windows => {
-            compile_step.addLibraryPath(b.dependency("dawn_x86_64_windows_gnu", .{}).path(""));
+            const dawn = b.lazyDependency("dawn_x86_64_windows_gnu", .{}).?;
+            compile_step.addLibraryPath(dawn.path(""));
         },
         .linux => {
-            compile_step.addLibraryPath(b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).path(""));
+            const dawn = b.lazyDependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).?;
+            compile_step.addLibraryPath(dawn.path(""));
         },
         .macos => {
-            compile_step.addLibraryPath(b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).path(""));
+            const dawn = b.lazyDependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).?;
+            compile_step.addLibraryPath(dawn.path(""));
         },
         else => {},
     }
