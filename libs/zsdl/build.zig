@@ -257,7 +257,7 @@ pub fn install_SDL2_image(
 }
 
 pub fn testVersionCheckSDL2(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build.Step {
-    const sdl2_prebuilt = b.dependency("sdl2-prebuilt", .{});
+    const sdl2_prebuilt = b.lazyDependency("sdl2-prebuilt", .{}).?;
     const sdl2_libs_path = sdl2_prebuilt.path("").getPath(b);
 
     const test_sdl2_version_check = b.addTest(.{

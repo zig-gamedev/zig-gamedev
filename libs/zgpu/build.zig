@@ -99,10 +99,8 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(zdawn);
 
-    @import("system_sdk").addLibraryPathsTo(zdawn);
-
+    linkSystemDeps(b, zdawn);
     addLibraryPathsTo(zdawn);
-    linkSystemDeps(zdawn);
 
     zdawn.linkSystemLibrary("dawn");
     zdawn.linkLibC();
@@ -131,20 +129,27 @@ pub fn build(b: *std.Build) void {
     @import("system_sdk").addLibraryPathsTo(tests);
     tests.addIncludePath(b.path("libs/dawn/include"));
     tests.linkLibrary(zdawn);
+    linkSystemDeps(b, tests);
     addLibraryPathsTo(tests);
-    linkSystemDeps(tests);
     b.installArtifact(tests);
 
     test_step.dependOn(&b.addRunArtifact(tests).step);
 }
 
-pub fn linkSystemDeps(compile_step: *std.Build.Step.Compile) void {
+pub fn linkSystemDeps(b: *std.Build, compile_step: *std.Build.Step.Compile) void {
     switch (compile_step.rootModuleTarget().os.tag) {
         .windows => {
+            if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+                compile_step.addLibraryPath(system_sdk.path("windows/lib/x86_64-windows-gnu"));
+            }
             compile_step.linkSystemLibrary("ole32");
             compile_step.linkSystemLibrary("dxguid");
         },
         .macos => {
+            if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+                compile_step.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+                compile_step.addFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+            }
             compile_step.linkSystemLibrary("objc");
             compile_step.linkFramework("Metal");
             compile_step.linkFramework("CoreGraphics");
@@ -162,13 +167,16 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     switch (target.os.tag) {
         .windows => {
-            compile_step.addLibraryPath(b.dependency("dawn_x86_64_windows_gnu", .{}).path(""));
+            const dawn = b.lazyDependency("dawn_x86_64_windows_gnu", .{}).?;
+            compile_step.addLibraryPath(dawn.path(""));
         },
         .linux => {
-            compile_step.addLibraryPath(b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).path(""));
+            const dawn = b.lazyDependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).?;
+            compile_step.addLibraryPath(dawn.path(""));
         },
         .macos => {
-            compile_step.addLibraryPath(b.dependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).path(""));
+            const dawn = b.lazyDependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).?;
+            compile_step.addLibraryPath(dawn.path(""));
         },
         else => {},
     }

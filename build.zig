@@ -67,8 +67,10 @@ pub fn build(b: *std.Build) void {
     if (target.result.os.tag == .emscripten) {
         // If user did not set --sysroot then default to zemscripten's emsdk path
         if (b.sysroot == null) {
-            b.sysroot = b.dependency("emsdk", .{}).path("upstream/emscripten/cache/sysroot").getPath(b);
-            std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
+            if (b.lazyDependency("emsdk", .{})) |emsdk| {
+                b.sysroot = emsdk.path("upstream/emscripten/cache/sysroot").getPath(b);
+                std.log.info("sysroot set to \"{s}\"", .{b.sysroot.?});
+            }
         }
         buildAndInstallSamplesWeb(b, .{
             .optimize = optimize,
@@ -198,9 +200,11 @@ fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: any
 }
 
 fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
+    const zemscripten = b.lazyImport(@This(), "zemscripten");
+
     inline for (comptime std.meta.declarations(samples_web)) |d| {
         const build_web_app_step = @field(samples_web, d.name).buildWeb(b, options);
-        build_web_app_step.dependOn(@import("zemscripten").activateEmsdkStep(b));
+        build_web_app_step.dependOn(zemscripten.activateEmsdkStep(b));
         b.getInstallStep().dependOn(build_web_app_step);
 
         b.step(d.name, "Build '" ++ d.name ++ "' demo").dependOn(build_web_app_step);
@@ -212,7 +216,7 @@ fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
         ) catch unreachable;
 
         const emrun_args = .{};
-        const emrun_step = @import("zemscripten").emrunStep(
+        const emrun_step = zemscripten.emrunStep(
             b,
             b.getInstallPath(.{ .custom = "web" }, html_filename),
             &emrun_args,
@@ -280,11 +284,17 @@ fn tests(
     });
     test_step.dependOn(&b.addRunArtifact(zmesh.artifact("zmesh-tests")).step);
 
-    const zphysics = b.dependency("zphysics", .{
+    test_step.dependOn(&b.addRunArtifact(b.dependency("zphysics", .{
         .target = target,
         .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zphysics.artifact("zphysics-tests")).step);
+        .use_double_precision = false,
+    }).artifact("zphysics-tests")).step);
+
+    test_step.dependOn(&b.addRunArtifact(b.dependency("zphysics", .{
+        .target = target,
+        .optimize = optimize,
+        .use_double_precision = true,
+    }).artifact("zphysics-tests")).step);
 
     const zpool = b.dependency("zpool", .{
         .target = target,

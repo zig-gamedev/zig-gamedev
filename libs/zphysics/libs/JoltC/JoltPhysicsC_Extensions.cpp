@@ -144,6 +144,7 @@ ENSURE_SIZE_ALIGN(JPH::Body,                 JPC_Body)
 ENSURE_SIZE_ALIGN(JPH::BodyLockRead,  JPC_BodyLockRead)
 ENSURE_SIZE_ALIGN(JPH::BodyLockWrite, JPC_BodyLockWrite)
 
+ENSURE_SIZE_ALIGN(JPH::RayCast, JPC_RayCast)
 ENSURE_SIZE_ALIGN(JPH::RRayCast, JPC_RRayCast)
 ENSURE_SIZE_ALIGN(JPH::RayCastResult, JPC_RayCastResult)
 ENSURE_SIZE_ALIGN(JPH::RayCastSettings, JPC_RayCastSettings)
