@@ -5,8 +5,6 @@
 Copy `zglfw` and `system-sdk` to a subdirectory of your project and add the following to your `build.zig.zon` .dependencies:
 ```zig
     .zglfw = .{ .path = "libs/zglfw" },
-    
-    // Required for building glfw
     .system_sdk = .{ .path = "libs/system-sdk" },
 ```
 
@@ -18,8 +16,6 @@ pub fn build(b: *std.Build) void {
     const zglfw = b.dependency("zglfw", .{});
     exe.root_module.addImport("zglfw", zglfw.module("root"));
     exe.linkLibrary(zglfw.artifact("glfw"));
-
-    @import("system_sdk").addLibraryPathsTo(exe);
 }
 ```
 
