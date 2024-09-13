@@ -570,6 +570,13 @@ typedef struct JPC_BodyLockWrite
     JPC_Body *                   body;
 } JPC_BodyLockWrite;
 
+// NOTE: Needs to be kept in sync with JPH::RayCast
+typedef struct JPC_RayCast
+{
+    alignas(16) float origin[4]; // 4th element is ignored
+    alignas(16) float direction[4]; // length of the vector is important; 4th element is ignored
+} JPC_RayCast;
+
 // NOTE: Needs to be kept in sync with JPH::RRayCast
 typedef struct JPC_RRayCast
 {
@@ -594,8 +601,8 @@ typedef struct JPC_RayCastSettings
 
 typedef struct JPC_AABox
 {
-    JPC_RVEC_ALIGN JPC_Real min[3];
-    JPC_RVEC_ALIGN JPC_Real max[3];
+    alignas(16) float min[3];
+    alignas(16) float max[3];
 } JPC_AABox;
 
 typedef struct JPC_Shape_SupportingFace
@@ -1528,16 +1535,16 @@ JPC_MeshShapeSettings_Sanitize(JPC_MeshShapeSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
 JPC_API JPC_DecoratedShapeSettings *
 JPC_RotatedTranslatedShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
-                                          const JPC_Real in_rotated[4],
-                                          const JPC_Real in_translated[3]);
+                                          const float in_rotated[4],
+                                          const float in_translated[3]);
 
 JPC_API JPC_DecoratedShapeSettings *
 JPC_ScaledShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
-                               const JPC_Real in_scale[3]);
+                               const float in_scale[3]);
 
 JPC_API JPC_DecoratedShapeSettings *
 JPC_OffsetCenterOfMassShapeSettings_Create(const JPC_ShapeSettings *in_inner_shape_settings,
-                                           const JPC_Real in_center_of_mass[3]);
+                                           const float in_center_of_mass[3]);
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_CompoundShapeSettings (-> JPC_ShapeSettings)
@@ -1551,8 +1558,8 @@ JPC_MutableCompoundShapeSettings_Create();
 
 JPC_API void
 JPC_CompoundShapeSettings_AddShape(JPC_CompoundShapeSettings *in_settings,
-                                   const JPC_Real in_position[3],
-                                   const JPC_Real in_rotation[4],
+                                   const float in_position[3],
+                                   const float in_rotation[4],
                                    const JPC_ShapeSettings *in_shape,
                                    const uint32_t in_user_data);
 //--------------------------------------------------------------------------------------------------
@@ -1609,7 +1616,7 @@ JPC_API float
 JPC_Shape_GetVolume(const JPC_Shape *in_shape);
 
 JPC_API void
-JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, JPC_Real out_position[3]);
+JPC_Shape_GetCenterOfMass(const JPC_Shape *in_shape, float out_position[3]);
 
 JPC_API JPC_AABox
 JPC_Shape_GetLocalBounds(const JPC_Shape *in_shape);
@@ -1629,7 +1636,7 @@ JPC_Shape_GetSupportingFace(const JPC_Shape *in_shape,
 
 JPC_API bool
 JPC_Shape_CastRay(const JPC_Shape *in_shape,
-                  const JPC_RRayCast *in_ray,
+                  const JPC_RayCast *in_ray,
                   const JPC_SubShapeIDCreator *in_id_creator,
                   JPC_RayCastResult *io_hit); // *Must* be default initialized (see JPC_RayCastResult)
 //--------------------------------------------------------------------------------------------------
@@ -1817,7 +1824,7 @@ JPC_BodyInterface_GetRotation(const JPC_BodyInterface *in_iface,
 JPC_API void
 JPC_BodyInterface_SetRotation(JPC_BodyInterface *in_iface,
                               JPC_BodyID in_body_id,
-                              const JPC_Real in_rotation[4],
+                              const float in_rotation[4],
                               JPC_Activation in_activation);
 JPC_API void
 JPC_BodyInterface_ActivateBody(JPC_BodyInterface *in_iface, JPC_BodyID in_body_id);
