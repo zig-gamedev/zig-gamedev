@@ -118,13 +118,14 @@ pub fn build(b: *std.Build) void {
     });
 
     if (options.with_freetype) {
-        imgui.addCSourceFile(.{
-            .file = b.path("libs/imgui/misc/freetype/imgui_freetype.cpp"),
-            .flags = cflags,
-        });
-        imgui.defineCMacro("IMGUI_ENABLE_FREETYPE", "1");
-        const freetype = b.dependency("freetype", .{});
-        imgui.linkLibrary(freetype.artifact("freetype"));
+        if (b.lazyDependency("freetype", .{})) |freetype| {
+            imgui.addCSourceFile(.{
+                .file = b.path("libs/imgui/misc/freetype/imgui_freetype.cpp"),
+                .flags = cflags,
+            });
+            imgui.defineCMacro("IMGUI_ENABLE_FREETYPE", "1");
+            imgui.linkLibrary(freetype.artifact("freetype"));
+        }
     }
 
     if (options.use_wchar32) {
