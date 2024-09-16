@@ -605,6 +605,14 @@ typedef struct JPC_AABox
     alignas(16) float max[3];
 } JPC_AABox;
 
+typedef struct JPC_RMatrix
+{
+    alignas(16) float column_0[4];
+    alignas(16) float column_1[4];
+    alignas(16) float column_2[4];
+    JPC_RVEC_ALIGN JPC_Real column_3[4];
+} JPC_RMatrix;
+
 typedef struct JPC_Shape_SupportingFace
 {
     alignas(16) uint32_t num_points;
@@ -903,7 +911,7 @@ typedef struct JPC_DebugRendererVTable
     // Required, *cannot* be NULL.
     void
     (*DrawGeometry)(void *in_self,
-                    const float inModelMatrix[16],
+                    const JPC_RMatrix* inModelMatrix,
                     const JPC_AABox *inWorldSpaceBounds,
                     float inLODScaleSq,
                     JPC_Color in_color,
