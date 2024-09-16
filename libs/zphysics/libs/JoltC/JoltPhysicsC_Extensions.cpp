@@ -148,6 +148,9 @@ ENSURE_SIZE_ALIGN(JPH::RayCast, JPC_RayCast)
 ENSURE_SIZE_ALIGN(JPH::RRayCast, JPC_RRayCast)
 ENSURE_SIZE_ALIGN(JPH::RayCastResult, JPC_RayCastResult)
 ENSURE_SIZE_ALIGN(JPH::RayCastSettings, JPC_RayCastSettings)
+
+ENSURE_SIZE_ALIGN(JPH::AABox, JPC_AABox)
+ENSURE_SIZE_ALIGN(JPH::RMat44, JPC_RMatrix)
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
