@@ -82,7 +82,7 @@ You can also define a run step that invokes `emrun`. This will serve the html lo
     const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
 
     const emrun_args = .{};
-    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename, &emrun_args));
+    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename), &emrun_args);
 
     emrun_step.dependOn(emcc_step);
 
