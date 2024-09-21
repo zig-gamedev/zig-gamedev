@@ -77,10 +77,7 @@ fn install(
     exe.root_module.addImport("zsdl2", zsdl2_module);
 
     @import("zsdl").link_SDL2(exe);
-
-    const sdl2_libs_path = b.dependency("sdl2-prebuilt", .{}).path("").getPath(b);
-    @import("zsdl").addLibraryPathsTo(sdl2_libs_path, exe);
-    @import("zsdl").addRPathsTo(sdl2_libs_path, exe);
+    @import("zsdl").prebuilt.addLibraryPathsTo(exe);
 
     exe.root_module.addImport("zopengl", zopengl_module);
 
@@ -90,7 +87,7 @@ fn install(
     );
     install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
 
-    if (@import("zsdl").install_SDL2(b, target.result, sdl2_libs_path, .bin)) |install_sdl2_step| {
+    if (@import("zsdl").prebuilt.install_SDL2(b, target.result, .bin)) |install_sdl2_step| {
         install_step.dependOn(install_sdl2_step);
     }
 

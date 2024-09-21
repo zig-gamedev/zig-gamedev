@@ -1,13 +1,23 @@
 .{
     .name = "zsdl",
-    .version = "0.2.0",
+    .version = "0.3.0",
 
     .min_zig_version = "0.13.0",
 
     .dependencies = .{
-        .@"sdl2-prebuilt" = .{
-            .url = "https://github.com/zig-gamedev/SDL2-prebuilt/archive/01ed17a8a2c85943be82fd9638212a1f1ab6f2b9.tar.gz",
-            .hash = "122028412e5d640fdf21044d4d0ac1287e1bc976e87859d2da6a716eb4fe1326f630",
+        .@"sdl2-prebuilt-macos" = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/f14773fa3de719b3a399b854c31eb4139d63842f.tar.gz",
+            .hash = "12205cb2da6fb4a7fcf28b9cd27b60aaf12f4d4a55be0260b1ae36eaf93ca5a99f03",
+            .lazy = true,
+        },
+        .@"sdl2-prebuilt-x86_64-linux-gnu" = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/1919257cc632bb31369b46030c0e9f95af525487.tar.gz",
+            .hash = "1220703f44b559bd5efe9effbdd90a55b80ed5cfa4c39e01652258433bba18aad672",
+            .lazy = true,
+        },
+        .@"sdl2-prebuilt-x86_64-windows-gnu" = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-windows-gnu/archive/8143e2a5c28dbace399cbff14c3e8749a1afd418.tar.gz",
+            .hash = "1220ade6b84d06d73bf83cef22c73ec4abc21a6d50b9f48875f348b7942c80dde11b",
             .lazy = true,
         },
     },
@@ -15,7 +25,6 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "libs",
         "src",
         "README.md",
     },
