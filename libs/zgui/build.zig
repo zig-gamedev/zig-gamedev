@@ -40,6 +40,11 @@ pub fn build(b: *std.Build) void {
             "with_te",
             "Build with bundled test engine support",
         ) orelse false,
+        .with_freetype = b.option(
+            bool,
+            "with_freetype",
+            "Build with system FreeType engine support",
+        ) orelse false,
         .use_wchar32 = b.option(
             bool,
             "use_wchar32",
@@ -111,6 +116,17 @@ pub fn build(b: *std.Build) void {
         },
         .flags = cflags,
     });
+
+    if (options.with_freetype) {
+        if (b.lazyDependency("freetype", .{})) |freetype| {
+            imgui.addCSourceFile(.{
+                .file = b.path("libs/imgui/misc/freetype/imgui_freetype.cpp"),
+                .flags = cflags,
+            });
+            imgui.defineCMacro("IMGUI_ENABLE_FREETYPE", "1");
+            imgui.linkLibrary(freetype.artifact("freetype"));
+        }
+    }
 
     if (options.use_wchar32) {
         imgui.defineCMacro("IMGUI_USE_WCHAR32", "1");

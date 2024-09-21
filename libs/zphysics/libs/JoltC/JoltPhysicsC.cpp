@@ -810,8 +810,7 @@ public:
         JPH::DebugRenderer::ECastShadow inCastShadow,
         JPH::DebugRenderer::EDrawMode inDrawMode) override
     {
-        float in_model_matrix[16]; // Model matrix will always be rounded to floats (JPH samples assume the same).
-        storeMat44(in_model_matrix, inModelMatrix.ToMat44());
+        auto in_model_matrix = reinterpret_cast<const JPC_RMatrix*>(&inModelMatrix);
         JPC_DebugRenderer_Geometry in_geometry {
             toJpc(&inGeometry.GetPtr()->mLODs[0]),
             static_cast<uint64_t>(inGeometry.GetPtr()->mLODs.size()),

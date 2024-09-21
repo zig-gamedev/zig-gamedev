@@ -971,6 +971,19 @@ pub const AABox = extern struct {
     }
 };
 
+pub const RMatrix = extern struct {
+    column_0: [4]f32 align(16),
+    column_1: [4]f32 align(16),
+    column_2: [4]f32 align(16),
+    column_3: [4]Real align(rvec_align),
+
+    comptime {
+        assert(@sizeOf(RMatrix) == @sizeOf(c.JPC_RMatrix));
+        assert(@offsetOf(RMatrix, "column_1") == @offsetOf(c.JPC_RMatrix, "column_1"));
+        assert(@offsetOf(RMatrix, "column_3") == @offsetOf(c.JPC_RMatrix, "column_3"));
+    }
+};
+
 pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else extern struct {
     pub fn createSingleton(debug_renderer_impl: *anyopaque) !void {
         switch (@as(DebugRendererResult, @enumFromInt(c.JPC_CreateDebugRendererSingleton(debug_renderer_impl)))) {
@@ -1067,7 +1080,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else ext
             }
             pub inline fn drawGeometry(
                 self: *T,
-                model_matrix: *const [16]Real,
+                model_matrix: *const RMatrix,
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
@@ -1137,7 +1150,7 @@ pub const DebugRenderer = if (!debug_renderer_enabled) extern struct {} else ext
             ) callconv(.C) *anyopaque = null,
             drawGeometry: ?*const fn (
                 self: *T,
-                model_matrix: *const [16]Real,
+                model_matrix: *const RMatrix,
                 world_space_bound: *const AABox,
                 lod_scale_sq: f32,
                 color: Color,
@@ -4626,7 +4639,7 @@ const test_cb1 = struct {
         }
         fn drawGeometry(
             self: *MyDebugRenderer,
-            model_matrix: *const [16]Real,
+            model_matrix: *const RMatrix,
             world_space_bound: *const AABox,
             lod_scale_sq: f32,
             color: DebugRenderer.Color,

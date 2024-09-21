@@ -390,7 +390,7 @@ const DebugRenderer = struct {
         for (self.body_draw_list.items) |instance| {
             const mem = gctx.uniformsAllocate(DrawUniforms, 1);
             mem.slice[0] = .{
-                .object_to_world = zm.transpose(zm.loadMat(&instance.mat)),
+                .object_to_world = zm.loadMat(&instance.mat),
                 .basecolor_roughness = .{ instance.color[0], instance.color[1], instance.color[2], 0.5 },
             };
             pass.setBindGroup(1, uniform_bg, &.{mem.offset});
@@ -541,7 +541,7 @@ const DebugRenderer = struct {
 
     fn drawGeometry(
         self: *DebugRenderer,
-        model_matrix: *const [16]zphy.Real,
+        mat: *const zphy.RMatrix,
         _: *const zphy.AABox,
         _: f32,
         color: zphy.DebugRenderer.Color,
@@ -552,9 +552,15 @@ const DebugRenderer = struct {
     ) callconv(.C) void {
         const batch = geometry.LODs[0].batch;
         const prim = @as(*const Primitive, @alignCast(@ptrCast(zphy.DebugRenderer.getPrimitiveFromBatch(batch))));
+        const lowp_model_matrix: [16]f32 = .{
+            mat.column_0[0], mat.column_1[0], mat.column_2[0], lowP(mat.column_3[0]),
+            mat.column_0[1], mat.column_1[1], mat.column_2[1], lowP(mat.column_3[1]),
+            mat.column_0[2], mat.column_1[2], mat.column_2[2], lowP(mat.column_3[2]),
+            0,               0,               0,               1,
+        };
         self.body_draw_list.append(.{
             .prim = prim,
-            .mat = model_matrix.*,
+            .mat = lowp_model_matrix,
             .color = .{
                 @as(f32, @floatFromInt(color.comp.r)) / 255.0,
                 @as(f32, @floatFromInt(color.comp.g)) / 255.0,
@@ -571,6 +577,10 @@ const DebugRenderer = struct {
         _: f32,
     ) callconv(.C) void {}
 };
+
+inline fn lowP(r: zphy.Real) f32 {
+    return @as(f32, @floatCast(r));
+}
 
 const DemoState = struct {
     window: *zglfw.Window,

@@ -9,6 +9,7 @@ Add `zemscripten` and (optionally) `emsdk` to your build.zig.zon dependencies:
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.52.tar.gz",
             .hash = "12202192726bf983ec243c7eea956d6107baf6f49d50b62f6a91f5d7471bc6daf53b",
+            .lazy = true,
         },
 ```
 
@@ -82,7 +83,7 @@ You can also define a run step that invokes `emrun`. This will serve the html lo
     const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
 
     const emrun_args = .{};
-    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename, &emrun_args));
+    const emrun_step = @import("zemscripten").emrunStep(b, b.getInstallPath(.{ .custom = "web" }, html_filename), &emrun_args);
 
     emrun_step.dependOn(emcc_step);
 

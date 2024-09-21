@@ -154,6 +154,20 @@ pub const ConfigFlags = packed struct(c_int) {
     _padding: u10 = 0,
 };
 
+pub const FontBuilderFlags = packed struct(c_uint) {
+    no_hinting: bool = false,
+    no_auto_hint: bool = false,
+    force_auto_hint: bool = false,
+    light_hinting: bool = false,
+    mono_hinting: bool = false,
+    bold: bool = false,
+    oblique: bool = false,
+    monochrome: bool = false,
+    load_color: bool = false,
+    bitmap: bool = false,
+    _padding: u22 = 0,
+};
+
 pub const FontConfig = extern struct {
     font_data: ?*anyopaque,
     font_data_size: c_int,
@@ -169,7 +183,7 @@ pub const FontConfig = extern struct {
     glyph_min_advance_x: f32,
     glyph_max_advance_x: f32,
     merge_mode: bool,
-    font_builder_flags: c_uint,
+    font_builder_flags: FontBuilderFlags,
     rasterizer_multiply: f32,
     rasterizer_density: f32,
     ellipsis_char: Wchar,
@@ -1065,6 +1079,28 @@ pub const Style = extern struct {
     pub const scaleAllSizes = zguiStyle_ScaleAllSizes;
     extern fn zguiStyle_ScaleAllSizes(style: *Style, scale_factor: f32) void;
 
+    /// `pub fn styleColorsDark(*Style)`
+    pub const setColorsDark = zguiStyleColorsDark;
+
+    /// `pub fn styleColorsLight(*Style)`
+    pub const setColorsLight = zguiStyleColorsLight;
+
+    /// `pub fn styleColorsClassic(*Style)`
+    pub const setColorsClassic = zguiStyleColorsClassic;
+
+    pub const StyleColorsBuiltin = enum {
+        dark,
+        light,
+        classic,
+    };
+    pub fn setColorsBuiltin(style: *Style, variant: StyleColorsBuiltin) void {
+        switch (variant) {
+            .dark => zguiStyleColorsDark(style),
+            .light => zguiStyleColorsLight(style),
+            .classic => zguiStyleColorsClassic(style),
+        }
+    }
+
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
         return style.colors[@intCast(@intFromEnum(idx))];
     }
@@ -1075,6 +1111,18 @@ pub const Style = extern struct {
 /// `pub fn getStyle() *Style`
 pub const getStyle = zguiGetStyle;
 extern fn zguiGetStyle() *Style;
+
+/// `pub fn styleColorsDark(*Style)`
+pub const styleColorsDark = zguiStyleColorsDark;
+extern fn zguiStyleColorsDark(style: *Style) void;
+
+/// `pub fn styleColorsLight(*Style)`
+pub const styleColorsLight = zguiStyleColorsLight;
+extern fn zguiStyleColorsLight(style: *Style) void;
+
+/// `pub fn styleColorsClassic(*Style)`
+pub const styleColorsClassic = zguiStyleColorsClassic;
+extern fn zguiStyleColorsClassic(style: *Style) void;
 //--------------------------------------------------------------------------------------------------
 pub const StyleCol = enum(c_int) {
     text,

@@ -1221,6 +1221,21 @@ extern "C"
         style->ScaleAllSizes(scale_factor);
     }
 
+    ZGUI_API void zguiStyleColorsDark(ImGuiStyle *style)
+    {
+        ImGui::StyleColorsDark(style);
+    }
+
+    ZGUI_API void zguiStyleColorsLight(ImGuiStyle *style)
+    {
+        ImGui::StyleColorsLight(style);
+    }
+
+    ZGUI_API void zguiStyleColorsClassic(ImGuiStyle *style)
+    {
+        ImGui::StyleColorsClassic(style);
+    }
+
     ZGUI_API void zguiPushStyleColor4f(ImGuiCol idx, const float col[4])
     {
         ImGui::PushStyleColor(idx, {col[0], col[1], col[2], col[3]});
