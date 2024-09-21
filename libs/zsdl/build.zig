@@ -132,29 +132,20 @@ pub const prebuilt = struct {
             .windows => {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-windows-gnu", .{})) |sdl2_prebuilt| {
-                        compile_step.addLibraryPath(.{ .dependency = .{
-                            .dependency = sdl2_prebuilt,
-                            .sub_path = "lib",
-                        } });
+                        compile_step.addLibraryPath(sdl2_prebuilt.path("lib"));
                     }
                 }
             },
             .linux => {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-linux-gnu", .{})) |sdl2_prebuilt| {
-                        compile_step.addLibraryPath(.{ .dependency = .{
-                            .dependency = sdl2_prebuilt,
-                            .sub_path = "lib",
-                        } });
+                        compile_step.addLibraryPath(sdl2_prebuilt.path("lib"));
                     }
                 }
             },
             .macos => {
                 if (b.lazyDependency("sdl2-prebuilt-macos", .{})) |sdl2_prebuilt| {
-                    compile_step.addFrameworkPath(.{ .dependency = .{
-                        .dependency = sdl2_prebuilt,
-                        .sub_path = "Frameworks",
-                    } });
+                    compile_step.addFrameworkPath(sdl2_prebuilt.path("Frameworks"));
                 }
             },
             else => {},
@@ -171,10 +162,7 @@ pub const prebuilt = struct {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-windows-gnu", .{})) |sdl2_prebuilt| {
                         return &b.addInstallFileWithDir(
-                            .{ .dependency = .{
-                                .dependency = sdl2_prebuilt,
-                                .sub_path = "bin/SDL2.dll",
-                            } },
+                            sdl2_prebuilt.path("bin/SDL2.dll"),
                             install_dir,
                             "SDL2.dll",
                         ).step;
@@ -185,10 +173,7 @@ pub const prebuilt = struct {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-linux-gnu", .{})) |sdl2_prebuilt| {
                         return &b.addInstallFileWithDir(
-                            .{ .dependency = .{
-                                .dependency = sdl2_prebuilt,
-                                .sub_path = "lib/libSDL2.so",
-                            } },
+                            sdl2_prebuilt.path("lib/libSDL2.so"),
                             install_dir,
                             "libSDL2.so",
                         ).step;
@@ -198,10 +183,7 @@ pub const prebuilt = struct {
             .macos => {
                 if (b.lazyDependency("sdl2-prebuilt-macos", .{})) |sdl2_prebuilt| {
                     return &b.addInstallDirectory(.{
-                        .source_dir = .{ .dependency = .{
-                            .dependency = sdl2_prebuilt,
-                            .sub_path = "Frameworks/SDL2.framework",
-                        } },
+                        .source_dir = sdl2_prebuilt.path("Frameworks/SDL2.framework"),
                         .install_dir = install_dir,
                         .install_subdir = "SDL2.framework",
                     }).step;
@@ -222,10 +204,7 @@ pub const prebuilt = struct {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-windows-gnu", .{})) |sdl2_prebuilt| {
                         return &b.addInstallFileWithDir(
-                            .{ .dependency = .{
-                                .dependency = sdl2_prebuilt,
-                                .sub_path = "bin/SDL2_ttf.dll",
-                            } },
+                            sdl2_prebuilt.path("bin/SDL2_ttf.dll"),
                             install_dir,
                             "SDL2_ttf.dll",
                         ).step;
@@ -236,10 +215,7 @@ pub const prebuilt = struct {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-linux-gnu", .{})) |sdl2_prebuilt| {
                         return &b.addInstallFileWithDir(
-                            .{ .dependency = .{
-                                .dependency = sdl2_prebuilt,
-                                .sub_path = "lib/libSDL2_ttf.so",
-                            } },
+                            sdl2_prebuilt.path("lib/libSDL2_ttf.so"),
                             install_dir,
                             "libSDL2_ttf.so",
                         ).step;
@@ -249,10 +225,7 @@ pub const prebuilt = struct {
             .macos => {
                 if (b.lazyDependency("sdl2-prebuilt-macos", .{})) |sdl2_prebuilt| {
                     return &b.addInstallDirectory(.{
-                        .source_dir = .{ .dependency = .{
-                            .dependency = sdl2_prebuilt,
-                            .sub_path = "Frameworks/SDL2_ttf.framework",
-                        } },
+                        .source_dir = sdl2_prebuilt.path("Frameworks/SDL2_ttf.framework"),
                         .install_dir = install_dir,
                         .install_subdir = "SDL2_ttf.framework",
                     }).step;
@@ -273,10 +246,7 @@ pub const prebuilt = struct {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-windows-gnu", .{})) |sdl2_prebuilt| {
                         return &b.addInstallFileWithDir(
-                            .{ .dependency = .{
-                                .dependency = sdl2_prebuilt,
-                                .sub_path = "bin/SDL2_image.dll",
-                            } },
+                            sdl2_prebuilt.path("bin/SDL2_image.dll"),
                             install_dir,
                             "SDL2_image.dll",
                         ).step;
@@ -287,10 +257,7 @@ pub const prebuilt = struct {
                 if (target.cpu.arch.isX86()) {
                     if (b.lazyDependency("sdl2-prebuilt-x86_64-linux-gnu", .{})) |sdl2_prebuilt| {
                         return &b.addInstallFileWithDir(
-                            .{ .dependency = .{
-                                .dependency = sdl2_prebuilt,
-                                .sub_path = "lib/libSDL2_image.so",
-                            } },
+                            sdl2_prebuilt.path("lib/libSDL2_image.so"),
                             install_dir,
                             "libSDL2_image.so",
                         ).step;
@@ -300,10 +267,7 @@ pub const prebuilt = struct {
             .macos => {
                 if (b.lazyDependency("sdl2-prebuilt-macos", .{})) |sdl2_prebuilt| {
                     return &b.addInstallDirectory(.{
-                        .source_dir = .{ .dependency = .{
-                            .dependency = sdl2_prebuilt,
-                            .sub_path = "Frameworks/SDL2_image.framework",
-                        } },
+                        .source_dir = sdl2_prebuilt.path("Frameworks/SDL2_image.framework"),
                         .install_dir = install_dir,
                         .install_subdir = "SDL2_image.framework",
                     }).step;
