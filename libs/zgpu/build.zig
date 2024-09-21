@@ -167,16 +167,31 @@ pub fn addLibraryPathsTo(compile_step: *std.Build.Step.Compile) void {
     const target = compile_step.rootModuleTarget();
     switch (target.os.tag) {
         .windows => {
-            const dawn = b.lazyDependency("dawn_x86_64_windows_gnu", .{}).?;
-            compile_step.addLibraryPath(dawn.path(""));
+            if (b.lazyDependency("dawn_x86_64_windows_gnu", .{})) |dawn_prebuilt| {
+                compile_step.addLibraryPath(dawn_prebuilt.path(""));
+            }
         },
         .linux => {
-            const dawn = b.lazyDependency(if (target.cpu.arch.isX86()) "dawn_x86_64_linux_gnu" else "dawn_aarch64_linux_gnu", .{}).?;
-            compile_step.addLibraryPath(dawn.path(""));
+            if (target.cpu.arch.isX86()) {
+                if (b.lazyDependency("dawn_x86_64_linux_gnu", .{})) |dawn_prebuilt| {
+                    compile_step.addLibraryPath(dawn_prebuilt.path(""));
+                }
+            } else if (target.cpu.arch.isAARCH64()) {
+                if (b.lazyDependency("dawn_aarch64_linux_gnu", .{})) |dawn_prebuilt| {
+                    compile_step.addLibraryPath(dawn_prebuilt.path(""));
+                }
+            }
         },
         .macos => {
-            const dawn = b.lazyDependency(if (target.cpu.arch.isX86()) "dawn_x86_64_macos" else "dawn_aarch64_macos", .{}).?;
-            compile_step.addLibraryPath(dawn.path(""));
+            if (target.cpu.arch.isX86()) {
+                if (b.lazyDependency("dawn_x86_64_macos", .{})) |dawn_prebuilt| {
+                    compile_step.addLibraryPath(dawn_prebuilt.path(""));
+                }
+            } else if (target.cpu.arch.isAARCH64()) {
+                if (b.lazyDependency("dawn_aarch64_macos", .{})) |dawn_prebuilt| {
+                    compile_step.addLibraryPath(dawn_prebuilt.path(""));
+                }
+            }
         },
         else => {},
     }
