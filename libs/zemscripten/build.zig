@@ -32,9 +32,10 @@ pub const ActivateEmsdkStep = struct {
     }
 };
 
-pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
-    const emsdk = b.dependency("emsdk", .{});
-
+pub fn activateEmsdkStep(b: *std.Build) ?*std.Build.Step {
+    const emsdk = b.lazyDependency("emsdk", .{}) orelse {
+        return null;
+    };
     const emsdk_bin_path = switch (builtin.target.os.tag) {
         .windows => emsdk.path("emsdk.bat").getPath(b),
         else => emsdk.path("emsdk").getPath(b),
@@ -138,8 +139,11 @@ pub fn emccStep(b: *std.Build, wasm: *std.Build.Step.Compile, options: struct {
     preload_paths: ?[]const EmccFilePath = null,
     shell_file_path: ?[]const u8 = null,
     install_dir: std.Build.InstallDir,
-}) *std.Build.Step {
-    const emscripten_path = b.dependency("emsdk", .{}).path("upstream/emscripten").getPath(b);
+}) ?*std.Build.Step {
+    const emsdk = b.lazyDependency("emsdk", .{}) orelse {
+        return null;
+    };
+    const emscripten_path = emsdk.path("upstream/emscripten").getPath(b);
     const emcc_path = switch (builtin.target.os.tag) {
         .windows => b.pathJoin(&.{ emscripten_path, "emcc.bat" }),
         else => b.pathJoin(&.{ emscripten_path, "emcc" }),
@@ -234,8 +238,10 @@ pub fn emrunStep(
     b: *std.Build,
     html_path: []const u8,
     extra_args: []const []const u8,
-) *std.Build.Step {
-    const emsdk = b.dependency("emsdk", .{});
+) ?*std.Build.Step {
+    const emsdk = b.lazyDependency("emsdk", .{}) orelse {
+        return null;
+    };
     const emscripten_path = emsdk.path("upstream/emscripten").getPath(b);
     const emrun_path = switch (builtin.target.os.tag) {
         .windows => b.pathJoin(&.{ emscripten_path, "emrun.bat" }),
