@@ -1853,6 +1853,9 @@ extern fn SDL_GetPerformanceFrequency() u64;
 pub const delay = SDL_Delay;
 extern fn SDL_Delay(ms: u32) void;
 
+pub const getTicks = SDL_GetTicks;
+extern fn SDL_GetTicks() u32;
+
 //--------------------------------------------------------------------------------------------------
 //
 // Filesystem Paths
