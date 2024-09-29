@@ -125,6 +125,8 @@ pub const samples_windows_linux = struct {
 };
 
 pub const samples_cross_platform = struct {
+    pub const sdl2_demo = @import("samples/sdl2_demo/build.zig");
+
     // OpenGL samples
     pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
     pub const minimal_sdl_gl = @import("samples/minimal_sdl_gl/build.zig");
@@ -148,6 +150,8 @@ pub const samples_cross_platform = struct {
 };
 
 pub const samples_web = struct {
+    pub const sdl2_demo = samples_cross_platform.sdl2_demo;
+
     // TODO: WebGL samples
     // pub const minimal_glfw_gl = samples_cross_platform.minimal_glfw_gl;
     // pub const minimal_sdl_gl = samples_cross_platform.minimal_sdl_gl;
