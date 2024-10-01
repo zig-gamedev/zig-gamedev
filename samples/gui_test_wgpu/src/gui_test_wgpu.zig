@@ -363,6 +363,7 @@ fn update(demo: *DemoState) !void {
                 var simple_enum_value: SimpleEnum = .first;
                 var sparse_enum_value: SparseEnum = .first;
                 var non_exhaustive_enum_value: NonExhaustiveEnum = .first;
+                var optional_enum_value: ?SimpleEnum = null;
             };
 
             const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
@@ -383,6 +384,7 @@ fn update(demo: *DemoState) !void {
             _ = zgui.comboFromEnum("simple enum", &static.simple_enum_value);
             _ = zgui.comboFromEnum("sparse enum", &static.sparse_enum_value);
             _ = zgui.comboFromEnum("non-exhaustive enum", &static.non_exhaustive_enum_value);
+            _ = zgui.comboFromEnum("optional enum", &static.optional_enum_value);
         }
 
         if (zgui.collapsingHeader("Widgets: Drag Sliders", .{})) {

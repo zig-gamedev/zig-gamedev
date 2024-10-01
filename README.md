@@ -1,6 +1,6 @@
 [Libraries](#libraries) - [Getting Started](#getting-started) - [Sample applications](#sample-applications-native-wgpu) - [Others using zig-gamedev](#others-using-zig-gamedev)
 
-# [zig-gamedev project](https://github.com/zig-gamedev) monorepo
+# [zig-gamedev](https://github.com/zig-gamedev) dev repo
 
 We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/hazeycode). We create:
 
@@ -59,7 +59,6 @@ Note: Libs are being migrated from [libs/](libs/) folder in this repo to each th
 |-------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | **[zaudio](libs/zaudio)**     | Cross-platform audio using [miniaudio](https://github.com/mackron/miniaudio)                                                                         |
 | **[zbullet](libs/zbullet)**   | Build package, [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zbullet/libs/cbullet) and bindings for [Bullet physics](https://github.com/bulletphysics/bullet3)                                                                           |
-| **[zd3d12](libs/zd3d12)**     | Helper library for DirectX 12                                                                                 |
 | **[zflecs](libs/zflecs)**     | Build package and bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                         |
 | **[zemscripten](libs/zemscripten)**  | Build package and shims for [Emscripten](https://emscripten.org) emsdk |
 | **[zglfw](libs/zglfw)**       | Build package & bindings for [GLFW](https://github.com/glfw/glfw)                                                                          |

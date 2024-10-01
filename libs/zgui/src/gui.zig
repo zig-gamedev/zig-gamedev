@@ -1761,9 +1761,16 @@ pub fn comboFromEnum(
     current_item: anytype,
 ) bool {
     const EnumType = @TypeOf(current_item.*);
-    const enum_type_info = switch (@typeInfo(EnumType)) {
-        .@"enum" => |enum_type_info| enum_type_info,
-        else => @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(current_item)),
+    const enum_type_info = getTypeInfo: {
+        switch (@typeInfo(EnumType)) {
+            .optional => |optional_type_info| switch (@typeInfo(optional_type_info.child)) {
+                .@"enum" => |enum_type_info| break :getTypeInfo enum_type_info,
+                else => {},
+            },
+            .@"enum" => |enum_type_info| break :getTypeInfo enum_type_info,
+            else => {},
+        }
+        @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(EnumType));
     };
 
     const FieldNameIndex = std.meta.Tuple(&.{ []const u8, i32 });
@@ -1781,14 +1788,22 @@ pub fn comboFromEnum(
     }
 
     const field_name_to_index = std.StaticStringMap(i32).initComptime(&field_name_to_index_list);
-    var item: i32 = field_name_to_index.get(@tagName(current_item.*)).?;
+
+    var item: i32 =
+        switch (@typeInfo(EnumType)) {
+        .optional => if (current_item.*) |tag| field_name_to_index.get(@tagName(tag)) orelse -1 else -1,
+        .@"enum" => field_name_to_index.get(@tagName(current_item.*)) orelse -1,
+        else => unreachable,
+    };
 
     const result = combo(label, .{
         .items_separated_by_zeros = item_names,
         .current_item = &item,
     });
 
-    current_item.* = index_to_enum[@intCast(item)];
+    if (item > -1) {
+        current_item.* = index_to_enum[@intCast(item)];
+    }
 
     return result;
 }
