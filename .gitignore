@@ -43,7 +43,8 @@
 !/libs/zgpu/libs/**
 !/libs/zsdl/libs/**
 !/libs/zopenvr/libs/**
-!/libs/zwindows/bin/x64/*
+
+!/libs/zstbi
 
 # Ignore some special directories
 *zig-cache
