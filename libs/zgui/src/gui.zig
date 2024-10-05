@@ -3725,7 +3725,7 @@ pub const DragDropFlags = packed struct(c_int) {
 };
 
 const Payload = extern struct {
-    data: *anyopaque = null,
+    data: ?*anyopaque = null,
     data_size: c_int = 0,
     source_id: c_uint = 0,
     source_parent_id: c_uint = 0,
