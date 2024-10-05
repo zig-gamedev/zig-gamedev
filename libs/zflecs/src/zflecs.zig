@@ -311,7 +311,7 @@ pub const poly_t = anyopaque;
 pub const mixins_t = opaque {};
 
 pub const header_t = extern struct {
-    magic: i32,
+    magic: i32 = 0,
     type: i32 = 0,
     refcount: i32 = 0,
     mixins: ?*mixins_t = null,
@@ -513,9 +513,9 @@ pub const term_t = extern struct {
 pub const query_t = extern struct {
     hdr: header_t = .{},
 
-    terms: [FLECS_TERM_COUNT_MAX]term_t = .{},
-    sizes: [FLECS_TERM_COUNT_MAX]size_t = .{},
-    ids: [FLECS_TERM_COUNT_MAX]id_t = .{},
+    terms: [FLECS_TERM_COUNT_MAX]term_t = .{.{}} ** FLECS_TERM_COUNT_MAX,
+    sizes: [FLECS_TERM_COUNT_MAX]size_t = .{0} ** FLECS_TERM_COUNT_MAX,
+    ids: [FLECS_TERM_COUNT_MAX]id_t = .{0} ** FLECS_TERM_COUNT_MAX,
 
     flags: flags32_t = 0,
     var_count: i8 = 0,
@@ -841,7 +841,7 @@ pub const entity_desc_t = extern struct {
     symbol: ?[*:0]const u8 = null,
     use_low_id: bool = false,
     add: ?[*:0]const id_t = null,
-    set: ?[*:.{}]const value_t = null,
+    set: ?[*]const value_t = null, // TODO: non-scalar terminator are deprecated in new zig
     add_expr: ?[*:0]const u8 = null,
 };
 
