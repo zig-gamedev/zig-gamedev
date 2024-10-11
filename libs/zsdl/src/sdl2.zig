@@ -391,6 +391,7 @@ pub const Texture = opaque {
     pub const query = queryTexture;
     pub const lock = lockTexture;
     pub const unlock = unlockTexture;
+    pub const update = updateTexture;
     pub const destroy = destroyTexture;
 };
 
@@ -441,6 +442,19 @@ pub fn unlockTexture(texture: *Texture) void {
     SDL_UnlockTexture(texture);
 }
 extern fn SDL_UnlockTexture(texture: *Texture) void;
+
+// Update the given texture rectangle with new pixel data.
+pub fn updateTexture(texture: *Texture, rect: ?*Rect, pixels: *anyopaque, pitch: i32) !void {
+    if (SDL_UpdateTexture(texture, rect, pixels, pitch) != 0) {
+        return makeError();
+    }
+}
+extern fn SDL_UpdateTexture(
+    texture: *Texture,
+    rect: ?*Rect,
+    pixels: *anyopaque,
+    pitch: c_int,
+) c_int;
 
 /// Destroy the specified texture.
 pub fn destroyTexture(tex: *Texture) void {
