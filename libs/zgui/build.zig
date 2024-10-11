@@ -66,7 +66,7 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    const cflags = &.{ "-fno-sanitize=undefined", "-Wno-elaborated-enum-base" };
+    const cflags = &.{ "-fno-sanitize=undefined", "-Wno-elaborated-enum-base", "-Wno-error=date-time" };
 
     const imgui = if (options.shared) blk: {
         const lib = b.addSharedLibrary(.{
