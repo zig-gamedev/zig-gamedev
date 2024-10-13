@@ -15,7 +15,7 @@ also add the following if you want to use our prebuilt libraries instead of syst
             .lazy = true,
         },
         .@"sdl2-prebuilt-x86_64-linux-gnu" = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/1919257cc632bb31369b46030c0e9f95af525487.tar.gz",
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/2eccc574ad909b0d00b694b10c217a95145c47af.tar.gz",
             .hash = "1220703f44b559bd5efe9effbdd90a55b80ed5cfa4c39e01652258433bba18aad672",
             .lazy = true,
         },
