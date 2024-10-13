@@ -218,7 +218,7 @@ pub const BufferView = extern struct {
     extensions_count: usize,
     extensions: ?[*]Extension,
 
-    pub fn data(bv: BufferView) ?[*]u8 {
+    pub fn getData(bv: BufferView) ?[*]u8 {
         return cgltf_buffer_view_data(&bv);
     }
 };
@@ -897,8 +897,8 @@ test "extern struct layout" {
         if (@TypeOf(ZigType) != type) {
             continue;
         }
-        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Struct and
-            @typeInfo(ZigType).Struct.layout == .@"extern")
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .@"struct" and
+            @typeInfo(ZigType).@"struct".layout == .@"extern")
         {
             comptime var c_name_buf: [256]u8 = undefined;
             const c_name = comptime try cTypeNameFromZigTypeName(&c_name_buf, decl.name);
@@ -933,7 +933,7 @@ test "enum" {
         if (@TypeOf(ZigType) != type) {
             continue;
         }
-        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .Enum) {
+        if (comptime std.meta.activeTag(@typeInfo(ZigType)) == .@"enum") {
             comptime var c_name_buf: [256]u8 = undefined;
             const c_name = comptime try cTypeNameFromZigTypeName(&c_name_buf, decl.name);
             const CType = @field(c, c_name);

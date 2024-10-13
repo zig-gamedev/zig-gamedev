@@ -8,7 +8,7 @@ pub const name = "generative art experiment: x0024";
 pub const display_width = 1024 * 1;
 pub const display_height = 1024 * 1;
 
-var prng = std.rand.DefaultPrng.init(0);
+var prng = std.Random.DefaultPrng.init(0);
 var random = prng.random();
 
 var fs_postprocess: gl.Uint = 0;

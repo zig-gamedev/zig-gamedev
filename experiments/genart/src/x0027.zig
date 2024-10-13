@@ -10,7 +10,7 @@ pub const display_height = 1024 * res_mul;
 
 const res_mul = 1; // 1 (1024x1024) or 2 (2048x2048)
 
-var prng = std.rand.DefaultPrng.init(0);
+var prng = std.Random.DefaultPrng.init(0);
 var random = prng.random();
 
 var fs_postprocess: gl.Uint = 0;

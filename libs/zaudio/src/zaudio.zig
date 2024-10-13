@@ -415,8 +415,29 @@ pub const ResourceManager = opaque {
     };
 };
 
-pub const Vfs = opaque {
-    // TODO: Add methods.
+pub const Vfs = extern struct {
+    pub const FileHandle = ?*anyopaque;
+    pub const OpenMode = enum(c_int) {
+        read = 1,
+        write,
+    };
+    pub const SeekOrigin = enum(c_int) {
+        start,
+        current,
+        end,
+    };
+    pub const FileInfo = extern struct {
+        size_in_bytes: usize,
+    };
+
+    on_open: ?*const fn (self: *Vfs, file_path: [*:0]const u8, mode: OpenMode, handle: *FileHandle) callconv(.C) Result,
+    on_openw: ?*const fn (self: *Vfs, file_path: [*:0]const u32, mode: OpenMode, handle: *FileHandle) callconv(.C) Result,
+    on_close: ?*const fn (self: *Vfs, handle: FileHandle) callconv(.C) Result,
+    on_read: ?*const fn (self: *Vfs, handle: FileHandle, dst: [*]u8, size: usize, bytes_read: *usize) callconv(.C) Result,
+    on_write: ?*const fn (self: *Vfs, handle: FileHandle, src: [*]const u8, size: usize, bytes_written: *usize) callconv(.C) Result,
+    on_seek: ?*const fn (self: *Vfs, handle: FileHandle, offset: i64, origin: SeekOrigin) callconv(.C) Result,
+    on_tell: ?*const fn (self: *Vfs, handle: FileHandle, offset: *i64) callconv(.C) Result,
+    on_info: ?*const fn (self: *Vfs, handle: FileHandle, info: *FileInfo) callconv(.C) Result,
 };
 
 pub const Context = opaque {
@@ -2867,7 +2888,7 @@ test "zaudio.audio_buffer" {
     var samples = try std.ArrayList(f32).initCapacity(std.testing.allocator, 1000);
     defer samples.deinit();
 
-    var prng = std.rand.DefaultPrng.init(0);
+    var prng = std.Random.DefaultPrng.init(0);
     const rand = prng.random();
 
     samples.expandToCapacity();

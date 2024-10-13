@@ -846,7 +846,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
         pub fn validateJob(comptime Job: type) void {
             comptime {
                 const struct_info = switch (@typeInfo(Job)) {
-                    .Struct => |info| info,
+                    .@"struct" => |info| info,
                     else => {
                         compileError("{s} must be a struct", .{@typeName(Job)});
                         unreachable;
@@ -872,7 +872,7 @@ pub fn JobQueue(comptime queue_config: QueueConfig) type {
 
                 const Main = @TypeOf(@field(Job, "exec"));
                 const fn_info = switch (@typeInfo(Main)) {
-                    .Fn => |info| info,
+                    .@"fn" => |info| info,
                     else => {
                         compileError(
                             "{s}.exec must be a function",
