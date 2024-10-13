@@ -13,6 +13,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
         .optimize = options.optimize,
     });
+    exe.linkLibC();
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
