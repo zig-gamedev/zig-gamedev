@@ -1219,8 +1219,8 @@ pub const Surface = extern struct {
 };
 
 /// Set the blend mode used for blit operations.
-pub fn surfaceBlendMode(surface: *Surface, blendMode: BlendMode) void {
-    SDL_SetSurfaceBlendMode(surface, blendMode);
+pub fn surfaceBlendMode(surface: *Surface, blendMode: BlendMode) bool {
+    return SDL_SetSurfaceBlendMode(surface, blendMode);
 }
 extern fn SDL_SetSurfaceBlendMode(*Surface, BlendMode) bool;
 
