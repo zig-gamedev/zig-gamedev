@@ -1212,9 +1212,17 @@ pub const Surface = extern struct {
     /// Reference count -- used when freeing surface (Read-mostly)
     refcount: c_int,
 
+    pub const blendMode = surfaceBlendMode;
+
     pub const free = freeSurface;
     pub const blit = blitSurface;
 };
+
+/// Set the blend mode used for blit operations.
+pub fn surfaceBlendMode(surface: *Surface, blendMode: BlendMode) void {
+    SDL_SetSurfaceBlendMode(surface, blendMode);
+}
+extern fn SDL_SetSurfaceBlendMode(*Surface, BlendMode) bool;
 
 /// Free an RGB surface.
 pub fn freeSurface(surface: *Surface) void {
