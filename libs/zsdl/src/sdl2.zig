@@ -393,7 +393,56 @@ pub const Texture = opaque {
     pub const unlock = unlockTexture;
     pub const update = updateTexture;
     pub const destroy = destroyTexture;
+    pub const setColorMod = setTextureColorMod;
+    pub const setAlphaMod = setTextureAlphaMod;
+    pub const setBlendMode = setTextureBlendMode;
 };
+
+/// Set an additional color value multiplied into render copy operations.
+pub fn setTextureBlendMode(
+    texture: *Texture,
+    blendMode: BlendMode,
+) !void {
+    if (SDL_SetTextureBlendMode(texture, blendMode) != 0) {
+        return makeError();
+    }
+}
+extern fn SDL_SetTextureBlendMode(
+    texture: *Texture,
+    blendMode: BlendMode,
+) c_int;
+
+/// Set an additional color value multiplied into render copy operations.
+pub fn setTextureColorMod(
+    texture: *Texture,
+    r: u8,
+    g: u8,
+    b: u8,
+) !void {
+    if (SDL_SetTextureColorMod(texture, r, g, b) != 0) {
+        return makeError();
+    }
+}
+extern fn SDL_SetTextureColorMod(
+    texture: *Texture,
+    r: u8,
+    g: u8,
+    b: u8,
+) c_int;
+
+/// Set an additional alpha value multiplied into render copy operations.
+pub fn setTextureAlphaMod(
+    texture: *Texture,
+    alpha: u8,
+) !void {
+    if (SDL_SetTextureAlphaMod(texture, alpha) != 0) {
+        return makeError();
+    }
+}
+extern fn SDL_SetTextureAlphaMod(
+    texture: *Texture,
+    alpha: u8,
+) c_int;
 
 /// Query the attributes of a texture.
 pub fn queryTexture(
@@ -534,6 +583,7 @@ pub const Renderer = opaque {
     pub const getOutputSize = getRendererOutputSize;
     pub const createTexture = sdl2.createTexture;
     pub const createTextureFromSurface = sdl2.createTextureFromSurface;
+    pub const createRGBSurfaceWithFormatFrom = sdl2.createRGBSurfaceWithFormatFrom;
     pub const getInfo = getRendererInfo;
     pub const isClipEnabled = renderIsClipEnabled;
     pub const getClipRect = renderGetClipRect;
@@ -798,6 +848,26 @@ pub fn createTextureFromSurface(renderer: *Renderer, surface: *Surface) Error!*T
     return SDL_CreateTextureFromSurface(renderer, surface) orelse makeError();
 }
 extern fn SDL_CreateTextureFromSurface(renderer: *Renderer, surface: *Surface) ?*Texture;
+
+/// Allocate a new RGB surface with with a specific pixel format and existing pixel data.
+pub fn createRGBSurfaceWithFormatFrom(
+    pixels: *anyopaque,
+    width: i32,
+    height: i32,
+    depth: i32,
+    pitch: i32,
+    format: PixelFormatEnum,
+) Error!*Surface {
+    return SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, depth, pitch, format) orelse makeError();
+}
+extern fn SDL_CreateRGBSurfaceWithFormatFrom(
+    pixels: *anyopaque,
+    width: c_int,
+    height: c_int,
+    depth: c_int,
+    pitch: c_int,
+    format: PixelFormatEnum,
+) ?*Surface;
 
 /// Get information about a rendering context.
 pub fn getRendererInfo(r: *const Renderer) Error!RendererInfo {
