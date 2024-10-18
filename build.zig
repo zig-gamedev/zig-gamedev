@@ -5,7 +5,7 @@ pub const min_zig_version = std.SemanticVersion{
     .major = 0,
     .minor = 14,
     .patch = 0,
-    .pre = "dev.1710",
+    .pre = "dev.1911",
 };
 
 pub fn build(b: *std.Build) void {
