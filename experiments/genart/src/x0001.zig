@@ -11,7 +11,7 @@ pub const display_height = 1024 * 1;
 const Vec2 = [2]f32;
 const bounds: f32 = 3.0;
 
-var prng = std.rand.DefaultPrng.init(123);
+var prng = std.Random.DefaultPrng.init(123);
 var random = prng.random();
 var pass: u32 = 0;
 var y: f32 = -bounds;
