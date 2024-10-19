@@ -5,11 +5,12 @@
 #pragma once
 
 #include <Jolt/Geometry/IndexedTriangle.h>
+#include <Jolt/Core/NonCopyable.h>
 
 JPH_NAMESPACE_BEGIN
 
 /// A class that splits a triangle list into two parts for building a tree
-class TriangleSplitter
+class JPH_EXPORT TriangleSplitter : public NonCopyable
 {
 public:
 	/// Constructor
@@ -35,8 +36,8 @@ public:
 								Range(uint inBegin, uint inEnd) : mBegin(inBegin), mEnd(inEnd) { }
 
 		/// Get number of triangles in range
-		uint					Count() const 
-		{ 
+		uint					Count() const
+		{
 			return mEnd - mBegin;
 		}
 
@@ -46,9 +47,9 @@ public:
 	};
 
 	/// Range of triangles to start with
-	Range						GetInitialRange() const 
-	{ 
-		return Range(0, (uint)mSortedTriangleIdx.size()); 
+	Range						GetInitialRange() const
+	{
+		return Range(0, (uint)mSortedTriangleIdx.size());
 	}
 
 	/// Split triangles into two groups left and right, returns false if no split could be made

@@ -627,13 +627,26 @@ pub const ShapeFilter = extern struct {
 pub const ContactSettings = extern struct {
     combined_friction: f32,
     combined_restitution: f32,
+
+    inv_mass_scale_1: f32,
+    inv_inertia_scale_1: f32,
+    inv_mass_scale_2: f32,
+    inv_inertia_scale_2: f32,
+
     is_sensor: bool,
+
+    relative_linear_surface_velocity: [4]f32 align(16), // 4th element is ignored
+    relative_angular_surface_velocity: [4]f32 align(16), // 4th element is ignored
 
     comptime {
         assert(@sizeOf(ContactSettings) == @sizeOf(c.JPC_ContactSettings));
         assert(@offsetOf(ContactSettings, "combined_restitution") == @offsetOf(
             c.JPC_ContactSettings,
             "combined_restitution",
+        ));
+        assert(@offsetOf(ContactSettings, "relative_angular_surface_velocity") == @offsetOf(
+            c.JPC_ContactSettings,
+            "relative_angular_surface_velocity",
         ));
     }
 };
@@ -758,6 +771,18 @@ pub const MotionQuality = enum(c.JPC_MotionQuality) {
     linear_cast = c.JPC_MOTION_QUALITY_LINEAR_CAST,
 };
 
+/// NOTE: Enum values designed for bitwise combinations in the C tradition
+pub const AllowedDOFs = enum(c.JPC_AllowedDOFs) {
+    none = c.JPC_ALLOWED_DOFS_NONE,                     // 0b000000
+    all = c.JPC_ALLOWED_DOFS_ALL,                       // 0b111111
+    translation_x = c.JPC_ALLOWED_DOFS_TRANSLATION_X,   // 0b000001
+    translation_y = c.JPC_ALLOWED_DOFS_TRANSLATION_Y,   // 0b000010
+    translation_z = c.JPC_ALLOWED_DOFS_TRANSLATION_Z,   // 0b000100
+    rotation_x = c.JPC_ALLOWED_DOFS_ROTATION_X,         // 0b001000
+    rotation_y = c.JPC_ALLOWED_DOFS_ROTATION_Y,         // 0b010000
+    rotation_z = c.JPC_ALLOWED_DOFS_ROTATION_Z,         // 0b100000
+};
+
 pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
     calc_mass_inertia = c.JPC_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
     calc_inertia = c.JPC_OVERRIDE_MASS_PROPS_CALC_INERTIA,
@@ -780,10 +805,14 @@ pub const BodyCreationSettings = extern struct {
     object_layer: ObjectLayer = 0,
     collision_group: CollisionGroup = .{},
     motion_type: MotionType = .dynamic,
+    allowed_DOFs: AllowedDOFs = .all,
     allow_dynamic_or_kinematic: bool = false,
     is_sensor: bool = false,
+    collide_kinematic_vs_non_dynamic: bool = false,
     use_manifold_reduction: bool = true,
+    apply_gyroscopic_force: bool = false,
     motion_quality: MotionQuality = .discrete,
+    enhanced_internal_edge_removal: bool = false,
     allow_sleeping: bool = true,
     friction: f32 = 0.2,
     restitution: f32 = 0.0,
@@ -792,6 +821,8 @@ pub const BodyCreationSettings = extern struct {
     max_linear_velocity: f32 = 500.0,
     max_angular_velocity: f32 = 0.25 * c.JPC_PI * 60.0,
     gravity_factor: f32 = 1.0,
+    num_velocity_steps_override: u32 = 0,
+    num_position_steps_override: u32 = 0,
     override_mass_properties: OverrideMassProperties = .calc_mass_inertia,
     inertia_multiplier: f32 = 1.0,
     mass_properties_override: MassProperties = .{},
@@ -805,6 +836,8 @@ pub const BodyCreationSettings = extern struct {
         assert(@offsetOf(BodyCreationSettings, "user_data") == @offsetOf(c.JPC_BodyCreationSettings, "user_data"));
         assert(@offsetOf(BodyCreationSettings, "motion_quality") ==
             @offsetOf(c.JPC_BodyCreationSettings, "motion_quality"));
+        assert(@offsetOf(BodyCreationSettings, "shape") ==
+            @offsetOf(c.JPC_BodyCreationSettings, "shape"));
     }
 };
 
@@ -944,6 +977,11 @@ pub const RayCastResult = extern struct {
 pub const BackFaceMode = enum(c.JPC_BackFaceMode) {
     ignore_back_faces = c.JPC_BACK_FACE_IGNORE,
     collide_with_back_faces = c.JPC_BACK_FACE_COLLIDE,
+};
+
+pub const BodyType = enum(c.JPC_BodyType) {
+    rigid_body = c.JPC_BODY_TYPE_RIGID_BODY,
+    soft_body = c.JPC_BODY_TYPE_SOFT_BODY,
 };
 
 pub const RayCastSettings = extern struct {
@@ -1308,7 +1346,7 @@ pub fn init(allocator: std.mem.Allocator, args: struct {
 
     state.?.mem_allocations.ensureTotalCapacity(32) catch unreachable;
 
-    c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
+    c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsRealloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
 
     c.JPC_CreateFactory();
     c.JPC_RegisterTypes();
@@ -1330,7 +1368,7 @@ pub fn postReload(allocator: std.mem.Allocator, prev_state: GlobalState) void {
     state.?.mem_allocator = allocator;
     state.?.mem_allocations.allocator = allocator;
 
-    c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
+    c.JPC_RegisterCustomAllocator(zphysicsAlloc, zphysicsRealloc, zphysicsFree, zphysicsAlignedAlloc, zphysicsFree);
 }
 
 pub fn deinit() void {
@@ -1488,14 +1526,12 @@ pub const PhysicsSystem = opaque {
         delta_time: f32,
         args: struct {
             collision_steps: i32 = 1,
-            integration_sub_steps: i32 = 1,
         },
     ) !void {
         const res = c.JPC_PhysicsSystem_Update(
             @as(*c.JPC_PhysicsSystem, @ptrCast(physics_system)),
             delta_time,
             args.collision_steps,
-            args.integration_sub_steps,
             @as(*c.JPC_TempAllocator, @ptrCast(state.?.temp_allocator)),
             @as(*c.JPC_JobSystem, @ptrCast(state.?.job_system)),
         );
@@ -2000,6 +2036,7 @@ pub const Body = extern struct {
 
     object_layer: ObjectLayer,
 
+    body_type: BodyType,
     broad_phase_layer: BroadPhaseLayer,
     motion_type: MotionType,
     flags: u8,
@@ -2451,6 +2488,8 @@ pub const CharacterVirtual = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const MotionProperties = extern struct {
+    pub const inactive_index: u32 = std.math.maxInt(u32);
+
     linear_velocity: [4]f32 align(16), // 4th element is ignored
     angular_velocity: [4]f32 align(16), // 4th element is ignored
     inv_inertia_diagonal: [4]f32 align(16),
@@ -2464,13 +2503,17 @@ pub const MotionProperties = extern struct {
     max_linear_velocity: f32,
     max_angular_velocity: f32,
     gravity_factor: f32,
-    index_in_active_bodies: u32,
-    island_index: u32,
+    index_in_active_bodies: u32 = inactive_index,
+    island_index: u32 = inactive_index,
 
     motion_quality: MotionQuality,
     allow_sleeping: bool,
 
-    reserved: [52 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
+    allowed_DOFs: AllowedDOFs = .all,
+    num_velocity_steps_override: u8 = 0,
+    num_position_steps_override: u8 = 0,
+
+    reserved: [53 + c.JPC_ENABLE_ASSERTS * 3 + c.JPC_DOUBLE_PRECISION * 24]u8 align(4 + 4 * c.JPC_DOUBLE_PRECISION),
 
     pub fn getMotionQuality(motion: *const MotionProperties) MotionQuality {
         return @as(MotionQuality, @enumFromInt(c.JPC_MotionProperties_GetMotionQuality(
@@ -2641,6 +2684,10 @@ pub const MotionProperties = extern struct {
         assert(@offsetOf(MotionProperties, "force") == @offsetOf(c.JPC_MotionProperties, "force"));
         assert(@offsetOf(MotionProperties, "motion_quality") == @offsetOf(c.JPC_MotionProperties, "motion_quality"));
         assert(@offsetOf(MotionProperties, "gravity_factor") == @offsetOf(c.JPC_MotionProperties, "gravity_factor"));
+        assert(@offsetOf(MotionProperties, "num_position_steps_override") == @offsetOf(
+            c.JPC_MotionProperties,
+            "num_position_steps_override",
+        ));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -3609,6 +3656,57 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     ) catch @panic("zphysics: out of memory");
 
     return ptr;
+}
+
+fn zphysicsRealloc(maybe_ptr: ?*anyopaque, old_size: usize, new_size: usize) callconv(.C) ?*anyopaque {
+    state.?.mem_mutex.lock();
+    defer state.?.mem_mutex.unlock();
+
+    if (maybe_ptr) |ptr| {
+        const info = state.?.mem_allocations.getPtr(@intFromPtr(ptr)).?;
+        const mem = @as([*]u8, @ptrCast(ptr))[0..info.size];
+
+        const did_resize = state.?.mem_allocator.rawResize(
+            mem,
+            std.math.log2_int(u29, @as(u29, @intCast(info.alignment))),
+            new_size,
+            @returnAddress(),
+        );
+
+        if (did_resize) {
+            info.size = @as(u48, @intCast(new_size));
+            return ptr;
+        }
+    }
+
+    const new_ptr = state.?.mem_allocator.rawAlloc(
+        new_size,
+        std.math.log2_int(u29, @as(u29, @intCast(mem_alignment))),
+        @returnAddress(),
+    );
+    if (new_ptr == null) @panic("zphysics: out of memory");
+
+    state.?.mem_allocations.put(
+        @intFromPtr(new_ptr),
+        .{ .size = @as(u48, @intCast(new_size)), .alignment = mem_alignment },
+    ) catch @panic("zphysics: out of memory");
+
+    if (maybe_ptr) |old_ptr| {
+        const smaller_size = @min(new_size, old_size);
+        const old_mem = @as([*]u8, @ptrCast(old_ptr))[0..smaller_size];
+        const new_mem = @as([*]u8, @ptrCast(new_ptr))[0..smaller_size];
+        @memcpy(new_mem, old_mem);
+
+        const old_info = state.?.mem_allocations.fetchRemove(@intFromPtr(old_ptr)).?.value;
+        const mem_to_free = @as([*]u8, @ptrCast(old_ptr))[0..old_info.size];
+        state.?.mem_allocator.rawFree(
+            mem_to_free,
+            std.math.log2_int(u29, @as(u29, @intCast(old_info.alignment))),
+            @returnAddress(),
+        );
+    }
+
+    return new_ptr;
 }
 
 fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {

@@ -4,13 +4,14 @@
 
 #pragma once
 
+#include <Jolt/Core/StaticArray.h>
 #include <Jolt/Math/Float3.h>
 #include <Jolt/Math/Swizzle.h>
 #include <Jolt/Math/MathTypes.h>
 
 JPH_NAMESPACE_BEGIN
 
-/// 3 component vector (stored as 4 vectors). 
+/// 3 component vector (stored as 4 vectors).
 /// Note that we keep the 4th component the same as the 3rd component to avoid divisions by zero when JPH_FLOATING_POINT_EXCEPTIONS_ENABLED defined
 class [[nodiscard]] alignas(JPH_VECTOR_ALIGNMENT) Vec3
 {
@@ -32,6 +33,7 @@ public:
 	/// Constructor
 								Vec3() = default; ///< Intentionally not initialized for performance reasons
 								Vec3(const Vec3 &inRHS) = default;
+	Vec3 &						operator = (const Vec3 &inRHS) = default;
 	explicit JPH_INLINE			Vec3(Vec4Arg inRHS);
 	JPH_INLINE					Vec3(Type inRHS) : mValue(inRHS)				{ CheckW(); }
 
@@ -54,7 +56,7 @@ public:
 
 	/// Replicate inV across all components
 	static JPH_INLINE Vec3		sReplicate(float inV);
-		
+
 	/// Load 3 floats from memory (reads 32 bits extra which it doesn't use)
 	static JPH_INLINE Vec3		sLoadFloat3Unsafe(const Float3 &inV);
 
@@ -103,7 +105,7 @@ public:
 	static JPH_INLINE Vec3		sUnitSpherical(float inTheta, float inPhi);
 
 	/// A set of vectors uniformly spanning the surface of a unit sphere, usable for debug purposes
-	static const std::vector<Vec3> sUnitSphere;
+	JPH_EXPORT static const StaticArray<Vec3, 1026> sUnitSphere;
 
 	/// Get random unit vector
 	template <class Random>
@@ -123,11 +125,14 @@ public:
 	JPH_INLINE float			GetY() const									{ return mF32[1]; }
 	JPH_INLINE float			GetZ() const									{ return mF32[2]; }
 #endif
-	
+
 	/// Set individual components
 	JPH_INLINE void				SetX(float inX)									{ mF32[0] = inX; }
 	JPH_INLINE void				SetY(float inY)									{ mF32[1] = inY; }
 	JPH_INLINE void				SetZ(float inZ)									{ mF32[2] = mF32[3] = inZ; } // Assure Z and W are the same
+
+	/// Set all components
+	JPH_INLINE void				Set(float inX, float inY, float inZ)			{ *this = Vec3(inX, inY, inZ); }
 
 	/// Get float component by index
 	JPH_INLINE float			operator [] (uint inCoordinate) const			{ JPH_ASSERT(inCoordinate < 3); return mF32[inCoordinate]; }
@@ -272,7 +277,7 @@ public:
 
 	/// Internal helper function that checks that W is equal to Z, so e.g. dividing by it should not generate div by 0
 	JPH_INLINE void				CheckW() const;
-	
+
 	/// Internal helper function that ensures that the Z component is replicated to the W component to prevent divisions by zero
 	static JPH_INLINE Type		sFixW(Type inValue);
 

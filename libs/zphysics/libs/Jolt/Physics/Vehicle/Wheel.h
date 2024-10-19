@@ -15,10 +15,10 @@ JPH_NAMESPACE_BEGIN
 class VehicleConstraint;
 
 /// Base class for wheel settings, each VehicleController can implement a derived class of this
-class WheelSettings : public SerializableObject, public RefTarget<WheelSettings>, public NonCopyable
+class JPH_EXPORT WheelSettings : public SerializableObject, public RefTarget<WheelSettings>
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(WheelSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, WheelSettings)
 
 	/// Saves the contents in binary form to inStream.
 	virtual void			SaveBinaryState(StreamOut &inStream) const;
@@ -27,6 +27,7 @@ public:
 	virtual void			RestoreBinaryState(StreamIn &inStream);
 
 	Vec3					mPosition { 0, 0, 0 };						///< Attachment point of wheel suspension in local space of the body
+	Vec3					mSuspensionForcePoint { 0, 0, 0 };			///< Where tire forces (suspension and traction) are applied, in local space of the body. A good default is the center of the wheel in its neutral pose. See mEnableSuspensionForcePoint.
 	Vec3					mSuspensionDirection { 0, -1, 0 };			///< Direction of the suspension in local space of the body, should point down
 	Vec3					mSteeringAxis { 0, 1, 0 };					///< Direction of the steering axis in local space of the body, should point up (e.g. for a bike would be -mSuspensionDirection)
 	Vec3					mWheelUp { 0, 1, 0 };						///< Up direction when the wheel is in the neutral steering position (usually VehicleConstraintSettings::mUp but can be used to give the wheel camber or for a bike would be -mSuspensionDirection)
@@ -34,14 +35,14 @@ public:
 	float					mSuspensionMinLength = 0.3f;				///< How long the suspension is in max raised position relative to the attachment point (m)
 	float					mSuspensionMaxLength = 0.5f;				///< How long the suspension is in max droop position relative to the attachment point (m)
 	float					mSuspensionPreloadLength = 0.0f;			///< The natural length (m) of the suspension spring is defined as mSuspensionMaxLength + mSuspensionPreloadLength. Can be used to preload the suspension as the spring is compressed by mSuspensionPreloadLength when the suspension is in max droop position. Note that this means when the vehicle touches the ground there is a discontinuity so it will also make the vehicle more bouncy as we're updating with discrete time steps.
-	float					mSuspensionFrequency = 1.5f;				///< Natural frequency of the suspension spring (Hz)
-	float					mSuspensionDamping = 0.5f;					///< Damping factor of the suspension spring (0 = no damping, 1 = critical damping)
+	SpringSettings			mSuspensionSpring { ESpringMode::FrequencyAndDamping, 1.5f, 0.5f }; ///< Settings for the suspension spring
 	float					mRadius = 0.3f;								///< Radius of the wheel (m)
 	float					mWidth = 0.1f;								///< Width of the wheel (m)
+	bool					mEnableSuspensionForcePoint = false;		///< Enables mSuspensionForcePoint, if disabled, the forces are applied at the collision contact point. This leads to a more accurate simulation when interacting with dynamic objects but makes the vehicle less stable. When setting this to true, all forces will be applied to a fixed point on the vehicle body.
 };
 
 /// Base class for runtime data for a wheel, each VehicleController can implement a derived class of this
-class Wheel
+class JPH_EXPORT Wheel : public NonCopyable
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -86,7 +87,7 @@ public:
 	/// Velocity of the contact point (m / s, not relative to the wheel but in world space)
 	Vec3					GetContactPointVelocity() const				{ JPH_ASSERT(HasContact()); return mContactPointVelocity; }
 
-	/// Returns the current contact mormal in world space (note by the time you call this the vehicle has moved)
+	/// Returns the current contact normal in world space (note by the time you call this the vehicle has moved)
 	Vec3					GetContactNormal() const					{ JPH_ASSERT(HasContact()); return mContactNormal; }
 
 	/// Returns longitudinal direction (direction along the wheel relative to floor) in world space (note by the time you call this the vehicle has moved)

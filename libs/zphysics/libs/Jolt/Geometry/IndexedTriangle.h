@@ -16,7 +16,7 @@ public:
 
 	/// Constructor
 					IndexedTriangleNoMaterial() = default;
-					IndexedTriangleNoMaterial(uint32 inI1, uint32 inI2, uint32 inI3)	{ mIdx[0] = inI1; mIdx[1] = inI2; mIdx[2] = inI3; }
+	constexpr		IndexedTriangleNoMaterial(uint32 inI1, uint32 inI2, uint32 inI3) : mIdx { inI1, inI2, inI3 } { }
 
 	/// Check if two triangles are identical
 	bool			operator == (const IndexedTriangleNoMaterial &inRHS) const
@@ -41,9 +41,13 @@ public:
 	}
 
 	/// Check if triangle is degenerate
-	bool			IsDegenerate() const
+	bool			IsDegenerate(const VertexList &inVertices) const
 	{
-		return mIdx[0] == mIdx[1] || mIdx[1] == mIdx[2] || mIdx[2] == mIdx[0];
+		Vec3 v0(inVertices[mIdx[0]]);
+		Vec3 v1(inVertices[mIdx[1]]);
+		Vec3 v2(inVertices[mIdx[2]]);
+
+		return (v1 - v0).Cross(v2 - v0).IsNearZero();
 	}
 
 	/// Rotate the vertices so that the second vertex becomes first etc. This does not change the represented triangle.
@@ -71,7 +75,7 @@ public:
 	using IndexedTriangleNoMaterial::IndexedTriangleNoMaterial;
 
 	/// Constructor
-					IndexedTriangle(uint32 inI1, uint32 inI2, uint32 inI3, uint32 inMaterialIndex) : IndexedTriangleNoMaterial(inI1, inI2, inI3), mMaterialIndex(inMaterialIndex) { }
+	constexpr		IndexedTriangle(uint32 inI1, uint32 inI2, uint32 inI3, uint32 inMaterialIndex) : IndexedTriangleNoMaterial(inI1, inI2, inI3), mMaterialIndex(inMaterialIndex) { }
 
 	/// Check if two triangles are identical
 	bool			operator == (const IndexedTriangle &inRHS) const

@@ -34,7 +34,7 @@ struct CollisionEstimationResult
 /// This function estimates the contact impulses and body velocity changes as a result of a collision.
 /// It can be used in the ContactListener::OnContactAdded to determine the strength of the collision to e.g. play a sound or trigger a particle system.
 /// This function is accurate when two bodies collide but will not be accurate when more than 2 bodies collide at the same time as it does not know about these other collisions.
-/// 
+///
 /// @param inBody1 Colliding body 1
 /// @param inBody2 Colliding body 2
 /// @param inManifold The collision manifold
@@ -43,6 +43,6 @@ struct CollisionEstimationResult
 /// @param inCombinedRestitution The combined restitution of body 1 and body 2 (see ContactSettings::mCombinedRestitution)
 /// @param inMinVelocityForRestitution Minimal velocity required for restitution to be applied (see PhysicsSettings::mMinVelocityForRestitution)
 /// @param inNumIterations Number of iterations to use for the impulse estimation (see PhysicsSettings::mNumVelocitySteps, note you can probably use a lower number for a decent estimate). If you set the number of iterations to 1 then no friction will be calculated.
-void EstimateCollisionResponse(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, CollisionEstimationResult &outResult, float inCombinedFriction, float inCombinedRestitution, float inMinVelocityForRestitution = 1.0f, uint inNumIterations = 10);
+JPH_EXPORT void EstimateCollisionResponse(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, CollisionEstimationResult &outResult, float inCombinedFriction, float inCombinedRestitution, float inMinVelocityForRestitution = 1.0f, uint inNumIterations = 10);
 
 JPH_NAMESPACE_END

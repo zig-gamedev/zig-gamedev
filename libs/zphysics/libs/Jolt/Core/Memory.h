@@ -10,6 +10,7 @@ JPH_NAMESPACE_BEGIN
 
 // Normal memory allocation, must be at least 8 byte aligned on 32 bit platform and 16 byte aligned on 64 bit platform
 using AllocateFunction = void *(*)(size_t inSize);
+using ReallocateFunction = void *(*)(void *inBlock, size_t inOldSize, size_t inNewSize);
 using FreeFunction = void (*)(void *inBlock);
 
 // Aligned memory allocation
@@ -17,13 +18,14 @@ using AlignedAllocateFunction = void *(*)(size_t inSize, size_t inAlignment);
 using AlignedFreeFunction = void (*)(void *inBlock);
 
 // User defined allocation / free functions
-extern AllocateFunction Allocate;
-extern FreeFunction Free;
-extern AlignedAllocateFunction AlignedAllocate;
-extern AlignedFreeFunction AlignedFree;
+JPH_EXPORT extern AllocateFunction Allocate;
+JPH_EXPORT extern ReallocateFunction Reallocate;
+JPH_EXPORT extern FreeFunction Free;
+JPH_EXPORT extern AlignedAllocateFunction AlignedAllocate;
+JPH_EXPORT extern AlignedFreeFunction AlignedFree;
 
 /// Register platform default allocation / free functions
-void RegisterDefaultAllocator();
+JPH_EXPORT void RegisterDefaultAllocator();
 
 /// Macro to override the new and delete functions
 #define JPH_OVERRIDE_NEW_DELETE \
@@ -32,17 +34,18 @@ void RegisterDefaultAllocator();
 	JPH_INLINE void *operator new[] (size_t inCount)											{ return JPH::Allocate(inCount); } \
 	JPH_INLINE void operator delete[] (void *inPointer) noexcept								{ JPH::Free(inPointer); } \
 	JPH_INLINE void *operator new (size_t inCount, std::align_val_t inAlignment)				{ return JPH::AlignedAllocate(inCount, static_cast<size_t>(inAlignment)); } \
-	JPH_INLINE void operator delete (void *inPointer, std::align_val_t inAlignment) noexcept	{ JPH::AlignedFree(inPointer); } \
+	JPH_INLINE void operator delete (void *inPointer, [[maybe_unused]] std::align_val_t inAlignment) noexcept	{ JPH::AlignedFree(inPointer); } \
 	JPH_INLINE void *operator new[] (size_t inCount, std::align_val_t inAlignment)				{ return JPH::AlignedAllocate(inCount, static_cast<size_t>(inAlignment)); } \
-	JPH_INLINE void operator delete[] (void *inPointer, std::align_val_t inAlignment) noexcept	{ JPH::AlignedFree(inPointer); }
+	JPH_INLINE void operator delete[] (void *inPointer, [[maybe_unused]] std::align_val_t inAlignment) noexcept	{ JPH::AlignedFree(inPointer); }
 
 #else
 
 // Directly define the allocation functions
-void *Allocate(size_t inSize);
-void Free(void *inBlock);
-void *AlignedAllocate(size_t inSize, size_t inAlignment);
-void AlignedFree(void *inBlock);
+JPH_EXPORT void *Allocate(size_t inSize);
+JPH_EXPORT void *Reallocate(void *inBlock, size_t inOldSize, size_t inNewSize);
+JPH_EXPORT void Free(void *inBlock);
+JPH_EXPORT void *AlignedAllocate(size_t inSize, size_t inAlignment);
+JPH_EXPORT void AlignedFree(void *inBlock);
 
 // Don't implement allocator registering
 inline void RegisterDefaultAllocator() { }

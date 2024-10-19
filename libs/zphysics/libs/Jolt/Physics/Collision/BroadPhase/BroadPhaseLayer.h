@@ -9,9 +9,9 @@
 
 JPH_NAMESPACE_BEGIN
 
-/// An object layer can be mapped to a broadphase layer. Objects with the same broadphase layer will end up in the same sub structure (usually a tree) of the broadphase. 
-/// When there are many layers, this reduces the total amount of sub structures the broad phase needs to manage. Usually you want objects that don't collide with each other 
-/// in different broad phase layers, but there could be exceptions if objects layers only contain a minor amount of objects so it is not beneficial to give each layer its 
+/// An object layer can be mapped to a broadphase layer. Objects with the same broadphase layer will end up in the same sub structure (usually a tree) of the broadphase.
+/// When there are many layers, this reduces the total amount of sub structures the broad phase needs to manage. Usually you want objects that don't collide with each other
+/// in different broad phase layers, but there could be exceptions if objects layers only contain a minor amount of objects so it is not beneficial to give each layer its
 /// own sub structure in the broadphase.
 /// Note: This class requires explicit casting from and to Type to avoid confusion with ObjectLayer
 class BroadPhaseLayer
@@ -19,7 +19,7 @@ class BroadPhaseLayer
 public:
 	using Type = uint8;
 
-	JPH_INLINE 						BroadPhaseLayer() = default;
+	JPH_INLINE						BroadPhaseLayer() = default;
 	JPH_INLINE explicit constexpr	BroadPhaseLayer(Type inValue) : mValue(inValue) { }
 	JPH_INLINE constexpr			BroadPhaseLayer(const BroadPhaseLayer &) = default;
 	JPH_INLINE BroadPhaseLayer &	operator = (const BroadPhaseLayer &) = default;
@@ -44,6 +44,11 @@ public:
 		return mValue;
 	}
 
+	JPH_INLINE Type					GetValue() const
+	{
+		return mValue;
+	}
+
 private:
 	Type							mValue;
 };
@@ -52,7 +57,7 @@ private:
 static constexpr BroadPhaseLayer cBroadPhaseLayerInvalid(0xff);
 
 /// Interface that the application should implement to allow mapping object layers to broadphase layers
-class BroadPhaseLayerInterface : public NonCopyable
+class JPH_EXPORT BroadPhaseLayerInterface : public NonCopyable
 {
 public:
 	/// Destructor
@@ -71,35 +76,35 @@ public:
 };
 
 /// Class to test if an object can collide with a broadphase layer. Used while finding collision pairs.
-class ObjectVsBroadPhaseLayerFilter : public NonCopyable
+class JPH_EXPORT ObjectVsBroadPhaseLayerFilter : public NonCopyable
 {
 public:
 	/// Destructor
 	virtual							~ObjectVsBroadPhaseLayerFilter() = default;
 
 	/// Returns true if an object layer should collide with a broadphase layer
-	virtual bool					ShouldCollide(ObjectLayer inLayer1, BroadPhaseLayer inLayer2) const
+	virtual bool					ShouldCollide([[maybe_unused]] ObjectLayer inLayer1, [[maybe_unused]] BroadPhaseLayer inLayer2) const
 	{
 		return true;
 	}
 };
 
 /// Filter class for broadphase layers
-class BroadPhaseLayerFilter : public NonCopyable
+class JPH_EXPORT BroadPhaseLayerFilter : public NonCopyable
 {
 public:
 	/// Destructor
 	virtual							~BroadPhaseLayerFilter() = default;
 
 	/// Function to filter out broadphase layers when doing collision query test (return true to allow testing against objects with this layer)
-	virtual bool					ShouldCollide(BroadPhaseLayer inLayer) const
+	virtual bool					ShouldCollide([[maybe_unused]] BroadPhaseLayer inLayer) const
 	{
 		return true;
 	}
 };
 
 /// Default filter class that uses the pair filter in combination with a specified layer to filter layers
-class DefaultBroadPhaseLayerFilter : public BroadPhaseLayerFilter
+class JPH_EXPORT DefaultBroadPhaseLayerFilter : public BroadPhaseLayerFilter
 {
 public:
 	/// Constructor
@@ -121,7 +126,7 @@ private:
 };
 
 /// Allows objects from a specific broad phase layer only
-class SpecifiedBroadPhaseLayerFilter : public BroadPhaseLayerFilter
+class JPH_EXPORT SpecifiedBroadPhaseLayerFilter : public BroadPhaseLayerFilter
 {
 public:
 	/// Constructor

@@ -17,10 +17,10 @@ JPH_NAMESPACE_BEGIN
 #endif // JPH_DEBUG_RENDERER
 
 /// Generic properties for a vehicle engine
-class VehicleEngineSettings
+class JPH_EXPORT VehicleEngineSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(VehicleEngineSettings)
+	JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(JPH_EXPORT, VehicleEngineSettings)
 
 	/// Constructor
 							VehicleEngineSettings();
@@ -34,13 +34,13 @@ public:
 	float					mMaxTorque = 500.0f;						///< Max amount of torque (Nm) that the engine can deliver
 	float					mMinRPM = 1000.0f;							///< Min amount of revolutions per minute (rpm) the engine can produce without stalling
 	float					mMaxRPM = 6000.0f;							///< Max amount of revolutions per minute (rpm) the engine can generate
-	LinearCurve				mNormalizedTorque;							///< Curve that describes a ratio of the max torque the engine can produce vs the fraction of the max RPM of the engine
+	LinearCurve				mNormalizedTorque;							///< Y-axis: Curve that describes a ratio of the max torque the engine can produce (0 = 0, 1 = mMaxTorque). X-axis: the fraction of the RPM of the engine (0 = mMinRPM, 1 = mMaxRPM)
 	float					mInertia = 0.5f;							///< Moment of inertia (kg m^2) of the engine
 	float					mAngularDamping = 0.2f;						///< Angular damping factor of the wheel: dw/dt = -c * w
 };
 
 /// Runtime data for engine
-class VehicleEngine : public VehicleEngineSettings
+class JPH_EXPORT VehicleEngine : public VehicleEngineSettings
 {
 public:
 	/// Multiply an angular velocity (rad/s) with this value to get rounds per minute (RPM)
@@ -72,9 +72,15 @@ public:
 	void					ApplyDamping(float inDeltaTime);
 
 #ifdef JPH_DEBUG_RENDERER
+	// Function that converts RPM to an angle in radians for debugging purposes
+	float					ConvertRPMToAngle(float inRPM) const		{ return (-0.75f + 1.5f * inRPM / mMaxRPM) * JPH_PI; }
+
 	/// Debug draw a RPM meter
 	void					DrawRPM(DebugRenderer *inRenderer, RVec3Arg inPosition, Vec3Arg inForward, Vec3Arg inUp, float inSize, float inShiftDownRPM, float inShiftUpRPM) const;
 #endif // JPH_DEBUG_RENDERER
+
+	/// If the engine is idle we allow the vehicle to sleep
+	bool					AllowSleep() const							{ return mCurrentRPM <= 1.01f * mMinRPM; }
 
 	/// Saving state for replay
 	void					SaveState(StateRecorder &inStream) const;

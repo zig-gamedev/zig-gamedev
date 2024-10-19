@@ -10,13 +10,13 @@
 JPH_NAMESPACE_BEGIN
 
 /// Collision detection helper that casts a convex object vs one or more triangles
-class CastConvexVsTriangles
+class JPH_EXPORT CastConvexVsTriangles
 {
 public:
 	/// Constructor
 	/// @param inShapeCast The shape to cast against the triangles and its start and direction
 	/// @param inShapeCastSettings Settings for performing the cast
-	/// @param inScale Local space scale for the shape to cast against.
+	/// @param inScale Local space scale for the shape to cast against (scales relative to its center of mass).
 	/// @param inCenterOfMassTransform2 Is the center of mass transform of shape 2 (excluding scale), this is used to provide a transform to the shape cast result so that local quantities can be transformed into world space.
 	/// @param inSubShapeIDCreator1 Class that tracks the current sub shape ID for the casting shape
 	/// @param ioCollector The collector that receives the results.

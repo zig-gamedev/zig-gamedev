@@ -490,12 +490,14 @@ JPC_RegisterDefaultAllocator(void)
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_RegisterCustomAllocator(JPC_AllocateFunction in_alloc,
+                            JPC_ReallocateFunction in_realloc,
                             JPC_FreeFunction in_free,
                             JPC_AlignedAllocateFunction in_aligned_alloc,
                             JPC_AlignedFreeFunction in_aligned_free)
 {
 #ifndef JPH_DISABLE_CUSTOM_ALLOCATOR
     JPH::Allocate = in_alloc;
+    JPH::Reallocate = in_realloc;
     JPH::Free = in_free;
     JPH::AlignedAllocate = in_aligned_alloc;
     JPH::AlignedFree = in_aligned_free;
@@ -764,7 +766,8 @@ public:
         JPH::RVec3Arg inV1,
         JPH::RVec3Arg inV2,
         JPH::RVec3Arg inV3,
-        JPH::ColorArg inColor) override
+        JPH::ColorArg inColor,
+        JPH::DebugRenderer::ECastShadow inCastShadow) override
     {
         JPC_Real in_v1[3];
         storeRVec3(in_v1, inV1);
@@ -772,7 +775,8 @@ public:
         storeRVec3(in_v2, inV2);
         JPC_Real in_v3[3];
         storeRVec3(in_v3, inV3);
-        c_renderer->vtbl->DrawTriangle(c_renderer, in_v1, in_v2, in_v3, *toJpc(&inColor));
+        c_renderer->vtbl->DrawTriangle(
+            c_renderer, in_v1, in_v2, in_v3, *toJpc(&inColor), static_cast<JPC_CastShadow>(inCastShadow));
     }
     virtual JPH::DebugRenderer::Batch CreateTriangleBatch(
         const JPH::DebugRenderer::Triangle *inTriangles,
@@ -1047,9 +1051,9 @@ JPC_PhysicsSystem_GetNumBodies(const JPC_PhysicsSystem *in_physics_system)
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
-JPC_PhysicsSystem_GetNumActiveBodies(const JPC_PhysicsSystem *in_physics_system)
+JPC_PhysicsSystem_GetNumActiveBodies(const JPC_PhysicsSystem *in_physics_system, JPC_BodyType in_type)
 {
-    return toJph(in_physics_system)->GetNumActiveBodies();
+    return toJph(in_physics_system)->GetNumActiveBodies(static_cast<JPH::EBodyType>(in_type));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API uint32_t
@@ -1119,7 +1123,6 @@ JPC_API JPC_PhysicsUpdateError
 JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
                          float in_delta_time,
                          int in_collision_steps,
-                         int in_integration_sub_steps,
                          JPC_TempAllocator *in_temp_allocator,
                          JPC_JobSystem *in_job_system)
 {
@@ -1127,7 +1130,6 @@ JPC_PhysicsSystem_Update(JPC_PhysicsSystem *in_physics_system,
     JPC_PhysicsUpdateError error = (JPC_PhysicsUpdateError)toJph(in_physics_system)->Update(
         in_delta_time,
         in_collision_steps,
-        in_integration_sub_steps,
         reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator),
         reinterpret_cast<JPH::JobSystem *>(in_job_system));
     return error;
@@ -2853,9 +2855,11 @@ JPC_MotionProperties_SetGravityFactor(JPC_MotionProperties *in_properties,
 //--------------------------------------------------------------------------------------------------
 JPC_API void
 JPC_MotionProperties_SetMassProperties(JPC_MotionProperties *in_properties,
+                                       JPC_AllowedDOFs in_allowed_DOFs,
                                        const JPC_MassProperties *in_mass_properties)
 {
-    toJph(in_properties)->SetMassProperties(*toJph(in_mass_properties));
+    toJph(in_properties)->SetMassProperties(
+        static_cast<JPH::EAllowedDOFs>(in_allowed_DOFs), *toJph(in_mass_properties));
 }
 //--------------------------------------------------------------------------------------------------
 JPC_API float

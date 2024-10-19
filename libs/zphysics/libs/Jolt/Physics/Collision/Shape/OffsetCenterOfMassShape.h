@@ -11,10 +11,10 @@ JPH_NAMESPACE_BEGIN
 class CollideShapeSettings;
 
 /// Class that constructs an OffsetCenterOfMassShape
-class OffsetCenterOfMassShapeSettings final : public DecoratedShapeSettings
+class JPH_EXPORT OffsetCenterOfMassShapeSettings final : public DecoratedShapeSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(OffsetCenterOfMassShapeSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, OffsetCenterOfMassShapeSettings)
 
 	/// Constructor
 									OffsetCenterOfMassShapeSettings() = default;
@@ -32,7 +32,7 @@ public:
 };
 
 /// This shape will shift the center of mass of a child shape, it can e.g. be used to lower the center of mass of an unstable object like a boat to make it stable
-class OffsetCenterOfMassShape final : public DecoratedShape
+class JPH_EXPORT OffsetCenterOfMassShape final : public DecoratedShape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -40,6 +40,7 @@ public:
 	/// Constructor
 									OffsetCenterOfMassShape() : DecoratedShape(EShapeSubType::OffsetCenterOfMass) { }
 									OffsetCenterOfMassShape(const OffsetCenterOfMassShapeSettings &inSettings, ShapeResult &outResult);
+									OffsetCenterOfMassShape(const Shape *inShape, Vec3Arg inOffset) : DecoratedShape(EShapeSubType::OffsetCenterOfMass, inShape), mOffset(inOffset) { }
 
 	/// Access the offset that is applied to the center of mass
 	Vec3							GetOffset() const										{ return mOffset; }
@@ -49,7 +50,7 @@ public:
 
 	// See Shape::GetLocalBounds
 	virtual AABox					GetLocalBounds() const override;
-		
+
 	// See Shape::GetWorldSpaceBounds
 	virtual AABox					GetWorldSpaceBounds(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale) const override;
 	using Shape::GetWorldSpaceBounds;
@@ -95,6 +96,9 @@ public:
 	// See: Shape::CollidePoint
 	virtual void					CollidePoint(Vec3Arg inPoint, const SubShapeIDCreator &inSubShapeIDCreator, CollidePointCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const override;
 
+	// See: Shape::CollideSoftBodyVertices
+	virtual void					CollideSoftBodyVertices(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, SoftBodyVertex *ioVertices, uint inNumVertices, float inDeltaTime, Vec3Arg inDisplacementDueToGravity, int inCollidingShapeIndex) const override;
+
 	// See Shape::CollectTransformedShapes
 	virtual void					CollectTransformedShapes(const AABox &inBox, Vec3Arg inPositionCOM, QuatArg inRotation, Vec3Arg inScale, const SubShapeIDCreator &inSubShapeIDCreator, TransformedShapeCollector &ioCollector, const ShapeFilter &inShapeFilter) const override;
 
@@ -115,9 +119,6 @@ public:
 
 	// See Shape::GetVolume
 	virtual float					GetVolume() const override								{ return mInnerShape->GetVolume(); }
-
-	// See Shape::IsValidScale
-	virtual bool					IsValidScale(Vec3Arg inScale) const override			{ return mInnerShape->IsValidScale(inScale); }
 
 	// Register shape functions with the registry
 	static void						sRegister();

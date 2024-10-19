@@ -6,8 +6,10 @@
 
 // Include for __rdtsc
 #if defined(JPH_PLATFORM_WINDOWS)
-	#include <intrin.h> 
+	#include <intrin.h>
 #elif defined(JPH_CPU_X86) && defined(JPH_COMPILER_GCC)
+	#include <x86intrin.h>
+#elif defined(JPH_CPU_E2K)
 	#include <x86intrin.h>
 #endif
 
@@ -27,6 +29,8 @@ JPH_INLINE uint64 GetProcessorTickCount()
 	return JPH_PLATFORM_BLUE_GET_TICKS();
 #elif defined(JPH_CPU_X86)
 	return __rdtsc();
+#elif defined(JPH_CPU_E2K)
+	return __rdtsc();
 #elif defined(JPH_CPU_ARM) && defined(JPH_USE_NEON)
 	uint64 val;
 	asm volatile("mrs %0, cntvct_el0" : "=r" (val));
@@ -41,8 +45,5 @@ JPH_INLINE uint64 GetProcessorTickCount()
 }
 
 #endif // JPH_PLATFORM_WINDOWS_UWP || (JPH_PLATFORM_WINDOWS && JPH_CPU_ARM)
-
-/// Get the amount of ticks per second, note that this number will never be fully accurate as the amound of ticks per second may vary with CPU load, so this number is only to be used to give an indication of time for profiling purposes
-uint64 GetProcessorTicksPerSecond();
 
 JPH_NAMESPACE_END

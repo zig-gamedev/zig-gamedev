@@ -86,12 +86,12 @@ MassProperties CompoundShape::GetMassProperties() const
 
 	// Ensure that inertia is a 3x3 matrix, adding inertias causes the bottom right element to change
 	p.mInertia.SetColumn4(3, Vec4(0, 0, 0, 1));
-	
+
 	return p;
 }
 
 AABox CompoundShape::GetWorldSpaceBounds(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale) const
-{ 
+{
 	if (mSubShapes.size() <= 10)
 	{
 		AABox bounds;
@@ -156,8 +156,8 @@ TransformedShape CompoundShape::GetSubShapeTransformedShape(const SubShapeID &in
 	return ts;
 }
 
-Vec3 CompoundShape::GetSurfaceNormal(const SubShapeID &inSubShapeID, Vec3Arg inLocalSurfacePosition) const 
-{ 
+Vec3 CompoundShape::GetSurfaceNormal(const SubShapeID &inSubShapeID, Vec3Arg inLocalSurfacePosition) const
+{
 	// Decode sub shape index
 	SubShapeID remainder;
 	uint32 index = GetSubShapeIndexFromID(inSubShapeID, remainder);
@@ -211,7 +211,7 @@ void CompoundShape::GetSubmergedVolume(Mat44Arg inCenterOfMassTransform, Vec3Arg
 		outCenterOfBuoyancy /= outSubmergedVolume;
 
 #ifdef JPH_DEBUG_RENDERER
-	// Draw senter of buoyancy
+	// Draw center of buoyancy
 	if (sDrawSubmergedVolumes)
 		DebugRenderer::sInstance->DrawWireSphere(inBaseOffset + outCenterOfBuoyancy, 0.05f, Color::sRed, 1);
 #endif // JPH_DEBUG_RENDERER
@@ -245,6 +245,15 @@ void CompoundShape::DrawGetSupportingFace(DebugRenderer *inRenderer, RMat44Arg i
 	}
 }
 #endif // JPH_DEBUG_RENDERER
+
+void CompoundShape::CollideSoftBodyVertices(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, SoftBodyVertex *ioVertices, uint inNumVertices, float inDeltaTime, Vec3Arg inDisplacementDueToGravity, int inCollidingShapeIndex) const
+{
+	for (const SubShape &shape : mSubShapes)
+	{
+		Mat44 transform = shape.GetLocalTransformNoScale(inScale);
+		shape.mShape->CollideSoftBodyVertices(inCenterOfMassTransform * transform, shape.TransformScale(inScale), ioVertices, inNumVertices, inDeltaTime, inDisplacementDueToGravity, inCollidingShapeIndex);
+	}
+}
 
 void CompoundShape::TransformShape(Mat44Arg inCenterOfMassTransform, TransformedShapeCollector &ioCollector) const
 {
@@ -296,16 +305,11 @@ void CompoundShape::SaveBinaryState(StreamOut &inStream) const
 	inStream.Write(mInnerRadius);
 
 	// Write sub shapes
-	size_t len = mSubShapes.size();
-	inStream.Write(len);
-	if (!inStream.IsFailed())
-		for (size_t i = 0; i < len; ++i)
-		{
-			const SubShape &s = mSubShapes[i];
-			inStream.Write(s.mUserData);
-			inStream.Write(s.mPositionCOM);
-			inStream.Write(s.mRotation);
-		}
+	inStream.Write(mSubShapes, [](const SubShape &inElement, StreamOut &inS) {
+		inS.Write(inElement.mUserData);
+		inS.Write(inElement.mPositionCOM);
+		inS.Write(inElement.mRotation);
+	});
 }
 
 void CompoundShape::RestoreBinaryState(StreamIn &inStream)
@@ -318,24 +322,16 @@ void CompoundShape::RestoreBinaryState(StreamIn &inStream)
 	inStream.Read(mInnerRadius);
 
 	// Read sub shapes
-	size_t len = 0;
-	inStream.Read(len);
-	if (!inStream.IsEOF() && !inStream.IsFailed())
-	{
-		mSubShapes.resize(len);
-		for (size_t i = 0; i < len; ++i)
-		{
-			SubShape &s = mSubShapes[i];
-			inStream.Read(s.mUserData);
-			inStream.Read(s.mPositionCOM);
-			inStream.Read(s.mRotation);
-			s.mIsRotationIdentity = s.mRotation == Float3(0, 0, 0);
-		}
-	}
+	inStream.Read(mSubShapes, [](StreamIn &inS, SubShape &outElement) {
+		inS.Read(outElement.mUserData);
+		inS.Read(outElement.mPositionCOM);
+		inS.Read(outElement.mRotation);
+		outElement.mIsRotationIdentity = outElement.mRotation == Float3(0, 0, 0);
+	});
 }
 
 void CompoundShape::SaveSubShapeState(ShapeList &outSubShapes) const
-{ 
+{
 	outSubShapes.clear();
 	outSubShapes.reserve(mSubShapes.size());
 	for (const SubShape &shape : mSubShapes)
@@ -343,7 +339,7 @@ void CompoundShape::SaveSubShapeState(ShapeList &outSubShapes) const
 }
 
 void CompoundShape::RestoreSubShapeState(const ShapeRefC *inSubShapes, uint inNumShapes)
-{ 
+{
 	JPH_ASSERT(mSubShapes.size() == inNumShapes);
 	for (uint i = 0; i < inNumShapes; ++i)
 		mSubShapes[i].mShape = inSubShapes[i];
@@ -390,6 +386,20 @@ bool CompoundShape::IsValidScale(Vec3Arg inScale) const
 	}
 
 	return true;
+}
+
+Vec3 CompoundShape::MakeScaleValid(Vec3Arg inScale) const
+{
+	Vec3 scale = ScaleHelpers::MakeNonZeroScale(inScale);
+	if (CompoundShape::IsValidScale(scale))
+		return scale;
+
+	Vec3 abs_uniform_scale = ScaleHelpers::MakeUniformScale(scale.Abs());
+	Vec3 uniform_scale = scale.GetSign() * abs_uniform_scale;
+	if (CompoundShape::IsValidScale(uniform_scale))
+		return uniform_scale;
+
+	return Sign(scale.GetX()) * abs_uniform_scale;
 }
 
 void CompoundShape::sRegister()

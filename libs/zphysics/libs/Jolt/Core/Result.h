@@ -6,9 +6,6 @@
 
 JPH_NAMESPACE_BEGIN
 
-// GCC doesn't properly detect that mState is used to ensure that mResult is initialized
-JPH_GCC_SUPPRESS_WARNING("-Wmaybe-uninitialized")
-
 /// Helper class that either contains a valid result or an error
 template <class Type>
 class Result
@@ -16,7 +13,7 @@ class Result
 public:
 	/// Default constructor
 						Result()									{ }
-						
+
 	/// Copy constructor
 						Result(const Result<Type> &inRHS) :
 		mState(inRHS.mState)
@@ -54,7 +51,7 @@ public:
 			break;
 		}
 
-		inRHS.mState = EState::Invalid;
+		// Don't reset the state of inRHS, the destructors still need to be called after a move operation
 	}
 
 	/// Destructor
@@ -105,19 +102,19 @@ public:
 			break;
 		}
 
-		inRHS.mState = EState::Invalid;
+		// Don't reset the state of inRHS, the destructors still need to be called after a move operation
 
 		return *this;
 	}
 
 	/// Clear result or error
 	void				Clear()
-	{ 
-		switch (mState) 
-		{ 
-		case EState::Valid: 
-			mResult.~Type(); 
-			break; 
+	{
+		switch (mState)
+		{
+		case EState::Valid:
+			mResult.~Type();
+			break;
 
 		case EState::Error:
 			mError.~String();
@@ -143,7 +140,7 @@ public:
 	void				Set(const Type &inResult)					{ Clear(); ::new (&mResult) Type(inResult); mState = EState::Valid; }
 
 	/// Set the result value (move value)
-	void				Set(const Type &&inResult)					{ Clear(); ::new (&mResult) Type(std::move(inResult)); mState = EState::Valid; }
+	void				Set(Type &&inResult)						{ Clear(); ::new (&mResult) Type(std::move(inResult)); mState = EState::Valid; }
 
 	/// Check if we had an error
 	bool				HasError() const							{ return mState == EState::Error; }

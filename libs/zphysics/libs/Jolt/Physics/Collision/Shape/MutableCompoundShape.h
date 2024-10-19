@@ -11,10 +11,10 @@ JPH_NAMESPACE_BEGIN
 class CollideShapeSettings;
 
 /// Class that constructs a MutableCompoundShape.
-class MutableCompoundShapeSettings final : public CompoundShapeSettings
+class JPH_EXPORT MutableCompoundShapeSettings final : public CompoundShapeSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(MutableCompoundShapeSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, MutableCompoundShapeSettings)
 
 	// See: ShapeSettings
 	virtual ShapeResult				Create() const override;
@@ -23,11 +23,11 @@ public:
 /// A compound shape, sub shapes can be rotated and translated.
 /// This shape is optimized for adding / removing and changing the rotation / translation of sub shapes but is less efficient in querying.
 /// Shifts all child objects so that they're centered around the center of mass (which needs to be kept up to date by calling AdjustCenterOfMass).
-/// 
-/// Note: If you're using MutableCompoundShapes and are querying data while modifying the shape you'll have a race condition. 
-/// In this case it is best to create a new MutableCompoundShape and set the new shape on the body using BodyInterface::SetShape. If a 
-/// query is still working on the old shape, it will have taken a reference and keep the old shape alive until the query finishes.
-class MutableCompoundShape final : public CompoundShape
+///
+/// Note: If you're using MutableCompoundShape and are querying data while modifying the shape you'll have a race condition.
+/// In this case it is best to create a new MutableCompoundShape using the Clone function. You replace the shape on a body using BodyInterface::SetShape.
+/// If a query is still working on the old shape, it will have taken a reference and keep the old shape alive until the query finishes.
+class JPH_EXPORT MutableCompoundShape final : public CompoundShape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -35,7 +35,10 @@ public:
 	/// Constructor
 									MutableCompoundShape() : CompoundShape(EShapeSubType::MutableCompound) { }
 									MutableCompoundShape(const MutableCompoundShapeSettings &inSettings, ShapeResult &outResult);
-		
+
+	/// Clone this shape. Can be used to avoid race conditions. See the documentation of this class for more information.
+	Ref<MutableCompoundShape>		Clone() const;
+
 	// See Shape::CastRay
 	virtual bool					CastRay(const RayCast &inRay, const SubShapeIDCreator &inSubShapeIDCreator, RayCastResult &ioHit) const override;
 	virtual void					CastRay(const RayCast &inRay, const RayCastSettings &inRayCastSettings, const SubShapeIDCreator &inSubShapeIDCreator, CastRayCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const override;
@@ -61,20 +64,25 @@ public:
 	///@{
 	/// @name Mutating shapes. Note that this is not thread safe, so you need to ensure that any bodies that use this shape are locked at the time of modification using BodyLockWrite. After modification you need to call BodyInterface::NotifyShapeChanged to update the broadphase and collision caches.
 
-	/// Adding a new shape
+	/// Adding a new shape.
+	/// Beware this can create a race condition if you're running collision queries in parallel. See class documentation for more information.
 	/// @return The index of the newly added shape
 	uint							AddShape(Vec3Arg inPosition, QuatArg inRotation, const Shape *inShape, uint32 inUserData = 0);
 
-	/// Remove a shape by index
+	/// Remove a shape by index.
+	/// Beware this can create a race condition if you're running collision queries in parallel. See class documentation for more information.
 	void							RemoveShape(uint inIndex);
 
-	/// Modify the position / orientation of a shape
+	/// Modify the position / orientation of a shape.
+	/// Beware this can create a race condition if you're running collision queries in parallel. See class documentation for more information.
 	void							ModifyShape(uint inIndex, Vec3Arg inPosition, QuatArg inRotation);
 
-	/// Modify the position / orientation and shape at the same time
+	/// Modify the position / orientation and shape at the same time.
+	/// Beware this can create a race condition if you're running collision queries in parallel. See class documentation for more information.
 	void							ModifyShape(uint inIndex, Vec3Arg inPosition, QuatArg inRotation, const Shape *inShape);
 
 	/// @brief Batch set positions / orientations, this avoids duplicate work due to bounding box calculation.
+	/// Beware this can create a race condition if you're running collision queries in parallel. See class documentation for more information.
 	/// @param inStartIndex Index of first shape to update
 	/// @param inNumber Number of shapes to update
 	/// @param inPositions A list of positions with arbitrary stride
@@ -83,9 +91,10 @@ public:
 	/// @param inRotationStride The orientation stride (the number of bytes between the first and second element)
 	void							ModifyShapes(uint inStartIndex, uint inNumber, const Vec3 *inPositions, const Quat *inRotations, uint inPositionStride = sizeof(Vec3), uint inRotationStride = sizeof(Quat));
 
-	/// Recalculate the center of mass and shift all objects so they're centered around it 
+	/// Recalculate the center of mass and shift all objects so they're centered around it
 	/// (this needs to be done of dynamic bodies and if the center of mass changes significantly due to adding / removing / repositioning sub shapes or else the simulation will look unnatural)
 	/// Note that after adjusting the center of mass of an object you need to call BodyInterface::NotifyShapeChanged and Constraint::NotifyShapeChanged on the relevant bodies / constraints.
+	/// Beware this can create a race condition if you're running collision queries in parallel. See class documentation for more information.
 	void							AdjustCenterOfMass();
 
 	///@}

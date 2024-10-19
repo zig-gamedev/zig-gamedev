@@ -10,15 +10,15 @@
 JPH_NAMESPACE_BEGIN
 
 /// Distance constraint settings, used to create a distance constraint
-class DistanceConstraintSettings final : public TwoBodyConstraintSettings
+class JPH_EXPORT DistanceConstraintSettings final : public TwoBodyConstraintSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(DistanceConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, DistanceConstraintSettings)
 
 	// See: ConstraintSettings::SaveBinaryState
 	virtual void				SaveBinaryState(StreamOut &inStream) const override;
 
-	/// Create an an instance of this constraint
+	/// Create an instance of this constraint
 	virtual TwoBodyConstraint *	Create(Body &inBody1, Body &inBody2) const override;
 
 	/// This determines in which space the constraint is setup, all properties below should be in the specified space
@@ -36,12 +36,8 @@ public:
 	float						mMinDistance = -1.0f;
 	float						mMaxDistance = -1.0f;
 
-	/// If mFrequency > 0 the constraint will be soft and mFrequency specifies the oscillation frequency in Hz and mDamping the damping ratio (0 = no damping, 1 = critical damping).
-	/// If mFrequency <= 0, mDamping is ignored and the distance constraint will have hard limits (as hard as the time step / the number of velocity / position solver steps allows).
-	/// Note that if you set mDamping = 0, you will not get an infinite oscillation. Because we integrate physics using an explicit Euler scheme, there is always energy loss.
-	/// This is done to keep the simulation from exploding, because with a damping of 0 and even the slightest rounding error, the oscillation could become bigger and bigger until the simluation explodes.
-	float						mFrequency = 0.0f;
-	float						mDamping = 0.0f;
+	/// When enabled, this makes the limits soft. When the constraint exceeds the limits, a spring force will pull it back.
+	SpringSettings				mLimitsSpringSettings;
 
 protected:
 	// See: ConstraintSettings::RestoreBinaryState
@@ -49,7 +45,7 @@ protected:
 };
 
 /// This constraint is a stiff spring that holds 2 points at a fixed distance from each other
-class DistanceConstraint final : public TwoBodyConstraint
+class JPH_EXPORT DistanceConstraint final : public TwoBodyConstraint
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -61,6 +57,7 @@ public:
 	virtual EConstraintSubType	GetSubType() const override									{ return EConstraintSubType::Distance; }
 	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) override;
 	virtual void				SetupVelocityConstraint(float inDeltaTime) override;
+	virtual void				ResetWarmStart() override;
 	virtual void				WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
 	virtual bool				SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool				SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
@@ -80,16 +77,13 @@ public:
 	float						GetMinDistance() const										{ return mMinDistance; }
 	float						GetMaxDistance() const										{ return mMaxDistance; }
 
-	/// Update the spring frequency for the constraint
-	void						SetFrequency(float inFrequency)								{ JPH_ASSERT(inFrequency >= 0.0f); mFrequency = inFrequency; }
-	float						GetFrequency() const										{ return mFrequency; }
+	/// Update the limits spring settings
+	const SpringSettings &		GetLimitsSpringSettings() const								{ return mLimitsSpringSettings; }
+	SpringSettings &			GetLimitsSpringSettings()									{ return mLimitsSpringSettings; }
+	void						SetLimitsSpringSettings(const SpringSettings &inLimitsSpringSettings) { mLimitsSpringSettings = inLimitsSpringSettings; }
 
-	/// Update the spring damping for the constraint
-	void						SetDamping(float inDamping)									{ JPH_ASSERT(inDamping >= 0.0f); mDamping = inDamping; }
-	float						GetDamping() const											{ return mDamping; }
-
-	///@name Get Lagrange multiplier from last physics update (relates to how much force/torque was applied to satisfy the constraint)
-	inline float	 			GetTotalLambdaPosition() const								{ return mAxisConstraint.GetTotalLambda(); }
+	///@name Get Lagrange multiplier from last physics update (the linear impulse applied to satisfy the constraint)
+	inline float				GetTotalLambdaPosition() const								{ return mAxisConstraint.GetTotalLambda(); }
 
 private:
 	// Internal helper function to calculate the values below
@@ -105,9 +99,8 @@ private:
 	float						mMinDistance;
 	float						mMaxDistance;
 
-	// Soft constraint properties (see DistanceConstraintSettings)
-	float						mFrequency;
-	float						mDamping;
+	// Soft constraint limits
+	SpringSettings				mLimitsSpringSettings;
 
 	// RUN TIME PROPERTIES FOLLOW
 

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <Jolt/Core/HashCombine.h>
+
 JPH_NAMESPACE_BEGIN
 
 /// Simple variable length array backed by a fixed size buffer
@@ -24,8 +26,8 @@ public:
 	explicit			StaticArray(std::initializer_list<T> inList)
 	{
 		JPH_ASSERT(inList.size() <= N);
-		for (typename std::initializer_list<T>::iterator i = inList.begin(); i != inList.end(); ++i)
-			::new (reinterpret_cast<T *>(&mElements[mSize++])) T(*i);
+		for (const T &v : inList)
+			::new (reinterpret_cast<T *>(&mElements[mSize++])) T(v);
 	}
 
 	/// Copy constructor
@@ -65,7 +67,7 @@ public:
 	/// Construct element at the back of the array
 	template <class... A>
 	void				emplace_back(A &&... inElement)
-	{	
+	{
 		JPH_ASSERT(mSize < N);
 		::new (&mElements[mSize++]) T(std::forward<A>(inElement)...);
 	}
@@ -156,6 +158,19 @@ public:
 		return reinterpret_cast<const T &>(mElements[inIdx]);
 	}
 
+	/// Access element
+	T &					at(size_type inIdx)
+	{
+		JPH_ASSERT(inIdx < mSize);
+		return reinterpret_cast<T &>(mElements[inIdx]);
+	}
+
+	const T &			at(size_type inIdx) const
+	{
+		JPH_ASSERT(inIdx < mSize);
+		return reinterpret_cast<const T &>(mElements[inIdx]);
+	}
+
 	/// First element in the array
 	const T &			front() const
 	{
@@ -211,7 +226,7 @@ public:
 	{
 		size_type rhs_size = inRHS.size();
 
-		if ((void *)this != (void *)&inRHS)
+		if (static_cast<const void *>(this) != static_cast<const void *>(&inRHS))
 		{
 			clear();
 
@@ -232,7 +247,7 @@ public:
 		size_type rhs_size = inRHS.size();
 		JPH_ASSERT(rhs_size <= N);
 
-		if ((void *)this != (void *)&inRHS)
+		if (static_cast<const void *>(this) != static_cast<const void *>(&inRHS))
 		{
 			clear();
 
@@ -245,7 +260,7 @@ public:
 
 		return *this;
 	}
-	
+
 	/// Comparing arrays
 	bool				operator == (const StaticArray<T, N> &inRHS) const
 	{
@@ -266,7 +281,7 @@ public:
 				return true;
 		return false;
 	}
-	
+
 protected:
 	struct alignas(T) Storage
 	{
@@ -296,13 +311,13 @@ namespace std
 			std::size_t ret = 0;
 
 			// Hash length first
-            JPH::HashCombine(ret, inRHS.size());
+			JPH::HashCombine(ret, inRHS.size());
 
 			// Then hash elements
 			for (const T &t : inRHS)
-	            JPH::HashCombine(ret, t);
+				JPH::HashCombine(ret, t);
 
-            return ret;
+			return ret;
 		}
 	};
 }

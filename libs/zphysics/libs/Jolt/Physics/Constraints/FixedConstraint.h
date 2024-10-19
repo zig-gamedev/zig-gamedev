@@ -11,15 +11,15 @@
 JPH_NAMESPACE_BEGIN
 
 /// Fixed constraint settings, used to create a fixed constraint
-class FixedConstraintSettings final : public TwoBodyConstraintSettings
+class JPH_EXPORT FixedConstraintSettings final : public TwoBodyConstraintSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(FixedConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, FixedConstraintSettings)
 
 	// See: ConstraintSettings::SaveBinaryState
 	virtual void				SaveBinaryState(StreamOut &inStream) const override;
 
-	/// Create an an instance of this constraint
+	/// Create an instance of this constraint
 	virtual TwoBodyConstraint *	Create(Body &inBody1, Body &inBody2) const override;
 
 	/// This determines in which space the constraint is setup, all properties below should be in the specified space
@@ -44,8 +44,8 @@ protected:
 };
 
 /// A fixed constraint welds two bodies together removing all degrees of freedom between them.
-/// This variant uses euler angles for the rotation constraint.
-class FixedConstraint final : public TwoBodyConstraint
+/// This variant uses Euler angles for the rotation constraint.
+class JPH_EXPORT FixedConstraint final : public TwoBodyConstraint
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -57,6 +57,7 @@ public:
 	virtual EConstraintSubType	GetSubType() const override									{ return EConstraintSubType::Fixed; }
 	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) override;
 	virtual void				SetupVelocityConstraint(float inDeltaTime) override;
+	virtual void				ResetWarmStart() override;
 	virtual void				WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
 	virtual bool				SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool				SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
@@ -71,13 +72,13 @@ public:
 	virtual Mat44				GetConstraintToBody1Matrix() const override					{ return Mat44::sTranslation(mLocalSpacePosition1); }
 	virtual Mat44				GetConstraintToBody2Matrix() const override					{ return Mat44::sRotationTranslation(mInvInitialOrientation, mLocalSpacePosition2); }
 
-	///@name Get Lagrange multiplier from last physics update (relates to how much force/torque was applied to satisfy the constraint)
+	///@name Get Lagrange multiplier from last physics update (the linear/angular impulse applied to satisfy the constraint)
 	inline Vec3					GetTotalLambdaPosition() const								{ return mPointConstraintPart.GetTotalLambda(); }
 	inline Vec3					GetTotalLambdaRotation() const								{ return mRotationConstraintPart.GetTotalLambda(); }
 
 private:
 	// CONFIGURATION PROPERTIES FOLLOW
-		
+
 	// Local space constraint positions
 	Vec3						mLocalSpacePosition1;
 	Vec3						mLocalSpacePosition2;

@@ -34,7 +34,7 @@ public:
 	static constexpr int			TriangleHeaderSize = sizeof(TriangleHeader);
 
 	/// If this codec could return a different offset than the current buffer size when calling Pack()
-	static constexpr bool			ChangesOffsetOnPack = false; 
+	static constexpr bool			ChangesOffsetOnPack = false;
 
 	/// Amount of bits per component
 	enum EComponentData : uint32
@@ -67,7 +67,7 @@ public:
 	};
 
 	static_assert(sizeof(VertexData) == 8, "Compiler added padding");
-	
+
 	/// A block of 4 triangles
 	struct TriangleBlock
 	{
@@ -87,6 +87,36 @@ public:
 	};
 
 	static_assert(sizeof(TriangleBlockHeader) == 4, "Compiler added padding");
+
+	/// This class is used to validate that the triangle data will not be degenerate after compression
+	class ValidationContext
+	{
+	public:
+		/// Constructor
+									ValidationContext(const IndexedTriangleList &inTriangles, const VertexList &inVertices) :
+			mVertices(inVertices)
+		{
+			// Only used the referenced triangles, just like EncodingContext::Finalize does
+			for (const IndexedTriangle &i : inTriangles)
+				for (uint32 idx : i.mIdx)
+					mBounds.Encapsulate(Vec3(inVertices[idx]));
+		}
+
+		/// Test if a triangle will be degenerate after quantization
+		bool						IsDegenerate(const IndexedTriangle &inTriangle) const
+		{
+			// Quantize the triangle in the same way as EncodingContext::Finalize does
+			UVec4 quantized_vertex[3];
+			Vec3 compress_scale = Vec3::sReplicate(COMPONENT_MASK) / Vec3::sMax(mBounds.GetSize(), Vec3::sReplicate(1.0e-20f));
+			for (int i = 0; i < 3; ++i)
+				quantized_vertex[i] = ((Vec3(mVertices[inTriangle.mIdx[i]]) - mBounds.mMin) * compress_scale + Vec3::sReplicate(0.5f)).ToInt();
+			return quantized_vertex[0] == quantized_vertex[1] || quantized_vertex[1] == quantized_vertex[2] || quantized_vertex[0] == quantized_vertex[2];
+		}
+
+	private:
+		const VertexList &			mVertices;
+		AABox						mBounds;
+	};
 
 	/// This class is used to encode and compress triangle data into a byte buffer
 	class EncodingContext
@@ -257,10 +287,10 @@ public:
 		{
 			JPH_ASSERT(inNumTriangles > 0);
 			const TriangleBlockHeader *header = reinterpret_cast<const TriangleBlockHeader *>(inTriangleStart);
-			const VertexData *vertices = header->GetVertexData();			
+			const VertexData *vertices = header->GetVertexData();
 			const TriangleBlock *t = header->GetTriangleBlock();
 			const TriangleBlock *end = t + ((inNumTriangles + 3) >> 2);
-			
+
 			int triangles_left = inNumTriangles;
 
 			do
@@ -291,7 +321,7 @@ public:
 				}
 
 				++t;
-			} 
+			}
 			while (t < end);
 		}
 
@@ -300,7 +330,7 @@ public:
 		{
 			JPH_ASSERT(inNumTriangles > 0);
 			const TriangleBlockHeader *header = reinterpret_cast<const TriangleBlockHeader *>(inTriangleStart);
-			const VertexData *vertices = header->GetVertexData();			
+			const VertexData *vertices = header->GetVertexData();
 			const TriangleBlock *t = header->GetTriangleBlock();
 			const TriangleBlock *end = t + ((inNumTriangles + 3) >> 2);
 
@@ -336,7 +366,7 @@ public:
 				// Next block
 				++t;
 				start_triangle_idx += UVec4::sReplicate(4);
-			} 
+			}
 			while (t < end);
 
 			// Get the smallest component
@@ -380,13 +410,13 @@ public:
 		}
 
 		/// Get flags for entire triangle block
-		JPH_INLINE static void		sGetFlags(const void *inTriangleStart, uint32 inNumTriangles, uint8 *outTriangleFlags) 
+		JPH_INLINE static void		sGetFlags(const void *inTriangleStart, uint32 inNumTriangles, uint8 *outTriangleFlags)
 		{
 			JPH_ASSERT(inNumTriangles > 0);
 			const TriangleBlockHeader *header = reinterpret_cast<const TriangleBlockHeader *>(inTriangleStart);
 			const TriangleBlock *t = header->GetTriangleBlock();
 			const TriangleBlock *end = t + ((inNumTriangles + 3) >> 2);
-			
+
 			int triangles_left = inNumTriangles;
 			do
 			{
@@ -394,7 +424,7 @@ public:
 					*outTriangleFlags++ = t->mFlags[i];
 
 				++t;
-			} 
+			}
 			while (t < end);
 		}
 
@@ -406,7 +436,7 @@ public:
 			return first_block[inTriangleIndex >> 2].mFlags[inTriangleIndex & 0b11];
 		}
 
-		/// Unpacks triangles and flags, convencience function
+		/// Unpacks triangles and flags, convenience function
 		JPH_INLINE void				Unpack(const void *inTriangleStart, uint32 inNumTriangles, Vec3 *outTriangles, uint8 *outTriangleFlags) const
 		{
 			Unpack(inTriangleStart, inNumTriangles, outTriangles);

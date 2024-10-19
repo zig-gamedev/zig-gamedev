@@ -27,7 +27,7 @@ JPH_IMPLEMENT_SERIALIZABLE_VIRTUAL(GearConstraintSettings)
 }
 
 void GearConstraintSettings::SaveBinaryState(StreamOut &inStream) const
-{ 
+{
 	ConstraintSettings::SaveBinaryState(inStream);
 
 	inStream.Write(mSpace);
@@ -82,6 +82,11 @@ void GearConstraint::SetupVelocityConstraint(float inDeltaTime)
 	CalculateConstraintProperties(rotation1, rotation2);
 }
 
+void GearConstraint::ResetWarmStart()
+{
+	mGearConstraintPart.Deactivate();
+}
+
 void GearConstraint::WarmStartVelocityConstraint(float inWarmStartImpulseRatio)
 {
 	// Warm starting: Apply previous frame impulse
@@ -101,7 +106,7 @@ bool GearConstraint::SolvePositionConstraint(float inDeltaTime, float inBaumgart
 	float gear1rot;
 	if (mGear1Constraint->GetSubType() == EConstraintSubType::Hinge)
 	{
-		gear1rot = static_cast<const HingeConstraint *>(mGear1Constraint.GetPtr())->GetCurrentAngle();
+		gear1rot = StaticCast<HingeConstraint>(mGear1Constraint)->GetCurrentAngle();
 	}
 	else
 	{
@@ -112,10 +117,10 @@ bool GearConstraint::SolvePositionConstraint(float inDeltaTime, float inBaumgart
 	float gear2rot;
 	if (mGear2Constraint->GetSubType() == EConstraintSubType::Hinge)
 	{
-		gear2rot = static_cast<const HingeConstraint *>(mGear2Constraint.GetPtr())->GetCurrentAngle();
+		gear2rot = StaticCast<HingeConstraint>(mGear2Constraint)->GetCurrentAngle();
 	}
 	else
-	{		
+	{
 		JPH_ASSERT(false, "Unsupported");
 		return false;
 	}
@@ -171,13 +176,13 @@ Ref<ConstraintSettings> GearConstraint::GetConstraintSettings() const
 Mat44 GearConstraint::GetConstraintToBody1Matrix() const
 {
 	Vec3 perp = mLocalSpaceHingeAxis1.GetNormalizedPerpendicular();
-	return Mat44(Vec4(mLocalSpaceHingeAxis1, 0), Vec4(perp, 0), Vec4(mLocalSpaceHingeAxis1.Cross(perp), 0), Vec4(0, 0, 0, 1)); 
+	return Mat44(Vec4(mLocalSpaceHingeAxis1, 0), Vec4(perp, 0), Vec4(mLocalSpaceHingeAxis1.Cross(perp), 0), Vec4(0, 0, 0, 1));
 }
 
-Mat44 GearConstraint::GetConstraintToBody2Matrix() const 
-{ 
+Mat44 GearConstraint::GetConstraintToBody2Matrix() const
+{
 	Vec3 perp = mLocalSpaceHingeAxis2.GetNormalizedPerpendicular();
-	return Mat44(Vec4(mLocalSpaceHingeAxis2, 0), Vec4(perp, 0), Vec4(mLocalSpaceHingeAxis2.Cross(perp), 0), Vec4(0, 0, 0, 1)); 
+	return Mat44(Vec4(mLocalSpaceHingeAxis2, 0), Vec4(perp, 0), Vec4(mLocalSpaceHingeAxis2.Cross(perp), 0), Vec4(0, 0, 0, 1));
 }
 
 JPH_NAMESPACE_END

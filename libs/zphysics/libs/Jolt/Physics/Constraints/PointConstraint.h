@@ -10,15 +10,15 @@
 JPH_NAMESPACE_BEGIN
 
 /// Point constraint settings, used to create a point constraint
-class PointConstraintSettings final : public TwoBodyConstraintSettings
+class JPH_EXPORT PointConstraintSettings final : public TwoBodyConstraintSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(PointConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, PointConstraintSettings)
 
 	// See: ConstraintSettings::SaveBinaryState
 	virtual void				SaveBinaryState(StreamOut &inStream) const override;
 
-	/// Create an an instance of this constraint
+	/// Create an instance of this constraint
 	virtual TwoBodyConstraint *	Create(Body &inBody1, Body &inBody2) const override;
 
 	/// This determines in which space the constraint is setup, all properties below should be in the specified space
@@ -37,7 +37,7 @@ protected:
 };
 
 /// A point constraint constrains 2 bodies on a single point (removing 3 degrees of freedom)
-class PointConstraint final : public TwoBodyConstraint
+class JPH_EXPORT PointConstraint final : public TwoBodyConstraint
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -49,6 +49,7 @@ public:
 	virtual EConstraintSubType	GetSubType() const override									{ return EConstraintSubType::Point; }
 	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) override;
 	virtual void				SetupVelocityConstraint(float inDeltaTime) override;
+	virtual void				ResetWarmStart() override;
 	virtual void				WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
 	virtual bool				SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool				SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
@@ -65,18 +66,18 @@ public:
 	/// Update the attachment point for body 2
 	void						SetPoint2(EConstraintSpace inSpace, RVec3Arg inPoint2);
 
-	/// Get the attachment point for body 1 relative to body 1 COM
+	/// Get the attachment point for body 1 relative to body 1 COM (transform by Body::GetCenterOfMassTransform to take to world space)
 	inline Vec3					GetLocalSpacePoint1() const									{ return mLocalSpacePosition1; }
 
-	/// Get the attachment point for body 2 relative to body 2 COM
+	/// Get the attachment point for body 2 relative to body 2 COM (transform by Body::GetCenterOfMassTransform to take to world space)
 	inline Vec3					GetLocalSpacePoint2() const									{ return mLocalSpacePosition2; }
 
 	// See: TwoBodyConstraint
 	virtual Mat44				GetConstraintToBody1Matrix() const override					{ return Mat44::sTranslation(mLocalSpacePosition1); }
 	virtual Mat44				GetConstraintToBody2Matrix() const override					{ return Mat44::sTranslation(mLocalSpacePosition2); } // Note: Incorrect rotation as we don't track the original rotation difference, should not matter though as the constraint is not limiting rotation.
 
-	///@name Get Lagrange multiplier from last physics update (relates to how much force/torque was applied to satisfy the constraint)
-	inline Vec3		 			GetTotalLambdaPosition() const								{ return mPointConstraintPart.GetTotalLambda(); }
+	///@name Get Lagrange multiplier from last physics update (the linear impulse applied to satisfy the constraint)
+	inline Vec3					GetTotalLambdaPosition() const								{ return mPointConstraintPart.GetTotalLambda(); }
 
 private:
 	// Internal helper function to calculate the values below

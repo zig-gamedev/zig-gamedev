@@ -8,7 +8,11 @@
 
 JPH_NAMESPACE_BEGIN
 
-#ifdef JPH_USE_SSE
+#if defined(JPH_CPU_WASM)
+
+// Not supported
+
+#elif defined(JPH_USE_SSE)
 
 /// Helper class that needs to be put on the stack to update the state of the floating point control word.
 /// This state is kept per thread.
@@ -28,7 +32,7 @@ public:
 	}
 
 private:
-	uint		mPrevState;	
+	uint		mPrevState;
 };
 
 #elif defined(JPH_CPU_ARM) && defined(JPH_COMPILER_MSVC)
@@ -71,11 +75,11 @@ public:
 				FPControlWord()
 	{
 		uint64 val;
-	    asm volatile("mrs %0, fpcr" : "=r" (val));
+		asm volatile("mrs %0, fpcr" : "=r" (val));
 		mPrevState = val;
 		val &= ~Mask;
 		val |= Value;
-	    asm volatile("msr fpcr, %0" : /* no output */ : "r" (val));
+		asm volatile("msr fpcr, %0" : /* no output */ : "r" (val));
 	}
 
 				~FPControlWord()
@@ -121,10 +125,6 @@ public:
 private:
 	uint32		mPrevState;
 };
-
-#elif defined(JPH_CPU_WASM)
-
-// Not supported
 
 #else
 

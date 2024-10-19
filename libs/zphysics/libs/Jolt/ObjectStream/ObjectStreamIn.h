@@ -13,24 +13,26 @@ JPH_SUPPRESS_WARNINGS_STD_BEGIN
 #include <fstream>
 JPH_SUPPRESS_WARNINGS_STD_END
 
+#ifdef JPH_OBJECT_STREAM
+
 JPH_NAMESPACE_BEGIN
 
 /// ObjectStreamIn contains all logic for reading an object from disk. It is the base
 /// class for the text and binary input streams (ObjectStreamTextIn and ObjectStreamBinaryIn).
-class ObjectStreamIn : public IObjectStreamIn
+class JPH_EXPORT ObjectStreamIn : public IObjectStreamIn
 {
 private:
 	struct ClassDescription;
 
 public:
 	/// Main function to read an object from a stream
-	template <class T> 
+	template <class T>
 	static bool sReadObject(istream &inStream, T *&outObject)
 	{
 		// Create the input stream
 		bool result = false;
 		ObjectStreamIn *stream = ObjectStreamIn::Open(inStream);
-		if (stream) 
+		if (stream)
 		{
 			// Read the object
 			outObject = (T *)stream->Read(JPH_RTTI(T));
@@ -41,7 +43,7 @@ public:
 	}
 
 	/// Main function to read an object from a stream (reference counting pointer version)
-	template <class T> 
+	template <class T>
 	static bool sReadObject(istream &inStream, Ref<T> &outObject)
 	{
 		T *object = nullptr;
@@ -56,7 +58,7 @@ public:
 	{
 		std::ifstream stream;
 		stream.open(inFileName, std::ifstream::in | std::ifstream::binary);
-		if (!stream.is_open()) 
+		if (!stream.is_open())
 			return false;
 		return sReadObject(stream, outObject);
 	}
@@ -86,7 +88,7 @@ public:
 
 protected:
 	/// Constructor
-	explicit 					ObjectStreamIn(istream &inStream);
+	explicit					ObjectStreamIn(istream &inStream);
 
 	/// Determine the type and version of an object stream
 	static bool					GetInfo(istream &inStream, EStreamType &outType, int &outVersion, int &outRevision);
@@ -110,12 +112,12 @@ private:
 	struct ClassDescription
 	{
 								ClassDescription() = default;
-		explicit 				ClassDescription(const RTTI *inRTTI)					: mRTTI(inRTTI) { }
+		explicit				ClassDescription(const RTTI *inRTTI)					: mRTTI(inRTTI) { }
 
 		const RTTI *			mRTTI = nullptr;
 		Array<AttributeDescription>	mAttributes;
 	};
-	
+
 	struct ObjectInfo
 	{
 								ObjectInfo() = default;
@@ -132,7 +134,7 @@ private:
 		Identifier				mIdentifier;
 		const RTTI *			mRTTI;
 	};
-	
+
 	using IdentifierMap = UnorderedMap<Identifier, ObjectInfo>;
 	using ClassDescriptionMap = UnorderedMap<String, ClassDescription>;
 
@@ -142,3 +144,5 @@ private:
 };
 
 JPH_NAMESPACE_END
+
+#endif // JPH_OBJECT_STREAM
