@@ -477,6 +477,7 @@ typedef struct JPC_CharacterBaseSettings
     alignas(16) float   up[4]; // 4th element is ignored
     alignas(16) float   supporting_volume[4];
     float               max_slope_angle;
+    bool                enhanced_internal_edge_removal;
     const JPC_Shape *   shape;
 } JPC_CharacterBaseSettings;
 
@@ -507,6 +508,8 @@ typedef struct JPC_CharacterVirtualSettings
     uint32_t            max_num_hits;
     float               hit_reduction_cos_max_angle;
     float               penetration_recovery_speed;
+    const JPC_Shape *   inner_body_shape;
+    JPC_ObjectLayer     inner_body_layer;
 } JPC_CharacterVirtualSettings;
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
@@ -865,6 +868,13 @@ typedef struct JPC_CharacterContactListenerVTable
                          const JPC_SubShapeID *sub_shape_id);
 
     // Required, *cannot* be NULL.
+    bool
+    (*OnCharacterContactValidate)(void *in_self,
+                                  const JPC_CharacterVirtual *in_character,
+                                  const JPC_CharacterVirtual *in_other_character,
+                                  const JPC_SubShapeID *sub_shape_id);
+
+    // Required, *cannot* be NULL.
     void
     (*OnContactAdded)(void *in_self,
                       const JPC_CharacterVirtual *in_character,
@@ -873,6 +883,16 @@ typedef struct JPC_CharacterContactListenerVTable
                       const JPC_Real contact_position[3],
                       const float contact_normal[3],
                       JPC_CharacterContactSettings *io_settings);
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnCharacterContactAdded)(void *in_self,
+                               const JPC_CharacterVirtual *in_character,
+                               const JPC_CharacterVirtual *in_other_character,
+                               const JPC_SubShapeID *sub_shape_id,
+                               const JPC_Real contact_position[3],
+                               const float contact_normal[3],
+                               JPC_CharacterContactSettings *io_settings);
 
     // Required, *cannot* be NULL.
     void
@@ -886,6 +906,19 @@ typedef struct JPC_CharacterContactListenerVTable
                       const JPC_PhysicsMaterial *contact_material,
                       const float character_velocity_in[3],
                       float character_velocity_out[3]);
+
+    // Required, *cannot* be NULL.
+    void
+    (*OnCharacterContactSolve)(void *in_self,
+                               const JPC_CharacterVirtual *in_character,
+                               const JPC_CharacterVirtual *in_other_character,
+                               const JPC_SubShapeID *sub_shape_id,
+                               const JPC_Real contact_position[3],
+                               const float contact_normal[3],
+                               const float contact_velocity[3],
+                               const JPC_PhysicsMaterial *contact_material,
+                               const float character_velocity_in[3],
+                               float character_velocity_out[3]);
 } JPC_CharacterContactListenerVTable;
 
 typedef struct JPC_ContactListenerVTable

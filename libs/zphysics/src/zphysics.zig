@@ -344,6 +344,19 @@ pub const CharacterContactListener = extern struct {
                     sub_shape_id,
                 );
             }
+            pub inline fn OnCharacterContactValidate(
+                self: *const T,
+                character: *const CharacterVirtual,
+                other_character: *const CharacterVirtual,
+                sub_shape_id: *const SubShapeId,
+            ) bool {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnCharacterContactValidate(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    other_character,
+                    sub_shape_id,
+                );
+            }
             pub inline fn OnContactAdded(
                 self: *const T,
                 character: *const CharacterVirtual,
@@ -357,6 +370,25 @@ pub const CharacterContactListener = extern struct {
                     @as(*CharacterContactListener, @ptrCast(self)),
                     character,
                     body,
+                    sub_shape_id,
+                    contact_position,
+                    contact_normal,
+                    io_settings,
+                );
+            }
+            pub inline fn OnCharacterContactAdded(
+                self: *const T,
+                character: *const CharacterVirtual,
+                other_character: *const CharacterVirtual,
+                sub_shape_id: *const SubShapeId,
+                contact_position: *const [3]Real,
+                contact_normal: *const [3]f32,
+                io_settings: *CharacterContactSettings,
+            ) void {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnCharacterContactAdded(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    other_character,
                     sub_shape_id,
                     contact_position,
                     contact_normal,
@@ -388,6 +420,31 @@ pub const CharacterContactListener = extern struct {
                     character_velocity_out,
                 );
             }
+            pub inline fn OnCharacterContactSolve(
+                self: *const T,
+                character: *const CharacterVirtual,
+                other_character: *const CharacterVirtual,
+                sub_shape_id: *const SubShapeId,
+                contact_position: *const [3]Real,
+                contact_normal: *const [3]f32,
+                contact_velocity: *const [3]f32,
+                contact_material: *const Material,
+                character_velocity: *const [3]f32,
+                character_velocity_out: *[3]f32,
+            ) void {
+                return @as(*const CharacterContactListener.VTable, @ptrCast(self.__v)).OnCharacterContactSolve(
+                    @as(*CharacterContactListener, @ptrCast(self)),
+                    character,
+                    other_character,
+                    sub_shape_id,
+                    contact_position,
+                    contact_normal,
+                    contact_velocity,
+                    contact_material,
+                    character_velocity,
+                    character_velocity_out,
+                );
+            }
         };
     }
 
@@ -406,6 +463,12 @@ pub const CharacterContactListener = extern struct {
             body: *const Body,
             sub_shape_id: *const SubShapeId,
         ) callconv(.C) bool,
+        OnCharacterContactValidate: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            other_character: *const CharacterVirtual,
+            sub_shape_id: *const SubShapeId,
+        ) callconv(.C) bool,
         OnContactAdded: *const fn (
             self: *CharacterContactListener,
             character: *const CharacterVirtual,
@@ -415,10 +478,31 @@ pub const CharacterContactListener = extern struct {
             contact_normal: *const [3]f32,
             io_settings: *CharacterContactSettings,
         ) callconv(.C) void,
+        OnCharacterContactAdded: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            other_character: *const CharacterVirtual,
+            sub_shape_id: *const SubShapeId,
+            contact_position: *const [3]Real,
+            contact_normal: *const [3]f32,
+            io_settings: *CharacterContactSettings,
+        ) callconv(.C) void,
         OnContactSolve: *const fn (
             self: *CharacterContactListener,
             character: *const CharacterVirtual,
             body: *const Body,
+            sub_shape_id: *const SubShapeId,
+            contact_position: *const [3]Real,
+            contact_normal: *const [3]f32,
+            contact_velocity: *const [3]f32,
+            contact_material: *const Material,
+            character_velocity: *const [3]f32,
+            character_velocity_out: *[3]f32,
+        ) callconv(.C) void,
+        OnCharacterContactSolve: *const fn (
+            self: *CharacterContactListener,
+            character: *const CharacterVirtual,
+            other_character: *const CharacterVirtual,
             sub_shape_id: *const SubShapeId,
             contact_position: *const [3]Real,
             contact_normal: *const [3]f32,
@@ -773,14 +857,14 @@ pub const MotionQuality = enum(c.JPC_MotionQuality) {
 
 /// NOTE: Enum values designed for bitwise combinations in the C tradition
 pub const AllowedDOFs = enum(c.JPC_AllowedDOFs) {
-    none = c.JPC_ALLOWED_DOFS_NONE,                     // 0b000000
-    all = c.JPC_ALLOWED_DOFS_ALL,                       // 0b111111
-    translation_x = c.JPC_ALLOWED_DOFS_TRANSLATION_X,   // 0b000001
-    translation_y = c.JPC_ALLOWED_DOFS_TRANSLATION_Y,   // 0b000010
-    translation_z = c.JPC_ALLOWED_DOFS_TRANSLATION_Z,   // 0b000100
-    rotation_x = c.JPC_ALLOWED_DOFS_ROTATION_X,         // 0b001000
-    rotation_y = c.JPC_ALLOWED_DOFS_ROTATION_Y,         // 0b010000
-    rotation_z = c.JPC_ALLOWED_DOFS_ROTATION_Z,         // 0b100000
+    none = c.JPC_ALLOWED_DOFS_NONE, // 0b000000
+    all = c.JPC_ALLOWED_DOFS_ALL, // 0b111111
+    translation_x = c.JPC_ALLOWED_DOFS_TRANSLATION_X, // 0b000001
+    translation_y = c.JPC_ALLOWED_DOFS_TRANSLATION_Y, // 0b000010
+    translation_z = c.JPC_ALLOWED_DOFS_TRANSLATION_Z, // 0b000100
+    rotation_x = c.JPC_ALLOWED_DOFS_ROTATION_X, // 0b001000
+    rotation_y = c.JPC_ALLOWED_DOFS_ROTATION_Y, // 0b010000
+    rotation_z = c.JPC_ALLOWED_DOFS_ROTATION_Z, // 0b100000
 };
 
 pub const OverrideMassProperties = enum(c.JPC_OverrideMassProperties) {
@@ -851,6 +935,7 @@ pub const CharacterBaseSettings = extern struct {
     up: [4]f32 align(16), // 4th element is ignored
     supporting_volume: [4]f32 align(16), // JPH::Plane - 4th element is used
     max_slope_angle: f32,
+    enhanced_internal_edge_removal: bool,
     shape: *Shape, // must provide valid shape (such as the typical capsule)
 
     comptime {
@@ -911,6 +996,8 @@ pub const CharacterVirtualSettings = extern struct {
     max_num_hits: u32,
     hit_reduction_cos_max_angle: f32,
     penetration_recovery_speed: f32,
+    inner_body_shape: ?*Shape,
+    inner_body_layer: ObjectLayer,
 
     comptime {
         assert(@sizeOf(CharacterVirtualSettings) == @sizeOf(c.JPC_CharacterVirtualSettings));
@@ -918,8 +1005,8 @@ pub const CharacterVirtualSettings = extern struct {
         assert(@offsetOf(CharacterVirtualSettings, "mass") == @offsetOf(c.JPC_CharacterVirtualSettings, "mass"));
         assert(@offsetOf(CharacterVirtualSettings, "max_num_hits") ==
             @offsetOf(c.JPC_CharacterVirtualSettings, "max_num_hits"));
-        assert(@offsetOf(CharacterVirtualSettings, "penetration_recovery_speed") ==
-            @offsetOf(c.JPC_CharacterVirtualSettings, "penetration_recovery_speed"));
+        assert(@offsetOf(CharacterVirtualSettings, "inner_body_layer") ==
+            @offsetOf(c.JPC_CharacterVirtualSettings, "inner_body_layer"));
     }
 };
 
@@ -1423,7 +1510,10 @@ pub const PhysicsSystem = opaque {
         return c.JPC_PhysicsSystem_GetNumBodies(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
     }
     pub fn getNumActiveBodies(physics_system: *const PhysicsSystem) u32 {
-        return c.JPC_PhysicsSystem_GetNumActiveBodies(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
+        return c.JPC_PhysicsSystem_GetNumActiveBodies(
+            @as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)),
+            @intFromEnum(BodyType.rigid_body),
+        );
     }
     pub fn getMaxBodies(physics_system: *const PhysicsSystem) u32 {
         return c.JPC_PhysicsSystem_GetMaxBodies(@as(*const c.JPC_PhysicsSystem, @ptrCast(physics_system)));
@@ -2612,9 +2702,14 @@ pub const MotionProperties = extern struct {
         c.JPC_MotionProperties_SetGravityFactor(@as(*c.JPC_MotionProperties, @ptrCast(motion)), factor);
     }
 
-    pub fn setMassProperties(motion: *MotionProperties, mass_properties: MassProperties) void {
+    pub fn setMassProperties(
+        motion: *MotionProperties,
+        allowed_DOFs: AllowedDOFs,
+        mass_properties: MassProperties,
+    ) void {
         c.JPC_MotionProperties_SetMassProperties(
             @as(*c.JPC_MotionProperties, @ptrCast(motion)),
+            @intFromEnum(allowed_DOFs),
             @as(*const c.JPC_MassProperties, @ptrCast(&mass_properties)),
         );
     }
@@ -3883,7 +3978,7 @@ test "zphysics.basic" {
     physics_system.addStepListener(@ptrCast(@alignCast(&my_step_listener)));
 
     physics_system.optimizeBroadPhase();
-    try physics_system.update(1.0 / 60.0, .{ .collision_steps = 1, .integration_sub_steps = 1 });
+    try physics_system.update(1.0 / 60.0, .{ .collision_steps = 1 });
     try physics_system.update(1.0 / 60.0, .{});
 
     physics_system.removeStepListener(@ptrCast(@alignCast(&my_step_listener)));
@@ -4681,7 +4776,7 @@ const test_cb1 = struct {
             .drawText3D = drawText3D,
         };
 
-        pub fn shouldBodyDraw(_: *const Body) align(DebugRenderer.BodyDrawFilterFuncAlignment) callconv(.C) bool {
+        pub fn shouldBodyDraw(_: *const Body) callconv(.C) bool {
             return true;
         }
 
