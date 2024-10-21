@@ -20,6 +20,11 @@ pub fn build(b: *std.Build) void {
             "on_demand",
             "Build tracy with TRACY_ON_DEMAND",
         ) orelse false,
+        .shared = b.option(
+            bool, 
+            "shared", 
+            "Build tracy as shared library"
+        ) orelse false,
     };
 
     const options_step = b.addOptions();
@@ -37,7 +42,11 @@ pub fn build(b: *std.Build) void {
     });
     ztracy.addIncludePath(b.path("libs/tracy/tracy"));
 
-    const tracy = b.addStaticLibrary(.{
+    const tracy = if (options.shared) b.addSharedLibrary(.{
+        .name = "tracy",
+        .target = target,
+        .optimize = optimize,
+    }) else b.addStaticLibrary(.{
         .name = "tracy",
         .target = target,
         .optimize = optimize,
@@ -47,7 +56,7 @@ pub fn build(b: *std.Build) void {
     tracy.addCSourceFile(.{
         .file = b.path("libs/tracy/TracyClient.cpp"),
         .flags = &.{
-            "-DTRACY_ENABLE",
+            if (options.enable_ztracy) "-DTRACY_ENABLE" else "",
             if (options.enable_fibers) "-DTRACY_FIBERS" else "",
             "-fno-sanitize=undefined",
         },
