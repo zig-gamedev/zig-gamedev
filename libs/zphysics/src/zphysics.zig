@@ -3753,55 +3753,30 @@ fn zphysicsAlloc(size: usize) callconv(.C) ?*anyopaque {
     return ptr;
 }
 
-fn zphysicsRealloc(maybe_ptr: ?*anyopaque, old_size: usize, new_size: usize) callconv(.C) ?*anyopaque {
+fn zphysicsRealloc(maybe_ptr: ?*anyopaque, reported_old_size: usize, new_size: usize) callconv(.C) ?*anyopaque {
     state.?.mem_mutex.lock();
     defer state.?.mem_mutex.unlock();
 
-    if (maybe_ptr) |ptr| {
-        const info = state.?.mem_allocations.getPtr(@intFromPtr(ptr)).?;
-        const mem = @as([*]u8, @ptrCast(ptr))[0..info.size];
+    const old_size = if (maybe_ptr != null) reported_old_size else 0;
 
-        const did_resize = state.?.mem_allocator.rawResize(
-            mem,
-            std.math.log2_int(u29, @as(u29, @intCast(info.alignment))),
-            new_size,
-            @returnAddress(),
-        );
+    const old_mem = if (old_size > 0)
+        @as([*]align(mem_alignment) u8, @ptrCast(@alignCast(maybe_ptr)))[0..old_size]
+    else
+        @as([*]align(mem_alignment) u8, undefined)[0..0];
 
-        if (did_resize) {
-            info.size = @as(u48, @intCast(new_size));
-            return ptr;
-        }
+    const mem = state.?.mem_allocator.realloc(old_mem, new_size) catch @panic("zphysics: out of memory");
+
+    if (maybe_ptr != null) {
+        const removed = state.?.mem_allocations.remove(@intFromPtr(maybe_ptr.?));
+        std.debug.assert(removed);
     }
 
-    const new_ptr = state.?.mem_allocator.rawAlloc(
-        new_size,
-        std.math.log2_int(u29, @as(u29, @intCast(mem_alignment))),
-        @returnAddress(),
-    );
-    if (new_ptr == null) @panic("zphysics: out of memory");
-
     state.?.mem_allocations.put(
-        @intFromPtr(new_ptr),
+        @intFromPtr(mem.ptr),
         .{ .size = @as(u48, @intCast(new_size)), .alignment = mem_alignment },
     ) catch @panic("zphysics: out of memory");
 
-    if (maybe_ptr) |old_ptr| {
-        const smaller_size = @min(new_size, old_size);
-        const old_mem = @as([*]u8, @ptrCast(old_ptr))[0..smaller_size];
-        const new_mem = @as([*]u8, @ptrCast(new_ptr))[0..smaller_size];
-        @memcpy(new_mem, old_mem);
-
-        const old_info = state.?.mem_allocations.fetchRemove(@intFromPtr(old_ptr)).?.value;
-        const mem_to_free = @as([*]u8, @ptrCast(old_ptr))[0..old_info.size];
-        state.?.mem_allocator.rawFree(
-            mem_to_free,
-            std.math.log2_int(u29, @as(u29, @intCast(old_info.alignment))),
-            @returnAddress(),
-        );
-    }
-
-    return new_ptr;
+    return mem.ptr;
 }
 
 fn zphysicsAlignedAlloc(size: usize, alignment: usize) callconv(.C) ?*anyopaque {
