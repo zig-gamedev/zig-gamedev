@@ -80,5 +80,12 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     @import("zwindows").install_xaudio2(&exe.step, .bin);
     @import("zwindows").install_d3d12(&exe.step, .bin);
 
+    if (options.target.result.os.tag == .macos) {
+        if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+            exe.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            exe.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        }
+    }
+
     return exe;
 }
