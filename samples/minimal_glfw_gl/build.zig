@@ -21,5 +21,12 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));
 
+    if (options.target.result.os.tag == .macos) {
+        if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+            exe.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            exe.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        }
+    }
+
     return exe;
 }

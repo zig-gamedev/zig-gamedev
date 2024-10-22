@@ -72,7 +72,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.step.dependOn(&install_content_step.step);
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const compile_shaders = @import("zwindows").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
+        const compile_shaders = @import("zwindows").addCompileShaders(b, demo_name, zwindows, .{ .shader_ver = "6_6" });
         const root_path = b.pathResolve(&.{ @src().file, "..", "..", ".." });
 
         const hlsl_path = b.pathJoin(&.{ root_path, src_path, demo_name ++ ".hlsl" });
@@ -88,7 +88,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwindows").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, zwindows, .bin);
 
     return exe;
 }

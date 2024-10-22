@@ -45,7 +45,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     exe.rdynamic = true;
 
-    @import("zwindows").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, zwindows, .bin);
 
     return exe;
 }

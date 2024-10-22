@@ -45,5 +45,12 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
     exe.step.dependOn(&install_content_step.step);
 
+    if (options.target.result.os.tag == .macos) {
+        if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+            exe.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            exe.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+        }
+    }
+
     return exe;
 }

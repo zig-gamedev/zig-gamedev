@@ -50,17 +50,16 @@ pub fn build(b: *std.Build) !void {
 
 pub fn install_xaudio2(
     step: *std.Build.Step,
+    zwindows: *std.Build.Dependency,
     install_dir: std.Build.InstallDir,
 ) void {
     const b = step.owner;
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     step.dependOn(
         &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "bin/x64/xaudio2_9redist.dll" },
-                ),
-            },
+            .{ .dependency = .{
+                .dependency = zwindows,
+                .sub_path = "bin/x64/xaudio2_9redist.dll",
+            } },
             install_dir,
             "xaudio2_9redist.dll",
         ).step,
@@ -69,28 +68,26 @@ pub fn install_xaudio2(
 
 pub fn install_d3d12(
     step: *std.Build.Step,
+    zwindows: *std.Build.Dependency,
     install_dir: std.Build.InstallDir,
 ) void {
     const b = step.owner;
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     step.dependOn(
         &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "bin/x64/D3D12Core.dll" },
-                ),
-            },
+            .{ .dependency = .{
+                .dependency = zwindows,
+                .sub_path = "bin/x64/D3D12Core.dll",
+            } },
             install_dir,
             "d3d12/D3D12Core.dll",
         ).step,
     );
     step.dependOn(
         &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "bin/x64/D3D12SDKLayers.dll" },
-                ),
-            },
+            .{ .dependency = .{
+                .dependency = zwindows,
+                .sub_path = "bin/x64/D3D12SDKLayers.dll",
+            } },
             install_dir,
             "d3d12/D3D12SDKLayers.dll",
         ).step,
@@ -99,28 +96,26 @@ pub fn install_d3d12(
 
 pub fn install_directml(
     step: *std.Build.Step,
+    zwindows: *std.Build.Dependency,
     install_dir: std.Build.InstallDir,
 ) void {
     const b = step.owner;
-    const source_path_prefix = comptime std.fs.path.dirname(@src().file) orelse ".";
     step.dependOn(
         &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "bin/x64/DirectML.dll" },
-                ),
-            },
+            .{ .dependency = .{
+                .dependency = zwindows,
+                .sub_path = "bin/x64/DirectML.dll",
+            } },
             install_dir,
             "DirectML.dll",
         ).step,
     );
     step.dependOn(
         &b.addInstallFileWithDir(
-            .{
-                .cwd_relative = b.pathJoin(
-                    &.{ source_path_prefix, "bin/x64/DirectML.Debug.dll" },
-                ),
-            },
+            .{ .dependency = .{
+                .dependency = zwindows,
+                .sub_path = "bin/x64/DirectML.Debug.dll",
+            } },
             install_dir,
             "DirectML.Debug.dll",
         ).step,
@@ -129,6 +124,7 @@ pub fn install_directml(
 
 pub const CompileShaders = struct {
     step: *std.Build.Step,
+    zwindows: *std.Build.Dependency,
     shader_ver: []const u8,
 
     pub fn addVsShader(
@@ -204,10 +200,9 @@ pub const CompileShaders = struct {
     ) void {
         const b = self.step.owner;
 
-        const zwindows_path = comptime std.fs.path.dirname(@src().file) orelse ".";
         const dxc_path = switch (builtin.target.os.tag) {
-            .windows => zwindows_path ++ "/bin/x64/dxc.exe",
-            .linux => zwindows_path ++ "/bin/x64/dxc",
+            .windows => self.zwindows.path("bin/x64/dxc.exe").getPath(b),
+            .linux => self.zwindows.path("bin/x64/dxc").getPath(b),
             else => @panic("Unsupported target"),
         };
 
@@ -227,16 +222,22 @@ pub const CompileShaders = struct {
         if (builtin.target.os.tag == .linux) {
             cmd_step.setEnvironmentVariable(
                 "LD_LIBRARY_PATH",
-                zwindows_path ++ "/bin/x64",
+                self.zwindows.path("bin/x64").getPath(b),
             );
         }
         self.step.dependOn(&cmd_step.step);
     }
 };
 
-pub fn addCompileShaders(b: *std.Build, comptime name: []const u8, options: struct { shader_ver: []const u8 }) CompileShaders {
+pub fn addCompileShaders(
+    b: *std.Build,
+    comptime name: []const u8,
+    zwindows: *std.Build.Dependency,
+    options: struct { shader_ver: []const u8 },
+) CompileShaders {
     return .{
         .step = b.step(name ++ "-dxc", "Build shaders for '" ++ name ++ "'"),
+        .zwindows = zwindows,
         .shader_ver = options.shader_ver,
     };
 }

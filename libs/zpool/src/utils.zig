@@ -11,7 +11,7 @@ pub fn typeIdOf(comptime T: type) std.builtin.TypeId {
 }
 
 pub fn isStruct(comptime T: type) bool {
-    return typeIdOf(T) == std.builtin.TypeId.Struct;
+    return typeIdOf(T) == std.builtin.TypeId.@"struct";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -19,7 +19,7 @@ pub fn isStruct(comptime T: type) bool {
 /// UInt(bits) returns an unsigned integer type of the requested bit width.
 pub fn UInt(comptime bits: u8) type {
     const unsigned = std.builtin.Signedness.unsigned;
-    return @Type(.{ .Int = .{ .signedness = unsigned, .bits = bits } });
+    return @Type(.{ .int = .{ .signedness = unsigned, .bits = bits } });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,7 +52,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
     const StructField = std.builtin.Type.StructField;
 
     // same number of fields in the new struct
-    const struct_fields = @typeInfo(Struct).Struct.fields;
+    const struct_fields = @typeInfo(Struct).@"struct".fields;
 
     comptime var struct_of_slices_fields: []const StructField = &.{};
     inline for (struct_fields) |struct_field| {
@@ -60,7 +60,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
         const element_type = struct_field.type;
 
         const slice_type_info = std.builtin.Type{
-            .Pointer = .{
+            .pointer = .{
                 .child = element_type,
                 .alignment = @alignOf(element_type),
                 .size = .Slice,
@@ -87,7 +87,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
         struct_of_slices_fields = struct_of_slices_fields ++ [1]StructField{slice_field};
     }
 
-    return @Type(.{ .Struct = .{
+    return @Type(.{ .@"struct" = .{
         .layout = .auto,
         .fields = struct_of_slices_fields,
         .decls = &.{},

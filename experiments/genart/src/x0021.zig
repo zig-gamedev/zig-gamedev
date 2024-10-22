@@ -13,7 +13,7 @@ const Vec2 = [2]f32;
 var fs_postprocess: gl.Uint = 0;
 var accum_tex: gl.Uint = 0;
 var accum_fbo: gl.Uint = 0;
-var prng = std.rand.DefaultPrng.init(0);
+var prng = std.Random.DefaultPrng.init(0);
 var random = prng.random();
 
 const bounds: f32 = 3.0;

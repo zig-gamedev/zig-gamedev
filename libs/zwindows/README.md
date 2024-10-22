@@ -49,9 +49,9 @@ pub fn build(b: *std.Build) !void {
     
     // Install vendored binaries
     const zwindows = @import("zwindows");
-    try zwindows.install_xaudio2(&exe.step, .bin);
-    try zwindows.install_d3d12(&exe.step, .bin);
-    try zwindows.install_directml(&exe.step, .bin);
+    try zwindows.install_xaudio2(&exe.step, zwindows_dependency, .bin);
+    try zwindows.install_d3d12(&exe.step, zwindows_dependency, .bin);
+    try zwindows.install_directml(&exe.step, zwindows_dependency, .bin);
 }
 ```
 

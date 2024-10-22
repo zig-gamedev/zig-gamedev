@@ -1569,7 +1569,6 @@ fn isLinuxDesktopLike(tag: std.Target.Os.Tag) bool {
     return switch (tag) {
         .linux,
         .freebsd,
-        .kfreebsd,
         .openbsd,
         .dragonfly,
         => true,
@@ -1687,7 +1686,7 @@ const objc = struct {
 };
 
 fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnType: type) ReturnType {
-    const args_meta = @typeInfo(@TypeOf(args)).Struct.fields;
+    const args_meta = @typeInfo(@TypeOf(args)).@"struct".fields;
 
     const FnType = switch (args_meta.len) {
         0 => *const fn (@TypeOf(obj), objc.SEL) callconv(.C) ReturnType,
