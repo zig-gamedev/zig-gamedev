@@ -35,10 +35,10 @@ Alternatively, you can download and install manually using the links below:
 
 | OS/Arch         | Download link               |
 | --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.14.0-dev.1710+8ee52f99c.zip](https://ziglang.org/builds/zig-windows-x86_64-0.14.0-dev.1710+8ee52f99c.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
+| Windows x86_64  | [zig-windows-x86_64-0.14.0-dev.1710+8ee52f99c.zip](https://pkg.machengine.org/zig/zig-windows-x86_64-0.14.0-dev.1710+8ee52f99c.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-linux-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-aarch64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
 
 ### Build and run the [Samples](#sample-applications-native-wgpu)
 

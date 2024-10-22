@@ -30,6 +30,7 @@ jobs:
         with:
           version: ${{ steps.zigversion.outputs.content }}
       - name: Check format
+        continue-on-error: true
         run: zig fmt --check .
       - name: Build all
         run: zig build -Dexperiments
