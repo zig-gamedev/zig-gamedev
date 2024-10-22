@@ -16,10 +16,10 @@ class StreamOut;
 /// - Both don't have a group filter
 /// - The first group filter says that the objects can collide
 /// - Or if there's no filter for the first object, the second group filter says the objects can collide
-class CollisionGroup
+class JPH_EXPORT CollisionGroup
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(CollisionGroup)
+	JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(JPH_EXPORT, CollisionGroup)
 
 	using GroupID			= uint32;
 	using SubGroupID		= uint32;
@@ -76,7 +76,7 @@ public:
 		else if (inOther.mGroupFilter != nullptr)
 			return inOther.mGroupFilter->CanCollide(inOther, *this);
 		else
-			return true;		
+			return true;
 	}
 
 	/// Saves the state of this object in binary form to inStream. Does not save group filter.

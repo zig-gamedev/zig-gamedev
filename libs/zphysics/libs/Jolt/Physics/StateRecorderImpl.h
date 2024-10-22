@@ -9,7 +9,7 @@
 JPH_NAMESPACE_BEGIN
 
 /// Implementation of the StateRecorder class that uses a stringstream as underlying store and that implements checking if the state doesn't change upon reading
-class StateRecorderImpl final : public StateRecorder
+class JPH_EXPORT StateRecorderImpl final : public StateRecorder
 {
 public:
 	/// Constructor
@@ -21,6 +21,9 @@ public:
 
 	/// Rewind the stream for reading
 	void				Rewind();
+
+	/// Clear the stream for reuse
+	void				Clear();
 
 	/// Read a string of bytes from the binary stream
 	virtual void		ReadBytes(void *outData, size_t inNumBytes) override;

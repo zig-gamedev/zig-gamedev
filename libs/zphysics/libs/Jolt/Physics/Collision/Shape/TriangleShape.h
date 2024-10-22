@@ -9,10 +9,10 @@
 JPH_NAMESPACE_BEGIN
 
 /// Class that constructs a TriangleShape
-class TriangleShapeSettings final : public ConvexShapeSettings
+class JPH_EXPORT TriangleShapeSettings final : public ConvexShapeSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(TriangleShapeSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, TriangleShapeSettings)
 
 	/// Default constructor for deserialization
 							TriangleShapeSettings() = default;
@@ -31,7 +31,7 @@ public:
 };
 
 /// A single triangle, not the most efficient way of creating a world filled with triangles but can be used as a query shape for example.
-class TriangleShape final : public ConvexShape
+class JPH_EXPORT TriangleShape final : public ConvexShape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -49,7 +49,7 @@ public:
 
 	// See Shape::GetLocalBounds
 	virtual AABox			GetLocalBounds() const override;
-		
+
 	// See Shape::GetWorldSpaceBounds
 	virtual AABox			GetWorldSpaceBounds(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale) const override;
 	using Shape::GetWorldSpaceBounds;
@@ -84,8 +84,8 @@ public:
 	// See: Shape::CollidePoint
 	virtual void			CollidePoint(Vec3Arg inPoint, const SubShapeIDCreator &inSubShapeIDCreator, CollidePointCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const override;
 
-	// See Shape::TransformShape
-	virtual void			TransformShape(Mat44Arg inCenterOfMassTransform, TransformedShapeCollector &ioCollector) const override;
+	// See: Shape::CollideSoftBodyVertices
+	virtual void			CollideSoftBodyVertices(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, SoftBodyVertex *ioVertices, uint inNumVertices, float inDeltaTime, Vec3Arg inDisplacementDueToGravity, int inCollidingShapeIndex) const override;
 
 	// See Shape::GetTrianglesStart
 	virtual void			GetTrianglesStart(GetTrianglesContext &ioContext, const AABox &inBox, Vec3Arg inPositionCOM, QuatArg inRotation, Vec3Arg inScale) const override;
@@ -105,6 +105,9 @@ public:
 	// See Shape::IsValidScale
 	virtual bool			IsValidScale(Vec3Arg inScale) const override;
 
+	// See Shape::MakeScaleValid
+	virtual Vec3			MakeScaleValid(Vec3Arg inScale) const override;
+
 	// Register shape functions with the registry
 	static void				sRegister();
 
@@ -123,7 +126,7 @@ private:
 	class					TSGetTrianglesContext;
 
 	// Classes for GetSupportFunction
-	class 					TriangleNoConvex;
+	class					TriangleNoConvex;
 	class					TriangleWithConvex;
 
 	Vec3					mV1;

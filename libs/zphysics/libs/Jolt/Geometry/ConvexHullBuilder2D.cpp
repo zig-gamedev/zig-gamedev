@@ -19,10 +19,10 @@ void ConvexHullBuilder2D::Edge::CalculateNormalAndCenter(const Vec3 *inPositions
 
 	// Center of edge
 	mCenter = 0.5f * (p1 + p2);
-			
-	// Create outward pointing normal. 
+
+	// Create outward pointing normal.
 	// We have two choices for the normal (which satisfies normal . edge = 0):
-	// normal1 = (-edge.y, edge.x, 0) 
+	// normal1 = (-edge.y, edge.x, 0)
 	// normal2 = (edge.y, -edge.x, 0)
 	// We want (normal x edge).z > 0 so that the normal points out of the polygon. Only normal2 satisfies this condition.
 	Vec3 edge = p2 - p1;
@@ -99,7 +99,7 @@ void ConvexHullBuilder2D::ValidateEdges() const
 
 		++count;
 		edge = edge->mNextEdge;
-	} while (edge != mFirstEdge);	
+	} while (edge != mFirstEdge);
 
 	// Validate that count matches
 	JPH_ASSERT(count == mNumEdges);
@@ -135,15 +135,14 @@ void ConvexHullBuilder2D::AssignPointToEdge(int inPositionIdx, const Array<Edge 
 	{
 		if (best_dist_sq > best_edge->mFurthestPointDistanceSq)
 		{
-			// This point is futher away than any others, update the distance and add point as last point
+			// This point is further away than any others, update the distance and add point as last point
 			best_edge->mFurthestPointDistanceSq = best_dist_sq;
 			best_edge->mConflictList.push_back(inPositionIdx);
 		}
 		else
 		{
 			// Not the furthest point, add it as the before last point
-			best_edge->mConflictList.push_back(best_edge->mConflictList.back());
-			best_edge->mConflictList[best_edge->mConflictList.size() - 2] = inPositionIdx;
+			best_edge->mConflictList.insert(best_edge->mConflictList.begin() + best_edge->mConflictList.size() - 1, inPositionIdx);
 		}
 	}
 }

@@ -19,10 +19,10 @@ enum class ETransmissionMode : uint8
 };
 
 /// Configuration for the transmission of a vehicle (gear box)
-class VehicleTransmissionSettings
+class JPH_EXPORT VehicleTransmissionSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(VehicleTransmissionSettings)
+	JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(JPH_EXPORT, VehicleTransmissionSettings)
 
 	/// Saves the contents in binary form to inStream.
 	void					SaveBinaryState(StreamOut &inStream) const;
@@ -38,11 +38,11 @@ public:
 	float					mSwitchLatency = 0.5f;						///< How long to wait after releasing the clutch before another switch is attempted (s), only used in auto mode
 	float					mShiftUpRPM = 4000.0f;						///< If RPM of engine is bigger then this we will shift a gear up, only used in auto mode
 	float					mShiftDownRPM = 2000.0f;					///< If RPM of engine is smaller then this we will shift a gear down, only used in auto mode
-	float					mClutchStrength = 10.0f;					///< Strength of the clutch when fully engaged. Total torque a clutch applies is Torque = ClutchStrength * (Velocity Engine - Avg Velocity Wheels) (units: k m^2 s^-1)
+	float					mClutchStrength = 10.0f;					///< Strength of the clutch when fully engaged. Total torque a clutch applies is Torque = ClutchStrength * (Velocity Engine - Avg Velocity Wheels At Clutch) (units: k m^2 s^-1)
 };
 
 /// Runtime data for transmission
-class VehicleTransmission : public VehicleTransmissionSettings
+class JPH_EXPORT VehicleTransmission : public VehicleTransmissionSettings
 {
 public:
 	/// Set input from driver regarding the transmission (only relevant when transmission is set to manual mode)
@@ -50,7 +50,7 @@ public:
 	/// @param inClutchFriction Value between 0 and 1 indicating how much friction the clutch gives (0 = no friction, 1 = full friction)
 	void					Set(int inCurrentGear, float inClutchFriction) { mCurrentGear = inCurrentGear; mClutchFriction = inClutchFriction; }
 
-	/// Update the current gear and clutch friction if the transmission is in aut mode
+	/// Update the current gear and clutch friction if the transmission is in auto mode
 	/// @param inDeltaTime Time step delta time in s
 	/// @param inCurrentRPM Current RPM for engine
 	/// @param inForwardInput Hint if the user wants to drive forward (> 0) or backwards (< 0)
@@ -68,6 +68,9 @@ public:
 
 	/// Return the transmission ratio based on the current gear (ratio between engine and differential)
 	float					GetCurrentRatio() const;
+
+	/// Only allow sleeping when the transmission is idle
+	bool					AllowSleep() const							{ return mGearSwitchTimeLeft <= 0.0f && mClutchReleaseTimeLeft <= 0.0f && mGearSwitchLatencyTimeLeft <= 0.0f; }
 
 	/// Saving state for replay
 	void					SaveState(StateRecorder &inStream) const;

@@ -26,6 +26,7 @@ public:
 								DMat44() = default; ///< Intentionally not initialized for performance reasons
 	JPH_INLINE					DMat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, DVec3Arg inC4);
 								DMat44(const DMat44 &inM2) = default;
+	DMat44 &					operator = (const DMat44 &inM2) = default;
 	JPH_INLINE explicit			DMat44(Mat44Arg inM);
 	JPH_INLINE					DMat44(Mat44Arg inRot, DVec3Arg inT);
 	JPH_INLINE					DMat44(Type inC1, Type inC2, Type inC3, DTypeArg inC4);
@@ -54,7 +55,7 @@ public:
 	/// Convert to Mat44 rounding to nearest
 	JPH_INLINE Mat44			ToMat44() const											{ return Mat44(mCol[0], mCol[1], mCol[2], Vec3(mCol3)); }
 
-	/// Comparsion
+	/// Comparison
 	JPH_INLINE bool				operator == (DMat44Arg inM2) const;
 	JPH_INLINE bool				operator != (DMat44Arg inM2) const						{ return !(*this == inM2); }
 
@@ -113,6 +114,9 @@ public:
 	JPH_INLINE void				SetColumn3(uint inCol, Vec3Arg inV)						{ JPH_ASSERT(inCol < 3); mCol[inCol] = Vec4(inV, 0.0f); }
 	JPH_INLINE Vec4				GetColumn4(uint inCol) const							{ JPH_ASSERT(inCol < 3); return mCol[inCol]; }
 	JPH_INLINE void				SetColumn4(uint inCol, Vec4Arg inV)						{ JPH_ASSERT(inCol < 3); mCol[inCol] = inV; }
+
+	/// Transpose 3x3 subpart of matrix
+	JPH_INLINE Mat44			Transposed3x3() const									{ return GetRotation().Transposed3x3(); }
 
 	/// Inverse 4x4 matrix
 	JPH_INLINE DMat44			Inversed() const;

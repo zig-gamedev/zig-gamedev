@@ -10,16 +10,16 @@
 
 JPH_NAMESPACE_BEGIN
 
-/// A convex hull builder that tries to create 2D hulls as accurately as possible. Used for offline processing. 
-class ConvexHullBuilder2D : public NonCopyable
+/// A convex hull builder that tries to create 2D hulls as accurately as possible. Used for offline processing.
+class JPH_EXPORT ConvexHullBuilder2D : public NonCopyable
 {
 public:
-	using Positions = Array<Vec3>; 
+	using Positions = Array<Vec3>;
 	using Edges = Array<int>;
 
 	/// Constructor
 	/// @param inPositions Positions used to make the hull. Uses X and Y component of Vec3 only!
-	explicit			ConvexHullBuilder2D(const Positions &inPositions); 
+	explicit			ConvexHullBuilder2D(const Positions &inPositions);
 
 	/// Destructor
 						~ConvexHullBuilder2D();
@@ -86,10 +86,10 @@ private:
 		Vec3			mNormal;									///< Normal of the edge (not normalized)
 		Vec3			mCenter;									///< Center of the edge
 		ConflictList	mConflictList;								///< Positions associated with this edge (that are closest to this edge). Last entry is the one furthest away from the edge, remainder is unsorted.
-		Edge *			mPrevEdge = nullptr;						///< Previous edge in cicular list
+		Edge *			mPrevEdge = nullptr;						///< Previous edge in circular list
 		Edge *			mNextEdge = nullptr;						///< Next edge in circular list
 		int				mStartIdx;									///< Position index of start of this edge
-		float			mFurthestPointDistanceSq = 0.0f;			///< Squared distance of furtest point from the conflict list to the edge
+		float			mFurthestPointDistanceSq = 0.0f;			///< Squared distance of furthest point from the conflict list to the edge
 	};
 
 	const Positions &	mPositions;									///< List of positions (some of them are part of the hull)

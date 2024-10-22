@@ -12,6 +12,7 @@ JPH_NAMESPACE_BEGIN
 
 class IslandBuilder;
 class BodyManager;
+class StateRecorderFilter;
 #ifdef JPH_DEBUG_RENDERER
 class DebugRenderer;
 #endif // JPH_DEBUG_RENDERER
@@ -20,7 +21,7 @@ class DebugRenderer;
 using Constraints = Array<Ref<Constraint>>;
 
 /// A constraint manager manages all constraints of the same type
-class ConstraintManager : public NonCopyable
+class JPH_EXPORT ConstraintManager : public NonCopyable
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -42,7 +43,7 @@ public:
 	Constraints				GetConstraints() const;
 
 	/// Get total number of constraints
-	inline uint32			GetNumConstraints() const					{ return (uint32)mConstraints.size(); }
+	inline uint32			GetNumConstraints() const					{ return uint32(mConstraints.size()); }
 
 	/// Determine the active constraints of a subset of the constraints
 	void					GetActiveConstraints(uint32 inStartConstraintIdx, uint32 inEndConstraintIdx, Constraint **outActiveConstraints, uint32 &outNumActiveConstraints) const;
@@ -56,23 +57,15 @@ public:
 	/// Prior to solving the velocity constraints, you must call SetupVelocityConstraints once to precalculate values that are independent of velocity
 	static void				sSetupVelocityConstraints(Constraint **inActiveConstraints, uint32 inNumActiveConstraints, float inDeltaTime);
 
-	/// Same as above, but applies to a limited amount of constraints only
-	static void				sSetupVelocityConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inDeltaTime);
-
 	/// Apply last frame's impulses, must be called prior to SolveVelocityConstraints
-	static void				sWarmStartVelocityConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inWarmStartImpulseRatio);
-
-	/// Same as above but also calculates the number of velocity steps
-	static void				sWarmStartVelocityConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inWarmStartImpulseRatio, int &ioNumVelocitySteps);
+	template <class ConstraintCallback>
+	static void				sWarmStartVelocityConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inWarmStartImpulseRatio, ConstraintCallback &ioCallback);
 
 	/// This function is called multiple times to iteratively come to a solution that meets all velocity constraints
 	static bool				sSolveVelocityConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inDeltaTime);
 
 	/// This function is called multiple times to iteratively come to a solution that meets all position constraints
 	static bool				sSolvePositionConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inDeltaTime, float inBaumgarte);
-
-	/// Same as above but also calculates the number of position steps
-	static bool				sSolvePositionConstraints(Constraint **inActiveConstraints, const uint32 *inConstraintIdxBegin, const uint32 *inConstraintIdxEnd, float inDeltaTime, float inBaumgarte, int &ioNumPositionSteps);
 
 #ifdef JPH_DEBUG_RENDERER
 	/// Draw all constraints
@@ -86,7 +79,7 @@ public:
 #endif // JPH_DEBUG_RENDERER
 
 	/// Save state of constraints
-	void					SaveState(StateRecorder &inStream) const;
+	void					SaveState(StateRecorder &inStream, const StateRecorderFilter *inFilter) const;
 
 	/// Restore the state of constraints. Returns false if failed.
 	bool					RestoreState(StateRecorder &inStream);

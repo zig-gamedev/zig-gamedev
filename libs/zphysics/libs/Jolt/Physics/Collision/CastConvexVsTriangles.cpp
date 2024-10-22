@@ -19,8 +19,8 @@ CastConvexVsTriangles::CastConvexVsTriangles(const ShapeCast &inShapeCast, const
 	mCenterOfMassTransform2(inCenterOfMassTransform2),
 	mScale(inScale),
 	mSubShapeIDCreator1(inSubShapeIDCreator1),
-	mCollector(ioCollector) 
-{ 
+	mCollector(ioCollector)
+{
 	JPH_ASSERT(inShapeCast.mShape->GetType() == EShapeType::Convex);
 
 	// Determine if shape is inside out or not
@@ -51,7 +51,7 @@ void CastConvexVsTriangles::Cast(Vec3Arg inV0, Vec3Arg inV1, Vec3Arg inV2, uint8
 	if (mSupport == nullptr)
 	{
 		// Determine if we want to use the actual shape or a shrunken shape with convex radius
-		ConvexShape::ESupportMode support_mode = mShapeCastSettings.mUseShrunkenShapeAndConvexRadius? ConvexShape::ESupportMode::ExcludeConvexRadius : ConvexShape::ESupportMode::IncludeConvexRadius;
+		ConvexShape::ESupportMode support_mode = mShapeCastSettings.mUseShrunkenShapeAndConvexRadius? ConvexShape::ESupportMode::ExcludeConvexRadius : ConvexShape::ESupportMode::Default;
 
 		// Create support function
 		mSupport = static_cast<const ConvexShape *>(mShapeCast.mShape)->GetSupportFunction(support_mode, mSupportBuffer, mShapeCast.mScale);
@@ -80,6 +80,10 @@ void CastConvexVsTriangles::Cast(Vec3Arg inV0, Vec3Arg inV1, Vec3Arg inV2, uint8
 
 		// Its a hit, store the sub shape id's
 		ShapeCastResult result(fraction, contact_point_a, contact_point_b, contact_normal_world, back_facing, mSubShapeIDCreator1.GetID(), inSubShapeID2, TransformedShape::sGetBodyID(mCollector.GetContext()));
+
+		// Early out if this hit is deeper than the collector's early out value
+		if (fraction == 0.0f && -result.mPenetrationDepth >= mCollector.GetEarlyOutFraction())
+			return;
 
 		// Gather faces
 		if (mShapeCastSettings.mCollectFacesMode == ECollectFacesMode::CollectFaces)

@@ -4,10 +4,10 @@
 
 #include <Jolt/Jolt.h>
 
+#include <Jolt/Physics/Character/Character.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Collision/CollideShape.h>
-#include <Jolt/Physics/Character/Character.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/ObjectStream/TypeDeclarations.h>
 
@@ -34,18 +34,16 @@ Character::Character(const CharacterSettings *inSettings, RVec3Arg inPosition, Q
 {
 	// Construct rigid body
 	BodyCreationSettings settings(mShape, inPosition, inRotation, EMotionType::Dynamic, mLayer);
+	settings.mAllowedDOFs = EAllowedDOFs::TranslationX | EAllowedDOFs::TranslationY | EAllowedDOFs::TranslationZ;
+	settings.mEnhancedInternalEdgeRemoval = inSettings->mEnhancedInternalEdgeRemoval;
+	settings.mOverrideMassProperties = EOverrideMassProperties::MassAndInertiaProvided;
+	settings.mMassPropertiesOverride.mMass = inSettings->mMass;
 	settings.mFriction = inSettings->mFriction;
 	settings.mGravityFactor = inSettings->mGravityFactor;
 	settings.mUserData = inUserData;
-	Body *body = mSystem->GetBodyInterface().CreateBody(settings);
+	const Body *body = mSystem->GetBodyInterface().CreateBody(settings);
 	if (body != nullptr)
-	{
-		// Update the mass properties of the shape so that we set the correct mass and don't allow any rotation
-		body->GetMotionProperties()->SetInverseMass(1.0f / inSettings->mMass);
-		body->GetMotionProperties()->SetInverseInertia(Vec3::sZero(), Quat::sIdentity());
-
 		mBodyID = body->GetID();
-	}
 }
 
 Character::~Character()
@@ -246,7 +244,7 @@ RVec3 Character::GetPosition(bool inLockBodies) const
 	return sGetBodyInterface(mSystem, inLockBodies).GetPosition(mBodyID);
 }
 
-void Character::SetPosition(RVec3Arg inPosition, EActivation inActivationMode, bool inLockBodies) 
+void Character::SetPosition(RVec3Arg inPosition, EActivation inActivationMode, bool inLockBodies)
 {
 	sGetBodyInterface(mSystem, inLockBodies).SetPosition(mBodyID, inPosition, inActivationMode);
 }
@@ -256,7 +254,7 @@ Quat Character::GetRotation(bool inLockBodies) const
 	return sGetBodyInterface(mSystem, inLockBodies).GetRotation(mBodyID);
 }
 
-void Character::SetRotation(QuatArg inRotation, EActivation inActivationMode, bool inLockBodies) 
+void Character::SetRotation(QuatArg inRotation, EActivation inActivationMode, bool inLockBodies)
 {
 	sGetBodyInterface(mSystem, inLockBodies).SetRotation(mBodyID, inRotation, inActivationMode);
 }
@@ -315,6 +313,11 @@ bool Character::SetShape(const Shape *inShape, float inMaxPenetrationDepth, bool
 	mShape = inShape;
 	sGetBodyInterface(mSystem, inLockBodies).SetShape(mBodyID, mShape, false, EActivation::Activate);
 	return true;
+}
+
+TransformedShape Character::GetTransformedShape(bool inLockBodies) const
+{
+	return sGetBodyInterface(mSystem, inLockBodies).GetTransformedShape(mBodyID);
 }
 
 JPH_NAMESPACE_END

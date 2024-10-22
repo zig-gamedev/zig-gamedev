@@ -6,6 +6,7 @@
 
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Constraints/ConstraintPart/SpringPart.h>
+#include <Jolt/Physics/Constraints/SpringSettings.h>
 #include <Jolt/Physics/StateRecorder.h>
 
 JPH_NAMESPACE_BEGIN
@@ -45,7 +46,7 @@ class AngleConstraintPart
 			// Impulse:
 			// P = J^T lambda
 			//
-			// Euler velocity integration: 
+			// Euler velocity integration:
 			// v' = v + M^-1 P
 			if (ioBody1.IsDynamic())
 				ioBody1.GetMotionProperties()->SubAngularVelocityStep(inLambda * mInvI1_Axis);
@@ -57,7 +58,39 @@ class AngleConstraintPart
 		return false;
 	}
 
+	/// Internal helper function to calculate the inverse effective mass
+	JPH_INLINE float				CalculateInverseEffectiveMass(const Body &inBody1, const Body &inBody2, Vec3Arg inWorldSpaceAxis)
+	{
+		JPH_ASSERT(inWorldSpaceAxis.IsNormalized(1.0e-4f));
+
+		// Calculate properties used below
+		mInvI1_Axis = inBody1.IsDynamic()? inBody1.GetMotionProperties()->MultiplyWorldSpaceInverseInertiaByVector(inBody1.GetRotation(), inWorldSpaceAxis) : Vec3::sZero();
+		mInvI2_Axis = inBody2.IsDynamic()? inBody2.GetMotionProperties()->MultiplyWorldSpaceInverseInertiaByVector(inBody2.GetRotation(), inWorldSpaceAxis) : Vec3::sZero();
+
+		// Calculate inverse effective mass: K = J M^-1 J^T
+		return inWorldSpaceAxis.Dot(mInvI1_Axis + mInvI2_Axis);
+	}
+
 public:
+	/// Calculate properties used during the functions below
+	/// @param inBody1 The first body that this constraint is attached to
+	/// @param inBody2 The second body that this constraint is attached to
+	/// @param inWorldSpaceAxis The axis of rotation along which the constraint acts (normalized)
+	/// Set the following terms to zero if you don't want to drive the constraint to zero with a spring:
+	/// @param inBias Bias term (b) for the constraint impulse: lambda = J v + b
+	inline void					CalculateConstraintProperties(const Body &inBody1, const Body &inBody2, Vec3Arg inWorldSpaceAxis, float inBias = 0.0f)
+	{
+		float inv_effective_mass = CalculateInverseEffectiveMass(inBody1, inBody2, inWorldSpaceAxis);
+
+		if (inv_effective_mass == 0.0f)
+			Deactivate();
+		else
+		{
+			mEffectiveMass = 1.0f / inv_effective_mass;
+			mSpringPart.CalculateSpringPropertiesWithBias(inBias);
+		}
+	}
+
 	/// Calculate properties used during the functions below
 	/// @param inDeltaTime Time step
 	/// @param inBody1 The first body that this constraint is attached to
@@ -68,19 +101,47 @@ public:
 	///	@param inC Value of the constraint equation (C)
 	///	@param inFrequency Oscillation frequency (Hz)
 	///	@param inDamping Damping factor (0 = no damping, 1 = critical damping)
-	inline void					CalculateConstraintProperties(float inDeltaTime, const Body &inBody1, const Body &inBody2, Vec3Arg inWorldSpaceAxis, float inBias = 0.0f, float inC = 0.0f, float inFrequency = 0.0f, float inDamping = 0.0f)
+	inline void					CalculateConstraintPropertiesWithFrequencyAndDamping(float inDeltaTime, const Body &inBody1, const Body &inBody2, Vec3Arg inWorldSpaceAxis, float inBias, float inC, float inFrequency, float inDamping)
 	{
-		JPH_ASSERT(inWorldSpaceAxis.IsNormalized(1.0e-4f));
+		float inv_effective_mass = CalculateInverseEffectiveMass(inBody1, inBody2, inWorldSpaceAxis);
 
-		// Calculate properties used below
-		mInvI1_Axis = inBody1.IsDynamic()? inBody1.GetMotionProperties()->MultiplyWorldSpaceInverseInertiaByVector(inBody1.GetRotation(), inWorldSpaceAxis) : Vec3::sZero();
-		mInvI2_Axis = inBody2.IsDynamic()? inBody2.GetMotionProperties()->MultiplyWorldSpaceInverseInertiaByVector(inBody2.GetRotation(), inWorldSpaceAxis) : Vec3::sZero();
-	
-		// Calculate inverse effective mass: K = J M^-1 J^T
-		float inv_effective_mass = inWorldSpaceAxis.Dot(mInvI1_Axis + mInvI2_Axis);
+		if (inv_effective_mass == 0.0f)
+			Deactivate();
+		else
+			mSpringPart.CalculateSpringPropertiesWithFrequencyAndDamping(inDeltaTime, inv_effective_mass, inBias, inC, inFrequency, inDamping, mEffectiveMass);
+	}
 
-		// Calculate effective mass and spring properties
-		mSpringPart.CalculateSpringProperties(inDeltaTime, inv_effective_mass, inBias, inC, inFrequency, inDamping, mEffectiveMass);
+	/// Calculate properties used during the functions below
+	/// @param inDeltaTime Time step
+	/// @param inBody1 The first body that this constraint is attached to
+	/// @param inBody2 The second body that this constraint is attached to
+	/// @param inWorldSpaceAxis The axis of rotation along which the constraint acts (normalized)
+	/// Set the following terms to zero if you don't want to drive the constraint to zero with a spring:
+	/// @param inBias Bias term (b) for the constraint impulse: lambda = J v + b
+	///	@param inC Value of the constraint equation (C)
+	///	@param inStiffness Spring stiffness k.
+	///	@param inDamping Spring damping coefficient c.
+	inline void					CalculateConstraintPropertiesWithStiffnessAndDamping(float inDeltaTime, const Body &inBody1, const Body &inBody2, Vec3Arg inWorldSpaceAxis, float inBias, float inC, float inStiffness, float inDamping)
+	{
+		float inv_effective_mass = CalculateInverseEffectiveMass(inBody1, inBody2, inWorldSpaceAxis);
+
+		if (inv_effective_mass == 0.0f)
+			Deactivate();
+		else
+			mSpringPart.CalculateSpringPropertiesWithStiffnessAndDamping(inDeltaTime, inv_effective_mass, inBias, inC, inStiffness, inDamping, mEffectiveMass);
+	}
+
+	/// Selects one of the above functions based on the spring settings
+	inline void					CalculateConstraintPropertiesWithSettings(float inDeltaTime, const Body &inBody1, const Body &inBody2, Vec3Arg inWorldSpaceAxis, float inBias, float inC, const SpringSettings &inSpringSettings)
+	{
+		float inv_effective_mass = CalculateInverseEffectiveMass(inBody1, inBody2, inWorldSpaceAxis);
+
+		if (inv_effective_mass == 0.0f)
+			Deactivate();
+		else if (inSpringSettings.mMode == ESpringMode::FrequencyAndDamping)
+			mSpringPart.CalculateSpringPropertiesWithFrequencyAndDamping(inDeltaTime, inv_effective_mass, inBias, inC, inSpringSettings.mFrequency, inSpringSettings.mDamping, mEffectiveMass);
+		else
+			mSpringPart.CalculateSpringPropertiesWithStiffnessAndDamping(inDeltaTime, inv_effective_mass, inBias, inC, inSpringSettings.mStiffness, inSpringSettings.mDamping, mEffectiveMass);
 	}
 
 	/// Deactivate this constraint
@@ -146,11 +207,11 @@ public:
 			// lambda = -K^-1 * beta / dt * C
 			//
 			// We should divide by inDeltaTime, but we should multiply by inDeltaTime in the Euler step below so they're cancelled out
-			float lambda = -mEffectiveMass * inBaumgarte * inC; 
+			float lambda = -mEffectiveMass * inBaumgarte * inC;
 
 			// Directly integrate velocity change for one time step
 			//
-			// Euler velocity integration: 
+			// Euler velocity integration:
 			// dv = M^-1 P
 			//
 			// Impulse:
@@ -159,9 +220,9 @@ public:
 			// Euler position integration:
 			// x' = x + dv * dt
 			//
-			// Note we don't accumulate velocities for the stabilization. This is using the approach described in 'Modeling and 
-			// Solving Constraints' by Erin Catto presented at GDC 2007. On slide 78 it is suggested to split up the Baumgarte 
-			// stabilization for positional drift so that it does not actually add to the momentum. We combine an Euler velocity 
+			// Note we don't accumulate velocities for the stabilization. This is using the approach described in 'Modeling and
+			// Solving Constraints' by Erin Catto presented at GDC 2007. On slide 78 it is suggested to split up the Baumgarte
+			// stabilization for positional drift so that it does not actually add to the momentum. We combine an Euler velocity
 			// integrate + a position integrate and then discard the velocity change.
 			if (ioBody1.IsDynamic())
 				ioBody1.SubRotationStep(lambda * mInvI1_Axis);

@@ -12,10 +12,10 @@ JPH_NAMESPACE_BEGIN
 class CollideShapeSettings;
 
 /// Class that constructs a RotatedTranslatedShape
-class RotatedTranslatedShapeSettings final : public DecoratedShapeSettings
+class JPH_EXPORT RotatedTranslatedShapeSettings final : public DecoratedShapeSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(RotatedTranslatedShapeSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, RotatedTranslatedShapeSettings)
 
 	/// Constructor
 									RotatedTranslatedShapeSettings() = default;
@@ -35,7 +35,7 @@ public:
 
 /// A rotated translated shape will rotate and translate a child shape.
 /// Shifts the child object so that it is centered around the center of mass.
-class RotatedTranslatedShape final : public DecoratedShape
+class JPH_EXPORT RotatedTranslatedShape final : public DecoratedShape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -49,14 +49,14 @@ public:
 	Quat							GetRotation() const										{ return mRotation; }
 
 	/// Access the translation that has been applied to the inner shape
-	Vec3							GetPosition() const										{ return mCenterOfMass - mRotation.InverseRotate(mInnerShape->GetCenterOfMass()); }
+	Vec3							GetPosition() const										{ return mCenterOfMass - mRotation * mInnerShape->GetCenterOfMass(); }
 
 	// See Shape::GetCenterOfMass
 	virtual Vec3					GetCenterOfMass() const override						{ return mCenterOfMass; }
 
 	// See Shape::GetLocalBounds
 	virtual AABox					GetLocalBounds() const override;
-		
+
 	// See Shape::GetWorldSpaceBounds
 	virtual AABox					GetWorldSpaceBounds(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale) const override;
 	using Shape::GetWorldSpaceBounds;
@@ -97,6 +97,9 @@ public:
 	// See: Shape::CollidePoint
 	virtual void					CollidePoint(Vec3Arg inPoint, const SubShapeIDCreator &inSubShapeIDCreator, CollidePointCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const override;
 
+	// See: Shape::CollideSoftBodyVertices
+	virtual void					CollideSoftBodyVertices(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, SoftBodyVertex *ioVertices, uint inNumVertices, float inDeltaTime, Vec3Arg inDisplacementDueToGravity, int inCollidingShapeIndex) const override;
+
 	// See Shape::CollectTransformedShapes
 	virtual void					CollectTransformedShapes(const AABox &inBox, Vec3Arg inPositionCOM, QuatArg inRotation, Vec3Arg inScale, const SubShapeIDCreator &inSubShapeIDCreator, TransformedShapeCollector &ioCollector, const ShapeFilter &inShapeFilter) const override;
 
@@ -121,6 +124,9 @@ public:
 	// See Shape::IsValidScale
 	virtual bool					IsValidScale(Vec3Arg inScale) const override;
 
+	// See Shape::MakeScaleValid
+	virtual Vec3					MakeScaleValid(Vec3Arg inScale) const override;
+
 	// Register shape functions with the registry
 	static void						sRegister();
 
@@ -132,8 +138,10 @@ private:
 	// Helper functions called by CollisionDispatch
 	static void						sCollideRotatedTranslatedVsShape(const Shape *inShape1, const Shape *inShape2, Vec3Arg inScale1, Vec3Arg inScale2, Mat44Arg inCenterOfMassTransform1, Mat44Arg inCenterOfMassTransform2, const SubShapeIDCreator &inSubShapeIDCreator1, const SubShapeIDCreator &inSubShapeIDCreator2, const CollideShapeSettings &inCollideShapeSettings, CollideShapeCollector &ioCollector, const ShapeFilter &inShapeFilter);
 	static void						sCollideShapeVsRotatedTranslated(const Shape *inShape1, const Shape *inShape2, Vec3Arg inScale1, Vec3Arg inScale2, Mat44Arg inCenterOfMassTransform1, Mat44Arg inCenterOfMassTransform2, const SubShapeIDCreator &inSubShapeIDCreator1, const SubShapeIDCreator &inSubShapeIDCreator2, const CollideShapeSettings &inCollideShapeSettings, CollideShapeCollector &ioCollector, const ShapeFilter &inShapeFilter);
+	static void						sCollideRotatedTranslatedVsRotatedTranslated(const Shape *inShape1, const Shape *inShape2, Vec3Arg inScale1, Vec3Arg inScale2, Mat44Arg inCenterOfMassTransform1, Mat44Arg inCenterOfMassTransform2, const SubShapeIDCreator &inSubShapeIDCreator1, const SubShapeIDCreator &inSubShapeIDCreator2, const CollideShapeSettings &inCollideShapeSettings, CollideShapeCollector &ioCollector, const ShapeFilter &inShapeFilter);
 	static void						sCastRotatedTranslatedVsShape(const ShapeCast &inShapeCast, const ShapeCastSettings &inShapeCastSettings, const Shape *inShape, Vec3Arg inScale, const ShapeFilter &inShapeFilter, Mat44Arg inCenterOfMassTransform2, const SubShapeIDCreator &inSubShapeIDCreator1, const SubShapeIDCreator &inSubShapeIDCreator2, CastShapeCollector &ioCollector);
 	static void						sCastShapeVsRotatedTranslated(const ShapeCast &inShapeCast, const ShapeCastSettings &inShapeCastSettings, const Shape *inShape, Vec3Arg inScale, const ShapeFilter &inShapeFilter, Mat44Arg inCenterOfMassTransform2, const SubShapeIDCreator &inSubShapeIDCreator1, const SubShapeIDCreator &inSubShapeIDCreator2, CastShapeCollector &ioCollector);
+	static void						sCastRotatedTranslatedVsRotatedTranslated(const ShapeCast &inShapeCast, const ShapeCastSettings &inShapeCastSettings, const Shape *inShape, Vec3Arg inScale, const ShapeFilter &inShapeFilter, Mat44Arg inCenterOfMassTransform2, const SubShapeIDCreator &inSubShapeIDCreator1, const SubShapeIDCreator &inSubShapeIDCreator2, CastShapeCollector &ioCollector);
 
 	/// Transform the scale to the local space of the child shape
 	inline Vec3						TransformScale(Vec3Arg inScale) const
@@ -144,7 +152,7 @@ private:
 
 		return ScaleHelpers::RotateScale(mRotation, inScale);
 	}
-		
+
 	bool							mIsRotationIdentity;									///< If mRotation is close to identity (put here because it falls in padding bytes)
 	Vec3							mCenterOfMass;											///< Position of the center of mass
 	Quat							mRotation;												///< Rotation of the child shape

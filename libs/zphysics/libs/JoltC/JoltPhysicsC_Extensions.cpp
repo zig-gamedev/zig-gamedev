@@ -27,6 +27,9 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Character/Character.h>
+#include <Jolt/Physics/Character/CharacterBase.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 #include <Jolt/Physics/PhysicsLock.cpp>
@@ -88,9 +91,9 @@ JPC_PhysicsSystem_GetActiveBodyIDs(const JPC_PhysicsSystem *in_physics_system,
 
     if (out_num_body_ids) *out_num_body_ids = 0;
 
-    for (uint32_t i = 0; i < physics_system->mBodyManager.mNumActiveBodies; ++i)
+    for (uint32_t i = 0; i < physics_system->mBodyManager.mNumActiveBodies[0]; ++i)
     {
-        const JPH::BodyID body_id = physics_system->mBodyManager.mActiveBodies[i];
+        const JPH::BodyID body_id = physics_system->mBodyManager.mActiveBodies[0][i];
         *out_body_ids = body_id.GetIndexAndSequenceNumber();
         out_body_ids += 1;
         if (out_num_body_ids) *out_num_body_ids += 1;
@@ -121,6 +124,8 @@ ENSURE_SIZE_ALIGN(JPH::EShapeSubType,           JPC_ShapeSubType)
 ENSURE_SIZE_ALIGN(JPH::EMotionType,             JPC_MotionType)
 ENSURE_SIZE_ALIGN(JPH::EMotionQuality,          JPC_MotionQuality)
 ENSURE_SIZE_ALIGN(JPH::EBackFaceMode,           JPC_BackFaceMode)
+ENSURE_SIZE_ALIGN(JPH::EBodyType,               JPC_BodyType)
+ENSURE_SIZE_ALIGN(JPH::EAllowedDOFs,            JPC_AllowedDOFs)
 ENSURE_SIZE_ALIGN(JPH::EOverrideMassProperties, JPC_OverrideMassProperties)
 ENSURE_SIZE_ALIGN(JPH::EActivation,             JPC_Activation)
 ENSURE_SIZE_ALIGN(JPH::ValidateResult,          JPC_ValidateResult)
@@ -149,8 +154,15 @@ ENSURE_SIZE_ALIGN(JPH::RRayCast, JPC_RRayCast)
 ENSURE_SIZE_ALIGN(JPH::RayCastResult, JPC_RayCastResult)
 ENSURE_SIZE_ALIGN(JPH::RayCastSettings, JPC_RayCastSettings)
 
+ENSURE_SIZE_ALIGN(JPH::CharacterBaseSettings, JPC_CharacterBaseSettings)
+ENSURE_SIZE_ALIGN(JPH::CharacterSettings, JPC_CharacterSettings)
+ENSURE_SIZE_ALIGN(JPH::CharacterVirtualSettings, JPC_CharacterVirtualSettings)
+
 ENSURE_SIZE_ALIGN(JPH::AABox, JPC_AABox)
 ENSURE_SIZE_ALIGN(JPH::RMat44, JPC_RMatrix)
+
+ENSURE_SIZE_ALIGN(JPH::RMat44, JPC_RMatrix)
+
 //--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -291,6 +303,11 @@ static_assert(offsetof(JPH::RayCastResult, mSubShapeID2) == offsetof(JPC_RayCast
 static_assert(offsetof(JPH::RayCastSettings, mBackFaceMode) == offsetof(JPC_RayCastSettings, back_face_mode));
 static_assert(offsetof(JPH::RayCastSettings, mTreatConvexAsSolid) ==
     offsetof(JPC_RayCastSettings, treat_convex_as_solid));
+
+static_assert(offsetof(JPH::CharacterBaseSettings, mShape) == offsetof(JPC_CharacterBaseSettings, shape));
+static_assert(offsetof(JPH::CharacterSettings, mGravityFactor) == offsetof(JPC_CharacterSettings, gravity_factor));
+static_assert(offsetof(JPH::CharacterVirtualSettings, mMaxNumHits) ==
+    offsetof(JPC_CharacterVirtualSettings, max_num_hits));
 
 static_assert(offsetof(JPH::RRayCast, mOrigin) == offsetof(JPC_RRayCast, origin));
 static_assert(offsetof(JPH::RRayCast, mDirection) == offsetof(JPC_RRayCast, direction));

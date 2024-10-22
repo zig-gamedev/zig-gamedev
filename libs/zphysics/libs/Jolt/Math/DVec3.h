@@ -8,7 +8,7 @@
 
 JPH_NAMESPACE_BEGIN
 
-/// 3 component vector of doubles (stored as 4 vectors). 
+/// 3 component vector of doubles (stored as 4 vectors).
 /// Note that we keep the 4th component the same as the 3rd component to avoid divisions by zero when JPH_FLOATING_POINT_EXCEPTIONS_ENABLED defined
 class [[nodiscard]] alignas(JPH_DVECTOR_ALIGNMENT) DVec3
 {
@@ -36,6 +36,7 @@ public:
 	/// Constructor
 								DVec3() = default; ///< Intentionally not initialized for performance reasons
 								DVec3(const DVec3 &inRHS) = default;
+	DVec3 &						operator = (const DVec3 &inRHS) = default;
 	JPH_INLINE explicit			DVec3(Vec3Arg inRHS);
 	JPH_INLINE explicit			DVec3(Vec4Arg inRHS);
 	JPH_INLINE					DVec3(TypeArg inRHS) : mValue(inRHS)			{ CheckW(); }
@@ -56,7 +57,7 @@ public:
 
 	/// Replicate inV across all components
 	static JPH_INLINE DVec3		sReplicate(double inV);
-		
+
 	/// Vector with all NaN's
 	static JPH_INLINE DVec3		sNaN();
 
@@ -72,7 +73,7 @@ public:
 	/// Prepare to convert to float vector 3 rounding towards zero (returns DVec3 that can be converted to a Vec3 to get the rounding)
 	JPH_INLINE DVec3			PrepareRoundToZero() const;
 
-	/// Prepare to convert to float vector 3 rounding towards positive/negative inf  (returns DVec3 that can be converted to a Vec3 to get the rounding)
+	/// Prepare to convert to float vector 3 rounding towards positive/negative inf (returns DVec3 that can be converted to a Vec3 to get the rounding)
 	JPH_INLINE DVec3			PrepareRoundToInf() const;
 
 	/// Convert to float vector 3 rounding down
@@ -147,12 +148,15 @@ public:
 	JPH_INLINE double			GetY() const									{ return mF64[1]; }
 	JPH_INLINE double			GetZ() const									{ return mF64[2]; }
 #endif
-	
+
 	/// Set individual components
 	JPH_INLINE void				SetX(double inX)								{ mF64[0] = inX; }
 	JPH_INLINE void				SetY(double inY)								{ mF64[1] = inY; }
 	JPH_INLINE void				SetZ(double inZ)								{ mF64[2] = mF64[3] = inZ; } // Assure Z and W are the same
-	
+
+	/// Set all components
+	JPH_INLINE void				Set(double inX, double inY, double inZ)			{ *this = DVec3(inX, inY, inZ); }
+
 	/// Get double component by index
 	JPH_INLINE double			operator [] (uint inCoordinate) const			{ JPH_ASSERT(inCoordinate < 3); return mF64[inCoordinate]; }
 
@@ -262,7 +266,7 @@ public:
 
 	/// Internal helper function that checks that W is equal to Z, so e.g. dividing by it should not generate div by 0
 	JPH_INLINE void				CheckW() const;
-	
+
 	/// Internal helper function that ensures that the Z component is replicated to the W component to prevent divisions by zero
 	static JPH_INLINE Type		sFixW(TypeArg inValue);
 

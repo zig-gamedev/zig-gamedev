@@ -17,15 +17,15 @@ JPH_NAMESPACE_BEGIN
 ///
 /// This image describes the limit settings:
 /// @image html Docs/SwingTwistConstraint.png
-class SwingTwistConstraintSettings final : public TwoBodyConstraintSettings
+class JPH_EXPORT SwingTwistConstraintSettings final : public TwoBodyConstraintSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(SwingTwistConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, SwingTwistConstraintSettings)
 
 	// See: ConstraintSettings::SaveBinaryState
 	virtual void				SaveBinaryState(StreamOut &inStream) const override;
 
-	/// Create an an instance of this constraint
+	/// Create an instance of this constraint
 	virtual TwoBodyConstraint *	Create(Body &inBody1, Body &inBody2) const override;
 
 	/// This determines in which space the constraint is setup, all properties below should be in the specified space
@@ -40,14 +40,17 @@ public:
 	RVec3						mPosition2 = RVec3::sZero();
 	Vec3						mTwistAxis2 = Vec3::sAxisX();
 	Vec3						mPlaneAxis2 = Vec3::sAxisY();
-	
+
+	/// The type of swing constraint that we want to use.
+	ESwingType					mSwingType = ESwingType::Cone;
+
 	///@name Swing rotation limits
-	float						mNormalHalfConeAngle = 0.0f;								///< See image. Angle in radians.
-	float						mPlaneHalfConeAngle = 0.0f;									///< See image. Angle in radians.
+	float						mNormalHalfConeAngle = 0.0f;								///< See image at Detailed Description. Angle in radians.
+	float						mPlaneHalfConeAngle = 0.0f;									///< See image at Detailed Description. Angle in radians.
 
 	///@name Twist rotation limits
-	float						mTwistMinAngle = 0.0f;										///< See image. Angle in radians. Rotation will be limited between [mLimitsMin, mLimitsMax] where mLimitsMin \f$\in [-\pi, 0]\f$ and mLimitsMax \f$\in [0, \pi]\f$
-	float						mTwistMaxAngle = 0.0f;										///< See image. Angle in radians.
+	float						mTwistMinAngle = 0.0f;										///< See image at Detailed Description. Angle in radians. Should be \f$\in [-\pi, \pi]\f$.
+	float						mTwistMaxAngle = 0.0f;										///< See image at Detailed Description. Angle in radians. Should be \f$\in [-\pi, \pi]\f$.
 
 	///@name Friction
 	float						mMaxFrictionTorque = 0.0f;									///< Maximum amount of torque (N m) to apply as friction when the constraint is not powered by a motor
@@ -64,7 +67,7 @@ protected:
 /// A swing twist constraint is a specialized constraint for humanoid ragdolls that allows limited rotation only
 ///
 /// @see SwingTwistConstraintSettings for a description of the limits
-class SwingTwistConstraint final : public TwoBodyConstraint
+class JPH_EXPORT SwingTwistConstraint final : public TwoBodyConstraint
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -76,6 +79,7 @@ public:
 	virtual EConstraintSubType	GetSubType() const override									{ return EConstraintSubType::SwingTwist; }
 	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) override;
 	virtual void				SetupVelocityConstraint(float inDeltaTime) override;
+	virtual void				ResetWarmStart() override;
 	virtual void				WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
 	virtual bool				SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool				SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
@@ -92,10 +96,10 @@ public:
 	virtual Mat44				GetConstraintToBody2Matrix() const override					{ return Mat44::sRotationTranslation(mConstraintToBody2, mLocalSpacePosition2); }
 
 	///@name Constraint reference frame
-	inline Vec3 				GetLocalSpacePosition1() const								{ return mLocalSpacePosition1; }
-	inline Vec3		 			GetLocalSpacePosition2() const								{ return mLocalSpacePosition2; }
-	inline Quat		 			GetConstraintToBody1() const								{ return mConstraintToBody1; }
-	inline Quat		 			GetConstraintToBody2() const								{ return mConstraintToBody2; }
+	inline Vec3					GetLocalSpacePosition1() const								{ return mLocalSpacePosition1; }
+	inline Vec3					GetLocalSpacePosition2() const								{ return mLocalSpacePosition2; }
+	inline Quat					GetConstraintToBody1() const								{ return mConstraintToBody1; }
+	inline Quat					GetConstraintToBody2() const								{ return mConstraintToBody2; }
 
 	///@name Constraint limits
 	inline float				GetNormalHalfConeAngle() const								{ return mNormalHalfConeAngle; }
@@ -127,11 +131,11 @@ public:
 
 	/// Set the target angular velocity of body 2 in constraint space of body 2
 	void						SetTargetAngularVelocityCS(Vec3Arg inAngularVelocity)		{ mTargetAngularVelocity = inAngularVelocity; }
-	Vec3		 				GetTargetAngularVelocityCS() const							{ return mTargetAngularVelocity; }
+	Vec3						GetTargetAngularVelocityCS() const							{ return mTargetAngularVelocity; }
 
 	/// Set the target orientation in constraint space (drives constraint to: GetRotationInConstraintSpace() == inOrientation)
 	void						SetTargetOrientationCS(QuatArg inOrientation);
-	Quat 						GetTargetOrientationCS() const								{ return mTargetOrientation; }
+	Quat						GetTargetOrientationCS() const								{ return mTargetOrientation; }
 
 	/// Set the target orientation in body space (R2 = R1 * inOrientation, where R1 and R2 are the world space rotations for body 1 and 2).
 	/// Solve: R2 * ConstraintToBody2 = R1 * ConstraintToBody1 * q (see SwingTwistConstraint::GetSwingTwist) and R2 = R1 * inOrientation for q.
@@ -139,10 +143,10 @@ public:
 
 	/// Get current rotation of constraint in constraint space.
 	/// Solve: R2 * ConstraintToBody2 = R1 * ConstraintToBody1 * q for q.
-	inline Quat					GetRotationInConstraintSpace() const;
+	Quat						GetRotationInConstraintSpace() const;
 
-	///@name Get Lagrange multiplier from last physics update (relates to how much force/torque was applied to satisfy the constraint)
-	inline Vec3		 			GetTotalLambdaPosition() const								{ return mPointConstraintPart.GetTotalLambda(); }
+	///@name Get Lagrange multiplier from last physics update (the linear/angular impulse applied to satisfy the constraint)
+	inline Vec3					GetTotalLambdaPosition() const								{ return mPointConstraintPart.GetTotalLambda(); }
 	inline float				GetTotalLambdaTwist() const									{ return mSwingTwistConstraintPart.GetTotalTwistLambda(); }
 	inline float				GetTotalLambdaSwingY() const								{ return mSwingTwistConstraintPart.GetTotalSwingYLambda(); }
 	inline float				GetTotalLambdaSwingZ() const								{ return mSwingTwistConstraintPart.GetTotalSwingZLambda(); }
@@ -157,7 +161,7 @@ private:
 	// Local space constraint positions
 	Vec3						mLocalSpacePosition1;
 	Vec3						mLocalSpacePosition2;
-	
+
 	// Transforms from constraint space to body space
 	Quat						mConstraintToBody1;
 	Quat						mConstraintToBody2;

@@ -24,14 +24,14 @@ JPH_NAMESPACE_BEGIN
 static constexpr ObjectLayer cObjectLayerInvalid = ObjectLayer(~ObjectLayer(0U));
 
 /// Filter class for object layers
-class ObjectLayerFilter : public NonCopyable
+class JPH_EXPORT ObjectLayerFilter : public NonCopyable
 {
 public:
 	/// Destructor
 	virtual					~ObjectLayerFilter() = default;
 
 	/// Function to filter out object layers when doing collision query test (return true to allow testing against objects with this layer)
-	virtual bool			ShouldCollide(ObjectLayer inLayer) const
+	virtual bool			ShouldCollide([[maybe_unused]] ObjectLayer inLayer) const
 	{
 		return true;
 	}
@@ -46,21 +46,21 @@ public:
 };
 
 /// Filter class to test if two objects can collide based on their object layer. Used while finding collision pairs.
-class ObjectLayerPairFilter : public NonCopyable
+class JPH_EXPORT ObjectLayerPairFilter : public NonCopyable
 {
 public:
 	/// Destructor
 	virtual					~ObjectLayerPairFilter() = default;
 
 	/// Returns true if two layers can collide
-	virtual bool			ShouldCollide(ObjectLayer inLayer1, ObjectLayer inLayer2) const
+	virtual bool			ShouldCollide([[maybe_unused]] ObjectLayer inLayer1, [[maybe_unused]] ObjectLayer inLayer2) const
 	{
 		return true;
 	}
 };
 
 /// Default filter class that uses the pair filter in combination with a specified layer to filter layers
-class DefaultObjectLayerFilter : public ObjectLayerFilter
+class JPH_EXPORT DefaultObjectLayerFilter : public ObjectLayerFilter
 {
 public:
 	/// Constructor
@@ -89,7 +89,7 @@ private:
 };
 
 /// Allows objects from a specific layer only
-class SpecifiedObjectLayerFilter : public ObjectLayerFilter
+class JPH_EXPORT SpecifiedObjectLayerFilter : public ObjectLayerFilter
 {
 public:
 	/// Constructor

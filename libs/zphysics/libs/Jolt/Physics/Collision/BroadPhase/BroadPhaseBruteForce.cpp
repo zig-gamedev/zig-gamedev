@@ -14,9 +14,9 @@
 #include <Jolt/Core/QuickSort.h>
 
 JPH_NAMESPACE_BEGIN
-	
+
 void BroadPhaseBruteForce::AddBodiesFinalize(BodyID *ioBodies, int inNumber, AddState inAddState)
-{ 
+{
 	lock_guard lock(mMutex);
 
 	BodyVector &bodies = mBodyManager->GetBodies();
@@ -45,9 +45,9 @@ void BroadPhaseBruteForce::AddBodiesFinalize(BodyID *ioBodies, int inNumber, Add
 	// Resort
 	QuickSort(mBodyIDs.begin(), mBodyIDs.end());
 }
-	
-void BroadPhaseBruteForce::RemoveBodies(BodyID *ioBodies, int inNumber) 
-{ 
+
+void BroadPhaseBruteForce::RemoveBodies(BodyID *ioBodies, int inNumber)
+{
 	lock_guard lock(mMutex);
 
 	BodyVector &bodies = mBodyManager->GetBodies();
@@ -64,7 +64,7 @@ void BroadPhaseBruteForce::RemoveBodies(BodyID *ioBodies, int inNumber)
 		JPH_ASSERT(body.IsInBroadPhase());
 
 		// Find body id
-		Array<BodyID>::iterator it = lower_bound(mBodyIDs.begin(), mBodyIDs.end(), body.GetID());
+		Array<BodyID>::const_iterator it = std::lower_bound(mBodyIDs.begin(), mBodyIDs.end(), body.GetID());
 		JPH_ASSERT(it != mBodyIDs.end());
 
 		// Remove element
@@ -75,7 +75,7 @@ void BroadPhaseBruteForce::RemoveBodies(BodyID *ioBodies, int inNumber)
 	}
 }
 
-void BroadPhaseBruteForce::NotifyBodiesAABBChanged(BodyID *ioBodies, int inNumber, bool inTakeLock) 
+void BroadPhaseBruteForce::NotifyBodiesAABBChanged(BodyID *ioBodies, int inNumber, bool inTakeLock)
 {
 	// Do nothing, we directly reference the body
 }
@@ -86,7 +86,7 @@ void BroadPhaseBruteForce::NotifyBodiesLayerChanged(BodyID * ioBodies, int inNum
 }
 
 void BroadPhaseBruteForce::CastRay(const RayCast &inRay, RayCastBodyCollector &ioCollector, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter) const
-{ 
+{
 	shared_lock lock(mMutex);
 
 	// Load ray
@@ -118,7 +118,7 @@ void BroadPhaseBruteForce::CastRay(const RayCast &inRay, RayCastBodyCollector &i
 	}
 }
 
-void BroadPhaseBruteForce::CollideAABox(const AABox &inBox, CollideShapeBodyCollector &ioCollector, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter) const 
+void BroadPhaseBruteForce::CollideAABox(const AABox &inBox, CollideShapeBodyCollector &ioCollector, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter) const
 {
 	shared_lock lock(mMutex);
 
@@ -220,7 +220,7 @@ void BroadPhaseBruteForce::CollideOrientedBox(const OrientedBox &inBox, CollideS
 	}
 }
 
-void BroadPhaseBruteForce::CastAABoxNoLock(const AABoxCast &inBox, CastShapeBodyCollector &ioCollector, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter) const 
+void BroadPhaseBruteForce::CastAABoxNoLock(const AABoxCast &inBox, CastShapeBodyCollector &ioCollector, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter) const
 {
 	shared_lock lock(mMutex);
 
@@ -230,7 +230,7 @@ void BroadPhaseBruteForce::CastAABoxNoLock(const AABoxCast &inBox, CastShapeBody
 	RayInvDirection inv_direction(inBox.mDirection);
 
 	// For all bodies
-	float early_out_fraction = ioCollector.GetEarlyOutFraction();
+	float early_out_fraction = ioCollector.GetPositiveEarlyOutFraction();
 	for (BodyID b : mBodyIDs)
 	{
 		const Body &body = mBodyManager->GetBody(b);
@@ -248,7 +248,7 @@ void BroadPhaseBruteForce::CastAABoxNoLock(const AABoxCast &inBox, CastShapeBody
 				ioCollector.AddHit(result);
 				if (ioCollector.ShouldEarlyOut())
 					break;
-				early_out_fraction = ioCollector.GetEarlyOutFraction();
+				early_out_fraction = ioCollector.GetPositiveEarlyOutFraction();
 			}
 		}
 	}
@@ -298,6 +298,16 @@ void BroadPhaseBruteForce::FindCollidingPairs(BodyID *ioActiveBodies, int inNumA
 			ioPairCollector.AddHit({ b1_id, b2_id });
 		}
 	}
+}
+
+AABox BroadPhaseBruteForce::GetBounds() const
+{
+	shared_lock lock(mMutex);
+
+	AABox bounds;
+	for (BodyID b : mBodyIDs)
+		bounds.Encapsulate(mBodyManager->GetBody(b).GetWorldSpaceBounds());
+	return bounds;
 }
 
 JPH_NAMESPACE_END

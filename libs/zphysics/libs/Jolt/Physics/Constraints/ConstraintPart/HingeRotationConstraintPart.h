@@ -11,33 +11,35 @@
 
 JPH_NAMESPACE_BEGIN
 
-/// Constrains rotation around 2 axis so that it only allows rotation around 1 axis
-///
-/// Based on: "Constraints Derivation for Rigid Body Simulation in 3D" - Daniel Chappuis, section 2.4.1
-///
-/// Constraint equation (eq 87):
-///
-/// \f[C = \begin{bmatrix}a_1 \cdot b_2 \\ a_1 \cdot c_2\end{bmatrix}\f]
-///
-/// Jacobian (eq 90):
-///
-///	\f[J = \begin{bmatrix}
-/// 0	& -b_2 \times a_1	& 0		& b_2 \times a_1	\\
-/// 0	& -c_2 \times a_1	& 0		& c2 \times a_1
-/// \end{bmatrix}\f]
-///
-/// Used terms (here and below, everything in world space):\n
-/// a1 = hinge axis on body 1.\n
-/// b2, c2 = axis perpendicular to hinge axis on body 2.\n
-/// x1, x2 = center of mass for the bodies.\n
-/// v = [v1, w1, v2, w2].\n
-/// v1, v2 = linear velocity of body 1 and 2.\n
-/// w1, w2 = angular velocity of body 1 and 2.\n
-/// M = mass matrix, a diagonal matrix of the mass and inertia with diagonal [m1, I1, m2, I2].\n
-/// \f$K^{-1} = \left( J M^{-1} J^T \right)^{-1}\f$ = effective mass.\n
-/// b = velocity bias.\n
-/// \f$\beta\f$ = baumgarte constant.\n
-/// E = identity matrix.
+/**
+	Constrains rotation around 2 axis so that it only allows rotation around 1 axis
+
+	Based on: "Constraints Derivation for Rigid Body Simulation in 3D" - Daniel Chappuis, section 2.4.1
+
+	Constraint equation (eq 87):
+
+	\f[C = \begin{bmatrix}a_1 \cdot b_2 \\ a_1 \cdot c_2\end{bmatrix}\f]
+
+	Jacobian (eq 90):
+
+	\f[J = \begin{bmatrix}
+	0	& -b_2 \times a_1	& 0		& b_2 \times a_1	\\
+	0	& -c_2 \times a_1	& 0		& c2 \times a_1
+	\end{bmatrix}\f]
+
+	Used terms (here and below, everything in world space):\n
+	a1 = hinge axis on body 1.\n
+	b2, c2 = axis perpendicular to hinge axis on body 2.\n
+	x1, x2 = center of mass for the bodies.\n
+	v = [v1, w1, v2, w2].\n
+	v1, v2 = linear velocity of body 1 and 2.\n
+	w1, w2 = angular velocity of body 1 and 2.\n
+	M = mass matrix, a diagonal matrix of the mass and inertia with diagonal [m1, I1, m2, I2].\n
+	\f$K^{-1} = \left( J M^{-1} J^T \right)^{-1}\f$ = effective mass.\n
+	b = velocity bias.\n
+	\f$\beta\f$ = baumgarte constant.\n
+	E = identity matrix.
+**/
 class HingeRotationConstraintPart
 {
 public:
@@ -56,7 +58,7 @@ private:
 			// Impulse:
 			// P = J^T lambda
 			//
-			// Euler velocity integration: 
+			// Euler velocity integration:
 			// v' = v + M^-1 P
 			Vec3 impulse = mB2xA1 * inLambda[0] + mC2xA1 * inLambda[1];
 			if (ioBody1.IsDynamic())
@@ -110,10 +112,7 @@ public:
 		inv_effective_mass(1, 0) = mC2xA1.Dot(summed_inv_inertia.Multiply3x3(mB2xA1));
 		inv_effective_mass(1, 1) = mC2xA1.Dot(summed_inv_inertia.Multiply3x3(mC2xA1));
 		if (!mEffectiveMass.SetInversed(inv_effective_mass))
-		{
-			JPH_ASSERT(false, "Determinant is zero!");
 			Deactivate();
-		}
 	}
 
 	/// Deactivate this constraint
@@ -143,8 +142,8 @@ public:
 		Vec2 lambda = mEffectiveMass * jv;
 
 		// Store accumulated lambda
-		mTotalLambda += lambda; 
-		
+		mTotalLambda += lambda;
+
 		return ApplyVelocityStep(ioBody1, ioBody2, lambda);
 	}
 
@@ -166,7 +165,7 @@ public:
 
 			// Directly integrate velocity change for one time step
 			//
-			// Euler velocity integration: 
+			// Euler velocity integration:
 			// dv = M^-1 P
 			//
 			// Impulse:
@@ -175,9 +174,9 @@ public:
 			// Euler position integration:
 			// x' = x + dv * dt
 			//
-			// Note we don't accumulate velocities for the stabilization. This is using the approach described in 'Modeling and 
-			// Solving Constraints' by Erin Catto presented at GDC 2007. On slide 78 it is suggested to split up the Baumgarte 
-			// stabilization for positional drift so that it does not actually add to the momentum. We combine an Euler velocity 
+			// Note we don't accumulate velocities for the stabilization. This is using the approach described in 'Modeling and
+			// Solving Constraints' by Erin Catto presented at GDC 2007. On slide 78 it is suggested to split up the Baumgarte
+			// stabilization for positional drift so that it does not actually add to the momentum. We combine an Euler velocity
 			// integrate + a position integrate and then discard the velocity change.
 			Vec3 impulse = mB2xA1 * lambda[0] + mC2xA1 * lambda[1];
 			if (ioBody1.IsDynamic())
@@ -195,7 +194,7 @@ public:
 	{
 		return mTotalLambda;
 	}
-	
+
 	/// Save state of this constraint part
 	void						SaveState(StateRecorder &inStream) const
 	{

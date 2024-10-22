@@ -15,15 +15,15 @@ JPH_NAMESPACE_BEGIN
 /// Length2 = |BodyPoint2 - FixedPoint2|
 /// The constraint keeps the two line segments constrained so that
 /// MinDistance <= Length1 + Ratio * Length2 <= MaxDistance
-class PulleyConstraintSettings final : public TwoBodyConstraintSettings
+class JPH_EXPORT PulleyConstraintSettings final : public TwoBodyConstraintSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(PulleyConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, PulleyConstraintSettings)
 
 	// See: ConstraintSettings::SaveBinaryState
 	virtual void				SaveBinaryState(StreamOut &inStream) const override;
 
-	/// Create an an instance of this constraint
+	/// Create an instance of this constraint
 	virtual TwoBodyConstraint *	Create(Body &inBody1, Body &inBody2) const override;
 
 	/// This determines in which space the constraint is setup, specified properties below should be in the specified space
@@ -41,7 +41,7 @@ public:
 	/// Fixed world point to which body 2 is connected (always world space)
 	RVec3						mFixedPoint2 = RVec3::sZero();
 
-	/// Ratio between the two line segments (see formula above), can be used to create a block and tackle 
+	/// Ratio between the two line segments (see formula above), can be used to create a block and tackle
 	float						mRatio = 1.0f;
 
 	/// The minimum length of the line segments (see formula above), use -1 to calculate the length based on the positions of the objects when the constraint is created.
@@ -56,7 +56,7 @@ protected:
 };
 
 /// A pulley constraint.
-class PulleyConstraint final : public TwoBodyConstraint
+class JPH_EXPORT PulleyConstraint final : public TwoBodyConstraint
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -68,6 +68,7 @@ public:
 	virtual EConstraintSubType	GetSubType() const override									{ return EConstraintSubType::Pulley; }
 	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) override;
 	virtual void				SetupVelocityConstraint(float inDeltaTime) override;
+	virtual void				ResetWarmStart() override;
 	virtual void				WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
 	virtual bool				SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool				SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
@@ -90,8 +91,8 @@ public:
 	/// Get the current length of both segments (multiplied by the ratio for segment 2)
 	float						GetCurrentLength() const									{ return Vec3(mWorldSpacePosition1 - mFixedPosition1).Length() + mRatio * Vec3(mWorldSpacePosition2 - mFixedPosition2).Length(); }
 
-	///@name Get Lagrange multiplier from last physics update (relates to how much force/torque was applied to satisfy the constraint)
-	inline float	 			GetTotalLambdaPosition() const								{ return mIndependentAxisConstraintPart.GetTotalLambda(); }
+	///@name Get Lagrange multiplier from last physics update (the linear impulse applied to satisfy the constraint)
+	inline float				GetTotalLambdaPosition() const								{ return mIndependentAxisConstraintPart.GetTotalLambda(); }
 
 private:
 	// Calculates world positions and normals and returns current length

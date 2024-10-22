@@ -25,11 +25,11 @@ JPH_IMPLEMENT_SERIALIZABLE_VIRTUAL(PointConstraintSettings)
 }
 
 void PointConstraintSettings::SaveBinaryState(StreamOut &inStream) const
-{ 
+{
 	ConstraintSettings::SaveBinaryState(inStream);
 
 	inStream.Write(mSpace);
-	inStream.Write(mPoint1);	
+	inStream.Write(mPoint1);
 	inStream.Write(mPoint2);
 }
 
@@ -88,13 +88,18 @@ void PointConstraint::SetPoint2(EConstraintSpace inSpace, RVec3Arg inPoint2)
 }
 
 void PointConstraint::CalculateConstraintProperties()
-{	
+{
 	mPointConstraintPart.CalculateConstraintProperties(*mBody1, Mat44::sRotation(mBody1->GetRotation()), mLocalSpacePosition1, *mBody2, Mat44::sRotation(mBody2->GetRotation()), mLocalSpacePosition2);
 }
 
 void PointConstraint::SetupVelocityConstraint(float inDeltaTime)
 {
 	CalculateConstraintProperties();
+}
+
+void PointConstraint::ResetWarmStart()
+{
+	mPointConstraintPart.Deactivate();
 }
 
 void PointConstraint::WarmStartVelocityConstraint(float inWarmStartImpulseRatio)

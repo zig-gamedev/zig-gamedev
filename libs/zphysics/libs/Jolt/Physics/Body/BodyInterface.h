@@ -9,12 +9,14 @@
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Jolt/Physics/Body/MotionType.h>
 #include <Jolt/Physics/Body/MotionQuality.h>
+#include <Jolt/Physics/Body/BodyType.h>
 #include <Jolt/Core/Reference.h>
 
 JPH_NAMESPACE_BEGIN
 
 class Body;
 class BodyCreationSettings;
+class SoftBodyCreationSettings;
 class BodyLockInterface;
 class BroadPhase;
 class BodyManager;
@@ -24,28 +26,40 @@ class SubShapeID;
 class Shape;
 class TwoBodyConstraintSettings;
 class TwoBodyConstraint;
+class BroadPhaseLayerFilter;
+class AABox;
 
 /// Class that provides operations on bodies using a body ID. Note that if you need to do multiple operations on a single body, it is more efficient to lock the body once and combine the operations.
 /// All quantities are in world space unless otherwise specified.
-class BodyInterface : public NonCopyable
+class JPH_EXPORT BodyInterface : public NonCopyable
 {
 public:
 	/// Initialize the interface (should only be called by PhysicsSystem)
 	void						Init(BodyLockInterface &inBodyLockInterface, BodyManager &inBodyManager, BroadPhase &inBroadPhase) { mBodyLockInterface = &inBodyLockInterface; mBodyManager = &inBodyManager; mBroadPhase = &inBroadPhase; }
-	
-	/// Create a body
+
+	/// Create a rigid body
 	/// @return Created body or null when out of bodies
 	Body *						CreateBody(const BodyCreationSettings &inSettings);
-	
-	/// Create a body with specified ID. This function can be used if a simulation is to run in sync between clients or if a simulation needs to be restored exactly.
+
+	/// Create a soft body
+	/// @return Created body or null when out of bodies
+	Body *						CreateSoftBody(const SoftBodyCreationSettings &inSettings);
+
+	/// Create a rigid body with specified ID. This function can be used if a simulation is to run in sync between clients or if a simulation needs to be restored exactly.
 	/// The ID created on the server can be replicated to the client and used to create a deterministic simulation.
 	/// @return Created body or null when the body ID is invalid or a body of the same ID already exists.
 	Body *						CreateBodyWithID(const BodyID &inBodyID, const BodyCreationSettings &inSettings);
 
-	/// Advanced use only. Creates a body without specifying an ID. This body cannot be added to the physics system until it has been assigned a body ID.
+	/// Create a soft body with specified ID. See comments at CreateBodyWithID.
+	Body *						CreateSoftBodyWithID(const BodyID &inBodyID, const SoftBodyCreationSettings &inSettings);
+
+	/// Advanced use only. Creates a rigid body without specifying an ID. This body cannot be added to the physics system until it has been assigned a body ID.
 	/// This can be used to decouple allocation from registering the body. A call to CreateBodyWithoutID followed by AssignBodyID is equivalent to calling CreateBodyWithID.
 	/// @return Created body
 	Body *						CreateBodyWithoutID(const BodyCreationSettings &inSettings) const;
+
+	/// Advanced use only. Creates a body without specifying an ID. See comments at CreateBodyWithoutID.
+	Body *						CreateSoftBodyWithoutID(const SoftBodyCreationSettings &inSettings) const;
 
 	/// Advanced use only. Destroy a body previously created with CreateBodyWithoutID that hasn't gotten an ID yet through the AssignBodyID function,
 	/// or a body that has had its body ID unassigned through UnassignBodyIDs. Bodies that have an ID should be destroyed through DestroyBody.
@@ -69,10 +83,12 @@ public:
 	/// @param outBodies If not null on input, this will contain a list of body pointers corresponding to inBodyIDs that can be destroyed afterwards (caller assumes ownership over these).
 	void						UnassignBodyIDs(const BodyID *inBodyIDs, int inNumber, Body **outBodies);
 
-	/// Destroy a body
+	/// Destroy a body.
+	/// Make sure that you remove the body from the physics system using BodyInterface::RemoveBody before calling this function.
 	void						DestroyBody(const BodyID &inBodyID);
-	
+
 	/// Destroy multiple bodies
+	/// Make sure that you remove the bodies from the physics system using BodyInterface::RemoveBody before calling this function.
 	void						DestroyBodies(const BodyID *inBodyIDs, int inNumber);
 
 	/// Add body to the physics system.
@@ -80,10 +96,10 @@ public:
 	/// Adding many bodies, one at a time, results in a really inefficient broadphase until PhysicsSystem::OptimizeBroadPhase is called or when PhysicsSystem::Update rebuilds the tree!
 	/// After adding, to get a body by ID use the BodyLockRead or BodyLockWrite interface!
 	void						AddBody(const BodyID &inBodyID, EActivation inActivationMode);
-	
+
 	/// Remove body from the physics system.
 	void						RemoveBody(const BodyID &inBodyID);
-	
+
 	/// Check if a body has been added to the physics system.
 	bool						IsAdded(const BodyID &inBodyID) const;
 
@@ -91,7 +107,11 @@ public:
 	/// @return Created body ID or an invalid ID when out of bodies
 	BodyID						CreateAndAddBody(const BodyCreationSettings &inSettings, EActivation inActivationMode);
 
-	/// Broadphase add state handle, used to keep track of a batch while ading to the broadphase.
+	/// Combines CreateSoftBody and AddBody
+	/// @return Created body ID or an invalid ID when out of bodies
+	BodyID						CreateAndAddSoftBody(const SoftBodyCreationSettings &inSettings, EActivation inActivationMode);
+
+	/// Broadphase add state handle, used to keep track of a batch while adding to the broadphase.
 	using AddState = void *;
 
 	///@name Batch adding interface, see Broadphase for further documentation.
@@ -107,9 +127,11 @@ public:
 	///@{
 	void						ActivateBody(const BodyID &inBodyID);
 	void						ActivateBodies(const BodyID *inBodyIDs, int inNumber);
+	void						ActivateBodiesInAABox(const AABox &inBox, const BroadPhaseLayerFilter &inBroadPhaseLayerFilter, const ObjectLayerFilter &inObjectLayerFilter);
 	void						DeactivateBody(const BodyID &inBodyID);
 	void						DeactivateBodies(const BodyID *inBodyIDs, int inNumber);
 	bool						IsActive(const BodyID &inBodyID) const;
+	void						ResetSleepTimer(const BodyID &inBodyID);
 	///@}
 
 	/// Create a two body constraint
@@ -180,10 +202,10 @@ public:
 
 	///@name Add forces to the body
 	///@{
-	void						AddForce(const BodyID &inBodyID, Vec3Arg inForce); ///< See Body::AddForce
-	void						AddForce(const BodyID &inBodyID, Vec3Arg inForce, RVec3Arg inPoint); ///< Applied at inPoint
-	void						AddTorque(const BodyID &inBodyID, Vec3Arg inTorque); ///< See Body::AddTorque
-	void						AddForceAndTorque(const BodyID &inBodyID, Vec3Arg inForce, Vec3Arg inTorque); ///< A combination of Body::AddForce and Body::AddTorque
+	void						AddForce(const BodyID &inBodyID, Vec3Arg inForce, EActivation inActivationMode = EActivation::Activate); ///< See Body::AddForce
+	void						AddForce(const BodyID &inBodyID, Vec3Arg inForce, RVec3Arg inPoint, EActivation inActivationMode = EActivation::Activate); ///< Applied at inPoint
+	void						AddTorque(const BodyID &inBodyID, Vec3Arg inTorque, EActivation inActivationMode = EActivation::Activate); ///< See Body::AddTorque
+	void						AddForceAndTorque(const BodyID &inBodyID, Vec3Arg inForce, Vec3Arg inTorque, EActivation inActivationMode = EActivation::Activate); ///< A combination of Body::AddForce and Body::AddTorque
 	///@}
 
 	///@name Add an impulse to the body
@@ -191,6 +213,12 @@ public:
 	void						AddImpulse(const BodyID &inBodyID, Vec3Arg inImpulse); ///< Applied at center of mass
 	void						AddImpulse(const BodyID &inBodyID, Vec3Arg inImpulse, RVec3Arg inPoint); ///< Applied at inPoint
 	void						AddAngularImpulse(const BodyID &inBodyID, Vec3Arg inAngularImpulse);
+	bool						ApplyBuoyancyImpulse(const BodyID &inBodyID, RVec3Arg inSurfacePosition, Vec3Arg inSurfaceNormal, float inBuoyancy, float inLinearDrag, float inAngularDrag, Vec3Arg inFluidVelocity, Vec3Arg inGravity, float inDeltaTime);
+	///@}
+
+	///@name Body type
+	///@{
+	EBodyType					GetBodyType(const BodyID &inBodyID) const;
 	///@}
 
 	///@name Body motion type
@@ -226,11 +254,18 @@ public:
 	float						GetGravityFactor(const BodyID &inBodyID) const;
 	///@}
 
+	///@name Manifold reduction
+	///@{
+	void						SetUseManifoldReduction(const BodyID &inBodyID, bool inUseReduction);
+	bool						GetUseManifoldReduction(const BodyID &inBodyID) const;
+	///@}
+
 	/// Get transform and shape for this body, used to perform collision detection
 	TransformedShape			GetTransformedShape(const BodyID &inBodyID) const;
 
 	/// Get the user data for a body
 	uint64						GetUserData(const BodyID &inBodyID) const;
+	void						SetUserData(const BodyID &inBodyID, uint64 inUserData) const;
 
 	/// Get the material for a particular sub shape
 	const PhysicsMaterial *		GetMaterial(const BodyID &inBodyID, const SubShapeID &inSubShapeID) const;
@@ -239,6 +274,9 @@ public:
 	void						InvalidateContactCache(const BodyID &inBodyID);
 
 private:
+	/// Helper function to activate a single body
+	JPH_INLINE void				ActivateBodyInternal(Body &ioBody) const;
+
 	BodyLockInterface *			mBodyLockInterface = nullptr;
 	BodyManager *				mBodyManager = nullptr;
 	BroadPhase *				mBroadPhase = nullptr;

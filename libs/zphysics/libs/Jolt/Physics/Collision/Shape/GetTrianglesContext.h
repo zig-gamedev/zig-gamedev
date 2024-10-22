@@ -16,12 +16,12 @@ class GetTrianglesContextVertexList
 public:
 	/// Constructor, to be called in GetTrianglesStart
 					GetTrianglesContextVertexList(Vec3Arg inPositionCOM, QuatArg inRotation, Vec3Arg inScale, Mat44Arg inLocalTransform, const Vec3 *inTriangleVertices, size_t inNumTriangleVertices, const PhysicsMaterial *inMaterial) :
-		mLocalToWorld(Mat44::sRotationTranslation(inRotation, inPositionCOM) * Mat44::sScale(inScale) * inLocalTransform), 
+		mLocalToWorld(Mat44::sRotationTranslation(inRotation, inPositionCOM) * Mat44::sScale(inScale) * inLocalTransform),
 		mTriangleVertices(inTriangleVertices),
 		mNumTriangleVertices(inNumTriangleVertices),
 		mMaterial(inMaterial),
 		mIsInsideOut(ScaleHelpers::IsInsideOut(inScale))
-	{ 
+	{
 		static_assert(sizeof(GetTrianglesContextVertexList) <= sizeof(Shape::GetTrianglesContext), "GetTrianglesContext too small");
 		JPH_ASSERT(IsAligned(this, alignof(GetTrianglesContextVertexList)));
 		JPH_ASSERT(inNumTriangleVertices % 3 == 0);
@@ -68,7 +68,8 @@ public:
 	}
 
 	/// Helper function that creates a vertex list of a half unit sphere (top part)
-	static void		sCreateHalfUnitSphereTop(std::vector<Vec3> &ioVertices, int inDetailLevel)
+	template <class A>
+	static void		sCreateHalfUnitSphereTop(A &ioVertices, int inDetailLevel)
 	{
 		sCreateUnitSphereHelper(ioVertices,  Vec3::sAxisX(),  Vec3::sAxisY(),  Vec3::sAxisZ(), inDetailLevel);
 		sCreateUnitSphereHelper(ioVertices,  Vec3::sAxisY(), -Vec3::sAxisX(),  Vec3::sAxisZ(), inDetailLevel);
@@ -77,7 +78,8 @@ public:
 	}
 
 	/// Helper function that creates a vertex list of a half unit sphere (bottom part)
-	static void		sCreateHalfUnitSphereBottom(std::vector<Vec3> &ioVertices, int inDetailLevel)
+	template <class A>
+	static void		sCreateHalfUnitSphereBottom(A &ioVertices, int inDetailLevel)
 	{
 		sCreateUnitSphereHelper(ioVertices, -Vec3::sAxisX(), -Vec3::sAxisY(),  Vec3::sAxisZ(), inDetailLevel);
 		sCreateUnitSphereHelper(ioVertices, -Vec3::sAxisY(),  Vec3::sAxisX(),  Vec3::sAxisZ(), inDetailLevel);
@@ -85,8 +87,9 @@ public:
 		sCreateUnitSphereHelper(ioVertices, -Vec3::sAxisY(), -Vec3::sAxisX(), -Vec3::sAxisZ(), inDetailLevel);
 	}
 
-	/// Helper function that creates an open cyclinder of half height 1 and radius 1
-	static void		sCreateUnitOpenCylinder(std::vector<Vec3> &ioVertices, int inDetailLevel)
+	/// Helper function that creates an open cylinder of half height 1 and radius 1
+	template <class A>
+	static void		sCreateUnitOpenCylinder(A &ioVertices, int inDetailLevel)
 	{
 		const Vec3 bottom_offset(0.0f, -2.0f, 0.0f);
 		int num_verts = 4 * (1 << inDetailLevel);
@@ -112,7 +115,8 @@ public:
 
 private:
 	/// Recursive helper function for creating a sphere
-	static void		sCreateUnitSphereHelper(std::vector<Vec3> &ioVertices, Vec3Arg inV1, Vec3Arg inV2, Vec3Arg inV3, int inLevel)
+	template <class A>
+	static void		sCreateUnitSphereHelper(A &ioVertices, Vec3Arg inV1, Vec3Arg inV2, Vec3Arg inV3, int inLevel)
 	{
 		Vec3 center1 = (inV1 + inV2).Normalized();
 		Vec3 center2 = (inV2 + inV3).Normalized();
@@ -137,7 +141,7 @@ private:
 	Mat44					mLocalToWorld;
 	const Vec3 *			mTriangleVertices;
 	size_t					mNumTriangleVertices;
-	size_t					mCurrentVertex = 0;	
+	size_t					mCurrentVertex = 0;
 	const PhysicsMaterial *	mMaterial;
 	bool					mIsInsideOut;
 };
@@ -150,7 +154,7 @@ public:
 					GetTrianglesContextMultiVertexList(bool inIsInsideOut, const PhysicsMaterial *inMaterial) :
 		mMaterial(inMaterial),
 		mIsInsideOut(inIsInsideOut)
-	{ 
+	{
 		static_assert(sizeof(GetTrianglesContextMultiVertexList) <= sizeof(Shape::GetTrianglesContext), "GetTrianglesContext too small");
 		JPH_ASSERT(IsAligned(this, alignof(GetTrianglesContextMultiVertexList)));
 	}
@@ -159,7 +163,7 @@ public:
 	void			AddPart(Mat44Arg inLocalToWorld, const Vec3 *inTriangleVertices, size_t inNumTriangleVertices)
 	{
 		JPH_ASSERT(inNumTriangleVertices % 3 == 0);
-		
+
 		mParts.push_back({ inLocalToWorld, inTriangleVertices, inNumTriangleVertices });
 	}
 
@@ -236,7 +240,7 @@ private:
 
 	StaticArray<Part, 3>	mParts;
 	uint					mCurrentPart = 0;
-	size_t					mCurrentVertex = 0;	
+	size_t					mCurrentVertex = 0;
 	const PhysicsMaterial *	mMaterial;
 	bool					mIsInsideOut;
 };

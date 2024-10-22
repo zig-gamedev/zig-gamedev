@@ -21,7 +21,14 @@ JPH_NAMESPACE_BEGIN
 
 JPH_ALLOC_SCOPE void *JPH_ALLOC_FN(Allocate)(size_t inSize)
 {
+	JPH_ASSERT(inSize > 0);
 	return malloc(inSize);
+}
+
+JPH_ALLOC_SCOPE void *JPH_ALLOC_FN(Reallocate)(void *inBlock, [[maybe_unused]] size_t inOldSize, size_t inNewSize)
+{
+	JPH_ASSERT(inNewSize > 0);
+	return realloc(inBlock, inNewSize);
 }
 
 JPH_ALLOC_SCOPE void JPH_ALLOC_FN(Free)(void *inBlock)
@@ -31,13 +38,19 @@ JPH_ALLOC_SCOPE void JPH_ALLOC_FN(Free)(void *inBlock)
 
 JPH_ALLOC_SCOPE void *JPH_ALLOC_FN(AlignedAllocate)(size_t inSize, size_t inAlignment)
 {
+	JPH_ASSERT(inSize > 0 && inAlignment > 0);
+
 #if defined(JPH_PLATFORM_WINDOWS)
-	// Microsoft doesn't implement C++17 std::aligned_alloc
+	// Microsoft doesn't implement posix_memalign
 	return _aligned_malloc(inSize, inAlignment);
-#elif defined(JPH_PLATFORM_ANDROID)
-	return memalign(inAlignment, AlignUp(inSize, inAlignment));
 #else
-	return std::aligned_alloc(inAlignment, AlignUp(inSize, inAlignment));
+	void *block = nullptr;
+	JPH_SUPPRESS_WARNING_PUSH
+	JPH_GCC_SUPPRESS_WARNING("-Wunused-result")
+	JPH_CLANG_SUPPRESS_WARNING("-Wunused-result")
+	posix_memalign(&block, inAlignment, inSize);
+	JPH_SUPPRESS_WARNING_POP
+	return block;
 #endif
 }
 
@@ -45,16 +58,15 @@ JPH_ALLOC_SCOPE void JPH_ALLOC_FN(AlignedFree)(void *inBlock)
 {
 #if defined(JPH_PLATFORM_WINDOWS)
 	_aligned_free(inBlock);
-#elif defined(JPH_PLATFORM_ANDROID)
-	free(inBlock);
 #else
-	std::free(inBlock);
+	free(inBlock);
 #endif
 }
 
 #ifndef JPH_DISABLE_CUSTOM_ALLOCATOR
 
 AllocateFunction Allocate = nullptr;
+ReallocateFunction Reallocate = nullptr;
 FreeFunction Free = nullptr;
 AlignedAllocateFunction AlignedAllocate = nullptr;
 AlignedFreeFunction AlignedFree = nullptr;
@@ -62,6 +74,7 @@ AlignedFreeFunction AlignedFree = nullptr;
 void RegisterDefaultAllocator()
 {
 	Allocate = AllocateImpl;
+	Reallocate = ReallocateImpl;
 	Free = FreeImpl;
 	AlignedAllocate = AlignedAllocateImpl;
 	AlignedFree = AlignedFreeImpl;
