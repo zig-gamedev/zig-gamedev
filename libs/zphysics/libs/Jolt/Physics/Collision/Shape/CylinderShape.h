@@ -10,10 +10,10 @@
 JPH_NAMESPACE_BEGIN
 
 /// Class that constructs a CylinderShape
-class CylinderShapeSettings final : public ConvexShapeSettings
+class JPH_EXPORT CylinderShapeSettings final : public ConvexShapeSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(CylinderShapeSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, CylinderShapeSettings)
 
 	/// Default constructor for deserialization
 							CylinderShapeSettings() = default;
@@ -31,7 +31,7 @@ public:
 };
 
 /// A cylinder
-class CylinderShape final : public ConvexShape
+class JPH_EXPORT CylinderShape final : public ConvexShape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -80,8 +80,8 @@ public:
 	// See: Shape::CollidePoint
 	virtual void			CollidePoint(Vec3Arg inPoint, const SubShapeIDCreator &inSubShapeIDCreator, CollidePointCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const override;
 
-	// See Shape::TransformShape
-	virtual void			TransformShape(Mat44Arg inCenterOfMassTransform, TransformedShapeCollector &ioCollector) const override;
+	// See: Shape::CollideSoftBodyVertices
+	virtual void			CollideSoftBodyVertices(Mat44Arg inCenterOfMassTransform, Vec3Arg inScale, SoftBodyVertex *ioVertices, uint inNumVertices, float inDeltaTime, Vec3Arg inDisplacementDueToGravity, int inCollidingShapeIndex) const override;
 
 	// See Shape::GetTrianglesStart
 	virtual void			GetTrianglesStart(GetTrianglesContext &ioContext, const AABox &inBox, Vec3Arg inPositionCOM, QuatArg inRotation, Vec3Arg inScale) const override;
@@ -103,6 +103,9 @@ public:
 
 	// See Shape::IsValidScale
 	virtual bool			IsValidScale(Vec3Arg inScale) const override;
+
+	// See Shape::MakeScaleValid
+	virtual Vec3			MakeScaleValid(Vec3Arg inScale) const override;
 
 	// Register shape functions with the registry
 	static void				sRegister();

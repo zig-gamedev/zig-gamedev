@@ -19,14 +19,14 @@ using std::condition_variable;
 
 /// Implements a semaphore
 /// When we switch to C++20 we can use counting_semaphore to unify this
-class Semaphore
+class JPH_EXPORT Semaphore
 {
 public:
 	/// Constructor
 						Semaphore();
 						~Semaphore();
 
-	/// Release the semaphore, signalling the thread waiting on the barrier that there may be work
+	/// Release the semaphore, signaling the thread waiting on the barrier that there may be work
 	void				Release(uint inNumber = 1);
 
 	/// Acquire the semaphore inNumber times

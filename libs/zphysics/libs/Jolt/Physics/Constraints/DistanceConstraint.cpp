@@ -26,12 +26,13 @@ JPH_IMPLEMENT_SERIALIZABLE_VIRTUAL(DistanceConstraintSettings)
 	JPH_ADD_ATTRIBUTE(DistanceConstraintSettings, mPoint2)
 	JPH_ADD_ATTRIBUTE(DistanceConstraintSettings, mMinDistance)
 	JPH_ADD_ATTRIBUTE(DistanceConstraintSettings, mMaxDistance)
-	JPH_ADD_ATTRIBUTE(DistanceConstraintSettings, mFrequency)
-	JPH_ADD_ATTRIBUTE(DistanceConstraintSettings, mDamping)
+	JPH_ADD_ENUM_ATTRIBUTE_WITH_ALIAS(DistanceConstraintSettings, mLimitsSpringSettings.mMode, "mSpringMode")
+	JPH_ADD_ATTRIBUTE_WITH_ALIAS(DistanceConstraintSettings, mLimitsSpringSettings.mFrequency, "mFrequency") // Renaming attributes to stay compatible with old versions of the library
+	JPH_ADD_ATTRIBUTE_WITH_ALIAS(DistanceConstraintSettings, mLimitsSpringSettings.mDamping, "mDamping")
 }
 
 void DistanceConstraintSettings::SaveBinaryState(StreamOut &inStream) const
-{ 
+{
 	ConstraintSettings::SaveBinaryState(inStream);
 
 	inStream.Write(mSpace);
@@ -39,8 +40,7 @@ void DistanceConstraintSettings::SaveBinaryState(StreamOut &inStream) const
 	inStream.Write(mPoint2);
 	inStream.Write(mMinDistance);
 	inStream.Write(mMaxDistance);
-	inStream.Write(mFrequency);
-	inStream.Write(mDamping);
+	mLimitsSpringSettings.SaveBinaryState(inStream);
 }
 
 void DistanceConstraintSettings::RestoreBinaryState(StreamIn &inStream)
@@ -52,8 +52,7 @@ void DistanceConstraintSettings::RestoreBinaryState(StreamIn &inStream)
 	inStream.Read(mPoint2);
 	inStream.Read(mMinDistance);
 	inStream.Read(mMaxDistance);
-	inStream.Read(mFrequency);
-	inStream.Read(mDamping);
+	mLimitsSpringSettings.RestoreBinaryState(inStream);
 }
 
 TwoBodyConstraint *DistanceConstraintSettings::Create(Body &inBody1, Body &inBody2) const
@@ -85,14 +84,23 @@ DistanceConstraint::DistanceConstraint(Body &inBody1, Body &inBody2, const Dista
 
 	// Store distance we want to keep between the world space points
 	float distance = Vec3(mWorldSpacePosition2 - mWorldSpacePosition1).Length();
-	SetDistance(mMinDistance < 0.0f? distance : mMinDistance, mMaxDistance < 0.0f? distance : mMaxDistance);
+	float min_distance, max_distance;
+	if (mMinDistance < 0.0f && mMaxDistance < 0.0f)
+	{
+		min_distance = max_distance = distance;
+	}
+	else
+	{
+		min_distance = mMinDistance < 0.0f? min(distance, mMaxDistance) : mMinDistance;
+		max_distance = mMaxDistance < 0.0f? max(distance, mMinDistance) : mMaxDistance;
+	}
+	SetDistance(min_distance, max_distance);
 
 	// Most likely gravity is going to tear us apart (this is only used when the distance between the points = 0)
-	mWorldSpaceNormal = Vec3::sAxisY(); 
+	mWorldSpaceNormal = Vec3::sAxisY();
 
-	// Store frequency and damping
-	SetFrequency(inSettings.mFrequency);
-	SetDamping(inSettings.mDamping);
+	// Store spring settings
+	SetLimitsSpringSettings(inSettings.mLimitsSpringSettings);
 }
 
 void DistanceConstraint::NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM)
@@ -122,15 +130,15 @@ void DistanceConstraint::CalculateConstraintProperties(float inDeltaTime)
 
 	if (mMinDistance == mMaxDistance)
 	{
-		mAxisConstraint.CalculateConstraintProperties(inDeltaTime, *mBody1, r1_plus_u, *mBody2, r2, mWorldSpaceNormal, 0.0f, delta_len - mMinDistance, mFrequency, mDamping);
+		mAxisConstraint.CalculateConstraintPropertiesWithSettings(inDeltaTime, *mBody1, r1_plus_u, *mBody2, r2, mWorldSpaceNormal, 0.0f, delta_len - mMinDistance, mLimitsSpringSettings);
 
 		// Single distance, allow constraint forces in both directions
 		mMinLambda = -FLT_MAX;
 		mMaxLambda = FLT_MAX;
 	}
-	if (delta_len <= mMinDistance)
+	else if (delta_len <= mMinDistance)
 	{
-		mAxisConstraint.CalculateConstraintProperties(inDeltaTime, *mBody1, r1_plus_u, *mBody2, r2, mWorldSpaceNormal, 0.0f, delta_len - mMinDistance, mFrequency, mDamping);
+		mAxisConstraint.CalculateConstraintPropertiesWithSettings(inDeltaTime, *mBody1, r1_plus_u, *mBody2, r2, mWorldSpaceNormal, 0.0f, delta_len - mMinDistance, mLimitsSpringSettings);
 
 		// Allow constraint forces to make distance bigger only
 		mMinLambda = 0;
@@ -138,7 +146,7 @@ void DistanceConstraint::CalculateConstraintProperties(float inDeltaTime)
 	}
 	else if (delta_len >= mMaxDistance)
 	{
-		mAxisConstraint.CalculateConstraintProperties(inDeltaTime, *mBody1, r1_plus_u, *mBody2, r2, mWorldSpaceNormal, 0.0f, delta_len - mMaxDistance, mFrequency, mDamping);
+		mAxisConstraint.CalculateConstraintPropertiesWithSettings(inDeltaTime, *mBody1, r1_plus_u, *mBody2, r2, mWorldSpaceNormal, 0.0f, delta_len - mMaxDistance, mLimitsSpringSettings);
 
 		// Allow constraint forces to make distance smaller only
 		mMinLambda = -FLT_MAX;
@@ -151,6 +159,11 @@ void DistanceConstraint::CalculateConstraintProperties(float inDeltaTime)
 void DistanceConstraint::SetupVelocityConstraint(float inDeltaTime)
 {
 	CalculateConstraintProperties(inDeltaTime);
+}
+
+void DistanceConstraint::ResetWarmStart()
+{
+	mAxisConstraint.Deactivate();
 }
 
 void DistanceConstraint::WarmStartVelocityConstraint(float inWarmStartImpulseRatio)
@@ -168,21 +181,24 @@ bool DistanceConstraint::SolveVelocityConstraint(float inDeltaTime)
 
 bool DistanceConstraint::SolvePositionConstraint(float inDeltaTime, float inBaumgarte)
 {
-	float distance = Vec3(mWorldSpacePosition2 - mWorldSpacePosition1).Dot(mWorldSpaceNormal);
-
-	// Calculate position error
-	float position_error = 0.0f;
-	if (distance < mMinDistance)
-		position_error = distance - mMinDistance;
-	else if (distance > mMaxDistance)
-		position_error = distance - mMaxDistance;
-
-	if (position_error != 0.0f)
+	if (mLimitsSpringSettings.mFrequency <= 0.0f) // When the spring is active, we don't need to solve the position constraint
 	{
-		// Update constraint properties (bodies may have moved)
-		CalculateConstraintProperties(inDeltaTime);
+		float distance = Vec3(mWorldSpacePosition2 - mWorldSpacePosition1).Dot(mWorldSpaceNormal);
 
-		return mAxisConstraint.SolvePositionConstraint(*mBody1, *mBody2, mWorldSpaceNormal, position_error, inBaumgarte);
+		// Calculate position error
+		float position_error = 0.0f;
+		if (distance < mMinDistance)
+			position_error = distance - mMinDistance;
+		else if (distance > mMaxDistance)
+			position_error = distance - mMaxDistance;
+
+		if (position_error != 0.0f)
+		{
+			// Update constraint properties (bodies may have moved)
+			CalculateConstraintProperties(inDeltaTime);
+
+			return mAxisConstraint.SolvePositionConstraint(*mBody1, *mBody2, mWorldSpaceNormal, position_error, inBaumgarte);
+		}
 	}
 
 	return false;
@@ -243,8 +259,7 @@ Ref<ConstraintSettings> DistanceConstraint::GetConstraintSettings() const
 	settings->mPoint2 = RVec3(mLocalSpacePosition2);
 	settings->mMinDistance = mMinDistance;
 	settings->mMaxDistance = mMaxDistance;
-	settings->mFrequency = mFrequency;
-	settings->mDamping = mDamping;
+	settings->mLimitsSpringSettings = mLimitsSpringSettings;
 	return settings;
 }
 

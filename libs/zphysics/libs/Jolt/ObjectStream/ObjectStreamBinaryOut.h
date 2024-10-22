@@ -6,23 +6,25 @@
 
 #include <Jolt/ObjectStream/ObjectStreamOut.h>
 
+#ifdef JPH_OBJECT_STREAM
+
 JPH_NAMESPACE_BEGIN
 
 /// Implementation of ObjectStream binary output stream.
-class ObjectStreamBinaryOut : public ObjectStreamOut
+class JPH_EXPORT ObjectStreamBinaryOut : public ObjectStreamOut
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
 
 	/// Constructor and destructor
-	explicit 					ObjectStreamBinaryOut(ostream &inStream);
+	explicit					ObjectStreamBinaryOut(ostream &inStream);
 
 	///@name Output type specific operations
 	virtual void				WriteDataType(EOSDataType inType) override;
 	virtual void				WriteName(const char *inName) override;
 	virtual void				WriteIdentifier(Identifier inIdentifier) override;
 	virtual void				WriteCount(uint32 inCount) override;
-								
+
 	virtual void				WritePrimitiveData(const uint8 &inPrimitive) override;
 	virtual void				WritePrimitiveData(const uint16 &inPrimitive) override;
 	virtual void				WritePrimitiveData(const int &inPrimitive) override;
@@ -49,3 +51,5 @@ private:
 };
 
 JPH_NAMESPACE_END
+
+#endif // JPH_OBJECT_STREAM

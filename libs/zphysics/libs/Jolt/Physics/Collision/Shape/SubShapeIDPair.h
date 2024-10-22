@@ -19,11 +19,12 @@ public:
 	/// Constructor
 							SubShapeIDPair() = default;
 							SubShapeIDPair(const BodyID &inBody1ID, const SubShapeID &inSubShapeID1, const BodyID &inBody2ID, const SubShapeID &inSubShapeID2) : mBody1ID(inBody1ID), mSubShapeID1(inSubShapeID1), mBody2ID(inBody2ID), mSubShapeID2(inSubShapeID2) { }
+	SubShapeIDPair &		operator = (const SubShapeIDPair &) = default;
 							SubShapeIDPair(const SubShapeIDPair &) = default;
 
 	/// Equality operator
-	inline bool				operator == (const SubShapeIDPair &inRHS) const		
-	{ 
+	inline bool				operator == (const SubShapeIDPair &inRHS) const
+	{
 		return UVec4::sLoadInt4(reinterpret_cast<const uint32 *>(this)) == UVec4::sLoadInt4(reinterpret_cast<const uint32 *>(&inRHS));
 	}
 
@@ -56,7 +57,7 @@ private:
 	SubShapeID				mSubShapeID2;
 };
 
-static_assert(sizeof(SubShapeIDPair) == 16, "Unexpected size"); 
+static_assert(sizeof(SubShapeIDPair) == 16, "Unexpected size");
 static_assert(alignof(SubShapeIDPair) == 4, "Assuming 4 byte aligned");
 
 JPH_NAMESPACE_END
@@ -66,7 +67,7 @@ JPH_SUPPRESS_WARNINGS_STD_BEGIN
 namespace std
 {
 	/// Declare std::hash for SubShapeIDPair, note that std::hash is platform dependent and we need this one to be consistent because we sort on it in the ContactConstraintManager
-	template <> 
+	template <>
 	struct hash<JPH::SubShapeIDPair>
 	{
 		inline size_t operator () (const JPH::SubShapeIDPair &inRHS) const

@@ -14,10 +14,10 @@ JPH_NAMESPACE_BEGIN
 class CollideShapeSettings;
 
 /// Class that constructs a ConvexShape (abstract)
-class ConvexShapeSettings : public ShapeSettings
+class JPH_EXPORT ConvexShapeSettings : public ShapeSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_ABSTRACT(ConvexShapeSettings)
+	JPH_DECLARE_SERIALIZABLE_ABSTRACT(JPH_EXPORT, ConvexShapeSettings)
 
 	/// Constructor
 									ConvexShapeSettings() = default;
@@ -32,7 +32,7 @@ public:
 };
 
 /// Base class for all convex shapes. Defines a virtual interface.
-class ConvexShape : public Shape
+class JPH_EXPORT ConvexShape : public Shape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -46,7 +46,7 @@ public:
 	virtual uint					GetSubShapeIDBitsRecursive() const override					{ return 0; } // Convex shapes don't have sub shapes
 
 	// See Shape::GetMaterial
-	virtual const PhysicsMaterial *	GetMaterial(const SubShapeID &inSubShapeID) const override	{ JPH_ASSERT(inSubShapeID.IsEmpty(), "Invalid subshape ID"); return GetMaterial(); }
+	virtual const PhysicsMaterial *	GetMaterial([[maybe_unused]] const SubShapeID &inSubShapeID) const override	{ JPH_ASSERT(inSubShapeID.IsEmpty(), "Invalid subshape ID"); return GetMaterial(); }
 
 	// See Shape::CastRay
 	virtual bool					CastRay(const RayCast &inRay, const SubShapeIDCreator &inSubShapeIDCreator, RayCastResult &ioHit) const override;
@@ -71,11 +71,11 @@ public:
 		/// Warning: Virtual destructor will not be called on this object!
 		virtual						~Support() = default;
 
-		/// Calculate the support vector for this convex shape (includes / excludes the convex radius depending on how this was obtained). 
+		/// Calculate the support vector for this convex shape (includes / excludes the convex radius depending on how this was obtained).
 		/// Support vector is relative to the center of mass of the shape.
 		virtual Vec3				GetSupport(Vec3Arg inDirection) const = 0;
 
-		/// Convex radius of shape. Collision detection on penetrating shapes is much more expensive, 
+		/// Convex radius of shape. Collision detection on penetrating shapes is much more expensive,
 		/// so you can add a radius around objects to increase the shape. This makes it far less likely that they will actually penetrate.
 		virtual float				GetConvexRadius() const = 0;
 	};
@@ -88,10 +88,11 @@ public:
 	};
 
 	/// How the GetSupport function should behave
-	enum class ESupportMode	
+	enum class ESupportMode
 	{
-		ExcludeConvexRadius,		///< Return the shape excluding the convex radius
-		IncludeConvexRadius,		///< Return the shape including the convex radius
+		ExcludeConvexRadius,		///< Return the shape excluding the convex radius, Support::GetConvexRadius will return the convex radius if there is one, but adding this radius may not result in the most accurate/efficient representation of shapes with sharp edges
+		IncludeConvexRadius,		///< Return the shape including the convex radius, Support::GetSupport includes the convex radius if there is one, Support::GetConvexRadius will return 0
+		Default,					///< Use both Support::GetSupport add Support::GetConvexRadius to get a support point that matches the original shape as accurately/efficiently as possible
 	};
 
 	/// Returns an object that provides the GetSupport function for this shape.
@@ -131,7 +132,7 @@ protected:
 	virtual void					RestoreBinaryState(StreamIn &inStream) override;
 
 	/// Vertex list that forms a unit sphere
-	static const std::vector<Vec3>	sUnitSphereTriangles;
+	static const StaticArray<Vec3, 384> sUnitSphereTriangles;
 
 private:
 	// Class for GetTrianglesStart/Next

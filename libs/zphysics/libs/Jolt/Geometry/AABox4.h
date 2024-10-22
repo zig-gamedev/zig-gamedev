@@ -92,11 +92,11 @@ JPH_INLINE UVec4 AABox4VsBox(Mat44Arg inOrientation, Vec3Arg inHalfExtents, Vec4
 	// Note that the code is swapped around: A is the aabox and B is the oriented box (this saves us from having to invert the orientation of the oriented box)
 
 	// Compute translation vector t (the translation of B in the space of A)
-	Vec4 t[3] { 
-		inOrientation.GetTranslation().SplatX() - 0.5f * (inBoxMinX + inBoxMaxX), 
-		inOrientation.GetTranslation().SplatY() - 0.5f * (inBoxMinY + inBoxMaxY), 
+	Vec4 t[3] {
+		inOrientation.GetTranslation().SplatX() - 0.5f * (inBoxMinX + inBoxMaxX),
+		inOrientation.GetTranslation().SplatY() - 0.5f * (inBoxMinY + inBoxMaxY),
 		inOrientation.GetTranslation().SplatZ() - 0.5f * (inBoxMinZ + inBoxMaxZ) };
-	
+
 	// Compute common subexpressions. Add in an epsilon term to
 	// counteract arithmetic errors when two edges are parallel and
 	// their cross product is (near) null (see text for details)
@@ -104,9 +104,9 @@ JPH_INLINE UVec4 AABox4VsBox(Mat44Arg inOrientation, Vec3Arg inHalfExtents, Vec4
 	Vec3 abs_r[3] { inOrientation.GetAxisX().Abs() + epsilon, inOrientation.GetAxisY().Abs() + epsilon, inOrientation.GetAxisZ().Abs() + epsilon };
 
 	// Half extents for a
-	Vec4 a_half_extents[3] { 
-		0.5f * (inBoxMaxX - inBoxMinX), 
-		0.5f * (inBoxMaxY - inBoxMinY), 
+	Vec4 a_half_extents[3] {
+		0.5f * (inBoxMaxX - inBoxMinX),
+		0.5f * (inBoxMaxY - inBoxMinY),
 		0.5f * (inBoxMaxZ - inBoxMinZ) };
 
 	// Half extents of b
@@ -119,7 +119,7 @@ JPH_INLINE UVec4 AABox4VsBox(Mat44Arg inOrientation, Vec3Arg inHalfExtents, Vec4
 
 	// Test axes L = A0, L = A1, L = A2
 	Vec4 ra, rb;
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 3; i++)
 	{
 		ra = a_half_extents[i];
 		rb = b_half_extents_x * abs_r[0][i] + b_half_extents_y * abs_r[1][i] + b_half_extents_z * abs_r[2][i];
@@ -127,7 +127,7 @@ JPH_INLINE UVec4 AABox4VsBox(Mat44Arg inOrientation, Vec3Arg inHalfExtents, Vec4
 	}
 
 	// Test axes L = B0, L = B1, L = B2
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 3; i++)
 	{
 		ra = a_half_extents[0] * abs_r[i][0] + a_half_extents[1] * abs_r[i][1] + a_half_extents[2] * abs_r[i][2];
 		rb = Vec4::sReplicate(inHalfExtents[i]);
@@ -151,34 +151,34 @@ JPH_INLINE UVec4 AABox4VsBox(Mat44Arg inOrientation, Vec3Arg inHalfExtents, Vec4
 
 	// Test axis L = A1 x B0
 	ra = a_half_extents[0] * abs_r[0][2] + a_half_extents[2] * abs_r[0][0];
-	rb = b_half_extents_y * abs_r[2][1] + b_half_extents_z * abs_r[1][1];	
+	rb = b_half_extents_y * abs_r[2][1] + b_half_extents_z * abs_r[1][1];
 	overlaps = UVec4::sAnd(overlaps, Vec4::sLessOrEqual((t[0] * inOrientation(2, 0) - t[2] * inOrientation(0, 0)).Abs(), ra + rb));
 
 	// Test axis L = A1 x B1
 	ra = a_half_extents[0] * abs_r[1][2] + a_half_extents[2] * abs_r[1][0];
 	rb = b_half_extents_x * abs_r[2][1] + b_half_extents_z * abs_r[0][1];
 	overlaps = UVec4::sAnd(overlaps, Vec4::sLessOrEqual((t[0] * inOrientation(2, 1) - t[2] * inOrientation(0, 1)).Abs(), ra + rb));
-	
+
 	// Test axis L = A1 x B2
 	ra = a_half_extents[0] * abs_r[2][2] + a_half_extents[2] * abs_r[2][0];
 	rb = b_half_extents_x * abs_r[1][1] + b_half_extents_y * abs_r[0][1];
 	overlaps = UVec4::sAnd(overlaps, Vec4::sLessOrEqual((t[0] * inOrientation(2, 2) - t[2] * inOrientation(0, 2)).Abs(), ra + rb));
-	
+
 	// Test axis L = A2 x B0
 	ra = a_half_extents[0] * abs_r[0][1] + a_half_extents[1] * abs_r[0][0];
 	rb = b_half_extents_y * abs_r[2][2] + b_half_extents_z * abs_r[1][2];
 	overlaps = UVec4::sAnd(overlaps, Vec4::sLessOrEqual((t[1] * inOrientation(0, 0) - t[0] * inOrientation(1, 0)).Abs(), ra + rb));
-	
+
 	// Test axis L = A2 x B1
 	ra = a_half_extents[0] * abs_r[1][1] + a_half_extents[1] * abs_r[1][0];
 	rb = b_half_extents_x * abs_r[2][2] + b_half_extents_z * abs_r[0][2];
 	overlaps = UVec4::sAnd(overlaps, Vec4::sLessOrEqual((t[1] * inOrientation(0, 1) - t[0] * inOrientation(1, 1)).Abs(), ra + rb));
-	
+
 	// Test axis L = A2 x B2
 	ra = a_half_extents[0] * abs_r[2][1] + a_half_extents[1] * abs_r[2][0];
 	rb = b_half_extents_x * abs_r[1][2] + b_half_extents_y * abs_r[0][2];
 	overlaps = UVec4::sAnd(overlaps, Vec4::sLessOrEqual((t[1] * inOrientation(0, 2) - t[0] * inOrientation(1, 2)).Abs(), ra + rb));
-	
+
 	// Return if the OBB vs AABBs are intersecting
 	return overlaps;
 }
@@ -189,16 +189,29 @@ JPH_INLINE UVec4 AABox4VsBox(const OrientedBox &inBox, Vec4Arg inBoxMinX, Vec4Ar
 	return AABox4VsBox(inBox.mOrientation, inBox.mHalfExtents, inBoxMinX, inBoxMinY, inBoxMinZ, inBoxMaxX, inBoxMaxY, inBoxMaxZ, inEpsilon);
 }
 
+/// Get the squared distance between 4 AABoxes and a point
+JPH_INLINE Vec4 AABox4DistanceSqToPoint(Vec4Arg inPointX, Vec4Arg inPointY, Vec4Arg inPointZ, Vec4Arg inBoxMinX, Vec4Arg inBoxMinY, Vec4Arg inBoxMinZ, Vec4Arg inBoxMaxX, Vec4Arg inBoxMaxY, Vec4Arg inBoxMaxZ)
+{
+	// Get closest point on box
+	Vec4 closest_x = Vec4::sMin(Vec4::sMax(inPointX, inBoxMinX), inBoxMaxX);
+	Vec4 closest_y = Vec4::sMin(Vec4::sMax(inPointY, inBoxMinY), inBoxMaxY);
+	Vec4 closest_z = Vec4::sMin(Vec4::sMax(inPointZ, inBoxMinZ), inBoxMaxZ);
+
+	// Return the squared distance between the box and point
+	return Square(closest_x - inPointX) + Square(closest_y - inPointY) + Square(closest_z - inPointZ);
+}
+
+/// Get the squared distance between 4 AABoxes and a point
+JPH_INLINE Vec4 AABox4DistanceSqToPoint(Vec3 inPoint, Vec4Arg inBoxMinX, Vec4Arg inBoxMinY, Vec4Arg inBoxMinZ, Vec4Arg inBoxMaxX, Vec4Arg inBoxMaxY, Vec4Arg inBoxMaxZ)
+{
+	return AABox4DistanceSqToPoint(inPoint.SplatX(), inPoint.SplatY(), inPoint.SplatZ(), inBoxMinX, inBoxMinY, inBoxMinZ, inBoxMaxX, inBoxMaxY, inBoxMaxZ);
+}
+
 /// Test 4 AABoxes vs a sphere
 JPH_INLINE UVec4 AABox4VsSphere(Vec4Arg inCenterX, Vec4Arg inCenterY, Vec4Arg inCenterZ, Vec4Arg inRadiusSq, Vec4Arg inBoxMinX, Vec4Arg inBoxMinY, Vec4Arg inBoxMinZ, Vec4Arg inBoxMaxX, Vec4Arg inBoxMaxY, Vec4Arg inBoxMaxZ)
 {
-	// Get closest point on box
-	Vec4 closest_x = Vec4::sMin(Vec4::sMax(inCenterX, inBoxMinX), inBoxMaxX);
-	Vec4 closest_y = Vec4::sMin(Vec4::sMax(inCenterY, inBoxMinY), inBoxMaxY);
-	Vec4 closest_z = Vec4::sMin(Vec4::sMax(inCenterZ, inBoxMinZ), inBoxMaxZ);
-
 	// Test the distance from the center of the sphere to the box is smaller than the radius
-	Vec4 distance_sq = Square(closest_x - inCenterX) + Square(closest_y - inCenterY) + Square(closest_z - inCenterZ);
+	Vec4 distance_sq = AABox4DistanceSqToPoint(inCenterX, inCenterY, inCenterZ, inBoxMinX, inBoxMinY, inBoxMinZ, inBoxMaxX, inBoxMaxY, inBoxMaxZ);
 	return Vec4::sLessOrEqual(distance_sq, inRadiusSq);
 }
 

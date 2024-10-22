@@ -21,20 +21,27 @@ enum class EPathRotationConstraintType
 	ConstrainAroundTangent,			///< Only allow rotation around the tangent vector (following the path)
 	ConstrainAroundNormal,			///< Only allow rotation around the normal vector (perpendicular to the path)
 	ConstrainAroundBinormal,		///< Only allow rotation around the binormal vector (perpendicular to the path)
-	ConstaintToPath,				///< Fully constrain the rotation of body 2 to the path (follwing the tangent and normal of the path)
+	ConstrainToPath,				///< Fully constrain the rotation of body 2 to the path (following the tangent and normal of the path)
 	FullyConstrained,				///< Fully constrain the rotation of the body 2 to the rotation of body 1
 };
 
 /// Path constraint settings, used to constrain the degrees of freedom between two bodies to a path
-class PathConstraintSettings final : public TwoBodyConstraintSettings
+///
+/// The requirements of the path are that:
+/// * Tangent, normal and bi-normal form an orthonormal basis with: tangent cross bi-normal = normal
+/// * The path points along the tangent vector
+/// * The path is continuous so doesn't contain any sharp corners
+///
+/// The reason for all this is that the constraint acts like a slider constraint with the sliding axis being the tangent vector (the assumption here is that delta time will be small enough so that the path is linear for that delta time).
+class JPH_EXPORT PathConstraintSettings final : public TwoBodyConstraintSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(PathConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, PathConstraintSettings)
 
 	// See: ConstraintSettings::SaveBinaryState
 	virtual void					SaveBinaryState(StreamOut &inStream) const override;
 
-	/// Create an an instance of this constraint
+	/// Create an instance of this constraint
 	virtual TwoBodyConstraint *		Create(Body &inBody1, Body &inBody2) const override;
 
 	/// The path that constrains the two bodies
@@ -64,7 +71,7 @@ protected:
 };
 
 /// Path constraint, used to constrain the degrees of freedom between two bodies to a path
-class PathConstraint final : public TwoBodyConstraint
+class JPH_EXPORT PathConstraint final : public TwoBodyConstraint
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -76,6 +83,7 @@ public:
 	virtual EConstraintSubType		GetSubType() const override								{ return EConstraintSubType::Path; }
 	virtual void					NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) override;
 	virtual void					SetupVelocityConstraint(float inDeltaTime) override;
+	virtual void					ResetWarmStart() override;
 	virtual void					WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
 	virtual bool					SolveVelocityConstraint(float inDeltaTime) override;
 	virtual bool					SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
@@ -99,7 +107,7 @@ public:
 
 	/// Access to the current fraction along the path e [0, GetPath()->GetMaxPathFraction()]
 	float							GetPathFraction() const									{ return mPathFraction; }
-	
+
 	/// Friction control
 	void							SetMaxFrictionForce(float inFrictionForce)				{ mMaxFrictionForce = inFrictionForce; }
 	float							GetMaxFrictionForce() const								{ return mMaxFrictionForce; }
@@ -116,7 +124,7 @@ public:
 	void							SetTargetPathFraction(float inFraction)					{ JPH_ASSERT(mPath->IsLooping() || (inFraction >= 0.0f && inFraction <= mPath->GetPathMaxFraction())); mTargetPathFraction = inFraction; }
 	float							GetTargetPathFraction() const							{ return mTargetPathFraction; }
 
-	///@name Get Lagrange multiplier from last physics update (relates to how much force/torque was applied to satisfy the constraint)
+	///@name Get Lagrange multiplier from last physics update (the linear/angular impulse applied to satisfy the constraint)
 	inline Vector<2>				GetTotalLambdaPosition() const							{ return mPositionConstraintPart.GetTotalLambda(); }
 	inline float					GetTotalLambdaPositionLimits() const					{ return mPositionLimitsConstraintPart.GetTotalLambda(); }
 	inline float					GetTotalLambdaMotor() const								{ return mPositionMotorConstraintPart.GetTotalLambda(); }

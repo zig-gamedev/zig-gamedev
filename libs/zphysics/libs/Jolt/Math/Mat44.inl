@@ -12,18 +12,18 @@ JPH_NAMESPACE_BEGIN
 
 #define JPH_EL(r, c) mCol[c].mF32[r]
 
-Mat44::Mat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, Vec4Arg inC4) : 
-	mCol { inC1, inC2, inC3, inC4 } 
-{ 
+Mat44::Mat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, Vec4Arg inC4) :
+	mCol { inC1, inC2, inC3, inC4 }
+{
 }
 
-Mat44::Mat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, Vec3Arg inC4) : 
-	mCol { inC1, inC2, inC3, Vec4(inC4, 1.0f) } 
-{ 
+Mat44::Mat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, Vec3Arg inC4) :
+	mCol { inC1, inC2, inC3, Vec4(inC4, 1.0f) }
+{
 }
 
-Mat44::Mat44(Type inC1, Type inC2, Type inC3, Type inC4) : 
-	mCol { inC1, inC2, inC3, inC4 } 
+Mat44::Mat44(Type inC1, Type inC2, Type inC3, Type inC4) :
+	mCol { inC1, inC2, inC3, inC4 }
 {
 }
 
@@ -83,7 +83,7 @@ Mat44 Mat44::sRotationZ(float inZ)
 }
 
 Mat44 Mat44::sRotation(QuatArg inQuat)
-{	
+{
 	JPH_ASSERT(inQuat.IsNormalized());
 
 	// See: https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation section 'Quaternion-derived rotation matrix'
@@ -107,7 +107,7 @@ Mat44 Mat44::sRotation(QuatArg inQuat)
 	__m128 col1 = _mm_blend_ps(_mm_blend_ps(diagonal, minus, 0b1001), plus, 0b0100);	// (2 xy - 2 zw, 1 - 2 x^2 - 2 z^2, 2 yz + 2 xw, 0)
 	__m128 col2 = _mm_blend_ps(_mm_blend_ps(minus, plus, 0b0001), diagonal, 0b0100);	// (2 xz + 2 yw, 2 yz - 2 xw, 1 - 2 x^2 - 2 y^2, 0)
 	__m128 col3 = _mm_set_ps(1, 0, 0, 0);
-	
+
 	return Mat44(col0, col1, col2, col3);
 #else
 	float x = inQuat.GetX();
@@ -210,7 +210,16 @@ Mat44 Mat44::sLookAt(Vec3Arg inPos, Vec3Arg inTarget, Vec3Arg inUp)
 	Vec3 right = direction.Cross(inUp).NormalizedOr(Vec3::sAxisX());
 	Vec3 up = right.Cross(direction);
 
-	return Mat44(Vec4(right, 0), Vec4(up, 0), Vec4(-direction, 0), Vec4(inPos, 1)).InversedRotationTranslation();	
+	return Mat44(Vec4(right, 0), Vec4(up, 0), Vec4(-direction, 0), Vec4(inPos, 1)).InversedRotationTranslation();
+}
+
+Mat44 Mat44::sPerspective(float inFovY, float inAspect, float inNear, float inFar)
+{
+	float height = 1.0f / Tan(0.5f * inFovY);
+	float width = height / inAspect;
+	float range = inFar / (inNear - inFar);
+
+	return Mat44(Vec4(width, 0.0f, 0.0f, 0.0f), Vec4(0.0f, height, 0.0f, 0.0f), Vec4(0.0f, 0.0f, range, -1.0f), Vec4(0.0f, 0.0f, range * inNear, 0.0f));
 }
 
 bool Mat44::operator == (Mat44Arg inM2) const
@@ -275,8 +284,8 @@ Vec3 Mat44::operator * (Vec3Arg inV) const
 	return Vec3::sFixW(t);
 #else
 	return Vec3(
-		mCol[0].mF32[0] * inV.mF32[0] + mCol[1].mF32[0] * inV.mF32[1] + mCol[2].mF32[0] * inV.mF32[2] + mCol[3].mF32[0], 
-		mCol[0].mF32[1] * inV.mF32[0] + mCol[1].mF32[1] * inV.mF32[1] + mCol[2].mF32[1] * inV.mF32[2] + mCol[3].mF32[1], 
+		mCol[0].mF32[0] * inV.mF32[0] + mCol[1].mF32[0] * inV.mF32[1] + mCol[2].mF32[0] * inV.mF32[2] + mCol[3].mF32[0],
+		mCol[0].mF32[1] * inV.mF32[0] + mCol[1].mF32[1] * inV.mF32[1] + mCol[2].mF32[1] * inV.mF32[2] + mCol[3].mF32[1],
 		mCol[0].mF32[2] * inV.mF32[0] + mCol[1].mF32[2] * inV.mF32[1] + mCol[2].mF32[2] * inV.mF32[2] + mCol[3].mF32[2]);
 #endif
 }
@@ -297,9 +306,9 @@ Vec4 Mat44::operator * (Vec4Arg inV) const
 	return t;
 #else
 	return Vec4(
-		mCol[0].mF32[0] * inV.mF32[0] + mCol[1].mF32[0] * inV.mF32[1] + mCol[2].mF32[0] * inV.mF32[2] + mCol[3].mF32[0] * inV.mF32[3], 
-		mCol[0].mF32[1] * inV.mF32[0] + mCol[1].mF32[1] * inV.mF32[1] + mCol[2].mF32[1] * inV.mF32[2] + mCol[3].mF32[1] * inV.mF32[3], 
-		mCol[0].mF32[2] * inV.mF32[0] + mCol[1].mF32[2] * inV.mF32[1] + mCol[2].mF32[2] * inV.mF32[2] + mCol[3].mF32[2] * inV.mF32[3], 
+		mCol[0].mF32[0] * inV.mF32[0] + mCol[1].mF32[0] * inV.mF32[1] + mCol[2].mF32[0] * inV.mF32[2] + mCol[3].mF32[0] * inV.mF32[3],
+		mCol[0].mF32[1] * inV.mF32[0] + mCol[1].mF32[1] * inV.mF32[1] + mCol[2].mF32[1] * inV.mF32[2] + mCol[3].mF32[1] * inV.mF32[3],
+		mCol[0].mF32[2] * inV.mF32[0] + mCol[1].mF32[2] * inV.mF32[1] + mCol[2].mF32[2] * inV.mF32[2] + mCol[3].mF32[2] * inV.mF32[3],
 		mCol[0].mF32[3] * inV.mF32[0] + mCol[1].mF32[3] * inV.mF32[1] + mCol[2].mF32[3] * inV.mF32[2] + mCol[3].mF32[3] * inV.mF32[3]);
 #endif
 }
@@ -318,8 +327,8 @@ Vec3 Mat44::Multiply3x3(Vec3Arg inV) const
 	return Vec3::sFixW(t);
 #else
 	return Vec3(
-		mCol[0].mF32[0] * inV.mF32[0] + mCol[1].mF32[0] * inV.mF32[1] + mCol[2].mF32[0] * inV.mF32[2], 
-		mCol[0].mF32[1] * inV.mF32[0] + mCol[1].mF32[1] * inV.mF32[1] + mCol[2].mF32[1] * inV.mF32[2], 
+		mCol[0].mF32[0] * inV.mF32[0] + mCol[1].mF32[0] * inV.mF32[1] + mCol[2].mF32[0] * inV.mF32[2],
+		mCol[0].mF32[1] * inV.mF32[0] + mCol[1].mF32[1] * inV.mF32[1] + mCol[2].mF32[1] * inV.mF32[2],
 		mCol[0].mF32[2] * inV.mF32[0] + mCol[1].mF32[2] * inV.mF32[1] + mCol[2].mF32[2] * inV.mF32[2]);
 #endif
 }
@@ -600,7 +609,7 @@ Mat44 Mat44::Inversed() const
 	det = _mm_add_ss(_mm_shuffle_ps(det, det, _MM_SHUFFLE(1, 0, 3, 2)), det);
 	det = _mm_div_ss(_mm_set_ss(1.0f), det);
 	det = _mm_shuffle_ps(det, det, _MM_SHUFFLE(0, 0, 0, 0));
-	
+
 	Mat44 result;
 	result.mCol[0].mValue = _mm_mul_ps(det, minor0);
 	result.mCol[1].mValue = _mm_mul_ps(det, minor1);
@@ -674,7 +683,7 @@ Mat44 Mat44::Inversed() const
 	Type det = vmulq_f32(row0, minor0);
 	det = vdupq_n_f32(vaddvq_f32(det));
 	det = vdivq_f32(vdupq_n_f32(1.0f), det);
-	
+
 	Mat44 result;
 	result.mCol[0].mValue = vmulq_f32(det, minor0);
 	result.mCol[1].mValue = vmulq_f32(det, minor1);
@@ -686,7 +695,7 @@ Mat44 Mat44::Inversed() const
 	float m01 = JPH_EL(0, 1), m11 = JPH_EL(1, 1), m21 = JPH_EL(2, 1), m31 = JPH_EL(3, 1);
 	float m02 = JPH_EL(0, 2), m12 = JPH_EL(1, 2), m22 = JPH_EL(2, 2), m32 = JPH_EL(3, 2);
 	float m03 = JPH_EL(0, 3), m13 = JPH_EL(1, 3), m23 = JPH_EL(2, 3), m33 = JPH_EL(3, 3);
-	
+
 	float m10211120 = m10 * m21 - m11 * m20;
 	float m10221220 = m10 * m22 - m12 * m20;
 	float m10231320 = m10 * m23 - m13 * m20;
@@ -731,322 +740,48 @@ float Mat44::GetDeterminant3x3() const
 
 Mat44 Mat44::Adjointed3x3() const
 {
-	// Adapted from Inversed() to remove 4th column and the division by the determinant
-	// Note: This can be optimized.
-
-	JPH_ASSERT(mCol[0][3] == 0.0f);
-	JPH_ASSERT(mCol[1][3] == 0.0f);
-	JPH_ASSERT(mCol[2][3] == 0.0f);
-
-#if defined(JPH_USE_SSE)
-	__m128 tmp1 = _mm_shuffle_ps(mCol[0].mValue, mCol[1].mValue, _MM_SHUFFLE(1, 0, 1, 0));
-	__m128 row1 = _mm_shuffle_ps(mCol[2].mValue, _mm_setzero_ps(), _MM_SHUFFLE(1, 0, 1, 0));
-	__m128 row0 = _mm_shuffle_ps(tmp1, row1, _MM_SHUFFLE(2, 0, 2, 0));
-	row1 = _mm_shuffle_ps(row1, tmp1, _MM_SHUFFLE(3, 1, 3, 1));
-	tmp1 = _mm_shuffle_ps(mCol[0].mValue, mCol[1].mValue, _MM_SHUFFLE(3, 2, 3, 2));
-	__m128 row3 = _mm_shuffle_ps(mCol[2].mValue, _mm_set_ps(1, 0, 0, 0), _MM_SHUFFLE(3, 2, 3, 2));
-	__m128 row2 = _mm_shuffle_ps(tmp1, row3, _MM_SHUFFLE(2, 0, 2, 0));
-	row3 = _mm_shuffle_ps(row3, tmp1, _MM_SHUFFLE(3, 1, 3, 1));
-
-	tmp1 = _mm_mul_ps(row2, row3);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	__m128 minor0 = _mm_mul_ps(row1, tmp1);
-	__m128 minor1 = _mm_mul_ps(row0, tmp1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_sub_ps(_mm_mul_ps(row1, tmp1), minor0);
-	minor1 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor1);
-	minor1 = _mm_shuffle_ps(minor1, minor1, _MM_SHUFFLE(1, 0, 3, 2));
-
-	tmp1 = _mm_mul_ps(row1, row2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor0 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor0);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_sub_ps(minor0, _mm_mul_ps(row3, tmp1));
-
-	tmp1 = _mm_mul_ps(_mm_shuffle_ps(row1, row1, _MM_SHUFFLE(1, 0, 3, 2)), row3);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	row2 = _mm_shuffle_ps(row2, row2, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_add_ps(_mm_mul_ps(row2, tmp1), minor0);
-	__m128 minor2 = _mm_mul_ps(row0, tmp1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_sub_ps(minor0, _mm_mul_ps(row2, tmp1));
-	minor2 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor2);
-	minor2 = _mm_shuffle_ps(minor2, minor2, _MM_SHUFFLE(1, 0, 3, 2));
-
-	tmp1 = _mm_mul_ps(row0, row1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor2 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor2 = _mm_sub_ps(_mm_mul_ps(row3, tmp1), minor2);
-
-	tmp1 = _mm_mul_ps(row0, row3);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor1 = _mm_sub_ps(minor1, _mm_mul_ps(row2, tmp1));
-	minor2 = _mm_add_ps(_mm_mul_ps(row1, tmp1), minor2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor1 = _mm_add_ps(_mm_mul_ps(row2, tmp1), minor1);
-	minor2 = _mm_sub_ps(minor2, _mm_mul_ps(row1, tmp1));
-
-	tmp1 = _mm_mul_ps(row0, row2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor1 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor1 = _mm_sub_ps(minor1, _mm_mul_ps(row3, tmp1));
-		
-	Mat44 result;
-	result.mCol[0].mValue = minor0;
-	result.mCol[1].mValue = minor1;
-	result.mCol[2].mValue = minor2;
-	result.mCol[3] = Vec4(0, 0, 0, 1);
-	return result;
-#elif defined(JPH_USE_NEON)
-	Type v0001 = vsetq_lane_f32(1, vdupq_n_f32(0), 3);
-	Type tmp1 = JPH_NEON_SHUFFLE_F32x4(mCol[0].mValue, mCol[1].mValue, 0, 1, 4, 5);
-	Type row1 = JPH_NEON_SHUFFLE_F32x4(mCol[2].mValue, v0001, 0, 1, 4, 5);
-	Type row0 = JPH_NEON_SHUFFLE_F32x4(tmp1, row1, 0, 2, 4, 6);
-	row1 = JPH_NEON_SHUFFLE_F32x4(row1, tmp1, 1, 3, 5, 7);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(mCol[0].mValue, mCol[1].mValue, 2, 3, 6, 7);
-	Type row3 = JPH_NEON_SHUFFLE_F32x4(mCol[2].mValue, v0001, 2, 3, 6, 7);
-	Type row2 = JPH_NEON_SHUFFLE_F32x4(tmp1, row3, 0, 2, 4, 6);
-	row3 = JPH_NEON_SHUFFLE_F32x4(row3, tmp1, 1, 3, 5, 7);
-
-	tmp1 = vmulq_f32(row2, row3);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	Type minor0 = vmulq_f32(row1, tmp1);
-	Type minor1 = vmulq_f32(row0, tmp1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor0 = vsubq_f32(vmulq_f32(row1, tmp1), minor0);
-	minor1 = vsubq_f32(vmulq_f32(row0, tmp1), minor1);
-	minor1 = JPH_NEON_SHUFFLE_F32x4(minor1, minor1, 2, 3, 0, 1);
-
-	tmp1 = vmulq_f32(row1, row2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor0 = vaddq_f32(vmulq_f32(row3, tmp1), minor0);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor0 = vsubq_f32(minor0, vmulq_f32(row3, tmp1));
-
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(row1, row1, 2, 3, 0, 1);
-	tmp1 = vmulq_f32(tmp1, row3);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	row2 = JPH_NEON_SHUFFLE_F32x4(row2, row2, 2, 3, 0, 1);
-	minor0 = vaddq_f32(vmulq_f32(row2, tmp1), minor0);
-	Type minor2 = vmulq_f32(row0, tmp1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor0 = vsubq_f32(minor0, vmulq_f32(row2, tmp1));
-	minor2 = vsubq_f32(vmulq_f32(row0, tmp1), minor2);
-	minor2 = JPH_NEON_SHUFFLE_F32x4(minor2, minor2, 2, 3, 0, 1);
-
-	tmp1 = vmulq_f32(row0, row1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor2 = vaddq_f32(vmulq_f32(row3, tmp1), minor2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor2 = vsubq_f32(vmulq_f32(row3, tmp1), minor2);
-
-	tmp1 = vmulq_f32(row0, row3);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor1 = vsubq_f32(minor1, vmulq_f32(row2, tmp1));
-	minor2 = vaddq_f32(vmulq_f32(row1, tmp1), minor2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor1 = vaddq_f32(vmulq_f32(row2, tmp1), minor1);
-	minor2 = vsubq_f32(minor2, vmulq_f32(row1, tmp1));
-
-	tmp1 = vmulq_f32(row0, row2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor1 = vaddq_f32(vmulq_f32(row3, tmp1), minor1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor1 = vsubq_f32(minor1, vmulq_f32(row3, tmp1));
-	
-	Mat44 result;
-	result.mCol[0].mValue = minor0;
-	result.mCol[1].mValue = minor1;
-	result.mCol[2].mValue = minor2;
-	result.mCol[3].mValue = v0001;
-	return result;
-#else
 	return Mat44(
-		Vec4(JPH_EL(1, 1) * JPH_EL(2, 2) - JPH_EL(1, 2) * JPH_EL(2, 1),
-			JPH_EL(1, 2) * JPH_EL(2, 0) - JPH_EL(1, 0) * JPH_EL(2, 2),
-			JPH_EL(1, 0) * JPH_EL(2, 1) - JPH_EL(1, 1) * JPH_EL(2, 0),
-			0),
-		Vec4(JPH_EL(0, 2) * JPH_EL(2, 1) - JPH_EL(0, 1) * JPH_EL(2, 2),
-			JPH_EL(0, 0) * JPH_EL(2, 2) - JPH_EL(0, 2) * JPH_EL(2, 0),
-			JPH_EL(0, 1) * JPH_EL(2, 0) - JPH_EL(0, 0) * JPH_EL(2, 1),
-			0),
-		Vec4(JPH_EL(0, 1) * JPH_EL(1, 2) - JPH_EL(0, 2) * JPH_EL(1, 1),
-			JPH_EL(0, 2) * JPH_EL(1, 0) - JPH_EL(0, 0) * JPH_EL(1, 2),
-			JPH_EL(0, 0) * JPH_EL(1, 1) - JPH_EL(0, 1) * JPH_EL(1, 0),
-			0),
+		Vec4(JPH_EL(1, 1), JPH_EL(1, 2), JPH_EL(1, 0), 0) * Vec4(JPH_EL(2, 2), JPH_EL(2, 0), JPH_EL(2, 1), 0)
+			- Vec4(JPH_EL(1, 2), JPH_EL(1, 0), JPH_EL(1, 1), 0) * Vec4(JPH_EL(2, 1), JPH_EL(2, 2), JPH_EL(2, 0), 0),
+		Vec4(JPH_EL(0, 2), JPH_EL(0, 0), JPH_EL(0, 1), 0) * Vec4(JPH_EL(2, 1), JPH_EL(2, 2), JPH_EL(2, 0), 0)
+			- Vec4(JPH_EL(0, 1), JPH_EL(0, 2), JPH_EL(0, 0), 0) * Vec4(JPH_EL(2, 2), JPH_EL(2, 0), JPH_EL(2, 1), 0),
+		Vec4(JPH_EL(0, 1), JPH_EL(0, 2), JPH_EL(0, 0), 0) * Vec4(JPH_EL(1, 2), JPH_EL(1, 0), JPH_EL(1, 1), 0)
+			- Vec4(JPH_EL(0, 2), JPH_EL(0, 0), JPH_EL(0, 1), 0) * Vec4(JPH_EL(1, 1), JPH_EL(1, 2), JPH_EL(1, 0), 0),
 		Vec4(0, 0, 0, 1));
-#endif
 }
 
 Mat44 Mat44::Inversed3x3() const
 {
-	// Adapted from Inversed() to remove 4th column
-	// Note: This can be optimized.
-
-	JPH_ASSERT(mCol[0][3] == 0.0f);
-	JPH_ASSERT(mCol[1][3] == 0.0f);
-	JPH_ASSERT(mCol[2][3] == 0.0f);
-
-#if defined(JPH_USE_SSE)
-	__m128 tmp1 = _mm_shuffle_ps(mCol[0].mValue, mCol[1].mValue, _MM_SHUFFLE(1, 0, 1, 0));
-	__m128 row1 = _mm_shuffle_ps(mCol[2].mValue, _mm_setzero_ps(), _MM_SHUFFLE(1, 0, 1, 0));
-	__m128 row0 = _mm_shuffle_ps(tmp1, row1, _MM_SHUFFLE(2, 0, 2, 0));
-	row1 = _mm_shuffle_ps(row1, tmp1, _MM_SHUFFLE(3, 1, 3, 1));
-	tmp1 = _mm_shuffle_ps(mCol[0].mValue, mCol[1].mValue, _MM_SHUFFLE(3, 2, 3, 2));
-	__m128 row3 = _mm_shuffle_ps(mCol[2].mValue, _mm_set_ps(1, 0, 0, 0), _MM_SHUFFLE(3, 2, 3, 2));
-	__m128 row2 = _mm_shuffle_ps(tmp1, row3, _MM_SHUFFLE(2, 0, 2, 0));
-	row3 = _mm_shuffle_ps(row3, tmp1, _MM_SHUFFLE(3, 1, 3, 1));
-
-	tmp1 = _mm_mul_ps(row2, row3);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	__m128 minor0 = _mm_mul_ps(row1, tmp1);
-	__m128 minor1 = _mm_mul_ps(row0, tmp1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_sub_ps(_mm_mul_ps(row1, tmp1), minor0);
-	minor1 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor1);
-	minor1 = _mm_shuffle_ps(minor1, minor1, _MM_SHUFFLE(1, 0, 3, 2));
-
-	tmp1 = _mm_mul_ps(row1, row2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor0 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor0);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_sub_ps(minor0, _mm_mul_ps(row3, tmp1));
-
-	tmp1 = _mm_mul_ps(_mm_shuffle_ps(row1, row1, _MM_SHUFFLE(1, 0, 3, 2)), row3);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	row2 = _mm_shuffle_ps(row2, row2, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_add_ps(_mm_mul_ps(row2, tmp1), minor0);
-	__m128 minor2 = _mm_mul_ps(row0, tmp1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor0 = _mm_sub_ps(minor0, _mm_mul_ps(row2, tmp1));
-	minor2 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor2);
-	minor2 = _mm_shuffle_ps(minor2, minor2, _MM_SHUFFLE(1, 0, 3, 2));
-
-	tmp1 = _mm_mul_ps(row0, row1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor2 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor2 = _mm_sub_ps(_mm_mul_ps(row3, tmp1), minor2);
-
-	tmp1 = _mm_mul_ps(row0, row3);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor1 = _mm_sub_ps(minor1, _mm_mul_ps(row2, tmp1));
-	minor2 = _mm_add_ps(_mm_mul_ps(row1, tmp1), minor2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor1 = _mm_add_ps(_mm_mul_ps(row2, tmp1), minor1);
-	minor2 = _mm_sub_ps(minor2, _mm_mul_ps(row1, tmp1));
-
-	tmp1 = _mm_mul_ps(row0, row2);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(2, 3, 0, 1));
-	minor1 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor1);
-	tmp1 = _mm_shuffle_ps(tmp1, tmp1, _MM_SHUFFLE(1, 0, 3, 2));
-	minor1 = _mm_sub_ps(minor1, _mm_mul_ps(row3, tmp1));
-
-	__m128 det = _mm_mul_ps(row0, minor0);
-	det = _mm_add_ps(_mm_shuffle_ps(det, det, _MM_SHUFFLE(2, 3, 0, 1)), det); // Original code did (x + z) + (y + w), changed to (x + y) + (z + w) to match the ARM code below and make the result cross platform deterministic
-	det = _mm_add_ss(_mm_shuffle_ps(det, det, _MM_SHUFFLE(1, 0, 3, 2)), det);
-	det = _mm_div_ss(_mm_set_ss(1.0f), det);
-	det = _mm_shuffle_ps(det, det, _MM_SHUFFLE(0, 0, 0, 0));
-	
-	Mat44 result;
-	result.mCol[0].mValue = _mm_mul_ps(det, minor0);
-	result.mCol[1].mValue = _mm_mul_ps(det, minor1);
-	result.mCol[2].mValue = _mm_mul_ps(det, minor2);
-	result.mCol[3] = Vec4(0, 0, 0, 1);
-	return result;
-#elif defined(JPH_USE_NEON)
-	Type v0001 = vsetq_lane_f32(1, vdupq_n_f32(0), 3);
-	Type tmp1 = JPH_NEON_SHUFFLE_F32x4(mCol[0].mValue, mCol[1].mValue, 0, 1, 4, 5);
-	Type row1 = JPH_NEON_SHUFFLE_F32x4(mCol[2].mValue, v0001, 0, 1, 4, 5);
-	Type row0 = JPH_NEON_SHUFFLE_F32x4(tmp1, row1, 0, 2, 4, 6);
-	row1 = JPH_NEON_SHUFFLE_F32x4(row1, tmp1, 1, 3, 5, 7);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(mCol[0].mValue, mCol[1].mValue, 2, 3, 6, 7);
-	Type row3 = JPH_NEON_SHUFFLE_F32x4(mCol[2].mValue, v0001, 2, 3, 6, 7);
-	Type row2 = JPH_NEON_SHUFFLE_F32x4(tmp1, row3, 0, 2, 4, 6);
-	row3 = JPH_NEON_SHUFFLE_F32x4(row3, tmp1, 1, 3, 5, 7);
-
-	tmp1 = vmulq_f32(row2, row3);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	Type minor0 = vmulq_f32(row1, tmp1);
-	Type minor1 = vmulq_f32(row0, tmp1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor0 = vsubq_f32(vmulq_f32(row1, tmp1), minor0);
-	minor1 = vsubq_f32(vmulq_f32(row0, tmp1), minor1);
-	minor1 = JPH_NEON_SHUFFLE_F32x4(minor1, minor1, 2, 3, 0, 1);
-
-	tmp1 = vmulq_f32(row1, row2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor0 = vaddq_f32(vmulq_f32(row3, tmp1), minor0);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor0 = vsubq_f32(minor0, vmulq_f32(row3, tmp1));
-
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(row1, row1, 2, 3, 0, 1);
-	tmp1 = vmulq_f32(tmp1, row3);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	row2 = JPH_NEON_SHUFFLE_F32x4(row2, row2, 2, 3, 0, 1);
-	minor0 = vaddq_f32(vmulq_f32(row2, tmp1), minor0);
-	Type minor2 = vmulq_f32(row0, tmp1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor0 = vsubq_f32(minor0, vmulq_f32(row2, tmp1));
-	minor2 = vsubq_f32(vmulq_f32(row0, tmp1), minor2);
-	minor2 = JPH_NEON_SHUFFLE_F32x4(minor2, minor2, 2, 3, 0, 1);
-
-	tmp1 = vmulq_f32(row0, row1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor2 = vaddq_f32(vmulq_f32(row3, tmp1), minor2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor2 = vsubq_f32(vmulq_f32(row3, tmp1), minor2);
-
-	tmp1 = vmulq_f32(row0, row3);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor1 = vsubq_f32(minor1, vmulq_f32(row2, tmp1));
-	minor2 = vaddq_f32(vmulq_f32(row1, tmp1), minor2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor1 = vaddq_f32(vmulq_f32(row2, tmp1), minor1);
-	minor2 = vsubq_f32(minor2, vmulq_f32(row1, tmp1));
-
-	tmp1 = vmulq_f32(row0, row2);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 1, 0, 3, 2);
-	minor1 = vaddq_f32(vmulq_f32(row3, tmp1), minor1);
-	tmp1 = JPH_NEON_SHUFFLE_F32x4(tmp1, tmp1, 2, 3, 0, 1);
-	minor1 = vsubq_f32(minor1, vmulq_f32(row3, tmp1));
-
-	Type det = vmulq_f32(row0, minor0);
-	det = vdupq_n_f32(vaddvq_f32(det));
-	det = vdivq_f32(vdupq_n_f32(1.0f), det);
-	
-	Mat44 result;
-	result.mCol[0].mValue = vmulq_f32(det, minor0);
-	result.mCol[1].mValue = vmulq_f32(det, minor1);
-	result.mCol[2].mValue = vmulq_f32(det, minor2);
-	result.mCol[3].mValue = v0001;
-	return result;
-#else
 	float det = GetDeterminant3x3();
 
 	return Mat44(
-		Vec4((JPH_EL(1, 1) * JPH_EL(2, 2) - JPH_EL(1, 2) * JPH_EL(2, 1)) / det,
-			(JPH_EL(1, 2) * JPH_EL(2, 0) - JPH_EL(1, 0) * JPH_EL(2, 2)) / det,
-			(JPH_EL(1, 0) * JPH_EL(2, 1) - JPH_EL(1, 1) * JPH_EL(2, 0)) / det,
-			0),
-		Vec4((JPH_EL(0, 2) * JPH_EL(2, 1) - JPH_EL(0, 1) * JPH_EL(2, 2)) / det,
-			(JPH_EL(0, 0) * JPH_EL(2, 2) - JPH_EL(0, 2) * JPH_EL(2, 0)) / det,
-			(JPH_EL(0, 1) * JPH_EL(2, 0) - JPH_EL(0, 0) * JPH_EL(2, 1)) / det,
-			0),
-		Vec4((JPH_EL(0, 1) * JPH_EL(1, 2) - JPH_EL(0, 2) * JPH_EL(1, 1)) / det,
-			(JPH_EL(0, 2) * JPH_EL(1, 0) - JPH_EL(0, 0) * JPH_EL(1, 2)) / det,
-			(JPH_EL(0, 0) * JPH_EL(1, 1) - JPH_EL(0, 1) * JPH_EL(1, 0)) / det,
-			0),
+		(Vec4(JPH_EL(1, 1), JPH_EL(1, 2), JPH_EL(1, 0), 0) * Vec4(JPH_EL(2, 2), JPH_EL(2, 0), JPH_EL(2, 1), 0)
+			- Vec4(JPH_EL(1, 2), JPH_EL(1, 0), JPH_EL(1, 1), 0) * Vec4(JPH_EL(2, 1), JPH_EL(2, 2), JPH_EL(2, 0), 0)) / det,
+		(Vec4(JPH_EL(0, 2), JPH_EL(0, 0), JPH_EL(0, 1), 0) * Vec4(JPH_EL(2, 1), JPH_EL(2, 2), JPH_EL(2, 0), 0)
+			- Vec4(JPH_EL(0, 1), JPH_EL(0, 2), JPH_EL(0, 0), 0) * Vec4(JPH_EL(2, 2), JPH_EL(2, 0), JPH_EL(2, 1), 0)) / det,
+		(Vec4(JPH_EL(0, 1), JPH_EL(0, 2), JPH_EL(0, 0), 0) * Vec4(JPH_EL(1, 2), JPH_EL(1, 0), JPH_EL(1, 1), 0)
+			- Vec4(JPH_EL(0, 2), JPH_EL(0, 0), JPH_EL(0, 1), 0) * Vec4(JPH_EL(1, 1), JPH_EL(1, 2), JPH_EL(1, 0), 0)) / det,
 		Vec4(0, 0, 0, 1));
-#endif
+}
+
+bool Mat44::SetInversed3x3(Mat44Arg inM)
+{
+	float det = inM.GetDeterminant3x3();
+
+	// If the determinant is zero the matrix is singular and we return false
+	if (det == 0.0f)
+		return false;
+
+	// Finish calculating the inverse
+	*this = inM.Adjointed3x3();
+	mCol[0] /= det;
+	mCol[1] /= det;
+	mCol[2] /= det;
+	return true;
 }
 
 Quat Mat44::GetQuaternion() const
 {
-	JPH_ASSERT(mCol[3] == Vec4(0, 0, 0, 1));
-
 	float tr = mCol[0].mF32[0] + mCol[1].mF32[1] + mCol[2].mF32[2];
 
 	if (tr >= 0.0f)
@@ -1119,32 +854,32 @@ Mat44 Mat44::sQuatRightMultiply(QuatArg inQ)
 }
 
 Mat44 Mat44::GetRotation() const
-{ 
+{
 	JPH_ASSERT(mCol[0][3] == 0.0f);
 	JPH_ASSERT(mCol[1][3] == 0.0f);
 	JPH_ASSERT(mCol[2][3] == 0.0f);
 
-	return Mat44(mCol[0], mCol[1], mCol[2], Vec4(0, 0, 0, 1)); 
+	return Mat44(mCol[0], mCol[1], mCol[2], Vec4(0, 0, 0, 1));
 }
 
 Mat44 Mat44::GetRotationSafe() const
-{ 
+{
 #if defined(JPH_USE_AVX512)
 	return Mat44(_mm_maskz_mov_ps(0b0111, mCol[0].mValue),
 				 _mm_maskz_mov_ps(0b0111, mCol[1].mValue),
 				 _mm_maskz_mov_ps(0b0111, mCol[2].mValue),
-				 Vec4(0, 0, 0, 1)); 
+				 Vec4(0, 0, 0, 1));
 #elif defined(JPH_USE_SSE4_1)
-	__m128 zero = _mm_setzero_ps(); 
+	__m128 zero = _mm_setzero_ps();
 	return Mat44(_mm_blend_ps(mCol[0].mValue, zero, 8),
 				 _mm_blend_ps(mCol[1].mValue, zero, 8),
 				 _mm_blend_ps(mCol[2].mValue, zero, 8),
-				 Vec4(0, 0, 0, 1)); 
+				 Vec4(0, 0, 0, 1));
 #elif defined(JPH_USE_NEON)
 	return Mat44(vsetq_lane_f32(0, mCol[0].mValue, 3),
 				 vsetq_lane_f32(0, mCol[1].mValue, 3),
 				 vsetq_lane_f32(0, mCol[2].mValue, 3),
-				 Vec4(0, 0, 0, 1)); 
+				 Vec4(0, 0, 0, 1));
 #else
 	return Mat44(Vec4(mCol[0].mF32[0], mCol[0].mF32[1], mCol[0].mF32[2], 0),
 				 Vec4(mCol[1].mF32[0], mCol[1].mF32[1], mCol[1].mF32[2], 0),
@@ -1199,7 +934,7 @@ Mat44 Mat44::Decompose(Vec3 &outScale) const
 	// Make Z axis perpendicular to Y
 	float y_dot_y = y.LengthSq();
 	z -= (y.Dot(z) / y_dot_y) * y;
-	
+
 	// Determine the scale
 	float z_dot_z = z.LengthSq();
 	outScale = Vec3(x_dot_x, y_dot_y, z_dot_z).Sqrt();

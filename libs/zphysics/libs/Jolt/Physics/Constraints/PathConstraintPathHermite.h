@@ -9,16 +9,16 @@
 JPH_NAMESPACE_BEGIN
 
 /// A path that follows a Hermite spline
-class PathConstraintPathHermite final : public PathConstraintPath
+class JPH_EXPORT PathConstraintPathHermite final : public PathConstraintPath
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(PathConstraintPathHermite)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, PathConstraintPathHermite)
 
 	// See PathConstraintPath::GetPathMaxFraction
 	virtual float		GetPathMaxFraction() const override									{ return float(IsLooping()? mPoints.size() : mPoints.size() - 1); }
 
 	// See PathConstraintPath::GetClosestPoint
-	virtual float		GetClosestPoint(Vec3Arg inPosition) const override;
+	virtual float		GetClosestPoint(Vec3Arg inPosition, float inFractionHint) const override;
 
 	// See PathConstraintPath::GetPointOnPath
 	virtual void		GetPointOnPath(float inFraction, Vec3 &outPathPosition, Vec3 &outPathTangent, Vec3 &outPathNormal, Vec3 &outPathBinormal) const override;
@@ -31,7 +31,7 @@ public:
 
 	struct Point
 	{
-		JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(Point)
+		JPH_DECLARE_SERIALIZABLE_NON_VIRTUAL(JPH_EXPORT, Point)
 
 		Vec3			mPosition;															///< Position on the path
 		Vec3			mTangent;															///< Tangent of the path, does not need to be normalized (in the direction of the path)
@@ -47,7 +47,7 @@ private:
 	inline void			GetIndexAndT(float inFraction, int &outIndex, float &outT) const;
 
 	using Points = Array<Point>;
-	   
+
 	Points				mPoints;															///< Points on the Hermite spline
 };
 

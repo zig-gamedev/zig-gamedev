@@ -190,7 +190,12 @@ MyDebugRenderer_DrawLine(void *in_self, JPC_Real in_from[3], JPC_Real in_to[3], 
 }
 
 static void
-MyDebugRenderer_DrawTriangle(void *in_self, JPC_Real in_v1[3], JPC_Real in_v2[3], JPC_Real in_v3[3], JPC_Color in_color)
+MyDebugRenderer_DrawTriangle(void *in_self,
+                             JPC_Real in_v1[3],
+                             JPC_Real in_v2[3],
+                             JPC_Real in_v3[3],
+                             JPC_Color in_color,
+                             JPC_CastShadow in_cast_shadow)
 {
 #ifdef PRINT_OUTPUT
     fprintf(stderr, "\tDebugRenderer: DrawTriangle called.\n");
@@ -233,7 +238,7 @@ MyDebugRenderer_CreateTriangleBatchIndexed(void *in_self,
 
 static void
 MyDebugRenderer_DrawGeometry(void *in_self,
-                             const float inModelMatrix[16],
+                             const JPC_RMatrix *inMatrix,
                              const JPC_AABox *inWorldSpaceBounds,
                              float inLODScaleSq,
                              JPC_Color inColor,
@@ -555,7 +560,7 @@ JoltCTest_Basic2(void)
     if (JPC_BodyInterface_IsAdded(body_interface, floor_id) != true) return 0;
 
     JPC_PhysicsSystem_OptimizeBroadPhase(physics_system);
-    JPC_PhysicsUpdateError update_err = JPC_PhysicsSystem_Update(physics_system, 1.0f / 60.0f, 1, 1, temp_allocator, job_system);
+    JPC_PhysicsUpdateError update_err = JPC_PhysicsSystem_Update(physics_system, 1.0f / 60.0f, 1, temp_allocator, job_system);
     if (update_err != JPC_PHYSICS_UPDATE_NO_ERROR) return 0;
 
     JPC_BodyInterface_RemoveBody(body_interface, floor_id);
@@ -713,13 +718,11 @@ JoltCTest_HelloWorld(void)
 
         const float delta_time = 1.0f / 60.0f;
         const int collision_steps = 1;
-        const int integration_sub_steps = 1;
 
         JPC_PhysicsUpdateError update_err = JPC_PhysicsSystem_Update(
             physics_system,
             delta_time,
             collision_steps,
-            integration_sub_steps,
             temp_allocator,
             job_system);
 

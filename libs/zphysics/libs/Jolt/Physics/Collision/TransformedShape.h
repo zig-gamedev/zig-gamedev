@@ -22,7 +22,7 @@ class RayCastResult;
 /// This structure can be obtained from a body (e.g. after a broad phase query) under lock protection.
 /// The lock can then be released and collision detection operations can be safely performed since
 /// the class takes a reference on the shape and does not use anything from the body anymore.
-class TransformedShape
+class JPH_EXPORT TransformedShape
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -40,7 +40,7 @@ public:
 	/// If you want the surface normal of the hit use GetWorldSpaceSurfaceNormal(collected sub shape ID, inRay.GetPointOnRay(collected fraction)) on this object.
 	void						CastRay(const RRayCast &inRay, const RayCastSettings &inRayCastSettings, CastRayCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const;
 
-	/// Check if inPoint is inside any shapes. For this tests all shapes are treated as if they were solid. 
+	/// Check if inPoint is inside any shapes. For this tests all shapes are treated as if they were solid.
 	/// For a mesh shape, this test will only provide sensible information if the mesh is a closed manifold.
 	/// For each shape that collides, ioCollector will receive a hit
 	void						CollidePoint(RVec3Arg inPoint, CollidePointCollector &ioCollector, const ShapeFilter &inShapeFilter = { }) const;
@@ -70,7 +70,7 @@ public:
 	/// Use the context from Shape
 	using GetTrianglesContext = Shape::GetTrianglesContext;
 
-	/// To start iterating over triangles, call this function first. 
+	/// To start iterating over triangles, call this function first.
 	/// To get the actual triangles call GetTrianglesNext.
 	/// @param ioContext A temporary buffer and should remain untouched until the last call to GetTrianglesNext.
 	/// @param inBox The world space bounding in which you want to get the triangles.
@@ -108,12 +108,12 @@ public:
 	{
 		Vec3 scale;
 		RMat44 rot_trans = inTransform.Decompose(scale);
-		SetWorldTransform(rot_trans.GetTranslation(), rot_trans.GetRotation().GetQuaternion(), scale);
+		SetWorldTransform(rot_trans.GetTranslation(), rot_trans.GetQuaternion(), scale);
 	}
 
 	/// Calculates the world transform including scale of this shape (not from the center of mass but in the space the shape was created)
-	inline RMat44				GetWorldTransform() const					
-	{	
+	inline RMat44				GetWorldTransform() const
+	{
 		RMat44 transform = RMat44::sRotation(mShapeRotation).PreScaled(GetShapeScale());
 		transform.SetTranslation(mShapePositionCOM - transform.Multiply3x3(mShape->GetCenterOfMass()));
 		return transform;
@@ -143,7 +143,7 @@ public:
 	}
 
 	/// Get the vertices of the face that faces inDirection the most (includes any convex radius). Note that this function can only return faces of
-	/// convex shapes or triangles, which is why a sub shape ID to get to that leaf must be provided. 
+	/// convex shapes or triangles, which is why a sub shape ID to get to that leaf must be provided.
 	/// @param inSubShapeID Sub shape ID of target shape
 	/// @param inDirection Direction that the face should be facing (in world space)
 	/// @param inBaseOffset The vertices will be returned relative to this offset, can be zero to get results in world position, but when you're testing far from the origin you get better precision by picking a position that's closer e.g. mShapePositionCOM since floats are most accurate near the origin
@@ -188,7 +188,7 @@ public:
 	SubShapeIDCreator			mSubShapeIDCreator;							///< Optional sub shape ID creator for the shape (can be used when expanding compound shapes into multiple transformed shapes)
 };
 
-static_assert(sizeof(TransformedShape) == JPH_IF_SINGLE_PRECISION_ELSE(64, 96), "Not properly packed");
+static_assert(JPH_CPU_ADDRESS_BITS != 64 || sizeof(TransformedShape) == JPH_IF_SINGLE_PRECISION_ELSE(64, 96), "Not properly packed");
 static_assert(alignof(TransformedShape) == JPH_RVECTOR_ALIGNMENT, "Not properly aligned");
 
 JPH_NAMESPACE_END

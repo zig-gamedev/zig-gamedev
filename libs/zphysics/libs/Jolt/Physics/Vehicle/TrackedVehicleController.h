@@ -15,10 +15,10 @@ JPH_NAMESPACE_BEGIN
 class PhysicsSystem;
 
 /// WheelSettings object specifically for TrackedVehicleController
-class WheelSettingsTV : public WheelSettings
+class JPH_EXPORT WheelSettingsTV : public WheelSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(WheelSettingsTV)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, WheelSettingsTV)
 
 	// See: WheelSettings
 	virtual void				SaveBinaryState(StreamOut &inStream) const override;
@@ -29,7 +29,7 @@ public:
 };
 
 /// Wheel object specifically for TrackedVehicleController
-class WheelTV : public Wheel
+class JPH_EXPORT WheelTV : public Wheel
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -38,13 +38,13 @@ public:
 	explicit					WheelTV(const WheelSettingsTV &inWheel);
 
 	/// Override GetSettings and cast to the correct class
-	const WheelSettingsTV *		GetSettings() const							{ return static_cast<const WheelSettingsTV *>(mSettings.GetPtr()); }
+	const WheelSettingsTV *		GetSettings() const							{ return StaticCast<WheelSettingsTV>(mSettings); }
 
 	/// Update the angular velocity of the wheel based on the angular velocity of the track
 	void						CalculateAngularVelocity(const VehicleConstraint &inConstraint);
 
 	/// Update the wheel rotation based on the current angular velocity
-	void						Update(float inDeltaTime, const VehicleConstraint &inConstraint);
+	void						Update(uint inWheelIndex, float inDeltaTime, const VehicleConstraint &inConstraint);
 
 	int							mTrackIndex = -1;							///< Index in mTracks to which this wheel is attached (calculated on initialization)
 	float						mCombinedLongitudinalFriction = 0.0f;		///< Combined friction coefficient in longitudinal direction (combines terrain and track)
@@ -56,10 +56,10 @@ public:
 ///
 /// Default settings are based around what I could find about the M1 Abrams tank.
 /// Note to avoid issues with very heavy objects vs very light objects the mass of the tank should be a lot lower (say 10x) than that of a real tank. That means that the engine/brake torque is also 10x less.
-class TrackedVehicleControllerSettings : public VehicleControllerSettings
+class JPH_EXPORT TrackedVehicleControllerSettings : public VehicleControllerSettings
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(TrackedVehicleControllerSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, TrackedVehicleControllerSettings)
 
 	// Constructor
 								TrackedVehicleControllerSettings();
@@ -75,7 +75,7 @@ public:
 };
 
 /// Runtime controller class for vehicle with tank tracks
-class TrackedVehicleController : public VehicleController
+class JPH_EXPORT TrackedVehicleController : public VehicleController
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -89,6 +89,22 @@ public:
 	/// @param inRightRatio Value between -1 and 1 indicating an extra multiplier to the rotation rate of the right track (used for steering)
 	/// @param inBrake Value between 0 and 1 indicating how strong the brake pedal is pressed
 	void						SetDriverInput(float inForward, float inLeftRatio, float inRightRatio, float inBrake) { JPH_ASSERT(inLeftRatio != 0.0f && inRightRatio != 0.0f); mForwardInput = inForward; mLeftRatio = inLeftRatio; mRightRatio = inRightRatio; mBrakeInput = inBrake; }
+
+	/// Value between -1 and 1 for auto transmission and value between 0 and 1 indicating desired driving direction and amount the gas pedal is pressed
+	void						SetForwardInput(float inForward)			{ mForwardInput = inForward; }
+	float						GetForwardInput() const						{ return mForwardInput; }
+
+	/// Value between -1 and 1 indicating an extra multiplier to the rotation rate of the left track (used for steering)
+	void						SetLeftRatio(float inLeftRatio)				{ JPH_ASSERT(inLeftRatio != 0.0f); mLeftRatio = inLeftRatio; }
+	float						GetLeftRatio() const						{ return mLeftRatio; }
+
+	/// Value between -1 and 1 indicating an extra multiplier to the rotation rate of the right track (used for steering)
+	void						SetRightRatio(float inRightRatio)			{ JPH_ASSERT(inRightRatio != 0.0f); mRightRatio = inRightRatio; }
+	float						GetRightRatio() const						{ return mRightRatio; }
+
+	/// Value between 0 and 1 indicating how strong the brake pedal is pressed
+	void						SetBrakeInput(float inBrake)				{ mBrakeInput = inBrake; }
+	float						GetBrakeInput() const						{ return mBrakeInput; }
 
 	/// Get current engine state
 	const VehicleEngine &		GetEngine() const							{ return mEngine; }
@@ -119,7 +135,7 @@ protected:
 
 	// See: VehicleController
 	virtual Wheel *				ConstructWheel(const WheelSettings &inWheel) const override { JPH_ASSERT(IsKindOf(&inWheel, JPH_RTTI(WheelSettingsTV))); return new WheelTV(static_cast<const WheelSettingsTV &>(inWheel)); }
-	virtual bool				AllowSleep() const override					{ return mForwardInput == 0.0f; }
+	virtual bool				AllowSleep() const override;
 	virtual void				PreCollide(float inDeltaTime, PhysicsSystem &inPhysicsSystem) override;
 	virtual void				PostCollide(float inDeltaTime, PhysicsSystem &inPhysicsSystem) override;
 	virtual bool				SolveLongitudinalAndLateralConstraints(float inDeltaTime) override;
@@ -135,7 +151,7 @@ protected:
 	float						mRightRatio = 1.0f;							///< Value between -1 and 1 indicating an extra multiplier to the rotation rate of the right track (used for steering)
 	float						mBrakeInput = 0.0f;							///< Value between 0 and 1 indicating how strong the brake pedal is pressed
 
-	// Simluation information
+	// Simulation information
 	VehicleEngine				mEngine;									///< Engine state of the vehicle
 	VehicleTransmission			mTransmission;								///< Transmission state of the vehicle
 	VehicleTracks				mTracks;									///< Tracks of the vehicle

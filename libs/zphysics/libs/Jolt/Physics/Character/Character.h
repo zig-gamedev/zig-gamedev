@@ -5,12 +5,14 @@
 #pragma once
 
 #include <Jolt/Physics/Character/CharacterBase.h>
+#include <Jolt/Physics/Collision/ObjectLayer.h>
+#include <Jolt/Physics/Collision/TransformedShape.h>
 #include <Jolt/Physics/EActivation.h>
 
 JPH_NAMESPACE_BEGIN
 
 /// Contains the configuration of a character
-class CharacterSettings : public CharacterBaseSettings
+class JPH_EXPORT CharacterSettings : public CharacterBaseSettings
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -29,10 +31,10 @@ public:
 };
 
 /// Runtime character object.
-/// This object usually represents the player or a humanoid AI. It uses a single rigid body, 
+/// This object usually represents the player or a humanoid AI. It uses a single rigid body,
 /// usually with a capsule shape to simulate movement and collision for the character.
 /// The character is a keyframed object, the application controls it by setting the velocity.
-class Character : public CharacterBase
+class JPH_EXPORT Character : public CharacterBase
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -94,7 +96,7 @@ public:
 
 	/// Get the rotation of the character
 	Quat								GetRotation(bool inLockBodies = true) const;
-	
+
 	/// Set the rotation of the character, optionally activating it.
 	void								SetRotation(QuatArg inRotation, EActivation inActivationMode = EActivation::Activate, bool inLockBodies = true);
 
@@ -104,12 +106,18 @@ public:
 	/// Calculate the world transform of the character
 	RMat44								GetWorldTransform(bool inLockBodies = true) const;
 
+	/// Get the layer of the character
+	ObjectLayer							GetLayer() const										{ return mLayer; }
+
 	/// Update the layer of the character
 	void								SetLayer(ObjectLayer inLayer, bool inLockBodies = true);
 
 	/// Switch the shape of the character (e.g. for stance). When inMaxPenetrationDepth is not FLT_MAX, it checks
 	/// if the new shape collides before switching shape. Returns true if the switch succeeded.
 	bool								SetShape(const Shape *inShape, float inMaxPenetrationDepth, bool inLockBodies = true);
+
+	/// Get the transformed shape that represents the volume of the character, can be used for collision checks.
+	TransformedShape					GetTransformedShape(bool inLockBodies = true) const;
 
 	/// @brief Get all contacts for the character at a particular location
 	/// @param inPosition Position to test.

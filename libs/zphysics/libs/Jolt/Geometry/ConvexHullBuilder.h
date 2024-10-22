@@ -17,7 +17,7 @@
 JPH_NAMESPACE_BEGIN
 
 /// A convex hull builder that tries to create hulls as accurately as possible. Used for offline processing.
-class ConvexHullBuilder : public NonCopyable
+class JPH_EXPORT ConvexHullBuilder : public NonCopyable
 {
 public:
 	// Forward declare
@@ -75,7 +75,7 @@ public:
 		Vec3			mCentroid;							///< Center of the face
 		ConflictList	mConflictList;						///< Positions associated with this edge (that are closest to this edge). The last position in the list is the point that is furthest away from the face.
 		Edge *			mFirstEdge = nullptr;				///< First edge of this face
-		float			mFurthestPointDistanceSq = 0.0f;	///< Squared distance of furtest point from the conflict list to the face
+		float			mFurthestPointDistanceSq = 0.0f;	///< Squared distance of furthest point from the conflict list to the face
 		bool			mRemoved = false;					///< Flag that indicates that face has been removed (face will be freed later)
 #ifdef JPH_CONVEX_BUILDER_DEBUG
 		int				mIteration;							///< Iteration that this face was created
@@ -144,7 +144,7 @@ private:
 	public:
 		Edge *			mNeighbourEdge;						///< Edge that this edge is connected to
 		int				mStartIdx;							///< Vertex index in mPositions that indicates the start vertex of this edge
-		int				mEndIdx;							///< Vertex index in mPosition that indicats the end vertex of this edge
+		int				mEndIdx;							///< Vertex index in mPosition that indicates the end vertex of this edge
 	};
 
 	// Private typedefs
@@ -207,7 +207,7 @@ private:
 	/// Merges inFace with a neighbour if it is degenerate (a sliver)
 	void				MergeDegenerateFace(Face *inFace, Faces &ioAffectedFaces);
 
-	/// Merges any coplanar as well as neighbours that form a non-convex edge into inFace. 
+	/// Merges any coplanar as well as neighbours that form a non-convex edge into inFace.
 	/// Faces are considered coplanar if the distance^2 of the other face's centroid is smaller than inToleranceSq.
 	void				MergeCoplanarOrConcaveFaces(Face *inFace, float inToleranceSq, Faces &ioAffectedFaces);
 
@@ -255,7 +255,7 @@ private:
 #endif
 
 	const Positions &	mPositions;							///< List of positions (some of them are part of the hull)
-	Faces 				mFaces;								///< List of faces that are part of the hull (if !mRemoved)
+	Faces				mFaces;								///< List of faces that are part of the hull (if !mRemoved)
 
 	struct Coplanar
 	{
@@ -267,7 +267,7 @@ private:
 	CoplanarList		mCoplanarList;						///< List of positions that are coplanar to a face but outside of the face, these are added to the hull at the end
 
 #ifdef JPH_CONVEX_BUILDER_DEBUG
-	int					mIteration;							///< Number of iterations we've had so far (for debug purposes)	
+	int					mIteration;							///< Number of iterations we've had so far (for debug purposes)
 	mutable RVec3		mOffset;							///< Offset to use for state drawing
 	Vec3				mDelta;								///< Delta offset between next states
 #endif

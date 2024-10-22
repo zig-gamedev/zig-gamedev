@@ -22,10 +22,14 @@ JPH_IMPLEMENT_SERIALIZABLE_NON_VIRTUAL(BodyCreationSettings)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mCollisionGroup)
 	JPH_ADD_ENUM_ATTRIBUTE(BodyCreationSettings, mObjectLayer)
 	JPH_ADD_ENUM_ATTRIBUTE(BodyCreationSettings, mMotionType)
+	JPH_ADD_ENUM_ATTRIBUTE(BodyCreationSettings, mAllowedDOFs)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mAllowDynamicOrKinematic)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mIsSensor)
+	JPH_ADD_ATTRIBUTE_WITH_ALIAS(BodyCreationSettings, mCollideKinematicVsNonDynamic, "mSensorDetectsStatic") // This is the old name to keep backwards compatibility
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mUseManifoldReduction)
+	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mApplyGyroscopicForce)
 	JPH_ADD_ENUM_ATTRIBUTE(BodyCreationSettings, mMotionQuality)
+	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mEnhancedInternalEdgeRemoval)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mAllowSleeping)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mFriction)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mRestitution)
@@ -34,6 +38,8 @@ JPH_IMPLEMENT_SERIALIZABLE_NON_VIRTUAL(BodyCreationSettings)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mMaxLinearVelocity)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mMaxAngularVelocity)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mGravityFactor)
+	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mNumVelocityStepsOverride)
+	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mNumPositionStepsOverride)
 	JPH_ADD_ENUM_ATTRIBUTE(BodyCreationSettings, mOverrideMassProperties)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mInertiaMultiplier)
 	JPH_ADD_ATTRIBUTE(BodyCreationSettings, mMassPropertiesOverride)
@@ -48,10 +54,14 @@ void BodyCreationSettings::SaveBinaryState(StreamOut &inStream) const
 	mCollisionGroup.SaveBinaryState(inStream);
 	inStream.Write(mObjectLayer);
 	inStream.Write(mMotionType);
+	inStream.Write(mAllowedDOFs);
 	inStream.Write(mAllowDynamicOrKinematic);
 	inStream.Write(mIsSensor);
+	inStream.Write(mCollideKinematicVsNonDynamic);
 	inStream.Write(mUseManifoldReduction);
+	inStream.Write(mApplyGyroscopicForce);
 	inStream.Write(mMotionQuality);
+	inStream.Write(mEnhancedInternalEdgeRemoval);
 	inStream.Write(mAllowSleeping);
 	inStream.Write(mFriction);
 	inStream.Write(mRestitution);
@@ -60,6 +70,8 @@ void BodyCreationSettings::SaveBinaryState(StreamOut &inStream) const
 	inStream.Write(mMaxLinearVelocity);
 	inStream.Write(mMaxAngularVelocity);
 	inStream.Write(mGravityFactor);
+	inStream.Write(mNumVelocityStepsOverride);
+	inStream.Write(mNumPositionStepsOverride);
 	inStream.Write(mOverrideMassProperties);
 	inStream.Write(mInertiaMultiplier);
 	mMassPropertiesOverride.SaveBinaryState(inStream);
@@ -74,10 +86,14 @@ void BodyCreationSettings::RestoreBinaryState(StreamIn &inStream)
 	mCollisionGroup.RestoreBinaryState(inStream);
 	inStream.Read(mObjectLayer);
 	inStream.Read(mMotionType);
+	inStream.Read(mAllowedDOFs);
 	inStream.Read(mAllowDynamicOrKinematic);
 	inStream.Read(mIsSensor);
+	inStream.Read(mCollideKinematicVsNonDynamic);
 	inStream.Read(mUseManifoldReduction);
+	inStream.Read(mApplyGyroscopicForce);
 	inStream.Read(mMotionQuality);
+	inStream.Read(mEnhancedInternalEdgeRemoval);
 	inStream.Read(mAllowSleeping);
 	inStream.Read(mFriction);
 	inStream.Read(mRestitution);
@@ -86,12 +102,14 @@ void BodyCreationSettings::RestoreBinaryState(StreamIn &inStream)
 	inStream.Read(mMaxLinearVelocity);
 	inStream.Read(mMaxAngularVelocity);
 	inStream.Read(mGravityFactor);
+	inStream.Read(mNumVelocityStepsOverride);
+	inStream.Read(mNumPositionStepsOverride);
 	inStream.Read(mOverrideMassProperties);
 	inStream.Read(mInertiaMultiplier);
 	mMassPropertiesOverride.RestoreBinaryState(inStream);
 }
 
-Shape::ShapeResult BodyCreationSettings::ConvertShapeSettings() 
+Shape::ShapeResult BodyCreationSettings::ConvertShapeSettings()
 {
 	// If we already have a shape, return it
 	if (mShapePtr != nullptr)
@@ -119,8 +137,8 @@ Shape::ShapeResult BodyCreationSettings::ConvertShapeSettings()
 	return result;
 }
 
-const Shape *BodyCreationSettings::GetShape() const												
-{ 
+const Shape *BodyCreationSettings::GetShape() const
+{
 	// If we already have a shape, return it
 	if (mShapePtr != nullptr)
 		return mShapePtr;
@@ -136,7 +154,7 @@ const Shape *BodyCreationSettings::GetShape() const
 
 	Trace("Error: %s", result.GetError().c_str());
 	JPH_ASSERT(false, "An error occurred during shape creation. Use ConvertShapeSettings() to convert the shape and get the error!");
-	return nullptr;		
+	return nullptr;
 }
 
 MassProperties BodyCreationSettings::GetMassProperties() const
@@ -175,31 +193,7 @@ void BodyCreationSettings::SaveWithChildren(StreamOut &inStream, ShapeToIDMap *i
 		inStream.Write(~uint32(0));
 
 	// Save group filter
-	const GroupFilter *group_filter = mCollisionGroup.GetGroupFilter();
-	if (ioGroupFilterMap == nullptr || group_filter == nullptr)
-	{
-		// Write null ID
-		inStream.Write(~uint32(0));
-	}
-	else
-	{
-		GroupFilterToIDMap::const_iterator group_filter_id = ioGroupFilterMap->find(group_filter);
-		if (group_filter_id != ioGroupFilterMap->end())
-		{
-			// Existing group filter, write ID
-			inStream.Write(group_filter_id->second);
-		}
-		else
-		{
-			// New group filter, write the ID
-			uint32 new_group_filter_id = (uint32)ioGroupFilterMap->size();
-			(*ioGroupFilterMap)[group_filter] = new_group_filter_id;
-			inStream.Write(new_group_filter_id);
-
-			// Write the group filter
-			group_filter->SaveBinaryState(inStream);
-		}
-	}
+	StreamUtils::SaveObjectReference(inStream, mCollisionGroup.GetGroupFilter(), ioGroupFilterMap);
 }
 
 BodyCreationSettings::BCSResult BodyCreationSettings::sRestoreWithChildren(StreamIn &inStream, IDToShapeMap &ioShapeMap, IDToMaterialMap &ioMaterialMap, IDToGroupFilterMap &ioGroupFilterMap)
@@ -225,34 +219,13 @@ BodyCreationSettings::BCSResult BodyCreationSettings::sRestoreWithChildren(Strea
 	settings.SetShape(shape_result.Get());
 
 	// Read group filter
-	const GroupFilter *group_filter = nullptr;
-	uint32 group_filter_id = ~uint32(0);
-	inStream.Read(group_filter_id);
-	if (group_filter_id != ~uint32(0))
+	Result gfresult = StreamUtils::RestoreObjectReference(inStream, ioGroupFilterMap);
+	if (gfresult.HasError())
 	{
-		// Check if it already exists
-		if (group_filter_id >= ioGroupFilterMap.size())
-		{
-			// New group filter, restore it
-			GroupFilter::GroupFilterResult group_filter_result = GroupFilter::sRestoreFromBinaryState(inStream);
-			if (group_filter_result.HasError())
-			{
-				result.SetError(group_filter_result.GetError());
-				return result;
-			}
-			group_filter = group_filter_result.Get();
-			JPH_ASSERT(group_filter_id == ioGroupFilterMap.size());
-			ioGroupFilterMap.push_back(group_filter);
-		}
-		else
-		{
-			// Existing group filter
-			group_filter = ioGroupFilterMap[group_filter_id];
-		}
+		result.SetError(gfresult.GetError());
+		return result;
 	}
-
-	// Set the group filter on the part
-	settings.mCollisionGroup.SetGroupFilter(group_filter);
+	settings.mCollisionGroup.SetGroupFilter(gfresult.Get());
 
 	result.Set(settings);
 	return result;

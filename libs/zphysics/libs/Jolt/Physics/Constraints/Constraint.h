@@ -61,10 +61,10 @@ enum class EConstraintSpace
 };
 
 /// Class used to store the configuration of a constraint. Allows run-time creation of constraints.
-class ConstraintSettings : public SerializableObject, public RefTarget<ConstraintSettings>
+class JPH_EXPORT ConstraintSettings : public SerializableObject, public RefTarget<ConstraintSettings>
 {
 public:
-	JPH_DECLARE_SERIALIZABLE_VIRTUAL(ConstraintSettings)
+	JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, ConstraintSettings)
 
 	using ConstraintResult = Result<Ref<ConstraintSettings>>;
 
@@ -77,11 +77,15 @@ public:
 	/// If this constraint is enabled initially. Use Constraint::SetEnabled to toggle after creation.
 	bool						mEnabled = true;
 
-	/// Override for the number of solver velocity iterations to run, the total amount of iterations is the max of PhysicsSettings::mNumVelocitySteps and this for all constraints in the island.
-	int							mNumVelocityStepsOverride = 0;
+	/// Priority of the constraint when solving. Higher numbers have are more likely to be solved correctly.
+	/// Note that if you want a deterministic simulation and you cannot guarantee the order in which constraints are added/removed, you can make the priority for all constraints unique to get a deterministic ordering.
+	uint32						mConstraintPriority = 0;
 
-	/// Override for the number of position velocity iterations to run, the total amount of iterations is the max of PhysicsSettings::mNumPositionSteps and this for all constraints in the island.
-	int							mNumPositionStepsOverride = 0;
+	/// Used only when the constraint is active. Override for the number of solver velocity iterations to run, 0 means use the default in PhysicsSettings::mNumVelocitySteps. The number of iterations to use is the max of all contacts and constraints in the island.
+	uint						mNumVelocityStepsOverride = 0;
+
+	/// Used only when the constraint is active. Override for the number of solver position iterations to run, 0 means use the default in PhysicsSettings::mNumPositionSteps. The number of iterations to use is the max of all contacts and constraints in the island.
+	uint						mNumPositionStepsOverride = 0;
 
 	/// Size of constraint when drawing it through the debug renderer
 	float						mDrawConstraintSize = 1.0f;
@@ -95,7 +99,7 @@ protected:
 };
 
 /// Base class for all physics constraints. A constraint removes one or more degrees of freedom for a rigid body.
-class Constraint : public RefTarget<Constraint>, public NonCopyable
+class JPH_EXPORT Constraint : public RefTarget<Constraint>, public NonCopyable
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -105,11 +109,14 @@ public:
 #ifdef JPH_DEBUG_RENDERER
 		mDrawConstraintSize(inSettings.mDrawConstraintSize),
 #endif // JPH_DEBUG_RENDERER
-		mNumVelocityStepsOverride(inSettings.mNumVelocityStepsOverride),
-		mNumPositionStepsOverride(inSettings.mNumPositionStepsOverride),
+		mConstraintPriority(inSettings.mConstraintPriority),
+		mNumVelocityStepsOverride(uint8(inSettings.mNumVelocityStepsOverride)),
+		mNumPositionStepsOverride(uint8(inSettings.mNumPositionStepsOverride)),
 		mEnabled(inSettings.mEnabled),
 		mUserData(inSettings.mUserData)
 	{
+		JPH_ASSERT(inSettings.mNumVelocityStepsOverride < 256);
+		JPH_ASSERT(inSettings.mNumPositionStepsOverride < 256);
 	}
 
 	/// Virtual destructor
@@ -121,13 +128,18 @@ public:
 	/// Get the sub type of a constraint
 	virtual EConstraintSubType	GetSubType() const = 0;
 
-	/// Override for the number of solver velocity iterations to run, the total amount of iterations is the max of PhysicsSettings::mNumVelocitySteps and this for all constraints in the island.
-	void						SetNumVelocityStepsOverride(int inN)		{ mNumVelocityStepsOverride = inN; }
-	int							GetNumVelocityStepsOverride() const			{ return mNumVelocityStepsOverride; }
+	/// Priority of the constraint when solving. Higher numbers have are more likely to be solved correctly.
+	/// Note that if you want a deterministic simulation and you cannot guarantee the order in which constraints are added/removed, you can make the priority for all constraints unique to get a deterministic ordering.
+	uint32						GetConstraintPriority() const				{ return mConstraintPriority; }
+	void						SetConstraintPriority(uint32 inPriority)	{ mConstraintPriority = inPriority; }
 
-	/// Override for the number of position velocity iterations to run, the total amount of iterations is the max of PhysicsSettings::mNumPositionSteps and this for all constraints in the island.
-	void						SetNumPositionStepsOverride(int inN)		{ mNumPositionStepsOverride = inN; }
-	int							GetNumPositionStepsOverride() const			{ return mNumPositionStepsOverride; }
+	/// Used only when the constraint is active. Override for the number of solver velocity iterations to run, 0 means use the default in PhysicsSettings::mNumVelocitySteps. The number of iterations to use is the max of all contacts and constraints in the island.
+	void						SetNumVelocityStepsOverride(uint inN)		{ JPH_ASSERT(inN < 256); mNumVelocityStepsOverride = uint8(inN); }
+	uint						GetNumVelocityStepsOverride() const			{ return mNumVelocityStepsOverride; }
+
+	/// Used only when the constraint is active. Override for the number of solver position iterations to run, 0 means use the default in PhysicsSettings::mNumPositionSteps. The number of iterations to use is the max of all contacts and constraints in the island.
+	void						SetNumPositionStepsOverride(uint inN)		{ JPH_ASSERT(inN < 256); mNumPositionStepsOverride = uint8(inN); }
+	uint						GetNumPositionStepsOverride() const			{ return mNumPositionStepsOverride; }
 
 	/// Enable / disable this constraint. This can e.g. be used to implement a breakable constraint by detecting that the constraint impulse
 	/// (see e.g. PointConstraint::GetTotalLambdaPosition) went over a certain limit and then disabling the constraint.
@@ -148,6 +160,12 @@ public:
 	/// @param inDeltaCOM The delta of the center of mass of the body (shape->GetCenterOfMass() - shape_before_change->GetCenterOfMass())
 	virtual void				NotifyShapeChanged(const BodyID &inBodyID, Vec3Arg inDeltaCOM) = 0;
 
+	/// Notify the system that the configuration of the bodies and/or constraint has changed enough so that the warm start impulses should not be applied the next frame.
+	/// You can use this function for example when repositioning a ragdoll through Ragdoll::SetPose in such a way that the orientation of the bodies completely changes so that
+	/// the previous frame impulses are no longer a good approximation of what the impulses will be in the next frame. Calling this function when there are no big changes
+	/// will result in the constraints being much 'softer' than usual so they are more easily violated (e.g. a long chain of bodies might sag a bit if you call this every frame).
+	virtual void				ResetWarmStart() = 0;
+
 	///@name Solver interface
 	///@{
 	virtual bool				IsActive() const							{ return mEnabled; }
@@ -166,8 +184,8 @@ public:
 #ifdef JPH_DEBUG_RENDERER
 	// Drawing interface
 	virtual void				DrawConstraint(DebugRenderer *inRenderer) const = 0;
-	virtual void				DrawConstraintLimits(DebugRenderer *inRenderer) const { }
-	virtual void				DrawConstraintReferenceFrame(DebugRenderer *inRenderer) const { }
+	virtual void				DrawConstraintLimits([[maybe_unused]] DebugRenderer *inRenderer) const { }
+	virtual void				DrawConstraintReferenceFrame([[maybe_unused]] DebugRenderer *inRenderer) const { }
 
 	/// Size of constraint when drawing it through the debug renderer
 	float						GetDrawConstraintSize() const				{ return mDrawConstraintSize; }
@@ -201,11 +219,14 @@ private:
 	/// Index in the mConstraints list of the ConstraintManager for easy finding
 	uint32						mConstraintIndex = cInvalidConstraintIndex;
 
-	/// Override for the number of solver velocity iterations to run, the total amount of iterations is the max of PhysicsSettings::mNumVelocitySteps and this for all constraints in the island.
-	int							mNumVelocityStepsOverride = 0;
+	/// Priority of the constraint when solving. Higher numbers have are more likely to be solved correctly.
+	uint32						mConstraintPriority = 0;
 
-	/// Override for the number of position velocity iterations to run, the total amount of iterations is the max of PhysicsSettings::mNumPositionSteps and this for all constraints in the island.
-	int							mNumPositionStepsOverride = 0;
+	/// Used only when the constraint is active. Override for the number of solver velocity iterations to run, 0 means use the default in PhysicsSettings::mNumVelocitySteps. The number of iterations to use is the max of all contacts and constraints in the island.
+	uint8						mNumVelocityStepsOverride = 0;
+
+	/// Used only when the constraint is active. Override for the number of solver position iterations to run, 0 means use the default in PhysicsSettings::mNumPositionSteps. The number of iterations to use is the max of all contacts and constraints in the island.
+	uint8						mNumPositionStepsOverride = 0;
 
 	/// If this constraint is currently enabled
 	bool						mEnabled = true;

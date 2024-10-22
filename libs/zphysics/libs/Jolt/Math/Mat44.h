@@ -25,6 +25,7 @@ public:
 	JPH_INLINE					Mat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, Vec4Arg inC4);
 	JPH_INLINE					Mat44(Vec4Arg inC1, Vec4Arg inC2, Vec4Arg inC3, Vec3Arg inC4);
 								Mat44(const Mat44 &inM2) = default;
+	Mat44 &						operator = (const Mat44 &inM2) = default;
 	JPH_INLINE					Mat44(Type inC1, Type inC2, Type inC3, Type inC4);
 
 	/// Zero matrix
@@ -86,11 +87,14 @@ public:
 	/// @param inUp Up vector
 	static JPH_INLINE Mat44		sLookAt(Vec3Arg inPos, Vec3Arg inTarget, Vec3Arg inUp);
 
+	/// Returns a right-handed perspective projection matrix
+	static JPH_INLINE Mat44		sPerspective(float inFovY, float inAspect, float inNear, float inFar);
+
 	/// Get float component by element index
 	JPH_INLINE float			operator () (uint inRow, uint inColumn) const			{ JPH_ASSERT(inRow < 4); JPH_ASSERT(inColumn < 4); return mCol[inColumn].mF32[inRow]; }
 	JPH_INLINE float &			operator () (uint inRow, uint inColumn)					{ JPH_ASSERT(inRow < 4); JPH_ASSERT(inColumn < 4); return mCol[inColumn].mF32[inRow]; }
-	
-	/// Comparsion
+
+	/// Comparison
 	JPH_INLINE bool				operator == (Mat44Arg inM2) const;
 	JPH_INLINE bool				operator != (Mat44Arg inM2) const						{ return !(*this == inM2); }
 
@@ -179,6 +183,9 @@ public:
 
 	/// Inverse 3x3 matrix
 	JPH_INLINE Mat44			Inversed3x3() const;
+
+	/// *this = inM.Inversed3x3(), returns false if the matrix is singular in which case *this is unchanged
+	JPH_INLINE bool				SetInversed3x3(Mat44Arg inM);
 
 	/// Get rotation part only (note: retains the first 3 values from the bottom row)
 	JPH_INLINE Mat44			GetRotation() const;

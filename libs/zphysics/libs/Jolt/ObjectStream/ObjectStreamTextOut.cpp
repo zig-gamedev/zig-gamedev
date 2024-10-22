@@ -4,6 +4,8 @@
 
 #include <Jolt/Jolt.h>
 
+#ifdef JPH_OBJECT_STREAM
+
 #include <Jolt/ObjectStream/ObjectStreamTextOut.h>
 #include <Jolt/Core/StringTools.h>
 
@@ -17,7 +19,7 @@ ObjectStreamTextOut::ObjectStreamTextOut(ostream &inStream) :
 
 void ObjectStreamTextOut::WriteDataType(EOSDataType inType)
 {
-	switch (inType) 
+	switch (inType)
 	{
 	case EOSDataType::Declare:		WriteWord("declare ");		break;
 	case EOSDataType::Object:		WriteWord("object ");		break;
@@ -225,3 +227,5 @@ void ObjectStreamTextOut::WriteWord(const string_view &inWord)
 }
 
 JPH_NAMESPACE_END
+
+#endif // JPH_OBJECT_STREAM

@@ -17,7 +17,7 @@ JPH_NAMESPACE_BEGIN
 /// Internal tree structure in broadphase, is essentially a quad AABB tree.
 /// Tree is lockless (except for UpdatePrepare/Finalize() function), modifying objects in the tree will widen the aabbs of parent nodes to make the node fit.
 /// During the UpdatePrepare/Finalize() call the tree is rebuilt to achieve a tight fit again.
-class QuadTree : public NonCopyable
+class JPH_EXPORT QuadTree : public NonCopyable
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -33,11 +33,11 @@ private:
 		JPH_OVERRIDE_NEW_DELETE
 
 		/// Default constructor does not initialize
-		inline 					NodeID() = default;
+		inline					NodeID() = default;
 
 		/// Construct a node ID
 		static inline NodeID	sInvalid()							{ return NodeID(cInvalidNodeIndex); }
-		static inline NodeID	sFromBodyID(BodyID inID) 			{ NodeID node_id(inID.GetIndexAndSequenceNumber()); JPH_ASSERT(node_id.IsBody()); return node_id; }
+		static inline NodeID	sFromBodyID(BodyID inID)			{ NodeID node_id(inID.GetIndexAndSequenceNumber()); JPH_ASSERT(node_id.IsBody()); return node_id; }
 		static inline NodeID	sFromNodeIndex(uint32 inIdx)		{ NodeID node_id(inIdx | cIsNode); JPH_ASSERT(node_id.IsNode()); return node_id; }
 
 		/// Check what type of ID it is
@@ -197,6 +197,9 @@ public:
 	/// Will throw away the previous frame's nodes so that we can start building a new tree in the background
 	void						DiscardOldTree();
 
+	/// Get the bounding box for this tree
+	AABox						GetBounds() const;
+
 	/// Update the broadphase, needs to be called regularly to achieve a tight fit of the tree when bodies have been modified.
 	/// UpdatePrepare() will build the tree, UpdateFinalize() will lock the root of the tree shortly and swap the trees and afterwards clean up temporary data structures.
 	void						UpdatePrepare(const BodyVector &inBodies, TrackingVector &ioTracking, UpdateState &outUpdateState, bool inFullRebuild);
@@ -238,7 +241,7 @@ public:
 
 	/// Get bodies intersecting with a point and any hits to ioCollector
 	void						CollidePoint(Vec3Arg inPoint, CollideShapeBodyCollector &ioCollector, const ObjectLayerFilter &inObjectLayerFilter, const TrackingVector &inTracking) const;
-	
+
 	/// Get bodies intersecting with an oriented box and any hits to ioCollector
 	void						CollideOrientedBox(const OrientedBox &inBox, CollideShapeBodyCollector &ioCollector, const ObjectLayerFilter &inObjectLayerFilter, const TrackingVector &inTracking) const;
 
@@ -249,8 +252,11 @@ public:
 	void						FindCollidingPairs(const BodyVector &inBodies, const BodyID *inActiveBodies, int inNumActiveBodies, float inSpeculativeContactDistance, BodyPairCollector &ioPairCollector, const ObjectLayerPairFilter &inObjectLayerPairFilter) const;
 
 #ifdef JPH_TRACK_BROADPHASE_STATS
+	/// Sum up all the ticks spent in the various layers
+	uint64						GetTicks100Pct() const;
+
 	/// Trace the stats of this tree to the TTY
-	void						ReportStats() const;
+	void						ReportStats(uint64 inTicks100Pct) const;
 #endif // JPH_TRACK_BROADPHASE_STATS
 
 private:
@@ -303,12 +309,12 @@ private:
 	/// After the function returns ioNodeIDs and ioNodeCenters will be shuffled
 	static void					sPartition(NodeID *ioNodeIDs, Vec3 *ioNodeCenters, int inNumber, int &outMidPoint);
 
-	/// Sorts ioNodeIDs from inBegin to (but excluding) inEnd spatially into 4 groups. 
+	/// Sorts ioNodeIDs from inBegin to (but excluding) inEnd spatially into 4 groups.
 	/// outSplit needs to be 5 ints long, when the function returns each group runs from outSplit[i] to (but excluding) outSplit[i + 1]
 	/// After the function returns ioNodeIDs and ioNodeCenters will be shuffled
 	static void					sPartition4(NodeID *ioNodeIDs, Vec3 *ioNodeCenters, int inBegin, int inEnd, int *outSplit);
 
-#ifdef _DEBUG
+#ifdef JPH_DEBUG
 	/// Validate that the tree is consistent.
 	/// Note: This function only works if the tree is not modified while we're traversing it.
 	void						ValidateTree(const BodyVector &inBodies, const TrackingVector &inTracking, uint32 inNodeIndex, uint32 inNumExpectedBodies) const;
@@ -318,6 +324,25 @@ private:
 	/// Dump the tree in DOT format (see: https://graphviz.org/)
 	void						DumpTree(const NodeID &inRoot, const char *inFileNamePrefix) const;
 #endif
+
+	/// Allocator that controls adding / freeing nodes
+	Allocator *					mAllocator = nullptr;
+
+	/// This is a list of nodes that must be deleted after the trees are swapped and the old tree is no longer in use
+	Allocator::Batch			mFreeNodeBatch;
+
+	/// Number of bodies currently in the tree
+	/// This is aligned to be in a different cache line from the `Allocator` pointer to prevent cross-thread syncs
+	/// when reading nodes.
+	alignas(JPH_CACHE_LINE_SIZE) atomic<uint32> mNumBodies { 0 };
+
+	/// We alternate between two tree root nodes. When updating, we activate the new tree and we keep the old tree alive.
+	/// for queries that are in progress until the next time DiscardOldTree() is called.
+	RootNode					mRootNode[2];
+	atomic<uint32>				mRootNodeIndex { 0 };
+
+	/// Flag to keep track of changes to the broadphase, if false, we don't need to UpdatePrepare/Finalize()
+	atomic<bool>				mIsDirty = false;
 
 #ifdef JPH_TRACK_BROADPHASE_STATS
 	/// Mutex protecting the various LayerToStats members
@@ -332,12 +357,15 @@ private:
 		uint64					mTotalTicks = 0;
 		uint64					mCollectorTicks = 0;
 	};
-	
+
 	using LayerToStats = UnorderedMap<String, Stat>;
 
+	/// Sum up all the ticks in a layer
+	uint64						GetTicks100Pct(const LayerToStats &inLayer) const;
+
 	/// Trace the stats of a single query type to the TTY
-	void						ReportStats(const char *inName, const LayerToStats &inLayer) const;
-	
+	void						ReportStats(const char *inName, const LayerToStats &inLayer, uint64 inTicks100Pct) const;
+
 	mutable LayerToStats		mCastRayStats;
 	mutable LayerToStats		mCollideAABoxStats;
 	mutable LayerToStats		mCollideSphereStats;
@@ -357,23 +385,6 @@ private:
 	/// Name of this tree for debugging purposes
 	const char *				mName = "Layer";
 #endif // JPH_EXTERNAL_PROFILE || JPH_PROFILE_ENABLED
-
-	/// Number of bodies currently in the tree
-	atomic<uint32>				mNumBodies { 0 };
-
-	/// We alternate between two tree root nodes. When updating, we activate the new tree and we keep the old tree alive.
-	/// for queries that are in progress until the next time DiscardOldTree() is called.
-	RootNode					mRootNode[2];
-	atomic<uint32>				mRootNodeIndex { 0 };
-
-	/// Allocator that controls adding / freeing nodes
-	Allocator *					mAllocator = nullptr;
-
-	/// This is a list of nodes that must be deleted after the trees are swapped and the old tree is no longer in use
-	Allocator::Batch			mFreeNodeBatch;
-
-	/// Flag to keep track of changes to the broadphase, if false, we don't need to UpdatePrepare/Finalize()
-	atomic<bool>				mIsDirty = false;
 };
 
 JPH_NAMESPACE_END

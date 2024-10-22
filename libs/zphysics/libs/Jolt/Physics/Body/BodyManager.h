@@ -12,11 +12,25 @@ JPH_NAMESPACE_BEGIN
 
 // Classes
 class BodyCreationSettings;
+class SoftBodyCreationSettings;
 class BodyActivationListener;
+class StateRecorderFilter;
 struct PhysicsSettings;
 #ifdef JPH_DEBUG_RENDERER
 class DebugRenderer;
 class BodyDrawFilter;
+#endif // JPH_DEBUG_RENDERER
+
+#ifdef JPH_DEBUG_RENDERER
+
+/// Defines how to color soft body constraints
+enum class ESoftBodyConstraintColor
+{
+	ConstraintType,				/// Draw different types of constraints in different colors
+	ConstraintGroup,			/// Draw constraints in the same group in the same color, non-parallel group will be red
+	ConstraintOrder,			/// Draw constraints in the same group in the same color, non-parallel group will be red, and order within each group will be indicated with gradient
+};
+
 #endif // JPH_DEBUG_RENDERER
 
 /// Array of bodies
@@ -26,7 +40,7 @@ using BodyVector = Array<Body *>;
 using BodyIDVector = Array<BodyID>;
 
 /// Class that contains all bodies
-class BodyManager : public NonCopyable
+class JPH_EXPORT BodyManager : public NonCopyable
 {
 public:
 	JPH_OVERRIDE_NEW_DELETE
@@ -41,7 +55,7 @@ public:
 	uint							GetNumBodies() const;
 
 	/// Gets the max bodies that we can support
-	uint							GetMaxBodies() const						{ return (uint)mBodies.capacity(); }
+	uint							GetMaxBodies() const						{ return uint(mBodies.capacity()); }
 
 	/// Helper struct that counts the number of bodies of each type
 	struct BodyStats
@@ -56,6 +70,9 @@ public:
 
 		uint						mNumBodiesKinematic			= 0;			///< Number of kinematic bodies
 		uint						mNumActiveBodiesKinematic	= 0;			///< Number of kinematic bodies that are currently active
+
+		uint						mNumSoftBodies				= 0;			///< Number of soft bodies
+		uint						mNumActiveSoftBodies		= 0;			///< Number of soft bodies that are currently active
 	};
 
 	/// Get stats about the bodies in the body manager (slow, iterates through all bodies)
@@ -63,6 +80,9 @@ public:
 
 	/// Create a body using creation settings. The returned body will not be part of the body manager yet.
 	Body *							AllocateBody(const BodyCreationSettings &inBodyCreationSettings) const;
+
+	/// Create a soft body using creation settings. The returned body will not be part of the body manager yet.
+	Body *							AllocateSoftBody(const SoftBodyCreationSettings &inSoftBodyCreationSettings) const;
 
 	/// Free a body that has not been added to the body manager yet (if it has, use DestroyBodies).
 	void							FreeBody(Body *inBody) const;
@@ -91,13 +111,13 @@ public:
 	void							SetMotionQuality(Body &ioBody, EMotionQuality inMotionQuality);
 
 	/// Get copy of the list of active bodies under protection of a lock.
-	void							GetActiveBodies(BodyIDVector &outBodyIDs) const;
+	void							GetActiveBodies(EBodyType inType, BodyIDVector &outBodyIDs) const;
 
 	/// Get the list of active bodies. Note: Not thread safe. The active bodies list can change at any moment.
-	const BodyID *					GetActiveBodiesUnsafe() const				{ return mActiveBodies; }
+	const BodyID *					GetActiveBodiesUnsafe(EBodyType inType) const { return mActiveBodies[int(inType)]; }
 
 	/// Get the number of active bodies.
-	uint32							GetNumActiveBodies() const					{ return mNumActiveBodies; }
+	uint32							GetNumActiveBodies(EBodyType inType) const	{ return mNumActiveBodies[int(inType)]; }
 
 	/// Get the number of active bodies that are using continuous collision detection
 	uint32							GetNumActiveCCDBodies() const				{ return mNumActiveCCDBodies; }
@@ -125,17 +145,39 @@ public:
 	Body &							GetBody(const BodyID &inID)					{ return *mBodies[inID.GetIndex()]; }
 
 	/// Access a body, will return a nullptr if the body ID is no longer valid (not protected by lock)
-	const Body *					TryGetBody(const BodyID &inID) const		{ const Body *body = mBodies[inID.GetIndex()]; return sIsValidBodyPointer(body) && body->GetID() == inID? body : nullptr; }
+	const Body *					TryGetBody(const BodyID &inID) const
+	{
+		uint32 idx = inID.GetIndex();
+		if (idx >= mBodies.size())
+			return nullptr;
+
+		const Body *body = mBodies[idx];
+		if (sIsValidBodyPointer(body) && body->GetID() == inID)
+			return body;
+
+		return nullptr;
+	}
 
 	/// Access a body, will return a nullptr if the body ID is no longer valid (not protected by lock)
-	Body *							TryGetBody(const BodyID &inID)				{ Body *body = mBodies[inID.GetIndex()]; return sIsValidBodyPointer(body) && body->GetID() == inID? body : nullptr; }
+	Body *							TryGetBody(const BodyID &inID)
+	{
+		uint32 idx = inID.GetIndex();
+		if (idx >= mBodies.size())
+			return nullptr;
+
+		Body *body = mBodies[idx];
+		if (sIsValidBodyPointer(body) && body->GetID() == inID)
+			return body;
+
+		return nullptr;
+	}
 
 	/// Access the mutex for a single body
 	SharedMutex &					GetMutexForBody(const BodyID &inID) const	{ return mBodyMutexes.GetMutexByObjectIndex(inID.GetIndex()); }
 
 	/// Bodies are protected using an array of mutexes (so a fixed number, not 1 per body). Each bit in this mask indicates a locked mutex.
 	using MutexMask = uint64;
-	
+
 	///@name Batch body mutex access (do not use directly)
 	///@{
 	MutexMask						GetAllBodiesMutexMask() const				{ return mBodyMutexes.GetNumMutexes() == sizeof(MutexMask) * 8? ~MutexMask(0) : (MutexMask(1) << mBodyMutexes.GetNumMutexes()) - 1; }
@@ -162,11 +204,18 @@ public:
 	void							ValidateContactCacheForAllBodies();
 
 	/// Saving state for replay
-	void							SaveState(StateRecorder &inStream) const;
+	void							SaveState(StateRecorder &inStream, const StateRecorderFilter *inFilter) const;
 
 	/// Restoring state for replay. Returns false if failed.
 	bool							RestoreState(StateRecorder &inStream);
 
+	/// Save the state of a single body for replay
+	void							SaveBodyState(const Body &inBody, StateRecorder &inStream) const;
+
+	/// Save the state of a single body for replay
+	void							RestoreBodyState(Body &inBody, StateRecorder &inStream);
+
+#ifdef JPH_DEBUG_RENDERER
 	enum class EShapeColor
 	{
 		InstanceColor,				///< Random color per instance
@@ -177,11 +226,10 @@ public:
 		MaterialColor,				///< Color as defined by the PhysicsMaterial of the shape
 	};
 
-#ifdef JPH_DEBUG_RENDERER
 	/// Draw settings
 	struct DrawSettings
 	{
-		bool						mDrawGetSupportFunction = false;				///< Draw the GetSupport() function, used for convex collision detection	
+		bool						mDrawGetSupportFunction = false;				///< Draw the GetSupport() function, used for convex collision detection
 		bool						mDrawSupportDirection = false;					///< When drawing the support function, also draw which direction mapped to a specific support point
 		bool						mDrawGetSupportingFace = false;					///< Draw the faces that were found colliding during collision detection
 		bool						mDrawShape = true;								///< Draw the shapes of all bodies
@@ -193,6 +241,15 @@ public:
 		bool						mDrawVelocity = false;							///< Draw the velocity vector for each body
 		bool						mDrawMassAndInertia = false;					///< Draw the mass and inertia (as the box equivalent) for each body
 		bool						mDrawSleepStats = false;						///< Draw stats regarding the sleeping algorithm of each body
+		bool						mDrawSoftBodyVertices = false;					///< Draw the vertices of soft bodies
+		bool						mDrawSoftBodyVertexVelocities = false;			///< Draw the velocities of the vertices of soft bodies
+		bool						mDrawSoftBodyEdgeConstraints = false;			///< Draw the edge constraints of soft bodies
+		bool						mDrawSoftBodyBendConstraints = false;			///< Draw the bend constraints of soft bodies
+		bool						mDrawSoftBodyVolumeConstraints = false;			///< Draw the volume constraints of soft bodies
+		bool						mDrawSoftBodySkinConstraints = false;			///< Draw the skin constraints of soft bodies
+		bool						mDrawSoftBodyLRAConstraints = false;			///< Draw the LRA constraints of soft bodies
+		bool						mDrawSoftBodyPredictedBounds = false;			///< Draw the predicted bounds of soft bodies
+		ESoftBodyConstraintColor	mDrawSoftBodyConstraintColor = ESoftBodyConstraintColor::ConstraintType; ///< Coloring scheme to use for soft body constraints
 	};
 
 	/// Draw the state of the bodies (debugging purposes)
@@ -209,25 +266,25 @@ public:
 	public:
 		inline GrantActiveBodiesAccess(bool inAllowActivation, bool inAllowDeactivation)
 		{
-			JPH_ASSERT(!sOverrideAllowActivation);
-			sOverrideAllowActivation = inAllowActivation;
+			JPH_ASSERT(!sGetOverrideAllowActivation());
+			sSetOverrideAllowActivation(inAllowActivation);
 
-			JPH_ASSERT(!sOverrideAllowDeactivation);
-			sOverrideAllowDeactivation = inAllowDeactivation;
+			JPH_ASSERT(!sGetOverrideAllowDeactivation());
+			sSetOverrideAllowDeactivation(inAllowDeactivation);
 		}
 
 		inline ~GrantActiveBodiesAccess()
 		{
-			sOverrideAllowActivation = false;
-			sOverrideAllowDeactivation = false;
+			sSetOverrideAllowActivation(false);
+			sSetOverrideAllowDeactivation(false);
 		}
 	};
 #endif
 
-#ifdef _DEBUG
+#ifdef JPH_DEBUG
 	/// Validate if the cached bounding boxes are correct for all active bodies
 	void							ValidateActiveBodyBounds();
-#endif // _DEBUG
+#endif // JPH_DEBUG
 
 private:
 	/// Increment and get the sequence number of the body
@@ -236,16 +293,22 @@ private:
 #endif
 	inline uint8					GetNextSequenceNumber(int inBodyIndex)		{ return ++mBodySequenceNumbers[inBodyIndex]; }
 
+	/// Add a single body to mActiveBodies, note doesn't lock the active body mutex!
+	inline void						AddBodyToActiveBodies(Body &ioBody);
+
+	/// Remove a single body from mActiveBodies, note doesn't lock the active body mutex!
+	inline void						RemoveBodyFromActiveBodies(Body &ioBody);
+
 	/// Helper function to remove a body from the manager
 	JPH_INLINE Body *				RemoveBodyInternal(const BodyID &inBodyID);
 
 	/// Helper function to delete a body (which could actually be a BodyWithMotionProperties)
 	inline static void				sDeleteBody(Body *inBody);
 
-#if defined(_DEBUG) && defined(JPH_ENABLE_ASSERTS)
+#if defined(JPH_DEBUG) && defined(JPH_ENABLE_ASSERTS)
 	/// Function to check that the free list is not corrupted
 	void							ValidateFreeList() const;
-#endif // defined(_DEBUG) && _defined(JPH_ENABLE_ASSERTS)
+#endif // defined(JPH_DEBUG) && _defined(JPH_ENABLE_ASSERTS)
 
 	/// List of pointers to all bodies. Contains invalid pointers for deleted bodies, check with sIsValidBodyPointer. Note that this array is reserved to the max bodies that is passed in the Init function so that adding bodies will not reallocate the array.
 	BodyVector						mBodies;
@@ -266,7 +329,7 @@ private:
 	uintptr_t						mBodyIDFreeListStart = cBodyIDFreeListEnd;
 
 	/// Protects mBodies array (but not the bodies it points to), mNumBodies and mBodyIDFreeListStart
-	mutable Mutex					mBodiesMutex; 
+	mutable Mutex					mBodiesMutex;
 
 	/// An array of mutexes protecting the bodies in the mBodies array
 	using BodyMutexes = MutexArray<SharedMutex>;
@@ -279,10 +342,10 @@ private:
 	mutable Mutex					mActiveBodiesMutex;
 
 	/// List of all active dynamic bodies (size is equal to max amount of bodies)
-	BodyID *						mActiveBodies = nullptr;
+	BodyID *						mActiveBodies[cBodyTypeCount] = { };
 
 	/// How many bodies there are in the list of active bodies
-	atomic<uint32>					mNumActiveBodies = 0;
+	atomic<uint32>					mNumActiveBodies[cBodyTypeCount] = { };
 
 	/// How many of the active bodies have continuous collision detection enabled
 	uint32							mNumActiveCCDBodies = 0;
@@ -300,10 +363,14 @@ private:
 	const BroadPhaseLayerInterface *mBroadPhaseLayerInterface = nullptr;
 
 #ifdef JPH_ENABLE_ASSERTS
+	static bool						sGetOverrideAllowActivation();
+	static void						sSetOverrideAllowActivation(bool inValue);
+
+	static bool						sGetOverrideAllowDeactivation();
+	static void						sSetOverrideAllowDeactivation(bool inValue);
+
 	/// Debug system that tries to limit changes to active bodies during the PhysicsSystem::Update()
 	bool							mActiveBodiesLocked = false;
-	static thread_local bool		sOverrideAllowActivation;
-	static thread_local bool		sOverrideAllowDeactivation;
 #endif
 };
 

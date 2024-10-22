@@ -17,7 +17,7 @@ JPH_NAMESPACE_BEGIN
 /// \f$q = w + x \: i + y \: j + z \: k\f$
 ///
 /// or in vector notation:
-/// 
+///
 /// \f$q = [w, v] = [w, x, y, z]\f$
 ///
 /// Where:
@@ -25,7 +25,7 @@ JPH_NAMESPACE_BEGIN
 /// w = the real part
 /// v = the imaginary part, (x, y, z)
 ///
-/// Note that we store the quaternion in a Vec4 as [x, y, z, w] because that makes 
+/// Note that we store the quaternion in a Vec4 as [x, y, z, w] because that makes
 /// it easy to extract the rotation axis of the quaternion:
 ///
 /// q = [cos(angle / 2), sin(angle / 2) * rotation_axis]
@@ -38,11 +38,12 @@ public:
 	///@{
 	inline						Quat() = default; ///< Intentionally not initialized for performance reasons
 								Quat(const Quat &inRHS) = default;
+	Quat &						operator = (const Quat &inRHS) = default;
 	inline						Quat(float inX, float inY, float inZ, float inW)				: mValue(inX, inY, inZ, inW) { }
 	inline explicit				Quat(Vec4Arg inV)												: mValue(inV) { }
 	///@}
-								
-	///@name Tests					
+
+	///@name Tests
 	///@{
 
 	/// Check if two quaternions are exactly equal
@@ -59,7 +60,7 @@ public:
 
 	/// If any component of this quaternion is a NaN (not a number)
 	inline bool					IsNaN() const													{ return mValue.IsNaN(); }
-	
+
 	///@}
 	///@name Get components
 	///@{
@@ -80,7 +81,16 @@ public:
 	JPH_INLINE Vec3				GetXYZ() const													{ return Vec3(mValue); }
 
 	/// Get the quaternion as a Vec4
-	JPH_INLINE Vec4 			GetXYZW() const													{ return mValue; }
+	JPH_INLINE Vec4				GetXYZW() const													{ return mValue; }
+
+	/// Set individual components
+	JPH_INLINE void				SetX(float inX)													{ mValue.SetX(inX); }
+	JPH_INLINE void				SetY(float inY)													{ mValue.SetY(inY); }
+	JPH_INLINE void				SetZ(float inZ)													{ mValue.SetZ(inZ); }
+	JPH_INLINE void				SetW(float inW)													{ mValue.SetW(inW); }
+
+	/// Set all components
+	JPH_INLINE void				Set(float inX, float inY, float inZ, float inW)					{ mValue.Set(inX, inY, inZ, inW); }
 
 	///@}
 	///@name Default quaternions
@@ -108,22 +118,22 @@ public:
 	template <class Random>
 	inline static Quat			sRandom(Random &inRandom);
 
-	/// Conversion from Euler angles
+	/// Conversion from Euler angles. Rotation order is X then Y then Z (RotZ * RotY * RotX). Angles in radians.
 	inline static Quat			sEulerAngles(Vec3Arg inAngles);
 
-	/// Conversion to Euler angles
+	/// Conversion to Euler angles. Rotation order is X then Y then Z (RotZ * RotY * RotX). Angles in radians.
 	inline Vec3					GetEulerAngles() const;
 
-	///@name Length / normalization operations													
+	///@name Length / normalization operations
 	///@{
 
-	/// Squared length of quaternion. 
+	/// Squared length of quaternion.
 	/// @return Squared length of quaternion (\f$|v|^2\f$)
 	JPH_INLINE float			LengthSq() const												{ return mValue.LengthSq(); }
 
 	/// Length of quaternion.
 	/// @return Length of quaternion (\f$|v|\f$)
-	JPH_INLINE float			Length() const													{ return mValue.Length(); }	
+	JPH_INLINE float			Length() const													{ return mValue.Length(); }
 
 	/// Normalize the quaternion (make it length 1)
 	JPH_INLINE Quat				Normalized() const												{ return Quat(mValue.Normalized()); }
@@ -146,7 +156,7 @@ public:
 
 	///@}
 
-	/// Rotate a vector by this quaternion 
+	/// Rotate a vector by this quaternion
 	JPH_INLINE Vec3				operator * (Vec3Arg inValue) const;
 
 	/// Rotate a vector by the inverse of this quaternion
@@ -154,16 +164,16 @@ public:
 
 	/// Rotate a the vector (1, 0, 0) with this quaternion
 	JPH_INLINE Vec3				RotateAxisX() const;
-								
+
 	/// Rotate a the vector (0, 1, 0) with this quaternion
 	JPH_INLINE Vec3				RotateAxisY() const;
-								
+
 	/// Rotate a the vector (0, 0, 1) with this quaternion
 	JPH_INLINE Vec3				RotateAxisZ() const;
-								
-	/// Dot product				
+
+	/// Dot product
 	JPH_INLINE float			Dot(QuatArg inRHS) const										{ return mValue.Dot(inRHS.mValue); }
-								
+
 	/// The conjugate [w, -x, -y, -z] is the same as the inverse for unit quaternions
 	JPH_INLINE Quat				Conjugated() const												{ return Quat(Vec4::sXor(mValue, UVec4(0x80000000, 0x80000000, 0x80000000, 0).ReinterpretAsFloat())); }
 
@@ -211,8 +221,8 @@ public:
 	///
 	/// @see Gino van den Bergen - Rotational Joint Limits in Quaternion Space - GDC 2016
 	JPH_INLINE void				GetSwingTwist(Quat &outSwing, Quat &outTwist) const;
-								
-	/// Linear interpolation between two quaternions (for small steps). 
+
+	/// Linear interpolation between two quaternions (for small steps).
 	/// @param inFraction is in the range [0, 1]
 	/// @param inDestination The destination quaternion
 	/// @return (1 - inFraction) * this + fraction * inDestination
@@ -221,10 +231,10 @@ public:
 	/// Spherical linear interpolation between two quaternions.
 	/// @param inFraction is in the range [0, 1]
 	/// @param inDestination The destination quaternion
-	/// @return When fraction is zero this quaternion is returned, when fraction is 1 inDestination is returned. 
+	/// @return When fraction is zero this quaternion is returned, when fraction is 1 inDestination is returned.
 	/// When fraction is between 0 and 1 an interpolation along the shortest path is returned.
 	JPH_INLINE Quat				SLERP(QuatArg inDestination, float inFraction) const;
-	
+
 	/// Load 3 floats from memory (X, Y and Z component and then calculates W) reads 32 bits extra which it doesn't use
 	static JPH_INLINE Quat		sLoadFloat3Unsafe(const Float3 &inV);
 

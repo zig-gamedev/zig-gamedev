@@ -7,6 +7,8 @@
 #include <Jolt/ObjectStream/SerializableAttribute.h>
 #include <Jolt/ObjectStream/ObjectStream.h>
 
+#ifdef JPH_OBJECT_STREAM
+
 JPH_NAMESPACE_BEGIN
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +20,7 @@ inline void AddSerializableAttributeEnum(RTTI &inRTTI, uint inOffset, const char
 {
 	inRTTI.AddAttribute(SerializableAttribute(inName, inOffset,
 		[]() -> const RTTI *
-		{ 
+		{
 			return nullptr;
 		},
 		[](int inArrayDepth, EOSDataType inDataType, [[maybe_unused]] const char *inClassName)
@@ -28,7 +30,7 @@ inline void AddSerializableAttributeEnum(RTTI &inRTTI, uint inOffset, const char
 		[](IObjectStreamIn &ioStream, void *inObject)
 		{
 			uint32 temporary;
-			if (OSReadData(ioStream, temporary)) 
+			if (OSReadData(ioStream, temporary))
 			{
 				*reinterpret_cast<MemberType *>(inObject) = static_cast<MemberType>(temporary);
 				return true;
@@ -47,8 +49,19 @@ inline void AddSerializableAttributeEnum(RTTI &inRTTI, uint inOffset, const char
 		}));
 }
 
+// JPH_ADD_ENUM_ATTRIBUTE_WITH_ALIAS
+#define JPH_ADD_ENUM_ATTRIBUTE_WITH_ALIAS(class_name, member_name, alias_name) \
+	AddSerializableAttributeEnum<decltype(class_name::member_name)>(inRTTI, offsetof(class_name, member_name), alias_name);
+
 // JPH_ADD_ENUM_ATTRIBUTE
 #define JPH_ADD_ENUM_ATTRIBUTE(class_name, member_name) \
-	AddSerializableAttributeEnum<decltype(class_name::member_name)>(inRTTI, offsetof(class_name, member_name), #member_name);
+	JPH_ADD_ENUM_ATTRIBUTE_WITH_ALIAS(class_name, member_name, #member_name);
 
 JPH_NAMESPACE_END
+
+#else
+
+#define JPH_ADD_ENUM_ATTRIBUTE_WITH_ALIAS(...)
+#define JPH_ADD_ENUM_ATTRIBUTE(...)
+
+#endif // JPH_OBJECT_STREAM

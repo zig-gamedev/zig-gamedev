@@ -15,7 +15,7 @@
 JPH_NAMESPACE_BEGIN
 
 /// Class that can read a recorded stream from DebugRendererRecorder and plays it back trough a DebugRenderer
-class DebugRendererPlayback
+class JPH_DEBUG_RENDERER_EXPORT DebugRendererPlayback
 {
 public:
 	/// Constructor
@@ -23,7 +23,7 @@ public:
 
 	/// Parse a stream of frames
 	void								Parse(StreamIn &inStream);
-	
+
 	/// Get the number of parsed frames
 	uint								GetNumFrames() const				{ return (uint)mFrames.size(); }
 

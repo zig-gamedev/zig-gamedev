@@ -4,6 +4,8 @@
 
 #include <Jolt/Jolt.h>
 
+#ifdef JPH_OBJECT_STREAM
+
 #include <Jolt/ObjectStream/ObjectStreamTextIn.h>
 
 JPH_NAMESPACE_BEGIN
@@ -16,53 +18,53 @@ ObjectStreamTextIn::ObjectStreamTextIn(istream &inStream) :
 bool ObjectStreamTextIn::ReadDataType(EOSDataType &outType)
 {
 	String token;
-	if (ReadWord(token)) 
+	if (ReadWord(token))
 	{
 		transform(token.begin(), token.end(), token.begin(), [](char inValue) { return (char)tolower(inValue); });
 		if (token == "declare")
 			outType = EOSDataType::Declare;
 		else if (token == "object")
-			outType = EOSDataType::Object;		
+			outType = EOSDataType::Object;
 		else if (token == "instance")
 			outType = EOSDataType::Instance;
 		else if (token == "pointer")
 			outType = EOSDataType::Pointer;
 		else if (token == "array")
-			outType  = EOSDataType::Array;
+			outType = EOSDataType::Array;
 		else if (token == "uint8")
-			outType  = EOSDataType::T_uint8;
+			outType = EOSDataType::T_uint8;
 		else if (token == "uint16")
-			outType  = EOSDataType::T_uint16;
+			outType = EOSDataType::T_uint16;
 		else if (token == "int")
-			outType  = EOSDataType::T_int;
+			outType = EOSDataType::T_int;
 		else if (token == "uint32")
-			outType  = EOSDataType::T_uint32;
+			outType = EOSDataType::T_uint32;
 		else if (token == "uint64")
-			outType  = EOSDataType::T_uint64;
+			outType = EOSDataType::T_uint64;
 		else if (token == "float")
-			outType  = EOSDataType::T_float;
+			outType = EOSDataType::T_float;
 		else if (token == "double")
-			outType  = EOSDataType::T_double;
+			outType = EOSDataType::T_double;
 		else if (token == "bool")
-			outType  = EOSDataType::T_bool;
+			outType = EOSDataType::T_bool;
 		else if (token == "string")
-			outType  = EOSDataType::T_String;
+			outType = EOSDataType::T_String;
 		else if (token == "float3")
-			outType  = EOSDataType::T_Float3;
+			outType = EOSDataType::T_Float3;
 		else if (token == "double3")
-			outType  = EOSDataType::T_Double3;
+			outType = EOSDataType::T_Double3;
 		else if (token == "vec3")
-			outType  = EOSDataType::T_Vec3;
+			outType = EOSDataType::T_Vec3;
 		else if (token == "dvec3")
-			outType  = EOSDataType::T_DVec3;
+			outType = EOSDataType::T_DVec3;
 		else if (token == "vec4")
-			outType  = EOSDataType::T_Vec4;
+			outType = EOSDataType::T_Vec4;
 		else if (token == "quat")
-			outType  = EOSDataType::T_Quat;
+			outType = EOSDataType::T_Quat;
 		else if (token == "mat44")
-			outType  = EOSDataType::T_Mat44;
+			outType = EOSDataType::T_Mat44;
 		else if (token == "dmat44")
-			outType  = EOSDataType::T_DMat44;
+			outType = EOSDataType::T_DMat44;
 		else
 		{
 			Trace("ObjectStreamTextIn: Found unknown data type.");
@@ -109,7 +111,7 @@ bool ObjectStreamTextIn::ReadPrimitiveData(uint8 &outPrimitive)
 	{
 		outPrimitive = (uint8)temporary;
 		return true;
-	}	
+	}
 	return false;
 }
 
@@ -125,7 +127,7 @@ bool ObjectStreamTextIn::ReadPrimitiveData(uint16 &outPrimitive)
 	{
 		outPrimitive = (uint16)temporary;
 		return true;
-	}	
+	}
 	return false;
 }
 
@@ -212,54 +214,54 @@ bool ObjectStreamTextIn::ReadPrimitiveData(String &outPrimitive)
 	// Read string and interpret special characters
 	String result;
 	bool escaped = false;
-	for (;;) 
+	for (;;)
 	{
 		if (!ReadChar(c))
 			break;
 
-		switch (c) 
+		switch (c)
 		{
 		case '\n':
 		case '\t':
 			break;
 
 		case '\\':
-			if (escaped) 
+			if (escaped)
 			{
 				result += '\\';
 				escaped = false;
-			} 
-			else 
+			}
+			else
 				escaped = true;
 			break;
 
 		case 'n':
-			if (escaped) 
+			if (escaped)
 			{
 				result += '\n';
 				escaped = false;
-			} 
-			else 
+			}
+			else
 				result += 'n';
 			break;
 
 		case 't':
-			if (escaped) 
+			if (escaped)
 			{
 				result += '\t';
 				escaped = false;
-			} 
-			else 
+			}
+			else
 				result += 't';
 			break;
 
 		case '\"':
-			if (escaped) 
+			if (escaped)
 			{
 				result += '\"';
 				escaped = false;
-			} 
-			else 
+			}
+			else
 			{
 				// Found closing double quote
 				outPrimitive = result;
@@ -268,9 +270,9 @@ bool ObjectStreamTextIn::ReadPrimitiveData(String &outPrimitive)
 			break;
 
 		default:
-			if (escaped) 
+			if (escaped)
 				escaped = false;
-			else 
+			else
 				result += c;
 			break;
 		}
@@ -390,3 +392,5 @@ bool ObjectStreamTextIn::ReadWord(String &outWord)
 }
 
 JPH_NAMESPACE_END
+
+#endif // JPH_OBJECT_STREAM

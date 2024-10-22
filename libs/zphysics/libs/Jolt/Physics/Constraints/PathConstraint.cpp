@@ -30,7 +30,7 @@ JPH_IMPLEMENT_SERIALIZABLE_VIRTUAL(PathConstraintSettings)
 }
 
 void PathConstraintSettings::SaveBinaryState(StreamOut &inStream) const
-{ 
+{
 	ConstraintSettings::SaveBinaryState(inStream);
 
 	mPath->SaveBinaryState(inStream);
@@ -119,7 +119,7 @@ void PathConstraint::CalculateConstraintProperties(float inDeltaTime)
 	// Calculate new closest point on path
 	RVec3 position2 = path_to_world_2.GetTranslation();
 	Vec3 position2_local_to_path = Vec3(path_to_world_1.InversedRotationTranslation() * position2);
-	mPathFraction = mPath->GetClosestPoint(position2_local_to_path);
+	mPathFraction = mPath->GetClosestPoint(position2_local_to_path, mPathFraction);
 
 	// Get the point on the path for this fraction
 	Vec3 path_point, path_tangent, path_normal, path_binormal;
@@ -129,7 +129,7 @@ void PathConstraint::CalculateConstraintProperties(float inDeltaTime)
 	RVec3 path_point_ws = path_to_world_1 * path_point;
 	mR1 = Vec3(path_point_ws - mBody1->GetCenterOfMassPosition());
 	mR2 = Vec3(position2 - mBody2->GetCenterOfMassPosition());
-	
+
 	// Calculate U = X2 + R2 - X1 - R1
 	mU = Vec3(position2 - path_point_ws);
 
@@ -145,7 +145,7 @@ void PathConstraint::CalculateConstraintProperties(float inDeltaTime)
 
 	// Check if closest point is on the boundary of the path and if so apply limit
 	if (!mPath->IsLooping() && (mPathFraction <= 0.0f || mPathFraction >= mPath->GetPathMaxFraction()))
-		mPositionLimitsConstraintPart.CalculateConstraintProperties(inDeltaTime, *mBody1, mR1 + mU, *mBody2, mR2, mPathTangent);
+		mPositionLimitsConstraintPart.CalculateConstraintProperties(*mBody1, mR1 + mU, *mBody2, mR2, mPathTangent);
 	else
 		mPositionLimitsConstraintPart.Deactivate();
 
@@ -168,7 +168,7 @@ void PathConstraint::CalculateConstraintProperties(float inDeltaTime)
 		mHingeConstraintPart.CalculateConstraintProperties(*mBody1, transform1.GetRotation(), mPathBinormal, *mBody2, transform2.GetRotation(), path_to_world_2.GetAxisY());
 		break;
 
-	case EPathRotationConstraintType::ConstaintToPath:
+	case EPathRotationConstraintType::ConstrainToPath:
 		// We need to calculate the inverse of the rotation from body 1 to body 2 for the current path position (see: RotationEulerConstraintPart::sGetInvInitialOrientation)
 		// RotationBody2 = RotationBody1 * InitialOrientation <=> InitialOrientation^-1 = RotationBody2^-1 * RotationBody1
 		// We can express RotationBody2 in terms of RotationBody1: RotationBody2 = RotationBody1 * PathToBody1 * RotationClosestPointOnPath * PathToBody2^-1
@@ -186,16 +186,17 @@ void PathConstraint::CalculateConstraintProperties(float inDeltaTime)
 	{
 	case EMotorState::Off:
 		if (mMaxFrictionForce > 0.0f)
-			mPositionMotorConstraintPart.CalculateConstraintProperties(inDeltaTime, *mBody1, mR1 + mU, *mBody2, mR2, mPathTangent);
+			mPositionMotorConstraintPart.CalculateConstraintProperties(*mBody1, mR1 + mU, *mBody2, mR2, mPathTangent);
 		else
 			mPositionMotorConstraintPart.Deactivate();
 		break;
 
 	case EMotorState::Velocity:
-		mPositionMotorConstraintPart.CalculateConstraintProperties(inDeltaTime, *mBody1, mR1 + mU, *mBody2, mR2, mPathTangent, -mTargetVelocity);
+		mPositionMotorConstraintPart.CalculateConstraintProperties(*mBody1, mR1 + mU, *mBody2, mR2, mPathTangent, -mTargetVelocity);
 		break;
 
 	case EMotorState::Position:
+		if (mPositionMotorSettings.mSpringSettings.HasStiffness())
 		{
 			// Calculate constraint value to drive to
 			float c;
@@ -211,15 +212,26 @@ void PathConstraint::CalculateConstraintProperties(float inDeltaTime)
 			}
 			else
 				c = mPathFraction - mTargetPathFraction;
-			mPositionMotorConstraintPart.CalculateConstraintProperties(inDeltaTime, *mBody1, mR1 + mU, *mBody2, mR2, mPathTangent, 0.0f, c, mPositionMotorSettings.mFrequency, mPositionMotorSettings.mDamping);
-			break;
+			mPositionMotorConstraintPart.CalculateConstraintPropertiesWithSettings(inDeltaTime, *mBody1, mR1 + mU, *mBody2, mR2, mPathTangent, 0.0f, c, mPositionMotorSettings.mSpringSettings);
 		}
-	}	
+		else
+			mPositionMotorConstraintPart.Deactivate();
+		break;
+	}
 }
 
 void PathConstraint::SetupVelocityConstraint(float inDeltaTime)
 {
 	CalculateConstraintProperties(inDeltaTime);
+}
+
+void PathConstraint::ResetWarmStart()
+{
+	mPositionMotorConstraintPart.Deactivate();
+	mPositionConstraintPart.Deactivate();
+	mPositionLimitsConstraintPart.Deactivate();
+	mHingeConstraintPart.Deactivate();
+	mRotationConstraintPart.Deactivate();
 }
 
 void PathConstraint::WarmStartVelocityConstraint(float inWarmStartImpulseRatio)
@@ -241,7 +253,7 @@ void PathConstraint::WarmStartVelocityConstraint(float inWarmStartImpulseRatio)
 		mHingeConstraintPart.WarmStart(*mBody1, *mBody2, inWarmStartImpulseRatio);
 		break;
 
-	case EPathRotationConstraintType::ConstaintToPath:
+	case EPathRotationConstraintType::ConstrainToPath:
 	case EPathRotationConstraintType::FullyConstrained:
 		mRotationConstraintPart.WarmStart(*mBody1, *mBody2, inWarmStartImpulseRatio);
 		break;
@@ -261,7 +273,7 @@ bool PathConstraint::SolveVelocityConstraint(float inDeltaTime)
 				float max_lambda = mMaxFrictionForce * inDeltaTime;
 				motor = mPositionMotorConstraintPart.SolveVelocityConstraint(*mBody1, *mBody2, mPathTangent, -max_lambda, max_lambda);
 				break;
-			}	
+			}
 
 		case EMotorState::Velocity:
 		case EMotorState::Position:
@@ -303,7 +315,7 @@ bool PathConstraint::SolveVelocityConstraint(float inDeltaTime)
 		rot = mHingeConstraintPart.SolveVelocityConstraint(*mBody1, *mBody2);
 		break;
 
-	case EPathRotationConstraintType::ConstaintToPath:
+	case EPathRotationConstraintType::ConstrainToPath:
 	case EPathRotationConstraintType::FullyConstrained:
 		rot = mRotationConstraintPart.SolveVelocityConstraint(*mBody1, *mBody2);
 		break;
@@ -347,7 +359,7 @@ bool PathConstraint::SolvePositionConstraint(float inDeltaTime, float inBaumgart
 		rot = mHingeConstraintPart.SolvePositionConstraint(*mBody1, *mBody2, inBaumgarte);
 		break;
 
-	case EPathRotationConstraintType::ConstaintToPath:
+	case EPathRotationConstraintType::ConstrainToPath:
 	case EPathRotationConstraintType::FullyConstrained:
 		rot = mRotationConstraintPart.SolvePositionConstraint(*mBody1, *mBody2, mInvInitialOrientation, inBaumgarte);
 		break;
@@ -382,7 +394,7 @@ void PathConstraint::DrawConstraint(DebugRenderer *inRenderer) const
 			{
 				// Draw target marker
 				Vec3 position, tangent, normal, binormal;
-				mPath->GetPointOnPath(mTargetPathFraction, position, tangent, normal, binormal);			
+				mPath->GetPointOnPath(mTargetPathFraction, position, tangent, normal, binormal);
 				inRenderer->DrawMarker(path_to_world * position, Color::sYellow, 1.0f);
 				break;
 			}

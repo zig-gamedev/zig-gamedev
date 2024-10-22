@@ -6,6 +6,8 @@
 
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/SoftBody/SoftBodyCreationSettings.h>
+#include <Jolt/Physics/SoftBody/SoftBodyMotionProperties.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/StateRecorder.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
@@ -39,6 +41,7 @@ void Body::SetMotionType(EMotionType inMotionType)
 
 	JPH_ASSERT(inMotionType == EMotionType::Static || mMotionProperties != nullptr, "Body needs to be created with mAllowDynamicOrKinematic set tot true");
 	JPH_ASSERT(inMotionType != EMotionType::Static || !IsActive(), "Deactivate body first");
+	JPH_ASSERT(inMotionType == EMotionType::Dynamic || !IsSoftBody(), "Soft bodies can only be dynamic, you can make individual vertices kinematic by setting their inverse mass to 0");
 
 	// Store new motion type
 	mMotionType = inMotionType;
@@ -58,8 +61,8 @@ void Body::SetMotionType(EMotionType inMotionType)
 
 		case EMotionType::Kinematic:
 			// Cancel forces
-			mMotionProperties->mForce = Float3(0, 0, 0);
-			mMotionProperties->mTorque = Float3(0, 0, 0);
+			mMotionProperties->ResetForce();
+			mMotionProperties->ResetTorque();
 			break;
 
 		case EMotionType::Dynamic:
@@ -68,17 +71,18 @@ void Body::SetMotionType(EMotionType inMotionType)
 	}
 }
 
-void Body::SetAllowSleeping(bool inAllow)									
-{ 
-	mMotionProperties->mAllowSleeping = inAllow; 
-	if (inAllow) 
-		ResetSleepTestSpheres();
+void Body::SetAllowSleeping(bool inAllow)
+{
+	mMotionProperties->mAllowSleeping = inAllow;
+	if (inAllow)
+		ResetSleepTimer();
 }
 
 void Body::MoveKinematic(RVec3Arg inTargetPosition, QuatArg inTargetRotation, float inDeltaTime)
 {
+	JPH_ASSERT(IsRigidBody()); // Only valid for rigid bodies
 	JPH_ASSERT(!IsStatic());
-	JPH_ASSERT(BodyAccess::sCheckRights(BodyAccess::sPositionAccess, BodyAccess::EAccess::Read)); 
+	JPH_ASSERT(BodyAccess::sCheckRights(BodyAccess::sPositionAccess, BodyAccess::EAccess::Read));
 
 	// Calculate center of mass at end situation
 	RVec3 new_com = inTargetPosition + inTargetRotation * mShape->GetCenterOfMass();
@@ -95,19 +99,19 @@ void Body::CalculateWorldSpaceBoundsInternal()
 	mBounds = mShape->GetWorldSpaceBounds(GetCenterOfMassTransform(), Vec3::sReplicate(1.0f));
 }
 
-void Body::SetPositionAndRotationInternal(RVec3Arg inPosition, QuatArg inRotation) 
-{ 
-	JPH_ASSERT(BodyAccess::sCheckRights(BodyAccess::sPositionAccess, BodyAccess::EAccess::ReadWrite)); 
+void Body::SetPositionAndRotationInternal(RVec3Arg inPosition, QuatArg inRotation, bool inResetSleepTimer)
+{
+	JPH_ASSERT(BodyAccess::sCheckRights(BodyAccess::sPositionAccess, BodyAccess::EAccess::ReadWrite));
 
 	mPosition = inPosition + inRotation * mShape->GetCenterOfMass();
-	mRotation = inRotation; 
+	mRotation = inRotation;
 
 	// Initialize bounding box
 	CalculateWorldSpaceBoundsInternal();
 
 	// Reset sleeping test
-	if (mMotionProperties != nullptr)
-		ResetSleepTestSpheres();
+	if (inResetSleepTimer && mMotionProperties != nullptr)
+		ResetSleepTimer();
 }
 
 void Body::UpdateCenterOfMassInternal(Vec3Arg inPreviousCenterOfMass, bool inUpdateMassProperties)
@@ -117,12 +121,13 @@ void Body::UpdateCenterOfMassInternal(Vec3Arg inPreviousCenterOfMass, bool inUpd
 
 	// Recalculate mass and inertia if requested
 	if (inUpdateMassProperties && mMotionProperties != nullptr)
-		mMotionProperties->SetMassProperties(mShape->GetMassProperties());
+		mMotionProperties->SetMassProperties(mMotionProperties->GetAllowedDOFs(), mShape->GetMassProperties());
 }
 
 void Body::SetShapeInternal(const Shape *inShape, bool inUpdateMassProperties)
 {
-	JPH_ASSERT(BodyAccess::sCheckRights(BodyAccess::sPositionAccess, BodyAccess::EAccess::ReadWrite)); 
+	JPH_ASSERT(IsRigidBody()); // Only valid for rigid bodies
+	JPH_ASSERT(BodyAccess::sCheckRights(BodyAccess::sPositionAccess, BodyAccess::EAccess::ReadWrite));
 
 	// Get the old center of mass
 	Vec3 old_com = mShape->GetCenterOfMass();
@@ -137,7 +142,7 @@ void Body::SetShapeInternal(const Shape *inShape, bool inUpdateMassProperties)
 	CalculateWorldSpaceBoundsInternal();
 }
 
-Body::ECanSleep Body::UpdateSleepStateInternal(float inDeltaTime, float inMaxMovement, float inTimeBeforeSleep)
+ECanSleep Body::UpdateSleepStateInternal(float inDeltaTime, float inMaxMovement, float inTimeBeforeSleep)
 {
 	// Check override & sensors will never go to sleep (they would stop detecting collisions with sleeping bodies)
 	if (!mMotionProperties->mAllowSleeping || IsSensor())
@@ -175,13 +180,14 @@ Body::ECanSleep Body::UpdateSleepStateInternal(float inDeltaTime, float inMaxMov
 		}
 	}
 
-	mMotionProperties->mSleepTestTimer += inDeltaTime;
-	return mMotionProperties->mSleepTestTimer >= inTimeBeforeSleep? ECanSleep::CanSleep : ECanSleep::CannotSleep;
+	return mMotionProperties->AccumulateSleepTime(inDeltaTime, inTimeBeforeSleep);
 }
 
 bool Body::ApplyBuoyancyImpulse(RVec3Arg inSurfacePosition, Vec3Arg inSurfaceNormal, float inBuoyancy, float inLinearDrag, float inAngularDrag, Vec3Arg inFluidVelocity, Vec3Arg inGravity, float inDeltaTime)
 {
 	JPH_PROFILE_FUNCTION();
+
+	JPH_ASSERT(IsRigidBody()); // Only implemented for rigid bodies currently
 
 	// We follow the approach from 'Game Programming Gems 6' 2.5 Exact Buoyancy for Polyhedra
 	// All quantities below are in world space
@@ -194,7 +200,7 @@ bool Body::ApplyBuoyancyImpulse(RVec3Arg inSurfacePosition, Vec3Arg inSurfaceNor
 	float total_volume, submerged_volume;
 	Vec3 relative_center_of_buoyancy;
 	mShape->GetSubmergedVolume(rotation, Vec3::sReplicate(1.0f), surface_relative_to_body, total_volume, submerged_volume, relative_center_of_buoyancy JPH_IF_DEBUG_RENDERER(, mPosition));
-		
+
 	// If we're not submerged, there's no point in doing the rest of the calculations
 	if (submerged_volume > 0.0f)
 	{
@@ -282,27 +288,28 @@ void Body::SaveState(StateRecorder &inStream) const
 	// Only write properties that can change at runtime
 	inStream.Write(mPosition);
 	inStream.Write(mRotation);
-	inStream.Write(mFriction);
-	inStream.Write(mRestitution);
-	mCollisionGroup.SaveBinaryState(inStream);
-	inStream.Write(mMotionType);
 
 	if (mMotionProperties != nullptr)
-		mMotionProperties->SaveState(inStream);
+	{
+		if (IsSoftBody())
+			static_cast<const SoftBodyMotionProperties *>(mMotionProperties)->SaveState(inStream);
+		else
+			mMotionProperties->SaveState(inStream);
+	}
 }
 
 void Body::RestoreState(StateRecorder &inStream)
 {
 	inStream.Read(mPosition);
 	inStream.Read(mRotation);
-	inStream.Read(mFriction);
-	inStream.Read(mRestitution);
-	mCollisionGroup.RestoreBinaryState(inStream);
-	inStream.Read(mMotionType);
 
 	if (mMotionProperties != nullptr)
 	{
-		mMotionProperties->RestoreState(inStream);
+		if (IsSoftBody())
+			static_cast<SoftBodyMotionProperties *>(mMotionProperties)->RestoreState(inStream);
+		else
+			mMotionProperties->RestoreState(inStream);
+
 		JPH_IF_ENABLE_ASSERTS(mMotionProperties->mCachedMotionType = mMotionType);
 	}
 
@@ -312,6 +319,8 @@ void Body::RestoreState(StateRecorder &inStream)
 
 BodyCreationSettings Body::GetBodyCreationSettings() const
 {
+	JPH_ASSERT(IsRigidBody());
+
 	BodyCreationSettings result;
 
 	result.mPosition = GetPosition();
@@ -322,10 +331,14 @@ BodyCreationSettings Body::GetBodyCreationSettings() const
 	result.mUserData = mUserData;
 	result.mCollisionGroup = GetCollisionGroup();
 	result.mMotionType = GetMotionType();
+	result.mAllowedDOFs = mMotionProperties != nullptr? mMotionProperties->GetAllowedDOFs() : EAllowedDOFs::All;
 	result.mAllowDynamicOrKinematic = mMotionProperties != nullptr;
 	result.mIsSensor = IsSensor();
+	result.mCollideKinematicVsNonDynamic = GetCollideKinematicVsNonDynamic();
 	result.mUseManifoldReduction = GetUseManifoldReduction();
+	result.mApplyGyroscopicForce = GetApplyGyroscopicForce();
 	result.mMotionQuality = mMotionProperties != nullptr? mMotionProperties->GetMotionQuality() : EMotionQuality::Discrete;
+	result.mEnhancedInternalEdgeRemoval = GetEnhancedInternalEdgeRemoval();
 	result.mAllowSleeping = mMotionProperties != nullptr? GetAllowSleeping() : true;
 	result.mFriction = GetFriction();
 	result.mRestitution = GetRestitution();
@@ -334,10 +347,65 @@ BodyCreationSettings Body::GetBodyCreationSettings() const
 	result.mMaxLinearVelocity = mMotionProperties != nullptr? mMotionProperties->GetMaxLinearVelocity() : 0.0f;
 	result.mMaxAngularVelocity = mMotionProperties != nullptr? mMotionProperties->GetMaxAngularVelocity() : 0.0f;
 	result.mGravityFactor = mMotionProperties != nullptr? mMotionProperties->GetGravityFactor() : 1.0f;
+	result.mNumVelocityStepsOverride = mMotionProperties != nullptr? mMotionProperties->GetNumVelocityStepsOverride() : 0;
+	result.mNumPositionStepsOverride = mMotionProperties != nullptr? mMotionProperties->GetNumPositionStepsOverride() : 0;
 	result.mOverrideMassProperties = EOverrideMassProperties::MassAndInertiaProvided;
-	result.mMassPropertiesOverride.mMass = mMotionProperties != nullptr? 1.0f / mMotionProperties->GetInverseMassUnchecked() : FLT_MAX;
-	result.mMassPropertiesOverride.mInertia = mMotionProperties != nullptr? mMotionProperties->GetLocalSpaceInverseInertiaUnchecked().Inversed3x3() : Mat44::sIdentity();
+
+	// Invert inertia and mass
+	if (mMotionProperties != nullptr)
+	{
+		float inv_mass = mMotionProperties->GetInverseMassUnchecked();
+		Mat44 inv_inertia = mMotionProperties->GetLocalSpaceInverseInertiaUnchecked();
+
+		// Get mass
+		result.mMassPropertiesOverride.mMass = inv_mass != 0.0f? 1.0f / inv_mass : FLT_MAX;
+
+		// Get inertia
+		Mat44 inertia;
+		if (inertia.SetInversed3x3(inv_inertia))
+		{
+			// Inertia was invertible, we can use it
+			result.mMassPropertiesOverride.mInertia = inertia;
+		}
+		else
+		{
+			// Prevent division by zero
+			Vec3 diagonal = Vec3::sMax(inv_inertia.GetDiagonal3(), Vec3::sReplicate(FLT_MIN));
+			result.mMassPropertiesOverride.mInertia = Mat44::sScale(diagonal.Reciprocal());
+		}
+	}
+	else
+	{
+		result.mMassPropertiesOverride.mMass = FLT_MAX;
+		result.mMassPropertiesOverride.mInertia = Mat44::sScale(Vec3::sReplicate(FLT_MAX));
+	}
+
 	result.SetShape(GetShape());
+
+	return result;
+}
+
+SoftBodyCreationSettings Body::GetSoftBodyCreationSettings() const
+{
+	JPH_ASSERT(IsSoftBody());
+
+	SoftBodyCreationSettings result;
+
+	result.mPosition = GetPosition();
+	result.mRotation = GetRotation();
+	result.mUserData = mUserData;
+	result.mObjectLayer = GetObjectLayer();
+	result.mCollisionGroup = GetCollisionGroup();
+	result.mFriction = GetFriction();
+	result.mRestitution = GetRestitution();
+	const SoftBodyMotionProperties *mp = static_cast<const SoftBodyMotionProperties *>(mMotionProperties);
+	result.mNumIterations = mp->GetNumIterations();
+	result.mLinearDamping = mp->GetLinearDamping();
+	result.mMaxLinearVelocity = mp->GetMaxLinearVelocity();
+	result.mGravityFactor = mp->GetGravityFactor();
+	result.mPressure = mp->GetPressure();
+	result.mUpdatePosition = mp->GetUpdatePosition();
+	result.mSettings = mp->GetSettings();
 
 	return result;
 }
