@@ -66,7 +66,7 @@ pub const VerticesHandle = struct {
 
     fn init(comptime T: type, gctx: *GraphicsContext, vertices_length: usize) !VerticesHandle {
         switch (@typeInfo(T)) {
-            .Struct => |s| {
+            .@"struct" => |s| {
                 if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
@@ -981,7 +981,7 @@ pub const GraphicsContext = struct {
         comptime T: type,
     ) HResultError!ConstantBufferHandle(T) {
         switch (@typeInfo(T)) {
-            .Struct => |s| {
+            .@"struct" => |s| {
                 if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
@@ -1072,7 +1072,7 @@ pub const GraphicsContext = struct {
         vertices_length: usize,
     ) HResultError!VerticesHandle {
         switch (@typeInfo(T)) {
-            .Struct => |s| {
+            .@"struct" => |s| {
                 if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
