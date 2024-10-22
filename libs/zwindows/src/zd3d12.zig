@@ -1663,7 +1663,7 @@ pub const GraphicsContext = struct {
     ) HResultError!ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
-        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var buffer: [std.fs.max_path_bytes]u8 = undefined;
         var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
         const allocator = fba.allocator();
 
@@ -1802,7 +1802,7 @@ pub const GraphicsContext = struct {
     ) !ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
-        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var buffer: [std.fs.max_path_bytes]u8 = undefined;
         var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
         const allocator = fba.allocator();
 
