@@ -20,11 +20,7 @@ pub fn build(b: *std.Build) void {
             "on_demand",
             "Build tracy with TRACY_ON_DEMAND",
         ) orelse false,
-        .shared = b.option(
-            bool, 
-            "shared", 
-            "Build tracy as shared library"
-        ) orelse false,
+        .shared = b.option(bool, "shared", "Build tracy as shared library") orelse false,
     };
 
     const options_step = b.addOptions();
