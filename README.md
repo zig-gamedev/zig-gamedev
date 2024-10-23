@@ -74,7 +74,8 @@ Note: Libs are being migrated from [libs/](libs/) folder in this repo to each th
 | **[zpix](libs/zpix)**         | Support for GPU profiling with PIX for Windows                                                           |
 | **[zpool](libs/zpool)**       | Generic pool & handle implementation                                                                     |
 | **[zsdl](libs/zsdl)**         | Bindings for SDL2 and SDL3                                                                               |
-| **[zstbi](libs/zstbi)**       | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                |
+| **[zstbi](https://github.com/zig-gamedev/zstbi)**       | Zig bindings and build package for stb_image, stb_image_resize and stb_image_write from [Sean Barrett's stb single-file C libraries](https://github.com/nothings/stb)
+                |
 | **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                   |
 | **[zwindows](libs/zwindows)** | Windows development SDK for Zig game developers        |
 
