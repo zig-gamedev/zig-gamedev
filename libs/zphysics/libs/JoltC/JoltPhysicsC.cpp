@@ -3130,6 +3130,34 @@ JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
         *reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator));
 }
 //--------------------------------------------------------------------------------------------------
+JPC_API void
+JPC_CharacterVirtual_ExtendedUpdate(JPC_CharacterVirtual *in_character,
+                                    float in_delta_time,
+                                    const float in_gravity[3],
+                                    const void *in_settings,
+                                    const void *in_broad_phase_layer_filter,
+                                    const void *in_object_layer_filter,
+                                    const void *in_body_filter,
+                                    const void *in_shape_filter,
+                                    JPC_TempAllocator *in_temp_allocator)
+{
+    const JPH::BroadPhaseLayerFilter broad_phase_layer_filter{};
+    const JPH::ObjectLayerFilter object_layer_filter{};
+    const JPH::BodyFilter body_filter{};
+    const JPH::ShapeFilter shape_filter{};
+    toJph(in_character)->ExtendedUpdate(
+        in_delta_time,
+        loadVec3(in_gravity),
+        *static_cast<const JPH::CharacterVirtual::ExtendedUpdateSettings *>(in_settings),
+        in_broad_phase_layer_filter ?
+        *static_cast<const JPH::BroadPhaseLayerFilter *>(in_broad_phase_layer_filter) : broad_phase_layer_filter,
+        in_object_layer_filter ?
+        *static_cast<const JPH::ObjectLayerFilter *>(in_object_layer_filter) : object_layer_filter,
+        in_body_filter ? *static_cast<const JPH::BodyFilter *>(in_body_filter) : body_filter,
+        in_shape_filter ? *static_cast<const JPH::ShapeFilter *>(in_shape_filter) : shape_filter,
+        *reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator));
+}
+//--------------------------------------------------------------------------------------------------
 JPC_API JPC_CharacterGroundState
 JPC_CharacterVirtual_GetGroundState(JPC_CharacterVirtual *in_character)
 {
