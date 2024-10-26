@@ -78,6 +78,19 @@ pub const VTableHeader = switch (@import("builtin").abi) {
     },
 };
 
+pub fn RefTargetHeader(comptime first_field_align: u29) type {
+    return switch (@import("builtin").abi) {
+        .msvc => extern struct {
+            __vtable_ptr: ?*const anyopaque = null,
+            __ref_count: u32 align(first_field_align) = 0,
+        },
+        else => extern struct {
+            __vtable_ptr: ?*const anyopaque = null,
+            __ref_count: u32 = 0,
+        },
+    };
+}
+
 pub const BroadPhaseLayerInterface = extern struct {
     __v: *const VTable,
 
@@ -931,7 +944,7 @@ pub const CharacterContactSettings = extern struct {
 };
 
 pub const CharacterBaseSettings = extern struct {
-    __header: VTableHeader = .{},
+    __header: RefTargetHeader(16),
     up: [4]f32 align(16), // 4th element is ignored
     supporting_volume: [4]f32 align(16), // JPH::Plane - 4th element is used
     max_slope_angle: f32,

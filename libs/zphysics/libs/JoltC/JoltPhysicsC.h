@@ -42,6 +42,18 @@ typedef float JPC_Real;
     #define JPC_DEBUG_RENDERER 0
 #endif
 
+#define _JPC_REFTARGET_HEADER struct { const void * __vfptr_header[1]; uint32_t ref_count; };
+
+#if defined(_MSC_VER)
+#define _JPC_VTABLE_HEADER const void* __vtable_header[1]
+// MSVC quirk: If the first member of a derived class has alignment > 8, then extra padding is inserted such that
+//             the first member of the base class has the same alignment.
+#define _JPC_REFTARGET_HEADER_ALIGN_16 struct { const void * __vtable_ptr[2]; uint32_t ref_count; };
+#else
+#define _JPC_VTABLE_HEADER const void* __vtable_header[2]
+#define _JPC_REFTARGET_HEADER_ALIGN_16 _JPC_REFTARGET_HEADER
+#endif
+
 #define JPC_PI 3.14159265358979323846f
 
 #define JPC_COLLISION_GROUP_INVALID_GROUP 0xffffffff
@@ -469,11 +481,8 @@ typedef struct JPC_Body
 // NOTE: Needs to be kept in sync
 typedef struct JPC_CharacterBaseSettings
 {
-#   if defined(_MSC_VER)
-        const void* __vtable_header[1];
-#   else
-        const void* __vtable_header[2];
-#   endif
+    _JPC_REFTARGET_HEADER_ALIGN_16;
+
     alignas(16) float   up[4]; // 4th element is ignored
     alignas(16) float   supporting_volume[4];
     float               max_slope_angle;
@@ -731,12 +740,6 @@ typedef bool (*JPC_BodyDrawFilterFunc)(const JPC_Body *);
 // Interfaces (virtual tables)
 //
 //--------------------------------------------------------------------------------------------------
-#if defined(_MSC_VER)
-#define _JPC_VTABLE_HEADER const void* __vtable_header[1]
-#else
-#define _JPC_VTABLE_HEADER const void* __vtable_header[2]
-#endif
-
 typedef struct JPC_BroadPhaseLayerInterfaceVTable
 {
     _JPC_VTABLE_HEADER;

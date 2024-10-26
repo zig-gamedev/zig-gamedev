@@ -252,12 +252,7 @@ const tracy_stub = struct {
 };
 
 const tracy_full = struct {
-    const c = @cImport({
-        //@cDefine("TRACY_CALLSTACK", "8"); Uncomment to enable callstacks. "8" is max depth (can be changed).
-        @cDefine("TRACY_ENABLE", "");
-        @cInclude("TracyC.h");
-    });
-
+    const c = @import("c");
     const has_callstack_support = @hasDecl(c, "TRACY_HAS_CALLSTACK") and @hasDecl(c, "TRACY_CALLSTACK");
     const callstack_depth: c_int = if (has_callstack_support) c.TRACY_CALLSTACK else 0;
 
