@@ -13,6 +13,8 @@ const default_options = struct {
     const bind_group_pool_size = 32;
     const bind_group_layout_pool_size = 32;
     const pipeline_layout_pool_size = 32;
+    const max_num_bindings_per_group = 10;
+    const max_num_bind_groups_per_pipeline = 4;
 };
 
 pub fn build(b: *std.Build) void {
@@ -75,6 +77,16 @@ pub fn build(b: *std.Build) void {
             "pipeline_layout_pool_size",
             "Set pipeline layout pool size",
         ) orelse default_options.pipeline_layout_pool_size,
+        .max_num_bindings_per_group = b.option(
+            u32,
+            "max_num_bindings_per_group",
+            "Set maximum number of bindings per bind group",
+        ) orelse default_options.max_num_bindings_per_group,
+        .max_num_bind_groups_per_pipeline = b.option(
+            u32,
+            "max_num_bind_groups_per_pipeline",
+            "Set maximum number of bindings groups per pipeline",
+        ) orelse default_options.max_num_bind_groups_per_pipeline,
     };
 
     const options_step = b.addOptions();
