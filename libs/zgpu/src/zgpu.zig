@@ -1346,7 +1346,7 @@ pub const BindGroupEntryInfo = struct {
     texture_view_handle: ?TextureViewHandle = null,
 };
 
-const max_num_bindings_per_group = 10;
+const max_num_bindings_per_group = zgpu_options.max_num_bindings_per_group;
 
 pub const BindGroupInfo = struct {
     gpuobj: ?wgpu.BindGroup = null,
@@ -1362,7 +1362,7 @@ pub const BindGroupLayoutInfo = struct {
         [_]wgpu.BindGroupLayoutEntry{.{ .binding = 0, .visibility = .{} }} ** max_num_bindings_per_group,
 };
 
-const max_num_bind_groups_per_pipeline = 4;
+const max_num_bind_groups_per_pipeline = zgpu_options.max_num_bind_groups_per_pipeline;
 
 pub const PipelineLayoutInfo = struct {
     gpuobj: ?wgpu.PipelineLayout = null,
