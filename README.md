@@ -24,7 +24,7 @@ Note: If using Git then you will need [Git LFS](https://git-lfs.github.com/) to 
 
 ### Get Zig
 
-Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.14.0-dev.1710+8ee52f99c**. Or you can use the **unstable** [zig-0.14.0 branch](https://github.com/zig-gamedev/zig-gamedev/tree/zig-0.14.0) for newer versions.
+Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.14.0-dev.1911+8ee52f99c**. Or you can use the **unstable** [zig-0.14.0 branch](https://github.com/zig-gamedev/zig-gamedev/tree/zig-0.14.0) for newer versions.
 
 [zigup](https://github.com/marler8997/zigup) is recommended for managing compiler versions. To switch to the compiler version after branch checkout:
 ```sh
@@ -35,10 +35,10 @@ Alternatively, you can download and install manually using the links below:
 
 | OS/Arch         | Download link               |
 | --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.14.0-dev.1710+8ee52f99c.zip](https://pkg.machengine.org/zig/zig-windows-x86_64-0.14.0-dev.1710+8ee52f99c.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-linux-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-x86_64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.14.0-dev.1710+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-aarch64-0.14.0-dev.1710+8ee52f99c.tar.xz) |
+| Windows x86_64  | [zig-windows-x86_64-0.14.0-dev.1911+8ee52f99c.zip](https://pkg.machengine.org/zig/zig-windows-x86_64-0.14.0-dev.1911+8ee52f99c.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-linux-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.14.0-dev.1911+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-aarch64-0.14.0-dev.1911+8ee52f99c.tar.xz) |
 
 ### Build and run the [Samples](#sample-applications-native-wgpu)
 
