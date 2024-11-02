@@ -141,9 +141,11 @@ pub const samples_cross_platform = struct {
     pub const instanced_pills_wgpu = @import("samples/instanced_pills_wgpu/build.zig");
     pub const layers_wgpu = @import("samples/layers_wgpu/build.zig");
     pub const minimal_zgpu_zgui = @import("samples/minimal_zgpu_zgui/build.zig");
-    pub const monolith = @import("samples/monolith/build.zig");
+    // TODO(hazeycode): Get monolith building again. See https://github.com/zig-gamedev/zig-gamedev/pull/718
+    //pub const monolith = @import("samples/monolith/build.zig");
     pub const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
-    pub const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
+    // TODO(hazeycode): Get monolith building again. See https://github.com/zig-gamedev/zig-gamedev/pull/718
+    //pub const physics_test_wgpu = @import("samples/physics_test_wgpu/build.zig");
     pub const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
     pub const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
     pub const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
