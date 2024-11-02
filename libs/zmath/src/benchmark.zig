@@ -22,13 +22,13 @@
 //                      wave benchmark (SOA) - scalar version: 3.6598s, zmath version: 0.4231s
 //
 // -------------------------------------------------------------------------------------------------
-// 'Apple M1 Max', macOS Version 12.4, Zig 0.10.0-dev.2657+74442f350, ReleaseFast
+// 'Apple M1 Pro', macOS Version 12.5, Zig 0.13.0, ReleaseFast
 // -------------------------------------------------------------------------------------------------
-//                matrix mul benchmark (AOS) - scalar version: 1.0297s, zmath version: 1.0538s
-//       cross3, scale, bias benchmark (AOS) - scalar version: 0.6294s, zmath version: 0.6532s
-// cross3, dot3, scale, bias benchmark (AOS) - scalar version: 0.9807s, zmath version: 1.0988s
-//            quaternion mul benchmark (AOS) - scalar version: 1.5413s, zmath version: 0.7800s
-//                      wave benchmark (SOA) - scalar version: 3.4220s, zmath version: 1.0255s
+//                 matrix mul benchmark (AOS) - scalar version: 0.9970s, zmath version: 0.9777s
+//        cross3, scale, bias benchmark (AOS) - scalar version: 0.6250s, zmath version: 0.6423s
+//  cross3, dot3, scale, bias benchmark (AOS) - scalar version: 0.9822s, zmath version: 0.9717s
+//             quaternion mul benchmark (AOS) - scalar version: 0.9872s, zmath version: 0.7767s
+//                       wave benchmark (SOA) - scalar version: 3.3965s, zmath version: 1.0280s
 //
 // -------------------------------------------------------------------------------------------------
 // '11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f, ReleaseFast
