@@ -878,7 +878,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
 fn deinitResult(allocator: std.mem.Allocator, comptime Return: type, result: ?Return) void {
     if (result) |r| {
         switch (@typeInfo(Return)) {
-            .ErrorUnion => |error_union| {
+            .error_union => |error_union| {
                 if (r) |payload| {
                     deinitResult(allocator, error_union.payload, payload);
                 } else |_| {}
@@ -951,7 +951,7 @@ pub fn readOnlyHexdump(allocator: std.mem.Allocator, bytes: []const u8) !void {
 }
 fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Return) !void {
     switch (@typeInfo(Return)) {
-        .Pointer => |pointer| {
+        .pointer => |pointer| {
             if (pointer.size == .Slice and pointer.child != u8) {
                 if (result.len > 0) {
                     for (result, 0..) |v, i| {
@@ -969,7 +969,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
                 return;
             }
         },
-        .Optional => |optional| {
+        .optional => |optional| {
             if (result) |v| {
                 try renderResult(allocator, optional.child, v);
             } else {
@@ -979,7 +979,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             }
             return;
         },
-        .ErrorUnion => |error_union| {
+        .error_union => |error_union| {
             if (result) |v| {
                 try renderResult(allocator, error_union.payload, v);
             } else |err| {
@@ -1337,7 +1337,7 @@ pub fn getter(comptime T: type, comptime f_name: [:0]const u8, self: T, arg_ptrs
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
     const args = args: {
@@ -1360,10 +1360,10 @@ fn fillArgs(comptime arg_ptrs_info: std.builtin.Type.Struct, arg_ptrs: anytype, 
     inline for (arg_ptrs_info.fields, 0..) |field, i| {
         const arg_ptr = @field(arg_ptrs, field.name);
         args[i + offset] = switch (@typeInfo(field.type)) {
-            .Pointer => |pointer| switch (pointer.size) {
+            .pointer => |pointer| switch (pointer.size) {
                 .Slice => arg_ptr,
                 .One => switch (@typeInfo(pointer.child)) {
-                    .Array => std.mem.sliceTo(arg_ptr, 0),
+                    .array => std.mem.sliceTo(arg_ptr, 0),
                     else => switch (field.type) {
                         *std.ArrayList(OpenVR.AppOverrideKeys),
                         *std.ArrayList(OpenVR.TrackedDeviceIndex),
@@ -1387,7 +1387,7 @@ pub fn staticGetter(comptime T: type, comptime f_name: [:0]const u8, arg_ptrs: a
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
     const args = args: {
@@ -1410,7 +1410,7 @@ pub fn allocGetter(allocator: std.mem.Allocator, comptime T: type, comptime f_na
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
     const args = args: {
@@ -1444,7 +1444,7 @@ pub fn allocGetter(allocator: std.mem.Allocator, comptime T: type, comptime f_na
 fn FType(comptime T: type, comptime f_name: []const u8) type {
     const f = @field(T, f_name);
     const F = @TypeOf(f);
-    const f_info = @typeInfo(F).Fn;
+    const f_info = @typeInfo(F).@"fn";
     comptime var arg_types: [f_info.params.len]type = undefined;
     inline for (f_info.params, 0..) |param, i| {
         arg_types[i] = param.type.?;
@@ -1453,11 +1453,11 @@ fn FType(comptime T: type, comptime f_name: []const u8) type {
     const Return = f_info.return_type.?;
     const return_type_info = @typeInfo(Return);
     const Payload = switch (return_type_info) {
-        .ErrorUnion => |error_union| error_union.payload,
+        .error_union => |error_union| error_union.payload,
         else => Return,
     };
     const payload_prefix = switch (return_type_info) {
-        .ErrorUnion => "!",
+        .error_union => "!",
         else => "",
     };
 
@@ -1482,7 +1482,7 @@ pub fn setter(comptime T: type, comptime f_name: [:0]const u8, self: T, arg_ptrs
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
 
@@ -1509,7 +1509,7 @@ pub fn deinitSetter(comptime T: type, comptime f_name: [:0]const u8, self: T, ar
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
 
@@ -1537,7 +1537,7 @@ pub fn persistedSetter(comptime T: type, comptime f_name: [:0]const u8, self: T,
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
 
@@ -1566,7 +1566,7 @@ pub fn allocPersistedSetter(allocator: std.mem.Allocator, comptime T: type, comp
     defer zgui.popId();
 
     const ArgPtrs = @TypeOf(arg_ptrs);
-    const arg_ptrs_info = @typeInfo(ArgPtrs).Struct;
+    const arg_ptrs_info = @typeInfo(ArgPtrs).@"struct";
 
     const f_type = fType(T, f_name);
 

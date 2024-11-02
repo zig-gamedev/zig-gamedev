@@ -83,7 +83,7 @@ pub const Style = extern struct {
     scale_line_circle_size: f32,
     hatched_axis_line_thickness: f32,
     center_circle_size: f32,
-    colors: [@typeInfo(Color).Enum.fields.len][4]f32,
+    colors: [@typeInfo(Color).@"enum".fields.len][4]f32,
 };
 
 //---------------------------------------------------------------------------------------------------------------------|

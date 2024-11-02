@@ -65,7 +65,7 @@ pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
         .name = "Activate EMSDK",
         .owner = b,
         .makeFn = &struct {
-            fn make(_: *std.Build.Step, _: std.Progress.Node) anyerror!void {}
+            fn make(_: *std.Build.Step, _: std.Build.Step.MakeOptions) anyerror!void {}
         }.make,
     });
     step.dependOn(&chmod_emcc.step);

@@ -48,9 +48,9 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
-    @import("zopenvr").addLibraryPathsTo(exe);
+    @import("zopenvr").addLibraryPathsTo(zopenvr, exe);
     @import("zopenvr").linkOpenVR(exe);
-    @import("zopenvr").installOpenVR(&exe.step, options.target.result, .bin);
+    @import("zopenvr").installOpenVR(zopenvr, &exe.step, options.target.result, .bin);
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
@@ -63,7 +63,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .install_subdir = b.pathJoin(&.{ "bin", content_dir }),
     });
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {
-        const compile_shaders = @import("zwindows").addCompileShaders(b, demo_name, .{ .shader_ver = "6_6" });
+        const compile_shaders = @import("zwindows").addCompileShaders(b, demo_name, zwindows, .{ .shader_ver = "6_6" });
         const root_path = pathResolve(b, &.{ @src().file, "..", "..", ".." });
         const shaders_path = b.pathJoin(&.{ root_path, content_path, "shaders" });
 
@@ -97,7 +97,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    @import("zwindows").install_d3d12(&exe.step, .bin);
+    @import("zwindows").install_d3d12(&exe.step, zwindows, .bin);
 
     return exe;
 }

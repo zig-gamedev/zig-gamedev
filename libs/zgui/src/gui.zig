@@ -638,6 +638,9 @@ pub const Condition = enum(c_int) {
 /// `pub fn newFrame() void`
 pub const newFrame = zguiNewFrame;
 extern fn zguiNewFrame() void;
+/// `pub fn endFrame() void`
+pub const endFrame = zguiEndFrame;
+extern fn zguiEndFrame() void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn render() void`
 pub const render = zguiRender;
@@ -1059,7 +1062,7 @@ pub const Style = extern struct {
     curve_tessellation_tol: f32,
     circle_tessellation_max_error: f32,
 
-    colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
+    colors: [@typeInfo(StyleCol).@"enum".fields.len][4]f32,
 
     hover_stationary_delay: f32,
     hover_delay_short: f32,
@@ -1760,11 +1763,11 @@ pub fn comboFromEnum(
     const EnumType = @TypeOf(current_item.*);
     const enum_type_info = getTypeInfo: {
         switch (@typeInfo(EnumType)) {
-            .Optional => |optional_type_info| switch (@typeInfo(optional_type_info.child)) {
-                .Enum => |enum_type_info| break :getTypeInfo enum_type_info,
+            .optional => |optional_type_info| switch (@typeInfo(optional_type_info.child)) {
+                .@"enum" => |enum_type_info| break :getTypeInfo enum_type_info,
                 else => {},
             },
-            .Enum => |enum_type_info| break :getTypeInfo enum_type_info,
+            .@"enum" => |enum_type_info| break :getTypeInfo enum_type_info,
             else => {},
         }
         @compileError("Error: current_item must be a pointer-to-an-enum, not a " ++ @TypeOf(EnumType));
@@ -1788,8 +1791,8 @@ pub fn comboFromEnum(
 
     var item: i32 =
         switch (@typeInfo(EnumType)) {
-        .Optional => if (current_item.*) |tag| field_name_to_index.get(@tagName(tag)) orelse -1 else -1,
-        .Enum => field_name_to_index.get(@tagName(current_item.*)) orelse -1,
+        .optional => if (current_item.*) |tag| field_name_to_index.get(@tagName(tag)) orelse -1 else -1,
+        .@"enum" => field_name_to_index.get(@tagName(current_item.*)) orelse -1,
         else => unreachable,
     };
 
@@ -2086,7 +2089,7 @@ extern fn zguiDragScalar(
 ) bool;
 //--------------------------------------------------------------------------------------------------
 fn DragScalarNGen(comptime T: type) type {
-    const ScalarType = @typeInfo(T).Array.child;
+    const ScalarType = @typeInfo(T).array.child;
     return struct {
         v: *T,
         speed: f32 = 1.0,
@@ -2097,8 +2100,8 @@ fn DragScalarNGen(comptime T: type) type {
     };
 }
 pub fn dragScalarN(label: [:0]const u8, comptime T: type, args: DragScalarNGen(T)) bool {
-    const ScalarType = @typeInfo(T).Array.child;
-    const components = @typeInfo(T).Array.len;
+    const ScalarType = @typeInfo(T).array.child;
+    const components = @typeInfo(T).array.len;
     return zguiDragScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
@@ -2277,7 +2280,7 @@ extern fn zguiSliderScalar(
 
 //--------------------------------------------------------------------------------------------------
 fn SliderScalarNGen(comptime T: type) type {
-    const ScalarType = @typeInfo(T).Array.child;
+    const ScalarType = @typeInfo(T).array.child;
     return struct {
         v: *T,
         min: ScalarType,
@@ -2287,8 +2290,8 @@ fn SliderScalarNGen(comptime T: type) type {
     };
 }
 pub fn sliderScalarN(label: [:0]const u8, comptime T: type, args: SliderScalarNGen(T)) bool {
-    const ScalarType = @typeInfo(T).Array.child;
-    const components = @typeInfo(T).Array.len;
+    const ScalarType = @typeInfo(T).array.child;
+    const components = @typeInfo(T).array.len;
     return zguiSliderScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
@@ -2745,7 +2748,7 @@ extern fn zguiInputScalar(
 ) bool;
 //--------------------------------------------------------------------------------------------------
 fn InputScalarNGen(comptime T: type) type {
-    const ScalarType = @typeInfo(T).Array.child;
+    const ScalarType = @typeInfo(T).array.child;
     return struct {
         v: *T,
         step: ?ScalarType = null,
@@ -2755,8 +2758,8 @@ fn InputScalarNGen(comptime T: type) type {
     };
 }
 pub fn inputScalarN(label: [:0]const u8, comptime T: type, args: InputScalarNGen(T)) bool {
-    const ScalarType = @typeInfo(T).Array.child;
-    const components = @typeInfo(T).Array.len;
+    const ScalarType = @typeInfo(T).array.child;
+    const components = @typeInfo(T).array.len;
     return zguiInputScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
@@ -3722,7 +3725,7 @@ pub const DragDropFlags = packed struct(c_int) {
 };
 
 const Payload = extern struct {
-    data: *anyopaque = null,
+    data: ?*anyopaque = null,
     data_size: c_int = 0,
     source_id: c_uint = 0,
     source_parent_id: c_uint = 0,

@@ -108,7 +108,7 @@ pub fn Pool(
             @"Pool._curr_cycle": AddressableCycle,
         });
 
-        const Storage = MultiArrayList(@Type(.{ .Struct = .{
+        const Storage = MultiArrayList(@Type(.{ .@"struct" = .{
             .layout = .auto,
             .fields = private_fields ++ column_fields,
             .decls = &.{},
@@ -499,7 +499,7 @@ pub fn Pool(
         /// Call `value.deinit()` if defined.
         fn deinitColumnAt(self: Self, index: AddressableIndex, comptime column_field: StructField) void {
             switch (@typeInfo(column_field.type)) {
-                .Struct, .Enum, .Union, .Opaque => {
+                .@"struct", .@"enum", .@"union", .@"opaque" => {
                     if (@hasDecl(column_field.type, "deinit")) {
                         @field(self.columns, column_field.name)[index].deinit();
                     }

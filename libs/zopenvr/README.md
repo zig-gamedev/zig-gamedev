@@ -18,13 +18,12 @@ pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{ ... });
 
     const zopenvr = b.dependency("zopenvr", .{});
-    const zopenvr_path = zopenvr.path("").getPath(b);
 
     exe.root_module.addImport("zopenvr", zopenvr.module("zopenvr"));
 
-    try @import("zopenvr").addLibraryPathsTo(exe, zopenvr_path);
-    @import("zopenvr").linkOpenvr(exe);
-    try @import("zopenvr").installOpenvr(&exe.step, options.target.result, .bin, zopenvr_path);
+    try @import("zopenvr").addLibraryPathsTo(zopenvr, exe);
+    try @import("zopenvr").installOpenVR(zopenvr, &exe.step, target.result, .bin);
+    @import("zopenvr").linkOpenVR(exe);
 }
 ```
 

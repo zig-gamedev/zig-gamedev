@@ -585,7 +585,7 @@ const DemoState = struct {
             const multiple_pills = struct {
                 var segments: i32 = 7;
                 var instance_index: i32 = 0;
-                var rng = std.rand.DefaultPrng.init(42);
+                var rng = std.Random.DefaultPrng.init(42);
             };
             const needs_vertex_update = zgui.sliderInt(
                 "Segments",

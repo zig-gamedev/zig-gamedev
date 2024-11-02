@@ -192,7 +192,7 @@ pub const AudioContext = struct {
     }
 
     pub fn loadSound(actx: *AudioContext, relpath: []const u8) SoundHandle {
-        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var buffer: [std.fs.max_path_bytes]u8 = undefined;
         var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
         const allocator = fba.allocator();
 

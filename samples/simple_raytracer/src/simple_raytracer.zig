@@ -141,7 +141,7 @@ fn parseAndLoadGltfFile(path: []const u8) *c.cgltf_data {
     var data: *c.cgltf_data = undefined;
     const options = std.mem.zeroes(c.cgltf_options);
 
-    var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+    var buffer: [std.fs.max_path_bytes]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
     const allocator = fba.allocator();
 

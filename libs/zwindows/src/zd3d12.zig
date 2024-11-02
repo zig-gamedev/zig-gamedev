@@ -66,7 +66,7 @@ pub const VerticesHandle = struct {
 
     fn init(comptime T: type, gctx: *GraphicsContext, vertices_length: usize) !VerticesHandle {
         switch (@typeInfo(T)) {
-            .Struct => |s| {
+            .@"struct" => |s| {
                 if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
@@ -981,7 +981,7 @@ pub const GraphicsContext = struct {
         comptime T: type,
     ) HResultError!ConstantBufferHandle(T) {
         switch (@typeInfo(T)) {
-            .Struct => |s| {
+            .@"struct" => |s| {
                 if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
@@ -1072,7 +1072,7 @@ pub const GraphicsContext = struct {
         vertices_length: usize,
     ) HResultError!VerticesHandle {
         switch (@typeInfo(T)) {
-            .Struct => |s| {
+            .@"struct" => |s| {
                 if (s.layout != .@"extern") {
                     @compileError(@typeName(T) ++ " must be extern");
                 }
@@ -1663,7 +1663,7 @@ pub const GraphicsContext = struct {
     ) HResultError!ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
-        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var buffer: [std.fs.max_path_bytes]u8 = undefined;
         var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
         const allocator = fba.allocator();
 
@@ -1802,7 +1802,7 @@ pub const GraphicsContext = struct {
     ) !ResourceHandle {
         assert(gctx.is_cmdlist_opened);
 
-        var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var buffer: [std.fs.max_path_bytes]u8 = undefined;
         var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
         const allocator = fba.allocator();
 
