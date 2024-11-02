@@ -305,6 +305,7 @@ static_assert(offsetof(JPH::RayCastSettings, mBackFaceMode) == offsetof(JPC_RayC
 static_assert(offsetof(JPH::RayCastSettings, mTreatConvexAsSolid) ==
     offsetof(JPC_RayCastSettings, treat_convex_as_solid));
 
+static_assert(offsetof(JPH::CharacterBaseSettings, mRefCount) == offsetof(JPC_CharacterBaseSettings, ref_count));
 static_assert(offsetof(JPH::CharacterBaseSettings, mShape) == offsetof(JPC_CharacterBaseSettings, shape));
 static_assert(offsetof(JPH::CharacterSettings, mGravityFactor) == offsetof(JPC_CharacterSettings, gravity_factor));
 static_assert(offsetof(JPH::CharacterVirtualSettings, mMaxNumHits) ==

@@ -20,7 +20,11 @@ pub fn build(b: *std.Build) void {
             "on_demand",
             "Build tracy with TRACY_ON_DEMAND",
         ) orelse false,
-        .shared = b.option(bool, "shared", "Build tracy as shared library") orelse false,
+        .shared = b.option(
+            bool,
+            "shared",
+            "Build as shared library",
+        ) orelse false,
     };
 
     const options_step = b.addOptions();
@@ -30,19 +34,33 @@ pub fn build(b: *std.Build) void {
 
     const options_module = options_step.createModule();
 
+    const translate_c = b.addTranslateC(.{
+        .root_source_file = b.path("libs/tracy/tracy/TracyC.h"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    translate_c.addIncludePath(b.path("libs/tracy/tracy"));
+    translate_c.defineCMacro("TRACY_ENABLE", "");
+    translate_c.defineCMacro("TRACY_IMPORTS", "");
+
     const ztracy = b.addModule("root", .{
         .root_source_file = b.path("src/ztracy.zig"),
         .imports = &.{
             .{ .name = "ztracy_options", .module = options_module },
         },
     });
-    ztracy.addIncludePath(b.path("libs/tracy/tracy"));
+    ztracy.addImport("c", translate_c.createModule());
 
-    const tracy = if (options.shared) b.addSharedLibrary(.{
-        .name = "tracy",
-        .target = target,
-        .optimize = optimize,
-    }) else b.addStaticLibrary(.{
+    const tracy = if (options.shared) blk: {
+        const lib = b.addSharedLibrary(.{
+            .name = "tracy",
+            .target = target,
+            .optimize = optimize,
+        });
+        lib.defineCMacro("TRACY_EXPORTS", "");
+        break :blk lib;
+    } else b.addStaticLibrary(.{
         .name = "tracy",
         .target = target,
         .optimize = optimize,
@@ -61,8 +79,11 @@ pub fn build(b: *std.Build) void {
     if (options.on_demand) tracy.defineCMacro("TRACY_ON_DEMAND", null);
 
     tracy.linkLibC();
-    if (target.result.abi != .msvc)
+    if (target.result.abi != .msvc) {
         tracy.linkLibCpp();
+    } else {
+        tracy.defineCMacro("fileno", "_fileno");
+    }
 
     switch (target.result.os.tag) {
         .windows => {
