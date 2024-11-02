@@ -1,5 +1,4 @@
 const std = @import("std");
-const options = @import("zmesh_options");
 
 pub fn init(alloc: std.mem.Allocator) void {
     std.debug.assert(mem_allocator == null and mem_allocations == null);
@@ -8,27 +7,10 @@ pub fn init(alloc: std.mem.Allocator) void {
     mem_allocations = std.AutoHashMap(usize, usize).init(alloc);
     mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
 
-    const zmeshMallocPtr = @extern(*?*const fn (size: usize) callconv(.C) ?*anyopaque, .{
-        .name = "zmeshMallocPtr",
-        .is_dll_import = options.shared,
-    });
-    const zmeshCallocPtr = @extern(*?*const fn (num: usize, size: usize) callconv(.C) ?*anyopaque, .{
-        .name = "zmeshCallocPtr",
-        .is_dll_import = options.shared,
-    });
-    const zmeshReallocPtr = @extern(*?*const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque, .{
-        .name = "zmeshReallocPtr",
-        .is_dll_import = options.shared,
-    });
-    const zmeshFreePtr = @extern(*?*const fn (maybe_ptr: ?*anyopaque) callconv(.C) void, .{
-        .name = "zmeshFreePtr",
-        .is_dll_import = options.shared,
-    });
-
-    zmeshMallocPtr.* = zmeshMalloc;
-    zmeshCallocPtr.* = zmeshCalloc;
-    zmeshReallocPtr.* = zmeshRealloc;
-    zmeshFreePtr.* = zmeshFree;
+    zmeshMallocPtr = zmeshMalloc;
+    zmeshCallocPtr = zmeshCalloc;
+    zmeshReallocPtr = zmeshRealloc;
+    zmeshFreePtr = zmeshFree;
     meshopt_setAllocator(zmeshMalloc, zmeshFree);
 }
 
@@ -51,6 +33,8 @@ var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
 const mem_alignment = 16;
 
+extern var zmeshMallocPtr: ?*const fn (size: usize) callconv(.C) ?*anyopaque;
+
 pub fn zmeshMalloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
@@ -66,6 +50,8 @@ pub fn zmeshMalloc(size: usize) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
+extern var zmeshCallocPtr: ?*const fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
+
 fn zmeshCalloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
     const ptr = zmeshMalloc(num * size);
     if (ptr != null) {
@@ -79,6 +65,8 @@ pub fn zmeshAllocUser(user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     _ = user;
     return zmeshMalloc(size);
 }
+
+extern var zmeshReallocPtr: ?*const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
 
 fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
@@ -102,6 +90,8 @@ fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
 
     return mem.ptr;
 }
+
+extern var zmeshFreePtr: ?*const fn (maybe_ptr: ?*anyopaque) callconv(.C) void;
 
 fn zmeshFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
     if (maybe_ptr) |ptr| {
