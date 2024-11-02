@@ -660,6 +660,17 @@ typedef struct JPC_Shape_SupportingFace
     alignas(16) float    points[32][4]; // 4th element is ignored; world space
 } JPC_Shape_SupportingFace;
 
+// NOTE: Needs to be kept in sync with JPH::CharacterVirtual::ExtendedUpdateSettings
+typedef struct JPC_CharacterVirtual_ExtendedUpdateSettings
+{
+    alignas(16) float stick_to_floor_step_down[4]; // 4th element is ignored;
+    alignas(16) float walk_stairs_step_up[4]; // 4th element is ignored;
+    float             walk_stairs_min_step_forward;
+    float             walk_stairs_step_forward_test;
+    float             walk_stairs_cos_angle_forward_contact;
+    alignas(16) float walk_stairs_step_down_extra[4]; // 4th element is ignored;
+} JPC_CharacterVirtual_ExtendedUpdateSettings;
+
 #if JPC_DEBUG_RENDERER == 1
 // NOTE: Needs to be kept in sync with JPH::AABox
 
@@ -2223,6 +2234,17 @@ JPC_API void
 JPC_CharacterVirtual_Update(JPC_CharacterVirtual *in_character,
                             float in_delta_time,
                             const float in_gravity[3],
+                            const void *in_broad_phase_layer_filter,
+                            const void *in_object_layer_filter,
+                            const void *in_body_filter,
+                            const void *in_shape_filter,
+                            JPC_TempAllocator *in_temp_allocator);
+
+JPC_API void
+JPC_CharacterVirtual_ExtendedUpdate(JPC_CharacterVirtual *in_character,
+                            float in_delta_time,
+                            const float in_gravity[3],
+                            const void *in_settings,
                             const void *in_broad_phase_layer_filter,
                             const void *in_object_layer_filter,
                             const void *in_body_filter,

@@ -2488,6 +2488,21 @@ pub const Character = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const CharacterVirtual = opaque {
+    pub const ExtendedUpdateSettings = extern struct {
+        stick_to_floor_step_down: [4]f32 align(16) = .{ 0, -0.5, 0, 0 }, // 4th element is ignored
+        walk_stairs_step_up: [4]f32 align(16) = .{ 0, 0.4, 0, 0 }, // 4th element is ignored
+        walk_stairs_min_step_forward: f32 = 0.02,
+        walk_stairs_step_forward_test: f32 = 0.15,
+        walk_stairs_cos_angle_forward_contact: f32 = std.math.cos(std.math.degreesToRadians(75.0)),
+        walk_stairs_step_down_extra: [4]f32 align(16) = .{ 0, 0, 0, 0 }, // 4th element is ignored
+
+        comptime {
+            assert(@sizeOf(ExtendedUpdateSettings) == @sizeOf(c.JPC_CharacterVirtual_ExtendedUpdateSettings));
+            assert(@offsetOf(ExtendedUpdateSettings, "walk_stairs_cos_angle_forward_contact") ==
+                @offsetOf(c.JPC_CharacterVirtual_ExtendedUpdateSettings, "walk_stairs_cos_angle_forward_contact"));
+        }
+    };
+
     pub fn create(
         in_settings: *const CharacterVirtualSettings,
         in_position: [3]Real,
@@ -2521,6 +2536,31 @@ pub const CharacterVirtual = opaque {
             @as(*c.JPC_CharacterVirtual, @ptrCast(character)),
             delta_time,
             &gravity,
+            args.broad_phase_layer_filter,
+            args.object_layer_filter,
+            args.body_filter,
+            args.shape_filter,
+            @as(*c.JPC_TempAllocator, @ptrCast(state.?.temp_allocator)),
+        );
+    }
+
+    pub fn extendedUpdate(
+        character: *CharacterVirtual,
+        delta_time: f32,
+        gravity: [3]f32,
+        settings: *const ExtendedUpdateSettings,
+        args: struct {
+            broad_phase_layer_filter: ?*const BroadPhaseLayerFilter = null,
+            object_layer_filter: ?*const ObjectLayerFilter = null,
+            body_filter: ?*const BodyFilter = null,
+            shape_filter: ?*const ShapeFilter = null,
+        },
+    ) void {
+        c.JPC_CharacterVirtual_ExtendedUpdate(
+            @as(*c.JPC_CharacterVirtual, @ptrCast(character)),
+            delta_time,
+            &gravity,
+            settings,
             args.broad_phase_layer_filter,
             args.object_layer_filter,
             args.body_filter,
