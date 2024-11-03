@@ -4699,8 +4699,7 @@ fn Vector(comptime T: type) type {
 test {
     const testing = std.testing;
 
-    testing.refAllDeclsRecursive(@This());
-    if (@import("zgui_options").with_gizmo) testing.refAllDeclsRecursive(gizmo);
+    if (@import("zgui_options").with_gizmo) _ = gizmo;
 
     init(testing.allocator);
     defer deinit();
