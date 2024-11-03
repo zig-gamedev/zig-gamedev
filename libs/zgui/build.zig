@@ -119,13 +119,13 @@ pub fn build(b: *std.Build) void {
 
     if (options.with_freetype) {
         if (b.lazyDependency("freetype", .{})) |freetype| {
-            imgui.addCSourceFile(.{
-                .file = b.path("libs/imgui/misc/freetype/imgui_freetype.cpp"),
-                .flags = cflags,
-            });
-            imgui.defineCMacro("IMGUI_ENABLE_FREETYPE", "1");
             imgui.linkLibrary(freetype.artifact("freetype"));
         }
+        imgui.addCSourceFile(.{
+            .file = b.path("libs/imgui/misc/freetype/imgui_freetype.cpp"),
+            .flags = cflags,
+        });
+        imgui.defineCMacro("IMGUI_ENABLE_FREETYPE", "1");
     }
 
     if (options.use_wchar32) {
@@ -244,10 +244,12 @@ pub fn build(b: *std.Build) void {
 
     switch (options.backend) {
         .glfw_wgpu => {
-            const zglfw = b.dependency("zglfw", .{});
-            const zgpu = b.dependency("zgpu", .{});
-            imgui.addIncludePath(zglfw.path("libs/glfw/include"));
-            imgui.addIncludePath(zgpu.path("libs/dawn/include"));
+            if (b.lazyDependency("zglfw", .{})) |zglfw| {
+                imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            }
+            if (b.lazyDependency("zgpu", .{})) |zgpu| {
+                imgui.addIncludePath(zgpu.path("libs/dawn/include"));
+            }
             imgui.addCSourceFiles(.{
                 .files = &.{
                     "libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -257,8 +259,9 @@ pub fn build(b: *std.Build) void {
             });
         },
         .glfw_opengl3 => {
-            const zglfw = b.dependency("zglfw", .{});
-            imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            if (b.lazyDependency("zglfw", .{})) |zglfw| {
+                imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            }
             imgui.addCSourceFiles(.{
                 .files = &.{
                     "libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -268,8 +271,9 @@ pub fn build(b: *std.Build) void {
             });
         },
         .glfw_dx12 => {
-            const zglfw = b.dependency("zglfw", .{});
-            imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            if (b.lazyDependency("zglfw", .{})) |zglfw| {
+                imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            }
             imgui.addCSourceFiles(.{
                 .files = &.{
                     "libs/imgui/backends/imgui_impl_glfw.cpp",
@@ -296,8 +300,9 @@ pub fn build(b: *std.Build) void {
             }
         },
         .glfw => {
-            const zglfw = b.dependency("zglfw", .{});
-            imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            if (b.lazyDependency("zglfw", .{})) |zglfw| {
+                imgui.addIncludePath(zglfw.path("libs/glfw/include"));
+            }
             imgui.addCSourceFiles(.{
                 .files = &.{
                     "libs/imgui/backends/imgui_impl_glfw.cpp",
