@@ -1,8 +1,0 @@
-Name: Security
-SwiftVersions:
-  - Version: 4
-    Functions:
-      - Name: SecTrustEvaluate
-        Parameters:
-          - Position: 1
-            Nullability: O
