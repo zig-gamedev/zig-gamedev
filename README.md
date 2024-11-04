@@ -1,44 +1,10 @@
-[Libraries](#libraries) - [Getting Started](#getting-started) - [Sample applications](#sample-applications-native-wgpu) - [Others using zig-gamedev](#others-using-zig-gamedev)
-
 # [zig-gamedev](https://github.com/zig-gamedev) dev repo
 
-We build game development ecosystem for [Zig programming language](https://ziglang.org/), every day since July 2021. Please consider [supporting the project](https://github.com/sponsors/hazeycode). We create:
+The original repo spawned in July 2021 by [Michal Ziulek](https://github.com/michal-z). This is the main development repo for the [zig-gamedev libraries](https://github.com/zig-gamedev#libraries) and [sample applications](#sample-applications-native-wgpu).
 
-* Cross-platform and composable [libraries](#libraries)
-* Cross-platform [sample applications](#sample-applications-native-wgpu)
-* DirectX 12 [sample applications](#sample-applications-directx-12)
+Zig is still in development. This repo aims to track zig nightly.
 
-### Vision
-* Very modular "toolbox of libraries", user can use only the components she needs
-* Just [Zig](https://ziglang.org) is required to build on Windows, macOS and Linux - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
-* Building is as easy as `zig build`
-* Libraries are written from scratch in Zig *or* provide Ziggified bindings for carefully selected C/C++ libraries
-* Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) or OpenGL for cross-platform graphics and DirectX 12 for low-level graphics on Windows
-
-
-## Getting Started
-
-Download the [latest archive](https://github.com/zig-gamedev/zig-gamedev/archive/refs/heads/main.zip) or clone/submodule with Git.
-
-Note: If using Git then you will need [Git LFS](https://git-lfs.github.com/) to be installed.
-
-### Get Zig
-
-Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch is currenly tracking Zig **0.14.0-dev.1911+8ee52f99c**. Or you can use the **unstable** [zig-0.14.0 branch](https://github.com/zig-gamedev/zig-gamedev/tree/zig-0.14.0) for newer versions.
-
-[zigup](https://github.com/marler8997/zigup) is recommended for managing compiler versions. To switch to the compiler version after branch checkout:
-```sh
-zigup $(< .zigversion)
-```
-
-Alternatively, you can download and install manually using the links below:
-
-| OS/Arch         | Download link               |
-| --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.14.0-dev.1911+8ee52f99c.zip](https://pkg.machengine.org/zig/zig-windows-x86_64-0.14.0-dev.1911+8ee52f99c.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-linux-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-x86_64-0.14.0-dev.1911+8ee52f99c.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.14.0-dev.1911+8ee52f99c.tar.xz](https://pkg.machengine.org/zig/zig-macos-aarch64-0.14.0-dev.1911+8ee52f99c.tar.xz) |
+Libraries now live in their own repositories and are included in this repo as git submodules for developer convenience.
 
 ### Build and run the [Samples](#sample-applications-native-wgpu)
 
@@ -51,32 +17,6 @@ To get a list of all available build steps:
 ```
 zig build -l
 ```
-
-## Libraries
-Note: Libs are being migrated from [libs/](libs/) folder in this repo to each their own repository under the [zig-gamedev GitHub organisation](https://github.com/zig-gamedev). See [migration tracking PR](https://github.com/zig-gamedev/zig-gamedev/pull/668).
-
-| Library                       | Description                                                                                                                |
-|-------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| **[zaudio](libs/zaudio)**     | Cross-platform audio using [miniaudio](https://github.com/mackron/miniaudio)                                                                         |
-| **[zbullet](libs/zbullet)**   | Build package, [C API](https://github.com/zig-gamedev/zig-gamedev/tree/main/libs/zbullet/libs/cbullet) and bindings for [Bullet physics](https://github.com/bulletphysics/bullet3)                                                                           |
-| **[zflecs](libs/zflecs)**     | Build package and bindings for [flecs](https://github.com/SanderMertens/flecs) ECS                                                         |
-| **[zemscripten](libs/zemscripten)**  | Build package and shims for [Emscripten](https://emscripten.org) emsdk |
-| **[zglfw](libs/zglfw)**       | Build package & bindings for [GLFW](https://github.com/glfw/glfw)                                                                          |
-| **[zgpu](libs/zgpu)**         | Small helper library built on top of [Dawn](https://github.com/zig-gamedev/dawn) native WebGPU implementation                              |
-| **[zgui](libs/zgui)**         | Build package and bindings for [Dear Imgui](https://github.com/ocornut/imgui), [Test engine](https://github.com/ocornut/imgui_test_engine), [ImPlot](https://github.com/epezent/implot), [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo) and [imgui-node-editor](https://github.com/thedmd/imgui-node-editor)                       |
-| **[zjobs](libs/zjobs)**       | Generic job queue implementation                                                                                                           |
-| **[zmath](libs/zmath)**       | SIMD math library for game developers                                                                                                      |
-| **[zmesh](libs/zmesh)**       | Loading, generating, processing and optimizing triangle meshes                                                                             |
-| **[znoise](libs/znoise)**     | Build package & bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)                                                      |
-| **[zopengl](libs/zopengl)**   | OpenGL loader (supports 4.2 Core Profile and ES 2.0 Profile)                                                                               |
-| **[zopenvr](libs/zopenvr)**   | Bindings for [OpenVR](https://github.com/ValveSoftware/openvr)                                                                             |
-| **[zphysics](libs/zphysics)** | Build package, [C API](libs/zphysics/libs/JoltC) and bindings for [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                    |
-| **[zpix](libs/zpix)**         | Support for GPU profiling with PIX for Windows                                                           |
-| **[zpool](libs/zpool)**       | Generic pool & handle implementation                                                                     |
-| **[zsdl](libs/zsdl)**         | Bindings for SDL2 and SDL3                                                                               |
-| **[zstbi](libs/zstbi)**       | Image reading, writing and resizing with [stb](https://github.com/nothings/stb) libraries                |
-| **[ztracy](libs/ztracy)**     | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)                                                                   |
-| **[zwindows](libs/zwindows)** | Windows development SDK for Zig game developers        |
 
 ## Sample applications (native wgpu)
 
@@ -121,15 +61,3 @@ Some of the sample applications are listed below. More can be found in [samples]
 1. [mesh shader test](samples/mesh_shader_test): This sample shows how to use DirectX 12 Mesh Shader.<br />`zig build mesh_shader_test-run`
 
    <a href="samples/mesh_shader_test"><img src="samples/mesh_shader_test/screenshot.png" alt="mesh shader test" height="200"></a>
-
-
-## Others using zig-gamedev
-
-* [Tides of Revival](https://github.com/Srekel/tides-of-revival) - First-person, open-world, fantasy RPG being developed in the open
-* [Markets](https://github.com/ckrowland/markets) - Visually simulate markets of basic consumers and producers
-* [krateroid](https://github.com/kussakaa/krateroid) - 3D strategy game
-* [blokens](https://github.com/btipling/blockens) - Voxel game
-* [Delve Framework](https://github.com/Interrupt/delve-framework) - Simple game framework for making games with Lua
-* [jok](https://github.com/jack-ji/jok) - A minimal 2D/3D game framework for Zig
-* [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
-* [Pixi](https://github.com/foxnne/pixi) - Pixel art editor made with Zig
