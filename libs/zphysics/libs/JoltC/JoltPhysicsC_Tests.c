@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 //#define PRINT_OUTPUT
 
@@ -855,5 +856,178 @@ JoltCTest_HelloWorld(void)
     JPC_DestroyFactory();
 
     return 1;
+}
+//--------------------------------------------------------------------------------------------------
+// Serialization
+//--------------------------------------------------------------------------------------------------
+typedef struct BufferStreamOutImpl
+{
+    const JPC_StreamOutVTable *vtable;
+	void* buffer;
+	size_t len;
+	bool failed;
+} BufferStreamOutImpl;
+
+static void
+BufferedStreamOutImpl_WriteBytes(void *in_self, const void *in_data, size_t in_num_bytes)
+{
+	BufferStreamOutImpl* self = (BufferStreamOutImpl*)in_self;
+	if (self->failed)
+	{
+		return;
+	}
+
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "BufferedStreamOutImpl_WriteBytes(%llx, %llu)\n", (size_t)in_data, in_num_bytes);
+#endif
+
+	const size_t start = self->len;
+	self->len += in_num_bytes;
+
+	void* new_buffer = realloc(self->buffer, self->len);
+	if (!new_buffer)
+	{
+		free(self->buffer);
+		self->failed = true;
+	}
+
+	self->buffer = new_buffer;
+	memcpy(self->buffer + start, in_data, in_num_bytes);
+}
+
+static bool
+BufferedStreamOutImpl_IsFailed(const void *in_self)
+{
+	const BufferStreamOutImpl* self = (BufferStreamOutImpl*)in_self;
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "BufferedStreamOutImpl_IsFailed()\n");
+#endif
+	return self->failed;
+}
+
+static BufferStreamOutImpl
+BufferedStreamOutImpl_Init(void)
+{
+    static const JPC_StreamOutVTable vtable =
+    {
+        .WriteBytes = BufferedStreamOutImpl_WriteBytes,
+        .IsFailed = BufferedStreamOutImpl_IsFailed,
+    };
+    BufferStreamOutImpl impl =
+    {
+        .vtable = &vtable,
+		.buffer = NULL,
+		.len = 0,
+		.failed = false,
+    };
+    return impl;
+}
+
+typedef struct BufferStreamInImpl
+{
+    const JPC_StreamInVTable *vtable;
+	void* buffer;
+	size_t len;
+	size_t next;
+	bool eof;
+} BufferStreamInImpl;
+
+static void
+BufferedStreamInImpl_ReadBytes(void *in_self, void *out_data, size_t in_num_bytes)
+{
+	BufferStreamInImpl* self = (BufferStreamInImpl*)in_self;
+#ifdef PRINT_OUTPUT
+	fprintf(stderr, "BufferedStreamInImpl_ReadBytes(%llx, %llu)\n", (size_t)out_data, in_num_bytes);
+#endif
+	
+	const size_t remaining = self->len - self->next;
+	size_t copy_len = in_num_bytes;
+	if (copy_len > remaining)
+	{
+		self->eof = true;
+		copy_len = remaining;
+	}
+
+	if (copy_len > 0)
+	{
+		memcpy(out_data, self->buffer + self->next, copy_len);
+		self->next += copy_len;
+	}
+}
+
+static bool
+BufferedStreamInImpl_IsEOF(const void *in_self)
+{
+	BufferStreamInImpl* self = (BufferStreamInImpl*)in_self;
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "BufferedStreamInImpl_IsEOF()\n");
+#endif
+	return self->eof;
+}
+
+static bool
+BufferedStreamInImpl_IsFailed(const void *in_self)
+{
+#ifdef PRINT_OUTPUT
+    fprintf(stderr, "BufferedStreamInImpl_IsFailed()\n");
+#endif
+	return false;
+}
+
+static BufferStreamInImpl
+BufferedStreamInImpl_Init(void)
+{
+    static const JPC_StreamInVTable vtable =
+    {
+        .ReadBytes = BufferedStreamInImpl_ReadBytes,
+        .IsEOF = BufferedStreamInImpl_IsEOF,
+        .IsFailed = BufferedStreamInImpl_IsFailed,
+    };
+    BufferStreamInImpl impl =
+    {
+        .vtable = &vtable,
+		.buffer = NULL,
+		.len = 0,
+		.next = 0,
+    };
+    return impl;
+}
+
+uint32_t
+JoltCTest_Serialization(void)
+{
+	JPC_RegisterDefaultAllocator();
+	JPC_CreateFactory();
+	JPC_RegisterTypes();
+
+	JPC_TempAllocator *temp_allocator = JPC_TempAllocator_Create(10 * 1024 * 1024);
+	const float half_extent[3] = { 1.f, 2.f, 3.f };
+
+	{
+		JPC_BoxShapeSettings* box_shape_settings = JPC_BoxShapeSettings_Create(half_extent);
+		JPC_Shape* box_shape = JPC_ShapeSettings_CreateShape((JPC_ShapeSettings*)box_shape_settings);
+
+		BufferStreamOutImpl stream_out = BufferedStreamOutImpl_Init();
+		JPC_Shape_SaveBinaryState(box_shape, &stream_out);
+		assert(!stream_out.failed);
+
+		BufferStreamInImpl stream_in = BufferedStreamInImpl_Init();
+		stream_in.buffer = stream_out.buffer;
+		stream_in.len = stream_out.len;
+
+		JPC_Shape* box_restored = JPC_Shape_sRestoreFromBinaryState(&stream_in);
+		assert(JPC_SHAPE_SUB_TYPE_BOX == JPC_Shape_GetSubType(box_restored));
+
+		float half_extent_restored[3] = { 0, 0, 0 };
+		JPC_BoxShape_GetHalfExtent((JPC_BoxShape*)box_restored, half_extent_restored);
+		assert(memcmp(half_extent, half_extent_restored, 3 * sizeof(float)) == 0);
+
+		free(stream_in.buffer);
+	}
+
+	JPC_TempAllocator_Destroy(temp_allocator);
+	JPC_DestroyFactory();
+
+	return 1;
 }
 //--------------------------------------------------------------------------------------------------

@@ -751,6 +751,36 @@ typedef bool (*JPC_BodyDrawFilterFunc)(const JPC_Body *);
 // Interfaces (virtual tables)
 //
 //--------------------------------------------------------------------------------------------------
+typedef struct JPC_StreamOutVTable
+{
+    _JPC_VTABLE_HEADER;
+
+    // Required, *cannot* be NULL.
+    void
+    (*WriteBytes)(void *in_self, const void *in_data, size_t in_num_bytes);
+	
+    // Required, *cannot* be NULL.
+    bool
+    (*IsFailed)(const void *in_self);
+} JPC_StreamOutVTable;
+
+typedef struct JPC_StreamInVTable
+{
+    _JPC_VTABLE_HEADER;
+
+    // Required, *cannot* be NULL.
+    void
+    (*ReadBytes)(void *in_self, void *out_data, size_t in_num_bytes);
+
+    // Required, *cannot* be NULL.
+    bool
+    (*IsEOF)(const void *in_self);
+	
+    // Required, *cannot* be NULL.
+    bool
+    (*IsFailed)(const void *in_self);
+} JPC_StreamInVTable;
+
 typedef struct JPC_BroadPhaseLayerInterfaceVTable
 {
     _JPC_VTABLE_HEADER;
@@ -1738,6 +1768,15 @@ JPC_Shape_CastRay(const JPC_Shape *in_shape,
                   const JPC_RayCast *in_ray,
                   const JPC_SubShapeIDCreator *in_id_creator,
                   JPC_RayCastResult *io_hit); // *Must* be default initialized (see JPC_RayCastResult)
+
+// `in_stream_out` *must* point to a struct that has JPC_StreamOutVTable as its first member
+JPC_API void
+JPC_Shape_SaveBinaryState(const JPC_Shape* in_shape, void* in_stream_out);
+
+// `in_stream_in` *must* point to a struct that has JPC_StreamInVTable as its first member
+JPC_API JPC_Shape*
+JPC_Shape_sRestoreFromBinaryState(void* in_stream_in); 
+
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BoxShape

@@ -1936,6 +1936,23 @@ JPC_Shape_CastRay(const JPC_Shape *in_shape,
     assert(in_shape && in_ray && in_id_creator && io_hit);
     return toJph(in_shape)->CastRay(*toJph(in_ray), *toJph(in_id_creator), *toJph(io_hit));
 }
+
+JPC_API void
+JPC_Shape_SaveBinaryState(const JPC_Shape* in_shape, void* in_stream_out)
+{
+    assert(in_shape && in_stream_out);
+    return toJph(in_shape)->SaveBinaryState(*static_cast<JPH::StreamOut *>(in_stream_out));
+}
+
+JPC_API JPC_Shape*
+JPC_Shape_sRestoreFromBinaryState(void* in_stream_in)
+{
+	const JPH::Result result = JPH::Shape::sRestoreFromBinaryState(*static_cast<JPH::StreamIn *>(in_stream_in));
+	if (result.HasError()) return nullptr;
+	JPH::Shape* shape = const_cast<JPH::Shape*>(result.Get().GetPtr());
+	shape->AddRef();
+	return toJpc(shape);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // JPC_BoxShape

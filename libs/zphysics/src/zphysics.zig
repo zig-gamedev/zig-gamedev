@@ -91,6 +91,129 @@ pub fn RefTargetHeader(comptime first_field_align: u29) type {
     };
 }
 
+pub const StreamOut = extern struct {
+    __v: *const VTable,
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn writeBytes(self: *T, data: [*]const u8, num_bytes: usize) u32 {
+                return @as(*StreamOut.VTable, @ptrCast(self.__v))
+                    .writeBytes(@as(*StreamOut, @ptrCast(self)), data, num_bytes);
+            }
+            pub inline fn isFailed(self: *const T) bool {
+                return @as(*const StreamOut.VTable, @ptrCast(self.__v))
+                    .isFailed(@as(*const StreamOut, @ptrCast(self)));
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        writeBytes: *const fn (self: *StreamOut, data: [*]const u8, num_bytes: usize) callconv(.C) void,
+        isFailed: *const fn (self: *StreamOut) callconv(.C) bool,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_StreamOutVTable));
+    }
+};
+
+pub const AnyWriterStreamOut = extern struct {
+    usingnamespace StreamOut.Methods(@This());
+    __v: *const StreamOut.VTable = &vtable,
+    writer: *const std.io.AnyWriter,
+    failed: bool = false,
+
+    const vtable = StreamOut.VTable{
+        .writeBytes = _writeBytes,
+        .isFailed = _isFailed,
+    };
+
+    pub fn init(writer: *const std.io.AnyWriter) AnyWriterStreamOut {
+        return .{ .writer = writer };
+    }
+
+    fn _writeBytes(iself: *StreamOut, data: [*]const u8, num_bytes: usize) callconv(.C) void {
+        const self = @as(*AnyWriterStreamOut, @ptrCast(iself));
+        self.writer.writeAll(data[0..num_bytes]) catch {
+            self.failed = true;
+        };
+    }
+
+    fn _isFailed(iself: *StreamOut) callconv(.C) bool {
+        const self = @as(*AnyWriterStreamOut, @ptrCast(iself));
+        return self.failed;
+    }
+};
+
+pub const StreamIn = extern struct {
+    __v: *const VTable,
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn readBytes(self: *T, data: [*]u8, num_bytes: usize) u32 {
+                return @as(*StreamIn.VTable, @ptrCast(self.__v))
+                    .readBytes(@as(*StreamIn, @ptrCast(self)), data, num_bytes);
+            }
+            pub inline fn isEOF(self: *const T) bool {
+                return @as(*const StreamIn.VTable, @ptrCast(self.__v))
+                    .isEof(@as(*const StreamIn, @ptrCast(self)));
+            }
+            pub inline fn isFailed(self: *const T) bool {
+                return @as(*const StreamIn.VTable, @ptrCast(self.__v))
+                    .isFailed(@as(*const StreamIn, @ptrCast(self)));
+            }
+        };
+    }
+
+    pub const VTable = extern struct {
+        __header: VTableHeader = .{},
+        readBytes: *const fn (self: *StreamIn, data: [*]u8, num_bytes: usize) callconv(.C) void,
+        isEof: *const fn (self: *StreamIn) callconv(.C) bool,
+        isFailed: *const fn (self: *StreamIn) callconv(.C) bool,
+    };
+
+    comptime {
+        assert(@sizeOf(VTable) == @sizeOf(c.JPC_StreamInVTable));
+    }
+};
+
+pub const AnyReaderStreamIn = extern struct {
+    usingnamespace StreamIn.Methods(@This());
+    __v: *const StreamIn.VTable = &vtable,
+    reader: *const std.io.AnyReader,
+    failed: bool = false,
+    eof: bool = false,
+
+    const vtable = StreamIn.VTable{
+        .readBytes = _readBytes,
+        .isEof = _isEof,
+        .isFailed = _isFailed,
+    };
+
+    pub fn init(reader: *const std.io.AnyReader) AnyReaderStreamIn {
+        return .{ .reader = reader };
+    }
+
+    fn _readBytes(iself: *StreamIn, data: [*]u8, num_bytes: usize) callconv(.C) void {
+        const self = @as(*AnyReaderStreamIn, @ptrCast(iself));
+        self.reader.readNoEof(data[0..num_bytes]) catch |err| switch (err) {
+            error.EndOfStream => self.eof = true,
+            else => self.failed = true,
+        };
+    }
+
+    fn _isEof(iself: *StreamIn) callconv(.C) bool {
+        const self = @as(*AnyReaderStreamIn, @ptrCast(iself));
+        return self.eof;
+    }
+
+    fn _isFailed(iself: *StreamIn) callconv(.C) bool {
+        const self = @as(*AnyReaderStreamIn, @ptrCast(iself));
+        return self.failed;
+    }
+};
+
 pub const BroadPhaseLayerInterface = extern struct {
     __v: *const VTable,
 
@@ -3433,6 +3556,13 @@ pub const Shape = opaque {
         }
     };
 
+    pub fn restoreFromBinaryState(stream_in: *StreamIn) !*Shape {
+        const shape = c.JPC_Shape_sRestoreFromBinaryState(stream_in);
+        if (shape == null)
+            return error.FailedToRestoreShape;
+        return @as(*Shape, @ptrCast(shape));
+    }
+
     fn Methods(comptime T: type) type {
         return struct {
             pub fn asShape(shape: *const T) *const Shape {
@@ -3530,6 +3660,10 @@ pub const Shape = opaque {
                     @as(*c.JPC_RayCastResult, @ptrCast(&hit)),
                 );
                 return .{ .has_hit = has_hit, .hit = hit };
+            }
+
+            pub fn saveBinaryState(shape: *const T, stream_out: *StreamOut) void {
+                c.JPC_Shape_SaveBinaryState(@as(*const c.JPC_Shape, @ptrCast(shape)), stream_out);
             }
         };
     }
@@ -3893,6 +4027,12 @@ test "jolt_c.basic2" {
 extern fn JoltCTest_HelloWorld() u32;
 test "jolt_c.helloworld" {
     const ret = JoltCTest_HelloWorld();
+    try expect(ret != 0);
+}
+
+extern fn JoltCTest_Serialization() u32;
+test "jolt_c.serialization" {
+    const ret = JoltCTest_Serialization();
     try expect(ret != 0);
 }
 
@@ -4666,6 +4806,42 @@ test "zphysics.debugrenderer" {
     defer DebugRenderer.destroyBodyDrawFilter(draw_filter);
 
     physics_system.drawBodies(&draw_settings, draw_filter);
+}
+
+test "zphysics.serialization" {
+    try init(std.testing.allocator, .{});
+    defer deinit();
+
+    const half_extents: [3]f32 = .{ 1.0, 2.0, 3.0 };
+    const shape_settings = try BoxShapeSettings.create(half_extents);
+    defer shape_settings.release();
+
+    const shape = try shape_settings.createShape();
+    defer shape.release();
+
+    var buf: std.ArrayListUnmanaged(u8) = .{};
+    defer buf.deinit(std.testing.allocator);
+
+    {
+        const writer = buf.writer(std.testing.allocator).any();
+        var stream_out = AnyWriterStreamOut.init(&writer);
+        shape.saveBinaryState(@ptrCast(&stream_out));
+        try std.testing.expectEqual(1 + 8 + 4 + 12 + 4, buf.items.len);
+    }
+
+    {
+        var stream = std.io.fixedBufferStream(buf.items);
+        const reader = stream.reader().any();
+        var stream_in = AnyReaderStreamIn.init(&reader);
+        const shape_restored = try Shape.restoreFromBinaryState(@ptrCast(&stream_in));
+        defer shape_restored.release();
+
+        try std.testing.expectEqual(Shape.SubType.box, shape_restored.getSubType());
+
+        const box_shape_restored = BoxShape.asBoxShape(shape_restored);
+        const half_extent_restored = box_shape_restored.getHalfExtent();
+        try std.testing.expectEqual(half_extents, half_extent_restored);
+    }
 }
 
 test {
