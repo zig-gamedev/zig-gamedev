@@ -4,7 +4,7 @@ The original repo spawned in July 2021 by [Michal Ziulek](https://github.com/mic
 
 Zig is still in development. This repo aims to track zig nightly.
 
-Libraries now live in their own repositories and are included in this repo as git submodules for developer convenience.
+Libraries now live in their own repositories and are consumed using Zig's package manager. Git submodules are also included in this repo for developer convenience but are not required.
 
 ### Build and run the [Samples](#sample-applications-native-wgpu)
 
