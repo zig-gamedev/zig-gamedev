@@ -12,7 +12,7 @@
         "LICENSE",
     },
     .dependencies = .{
-        .system_sdk = .{ .path = "libs/system-sdk" },
+        .system_sdk = .{ .path = "libs/system_sdk" },
         .zaudio = .{ .path = "libs/zaudio" },
         .zbullet = .{ .path = "libs/zbullet" },
         .zflecs = .{ .path = "libs/zflecs" },

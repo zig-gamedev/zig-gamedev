@@ -16,4 +16,4 @@
 *.hiplc
 .gitkeep
 /libs/zgpu/libs/mach-gpu-dawn/libs/*
-/libs/system-sdk/*
+/libs/system_sdk/*

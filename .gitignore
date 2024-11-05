@@ -39,7 +39,7 @@
 !.vimrc
 !.gitkeep
 
-!/libs/system-sdk
+!/libs/system_sdk
 !/libs/zaudio
 !/libs/zbullet
 !/libs/zemscripten

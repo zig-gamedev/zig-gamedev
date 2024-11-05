@@ -1,6 +1,3 @@
-[submodule "libs/system-sdk"]
-	path = libs/system-sdk
-	url = git@github.com:zig-gamedev/system-sdk.git
 [submodule "libs/zaudio"]
 	path = libs/zaudio
 	url = git@github.com:zig-gamedev/zaudio.git
@@ -61,3 +58,6 @@
 [submodule "libs/zwindows"]
 	path = libs/zwindows
 	url = git@github.com:zig-gamedev/zwindows.git
+[submodule "libs/system_sdk"]
+	path = libs/system_sdk
+	url = git@github.com:zig-gamedev/system_sdk.git
