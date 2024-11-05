@@ -39,11 +39,27 @@
 !.vimrc
 !.gitkeep
 
-!/libs/system-sdk/**
-!/libs/zgpu/libs/**
-!/libs/zsdl/libs/**
-!/libs/zopenvr/libs/**
-!/libs/zwindows/bin/x64/*
+!/libs/system_sdk
+!/libs/zaudio
+!/libs/zbullet
+!/libs/zemscripten
+!/libs/zflecs
+!/libs/zglfw
+!/libs/zgpu
+!/libs/zgui
+!/libs/zjobs
+!/libs/zmath
+!/libs/zmesh
+!/libs/znoise
+!/libs/zopengl
+!/libs/zopenvr
+!/libs/zphysics
+!/libs/zpix
+!/libs/zpool
+!/libs/zsdl
+!/libs/zstbi
+!/libs/ztracy
+!/libs/zwindows
 
 # Ignore some special directories
 *zig-cache

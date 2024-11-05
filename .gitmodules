@@ -1,0 +1,63 @@
+[submodule "libs/zaudio"]
+	path = libs/zaudio
+	url = git@github.com:zig-gamedev/zaudio.git
+[submodule "libs/zbullet"]
+	path = libs/zbullet
+	url = git@github.com:zig-gamedev/zbullet.git
+[submodule "libs/zflecs"]
+	path = libs/zflecs
+	url = git@github.com:zig-gamedev/zflecs.git
+[submodule "libs/zemscripten"]
+	path = libs/zemscripten
+	url = git@github.com:zig-gamedev/zemscripten.git
+[submodule "libs/zglfw"]
+	path = libs/zglfw
+	url = git@github.com:zig-gamedev/zglfw.git
+[submodule "libs/zgpu"]
+	path = libs/zgpu
+	url = git@github.com:zig-gamedev/zgpu.git
+[submodule "libs/zgui"]
+	path = libs/zgui
+	url = git@github.com:zig-gamedev/zgui.git
+[submodule "libs/zjobs"]
+	path = libs/zjobs
+	url = git@github.com:zig-gamedev/zjobs.git
+[submodule "libs/zmath"]
+	path = libs/zmath
+	url = git@github.com:zig-gamedev/zmath.git
+[submodule "libs/zmesh"]
+	path = libs/zmesh
+	url = git@github.com:zig-gamedev/zmesh.git
+[submodule "libs/znoise"]
+	path = libs/znoise
+	url = git@github.com:zig-gamedev/znoise.git
+[submodule "libs/zopengl"]
+	path = libs/zopengl
+	url = git@github.com:zig-gamedev/zopengl.git
+[submodule "libs/zopenvr"]
+	path = libs/zopenvr
+	url = git@github.com:zig-gamedev/zopenvr.git
+[submodule "libs/zphysics"]
+	path = libs/zphysics
+	url = git@github.com:zig-gamedev/zphysics.git
+[submodule "libs/zpix"]
+	path = libs/zpix
+	url = git@github.com:zig-gamedev/zpix.git
+[submodule "libs/zpool"]
+	path = libs/zpool
+	url = git@github.com:zig-gamedev/zpool.git
+[submodule "libs/zsdl"]
+	path = libs/zsdl
+	url = git@github.com:zig-gamedev/zsdl.git
+[submodule "libs/zstbi"]
+	path = libs/zstbi
+	url = git@github.com:zig-gamedev/zstbi.git
+[submodule "libs/ztracy"]
+	path = libs/ztracy
+	url = git@github.com:zig-gamedev/ztracy.git
+[submodule "libs/zwindows"]
+	path = libs/zwindows
+	url = git@github.com:zig-gamedev/zwindows.git
+[submodule "libs/system_sdk"]
+	path = libs/system_sdk
+	url = git@github.com:zig-gamedev/system_sdk.git
