@@ -43,12 +43,12 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
 
     lib.addIncludePath(zmesh.path("libs/cgltf"));
     lib.addCSourceFile(.{
-        .file = b.path("libs/zmesh/libs/cgltf/cgltf.c"),
+        .file = zmesh.path("libs/cgltf/cgltf.c"),
         .flags = &.{"-std=c99"},
     });
 
     lib.addIncludePath(b.path("samples/common/libs"));
-    lib.addIncludePath(b.path(zmesh.path("libs/cgltf")));
+    lib.addIncludePath(zmesh.path("libs/cgltf"));
 
     const module = b.createModule(.{
         .root_source_file = b.path("samples/common/src/common.zig"),
@@ -58,7 +58,7 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
         },
     });
     module.addIncludePath(b.path("samples/common/libs/imgui"));
-    module.addIncludePath(b.path(zmesh.path("libs/cgltf")));
+    module.addIncludePath(zmesh.path("libs/cgltf"));
 
     compile_step.root_module.addImport("common", module);
 
