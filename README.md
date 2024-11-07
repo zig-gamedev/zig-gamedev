@@ -2,7 +2,7 @@
 
 The original repo spawned in July 2021 by [Michal Ziulek](https://github.com/michal-z). This is the main development repo for the [zig-gamedev libraries](https://github.com/zig-gamedev#libraries) and [sample applications](#sample-applications-native-wgpu).
 
-Zig is still in development. This repo aims to track zig nightly.
+Zig is still in development. Our main branch aims to track zig nightly-ish. See [.zigversion](./.zigversion) for the last known compatible Zig version for any revision.
 
 Libraries now live in their own repositories and are consumed using Zig's package manager. Git submodules are also included in this repo for developer convenience but are not required.
 
