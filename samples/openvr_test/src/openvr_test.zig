@@ -30,8 +30,8 @@ const Surface = struct {
     const Self = @This();
 
     fn init(allocator: std.mem.Allocator, width: i32, height: i32) !Self {
-        zglfw.windowHintTyped(.client_api, .no_api);
-        zglfw.windowHintTyped(.maximized, true);
+        zglfw.windowHint(.client_api, .no_api);
+        zglfw.windowHint(.maximized, true);
         const window = try zglfw.Window.create(width, height, window_title, null);
 
         const win32_window = zglfw.getWin32Window(window) orelse return error.FailedToGetWin32Window;
