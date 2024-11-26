@@ -4,7 +4,7 @@ The original repo spawned in July 2021 by [Michal Ziulek](https://github.com/mic
 
 Zig is still in development. Our main branch aims to track zig nightly-ish. See [.zigversion](./.zigversion) for the last known compatible Zig version for any revision.
 
-Libraries now live in their own repositories and are consumed using Zig's package manager. Git submodules are also included in this repo for developer convenience but are not required to build.
+Libraries now live in their own repositories and are consumed using Zig's package manager. Git submodules are also included in this repo for developer convenience but are not required to build. Users that wish to use the submodules instead of remote packages can replace build.zig.zon with dev.build.zig.zon.
 
 ### Build and run the [Samples](#sample-applications-native-wgpu)
 
