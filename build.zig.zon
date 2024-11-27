@@ -42,8 +42,8 @@
         },
 
         .zglfw = .{
-            .url = "https://github.com/zig-gamedev/zglfw/archive/d18b30438d630d44e50aa30e2300a96c4f4ff67d.tar.gz",
-            .hash = "1220074231fcf6556b27e0ac6a3b22a19062c0c4bc3fd77c6fdcede15303af824c27",
+            .url = "https://github.com/zig-gamedev/zglfw/archive/2f9c53cf56bbed59ebc717d9e0e2b57803310b3b.tar.gz",
+            .hash = "1220338382c7c535e103edad3666bedbc542966aac5e98eb8971bb7741eeaa05d8bc",
         },
 
         .zgpu = .{
@@ -155,7 +155,7 @@
             .url = "https://github.com/zig-gamedev/ztracy/archive/4990324a1a724b59b8a561e521ab944e99ac6c28.tar.gz",
             .hash = "122058b9caf1299bcb723b8567999154b18d82e0e896471e10ef56b0e60c6dda59c2",
         },
-        
+
         .zwindows = .{
             .url = "https://github.com/zig-gamedev/zwindows/archive/511794cb06f5f2b7a2be8346e7312f54d0adb820.tar.gz",
             .hash = "12204948283efd34140a20dfdc36b2bcd57fc1d52e18d37ca7d5ef7077142d768d02",

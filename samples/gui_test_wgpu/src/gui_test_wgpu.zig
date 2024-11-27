@@ -766,7 +766,7 @@ pub fn main() !void {
         std.posix.chdir(path) catch {};
     }
 
-    zglfw.windowHintTyped(.client_api, .no_api);
+    zglfw.windowHint(.client_api, .no_api);
 
     const window = try zglfw.Window.create(1600, 1000, window_title, null);
     defer window.destroy();

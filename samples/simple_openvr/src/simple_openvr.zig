@@ -319,10 +319,10 @@ pub fn main() !void {
 
     const framebuffer_size = [_]i32{ 640, 320 };
 
-    zglfw.windowHintTyped(.position_x, 700);
-    zglfw.windowHintTyped(.position_y, 100);
-    zglfw.windowHintTyped(.resizable, false);
-    zglfw.windowHintTyped(.client_api, .no_api);
+    zglfw.windowHint(.position_x, 700);
+    zglfw.windowHint(.position_y, 100);
+    zglfw.windowHint(.resizable, false);
+    zglfw.windowHint(.client_api, .no_api);
     const window = try zglfw.Window.create(framebuffer_size[0], framebuffer_size[1], "", null);
     defer window.destroy();
 
