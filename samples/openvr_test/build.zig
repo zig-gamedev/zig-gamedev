@@ -22,6 +22,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const zgui = b.dependency("zgui", .{
         .target = options.target,
         .backend = .glfw_dx12,
+        .with_implot = true,
     });
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
