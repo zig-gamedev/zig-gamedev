@@ -739,7 +739,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                             zgui.text("{s}", .{arg_name});
                             zgui.sameLine(.{});
                             if (zgui.button("Add", .{})) {
-                                const key = .{
+                                const key = OpenVR.AppOverrideKeys{
                                     .key = try alloc.allocSentinel(u8, 1024, 0),
                                     .value = try alloc.allocSentinel(u8, 1024, 0),
                                 };
