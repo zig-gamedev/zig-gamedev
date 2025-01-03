@@ -18,23 +18,23 @@
         },
 
         .zaudio = .{
-            .url = "https://github.com/zig-gamedev/zaudio/archive/7c8a86c1b7a44b906e5de5f3ee18cdd0b8de018b.tar.gz",
-            .hash = "1220423c756c4d6f58d9465a597c2b9f982d929a56fa5ceab4b7626d0ea2685bcd6c",
+            .url = "https://github.com/zig-gamedev/zaudio/archive/496da32757767b31f389554e1e5c668796755fe2.tar.gz",
+            .hash = "12203f6ab72861cd7e36ebd1590f9cc7fd036366e2ff96122002a395f628e813d999",
         },
 
         .zbullet = .{
-            .url = "https://github.com/zig-gamedev/zbullet/archive/80ca865c4d1de4805e012576f796de034564d553.tar.gz",
+            .url = "https://github.com/zig-gamedev/zbullet/archive/4b9982c339f9c037e7f21e8551ffbfc01bdd771c.tar.gz",
             .hash = "1220b67a8c68334fb1c0dc13cbc1b72777a5abb81640a9639f58017e520a48deb325",
         },
 
         .zflecs = .{
-            .url = "https://github.com/zig-gamedev/zflecs/archive/db76fc7177377bb3f9eadb860ee3f07f4641004f.tar.gz",
+            .url = "https://github.com/zig-gamedev/zflecs/archive/fcde2da35ea43c289bc731c9a244417c176192d0.tar.gz",
             .hash = "12201bcd78d8301929e3f1a029c6f418340b4f540b885c685fde51e4b34ead27a4a5",
         },
 
         .zemscripten = .{
-            .url = "https://github.com/zig-gamedev/zemscripten/archive/06d3040173ecf329373cfbc1396be95c35894475.tar.gz",
-            .hash = "122032fe722a72ad86286c32654d75e4253a9023ddd45c8a93b34be5e1cbd09d61d1",
+            .url = "https://github.com/zig-gamedev/zemscripten/archive/2c5c40b451a09df46a41c8f50cd2d21ec678018c.tar.gz",
+            .hash = "12206d9a2b8a6036aeb178436f9c460d52d7d45efbc78d9387fb5256f0907e8b842b",
         },
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.52.tar.gz",
@@ -42,13 +42,13 @@
         },
 
         .zglfw = .{
-            .url = "https://github.com/zig-gamedev/zglfw/archive/d18b30438d630d44e50aa30e2300a96c4f4ff67d.tar.gz",
-            .hash = "1220074231fcf6556b27e0ac6a3b22a19062c0c4bc3fd77c6fdcede15303af824c27",
+            .url = "https://github.com/zig-gamedev/zglfw/archive/4a5ec6186173a6ae4d71ad01b64dac5561ef0b16.tar.gz",
+            .hash = "1220fb278bcd5f1be0096c841c29de2374806f3980160aa3e409f551b1c242254b74",
         },
 
         .zgpu = .{
-            .url = "https://github.com/zig-gamedev/zgpu/archive/44061500651ea5ef6d708527fe322e2e69e2e631.tar.gz",
-            .hash = "1220af0752814ec0a3438aa3ca3e33661885ec134c5e7b794247381b0fbe90c21012",
+            .url = "https://github.com/zig-gamedev/zgpu/archive/987809eff7cb47901192a6d41dc67486e3211f21.tar.gz",
+            .hash = "1220777b1f964f666f5e990412f34c7dd36b6c399ff15920754f842df297425dffa5",
         },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
@@ -77,58 +77,58 @@
         },
 
         .zgui = .{
-            .url = "https://github.com/zig-gamedev/zgui/archive/d23ed60a659d8c9c6d664b2e9bd78fae1675154e.tar.gz",
-            .hash = "1220ffffdf1d0d2aca86a1ea31ba17ee48090b38cefb2a8487d2d801eb1fdd78becb",
+            .url = "https://github.com/zig-gamedev/zgui/archive/5fb1c3b935b311e88352b0ffee29e7ad56da9722.tar.gz",
+            .hash = "12204f82e0475ddfd6a57d97f74bcf9052452c0eb2fa863cf0e3bce1071d2603e9f4",
         },
 
         .zjobs = .{
-            .url = "https://github.com/zig-gamedev/zjobs/archive/9a8a42e1de4b37d223cb5f44bc266c961e868cc8.tar.gz",
+            .url = "https://github.com/zig-gamedev/zjobs/archive/19743327b06209a8041f7840ec13a9b794767d32.tar.gz",
             .hash = "12203322a6cbf36b797c78833fae7391b736f3808ee59d7ce092981d02bbde941a07",
         },
 
         .zmath = .{
-            .url = "https://github.com/zig-gamedev/zmath/archive/fb075f0f2f90d6d938a5959a3a79700cdec155c2.tar.gz",
+            .url = "https://github.com/zig-gamedev/zmath/archive/24cdd20f9da09bd1ce7b552907eeaba9bafea59d.tar.gz",
             .hash = "1220081d55b58b968d953db1afc2fb01b2f5733929144e69522461ce25fa6450d84e",
         },
 
         .zmesh = .{
-            .url = "https://github.com/zig-gamedev/zmesh/archive/c3e96a6858714290384ce33a99a3a2baa851acca.tar.gz",
-            .hash = "1220f914e117966d9d2fc5aca141859a3ebf94b4f1c36b881f201958699568a75f70",
+            .url = "https://github.com/zig-gamedev/zmesh/archive/1fc267af7c8bd00cb2d79de12b3e0512a3b787cf.tar.gz",
+            .hash = "1220791c58e1f2e911d5b776efe8893c64684a56d9196b98d95b59ee45b3624b048d",
         },
 
         .znoise = .{
-            .url = "https://github.com/zig-gamedev/znoise/archive/e53e144e41dcd3f7a1c2986715addb973b8baf55.tar.gz",
+            .url = "https://github.com/zig-gamedev/znoise/archive/b6e7a24c9bfa4bae63521664e191a728b5b18805.tar.gz",
             .hash = "12208e16c80366e2a2f8bd3f1c676b09bf47c157f4d0f0d6440555f9b74d8a9d79f7",
         },
 
         .zopengl = .{
-            .url = "https://github.com/zig-gamedev/zopengl/archive/14e69429d004013d806076317a350d43a27f036f.tar.gz",
-            .hash = "12203720546b5ed015b90f788d57d41ef86b09595f9450ee67ce8aca43dac00ed8a1",
+            .url = "https://github.com/zig-gamedev/zopengl/archive/c9c293a9af388478bca0ad52007a72372ef71747.tar.gz",
+            .hash = "1220c030f5e33e09bd80fe7a7b064b65e1fc02e9bbf603ba04716866c9f1ca16f8ce",
         },
 
         .zopenvr = .{
-            .url = "https://github.com/zig-gamedev/zopenvr/archive/d25bb7c2f14702194d91a519bf8cbe6a12456d92.tar.gz",
-            .hash = "12203870e1bb1971e4d2e1c64f437485f918d5c384ca0c25d15089b9b7d035a2bced",
+            .url = "https://github.com/zig-gamedev/zopenvr/archive/f7c4696c9be9eaf75e9b878e11392e707194bded.tar.gz",
+            .hash = "1220cf39bd5b439ed552517c32b2b5ac28e28beb245aa8537e9b95019b7c5cac708c",
         },
 
         .zphysics = .{
-            .url = "https://github.com/zig-gamedev/zphysics/archive/05e39c0d32bf0b9cea8fc05907176a5175df39c4.tar.gz",
-            .hash = "12206d54e74d842a149aae4c0123a1fd5950d0cb6eece826a55d3df46bfee8d2e28f",
+            .url = "https://github.com/zig-gamedev/zphysics/archive/c545c87dcd09d42cf04d8551d8480a5ffad4abee.tar.gz",
+            .hash = "1220f9eaa3a8ceab05494a61e7bcb14ad90741d7813d0e4c9e2a6c7451783816d35b",
         },
 
         .zpix = .{
-            .url = "https://github.com/zig-gamedev/zpix/archive/c1ae879173a8dff7d9ac55f8d3cdde7edc3ccb08.tar.gz",
+            .url = "https://github.com/zig-gamedev/zpix/archive/b69194be5edc653cd250c81ff592d205787d0f8e.tar.gz",
             .hash = "12208392e8408979936c9ae229ef49a68128d00744b4081d740beff79a65b914b9cf",
         },
 
         .zpool = .{
-            .url = "https://github.com/zig-gamedev/zpool/archive/b3d91a939f6738b7beec41d9fada07bc9cc01eaf.tar.gz",
+            .url = "https://github.com/zig-gamedev/zpool/archive/820e0e59dc415d9784004464a6cf52223fbce126.tar.gz",
             .hash = "1220e600a92d73dc8c3b5303351dcc67352114c975e59ae55de11b637ec173e75455",
         },
 
         .zsdl = .{
-            .url = "https://github.com/zig-gamedev/zsdl/archive/87245f0c4173bc07e39e1b464bda2fe89ad2ba81.tar.gz",
-            .hash = "1220f3189435fc5abab1ad22bd317f90384c82fb8d4a7acf82535f89823e1c6d66b3",
+            .url = "https://github.com/zig-gamedev/zsdl/archive/360a5033010c71445ba42d1de3973abd50c6b128.tar.gz",
+            .hash = "1220b661c47496008c7b2717c06b7bc1f79b1cfc430c885222d5d49c91d3fc57cbde",
         },
         .@"sdl2-prebuilt-macos" = .{
             .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/f14773fa3de719b3a399b854c31eb4139d63842f.tar.gz",
@@ -147,17 +147,17 @@
         },
 
         .zstbi = .{
-            .url = "https://github.com/zig-gamedev/zstbi/archive/3f3f6b21e369666f089a4a328986ad7d0414fb11.tar.gz",
-            .hash = "122009ea2ff8496071dbe447731a62e6c7c731b6aca5ac3a01992a8d3330d4482a88",
+            .url = "https://github.com/zig-gamedev/zstbi/archive/bcbd249f3f57fb84d6d76f1bc621c7bd3bfaa4a2.tar.gz",
+            .hash = "12208b7d15a730294a7d8ee3a9d3ef145e109f94d0a68be7f0ee282e0630ede093d5",
         },
 
         .ztracy = .{
-            .url = "https://github.com/zig-gamedev/ztracy/archive/4990324a1a724b59b8a561e521ab944e99ac6c28.tar.gz",
-            .hash = "122058b9caf1299bcb723b8567999154b18d82e0e896471e10ef56b0e60c6dda59c2",
+            .url = "https://github.com/zig-gamedev/ztracy/archive/5af60074f355ecda6114d08dcc8c931c3d163c94.tar.gz",
+            .hash = "1220293b509e9238e43828b00ee18e38eeace190ef844b74bf54e3db6e7da7398f4b",
         },
-        
+
         .zwindows = .{
-            .url = "https://github.com/zig-gamedev/zwindows/archive/511794cb06f5f2b7a2be8346e7312f54d0adb820.tar.gz",
+            .url = "https://github.com/zig-gamedev/zwindows/archive/4c4e0ea8222978fe482cf8ba62e24c2486bd0b9f.tar.gz",
             .hash = "12204948283efd34140a20dfdc36b2bcd57fc1d52e18d37ca7d5ef7077142d768d02",
         },
     },

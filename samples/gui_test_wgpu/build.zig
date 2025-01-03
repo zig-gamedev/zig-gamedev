@@ -29,6 +29,8 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const zgui = b.dependency("zgui", .{
         .target = options.target,
         .backend = .glfw_wgpu,
+        .with_implot = true,
+        .with_node_editor = true,
         .with_te = true,
     });
     exe.root_module.addImport("zgui", zgui.module("root"));

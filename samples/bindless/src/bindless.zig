@@ -433,7 +433,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         max_num_lods,
     );
 
-    const depth_texture = .{
+    const depth_texture = ResourceView{
         .resource = gctx.createCommittedResource(
             .DEFAULT,
             .{},
@@ -670,7 +670,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             null,
         );
 
-        break :env_texture .{
+        break :env_texture ResourceView{
             .resource = resource,
             .view = gctx.allocShaderResourceView(
                 resource,
@@ -709,7 +709,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{ .COPY_DEST = true },
             null,
         );
-        break :irradiance_texture .{
+        break :irradiance_texture ResourceView{
             .resource = resource,
             .view = gctx.allocShaderResourceView(
                 resource,
@@ -748,9 +748,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{ .COPY_DEST = true },
             null,
         );
-        break :prefiltered_env_texture .{
+        break :prefiltered_env_texture ResourceView{
             .resource = resource,
-
             .view = gctx.allocShaderResourceView(
                 resource,
                 &d3d12.SHADER_RESOURCE_VIEW_DESC{
@@ -786,7 +785,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .{ .UNORDERED_ACCESS = true },
             null,
         );
-        break :brdf_integration_texture .{
+        break :brdf_integration_texture ResourceView{
             .resource = resource,
 
             .view = gctx.allocShaderResourceView(
