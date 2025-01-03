@@ -845,7 +845,7 @@ fn draw(demo: *DemoState) void {
     const vertex_buffer_handle = gctx.createBuffer(.{
         .usage = .{ .vertex = true },
         .size = AudioState.num_sets * AudioState.usable_samples_per_set * @sizeOf(Vertex),
-        .mapped_at_creation = true,
+        .mapped_at_creation = .true,
     });
     const vertex_buffer = gctx.lookupResource(vertex_buffer_handle).?;
     defer gctx.destroyResource(vertex_buffer_handle);
