@@ -363,7 +363,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var table: *dml.IBindingTable = undefined;
         hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @as(*?*anyopaque, @ptrCast(&table))));
 
-        break :blk .{
+        break :blk OperatorState{
             .cop = conv_cop,
             .dtbl = table,
             .info = conv_info,
