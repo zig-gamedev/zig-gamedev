@@ -137,20 +137,22 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
         _ = zgui.beginTabBar("Joystick picker", .{});
         defer zgui.endTabBar();
 
-        var jid: u32 = 0;
-        while (jid < zglfw.Joystick.maximum_supported) : (jid += 1) {
-            if (zgui.beginTabItem(
-                try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1}),
-                .{},
-            )) {
-                if (zglfw.Joystick.get(@as(zglfw.Joystick.Id, @intCast(jid)))) |joystick| {
+        for (0 .. zglfw.Joystick.maximum_supported) |jid| {
+            const joystick: zglfw.Joystick = @enumFromInt(jid);
+            const tab_title = try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1});
+
+            if (zgui.beginTabItem(tab_title, .{})) {
+                defer zgui.endTabItem();
+
+                if (joystick.isPresent()) {
+                    const guid = joystick.getGuid() catch "n/a";
                     zgui.text("Present: yes", .{});
                     zgui.newLine();
                     zgui.beginGroup();
-                    zgui.text("Raw joystick: {s}", .{joystick.getGuid()});
+                    zgui.text("Raw joystick: {s}", .{guid});
                     zgui.indent(.{ .indent_w = 50.0 });
                     zgui.beginGroup();
-                    for (joystick.getAxes(), 0..) |axis, i| {
+                    for (joystick.getAxes() catch &.{}, 0..) |axis, i| {
                         zgui.progressBar(.{
                             .fraction = (axis + 1.0) / 2.0,
                             .w = 400.0,
@@ -163,7 +165,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                     zgui.endGroup();
                     zgui.sameLine(.{});
                     zgui.beginGroup();
-                    for (joystick.getButtons(), 0..) |action, i| {
+                    for (joystick.getButtons() catch &.{}, 0..) |action, i| {
                         zgui.progressBar(.{
                             .fraction = if (action == .press) 1.0 else 0.0,
                             .w = 400.0,
@@ -182,7 +184,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                         zgui.text("Mapped gamepad: {s}", .{gamepad.getName()});
                         zgui.indent(.{ .indent_w = 50.0 });
                         zgui.beginGroup();
-                        const gamepad_state = gamepad.getState();
+                        const gamepad_state: zglfw.Gamepad.State = gamepad.getState() catch .{};
                         for (std.enums.values(zglfw.Gamepad.Axis)) |axis| {
                             const value = gamepad_state.axes[@intFromEnum(axis)];
                             zgui.progressBar(.{
@@ -217,7 +219,6 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                 } else {
                     zgui.text("Present: no", .{});
                 }
-                zgui.endTabItem();
             }
         }
     }
@@ -260,7 +261,7 @@ pub fn main() !void {
         std.posix.chdir(path) catch {};
     }
 
-    zglfw.windowHintTyped(.client_api, .no_api);
+    zglfw.windowHint(.client_api, .no_api);
 
     const window = try zglfw.Window.create(1600, 775, window_title, null);
     defer window.destroy();
