@@ -31,7 +31,7 @@ pub fn main() !void {
     try glfw.init();
     defer glfw.terminate();
 
-    glfw.windowHintTyped(.client_api, .no_api);
+    glfw.windowHint(.client_api, .no_api);
     const glfw_window = try glfw.Window.create(800, 600, window_name, null);
     defer glfw_window.destroy();
     glfw_window.setSizeLimits(400, 400, -1, -1);

@@ -511,7 +511,7 @@ const DemoState = struct {
                 const v1 = zm.mul(v, zm.mul(width_mat, zm.mul(v1_length_mat, zm.mul(angle_mat, position_mat))));
 
                 if (dragging.state == .idle and demo.window.getMouseButton(.left) == .press) {
-                    demo.window.setInputMode(.cursor, .disabled);
+                    demo.window.setInputMode(.cursor, .disabled) catch {};
 
                     const v0_dx = object_position[0] - v0[0];
                     const v0_dy = object_position[1] - v0[1];
@@ -531,7 +531,7 @@ const DemoState = struct {
                 } else {
                     if (demo.window.getMouseButton(.left) == .release) {
                         dragging.state = .idle;
-                        demo.window.setInputMode(.cursor, .normal);
+                        demo.window.setInputMode(.cursor, .normal) catch {};
                     } else {
                         const object_position_delta = zm.f32x4(
                             object_position[0] - dragging.object_position_start[0],
@@ -783,7 +783,7 @@ pub fn main() !void {
         std.posix.chdir(path) catch {};
     }
 
-    zglfw.windowHintTyped(.client_api, .no_api);
+    zglfw.windowHint(.client_api, .no_api);
 
     const window = try zglfw.Window.create(1600, 1000, window_title, null);
     defer window.destroy();

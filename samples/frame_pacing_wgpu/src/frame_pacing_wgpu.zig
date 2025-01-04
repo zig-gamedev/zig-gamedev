@@ -27,15 +27,15 @@ const Surface = struct {
             monitor = mvm.monitor;
             width = mvm.video_mode.width;
             height = mvm.video_mode.height;
-            zglfw.windowHintTyped(.red_bits, mvm.video_mode.red_bits);
-            zglfw.windowHintTyped(.green_bits, mvm.video_mode.green_bits);
-            zglfw.windowHintTyped(.blue_bits, mvm.video_mode.blue_bits);
-            zglfw.windowHintTyped(.refresh_rate, mvm.video_mode.refresh_rate);
+            zglfw.windowHint(.red_bits, mvm.video_mode.red_bits);
+            zglfw.windowHint(.green_bits, mvm.video_mode.green_bits);
+            zglfw.windowHint(.blue_bits, mvm.video_mode.blue_bits);
+            zglfw.windowHint(.refresh_rate, mvm.video_mode.refresh_rate);
 
             // vsync off
             present_mode = .immediate;
         }
-        zglfw.windowHintTyped(.client_api, .no_api);
+        zglfw.windowHint(.client_api, .no_api);
         const window = try zglfw.Window.create(width, height, window_title, monitor);
 
         const gctx = try zgpu.GraphicsContext.create(
@@ -191,22 +191,20 @@ pub fn main() !void {
     var monitor_video_modes = std.ArrayList(MonitorVideoMode).init(allocator);
     defer monitor_video_modes.deinit();
 
-    if (zglfw.Monitor.getAll()) |monitors| {
-        for (monitors) |monitor| {
-            for (try monitor.getVideoModes()) |video_mode| {
-                const bits = video_mode.red_bits + video_mode.green_bits + video_mode.blue_bits;
-                try monitor_names.append(try std.fmt.allocPrintZ(allocator, "{s} {}×{} {}-bits {}hz", .{
-                    try monitor.getName(),
-                    video_mode.width,
-                    video_mode.height,
-                    bits,
-                    video_mode.refresh_rate,
-                }));
-                try monitor_video_modes.append(.{
-                    .monitor = monitor,
-                    .video_mode = video_mode,
-                });
-            }
+    for (zglfw.Monitor.getAll()) |monitor| {
+        for (try monitor.getVideoModes()) |video_mode| {
+            const bits = video_mode.red_bits + video_mode.green_bits + video_mode.blue_bits;
+            try monitor_names.append(try std.fmt.allocPrintZ(allocator, "{s} {}×{} {}-bits {}hz", .{
+                try monitor.getName(),
+                video_mode.width,
+                video_mode.height,
+                bits,
+                video_mode.refresh_rate,
+            }));
+            try monitor_video_modes.append(.{
+                .monitor = monitor,
+                .video_mode = video_mode,
+            });
         }
     }
     var selected_monitor_video_mode: usize = 0;
