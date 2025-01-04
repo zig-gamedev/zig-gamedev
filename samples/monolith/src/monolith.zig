@@ -496,7 +496,7 @@ const DebugRenderer = struct {
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
-        _: *const zphy.DebugRenderer.Color,
+        _: zphy.DebugRenderer.Color,
     ) callconv(.C) void {}
 
     fn drawTriangle(
@@ -504,7 +504,7 @@ const DebugRenderer = struct {
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
-        _: *const zphy.DebugRenderer.Color,
+        _: zphy.DebugRenderer.Color,
     ) callconv(.C) void {}
 
     fn createTriangleBatch(_: *DebugRenderer, _: [*]zphy.DebugRenderer.Triangle, _: u32) callconv(.C) *anyopaque {
@@ -1068,15 +1068,15 @@ fn update(demo: *DemoState) void {
 
         if (window.getMouseButton(.left) == .press) {
             if (demo.mouse.captured) {
-                window.setInputMode(.cursor, zglfw.Cursor.Mode.normal);
-                window.setInputMode(.raw_mouse_motion, false);
+                window.setInputMode(.cursor, zglfw.Cursor.Mode.normal) catch unreachable;
+                window.setInputMode(.raw_mouse_motion, false) catch unreachable;
             }
             demo.mouse.captured = false;
         }
         if (window.getMouseButton(.right) == .press) {
             if (!demo.mouse.captured) {
-                window.setInputMode(.cursor, zglfw.Cursor.Mode.disabled);
-                window.setInputMode(.raw_mouse_motion, true);
+                window.setInputMode(.cursor, zglfw.Cursor.Mode.disabled) catch unreachable;
+                window.setInputMode(.raw_mouse_motion, true) catch unreachable;
             }
             demo.mouse.captured = true;
         }
