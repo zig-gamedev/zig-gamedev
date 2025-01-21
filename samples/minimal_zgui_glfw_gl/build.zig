@@ -41,5 +41,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     });
     exe.step.dependOn(&install_content_step.step);
 
+    if (options.target.result.os.tag == .linux) {
+        if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
+            exe.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
+        }
+    }
+
     return exe;
 }
