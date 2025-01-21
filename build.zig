@@ -174,17 +174,8 @@ pub const samples_web = struct {
 };
 
 fn buildAndInstallSamples(b: *std.Build, options: anytype, comptime samples: anytype) void {
-    buildAndInstallSample: inline for (comptime std.meta.declarations(samples)) |d| {
+    inline for (comptime std.meta.declarations(samples)) |d| {
         const exe = @field(samples, d.name).build(b, options);
-
-        // TODO: Get these samples working on Windows again. Broken by Zig upgrade, see https://github.com/zig-gamedev/zig-gamedev/issues/730
-        if (exe.rootModuleTarget().os.tag == .windows) {
-            inline for (.{ "monolith", "physics_test_wgpu" }) |name| {
-                comptime if (std.mem.eql(u8, name, d.name)) {
-                    continue :buildAndInstallSample;
-                };
-            }
-        }
 
         // TODO: Problems with LTO on Windows.
         if (exe.rootModuleTarget().os.tag == .windows) {
