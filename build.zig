@@ -121,7 +121,6 @@ pub const samples_windows_linux = struct {
 
 pub const samples_cross_platform = struct {
     pub const sdl2_demo = @import("samples/sdl2_demo/build.zig");
-    pub const sdl3_demo = @import("samples/sdl3_demo/build.zig");
 
     // OpenGL samples
     pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
