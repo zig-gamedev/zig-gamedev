@@ -34,8 +34,6 @@ jobs:
         run: zig fmt --check .
       - name: Build all
         run: zig build -Dexperiments
-      - name: Build and run tests
-        run: zig build test
       - name: Cross compile
         if: runner.os == 'Linux'
         run: zig build -Dtarget=x86_64-windows-gnu

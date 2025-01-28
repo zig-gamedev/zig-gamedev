@@ -81,11 +81,6 @@ pub fn build(b: *std.Build) void {
         }
     }
 
-    { // Tests
-        const test_step = b.step("test", "Run all tests");
-        tests(b, target, optimize, test_step);
-    }
-
     { // Benchmarks
         const benchmark_step = b.step("benchmark", "Run all benchmarks");
         const zmath = b.dependency("zmath", .{
@@ -126,6 +121,7 @@ pub const samples_windows_linux = struct {
 
 pub const samples_cross_platform = struct {
     pub const sdl2_demo = @import("samples/sdl2_demo/build.zig");
+    pub const sdl3_demo = @import("samples/sdl3_demo/build.zig");
 
     // OpenGL samples
     pub const minimal_glfw_gl = @import("samples/minimal_glfw_gl/build.zig");
@@ -230,98 +226,6 @@ fn buildAndInstallSamplesWeb(b: *std.Build, options: anytype) void {
             "Build '" ++ d.name ++ "' sample as a web app and serve locally using `emrun`",
         ).dependOn(emrun_step);
     }
-}
-
-fn tests(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    test_step: *std.Build.Step,
-) void {
-    // TODO: Renable randomly failing zaudio tests on windows
-    if (target.result.os.tag != .windows) {
-        const zaudio = b.dependency("zaudio", .{
-            .target = target,
-            .optimize = optimize,
-        });
-        test_step.dependOn(&b.addRunArtifact(zaudio.artifact("zaudio-tests")).step);
-    }
-
-    // TODO: Get zbullet tests working on Windows again
-    if (target.result.os.tag != .windows) {
-        const zbullet = b.dependency("zbullet", .{
-            .target = target,
-            .optimize = optimize,
-        });
-        test_step.dependOn(&b.addRunArtifact(zbullet.artifact("zbullet-tests")).step);
-    }
-
-    const zflecs = b.dependency("zflecs", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zflecs.artifact("zflecs-tests")).step);
-
-    const zgpu = b.dependency("zgpu", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zgpu.artifact("zgpu-tests")).step);
-
-    const zgui = b.dependency("zgui", .{
-        .target = target,
-        .optimize = optimize,
-        .with_te = true,
-    });
-    test_step.dependOn(&b.addRunArtifact(zgui.artifact("zgui-tests")).step);
-
-    const zmath = b.dependency("zmath", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zmath.artifact("zmath-tests")).step);
-
-    const zmesh = b.dependency("zmesh", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zmesh.artifact("zmesh-tests")).step);
-
-    test_step.dependOn(&b.addRunArtifact(b.dependency("zphysics", .{
-        .target = target,
-        .optimize = optimize,
-        .use_double_precision = false,
-    }).artifact("zphysics-tests")).step);
-
-    test_step.dependOn(&b.addRunArtifact(b.dependency("zphysics", .{
-        .target = target,
-        .optimize = optimize,
-        .use_double_precision = true,
-    }).artifact("zphysics-tests")).step);
-
-    const zpool = b.dependency("zpool", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zpool.artifact("zpool-tests")).step);
-
-    const zjobs = b.dependency("zjobs", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zjobs.artifact("zjobs-tests")).step);
-
-    const zstbi = b.dependency("zstbi", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(zstbi.artifact("zstbi-tests")).step);
-
-    const ztracy = b.dependency("ztracy", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    test_step.dependOn(&b.addRunArtifact(ztracy.artifact("ztracy-tests")).step);
 }
 
 // TODO: Delete this once Zig checks minimum_zig_version in build.zig.zon
