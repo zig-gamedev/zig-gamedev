@@ -52,12 +52,16 @@ pub fn main() !void {
     const cbv_srv = gctx.cbv_srv_uav_gpu_heaps[0];
     zgui.backend.init(
         window,
-        gctx.device,
-        zd3d12.GraphicsContext.max_num_buffered_frames,
-        @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
-        cbv_srv.heap.?,
-        @bitCast(cbv_srv.base.cpu_handle),
-        @bitCast(cbv_srv.base.gpu_handle),
+        .{
+            .device = gctx.device,
+            .command_queue = gctx.cmdqueue,
+            .num_frames_in_flight = zd3d12.GraphicsContext.max_num_buffered_frames,
+            .rtv_format = @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
+            .dsv_format = @intFromEnum(dxgi.FORMAT.D32_FLOAT),
+            .cbv_srv_heap = cbv_srv.heap.?,
+            .font_srv_cpu_desc_handle = @bitCast(cbv_srv.base.cpu_handle),
+            .font_srv_gpu_desc_handle = @bitCast(cbv_srv.base.gpu_handle),
+        },
     );
     defer zgui.backend.deinit();
 
