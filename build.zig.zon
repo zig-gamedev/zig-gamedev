@@ -13,13 +13,13 @@
     },
     .dependencies = .{
         .system_sdk = .{
-            .url = "https://github.com/zig-gamedev/system_sdk/archive/bf49d627a191e339f70e72668c8333717fb969b0.tar.gz",
+            .url = "https://github.com/zig-gamedev/system_sdk/archive/d1e724748d15cfcbf50c45ec7c7019688d45b16a.tar.gz",
             .hash = "122047a9298c4c9dd43389d418d6826d469b192246ba0944102964cdc57f94c562df",
         },
 
         .zaudio = .{
-            .url = "https://github.com/zig-gamedev/zaudio/archive/496da32757767b31f389554e1e5c668796755fe2.tar.gz",
-            .hash = "12203f6ab72861cd7e36ebd1590f9cc7fd036366e2ff96122002a395f628e813d999",
+            .url = "https://github.com/zig-gamedev/zaudio/archive/1d55b813e090271d2774a7637ec3c077a2847c43.tar.gz",
+            .hash = "1220b4c7d7a2e6f0ac3a6bf5cd52d2adf73b18d131c9290290f7fb380d54ad12ee61",
         },
 
         .zbullet = .{
@@ -42,13 +42,13 @@
         },
 
         .zglfw = .{
-            .url = "https://github.com/zig-gamedev/zglfw/archive/5aaf806521bbda4385b1041d9448bd0c40192a1c.tar.gz",
-            .hash = "12202db5d18aa92ae61b0e47c11ec517eeb5984d8e2647ff513807ff30a444fef49a",
+            .url = "https://github.com/zig-gamedev/zglfw/archive/46c24600da1ebebb2ba29d281bdaee8d356fc94c.tar.gz",
+            .hash = "122046ef684bef5d52959d52fb111a7490e4911e6fe7f654cf793a8f4a20efe5ed97",
         },
 
         .zgpu = .{
-            .url = "https://github.com/zig-gamedev/zgpu/archive/987809eff7cb47901192a6d41dc67486e3211f21.tar.gz",
-            .hash = "1220777b1f964f666f5e990412f34c7dd36b6c399ff15920754f842df297425dffa5",
+            .url = "https://github.com/zig-gamedev/zgpu/archive/bc10f874cf9c93e347c1298efba87be4f001fc9d.tar.gz",
+            .hash = "122020a116e18cad9f4ea905ca63a1505a47d680feb6edc9ebcf34795bf338f5868b",
         },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
@@ -77,8 +77,8 @@
         },
 
         .zgui = .{
-            .url = "https://github.com/zig-gamedev/zgui/archive/6763f8a059efe96951700731a8a3efb8a99a8ceb.tar.gz",
-            .hash = "1220c209784531fdf9eab84ca0a985adc98dc0b3c22fa477b54714036fe549b7eeb5",
+            .url = "https://github.com/zig-gamedev/zgui/archive/655a123f5da273f5e745d587d42ac652b3ca441e.tar.gz",
+            .hash = "1220d4d6e539b6c60ae448ac3b2c724cccdf9e53eb889a16a5a3dc9689feca4e8c7e",
         },
 
         .zjobs = .{
