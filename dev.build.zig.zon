@@ -91,6 +91,22 @@
             .hash = "12200ecb91c0596d0356ff39d573af83abcd44fecb27943589f11c2cd172763fea39",
             .lazy = true,
         },
+        .@"sdl3-prebuilt-macos" = .{
+            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-macos/archive/07985b3c3eb79277ae11a3dcf2b17d68bfe8276f.tar.gz",
+            .hash = "1220f4a00b613878775ad71299fff1964f3c6e7e21add7a9e82f5f25897c7ac2368e",
+            .lazy = true,
+        },
+        .@"sdl3-prebuilt-x86_64-windows-gnu" = .{
+            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-windows-gnu/archive/bd506c7cf80c4bb4876a169f77ecaa0f12824c5.tar.gz",
+            .hash = "122073ccc1be25223aed7eb9590e81eed67835901cd18ebf2314eb9cfe5bbef595cf",
+            .lazy = true,
+        },
+        .@"sdl3-prebuilt-x86_64-linux-gnu" = .{
+            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-linux-gnu/archive/183871b80747c77cfd467555ac7921fc828438ee.tar.gz",
+            .hash = "1220457c9927ab54acd80f67b372b50399dfe1716fdb97865423b1ae86876a95ca81",
+            .lazy = true,
+        },
+
 
         .zstbi = .{ .path = "libs/zstbi" },
 
