@@ -162,8 +162,8 @@
         },
 
         .zstbi = .{
-            .url = "https://github.com/zig-gamedev/zstbi/archive/bcbd249f3f57fb84d6d76f1bc621c7bd3bfaa4a2.tar.gz",
-            .hash = "12208b7d15a730294a7d8ee3a9d3ef145e109f94d0a68be7f0ee282e0630ede093d5",
+            .url = "https://github.com/zig-gamedev/zstbi/archive/4fce0ee7ca94bd42536c136d9a369e647bc55b14.tar.gz",
+            .hash = "122080418650eec7bd891749529fd13c99a118181fac8715035fdcfd8f76d65b2b0f",
         },
 
         .ztracy = .{

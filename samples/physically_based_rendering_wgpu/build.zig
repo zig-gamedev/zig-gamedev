@@ -48,7 +48,6 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zstbi", zstbi.module("root"));
-    exe.linkLibrary(zstbi.artifact("zstbi"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

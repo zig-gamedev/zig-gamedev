@@ -29,7 +29,6 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zstbi", zstbi.module("root"));
-    exe.linkLibrary(zstbi.artifact("zstbi"));
 
     const zwindows = b.dependency("zwindows", .{
         .zxaudio2_debug_layer = options.zxaudio2_debug_layer,

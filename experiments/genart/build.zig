@@ -72,7 +72,6 @@ fn install(
     exe.root_module.addImport("ximpl", ximpl);
 
     exe.root_module.addImport("zstbi", zstbi_module);
-    exe.linkLibrary(zstbi.artifact("zstbi"));
 
     exe.root_module.addImport("zsdl2", zsdl2_module);
 
