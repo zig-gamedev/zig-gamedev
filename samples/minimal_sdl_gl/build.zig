@@ -16,12 +16,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const zsdl = b.dependency("zsdl", .{});
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
 
-    @import("zsdl").prebuilt.addLibraryPathsTo(exe);
-
-    if (@import("zsdl").prebuilt.install_SDL2(b, options.target.result, .bin)) |install_sdl2_step| {
-        exe.step.dependOn(install_sdl2_step);
-    }
-
+    @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
 
     const zopengl = b.dependency("zopengl", .{});
