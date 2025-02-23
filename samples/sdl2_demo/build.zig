@@ -23,15 +23,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
     exe.root_module.addImport("zsdl2_image", zsdl.module("zsdl2_image"));
 
-    @import("zsdl").prebuilt.addLibraryPathsTo(exe);
-
-    if (@import("zsdl").prebuilt.install_SDL2(b, options.target.result, .bin)) |install_lib_step| {
-        exe.step.dependOn(install_lib_step);
-    }
-
-    if (@import("zsdl").prebuilt.install_SDL2_image(b, options.target.result, .bin)) |install_lib_step| {
-        exe.step.dependOn(install_lib_step);
-    }
+    @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
 
     @import("zsdl").link_SDL2(exe);
     @import("zsdl").link_SDL2_image(exe);

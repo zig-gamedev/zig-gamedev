@@ -127,8 +127,8 @@
         },
 
         .zsdl = .{
-            .url = "https://github.com/zig-gamedev/zsdl/archive/48a230277225fd8e731fe6bedd1b543d54c94d8a.tar.gz",
-            .hash = "1220d5669fa5c68b1de8e27bf1f71cd4d3adc0e1f9de7ef9ec50644468596822f3ea",
+            .url = "https://github.com/zig-gamedev/zsdl/archive/9635e2f996e86cd46ce939752b7a8c47f9883b9e.tar.gz",
+            .hash = "1220a5251c77af0d18c54ab1754fb0a296b9e4894b544b365c3e3da3c661b3b6f2aa",
         },
         .@"sdl2-prebuilt-macos" = .{
             .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/f14773fa3de719b3a399b854c31eb4139d63842f.tar.gz",

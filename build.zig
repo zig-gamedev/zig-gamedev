@@ -81,6 +81,14 @@ pub fn build(b: *std.Build) void {
         }
     }
 
+    // Install prebuilt SDL2 libs in bin output dir
+    if (@import("zsdl").prebuilt_sdl2.install(b, options.target.result, .bin, .{
+        .ttf = true,
+        .image = true,
+    })) |install_sdl2_step| {
+        b.getInstallStep().dependOn(install_sdl2_step);
+    }
+
     { // Benchmarks
         const benchmark_step = b.step("benchmark", "Run all benchmarks");
         const zmath = b.dependency("zmath", .{

@@ -76,7 +76,7 @@ fn install(
     exe.root_module.addImport("zsdl2", zsdl2_module);
 
     @import("zsdl").link_SDL2(exe);
-    @import("zsdl").prebuilt.addLibraryPathsTo(exe);
+    @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
 
     exe.root_module.addImport("zopengl", zopengl_module);
 
@@ -85,10 +85,6 @@ fn install(
         "Build '" ++ desc_name[0..desc_size] ++ "' genart experiment",
     );
     install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
-
-    if (@import("zsdl").prebuilt.install_SDL2(b, target.result, .bin)) |install_sdl2_step| {
-        install_step.dependOn(install_sdl2_step);
-    }
 
     const run_step = b.step(
         name ++ "-run",
