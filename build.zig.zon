@@ -34,7 +34,7 @@
 
         .zemscripten = .{
             .url = "https://github.com/zig-gamedev/zemscripten/archive/66088f8317fa546b14b1119cb1a7d68973905130.tar.gz",
-            .hash = "1220e415284b5d809a713238bc3e05cc2b4575076b344a1be41c5432e63b404342ca",
+            .hash = "12205235fca69823cc458a358846c7bd05ed33a854148ab95526b7c133e5e7a9aefb",
         },
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.3.tar.gz",
