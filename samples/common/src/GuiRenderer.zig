@@ -96,8 +96,8 @@ pub fn init(
         .font = font,
         .font_srv = font_srv,
         .pipeline = pipeline,
-        .vb = .{.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
-        .ib = .{.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
+        .vb = .{zd3d12.ResourceHandle{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
+        .ib = .{zd3d12.ResourceHandle{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
         .vb_cpu_addr = [_][]align(8) u8{&.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
         .ib_cpu_addr = [_][]align(8) u8{&.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
     };
