@@ -57,7 +57,10 @@ pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
 
     wasm.root_module.addImport("zemscripten", b.dependency("zemscripten", .{}).module("root"));
 
-    const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, options.optimize);
+    const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, .{
+        .optimize = options.optimize,
+        .fsanitize = true,
+    });
 
     var emcc_settings = zemscripten.emccDefaultSettings(b.allocator, .{
         .optimize = options.optimize,
