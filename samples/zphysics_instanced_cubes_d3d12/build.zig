@@ -1,8 +1,8 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const demo_name = "zphysics_instanced_cubes_d3d12";
-const content_dir = demo_name ++ "_content/";
+pub const demo_name = "zphysics_instanced_cubes_d3d12";
+pub const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });

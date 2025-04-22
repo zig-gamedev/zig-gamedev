@@ -1,7 +1,7 @@
 const std = @import("std");
 
-const demo_name = "layers_wgpu";
-const content_dir = demo_name ++ "_content/";
+pub const demo_name = "layers_wgpu";
+pub const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });

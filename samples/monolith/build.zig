@@ -1,7 +1,7 @@
 const std = @import("std");
 
-const demo_name = "monolith";
-const content_dir = "monolith_content/";
+pub const demo_name = "monolith";
+pub const content_dir = "monolith_content/";
 
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
