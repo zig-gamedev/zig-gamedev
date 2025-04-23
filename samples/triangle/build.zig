@@ -1,8 +1,8 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const demo_name = "triangle";
-const content_dir = demo_name ++ "_content/";
+pub const demo_name = "triangle";
+pub const content_dir = demo_name ++ "_content/";
 
 // in future zig version e342433
 pub fn pathResolve(b: *std.Build, paths: []const []const u8) []u8 {

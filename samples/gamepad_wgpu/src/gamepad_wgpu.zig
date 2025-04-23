@@ -137,7 +137,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
         _ = zgui.beginTabBar("Joystick picker", .{});
         defer zgui.endTabBar();
 
-        for (0 .. zglfw.Joystick.maximum_supported) |jid| {
+        for (0..zglfw.Joystick.maximum_supported) |jid| {
             const joystick: zglfw.Joystick = @enumFromInt(jid);
             const tab_title = try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1});
 

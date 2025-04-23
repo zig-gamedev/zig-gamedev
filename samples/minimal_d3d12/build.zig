@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const demo_name = "minimal_d3d12";
+pub const demo_name = "minimal_d3d12";
 
 // in future zig version e342433
 pub fn pathResolve(b: *std.Build, paths: []const []const u8) []u8 {
@@ -18,7 +18,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .optimize = options.optimize,
     });
 
-    const zwindows = b.dependency("zwindows", .{});
+    const zwindows = b.dependency("zwindows", .{
+        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
+        .zd3d12_debug_layer = options.zd3d12_debug_layer,
+        .zd3d12_gbv = options.zd3d12_gbv,
+    });
     exe.root_module.addImport("zwindows", zwindows.module("zwindows"));
 
     if (builtin.os.tag == .windows or builtin.os.tag == .linux) {

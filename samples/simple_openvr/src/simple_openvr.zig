@@ -1118,8 +1118,8 @@ pub fn main() !void {
 
             for (eye_descs) |eye_desc| {
                 const dx12_texture = OpenVR.D3D12TextureData{
-                    .resource = gctx.lookupResource(eye_desc.texture).?,
-                    .command_queue = gctx.cmdqueue,
+                    .resource = @ptrCast(gctx.lookupResource(eye_desc.texture).?),
+                    .command_queue = @ptrCast(gctx.cmdqueue),
                     .node_mask = 0,
                 };
                 app.compositor.submit(eye_desc.eye, &.{

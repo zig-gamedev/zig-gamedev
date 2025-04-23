@@ -1,8 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-const demo_name = "simple_openvr";
-const content_dir = demo_name ++ "_content/";
+pub const demo_name = "simple_openvr";
+pub const content_dir = demo_name ++ "_content/";
 
 // in future zig version e342433
 pub fn pathResolve(b: *std.Build, paths: []const []const u8) []u8 {

@@ -153,7 +153,7 @@ const ContactListener = extern struct {
     };
 
     __v: *const zphy.ContactListener.VTable = &vtable,
-    bodies_touching_sensors: [9]SensorContacts = .{.{}} ** 9,
+    bodies_touching_sensors: [9]SensorContacts = .{SensorContacts{}} ** 9,
 
     const vtable = zphy.ContactListener.VTable{
         .onContactValidate = _onContactValidate,
@@ -248,8 +248,8 @@ const DebugRenderer = struct {
     usingnamespace zphy.DebugRenderer.Methods(@This());
     __v: *const zphy.DebugRenderer.VTable(@This()) = &vtable,
 
-    primitives: [max_prims]Primitive = .{.{}} ** max_prims,
-    vertices: [max_verts]DebugVertex = .{.{}} ** max_verts,
+    primitives: [max_prims]Primitive = .{Primitive{}} ** max_prims,
+    vertices: [max_verts]DebugVertex = .{DebugVertex{}} ** max_verts,
     indices: [max_indcs]u16 = .{std.math.maxInt(u16)} ** max_indcs,
     heads: struct {
         prim: usize = 0,

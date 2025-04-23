@@ -1,7 +1,7 @@
 const std = @import("std");
 
-const demo_name = "sdl2_demo";
-const content_dir = demo_name ++ "_content/";
+pub const demo_name = "sdl2_demo";
+pub const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
@@ -57,7 +57,10 @@ pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
 
     wasm.root_module.addImport("zemscripten", b.dependency("zemscripten", .{}).module("root"));
 
-    const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, options.optimize);
+    const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, .{
+        .optimize = options.optimize,
+        .fsanitize = true,
+    });
 
     var emcc_settings = zemscripten.emccDefaultSettings(b.allocator, .{
         .optimize = options.optimize,

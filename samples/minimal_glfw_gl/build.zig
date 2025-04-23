@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const demo_name = "minimal_glfw_gl";
+pub const demo_name = "minimal_glfw_gl";
 
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });

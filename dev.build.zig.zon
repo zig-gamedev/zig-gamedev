@@ -1,6 +1,7 @@
 .{
-    .name = "zig-gamedev",
-    .version = "0.6.0",
+    .name = .zig_gamedev,
+    .fingerprint = 0xe02dab6801fee8e4,
+    .version = "0.7.0",
     .minimum_zig_version = "0.14.0",
     .paths = .{
         "build.zig",
@@ -31,27 +32,27 @@
         .zgpu = .{ .path = "libs/zgpu" },
         .dawn_x86_64_windows_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
-            .hash = "1220f9448cde02ef3cd51bde2e0850d4489daa0541571d748154e89c6eb46c76a267",
+            .hash = "N-V-__8AAGsYnAT5RIzeAu881RveLghQ1EidqgVBVx10gVTo",
             .lazy = true,
         },
         .dawn_x86_64_linux_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/7d70db023bf254546024629cbec5ee6113e12a42.tar.gz",
-            .hash = "12204a3519efd49ea2d7cf63b544492a3a771d37eda320f86380813376801e4cfa73",
+            .hash = "N-V-__8AAK7XUQNKNRnv1J6i189jtURJKjp3HTftoyD4Y4CB",
             .lazy = true,
         },
         .dawn_aarch64_linux_gnu = .{
             .url = "https://github.com/michal-z/webgpu_dawn-aarch64-linux-gnu/archive/c1f55e740a62f6942ff046e709ecd509a005dbeb.tar.gz",
-            .hash = "12205cd13f6849f94ef7688ee88c6b74c7918a5dfb514f8a403fcc2929a0aa342627",
+            .hash = "N-V-__8AAJ-wTwNc0T9oSflO92iO6IxrdMeRil37UU-KQD_M",
             .lazy = true,
         },
         .dawn_aarch64_macos = .{
             .url = "https://github.com/michal-z/webgpu_dawn-aarch64-macos/archive/d2360cdfff0cf4a780cb77aa47c57aca03cc6dfe.tar.gz",
-            .hash = "12201fe677e9c7cfb8984a36446b329d5af23d03dc1e4f79a853399529e523a007fa",
+            .hash = "N-V-__8AALVIRAIf5nfpx8-4mEo2RGsynVryPQPcHk95qFM5",
             .lazy = true,
         },
         .dawn_x86_64_macos = .{
             .url = "https://github.com/michal-z/webgpu_dawn-x86_64-macos/archive/901716b10b31ce3e0d3fe479326b41e91d59c661.tar.gz",
-            .hash = "1220b1f02f2f7edd98a078c64e3100907d90311d94880a3cc5927e1ac009d002667a",
+            .hash = "N-V-__8AAIz1QAKx8C8vft2YoHjGTjEAkH2QMR2UiAo8xZJ-",
             .lazy = true,
         },
 
@@ -76,42 +77,41 @@
         .zpool = .{ .path = "libs/zpool" },
 
         .zsdl = .{ .path = "libs/zsdl" },
-        .@"sdl2-prebuilt-macos" = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/f14773fa3de719b3a399b854c31eb4139d63842f.tar.gz",
-            .hash = "12205cb2da6fb4a7fcf28b9cd27b60aaf12f4d4a55be0260b1ae36eaf93ca5a99f03",
+        .sdl2_prebuilt_macos = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/7bc0fa9101342c019eed252d43f490660dfa411b.tar.gz",
+            .hash = "sdl2_prebuilt_macos-0.2.0-dev-DaOxP5Eq2QBpNBkpXn2qjyI6_s0gINcbdUMpqI1KshaH",
             .lazy = true,
         },
-        .@"sdl2-prebuilt-x86_64-windows-gnu" = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-windows-gnu/archive/8143e2a5c28dbace399cbff14c3e8749a1afd418.tar.gz",
-            .hash = "1220ade6b84d06d73bf83cef22c73ec4abc21a6d50b9f48875f348b7942c80dde11b",
+        .sdl2_prebuilt_x86_64_windows_gnu = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-windows-gnu/archive/8de1512cedfa1fb3ab17ecf295af8cabd7f231f1.tar.gz",
+            .hash = "sdl2_prebuilt_x86_64_windows_gnu-0.2.0-dev-HPeIhv2VaQBOWF4Fjtr7Vb9bA852pUtwUuQKdvNvkA98",
             .lazy = true,
         },
-        .@"sdl2-prebuilt-x86_64-linux-gnu" = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/2eccc574ad909b0d00b694b10c217a95145c47af.tar.gz",
-            .hash = "12200ecb91c0596d0356ff39d573af83abcd44fecb27943589f11c2cd172763fea39",
+        .sdl2_prebuilt_x86_64_linux_gnu = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/ce2b511c052c3fdc35c286ade8235d2830a50992.tar.gz",
+            .hash = "sdl2_prebuilt_x86_64_linux_gnu-0.2.0-dev-NHZ_xrzSHwDJDoAxuVi000OEq428znS1fDRRJE8PlXHu",
             .lazy = true,
         },
-        .@"sdl3-prebuilt-macos" = .{
-            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-macos/archive/07985b3c3eb79277ae11a3dcf2b17d68bfe8276f.tar.gz",
-            .hash = "1220f4a00b613878775ad71299fff1964f3c6e7e21add7a9e82f5f25897c7ac2368e",
+        .sdl3_prebuilt_macos = .{
+            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-macos/archive/e89207914a0f0163c0fb543da4f530f645ef5969.tar.gz",
+            .hash = "sdl3_prebuilt_macos-0.2.0-dev-A1UBS1aUdwCWfplgS5fNorbstvDxSi3LOHnSPzjmWZhl",
             .lazy = true,
         },
-        .@"sdl3-prebuilt-x86_64-windows-gnu" = .{
-            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-windows-gnu/archive/bd506c7cf80c4bb4876a169f77ecaa0f12824c5.tar.gz",
-            .hash = "122073ccc1be25223aed7eb9590e81eed67835901cd18ebf2314eb9cfe5bbef595cf",
+        .sdl3_prebuilt_x86_64_windows_gnu = .{
+            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-windows-gnu/archive/8f5dc1a9c9450ac578286e90d4667fc3aa1b23e2.tar.gz",
+            .hash = "sdl3_prebuilt_x86_64_windows_gnu-0.2.0-dev-AAAAAI_mJADlsRyMxRFKobQJEbfs1p-37A9mmYEj7DW-",
             .lazy = true,
         },
-        .@"sdl3-prebuilt-x86_64-linux-gnu" = .{
-            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-linux-gnu/archive/183871b80747c77cfd467555ac7921fc828438ee.tar.gz",
-            .hash = "1220457c9927ab54acd80f67b372b50399dfe1716fdb97865423b1ae86876a95ca81",
+        .sdl3_prebuilt_x86_64_linux_gnu = .{
+            .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-linux-gnu/archive/b19959ed3aa87d8393640d7ba3aec142ae85487b.tar.gz",
+            .hash = "sdl3_prebuilt_x86_64_linux_gnu-0.2.0-dev-qpwWsmyVNwBHzXjgC9Z-U02SXoUVMMxvCnI7XKocDcDn",
             .lazy = true,
         },
-
 
         .zstbi = .{ .path = "libs/zstbi" },
 
         .ztracy = .{ .path = "libs/ztracy" },
-        
+
         .zwindows = .{ .path = "libs/zwindows" },
     },
 }

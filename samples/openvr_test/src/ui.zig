@@ -952,7 +952,7 @@ pub fn readOnlyHexdump(allocator: std.mem.Allocator, bytes: []const u8) !void {
 fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Return) !void {
     switch (@typeInfo(Return)) {
         .pointer => |pointer| {
-            if (pointer.size == .Slice and pointer.child != u8) {
+            if (pointer.size == .slice and pointer.child != u8) {
                 if (result.len > 0) {
                     for (result, 0..) |v, i| {
                         zgui.pushIntId(@intCast(i));
@@ -1361,8 +1361,8 @@ fn fillArgs(comptime arg_ptrs_info: std.builtin.Type.Struct, arg_ptrs: anytype, 
         const arg_ptr = @field(arg_ptrs, field.name);
         args[i + offset] = switch (@typeInfo(field.type)) {
             .pointer => |pointer| switch (pointer.size) {
-                .Slice => arg_ptr,
-                .One => switch (@typeInfo(pointer.child)) {
+                .slice => arg_ptr,
+                .one => switch (@typeInfo(pointer.child)) {
                     .array => std.mem.sliceTo(arg_ptr, 0),
                     else => switch (field.type) {
                         *std.ArrayList(OpenVR.AppOverrideKeys),

@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const demo_name = "vector_graphics_test";
+pub const demo_name = "vector_graphics_test";
 
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });

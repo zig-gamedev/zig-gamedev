@@ -2,19 +2,22 @@
 
 The original repo spawned in July 2021 by [Michal Ziulek](https://github.com/michal-z). This is the main development repo for the [zig-gamedev libraries](https://github.com/zig-gamedev#libraries) and [sample applications](#sample-applications-native-wgpu).
 
-Zig is still in development. Our main branch aims to track zig nightly-ish. See [.zigversion](./.zigversion) for the last known compatible Zig version for any revision.
-
 Libraries now live in their own repositories and are consumed using Zig's package manager. Git submodules are also included in this repo for developer convenience but are not required to build. Users that wish to use the submodules instead of remote packages can replace build.zig.zon with dev.build.zig.zon.
 
-### Build and run the [Samples](#sample-applications-native-wgpu)
+## Getting Started
 
-To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
-```
+- Download and install [Git LFS](https://git-lfs.com)
+- Download and install [anyzig](https://github.com/marler8997/anyzig) (recommended) or get a Zig compiler by some other means.
+- Clone this repo `git clone git@github.com:zig-gamedev/zig-gamedev.git && cd zig-gamedev`
+- (Optional) Get the submodules and use them instead of the package manager `git submodule update --init && mv build.zig.zon backup.build.zig.zon && mv dev.build.zig.zon build.zig.zon`
+
+Build and run a sample app:
+```sh
 zig build physically_based_rendering_wgpu-run
 ```
 
-To get a list of all available build steps:
-```
+Get a list of all available build steps:
+```sh
 zig build -l
 ```
 
