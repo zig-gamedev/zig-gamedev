@@ -78,8 +78,8 @@
         },
 
         .zgui = .{
-            .url = "https://github.com/zig-gamedev/zgui/archive/7ac0630658ee2d285893603aca3945461d181beb.tar.gz",
-            .hash = "zgui-0.6.0-dev--L6sZG-baABjJ9Gcf2XU_VpTLmn4nNwq7alHKDRT_BW9",
+            .url = "https://github.com/zig-gamedev/zgui/archive/0027c0117026df3b98102160bd1ecd476e5b80cc.tar.gz",
+            .hash = "zgui-0.6.0-dev--L6sZG-baAC_aKii9zSGNRzQGz4bdsEi2-SOjAtICP6k",
         },
 
         .zjobs = .{
@@ -103,8 +103,8 @@
         },
 
         .zopengl = .{
-            .url = "https://github.com/zig-gamedev/zopengl/archive/fe574e10bc096983631d9f18b363e7a88247eef4.tar.gz",
-            .hash = "zopengl-0.6.0-dev-5-tnz0tUCAAecmfZHeJBAGiwU9ofrlLHJEGt2CXwnmF9",
+            .url = "https://github.com/zig-gamedev/zopengl/archive/27f5f228bc1f6da4a4f6acaca07d1cc5ad135171.tar.gz",
+            .hash = "zopengl-0.6.0-dev-5-tnz59jCAB6WpFFql6YdVtwBLlOcReCYVOnxQTPD-xC",
         },
 
         .zopenvr = .{
@@ -128,8 +128,8 @@
         },
 
         .zsdl = .{
-            .url = "https://github.com/zig-gamedev/zsdl/archive/680fc9614d01173168c8ecb5b2256b7f1de73c41.tar.gz",
-            .hash = "zsdl-0.4.0-dev-rFpjE6pXWQC9EXxkkH2zO6MUh9JCDgteTDAIPt-mSQm2",
+            .url = "https://github.com/zig-gamedev/zsdl/archive/5b4f2529a4b03975c3b451f567300b72a4714141.tar.gz",
+            .hash = "zsdl-0.4.0-dev-rFpjE45XWQDR2TRCavRn5yUDtf62A16_rTWMNA6-VDub",
         },
         .sdl2_prebuilt_macos = .{
             .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/7bc0fa9101342c019eed252d43f490660dfa411b.tar.gz",

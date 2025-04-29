@@ -12,7 +12,7 @@ var sprite: Sprite = undefined;
 const platform_rect = sdl.Rect{ .x = 160, .y = 380, .w = 300, .h = 50 };
 
 pub fn init() !void {
-    _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
+    _ = try sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
     try sdl.init(.{ .audio = true, .video = true });
 
     const default_window_width = 640;
@@ -29,7 +29,7 @@ pub fn init() !void {
 
     renderer = try sdl.createRenderer(
         window,
-        -1,
+        null,
         .{ .present_vsync = true },
     );
 

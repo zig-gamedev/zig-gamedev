@@ -12,7 +12,7 @@ pub fn main() !void {
 
     xcommon.allocator = gpa.allocator();
 
-    _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
+    _ = try sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
 
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();

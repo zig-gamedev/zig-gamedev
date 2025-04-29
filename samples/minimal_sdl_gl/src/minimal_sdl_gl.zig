@@ -3,7 +3,7 @@ const sdl = @import("zsdl2");
 const zopengl = @import("zopengl");
 
 pub fn main() !void {
-    _ = sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
+    _ = try sdl.setHint(sdl.hint_windows_dpi_awareness, "system");
 
     try sdl.init(.{ .audio = true, .video = true });
     defer sdl.quit();
@@ -39,7 +39,7 @@ pub fn main() !void {
         var w: i32 = undefined;
         var h: i32 = undefined;
 
-        try window.getSize(&w, &h);
+        window.getSize(&w, &h);
         std.debug.print("Window size is {d}x{d}\n", .{ w, h });
 
         sdl.gl.getDrawableSize(window, &w, &h);
