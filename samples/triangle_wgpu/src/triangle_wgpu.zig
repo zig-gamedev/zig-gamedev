@@ -172,10 +172,8 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgui.backend.newFrame(
-        demo.gctx.swapchain_descriptor.width,
-        demo.gctx.swapchain_descriptor.height,
-    );
+    _ = demo;
+    zgui.backend.newFrame();
     zgui.showDemoWindow(null);
 }
 
@@ -345,15 +343,10 @@ pub fn main() !void {
     var demo = try init(allocator, window);
     defer deinit(allocator, &demo);
 
-    const scale_factor = scale_factor: {
-        const scale = window.getContentScale();
-        break :scale_factor @max(scale[0], scale[1]);
-    };
-
     zgui.init(allocator);
     defer zgui.deinit();
 
-    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0 * scale_factor));
+    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", math.floor(16.0));
 
     zgui.backend.init(
         window,
@@ -363,10 +356,8 @@ pub fn main() !void {
     );
     defer zgui.backend.deinit();
 
-    zgui.getStyle().scaleAllSizes(scale_factor);
-
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
-        zglfw.pollEvents();
+        zglfw.pollEvents();       
         update(&demo);
         draw(&demo);
     }
