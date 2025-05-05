@@ -19,8 +19,8 @@
         },
 
         .zaudio = .{
-            .url = "https://github.com/zig-gamedev/zaudio/archive/b03ad083bcd1594c099f5841f62c2dccea634f86.tar.gz",
-            .hash = "zaudio-0.11.0-dev-_M-91jdkPwCWTlVfjKjXZWbHdXjKmYDcbCn99w3c9yOu",
+            .url = "https://github.com/zig-gamedev/zaudio/archive/1012b105627e28827f558b79e533575ef65a4965.tar.gz",
+            .hash = "zaudio-0.11.0-dev-_M-91mJkPwB7NWGKgDvdpl3xyjkk301Tp6ubbsleUvVK",
         },
 
         .zbullet = .{

@@ -122,7 +122,7 @@ const AudioState = struct {
     ) callconv(.C) void {
         const audio = @as(*AudioState, @ptrCast(@alignCast(device.getUserData())));
 
-        audio.engine.readPcmFrames(output.?, num_frames, null) catch {};
+        audio.engine.asNodeGraphMut().readPcmFrames(output.?, num_frames, null) catch {};
 
         audio.mutex.lock();
         defer audio.mutex.unlock();
@@ -284,39 +284,39 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
 
     const audio_filter = audio_filter: {
         const lpf_config = zaudio.LpfNode.Config.init(
-            audio.engine.getChannels(),
+            audio.engine.asNodeGraph().getChannels(),
             audio.engine.getSampleRate(),
             min_filter_fequency,
             filter_order,
         );
         const hpf_config = zaudio.HpfNode.Config.init(
-            audio.engine.getChannels(),
+            audio.engine.asNodeGraph().getChannels(),
             audio.engine.getSampleRate(),
             min_filter_fequency,
             filter_order,
         );
         const notch_config = zaudio.NotchNode.Config.init(
-            audio.engine.getChannels(),
+            audio.engine.asNodeGraph().getChannels(),
             audio.engine.getSampleRate(),
             min_filter_q,
             min_filter_fequency,
         );
         const peak_config = zaudio.PeakNode.Config.init(
-            audio.engine.getChannels(),
+            audio.engine.asNodeGraph().getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
             min_filter_fequency,
         );
         const loshelf_config = zaudio.LoshelfNode.Config.init(
-            audio.engine.getChannels(),
+            audio.engine.asNodeGraph().getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
             min_filter_fequency,
         );
         const hishelf_config = zaudio.HishelfNode.Config.init(
-            audio.engine.getChannels(),
+            audio.engine.asNodeGraph().getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
@@ -326,36 +326,37 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         const audio_filter = AudioFilter{
             .lpf = .{
                 .config = lpf_config.lpf,
-                .node = try audio.engine.createLpfNode(lpf_config),
+                .node = try audio.engine.asNodeGraphMut().createLpfNode(lpf_config),
             },
             .hpf = .{
                 .config = hpf_config.hpf,
-                .node = try audio.engine.createHpfNode(hpf_config),
+                .node = try audio.engine.asNodeGraphMut().createHpfNode(hpf_config),
             },
             .notch = .{
                 .config = notch_config.notch,
-                .node = try audio.engine.createNotchNode(notch_config),
+                .node = try audio.engine.asNodeGraphMut().createNotchNode(notch_config),
             },
             .peak = .{
                 .config = peak_config.peak,
-                .node = try audio.engine.createPeakNode(peak_config),
+                .node = try audio.engine.asNodeGraphMut().createPeakNode(peak_config),
             },
             .loshelf = .{
                 .config = loshelf_config.loshelf,
-                .node = try audio.engine.createLoshelfNode(loshelf_config),
+                .node = try audio.engine.asNodeGraphMut().createLoshelfNode(loshelf_config),
             },
             .hishelf = .{
                 .config = hishelf_config.hishelf,
-                .node = try audio.engine.createHishelfNode(hishelf_config),
+                .node = try audio.engine.asNodeGraphMut().createHishelfNode(hishelf_config),
             },
         };
 
-        try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
-        try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
-        try audio_filter.notch.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
-        try audio_filter.peak.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
-        try audio_filter.loshelf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
-        try audio_filter.hishelf.node.attachOutputBus(0, audio.engine.getEndpointMut(), 0);
+        const endpoint = audio.engine.asNodeGraphMut().getEndpointMut();
+        try audio_filter.lpf.node.asNodeMut().attachOutputBus(0, endpoint, 0);
+        try audio_filter.hpf.node.asNodeMut().attachOutputBus(0, endpoint, 0);
+        try audio_filter.notch.node.asNodeMut().attachOutputBus(0, endpoint, 0);
+        try audio_filter.peak.node.asNodeMut().attachOutputBus(0, endpoint, 0);
+        try audio_filter.loshelf.node.asNodeMut().attachOutputBus(0, endpoint, 0);
+        try audio_filter.hishelf.node.asNodeMut().attachOutputBus(0, endpoint, 0);
 
         break :audio_filter audio_filter;
     };
@@ -363,31 +364,31 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     // Waveform generator
     const waveform_config = zaudio.Waveform.Config.init(
         .float32,
-        audio.engine.getChannels(),
+        audio.engine.asNodeGraph().getChannels(),
         audio.engine.getSampleRate(),
         .sine,
         0.5,
         440.0,
     );
     const waveform_data_source = try zaudio.Waveform.create(waveform_config);
-    const waveform_node = try audio.engine.createDataSourceNode(
+    const waveform_node = try audio.engine.asNodeGraphMut().createDataSourceNode(
         zaudio.DataSourceNode.Config.init(waveform_data_source.asDataSourceMut()),
     );
-    try waveform_node.setState(.stopped);
+    try waveform_node.asNodeMut().setState(.stopped);
 
     // Noise generator
     const noise_config = zaudio.Noise.Config.init(
         .float32,
-        audio.engine.getChannels(),
+        audio.engine.asNodeGraph().getChannels(),
         .pink,
         123,
         0.25,
     );
     const noise_data_source = try zaudio.Noise.create(noise_config);
-    const noise_node = try audio.engine.createDataSourceNode(
+    const noise_node = try audio.engine.asNodeGraphMut().createDataSourceNode(
         zaudio.DataSourceNode.Config.init(noise_data_source.asDataSourceMut()),
     );
-    try noise_node.setState(.stopped);
+    try noise_node.asNodeMut().setState(.stopped);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -458,15 +459,15 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn updateAudioGraph(demo: DemoState) !void {
     const node = node: {
         if (demo.audio_filter.is_enabled == false)
-            break :node demo.audio.engine.getEndpointMut();
+            break :node demo.audio.engine.asNodeGraphMut().getEndpointMut();
         break :node demo.audio_filter.getCurrentNode();
     };
 
-    try demo.music.attachOutputBus(0, node, 0);
-    try demo.waveform_node.attachOutputBus(0, node, 0);
-    try demo.noise_node.attachOutputBus(0, node, 0);
+    try demo.music.asNodeMut().attachOutputBus(0, node, 0);
+    try demo.waveform_node.asNodeMut().attachOutputBus(0, node, 0);
+    try demo.noise_node.asNodeMut().attachOutputBus(0, node, 0);
     for (demo.sounds.items) |sound| {
-        try sound.attachOutputBus(0, node, 0);
+        try sound.asNodeMut().attachOutputBus(0, node, 0);
     }
 }
 
@@ -550,11 +551,11 @@ fn update(demo: *DemoState) !void {
             zgui.separator();
             zgui.textUnformatted("Waveform Generator:");
 
-            var is_enabled = demo.waveform_node.getState() == .started;
+            var is_enabled = demo.waveform_node.asNode().getState() == .started;
             if (zgui.checkbox("Enabled", .{ .v = &is_enabled })) {
                 if (is_enabled) {
-                    try demo.waveform_node.setState(.started);
-                } else try demo.waveform_node.setState(.stopped);
+                    try demo.waveform_node.asNodeMut().setState(.started);
+                } else try demo.waveform_node.asNodeMut().setState(.stopped);
             }
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
@@ -599,11 +600,11 @@ fn update(demo: *DemoState) !void {
             zgui.separator();
             zgui.textUnformatted("Noise Generator:");
 
-            var is_enabled = demo.noise_node.getState() == .started;
+            var is_enabled = demo.noise_node.asNode().getState() == .started;
             if (zgui.checkbox("Enabled", .{ .v = &is_enabled })) {
                 if (is_enabled) {
-                    try demo.noise_node.setState(.started);
-                } else try demo.noise_node.setState(.stopped);
+                    try demo.noise_node.asNodeMut().setState(.started);
+                } else try demo.noise_node.asNodeMut().setState(.stopped);
             }
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
