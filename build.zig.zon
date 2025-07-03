@@ -39,7 +39,7 @@
         },
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.3.tar.gz",
-            .hash = "122089f5c9fe376b309b6a3970b9838667479adc0d9e038284aefceec6bb6d4f1ed0",
+            .hash = "N-V-__8AAOG3BQCJ9cn-N2swm2o5cLmDhmdHmtwNngOChK78",
         },
 
         .zglfw = .{

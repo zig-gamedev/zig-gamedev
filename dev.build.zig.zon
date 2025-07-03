@@ -23,8 +23,8 @@
 
         .zemscripten = .{ .path = "libs/zemscripten" },
         .emsdk = .{
-            .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.52.tar.gz",
-            .hash = "12202192726bf983ec243c7eea956d6107baf6f49d50b62f6a91f5d7471bc6daf53b",
+            .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.3.tar.gz",
+            .hash = "N-V-__8AAOG3BQCJ9cn-N2swm2o5cLmDhmdHmtwNngOChK78",
         },
 
         .zglfw = .{ .path = "libs/zglfw" },
