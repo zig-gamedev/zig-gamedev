@@ -2,35 +2,63 @@ const std = @import("std");
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
 
-pub fn main() !void {
-    try glfw.init();
-    defer glfw.terminate();
+var window: *glfw.Window = undefined;
 
-    const gl_major = 4;
-    const gl_minor = 0;
-    glfw.windowHint(.context_version_major, gl_major);
-    glfw.windowHint(.context_version_minor, gl_minor);
+pub fn init(gl_settings: struct {
+    api: glfw.ClientApi,
+    version_major: u16,
+    version_minor: u16,
+}) !void {
+    try glfw.init();
+
+    glfw.windowHint(.client_api, gl_settings.api);
+    glfw.windowHint(.context_version_major, gl_settings.version_major);
+    glfw.windowHint(.context_version_minor, gl_settings.version_minor);
     glfw.windowHint(.opengl_profile, .opengl_core_profile);
     glfw.windowHint(.opengl_forward_compat, true);
-    glfw.windowHint(.client_api, .opengl_api);
     glfw.windowHint(.doublebuffer, true);
 
-    const window = try glfw.Window.create(600, 600, "zig-gamedev: minimal_glfw_gl", null);
-    defer window.destroy();
+    window = try glfw.Window.create(600, 600, "zig-gamedev: minimal_glfw_gl", null);
 
     glfw.makeContextCurrent(window);
 
-    try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
-
-    const gl = zopengl.bindings;
+    switch (gl_settings.api) {
+        .no_api => unreachable,
+        .opengl_api => {
+            try zopengl.loadCoreProfile(
+                glfw.getProcAddress,
+                gl_settings.version_major,
+                gl_settings.version_minor,
+            );
+        },
+        .opengl_es_api => {
+            try zopengl.loadEsProfile(
+                glfw.getProcAddress,
+                gl_settings.version_major,
+                gl_settings.version_minor,
+            );
+        },
+    }
 
     glfw.swapInterval(1);
+}
 
-    while (!window.shouldClose()) {
-        glfw.pollEvents();
+pub fn deinit() void {
+    window.destroy();
+    glfw.terminate();
+}
 
-        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.6, 0.4, 1.0 });
+pub fn shouldQuit() bool {
+    return window.shouldClose();
+}
 
-        window.swapBuffers();
-    }
+pub fn updateAndRender() void {
+    glfw.pollEvents();
+
+    const gl = zopengl.bindings;
+    
+    gl.clearColor(0.12, 0.24, 0.36, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    window.swapBuffers();
 }

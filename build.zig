@@ -160,9 +160,9 @@ pub const samples = struct {
     /// Sample apps that can be built as web applications using zemscripten.
     pub const web = struct {
         pub const sdl2_demo = samples.crossplatform.sdl2_demo;
+        pub const minimal_glfw_gl = samples.crossplatform.minimal_glfw_gl;
 
         // TODO: WebGL samples
-        // pub const minimal_glfw_gl = samples.crossplatform.minimal_glfw_gl;
         // pub const minimal_sdl_gl = samples.crossplatform.minimal_sdl_gl;
         // pub const minimal_zgui_glfw_gl = samples.crossplatform.minimal_zgui_glfw_gl;
 
