@@ -114,7 +114,7 @@
 
         .zphysics = .{
             .url = "https://github.com/zig-gamedev/zphysics/archive/e61d7d3449750432cc91fb928959c8fb0ed9fe87.tar.gz",
-            .hash = "zphysics-0.2.0-dev-nZDEAHKiPwDIup82Bua4nZKs18EEpgWCLuEjWNAlmuau",
+            .hash = "zphysics-0.2.0-dev-nZDEAOz6QgDbFlcnHtGhk5mz1vNyWpSxn0iDcSldVhBN",
         },
 
         .zpix = .{
