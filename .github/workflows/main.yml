@@ -37,7 +37,7 @@ jobs:
       - name: Cross compile Linux->Windows
         if: runner.os == 'Linux'
         run: zig build -Dtarget=x86_64-windows-gnu
-      - name: Build for Web
-        run: zig build -Dtarget=wasm32-emscripten
+      # - name: Build for Web
+      #   run: zig build -Dtarget=wasm32-emscripten
         
 
