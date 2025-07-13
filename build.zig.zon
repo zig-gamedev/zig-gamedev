@@ -34,8 +34,8 @@
         },
 
         .zemscripten = .{
-            .url = "https://github.com/zig-gamedev/zemscripten/archive/dce5c0b043ff8cc8ae1bd2eb597fd86bfa94591c.tar.gz",
-            .hash = "zemscripten-0.2.0-dev-sRlDqKdPAACNU94D6IU-7WYWoJhtCS7Yc28hjqOHVA5T",
+            .url = "https://github.com/zig-gamedev/zemscripten/archive/e82dfa1183171d6e56af80c3a6ec13c119231f7a.tar.gz",
+            .hash = "zemscripten-0.2.0-dev-sRlDqLZNAAAzyv87o5wdKaX11asXJIxJwJJt1NHoDDsa",
         },
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.3.tar.gz",
