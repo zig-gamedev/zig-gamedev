@@ -1,4 +1,6 @@
 const std = @import("std");
+const glfw = @import("zglfw");
+const zopengl = @import("zopengl");
 
 const zemscripten = @import("zemscripten");
 pub const panic = zemscripten.panic;
@@ -9,25 +11,32 @@ pub const std_options = std.Options{
 
 const minimal_glfw_gl = @import("minimal_glfw_gl.zig");
 
-var initialised = false;
+const gl_es_version_major: u16 = 2;
+const gl_es_version_minor: u16 = 0;
 
 export fn main() c_int {
-    zemscripten.setMainLoop(mainLoopCallback, null, false);
+    init() catch |err| {
+        std.log.err("Initialization failed with error: {s}", .{@errorName(err)});
+        return -1;
+    };
+
     return 0;
 }
 
 export fn mainLoopCallback() void {
-    if (initialised == false) {
-        minimal_glfw_gl.init(.{
-            .api = .opengl_es_api,
-            .version_major = 2,
-            .version_minor = 0,
-        }) catch |err| {
-            std.log.err("minimal_glfw_gl.init failed with error: {s}", .{@errorName(err)});
-            return;
-        };
-        initialised = true;
-    }
-
     minimal_glfw_gl.updateAndRender();
+}
+
+fn init() !void {
+    try glfw.init();
+
+    glfw.windowHint(.context_version_major, gl_es_version_major);
+    glfw.windowHint(.context_version_minor, gl_es_version_minor);
+    glfw.windowHint(.doublebuffer, true);
+
+    try minimal_glfw_gl.init();
+
+    try zopengl.loadEsProfile(glfw.getProcAddress, gl_es_version_major, gl_es_version_minor);
+
+    zemscripten.setMainLoop(mainLoopCallback, null, false);
 }
