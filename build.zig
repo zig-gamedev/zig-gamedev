@@ -1,106 +1,18 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-pub fn build(b: *std.Build) void {
-    if (checkGitLfsContent() == false) {
-        ensureGit(b.allocator) catch return;
-        ensureGitLfs(b.allocator, "install") catch return;
-        ensureGitLfs(b.allocator, "pull") catch return;
-        if (checkGitLfsContent() == false) {
-            std.log.err("\n" ++
-                \\---------------------------------------------------------------------------
-                \\
-                \\Something went wrong, Git LFS content has not been downloaded.
-                \\
-                \\Please try to re-clone the repo and build again.
-                \\
-                \\---------------------------------------------------------------------------
-                \\
-            , .{});
-            return;
-        }
-    }
-
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
-
-    const zpix_enable = b.option(
-        bool,
-        "zpix-enable",
-        "Enable PIX for Windows profiler",
-    ) orelse false;
-    const options = .{
-        .optimize = optimize,
-        .target = target,
-        .zxaudio2_debug_layer = b.option(
-            bool,
-            "zxaudio2_debug_layer",
-            "Enable XAudio2 debug layer",
-        ) orelse false,
-        .zd3d12_debug_layer = b.option(
-            bool,
-            "zd3d12_debug_layer",
-            "Enable DirectX 12 debug layer",
-        ) orelse false,
-        .zd3d12_gbv = b.option(
-            bool,
-            "zd3d12_gbv",
-            "Enable DirectX 12 GPU-Based Validation (GBV)",
-        ) orelse false,
-        .zpix_enable = zpix_enable,
-        .zpix_path = b.option(
-            []const u8,
-            "zpix-path",
-            "Installed PIX path",
-        ) orelse if (zpix_enable) @panic("PIX path is required when enabled") else "",
+pub fn build(b: *std.Build) !void {
+    checkGitLfsContent() catch {
+        try ensureGit(b.allocator);
+        try ensureGitLfs(b.allocator, "install");
+        try ensureGitLfs(b.allocator, "pull");
+        try checkGitLfsContent();
     };
 
-    if (target.result.os.tag == .windows) {
-        if (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux) {
-            const activate_zwindows = @import("zwindows").activateSdk(b, b.dependency("zwindows", .{}));
-            b.default_step.dependOn(activate_zwindows);
-
-            samples.build(b, options, activate_zwindows, samples.windows_linux_cross);
-
-            if (builtin.target.os.tag == .windows) {
-                // TODO: Try to upgrade these to windows_linux_cross
-                samples.build(b, options, activate_zwindows, samples.windows_only);
-            }
-        } else @panic("Unsupported host OS for Windows target");
-    }
-
-    if (target.result.os.tag == .emscripten) {
-        const activate_emsdk = @import("zemscripten").activateEmsdkStep(b);
-        b.default_step.dependOn(activate_emsdk);
-
-        const web_options = .{
-            .optimize = optimize,
-            .target = target,
-        };
-        samples.buildWeb(b, web_options, activate_emsdk);
-    } else {
-        samples.build(b, options, null, samples.crossplatform);
-    }
-
-    // Install prebuilt SDL2 libs in bin output dir
-    if (@import("zsdl").prebuilt_sdl2.install(b, options.target.result, .bin, .{
-        .ttf = true,
-        .image = true,
-    })) |install_sdl2_step| {
-        b.getInstallStep().dependOn(install_sdl2_step);
-    }
-
-    { // Benchmarks
-        const benchmark_step = b.step("benchmark", "Run all benchmarks");
-        const zmath = b.dependency("zmath", .{
-            .optimize = .ReleaseFast,
-        });
-        benchmark_step.dependOn(&b.addRunArtifact(zmath.artifact("zmath-benchmarks")).step);
-    }
-
-    // Experiments
-    if (b.option(bool, "experiments", "Build our prototypes and experimental programs") orelse false) {
-        @import("experiments/build.zig").build(b, options);
+    const target = b.standardTargetOptions(.{});
+    switch (target.result.os.tag) {
+        .emscripten => buildWeb(b, target),
+        else => buildDesktop(b, target),
     }
 }
 
@@ -160,13 +72,15 @@ pub const samples = struct {
     /// Sample apps that can be built as web applications using zemscripten.
     pub const web = struct {
         pub const sdl2_demo = samples.crossplatform.sdl2_demo;
-        pub const minimal_glfw_gl = samples.crossplatform.minimal_glfw_gl;
 
-        // TODO: WebGL samples
+        // WebGL samples
+        // TODO:
         // pub const minimal_sdl_gl = samples.crossplatform.minimal_sdl_gl;
+        pub const minimal_glfw_gl = samples.crossplatform.minimal_glfw_gl;
         // pub const minimal_zgui_glfw_gl = samples.crossplatform.minimal_zgui_glfw_gl;
 
-        // TODO: WebGPU samples
+        // WebGPU samples
+        // TODO:
         // pub const audio_experiments_wgpu = samples.crossplatform.audio_experiments_wgpu;
         // pub const bullet_physics_test_wgpu = samples.crossplatform.bullet_physics_test_wgpu;
         // pub const gamepad_wgpu = samples.crossplatform.gamepad_wgpu;
@@ -181,60 +95,132 @@ pub const samples = struct {
         // pub const textured_quad_wgpu = samples.crossplatform.textured_quad_wgpu;
         // pub const triangle_wgpu = samples.crossplatform.triangle_wgpu;
     };
-
-    fn build(
-        b: *std.Build,
-        options: anytype,
-        maybe_depend_step: ?*std.Build.Step,
-        comptime apps: anytype,
-    ) void {
-        inline for (comptime std.meta.declarations(apps)) |d| {
-            const exe = buildExe(b, options, @field(apps, d.name));
-            if (maybe_depend_step) |step| {
-                exe.step.dependOn(step);
-            }
-        }
-    }
-
-    fn buildWeb(
-        b: *std.Build,
-        options: anytype,
-        maybe_depend_step: ?*std.Build.Step,
-    ) void {
-        inline for (comptime std.meta.declarations(samples.web)) |d| {
-            const build_web_app_step = @field(samples.web, d.name).buildWeb(b, options);
-
-            if (maybe_depend_step) |step| {
-                build_web_app_step.dependOn(step);
-            }
-
-            b.getInstallStep().dependOn(build_web_app_step);
-
-            const html_filename = std.fmt.allocPrint(
-                b.allocator,
-                "{s}.html",
-                .{d.name},
-            ) catch unreachable;
-
-            const emrun_step = @import("zemscripten").emrunStep(
-                b,
-                b.getInstallPath(.{ .custom = "web" }, html_filename),
-                &.{},
-            );
-            emrun_step.dependOn(build_web_app_step);
-
-            b.step(
-                d.name,
-                "Build '" ++ d.name ++ "' sample as a web app",
-            ).dependOn(build_web_app_step);
-
-            b.step(
-                d.name ++ "-emrun",
-                "Build '" ++ d.name ++ "' sample as a web app and serve locally using `emrun`",
-            ).dependOn(emrun_step);
-        }
-    }
 };
+
+fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget) void {
+    const options = .{
+        .optimize = b.standardOptimizeOption(.{
+            .preferred_optimize_mode = .ReleaseSmall,
+        }),
+        .target = target,
+    };
+
+    const activate_emsdk = @import("zemscripten").activateEmsdkStep(b);
+    b.default_step.dependOn(activate_emsdk);
+
+    inline for (comptime std.meta.declarations(samples.web)) |d| {
+        const build_web_app_step = @field(samples.web, d.name).buildWeb(b, options);
+        build_web_app_step.dependOn(activate_emsdk);
+
+        b.getInstallStep().dependOn(build_web_app_step);
+
+        const html_filename = std.fmt.allocPrint(
+            b.allocator,
+            "{s}.html",
+            .{d.name},
+        ) catch unreachable;
+
+        const emrun_step = @import("zemscripten").emrunStep(
+            b,
+            b.getInstallPath(.{ .custom = "web" }, html_filename),
+            &.{},
+        );
+        emrun_step.dependOn(build_web_app_step);
+
+        b.step(
+            d.name,
+            "Build '" ++ d.name ++ "' sample as a web app",
+        ).dependOn(build_web_app_step);
+
+        b.step(
+            d.name ++ "-emrun",
+            "Build '" ++ d.name ++ "' sample as a web app and serve locally using `emrun`",
+        ).dependOn(emrun_step);
+    }
+
+    buildBenchmarks(b, options.target);
+}
+
+fn buildDesktop(b: *std.Build, target: std.Build.ResolvedTarget) void {
+    const optimize = b.standardOptimizeOption(.{});
+
+    const zpix_enable = b.option(
+        bool,
+        "zpix-enable",
+        "Enable PIX for Windows profiler",
+    ) orelse false;
+    const options = .{
+        .optimize = optimize,
+        .target = target,
+        .zxaudio2_debug_layer = b.option(
+            bool,
+            "zxaudio2_debug_layer",
+            "Enable XAudio2 debug layer",
+        ) orelse false,
+        .zd3d12_debug_layer = b.option(
+            bool,
+            "zd3d12_debug_layer",
+            "Enable DirectX 12 debug layer",
+        ) orelse false,
+        .zd3d12_gbv = b.option(
+            bool,
+            "zd3d12_gbv",
+            "Enable DirectX 12 GPU-Based Validation (GBV)",
+        ) orelse false,
+        .zpix_enable = zpix_enable,
+        .zpix_path = b.option(
+            []const u8,
+            "zpix-path",
+            "Installed PIX path",
+        ) orelse if (zpix_enable) @panic("PIX path is required when enabled") else "",
+    };
+
+    if (target.result.os.tag == .windows) {
+        if (builtin.target.os.tag == .windows or builtin.target.os.tag == .linux) {
+            const activate_zwindows = @import("zwindows").activateSdk(b, b.dependency("zwindows", .{}));
+            b.default_step.dependOn(activate_zwindows);
+
+            inline for (comptime std.meta.declarations(samples.windows_linux_cross)) |d| {
+                _ = buildExe(b, options, @field(samples.windows_linux_cross, d.name));
+            }
+
+            if (builtin.target.os.tag == .windows) {
+                // TODO: Try to upgrade these to windows_linux_cross
+                inline for (comptime std.meta.declarations(samples.windows_only)) |d| {
+                    _ = buildExe(b, options, @field(samples.windows_only, d.name));
+                }
+            }
+        } else @panic("Unsupported host OS for Windows target");
+    }
+
+    inline for (comptime std.meta.declarations(samples.crossplatform)) |d| {
+        _ = buildExe(b, options, @field(samples.crossplatform, d.name));
+    }
+
+    // Install prebuilt SDL2 libs in bin output dir
+    if (@import("zsdl").prebuilt_sdl2.install(b, options.target.result, .bin, .{
+        .ttf = true,
+        .image = true,
+    })) |install_sdl2_step| {
+        b.getInstallStep().dependOn(install_sdl2_step);
+    }
+
+    buildBenchmarks(b, options.target);
+
+    // Experiments
+    if (b.option(bool, "experiments", "Build our prototypes and experimental programs") orelse false) {
+        @import("experiments/build.zig").build(b, options);
+    }
+}
+
+fn buildBenchmarks(b: *std.Build, target: std.Build.ResolvedTarget) void {
+    const benchmark_step = b.step("benchmark", "Run all benchmarks");
+    const zmath = b.dependency("zmath", .{
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    benchmark_step.dependOn(&b.addRunArtifact(zmath.artifact("zmath-benchmarks")).step);
+}
 
 fn buildExe(b: *std.Build, options: anytype, sample: anytype) *std.Build.Step.Compile {
     const exe = sample.build(b, options);
@@ -323,14 +309,16 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
     }
 }
 
-fn checkGitLfsContent() bool {
+fn checkGitLfsContent() !void {
     const expected_contents =
         \\DO NOT EDIT OR DELETE
         \\This file is used to check if Git LFS content has been downloaded
     ;
     var buf: [expected_contents.len]u8 = undefined;
     _ = std.fs.cwd().readFile(".lfs-content-token", &buf) catch {
-        return false;
+        return error.GitLfsContentTokenNotFound;
     };
-    return std.mem.eql(u8, expected_contents, &buf);
+    if (!std.mem.eql(u8, expected_contents, &buf)) {
+        return error.GitLfsContentCheckFailed;
+    }
 }
