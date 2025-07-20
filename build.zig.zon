@@ -113,8 +113,8 @@
         },
 
         .zphysics = .{
-            .url = "https://github.com/zig-gamedev/zphysics/archive/e61d7d3449750432cc91fb928959c8fb0ed9fe87.tar.gz",
-            .hash = "zphysics-0.2.0-dev-nZDEAOz6QgDbFlcnHtGhk5mz1vNyWpSxn0iDcSldVhBN",
+            .url = "https://github.com/zig-gamedev/zphysics/archive/cfa94645fd2151507eee481021e230722ad77fd7.tar.gz",
+            .hash = "zphysics-0.2.0-dev-nZDEABi7QgBUjk6YPWeNooglZGj8rintJdSTSE_bPkQm",
         },
 
         .zpix = .{
