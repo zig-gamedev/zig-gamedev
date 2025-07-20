@@ -133,12 +133,10 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget) void {
         ).dependOn(build_web_app_step);
 
         b.step(
-            d.name ++ "-emrun",
+            d.name ++ "-run",
             "Build '" ++ d.name ++ "' sample as a web app and serve locally using `emrun`",
         ).dependOn(emrun_step);
     }
-
-    buildBenchmarks(b, options.target);
 }
 
 fn buildDesktop(b: *std.Build, target: std.Build.ResolvedTarget) void {

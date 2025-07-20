@@ -16,9 +16,14 @@ Build and run a sample app:
 zig build physically_based_rendering_wgpu-run
 ```
 
-Get a list of all available build steps:
+Get a list of all available build steps for the native target:
 ```sh
 zig build -l
+```
+
+Get a list of all available build steps for web (using emscripten):
+```sh
+zig build -l -Dtarget=wasm32-emscripten
 ```
 
 ## Sample applications (native wgpu)
