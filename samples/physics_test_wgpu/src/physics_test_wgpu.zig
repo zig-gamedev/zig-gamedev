@@ -49,47 +49,44 @@ const broad_phase_layers = struct {
 };
 
 const BroadPhaseLayerInterface = extern struct {
-    usingnamespace zphy.BroadPhaseLayerInterface.Methods(@This());
-    __v: *const zphy.BroadPhaseLayerInterface.VTable = &vtable,
-
+    broad_phase_layer_interface: zphy.BroadPhaseLayerInterface = .init(@This()),
     object_to_broad_phase: [object_layers.len]zphy.BroadPhaseLayer = undefined,
 
-    const vtable = zphy.BroadPhaseLayerInterface.VTable{
-        .getNumBroadPhaseLayers = _getNumBroadPhaseLayers,
-        .getBroadPhaseLayer = _getBroadPhaseLayer,
-    };
-
     fn init() BroadPhaseLayerInterface {
-        var layer_interface: BroadPhaseLayerInterface = .{};
-        layer_interface.object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
-        layer_interface.object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
-        return layer_interface;
+        var object_to_broad_phase: [object_layers.len]zphy.BroadPhaseLayer = undefined;
+        object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
+        object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
+        return .{ .object_to_broad_phase = object_to_broad_phase };
     }
 
-    fn _getNumBroadPhaseLayers(_: *const zphy.BroadPhaseLayerInterface) callconv(.C) u32 {
+    fn selfPtr(broad_phase_layer_interface: *zphy.BroadPhaseLayerInterface) *BroadPhaseLayerInterface {
+        return @alignCast(@fieldParentPtr("broad_phase_layer_interface", broad_phase_layer_interface));
+    }
+
+    fn selfPtrConst(broad_phase_layer_interface: *const zphy.BroadPhaseLayerInterface) *const BroadPhaseLayerInterface {
+        return @alignCast(@fieldParentPtr("broad_phase_layer_interface", broad_phase_layer_interface));
+    }
+
+    pub fn getNumBroadPhaseLayers(_: *const zphy.BroadPhaseLayerInterface) callconv(.c) u32 {
         return broad_phase_layers.len;
     }
 
-    fn _getBroadPhaseLayer(
-        iself: *const zphy.BroadPhaseLayerInterface,
+    pub fn getBroadPhaseLayer(
+        broad_phase_layer_interface: *const zphy.BroadPhaseLayerInterface,
         layer: zphy.ObjectLayer,
-    ) callconv(.C) zphy.BroadPhaseLayer {
-        const self = @as(*const BroadPhaseLayerInterface, @ptrCast(iself));
-        return self.object_to_broad_phase[layer];
+    ) callconv(.c) zphy.BroadPhaseLayer {
+        return selfPtrConst(broad_phase_layer_interface).object_to_broad_phase[layer];
     }
 };
 
 const ObjectVsBroadPhaseLayerFilter = extern struct {
-    usingnamespace zphy.ObjectVsBroadPhaseLayerFilter.Methods(@This());
-    __v: *const zphy.ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
+    object_vs_broad_phase_layer_filter: zphy.ObjectVsBroadPhaseLayerFilter = .init(@This()),
 
-    const vtable = zphy.ObjectVsBroadPhaseLayerFilter.VTable{ .shouldCollide = _shouldCollide };
-
-    fn _shouldCollide(
+    pub fn shouldCollide(
         _: *const zphy.ObjectVsBroadPhaseLayerFilter,
         layer1: zphy.ObjectLayer,
         layer2: zphy.BroadPhaseLayer,
-    ) callconv(.C) bool {
+    ) callconv(.c) bool {
         return switch (layer1) {
             object_layers.non_moving => layer2 == broad_phase_layers.moving,
             object_layers.moving => true,
@@ -99,16 +96,13 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
 };
 
 const ObjectLayerPairFilter = extern struct {
-    usingnamespace zphy.ObjectLayerPairFilter.Methods(@This());
-    __v: *const zphy.ObjectLayerPairFilter.VTable = &vtable,
+    object_layer_pair_filter: zphy.ObjectLayerPairFilter = .init(@This()),
 
-    const vtable = zphy.ObjectLayerPairFilter.VTable{ .shouldCollide = _shouldCollide };
-
-    fn _shouldCollide(
+    pub fn shouldCollide(
         _: *const zphy.ObjectLayerPairFilter,
         object1: zphy.ObjectLayer,
         object2: zphy.ObjectLayer,
-    ) callconv(.C) bool {
+    ) callconv(.c) bool {
         return switch (object1) {
             object_layers.non_moving => object2 == object_layers.moving,
             object_layers.moving => true,
@@ -118,24 +112,61 @@ const ObjectLayerPairFilter = extern struct {
 };
 
 const ContactListener = extern struct {
-    usingnamespace zphy.ContactListener.Methods(@This());
-    __v: *const zphy.ContactListener.VTable = &vtable,
+    contact_listener: zphy.ContactListener = .init(@This()),
 
-    const vtable = zphy.ContactListener.VTable{ .onContactValidate = _onContactValidate };
+    fn selfPtr(contact_listener: *zphy.ContactListener) *ContactListener {
+        return @alignCast(@fieldParentPtr("contact_listener", contact_listener));
+    }
 
-    fn _onContactValidate(
-        self: *zphy.ContactListener,
+    fn selfPtrConst(contact_listener: *const zphy.ContactListener) *const ContactListener {
+        return @alignCast(@fieldParentPtr("contact_listener", contact_listener));
+    }
+
+    pub fn onContactValidate(
+        contact_listener: *zphy.ContactListener,
         body1: *const zphy.Body,
         body2: *const zphy.Body,
         base_offset: *const [3]zphy.Real,
         collision_result: *const zphy.CollideShapeResult,
-    ) callconv(.C) zphy.ValidateResult {
-        _ = self;
+    ) callconv(.c) zphy.ValidateResult {
+        _ = contact_listener;
         _ = body1;
         _ = body2;
         _ = base_offset;
         _ = collision_result;
         return .accept_all_contacts;
+    }
+
+    pub fn onContactAdded(
+        contact_listener: *zphy.ContactListener,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
+        _: *const zphy.ContactManifold,
+        _: *zphy.ContactSettings,
+    ) callconv(.c) void {
+        _ = contact_listener;
+        _ = body1;
+        _ = body2;
+    }
+
+    pub fn onContactPersisted(
+        contact_listener: *zphy.ContactListener,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
+        _: *const zphy.ContactManifold,
+        _: *zphy.ContactSettings,
+    ) callconv(.c) void {
+        _ = contact_listener;
+        _ = body1;
+        _ = body2;
+    }
+
+    pub fn onContactRemoved(
+        contact_listener: *zphy.ContactListener,
+        sub_shape_id_pair: *const zphy.SubShapeIdPair,
+    ) callconv(.c) void {
+        _ = contact_listener;
+        _ = sub_shape_id_pair;
     }
 };
 
@@ -209,7 +240,7 @@ fn generateMeshes(
 
     {
         const terrain = (struct {
-            fn impl(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.C) void {
+            fn impl(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.c) void {
                 _ = userdata;
                 position[0] = uv[0];
                 position[1] = 0.0;
@@ -350,9 +381,9 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         const body_interface = physics_system.getBodyInterfaceMut();
 
         const floor_shape_settings = try zphy.BoxShapeSettings.create(.{ 100.0, 1.0, 100.0 });
-        defer floor_shape_settings.release();
+        defer floor_shape_settings.asShapeSettings().release();
 
-        const floor_shape = try floor_shape_settings.createShape();
+        const floor_shape = try floor_shape_settings.asShapeSettings().createShape();
         defer floor_shape.release();
 
         _ = try body_interface.createAndAddBody(.{
@@ -364,9 +395,9 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         }, .activate);
 
         const box_shape_settings = try zphy.BoxShapeSettings.create(.{ 0.5, 0.5, 0.5 });
-        defer box_shape_settings.release();
+        defer box_shape_settings.asShapeSettings().release();
 
-        const box_shape = try box_shape_settings.createShape();
+        const box_shape = try box_shape_settings.asShapeSettings().createShape();
         defer box_shape.release();
 
         var i: u32 = 0;

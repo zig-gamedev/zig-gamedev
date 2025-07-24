@@ -63,55 +63,52 @@ const object_layers = struct {
 const broad_phase_layers = struct {
     const non_moving: zphy.BroadPhaseLayer = 0;
     const moving: zphy.BroadPhaseLayer = 1;
-    const sensors: zphy.ObjectLayer = 2;
-    const player: zphy.ObjectLayer = 3;
+    const sensors: zphy.BroadPhaseLayer = 2;
+    const player: zphy.BroadPhaseLayer = 3;
     const len: u32 = 4;
 };
 
 const BroadPhaseLayerInterface = extern struct {
-    usingnamespace zphy.BroadPhaseLayerInterface.Methods(@This());
-    __v: *const zphy.BroadPhaseLayerInterface.VTable = &vtable,
-
+    broad_phase_layer_interface: zphy.BroadPhaseLayerInterface = .init(@This()),
     object_to_broad_phase: [object_layers.len]zphy.BroadPhaseLayer = undefined,
 
-    const vtable = zphy.BroadPhaseLayerInterface.VTable{
-        .getNumBroadPhaseLayers = _getNumBroadPhaseLayers,
-        .getBroadPhaseLayer = _getBroadPhaseLayer,
-    };
-
     fn init() BroadPhaseLayerInterface {
-        var layer_interface: BroadPhaseLayerInterface = .{};
-        layer_interface.object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
-        layer_interface.object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
-        layer_interface.object_to_broad_phase[object_layers.sensors] = broad_phase_layers.sensors;
-        layer_interface.object_to_broad_phase[object_layers.player] = broad_phase_layers.player;
-        return layer_interface;
+        var object_to_broad_phase: [object_layers.len]zphy.BroadPhaseLayer = undefined;
+        object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
+        object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
+        object_to_broad_phase[object_layers.sensors] = broad_phase_layers.sensors;
+        object_to_broad_phase[object_layers.player] = broad_phase_layers.player;
+        return .{ .object_to_broad_phase = object_to_broad_phase };
     }
 
-    fn _getNumBroadPhaseLayers(_: *const zphy.BroadPhaseLayerInterface) callconv(.C) u32 {
+    fn selfPtr(broad_phase_layer_interface: *zphy.BroadPhaseLayerInterface) *BroadPhaseLayerInterface {
+        return @alignCast(@fieldParentPtr("broad_phase_layer_interface", broad_phase_layer_interface));
+    }
+
+    fn selfPtrConst(broad_phase_layer_interface: *const zphy.BroadPhaseLayerInterface) *const BroadPhaseLayerInterface {
+        return @alignCast(@fieldParentPtr("broad_phase_layer_interface", broad_phase_layer_interface));
+    }
+
+    pub fn getNumBroadPhaseLayers(_: *const zphy.BroadPhaseLayerInterface) callconv(.c) u32 {
         return broad_phase_layers.len;
     }
 
-    fn _getBroadPhaseLayer(
-        iself: *const zphy.BroadPhaseLayerInterface,
+    pub fn getBroadPhaseLayer(
+        broad_phase_layer_interface: *const zphy.BroadPhaseLayerInterface,
         layer: zphy.ObjectLayer,
-    ) callconv(.C) zphy.BroadPhaseLayer {
-        const self = @as(*const BroadPhaseLayerInterface, @ptrCast(iself));
-        return self.object_to_broad_phase[layer];
+    ) callconv(.c) zphy.BroadPhaseLayer {
+        return selfPtrConst(broad_phase_layer_interface).object_to_broad_phase[layer];
     }
 };
 
 const ObjectVsBroadPhaseLayerFilter = extern struct {
-    usingnamespace zphy.ObjectVsBroadPhaseLayerFilter.Methods(@This());
-    __v: *const zphy.ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
+    object_vs_broad_phase_layer_filter: zphy.ObjectVsBroadPhaseLayerFilter = .init(@This()),
 
-    const vtable = zphy.ObjectVsBroadPhaseLayerFilter.VTable{ .shouldCollide = _shouldCollide };
-
-    fn _shouldCollide(
+    pub fn shouldCollide(
         _: *const zphy.ObjectVsBroadPhaseLayerFilter,
         layer1: zphy.ObjectLayer,
         layer2: zphy.BroadPhaseLayer,
-    ) callconv(.C) bool {
+    ) callconv(.c) bool {
         return switch (layer1) {
             object_layers.non_moving => layer2 == broad_phase_layers.moving or layer2 == broad_phase_layers.player,
             object_layers.moving => layer2 == broad_phase_layers.non_moving or layer2 == broad_phase_layers.sensors,
@@ -123,16 +120,13 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
 };
 
 const ObjectLayerPairFilter = extern struct {
-    usingnamespace zphy.ObjectLayerPairFilter.Methods(@This());
-    __v: *const zphy.ObjectLayerPairFilter.VTable = &vtable,
+    object_layer_pair_filter: zphy.ObjectLayerPairFilter = .init(@This()),
 
-    const vtable = zphy.ObjectLayerPairFilter.VTable{ .shouldCollide = _shouldCollide };
-
-    fn _shouldCollide(
+    pub fn shouldCollide(
         _: *const zphy.ObjectLayerPairFilter,
         object1: zphy.ObjectLayer,
         object2: zphy.ObjectLayer,
-    ) callconv(.C) bool {
+    ) callconv(.c) bool {
         return switch (object1) {
             object_layers.non_moving => object2 == object_layers.moving or object2 == object_layers.player,
             object_layers.moving => object2 == object_layers.non_moving or object2 == object_layers.sensors,
@@ -144,51 +138,81 @@ const ObjectLayerPairFilter = extern struct {
 };
 
 const ContactListener = extern struct {
-    usingnamespace zphy.ContactListener.Methods(@This());
-
-    pub const SensorContacts = extern struct {
-        dynamic: zphy.BodyId = std.math.maxInt(zphy.BodyId),
-        kinematic: zphy.BodyId = std.math.maxInt(zphy.BodyId),
-        static: zphy.BodyId = std.math.maxInt(zphy.BodyId),
-    };
-
-    __v: *const zphy.ContactListener.VTable = &vtable,
+    contact_listener: zphy.ContactListener = .init(@This()),
     bodies_touching_sensors: [9]SensorContacts = .{SensorContacts{}} ** 9,
 
-    const vtable = zphy.ContactListener.VTable{
-        .onContactValidate = _onContactValidate,
-        .onContactPersisted = _onContactPersisted,
+    fn selfPtr(contact_listener: *zphy.ContactListener) *ContactListener {
+        return @alignCast(@fieldParentPtr("contact_listener", contact_listener));
+    }
+
+    fn selfPtrConst(contact_listener: *const zphy.ContactListener) *const ContactListener {
+        return @alignCast(@fieldParentPtr("contact_listener", contact_listener));
+    }
+
+    pub const SensorContacts = extern struct {
+        dynamic: zphy.BodyId = .invalid,
+        kinematic: zphy.BodyId = .invalid,
+        static: zphy.BodyId = .invalid,
     };
 
-    fn _onContactValidate(
-        _: *zphy.ContactListener,
-        _: *const zphy.Body,
-        _: *const zphy.Body,
-        _: *const [3]zphy.Real,
-        _: *const zphy.CollideShapeResult,
-    ) callconv(.C) zphy.ValidateResult {
+    pub fn onContactValidate(
+        contact_listener: *zphy.ContactListener,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
+        base_offset: *const [3]zphy.Real,
+        collision_result: *const zphy.CollideShapeResult,
+    ) callconv(.c) zphy.ValidateResult {
+        _ = contact_listener;
+        _ = body1;
+        _ = body2;
+        _ = base_offset;
+        _ = collision_result;
         return .accept_all_contacts;
     }
 
-    fn _onContactPersisted(
-        self_base: *zphy.ContactListener,
+    pub fn onContactAdded(
+        contact_listener: *zphy.ContactListener,
         body1: *const zphy.Body,
         body2: *const zphy.Body,
         _: *const zphy.ContactManifold,
         _: *zphy.ContactSettings,
-    ) callconv(.C) void {
-        const self = @as(*ContactListener, @ptrCast(self_base));
+    ) callconv(.c) void {
+        _ = contact_listener;
+        _ = body1;
+        _ = body2;
+    }
+
+    pub fn onContactPersisted(
+        contact_listener: *zphy.ContactListener,
+        body1: *const zphy.Body,
+        body2: *const zphy.Body,
+        _: *const zphy.ContactManifold,
+        _: *zphy.ContactSettings,
+    ) callconv(.c) void {
+        const self = selfPtr(contact_listener);
         if (body1.isSensor()) self.appendSensorContact(body2, body1);
         if (body2.isSensor()) self.appendSensorContact(body1, body2);
     }
 
-    fn appendSensorContact(self: *ContactListener, dynamic_body: *const zphy.Body, sensor: *const zphy.Body) void {
+    pub fn onContactRemoved(
+        contact_listener: *zphy.ContactListener,
+        sub_shape_id_pair: *const zphy.SubShapeIdPair,
+    ) callconv(.c) void {
+        _ = contact_listener;
+        _ = sub_shape_id_pair;
+    }
+
+    fn appendSensorContact(
+        self: *ContactListener,
+        dynamic_body: *const zphy.Body,
+        sensor: *const zphy.Body,
+    ) void {
         const index = index: {
             const cached_index_plus_one = dynamic_body.getUserData();
             if (cached_index_plus_one > 0) break :index cached_index_plus_one - 1;
             for (self.bodies_touching_sensors, 0..) |sensor_contacts, i| {
                 if (sensor_contacts.dynamic == dynamic_body.getId()) break :index i;
-                if (sensor_contacts.dynamic == std.math.maxInt(zphy.BodyId)) {
+                if (sensor_contacts.dynamic == .invalid) {
                     self.bodies_touching_sensors[i].dynamic = dynamic_body.getId();
                     break :index i;
                 }
@@ -210,20 +234,18 @@ const ContactListener = extern struct {
                 dynamic_body.setUserData(i + 1);
                 return sensor_contacts;
             }
-            if (sensor_contacts.dynamic == std.math.maxInt(zphy.BodyId)) break;
+            if (sensor_contacts.dynamic == .invalid) break;
         }
         return SensorContacts{};
     }
 
     pub fn clearSensorContacts(self: *ContactListener) void {
         for (0..self.bodies_touching_sensors.len) |i| {
-            if (self.bodies_touching_sensors[i].dynamic == std.math.maxInt(zphy.BodyId)) break;
-            self.bodies_touching_sensors[i].kinematic = std.math.maxInt(zphy.BodyId);
-            self.bodies_touching_sensors[i].static = std.math.maxInt(zphy.BodyId);
+            if (self.bodies_touching_sensors[i].dynamic == .invalid) break;
+            self.bodies_touching_sensors[i].kinematic = .invalid;
+            self.bodies_touching_sensors[i].static = .invalid;
         }
     }
-
-    pub const touching_sensor_value: u64 = 1;
 };
 
 const DebugRenderer = struct {
@@ -245,8 +267,9 @@ const DebugRenderer = struct {
         mat: [16]zphy.Real,
         color: [3]f32 = .{ 0, 1, 1 },
     };
-    usingnamespace zphy.DebugRenderer.Methods(@This());
-    __v: *const zphy.DebugRenderer.VTable(@This()) = &vtable,
+
+    const VTable = zphy.DebugRenderer.VTable(@This());
+    vtable: *const VTable = zphy.DebugRenderer.initVTable(@This()),
 
     primitives: [max_prims]Primitive = .{Primitive{}} ** max_prims,
     vertices: [max_verts]DebugVertex = .{DebugVertex{}} ** max_verts,
@@ -264,15 +287,6 @@ const DebugRenderer = struct {
     body_draw_settings: zphy.DebugRenderer.BodyDrawSettings = .{ .shape_color = .instance_color },
     body_draw_filter: *zphy.DebugRenderer.BodyDrawFilter,
     body_draw_list: std.ArrayList(DrawInstance),
-
-    const vtable = zphy.DebugRenderer.VTable(@This()){
-        .drawLine = drawLine,
-        .drawTriangle = drawTriangle,
-        .createTriangleBatch = createTriangleBatch,
-        .createTriangleBatchIndexed = createTriangleBatchIndexed,
-        .drawGeometry = drawGeometry,
-        .drawText3D = drawText3D,
-    };
 
     pub fn init(alloc: std.mem.Allocator, demo: *DemoState) DebugRenderer {
         return DebugRenderer{
@@ -487,37 +501,41 @@ const DebugRenderer = struct {
         }
     }
 
-    pub fn shouldBodyDraw(body: *const zphy.Body) callconv(.C) bool {
+    pub fn shouldBodyDraw(body: *const zphy.Body) callconv(.c) bool {
         if (body.object_layer == object_layers.non_moving) return false;
         return true;
     }
 
-    fn drawLine(
+    pub fn drawLine(
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: zphy.DebugRenderer.Color,
-    ) callconv(.C) void {}
+    ) callconv(.c) void {}
 
-    fn drawTriangle(
+    pub fn drawTriangle(
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: *const [3]zphy.Real,
         _: zphy.DebugRenderer.Color,
-    ) callconv(.C) void {}
+    ) callconv(.c) void {}
 
-    fn createTriangleBatch(_: *DebugRenderer, _: [*]zphy.DebugRenderer.Triangle, _: u32) callconv(.C) *anyopaque {
+    pub fn createTriangleBatch(
+        _: *DebugRenderer,
+        _: [*]zphy.DebugRenderer.Triangle,
+        _: u32,
+    ) callconv(.c) *zphy.DebugRenderer.TriangleBatch {
         unreachable; // Jolt's debug renderer seems to only use the indexed one below, so not implementing this.
     }
 
-    fn createTriangleBatchIndexed(
+    pub fn createTriangleBatchIndexed(
         self: *DebugRenderer,
         vertices: [*]zphy.DebugRenderer.Vertex,
         vertex_count: u32,
         indices: [*]u32,
         index_count: u32,
-    ) callconv(.C) *anyopaque {
+    ) callconv(.c) *zphy.DebugRenderer.TriangleBatch {
         self.primitives[self.heads.prim] = .{
             .index_start = self.heads.indx,
             .index_count = index_count,
@@ -539,7 +557,7 @@ const DebugRenderer = struct {
         return zphy.DebugRenderer.createTriangleBatch(prim_ptr);
     }
 
-    fn drawGeometry(
+    pub fn drawGeometry(
         self: *DebugRenderer,
         mat: *const zphy.RMatrix,
         _: *const zphy.AABox,
@@ -549,7 +567,7 @@ const DebugRenderer = struct {
         _: zphy.DebugRenderer.CullMode,
         _: zphy.DebugRenderer.CastShadow,
         _: zphy.DebugRenderer.DrawMode,
-    ) callconv(.C) void {
+    ) callconv(.c) void {
         const batch = geometry.LODs[0].batch;
         const prim = @as(*const Primitive, @alignCast(@ptrCast(zphy.DebugRenderer.getPrimitiveFromBatch(batch))));
         const lowp_model_matrix: [16]f32 = .{
@@ -569,13 +587,18 @@ const DebugRenderer = struct {
         }) catch unreachable;
     }
 
-    fn drawText3D(
+    pub fn drawText3D(
         _: *DebugRenderer,
         _: *const [3]zphy.Real,
         _: [*:0]const u8,
         _: zphy.DebugRenderer.Color,
         _: f32,
-    ) callconv(.C) void {}
+    ) callconv(.c) void {}
+
+    pub fn destroyTriangleBatch(
+        _: *DebugRenderer,
+        _: *zphy.DebugRenderer.TriangleBatch,
+    ) callconv(.c) void {}
 };
 
 inline fn lowP(r: zphy.Real) f32 {
@@ -603,7 +626,7 @@ const DemoState = struct {
     contact_listener: *ContactListener,
     physics_system: *zphy.PhysicsSystem,
 
-    wisp_bodies: [9]zphy.BodyId = .{0} ** 9,
+    wisp_bodies: [9]zphy.BodyId = .{.invalid} ** 9,
     physics_debug_renderer: DebugRenderer,
     physics_debug_enabled: bool = false,
     gizmo_enabled: bool = false,
@@ -615,8 +638,8 @@ const DemoState = struct {
         pitch: f32 = 0.04 * math.pi,
         yaw: f32 = -0.10 * math.pi,
         rotation: zm.Mat = zm.identity(),
-        rigid_body: zphy.BodyId = std.math.maxInt(zphy.BodyId),
-        collector_body: zphy.BodyId = std.math.maxInt(zphy.BodyId),
+        rigid_body: zphy.BodyId = .invalid,
+        collector_body: zphy.BodyId = .invalid,
         collector_attractor: [3]f32 = .{ 0, 0, 0 },
         out_of_body: bool = false,
     } = .{},
@@ -625,7 +648,7 @@ const DemoState = struct {
         captured: bool = false,
     } = .{},
     monolith: struct {
-        body: zphy.BodyId = 0,
+        body: zphy.BodyId = .invalid,
         center: zm.Vec = monolith_default_center,
         translate: zm.Mat = monolith_default_translate,
         transform: zm.Mat = monolith_default_transform,
@@ -685,7 +708,7 @@ fn generateMeshes(
 
     {
         const terrain = (struct {
-            fn impl(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.C) void {
+            fn impl(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.c) void {
                 _ = userdata;
                 position[0] = uv[0];
                 position[1] = 0.0;
@@ -856,8 +879,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
             monolith_radius[1],
             monolith_radius[2],
         });
-        defer monolith_shape_settings.release();
-        const monolith_shape = try monolith_shape_settings.createShape();
+        defer monolith_shape_settings.asShapeSettings().release();
+        const monolith_shape = try monolith_shape_settings.asShapeSettings().createShape();
         defer monolith_shape.release();
         demo.monolith.body = try body_interface.createAndAddBody(.{
             .position = demo.monolith.center,
@@ -868,8 +891,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         }, .activate);
 
         const floor_shape_settings = try zphy.BoxShapeSettings.create(.{ 800.0, 10.0, 800.0 });
-        defer floor_shape_settings.release();
-        const floor_shape = try floor_shape_settings.createShape();
+        defer floor_shape_settings.asShapeSettings().release();
+        const floor_shape = try floor_shape_settings.asShapeSettings().createShape();
         defer floor_shape.release();
         _ = try body_interface.createAndAddBody(.{
             .position = .{ 0.0, -10.0, 0.0, 1.0 },
@@ -913,8 +936,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         }, .activate);
 
         const sphere_shape_settings = try zphy.SphereShapeSettings.create(1.5);
-        defer sphere_shape_settings.release();
-        const sphere_shape = try sphere_shape_settings.createShape();
+        defer sphere_shape_settings.asShapeSettings().release();
+        const sphere_shape = try sphere_shape_settings.asShapeSettings().createShape();
         defer sphere_shape.release();
         var i: u32 = 0;
         while (i < 9) : (i += 1) {
@@ -941,8 +964,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         }, .activate);
 
         const flask_shape_settings = try zphy.TaperedCapsuleShapeSettings.create(4.0, 1.0, 5.0);
-        defer flask_shape_settings.release();
-        const flask_shape = try flask_shape_settings.createShape();
+        defer flask_shape_settings.asShapeSettings().release();
+        const flask_shape = try flask_shape_settings.asShapeSettings().createShape();
         defer flask_shape.release();
         demo.camera.collector_body = try body_interface.createAndAddBody(.{
             .position = zm.loadArr3(demo.camera.position),
@@ -953,8 +976,8 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         }, .activate);
 
         const stir_bar_shape_settings = try zphy.BoxShapeSettings.create(.{ 60.0, 7.0, 4.0 });
-        defer stir_bar_shape_settings.release();
-        const stir_bar_shape = try stir_bar_shape_settings.createShape();
+        defer stir_bar_shape_settings.asShapeSettings().release();
+        const stir_bar_shape = try stir_bar_shape_settings.asShapeSettings().createShape();
         defer stir_bar_shape.release();
         _ = try body_interface.createAndAddBody(.{
             .position = .{ 0, 8.0, 0, 1 },
@@ -1094,12 +1117,12 @@ fn update(demo: *DemoState) void {
         for (bodies) |body| {
             if (!zphy.isValidBodyPointer(body) or body.object_layer != object_layers.moving) continue;
             const sensor_contacts = demo.contact_listener.getSensorContacts(body);
-            if (sensor_contacts.kinematic != std.math.maxInt(zphy.BodyId)) { // stirring force around gathering point
+            if (sensor_contacts.kinematic != .invalid) { // stirring force around gathering point
                 const upward = zm.f32x4(0.0, 1.0, 0.0, 0.0);
                 const tangent = zm.cross3(upward, zm.loadArr3(body.getPosition())) * zm.f32x4s(0.05);
                 const force = zm.normalize3(upward + tangent) * zm.f32x4s(300000);
                 body.addForce(.{ force[0], force[1], force[2] });
-            } else if (sensor_contacts.static != std.math.maxInt(zphy.BodyId)) { // collection force
+            } else if (sensor_contacts.static != .invalid) { // collection force
                 const to_center = zm.loadArr3(demo.camera.collector_attractor) - zm.loadArr3(body.getPosition());
                 const force = zm.normalize3(to_center) * zm.f32x4s(60000);
                 body.addForce(.{ force[0], force[1], force[2] });

@@ -31,15 +31,8 @@ const BroadPhaseLayers = struct {
 };
 
 const BroadPhaseLayerInterface = extern struct {
-    usingnamespace zphysics.BroadPhaseLayerInterface.Methods(@This());
-    __v: *const zphysics.BroadPhaseLayerInterface.VTable = &vtable,
-
+    broad_phase_layer_interface: zphysics.BroadPhaseLayerInterface = .init(@This()),
     object_to_broad_phase: [ObjectLayers.len]zphysics.BroadPhaseLayer = undefined,
-
-    const vtable = zphysics.BroadPhaseLayerInterface.VTable{
-        .getNumBroadPhaseLayers = _getNumBroadPhaseLayers,
-        .getBroadPhaseLayer = _getBroadPhaseLayer,
-    };
 
     fn init() BroadPhaseLayerInterface {
         var layer_interface: BroadPhaseLayerInterface = .{};
@@ -48,26 +41,23 @@ const BroadPhaseLayerInterface = extern struct {
         return layer_interface;
     }
 
-    fn _getNumBroadPhaseLayers(_: *const zphysics.BroadPhaseLayerInterface) callconv(.C) u32 {
+    pub fn getNumBroadPhaseLayers(_: *const zphysics.BroadPhaseLayerInterface) callconv(.C) u32 {
         return BroadPhaseLayers.len;
     }
 
-    fn _getBroadPhaseLayer(
-        interface_self: *const zphysics.BroadPhaseLayerInterface,
+    pub fn getBroadPhaseLayer(
+        broad_phase_layer_interface: *const zphysics.BroadPhaseLayerInterface,
         object_layer: zphysics.ObjectLayer,
     ) callconv(.C) zphysics.BroadPhaseLayer {
-        const self: *const BroadPhaseLayerInterface = @ptrCast(interface_self);
+        const self: *const BroadPhaseLayerInterface = @alignCast(@fieldParentPtr("broad_phase_layer_interface", broad_phase_layer_interface));
         return self.object_to_broad_phase[object_layer];
     }
 };
 
 const ObjectVsBroadPhaseLayerFilter = extern struct {
-    usingnamespace zphysics.ObjectVsBroadPhaseLayerFilter.Methods(@This());
-    __v: *const zphysics.ObjectVsBroadPhaseLayerFilter.VTable = &vtable,
+    object_vs_broad_phase_layer_filter: zphysics.ObjectVsBroadPhaseLayerFilter = .init(@This()),
 
-    const vtable = zphysics.ObjectVsBroadPhaseLayerFilter.VTable{ .shouldCollide = _shouldCollide };
-
-    fn _shouldCollide(
+    pub fn shouldCollide(
         _: *const zphysics.ObjectVsBroadPhaseLayerFilter,
         object_layer: zphysics.ObjectLayer,
         broad_phase_layer: zphysics.BroadPhaseLayer,
@@ -81,12 +71,9 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
 };
 
 const ObjectLayerPairFilter = extern struct {
-    usingnamespace zphysics.ObjectLayerPairFilter.Methods(@This());
-    __v: *const zphysics.ObjectLayerPairFilter.VTable = &vtable,
+    object_layer_pair_filter: zphysics.ObjectLayerPairFilter = .init(@This()),
 
-    const vtable = zphysics.ObjectLayerPairFilter.VTable{ .shouldCollide = _shouldCollide };
-
-    fn _shouldCollide(
+    pub fn shouldCollide(
         _: *const zphysics.ObjectLayerPairFilter,
         a: zphysics.ObjectLayer,
         b: zphysics.ObjectLayer,
@@ -193,15 +180,15 @@ pub fn main() !void {
     const body_interface = physics_system.getBodyInterfaceMut();
 
     const cube_shape_settings = try zphysics.BoxShapeSettings.create(.{ 0.5, 0.5, 0.5 });
-    defer cube_shape_settings.release();
+    defer cube_shape_settings.asShapeSettings().release();
 
-    const cube_shape = try cube_shape_settings.createShape();
+    const cube_shape = try cube_shape_settings.asShapeSettings().createShape();
     defer cube_shape.release();
     {
         const floor_shape_settings = try zphysics.BoxShapeSettings.create(.{ 3, 1, 3 });
-        defer floor_shape_settings.release();
+        defer floor_shape_settings.asShapeSettings().release();
 
-        const floor_shape = try floor_shape_settings.createShape();
+        const floor_shape = try floor_shape_settings.asShapeSettings().createShape();
         defer floor_shape.release();
 
         _ = try body_interface.createAndAddBody(.{
