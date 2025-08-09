@@ -597,7 +597,7 @@ const DebugRenderer = struct {
 
     pub fn destroyTriangleBatch(
         _: *DebugRenderer,
-        _: *zphy.DebugRenderer.TriangleBatch,
+        _: *anyopaque,
     ) callconv(.c) void {}
 };
 
