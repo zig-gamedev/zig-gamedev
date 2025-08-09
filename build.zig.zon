@@ -24,8 +24,8 @@
         },
 
         .zbullet = .{
-            .url = "https://github.com/zig-gamedev/zbullet/archive/9a686d95f5e05cd6bb4a1f34fd59ee8e7ee2cc9d.tar.gz",
-            .hash = "zbullet-0.4.0-dev-7gkXj7GUQAAkp5CZT20veGkT9f0f8Qeloh6ok4dv1bSs",
+            .url = "https://github.com/zig-gamedev/zbullet/archive/092c2abc9bbc3bd31ff72d85e2c9aef36c47d4a5.tar.gz",
+            .hash = "zbullet-0.4.0-dev-7gkXjwigQADRKxxk65Tg5J4hbQ4dfRxfvScjso6XyhRF",
         },
 
         .zflecs = .{
