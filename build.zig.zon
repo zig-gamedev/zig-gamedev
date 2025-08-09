@@ -78,8 +78,8 @@
         },
 
         .zgui = .{
-            .url = "https://github.com/zig-gamedev/zgui/archive/b1c775da1f14d9dbeadc22243a11f7342bf59a51.tar.gz",
-            .hash = "zgui-0.6.0-dev--L6sZC-1aADzgrip50BHiYDaCwSMC04XWK0epNlQD6Dt",
+            .url = "https://github.com/zig-gamedev/zgui/archive/068c56384d756d9e955b779a4b96a157025b84ef.tar.gz",
+            .hash = "zgui-0.6.0-dev--L6sZCJ_aQDN8-3-W-__lzfAk3xpqNO7ZpsD_gi_REpb",
         },
 
         .zjobs = .{
