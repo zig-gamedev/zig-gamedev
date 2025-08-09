@@ -103,8 +103,8 @@
         },
 
         .zopengl = .{
-            .url = "https://github.com/zig-gamedev/zopengl/archive/27f5f228bc1f6da4a4f6acaca07d1cc5ad135171.tar.gz",
-            .hash = "zopengl-0.6.0-dev-5-tnz59jCAB6WpFFql6YdVtwBLlOcReCYVOnxQTPD-xC",
+            .url = "https://github.com/zig-gamedev/zopengl/archive/33ae578d91692c814e7d6b4b42573142475f68d0.tar.gz",
+            .hash = "zopengl-0.6.0-dev-5-tnz7Y8CQCW_JRgxPCM4ETsKGOGHddqw5y1XaXhrsb4",
         },
 
         .zopenvr = .{
