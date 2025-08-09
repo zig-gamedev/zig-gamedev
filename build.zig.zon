@@ -29,8 +29,8 @@
         },
 
         .zflecs = .{
-            .url = "https://github.com/zig-gamedev/zflecs/archive/34f6cc3f6d11fa13a44ae759e9ed6bec3a455fa4.tar.gz",
-            .hash = "zflecs-0.2.0-dev-1PN3yuhMNQDj3J57z74E3AIGM8bmVg3FhAd6XZKb_A9W",
+            .url = "https://github.com/zig-gamedev/zflecs/archive/4294dd32d898b786388d2412843e96c67ed273d4.tar.gz",
+            .hash = "zflecs-0.2.0-dev-1PN3yq5gNgAlzG5i6NiSb7bWe17F3_pW0TO75vTUYWEr",
         },
 
         .zemscripten = .{
