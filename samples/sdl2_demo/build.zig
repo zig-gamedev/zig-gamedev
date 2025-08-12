@@ -24,9 +24,27 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zsdl2_image", zsdl.module("zsdl2_image"));
 
     @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
-
-    @import("zsdl").link_SDL2(exe);
-    @import("zsdl").link_SDL2_image(exe);
+    switch (exe.rootModuleTarget().os.tag) {
+        .windows => {
+            exe.linkSystemLibrary("SDL2");
+            exe.linkSystemLibrary("SDL2main");
+            exe.linkSystemLibrary("SDL2_ttf");
+            exe.linkSystemLibrary("SDL2_image");
+        },
+        .linux => {
+            exe.linkSystemLibrary("SDL2");
+            exe.linkSystemLibrary("SDL2_ttf");
+            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.addRPathSpecial("$ORIGIN");
+        },
+        .macos => {
+            exe.linkFramework("SDL2");
+            exe.linkFramework("SDL2_ttf");
+            exe.linkFramework("SDL2_image");
+            exe.root_module.addRPathSpecial("@executable_path");
+        },
+        else => {},
+    }
 
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = b.path(b.pathJoin(&.{ cwd_path, content_dir })),

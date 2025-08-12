@@ -17,7 +17,27 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
 
     @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
-    @import("zsdl").link_SDL2(exe);
+    switch (exe.rootModuleTarget().os.tag) {
+        .windows => {
+            exe.linkSystemLibrary("SDL2");
+            exe.linkSystemLibrary("SDL2main");
+            exe.linkSystemLibrary("SDL2_ttf");
+            exe.linkSystemLibrary("SDL2_image");
+        },
+        .linux => {
+            exe.linkSystemLibrary("SDL2");
+            exe.linkSystemLibrary("SDL2_ttf");
+            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.addRPathSpecial("$ORIGIN");
+        },
+        .macos => {
+            exe.linkFramework("SDL2");
+            exe.linkFramework("SDL2_ttf");
+            exe.linkFramework("SDL2_image");
+            exe.root_module.addRPathSpecial("@executable_path");
+        },
+        else => {},
+    }
 
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));

@@ -128,23 +128,8 @@
         },
 
         .zsdl = .{
-            .url = "https://github.com/zig-gamedev/zsdl/archive/89c1fe2d7ef5020c68e71ac574195f09fc949cce.tar.gz",
-            .hash = "zsdl-0.4.0-dev-rFpjE5FXWQAHcbsSHDjFtbTkruSgvRVYOae6x8RXCnoM",
-        },
-        .sdl2_prebuilt_macos = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/7bc0fa9101342c019eed252d43f490660dfa411b.tar.gz",
-            .hash = "sdl2_prebuilt_macos-0.2.0-dev-DaOxP5Eq2QBpNBkpXn2qjyI6_s0gINcbdUMpqI1KshaH",
-            .lazy = true,
-        },
-        .sdl2_prebuilt_x86_64_windows_gnu = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-windows-gnu/archive/8de1512cedfa1fb3ab17ecf295af8cabd7f231f1.tar.gz",
-            .hash = "sdl2_prebuilt_x86_64_windows_gnu-0.2.0-dev-HPeIhv2VaQBOWF4Fjtr7Vb9bA852pUtwUuQKdvNvkA98",
-            .lazy = true,
-        },
-        .sdl2_prebuilt_x86_64_linux_gnu = .{
-            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/ce2b511c052c3fdc35c286ade8235d2830a50992.tar.gz",
-            .hash = "sdl2_prebuilt_x86_64_linux_gnu-0.2.0-dev-NHZ_xrzSHwDJDoAxuVi000OEq428znS1fDRRJE8PlXHu",
-            .lazy = true,
+            .url = "https://github.com/zig-gamedev/zsdl/archive/a764b0ee51a157a6133007e4f423a869df9e31d7.tar.gz",
+            .hash = "zsdl-0.4.0-dev-rFpjE2BgWQADibKkkIjv0Ig8k96MOu3Yeo6e0n9OD85L",
         },
         .sdl3_prebuilt_macos = .{
             .url = "https://github.com/zig-gamedev/sdl3-prebuilt-macos/archive/e89207914a0f0163c0fb543da4f530f645ef5969.tar.gz",
@@ -159,6 +144,21 @@
         .sdl3_prebuilt_x86_64_linux_gnu = .{
             .url = "https://github.com/zig-gamedev/sdl3-prebuilt-x86_64-linux-gnu/archive/b19959ed3aa87d8393640d7ba3aec142ae85487b.tar.gz",
             .hash = "sdl3_prebuilt_x86_64_linux_gnu-0.2.0-dev-qpwWsmyVNwBHzXjgC9Z-U02SXoUVMMxvCnI7XKocDcDn",
+            .lazy = true,
+        },
+        .sdl2_prebuilt_macos = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-macos/archive/7bc0fa9101342c019eed252d43f490660dfa411b.tar.gz",
+            .hash = "sdl2_prebuilt_macos-0.2.0-dev-DaOxP5Eq2QBpNBkpXn2qjyI6_s0gINcbdUMpqI1KshaH",
+            .lazy = true,
+        },
+        .sdl2_prebuilt_x86_64_windows_gnu = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-windows-gnu/archive/8de1512cedfa1fb3ab17ecf295af8cabd7f231f1.tar.gz",
+            .hash = "sdl2_prebuilt_x86_64_windows_gnu-0.2.0-dev-HPeIhv2VaQBOWF4Fjtr7Vb9bA852pUtwUuQKdvNvkA98",
+            .lazy = true,
+        },
+        .sdl2_prebuilt_x86_64_linux_gnu = .{
+            .url = "https://github.com/zig-gamedev/sdl2-prebuilt-x86_64-linux-gnu/archive/ce2b511c052c3fdc35c286ade8235d2830a50992.tar.gz",
+            .hash = "sdl2_prebuilt_x86_64_linux_gnu-0.2.0-dev-NHZ_xrzSHwDJDoAxuVi000OEq428znS1fDRRJE8PlXHu",
             .lazy = true,
         },
 

@@ -75,8 +75,28 @@ fn install(
 
     exe.root_module.addImport("zsdl2", zsdl2_module);
 
-    @import("zsdl").link_SDL2(exe);
     @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
+    switch (exe.rootModuleTarget().os.tag) {
+        .windows => {
+            exe.linkSystemLibrary("SDL2");
+            exe.linkSystemLibrary("SDL2main");
+            exe.linkSystemLibrary("SDL2_ttf");
+            exe.linkSystemLibrary("SDL2_image");
+        },
+        .linux => {
+            exe.linkSystemLibrary("SDL2");
+            exe.linkSystemLibrary("SDL2_ttf");
+            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.addRPathSpecial("$ORIGIN");
+        },
+        .macos => {
+            exe.linkFramework("SDL2");
+            exe.linkFramework("SDL2_ttf");
+            exe.linkFramework("SDL2_image");
+            exe.root_module.addRPathSpecial("@executable_path");
+        },
+        else => {},
+    }
 
     exe.root_module.addImport("zopengl", zopengl_module);
 
