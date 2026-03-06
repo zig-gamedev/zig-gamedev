@@ -4,7 +4,6 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const hrPanic = zwindows.hrPanic;
 const hrPanicOnFail = zwindows.hrPanicOnFail;
@@ -172,7 +171,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         pso_desc.RasterizerState.CullMode = .NONE;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
-        pso_desc.RasterizerState.AntialiasedLineEnable = windows.TRUE;
+        pso_desc.RasterizerState.AntialiasedLineEnable = zwindows.TRUE;
         pso_desc.VS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.vs.cso", null));
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try common.readContentDirFileAlloc(arena_allocator, content_dir, "shaders/draw_mesh.ps.cso", null));
 
@@ -195,11 +194,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     zmesh.init(arena_allocator);
     defer zmesh.deinit();
 
-    var mesh_indices = std.ArrayList(u32).init(arena_allocator);
-    var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
-    var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
-    var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
-    var mesh_tangents = std.ArrayList([4]f32).init(arena_allocator);
+    var mesh_indices: std.ArrayList(u32) = .empty;
+    var mesh_positions: std.ArrayList([3]f32) = .empty;
+    var mesh_normals: std.ArrayList([3]f32) = .empty;
+    var mesh_texcoords: std.ArrayList([2]f32) = .empty;
+    var mesh_tangents: std.ArrayList([4]f32) = .empty;
     {
         const data = try zmesh.io.parseAndLoadFile(
             try std.fs.path.joinZ(arena_allocator, &.{
@@ -210,6 +209,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         defer zmesh.io.freeData(data);
 
         try zmesh.io.appendMeshPrimitive(
+            arena_allocator,
             data,
             0,
             0,
@@ -497,14 +497,14 @@ fn update(demo: *DemoState) void {
     if (demo.draw_wireframe) {
         // Handle camera rotation with mouse.
         {
-            var pos: windows.POINT = undefined;
-            _ = windows.GetCursorPos(&pos);
+            var pos: zwindows.POINT = undefined;
+            _ = zwindows.GetCursorPos(&pos);
             const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
             const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
             demo.mouse.cursor_prev_x = pos.x;
             demo.mouse.cursor_prev_y = pos.y;
 
-            if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
+            if (zwindows.GetAsyncKeyState(zwindows.VK_RBUTTON) < 0) {
                 demo.camera.pitch += 0.0025 * delta_y;
                 demo.camera.yaw += 0.0025 * delta_x;
                 demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -527,14 +527,14 @@ fn update(demo: *DemoState) void {
 
             var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
-            if (windows.GetAsyncKeyState('W') < 0) {
+            if (zwindows.GetAsyncKeyState('W') < 0) {
                 cpos += forward;
-            } else if (windows.GetAsyncKeyState('S') < 0) {
+            } else if (zwindows.GetAsyncKeyState('S') < 0) {
                 cpos -= forward;
             }
-            if (windows.GetAsyncKeyState('D') < 0) {
+            if (zwindows.GetAsyncKeyState('D') < 0) {
                 cpos += right;
-            } else if (windows.GetAsyncKeyState('A') < 0) {
+            } else if (zwindows.GetAsyncKeyState('A') < 0) {
                 cpos -= right;
             }
 
@@ -580,7 +580,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             0,
             null,
-            windows.TRUE,
+            zwindows.TRUE,
             &demo.depth_texture_dsv,
         );
         gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);
@@ -610,7 +610,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{demo.pixel_texture_rtv},
-            windows.TRUE,
+            zwindows.TRUE,
             &demo.depth_texture_dsv,
         );
         gctx.cmdlist.ClearRenderTargetView(
@@ -668,7 +668,7 @@ fn draw(demo: *DemoState) void {
                 },
             );
 
-            gctx.cmdlist.OMSetRenderTargets(0, null, windows.TRUE, &demo.depth_texture_dsv);
+            gctx.cmdlist.OMSetRenderTargets(0, null, zwindows.TRUE, &demo.depth_texture_dsv);
             gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);
 
             //
@@ -759,7 +759,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        windows.TRUE,
+        zwindows.TRUE,
         null,
     );
 

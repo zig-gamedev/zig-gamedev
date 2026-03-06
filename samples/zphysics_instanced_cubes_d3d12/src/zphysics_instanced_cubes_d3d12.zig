@@ -10,6 +10,19 @@ const zwindows = @import("zwindows");
 const d3d12 = zwindows.d3d12;
 const dxgi = zwindows.dxgi;
 
+const GuiSrvDescHandles = struct {
+    cpu: zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE,
+    gpu: zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE,
+};
+
+fn guiSrvDescAlloc(info: *zgui.backend.ImGui_ImplDX12_InitInfo, out_cpu: *zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE, out_gpu: *zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE) callconv(.c) void {
+    const handles: *const GuiSrvDescHandles = @ptrCast(@alignCast(info.user_data.?));
+    out_cpu.* = handles.cpu;
+    out_gpu.* = handles.gpu;
+}
+
+fn guiSrvDescFree(_: *zgui.backend.ImGui_ImplDX12_InitInfo, _: zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE, _: zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE) callconv(.c) void {}
+
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
@@ -41,14 +54,14 @@ const BroadPhaseLayerInterface = extern struct {
         return layer_interface;
     }
 
-    pub fn getNumBroadPhaseLayers(_: *const zphysics.BroadPhaseLayerInterface) callconv(.C) u32 {
+    pub fn getNumBroadPhaseLayers(_: *const zphysics.BroadPhaseLayerInterface) callconv(.c) u32 {
         return BroadPhaseLayers.len;
     }
 
     pub fn getBroadPhaseLayer(
         broad_phase_layer_interface: *const zphysics.BroadPhaseLayerInterface,
         object_layer: zphysics.ObjectLayer,
-    ) callconv(.C) zphysics.BroadPhaseLayer {
+    ) callconv(.c) zphysics.BroadPhaseLayer {
         const self: *const BroadPhaseLayerInterface = @alignCast(@fieldParentPtr("broad_phase_layer_interface", broad_phase_layer_interface));
         return self.object_to_broad_phase[object_layer];
     }
@@ -61,7 +74,7 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
         _: *const zphysics.ObjectVsBroadPhaseLayerFilter,
         object_layer: zphysics.ObjectLayer,
         broad_phase_layer: zphysics.BroadPhaseLayer,
-    ) callconv(.C) bool {
+    ) callconv(.c) bool {
         return switch (object_layer) {
             ObjectLayers.non_moving => broad_phase_layer == BroadPhaseLayers.moving,
             ObjectLayers.moving => true,
@@ -77,7 +90,7 @@ const ObjectLayerPairFilter = extern struct {
         _: *const zphysics.ObjectLayerPairFilter,
         a: zphysics.ObjectLayer,
         b: zphysics.ObjectLayer,
-    ) callconv(.C) bool {
+    ) callconv(.c) bool {
         return switch (a) {
             ObjectLayers.non_moving => b == ObjectLayers.moving,
             ObjectLayers.moving => true,
@@ -107,7 +120,7 @@ pub fn main() !void {
     defer glfw.terminate();
 
     glfw.windowHint(.client_api, .no_api);
-    const glfw_window = try glfw.Window.create(800, 600, window_name, null);
+    const glfw_window = try glfw.Window.create(800, 600, window_name, null, null);
     defer glfw_window.destroy();
 
     zgui.init(allocator);
@@ -280,22 +293,25 @@ pub fn main() !void {
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 
-    {
-        const cbv_srv = gctx.cbv_srv_uav_gpu_heaps[0];
-        zgui.backend.init(
-            glfw_window,
-            .{
-                .device = gctx.device,
-                .command_queue = gctx.cmdqueue,
-                .num_frames_in_flight = zd3d12.GraphicsContext.max_num_buffered_frames,
-                .rtv_format = @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
-                .dsv_format = @intFromEnum(dxgi.FORMAT.D32_FLOAT),
-                .cbv_srv_heap = cbv_srv.heap.?,
-                .font_srv_cpu_desc_handle = @bitCast(cbv_srv.base.cpu_handle),
-                .font_srv_gpu_desc_handle = @bitCast(cbv_srv.base.gpu_handle),
-            },
-        );
-    }
+    const cbv_srv = gctx.cbv_srv_uav_gpu_heaps[0];
+    var gui_srv_handles: GuiSrvDescHandles = .{
+        .cpu = @bitCast(cbv_srv.base.cpu_handle),
+        .gpu = @bitCast(cbv_srv.base.gpu_handle),
+    };
+    zgui.backend.init(
+        glfw_window,
+        .{
+            .device = gctx.device,
+            .command_queue = gctx.cmdqueue,
+            .num_frames_in_flight = zd3d12.GraphicsContext.max_num_buffered_frames,
+            .rtv_format = @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
+            .dsv_format = @intFromEnum(dxgi.FORMAT.D32_FLOAT),
+            .cbv_srv_heap = cbv_srv.heap.?,
+            .user_data = @ptrCast(&gui_srv_handles),
+            .srv_desc_alloc_fn = &guiSrvDescAlloc,
+            .srv_desc_free_fn = &guiSrvDescFree,
+        },
+    );
     defer zgui.backend.deinit();
 
     var framebuffer_size: [2]i32 = .{ 0, 0 };
@@ -306,14 +322,14 @@ pub fn main() !void {
     var cube_spawn_timer = try std.time.Timer.start();
     const cube_spawn_rate_ns = @divTrunc(std.time.ns_per_s, 2);
 
-    var cube_instances = std.ArrayList(Cube).init(allocator);
+    var cube_instances = std.array_list.Managed(Cube).init(allocator);
     defer cube_instances.deinit();
 
-    var out_of_bounds_body_id_indices = std.ArrayList(usize).init(allocator);
+    var out_of_bounds_body_id_indices = std.array_list.Managed(usize).init(allocator);
     defer out_of_bounds_body_id_indices.deinit();
 
-    var cube_body_ids = std.ArrayList(zphysics.BodyId).init(allocator);
-    defer cube_body_ids.deinit();
+    var cube_body_ids: std.ArrayList(zphysics.BodyId) = .empty;
+    defer cube_body_ids.deinit(allocator);
 
     const lock_interface = physics_system.getBodyLockInterface();
 
@@ -351,7 +367,7 @@ pub fn main() !void {
         if (glfw_window.getAttribute(.iconified)) {
             // Window is minimized
             const ns_in_ms: u64 = 1_000_000;
-            std.time.sleep(10 * ns_in_ms);
+            std.Thread.sleep(10 * ns_in_ms);
             continue;
         }
 
@@ -398,7 +414,7 @@ pub fn main() !void {
                 cube_instances.clearRetainingCapacity();
                 out_of_bounds_body_id_indices.clearRetainingCapacity();
 
-                try physics_system.getBodyIds(&cube_body_ids);
+                try physics_system.getBodyIds(allocator, &cube_body_ids);
                 for (cube_body_ids.items, 0..) |body_id, i| {
                     var read_lock: zphysics.BodyLockRead = .{};
                     read_lock.lock(lock_interface, body_id);

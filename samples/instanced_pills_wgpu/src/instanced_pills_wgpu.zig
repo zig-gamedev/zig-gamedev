@@ -109,7 +109,7 @@ const DemoState = struct {
     window: *zglfw.Window,
     gctx: *zgpu.GraphicsContext,
 
-    pills: std.ArrayList(Pill),
+    pills: std.array_list.Managed(Pill),
     vertex_count: u32,
 
     dimension: Dimension,
@@ -283,7 +283,7 @@ const DemoState = struct {
         return .{
             .window = window,
             .gctx = gctx,
-            .pills = std.ArrayList(Pill).init(allocator),
+            .pills = std.array_list.Managed(Pill).init(allocator),
             .vertex_count = 0,
             .dimension = calculateDimensions(gctx),
             .pipeline = pipeline,
@@ -785,7 +785,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

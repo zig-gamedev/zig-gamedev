@@ -39,7 +39,7 @@ pub const State = struct {
 
     background_color: wgpu.Color,
     dimension: Dimension,
-    layers: std.ArrayList(Layer),
+    layers: std.array_list.Managed(Layer),
 
     color_texture: zgpu.TextureHandle,
     color_texture_view: zgpu.TextureViewHandle,
@@ -89,7 +89,7 @@ pub const State = struct {
 
             .background_color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 },
             .dimension = calculateDimensions(gctx),
-            .layers = std.ArrayList(Layer).init(allocator),
+            .layers = std.array_list.Managed(Layer).init(allocator),
 
             .color_texture = color.texture,
             .color_texture_view = color.view,

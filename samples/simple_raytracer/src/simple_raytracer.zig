@@ -4,7 +4,6 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const hrPanic = zwindows.hrPanic;
 const hrPanicOnFail = zwindows.hrPanicOnFail;
@@ -117,9 +116,9 @@ const DemoState = struct {
     blas_buffer: zd3d12.ResourceHandle,
     tlas_buffer: zd3d12.ResourceHandle,
 
-    meshes: std.ArrayList(Mesh),
-    materials: std.ArrayList(Material),
-    textures: std.ArrayList(ResourceView),
+    meshes: std.array_list.Managed(Mesh),
+    materials: std.array_list.Managed(Material),
+    textures: std.array_list.Managed(ResourceView),
 
     camera: struct {
         position: Vec3,
@@ -168,6 +167,7 @@ fn parseAndLoadGltfFile(path: []const u8) *c.cgltf_data {
 }
 
 fn appendMeshPrimitive(
+    allocator: std.mem.Allocator,
     data: *c.cgltf_data,
     mesh_index: u32,
     prim_index: u32,
@@ -184,7 +184,7 @@ fn appendMeshPrimitive(
 
     // Indices.
     {
-        indices.ensureTotalCapacity(indices.items.len + num_indices) catch unreachable;
+        indices.ensureTotalCapacity(allocator, indices.items.len + num_indices) catch unreachable;
 
         const accessor = data.meshes[mesh_index].primitives[prim_index].indices;
 
@@ -224,10 +224,10 @@ fn appendMeshPrimitive(
 
     // Attributes.
     {
-        positions.resize(positions.items.len + num_vertices) catch unreachable;
-        if (normals != null) normals.?.resize(normals.?.items.len + num_vertices) catch unreachable;
-        if (texcoords0 != null) texcoords0.?.resize(texcoords0.?.items.len + num_vertices) catch unreachable;
-        if (tangents != null) tangents.?.resize(tangents.?.items.len + num_vertices) catch unreachable;
+        positions.resize(allocator, positions.items.len + num_vertices) catch unreachable;
+        if (normals != null) normals.?.resize(allocator, normals.?.items.len + num_vertices) catch unreachable;
+        if (texcoords0 != null) texcoords0.?.resize(allocator, texcoords0.?.items.len + num_vertices) catch unreachable;
+        if (tangents != null) tangents.?.resize(allocator, tangents.?.items.len + num_vertices) catch unreachable;
 
         const num_attribs: u32 = @as(u32, @intCast(data.meshes[mesh_index].primitives[prim_index].attributes_count));
 
@@ -282,17 +282,17 @@ fn appendMeshPrimitive(
 fn loadScene(
     arena: std.mem.Allocator,
     gctx: *zd3d12.GraphicsContext,
-    all_meshes: *std.ArrayList(Mesh),
-    all_vertices: *std.ArrayList(Vertex),
-    all_indices: *std.ArrayList(u32),
-    all_materials: *std.ArrayList(Material),
-    all_textures: *std.ArrayList(ResourceView),
+    all_meshes: *std.array_list.Managed(Mesh),
+    all_vertices: *std.array_list.Managed(Vertex),
+    all_indices: *std.array_list.Managed(u32),
+    all_materials: *std.array_list.Managed(Material),
+    all_textures: *std.array_list.Managed(ResourceView),
 ) void {
-    var indices = std.ArrayList(u32).init(arena);
-    var positions = std.ArrayList(Vec3).init(arena);
-    var normals = std.ArrayList(Vec3).init(arena);
-    var texcoords0 = std.ArrayList(Vec2).init(arena);
-    var tangents = std.ArrayList(Vec4).init(arena);
+    var indices: std.ArrayList(u32) = .empty;
+    var positions: std.ArrayList(Vec3) = .empty;
+    var normals: std.ArrayList(Vec3) = .empty;
+    var texcoords0: std.ArrayList(Vec2) = .empty;
+    var tangents: std.ArrayList(Vec4) = .empty;
 
     const data = parseAndLoadGltfFile(content_dir ++ "Sponza/Sponza.gltf");
     defer c.cgltf_free(data);
@@ -309,6 +309,7 @@ fn loadScene(
             const pre_positions_len = positions.items.len;
 
             appendMeshPrimitive(
+                arena,
                 data,
                 mesh_index,
                 prim_index,
@@ -475,7 +476,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             &options5,
             @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS5),
         );
-        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == windows.S_OK;
+        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == zwindows.S_OK;
     };
     const dxr_draw_mode = @intFromBool(dxr_is_supported);
 
@@ -673,11 +674,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
-    var all_meshes = std.ArrayList(Mesh).init(allocator);
-    var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
-    var all_indices = std.ArrayList(u32).init(arena_allocator);
-    var all_materials = std.ArrayList(Material).init(allocator);
-    var all_textures = std.ArrayList(ResourceView).init(allocator);
+    var all_meshes = std.array_list.Managed(Mesh).init(allocator);
+    var all_vertices = std.array_list.Managed(Vertex).init(arena_allocator);
+    var all_indices = std.array_list.Managed(u32).init(arena_allocator);
+    var all_materials = std.array_list.Managed(Material).init(allocator);
+    var all_textures = std.array_list.Managed(ResourceView).init(allocator);
     loadScene(
         arena_allocator,
         &gctx,
@@ -764,11 +765,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         gctx.flushResourceBarriers();
     }
 
-    var temp_resources = std.ArrayList(zd3d12.ResourceHandle).init(arena_allocator);
+    var temp_resources = std.array_list.Managed(zd3d12.ResourceHandle).init(arena_allocator);
 
     // Create "Bottom Level Acceleration Structure" (blas).
     const blas_buffer = if (dxr_is_supported) blk_blas: {
-        var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
+        var geometry_descs = std.array_list.Managed(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
             arena_allocator,
             all_meshes.items.len,
         ) catch unreachable;
@@ -1075,14 +1076,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: windows.POINT = undefined;
-        _ = windows.GetCursorPos(&pos);
+        var pos: zwindows.POINT = undefined;
+        _ = zwindows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
+        if (zwindows.GetAsyncKeyState(zwindows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -1102,14 +1103,14 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (windows.GetAsyncKeyState('W') < 0) {
+        if (zwindows.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (windows.GetAsyncKeyState('S') < 0) {
+        } else if (zwindows.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (windows.GetAsyncKeyState('D') < 0) {
+        if (zwindows.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (windows.GetAsyncKeyState('A') < 0) {
+        } else if (zwindows.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
@@ -1142,7 +1143,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        windows.TRUE,
+        zwindows.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(
@@ -1190,7 +1191,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.shadow_rays_texture_rtv},
-            windows.TRUE,
+            zwindows.TRUE,
             &demo.depth_texture_dsv,
         );
         gctx.cmdlist.ClearRenderTargetView(
@@ -1223,7 +1224,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-            windows.TRUE,
+            zwindows.TRUE,
             &demo.depth_texture_dsv,
         );
     }

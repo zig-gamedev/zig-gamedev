@@ -27,7 +27,7 @@ pub fn main() !void {
     glfw.windowHint(.client_api, .opengl_api);
     glfw.windowHint(.doublebuffer, true);
 
-    const window = try glfw.Window.create(800, 500, window_title, null);
+    const window = try glfw.Window.create(800, 500, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

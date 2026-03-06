@@ -91,16 +91,16 @@ const DemoState = struct {
 
     uniform_bg: zgpu.BindGroupHandle,
 
-    meshes: std.ArrayList(Mesh),
-    entities: std.ArrayList(Entity),
+    meshes: std.array_list.Managed(Mesh),
+    entities: std.array_list.Managed(Entity),
 
     keyboard_delay: f32 = 1.0,
     current_scene_index: i32 = initial_scene,
 
     physics: struct {
         world: zbt.World,
-        common_shapes: std.ArrayList(zbt.Shape),
-        scene_shapes: std.ArrayList(zbt.Shape),
+        common_shapes: std.array_list.Managed(zbt.Shape),
+        scene_shapes: std.array_list.Managed(zbt.Shape),
         debug: *zbt.DebugDrawer,
     },
     camera: Camera,
@@ -150,11 +150,11 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zmesh.init(arena);
     defer zmesh.deinit();
 
-    var common_shapes = std.ArrayList(zbt.Shape).init(allocator);
-    var meshes = std.ArrayList(Mesh).init(allocator);
-    var indices = std.ArrayList(u32).init(arena);
-    var positions = std.ArrayList([3]f32).init(arena);
-    var normals = std.ArrayList([3]f32).init(arena);
+    var common_shapes = std.array_list.Managed(zbt.Shape).init(allocator);
+    var meshes = std.array_list.Managed(Mesh).init(allocator);
+    var indices = std.array_list.Managed(u32).init(arena);
+    var positions = std.array_list.Managed([3]f32).init(arena);
+    var normals = std.array_list.Managed([3]f32).init(arena);
     try initMeshes(arena, &common_shapes, &meshes, &indices, &positions, &normals);
 
     const total_num_vertices = @as(u32, @intCast(positions.items.len));
@@ -166,7 +166,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .size = total_num_vertices * @sizeOf(Vertex),
     });
     {
-        var vertex_data = std.ArrayList(Vertex).init(arena);
+        var vertex_data = std.array_list.Managed(Vertex).init(arena);
         defer vertex_data.deinit();
         try vertex_data.resize(total_num_vertices);
 
@@ -213,13 +213,13 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     physics_world.setGravity(&.{ 0.0, -default_gravity, 0.0 });
 
     var physics_debug = try allocator.create(zbt.DebugDrawer);
-    physics_debug.* = zbt.DebugDrawer.init(allocator);
+    physics_debug.* = zbt.DebugDrawer.init();
 
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
     physics_world.debugSetMode(zbt.DebugMode.user_only);
 
-    var scene_shapes = std.ArrayList(zbt.Shape).init(allocator);
-    var entities = std.ArrayList(Entity).init(allocator);
+    var scene_shapes = std.array_list.Managed(zbt.Shape).init(allocator);
+    var entities = std.array_list.Managed(Entity).init(allocator);
     var camera: Camera = undefined;
     scenes[initial_scene].setup(physics_world, common_shapes, &scene_shapes, &entities, &camera);
 
@@ -630,9 +630,9 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 
 const SceneSetupFunc = *const fn (
     world: zbt.World,
-    common_shapes: std.ArrayList(zbt.Shape),
-    scene_shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
+    common_shapes: std.array_list.Managed(zbt.Shape),
+    scene_shapes: *std.array_list.Managed(zbt.Shape),
+    entities: *std.array_list.Managed(Entity),
     camera: *Camera,
 ) void;
 
@@ -644,9 +644,9 @@ const Scene = struct {
 
 fn setupScene0(
     world: zbt.World,
-    common_shapes: std.ArrayList(zbt.Shape),
-    scene_shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
+    common_shapes: std.array_list.Managed(zbt.Shape),
+    scene_shapes: *std.array_list.Managed(zbt.Shape),
+    entities: *std.array_list.Managed(Entity),
     camera: *Camera,
 ) void {
     assert(entities.items.len == 0);
@@ -726,9 +726,9 @@ fn setupScene0(
 
 fn setupScene1(
     world: zbt.World,
-    common_shapes: std.ArrayList(zbt.Shape),
-    scene_shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
+    common_shapes: std.array_list.Managed(zbt.Shape),
+    scene_shapes: *std.array_list.Managed(zbt.Shape),
+    entities: *std.array_list.Managed(Entity),
     camera: *Camera,
 ) void {
     _ = scene_shapes;
@@ -774,9 +774,9 @@ fn setupScene1(
 
 fn setupScene2(
     world: zbt.World,
-    common_shapes: std.ArrayList(zbt.Shape),
-    scene_shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
+    common_shapes: std.array_list.Managed(zbt.Shape),
+    scene_shapes: *std.array_list.Managed(zbt.Shape),
+    entities: *std.array_list.Managed(Entity),
     camera: *Camera,
 ) void {
     _ = scene_shapes;
@@ -821,9 +821,9 @@ fn setupScene2(
 
 fn setupScene3(
     world: zbt.World,
-    common_shapes: std.ArrayList(zbt.Shape),
-    scene_shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
+    common_shapes: std.array_list.Managed(zbt.Shape),
+    scene_shapes: *std.array_list.Managed(zbt.Shape),
+    entities: *std.array_list.Managed(Entity),
     camera: *Camera,
 ) void {
     assert(entities.items.len == 0);
@@ -906,8 +906,8 @@ fn setupScene3(
 
 fn cleanupScene(
     world: zbt.World,
-    shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
+    shapes: *std.array_list.Managed(zbt.Shape),
+    entities: *std.array_list.Managed(Entity),
 ) void {
     var i = world.getNumBodies() - 1;
     while (i >= 0) : (i -= 1) {
@@ -927,7 +927,7 @@ fn createEntity(
     world: zbt.World,
     body: zbt.Body,
     basecolor_roughness: [4]f32,
-    entities: *std.ArrayList(Entity),
+    entities: *std.array_list.Managed(Entity),
 ) void {
     const shape = body.getShape();
     const mesh_index = @as(u32, @intCast(shape.getUserIndex(0)));
@@ -969,10 +969,10 @@ fn createEntity(
 
 fn appendMesh(
     mesh: zmesh.Shape,
-    all_meshes: *std.ArrayList(Mesh),
-    all_indices: *std.ArrayList(u32),
-    all_positions: *std.ArrayList([3]f32),
-    all_normals: *std.ArrayList([3]f32),
+    all_meshes: *std.array_list.Managed(Mesh),
+    all_indices: *std.array_list.Managed(u32),
+    all_positions: *std.array_list.Managed([3]f32),
+    all_normals: *std.array_list.Managed([3]f32),
 ) !u32 {
     const mesh_index = @as(u32, @intCast(all_meshes.items.len));
     try all_meshes.append(.{
@@ -989,11 +989,11 @@ fn appendMesh(
 
 fn initMeshes(
     arena: std.mem.Allocator,
-    shapes: *std.ArrayList(zbt.Shape),
-    all_meshes: *std.ArrayList(Mesh),
-    all_indices: *std.ArrayList(u32),
-    all_positions: *std.ArrayList([3]f32),
-    all_normals: *std.ArrayList([3]f32),
+    shapes: *std.array_list.Managed(zbt.Shape),
+    all_meshes: *std.array_list.Managed(Mesh),
+    all_indices: *std.array_list.Managed(u32),
+    all_positions: *std.array_list.Managed([3]f32),
+    all_normals: *std.array_list.Managed([3]f32),
 ) !void {
     assert(shapes.items.len == 0);
     try shapes.resize(mesh_count);
@@ -1171,16 +1171,16 @@ fn initMeshes(
         const index_offset = @as(u32, @intCast(all_indices.items.len));
         const vertex_offset = @as(u32, @intCast(all_positions.items.len));
 
-        var indices = std.ArrayList(u32).init(arena);
-        defer indices.deinit();
-        var positions = std.ArrayList([3]f32).init(arena);
-        defer positions.deinit();
-        var normals = std.ArrayList([3]f32).init(arena);
-        defer normals.deinit();
+        var indices: std.ArrayList(u32) = .empty;
+        defer indices.deinit(arena);
+        var positions: std.ArrayList([3]f32) = .empty;
+        defer positions.deinit(arena);
+        var normals: std.ArrayList([3]f32) = .empty;
+        defer normals.deinit(arena);
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "world.gltf");
         defer zmesh.io.freeData(data);
-        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, null, null);
+        try zmesh.io.appendMeshPrimitive(arena, data, 0, 0, &indices, &positions, &normals, null, null);
 
         // "Unweld" mesh, this creates un-optimized mesh with duplicated vertices.
         // We need it for wireframes and facet look.
@@ -1349,7 +1349,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

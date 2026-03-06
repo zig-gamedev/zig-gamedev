@@ -6,9 +6,11 @@ const content_dir = "simple_raytracer_content/";
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "simple_raytracer",
-        .root_source_file = .{ .path = thisDir() ++ "/src/simple_raytracer.zig" },
-        .target = options.target,
-        .optimize = options.optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("samples/simple_raytracer/src/simple_raytracer.zig"),
+            .target = options.target,
+            .optimize = options.optimize,
+        }),
     });
 
     const zpix = b.dependency("zpix", .{
@@ -37,7 +39,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const install_content_step = b.addInstallDirectory(.{
-        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
+        .source_dir = b.path("samples/simple_raytracer/" ++ content_dir),
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ content_dir,
     });

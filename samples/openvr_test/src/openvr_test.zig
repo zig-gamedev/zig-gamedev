@@ -4,13 +4,25 @@ const OpenVR = @import("zopenvr");
 const zglfw = @import("zglfw");
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const dxgi = zwindows.dxgi;
 
 const zd3d12 = @import("zd3d12");
 
 const zgui = @import("zgui");
+
+const GuiSrvDescHandles = struct {
+    cpu: zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE,
+    gpu: zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE,
+};
+
+fn guiSrvDescAlloc(info: *zgui.backend.ImGui_ImplDX12_InitInfo, out_cpu: *zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE, out_gpu: *zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE) callconv(.c) void {
+    const handles: *const GuiSrvDescHandles = @ptrCast(@alignCast(info.user_data.?));
+    out_cpu.* = handles.cpu;
+    out_gpu.* = handles.gpu;
+}
+
+fn guiSrvDescFree(_: *zgui.backend.ImGui_ImplDX12_InitInfo, _: zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE, _: zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE) callconv(.c) void {}
 
 // We need to export below symbols for DirectX 12 Agility SDK.
 pub export const D3D12SDKVersion: u32 = 610;
@@ -26,13 +38,14 @@ const Surface = struct {
     gctx: zd3d12.GraphicsContext,
     scale_factor: f32,
     framebuffer_size: [2]i32,
+    gui_srv_handles: GuiSrvDescHandles,
 
     const Self = @This();
 
     fn init(allocator: std.mem.Allocator, width: i32, height: i32) !Self {
         zglfw.windowHint(.client_api, .no_api);
         zglfw.windowHint(.maximized, true);
-        const window = try zglfw.Window.create(width, height, window_title, null);
+        const window = try zglfw.Window.create(width, height, window_title, null, null);
 
         const win32_window = zglfw.getWin32Window(window) orelse return error.FailedToGetWin32Window;
         const gctx = zd3d12.GraphicsContext.init(.{
@@ -43,22 +56,7 @@ const Surface = struct {
         zgui.init(allocator);
         zgui.plot.init();
 
-        {
-            const cbv_srv = gctx.cbv_srv_uav_gpu_heaps[0];
-            zgui.backend.init(
-                window,
-                .{
-                    .device = gctx.device,
-                    .command_queue = gctx.cmdqueue,
-                    .num_frames_in_flight = zd3d12.GraphicsContext.max_num_buffered_frames,
-                    .rtv_format = @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
-                    .dsv_format = @intFromEnum(dxgi.FORMAT.D32_FLOAT),
-                    .cbv_srv_heap = cbv_srv.heap.?,
-                    .font_srv_cpu_desc_handle = @bitCast(cbv_srv.base.cpu_handle),
-                    .font_srv_gpu_desc_handle = @bitCast(cbv_srv.base.gpu_handle),
-                },
-            );
-        }
+        const cbv_srv = gctx.cbv_srv_uav_gpu_heaps[0];
 
         const scale_factor = scale_factor: {
             const scale = window.getContentScale();
@@ -77,7 +75,29 @@ const Surface = struct {
             .gctx = gctx,
             .scale_factor = scale_factor,
             .framebuffer_size = [_]i32{ width, height },
+            .gui_srv_handles = .{
+                .cpu = @bitCast(cbv_srv.base.cpu_handle),
+                .gpu = @bitCast(cbv_srv.base.gpu_handle),
+            },
         };
+    }
+
+    fn initBackend(self: *Self) void {
+        const cbv_srv = self.gctx.cbv_srv_uav_gpu_heaps[0];
+        zgui.backend.init(
+            self.window,
+            .{
+                .device = self.gctx.device,
+                .command_queue = self.gctx.cmdqueue,
+                .num_frames_in_flight = zd3d12.GraphicsContext.max_num_buffered_frames,
+                .rtv_format = @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
+                .dsv_format = @intFromEnum(dxgi.FORMAT.D32_FLOAT),
+                .cbv_srv_heap = cbv_srv.heap.?,
+                .user_data = @ptrCast(&self.gui_srv_handles),
+                .srv_desc_alloc_fn = &guiSrvDescAlloc,
+                .srv_desc_free_fn = &guiSrvDescFree,
+            },
+        );
     }
 
     pub fn setFrameBufferSize(self: *Self, next_framebuffer_size: [2]i32) void {
@@ -114,7 +134,7 @@ const SystemWindow = struct {
     device_to_absolute_tracking_pose_count: usize = 0,
 
     sorted_tracked_device_indices_of_class_tracked_device_class: OpenVR.TrackedDeviceClass = .invalid,
-    sorted_tracked_device_indices_of_class_tracked_device_indices: std.ArrayList(OpenVR.TrackedDeviceIndex),
+    sorted_tracked_device_indices_of_class_tracked_device_indices: std.array_list.Managed(OpenVR.TrackedDeviceIndex),
     sorted_tracked_device_indices_of_class_relative_to_tracked_device_index: OpenVR.TrackedDeviceIndex = 0,
 
     tracked_device_activity_level_device_index: OpenVR.TrackedDeviceIndex = 0,
@@ -195,7 +215,7 @@ const SystemWindow = struct {
 
     pub fn init(allocator: std.mem.Allocator) SystemWindow {
         return .{
-            .sorted_tracked_device_indices_of_class_tracked_device_indices = std.ArrayList(OpenVR.TrackedDeviceIndex).init(allocator),
+            .sorted_tracked_device_indices_of_class_tracked_device_indices = std.array_list.Managed(OpenVR.TrackedDeviceIndex).init(allocator),
         };
     }
 
@@ -381,7 +401,7 @@ const ApplicationsWindow = struct {
 
     launch_template_application_template_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     launch_template_application_new_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
-    launch_template_application_keys: std.ArrayList(OpenVR.AppOverrideKeys),
+    launch_template_application_keys: std.array_list.Managed(OpenVR.AppOverrideKeys),
     launch_template_application_result: ?OpenVR.ApplicationError!void = null,
 
     launch_application_from_mime_type: [256:0]u8 = std.mem.zeroes([256:0]u8),
@@ -443,7 +463,7 @@ const ApplicationsWindow = struct {
 
     pub fn init(allocator: std.mem.Allocator) ApplicationsWindow {
         return .{
-            .launch_template_application_keys = std.ArrayList(OpenVR.AppOverrideKeys).init(allocator),
+            .launch_template_application_keys = std.array_list.Managed(OpenVR.AppOverrideKeys).init(allocator),
         };
     }
 
@@ -671,7 +691,7 @@ const CompositorWindow = struct {
                 error.DoNotHaveFocus => {
                     zgui.indent(.{ .indent_w = 30 });
                     defer zgui.unindent(.{ .indent_w = 30 });
-                    zgui.text("{!}", .{err});
+                    zgui.text("{s}", .{@errorName(err)});
                     zgui.newLine();
                 },
                 else => return err,
@@ -770,7 +790,7 @@ const InputWindow = struct {
     action_handle_action_name: [256:0]u8 = std.mem.zeroes([256:0]u8),
     input_source_handle_input_source_path: [256:0]u8 = std.mem.zeroes([256:0]u8),
 
-    update_action_state_sets: std.ArrayList(OpenVR.ActiveActionSet),
+    update_action_state_sets: std.array_list.Managed(OpenVR.ActiveActionSet),
     update_action_state_result: ?OpenVR.InputError!void = null,
 
     digital_action_data_action: OpenVR.ActionHandle = 0,
@@ -827,13 +847,13 @@ const InputWindow = struct {
     show_action_origins_result: ?OpenVR.InputError!void = null,
 
     show_action_origins_action_handle: OpenVR.ActionHandle = 0,
-    show_bindings_for_action_set_sets: std.ArrayList(OpenVR.ActiveActionSet),
+    show_bindings_for_action_set_sets: std.array_list.Managed(OpenVR.ActiveActionSet),
     show_bindings_for_action_set_origin_to_highlight: OpenVR.InputValueHandle = 0,
     show_bindings_for_action_set_result: ?OpenVR.InputError!void = null,
 
     component_state_for_binding_render_model_name: [256:0]u8 = std.mem.zeroes([256:0]u8),
     component_state_for_binding_component_name: [256:0]u8 = std.mem.zeroes([256:0]u8),
-    component_state_for_binding_origin_info: std.ArrayList(OpenVR.InputBindingInfo),
+    component_state_for_binding_origin_info: std.array_list.Managed(OpenVR.InputBindingInfo),
     open_binding_ui_app_key: [OpenVR.max_application_key_length:0]u8 = std.mem.zeroes([OpenVR.max_application_key_length:0]u8),
     open_binding_ui_action_set_handle: OpenVR.ActionSetHandle = 0,
     open_binding_ui_device_handle: OpenVR.InputValueHandle = 0,
@@ -845,9 +865,9 @@ const InputWindow = struct {
 
     pub fn init(allocator: std.mem.Allocator) InputWindow {
         return .{
-            .update_action_state_sets = std.ArrayList(OpenVR.ActiveActionSet).init(allocator),
-            .show_bindings_for_action_set_sets = std.ArrayList(OpenVR.ActiveActionSet).init(allocator),
-            .component_state_for_binding_origin_info = std.ArrayList(OpenVR.InputBindingInfo).init(allocator),
+            .update_action_state_sets = std.array_list.Managed(OpenVR.ActiveActionSet).init(allocator),
+            .show_bindings_for_action_set_sets = std.array_list.Managed(OpenVR.ActiveActionSet).init(allocator),
+            .component_state_for_binding_origin_info = std.array_list.Managed(OpenVR.InputBindingInfo).init(allocator),
         };
     }
 
@@ -1163,7 +1183,7 @@ const OpenVRWindow = struct {
                             const focus = zgui.button("focus system window", .{});
                             try self.system_window.show(sys, allocator, focus);
                         } else |err| {
-                            zgui.text("system() error: {!}", .{err});
+                            zgui.text("system() error: {s}", .{@errorName(err)});
                         }
                     } else {
                         self.system = ovr.system();
@@ -1173,7 +1193,7 @@ const OpenVRWindow = struct {
                             const focus = zgui.button("focus chaperone window", .{});
                             try self.chaperone_window.show(chap, allocator, focus);
                         } else |err| {
-                            zgui.text("chaperone() error: {!}", .{err});
+                            zgui.text("chaperone() error: {s}", .{@errorName(err)});
                         }
                     } else {
                         self.chaperone = ovr.chaperone();
@@ -1183,7 +1203,7 @@ const OpenVRWindow = struct {
                             const focus = zgui.button("focus compositor window", .{});
                             try self.compositor_window.show(comp, allocator, focus);
                         } else |err| {
-                            zgui.text("compositor() error: {!}", .{err});
+                            zgui.text("compositor() error: {s}", .{@errorName(err)});
                         }
                     } else {
                         self.compositor = ovr.compositor();
@@ -1193,7 +1213,7 @@ const OpenVRWindow = struct {
                             const focus = zgui.button("focus applications window", .{});
                             try self.applications_window.show(apps, allocator, focus);
                         } else |err| {
-                            zgui.text("applications() error: {!}", .{err});
+                            zgui.text("applications() error: {s}", .{@errorName(err)});
                         }
                     } else {
                         self.applications = ovr.applications();
@@ -1203,7 +1223,7 @@ const OpenVRWindow = struct {
                             const focus = zgui.button("focus input window", .{});
                             try self.input_window.show(inp, allocator, focus);
                         } else |err| {
-                            zgui.text("input() error: {!}", .{err});
+                            zgui.text("input() error: {s}", .{@errorName(err)});
                         }
                     } else {
                         self.input = ovr.input();
@@ -1213,13 +1233,13 @@ const OpenVRWindow = struct {
                             const focus = zgui.button("focus render models window", .{});
                             try self.render_models_window.show(rm, allocator, focus);
                         } else |err| {
-                            zgui.text("renderModels() error: {!}", .{err});
+                            zgui.text("renderModels() error: {s}", .{@errorName(err)});
                         }
                     } else {
                         self.render_models = ovr.renderModels();
                     }
                 } else |err| {
-                    zgui.text("OpenVR.init() error: {!}", .{err});
+                    zgui.text("OpenVR.init() error: {s}", .{@errorName(err)});
                 }
             } else {
                 if (zgui.button("OpenVR.init()", .{})) {
@@ -1251,6 +1271,7 @@ pub fn main() !void {
     defer zglfw.terminate();
 
     var surface = try Surface.init(allocator, 1280, 720);
+    surface.initBackend();
     defer surface.deinit(allocator);
 
     var open_vr_window = OpenVRWindow.init(allocator);
@@ -1290,7 +1311,7 @@ pub fn main() !void {
             surface.gctx.cmdlist.OMSetRenderTargets(
                 1,
                 &.{back_buffer.descriptor_handle},
-                windows.TRUE,
+                zwindows.TRUE,
                 null,
             );
             surface.gctx.cmdlist.ClearRenderTargetView(

@@ -10,7 +10,7 @@ fn lerp(a: f32, b: f32, t: f32) f32 {
     return a * (1 - t) + b * t;
 }
 
-pub fn generateVertices(segments: u16, verticies: *std.ArrayList(Vertex)) !void {
+pub fn generateVertices(segments: u16, verticies: *std.array_list.Managed(Vertex)) !void {
     {
         var i: usize = 0;
         while (i <= segments) : (i += 1) {
@@ -34,7 +34,7 @@ pub fn generateVertices(segments: u16, verticies: *std.ArrayList(Vertex)) !void 
     }
 }
 
-pub fn generateIndices(segments: u16, indicies: *std.ArrayList(u16)) !void {
+pub fn generateIndices(segments: u16, indicies: *std.array_list.Managed(u16)) !void {
     const total = 2 * (segments + 1);
     var up = (segments + 1) / 2;
     var down = up - 1;
@@ -54,7 +54,7 @@ pub fn generateIndices(segments: u16, indicies: *std.ArrayList(u16)) !void {
 }
 
 test "generate 6 segment vertices" {
-    var verticies = std.ArrayList(Vertex).init(std.testing.allocator);
+    var verticies = std.array_list.Managed(Vertex).init(std.testing.allocator);
     defer verticies.deinit();
     try generateVertices(6, &verticies);
 
@@ -77,7 +77,7 @@ test "generate 6 segment vertices" {
 }
 
 test "generate 6 segment indices" {
-    var indices = std.ArrayList(u16).init(std.testing.allocator);
+    var indices = std.array_list.Managed(u16).init(std.testing.allocator);
     defer indices.deinit();
     try generateIndices(6, &indices);
     const expected = [_]u16{ 3, 2, 4, 1, 5, 0, 6, 13, 7, 12, 8, 11, 9, 10 };

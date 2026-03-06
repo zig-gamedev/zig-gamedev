@@ -9,9 +9,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     const exe = b.addExecutable(.{
         .name = demo_name,
-        .root_source_file = b.path(b.pathJoin(&.{ src_path, "main.zig" })),
-        .target = options.target,
-        .optimize = options.optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.pathJoin(&.{ src_path, "main.zig" })),
+            .target = options.target,
+            .optimize = options.optimize,
+        }),
     });
     exe.linkLibC();
 
@@ -56,18 +58,21 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     return exe;
 }
 
-pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
+pub fn buildWeb(b: *std.Build, options: anytype, activate_emsdk: *std.Build.Step) *std.Build.Step {
     const zemscripten = @import("zemscripten");
 
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
 
-    const wasm = b.addStaticLibrary(.{
+    const wasm = b.addLibrary(.{
         .name = demo_name,
-        .root_source_file = b.path(b.pathJoin(&.{ src_path, "main-web.zig" })),
-        .target = options.target,
-        .optimize = options.optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.pathJoin(&.{ src_path, "main-web.zig" })),
+            .target = options.target,
+            .optimize = options.optimize,
+        }),
     });
+    wasm.step.dependOn(activate_emsdk);
 
     const zsdl = b.dependency("zsdl", .{});
     wasm.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
@@ -90,17 +95,19 @@ pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
 
     return zemscripten.emccStep(
         b,
-        wasm,
+        &.{},
+        &.{wasm},
         .{
             .optimize = options.optimize,
             .flags = emcc_flags,
             .settings = emcc_settings,
             .embed_paths = &.{
                 .{
-                    .src_path = "samples/sdl2_demo/sdl2_demo_content/zero.png",
+                    .src_path = b.path("samples/sdl2_demo/sdl2_demo_content/zero.png"),
                     .virtual_path = "sdl2_demo_content/zero.png",
                 },
             },
+            .out_file_name = demo_name ++ ".html",
             .install_dir = .{ .custom = "web" },
         },
     );

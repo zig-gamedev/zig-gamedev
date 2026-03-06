@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const dxgi = zwindows.dxgi;
 const d3d12 = zwindows.d3d12;
 const hrPanicOnFail = zwindows.hrPanicOnFail;
@@ -9,6 +8,19 @@ const hrPanicOnFail = zwindows.hrPanicOnFail;
 const zgui = @import("zgui");
 
 const zd3d12 = @import("zd3d12");
+
+const GuiSrvDescHandles = struct {
+    cpu: zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE,
+    gpu: zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE,
+};
+
+fn guiSrvDescAlloc(info: *zgui.backend.ImGui_ImplDX12_InitInfo, out_cpu: *zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE, out_gpu: *zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE) callconv(.c) void {
+    const handles: *const GuiSrvDescHandles = @ptrCast(@alignCast(info.user_data.?));
+    out_cpu.* = handles.cpu;
+    out_gpu.* = handles.gpu;
+}
+
+fn guiSrvDescFree(_: *zgui.backend.ImGui_ImplDX12_InitInfo, _: zgui.backend.D3D12_CPU_DESCRIPTOR_HANDLE, _: zgui.backend.D3D12_GPU_DESCRIPTOR_HANDLE) callconv(.c) void {}
 
 pub export const D3D12SDKVersion: u32 = 610;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -24,10 +36,10 @@ pub fn main() !void {
         std.posix.chdir(path) catch {};
     }
 
-    _ = windows.CoInitializeEx(null, windows.COINIT_MULTITHREADED);
-    defer windows.CoUninitialize();
+    _ = zwindows.CoInitializeEx(null, zwindows.COINIT_MULTITHREADED);
+    defer zwindows.CoUninitialize();
 
-    _ = windows.SetProcessDPIAware();
+    _ = zwindows.SetProcessDPIAware();
 
     var gpa_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa_state.deinit();
@@ -50,6 +62,10 @@ pub fn main() !void {
     );
 
     const cbv_srv = gctx.cbv_srv_uav_gpu_heaps[0];
+    var gui_srv_handles: GuiSrvDescHandles = .{
+        .cpu = @bitCast(cbv_srv.base.cpu_handle),
+        .gpu = @bitCast(cbv_srv.base.gpu_handle),
+    };
     zgui.backend.init(
         window,
         .{
@@ -59,18 +75,19 @@ pub fn main() !void {
             .rtv_format = @intFromEnum(dxgi.FORMAT.R8G8B8A8_UNORM),
             .dsv_format = @intFromEnum(dxgi.FORMAT.D32_FLOAT),
             .cbv_srv_heap = cbv_srv.heap.?,
-            .font_srv_cpu_desc_handle = @bitCast(cbv_srv.base.cpu_handle),
-            .font_srv_gpu_desc_handle = @bitCast(cbv_srv.base.gpu_handle),
+            .user_data = @ptrCast(&gui_srv_handles),
+            .srv_desc_alloc_fn = &guiSrvDescAlloc,
+            .srv_desc_free_fn = &guiSrvDescFree,
         },
     );
     defer zgui.backend.deinit();
 
     mainLoop: while (true) {
-        var message = std.mem.zeroes(windows.MSG);
-        while (windows.PeekMessageA(&message, null, 0, 0, windows.PM_REMOVE) == windows.TRUE) {
-            _ = windows.TranslateMessage(&message);
-            _ = windows.DispatchMessageA(&message);
-            if (message.message == windows.WM_QUIT) {
+        var message = std.mem.zeroes(zwindows.MSG);
+        while (zwindows.PeekMessageA(&message, null, 0, 0, zwindows.PM_REMOVE) == zwindows.TRUE) {
+            _ = zwindows.TranslateMessage(&message);
+            _ = zwindows.DispatchMessageA(&message);
+            if (message.message == zwindows.WM_QUIT) {
                 break :mainLoop;
             }
         }
@@ -84,7 +101,7 @@ pub fn main() !void {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            windows.TRUE,
+            zwindows.TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(back_buffer.descriptor_handle, &.{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
@@ -111,66 +128,66 @@ pub fn main() !void {
 }
 
 fn processWindowMessage(
-    window: windows.HWND,
-    message: windows.UINT,
-    wparam: windows.WPARAM,
-    lparam: windows.LPARAM,
-) callconv(windows.WINAPI) windows.LRESULT {
+    window: zwindows.HWND,
+    message: zwindows.UINT,
+    wparam: zwindows.WPARAM,
+    lparam: zwindows.LPARAM,
+) callconv(zwindows.WINAPI) zwindows.LRESULT {
     switch (message) {
-        windows.WM_KEYDOWN => {
-            if (wparam == windows.VK_ESCAPE) {
-                windows.PostQuitMessage(0);
+        zwindows.WM_KEYDOWN => {
+            if (wparam == zwindows.VK_ESCAPE) {
+                zwindows.PostQuitMessage(0);
                 return 0;
             }
         },
-        windows.WM_GETMINMAXINFO => {
-            var info: *windows.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
+        zwindows.WM_GETMINMAXINFO => {
+            var info: *zwindows.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
             info.ptMinTrackSize.x = 400;
             info.ptMinTrackSize.y = 400;
             return 0;
         },
-        windows.WM_DESTROY => {
-            windows.PostQuitMessage(0);
+        zwindows.WM_DESTROY => {
+            zwindows.PostQuitMessage(0);
             return 0;
         },
         else => {},
     }
-    return windows.DefWindowProcA(window, message, wparam, lparam);
+    return zwindows.DefWindowProcA(window, message, wparam, lparam);
 }
 
-fn createWindow(width: u32, height: u32) windows.HWND {
-    const winclass = windows.WNDCLASSEXA{
+fn createWindow(width: u32, height: u32) zwindows.HWND {
+    const winclass = zwindows.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(windows.GetModuleHandleA(null)),
+        .hInstance = @ptrCast(zwindows.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = windows.LoadCursorA(null, @ptrFromInt(32512)),
+        .hCursor = zwindows.LoadCursorA(null, @ptrFromInt(32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = window_title,
         .hIconSm = null,
     };
-    _ = windows.RegisterClassExA(&winclass);
+    _ = zwindows.RegisterClassExA(&winclass);
 
-    const style = windows.WS_OVERLAPPEDWINDOW;
+    const style = zwindows.WS_OVERLAPPEDWINDOW;
 
-    var rect = windows.RECT{
+    var rect = zwindows.RECT{
         .left = 0,
         .top = 0,
         .right = @intCast(width),
         .bottom = @intCast(height),
     };
-    _ = windows.AdjustWindowRectEx(&rect, style, windows.FALSE, 0);
+    _ = zwindows.AdjustWindowRectEx(&rect, style, zwindows.FALSE, 0);
 
-    const window = windows.CreateWindowExA(
+    const window = zwindows.CreateWindowExA(
         0,
         window_title,
         window_title,
-        style + windows.WS_VISIBLE,
-        windows.CW_USEDEFAULT,
-        windows.CW_USEDEFAULT,
+        style + zwindows.WS_VISIBLE,
+        zwindows.CW_USEDEFAULT,
+        zwindows.CW_USEDEFAULT,
         rect.right - rect.left,
         rect.bottom - rect.top,
         null,

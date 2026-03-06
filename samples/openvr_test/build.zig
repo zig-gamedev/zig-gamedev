@@ -8,9 +8,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{
         .name = demo_name,
-        .root_source_file = b.path(b.pathJoin(&.{ src_path, demo_name ++ ".zig" })),
-        .target = options.target,
-        .optimize = options.optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.pathJoin(&.{ src_path, demo_name ++ ".zig" })),
+            .target = options.target,
+            .optimize = options.optimize,
+        }),
     });
 
     const zglfw = b.dependency("zglfw", .{
@@ -38,11 +40,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     exe.root_module.addImport("zwindows", zwindows_module);
     exe.root_module.addImport("zd3d12", zd3d12_module);
 
-    const zopenvr = b.dependency("zopenvr", .{
-        .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
-        .zd3d12_debug_layer = options.zd3d12_debug_layer,
-        .zd3d12_gbv = options.zd3d12_gbv,
-    });
+    const zopenvr = b.dependency("zopenvr", .{});
     exe.root_module.addImport("zopenvr", zopenvr.module("root"));
 
     @import("zopenvr").addLibraryPathsTo(zopenvr, exe);

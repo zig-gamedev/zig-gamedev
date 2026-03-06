@@ -266,7 +266,7 @@ fn update(demo: *DemoState) !void {
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
 
-        zgui.pushFont(demo.font_large);
+        zgui.pushFont(demo.font_large, 0);
         zgui.separator();
         zgui.dummy(.{ .w = -1.0, .h = 20.0 });
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
@@ -580,9 +580,10 @@ fn update(demo: *DemoState) !void {
         }
 
         if (zgui.collapsingHeader("Widgets: Image", .{})) {
-            const tex_id = demo.gctx.lookupResource(demo.texture_view).?;
-            zgui.image(tex_id, .{ .w = 512.0, .h = 512.0 });
-            _ = zgui.imageButton("image_button_id", tex_id, .{ .w = 512.0, .h = 512.0 });
+            const tv = demo.gctx.lookupResource(demo.texture_view).?;
+            const tex_ref = zgui.TextureRef{ .tex_data = null, .tex_id = @enumFromInt(@intFromPtr(tv)) };
+            zgui.image(tex_ref, .{ .w = 512.0, .h = 512.0 });
+            _ = zgui.imageButton("image_button_id", tex_ref, .{ .w = 512.0, .h = 512.0 });
         }
 
         const draw_list = zgui.getBackgroundDrawList();
@@ -768,7 +769,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

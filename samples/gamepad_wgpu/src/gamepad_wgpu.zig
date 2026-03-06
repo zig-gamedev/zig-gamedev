@@ -139,7 +139,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
 
         for (0..zglfw.Joystick.maximum_supported) |jid| {
             const joystick: zglfw.Joystick = @enumFromInt(jid);
-            const tab_title = try std.fmt.allocPrintZ(arena.allocator(), "Joystick {}", .{jid + 1});
+            const tab_title = try std.fmt.allocPrintSentinel(arena.allocator(), "Joystick {}", .{jid + 1}, 0);
 
             if (zgui.beginTabItem(tab_title, .{})) {
                 defer zgui.endTabItem();
@@ -157,7 +157,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                             .fraction = (axis + 1.0) / 2.0,
                             .w = 400.0,
                             .h = 50.0,
-                            .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{axis}),
+                            .overlay = try std.fmt.allocPrintSentinel(arena.allocator(), "{d:.2}", .{axis}, 0),
                         });
                         zgui.sameLine(.{});
                         zgui.text("Axis {}", .{i});
@@ -191,7 +191,7 @@ fn update(allocator: std.mem.Allocator, demo: *DemoState) !void {
                                 .fraction = (value + 1.0) / 2.0,
                                 .w = 400.0,
                                 .h = 50.0,
-                                .overlay = try std.fmt.allocPrintZ(arena.allocator(), "{d:.2}", .{value}),
+                                .overlay = try std.fmt.allocPrintSentinel(arena.allocator(), "{d:.2}", .{value}, 0),
                             });
                             zgui.sameLine(.{});
                             zgui.text("{s}", .{axis_labels.get(axis)});
@@ -263,7 +263,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 775, window_title, null);
+    const window = try zglfw.Window.create(1600, 775, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

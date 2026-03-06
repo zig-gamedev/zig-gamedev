@@ -5,7 +5,7 @@ const zopengl = @import("zopengl");
 pub var window: *glfw.Window = undefined;
 
 pub fn init() !void {
-    window = try glfw.Window.create(600, 600, "zig-gamedev: minimal_glfw_gl", null);
+    window = try glfw.Window.create(600, 600, "zig-gamedev: minimal_glfw_gl", null, null);
 
     glfw.makeContextCurrent(window);
 

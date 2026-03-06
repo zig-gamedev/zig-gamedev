@@ -4,7 +4,6 @@ const std = @import("std");
 const assert = std.debug.assert;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const hrPanic = zwindows.hrPanic;
 const hrPanicOnFail = zwindows.hrPanicOnFail;
@@ -72,8 +71,8 @@ pub fn init(
         };
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RasterizerState.CullMode = .NONE;
-        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
-        pso_desc.BlendState.RenderTarget[0].BlendEnable = windows.TRUE;
+        pso_desc.DepthStencilState.DepthEnable = zwindows.FALSE;
+        pso_desc.BlendState.RenderTarget[0].BlendEnable = zwindows.TRUE;
         pso_desc.BlendState.RenderTarget[0].SrcBlend = .SRC_ALPHA;
         pso_desc.BlendState.RenderTarget[0].DestBlend = .INV_SRC_ALPHA;
         pso_desc.BlendState.RenderTarget[0].BlendOp = .ADD;

@@ -5,7 +5,6 @@ const zmath = @import("zmath");
 const zglfw = @import("zglfw");
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const d3d = zwindows.d3d;
 const dxgi = zwindows.dxgi;
@@ -112,7 +111,7 @@ const SceneVertex = extern struct {
     position: [3]f32,
     tex_coord: [2]f32,
 };
-fn addCubeToScene(mat: zmath.Mat, vert_data: *std.ArrayList(SceneVertex)) !void {
+fn addCubeToScene(mat: zmath.Mat, vert_data: *std.array_list.Managed(SceneVertex)) !void {
     const A = zmath.mul(zmath.Vec{ 0, 0, 0, 1 }, mat);
     const B = zmath.mul(zmath.Vec{ 1, 0, 0, 1 }, mat);
     const C = zmath.mul(zmath.Vec{ 1, 1, 0, 1 }, mat);
@@ -297,7 +296,7 @@ const TrackedDevice = struct {
 };
 
 var show_cubes = true;
-fn toggle_show_cubes(_: *zglfw.Window, key: zglfw.Key, _: i32, action: zglfw.Action, _: zglfw.Mods) callconv(.C) void {
+fn toggle_show_cubes(_: *zglfw.Window, key: zglfw.Key, _: i32, action: zglfw.Action, _: zglfw.Mods) callconv(.c) void {
     if (key == .c and action == .press) {
         show_cubes = !show_cubes;
     }
@@ -323,7 +322,7 @@ pub fn main() !void {
     zglfw.windowHint(.position_y, 100);
     zglfw.windowHint(.resizable, false);
     zglfw.windowHint(.client_api, .no_api);
-    const window = try zglfw.Window.create(framebuffer_size[0], framebuffer_size[1], "", null);
+    const window = try zglfw.Window.create(framebuffer_size[0], framebuffer_size[1], "", null, null);
     defer window.destroy();
 
     const win32_window = zglfw.getWin32Window(window) orelse @panic("failed to get win32 handle to window");
@@ -347,7 +346,7 @@ pub fn main() !void {
         const display = try app.system.allocTrackedDevicePropertyString(allocator, OpenVR.hmd, .serial_number);
         defer allocator.free(display);
 
-        const title = try std.fmt.allocPrintZ(allocator, "zig-gamedev: simple openvr - {s} {s}", .{ driver, display });
+        const title = try std.fmt.allocPrintSentinel(allocator, "zig-gamedev: simple openvr - {s} {s}", .{ driver, display }, 0);
         defer allocator.free(title);
         window.setTitle(title);
     }
@@ -453,11 +452,11 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/scene.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = windows.TRUE;
-            rasterizer_state.MultisampleEnable = windows.TRUE;
+            rasterizer_state.FrontCounterClockwise = zwindows.TRUE;
+            rasterizer_state.MultisampleEnable = zwindows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        pso_desc.SampleMask = windows.UINT_MAX;
+        pso_desc.SampleMask = zwindows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{
@@ -489,7 +488,7 @@ pub fn main() !void {
             const scene_volume_height = scene_volume_init;
             const scene_volume_depth = scene_volume_init;
 
-            var vert_data_array = std.ArrayList(SceneVertex).init(arena_allocator);
+            var vert_data_array = std.array_list.Managed(SceneVertex).init(arena_allocator);
             const mat_scale = zmath.scaling(scale, scale, scale);
             const mat_transform = zmath.translation(
                 -(scene_volume_width * scale_spacing) / 2,
@@ -579,16 +578,16 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/companion.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = windows.TRUE;
+            rasterizer_state.FrontCounterClockwise = zwindows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
         pso_desc.DepthStencilState = depth_stencil_state: {
             var depth_stencil_state = d3d12.DEPTH_STENCIL_DESC.initDefault();
-            depth_stencil_state.DepthEnable = windows.FALSE;
-            depth_stencil_state.StencilEnable = windows.FALSE;
+            depth_stencil_state.DepthEnable = zwindows.FALSE;
+            depth_stencil_state.StencilEnable = zwindows.FALSE;
             break :depth_stencil_state depth_stencil_state;
         };
-        pso_desc.SampleMask = windows.UINT_MAX;
+        pso_desc.SampleMask = zwindows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{
@@ -682,11 +681,11 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/axes.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = windows.TRUE;
-            rasterizer_state.MultisampleEnable = windows.TRUE;
+            rasterizer_state.FrontCounterClockwise = zwindows.TRUE;
+            rasterizer_state.MultisampleEnable = zwindows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        pso_desc.SampleMask = windows.UINT_MAX;
+        pso_desc.SampleMask = zwindows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .LINE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{
@@ -770,11 +769,11 @@ pub fn main() !void {
         pso_desc.PS = d3d12.SHADER_BYTECODE.init(try std.fs.cwd().readFileAlloc(arena_allocator, content_dir ++ "/shaders/render_model.ps.cso", 256 * 1024));
         pso_desc.RasterizerState = rasterizer_state: {
             var rasterizer_state = d3d12.RASTERIZER_DESC.initDefault();
-            rasterizer_state.FrontCounterClockwise = windows.TRUE;
-            rasterizer_state.MultisampleEnable = windows.TRUE;
+            rasterizer_state.FrontCounterClockwise = zwindows.TRUE;
+            rasterizer_state.MultisampleEnable = zwindows.TRUE;
             break :rasterizer_state rasterizer_state;
         };
-        pso_desc.SampleMask = windows.UINT_MAX;
+        pso_desc.SampleMask = zwindows.UINT_MAX;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats = .{

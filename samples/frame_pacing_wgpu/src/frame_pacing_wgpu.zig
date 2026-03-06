@@ -36,7 +36,7 @@ const Surface = struct {
             present_mode = .immediate;
         }
         zglfw.windowHint(.client_api, .no_api);
-        const window = try zglfw.Window.create(width, height, window_title, monitor);
+        const window = try zglfw.Window.create(width, height, window_title, monitor, null);
 
         const gctx = try zgpu.GraphicsContext.create(
             allocator,
@@ -101,10 +101,12 @@ const Surface = struct {
     }
 };
 
-const XyData = std.DoublyLinkedList(struct {
+const XyNode = struct {
     x: f64,
     y: f64,
-});
+    link: std.DoublyLinkedList.Node = .{},
+};
+const XyData = std.DoublyLinkedList;
 
 const XyLine = struct {
     xv: []const f64,
@@ -112,16 +114,17 @@ const XyLine = struct {
     const Self = @This();
 
     fn init(allocator: std.mem.Allocator, xy_data: XyData) !Self {
-        var xv = try allocator.alloc(f64, xy_data.len);
-        var yv = try allocator.alloc(f64, xy_data.len);
+        var xv = try allocator.alloc(f64, xy_data.len());
+        var yv = try allocator.alloc(f64, xy_data.len());
         var current = xy_data.first;
         var i: usize = 0;
         while (current) |node| : ({
             current = node.next;
             i += 1;
         }) {
-            xv[i] = node.data.x;
-            yv[i] = node.data.y;
+            const xy: *XyNode = @fieldParentPtr("link", node);
+            xv[i] = xy.x;
+            yv[i] = xy.y;
         }
 
         return .{
@@ -160,8 +163,9 @@ pub fn main() !void {
     defer surface.deinit(allocator);
 
     var frame_time_history: XyData = .{};
-    defer while (frame_time_history.pop()) |frame_time| {
-        allocator.destroy(frame_time);
+    defer while (frame_time_history.pop()) |node| {
+        const xy: *XyNode = @fieldParentPtr("link", node);
+        allocator.destroy(xy);
     };
 
     const Mode = enum {
@@ -180,7 +184,7 @@ pub fn main() !void {
     var frame_rate_target: i32 = 60;
     var frame_time_target: f32 = 16.666;
 
-    var monitor_names = std.ArrayList([:0]const u8).init(allocator);
+    var monitor_names = std.array_list.Managed([:0]const u8).init(allocator);
     defer {
         for (monitor_names.items) |monitor_name| {
             allocator.free(monitor_name);
@@ -188,19 +192,19 @@ pub fn main() !void {
         monitor_names.deinit();
     }
 
-    var monitor_video_modes = std.ArrayList(MonitorVideoMode).init(allocator);
+    var monitor_video_modes = std.array_list.Managed(MonitorVideoMode).init(allocator);
     defer monitor_video_modes.deinit();
 
     for (zglfw.Monitor.getAll()) |monitor| {
         for (try monitor.getVideoModes()) |video_mode| {
             const bits = video_mode.red_bits + video_mode.green_bits + video_mode.blue_bits;
-            try monitor_names.append(try std.fmt.allocPrintZ(allocator, "{s} {}×{} {}-bits {}hz", .{
+            try monitor_names.append(try std.fmt.allocPrintSentinel(allocator, "{s} {}×{} {}-bits {}hz", .{
                 try monitor.getName(),
                 video_mode.width,
                 video_mode.height,
                 bits,
                 video_mode.refresh_rate,
-            }));
+            }, 0));
             try monitor_video_modes.append(.{
                 .monitor = monitor,
                 .video_mode = video_mode,
@@ -262,13 +266,16 @@ pub fn main() !void {
             if (zgui.begin("Config", .{})) {
                 {
                     {
-                        var frame_time_node = try allocator.create(XyData.Node);
-                        frame_time_node.data.x = surface.gctx.stats.time;
-                        frame_time_node.data.y = surface.gctx.stats.average_cpu_time;
-                        frame_time_history.append(frame_time_node);
-                        while (frame_time_history.len > 100) {
+                        var frame_time_node = try allocator.create(XyNode);
+                        frame_time_node.* = .{
+                            .x = surface.gctx.stats.time,
+                            .y = surface.gctx.stats.average_cpu_time,
+                        };
+                        frame_time_history.append(&frame_time_node.link);
+                        while (frame_time_history.len() > 100) {
                             const node = frame_time_history.popFirst() orelse unreachable;
-                            allocator.destroy(node);
+                            const xy: *XyNode = @fieldParentPtr("link", node);
+                            allocator.destroy(xy);
                         }
                     }
 

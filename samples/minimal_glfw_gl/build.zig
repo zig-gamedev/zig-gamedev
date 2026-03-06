@@ -7,9 +7,11 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
     const exe = b.addExecutable(.{
         .name = demo_name,
-        .root_source_file = b.path(b.pathJoin(&.{ src_path, "main.zig" })),
-        .target = options.target,
-        .optimize = options.optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.pathJoin(&.{ src_path, "main.zig" })),
+            .target = options.target,
+            .optimize = options.optimize,
+        }),
     });
 
     const zglfw = b.dependency("zglfw", .{
@@ -35,7 +37,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     return exe;
 }
 
-pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
+pub fn buildWeb(b: *std.Build, options: anytype, activate_emsdk: *std.Build.Step) *std.Build.Step {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
 
@@ -48,12 +50,15 @@ pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
         .target = options.target,
     });
 
-    const wasm = b.addStaticLibrary(.{
+    const wasm = b.addLibrary(.{
         .name = demo_name,
-        .root_source_file = b.path(b.pathJoin(&.{ src_path, "main-web.zig" })),
-        .target = options.target,
-        .optimize = options.optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.pathJoin(&.{ src_path, "main-web.zig" })),
+            .target = options.target,
+            .optimize = options.optimize,
+        }),
     });
+    wasm.step.dependOn(activate_emsdk);
 
     wasm.root_module.addImport("zglfw", zglfw.module("root"));
 
@@ -77,11 +82,13 @@ pub fn buildWeb(b: *std.Build, options: anytype) *std.Build.Step {
 
     return zemscripten.emccStep(
         b,
-        wasm,
+        &.{},
+        &.{wasm},
         .{
             .optimize = options.optimize,
             .flags = emcc_flags,
             .settings = emcc_settings,
+            .out_file_name = demo_name ++ ".html",
             .install_dir = .{ .custom = "web" },
         },
     );
