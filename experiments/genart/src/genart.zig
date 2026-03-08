@@ -166,7 +166,7 @@ fn updateFrameStats(window: *sdl.Window, name: [:0]const u8) struct { time: f64,
         const wanted_per_frame_ns = @as(u64, @intFromFloat(1.0 / 60.0 * std.time.ns_per_s));
 
         if (this_frame_ns < wanted_per_frame_ns) {
-            std.time.sleep(wanted_per_frame_ns - this_frame_ns);
+            std.Thread.sleep(wanted_per_frame_ns - this_frame_ns);
             break :now_ns state.timer.read();
         }
         break :now_ns now_ns;

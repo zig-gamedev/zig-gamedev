@@ -183,7 +183,7 @@ const DemoState = struct {
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
-    meshes: std.ArrayList(Mesh),
+    meshes: std.array_list.Managed(Mesh),
 
     broad_phase_layer_interface: *BroadPhaseLayerInterface,
     object_vs_broad_phase_layer_filter: *ObjectVsBroadPhaseLayerFilter,
@@ -204,10 +204,10 @@ const DemoState = struct {
 
 fn appendMesh(
     mesh: zmesh.Shape,
-    meshes: *std.ArrayList(Mesh),
-    meshes_indices: *std.ArrayList(Mesh.IndexType),
-    meshes_positions: *std.ArrayList([3]f32),
-    meshes_normals: *std.ArrayList([3]f32),
+    meshes: *std.array_list.Managed(Mesh),
+    meshes_indices: *std.array_list.Managed(Mesh.IndexType),
+    meshes_positions: *std.array_list.Managed([3]f32),
+    meshes_normals: *std.array_list.Managed([3]f32),
 ) void {
     meshes.append(.{
         .index_offset = @as(u32, @intCast(meshes_indices.items.len)),
@@ -226,10 +226,10 @@ const mesh_cube = 1;
 
 fn generateMeshes(
     allocator: std.mem.Allocator,
-    meshes: *std.ArrayList(Mesh),
-    meshes_indices: *std.ArrayList(Mesh.IndexType),
-    meshes_positions: *std.ArrayList([3]f32),
-    meshes_normals: *std.ArrayList([3]f32),
+    meshes: *std.array_list.Managed(Mesh),
+    meshes_indices: *std.array_list.Managed(Mesh.IndexType),
+    meshes_positions: *std.array_list.Managed([3]f32),
+    meshes_normals: *std.array_list.Managed([3]f32),
 ) void {
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
@@ -277,10 +277,10 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     //
     // Procedural meshes
     //
-    var meshes = std.ArrayList(Mesh).init(allocator);
-    var meshes_indices = std.ArrayList(Mesh.IndexType).init(arena);
-    var meshes_positions = std.ArrayList([3]f32).init(arena);
-    var meshes_normals = std.ArrayList([3]f32).init(arena);
+    var meshes = std.array_list.Managed(Mesh).init(allocator);
+    var meshes_indices = std.array_list.Managed(Mesh.IndexType).init(arena);
+    var meshes_positions = std.array_list.Managed([3]f32).init(arena);
+    var meshes_normals = std.array_list.Managed([3]f32).init(arena);
     generateMeshes(allocator, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
     const total_num_vertices = @as(u32, @intCast(meshes_positions.items.len));
@@ -327,7 +327,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
         .size = total_num_vertices * @sizeOf(Vertex),
     });
     {
-        var vertex_data = std.ArrayList(Vertex).init(arena);
+        var vertex_data = std.array_list.Managed(Vertex).init(arena);
         defer vertex_data.deinit();
         vertex_data.resize(total_num_vertices) catch unreachable;
 
@@ -693,7 +693,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

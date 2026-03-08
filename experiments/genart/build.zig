@@ -11,7 +11,7 @@ pub fn build(b: *std.Build, options: anytype) void {
 
 fn install(
     b: *std.Build,
-    optimize: std.builtin.Mode,
+    optimize: std.builtin.OptimizeMode,
     target: std.Build.ResolvedTarget,
     comptime name: []const u8,
 ) void {
@@ -63,9 +63,11 @@ fn install(
 
     const exe = b.addExecutable(.{
         .name = name,
-        .root_source_file = b.path(b.pathJoin(&.{ src_path, "genart.zig" })),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.pathJoin(&.{ src_path, "genart.zig" })),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     exe.rdynamic = true;
     exe.root_module.addImport("xcommon", xcommon);

@@ -4,7 +4,6 @@ const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d = zwindows.d3d;
 const d3d12 = zwindows.d3d12;
 const wasapi = zwindows.wasapi;
@@ -109,7 +108,7 @@ const DemoState = struct {
     mesh_pbr_pso: zd3d12.PipelineHandle,
     sample_env_texture_pso: zd3d12.PipelineHandle,
 
-    meshes: std.ArrayList(Mesh),
+    meshes: std.array_list.Managed(Mesh),
     vertex_buffer: zd3d12.ResourceHandle,
 
     index_buffer: zd3d12.ResourceHandle,
@@ -139,16 +138,16 @@ const DemoState = struct {
 fn loadMesh(
     arena: std.mem.Allocator,
     path: [:0]const u8,
-    all_meshes: *std.ArrayList(Mesh),
-    all_vertices: *std.ArrayList(Vertex),
-    all_indices: *std.ArrayList(u32),
+    all_meshes: *std.array_list.Managed(Mesh),
+    all_vertices: *std.array_list.Managed(Vertex),
+    all_indices: *std.array_list.Managed(u32),
     generate_lods: u32,
 ) !void {
-    var indices = std.ArrayList(u32).init(arena);
-    var positions = std.ArrayList([3]f32).init(arena);
-    var normals = std.ArrayList([3]f32).init(arena);
-    var texcoords0 = std.ArrayList([2]f32).init(arena);
-    var tangents = std.ArrayList([4]f32).init(arena);
+    var indices: std.ArrayList(u32) = .empty;
+    var positions: std.ArrayList([3]f32) = .empty;
+    var normals: std.ArrayList([3]f32) = .empty;
+    var texcoords0: std.ArrayList([2]f32) = .empty;
+    var tangents: std.ArrayList([4]f32) = .empty;
 
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;
@@ -160,7 +159,7 @@ fn loadMesh(
 
     const data = try zmesh.io.parseAndLoadFile(pathname);
     defer zmesh.io.freeData(data);
-    try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+    try zmesh.io.appendMeshPrimitive(arena, data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     var mesh = Mesh{
         .vertex_offset = @as(u32, @intCast(pre_positions_len)),
@@ -175,7 +174,7 @@ fn loadMesh(
 
     if (generate_lods > 0) {
         assert(generate_lods <= max_num_lods);
-        var all_lods_indices = std.ArrayList(u32).init(arena);
+        var all_lods_indices = std.array_list.Managed(u32).init(arena);
 
         var lod_index: u32 = 1;
         while (lod_index < generate_lods) : (lod_index += 1) {
@@ -185,7 +184,7 @@ fn loadMesh(
             const target_index_count: usize = @as(usize, @intFromFloat(@as(f32, @floatFromInt(indices.items.len)) * threshold));
             const target_error: f32 = 1e-2;
 
-            var lod_indices = std.ArrayList(u32).init(arena);
+            var lod_indices = std.array_list.Managed(u32).init(arena);
             lod_indices.resize(indices.items.len) catch unreachable;
             var lod_error: f32 = 0.0;
             const lod_indices_count = zmesh.opt.simplifySloppy(
@@ -209,7 +208,7 @@ fn loadMesh(
             all_lods_indices.appendSlice(lod_indices.items) catch unreachable;
         }
 
-        indices.appendSlice(all_lods_indices.items) catch unreachable;
+        indices.appendSlice(arena, all_lods_indices.items) catch unreachable;
     }
 
     all_meshes.append(mesh) catch unreachable;
@@ -294,7 +293,7 @@ fn drawToCubeTexture(
 
         gctx.addTransitionBarrier(dest_texture, .{ .RENDER_TARGET = true });
         gctx.flushResourceBarriers();
-        gctx.cmdlist.OMSetRenderTargets(1, &.{cube_face_rtv}, windows.TRUE, null);
+        gctx.cmdlist.OMSetRenderTargets(1, &.{cube_face_rtv}, zwindows.TRUE, null);
         gctx.deallocateAllTempCpuDescriptors(.RTV);
 
         const mem = gctx.allocateUploadMemory(Mat4, 1);
@@ -385,7 +384,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         };
         pso_desc.RTVFormats[0] = .R16G16B16A16_FLOAT;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = zwindows.FALSE;
         pso_desc.RasterizerState.CullMode = .FRONT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
@@ -419,9 +418,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     zmesh.init(arena_allocator);
     defer zmesh.deinit();
 
-    var all_meshes = std.ArrayList(Mesh).init(allocator);
-    var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
-    var all_indices = std.ArrayList(u32).init(arena_allocator);
+    var all_meshes = std.array_list.Managed(Mesh).init(allocator);
+    var all_vertices = std.array_list.Managed(Vertex).init(arena_allocator);
+    var all_indices = std.array_list.Managed(u32).init(arena_allocator);
 
     try loadMesh(arena_allocator, content_dir ++ "cube.gltf", &all_meshes, &all_vertices, &all_indices, 0);
     try loadMesh(
@@ -947,14 +946,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: windows.POINT = undefined;
-        _ = windows.GetCursorPos(&pos);
+        var pos: zwindows.POINT = undefined;
+        _ = zwindows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
+        if (zwindows.GetAsyncKeyState(zwindows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -974,14 +973,14 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (windows.GetAsyncKeyState('W') < 0) {
+        if (zwindows.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (windows.GetAsyncKeyState('S') < 0) {
+        } else if (zwindows.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (windows.GetAsyncKeyState('D') < 0) {
+        if (zwindows.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (windows.GetAsyncKeyState('A') < 0) {
+        } else if (zwindows.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
@@ -1012,7 +1011,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        windows.TRUE,
+        zwindows.TRUE,
         &demo.depth_texture.view,
     );
     gctx.cmdlist.ClearRenderTargetView(

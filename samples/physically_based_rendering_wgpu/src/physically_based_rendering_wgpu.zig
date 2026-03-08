@@ -88,7 +88,7 @@ const DemoState = struct {
     mesh_bg: zgpu.BindGroupHandle,
     env_bg: zgpu.BindGroupHandle,
 
-    meshes: std.ArrayList(Mesh),
+    meshes: std.array_list.Managed(Mesh),
 
     draw_mode: i32 = 0,
     current_hdri_index: i32 = 1,
@@ -108,15 +108,15 @@ const DemoState = struct {
 
 fn loadAllMeshes(
     arena: std.mem.Allocator,
-    out_meshes: *std.ArrayList(Mesh),
-    out_vertices: *std.ArrayList(Vertex),
-    out_indices: *std.ArrayList(u32),
+    out_meshes: *std.array_list.Managed(Mesh),
+    out_vertices: *std.array_list.Managed(Vertex),
+    out_indices: *std.array_list.Managed(u32),
 ) !void {
-    var indices = std.ArrayList(u32).init(arena);
-    var positions = std.ArrayList([3]f32).init(arena);
-    var normals = std.ArrayList([3]f32).init(arena);
-    var texcoords = std.ArrayList([2]f32).init(arena);
-    var tangents = std.ArrayList([4]f32).init(arena);
+    var indices: std.ArrayList(u32) = .empty;
+    var positions: std.ArrayList([3]f32) = .empty;
+    var normals: std.ArrayList([3]f32) = .empty;
+    var texcoords: std.ArrayList([2]f32) = .empty;
+    var tangents: std.ArrayList([4]f32) = .empty;
 
     {
         const pre_indices_len = indices.items.len;
@@ -124,7 +124,7 @@ fn loadAllMeshes(
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
         defer zmesh.io.freeData(data);
-        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
+        try zmesh.io.appendMeshPrimitive(arena, data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
 
         try out_meshes.append(.{
             .index_offset = @as(u32, @intCast(pre_indices_len)),
@@ -139,7 +139,7 @@ fn loadAllMeshes(
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
         defer zmesh.io.freeData(data);
-        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
+        try zmesh.io.appendMeshPrimitive(arena, data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
 
         try out_meshes.append(.{
             .index_offset = @as(u32, @intCast(pre_indices_len)),
@@ -223,9 +223,9 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     zmesh.init(arena);
     defer zmesh.deinit();
 
-    var meshes = std.ArrayList(Mesh).init(allocator);
-    var vertices = std.ArrayList(Vertex).init(arena);
-    var indices = std.ArrayList(u32).init(arena);
+    var meshes = std.array_list.Managed(Mesh).init(allocator);
+    var vertices = std.array_list.Managed(Vertex).init(arena);
+    var indices = std.array_list.Managed(u32).init(arena);
     try loadAllMeshes(arena, &meshes, &vertices, &indices);
 
     const total_num_vertices = @as(u32, @intCast(vertices.items.len));
@@ -1121,7 +1121,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

@@ -3,7 +3,6 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const d2d1 = zwindows.d2d1;
 const dwrite = zwindows.dwrite;
@@ -36,7 +35,7 @@ const DemoState = struct {
     ink_style: *d2d1.IInkStyle,
     bezier_lines_path: *d2d1.IPathGeometry,
 
-    ink_points: std.ArrayList(d2d1.POINT_2F),
+    ink_points: std.array_list.Managed(d2d1.POINT_2F),
 
     left_mountain_geo: *d2d1.IGeometry,
     right_mountain_geo: *d2d1.IGeometry,
@@ -56,7 +55,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     gctx.present_flags = .{};
     gctx.present_interval = 1;
 
-    var ink_points = std.ArrayList(d2d1.POINT_2F).init(allocator);
+    var ink_points = std.array_list.Managed(d2d1.POINT_2F).init(allocator);
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -176,7 +175,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         var p0 = d2d1.POINT_2F{ .x = 0.0, .y = 0.0 };
         ink_points.append(p0) catch unreachable;
         ink.SetStartPoint(&.{ .x = p0.x, .y = p0.y, .radius = 1.0 });
-        const sp = ink.GetStartPoint();
+        var sp: d2d1.INK_POINT = undefined;
+        _ = ink.GetStartPoint(&sp);
         assert(sp.x == p0.x and sp.y == p0.y and sp.radius == 1.0);
         assert(ink.GetSegmentCount() == 0);
 
@@ -647,7 +647,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        windows.TRUE,
+        zwindows.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(

@@ -2,7 +2,6 @@ const std = @import("std");
 const glfw = @import("zglfw");
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 
 const zd3d12 = @import("zd3d12");
@@ -30,7 +29,7 @@ pub fn main() !void {
     defer glfw.terminate();
 
     glfw.windowHint(.client_api, .no_api);
-    const glfw_window = try glfw.Window.create(1600, 1200, window_name, null);
+    const glfw_window = try glfw.Window.create(1600, 1200, window_name, null, null);
     defer glfw_window.destroy();
 
     const window = glfw.getWin32Window(glfw_window) orelse return error.FailedToGetWin32Window;
@@ -46,7 +45,7 @@ pub fn main() !void {
         const arena_allocator = arena_allocator_state.allocator();
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = zwindows.FALSE;
         pso_desc.InputLayout = d3d12.INPUT_LAYOUT_DESC.init(&.{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         });
@@ -85,7 +84,7 @@ pub fn main() !void {
         if (glfw_window.getAttribute(.iconified)) {
             // Window is minimized
             const ns_in_ms: u64 = 1_000_000;
-            std.time.sleep(10 * ns_in_ms);
+            std.Thread.sleep(10 * ns_in_ms);
             continue;
         }
 
@@ -108,7 +107,7 @@ pub fn main() !void {
             gctx.cmdlist.OMSetRenderTargets(
                 1,
                 &.{back_buffer.descriptor_handle},
-                windows.TRUE,
+                zwindows.TRUE,
                 null,
             );
             gctx.cmdlist.ClearRenderTargetView(

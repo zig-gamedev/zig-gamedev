@@ -8,10 +8,12 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
     const target = compile_step.root_module.resolved_target.?;
     const optimize = compile_step.root_module.optimize.?;
 
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "common",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     lib.linkLibC();

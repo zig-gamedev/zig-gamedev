@@ -12,7 +12,6 @@ const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const Mutex = std.Thread.Mutex;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const xaudio2 = zwindows.xaudio2;
 const xaudio2fx = zwindows.xaudio2fx;
@@ -51,17 +50,17 @@ const Pso_Vertex = struct {
 const AudioData = struct {
     mutex: Mutex = .{},
     cursor_position: u32 = 99,
-    left: std.ArrayList(f32),
-    right: std.ArrayList(f32),
+    left: std.array_list.Managed(f32),
+    right: std.array_list.Managed(f32),
 
     fn init(allocator: std.mem.Allocator) AudioData {
         const size = 100 * 480;
 
-        var left = std.ArrayList(f32).initCapacity(allocator, size) catch unreachable;
+        var left = std.array_list.Managed(f32).initCapacity(allocator, size) catch unreachable;
         left.resize(size) catch unreachable;
         for (left.items) |*s| s.* = 0.0;
 
-        var right = std.ArrayList(f32).initCapacity(allocator, size) catch unreachable;
+        var right = std.array_list.Managed(f32).initCapacity(allocator, size) catch unreachable;
         right.resize(size) catch unreachable;
         for (right.items) |*s| s.* = 0.0;
 
@@ -111,7 +110,7 @@ const DemoState = struct {
     } = .{},
 };
 
-fn processAudio(samples: [*]f32, num_samples: u32, num_channels: u32, context: ?*anyopaque) callconv(.C) void {
+fn processAudio(samples: [*]f32, num_samples: u32, num_channels: u32, context: ?*anyopaque) callconv(.c) void {
     _ = num_samples;
     const audio_data = @as(*AudioData, @ptrCast(@alignCast(context)));
 
@@ -150,13 +149,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     hrPanicOnFail(music.voice.Start(.{}, xaudio2.COMMIT_NOW));
 
     {
-        var reverb_apo: ?*windows.IUnknown = null;
+        var reverb_apo: ?*zwindows.IUnknown = null;
         hrPanicOnFail(xaudio2fx.createReverb(&reverb_apo, 0));
         defer _ = reverb_apo.?.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
             .pEffect = reverb_apo.?,
-            .InitialState = windows.FALSE,
+            .InitialState = zwindows.FALSE,
             .OutputChannels = 2,
         }};
         const effect_chain = xaudio2.EFFECT_CHAIN{
@@ -182,7 +181,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
             .pEffect = p0,
-            .InitialState = windows.TRUE,
+            .InitialState = zwindows.TRUE,
             .OutputChannels = 2,
         }};
         const effect_chain = xaudio2.EFFECT_CHAIN{
@@ -363,14 +362,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: windows.POINT = undefined;
-        _ = windows.GetCursorPos(&pos);
+        var pos: zwindows.POINT = undefined;
+        _ = zwindows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
+        if (zwindows.GetAsyncKeyState(zwindows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -394,14 +393,14 @@ fn update(demo: *DemoState) void {
         // Load camera position from memory to SIMD register ('3' means that we want to load three components).
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
-        if (windows.GetAsyncKeyState('W') < 0) {
+        if (zwindows.GetAsyncKeyState('W') < 0) {
             cpos += forward;
-        } else if (windows.GetAsyncKeyState('S') < 0) {
+        } else if (zwindows.GetAsyncKeyState('S') < 0) {
             cpos -= forward;
         }
-        if (windows.GetAsyncKeyState('D') < 0) {
+        if (zwindows.GetAsyncKeyState('D') < 0) {
             cpos += right;
-        } else if (windows.GetAsyncKeyState('A') < 0) {
+        } else if (zwindows.GetAsyncKeyState('A') < 0) {
             cpos -= right;
         }
 
@@ -435,7 +434,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        windows.TRUE,
+        zwindows.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(

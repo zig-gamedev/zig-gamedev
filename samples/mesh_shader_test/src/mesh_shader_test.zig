@@ -4,7 +4,6 @@ const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const dml = zwindows.directml;
 const hrPanic = zwindows.hrPanic;
@@ -92,7 +91,7 @@ const DemoState = struct {
     depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    meshes: std.ArrayList(Mesh),
+    meshes: std.array_list.Managed(Mesh),
 
     draw_mode: DrawMode,
     num_objects_to_draw: i32,
@@ -112,15 +111,15 @@ const DemoState = struct {
 fn loadMeshAndGenerateMeshlets(
     arena_allocator: std.mem.Allocator,
     relpath: [:0]const u8,
-    all_meshes: *std.ArrayList(Mesh),
-    all_vertices: *std.ArrayList(Vertex),
-    all_indices: *std.ArrayList(u32),
-    all_meshlets: *std.ArrayList(Meshlet),
-    all_meshlets_data: *std.ArrayList(u32),
+    all_meshes: *std.array_list.Managed(Mesh),
+    all_vertices: *std.array_list.Managed(Vertex),
+    all_indices: *std.array_list.Managed(u32),
+    all_meshlets: *std.array_list.Managed(Meshlet),
+    all_meshlets_data: *std.array_list.Managed(u32),
 ) !void {
-    var src_positions = std.ArrayList([3]f32).init(arena_allocator);
-    var src_normals = std.ArrayList([3]f32).init(arena_allocator);
-    var src_indices = std.ArrayList(u32).init(arena_allocator);
+    var src_positions: std.ArrayList([3]f32) = .empty;
+    var src_normals: std.ArrayList([3]f32) = .empty;
+    var src_indices: std.ArrayList(u32) = .empty;
 
     const abspath = std.fs.path.joinZ(arena_allocator, &.{
         std.fs.selfExeDirPathAlloc(arena_allocator) catch unreachable,
@@ -129,9 +128,9 @@ fn loadMeshAndGenerateMeshlets(
 
     const data = try zmesh.io.parseAndLoadFile(abspath);
     defer zmesh.io.freeData(data);
-    try zmesh.io.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+    try zmesh.io.appendMeshPrimitive(arena_allocator, data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
-    var src_vertices = try std.ArrayList(Vertex).initCapacity(
+    var src_vertices = try std.array_list.Managed(Vertex).initCapacity(
         arena_allocator,
         src_positions.items.len,
     );
@@ -143,7 +142,7 @@ fn loadMeshAndGenerateMeshlets(
         });
     }
 
-    var remap = std.ArrayList(u32).init(arena_allocator);
+    var remap = std.array_list.Managed(u32).init(arena_allocator);
     try remap.resize(src_indices.items.len);
     const num_unique_vertices = zmesh.opt.generateVertexRemap(
         remap.items,
@@ -152,7 +151,7 @@ fn loadMeshAndGenerateMeshlets(
         src_vertices.items,
     );
 
-    var opt_vertices = std.ArrayList(Vertex).init(arena_allocator);
+    var opt_vertices = std.array_list.Managed(Vertex).init(arena_allocator);
     try opt_vertices.resize(num_unique_vertices);
     zmesh.opt.remapVertexBuffer(
         Vertex,
@@ -161,7 +160,7 @@ fn loadMeshAndGenerateMeshlets(
         remap.items,
     );
 
-    var opt_indices = std.ArrayList(u32).init(arena_allocator);
+    var opt_indices = std.array_list.Managed(u32).init(arena_allocator);
     try opt_indices.resize(src_indices.items.len);
     zmesh.opt.remapIndexBuffer(
         opt_indices.items,
@@ -188,9 +187,9 @@ fn loadMeshAndGenerateMeshlets(
         max_num_meshlet_triangles,
     );
 
-    var meshlets = std.ArrayList(zmesh.opt.Meshlet).init(arena_allocator);
-    var meshlet_vertices = std.ArrayList(u32).init(arena_allocator);
-    var meshlet_triangles = std.ArrayList(u8).init(arena_allocator);
+    var meshlets = std.array_list.Managed(zmesh.opt.Meshlet).init(arena_allocator);
+    var meshlet_vertices = std.array_list.Managed(u32).init(arena_allocator);
+    var meshlet_triangles = std.array_list.Managed(u8).init(arena_allocator);
     try meshlets.resize(max_num_meshlets);
     try meshlet_vertices.resize(max_num_meshlets * max_num_meshlet_vertices);
     try meshlet_triangles.resize(max_num_meshlets * max_num_meshlet_triangles * 3);
@@ -265,15 +264,15 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             &options7,
             @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS7),
         );
-        if (options7.MeshShaderTier == .NOT_SUPPORTED or res != windows.S_OK) {
-            _ = windows.MessageBoxA(
+        if (options7.MeshShaderTier == .NOT_SUPPORTED or res != zwindows.S_OK) {
+            _ = zwindows.MessageBoxA(
                 window,
                 "This applications requires graphics card that supports Mesh Shader " ++
                     "(NVIDIA GeForce Turing or newer, AMD Radeon RX 6000 or newer).",
                 "No DirectX 12 Mesh Shader support",
-                windows.MB_OK | windows.MB_ICONERROR,
+                zwindows.MB_OK | zwindows.MB_ICONERROR,
             );
-            windows.ExitProcess(0);
+            zwindows.ExitProcess(0);
         }
     }
 
@@ -328,11 +327,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     zmesh.init(arena_allocator);
     defer zmesh.deinit();
 
-    var all_meshes = std.ArrayList(Mesh).init(allocator);
-    var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
-    var all_indices = std.ArrayList(u32).init(arena_allocator);
-    var all_meshlets = std.ArrayList(Meshlet).init(arena_allocator);
-    var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
+    var all_meshes = std.array_list.Managed(Mesh).init(allocator);
+    var all_vertices = std.array_list.Managed(Vertex).init(arena_allocator);
+    var all_indices = std.array_list.Managed(u32).init(arena_allocator);
+    var all_meshlets = std.array_list.Managed(Meshlet).init(arena_allocator);
+    var all_meshlets_data = std.array_list.Managed(u32).init(arena_allocator);
     try loadMeshAndGenerateMeshlets(
         arena_allocator,
         content_dir ++ "cube.gltf",
@@ -630,14 +629,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: windows.POINT = undefined;
-        _ = windows.GetCursorPos(&pos);
+        var pos: zwindows.POINT = undefined;
+        _ = zwindows.GetCursorPos(&pos);
         const delta_x = @as(f32, @floatFromInt(pos.x)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_x));
         const delta_y = @as(f32, @floatFromInt(pos.y)) - @as(f32, @floatFromInt(demo.mouse.cursor_prev_y));
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (windows.GetAsyncKeyState(windows.VK_RBUTTON) < 0) {
+        if (zwindows.GetAsyncKeyState(zwindows.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = @min(demo.camera.pitch, 0.48 * math.pi);
@@ -657,14 +656,14 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (windows.GetAsyncKeyState('W') < 0) {
+        if (zwindows.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (windows.GetAsyncKeyState('S') < 0) {
+        } else if (zwindows.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (windows.GetAsyncKeyState('D') < 0) {
+        if (zwindows.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (windows.GetAsyncKeyState('A') < 0) {
+        } else if (zwindows.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
@@ -694,7 +693,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &.{back_buffer.descriptor_handle},
-        windows.TRUE,
+        zwindows.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, .{ .DEPTH = true }, 1.0, 0, 0, null);

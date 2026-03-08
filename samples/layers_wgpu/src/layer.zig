@@ -18,23 +18,23 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
         gctx: *zgpu.GraphicsContext,
 
         common_uniforms: ?BindGroup,
-        common_uniforms_offsets: std.ArrayList(u32),
+        common_uniforms_offsets: std.array_list.Managed(u32),
 
         vertex_uniforms: ?BindGroup,
-        vertex_uniforms_offsets: std.ArrayList(u32),
+        vertex_uniforms_offsets: std.array_list.Managed(u32),
 
         fragment_uniforms: ?BindGroup,
-        fragment_uniforms_offsets: std.ArrayList(u32),
+        fragment_uniforms_offsets: std.array_list.Managed(u32),
 
         pipeline: zgpu.RenderPipelineHandle,
 
-        vertices: std.ArrayList(Vertex),
+        vertices: std.array_list.Managed(Vertex),
         vertex_buffer: zgpu.BufferHandle,
 
-        indices: std.ArrayList(u16),
+        indices: std.array_list.Managed(u16),
         index_buffer: zgpu.BufferHandle,
 
-        instances: std.ArrayList(Instance),
+        instances: std.array_list.Managed(Instance),
         instance_buffer: zgpu.BufferHandle,
 
         pub fn init(
@@ -56,29 +56,29 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
                     .group = cu.group,
                     .bind_group = gctx.createBindGroup(bind_groups[cu.group], cu.bindings),
                 } else null,
-                .common_uniforms_offsets = std.ArrayList(u32).init(allocator),
+                .common_uniforms_offsets = std.array_list.Managed(u32).init(allocator),
 
                 .vertex_uniforms = if (vertex_uniforms) |vu| .{
                     .group = vu.group,
                     .bind_group = gctx.createBindGroup(bind_groups[vu.group], vu.bindings),
                 } else null,
-                .vertex_uniforms_offsets = std.ArrayList(u32).init(allocator),
+                .vertex_uniforms_offsets = std.array_list.Managed(u32).init(allocator),
 
                 .fragment_uniforms = if (fragment_uniforms) |fu| .{
                     .group = fu.group,
                     .bind_group = gctx.createBindGroup(bind_groups[fu.group], fu.bindings),
                 } else null,
-                .fragment_uniforms_offsets = std.ArrayList(u32).init(allocator),
+                .fragment_uniforms_offsets = std.array_list.Managed(u32).init(allocator),
 
                 .pipeline = createPipeline(gctx, bind_groups, vertex_attributes, instance_attributes, vertex_shader, fragment_shader),
 
-                .vertices = std.ArrayList(Vertex).init(allocator),
+                .vertices = std.array_list.Managed(Vertex).init(allocator),
                 .vertex_buffer = .{},
 
-                .indices = std.ArrayList(u16).init(allocator),
+                .indices = std.array_list.Managed(u16).init(allocator),
                 .index_buffer = .{},
 
-                .instances = std.ArrayList(Instance).init(allocator),
+                .instances = std.array_list.Managed(Instance).init(allocator),
                 .instance_buffer = .{},
             };
         }

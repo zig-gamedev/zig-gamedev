@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const dxgi = zwindows.dxgi;
 const d3d12 = zwindows.d3d12;
 const d3d12d = zwindows.d3d12d;
@@ -13,66 +12,66 @@ pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: minimal d3d12";
 
 fn processWindowMessage(
-    window: windows.HWND,
-    message: windows.UINT,
-    wparam: windows.WPARAM,
-    lparam: windows.LPARAM,
-) callconv(windows.WINAPI) windows.LRESULT {
+    window: zwindows.HWND,
+    message: zwindows.UINT,
+    wparam: zwindows.WPARAM,
+    lparam: zwindows.LPARAM,
+) callconv(zwindows.WINAPI) zwindows.LRESULT {
     switch (message) {
-        windows.WM_KEYDOWN => {
-            if (wparam == windows.VK_ESCAPE) {
-                windows.PostQuitMessage(0);
+        zwindows.WM_KEYDOWN => {
+            if (wparam == zwindows.VK_ESCAPE) {
+                zwindows.PostQuitMessage(0);
                 return 0;
             }
         },
-        windows.WM_GETMINMAXINFO => {
-            var info: *windows.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
+        zwindows.WM_GETMINMAXINFO => {
+            var info: *zwindows.MINMAXINFO = @ptrFromInt(@as(usize, @intCast(lparam)));
             info.ptMinTrackSize.x = 400;
             info.ptMinTrackSize.y = 400;
             return 0;
         },
-        windows.WM_DESTROY => {
-            windows.PostQuitMessage(0);
+        zwindows.WM_DESTROY => {
+            zwindows.PostQuitMessage(0);
             return 0;
         },
         else => {},
     }
-    return windows.DefWindowProcA(window, message, wparam, lparam);
+    return zwindows.DefWindowProcA(window, message, wparam, lparam);
 }
 
-fn createWindow(width: u32, height: u32) windows.HWND {
-    const winclass = windows.WNDCLASSEXA{
+fn createWindow(width: u32, height: u32) zwindows.HWND {
+    const winclass = zwindows.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
-        .hInstance = @ptrCast(windows.GetModuleHandleA(null)),
+        .hInstance = @ptrCast(zwindows.GetModuleHandleA(null)),
         .hIcon = null,
-        .hCursor = windows.LoadCursorA(null, @ptrFromInt(32512)),
+        .hCursor = zwindows.LoadCursorA(null, @ptrFromInt(32512)),
         .hbrBackground = null,
         .lpszMenuName = null,
         .lpszClassName = window_name,
         .hIconSm = null,
     };
-    _ = windows.RegisterClassExA(&winclass);
+    _ = zwindows.RegisterClassExA(&winclass);
 
-    const style = windows.WS_OVERLAPPEDWINDOW;
+    const style = zwindows.WS_OVERLAPPEDWINDOW;
 
-    var rect = windows.RECT{
+    var rect = zwindows.RECT{
         .left = 0,
         .top = 0,
         .right = @intCast(width),
         .bottom = @intCast(height),
     };
-    _ = windows.AdjustWindowRectEx(&rect, style, windows.FALSE, 0);
+    _ = zwindows.AdjustWindowRectEx(&rect, style, zwindows.FALSE, 0);
 
-    const window = windows.CreateWindowExA(
+    const window = zwindows.CreateWindowExA(
         0,
         window_name,
         window_name,
-        style + windows.WS_VISIBLE,
-        windows.CW_USEDEFAULT,
-        windows.CW_USEDEFAULT,
+        style + zwindows.WS_VISIBLE,
+        zwindows.CW_USEDEFAULT,
+        zwindows.CW_USEDEFAULT,
         rect.right - rect.left,
         rect.bottom - rect.top,
         null,
@@ -87,10 +86,10 @@ fn createWindow(width: u32, height: u32) windows.HWND {
 }
 
 pub fn main() !void {
-    _ = windows.CoInitializeEx(null, windows.COINIT_MULTITHREADED);
-    defer windows.CoUninitialize();
+    _ = zwindows.CoInitializeEx(null, zwindows.COINIT_MULTITHREADED);
+    defer zwindows.CoUninitialize();
 
-    _ = windows.SetProcessDPIAware();
+    _ = zwindows.SetProcessDPIAware();
 
     const window = createWindow(1600, 1200);
 
@@ -102,7 +101,7 @@ pub fn main() !void {
         const ps_cso = @embedFile("./minimal_d3d12.ps.cso");
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = zwindows.FALSE;
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
@@ -133,28 +132,28 @@ pub fn main() !void {
     var frac: f32 = 0.0;
     var frac_delta: f32 = 0.005;
 
-    var window_rect: windows.RECT = undefined;
-    _ = windows.GetClientRect(window, &window_rect);
+    var window_rect: zwindows.RECT = undefined;
+    _ = zwindows.GetClientRect(window, &window_rect);
 
     //
     // Main Loop
     //
     main_loop: while (true) {
         {
-            var message = std.mem.zeroes(windows.MSG);
-            while (windows.PeekMessageA(&message, null, 0, 0, windows.PM_REMOVE) == windows.TRUE) {
-                _ = windows.TranslateMessage(&message);
-                _ = windows.DispatchMessageA(&message);
-                if (message.message == windows.WM_QUIT) {
+            var message = std.mem.zeroes(zwindows.MSG);
+            while (zwindows.PeekMessageA(&message, null, 0, 0, zwindows.PM_REMOVE) == zwindows.TRUE) {
+                _ = zwindows.TranslateMessage(&message);
+                _ = zwindows.DispatchMessageA(&message);
+                if (message.message == zwindows.WM_QUIT) {
                     break :main_loop;
                 }
             }
 
-            var rect: windows.RECT = undefined;
-            _ = windows.GetClientRect(window, &rect);
+            var rect: zwindows.RECT = undefined;
+            _ = zwindows.GetClientRect(window, &rect);
             if (rect.right == 0 and rect.bottom == 0) {
                 // Window is minimized
-                windows.Sleep(10);
+                zwindows.Sleep(10);
                 continue :main_loop;
             }
 
@@ -237,7 +236,7 @@ pub fn main() !void {
         dx12.command_list.OMSetRenderTargets(
             1,
             &.{back_buffer_descriptor},
-            windows.TRUE,
+            zwindows.TRUE,
             null,
         );
         dx12.command_list.ClearRenderTargetView(back_buffer_descriptor, &.{ 0.2, frac, 0.8, 1.0 }, 0, null);
@@ -287,7 +286,7 @@ const Dx12State = struct {
     rtv_heap_start: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     frame_fence: *d3d12.IFence,
-    frame_fence_event: windows.HANDLE,
+    frame_fence_event: zwindows.HANDLE,
     frame_fence_counter: u64 = 0,
     frame_index: u32 = 0,
 
@@ -297,7 +296,7 @@ const Dx12State = struct {
 
     const num_frames = 2;
 
-    fn init(window: windows.HWND) Dx12State {
+    fn init(window: zwindows.HWND) Dx12State {
         //
         // DXGI Factory
         //
@@ -324,15 +323,15 @@ const Dx12State = struct {
         // D3D12 Device
         //
         var device: *d3d12.IDevice9 = undefined;
-        if (d3d12.CreateDevice(null, .@"11_0", &d3d12.IID_IDevice9, @ptrCast(&device)) != windows.S_OK) {
-            _ = windows.MessageBoxA(
+        if (d3d12.CreateDevice(null, .@"11_0", &d3d12.IID_IDevice9, @ptrCast(&device)) != zwindows.S_OK) {
+            _ = zwindows.MessageBoxA(
                 window,
                 "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
                     "with DirectX 12 Feature Level 11.0 support.",
                 "Your graphics card driver may be old",
-                windows.MB_OK | windows.MB_ICONERROR,
+                zwindows.MB_OK | zwindows.MB_ICONERROR,
             );
-            windows.ExitProcess(0);
+            zwindows.ExitProcess(0);
         }
 
         std.log.info("D3D12 device created", .{});
@@ -353,8 +352,8 @@ const Dx12State = struct {
         //
         // Swap Chain
         //
-        var rect: windows.RECT = undefined;
-        _ = windows.GetClientRect(window, &rect);
+        var rect: zwindows.RECT = undefined;
+        _ = zwindows.GetClientRect(window, &rect);
 
         var swap_chain: *dxgi.ISwapChain3 = undefined;
         {
@@ -371,7 +370,7 @@ const Dx12State = struct {
                 .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
                 .BufferCount = num_frames,
                 .OutputWindow = window,
-                .Windowed = windows.TRUE,
+                .Windowed = zwindows.TRUE,
                 .SwapEffect = .FLIP_DISCARD,
                 .Flags = .{},
             };
@@ -408,7 +407,8 @@ const Dx12State = struct {
             .NodeMask = 0,
         }, &d3d12.IID_IDescriptorHeap, @ptrCast(&rtv_heap)));
 
-        const rtv_heap_start = rtv_heap.GetCPUDescriptorHandleForHeapStart();
+        var rtv_heap_start: d3d12.CPU_DESCRIPTOR_HANDLE = undefined;
+        _ = rtv_heap.GetCPUDescriptorHandleForHeapStart(&rtv_heap_start);
 
         for (swap_chain_textures, 0..) |texture, i| {
             device.CreateRenderTargetView(
@@ -426,7 +426,7 @@ const Dx12State = struct {
         var frame_fence: *d3d12.IFence = undefined;
         hrPanicOnFail(device.CreateFence(0, .{}, &d3d12.IID_IFence, @ptrCast(&frame_fence)));
 
-        const frame_fence_event = windows.CreateEventExA(null, "frame_fence_event", 0, windows.EVENT_ALL_ACCESS).?;
+        const frame_fence_event = zwindows.CreateEventExA(null, "frame_fence_event", 0, zwindows.EVENT_ALL_ACCESS).?;
 
         std.log.info("Frame fence created ", .{});
 
@@ -478,7 +478,7 @@ const Dx12State = struct {
         _ = dx12.command_list.Release();
         for (dx12.command_allocators) |cmdalloc| _ = cmdalloc.Release();
         _ = dx12.frame_fence.Release();
-        _ = windows.CloseHandle(dx12.frame_fence_event);
+        _ = zwindows.CloseHandle(dx12.frame_fence_event);
         _ = dx12.rtv_heap.Release();
         for (dx12.swap_chain_textures) |texture| _ = texture.Release();
         _ = dx12.swap_chain.Release();
@@ -497,7 +497,7 @@ const Dx12State = struct {
         const gpu_frame_counter = dx12.frame_fence.GetCompletedValue();
         if ((dx12.frame_fence_counter - gpu_frame_counter) >= num_frames) {
             hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, dx12.frame_fence_event));
-            windows.WaitForSingleObject(dx12.frame_fence_event, windows.INFINITE) catch {};
+            zwindows.WaitForSingleObject(dx12.frame_fence_event, zwindows.INFINITE) catch {};
         }
 
         dx12.frame_index = (dx12.frame_index + 1) % num_frames;
@@ -509,6 +509,6 @@ const Dx12State = struct {
         hrPanicOnFail(dx12.command_queue.Signal(dx12.frame_fence, dx12.frame_fence_counter));
         hrPanicOnFail(dx12.frame_fence.SetEventOnCompletion(dx12.frame_fence_counter, dx12.frame_fence_event));
 
-        windows.WaitForSingleObject(dx12.frame_fence_event, windows.INFINITE) catch {};
+        zwindows.WaitForSingleObject(dx12.frame_fence_event, zwindows.INFINITE) catch {};
     }
 };

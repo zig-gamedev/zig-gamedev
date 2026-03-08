@@ -732,7 +732,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                     _ = zgui.checkbox("wireframe", .{ .v = @ptrCast(&arg_ptr.wireframe) });
                 },
                 else => switch (arg_ptr_info.type) {
-                    *std.ArrayList(OpenVR.AppOverrideKeys) => {
+                    *std.array_list.Managed(OpenVR.AppOverrideKeys) => {
                         if (allocator) |alloc| {
                             zgui.pushStrId(arg_name);
                             defer zgui.popId();
@@ -773,7 +773,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                             @panic("allocator required for " ++ arg_name);
                         }
                     },
-                    *std.ArrayList(OpenVR.TrackedDeviceIndex) => {
+                    *std.array_list.Managed(OpenVR.TrackedDeviceIndex) => {
                         zgui.pushStrId(arg_name);
                         defer zgui.popId();
                         zgui.text("{s}", .{arg_name});
@@ -800,7 +800,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                             zgui.text("(empty)", .{});
                         }
                     },
-                    *std.ArrayList(OpenVR.ActiveActionSet) => {
+                    *std.array_list.Managed(OpenVR.ActiveActionSet) => {
                         zgui.pushStrId(arg_name);
                         defer zgui.popId();
                         zgui.text("{s}", .{arg_name});
@@ -832,7 +832,7 @@ fn renderParams(allocator: ?std.mem.Allocator, comptime arg_types: []const type,
                             zgui.text("(empty)", .{});
                         }
                     },
-                    *std.ArrayList(OpenVR.InputBindingInfo) => {
+                    *std.array_list.Managed(OpenVR.InputBindingInfo) => {
                         zgui.pushStrId(arg_name);
                         defer zgui.popId();
                         zgui.text("{s}", .{arg_name});
@@ -985,7 +985,7 @@ fn renderResult(allocator: ?std.mem.Allocator, comptime Return: type, result: Re
             } else |err| {
                 zgui.indent(.{ .indent_w = 30 });
                 defer zgui.unindent(.{ .indent_w = 30 });
-                zgui.text("{!}", .{err});
+                zgui.text("{s}", .{@errorName(err)});
             }
             return;
         },
@@ -1365,10 +1365,10 @@ fn fillArgs(comptime arg_ptrs_info: std.builtin.Type.Struct, arg_ptrs: anytype, 
                 .one => switch (@typeInfo(pointer.child)) {
                     .array => std.mem.sliceTo(arg_ptr, 0),
                     else => switch (field.type) {
-                        *std.ArrayList(OpenVR.AppOverrideKeys),
-                        *std.ArrayList(OpenVR.TrackedDeviceIndex),
-                        *std.ArrayList(OpenVR.ActiveActionSet),
-                        *std.ArrayList(OpenVR.InputBindingInfo),
+                        *std.array_list.Managed(OpenVR.AppOverrideKeys),
+                        *std.array_list.Managed(OpenVR.TrackedDeviceIndex),
+                        *std.array_list.Managed(OpenVR.ActiveActionSet),
+                        *std.array_list.Managed(OpenVR.InputBindingInfo),
                         => arg_ptr.items,
                         *?OpenVR.RenderModelError!OpenVR.RenderModel => arg_ptr.*.? catch @panic("render model required"),
                         *?OpenVR.RenderModelError!*OpenVR.RenderModel.TextureMap => arg_ptr.*.? catch @panic("texture map required"),

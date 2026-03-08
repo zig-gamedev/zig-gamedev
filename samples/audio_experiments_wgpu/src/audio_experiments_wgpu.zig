@@ -112,14 +112,14 @@ const AudioState = struct {
     engine: *zaudio.Engine,
     mutex: Mutex = .{},
     current_set: u32 = num_sets - 1,
-    samples: std.ArrayList(f32),
+    samples: std.array_list.Managed(f32),
 
     fn audioCallback(
         device: *zaudio.Device,
         output: ?*anyopaque,
         _: ?*const anyopaque,
         num_frames: u32,
-    ) callconv(.C) void {
+    ) callconv(.c) void {
         const audio = @as(*AudioState, @ptrCast(@alignCast(device.getUserData())));
 
         audio.engine.asNodeGraphMut().readPcmFrames(output.?, num_frames, null) catch {};
@@ -141,7 +141,7 @@ const AudioState = struct {
 
     fn create(allocator: std.mem.Allocator) !*AudioState {
         const samples = samples: {
-            var samples = try std.ArrayList(f32).initCapacity(
+            var samples = try std.array_list.Managed(f32).initCapacity(
                 allocator,
                 num_sets * samples_per_set,
             );
@@ -202,7 +202,7 @@ const DemoState = struct {
     depth_texv: zgpu.TextureViewHandle,
 
     music: *zaudio.Sound,
-    sounds: std.ArrayList(*zaudio.Sound),
+    sounds: std.array_list.Managed(*zaudio.Sound),
     audio_filter: AudioFilter,
 
     waveform_config: zaudio.Waveform.Config,
@@ -268,7 +268,7 @@ fn create(allocator: std.mem.Allocator, window: *zglfw.Window) !*DemoState {
     try audio.engine.start();
 
     const sounds = sounds: {
-        var sounds = std.ArrayList(*zaudio.Sound).init(allocator);
+        var sounds = std.array_list.Managed(*zaudio.Sound).init(allocator);
         try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "drum_bass_hard.flac", .{}));
         try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "tabla_tas1.flac", .{}));
         try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "loop_mika.flac", .{}));
@@ -988,7 +988,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

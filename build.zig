@@ -109,8 +109,7 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget) void {
     b.default_step.dependOn(activate_emsdk);
 
     inline for (comptime std.meta.declarations(samples.web)) |d| {
-        const build_web_app_step = @field(samples.web, d.name).buildWeb(b, options);
-        build_web_app_step.dependOn(activate_emsdk);
+        const build_web_app_step = @field(samples.web, d.name).buildWeb(b, options, activate_emsdk);
 
         b.getInstallStep().dependOn(build_web_app_step);
 

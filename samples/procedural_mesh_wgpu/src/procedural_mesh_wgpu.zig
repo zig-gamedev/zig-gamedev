@@ -56,8 +56,8 @@ const DemoState = struct {
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
 
-    meshes: std.ArrayList(Mesh),
-    drawables: std.ArrayList(Drawable),
+    meshes: std.array_list.Managed(Mesh),
+    drawables: std.array_list.Managed(Drawable),
 
     camera: struct {
         position: [3]f32 = .{ 0.0, 4.0, -4.0 },
@@ -72,10 +72,10 @@ const DemoState = struct {
 
 fn appendMesh(
     mesh: zmesh.Shape,
-    meshes: *std.ArrayList(Mesh),
-    meshes_indices: *std.ArrayList(IndexType),
-    meshes_positions: *std.ArrayList([3]f32),
-    meshes_normals: *std.ArrayList([3]f32),
+    meshes: *std.array_list.Managed(Mesh),
+    meshes_indices: *std.array_list.Managed(IndexType),
+    meshes_positions: *std.array_list.Managed([3]f32),
+    meshes_normals: *std.array_list.Managed([3]f32),
 ) void {
     meshes.append(.{
         .index_offset = @as(u32, @intCast(meshes_indices.items.len)),
@@ -91,11 +91,11 @@ fn appendMesh(
 
 fn initScene(
     allocator: std.mem.Allocator,
-    drawables: *std.ArrayList(Drawable),
-    meshes: *std.ArrayList(Mesh),
-    meshes_indices: *std.ArrayList(IndexType),
-    meshes_positions: *std.ArrayList([3]f32),
-    meshes_normals: *std.ArrayList([3]f32),
+    drawables: *std.array_list.Managed(Drawable),
+    meshes: *std.array_list.Managed(Mesh),
+    meshes_indices: *std.array_list.Managed(IndexType),
+    meshes_positions: *std.array_list.Managed([3]f32),
+    meshes_normals: *std.array_list.Managed([3]f32),
 ) void {
     const tracy_zone = ztracy.ZoneNC(@src(), "initScene", 0x00_ff_00_00);
     defer tracy_zone.End();
@@ -279,7 +279,7 @@ fn initScene(
             .lacunarity = 2.02,
         };
         const local = struct {
-            fn terrain(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.C) void {
+            fn terrain(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.c) void {
                 _ = userdata;
                 position[0] = uv[0];
                 position[1] = 0.025 * gen.noise2(uv[0], uv[1]);
@@ -394,11 +394,11 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         },
     });
 
-    var drawables = std.ArrayList(Drawable).init(allocator);
-    var meshes = std.ArrayList(Mesh).init(allocator);
-    var meshes_indices = std.ArrayList(IndexType).init(arena);
-    var meshes_positions = std.ArrayList([3]f32).init(arena);
-    var meshes_normals = std.ArrayList([3]f32).init(arena);
+    var drawables = std.array_list.Managed(Drawable).init(allocator);
+    var meshes = std.array_list.Managed(Mesh).init(allocator);
+    var meshes_indices = std.array_list.Managed(IndexType).init(arena);
+    var meshes_positions = std.array_list.Managed([3]f32).init(arena);
+    var meshes_normals = std.array_list.Managed([3]f32).init(arena);
     initScene(allocator, &drawables, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
     const total_num_vertices = @as(u32, @intCast(meshes_positions.items.len));
@@ -410,7 +410,7 @@ fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
         .size = total_num_vertices * @sizeOf(Vertex),
     });
     {
-        var vertex_data = std.ArrayList(Vertex).init(arena);
+        var vertex_data = std.array_list.Managed(Vertex).init(arena);
         defer vertex_data.deinit();
         vertex_data.resize(total_num_vertices) catch unreachable;
 
@@ -685,7 +685,7 @@ pub fn main() !void {
 
     zglfw.windowHint(.client_api, .no_api);
 
-    const window = try zglfw.Window.create(1600, 1000, window_title, null);
+    const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 

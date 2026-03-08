@@ -3,7 +3,6 @@ const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const zwindows = @import("zwindows");
-const windows = zwindows.windows;
 const d3d12 = zwindows.d3d12;
 const hrPanicOnFail = zwindows.hrPanicOnFail;
 const hrPanic = zwindows.hrPanic;
@@ -36,7 +35,7 @@ const DemoState = struct {
     const window_width = 1024;
     const window_height = 1024;
 
-    window: windows.HWND,
+    window: zwindows.HWND,
     gctx: zd3d12.GraphicsContext,
     guir: GuiRenderer,
     frame_stats: common.FrameStats,
@@ -68,7 +67,7 @@ const DemoState = struct {
             pso_desc.NumRenderTargets = 1;
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
             pso_desc.RasterizerState.CullMode = .NONE;
-            pso_desc.DepthStencilState.DepthEnable = windows.FALSE;
+            pso_desc.DepthStencilState.DepthEnable = zwindows.FALSE;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
@@ -239,7 +238,7 @@ const DemoState = struct {
         gctx.cmdlist.OMSetRenderTargets(
             1,
             &.{back_buffer.descriptor_handle},
-            windows.TRUE,
+            zwindows.TRUE,
             null,
         );
         gctx.cmdlist.ClearRenderTargetView(
