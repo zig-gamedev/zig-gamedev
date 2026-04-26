@@ -4,7 +4,6 @@ const std = @import("std");
 pub const demo_name = "minimal_glfw_d3d12";
 pub const content_dir = demo_name ++ "_content/";
 
-
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
@@ -21,7 +20,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
+    exe.root_module.linkLibrary(zglfw.artifact("glfw"));
 
     const zwindows = b.dependency("zwindows", .{
         .zxaudio2_debug_layer = options.zxaudio2_debug_layer,

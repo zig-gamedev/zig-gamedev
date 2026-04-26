@@ -7,11 +7,13 @@ const minimal_glfw_gl = @import("minimal_glfw_gl.zig");
 const gl_version_major: u16 = 4;
 const gl_version_minor: u16 = 0;
 
-pub fn main() !void {
-    { // Change current working directory to where the executable is located.
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        try std.posix.chdir(path);
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.gpa;
+    const io = init.io;
+    {
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     try glfw.init();

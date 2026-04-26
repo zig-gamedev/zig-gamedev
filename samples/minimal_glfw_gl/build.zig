@@ -18,19 +18,19 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
+    exe.root_module.linkLibrary(zglfw.artifact("glfw"));
 
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));
 
     if (options.target.result.os.tag == .macos) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("macos12/usr/lib"));
-            exe.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+            exe.root_module.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            exe.root_module.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
         }
     } else if (options.target.result.os.tag == .linux) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
+            exe.root_module.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
         }
     }
 

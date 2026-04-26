@@ -8,15 +8,17 @@ const zgui = @import("zgui");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: minimal zgpu zgui";
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     try zglfw.init();
     defer zglfw.terminate();
 
+    const allocator = init.gpa;
+    const io = init.io;
     // Change current working directory to where the executable is located.
     {
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.posix.chdir(path) catch {};
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     zglfw.windowHint(.client_api, .no_api);
@@ -25,12 +27,8 @@ pub fn main() !void {
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
-    var gpa_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa_state.deinit();
-    const gpa = gpa_state.allocator();
-
     const gctx = try zgpu.GraphicsContext.create(
-        gpa,
+        allocator,
         .{
             .window = window,
             .fn_getTime = @ptrCast(&zglfw.getTime),
@@ -44,14 +42,14 @@ pub fn main() !void {
         },
         .{},
     );
-    defer gctx.destroy(gpa);
+    defer gctx.destroy(allocator);
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
         break :scale_factor @max(scale[0], scale[1]);
     };
 
-    zgui.init(gpa);
+    zgui.init(allocator);
     defer zgui.deinit();
 
     _ = zgui.io.addFontFromFile(

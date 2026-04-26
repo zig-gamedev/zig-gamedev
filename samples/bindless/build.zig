@@ -4,7 +4,6 @@ const std = @import("std");
 pub const demo_name = "bindless";
 pub const content_dir = demo_name ++ "_content/";
 
-
 pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     const cwd_path = b.pathJoin(&.{ "samples", demo_name });
     const src_path = b.pathJoin(&.{ cwd_path, "src" });
@@ -21,7 +20,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zmesh", zmesh.module("root"));
-    exe.linkLibrary(zmesh.artifact("zmesh"));
+    exe.root_module.linkLibrary(zmesh.artifact("zmesh"));
 
     const zstbi = b.dependency("zstbi", .{
         .target = options.target,

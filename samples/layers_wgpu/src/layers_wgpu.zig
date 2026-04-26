@@ -88,15 +88,17 @@ const DemoState = struct {
     }
 };
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     try zglfw.init();
     defer zglfw.terminate();
 
+    const allocator = init.gpa;
+    const io = init.io;
     // Change current working directory to where the executable is located.
     {
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.posix.chdir(path) catch {};
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     zglfw.windowHint(.client_api, .no_api);
@@ -104,11 +106,6 @@ pub fn main() !void {
     const window = try zglfw.Window.create(800, 800, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
-
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
-    const allocator = gpa.allocator();
 
     var demo = try DemoState.init(allocator, window);
     defer demo.deinit(allocator);

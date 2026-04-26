@@ -680,15 +680,17 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     try zglfw.init();
     defer zglfw.terminate();
 
+    const allocator = init.gpa;
+    const io = init.io;
     // Change current working directory to where the executable is located.
     {
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.posix.chdir(path) catch {};
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     zglfw.windowHint(.client_api, .no_api);
@@ -696,11 +698,6 @@ pub fn main() !void {
     const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
-
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
-    const allocator = gpa.allocator();
 
     var demo = try create(allocator, window);
     defer destroy(allocator, demo);
@@ -725,16 +722,16 @@ pub fn main() !void {
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 
-    var frame_timer = try std.time.Timer.start();
+    var frame_timer = std.Io.Timestamp.now(io, .awake);
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         {
             // spin loop for frame limiter
             const target_ns = @divTrunc(std.time.ns_per_s, frame_rate_target);
-            while (frame_timer.read() < target_ns) {
+            while (frame_timer.untilNow(io, .awake).toNanoseconds() < target_ns) {
                 std.atomic.spinLoopHint();
             }
-            frame_timer.reset();
+            frame_timer = std.Io.Timestamp.now(io, .awake);
         }
 
         zglfw.pollEvents();

@@ -1,7 +1,7 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const Mutex = std.Thread.Mutex;
+const Mutex = std.Io.Mutex;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
@@ -110,7 +110,7 @@ const AudioState = struct {
 
     device: *zaudio.Device,
     engine: *zaudio.Engine,
-    mutex: Mutex = .{},
+    mutex: Mutex = .init,
     current_set: u32 = num_sets - 1,
     samples: std.array_list.Managed(f32),
 
@@ -124,8 +124,8 @@ const AudioState = struct {
 
         audio.engine.asNodeGraphMut().readPcmFrames(output.?, num_frames, null) catch {};
 
-        audio.mutex.lock();
-        defer audio.mutex.unlock();
+        audio.mutex.lockUncancelable(io);
+        defer audio.mutex.unlock(io);
 
         audio.current_set = (audio.current_set + 1) % num_sets;
 
@@ -857,8 +857,8 @@ fn draw(demo: *DemoState) void {
             AudioState.num_sets * AudioState.usable_samples_per_set,
         ).?;
 
-        demo.audio.mutex.lock();
-        defer demo.audio.mutex.unlock();
+        demo.audio.mutex.lockUncancelable(io);
+        defer demo.audio.mutex.unlock(io);
 
         const rcp_num_sets = 1.0 / @as(f32, @floatFromInt(AudioState.num_sets - 1));
         var set: u32 = 0;
@@ -975,15 +975,17 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     try zglfw.init();
     defer zglfw.terminate();
 
+    const allocator = init.gpa;
+    const io = init.io;
     // Change current working directory to where the executable is located.
     {
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.posix.chdir(path) catch {};
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     zglfw.windowHint(.client_api, .no_api);
@@ -991,11 +993,6 @@ pub fn main() !void {
     const window = try zglfw.Window.create(1600, 1000, window_title, null, null);
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
-
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
-    const allocator = gpa.allocator();
 
     const demo = try create(allocator, window);
     defer destroy(allocator, demo);

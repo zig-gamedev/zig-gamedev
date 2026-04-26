@@ -303,7 +303,7 @@ fn initScene(
     }
 }
 
-fn init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
+fn demo_init(allocator: std.mem.Allocator, window: *zglfw.Window) !DemoState {
     const gctx = try zgpu.GraphicsContext.create(
         allocator,
         .{
@@ -672,15 +672,17 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .texture = texture, .view = view };
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     try zglfw.init();
     defer zglfw.terminate();
 
+    const allocator = init.gpa;
+    const io = init.io;
     // Change current working directory to where the executable is located.
     {
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.posix.chdir(path) catch {};
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     zglfw.windowHint(.client_api, .no_api);
@@ -689,12 +691,7 @@ pub fn main() !void {
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
-    const allocator = gpa.allocator();
-
-    var demo = try init(allocator, window);
+    var demo = try demo_init(allocator, window);
     defer deinit(allocator, &demo);
 
     const scale_factor = scale_factor: {

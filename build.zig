@@ -2,11 +2,12 @@ const builtin = @import("builtin");
 const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
-    checkGitLfsContent() catch {
-        try ensureGit(b.allocator);
-        try ensureGitLfs(b.allocator, "install");
-        try ensureGitLfs(b.allocator, "pull");
-        try checkGitLfsContent();
+    checkGitLfsContent(b.graph.io) catch {
+        try ensureGit(b.allocator, b.graph.io);
+
+        try ensureGitLfs(b.allocator, b.graph.io, "install");
+        try ensureGitLfs(b.allocator, b.graph.io, "pull");
+        try checkGitLfsContent(b.graph.io);
     };
 
     const target = b.standardTargetOptions(.{});
@@ -224,7 +225,8 @@ fn buildExe(b: *std.Build, options: anytype, sample: anytype) *std.Build.Step.Co
 
     if (exe.rootModuleTarget().os.tag == .windows) {
         // TODO: Problems with LTO on Windows.
-        exe.want_lto = false;
+        //exe.want_lto = false;
+
     }
 
     if (exe.root_module.optimize != .Debug) {
@@ -242,7 +244,7 @@ fn buildExe(b: *std.Build, options: anytype, sample: anytype) *std.Build.Step.Co
     return exe;
 }
 
-fn ensureGit(allocator: std.mem.Allocator) !void {
+fn ensureGit(allocator: std.mem.Allocator, io: std.Io) !void {
     const printErrorMsg = (struct {
         fn impl() void {
             std.log.err("\n" ++
@@ -256,8 +258,7 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
         }
     }).impl;
     const argv = &[_][]const u8{ "git", "version" };
-    const result = std.process.Child.run(.{
-        .allocator = allocator,
+    const result = std.process.run(allocator, io, .{
         .argv = argv,
     }) catch { // e.g. FileNotFound
         printErrorMsg();
@@ -267,13 +268,14 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
         allocator.free(result.stderr);
         allocator.free(result.stdout);
     }
-    if (result.term.Exited != 0) {
+
+    if (result.term.exited != 0) {
         printErrorMsg();
         return error.GitNotFound;
     }
 }
 
-fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
+fn ensureGitLfs(allocator: std.mem.Allocator, io: std.Io, cmd: []const u8) !void {
     const printNoGitLfs = (struct {
         fn impl() void {
             std.log.err("\n" ++
@@ -289,8 +291,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
         }
     }).impl;
     const argv = &[_][]const u8{ "git", "lfs", cmd };
-    const result = std.process.Child.run(.{
-        .allocator = allocator,
+    const result = std.process.run(allocator, io, .{
         .argv = argv,
     }) catch { // e.g. FileNotFound
         printNoGitLfs();
@@ -300,19 +301,20 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
         allocator.free(result.stderr);
         allocator.free(result.stdout);
     }
-    if (result.term.Exited != 0) {
+    if (result.term.exited != 0) {
         printNoGitLfs();
         return error.GitLfsNotFound;
     }
 }
 
-fn checkGitLfsContent() !void {
+fn checkGitLfsContent(io: std.Io) !void {
     const expected_contents =
         \\DO NOT EDIT OR DELETE
         \\This file is used to check if Git LFS content has been downloaded
     ;
     var buf: [expected_contents.len]u8 = undefined;
-    _ = std.fs.cwd().readFile(".lfs-content-token", &buf) catch {
+
+    _ = std.Io.Dir.cwd().readFile(io, ".lfs-content-token", &buf) catch {
         return error.GitLfsContentTokenNotFound;
     };
     if (!std.mem.eql(u8, expected_contents, &buf)) {

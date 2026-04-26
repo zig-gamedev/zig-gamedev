@@ -2,11 +2,13 @@ const std = @import("std");
 
 const sdl2_demo = @import("sdl2_demo.zig");
 
-pub fn main() !void {
-    { // Change current working directory to where the executable is located.
-        var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        try std.posix.chdir(path);
+pub fn main(init: std.process.Init) !void {
+    const io = init.io;
+    const allocator = init.gpa;
+    {
+        const path = try std.process.executablePathAlloc(io, allocator);
+        defer allocator.free(path);
+        try std.process.setCurrentPath(io, path);
     }
 
     try sdl2_demo.init();
