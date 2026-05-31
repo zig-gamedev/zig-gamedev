@@ -617,7 +617,7 @@ fn update(demo: *DemoState) !void {
                         selected_item != index)
                     {
                         demo.noise_config.noise_type = @as(zaudio.Noise.Type, @enumFromInt(index));
-                        try demo.noise_data_source.setType(demo.noise_config.noise_type);
+                        try recreateNoiseGenerator(demo);
                     }
                 }
                 zgui.endCombo();
@@ -953,6 +953,30 @@ fn draw(demo: *DemoState) void {
         demo.depth_tex = depth.tex;
         demo.depth_texv = depth.texv;
     }
+}
+
+fn recreateNoiseGenerator(demo: *DemoState) !void {
+    const was_started = demo.noise_node.asNode().getState() == .started;
+
+    const new_noise_data_source = try zaudio.Noise.create(demo.noise_config);
+    errdefer new_noise_data_source.destroy();
+
+    const new_noise_node = try demo.audio.engine.asNodeGraphMut().createDataSourceNode(
+        zaudio.DataSourceNode.Config.init(new_noise_data_source.asDataSourceMut()),
+    );
+    errdefer new_noise_node.destroy();
+
+    try new_noise_node.asNodeMut().setState(if (was_started) .started else .stopped);
+
+    try demo.noise_node.asNodeMut().setState(.stopped);
+
+    demo.noise_node.destroy();
+    demo.noise_data_source.destroy();
+
+    demo.noise_data_source = new_noise_data_source;
+    demo.noise_node = new_noise_node;
+    
+    try updateAudioGraph(demo.*);
 }
 
 fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
