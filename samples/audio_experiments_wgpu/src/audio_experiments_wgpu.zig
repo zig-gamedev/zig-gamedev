@@ -958,24 +958,31 @@ fn draw(demo: *DemoState) void {
 fn recreateNoiseGenerator(demo: *DemoState) !void {
     const was_started = demo.noise_node.asNode().getState() == .started;
 
-    const new_noise_data_source = try zaudio.Noise.create(demo.noise_config);
-    errdefer new_noise_data_source.destroy();
+    const new_noise = create_noise: {
+        const new_noise_data_source = try zaudio.Noise.create(demo.noise_config);
+        errdefer new_noise_data_source.destroy();
 
-    const new_noise_node = try demo.audio.engine.asNodeGraphMut().createDataSourceNode(
-        zaudio.DataSourceNode.Config.init(new_noise_data_source.asDataSourceMut()),
-    );
-    errdefer new_noise_node.destroy();
+        const new_noise_node = try demo.audio.engine.asNodeGraphMut().createDataSourceNode(
+            zaudio.DataSourceNode.Config.init(new_noise_data_source.asDataSourceMut()),
+        );
+        errdefer new_noise_node.destroy();
 
-    try new_noise_node.asNodeMut().setState(if (was_started) .started else .stopped);
+        try new_noise_node.asNodeMut().setState(if (was_started) .started else .stopped);
+
+        break :create_noise .{
+            .data_source = new_noise_data_source,
+            .node = new_noise_node,
+        };
+    };
 
     try demo.noise_node.asNodeMut().setState(.stopped);
 
     demo.noise_node.destroy();
     demo.noise_data_source.destroy();
 
-    demo.noise_data_source = new_noise_data_source;
-    demo.noise_node = new_noise_node;
-    
+    demo.noise_data_source = new_noise.data_source;
+    demo.noise_node = new_noise.node;
+
     try updateAudioGraph(demo.*);
 }
 
