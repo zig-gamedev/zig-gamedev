@@ -82,11 +82,6 @@
             .hash = "zgui-0.6.0-dev--L6sZKkSbgCUBXLVfwJDPpMkETz7ll-mmQYQae-nMxjt",
         },
 
-        .zjobs = .{
-            .url = "https://github.com/zig-gamedev/zjobs/archive/2c202f7358923004ee57c3de0303da4853255bf2.tar.gz",
-            .hash = "zjobs-0.3.0-dev-59uaZnLQAADzoTY5yTgmOT1rrD86fMTQmPvj4ksZl-XK",
-        },
-
         .zmath = .{
             .url = "https://github.com/zig-gamedev/zmath/archive/3a5955b2b72cd081563fbb084eff05bffd1e3fbb.tar.gz",
             .hash = "zmath-0.11.0-dev-wjwivdMsAwD-xaLj76YHUq3t9JDH-X16xuMTmnDzqbu2",
