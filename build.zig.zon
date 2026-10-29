@@ -112,6 +112,11 @@
             .hash = "zphysics-0.2.0-dev-nZDEANvfQgD04nOPqL9KMokfgjzs_wPtHpoLscZScaOa",
         },
 
+        .recast_nav = .{
+            .url = "https://github.com/K4leri/recastnavigation/archive/37dccae63a9969c0eb2b235ff5e64237aa237a7b.tar.gz",
+            .hash = "recast_nav-0.2.1-WnAVzvHWDgBdTjU2QJimANnD24TrN5-JY9sqiU4bq3Lk",
+        },
+
         .zpix = .{
             .url = "https://github.com/zig-gamedev/zpix/archive/65a5bd6cc3e7a7b455f2fc1d4ceac396364aa0d7.tar.gz",
             .hash = "zpix-0.11.0-dev-T9TIVso4AAAFFeHotIID7BumFCp7We6TwRxW0gy8XWcW",
