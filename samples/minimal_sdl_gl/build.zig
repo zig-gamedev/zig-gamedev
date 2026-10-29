@@ -11,9 +11,9 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
             .root_source_file = b.path(b.pathJoin(&.{ src_path, demo_name ++ ".zig" })),
             .target = options.target,
             .optimize = options.optimize,
+            .link_libc = true,
         }),
     });
-    exe.linkLibC();
 
     const zsdl = b.dependency("zsdl", .{});
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
@@ -21,21 +21,21 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
     @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
     switch (exe.rootModuleTarget().os.tag) {
         .windows => {
-            exe.linkSystemLibrary("SDL2");
-            exe.linkSystemLibrary("SDL2main");
-            exe.linkSystemLibrary("SDL2_ttf");
-            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.linkSystemLibrary("SDL2", .{});
+            exe.root_module.linkSystemLibrary("SDL2main", .{});
+            exe.root_module.linkSystemLibrary("SDL2_ttf", .{});
+            exe.root_module.linkSystemLibrary("SDL2_image", .{});
         },
         .linux => {
-            exe.linkSystemLibrary("SDL2");
-            exe.linkSystemLibrary("SDL2_ttf");
-            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.linkSystemLibrary("SDL2", .{});
+            exe.root_module.linkSystemLibrary("SDL2_ttf", .{});
+            exe.root_module.linkSystemLibrary("SDL2_image", .{});
             exe.root_module.addRPathSpecial("$ORIGIN");
         },
         .macos => {
-            exe.linkFramework("SDL2");
-            exe.linkFramework("SDL2_ttf");
-            exe.linkFramework("SDL2_image");
+            exe.root_module.linkFramework("SDL2", .{});
+            exe.root_module.linkFramework("SDL2_ttf", .{});
+            exe.root_module.linkFramework("SDL2_image", .{});
             exe.root_module.addRPathSpecial("@executable_path");
         },
         else => {},

@@ -13,44 +13,43 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
         .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
+            .link_libc = true,
+            .link_libcpp = if (target.result.abi != .msvc) true else null,
         }),
     });
 
-    lib.linkLibC();
-    if (target.result.abi != .msvc)
-        lib.linkLibCpp();
-    lib.linkSystemLibrary("imm32");
+    lib.root_module.linkSystemLibrary("imm32", .{});
 
-    lib.addIncludePath(b.path("libs"));
-    lib.addCSourceFile(
+    lib.root_module.addIncludePath(b.path("libs"));
+    lib.root_module.addCSourceFile(
         .{ .file = b.path("samples/common/libs/imgui/imgui.cpp"), .flags = &.{""} },
     );
-    lib.addCSourceFile(
+    lib.root_module.addCSourceFile(
         .{ .file = b.path("samples/common/libs/imgui/imgui_widgets.cpp"), .flags = &.{""} },
     );
-    lib.addCSourceFile(
+    lib.root_module.addCSourceFile(
         .{ .file = b.path("samples/common/libs/imgui/imgui_tables.cpp"), .flags = &.{""} },
     );
-    lib.addCSourceFile(
+    lib.root_module.addCSourceFile(
         .{ .file = b.path("samples/common/libs/imgui/imgui_draw.cpp"), .flags = &.{""} },
     );
-    lib.addCSourceFile(
+    lib.root_module.addCSourceFile(
         .{ .file = b.path("samples/common/libs/imgui/imgui_demo.cpp"), .flags = &.{""} },
     );
-    lib.addCSourceFile(
+    lib.root_module.addCSourceFile(
         .{ .file = b.path("samples/common/libs/imgui/cimgui.cpp"), .flags = &.{""} },
     );
 
     const zmesh = b.dependency("zmesh", .{});
 
-    lib.addIncludePath(zmesh.path("libs/cgltf"));
-    lib.addCSourceFile(.{
+    lib.root_module.addIncludePath(zmesh.path("libs/cgltf"));
+    lib.root_module.addCSourceFile(.{
         .file = zmesh.path("libs/cgltf/cgltf.c"),
         .flags = &.{"-std=c99"},
     });
 
-    lib.addIncludePath(b.path("samples/common/libs"));
-    lib.addIncludePath(zmesh.path("libs/cgltf"));
+    lib.root_module.addIncludePath(b.path("samples/common/libs"));
+    lib.root_module.addIncludePath(zmesh.path("libs/cgltf"));
 
     const module = b.createModule(.{
         .root_source_file = b.path("samples/common/src/common.zig"),
@@ -64,5 +63,5 @@ pub fn link(compile_step: *std.Build.Step.Compile, deps: struct {
 
     compile_step.root_module.addImport("common", module);
 
-    compile_step.linkLibrary(lib);
+    compile_step.root_module.linkLibrary(lib);
 }

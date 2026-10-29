@@ -31,7 +31,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .backend = .win32_dx12,
     });
     exe.root_module.addImport("zgui", zgui.module("root"));
-    exe.linkLibrary(zgui.artifact("imgui"));
+    exe.root_module.linkLibrary(zgui.artifact("imgui"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);

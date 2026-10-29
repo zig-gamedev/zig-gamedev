@@ -320,15 +320,17 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .texture = texture, .view = view };
 }
 
-pub fn main() !void {
+pub fn main(zinit: std.process.Init) !void {
     try zglfw.init();
     defer zglfw.terminate();
 
     // Change current working directory to where the executable is located.
     {
         var buffer: [1024]u8 = undefined;
-        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
-        std.posix.chdir(path) catch {};
+        const len = std.process.executableDirPath(zinit.io, buffer[0..]) catch 0;
+        if (len > 0) {
+            std.Io.Threaded.chdir(buffer[0..len]) catch {};
+        }
     }
 
     zglfw.windowHint(.client_api, .no_api);
@@ -337,10 +339,7 @@ pub fn main() !void {
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
-    const allocator = gpa.allocator();
+    const allocator = zinit.gpa;
 
     var demo = try init(allocator, window);
     defer deinit(allocator, &demo);

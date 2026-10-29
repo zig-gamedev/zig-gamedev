@@ -19,21 +19,21 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
+    exe.root_module.linkLibrary(zglfw.artifact("glfw"));
 
     @import("zgpu").addLibraryPathsTo(exe);
     const zgpu = b.dependency("zgpu", .{
         .target = options.target,
     });
     exe.root_module.addImport("zgpu", zgpu.module("root"));
-    exe.linkLibrary(zgpu.artifact("zdawn"));
+    exe.root_module.linkLibrary(zgpu.artifact("zdawn"));
 
     const zgui = b.dependency("zgui", .{
         .target = options.target,
         .backend = .glfw_wgpu,
     });
     exe.root_module.addImport("zgui", zgui.module("root"));
-    exe.linkLibrary(zgui.artifact("imgui"));
+    exe.root_module.linkLibrary(zgui.artifact("imgui"));
 
     const zmath = b.dependency("zmath", .{
         .target = options.target,
@@ -59,12 +59,12 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     if (options.target.result.os.tag == .macos) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("macos12/usr/lib"));
-            exe.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+            exe.root_module.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            exe.root_module.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
         }
     } else if (options.target.result.os.tag == .linux) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
+            exe.root_module.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
         }
     }
 

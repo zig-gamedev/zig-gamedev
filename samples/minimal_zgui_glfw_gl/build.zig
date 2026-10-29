@@ -19,7 +19,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
+    exe.root_module.linkLibrary(zglfw.artifact("glfw"));
 
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));
@@ -29,7 +29,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .backend = .glfw_opengl3,
     });
     exe.root_module.addImport("zgui", zgui.module("root"));
-    exe.linkLibrary(zgui.artifact("imgui"));
+    exe.root_module.linkLibrary(zgui.artifact("imgui"));
 
     const exe_options = b.addOptions();
     exe.root_module.addOptions("build_options", exe_options);
@@ -45,7 +45,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     if (options.target.result.os.tag == .linux) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
+            exe.root_module.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
         }
     }
 

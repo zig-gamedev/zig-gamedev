@@ -224,7 +224,7 @@ fn buildExe(b: *std.Build, options: anytype, sample: anytype) *std.Build.Step.Co
 
     if (exe.rootModuleTarget().os.tag == .windows) {
         // TODO: Problems with LTO on Windows.
-        exe.want_lto = false;
+        exe.lto = .full;
     }
 
     if (exe.root_module.optimize != .Debug) {
@@ -255,11 +255,15 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
             , .{});
         }
     }).impl;
-    const argv = &[_][]const u8{ "git", "version" };
-    const result = std.process.Child.run(.{
-        .allocator = allocator,
-        .argv = argv,
-    }) catch { // e.g. FileNotFound
+    var threaded = std.Io.Threaded.init_single_threaded;
+    const opts = std.process.RunOptions{
+        .argv = &[_][]const u8{ "git", "version" },
+    };
+    const result = std.process.run(
+        allocator,
+        threaded.io(),
+        opts,
+    ) catch { // e.g. FileNotFound
         printErrorMsg();
         return error.GitNotFound;
     };
@@ -267,7 +271,7 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
         allocator.free(result.stderr);
         allocator.free(result.stdout);
     }
-    if (result.term.Exited != 0) {
+    if (result.term.exited != 0) {
         printErrorMsg();
         return error.GitNotFound;
     }
@@ -288,11 +292,15 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
             , .{});
         }
     }).impl;
-    const argv = &[_][]const u8{ "git", "lfs", cmd };
-    const result = std.process.Child.run(.{
-        .allocator = allocator,
-        .argv = argv,
-    }) catch { // e.g. FileNotFound
+    var threaded = std.Io.Threaded.init_single_threaded;
+    const opts = std.process.RunOptions{
+        .argv = &[_][]const u8{ "git", "lfs", cmd },
+    };
+    const result = std.process.run(
+        allocator,
+        threaded.io(),
+        opts,
+    ) catch { // e.g. FileNotFound
         printNoGitLfs();
         return error.GitLfsNotFound;
     };
@@ -300,7 +308,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
         allocator.free(result.stderr);
         allocator.free(result.stdout);
     }
-    if (result.term.Exited != 0) {
+    if (result.term.exited != 0) {
         printNoGitLfs();
         return error.GitLfsNotFound;
     }
@@ -308,11 +316,13 @@ fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
 
 fn checkGitLfsContent() !void {
     const expected_contents =
-        \\DO NOT EDIT OR DELETE
-        \\This file is used to check if Git LFS content has been downloaded
+        \\version https://git-lfs.github.com/spec/v1
+        \\oid sha256:936686ef9b9485f027086ce1ed7b4f7461d0ceb7eeccb573e48582055ca1c00f
+        \\size 87
     ;
     var buf: [expected_contents.len]u8 = undefined;
-    _ = std.fs.cwd().readFile(".lfs-content-token", &buf) catch {
+    var threaded = std.Io.Threaded.init_single_threaded;
+    _ = std.Io.Dir.cwd().readFile(threaded.io(), ".lfs-content-token", &buf) catch {
         return error.GitLfsContentTokenNotFound;
     };
     if (!std.mem.eql(u8, expected_contents, &buf)) {

@@ -83,8 +83,8 @@
         },
 
         .zmath = .{
-            .url = "https://github.com/zig-gamedev/zmath/archive/3a5955b2b72cd081563fbb084eff05bffd1e3fbb.tar.gz",
-            .hash = "zmath-0.11.0-dev-wjwivdMsAwD-xaLj76YHUq3t9JDH-X16xuMTmnDzqbu2",
+            .url = "git+https://github.com/zig-gamedev/zmath.git#9e42b04a24c970a297b365f3d3022f92dbf3219d",
+            .hash = "zmath-0.11.0-dev-wjwivTwtAwDOjG2_KGP-HLtHrONfsFfHttalmxFAGVAK",
         },
 
         .zmesh = .{

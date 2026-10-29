@@ -25,14 +25,14 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
+    exe.root_module.linkLibrary(zglfw.artifact("glfw"));
 
     const zgui = b.dependency("zgui", .{
         .target = options.target,
         .backend = .glfw_dx12,
     });
     exe.root_module.addImport("zgui", zgui.module("root"));
-    exe.linkLibrary(zgui.artifact("imgui"));
+    exe.root_module.linkLibrary(zgui.artifact("imgui"));
 
     const zwindows = b.dependency("zwindows", .{
         .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
@@ -52,7 +52,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .enable_asserts = true,
     });
     exe.root_module.addImport("zphysics", zphysics.module("root"));
-    exe.linkLibrary(zphysics.artifact("joltc"));
+    exe.root_module.linkLibrary(zphysics.artifact("joltc"));
 
     const zpix = b.dependency("zpix", .{
         .enable = options.zpix_enable,

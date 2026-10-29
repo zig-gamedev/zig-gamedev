@@ -80,12 +80,12 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
 
     if (options.target.result.os.tag == .macos) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("macos12/usr/lib"));
-            exe.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
+            exe.root_module.addLibraryPath(system_sdk.path("macos12/usr/lib"));
+            exe.root_module.addSystemFrameworkPath(system_sdk.path("macos12/System/Library/Frameworks"));
         }
     } else if (options.target.result.os.tag == .linux) {
         if (b.lazyDependency("system_sdk", .{})) |system_sdk| {
-            exe.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
+            exe.root_module.addLibraryPath(system_sdk.path("linux/lib/x86_64-linux-gnu"));
         }
     }
 

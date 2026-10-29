@@ -64,6 +64,7 @@
 # Ignore some special directories
 *zig-cache
 *zig-out
+*zig-pkg
 backup
 
 # Ignore some special system files

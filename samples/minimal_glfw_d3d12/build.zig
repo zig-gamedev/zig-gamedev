@@ -21,7 +21,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zglfw", zglfw.module("root"));
-    exe.linkLibrary(zglfw.artifact("glfw"));
+    exe.root_module.linkLibrary(zglfw.artifact("glfw"));
 
     const zwindows = b.dependency("zwindows", .{
         .zxaudio2_debug_layer = options.zxaudio2_debug_layer,

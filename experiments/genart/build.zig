@@ -36,7 +36,7 @@ fn install(
     });
     const zstbi_module = zstbi.module("root");
 
-    comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
+    comptime var desc_name: [256]u8 = @splat(0);
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
     const desc_size = comptime std.mem.indexOf(u8, &desc_name, "\x00").?;
 
@@ -80,21 +80,21 @@ fn install(
     @import("zsdl").prebuilt_sdl2.addLibraryPathsTo(exe);
     switch (exe.rootModuleTarget().os.tag) {
         .windows => {
-            exe.linkSystemLibrary("SDL2");
-            exe.linkSystemLibrary("SDL2main");
-            exe.linkSystemLibrary("SDL2_ttf");
-            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.linkSystemLibrary("SDL2", .{});
+            exe.root_module.linkSystemLibrary("SDL2main", .{});
+            exe.root_module.linkSystemLibrary("SDL2_ttf", .{});
+            exe.root_module.linkSystemLibrary("SDL2_image", .{});
         },
         .linux => {
-            exe.linkSystemLibrary("SDL2");
-            exe.linkSystemLibrary("SDL2_ttf");
-            exe.linkSystemLibrary("SDL2_image");
+            exe.root_module.linkSystemLibrary("SDL2", .{});
+            exe.root_module.linkSystemLibrary("SDL2_ttf", .{});
+            exe.root_module.linkSystemLibrary("SDL2_image", .{});
             exe.root_module.addRPathSpecial("$ORIGIN");
         },
         .macos => {
-            exe.linkFramework("SDL2");
-            exe.linkFramework("SDL2_ttf");
-            exe.linkFramework("SDL2_image");
+            exe.root_module.linkFramework("SDL2", .{});
+            exe.root_module.linkFramework("SDL2_ttf", .{});
+            exe.root_module.linkFramework("SDL2_image", .{});
             exe.root_module.addRPathSpecial("@executable_path");
         },
         else => {},

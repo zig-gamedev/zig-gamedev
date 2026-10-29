@@ -26,7 +26,7 @@ pub fn build(b: *std.Build, options: anytype) *std.Build.Step.Compile {
         .target = options.target,
     });
     exe.root_module.addImport("zmesh", zmesh.module("root"));
-    exe.linkLibrary(zmesh.artifact("zmesh"));
+    exe.root_module.linkLibrary(zmesh.artifact("zmesh"));
 
     const zwindows = b.dependency("zwindows", .{
         .zxaudio2_debug_layer = options.zxaudio2_debug_layer,
